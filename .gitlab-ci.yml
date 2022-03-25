@@ -1087,16 +1087,16 @@ macos11_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.12
   - asdf which python
-  - asdf shell python 3.9.9
+  - asdf shell python 3.9.12
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.12/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1136,16 +1136,16 @@ macos1015_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.12
   - asdf which python
-  - asdf shell python 3.9.9
+  - asdf shell python 3.9.12
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.12/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1180,8 +1180,8 @@ macos1014_client:
   - echo $SHELL
   - asdf current
   # asdf which python  # has no python for some reason
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
-  - asdf local python 3.9.9
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.12
+  - asdf local python 3.9.12
   - asdf which python
   - python --version
   - pip --version
@@ -1189,7 +1189,7 @@ macos1014_client:
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.12/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1224,16 +1224,16 @@ macos1013_client:
   - echo $SHELL
   - asdf current
   - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.12
   - asdf which python
-  - asdf local python 3.9.9
+  - asdf local python 3.9.12
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.12/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1267,7 +1267,7 @@ winmintest:
   stage: test
   needs: []
   script:
-  - choco install -y python3 --version 3.9.9
+  - choco install -y python3 --version 3.9.12
   - refreshenv
   - c:\Python39\Scripts\pip install -r requirements.txt.client
   - refreshenv
@@ -1282,7 +1282,7 @@ winpyinst:
   - .shared_windows_runners
   stage: packaging
   before_script:
-  - choco install -y python3 --version 3.9.9
+  - choco install -y python3 --version 3.9.12
   - refreshenv
   - c:\python39\python -m pip --version
   - c:\python39\python -m pip install --user --upgrade pip
