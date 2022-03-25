@@ -531,20 +531,23 @@ def RgetMarkReview(
         list: for each matching qgroup we return a list of
         [testnumber, question, version, mark of latest annotation, username, marking_time, time finished.]
     """
+    query = QGroup.select()
     if filterMarked is True:
-        # since it is marked, we know that it will have a user, so join the user table to query.
-        query = QGroup.select().join(User).where(QGroup.marked == True)  # noqa: E712
-    else:
-        query = QGroup.select()
+        query = query.where(QGroup.marked == True)  # noqa: E712
     if filterPaperNumber != "*":
-        query = query.where(QGroup.test == filterPaperNumber)
-
+        tref = Test.get_or_none(test_number=filterPaperNumber)
+        if not tref:
+            return []
+        query = query.where(QGroup.test == tref)
     if filterQ != "*":
         query = query.where(QGroup.question == filterQ)
     if filterV != "*":
         query = query.where(QGroup.version == filterV)
     if filterUser != "*":
-        query = query.where(User.name == filterUser)
+        uref = User.get_or_none(name=filterUser)
+        if not uref:
+            return []
+        query = query.where(QGroup.user == uref)
     filtered = []
     for qref in query:
         if qref.marked is True:
