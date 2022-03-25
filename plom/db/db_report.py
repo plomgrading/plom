@@ -537,8 +537,7 @@ def RgetMarkReview(
     else:
         query = QGroup.select()
     if filterPaperNumber != "*":
-        # since filtering on test-number join query with the Test table.
-        query = query.join(Test).where(Test.test_number == filterPaperNumber)
+        query = query.where(QGroup.test == filterPaperNumber)
 
     if filterQ != "*":
         query = query.where(QGroup.question == filterQ)
