@@ -65,7 +65,7 @@ def processUsers(userFile, demo, auto, numbered):
     return:
         None
     """
-    init_user_list = confdir / "initial_user_list.json"
+    init_user_list = confdir / "bootstrap_initial_users.json"
     # if we have been passed a userFile then process it and return
     if userFile:
         print(f"Processing user file '{userFile}' to {init_user_list}")

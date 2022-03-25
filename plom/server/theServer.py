@@ -75,7 +75,7 @@ class Server:
         It does simple sanity checks of pwd hashes to see if they have changed.
         """
         log = logging.getLogger("server")
-        init_user_list = confdir / "initial_user_list.json"
+        init_user_list = confdir / "bootstrap_initial_users.json"
         if not init_user_list.exists():
             log.info(f'"{init_user_list}" not found: skipping')
             return

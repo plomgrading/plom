@@ -182,7 +182,7 @@ def save_user_list(username_password_dict, basedir=Path(".")):
     Arguments:
         username_password_dict (dict): keys are names and values passwords.
         basedir (pathlib.Path): the usernames and hashed passwords are
-            written to `basedir/serverConfiguration/initial_user_list.json`
+            written to `basedir/serverConfiguration/bootstrap_initial_users.json`
             where basedir defaults to "." if omitted.
 
     Returns:
@@ -203,5 +203,5 @@ def save_user_list(username_password_dict, basedir=Path(".")):
 
     where = basedir / confdir
     where.mkdir(exist_ok=True)
-    with open(where / "initial_user_list.json", "w") as fh:
+    with open(where / "bootstrap_initial_users.json", "w") as fh:
         fh.write(json.dumps(username_hash_dict, indent=2))
