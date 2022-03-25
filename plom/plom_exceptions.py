@@ -116,6 +116,7 @@ class PlomTaskDeletedError(PlomBenignException):
 class PlomForceLogoutException(PlomSeriousException):
     """We call this when the server has changed or deleted
     a task out from under the client."""
+
     pass
 
 

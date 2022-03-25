@@ -1221,9 +1221,12 @@ class MarkerClient(QWidget):
                 "<p>This is a rare situation; just in case, we'll now force a "
                 "shutdown of your client.  Sorry.</p>".format(task, str(ex))
             ).exec_()
-            # This would avoid seeing the crash dialog...
-            # import sys
-            # sys.exit(58)
+            # Log out the user and then raise an exception
+            try:
+                self.msgr.closeUser()
+            except PlomAuthenticationException:
+                log.warn("User tried to logout but was already logged out.")
+                pass
             raise PlomForceLogoutException("Manager changed task") from ex
 
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
@@ -2016,9 +2019,12 @@ class MarkerClient(QWidget):
             "<p>For now you've been logged out and we'll now force a shutdown "
             "of your client.  Sorry.</p>".format(task, error_message)
         ).exec_()
-        # This would avoid seeing the crash dialog...
-        # import sys
-        # sys.exit(57)
+        # Log out the user and then raise an exception
+        try:
+            self.msgr.closeUser()
+        except PlomAuthenticationException:
+            log.warn("User tried to logout but was already logged out.")
+            pass
         raise PlomForceLogoutException(
             "Server changed under us: {}".format(error_message)
         ) from None
