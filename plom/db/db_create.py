@@ -194,7 +194,7 @@ def createIDGroup(self, t, pages):
 def createDNMGroup(self, t, pages):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
-        log.warning("Create DNM - No test with number {}".format(t))
+        log.warning("Create DNM - No test with number %s", t)
         return False
 
     gid = "d{}".format(str(t).zfill(4))
@@ -211,20 +211,12 @@ def createDNMGroup(self, t, pages):
                 queue_position=self.nextqueue_position(),
             )
         except pw.IntegrityError as e:
-            log.error(
-                "Create DNM - cannot make Group {} of Test {} error - {}".format(
-                    gid, t, e
-                )
-            )
+            log.error("Create DNM - cannot make Group %s of Test %s - %s", gid, t, e)
             return False
         try:
             dref = DNMGroup.create(test=tref, group=gref)
         except pw.IntegrityError as e:
-            log.error(
-                "Create DNM - cannot create DNMGroup {} of group {} error - {}.".format(
-                    dref, gref, e
-                )
-            )
+            log.error("Create DNM - cannot create DNMGroup of Group %s - %s", gref, e)
             return False
         return self.addTPages(tref, gref, t, pages, 1)
 
