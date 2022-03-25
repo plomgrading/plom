@@ -162,3 +162,59 @@ def no_authentication_only_log_request(f):
         return f(zelf, request)
 
     return wrapped
+
+
+def readonly_admin(f):
+    """Decorator for requiring the manager account to get something read-only.
+
+    In the future, more than one user might satify this via ACL, but for
+    now if just checks for the "manager" account.
+
+    Arguments:
+        f (function): a routing method associated with the Plom server.
+
+    Returns:
+        function: the original wrapped with logging.
+    """
+
+    @functools.wraps(f)
+    def wrapped(zelf, data, request):
+        if data["user"] != "manager":
+            log.warn(
+                '%s user "%s": tried to connect to admin (read-only) feature',
+                f.__name__,
+                data["user"],
+            )
+            raise web.HTTPForbidden(reason="I wanna speak to the manager!")
+        log.info('%s we have an admin-read-only user "%s"', f.__name__, data["user"])
+        return f(zelf, data, request)
+
+    return wrapped
+
+
+def write_admin(f):
+    """Decorator for requiring the manager account to push or other change something in the state of the server.
+
+    In the future, more than one user might satify this via ACL, but for
+    now if just checks for the "manager" account.
+
+    Arguments:
+        f (function): a routing method associated with the Plom server.
+
+    Returns:
+        function: the original wrapped with logging.
+    """
+
+    @functools.wraps(f)
+    def wrapped(zelf, data, request):
+        if data["user"] != "manager":
+            log.warn(
+                '%s user "%s": tried to connect to admin (write) feature',
+                f.__name__,
+                data["user"],
+            )
+            raise web.HTTPForbidden(reason="I wanna speak to the manager!")
+        log.info('%s we have an admin-write user "%s"', f.__name__, data["user"])
+        return f(zelf, data, request)
+
+    return wrapped

@@ -10,6 +10,7 @@ from aiohttp import web, MultipartWriter
 
 from plom import specdir
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
+from .routeutils import readonly_admin, write_admin
 from .routeutils import log
 
 # I couldn't make this work with the auth deco
@@ -59,6 +60,7 @@ class IDHandler:
 
     # @routes.put("/ID/classlist")
     @authenticate_by_token_required_fields(["user", "classlist"])
+    @write_admin
     def IDputClasslist(self, data, request):
         """Accept classlist upload.
 
@@ -88,8 +90,6 @@ class IDHandler:
                     TODO: would be nice to be able to "try again".
                 HTTPNotAcceptable: classlist too short (see above).
         """
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
             raise web.HTTPBadRequest(
@@ -474,6 +474,7 @@ class IDHandler:
     @authenticate_by_token_required_fields(
         ["user", "crop_top", "crop_bottom", "ignoreStamp"]
     )
+    @write_admin
     def run_id_reader(self, data, request):
         """Runs the id digit reader on all paper ID pages.
 
@@ -488,9 +489,6 @@ class IDHandler:
             aiohttp.web_response.Response: Returns a response with the date and time of the machine reader run.
             Or responds with saying the machine reader is already running.
         """
-        if data["user"] != "manager":
-            raise web.HTTPForbidden(reason="I only speak to the manager")
-
         is_running, other = self.server.run_id_reader(
             data["crop_top"], data["crop_bottom"], data["ignoreStamp"]
         )
@@ -504,6 +502,7 @@ class IDHandler:
             return web.Response(text=other, status=205)
 
     @authenticate_by_token_required_fields(["user"])
+    @write_admin
     def predict_id_lap_solver(self, data, request):
         """Match Runs the id digit reader on all paper ID pages.
 
@@ -518,9 +517,6 @@ class IDHandler:
             409 (conflict): ID reader still running
             412 (precondition failed) for no ID reader
         """
-        if data["user"] != "manager":
-            raise web.HTTPForbidden(reason="I only speak to the manager")
-
         try:
             status = self.server.predict_id_lap_solver()
         except RuntimeError as e:
