@@ -88,6 +88,11 @@ class Server:
                 log.warning("User %s already exists: not updating password", user)
                 continue
             self.DB.createUser(user, pw)
+        # Or maybe we should just erase it:
+        log.info(f'archived "{init_user_list}" to "{init_user_list}.done"')
+        init_user_list.rename(
+            init_user_list.with_suffix(init_user_list.suffix + ".done")
+        )
 
     from .plomServer.serverUserInit import (
         validate,
