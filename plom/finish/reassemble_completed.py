@@ -193,7 +193,7 @@ def reassemble_one_paper(
     finally:
         msgr.closeUser()
         msgr.stop()
-        return outname
+    return outname
 
 
 def reassemble_all_papers(

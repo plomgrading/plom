@@ -194,7 +194,7 @@ def createIDGroup(self, t, pages):
 def createDNMGroup(self, t, pages):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
-        log.warning("Create DNM - No test with number {}".format(t))
+        log.warning("Create DNM - No test with number %s", t)
         return False
 
     gid = "d{}".format(str(t).zfill(4))
@@ -202,29 +202,21 @@ def createDNMGroup(self, t, pages):
         # make the dnmgroup
         try:
             # A DNM group may have 0 pages, in that case mark it as scanned and set status = "complete"
-            sc = True if len(pages) == 0 else False
+            scanned = True if len(pages) == 0 else False
             gref = Group.create(
                 test=tref,
                 gid=gid,
                 group_type="d",
-                scanned=sc,
+                scanned=scanned,
                 queue_position=self.nextqueue_position(),
             )
         except pw.IntegrityError as e:
-            log.error(
-                "Create DNM - cannot make Group {} of Test {} error - {}".format(
-                    gid, t, e
-                )
-            )
+            log.error("Create DNM - cannot make Group for %s - %s", gid, e)
             return False
         try:
-            dref = DNMGroup.create(test=tref, group=gref)
+            DNMGroup.create(test=tref, group=gref)
         except pw.IntegrityError as e:
-            log.error(
-                "Create DNM - cannot create DNMGroup {} of group {} error - {}.".format(
-                    dref, gref, e
-                )
-            )
+            log.error("Create DNM - cannot create DNMGroup of Group %s - %s", gref, e)
             return False
         return self.addTPages(tref, gref, t, pages, 1)
 
