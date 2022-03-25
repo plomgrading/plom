@@ -482,9 +482,7 @@ class Messenger(BaseMessenger):
                 ) from None
 
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomSeriousException(response.text) from None
             raise PlomSeriousException(
                 f"Error of type {e} when creating new rubric"
@@ -521,9 +519,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
 
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomSeriousException(response.text) from None
             raise PlomSeriousException(
                 f"Error of type {e} when creating new rubric"

@@ -67,9 +67,7 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 409:
                 raise PlomExistingDatabase(response.reason) from None
@@ -109,9 +107,7 @@ class ManagerMessenger(BaseMessenger):
                 response.raise_for_status()
                 return response.text
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                if response.status_code == 403:
+                if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 406:
                     raise PlomDatabaseCreationError(response.reason) from None
@@ -234,9 +230,7 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomServerNotReady(response.reason) from None
             if response.status_code == 406:
                 raise PlomRangeException(e) from None
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
@@ -268,9 +262,7 @@ class ManagerMessenger(BaseMessenger):
                 )
                 response.raise_for_status()
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                if response.status_code == 403:
+                if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 400:
                     raise PlomSeriousException(response.reason) from None
@@ -726,9 +718,7 @@ class ManagerMessenger(BaseMessenger):
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                if response.status_code == 403:
+                if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 400:
                     # TODO? do something else?
@@ -751,9 +741,7 @@ class ManagerMessenger(BaseMessenger):
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                if response.status_code == 403:
+                if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 400:
                     # TODO? do something else?
@@ -776,9 +764,7 @@ class ManagerMessenger(BaseMessenger):
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                if response.status_code == 403:
+                if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 400:
                     # TODO? do something else?
@@ -924,9 +910,7 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
             collisionTest = response.json()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
                 raise PlomOwnersLoggedInException(response.reason) from None
@@ -954,9 +938,7 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
                 raise PlomOwnersLoggedInException(response.reason) from None
@@ -980,9 +962,7 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
                 raise PlomOwnersLoggedInException(response.reason) from None
@@ -1006,9 +986,7 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
                 raise PlomOwnersLoggedInException(response.reason) from None
@@ -1102,9 +1080,7 @@ class ManagerMessenger(BaseMessenger):
                 response.raise_for_status()
                 return response.text
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                if response.status_code == 403:
+                if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 406:
                     raise PlomConflict(response.reason) from None
@@ -1146,9 +1122,7 @@ class ManagerMessenger(BaseMessenger):
                 return [False, response.text]
             return [True, True]
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
@@ -1296,9 +1270,7 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 400:
                 raise PlomConflict(response.reason) from None
@@ -1315,9 +1287,7 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
+            if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 400:
                 raise PlomConflict(response.reason) from None

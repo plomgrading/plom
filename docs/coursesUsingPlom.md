@@ -85,9 +85,14 @@ Approx: 11500 over 9 course
 
 | Course  |  Tasks                  | # students |  Notes                      |
 |---------|-------------------------|:----------:|-----------------------------|
-| BMEG220 |                         |            |                             |
-|         |                         |            |                             |
+| 101     | 2 midterms, ?           | 1350       |                             |
+| 105     | midterm                 | 1020       | self-submitted              |
+| 303     | 2 midterms, 1 HW + ?    | 180        |                             |
+| 317     | midterm                 | 160        |                             |
+| BMEG220 | midterm, 2 quizzes, ?   | 110        |                             |
+| ELEC221 | midterm, ?              | 160        |                             |
 
+(term in progress: do not add to totals below)
 
 
 ## Totals up to Dec 31st 2021
