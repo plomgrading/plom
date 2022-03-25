@@ -536,7 +536,7 @@ def RgetMarkReview(
         query = query.where(QGroup.marked == True)  # noqa: E712
     if filterPaperNumber != "*":
         tref = Test.get_or_none(test_number=filterPaperNumber)
-        if not tref:
+        if tref is None:
             return []
         query = query.where(QGroup.test == tref)
     if filterQ != "*":
@@ -545,7 +545,7 @@ def RgetMarkReview(
         query = query.where(QGroup.version == filterV)
     if filterUser != "*":
         uref = User.get_or_none(name=filterUser)
-        if not uref:
+        if uref is None:
             return []
         query = query.where(QGroup.user == uref)
     filtered = []
