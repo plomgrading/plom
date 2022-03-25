@@ -1204,28 +1204,31 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def getMarkReview(self, filterQ, filterV, filterU, filterM=True):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/REP/markReview",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "filterQ": filterQ,
-                    "filterV": filterV,
-                    "filterU": filterU,
-                    "filterM": filterM,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def getMarkReview(
+        self, *, filterPaperNumber, filterQ, filterV, filterUser, filterMarked
+    ):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/REP/markReview",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "filterPaperNumber": filterPaperNumber,
+                        "filterQ": filterQ,
+                        "filterV": filterV,
+                        "filterUser": filterUser,
+                        "filterMarked": filterMarked,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getIDReview(self):
         self.SRmutex.acquire()

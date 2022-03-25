@@ -1642,6 +1642,10 @@ class Manager(QWidget):
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
 
+        # maps zero to special text
+        self.ui.reviewPaperNumSpinBox.setSpecialValueText("*")
+        self.ui.reviewPaperNumSpinBox.setRange(0, self.max_papers)
+
         self.ui.questionCB.addItem("*")
         for q in range(self.numberOfQuestions):
             self.ui.questionCB.addItem(str(q + 1))
@@ -1664,21 +1668,13 @@ class Manager(QWidget):
             self.ui.userCB.addItem(u)
 
     def filterReview(self):
-        if (
-            (self.ui.questionCB.currentText() == "*")
-            and (self.ui.versionCB.currentText() == "*")
-            and (self.ui.userCB.currentText() == "*")
-        ):
-            ErrorMessage(
-                'Please set at least one of "Question", "Version", "User" to specific values.'
-            ).exec_()
-            return
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
         mrList = self.msgr.getMarkReview(
-            self.ui.questionCB.currentText(),
-            self.ui.versionCB.currentText(),
-            self.ui.userCB.currentText(),
-            markedOnly,
+            filterPaperNumber=self.ui.reviewPaperNumSpinBox.text(),
+            filterQ=self.ui.questionCB.currentText(),
+            filterV=self.ui.versionCB.currentText(),
+            filterUser=self.ui.userCB.currentText(),
+            filterMarked=markedOnly,
         )
 
         self.ui.reviewTW.clearContents()

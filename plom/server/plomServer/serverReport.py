@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 
 def RgetScannedTests(self):
@@ -71,8 +71,8 @@ def RgetOriginalFiles(self, testNumber):
     return self.DB.RgetOriginalFiles(testNumber)
 
 
-def RgetMarkReview(self, filterQ, filterV, filterU, filterM):
-    return self.DB.RgetMarkReview(filterQ, filterV, filterU, filterM)
+def RgetMarkReview(self, *args, **kwargs):
+    return self.DB.RgetMarkReview(*args, **kwargs)
 
 
 def RgetIDReview(self):
