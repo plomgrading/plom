@@ -214,7 +214,7 @@ def createDNMGroup(self, t, pages):
             log.error("Create DNM - cannot make Group for %s - %s", gid, e)
             return False
         try:
-            dref = DNMGroup.create(test=tref, group=gref)
+            DNMGroup.create(test=tref, group=gref)
         except pw.IntegrityError as e:
             log.error("Create DNM - cannot create DNMGroup of Group %s - %s", gref, e)
             return False
