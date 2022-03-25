@@ -1218,12 +1218,18 @@ class MarkerClient(QWidget):
                 "may need to be remarked.</p>\n\n"
                 '<p>Specifically, the server says: "{}"</p>\n\n'
                 "<p>This is a rare situation; just in case, we'll now force a "
-                "shutdown of your client.  Sorry.</p>".format(task, str(ex))
+                "shutdown of your client.  Sorry.</p>"
+                "<p>Please log back in and continue marking.</p>".format(task, str(ex))
             ).exec_()
-            # This would avoid seeing the crash dialog...
-            # import sys
-            # sys.exit(58)
-            raise PlomSeriousException("Manager changed task") from ex
+            # Log out the user and then raise an exception
+            try:
+                self.msgr.closeUser()
+            except PlomAuthenticationException:
+                log.warn("We tried to logout user but they were already logged out.")
+                pass
+            # exit with code that is not 0 or 1
+            self.Qapp.exit(57)
+            # raise PlomForceLogoutException("Manager changed task") from ex
 
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
         # column means different things).  Instead, extract from .plom file.
@@ -2013,14 +2019,22 @@ class MarkerClient(QWidget):
             "your annotations have been discarded just in case.  You will be "
             "asked to redo the task later.</p>\n\n"
             "<p>For now you've been logged out and we'll now force a shutdown "
-            "of your client.  Sorry.</p>".format(task, error_message)
+            "of your client.  Sorry.</p>"
+            "<p>Please log back in and continue marking.</p>".format(
+                task, error_message
+            )
         ).exec_()
-        # This would avoid seeing the crash dialog...
-        # import sys
-        # sys.exit(57)
-        raise PlomSeriousException(
-            "Server changed under us: {}".format(error_message)
-        ) from None
+        # Log out the user and then raise an exception
+        try:
+            self.msgr.closeUser()
+        except PlomAuthenticationException:
+            log.warn("We tried to log out user but they were already logged out.")
+            pass
+        # exit with code that is not 0 or 1
+        self.Qapp.exit(57)
+        # raise PlomForceLogoutException(
+        # "Server changed under us: {}".format(error_message)
+        # ) from None
 
     def backgroundUploadFailed(self, task, errmsg):
         """An upload has failed, we don't know why, do something LOUDLY.

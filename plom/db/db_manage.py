@@ -308,7 +308,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
     returns:
         tuple: a 3-tuple, either (True, None, None) if the action worked
             or `(False, code, msg)` where code is a short string, which
-            currently can be "notfound", "owners", or "unscanned" and
+            currently can be "notfound", or "unscanned" and
             `msg` is a human-readable string suitable for an error
             message.
     """
@@ -322,14 +322,6 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return (False, "notfound", f"Cannot find test {test_number}")
-
-    # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        msg = f"Cannot move unknown {file_name} to extra page b/c"
-        msg += " owners of tasks in that test are logged in: "
-        msg += ", ".join(owners)
-        return (False, "owners", msg)
 
     qref_list = []
     fails = []
@@ -407,7 +399,7 @@ def moveUnknownToHWPage(self, file_name, test_number, questions):
     returns:
         tuple: a 3-tuple, either (True, None, None) if the action worked
             or `(False, code, msg)` where code is a short string, which
-            currently can be "notfound" or "owners" and `msg` is a
+            currently can be "notfound" and `msg` is a
             human-readable string suitable for an error message.
     """
     iref = Image.get_or_none(file_name=file_name)
@@ -420,14 +412,6 @@ def moveUnknownToHWPage(self, file_name, test_number, questions):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return (False, "notfound", f"Cannot find test {test_number}")
-
-    # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        msg = f"Cannot move unknown {file_name} to extra page b/c"
-        msg += " owners of tasks in that test are logged in: "
-        msg += ", ".join(owners)
-        return (False, "owners", msg)
 
     qref_list = []
     fails = []
@@ -483,14 +467,6 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return (False, "notfound", f"Cannot find test {test_number}")
-
-    # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        msg = f"Cannot move unknown {file_name} to Test Page b/c"
-        msg += " owners of tasks in that test are logged in: "
-        msg += ", ".join(owners)
-        return (False, "owners", msg)
 
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
     if pref is None:
@@ -670,14 +646,6 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
     if pref is None:
         return (False, "notfound", f"Cannot find p.{page_number} of test {test_number}")
     oref = pref.image  # the original page image for this tpage.
-
-    # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        msg = f"Cannot move colliding {file_name} to Test Page b/c"
-        msg += " owners of tasks in that test are logged in: "
-        msg += ", ".join(owners)
-        return (False, "owners", msg)
 
     # now create a discardpage with oref, and put iref into the tpage, delete the collision.
     with plomdb.atomic():

@@ -39,12 +39,14 @@ def add_popup_to_toplevel_exception_handler():
         else:
             abbrev = "".join(lines)
         lines.insert(0, f"Timestamp: {datetime.now()}\n\n")
+
+        txt = """<p><b>Something unexpected has happened!</b>
+        A partial error message is shown below.</p>
+        <p>(You could consider filing an issue; if you do, please copy-paste
+        the entire text under &ldquo;Show Details&rdquo;.)</p>"""
         msg = ErrorMsg(
             None,
-            """<p><b>Something unexpected has happened!</b>
-            A partial error message is shown below.</p>
-            <p>(You could consider filing an issue; if you do, please copy-paste
-            the entire text under &ldquo;Show Details&rdquo;.)</p>""",
+            txt,
             info=abbrev,
             details="".join(lines),
         )

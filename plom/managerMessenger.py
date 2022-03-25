@@ -533,8 +533,6 @@ class ManagerMessenger(BaseMessenger):
                 ) from None
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -560,8 +558,6 @@ class ManagerMessenger(BaseMessenger):
                 ) from None
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -586,8 +582,6 @@ class ManagerMessenger(BaseMessenger):
                 ) from None
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
             if response.status_code == 410:
                 raise PlomUnidentifiedPaperException() from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -619,8 +613,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 405:  # that question already has pages
                 raise PlomTakenException() from None
-            if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -644,8 +636,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomSeriousException(
                     "Server could not find the page - this should not happen!"
                 ) from None
-            if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
             if response.status_code == 406:
                 raise PlomSeriousException(
                     f"Page name '{page_name}' is invalid"
@@ -674,8 +664,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomSeriousException(
                     "Server could not find the page - this should not happen!"
                 ) from None
-            if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -926,8 +914,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
                 raise PlomOwnersLoggedInException(response.reason) from None
-            if response.status_code == 409:
-                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -956,8 +942,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
                 raise PlomOwnersLoggedInException(response.reason) from None
-            if response.status_code == 409:
-                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -982,8 +966,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
                 raise PlomOwnersLoggedInException(response.reason) from None
-            if response.status_code == 409:
-                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1008,8 +990,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
                 raise PlomOwnersLoggedInException(response.reason) from None
-            if response.status_code == 409:
-                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
