@@ -25,7 +25,6 @@ import tempfile
 from textwrap import shorten
 import time
 import threading
-import sys
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 import platform
@@ -1229,7 +1228,7 @@ class MarkerClient(QWidget):
                 log.warn("User tried to logout but was already logged out.")
                 pass
             # exit with code that is not 0 or 1
-            sys.exit(57)
+            self.Qapp.exit(57)
             # raise PlomForceLogoutException("Manager changed task") from ex
 
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
@@ -2032,7 +2031,7 @@ class MarkerClient(QWidget):
             log.warn("User tried to logout but was already logged out.")
             pass
         # exit with code that is not 0 or 1
-        sys.exit(57)
+        self.Qapp.exit(57)
         # raise PlomForceLogoutException(
         # "Server changed under us: {}".format(error_message)
         # ) from None

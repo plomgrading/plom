@@ -326,10 +326,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)  # page not found at all
+            return web.Response(status=404)  # page not found at all
 
     async def replaceMissingDNMPage(self, request):
         data = await request.json()
@@ -344,10 +341,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)  # page not found at all
+            return web.Response(status=404)  # page not found at all
 
     async def replaceMissingIDPage(self, request):
         data = await request.json()
@@ -362,9 +356,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            elif rval[1] == "unknown":
+            if rval[1] == "unknown":
                 return web.Response(status=410)
             else:
                 return web.Response(status=404)  # page not found at all
@@ -387,9 +379,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":
-                return web.json_response(rval[2], status=409)
-            elif rval[1] == "present":
+            if rval[1] == "present":
                 # that question already has pages
                 return web.Response(status=405)
             else:
@@ -417,10 +407,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)  # page not found at all
+            return web.Response(status=404)  # page not found at all
 
     async def removeSinglePage(self, request):
         """Remove the page (as described by its name) and reset any tasks that involve that page.
@@ -444,9 +431,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            elif rval[1] == "unknown":  # [False, "unknown"]
+            if rval[1] == "unknown":  # [False, "unknown"]
                 raise web.HTTPGone(reason="Cannot find that page.")
             elif rval[1] == "invalid":
                 raise web.HTTPNotAcceptable(reason="Page name is invalid")
@@ -649,8 +634,7 @@ class UploadHandler:
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authentication, or 403 is not manager.  406 if we
-                can't do the move due to users logged in.  409 in other
+                401 for authentication, or 403 is not manager. 409 in other
                 such as test number or page number do not exist.
         """
         data = await request.json()
@@ -669,9 +653,6 @@ class UploadHandler:
         if status:
             assert msg is None
             return web.json_response(code, status=200)  # all fine
-        if code == "owners":
-            log.warn(msg)
-            raise web.HTTPNotAcceptable(reason=msg)
         if code == "notfound":
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
@@ -694,8 +675,7 @@ class UploadHandler:
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authentication, or 403 is not manager.  406 if we
-                can't do the move due to users logged in.  409 if paper
+                401 for authentication, or 403 is not manager. 409 if paper
                 number or question number do not exist (e.g., out of range).
         """
         data = await request.json()
@@ -713,9 +693,6 @@ class UploadHandler:
         )
         if status:
             return web.Response(status=200)  # all fine
-        if code == "owners":
-            log.warn(msg)
-            raise web.HTTPNotAcceptable(reason=msg)
         if code == "notfound":
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
@@ -738,8 +715,7 @@ class UploadHandler:
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authentication, or 403 is not manager.  406 if we
-                can't do the move due to users logged in.   409 if paper
+                401 for authentication, or 403 is not manager. 409 if paper
                 number or question number do not exist (e.g., out of range).
                 Also, 409 if one or more questions not scanned (so cannot
                 attach extra page).  This is important as otherwise we can
@@ -761,9 +737,6 @@ class UploadHandler:
         )
         if status:
             return web.Response(status=200)
-        if code == "owners":
-            log.warn(msg)
-            raise web.HTTPNotAcceptable(reason=msg)
         if code == "notfound":
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
@@ -792,9 +765,6 @@ class UploadHandler:
         )
         if status:
             return web.Response(status=200)  # all fine
-        if code == "owners":
-            log.warn(msg)
-            raise web.HTTPNotAcceptable(reason=msg)
         if code == "notfound":
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
