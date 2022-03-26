@@ -20,6 +20,7 @@ from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import Default_Port
 from plom import SpecVerifier
+from plom.aliceBob import simple_password
 from plom.db import PlomDB
 from plom.server import specdir, confdir, check_server_directories
 
@@ -60,6 +61,13 @@ class Server:
         # Give directory correct permissions.
         subprocess.check_call(["chmod", "o-r", self.tempDirectory.name])
         self.load_users()
+        if not self.DB.doesUserExist("manager"):
+            log.info("No manager password: autogenerating and writing to stdout...")
+            manager_pw = simple_password(n=6)
+            print(f"Initial manager password: {manager_pw}")
+            hashpw = self.authority.create_password_hash(manager_pw)
+            del manager_pw
+            assert self.DB.createUser("manager", hashpw)
 
     def load_users(self):
         """Load the users from json file, add them to the database and checks pwd hashes.
@@ -67,21 +75,24 @@ class Server:
         It does simple sanity checks of pwd hashes to see if they have changed.
         """
         log = logging.getLogger("server")
-        if not (confdir / "userList.json").exists():
-            raise FileNotFoundError("Cannot find user/password file.")
-        with open(confdir / "userList.json") as data_file:
+        init_user_list = confdir / "bootstrap_initial_users.json"
+        if not init_user_list.exists():
+            log.info(f'"{init_user_list}" not found: skipping')
+            return
+        log.info(f'Loading users from "{init_user_list}"')
+        with open(init_user_list) as data_file:
             # load list of users + pwd hashes
             userList = json.load(data_file)
-            # for each name check if in DB by asking for the hash of its pwd
-            for uname in userList.keys():
-                passwordHash = self.DB.getUserPasswordHash(uname)
-                if passwordHash is None:  # not in list
-                    self.DB.createUser(uname, userList[uname])
-                else:
-                    if passwordHash != userList[uname]:
-                        log.warning("User {} password has changed.".format(uname))
-                    self.DB.setUserPasswordHash(userList[uname], passwordHash)
-        log.debug("Loading users")
+        for user, pw in userList.items():
+            if self.DB.doesUserExist(user):
+                log.warning("User %s already exists: not updating password", user)
+                continue
+            self.DB.createUser(user, pw)
+        # Or maybe we should just erase it:
+        log.info(f'archived "{init_user_list}" to "{init_user_list}.done"')
+        init_user_list.rename(
+            init_user_list.with_suffix(init_user_list.suffix + ".done")
+        )
 
     from .plomServer.serverUserInit import (
         validate,
@@ -242,7 +253,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
         logfile (pathlib.Path/str/None): name-only then relative to basedir else
             If omitted, use a default name with date and time included.
         logconsole (bool): if True (default) then log to the stderr.
-        master_token (str): a 32 hex-digit string used to encrypt tokens
+        master_token (None/str): a 32 hex-digit string used to encrypt tokens
             in the database.  Not needed on server unless you want to
             hot-restart the server without requiring users to log-off
             and log-in again.  If None, a new token is created.

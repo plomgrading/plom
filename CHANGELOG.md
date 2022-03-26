@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* plom-server will autogenerate a manager password if it is started without one.
 * Manager displays bundle name/page of unknown pages.
 * `plom-scan status` now displays information about unknown pages.
 
