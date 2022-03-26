@@ -128,6 +128,8 @@ class Chooser(QDialog):
         # set login etc from last time client ran.
         self.ui.userLE.setText(self.lastTime["user"])
         self.setServer(self.lastTime["server"])
+        self.ui.pgSB.setMinimum(1)
+        self.ui.vSB.setMinimum(1)
         self.ui.pgSB.setValue(int(self.lastTime["question"]))
         self.ui.vSB.setValue(int(self.lastTime["v"]))
         self.ui.fontSB.setValue(int(self.lastTime["fontSize"]))

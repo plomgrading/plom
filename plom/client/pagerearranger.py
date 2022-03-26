@@ -564,6 +564,15 @@ class RearrangementViewer(QDialog):
             else:
                 tmp_data.append([row.copy()])
 
+        def pack_names(names):
+            """List of names, abbreviated if list is long."""
+            if len(names) < 4:
+                s = ", ".join(names)
+            else:
+                s = ", ".join(names[:2])
+                s += f", {len(names) - 2} others"
+            return f" (& {s})"
+
         # Compress each list down to a single item, packing the names
         new_page_data = []
         # warn/log if True not in first?
@@ -571,7 +580,7 @@ class RearrangementViewer(QDialog):
             z = y[0].copy()
             other_names = [_["pagename"] for _ in y[1:]]
             if other_names:
-                z["pagename"] = z["pagename"] + " (& {})".format(", ".join(other_names))
+                z["pagename"] = z["pagename"] + pack_names(other_names)
             # If any entry had True for "included", include this row
             # Rearranger uses this to colour pages (originally) included
             z["included"] = any([_["included"] for _ in y])
