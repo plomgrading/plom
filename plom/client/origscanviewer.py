@@ -549,11 +549,11 @@ class RearrangementViewer(QDialog):
 
         def pack_names(names):
             """List of names, abbreviated if list is long."""
-            if len(names) >= 4:
+            if len(names) < 4:
+                s = ", ".join(names)
+            else:
                 s = ", ".join(names[:2])
                 s += f", {len(names) - 2} others"
-            else:
-                s = ", ".join(other_names)
             return f" (& {s})"
 
         # Compress each list down to a single item, packing the names
