@@ -718,9 +718,12 @@ class Annotator(QWidget):
         rearrangeView.listB.clear()
         del rearrangeView
         if perm:
+            # Sanity check for dupes in the permutation
             # pylint: disable=unsubscriptable-object
-            md5_tmp = [x[0] for x in perm]
-            if len(set(md5_tmp)) != len(md5_tmp):
+            md5 = [x[0] for x in perm]
+            # But if the input already had dupes than its not our problem
+            md5_in = [x["md5"] for x in self.src_img_data]
+            if len(set(md5)) != len(md5) and len(set(md5_in)) == len(md5_in):
                 s = dedent(
                     """
                     Unexpectedly repeated md5sums: did Adjust Pages somehow
