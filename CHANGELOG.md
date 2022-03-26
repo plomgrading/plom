@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Don't pop up a spurious warning about duplicated pages when scanned data had duplicates.
+* Shorten overly long page name lists in Rearrange Pages dialog.
 * Build fixes on older macOS releases.
 
 
