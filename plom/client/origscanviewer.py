@@ -547,6 +547,15 @@ class RearrangementViewer(QDialog):
             else:
                 tmp_data.append([x.copy()])
 
+        def pack_names(names):
+            """List of names, abbreviated if list is long."""
+            if len(names) < 4:
+                s = ", ".join(names)
+            else:
+                s = ", ".join(names[:2])
+                s += f", {len(names) - 2} others"
+            return f" (& {s})"
+
         # Compress each list down to a single item, packing the names
         new_pageData = []
         # warn/log if True not in first?
@@ -554,7 +563,7 @@ class RearrangementViewer(QDialog):
             z = y[0].copy()
             other_names = [_[0] for _ in y[1:]]
             if other_names:
-                z[0] = z[0] + " (& {})".format(", ".join(other_names))
+                z[0] = z[0] + pack_names(other_names)
             # If any entry had True for "included", include this row
             # TODO: or should we reorder the list, moving True to front?
             # TODO: depends what is done with the other data
