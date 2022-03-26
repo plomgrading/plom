@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Don't pop up a spurious warning about duplicated pages when scanned data had duplicates.
+* Build fixes on older macOS releases.
 
 
 ## [0.8.8] - 2022-03-14
