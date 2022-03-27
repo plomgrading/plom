@@ -50,6 +50,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QColorDialog,
 )
+from PyQt5.QtWidgets import QGraphicsRectItem
 
 from plom import __version__
 import plom.client.cursors
@@ -1480,11 +1481,25 @@ class Annotator(QWidget):
             info += "#1792</a>; please help us by copy-pasting the details below, "
             info += "along with any details about how to make this happen!</p>"
             details = "## Out of bounds objects\n\n  "
-            details += "\n  ".join(str(x) for x in out_objs)
+            details += "\n".join(str(x) for x in out_objs)
             details += "\n\n## All objects\n\n  "
-            details += "\n  ".join(str(x) for x in self.scene.items())
+            details += "\n".join(str(x) for x in self.scene.items())
+            details += "\n\n## More detail on rect objects\n\n  "
+            details += "Previous instances have involved QGraphicsRectItem so\n"
+            details += "here are details about all those:\n\n"
+            for x in self.scene.items():
+                if isinstance(x, QGraphicsRectItem):
+                    details += f"\n{x}"
+                    details += f"\n  - {x.rect()}"
+                    details += f"\n  - {x.pen()}"
+                    c = x.pen().color()
+                    details += "\n     - rgba: "
+                    details += f"{(c.red(), c.green(), c.blue(), c.alpha())}"
+                    details += f"\n     - width: {x.pen().width()}"
+                    details += f"\n  - {x.brush()}"
+                    details += f"\n     - style: {x.brush().style()}"
             details += "\n\n## Object serialization\n\n  "
-            details += "\n  ".join(str(x) for x in self.scene.pickleSceneItems())
+            details += "\n".join(str(x) for x in self.scene.pickleSceneItems())
             WarnMsg(self, msg, info=info, info_pre=False, details=details).exec_()
             return False
 
