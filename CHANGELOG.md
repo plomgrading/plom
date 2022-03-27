@@ -22,12 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-## [Unreleased]
+## [0.8.10] - 2022-03-27
 
 ### Added
 * plom-create subcommand "status" reports server status.
 
 ### Changed
+* We cannot no longer reliably build for macOS 10.13, will do so on a "best effort" basis.  Users should upgrade to at least macOS 10.14.
 
 ### Fixed
 * Don't pop up a spurious warning about duplicated pages when scanned data had duplicates.
@@ -737,7 +738,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.8.8...main
+[0.8.10]: https://gitlab.com/plom/plom/compare/v0.8.8...v0.8.10
 [0.8.8]: https://gitlab.com/plom/plom/compare/v0.8.7...v0.8.8
 [0.8.7]: https://gitlab.com/plom/plom/compare/v0.8.6...v0.8.7
 [0.8.6]: https://gitlab.com/plom/plom/compare/v0.8.5...v0.8.6

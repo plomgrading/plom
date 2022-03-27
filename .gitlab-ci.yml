@@ -818,7 +818,7 @@ binary_upload:
     - export LINKNAME0="Compiled client for GNU/Linux (AppImage)"
     - export LINKNAME1="Compiled client for Windows"
     - export LINKNAME2="Compiled client for macOS (for macOS ≥ 11)"
-    - export LINKNAME3="Compiled client for macOS (for macOS ≥ 10.13.6)"
+    - export LINKNAME3="Compiled client for macOS (for macOS ≥ 10.14)"
     - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
     - export FILENAME1="PlomClient-$VER.exe"
     - export FILENAME2="PlomClient-$VER-macos11.zip"
@@ -1132,7 +1132,7 @@ macos1013_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos10.zip
+  - export ZIPNAME=PlomClient-$VER-macos10_13.zip
   - pushd dist
   - ls
   - ls -sklR PlomClient-$VER.app
@@ -1142,6 +1142,7 @@ macos1013_client:
   - md5 $ZIPNAME > md5sum
   - ls $ZIPNAME
   - cat md5sum
+  allow_failure: true
   artifacts:
     paths:
     - PlomClient*.zip
