@@ -832,13 +832,13 @@ binary_upload:
     - export LINKNAME2="Compiled client for GNU/Linux (deprecated, compiled on CentOS 7)"
     - export LINKNAME3="Compiled client for Windows"
     - export LINKNAME4="Compiled client for macOS (for macOS ≥ 11)"
-    - export LINKNAME5="Compiled client for macOS (for macOS ≥ 10.13.6)"
+    - export LINKNAME5="Compiled client for macOS (for macOS ≥ 10.14)"
     - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
     - export FILENAME1="PlomClient-$VER-linux-ubuntu1804.bin"
     - export FILENAME2="PlomClient-$VER-linux-centos7.bin"
     - export FILENAME3="PlomClient-$VER.exe"
     - export FILENAME4="PlomClient-$VER-macos11.zip"
-    - export FILENAME5="PlomClient-$VER-macos10.zip"
+    - export FILENAME5="PlomClient-$VER-macos10_14.zip"
     - export URL0="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME0"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME2"
@@ -1237,7 +1237,7 @@ macos1013_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos10.zip
+  - export ZIPNAME=PlomClient-$VER-macos10_13.zip
   - pushd dist
   - ls
   - ls -sklR PlomClient-$VER.app
@@ -1247,6 +1247,7 @@ macos1013_client:
   - md5 $ZIPNAME > md5sum
   - ls $ZIPNAME
   - cat md5sum
+  allow_failure: true
   artifacts:
     paths:
     - PlomClient*.zip

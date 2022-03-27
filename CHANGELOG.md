@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * plom-create subcommand "status" reports server status.
 
+### Changed
+* We cannot no longer reliably build for macOS 10.13, will do so on a "best effort" basis.  Users should upgrade to at least macOS 10.14.
+
 ### Fixed
 * Don't pop up a spurious warning about duplicated pages when scanned data had duplicates.
 * Shorten overly long page name lists in Rearrange Pages dialog.
