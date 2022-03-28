@@ -63,6 +63,10 @@ class PlomBadTagError(PlomBenignException):
     pass
 
 
+class PlomDatabaseCreationError(PlomBenignException):
+    pass
+
+
 class PlomExistingDatabase(PlomBenignException):
     """The database has already been populated."""
 
@@ -106,6 +110,13 @@ class PlomTaskChangedError(PlomBenignException):
 
 
 class PlomTaskDeletedError(PlomBenignException):
+    pass
+
+
+class PlomForceLogoutException(PlomSeriousException):
+    """We call this when the server has changed or deleted
+    a task out from under the client."""
+
     pass
 
 

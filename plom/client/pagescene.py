@@ -226,6 +226,8 @@ class UnderlyingImages(QGraphicsItemGroup):
             # zoomed out quality: https://gitlab.com/plom/plom/-/issues/1989
             # qir.setScaledSize(QSize(768, 1000))
             pix = QPixmap(qir.read())
+            if pix.isNull():
+                raise RuntimeError(f"Could not read an image from {data['filename']}")
             # after metadata rotations, we might have a further DB-level rotation
             rot = QTransform()
             rot.rotate(data["orientation"])

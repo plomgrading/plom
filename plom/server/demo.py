@@ -8,6 +8,7 @@ import tempfile
 from warnings import warn
 
 from plom import Default_Port
+from plom import SpecVerifier
 from plom.misc_utils import working_directory
 from plom.server import PlomServer
 import plom.scan
@@ -59,8 +60,8 @@ class PlomDemoServer(PlomServer):
 
     Build papers
     >>> from plom.create import build_database, build_papers
-    >>> print(build_database(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"])))   # doctest: +ELLIPSIS
-    DB entry for test 0001: ...
+    >>> build_database(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]))   # doctest: +ELLIPSIS
+    Add DB row for paper 0001: ...
 
     >>> build_papers(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
     Building 2 pre-named papers and 3 blank papers in ...
@@ -112,7 +113,6 @@ class PlomDemoServer(PlomServer):
         # A bunch of class methods to initialize stuff
         self.__class__.initialise_server(tmpdir, port=self.port)
         self.__class__.add_demo_users(tmpdir)
-        self.__class__.add_demo_spec(tmpdir, num_to_produce=self._numpapers)
         kwargs.pop("basedir", True)
         super().__init__(basedir=tmpdir, **kwargs)
         s = f'{self.server_info["server"]}:{self.port}'
@@ -120,6 +120,11 @@ class PlomDemoServer(PlomServer):
         # TODO: probably want `with Messenger(...) as msgr:` here
         msgr = plom.create.start_messenger(s, pwd, verify_ssl=False)
         try:
+            sv = SpecVerifier.demo(num_to_produce=self._numpapers)
+            sv.verifySpec()
+            sv.checkCodes()
+            msgr.upload_spec(sv.spec)
+            self.add_demo_sources()
             plom.create.upload_demo_rubrics(msgr=msgr)
         finally:
             msgr.closeUser()
@@ -135,7 +140,9 @@ class PlomDemoServer(PlomServer):
         # TODO: probably want `with Messenger(...) as msgr:` here
         msgr = plom.create.start_messenger(s, pwd, verify_ssl=False)
         try:
-            plom.create.upload_demo_classlist(msgr=msgr)
+            # grab the spec - needed for classlist parsing
+            spec = msgr.get_spec()
+            plom.create.upload_demo_classlist(spec, msgr=msgr)
             # cmdline: "plom-create makedb" and "plom-create make"
             status = plom.create.build_database(msgr=msgr)
             print("Database built with output:")

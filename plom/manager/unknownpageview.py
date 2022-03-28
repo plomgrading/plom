@@ -3,7 +3,6 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QStringListModel
-from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import (
     QCheckBox,
     QCompleter,
@@ -21,7 +20,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from plom.client import ExamView
+from plom.client import ImageViewWidget
 from plom.client.useful_classes import ErrorMessage
 
 
@@ -275,57 +274,31 @@ class UnknownViewWindow(QDialog):
         self.numberOfQuestions = tpq[2]
         self.iDict = iDict
 
+        if len(fnames) > 1:
+            self.setWindowTitle("Multiple unknown pages")
+        else:
+            (p,) = fnames
+            self.setWindowTitle(
+                f"Unknown {p['pagename']}: p. {p['bundle_position']} of bundle {p['bundle_name']}"
+            )
         self.action = ""
         self.test = 0
         self.pq = ""
         self.sid = ""
 
-        self.view = ExamView(fnames, dark_background=True)
-        self.view.setRenderHint(QPainter.Antialiasing)
+        self.img = ImageViewWidget(self, fnames, dark_background=True)
         self.optionTW = QTabWidget()
 
-        # reset view button passes to the UnknownView.
-        self.resetB = QPushButton("reset view")
-        self.rotatePlusB = QPushButton("rotate +90")
-        self.rotateMinusB = QPushButton("rotate -90")
-        self.cancelB = QPushButton("&cancel")
-
-        self.cancelB.clicked.connect(self.reject)
-        self.resetB.clicked.connect(lambda: self.view.resetView())
-        self.rotatePlusB.clicked.connect(self.rotatePlus)
-        self.rotateMinusB.clicked.connect(self.rotateMinus)
-
-        self.resetB.setAutoDefault(False)  # return won't click the button by default.
-        self.rotatePlusB.setAutoDefault(False)
-        self.rotateMinusB.setAutoDefault(False)
+        cancelB = QPushButton("&cancel")
+        cancelB.clicked.connect(self.reject)
 
         # Layout simply
         grid = QGridLayout()
-        grid.addWidget(self.view, 1, 1, 10, 10)
+        grid.addWidget(self.img, 1, 1, 10, 10)
         grid.addWidget(self.optionTW, 1, 11, 10, -1)
-        grid.addWidget(self.resetB, 11, 1)
-        grid.addWidget(self.rotatePlusB, 11, 2)
-        grid.addWidget(self.rotateMinusB, 11, 3)
-        grid.addWidget(self.cancelB, 11, 20)
+        grid.addWidget(cancelB, 11, 20)
         self.setLayout(grid)
-        # Store the current exam view as a qtransform
-        self.viewTrans = self.view.transform()
-        self.dx = self.view.horizontalScrollBar().value()
-        self.dy = self.view.verticalScrollBar().value()
-        self.theta = 0
         self.initTabs()
-
-    def updateImage(self, fnames):
-        """Pass file to the view to update the image"""
-        # first store the current view transform and scroll values
-        self.viewTrans = self.view.transform()
-        self.dx = self.view.horizontalScrollBar().value()
-        self.dy = self.view.verticalScrollBar().value()
-        self.view.updateImages(fnames)
-        # re-set the view transform and scroll values
-        self.view.setTransform(self.viewTrans)
-        self.view.horizontalScrollBar().setValue(self.dx)
-        self.view.verticalScrollBar().setValue(self.dy)
 
     def initTabs(self):
         t0 = ActionTab(self)
@@ -339,20 +312,8 @@ class UnknownViewWindow(QDialog):
         self.optionTW.addTab(t3, "Homework Page")
         self.optionTW.addTab(t4, "Discard")
 
-    def rotatePlus(self):
-        self.theta += 90
-        if self.theta == 360:
-            self.theta = 0
-        self.view.rotateImage(90)
-
-    def rotateMinus(self):
-        self.theta -= 90
-        if self.theta == -90:
-            self.theta = 270
-        self.view.rotateImage(-90)
-
-    def viewQuestion(self, testNumber, questionNumber):
-        self.parent().viewQuestion(testNumber, questionNumber, parent=self)
+    def get_orientation(self):
+        return self.img.get_orientation()
 
     def viewWholeTest(self, testNumber):
         self.parent().viewWholeTest(testNumber, parent=self)

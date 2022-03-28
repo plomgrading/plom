@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+* plom-server will autogenerate a manager password if it is started without one.
+* Manager displays bundle name/page of unknown pages.
+* `plom-scan status` now displays information about unknown pages.
+
+### Changed
+* Plom now requires Python 3.7.
+* `plom-create` DB creation now done one test at a time which avoids timeouts and enables future flexibility.
+* Manager: improvements to the prediction-related UI.
+
+### Fixed
+* Non-zero initial orientations should now work properly.
+
+
 
 ## [0.8.10] - 2022-03-27
 
@@ -722,6 +738,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.8.10...main
 [0.8.10]: https://gitlab.com/plom/plom/compare/v0.8.8...v0.8.10
 [0.8.8]: https://gitlab.com/plom/plom/compare/v0.8.7...v0.8.8
 [0.8.7]: https://gitlab.com/plom/plom/compare/v0.8.6...v0.8.7

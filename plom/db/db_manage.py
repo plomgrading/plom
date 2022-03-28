@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Joey Shi
 
+from pathlib import Path
 import logging
 
 from plom.db.tables import plomdb
@@ -12,10 +14,28 @@ from plom.db.tables import EXPage, HWPage, Image, QGroup, Test, TPage
 log = logging.getLogger("DB")
 
 
-def getUnknownPageNames(self):
+def getUnknownPages(self):
+    """Get information about the unknown pages
+
+    Returns:
+        list: each entry is dict of information about an unknown page.
+        Keys include ``server_path``, ``orientation``, ``bundle_name``,
+        ``bundle_position``, ``md5sum``, ``id``.
+    """
     rval = []
     for uref in UnknownPage.select():
-        rval.append(uref.image.file_name)
+        rval.append(
+            {
+                "pagename": Path(uref.image.file_name).stem,
+                "md5sum": uref.image.md5sum,
+                "orientation": uref.image.rotation,
+                "id": uref.image.id,
+                "server_path": uref.image.file_name,
+                "original_name": uref.image.original_name,
+                "bundle_name": uref.image.bundle.name,
+                "bundle_position": uref.order,  # same as uref.image.bundle_order?
+            }
+        )
     return rval
 
 
@@ -40,50 +60,95 @@ def getCollidingPageNames(self):
 def getTPageImage(self, test_number, page_number, version):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
-    pref = TPage.get_or_none(
+        return (False, f"Paper {test_number} not found")
+    p = TPage.get_or_none(
         TPage.test == tref,
         TPage.page_number == page_number,
         TPage.version == version,
     )
-    if pref is None:
-        return [False]
-    else:
-        return [True, pref.image.file_name]
+    if p is None:
+        return (
+            False,
+            f"Cannot find page {page_number} version {version} in paper {test_number}",
+        )
+    return (
+        True,
+        [
+            "t{}".format(p.page_number),
+            p.image.md5sum,
+            p.image.rotation,
+            p.image.id,
+            p.image.file_name,
+        ],
+    )
 
 
 def getHWPageImage(self, test_number, question, order):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
+        return (False, f"Paper {test_number} not found")
     gref = QGroup.get(test=tref, question=question).group
-    pref = HWPage.get_or_none(
+    p = HWPage.get_or_none(
         HWPage.test == tref, HWPage.group == gref, HWPage.order == order
     )
-    if pref is None:
-        return [False]
-    else:
-        return [True, pref.image.file_name]
+    if p is None:
+        return (
+            False,
+            f"Cannot find homework page question {question} order {order} in paper {test_number}",
+        )
+    assert p.order == p  # remove
+    return (
+        True,
+        [
+            "h{}.{}".format(question, p.order),
+            p.image.md5sum,
+            p.image.rotation,
+            p.image.id,
+            p.image.file_name,
+        ],
+    )
 
 
 def getEXPageImage(self, test_number, question, order):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
+        return (False, f"Paper {test_number} not found")
     gref = QGroup.get(test=tref, question=question).group
-    pref = EXPage.get_or_none(
+    p = EXPage.get_or_none(
         EXPage.test == tref, EXPage.group == gref, EXPage.order == order
     )
-    if pref is None:
-        return [False]
-    else:
-        return [True, pref.image.file_name]
+    if p is None:
+        return (
+            False,
+            f"Cannot find extra page question {question} order {order} in paper {test_number}",
+        )
+    assert p.order == p  # remove
+    return (
+        True,
+        [
+            "e{}.{}".format(question, p.order),
+            p.image.md5sum,
+            p.image.rotation,
+            p.image.id,
+            p.image.file_name,
+        ],
+    )
 
 
 def getAllTestImages(self, test_number):
+    """All pages in this paper included ID pages.
+
+    Returns:
+        tuple: `(True, rval)` on success or `(False, msg)` on failure.
+            Here `msg` is an error message and rval is a list of lists
+            where each inner "row" consists of:
+            `name`, `md5sum`, `id`, `orientation`, `server_path`
+
+    TODO: orientation hardcoded to zero: see #1879, !1310
+    """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return (False, f"Cannot paper {test_number}")
+        return (False, f"Cannot find paper {test_number}")
 
     # give the pages as IDPages, DNMPages and then for each question
     rval = []
@@ -92,33 +157,84 @@ def getAllTestImages(self, test_number):
     # give tpages if scanned.
     for p in gref.tpages.order_by(TPage.page_number):
         if p.scanned:
-            rval.append(p.image.file_name)
+            rval.append(
+                [
+                    "id{}".format(p.page_number),
+                    p.image.md5sum,
+                    p.image.rotation,
+                    p.image.id,
+                    p.image.file_name,
+                ]
+            )
 
     # grab the dnm group - only has tpages
     gref = tref.dnmgroups[0].group
     # give tpages if scanned.
     for p in gref.tpages.order_by(TPage.page_number):
         if p.scanned:
-            rval.append(p.image.file_name)
+            rval.append(
+                [
+                    "dnm{}".format(p.page_number),
+                    p.image.md5sum,
+                    p.image.rotation,
+                    p.image.id,
+                    p.image.file_name,
+                ]
+            )
 
     # for each question give TPages, HWPages and EXPages
     for qref in tref.qgroups.order_by(QGroup.question):
         gref = qref.group
         for p in gref.tpages.order_by(TPage.page_number):
             if p.scanned:
-                rval.append(p.image.file_name)
+                rval.append(
+                    [
+                        "t{}".format(p.page_number),
+                        p.image.md5sum,
+                        p.image.rotation,
+                        p.image.id,
+                        p.image.file_name,
+                    ]
+                )
         for p in gref.hwpages.order_by(HWPage.order):
-            rval.append(p.image.file_name)
+            rval.append(
+                [
+                    "h{}.{}".format(qref.question, p.order),
+                    p.image.md5sum,
+                    p.image.rotation,
+                    p.image.id,
+                    p.image.file_name,
+                ]
+            )
         for p in gref.expages.order_by(EXPage.order):
-            rval.append(p.image.file_name)
+            rval.append(
+                [
+                    "e{}.{}".format(qref.question, p.order),
+                    p.image.md5sum,
+                    p.image.rotation,
+                    p.image.id,
+                    p.image.file_name,
+                ]
+            )
 
     return (True, rval)
 
 
 def getQuestionImages(self, test_number, question):
+    """All pages in this paper and this question.
+
+    Returns:
+        tuple: `(True, rval)` on success or `(False, msg)` on failure.
+            Here `msg` is an error message and rval is a list of lists
+            where each inner "row" consists of:
+            `name`, `md5sum`, `id`, `orientation`, `server_path`
+
+    TODO: orientation hardcoded to zero: see #1879, !1310
+    """
+
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return (False, f"Cannot paper {test_number}")
+        return (False, f"Cannot find paper {test_number}")
 
     qref = QGroup.get_or_none(QGroup.test == tref, QGroup.question == question)
     if qref is None:
@@ -127,24 +243,37 @@ def getQuestionImages(self, test_number, question):
     # append tpages, hwpages and expages
     for p in qref.group.tpages.order_by(TPage.page_number):
         if p.scanned:
-            rval.append(p.image.file_name)
+            rval.append(
+                [
+                    "t{}".format(p.page_number),
+                    p.image.md5sum,
+                    p.image.rotation,
+                    p.image.id,
+                    p.image.file_name,
+                ]
+            )
     for p in qref.group.hwpages.order_by(HWPage.order):
-        rval.append(p.image.file_name)
+        rval.append(
+            [
+                "h{}.{}".format(qref.question, p.order),
+                p.image.md5sum,
+                p.image.rotation,
+                p.image.id,
+                p.image.file_name,
+            ]
+        )
     for p in qref.group.expages.order_by(EXPage.order):
-        rval.append(p.image.file_name)
+        rval.append(
+            [
+                "e{}.{}".format(qref.question, p.order),
+                p.image.md5sum,
+                p.image.rotation,
+                p.image.id,
+                p.image.file_name,
+            ]
+        )
+
     return (True, rval)
-
-
-def getUnknownImage(self, file_name):
-    # this really just confirms that the file_name belongs to an unknmown
-    iref = Image.get_or_none(file_name=file_name)
-    if iref is None:
-        return [False]
-    uref = iref.upages[0]
-    if uref is None:
-        return [False]
-    else:
-        return [True, uref.image.file_name]
 
 
 def testOwnersLoggedIn(self, tref):
@@ -179,7 +308,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
     returns:
         tuple: a 3-tuple, either (True, None, None) if the action worked
             or `(False, code, msg)` where code is a short string, which
-            currently can be "notfound", "owners", or "unscanned" and
+            currently can be "notfound", or "unscanned" and
             `msg` is a human-readable string suitable for an error
             message.
     """
@@ -193,14 +322,6 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return (False, "notfound", f"Cannot find test {test_number}")
-
-    # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        msg = f"Cannot move unknown {file_name} to extra page b/c"
-        msg += " owners of tasks in that test are logged in: "
-        msg += ", ".join(owners)
-        return (False, "owners", msg)
 
     qref_list = []
     fails = []
@@ -278,7 +399,7 @@ def moveUnknownToHWPage(self, file_name, test_number, questions):
     returns:
         tuple: a 3-tuple, either (True, None, None) if the action worked
             or `(False, code, msg)` where code is a short string, which
-            currently can be "notfound" or "owners" and `msg` is a
+            currently can be "notfound" and `msg` is a
             human-readable string suitable for an error message.
     """
     iref = Image.get_or_none(file_name=file_name)
@@ -291,14 +412,6 @@ def moveUnknownToHWPage(self, file_name, test_number, questions):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return (False, "notfound", f"Cannot find test {test_number}")
-
-    # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        msg = f"Cannot move unknown {file_name} to extra page b/c"
-        msg += " owners of tasks in that test are logged in: "
-        msg += ", ".join(owners)
-        return (False, "owners", msg)
 
     qref_list = []
     fails = []
@@ -354,14 +467,6 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return (False, "notfound", f"Cannot find test {test_number}")
-
-    # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        msg = f"Cannot move unknown {file_name} to Test Page b/c"
-        msg += " owners of tasks in that test are logged in: "
-        msg += ", ".join(owners)
-        return (False, "owners", msg)
 
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
     if pref is None:
@@ -541,14 +646,6 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
     if pref is None:
         return (False, "notfound", f"Cannot find p.{page_number} of test {test_number}")
     oref = pref.image  # the original page image for this tpage.
-
-    # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        msg = f"Cannot move colliding {file_name} to Test Page b/c"
-        msg += " owners of tasks in that test are logged in: "
-        msg += ", ".join(owners)
-        return (False, "owners", msg)
 
     # now create a discardpage with oref, and put iref into the tpage, delete the collision.
     with plomdb.atomic():

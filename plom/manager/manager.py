@@ -9,19 +9,14 @@
 from collections import defaultdict
 import csv
 import imghdr
+import importlib.resources as resources
 import logging
 import os
 from pathlib import Path
-import sys
 import tempfile
 
 import arrow
 import urllib3
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QStandardItem, QStandardItemModel
@@ -47,17 +42,18 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-from plom.client.useful_classes import ErrorMessage, WarnMsg
+from plom.client.useful_classes import ErrorMessage, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
-from plom.client.origscanviewer import WholeTestView, GroupView
+from plom.client.viewers import WholeTestView, GroupView
 from plom.client import ImageViewWidget
+from plom.client.pagecache import download_pages
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
 from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
 from .reviewview import ReviewViewWindow
-from .selectrectangle import SelectRectangleWindow, IDViewWindow
+from .selectrectangle import SelectRectangleWindow
 from plom.plom_exceptions import (
     PlomSeriousException,
     PlomAPIException,
@@ -65,7 +61,7 @@ from plom.plom_exceptions import (
     PlomBenignException,
     PlomConflict,
     PlomExistingLoginException,
-    PlomOwnersLoggedInException,
+    # PlomOwnersLoggedInException,
     PlomUnidentifiedPaperException,
     PlomTakenException,
     PlomNoMoreException,
@@ -437,7 +433,8 @@ class Manager(QWidget):
         self.ui.actionCButton.clicked.connect(self.doCActions)
         self.ui.actionDButton.clicked.connect(self.doDActions)
         self.ui.selectRectButton.clicked.connect(self.selectRectangle)
-        self.ui.predictButton.clicked.connect(self.runPredictor)
+        self.ui.machineReadButton.clicked.connect(self.run_id_reader)
+        self.ui.predictButton.clicked.connect(self.run_predictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
         self.ui.enableUserB.clicked.connect(self.enableUsers)
@@ -519,6 +516,9 @@ class Manager(QWidget):
                 == QMessageBox.Yes
             ):
                 self.msgr.clearAuthorisation("manager", pwd)
+                self.msgr = None
+                self.login()
+                return
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomAuthenticationException as e:
@@ -675,26 +675,23 @@ class Manager(QWidget):
     def viewPage(self, t, pdetails, v):
         if pdetails[0] == "t":  # is a test-page t.PPP
             p = pdetails.split(".")[1]
-            vp = self.msgr.getTPageImage(t, p, v)
+            pagedata = self.msgr.getTPageImageData(t, p, v)
         elif pdetails[0] == "h":  # is a hw-page = h.q.o
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
-            vp = self.msgr.getHWPageImage(t, q, o)
+            pagedata = self.msgr.getHWPageImageData(t, q, o)
         elif pdetails[0] == "e":  # is a extra-page = e.q.o
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
-            vp = self.msgr.getEXPageImage(t, q, o)
+            pagedata = self.msgr.getEXPageImageData(t, q, o)
         else:
             return
 
-        if vp is None:
+        if not pagedata:
             return
-        # Context manager not appropriate, Issue #1996
-        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
-        with open(f, "wb") as fh:
-            fh.write(vp)
-        GroupView(self, [f]).exec_()
-        f.unlink()
+        with tempfile.TemporaryDirectory() as td:
+            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
+            GroupView(self, pagedata).exec_()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -742,15 +739,8 @@ class Manager(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            try:
-                rval = self.msgr.removeSinglePage(test_number, page_name)
-                ErrorMessage("{}".format(rval)).exec_()
-            except PlomOwnersLoggedInException as err:
-                ErrorMessage(
-                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                        err.args[-1]
-                    )
-                ).exec_()
+            rval = self.msgr.removeSinglePage(test_number, page_name)
+            ErrorMessage("{}".format(rval)).exec_()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -760,15 +750,9 @@ class Manager(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            try:
-                rval = self.msgr.removeAllScannedPages(test_number)
-                ErrorMessage("{}".format(rval)).exec_()
-            except PlomOwnersLoggedInException as err:
-                ErrorMessage(
-                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                        err.args[-1]
-                    )
-                ).exec_()
+
+            rval = self.msgr.removeAllScannedPages(test_number)
+            ErrorMessage("{}".format(rval)).exec_()
         self.refresh_scan_status_lists()
 
     def substituteTestQuestionPage(self, test_number, page_number, question, version):
@@ -779,15 +763,9 @@ class Manager(QWidget):
         )
         if msg.exec_() == QMessageBox.No:
             return
-        try:
-            rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
-            ErrorMessage("{}".format(rval)).exec_()
-        except PlomOwnersLoggedInException as err:
-            ErrorMessage(
-                "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
-                    err.args[-1]
-                )
-            ).exec_()
+
+        rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
+        ErrorMessage("{}".format(rval)).exec_()
 
     def substituteTestDNMPage(self, test_number, page_number):
         msg = SimpleQuestion(
@@ -797,15 +775,9 @@ class Manager(QWidget):
         )
         if msg.exec_() == QMessageBox.No:
             return
-        try:
-            rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
-            ErrorMessage("{}".format(rval)).exec_()
-        except PlomOwnersLoggedInException as err:
-            ErrorMessage(
-                "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
-                    err.args[-1]
-                )
-            ).exec_()
+
+        rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
+        ErrorMessage("{}".format(rval)).exec_()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(
@@ -818,12 +790,6 @@ class Manager(QWidget):
         try:
             rval = self.msgr.replaceMissingIDPage(test_number)
             ErrorMessage("{}".format(rval)).exec_()
-        except PlomOwnersLoggedInException as err:
-            ErrorMessage(
-                "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
-                    err.args[-1]
-                )
-            ).exec_()
         except PlomUnidentifiedPaperException as err:
             ErrorMessage(
                 "Cannot substitute that page - that paper has not been identified: {}".format(
@@ -858,12 +824,6 @@ class Manager(QWidget):
             ErrorMessage("{}".format(rval)).exec_()
         except PlomTakenException:
             ErrorMessage("That question already has hw pages present.").exec_()
-        except PlomOwnersLoggedInException as err:
-            ErrorMessage(
-                "Cannot substitute that question - owners of tasks in that test are logged in: {}".format(
-                    err.args[-1]
-                )
-            ).exec_()
 
         self.refresh_scan_status_lists()
 
@@ -909,15 +869,9 @@ class Manager(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            try:
-                rval = self.msgr.removeSinglePage(test_number, page_name)
-                ErrorMessage("{}".format(rval)).exec_()
-            except PlomOwnersLoggedInException as err:
-                ErrorMessage(
-                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                        err.args[-1]
-                    )
-                ).exec_()
+
+            rval = self.msgr.removeSinglePage(test_number, page_name)
+            ErrorMessage("{}".format(rval)).exec_()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -927,43 +881,38 @@ class Manager(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            try:
-                rval = self.msgr.removeAllScannedPages(test_number)
-                ErrorMessage("{}".format(rval)).exec_()
-            except PlomOwnersLoggedInException as err:
-                ErrorMessage(
-                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                        err.args[-1]
-                    )
-                ).exec_()
+
+            rval = self.msgr.removeAllScannedPages(test_number)
+            ErrorMessage("{}".format(rval)).exec_()
         self.refresh_scan_status_lists()
 
     def initUnknownTab(self):
-        self.unknownModel = QStandardItemModel(0, 6)
+        self.unknownModel = QStandardItemModel(0, 8)
         self.ui.unknownTV.setModel(self.unknownModel)
         self.ui.unknownTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.unknownTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.unknownModel.setHorizontalHeaderLabels(
             [
-                "FullFile",
+                "ID",
                 "File",
+                "Bundle name",
+                "Bundle position",
                 "Action to be taken",
                 "Rotation-angle",
                 "Test",
                 "Page or Question",
             ]
         )
-        self.ui.unknownTV.setIconSize(QSize(96, 96))
+        self.ui.unknownTV.setIconSize(QSize(32, 32))
         self.ui.unknownTV.activated.connect(self.viewUPage)
         self.ui.unknownTV.setColumnHidden(0, True)
         self.refreshUList()
 
     def refreshUList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
-        unkList = self.msgr.getUnknownPageNames()
-        r = 0
-        for u in unkList:
-            it0 = QStandardItem(os.path.split(u)[1])
+        unkList = self.msgr.getUnknownPages()
+        for r, u in enumerate(unkList):
+            it0 = QStandardItem(Path(u["server_path"]).name)
             pm = QPixmap()
             pm.loadFromData(
                 resources.read_binary(plom.client.icons, "manager_unknown.svg")
@@ -971,14 +920,29 @@ class Manager(QWidget):
             it0.setIcon(QIcon(pm))
             it1 = QStandardItem("?")
             it1.setTextAlignment(Qt.AlignCenter)
-            it2 = QStandardItem("0")
+            it2 = QStandardItem(str(u["orientation"]))
             it2.setTextAlignment(Qt.AlignCenter)
             it3 = QStandardItem("")
             it3.setTextAlignment(Qt.AlignCenter)
             it4 = QStandardItem("")
             it4.setTextAlignment(Qt.AlignCenter)
-            self.unknownModel.insertRow(r, [QStandardItem(u), it0, it1, it2, it3, it4])
-            r += 1
+            # the displayed value in first column:
+            raw = QStandardItem(str(u["id"]))
+            # but store entire dict in first entry, may need wrapped in QVariant
+            raw.setData(u)
+            self.unknownModel.insertRow(
+                r,
+                [
+                    raw,
+                    it0,
+                    QStandardItem(u["bundle_name"]),
+                    QStandardItem(str(u["bundle_position"])),
+                    it1,
+                    it2,
+                    it3,
+                    it4,
+                ],
+            )
         self.ui.unknownTV.resizeRowsToContents()
         self.ui.unknownTV.resizeColumnsToContents()
 
@@ -994,144 +958,127 @@ class Manager(QWidget):
         if len(pvi) == 0:
             return
         r = pvi[0].row()
-        fname = self.unknownModel.item(r, 0).text()
-        vp = self.msgr.getUnknownImage(fname)
-        if vp is None:
-            return
+        pagedata = self.unknownModel.item(r, 0).data()  # .toPyObject?
+        vp = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
         # get the list of ID'd papers
         iDict = self.msgr.getIdentified()
         # Context manager not appropriate, Issue #1996
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
             fh.write(vp)
-        if True:  # temp, minimise diff
-            uvw = UnknownViewWindow(
-                self,
-                [f],
-                [self.max_papers, self.numberOfPages, self.numberOfQuestions],
-                iDict,
-            )
-            if uvw.exec_() == QDialog.Accepted:
-                self.unknownModel.item(r, 2).setText(uvw.action)
-                self.unknownModel.item(r, 3).setText("{}".format(uvw.theta))
-                self.unknownModel.item(r, 4).setText("{}".format(uvw.test))
-                # questions is now of the form "1" or "1,2" or "1,2,3" etc
-                self.unknownModel.item(r, 5).setText("{}".format(uvw.pq))
-                if uvw.action == "discard":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_discard.svg")
-                    )
-                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
-                elif uvw.action == "extra":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_extra.svg")
-                    )
-                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
-                elif uvw.action == "test":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_test.svg")
-                    )
-                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
-                elif uvw.action == "homework":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_hw.svg")
-                    )
-                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+        pagedata["local_filename"] = f
+        uvw = UnknownViewWindow(
+            self,
+            [pagedata],
+            [self.max_papers, self.numberOfPages, self.numberOfQuestions],
+            iDict,
+        )
+        if uvw.exec_() == QDialog.Accepted:
+            # Colin hates all these hardcoded integers!
+            self.unknownModel.item(r, 4).setText(uvw.action)
+            self.unknownModel.item(r, 5).setText("{}".format(uvw.get_orientation()))
+            self.unknownModel.item(r, 6).setText("{}".format(uvw.test))
+            # questions is now of the form "1" or "1,2" or "1,2,3" etc
+            self.unknownModel.item(r, 7).setText("{}".format(uvw.pq))
+            if uvw.action == "discard":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_discard.svg")
+                )
+                self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+            elif uvw.action == "extra":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_extra.svg")
+                )
+                self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+            elif uvw.action == "test":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_test.svg")
+                )
+                self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+            elif uvw.action == "homework":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_hw.svg")
+                )
+                self.unknownModel.item(r, 1).setIcon(QIcon(pm))
         f.unlink()
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
-            if self.unknownModel.item(r, 2).text() == "discard":
-                self.msgr.removeUnknownImage(self.unknownModel.item(r, 0).text())
-            elif self.unknownModel.item(r, 2).text() == "extra":
+            action = self.unknownModel.item(r, 4).text()
+            pagedata = self.unknownModel.item(r, 0).data()
+            if action == "discard":
+                self.msgr.removeUnknownImage(pagedata["server_path"])
+            elif action == "extra":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
                     question_list = [
-                        int(x) for x in self.unknownModel.item(r, 5).text().split(",")
+                        int(x) for x in self.unknownModel.item(r, 7).text().split(",")
                     ]
                     self.msgr.unknownToExtraPage(
-                        self.unknownModel.item(r, 0).text(),
-                        self.unknownModel.item(r, 4).text(),
+                        pagedata["server_path"],
+                        self.unknownModel.item(r, 6).text(),
                         question_list,
-                        self.unknownModel.item(r, 3).text(),
+                        self.unknownModel.item(r, 5).text(),
                     )
-                except (PlomOwnersLoggedInException, PlomConflict) as err:
+                except PlomConflict as err:
                     ErrorMessage(f"{err}").exec_()
-            elif self.unknownModel.item(r, 2).text() == "test":
+            elif action == "test":
                 try:
                     if (
                         self.msgr.unknownToTestPage(
-                            self.unknownModel.item(r, 0).text(),
-                            self.unknownModel.item(r, 4).text(),
+                            pagedata["server_path"],
+                            self.unknownModel.item(r, 6).text(),
+                            self.unknownModel.item(r, 7).text(),
                             self.unknownModel.item(r, 5).text(),
-                            self.unknownModel.item(r, 3).text(),
                         )
                         == "collision"
                     ):
                         ErrorMessage(
                             "Collision created in test {}".format(
-                                self.unknownModel.item(r, 4).text()
+                                self.unknownModel.item(r, 6).text()
                             )
                         ).exec_()
-                except (PlomOwnersLoggedInException, PlomConflict) as err:
+                except PlomConflict as err:
                     ErrorMessage(f"{err}").exec_()
-            elif self.unknownModel.item(r, 2).text() == "homework":
+            elif action == "homework":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
                     question_list = [
-                        int(x) for x in self.unknownModel.item(r, 5).text().split(",")
+                        int(x) for x in self.unknownModel.item(r, 7).text().split(",")
                     ]
                     self.msgr.unknownToHWPage(
-                        self.unknownModel.item(r, 0).text(),
-                        self.unknownModel.item(r, 4).text(),
+                        pagedata["server_path"],
+                        self.unknownModel.item(r, 6).text(),
                         question_list,
-                        self.unknownModel.item(r, 3).text(),
+                        self.unknownModel.item(r, 5).text(),
                     )
-                except (PlomOwnersLoggedInException, PlomConflict) as err:
+                except PlomConflict as err:
                     ErrorMessage(f"{err}").exec_()
 
             else:
                 pass
-                # print(
-                #     "No action for file {}.".format(self.unknownModel.item(r, 0).text())
-                # )
         self.refreshScanTab()
 
-    def viewWholeTest(self, testNumber, parent=None):
-        vt = self.msgr.getTestImages(testNumber)
-        if vt is None:
-            return
-        if parent is None:
-            parent = self
-        with tempfile.TemporaryDirectory() as td:
-            inames = []
-            for i, img_bytes in enumerate(vt):
-                img_ext = imghdr.what(None, h=img_bytes)
-                iname = Path(td) / f"img.{i}.{img_ext}"
-                with open(iname, "wb") as fh:
-                    fh.write(img_bytes)
-                inames.append(iname)
-            WholeTestView(testNumber, inames, parent=parent).exec_()
+    def viewWholeTest(self, testnum, parent=None):
+        # TODO: used to get the ID page, and DNM etc, "just" need a new metadata
 
-    def viewQuestion(self, testNumber, questionNumber, parent=None):
-        vq = self.msgr.getQuestionImages(testNumber, questionNumber)
-        if vq is None:
-            return
+        # TODO: what was this vt None case here?
+        # vt = self.msgr.getTestImages(testNumber)
+        # if vt is None:
+        #     return
+
         if parent is None:
             parent = self
+        pagedata = self.msgr.get_pagedata(testnum)
         with tempfile.TemporaryDirectory() as td:
-            inames = []
-            for i, img_bytes in enumerate(vq):
-                img_ext = imghdr.what(None, h=img_bytes)
-                iname = Path(td) / f"img.{i}.{img_ext}"
-                with open(iname, "wb") as fh:
-                    fh.write(img_bytes)
-                inames.append(iname)
-            GroupView(parent, inames).exec_()
+            # get_all=True should be default?
+            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
+            labels = [x["pagename"] for x in pagedata]
+            WholeTestView(testnum, pagedata, labels, parent=parent).exec_()
 
     def checkTPage(self, testNumber, pageNumber, parent=None):
         if parent is None:
@@ -1139,23 +1086,24 @@ class Manager(QWidget):
         cp = self.msgr.checkTPage(testNumber, pageNumber)
         # returns [v, image] or [v, imageBytes]
         if cp[1] is None:
-            # TODO: ErrorMesage does not support parenting
-            ErrorMessage(
+            InfoMsg(
+                parent,
                 "Page {} of test {} is not scanned - should be version {}".format(
                     pageNumber, testNumber, cp[0]
-                )
+                ),
             ).exec_()
             return
         # Context manager not appropriate, Issue #1996
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
             fh.write(cp[1])
-        ErrorMessage(
-            "WARNING: potential collision! Page {} of test {} has been scanned already.".format(
-                pageNumber, testNumber
-            )
+        GroupView(
+            parent,
+            [f],
+            title=f"Paper {testNumber} page {pageNumber} already has an image",
+            before_text="Existing image:",
+            after_text=f"Performing this action would create a collision with paper {testNumber} p. {pageNumber}",
         ).exec_()
-        GroupView(parent, [f]).exec_()
         f.unlink()
 
     def initCollideTab(self):
@@ -1212,7 +1160,8 @@ class Manager(QWidget):
         page = int(self.collideModel.item(r, 4).text())
         version = int(self.collideModel.item(r, 5).text())
 
-        vop = self.msgr.getTPageImage(test, page, version)
+        (pagedata,) = self.msgr.getTPageImageData(test, page, version)
+        vop = self.msgr.get_image(pagedata["id"], pagedata["md5"])
         vcp = self.msgr.getCollidingImage(fname)
         if vop is None or vcp is None:
             return
@@ -1254,7 +1203,7 @@ class Manager(QWidget):
                         self.collideModel.item(r, 4).text(),
                         self.collideModel.item(r, 5).text(),
                     )
-                except (PlomOwnersLoggedInException, PlomConflict) as err:
+                except PlomConflict as err:
 
                     ErrorMessage(f"{err}").exec_()
             else:
@@ -1277,7 +1226,7 @@ class Manager(QWidget):
                 "Action to be taken",
             ]
         )
-        self.ui.discardTV.setIconSize(QSize(96, 96))
+        self.ui.discardTV.setIconSize(QSize(32, 32))
         self.ui.discardTV.activated.connect(self.viewDPage)
         self.ui.discardTV.setColumnHidden(0, True)
         self.refreshDList()
@@ -1296,7 +1245,7 @@ class Manager(QWidget):
             )
             it1.setIcon(QIcon(pm))
             it2 = QStandardItem(reason)
-            it3 = QStandardItem("none")
+            it3 = QStandardItem("")
             it3.setTextAlignment(Qt.AlignCenter)
             self.discardModel.insertRow(r, [it0, it1, it2, it3])
             r += 1
@@ -1320,34 +1269,19 @@ class Manager(QWidget):
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
             fh.write(vdp)
-        dvw = DiscardViewWindow(self, f)
-        if True:  # temp minimise diff
-            if dvw.exec_() == QDialog.Accepted:
-                if dvw.action == "unknown":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_move.svg")
-                    )
-                    self.discardModel.item(r, 1).setIcon(QIcon(pm))
-                    self.discardModel.item(r, 3).setText("move")
-                elif dvw.action == "none":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_none.svg")
-                    )
-                    self.discardModel.item(r, 1).setIcon(QIcon(pm))
-                    self.discardModel.item(r, 3).setText("none")
+        if DiscardViewWindow(self, f).exec_() == QDialog.Accepted:
+            pm = QPixmap()
+            pm.loadFromData(
+                resources.read_binary(plom.client.icons, "manager_move.svg")
+            )
+            self.discardModel.item(r, 1).setIcon(QIcon(pm))
+            self.discardModel.item(r, 3).setText("move")
         f.unlink()
 
     def doDActions(self):
         for r in range(self.discardModel.rowCount()):
             if self.discardModel.item(r, 3).text() == "move":
                 self.msgr.discardToUnknown(self.discardModel.item(r, 0).text())
-            else:
-                pass
-                # print(
-                #     "No action for file {}.".format(self.discardModel.item(r, 0).text())
-                # )
         self.refreshDList()
         self.refreshUList()
 
@@ -1411,15 +1345,9 @@ class Manager(QWidget):
         )
         if msg.exec_() == QMessageBox.No:
             return
-        try:
-            rval = self.msgr.removeSinglePage(test_number, page_name)
-            ErrorMessage("{}".format(rval)).exec_()
-        except PlomOwnersLoggedInException as err:
-            ErrorMessage(
-                "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                    err.args[-1]
-                )
-            ).exec_()
+
+        rval = self.msgr.removeSinglePage(test_number, page_name)
+        ErrorMessage("{}".format(rval)).exec_()
 
     # ###################
     # Progress tab stuff
@@ -1518,17 +1446,14 @@ class Manager(QWidget):
                 tmp = Path(td) / "id.{}.{}".format(i, img_ext)
                 with open(tmp, "wb") as fh:
                     fh.write(img_bytes)
+                if not img_ext:
+                    raise PlomSeriousException(f"Could not identify image type: {tmp}")
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
-                self.IDrectangle = srw.rectangle
-                self.IDwhichFile = srw.whichFile
-                if (
-                    self.IDrectangle is None
-                ):  # We do not allow the IDReader to run if no rectangle is selected (this would cause a crash)
-                    self.ui.predictButton.setEnabled(False)
-                else:
-                    self.ui.predictButton.setEnabled(True)
+                top, bottom = srw.top_bottom_values
+                self.ui.cropTopLE.setText(str(100 * top))
+                self.ui.cropBottomLE.setText(str(100 * bottom))
 
     def viewIDPage(self):
         idi = self.ui.predictionTW.selectedIndexes()
@@ -1546,20 +1471,17 @@ class Manager(QWidget):
             return
         with tempfile.TemporaryDirectory() as td:
             img_ext = imghdr.what(None, h=img_bytes)
-            imageName = Path(td) / f"id.{img_ext}"
-            with open(imageName, "wb") as fh:
+            img_name = Path(td) / f"id.{img_ext}"
+            with open(img_name, "wb") as fh:
                 fh.write(img_bytes)
-            IDViewWindow(self, imageName, sid).exec_()
+            if not img_ext:
+                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            GroupView(self, img_name, title=f"ID page currently IDed as {sid}").exec_()
 
-    def runPredictor(self, ignoreStamp=False):
-        rmsg = self.msgr.IDrunPredictions(
-            [
-                self.IDrectangle.left(),
-                self.IDrectangle.top(),
-                self.IDrectangle.width(),
-                self.IDrectangle.height(),
-            ],
-            self.IDwhichFile,
+    def run_id_reader(self, ignoreStamp=False):
+        rmsg = self.msgr.run_id_reader(
+            float(self.ui.cropTopLE.text()) / 100,
+            float(self.ui.cropBottomLE.text()) / 100,
             ignoreStamp,
         )
         # returns [True, True] = off and running,
@@ -1580,7 +1502,14 @@ class Manager(QWidget):
             )
             if sm.exec_() == QMessageBox.No:
                 return
-            self.runPredictor(ignoreStamp=True)
+            self.run_id_reader(ignoreStamp=True)
+
+    def run_predictor(self):
+        try:
+            status = self.msgr.run_predictor()
+            InfoMsg(self, "Results of ID matching:", info=status).exec_()
+        except PlomConflict as e:
+            WarnMsg(self, "ID matching procedure failed:", info=f"{e}").exec_()
 
     def un_id_paper(self):
         # should we populate "test" from the list view?
@@ -1713,6 +1642,10 @@ class Manager(QWidget):
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
 
+        # maps zero to special text
+        self.ui.reviewPaperNumSpinBox.setSpecialValueText("*")
+        self.ui.reviewPaperNumSpinBox.setRange(0, self.max_papers)
+
         self.ui.questionCB.addItem("*")
         for q in range(self.numberOfQuestions):
             self.ui.questionCB.addItem(str(q + 1))
@@ -1735,21 +1668,13 @@ class Manager(QWidget):
             self.ui.userCB.addItem(u)
 
     def filterReview(self):
-        if (
-            (self.ui.questionCB.currentText() == "*")
-            and (self.ui.versionCB.currentText() == "*")
-            and (self.ui.userCB.currentText() == "*")
-        ):
-            ErrorMessage(
-                'Please set at least one of "Question", "Version", "User" to specific values.'
-            ).exec_()
-            return
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
         mrList = self.msgr.getMarkReview(
-            self.ui.questionCB.currentText(),
-            self.ui.versionCB.currentText(),
-            self.ui.userCB.currentText(),
-            markedOnly,
+            filterPaperNumber=self.ui.reviewPaperNumSpinBox.text(),
+            filterQ=self.ui.questionCB.currentText(),
+            filterV=self.ui.versionCB.currentText(),
+            filterUser=self.ui.userCB.currentText(),
+            filterMarked=markedOnly,
         )
 
         self.ui.reviewTW.clearContents()
@@ -1792,13 +1717,12 @@ class Manager(QWidget):
             fh.write(img)
         rvw = ReviewViewWindow(self, [f])
         if rvw.exec() == QDialog.Accepted:
-            if rvw.action == "review":
-                # first remove auth from that user - safer.
-                if self.ui.reviewTW.item(r, 4).text() != "reviewer":
-                    self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
-                # then map that question's owner "reviewer"
-                self.msgr.MreviewQuestion(test, question, version)
-                self.ui.reviewTW.item(r, 4).setText("reviewer")
+            # first remove auth from that user - safer.
+            if self.ui.reviewTW.item(r, 4).text() != "reviewer":
+                self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
+            # then map that question's owner "reviewer"
+            self.msgr.MreviewQuestion(test, question, version)
+            self.ui.reviewTW.item(r, 4).setText("reviewer")
         f.unlink()
 
     def initRevIDTab(self):
@@ -1851,20 +1775,21 @@ class Manager(QWidget):
         img_bytes = self.msgr.request_ID_image(test)
         with tempfile.TemporaryDirectory() as td:
             img_ext = imghdr.what(None, h=img_bytes)
-            imageName = Path(td) / f"id.0.{img_ext}"
-            with open(imageName, "wb") as fh:
+            img_name = Path(td) / f"id.0.{img_ext}"
+            with open(img_name, "wb") as fh:
                 fh.write(img_bytes)
-            rvw = ReviewViewWindow(self, imageName, "ID pages")
+            if not img_ext:
+                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            rvw = ReviewViewWindow(self, img_name, "ID page")
             if rvw.exec() == QDialog.Accepted:
-                if rvw.action == "review":
-                    # first remove auth from that user - safer.
-                    if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
-                        self.msgr.clearAuthorisationUser(
-                            self.ui.reviewIDTW.item(r, 1).text()
-                        )
-                    # then map that question's owner "reviewer"
-                    self.ui.reviewIDTW.item(r, 1).setText("reviewer")
-                    self.msgr.IDreviewID(test)
+                # first remove auth from that user - safer.
+                if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
+                    self.msgr.clearAuthorisationUser(
+                        self.ui.reviewIDTW.item(r, 1).text()
+                    )
+                # then map that question's owner "reviewer"
+                self.ui.reviewIDTW.item(r, 1).setText("reviewer")
+                self.msgr.IDreviewID(test)
 
     ##################
     # Solution tab stuff

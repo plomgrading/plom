@@ -64,7 +64,6 @@ server_install_requires = [
     "requests",
     "requests-toolbelt",
     "packaging",
-    'importlib_resources ; python_version<"3.7"',  # until we drop 3.6
     "stdiomask>=0.0.6",
 ]
 # TODO: optional dependency to enable lossless jpeg rotations
@@ -92,7 +91,7 @@ setup(
     url="https://plomgrading.org",
     author="Andrew Rechnitzer",
     license="AGPLv3+",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

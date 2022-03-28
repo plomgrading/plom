@@ -746,19 +746,106 @@
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_12">
                    <item>
-                    <widget class="QPushButton" name="selectRectButton">
+                    <widget class="QFrame" name="frame_2">
+                     <property name="frameShape">
+                      <enum>QFrame::StyledPanel</enum>
+                     </property>
+                     <property name="frameShadow">
+                      <enum>QFrame::Raised</enum>
+                     </property>
+                     <layout class="QFormLayout" name="formLayout">
+                      <item row="1" column="0">
+                       <widget class="QLabel" name="label_11">
+                        <property name="text">
+                         <string>Crop top (percentage)</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="1" column="1">
+                       <widget class="QLineEdit" name="cropTopLE">
+                        <property name="text">
+                         <string>10.0</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="0">
+                       <widget class="QLabel" name="label_12">
+                        <property name="text">
+                         <string>Crop bottom (percentage)</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="1">
+                       <widget class="QLineEdit" name="cropBottomLE">
+                        <property name="text">
+                         <string>90.0</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="3" column="1">
+                       <widget class="QFrame" name="frame_3">
+                        <property name="frameShape">
+                         <enum>QFrame::NoFrame</enum>
+                        </property>
+                        <property name="frameShadow">
+                         <enum>QFrame::Raised</enum>
+                        </property>
+                        <layout class="QHBoxLayout" name="horizontalLayout_24">
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>0</number>
+                         </property>
+                         <item>
+                          <spacer name="horizontalSpacer_18">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>0</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                         <item>
+                          <widget class="QPushButton" name="selectRectButton">
+                           <property name="text">
+                            <string>Select interactively</string>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="machineReadButton">
+                     <property name="toolTip">
+                      <string>Maachine read the digits from the ID pages</string>
+                     </property>
                      <property name="text">
-                      <string>Select ID rectangle</string>
+                      <string>Recognize digits in IDs</string>
                      </property>
                     </widget>
                    </item>
                    <item>
                     <widget class="QPushButton" name="predictButton">
-                     <property name="enabled">
-                      <bool>false</bool>
+                     <property name="toolTip">
+                      <string>Predict IDs by matching unID'd papers with machine-read digits</string>
                      </property>
                      <property name="text">
-                      <string>Run predictions</string>
+                      <string>Predict IDs</string>
                      </property>
                     </widget>
                    </item>
@@ -1074,6 +1161,23 @@
           <layout class="QVBoxLayout" name="verticalLayout_19">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_12">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_31">
+               <item>
+                <widget class="QLabel" name="label_11">
+                 <property name="text">
+                  <string>Paper number</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="reviewPaperNumSpinBox"/>
+               </item>
+              </layout>
+             </item>
              <item>
               <layout class="QVBoxLayout" name="verticalLayout_15">
                <item>
@@ -1561,8 +1665,7 @@
   <tabstop>subsPageB</tabstop>
   <tabstop>overallTW</tabstop>
   <tabstop>papersLE</tabstop>
-  <tabstop>selectRectButton</tabstop>
-  <tabstop>predictButton</tabstop>
+  <tabstop>machineReadButton</tabstop>
   <tabstop>delPredButton</tabstop>
   <tabstop>predictionTW</tabstop>
   <tabstop>scrollArea</tabstop>

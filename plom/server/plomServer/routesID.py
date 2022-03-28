@@ -474,41 +474,67 @@ class IDHandler:
         )
 
     @authenticate_by_token_required_fields(
-        ["user", "rectangle", "fileNumber", "ignoreStamp"]
+        ["user", "crop_top", "crop_bottom", "ignoreStamp"]
     )
-    def IDrunPredictions(self, data, request):
-        """Runs the id prediction on all paper images.
+    def run_id_reader(self, data, request):
+        """Runs the id digit reader on all paper ID pages.
 
         Responds with status 200/202/205/401.
 
         Args:
-            data (dict): A dictionary having the user/token in addition to information from the rectangle
-                bounding box coordinates and file information.
+            data (dict): A dictionary having the user/token, cropping info
+                and flag to ignore time stamp.
             request (aiohttp.web_request.Request): Request of type POST /ID/predictedID.
 
         Returns:
-            aiohttp.web_response.Response: Returns a response with the date and time of the prediction run.
-                Or responds with saying the prediction is already running.
+            aiohttp.web_response.Response: Returns a response with the date and time of the machine reader run.
+            Or responds with saying the machine reader is already running.
         """
-
-        # TODO: maybe we want some special message here?
         if data["user"] != "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I only speak to the manager")
 
-        prediction_results = self.server.IDrunPredictions(
-            data["rectangle"], data["fileNumber"], data["ignoreStamp"]
+        is_running, other = self.server.run_id_reader(
+            data["crop_top"], data["crop_bottom"], data["ignoreStamp"]
         )
 
-        timestamp_found = prediction_results[0]
-        is_running = prediction_results[1]
-
-        if timestamp_found:  # set running or is running
-            if is_running:
+        if is_running:
+            if other:  # if OUR job started
                 return web.Response(status=200)
-            else:
-                return web.Response(status=202)  # is already running
-        else:  # isn't running because we found a time-stamp
-            return web.Response(text=is_running, status=205)
+            else:  # ... or one was already running
+                return web.Response(status=202)
+        else:  # isn't running (we found a time-stamp, in other)
+            return web.Response(text=other, status=205)
+
+    @authenticate_by_token_required_fields(["user"])
+    def predict_id_lap_solver(self, data, request):
+        """Match Runs the id digit reader on all paper ID pages.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request):
+
+        Returns:
+            aiohttp.web_response.Response: 200/401/403
+            401/403: authentication ttroubles
+            406 (not acceptable): LAP is degenerate
+            409 (conflict): ID reader still running
+            412 (precondition failed) for no ID reader
+        """
+        if data["user"] != "manager":
+            raise web.HTTPForbidden(reason="I only speak to the manager")
+
+        try:
+            status = self.server.predict_id_lap_solver()
+        except RuntimeError as e:
+            log.warn(e)
+            return web.HTTPConflict(reason=e)
+        except IndexError as e:
+            log.warn(e)
+            return web.HTTPNotAcceptable(reason=e)
+        except FileNotFoundError as e:
+            log.warn(e)
+            return web.HTTPPreconditionFailed(reason=f"Must run id reader first: {e}")
+        return web.Response(text=status, status=200)
 
     # @routes.patch("/ID/review")
     @authenticate_by_token_required_fields(["testNumber"])
@@ -553,9 +579,9 @@ class IDHandler:
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
-        router.add_post("/ID/predictedID", self.IDrunPredictions)
+        router.add_post("/ID/predictedID", self.predict_id_lap_solver)
+        router.add_post("/ID/run_id_reader", self.run_id_reader)
         router.add_patch("/ID/review", self.IDreviewID)
-        router.add_post("/ID/predictedID", self.IDrunPredictions)
         # be careful with this one - since is such a general route
         # put it last
         router.add_put("/ID/{papernum}", self.IdentifyPaper)

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Joey Shi
 
 from datetime import datetime
 import json
@@ -210,6 +211,33 @@ def MgiveTaskToClient(self, user_name, group_id, version):
             )
         )
         return [True, image_metadata, tag_list, aref.integrity_check]
+
+
+def MgetOneImageRotation(self, image_id, md5):
+    """Get the rotation of one image.
+
+    Args:
+        image_id: internal db ref number to image
+        md5: the md5sum of that image (as sanity check)
+
+    Returns:
+        list: [True, rotation] or [False, error_msg] where
+            error_msg is `"no such image"` or `"wrong md5sum"`.
+            rotation is a float.
+    """
+    with plomdb.atomic():
+        iref = Image.get_or_none(id=image_id)
+        if iref is None:
+            log.warning("Asked for a non-existent image with id={}".format(image_id))
+            return [False, "no such image"]
+        if iref.md5sum != md5:
+            log.warning(
+                "Asked for image id={} but supplied wrong md5sum {} instead of {}".format(
+                    image_id, md5, iref.md5sum
+                )
+            )
+            return [False, "wrong md5sum"]
+        return [True, iref.rotation]
 
 
 def MgetOneImageFilename(self, image_id, md5):
@@ -437,38 +465,17 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
     return (True, plom_data, img_file)
 
 
-def MgetOriginalImages(self, task):
-    """Return the original (unannotated) page images of the given task to the user."""
-    with plomdb.atomic():
-        gref = Group.get_or_none(Group.gid == task)
-        if gref is None:  # should not happen
-            log.info("MgetOriginalImages - task %s not known", task)
-            return (False, f"Task {task} not known")
-        if not gref.scanned:
-            log.warning("MgetOriginalImages - task %s not completely scanned", task)
-            return (False, f"Task {task} is not completely scanned")
-        # get the first non-outdated annotation for the group
-        aref = (
-            gref.qgroups[0]
-            .annotations.where(Annotation.outdated == False)  # noqa: E712
-            .order_by(Annotation.edition)
-            .get()
-        )
-        # this is the earliest non-outdated annotation = the original
-
-        rval = []
-        for p in aref.apages.order_by(APage.order):
-            rval.append(p.image.file_name)
-        return (True, rval)
-
-
 def MgetWholePaper(self, test_number, question):
-    """Send page images of whole paper back to user, highlighting which belong to the given question. Do not show ID pages."""
+    """All non-ID pages of a paper, highlighting which belong to a question.
 
-    # we can show show not totally scanned test.
+    Returns:
+        list: a list of lists, each "row" currently documented in the
+            caller's implementation.  TODO: consider moving the dict
+            stuff back to here.
+    """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:  # don't know that test - this shouldn't happen
-        return [False]
+        return [False]  # TODO
     pageData = []  # for each page append a 4-tuple [
     # page-code = t.pageNumber, h.questionNumber.order, 3.questionNumber.order, or l.order
     # image-md5sum,

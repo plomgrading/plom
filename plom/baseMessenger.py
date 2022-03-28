@@ -22,6 +22,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomConnectionError,
     PlomExistingLoginException,
+    PlomNoMoreException,
     PlomNoSolutionException,
     PlomServerNotReady,
     PlomSSLError,
@@ -360,8 +361,7 @@ class BaseMessenger:
             this function converts them for us.
 
         Raises:
-            PlomServerNotReady: server does not yet have a version map,
-                e.g., b/c it has not been built, or server has no spec.
+            PlomAuthenticationException: login troubles.
         """
         with self.SRmutex:
             try:
@@ -373,8 +373,6 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
-                elif response.status_code in (404, 409):
-                    raise PlomServerNotReady(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
@@ -645,6 +643,102 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
+    def get_pagedata(self, code):
+        """Get metadata about the images in this paper.
+
+        TODO: returns 404/409, so why not raise that instead?
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/pagedata/{code}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_pagedata_question(self, code, questionNumber):
+        """Get metadata about the images in this paper and question.
+
+        TODO: returns 404, so why not raise that instead?
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/pagedata/{code}/{questionNumber}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_pagedata_context_question(self, code, questionNumber):
+        """Get metadata about all non-ID page images in this paper, as related to a question.
+
+        For now, questionNumber effects the "included" column...
+
+        TODO: returns 404, so why not raise that instead?
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/pagedata/{code}/context/{questionNumber}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            ret = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        return ret
+
+    def get_image(self, image_id, md5sum):
+        """Download one image from server by its database id.
+
+        args:
+            image_id (int): TODO: int/str?  The key into the server's
+                database of images.
+            md5sum (str): the expected md5sum, just for sanity checks or
+                something I suppose.
+
+        return:
+            bytes: png/jpeg or whatever as bytes.
+
+        Errors/Exceptions
+            401: not authenticated
+            404: no such image
+            409: wrong md5sum provided
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/MK/images/{image_id}/{md5sum}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomConflict("Wrong md5sum provided") from None
+            if response.status_code == 404:
+                raise PlomNoMoreException("Cannot find image") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        return image
+
     def request_ID_image(self, code):
         self.SRmutex.acquire()
         try:
@@ -665,7 +759,7 @@ class BaseMessenger:
                 ) from None
             elif response.status_code == 410:
                 raise PlomBenignException(
-                    "That ID group of {} has not been scanned.".format(code)
+                    f"The ID page of {code} has not been scanned."
                 ) from None
             elif response.status_code == 409:
                 raise PlomSeriousException(
@@ -843,4 +937,21 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def getUnknownPages(self):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/unknownPages",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None

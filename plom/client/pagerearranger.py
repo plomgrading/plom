@@ -5,10 +5,6 @@
 # Copyright (C) 2020 Vala Vakilian
 
 import logging
-from pathlib import Path
-import random
-import tempfile
-import urllib.request
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QImageReader, QPixmap, QTransform
@@ -16,8 +12,6 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QFrame,
-    QFormLayout,
-    QGridLayout,
     QHBoxLayout,
     QListView,
     QListWidget,
@@ -27,20 +21,17 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSplitter,
-    QSpinBox,
-    QTabWidget,
     QVBoxLayout,
-    QWidget,
     QSpacerItem,
     QSizePolicy,
     QToolButton,
 )
 
-from .image_view_widget import ImageViewWidget
-from .useful_classes import ErrorMessage, SimpleQuestion
+from .useful_classes import WarnMsg, SimpleQuestion
+from .viewers import GroupView
 
 
-log = logging.getLogger("viewerdialog")
+log = logging.getLogger("rearrange")
 
 
 class SourceList(QListWidget):
@@ -77,20 +68,26 @@ class SourceList(QListWidget):
         B = QSize(x - 50, x - 50)
         self.setIconSize(B)
 
-    def addImageItem(self, p, pfile, belongs):
+    def addImageItem(self, p, pfile, angle, belongs):
         current_row = self.count()
         name = str(p)
         qir = QImageReader(str(pfile))
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
+        if pix.isNull():
+            raise RuntimeError(f"Could not read an image from {pfile}")
+        rot = QTransform()
+        rot.rotate(angle)
+        if angle != 0:
+            pix = pix.transformed(rot)
         it = QListWidgetItem(QIcon(pix), name)
         if belongs:
             it.setBackground(QBrush(Qt.darkGreen))
         self.addItem(it)  # item is added at current_row
         self.item_positions[name] = current_row
         self.item_files[name] = pfile
-        self.item_orientation[name] = 0
+        self.item_orientation[name] = angle
 
     def hideItemByName(self, name=None):
         """Removes (hides) a single named item from source-list.
@@ -128,7 +125,15 @@ class SourceList(QListWidget):
                 ci.setHidden(False)
 
     def viewImage(self, qi):
-        self._parent.viewImage(self.item_files[qi.text()])
+        """Shows a larger view of the currently selected page."""
+        self._parent.viewImage(
+            [
+                {
+                    "filename": self.item_files[qi.text()],
+                    "orientation": self.item_orientation[qi.text()],
+                }
+            ]
+        )
 
 
 class SinkList(QListWidget):
@@ -152,9 +157,8 @@ class SinkList(QListWidget):
         self.setIconSize(QSize(320, 320))
         self.setSpacing(8)
         self.setWrapping(False)
-        self.item_belongs = (
-            {}
-        )  # whether or not the item 'officially' belongs to the question
+        # whether or not the item 'officially' belongs to the question
+        self.item_belongs = {}
         self.item_files = {}
         self.item_orientation = {}
         self.item_id = {}
@@ -168,10 +172,10 @@ class SinkList(QListWidget):
         B = QSize(x - 50, x - 50)
         self.setIconSize(B)
 
-    def addPotentialItem(self, p, pfile, belongs, db_id=None):
+    def addPotentialItem(self, p, pfile, angle, belongs, db_id=None):
         name = str(p)
         self.item_files[name] = pfile
-        self.item_orientation[name] = 0  # TODO
+        self.item_orientation[name] = angle
         self.item_id[name] = db_id
         self.item_belongs[name] = belongs
 
@@ -194,6 +198,8 @@ class SinkList(QListWidget):
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
+        if pix.isNull():
+            raise RuntimeError(f"Could not read an image from {self.item_files[name]}")
         ci = QListWidgetItem(QIcon(pix), name)
         if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
@@ -272,27 +278,38 @@ class SinkList(QListWidget):
             angle (int)
         """
         self.item_orientation[name] = angle
-        rot = QTransform()
-        rot.rotate(angle)
         # TODO: instead of loading pixmap again, can we transform the QIcon?
         # Also, docs warned QPixmap.transformed() is slow
         qir = QImageReader(str(self.item_files[name]))
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
-        npix = pix.transformed(rot)
+        if pix.isNull():
+            raise RuntimeError(f"Could not read an image from {self.item_files[name]}")
+        rot = QTransform()
+        rot.rotate(angle)
+        if angle != 0:
+            pix = pix.transformed(rot)
         # ci = self.item(self.item_positions[name])
         # TODO: instead we get `ci` with a dumb loop
         for i in range(self.count()):
             ci = self.item(i)
             if ci.text() == name:
                 break
-        ci.setIcon(QIcon(npix))
+        ci.setIcon(QIcon(pix))
         # rotpixmap = ci.getIcon().pixmap().transformed(rot)
         # ci.setIcon(QIcon(rotpixmap))
 
     def viewImage(self, qi):
-        self._parent.viewImage(self.item_files[qi.text()])
+        """Shows a larger view of the currently selected page."""
+        self._parent.viewImage(
+            [
+                {
+                    "filename": self.item_files[qi.text()],
+                    "orientation": self.item_orientation[qi.text()],
+                }
+            ]
+        )
 
     def getNameList(self):
         nList = []
@@ -310,7 +327,8 @@ class RearrangementViewer(QDialog):
         self.need_to_confirm = need_to_confirm
         self._setupUI()
         page_data = self.dedupe_by_md5sum(page_data)
-        self.pageData = page_data
+        # stored in an instance variable but only used on reset (and initial setup)
+        self.initial_page_data = page_data
         self.nameToIrefNFile = {}
         if current_pages:
             self.populateListWithCurrent(current_pages)
@@ -495,17 +513,17 @@ class RearrangementViewer(QDialog):
             lambda sel, unsel: self.singleSelect(self.listB, allPageWidgets)
         )
 
-    def dedupe_by_md5sum(self, pageData):
+    def dedupe_by_md5sum(self, page_data):
         """Collapse entries in the pagedata with duplicated md5sums.
 
-        In the future [1], pages will be shared between questions but we
-        only want to show one copy of each such duplicated page in the
-        "Adjust pages" dialog.
+        Pages are shared between questions but we only want to show one
+        copy of each such duplicated page in the "Adjust pages" dialog.
 
-        [1] https://gitlab.com/plom/plom/-/merge_requests/698
-
-        The data looks like the following.  We want to compress rows that
-        have duplicated md5sums:
+        The `page_data` is a list of dicts, each with keys `"pagename"`,
+        `"md5"`, `"included"`, `"order"`, `"id"`, `"local_filename"`, and
+        others (`"orientation"`, etc) not shown here.  These have
+        corresponding values like in the example below.  We want to
+        compress rows that have duplicated md5sums:
         ```
         ['h1.1', 'e224c22eda93456143fbac94beb0ffbd', True, 1, 40, '/tmp/plom_zq/tmpnqq.image]
         ['h1.2', '97521f4122df24ca012a12930391195a', True, 2, 41, '/tmp/plom_zq/tmp_om.image]
@@ -528,9 +546,9 @@ class RearrangementViewer(QDialog):
         May not be completely well-posed.  Probably better to refactor before this.  E.g., factor out
         a dict of md5sum to filenames before we get here.
 
-        "Included" (column 3): include these in the question or maybe server
-        originally had these in the question (TODO: maybe not, True/False
-        generated on API call).
+        `"included"` (column 3): server said these were ORIGINALLY included
+        in this question.  User might have changed this; see "current"
+        elsewhere.
 
         TODO: if order does not have `h1,1` first, should we move it first?
               that is, before the parenthetical?  Probably by re-ordering
@@ -538,14 +556,13 @@ class RearrangementViewer(QDialog):
         """
         # List of lists, preserving original order within each list
         tmp_data = []
-        for x in pageData:
-            md5 = x[1]
-            md5s_so_far = [y[0][1] for y in tmp_data]
-            if md5 in md5s_so_far:
-                i = md5s_so_far.index(md5)
-                tmp_data[i].append(x.copy())
+        for row in page_data:
+            md5s_so_far = [y[0]["md5"] for y in tmp_data]
+            if row["md5"] in md5s_so_far:
+                i = md5s_so_far.index(row["md5"])
+                tmp_data[i].append(row.copy())
             else:
-                tmp_data.append([x.copy()])
+                tmp_data.append([row.copy()])
 
         def pack_names(names):
             """List of names, abbreviated if list is long."""
@@ -557,20 +574,19 @@ class RearrangementViewer(QDialog):
             return f" (& {s})"
 
         # Compress each list down to a single item, packing the names
-        new_pageData = []
+        new_page_data = []
         # warn/log if True not in first?
         for y in tmp_data:
             z = y[0].copy()
-            other_names = [_[0] for _ in y[1:]]
+            other_names = [_["pagename"] for _ in y[1:]]
             if other_names:
-                z[0] = z[0] + pack_names(other_names)
+                z["pagename"] = z["pagename"] + pack_names(other_names)
             # If any entry had True for "included", include this row
-            # TODO: or should we reorder the list, moving True to front?
-            # TODO: depends what is done with the other data
-            z[2] = any([_[2] for _ in y])
-            new_pageData.append(z)
+            # Rearranger uses this to colour pages (originally) included
+            z["included"] = any([_["included"] for _ in y])
+            new_page_data.append(z)
 
-        return new_pageData
+        return new_page_data
 
     def show_relevant_tools(self):
         """Hide/show tools based on current selections."""
@@ -596,15 +612,26 @@ class RearrangementViewer(QDialog):
         self.listA.clear()
         self.listB.clear()
         move_order = {}
-        for row in self.pageData:
-            self.nameToIrefNFile[row[0]] = [row[1], row[5]]
+        for row in self.initial_page_data:
+            self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
             # add every page image to list A
-            self.listA.addImageItem(row[0], row[5], row[2])
+            self.listA.addImageItem(
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
+            )
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[5], row[2], db_id=row[4])
+            self.listB.addPotentialItem(
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
+                db_id=row["id"],
+            )
             # if position in current annot is non-null then add to list of pages to move between lists.
-            if row[2] and row[3]:
-                move_order[row[3]] = row[0]
+            if row["included"] and row["order"]:
+                move_order[row["order"]] = row["pagename"]
         for k in sorted(move_order.keys()):
             self.listB.appendItem(self.listA.hideItemByName(name=move_order[k]))
 
@@ -621,22 +648,33 @@ class RearrangementViewer(QDialog):
         self.nameToIrefNFile = {}
         self.listA.clear()
         self.listB.clear()
-        for row in self.pageData:
-            self.nameToIrefNFile[row[0]] = [row[1], row[5]]
+        for row in self.initial_page_data:
+            self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
             # add every page image to list A
-            self.listA.addImageItem(row[0], row[5], row[2])
+            self.listA.addImageItem(
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
+            )
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[5], row[2], db_id=row[4])
+            self.listB.addPotentialItem(
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
+                db_id=row["id"],
+            )
         for kv in current:
-            match = [row[0] for row in self.pageData if row[1] == kv["md5"]]
+            match = [
+                row["pagename"]
+                for row in self.initial_page_data
+                if row["md5"] == kv["md5"]
+            ]
             assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
             (match,) = match
             self.listB.appendItem(self.listA.hideItemByName(match))
-            if kv["orientation"] != 0:
-                log.info("Applying orientation of %s", kv["orientation"])
-                # always display unrotated in source ListA
-                # TODO: should reflect server static info (currently always orientation = 0 but...)
-                self.listB.rotateItemTo(match, kv["orientation"])
+            self.listB.rotateItemTo(match, kv["orientation"])
 
     def sourceToSink(self):
         """
@@ -713,9 +751,9 @@ class RearrangementViewer(QDialog):
         """Rotates the currently selected page by 90 degrees."""
         self.listB.rotateSelectedImages(angle)
 
-    def viewImage(self, fname):
-        """Shows a larger view of the currently selected page."""
-        GroupView(self, [fname], bigger=True).exec_()
+    def viewImage(self, image_data):
+        """Shows a larger view of one or more pages."""
+        GroupView(self, image_data, bigger=True).exec_()
 
     def doShuffle(self):
         """
@@ -728,8 +766,8 @@ class RearrangementViewer(QDialog):
             (where `iref` seems to be md5sum?  TODO).
         """
         if self.listB.count() == 0:
-            msg = ErrorMessage("You must have at least one page in the bottom list.")
-            msg.exec()
+            msg = "You must have at least one page in the bottom list."
+            WarnMsg(self, msg).exec()
             return
         if self.need_to_confirm:
             msg = SimpleQuestion(
@@ -770,293 +808,3 @@ class RearrangementViewer(QDialog):
             if lstViewI.selectionModel().hasSelection():
                 # ...as this causes emission of selectionChanged() signal as well:
                 lstViewI.selectionModel().clearSelection()
-
-
-class GroupView(QDialog):
-    def __init__(self, parent, fnames, bigger=False):
-        super().__init__(parent)
-        grid = QGridLayout()
-        self.testImg = ImageViewWidget(self, fnames, has_reset_button=False)
-        closeButton = QPushButton("&Close")
-        resetB = QPushButton("&reset view")
-        grid.addWidget(self.testImg, 1, 1, 1, 8)
-        grid.addWidget(closeButton, 2, 8)
-        grid.addWidget(resetB, 2, 1)
-        self.setLayout(grid)
-        if bigger:
-            self.resize(
-                QSize(
-                    int(self.parent().width() * 2 / 3),
-                    int(self.parent().height() * 11 / 12),
-                )
-            )
-        resetB.clicked.connect(self.testImg.resetView)
-        closeButton.clicked.connect(self.close)
-        if bigger:
-            # TODO: seems needed for Ctrl-R double-click popup
-            self.testImg.resetView()
-            self.testImg.forceRedrawOrSomeBullshit()
-
-    def closeEvent(self, event):
-        self.closeWindow()
-
-    def closeWindow(self):
-        self.close()
-
-
-class QuestionViewDialog(GroupView):
-    """View the raw scans from a particular question, optionally with tagging.
-
-    Args:
-        parent: the parent of this dialog
-        fnames (list): the files to use for viewing, `str` or `pathlib.Path`.
-            We don't claim the files: caller should manage them and delete
-            when done.
-        testnum (int): which test/paper number is this
-        questnum (int): which question number.  TODO: probably should
-            support question label.
-        ver (int/None): if we know the version, we can display it.
-        marker (None/plom.client.Marker): used to talk to the server for
-            tagging.
-    """
-
-    def __init__(self, parent, fnames, testnum, questnum, ver=None, marker=None):
-        super().__init__(parent, fnames)
-        s = f"Original ungraded images for test {testnum:04} question {questnum}"
-        if ver:
-            s += f" (ver {ver})"
-        self.setWindowTitle(s)
-        self.tgv = (testnum, questnum, ver)
-        grid = self.layout()
-        if marker:
-            self.marker = marker
-            tagButton = QPushButton("&Tags")
-            tagButton.clicked.connect(self.tags)
-            # add new button to bottom right
-            grid.addWidget(tagButton, grid.rowCount() - 1, grid.columnCount() - 2)
-
-    def tags(self):
-        """If we have a marker parent then use it to manage tags"""
-        if self.marker:
-            task = f"q{self.tgv[0]:04}g{self.tgv[1]}"
-            self.marker.manage_task_tags(task, parent=self)
-
-
-class WholeTestView(QDialog):
-    def __init__(self, testnum, filenames, labels=None, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(f"Original scans of test {testnum}")
-        self.pageTabs = QTabWidget()
-        closeButton = QPushButton("&Close")
-        prevButton = QPushButton("&Previous")
-        nextButton = QPushButton("&Next")
-        grid = QGridLayout()
-        grid.addWidget(self.pageTabs, 1, 1, 6, 6)
-        grid.addWidget(prevButton, 7, 1)
-        grid.addWidget(nextButton, 7, 2)
-        grid.addWidget(closeButton, 7, 6)
-        self.setLayout(grid)
-        prevButton.clicked.connect(self.previousTab)
-        nextButton.clicked.connect(self.nextTab)
-        closeButton.clicked.connect(self.closeWindow)
-        self.pageTabs.currentChanged.connect(self.tabSelected)
-        self.setMinimumSize(500, 500)
-        if not labels:
-            labels = [f"{k + 1}" for k in range(len(filenames))]
-        for f, label in zip(filenames, labels):
-            # Tab doesn't seem to have padding so compact=False
-            tab = ImageViewWidget(self, [f], compact=False)
-            self.pageTabs.addTab(tab, label)
-
-    def closeEvent(self, event):
-        self.closeWindow()
-
-    def closeWindow(self):
-        self.close()
-
-    def tabSelected(self, index):
-        """Resize on change tab."""
-        if index >= 0:
-            self.pageTabs.currentWidget().resetView()
-
-    def nextTab(self):
-        t = self.pageTabs.currentIndex() + 1
-        if t >= self.pageTabs.count():
-            t = 0
-        self.pageTabs.setCurrentIndex(t)
-
-    def previousTab(self):
-        t = self.pageTabs.currentIndex() - 1
-        if t < 0:
-            t = self.pageTabs.count() - 1
-        self.pageTabs.setCurrentIndex(t)
-
-
-class SelectTestQuestion(QDialog):
-    def __init__(self, parent, info, gn=None):
-        super().__init__(parent)
-        self.setWindowTitle("View another test")
-        self.iL = QLabel("From which test do you wish to view the current question?")
-        self.ab = QPushButton("&Accept")
-        self.ab.clicked.connect(self.accept)
-        self.cb = QPushButton("&Cancel")
-        self.cb.clicked.connect(self.reject)
-
-        fg = QFormLayout()
-        self.tsb = QSpinBox()
-        self.tsb.setRange(1, info["numberToProduce"])
-        self.tsb.setValue(1)
-        fg.addRow("Select test:", self.tsb)
-        if gn is not None:
-            self.gsb = QSpinBox()
-            self.gsb.setRange(1, info["numberOfQuestions"])
-            self.gsb.setValue(gn)
-            fg.addRow("Select question:", self.gsb)
-            self.iL.setText("Which test/group do you wish to view?")
-        grid = QGridLayout()
-        grid.addWidget(self.iL, 0, 1, 1, 3)
-        grid.addLayout(fg, 1, 1, 3, 3)
-        grid.addWidget(self.ab, 4, 1)
-        grid.addWidget(self.cb, 4, 3)
-        self.setLayout(grid)
-
-
-class SolutionViewer(QWidget):
-    def __init__(self, parent, fname):
-        super().__init__()
-        self._annotr = parent
-        grid = QGridLayout()
-        self.sv = ImageViewWidget(self, fname)
-        self.refreshButton = QPushButton("&Refresh")
-        self.closeButton = QPushButton("&Close")
-        self.maxNormButton = QPushButton("&Max/Norm")
-        grid.addWidget(self.sv, 1, 1, 6, 6)
-        grid.addWidget(self.refreshButton, 7, 1)
-        grid.addWidget(self.closeButton, 7, 7)
-        grid.addWidget(self.maxNormButton, 1, 7)
-        self.setLayout(grid)
-        self.closeButton.clicked.connect(self.closeWindow)
-        self.maxNormButton.clicked.connect(self.swapMaxNorm)
-        self.refreshButton.clicked.connect(self.refresh)
-
-        self.setWindowTitle(f"Solutions - {Path(fname).stem}")
-
-        self.setMinimumSize(500, 500)
-
-        self.show()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
-
-    def closeEvent(self, event):
-        self.closeWindow()
-
-    def closeWindow(self):
-        self.close()
-
-    def refresh(self):
-        solnfile = self._annotr.refreshSolutionImage()
-        self.sv.updateImage(solnfile)
-        if solnfile is None:
-            ErrorMessage("Server no longer has a solution.  Try again later?").exec_()
-
-
-class CatViewer(QDialog):
-    def __init__(self, parent, dogAttempt=False):
-
-        self.msgs = [
-            "PLOM",
-            "I%20can%20haz%20more%20markingz",
-            "Insert%20meme%20here",
-            "Hello%20Omer",
-            "More%20patz%20pleeze",
-        ]
-
-        super().__init__(parent)
-        grid = QGridLayout()
-        self.count = 0
-        self.catz = None
-        if dogAttempt:
-            self.getNewImageFile(msg="No%20dogz.%20Only%20Catz%20and%20markingz")
-        else:
-            self.getNewImageFile()
-        self.img = ImageViewWidget(self, self.catz)
-
-        self.refreshButton = QPushButton("&Refresh")
-        self.closeButton = QPushButton("&Close")
-        grid.addWidget(self.img, 1, 1, 6, 7)
-        grid.addWidget(self.refreshButton, 7, 1)
-        grid.addWidget(self.closeButton, 7, 7)
-        self.setLayout(grid)
-        self.closeButton.clicked.connect(self.closeWindow)
-        self.refreshButton.clicked.connect(self.refresh)
-
-        self.setWindowTitle("Catz")
-
-        self.setMinimumSize(500, 500)
-
-    def closeEvent(self, event):
-        self.eraseImageFile()
-        self.closeWindow()
-
-    def closeWindow(self):
-        self.close()
-
-    def getNewImageFile(self, *, msg=None):
-        """Erase the current stored image and try to get a new one.
-
-        args:
-            msg (None/str): something for the cat to say.
-
-        returns:
-            None: but sets the `.catz` instance variable as a side effect.
-        """
-        self.eraseImageFile()
-        logging.debug("Trying to refresh cat image")
-
-        # Do we need to manage this tempfile in instance variable? Issue #1842
-        # with tempfile.NamedTemporaryFile() as f:
-        #     urllib.request.urlretrieve("https://cataas.com/cat", f)
-        #     self.img.updateImages(f)
-        self.catz = Path(tempfile.NamedTemporaryFile(delete=False).name)
-
-        try:
-            if msg is None:
-                urllib.request.urlretrieve("https://cataas.com/cat", self.catz)
-            else:
-                urllib.request.urlretrieve(
-                    f"https://cataas.com/cat/says/{msg}", self.catz
-                )
-            logging.debug("Cat image refreshed")
-        except Exception:
-            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
-            self.catz = None
-
-    def eraseImageFile(self):
-        if self.catz is None:
-            return
-        try:
-            self.catz.unlink()
-        except OSError:
-            pass
-
-    def refresh(self):
-        self.count += 1
-        if self.count > 5:
-            msg = "Back%20to%20work"
-        elif random.choice([0, 1]):
-            msg = random.choice(self.msgs)
-        else:
-            msg = None
-        self.getNewImageFile(msg=msg)
-        self.img.updateImage(self.catz)
-        if self.count > 5:
-            ErrorMessage("Enough break time").exec_()
-            self.close()
-
-
-###

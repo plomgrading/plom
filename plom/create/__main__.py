@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
@@ -30,7 +30,7 @@ import plom
 from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
-from plom.plom_exceptions import PlomExistingDatabase
+from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
 from plom.create import build_database, build_papers
@@ -204,6 +204,13 @@ def get_parser():
     )
     spL.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     spL.add_argument("-w", "--password", type=str, help='for the "manager" user')
+    spL.add_argument(
+        "-i",
+        "--ignore-warnings",
+        action="store_true",
+        help="Ignore any classlist warnings and upload anyway.",
+    )
+
     group = spL.add_mutually_exclusive_group(required=True)
     group.add_argument("classlist", nargs="?", help="filename in csv format")
     group.add_argument(
@@ -412,19 +419,42 @@ def main():
             msgr.stop()
 
     elif args.command == "class":
+        # we need the spec, so grab it from the server
+        msgr = start_messenger(args.server, args.password)
+        try:
+            spec = msgr.get_spec()
+        except PlomServerNotReady:
+            print("Server does not yet have a test-spec. We cannot proceed.")
+            # bailing out - close and stop messenger
+            msgr.closeUser()
+            msgr.stop()
+            sys.exit(1)  # TODO = more graceful exit
+
         if args.demo:
-            classlist = get_demo_classlist()
+            classlist = get_demo_classlist(spec)
+            upload_classlist(classlist, msgr=msgr)
         else:
-            classlist = process_classlist_file(args.classlist)
-        upload_classlist(classlist, msgr=(args.server, args.password))
+
+            success, classlist = process_classlist_file(
+                args.classlist, spec, ignore_warnings=args.ignore_warnings
+            )
+            if success:
+                try:
+                    upload_classlist(classlist, msgr=msgr)
+                except Exception as err:  # TODO - make a better error handler here
+                    print("An error occurred when uploading the valid classlist: ", err)
+            else:
+                print("Could not process classlist - see messages above")
+        # close up and stop messenger
+        msgr.closeUser()
+        msgr.stop()
 
     elif args.command == "make-db":
         if args.from_file is None:
-            status = build_database(msgr=(args.server, args.password))
+            build_database(msgr=(args.server, args.password))
         else:
             qvmap = version_map_from_file(args.from_file)
-            status = build_database(vermap=qvmap, msgr=(args.server, args.password))
-        print(status)
+            build_database(vermap=qvmap, msgr=(args.server, args.password))
 
     elif args.command == "get-ver-map":
         f = save_version_map(args.file, msgr=(args.server, args.password))
@@ -432,8 +462,7 @@ def main():
 
     elif args.command == "make":
         try:
-            status = build_database(msgr=(args.server, args.password))
-            print(status)
+            build_database(msgr=(args.server, args.password))
         except PlomExistingDatabase:
             print("Since we already have a database, move on to making papers")
         build_papers(

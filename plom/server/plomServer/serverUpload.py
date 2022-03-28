@@ -3,12 +3,12 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Joey Shi
 
 import hashlib
 import logging
 import os
 import shutil
-import subprocess
 import uuid
 
 from plom.server import pageNotSubmitted
@@ -272,10 +272,6 @@ def getEXPageImage(self, testNumber, question, order):
     return self.DB.getEXPageImage(testNumber, question, order)
 
 
-def getUnknownImage(self, fname):
-    return self.DB.getUnknownImage(fname)
-
-
 def getDiscardImage(self, fname):
     return self.DB.getDiscardImage(fname)
 
@@ -284,8 +280,8 @@ def getCollidingImage(self, fname):
     return self.DB.getCollidingImage(fname)
 
 
-def getUnknownPageNames(self):
-    return self.DB.getUnknownPageNames()
+def getUnknownPages(self):
+    return self.DB.getUnknownPages()
 
 
 def getDiscardNames(self):
@@ -294,14 +290,6 @@ def getDiscardNames(self):
 
 def getCollidingPageNames(self):
     return self.DB.getCollidingPageNames()
-
-
-def getQuestionImages(self, testNumber, questionNumber):
-    return self.DB.getQuestionImages(testNumber, questionNumber)
-
-
-def getAllTestImages(self, testNumber):
-    return self.DB.getAllTestImages(testNumber)
 
 
 def checkTPage(self, testNumber, pageNumber):
@@ -324,12 +312,7 @@ def unknownToTestPage(self, file_name, test, page, rotation):
     status, code, msg = self.DB.moveUnknownToTPage(file_name, test, page)
     if status:
         # rotate the page
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, file_name],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
+        self.DB.updateImageRotation(file_name, rotation)
         return (True, "testPage", None)
 
     if not status and code != "scanned":
@@ -339,12 +322,7 @@ def unknownToTestPage(self, file_name, test, page, rotation):
     status, code, msg = self.DB.moveUnknownToCollision(file_name, test, page)
     if status:
         # rotate the page
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, file_name],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
+        self.DB.updateImageRotation(file_name, rotation)
         return (True, "collision", None)
     return (status, code, msg)
 
@@ -353,12 +331,7 @@ def unknownToExtraPage(self, fname, test, question, rotation):
     rval = self.DB.moveUnknownToExtraPage(fname, test, question)
     if rval[0]:
         # moved successfully. now rotate the page
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, fname],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
+        self.DB.updateImageRotation(fname, rotation)
     return rval
 
 
@@ -366,12 +339,7 @@ def unknownToHWPage(self, fname, test, questions, rotation):
     rval = self.DB.moveUnknownToHWPage(fname, test, questions)
     if rval[0]:
         # moved successfully. now rotate the page
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, fname],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
+        self.DB.updateImageRotation(fname, rotation)
     return rval
 
 
@@ -460,6 +428,23 @@ def getPageFromBundle(self, bundle_name, bundle_order):
     return self.DB.getPageFromBundle(bundle_name, bundle_order)
 
 
-##
+def initialiseExamDatabase(self, spec, vmap):
+    from plom.db import initialiseExamDatabaseFromSpec
 
-##
+    return initialiseExamDatabaseFromSpec(spec, self.DB, vmap)
+
+
+def appendTestToExamDatabase(self, spec, t, vmap_for_test):
+    return self.DB.addSingleTestToDB(spec, t, vmap_for_test)
+
+
+def getPageVersions(self, paper_idx):
+    return self.DB.getPageVersions(paper_idx)
+
+
+def get_question_versions(self, paper_idx):
+    return self.DB.get_question_versions(paper_idx)
+
+
+def get_all_question_versions(self):
+    return self.DB.get_all_question_versions()

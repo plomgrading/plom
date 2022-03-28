@@ -6,14 +6,9 @@
 
 """Misc utilities for the Plom Server"""
 
+import importlib.resources as resources
 import logging
 from pathlib import Path
-import sys
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 import plom
 from plom import Default_Port
@@ -67,10 +62,6 @@ def check_server_fully_configured(basedir):
     if not (basedir / specdir / "predictionlist.csv").exists():
         raise FileNotFoundError(
             "Cannot find the predictionlist. Have you run 'plom-server init'?"
-        )
-    if not (basedir / confdir / "userList.json").exists():
-        raise FileNotFoundError(
-            "Processed userlist is not present. Have you run 'plom-server users'?"
         )
 
 

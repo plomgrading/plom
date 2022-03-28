@@ -63,7 +63,7 @@ def _ultra_raw_upload_classlist(classlist, msgr):
 
 
 @with_manager_messenger
-def upload_demo_classlist(*, msgr):
+def upload_demo_classlist(spec, *, msgr):
     """Uploads the demo classlist file to the server.
 
     Keyword Args:
@@ -71,5 +71,5 @@ def upload_demo_classlist(*, msgr):
             tuple appropriate for credientials.
     """
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
-    classlist = get_demo_classlist()
+    classlist = get_demo_classlist(spec)
     _ultra_raw_upload_classlist(classlist, msgr)

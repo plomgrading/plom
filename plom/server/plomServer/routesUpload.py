@@ -326,10 +326,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)  # page not found at all
+            return web.Response(status=404)  # page not found at all
 
     async def replaceMissingDNMPage(self, request):
         data = await request.json()
@@ -344,10 +341,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)  # page not found at all
+            return web.Response(status=404)  # page not found at all
 
     async def replaceMissingIDPage(self, request):
         data = await request.json()
@@ -362,9 +356,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            elif rval[1] == "unknown":
+            if rval[1] == "unknown":
                 return web.Response(status=410)
             else:
                 return web.Response(status=404)  # page not found at all
@@ -387,9 +379,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":
-                return web.json_response(rval[2], status=409)
-            elif rval[1] == "present":
+            if rval[1] == "present":
                 # that question already has pages
                 return web.Response(status=405)
             else:
@@ -417,10 +407,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)  # page not found at all
+            return web.Response(status=404)  # page not found at all
 
     async def removeSinglePage(self, request):
         """Remove the page (as described by its name) and reset any tasks that involve that page.
@@ -444,26 +431,23 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            elif rval[1] == "unknown":  # [False, "unknown"]
+            if rval[1] == "unknown":  # [False, "unknown"]
                 raise web.HTTPGone(reason="Cannot find that page.")
             elif rval[1] == "invalid":
                 raise web.HTTPNotAcceptable(reason="Page name is invalid")
             else:
                 raise web.HTTPBadRequest()
 
-    async def getUnknownPageNames(self, request):
+    async def getUnknownPages(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        rval = self.server.getUnknownPageNames()
-        return web.json_response(rval, status=200)  # all fine
+        if not data["user"] in ("scanner", "manager"):
+            raise web.HTTPForbidden(reason="Only manager and scanner can use this")
+        rval = self.server.getUnknownPages()
+        return web.json_response(rval, status=200)
 
     async def getDiscardNames(self, request):
         data = await request.json()
@@ -498,13 +482,15 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
 
-        rval = self.server.getTPageImage(data["test"], data["page"], data["version"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, val = self.server.getTPageImage(data["test"], data["page"], data["version"])
+        if not ok:
+            raise web.HTTPBadRequest(reason=val)  # TODO: was 404
+
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pagedata = [{k: v for k, v in zip(rownames, val)}]
+        return web.json_response(pagedata, status=200)
 
     async def getHWPageImage(self, request):  # should this use version too?
         data = await request.json()
@@ -515,13 +501,16 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
 
-        rval = self.server.getHWPageImage(data["test"], data["question"], data["order"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, val = self.server.getHWPageImage(
+            data["test"], data["question"], data["order"]
+        )
+        if not ok:
+            raise web.HTTPBadRequest(reason=val)  # TODO: was 404
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pagedata = [{k: v for k, v in zip(rownames, val)}]
+        return web.json_response(pagedata, status=200)
 
     async def getEXPageImage(self, request):
         data = await request.json()
@@ -532,28 +521,16 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
 
-        rval = self.server.getEXPageImage(data["test"], data["question"], data["order"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
-
-    async def getUnknownImage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "fileName"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        rval = self.server.getUnknownImage(data["fileName"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, val = self.server.getEXPageImage(
+            data["test"], data["question"], data["order"]
+        )
+        if not ok:
+            raise web.HTTPBadRequest(reason=val)  # TODO: was 404
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pagedata = [{k: v for k, v in zip(rownames, val)}]
+        return web.json_response(pagedata, status=200)
 
     async def getDiscardImage(self, request):
         data = await request.json()
@@ -584,44 +561,6 @@ class UploadHandler:
             return web.FileResponse(rval[1], status=200)  # all fine
         else:
             return web.Response(status=404)
-
-    # @route.get("/admin/questionImages")
-    @authenticate_by_token_required_fields(["user", "test", "question"])
-    def getQuestionImages(self, data, request):
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        ok, filenames = self.server.getQuestionImages(data["test"], data["question"])
-        if not ok:
-            # 2nd return value is error message in this case
-            raise web.HTTPNotFound(reason=filenames)
-        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
-        with MultipartWriter("images") as mpwriter:
-            mpwriter.append(str(len(filenames)))
-            for f in filenames:
-                with open(f, "rb") as fh:
-                    b = fh.read()
-                mpwriter.append(b)
-            return web.Response(body=mpwriter, status=200)
-
-    # @routes.get("/admin/testImages")
-    @authenticate_by_token_required_fields(["user", "test"])
-    def getAllTestImages(self, data, request):
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        ok, filenames = self.server.getAllTestImages(data["test"])
-        if not ok:
-            # 2nd return value is error message in this case
-            raise web.HTTPNotFound(reason=filenames)
-        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
-        with MultipartWriter("images") as mpwriter:
-            mpwriter.append(str(len(filenames)))
-            for f in filenames:
-                with open(f, "rb") as fh:
-                    b = fh.read()
-                mpwriter.append(b)
-            return web.Response(body=mpwriter, status=200)
 
     async def checkTPage(self, request):
         data = await request.json()
@@ -695,8 +634,7 @@ class UploadHandler:
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authentication, or 403 is not manager.  406 if we
-                can't do the move due to users logged in.  409 in other
+                401 for authentication, or 403 is not manager. 409 in other
                 such as test number or page number do not exist.
         """
         data = await request.json()
@@ -715,9 +653,6 @@ class UploadHandler:
         if status:
             assert msg is None
             return web.json_response(code, status=200)  # all fine
-        if code == "owners":
-            log.warn(msg)
-            raise web.HTTPNotAcceptable(reason=msg)
         if code == "notfound":
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
@@ -740,8 +675,7 @@ class UploadHandler:
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authentication, or 403 is not manager.  406 if we
-                can't do the move due to users logged in.  409 if paper
+                401 for authentication, or 403 is not manager. 409 if paper
                 number or question number do not exist (e.g., out of range).
         """
         data = await request.json()
@@ -759,9 +693,6 @@ class UploadHandler:
         )
         if status:
             return web.Response(status=200)  # all fine
-        if code == "owners":
-            log.warn(msg)
-            raise web.HTTPNotAcceptable(reason=msg)
         if code == "notfound":
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
@@ -784,8 +715,7 @@ class UploadHandler:
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authentication, or 403 is not manager.  406 if we
-                can't do the move due to users logged in.   409 if paper
+                401 for authentication, or 403 is not manager. 409 if paper
                 number or question number do not exist (e.g., out of range).
                 Also, 409 if one or more questions not scanned (so cannot
                 attach extra page).  This is important as otherwise we can
@@ -807,9 +737,6 @@ class UploadHandler:
         )
         if status:
             return web.Response(status=200)
-        if code == "owners":
-            log.warn(msg)
-            raise web.HTTPNotAcceptable(reason=msg)
         if code == "notfound":
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
@@ -838,9 +765,6 @@ class UploadHandler:
         )
         if status:
             return web.Response(status=200)  # all fine
-        if code == "owners":
-            log.warn(msg)
-            raise web.HTTPNotAcceptable(reason=msg)
         if code == "notfound":
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
@@ -863,19 +787,13 @@ class UploadHandler:
             return web.Response(status=404)
 
     @authenticate_by_token_required_fields(["user", "version_map"])
-    def populateExamDatabase(self, data, request):
-        """Instruct the server to generate paper data in the database.
-
-        TODO: maybe the api call should just be for one row of the database.
-        """
+    def initialiseExamDatabase(self, data, request):
+        """Instruct the server to generate paper data in the database."""
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
             raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
-
-        # TODO: talking to DB directly is not design we use elsewhere: call helper?
-        from plom.db import buildExamDatabaseFromSpec
 
         if len(data["version_map"]) == 0:
             vmap = None
@@ -883,15 +801,54 @@ class UploadHandler:
             vmap = undo_json_packing_of_version_map(data["version_map"])
 
         try:
-            r, summary = buildExamDatabaseFromSpec(spec, self.server.DB, vmap)
+            new_vmap = self.server.initialiseExamDatabase(spec, vmap)
         except ValueError:
             raise web.HTTPConflict(
                 reason="Database already present: not overwriting"
             ) from None
-        if r:
-            return web.Response(text=summary, status=200)
-        else:
-            raise web.HTTPInternalServerError(text=summary)
+
+        return web.json_response(new_vmap, status=200)
+
+    @authenticate_by_token_required_fields(["user", "test_number", "vmap_for_test"])
+    def appendTestToExamDatabase(self, data, request):
+        """Append given test to database using given version map.
+
+        Returns:
+            web.Response: 200 on success and a status message summarizing
+                the newly created row.
+                400 for server does not have spec.
+                401 for authentication, or 403 if not manager.
+                406 (unacceptable) for problems with version map or spec.
+                409 (conflict) for row already exists or otherwise cannot
+                be created.
+                500 for unexpected errors.
+        """
+        if not data["user"] == "manager":
+            raise web.HTTPForbidden(reason="Not manager")
+        spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
+
+        # explicitly cast incoming vmap to ints
+        try:
+            vmap = {int(q): int(v) for q, v in data["vmap_for_test"].items()}
+        except (TypeError, ValueError) as e:
+            raise web.HTTPNotAcceptable(
+                reason=f"Could not convert version map to int: {str(e)}"
+            ) from None
+
+        try:
+            summary = self.server.appendTestToExamDatabase(
+                spec, data["test_number"], vmap
+            )
+        except ValueError as e:
+            raise web.HTTPConflict(reason=str(e)) from None
+        except KeyError as e:
+            raise web.HTTPNotAcceptable(reason=str(e)) from None
+        except RuntimeError as e:
+            # uneasy about explicit 500, but these are unexpected
+            raise web.HTTPInternalServerError(reason=str(e)) from None
+        return web.Response(text=summary, status=200)
 
     @authenticate_by_token_required_fields([])
     def getGlobalPageVersionMap(self, data, request):
@@ -912,7 +869,7 @@ class UploadHandler:
             raise web.HTTPNotFound(reason="Server has no spec so no version map")
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
-            ver = self.server.DB.getPageVersions(paper_idx)
+            ver = self.server.getPageVersions(paper_idx)
             if not ver:
                 _msg = "There is no version map: have you built the database?"
                 log.warn(_msg)
@@ -926,11 +883,11 @@ class UploadHandler:
 
         Returns:
             dict: keyed by question number.  Note keys will be strings b/c
-                of json limitations; you may need to convert back to int.
-                Fails with 409 if there is no version map.
+            of json limitations; you may need to convert back to int.
+            Fails with 409 if there is no such paper.
         """
         paper_idx = request.match_info["papernum"]
-        vers = self.server.DB.getQuestionVersions(paper_idx)
+        vers = self.server.get_question_versions(paper_idx)
         if not vers:
             _msg = f"paper {paper_idx} does not (yet?) have a version map"
             log.warn(_msg)
@@ -943,24 +900,13 @@ class UploadHandler:
 
         Returns:
             dict: dict of dicts, keyed first by paper index then by
-                question number.  Both keys will become strings b/c of
-                json limitations; you may need to convert back to int.
-                Fails with 404/409 if there is no version map: 404 if
-                the server has no spec and 409 if the server has a spec
-                but the version map database has not been built yet.
+            question number.  Both keys will become strings b/c of
+            json limitations; you may need to convert back to int.
+            If the server does not yet have any database, the version
+            map will be empty.
         """
-        spec = self.server.testSpec
-        if not spec:
-            raise web.HTTPNotFound(reason="Server has no spec so no version map")
-        vers = {}
-        for paper_idx in range(1, spec["numberToProduce"] + 1):
-            ver = self.server.DB.getQuestionVersions(paper_idx)
-            if not ver:
-                _msg = "There is no version map: have you built the database?"
-                log.warn(_msg)
-                raise web.HTTPConflict(reason=_msg)
-            vers[paper_idx] = ver
-        return web.json_response(vers, status=200)
+        vermap = self.server.get_all_question_versions()
+        return web.json_response(vermap, status=200)
 
     # Some more bundle things
 
@@ -1037,14 +983,11 @@ class UploadHandler:
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
         router.add_get("/admin/scannedEXPage", self.getEXPageImage)
-        router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
+        router.add_get("/admin/unknownPages", self.getUnknownPages)
         router.add_get("/admin/discardNames", self.getDiscardNames)
         router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
-        router.add_get("/admin/unknownImage", self.getUnknownImage)
         router.add_get("/admin/discardImage", self.getDiscardImage)
         router.add_get("/admin/collidingImage", self.getCollidingImage)
-        router.add_get("/admin/questionImages", self.getQuestionImages)
-        router.add_get("/admin/testImages", self.getAllTestImages)
         router.add_get("/admin/checkTPage", self.checkTPage)
         router.add_delete("/admin/unknownImage", self.removeUnknownImage)
         router.add_delete("/admin/collidingImage", self.removeCollidingImage)
@@ -1053,7 +996,8 @@ class UploadHandler:
         router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
-        router.add_put("/admin/populateDB", self.populateExamDatabase)
+        router.add_put("/admin/initialiseDB", self.initialiseExamDatabase)
+        router.add_put("/admin/appendTestToDB", self.appendTestToExamDatabase)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get(
             "/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap

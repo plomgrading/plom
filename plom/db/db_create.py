@@ -125,6 +125,68 @@ def nextqueue_position(self):
     return lastPos + 1
 
 
+# to create one test of the db at a time
+
+
+def addSingleTestToDB(self, spec, t, vmap_for_test):
+    """Build a single test in the data base from spc and version_map
+
+    Arguments:
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
+        t (int): the test number to build
+        vmap_for_test (dict): version map indexed by question number for
+            the given test. It is a slice of the global version_map
+
+    Returns:
+        (bool, str): where bool is true if succuess, and str is a
+            status string, one line per test, ending with an error
+            if failure.
+
+    Raises:
+        KeyError: problems with version map or spec
+        ValueError: attempt to create test n without test n-1.
+            or attempts to create a test that already exists.
+        RuntimeError: unexpected error, for example we were able
+            to create the test but not the question groups
+            associated with it.
+    """
+    # Cannot create test n before test n-1 (yet: Issue #1745)
+    if t > 1:
+        if Test.get_or_none(test_number=t - 1) is None:
+            raise ValueError(f"Error creating test {t} without test {t-1}")
+
+    status = f"Add DB row for paper {t:04}:"
+    if not self.createTest(t):
+        raise ValueError(f"A DB row for paper {t:04} already exists")
+    if not self.createIDGroup(t, [spec["idPage"]]):
+        raise RuntimeError(f"Failed to create idgroup for paper {t:04}")
+    status += " ID"
+
+    if not self.createDNMGroup(t, spec["doNotMarkPages"]):
+        raise RuntimeError(f"Failed to create DoNotMark-group for paper {t:04}")
+    status += " DNM"
+
+    for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
+        gs = str(g + 1)  # now a str and 1,2,3,...
+        v = vmap_for_test[g + 1]
+        if v not in range(1, spec["numberOfVersions"] + 1):
+            raise KeyError(f"problem with version map for Q{gs}: v={v} out of range")
+        select = spec["question"][gs]["select"]
+        if select == "fix":
+            vstr = "f{}".format(v)
+            if v != 1:
+                raise KeyError(f"v={v} but select=fix question only allows v=1")
+        elif select == "shuffle":
+            vstr = "v{}".format(v)
+        else:
+            raise KeyError(f'Invalid spec: Q{gs} unexpected select="{select}"')
+        if not self.createQGroup(t, g + 1, v, spec["question"][gs]["pages"]):
+            raise RuntimeError(f"Failed to create Question {gs} ver {v}")
+        status += f" Q{gs}{vstr}"
+
+    return status
+
+
 def createTest(self, t):
     with plomdb.atomic():
         try:
@@ -294,7 +356,7 @@ def getPageVersions(self, t):
     return {p.page_number: p.version for p in tref.tpages}
 
 
-def getQuestionVersions(self, t):
+def get_question_versions(self, t):
     """Get the mapping between question numbers and versions for a test.
 
     Args:
@@ -302,12 +364,28 @@ def getQuestionVersions(self, t):
 
     Returns:
         dict: keys are question numbers (int) and value is the question
-            version (int), or empty dict if there was no such paper.
+        version (int), or empty dict if there was no such paper.
     """
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         return {}
     return {q.question: q.version for q in tref.qgroups}
+
+
+def get_all_question_versions(self):
+    """Get the mapping between question numbers and versions for all tests.
+
+    Returns:
+        dict: a dict of dicts, where the outer keys are test number (int),
+        the inner keys are question numbers (int), and values are the
+        question version (int).  If there are no papers yet, return an
+        empty dict.
+    """
+    qvmap = {}
+    for tref in Test.select():
+        tn = tref.test_number
+        qvmap[tn] = {q.question: q.version for q in tref.qgroups}
+    return qvmap
 
 
 def id_paper(self, paper_num, user_name, sid, sname):

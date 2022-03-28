@@ -5,14 +5,16 @@
 from pathlib import Path
 
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QGuiApplication, QBrush, QImageReader, QPainter, QPixmap
+from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtGui import QBrush, QImageReader, QPainter, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
     QGraphicsScene,
     QGraphicsView,
-    QGridLayout,
-    QPushButton,
+    QHBoxLayout,
+    QToolButton,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -25,62 +27,141 @@ class ImageViewWidget(QWidget):
 
     args:
         parent (QWidget): the parent container for this widget.
-        fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
-            `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
-            for a single image.  Unclear whether the caller must maintain
+        image_data (None/list[dict]/list[str/pathlib.Path]/str/pathlib.Path):
+            each dict has keys 'filename' and 'orientation' (and
+            possibly others).
+            Currently every image is used and the list order
+            determines the order.  That is subject to change.
+            Can also be a list of `pathlib.Path` or `str` of image
+            filenames.  Can also be a single `str`/`pathlib.Path`,
+            for a single image.
+            Unclear whether the caller must maintain
             these image files on disc or if the QPixmap will reads it once
             and stores it.  See Issue #1842.  For now, safest to assume
             you must maintain it.
-        has_reset_button (bool): whether to include a reset zoom button,
-            default: True.
+        has_controls (bool): include UI elements for zooming etc.
+            Default: True.
+        has_rotate_controls (bool): include UI elements for rotation.
+            Default: True.  Does nothing unless `has_controls` is True.
         compact (bool): whether to include a margin (default True) or
             not.  Correct choice will depend on parent but is probably
             only cosmetic.
+        dark_background (bool): sometimes its useful to have some
+            higher-constrast matting around images.  Default: False.
     """
 
-    def __init__(self, parent, fnames=None, has_reset_button=True, compact=True):
+    def __init__(
+        self,
+        parent,
+        image_data=None,
+        *,
+        has_controls=True,
+        has_rotate_controls=True,
+        compact=True,
+        dark_background=False,
+    ):
         super().__init__(parent)
-        # Grab an examview widget (QGraphicsView)
-        self.view = ExamView(fnames)
-        # Render nicely
+        # Grab an examview widget (a interactive subclass of QGraphicsView)
+        self.view = _ExamView(image_data, dark_background=dark_background)
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        if has_reset_button:
-            resetB = QPushButton("&reset view")
-            resetB.clicked.connect(self.resetView)
-            # return won't click the button by default
-            resetB.setAutoDefault(False)
-        grid = QGridLayout()
+        grid = QVBoxLayout()
         if compact:
             grid.setContentsMargins(0, 0, 0, 0)
-        grid.addWidget(self.view, 1, 1, 10, 4)
-        if has_reset_button:
-            grid.addWidget(resetB, 20, 1)
+        grid.addWidget(self.view, 1)
+        grid.setSpacing(3)
+        self.zoomLockB = None
+        if has_controls:
+            resetB = QToolButton()
+            # resetB.setText("\N{Leftwards Arrow To Bar Over Rightwards Arrow To Bar}")
+            # resetB.setText("\N{Up Down Black Arrow}")
+            resetB.setText("reset")
+            resetB.setToolTip("reset zoom")
+            resetB.clicked.connect(self.resetView)
+            zoomInB = QToolButton()
+            zoomInB.setText("\N{Heavy Plus Sign}")
+            zoomInB.setToolTip("zoom in")
+            zoomInB.clicked.connect(self.zoomIn)
+            zoomOutB = QToolButton()
+            zoomOutB.setText("\N{Heavy Minus Sign}")
+            zoomOutB.setToolTip("zoom out")
+            zoomOutB.clicked.connect(self.zoomOut)
+            zoomLockB = QToolButton()
+            zoomLockB.setText(" \N{Lock} ")
+            zoomLockB.setCheckable(True)
+            zoomLockB.setChecked(False)
+            zoomLockB.clicked.connect(self.zoomLockToggle)
+            self.zoomLockB = zoomLockB
+            self._zoomLockUpdateTooltip()
+            buttons = QHBoxLayout()
+            buttons.setContentsMargins(0, 0, 0, 0)
+            buttons.setSpacing(3)
+            buttons.addStretch(1)
+            buttons.addWidget(resetB)
+            buttons.addWidget(zoomInB)
+            buttons.addWidget(zoomOutB)
+            buttons.addWidget(zoomLockB)
+            if has_rotate_controls:
+                rotateB_cw = QToolButton()
+                rotateB_cw.setText("\N{Clockwise Open Circle Arrow}")
+                rotateB_cw.setToolTip("rotate clockwise")
+                rotateB_cw.clicked.connect(lambda: self.view.rotateImage(90))
+                rotateB_ccw = QToolButton()
+                rotateB_ccw.setText("\N{Anticlockwise Open Circle Arrow}")
+                rotateB_ccw.setToolTip("rotate counter-clockwise")
+                rotateB_ccw.clicked.connect(lambda: self.view.rotateImage(-90))
+                buttons.addSpacing(12)
+                buttons.addWidget(rotateB_cw)
+                buttons.addWidget(rotateB_ccw)
+            buttons.addStretch(1)
+            grid.addLayout(buttons)
+
         self.setLayout(grid)
-        # Store the current exam view as a qtransform
-        self.viewTrans = self.view.transform()
-        self.dx = self.view.horizontalScrollBar().value()
-        self.dy = self.view.verticalScrollBar().value()
 
-    def updateImage(self, fnames):
+    def updateImage(self, image_data):
         """Pass file(s) to the view to update the image"""
-        # first store the current view transform and scroll values
-        self.viewTrans = self.view.transform()
-        self.dx = self.view.horizontalScrollBar().value()
-        self.dy = self.view.verticalScrollBar().value()
-        self.view.updateImages(fnames)
+        self.view.updateImages(image_data)
 
-        # re-set the view transform and scroll values
-        self.view.setTransform(self.viewTrans)
-        self.view.horizontalScrollBar().setValue(self.dx)
-        self.view.verticalScrollBar().setValue(self.dy)
+    def get_orientation(self):
+        """Report the sum of user-performed rotations."""
+        return self.view.theta
 
     def resizeEvent(self, whatev):
         """Seems to ensure image gets resize on window resize."""
+        if self.zoomLockB and self.zoomLockB.isChecked():
+            return
         self.view.resetView()
 
     def resetView(self):
+        if self.zoomLockB:
+            self.zoomLockB.setChecked(False)
+            self._zoomLockUpdateTooltip()
         self.view.resetView()
+
+    def zoomIn(self):
+        self.view.zoomIn()
+        self.zoomLockSetOn()
+
+    def zoomOut(self):
+        self.view.zoomOut()
+        self.zoomLockSetOn()
+
+    def zoomLockToggle(self):
+        if self.zoomLockB and not self.zoomLockB.isChecked():
+            # refit the view on untoggle
+            self.resetView()
+        self._zoomLockUpdateTooltip()
+
+    def zoomLockSetOn(self):
+        if self.zoomLockB:
+            self.zoomLockB.setChecked(True)
+            self._zoomLockUpdateTooltip()
+
+    def _zoomLockUpdateTooltip(self):
+        if self.zoomLockB.isChecked():
+            self.zoomLockB.setToolTip("zoom: locked")
+        else:
+            self.zoomLockB.setToolTip("zoom: fit on window resize")
 
     def forceRedrawOrSomeBullshit(self):
         """Horrid workaround when we cannot get proper redraws.
@@ -95,23 +176,24 @@ class ImageViewWidget(QWidget):
         QTimer.singleShot(32, self.view.resetView)
 
 
-class ExamView(QGraphicsView):
+class _ExamView(QGraphicsView):
     """Display images with some interaction: click-to-zoom/unzoom
 
     args:
-        fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
-            `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
-            for a single image.  Unclear whether the caller must maintain
-            these image files on disc or if the QPixmap will reads it once
-            and stores it.  See Issue #1842.  For now, safest to assume
-            you must maintain it.
+        image_data (None/list[dict]/list[str/pathlib.Path]/str/pathlib.Path):
+            each dict has keys 'filename' and 'orientation' (and
+            possibly others).
+            Currently every image is used and the list order
+            determines the order.  That is subject to change.
+            Can also be a list of `pathlib.Path` or `str` of image
+            filenames.  Can also be a single `str`/`pathlib.Path`,
+            for a single image.
         dark_background (bool): default False which means follow theme,
             or pass true to force a darker coloured background.
     """
 
-    def __init__(self, fnames, dark_background=False):
+    def __init__(self, image_data, dark_background=False):
         super().__init__()
-        # set background
         if dark_background:
             self.setBackgroundBrush(QBrush(Qt.darkCyan))
         else:
@@ -122,35 +204,62 @@ class ExamView(QGraphicsView):
         self.scene = QGraphicsScene()
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
-        self.updateImages(fnames)
+        # we track the total user-performed rotations in case caller is interested
+        self.theta = 0
+        self.updateImages(image_data)
 
-    def updateImages(self, fnames):
-        """Update the images new ones from filenames
+    def updateImages(self, image_data):
+        """Update the images new ones from filenames and optionally metadata.
 
         Args:
-            fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
-                `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
+            image_data (None/list[dict]/list[str/pathlib.Path]/str/pathlib.Path):
+                each dict has keys 'filename' and 'orientation' (and
+                possibly others that are unused).  If 'filename' isn't
+                present, we check for 'local_filename' instead.
+                Currently every image is used and the list order
+                determines the order.  That is subject to change.
+                Can also be a list of `pathlib.Path` or `str` of image
+                filenames.  Can also be a single `str`/`pathlib.Path`,
                 for a single image.
 
         Raises:
             ValueError: an image did not load, for example if was empty.
+            KeyError: dict did not have appropriate keys.
         """
-        if isinstance(fnames, (str, Path)):
-            fnames = [fnames]
+        if isinstance(image_data, (str, Path)):
+            image_data = [image_data]
         for img in self.imageGItem.childItems():
             self.imageGItem.removeFromGroup(img)
             self.scene.removeItem(img)
         img = None
 
-        if fnames is not None:
+        # we may use the viewing angle instead of rotating the item so reset
+        # if we have new images, even if they have non-zero orientation
+        self.resetTransform()
+
+        if image_data is not None:
             x = 0
-            for (n, fn) in enumerate(fnames):
-                qir = QImageReader(str(fn))
+            for data in image_data:
+                if not isinstance(data, dict):
+                    data = {"filename": data, "orientation": 0}
+                filename = data.get("filename")
+                if filename is None:
+                    filename = data.get("local_filename")
+                if filename is None:
+                    raise KeyError(
+                        f"Cannot find 'filename' nor 'local_filename' in {data}"
+                    )
+                qir = QImageReader(str(filename))
                 # deal with jpeg exif rotations
                 qir.setAutoTransform(True)
                 pix = QPixmap(qir.read())
                 if pix.isNull():
-                    raise ValueError(f"Could not read an image from {fn}")
+                    raise ValueError(f"Could not read an image from {filename}")
+                rot = QTransform()
+                # if more than one image, its not well-defined which one theta gets
+                self.theta = data["orientation"]
+                rot.rotate(data["orientation"])
+                pix = pix.transformed(rot)
                 pixmap = QGraphicsPixmapItem(pix)
                 pixmap.setTransformationMode(Qt.SmoothTransformation)
                 pixmap.setPos(x, 0)
@@ -181,10 +290,18 @@ class ExamView(QGraphicsView):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            self.scale(0.8, 0.8)
+            self.zoomOut()
         else:
-            self.scale(1.25, 1.25)
+            self.zoomIn()
         self.centerOn(event.pos())
+        # Unpleasant to grub in parent but want mouse events to lock zoom
+        self.parent().zoomLockSetOn()
+
+    def zoomOut(self):
+        self.scale(0.8, 0.8)
+
+    def zoomIn(self):
+        self.scale(1.25, 1.25)
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
@@ -192,4 +309,10 @@ class ExamView(QGraphicsView):
 
     def rotateImage(self, dTheta):
         self.rotate(dTheta)
-        self.resetView()
+        self.theta += dTheta
+        if self.theta == 360:
+            self.theta = 0
+        if self.theta == -90:
+            self.theta = 270
+        # Unpleasant to grub in parent but want to unlock zoom not just refit
+        self.parent().resetView()

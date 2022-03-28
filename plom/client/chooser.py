@@ -116,7 +116,7 @@ class Chooser(QDialog):
         # Hide button used for directly opening manager
         # self.ui.manageButton.clicked.connect(self.run_manager)
         self.ui.manageButton.setVisible(False)
-        self.ui.closeButton.clicked.connect(self.closeWindow)
+        self.ui.closeButton.clicked.connect(self.close)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
         self.ui.getServerInfoButton.clicked.connect(self.getInfo)
@@ -351,11 +351,10 @@ class Chooser(QDialog):
                 "Error msg: {}.".format(cfgfile, e),
             ).exec_()
 
-    def closeWindow(self):
+    def closeEvent(self, event):
         self.saveDetails()
         if self.messenger:
             self.messenger.stop()
-        self.close()
 
     def setFont(self, n):
         """Adjust font size of user interface.

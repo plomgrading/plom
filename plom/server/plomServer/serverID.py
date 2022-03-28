@@ -3,14 +3,17 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
+import csv
 from datetime import datetime
 import json
 import logging
 import os
 import shutil
 import subprocess
+import time
 
 from plom import specdir
+from plom.idreader.assign_prob import assemble_cost_matrix, lap_solver
 
 
 log = logging.getLogger("servID")
@@ -160,6 +163,7 @@ def IDputPredictions(self, predictions, classlist, spec):
     for test, sid in predictions:
         if int(sid) not in ids:
             return [False, f"ID {sid} not in classlist"]
+        # TODO: Issue #1745: maybe check test is in database instead?
         if test < 0 or test > spec["numberToProduce"]:
             return [False, f"Test {test} outside range"]
 
@@ -190,24 +194,115 @@ def IDreviewID(self, test_number):
     return self.DB.IDreviewID(test_number)
 
 
-def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
+def predict_id_lap_solver(self):
+    """Predict IDs by matching unidentified papers against the classlist via linear assignment problem.
+
+    Get the classlist and remove all people that are already IDed
+    against a paper.  Get the list of unidentified papers.  Get the
+    previously-computed probabilities of images being each digit.
+
+    Probably some cannot be read: drop those from the list of unidenfied
+    papers.
+
+    Match the two.
+
+    TODO: consider doing this client-side, although Manager tool would
+    then depend on lapsolver or perhaps SciPy's linear_sum_assignment
+
+    TODO: arguments to control which papers to run on...?
+
+    Returns:
+        str: status text, appropriate to show to a user.
+
+    Raises:
+        RuntimeError: id reader still running
+        FileNotFoundError: no probability data
+        IndexError: something is zero, degenerate assignment problem.
+    """
+    lock_file = specdir / "IDReader.lock"
+    heatmaps_file = specdir / "id_prob_heatmaps.json"
+
+    if lock_file.exists():
+        _ = "ID reader lock present (still running?); cannot perform matching"
+        log.info(_)
+        raise RuntimeError(_)
+
+    t = time.process_time()
+
+    # implicitly raises FileNotFoundError if no heatmap
+    with open(heatmaps_file, "r") as fh:
+        probabilities = json.load(fh)
+    # ugh, undo Json mucking our int keys into str
+    probabilities = {int(k): v for k, v in probabilities.items()}
+
+    log.info("Getting the classlist")
+    sids = []
+    with open(specdir / "classlist.csv", newline="") as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=",")
+        next(csv_reader, None)  # skip the header
+        for row in csv_reader:
+            sids.append(row[0])
+
+    status = f"Original class list has {len(sids)} students.\n"
+    X = self.DB.IDgetIdentifiedTests()
+    for x in X:
+        try:
+            sids.remove(x[1])
+        except ValueError:
+            pass
+    unidentified_papers = self.DB.IDgetUnidentifiedTests()
+    status += "\nAssignment problem: "
+    status += f"{len(unidentified_papers)} unidentified papers to match with "
+    status += f"{len(sids)} unused names in the classlist."
+
+    # exclude papers for which we don't have probabilities
+    papers = [n for n in unidentified_papers if n in probabilities]
+    if len(papers) < len(unidentified_papers):
+        status += f"\nNote: {len(unidentified_papers) - len(papers)} papers "
+        status += f"were not autoread; have {len(papers)} papers to match.\n"
+
+    if len(papers) == 0 or len(sids) == 0:
+        raise IndexError(
+            f"Assignment problem is degenerate: {len(papers)} unidentified "
+            f"machine-read papers and {len(sids)} unused students."
+        )
+
+    status += f"\nTime loading data: {time.process_time() - t:.02} seconds.\n"
+
+    status += "\nBuilding cost matrix..."
+    t = time.process_time()
+    cost_matrix = assemble_cost_matrix(papers, sids, probabilities)
+    status += f" done in {time.process_time() - t:.02} seconds.\n"
+
+    status += "\nSolving assignment problem..."
+    t = time.process_time()
+    prediction_pairs = lap_solver(papers, sids, cost_matrix)
+    status += f" done in {time.process_time() - t:.02} seconds."
+
+    log.info("Saving results in predictionlist.csv")
+    with open(specdir / "predictionlist.csv", "w") as fh:
+        fh.write("test, id\n")
+        for test_number, student_ID in prediction_pairs:
+            fh.write("{}, {}\n".format(test_number, student_ID))
+    return status
+
+
+def run_id_reader(self, top, bottom, ignore_stamp):
     """Run the ML prediction model on the papers and saves the information.
 
     Args:
-        rectangle (list): A list of coordinates if the format of:
-            [top_left_x, top_left_y, bottom_right_x, bottom_right_y]
-        database_reference_number (int): Number of the file which the
-            cropped rectangle was extracted from.
+        top (float): where to crop in `[0, 1]`.
+        bottom (float): where to crop in `[0, 1]`.
         ignore_stamp (bool): Whether to ignore the timestamp when
             deciding whether to skip the run.
 
     Returns:
         list: A list with first value boolean and second value boolean or a
-            message string of the format:
-            [True, False]: it is already running.
-            [False, str]: prediction already exists, `str` is the
-                timestamp of the last time prediction run.
-            [True, True]: we started a new prediction run.
+        message string of the format:
+        `[True, False]`: it is already running.
+        `[False, str]`: prediction already exists, `str` is the
+        timestamp of the last time prediction run.
+        `[True, True]`: we started a new prediction run.
     """
     lock_file = specdir / "IDReader.lock"
     timestamp = specdir / "IDReader.timestamp"
@@ -220,7 +315,7 @@ def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
         if ignore_stamp is False:
             with open(timestamp, "r") as fh:
                 txt = json.load(fh)
-                return [False, txt]
+            return [False, txt]
         else:
             os.unlink(timestamp)
 
@@ -230,7 +325,7 @@ def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
 
     # dump this as json / lock_file for subprocess to use in background.
     with open(lock_file, "w") as fh:
-        json.dump([test_image_dict, rectangle], fh)
+        json.dump([test_image_dict, {"crop_top": top, "crop_bottom": bottom}], fh)
     # make a timestamp
     last_run_timestamp = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
 
