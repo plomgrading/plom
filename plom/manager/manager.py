@@ -80,22 +80,19 @@ log = logging.getLogger("manager")
 class UserDialog(QDialog):
     """Simple dialog to enter username and password"""
 
-    def __init__(self, name=None, extant=[]):
-        super().__init__()
+    def __init__(self, parent, title, *, name=None, extant=[]):
+        super().__init__(parent)
         self.name = name
-        self.initUI()
-        if name is not None:
-            self.userLE.setEnabled(False)
-        self.extant = [
-            x.lower() for x in extant
-        ]  # put everything in lowercase to simplify checking.
+        # put everything in lowercase to simplify checking.
+        self.extant = [x.lower() for x in extant]
 
-    def initUI(self):
-        self.setWindowTitle("Please enter user")
+        self.setWindowTitle(title)
         self.userL = QLabel("Username:")
         self.pwL = QLabel("Password:")
         self.pwL2 = QLabel("and again:")
         self.userLE = QLineEdit(self.name)
+        if name is not None:
+            self.userLE.setEnabled(False)
         initialpw = simple_password()
         self.pwLE = QLineEdit(initialpw)
         # self.pwLE.setEchoMode(QLineEdit.Password)
@@ -125,7 +122,6 @@ class UserDialog(QDialog):
         grid.addWidget(self.cnB, 4, 1)
 
         self.setLayout(grid)
-        self.show()
 
     def togglePWShow(self):
         if self.pwCB.checkState() == Qt.Checked:
@@ -2007,7 +2003,7 @@ class Manager(QWidget):
 
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
-        cpwd = UserDialog(name=user)
+        cpwd = UserDialog(self, f'Change password for "{user}"', name=user)
         if cpwd.exec_() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(user, cpwd.password)
             ErrorMessage(rval[1]).exec_()
@@ -2019,7 +2015,7 @@ class Manager(QWidget):
             self.ui.userListTW.item(r, 0).text()
             for r in range(self.ui.userListTW.rowCount())
         ]
-        cpwd = UserDialog(name=None, extant=uList)
+        cpwd = UserDialog(self, "Create new user", name=None, extant=uList)
         if cpwd.exec_() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(cpwd.name, cpwd.password)
             ErrorMessage(rval[1]).exec_()
