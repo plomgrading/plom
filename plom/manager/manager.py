@@ -283,9 +283,11 @@ class TestStatus(QDialog):
 
 
 class ProgressBox(QGroupBox):
-    def __init__(self, parent, qu, v, stats):
-        super().__init__(parent)
-        self._parent = parent
+    def __init__(self, manager, qu, v, stats):
+        # This widget will be re-parented when its added to a layout
+        super().__init__()
+        # TODO: used to call a method of manager, instead use signal/slots?
+        self._manager = manager
         self.question = qu
         self.version = v
         self.setTitle("Q-{} V-{}".format(qu, v))
@@ -313,7 +315,6 @@ class ProgressBox(QGroupBox):
         grid.addWidget(self.vhB)
 
         self.setLayout(grid)
-        self.show()
         self.refresh(self.stats)
 
     def refresh(self, stats):
@@ -356,7 +357,7 @@ class ProgressBox(QGroupBox):
             self.lhL.setText("# Marked in last hour = N/A")
 
     def viewHist(self):
-        self._parent.viewMarkHistogram(self.question, self.version)
+        self._manager.viewMarkHistogram(self.question, self.version)
 
 
 class Manager(QWidget):
