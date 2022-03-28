@@ -231,8 +231,8 @@ class QVHistogram(QDialog):
 
 
 class TestStatus(QDialog):
-    def __init__(self, nq, status):
-        super().__init__()
+    def __init__(self, parent, nq, status):
+        super().__init__(parent)
         self.status = status
         self.setWindowTitle("Status of test {}".format(self.status["number"]))
 
@@ -1374,7 +1374,7 @@ class Manager(QWidget):
         r = pvi[0].row()
         testNumber = int(self.ui.overallTW.item(r, 0).text())
         stats = self.msgr.RgetStatus(testNumber)
-        TestStatus(self.numberOfQuestions, stats).exec_()
+        TestStatus(self, self.numberOfQuestions, stats).exec_()
 
     def refreshOverallTab(self):
         self.ui.overallTW.clearContents()
