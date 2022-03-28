@@ -1610,9 +1610,6 @@ class Manager(QWidget):
             self.ui.tasksOutTW.setItem(r, 2, QTableWidgetItem(str(x[2])))
             r += 1
 
-    def todo(self, msg=""):
-        ErrorMessage("This is on our to-do list" + msg).exec_()
-
     ##################
     # review tab stuff
 
