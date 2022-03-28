@@ -1591,6 +1591,9 @@ class PageScene(QGraphicsScene):
         Raises:
             ValueError: invalid pickle data.
         """
+        # do this as a single undo macro.
+        self.undoStack.beginMacro("Unpickling scene items")
+
         # clear all items from scene.
         for X in self.items():
             if (
@@ -1627,6 +1630,8 @@ class PageScene(QGraphicsScene):
         # now make sure focus is cleared from every item
         for X in self.items():
             X.setFocus(False)
+        # finish the macro
+        self.undoStack.endMacro()
 
     def mousePressBox(self, event):
         """
