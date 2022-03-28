@@ -155,8 +155,9 @@ class UserDialog(QDialog):
 
 
 class QVHistogram(QDialog):
-    def __init__(self, q, v, hist):
-        super().__init__()
+    """A non-modal dialog showing histograms."""
+    def __init__(self, parent, q, v, hist):
+        super().__init__(parent)
         self.question = q
         self.version = v
         self.setWindowTitle("Histograms for question {} version {}".format(q, v))
@@ -1586,7 +1587,7 @@ class Manager(QWidget):
 
     def viewMarkHistogram(self, question, version):
         mhist = self.msgr.getMarkHistogram(question, version)
-        QVHistogram(question, version, mhist).exec_()
+        QVHistogram(self, question, version, mhist).exec_()
 
     def initOutTab(self):
         self.ui.tasksOutTW.setColumnCount(3)
