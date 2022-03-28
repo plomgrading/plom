@@ -292,7 +292,6 @@ class ProgressBox(QGroupBox):
         self.version = v
         self.setTitle("Q-{} V-{}".format(qu, v))
 
-        self.stats = stats
         grid = QVBoxLayout()
         self.nscL = QLabel()
         grid.addWidget(self.nscL)
@@ -310,48 +309,44 @@ class ProgressBox(QGroupBox):
         self.pb = QProgressBar()
         self.pb.setFormat("%v / %m")
         grid.addWidget(self.pb)
-        self.vhB = QPushButton("View histograms")
-        self.vhB.clicked.connect(self.viewHist)
-        grid.addWidget(self.vhB)
+        vhB = QPushButton("View histograms")
+        vhB.clicked.connect(self.viewHist)
+        grid.addWidget(vhB)
 
         self.setLayout(grid)
-        self.refresh(self.stats)
+        self.refresh(stats)
 
     def refresh(self, stats):
-        self.stats = stats
-
         self.setEnabled(True)
         self.setVisible(True)
-        self.pb.setMaximum(self.stats["NScanned"])
-        self.pb.setValue(self.stats["NMarked"])
-        self.nscL.setText("# Scanned = {}".format(self.stats["NScanned"]))
-        self.nmkL.setText("# Marked = {}".format(self.stats["NMarked"]))
+        self.pb.setMaximum(stats["NScanned"])
+        self.pb.setValue(stats["NMarked"])
+        self.nscL.setText("# Scanned = {}".format(stats["NScanned"]))
+        self.nmkL.setText("# Marked = {}".format(stats["NMarked"]))
 
-        if self.stats["NScanned"] == 0:
+        if stats["NScanned"] == 0:
             self.setEnabled(False)
             self.setVisible(False)
             return
-        if self.stats["NMarked"] > 0:
+        if stats["NMarked"] > 0:
             self.avgL.setText(
                 "Mean : Median : Mode = {:0.2f} : {} : {}".format(
-                    self.stats["avgMark"],
-                    self.stats["medianMark"],
-                    self.stats["modeMark"],
+                    stats["avgMark"], stats["medianMark"], stats["modeMark"]
                 )
             )
             self.mmfL.setText(
                 "Min : Max : Full = {} : {} : {}".format(
-                    self.stats["minMark"], self.stats["maxMark"], self.stats["fullMark"]
+                    stats["minMark"], stats["maxMark"], stats["fullMark"]
                 )
             )
             self.mtL.setText(
-                "Avg marking time = {:0.1f}s".format(self.stats["avgMTime"])
+                "Avg marking time = {:0.1f}s".format(stats["avgMTime"])
             )
-            self.lhL.setText("# Marked in last hour = {}".format(self.stats["NRecent"]))
+            self.lhL.setText("# Marked in last hour = {}".format(stats["NRecent"]))
         else:
             self.avgL.setText("Mean : Median : Mode  = N/A")
             self.mmfL.setText(
-                "Min : Max : Full = N/A : N/A : {}".format(self.stats["fullMark"])
+                "Min : Max : Full = N/A : N/A : {}".format(stats["fullMark"])
             )
             self.mtL.setText("Avg marking time = N/A")
             self.lhL.setText("# Marked in last hour = N/A")
