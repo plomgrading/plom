@@ -128,6 +128,7 @@ class Annotator(QWidget):
 
         # declares some instance vars
         self.cursorBox = None
+        self.cursorCrop = None
         self.cursorCross = None
         self.cursorDelete = None
         self.cursorEllipse = None
@@ -529,6 +530,7 @@ class Annotator(QWidget):
         self.cursorBox = QCursor(_pixmap_from("box.png"), 4, 4)
         self.cursorEllipse = QCursor(_pixmap_from("ellipse.png"), 4, 4)
         self.cursorCross = QCursor(_pixmap_from("cross.png"), 4, 4)
+        self.cursorCrop = QCursor(_pixmap_from("crop.png"), 4, 4)
         self.cursorDelete = QCursor(_pixmap_from("delete.png"), 4, 4)
         self.cursorLine = QCursor(_pixmap_from("line.png"), 4, 4)
         self.cursorPen = QCursor(_pixmap_from("pen.png"), 4, 4)
@@ -1128,7 +1130,7 @@ class Annotator(QWidget):
         self.uncropShortCut.activated.connect(self.uncrop_region)
 
     def to_crop_mode(self):
-        self.setToolMode("crop", self.cursorDelete)
+        self.setToolMode("crop", self.cursorCrop)
 
     def uncrop_region(self):
         self.scene.uncrop_underlying_images()
