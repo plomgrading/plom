@@ -35,6 +35,7 @@ from PyQt5.QtWidgets import (
     QGraphicsSceneDragDropEvent,
     QGraphicsTextItem,
     QGraphicsItemGroup,
+    QGraphicsItem,
     QMessageBox,
     QUndoStack,
 )
@@ -71,6 +72,7 @@ from .tools import (
     CommandPen,
     CommandHighlight,
     CommandPenArrow,
+    CommandCrop,
 )
 from .elastics import (
     which_horizontal_step,
@@ -193,9 +195,16 @@ class UnderlyingRect(QGraphicsRectItem):
     def __init__(self, rect):
         super().__init__()
         self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
-        self.setBrush(QBrush(Qt.white))
+        self.setBrush(QBrush(Qt.green))
         self.setRect(rect)
         self.setZValue(-10)
+
+    def croppit(self, crop_rect):
+        marg_rect = self.mapRectFromScene(crop_rect)
+        marg = 512  # at some point in future make some function of image width/height
+        marg_rect.adjust(-marg, -marg, marg, marg)
+        self.setRect(marg_rect)
+        self.update()
 
 
 class UnderlyingImages(QGraphicsItemGroup):
@@ -249,8 +258,20 @@ class UnderlyingImages(QGraphicsItemGroup):
             x = int(x)
             self.images[n] = img
             self.addToGroup(self.images[n])
+        self.currentBound = self.boundingRect()
         self.rect = UnderlyingRect(self.boundingRect())
         self.addToGroup(self.rect)
+        # set it to clip things
+        self.setFlag(QGraphicsItem.ItemClipsChildrenToShape, True)
+
+    def shape(self):
+        shape_rect = QPainterPath()
+        shape_rect.addRect(self.currentBound)
+        return shape_rect
+
+    def croppit(self, crop_rect):
+        self.currentBound = self.mapRectFromScene(crop_rect)
+        self.update()
 
 
 # Dictionaries to translate tool-modes into functions
@@ -268,6 +289,7 @@ mousePress = {
     "tick": "mousePressTick",
     "zoom": "mousePressZoom",
     "image": "mousePressImage",
+    "crop": "mousePressCrop",
 }
 mouseMove = {
     "box": "mouseMoveBox",
@@ -279,6 +301,7 @@ mouseMove = {
     "text": "mouseMoveText",
     "tick": "mouseMoveTick",
     "zoom": "mouseMoveZoom",
+    "crop": "mouseMoveCrop",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -292,6 +315,7 @@ mouseRelease = {
     "rubric": "mouseReleaseRubric",
     "text": "mouseReleaseText",
     "tick": "mouseReleaseTick",
+    "crop": "mouseReleaseCrop",
 }
 
 # things for nice rubric/text drag-box tool
@@ -2559,3 +2583,101 @@ class PageScene(QGraphicsScene):
             self.zoomFlag,
             self.boxLineStampState,
         ]
+
+    # PAGE SCENE CROPPING STUFF
+    def croppit(self, crop_rect):
+        log.warn(f"Hello {crop_rect}")
+        self.underImage.croppit(crop_rect)
+        self.underRect.croppit(crop_rect)
+        # set move mode
+        self.parent().toMoveMode()
+
+    def mousePressCrop(self, event):
+        """
+        Handle the mouse press when drawing a crop box.
+
+        Notes:
+            Nothing happens until button is released.
+
+        Args:
+            event (QMouseEvent): given mouse press.
+
+        Returns:
+            None
+
+        """
+        if self.deleteFlag:
+            return
+
+        self.deleteFlag = 1
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+        self.delBoxItem.setBrush(self.deleteBrush)
+        self.addItem(self.delBoxItem)
+
+    def mouseMoveCrop(self, event):
+        """
+        Update the size of the delete box as the mouse is moved.
+
+        Notes:
+            This animates the drawing of the box for the user.
+
+        Args (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
+        """
+        if self.deleteFlag:
+            self.deleteFlag = 2  # drag started.
+            self.currentPos = event.scenePos()
+            if self.delBoxItem is None:
+                log.error("EEK - should not be here")
+                # somehow missed the mouse-press
+                self.delBoxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+                self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+                self.delBoxItem.setBrush(self.deleteBrush)
+                self.addItem(self.delBoxItem)
+            else:
+                self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+
+    def mouseReleaseCrop(self, event):
+        """
+        Handle when the mouse is released after drawing a new delete box.
+
+        Notes:
+             Remove the temp boxitem (which was needed for animation)
+            and then delete all objects that lie outside the box, translate everyting.
+            Push the resulting commands onto the undo stack
+        MUCH TODO
+
+
+        Args:
+            event (QMouseEvent): the given mouse release.
+
+        Returns:
+            None
+
+        """
+        if self.deleteFlag == 0:
+            return
+        # check to see if box is quite small (since very hard
+        # to click button without moving a little)
+        # if small then set flag to 0 and return
+        if (
+            self.delBoxItem.rect().height() < 128
+            and self.delBoxItem.rect().width() < 128
+        ):
+            self.removeItem(self.delBoxItem)
+            self.deleteFlag = 0
+            return
+        elif self.deleteFlag == 2:
+            crop_rect = self.delBoxItem.rect()
+            command = CommandCrop(self, crop_rect, self.underImage.currentBound)
+            self.undoStack.push(command)
+
+        self.removeItem(self.delBoxItem)
+        self.deleteFlag = 0  # put flag back.

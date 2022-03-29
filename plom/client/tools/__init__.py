@@ -9,7 +9,7 @@ log = logging.getLogger("tools")
 
 from plom.client.tools.move import CommandMoveItem
 from plom.client.tools.tool import CommandTool, DeleteObject, DeleteItem
-from plom.client.tools.delete import CommandDelete
+from plom.client.tools.delete import CommandDelete, CommandCrop
 
 from plom.client.tools.box import CommandBox
 from plom.client.tools.rubric import (

@@ -1118,6 +1118,13 @@ class Annotator(QWidget):
         self.slowDepanShortCut = QShortcut(QKeySequence("Ctrl+Shift+space"), self)
         self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
 
+        # cropping hackery.
+        self.croppitShortCut = QShortcut(QKeySequence("Ctrl+p"), self)
+        self.croppitShortCut.activated.connect(self.argh)
+
+    def argh(self):
+        self.setToolMode("crop", self.cursorDelete)
+        
     def toUndo(self):
         self.ui.undoButton.animateClick()
 
