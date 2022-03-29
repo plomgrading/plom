@@ -152,7 +152,7 @@ def write_template_csv_user_list(filename):
         f.write(b)
 
 
-def parse_and_save_user_list(user_file_path):
+def parse_and_save_user_list(user_file_path, basedir=Path(".")):
     """Parses the user list provided and saves the user hash dictionary.
 
     1. Reads the header and username/password dictionary in the user_file_path.
@@ -170,7 +170,7 @@ def parse_and_save_user_list(user_file_path):
     Raises:
         ValueError
     """
-    save_user_list(get_raw_user_dict_from_csv(user_file_path))
+    save_user_list(get_raw_user_dict_from_csv(user_file_path), basedir=basedir)
 
 
 def save_user_list(username_password_dict, basedir=Path(".")):
