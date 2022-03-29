@@ -246,6 +246,9 @@ class Annotator(QWidget):
         m.addAction("Tag paper...\tF3", self.tag_paper)
         m.addSeparator()
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
+        m.addAction("Crop to region\tCtrl-p", self.to_crop_mode)
+        m.addAction("Uncrop\tCtrl-shift-p", self.uncrop_region)
+        m.addSeparator()
         subm = m.addMenu("Tools")
         # to make these actions checkable, they need to belong to self.
         # submg = QActionGroup(m)
@@ -1120,11 +1123,16 @@ class Annotator(QWidget):
 
         # cropping hackery.
         self.croppitShortCut = QShortcut(QKeySequence("Ctrl+p"), self)
-        self.croppitShortCut.activated.connect(self.argh)
+        self.croppitShortCut.activated.connect(self.to_crop_mode)
+        self.uncropShortCut = QShortcut(QKeySequence("Ctrl+Shift+p"), self)
+        self.uncropShortCut.activated.connect(self.uncrop_region)
 
-    def argh(self):
+    def to_crop_mode(self):
         self.setToolMode("crop", self.cursorDelete)
-        
+
+    def uncrop_region(self):
+        self.scene.uncrop_underlying_images()
+
     def toUndo(self):
         self.ui.undoButton.animateClick()
 
@@ -1687,6 +1695,14 @@ class Annotator(QWidget):
         aname = self.scene.save(self.saveName)
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
+        # get the crop-rect and rewrite it as a 4-tupple (x,y,w,h)
+        crop_rect = self.scene.current_crop_rectangle()
+        crop_rect_dat = (
+            crop_rect.x(),
+            crop_rect.y(),
+            crop_rect.width(),
+            crop_rect.height(),
+        )
         # TODO: consider saving colour only if not red?
         # TODO: someday src_img_data may have other images not used
         plomData = {
@@ -1697,6 +1713,7 @@ class Annotator(QWidget):
             "currentMark": self.getScore(),
             "sceneScale": self.scene.get_scale_factor(),
             "annotationColor": self.scene.ink.color().getRgb()[:3],
+            "crop_rectangle": crop_rect_dat,
             "sceneItems": lst,
         }
         plomfile = self.saveName.with_suffix(".plom")
@@ -1724,6 +1741,8 @@ class Annotator(QWidget):
         if plomData.get("annotationColor", None):
             self.scene.set_annotation_color(plomData["annotationColor"])
         self.scene.unpickleSceneItems(plomData["sceneItems"])
+        if plomData.get("crop_rectangle", None):
+            self.scene.crop_from_plomfile(plomData["crop_rectangle"])
         self.view.setHidden(False)
 
     def setZoomComboBox(self):

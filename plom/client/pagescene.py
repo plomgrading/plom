@@ -258,14 +258,15 @@ class UnderlyingImages(QGraphicsItemGroup):
             x = int(x)
             self.images[n] = img
             self.addToGroup(self.images[n])
+        # set original bounding rectangle
+        self.originalBound = self.boundingRect()
+        # set current bounding rect for cropping functions
         self.currentBound = self.boundingRect()
-        self.rect = UnderlyingRect(self.boundingRect())
-        self.addToGroup(self.rect)
-        # set it to clip things
+        # set it to clip/crop things
         self.setFlag(QGraphicsItem.ItemClipsChildrenToShape, True)
 
     def shape(self):
-        # TODO - remove unused images as well 
+        # TODO - remove unused images as well
         shape_rect = QPainterPath()
         shape_rect.addRect(self.currentBound)
         return shape_rect
@@ -273,6 +274,9 @@ class UnderlyingImages(QGraphicsItemGroup):
     def croppit(self, crop_rect):
         self.currentBound = self.mapRectFromScene(crop_rect)
         self.update()
+
+    def get_original_rect(self):
+        return self.originalBound
 
 
 # Dictionaries to translate tool-modes into functions
@@ -766,8 +770,8 @@ class PageScene(QGraphicsScene):
         return False
 
     def getSaveableRectangle(self):
-        # the scenerect is set to the initial images
-        br = self.underImage.mapRectToScene(self.underImage.boundingRect())
+        # the rectangle is set to our current (potentially cropped) image bound
+        br = self.underImage.mapRectToScene(self.underImage.currentBound)
         # go through all saveable items
         for X in self.items():
             if hasattr(X, "saveable"):
@@ -2592,14 +2596,25 @@ class PageScene(QGraphicsScene):
         self.underRect.croppit(crop_rect)
         self.scoreBox.setPos(crop_rect.topLeft())
         self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
-        # reset the view
+        # update the scene-rectangle - helps the viewer
         # TODO - work out why the view is borked - doesn't centre correctly
         self.views()[0].fitInView(self.underRect.rect(), Qt.KeepAspectRatio)
         self.views()[0].setZoomSelector(True)
 
+    def current_crop_rectangle(self):
+        return self.underImage.currentBound
+
+    def crop_from_plomfile(self, crop_dat):
+        # crop dat = (x,y,w,h)
+        self.trigger_crop(QRectF(*crop_dat))
+
+    def uncrop_underlying_images(self):
+        original_rect = self.underImage.get_original_rect()
+        self.trigger_crop(original_rect)
+
     def trigger_crop(self, crop_rect):
         self.undoStack.beginMacro("Crop region")
-        command = CommandCrop(self, crop_rect, self.underImage.currentBound)
+        command = CommandCrop(self, crop_rect, self.current_crop_rectangle())
         self.undoStack.push(command)
         # look for everything outside the underlying rectangle
         for X in self.items():
