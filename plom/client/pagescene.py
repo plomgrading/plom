@@ -195,7 +195,7 @@ class UnderlyingRect(QGraphicsRectItem):
     def __init__(self, rect):
         super().__init__()
         self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
-        self.setBrush(QBrush(Qt.green))
+        self.setBrush(QBrush(Qt.gray))
         self.setRect(rect)
         self.setZValue(-10)
 
@@ -265,6 +265,7 @@ class UnderlyingImages(QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.ItemClipsChildrenToShape, True)
 
     def shape(self):
+        # TODO - remove unused images as well 
         shape_rect = QPainterPath()
         shape_rect.addRect(self.currentBound)
         return shape_rect
@@ -2586,10 +2587,34 @@ class PageScene(QGraphicsScene):
 
     # PAGE SCENE CROPPING STUFF
     def croppit(self, crop_rect):
-        log.warn(f"Hello {crop_rect}")
+        # this is called by the actual command-redo.
         self.underImage.croppit(crop_rect)
         self.underRect.croppit(crop_rect)
-        # set move mode
+        self.scoreBox.setPos(crop_rect.topLeft())
+        self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
+        # reset the view
+        # TODO - work out why the view is borked - doesn't centre correctly
+        self.views()[0].fitInView(self.underRect.rect(), Qt.KeepAspectRatio)
+        self.views()[0].setZoomSelector(True)
+
+    def trigger_crop(self, crop_rect):
+        self.undoStack.beginMacro("Crop region")
+        command = CommandCrop(self, crop_rect, self.underImage.currentBound)
+        self.undoStack.push(command)
+        # look for everything outside the underlying rectangle
+        for X in self.items():
+            if hasattr(X, "saveable"):
+                # now check it is inside the UnderlyingRect
+                if X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
+                    # is inside bounds so leave it
+                    pass
+                else:
+                    # outside bounds so delete it
+                    command = CommandDelete(self, X)
+                    self.undoStack.push(command)
+
+        self.undoStack.endMacro()
+        # now set mode to move.
         self.parent().toMoveMode()
 
     def mousePressCrop(self, event):
@@ -2673,11 +2698,7 @@ class PageScene(QGraphicsScene):
         ):
             self.removeItem(self.delBoxItem)
             self.deleteFlag = 0
-            return
-        elif self.deleteFlag == 2:
-            crop_rect = self.delBoxItem.rect()
-            command = CommandCrop(self, crop_rect, self.underImage.currentBound)
-            self.undoStack.push(command)
-
-        self.removeItem(self.delBoxItem)
-        self.deleteFlag = 0  # put flag back.
+        else:
+            self.removeItem(self.delBoxItem)
+            self.deleteFlag = 0  # put flag back.
+            self.trigger_crop(self.delBoxItem.rect())
