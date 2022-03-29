@@ -155,7 +155,14 @@ class UserDialog(QDialog):
 
 
 class QVHistogram(QDialog):
-    """A non-modal dialog showing histograms."""
+    """A non-modal dialog showing histograms.
+
+    A note on modality: because this is parented to Manager (see super
+    init call) but non-modal you can open as many as you want.  At
+    least in the Gnome environment, the window manager keeps them all
+    on top of Manager (but allows the focus to switch back to Manager).
+    Compare to `SolutionViewer` which is unparented so not on top.
+    """
 
     def __init__(self, parent, q, v, hist):
         super().__init__(parent)
