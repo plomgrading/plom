@@ -195,7 +195,7 @@ class UnderlyingRect(QGraphicsRectItem):
     def __init__(self, rect):
         super().__init__()
         self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
-        self.setBrush(QBrush(Qt.gray))
+        self.setBrush(QBrush(QColor(249, 249, 249, 255)))
         self.setRect(rect)
         self.setZValue(-10)
 
@@ -2598,7 +2598,9 @@ class PageScene(QGraphicsScene):
         self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # update the scene-rectangle - helps the viewer
         # TODO - work out why the view is borked - doesn't centre correctly
-        self.views()[0].fitInView(self.underRect.rect(), Qt.KeepAspectRatio)
+        self.views()[0].fitInView(crop_rect, Qt.KeepAspectRatio)
+        # zoom out a bit
+        self.views()[0].scale(0.8, 0.8)
         self.views()[0].setZoomSelector(True)
 
     def current_crop_rectangle(self):
