@@ -161,14 +161,13 @@ class QVHistogram(QDialog):
         self.question = q
         self.version = v
         self.setWindowTitle("Histograms for question {} version {}".format(q, v))
-        self.hist = hist
         tot = 0
         mx = 0
         dist = {}
-        for u in self.hist:
-            for m in self.hist[u]:
+        for u in hist:
+            for m in hist[u]:
                 im = int(m)
-                s = int(self.hist[u][m])
+                s = int(hist[u][m])
                 mx = max(mx, im)
                 tot += s
                 if im not in dist:
@@ -177,7 +176,7 @@ class QVHistogram(QDialog):
 
         grid = QGridLayout()
 
-        self.eG = QGroupBox("All markers")
+        eG = QGroupBox("All markers")
         gg = QVBoxLayout()
         gg.addWidget(QLabel("Number of papers: {}".format(tot)))
         gp = QHBoxLayout()
@@ -191,19 +190,19 @@ class QVHistogram(QDialog):
             pb.setToolTip("{} = {}%".format(im, pb.value()))
             gp.addWidget(pb)
         gg.addLayout(gp)
-        self.eG.setLayout(gg)
-        grid.addWidget(self.eG, 0, 0)
+        eG.setLayout(gg)
+        grid.addWidget(eG, 0, 0)
 
         max_number_of_rows = 4  # should depend on user's viewport
         current_row = 1
         current_column = 0
 
-        self.uG = {}
-        for u in self.hist:
+        uG = {}
+        for u in hist:
             utot = 0
-            for m in self.hist[u]:
-                utot += self.hist[u][m]
-            self.uG[u] = QGroupBox("Marker: {}".format(u))
+            for m in hist[u]:
+                utot += hist[u][m]
+            uG[u] = QGroupBox("Marker: {}".format(u))
             gg = QVBoxLayout()
             gg.addWidget(QLabel("Number of papers: {}".format(utot)))
             gp = QHBoxLayout()
@@ -211,22 +210,22 @@ class QVHistogram(QDialog):
                 m = str(im)
                 pb = QProgressBar()
                 pb.setOrientation(Qt.Vertical)
-                if m not in self.hist[u]:
+                if m not in hist[u]:
                     pb.setValue(0)
                 else:
-                    pb.setValue((100 * self.hist[u][m]) // utot)
+                    pb.setValue((100 * hist[u][m]) // utot)
                 pb.setToolTip("{} = {}%".format(m, pb.value()))
                 gp.addWidget(pb)
             gg.addLayout(gp)
-            self.uG[u].setLayout(gg)
-            grid.addWidget(self.uG[u], current_row, current_column)
+            uG[u].setLayout(gg)
+            grid.addWidget(uG[u], current_row, current_column)
             current_row = (current_row + 1) % max_number_of_rows
             if current_row == 0:
                 current_column = current_column + 1
 
-        self.cB = QPushButton("&Close")
-        self.cB.clicked.connect(self.accept)
-        grid.addWidget(self.cB)
+        cB = QPushButton("&Close")
+        cB.clicked.connect(self.accept)
+        grid.addWidget(cB)
         self.setLayout(grid)
         self.show()
 
