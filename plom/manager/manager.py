@@ -156,6 +156,7 @@ class UserDialog(QDialog):
 
 class QVHistogram(QDialog):
     """A non-modal dialog showing histograms."""
+
     def __init__(self, parent, q, v, hist):
         super().__init__(parent)
         self.question = q
@@ -339,9 +340,7 @@ class ProgressBox(QGroupBox):
                     stats["minMark"], stats["maxMark"], stats["fullMark"]
                 )
             )
-            self.mtL.setText(
-                "Avg marking time = {:0.1f}s".format(stats["avgMTime"])
-            )
+            self.mtL.setText("Avg marking time = {:0.1f}s".format(stats["avgMTime"]))
             self.lhL.setText("# Marked in last hour = {}".format(stats["NRecent"]))
         else:
             self.avgL.setText("Mean : Median : Mode  = N/A")
