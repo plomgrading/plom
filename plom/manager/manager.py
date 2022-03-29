@@ -310,10 +310,6 @@ class ProgressBox(QGroupBox):
         self.setTitle("Q-{} V-{}".format(qu, v))
 
         grid = QVBoxLayout()
-        self.nscL = QLabel()
-        grid.addWidget(self.nscL)
-        self.nmkL = QLabel()
-        grid.addWidget(self.nmkL)
         self.lhL = QLabel()
         grid.addWidget(self.lhL)
         self.mtL = QLabel()
@@ -338,8 +334,6 @@ class ProgressBox(QGroupBox):
         self.setVisible(True)
         self.pb.setMaximum(stats["NScanned"])
         self.pb.setValue(stats["NMarked"])
-        self.nscL.setText("# Scanned = {}".format(stats["NScanned"]))
-        self.nmkL.setText("# Marked = {}".format(stats["NMarked"]))
 
         if stats["NScanned"] == 0:
             self.setEnabled(False)
