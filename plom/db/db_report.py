@@ -651,8 +651,9 @@ def _get_files_from_group(group_ref):
     returns:
         list: list of dicts with keys `original_name`, `bundle_name`,
         and `bundle_order`.
-    """
 
+    Note: only scaned pages are included.
+    """
     image_list = []
     # add all test_pages
     for pref in group_ref.tpages:
