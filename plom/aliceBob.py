@@ -115,7 +115,7 @@ def make_random_user_list(number):
     if number > len(names):
         digits = max(2, int(math.ceil(math.log10(number / len(names)))))
         loc_names = [
-            x + "{}".format(n).zfill(digits) for x in names for n in range(10**digits)
+            x + "{}".format(n).zfill(digits) for x in names for n in range(10 ** digits)
         ]
     else:
         loc_names = names

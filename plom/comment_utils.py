@@ -19,4 +19,4 @@ def generate_new_comment_ID(num_of_digits=12):
     # TODO: Why string you ask ? Well because of this:
     # comIDi = QStandardItem(com["id"])
     # OverflowError: argument 1 overflowed: value must be in the range -2147483648 to 2147483647
-    return str(random.randint(10**num_of_digits, 10 ** (num_of_digits + 1) - 1))
+    return str(random.randint(10 ** num_of_digits, 10 ** (num_of_digits + 1) - 1))
