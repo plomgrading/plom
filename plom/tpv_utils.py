@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2020, 2022 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 
 """Utilities for dealing with TPV codes
@@ -150,6 +150,6 @@ def newMagicCode(seed=None):
        str: the magic code
     """
     random.seed(seed)
-    magic = str(random.randrange(0, 10 ** 6)).zfill(6)
+    magic = str(random.randrange(0, 10**6)).zfill(6)
     assert len(magic) == 6
     return magic

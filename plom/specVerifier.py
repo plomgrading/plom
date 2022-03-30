@@ -475,13 +475,13 @@ class SpecVerifier:
             prnt("WARNING - privateSeed is already set. Not replacing this.")
         else:
             prnt("Assigning a privateSeed to the spec{}".format(chk))
-            self.spec["privateSeed"] = str(random.randrange(0, 10 ** 16)).zfill(16)
+            self.spec["privateSeed"] = str(random.randrange(0, 10**16)).zfill(16)
 
         if "publicCode" in self.spec:
             prnt("WARNING - publicCode is already set. Not replacing this.")
         else:
             prnt("Assigning a publicCode to the spec{}".format(chk))
-            self.spec["publicCode"] = str(random.randrange(0, 10 ** 6)).zfill(6)
+            self.spec["publicCode"] = str(random.randrange(0, 10**6)).zfill(6)
 
     def saveVerifiedSpec(self, verbose=False, basedir=Path(".")):
         """Saves the verified spec to a particular name."""

@@ -209,7 +209,7 @@ black:
   stage: static_analysis
   image: python:3.10
   before_script:
-    - pip3 install "black~=21.10b"
+    - pip3 install "black~=22.3"
   script:
     - black --check --diff .
   allow_failure: true
