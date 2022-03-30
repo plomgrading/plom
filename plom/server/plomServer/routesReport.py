@@ -453,7 +453,10 @@ class ReportHandler:
     # @routes.get("/REP/fileAudit")
     @authenticate_by_token_required_fields(["user"])
     def RgetFileAudit(self, data, request):
-        """Respond with metadata about files used in all tests.
+        """Respond with metadata about image-files used in all tests.
+        In particular, for each test, which imagefiles/bundles are used
+        for each id-group, dnm-group, and question-group. Then also
+        reports unknowns, discards, collisions, and dangling pages.
 
         Responds with status 200/401.
 
@@ -469,8 +472,6 @@ class ReportHandler:
             return web.Response(status=401)
         rmsg = self.server.RgetFileAudit()
 
-        # A list of lists included information of format below:
-        # [Test number, User who ID'd the paper, Time of ID'ing, Student ID, Student name]
         return web.json_response(rmsg, status=200)
 
     def setUpRoutes(self, router):
