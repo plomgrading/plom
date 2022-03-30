@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
 
-from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User, DiscardedPage
+from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
 
 
 log = logging.getLogger("DB")
@@ -704,14 +704,7 @@ def RgetFileAudit(self):
     audit["tests"] = {}
     for tref in Test.select():
         audit["tests"][tref.test_number] = self.RgetFilesInTest(tref.test_number)
-    audit["discards"] = [
-        {
-            "original_name": dref.image.original_name,
-            "bundle_name": dref.image.bundle.name,
-            "bundle_order": dref.image.bundle_order,
-        }
-        for dref in DiscardedPage.select()
-    ]
+    audit["discards"] = self.getDiscardedPages()
     audit["unknowns"] = self.getUnknownPages()
     audit["dangling"] = self.RgetDanglingPages()
     audit["collisions"] = self.getCollidingPageNames()
