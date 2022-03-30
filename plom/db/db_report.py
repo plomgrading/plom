@@ -701,11 +701,19 @@ def RgetFileAudit(self):
     for tref in Test.select():
         audit["tests"][tref.test_number] = self.RgetFilesInTest(tref.test_number)
     audit["discards"] = [
-        (dref.image.original_name, dref.image.bundle.name)
+        {
+            "original_name": dref.image.original_name,
+            "bundle_name": dref.image.bundle.name,
+            "bundle_order": dref.image.bundle_order,
+        }
         for dref in DiscardedPage.select()
     ]
     audit["unknowns"] = [
-        (uref.image.original_name, uref.image.bundle.name)
+        {
+            "original_name": uref.image.original_name,
+            "bundle_name": uref.image.bundle.name,
+            "bundle_order": uref.image.bundle_order,
+        }
         for uref in UnknownPage.select()
     ]
     audit["dangling"] = self.RgetDanglingPages()
