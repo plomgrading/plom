@@ -652,7 +652,7 @@ def _get_files_from_group(group_ref):
         list: list of dicts with keys `original_name`, `bundle_name`,
         and `bundle_order`.
 
-    Note: only scaned pages are included.
+    Note: only scanned pages are included.
     """
     image_list = []
     # add all test_pages
