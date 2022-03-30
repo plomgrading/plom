@@ -150,6 +150,6 @@ def newMagicCode(seed=None):
        str: the magic code
     """
     random.seed(seed)
-    magic = str(random.randrange(0, 10**6)).zfill(6)
+    magic = str(random.randrange(0, 10 ** 6)).zfill(6)
     assert len(magic) == 6
     return magic
