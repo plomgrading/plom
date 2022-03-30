@@ -7,16 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
 
-from plom.db.tables import (
-    Group,
-    IDGroup,
-    QGroup,
-    Test,
-    TPage,
-    User,
-    DiscardedPage,
-    UnknownPage,
-)
+from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User, DiscardedPage
 
 
 log = logging.getLogger("DB")
