@@ -145,6 +145,14 @@ def processHWScans(
     returns:
         None
 
+    raises:
+        ValueError: various errors such as cannot find file, no such student
+            id, md5sum collision with existing bundle, etc.  Generally
+            things caller could fix.  Check message for details.
+        RuntimeError: expected failing conditions.
+        TODO: possibly others, need to drill into ``process_scans`` and
+            other methods.
+
     Ask server to map `student_id` to a test-number; these should have been
     pre-populated on test-generation so if `student_id` not known there is
     an error.
