@@ -643,7 +643,15 @@ def RgetUserFullProgress(self, user_name):
 
 
 def _get_files_from_group(group_ref):
-    """Return a list of images/bundles used in the groups of the given group"""
+    """Return a list of images and their bundle info in the pages of the given group.
+
+    args:
+        group_ref: can be an IDGroup, DNMGroup or QGroup.
+
+    returns:
+        list: list of dicts with keys `original_name`, `bundle_name`,
+        and `bundle_order`.
+    """
 
     image_list = []
     # add all test_pages
