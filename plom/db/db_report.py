@@ -117,6 +117,9 @@ def RgetDanglingPages(self):
                         "type": "tpage",
                         "page": pref.page_number,
                         "code": f"t.{pref.page_number}",
+                        "original_name": pref.image.original_name,
+                        "bundle_name": pref.image.bundle.name,
+                        "bundle_order": pref.image.bundle_order,
                     }
                 )
         for pref in gref.hwpages:
@@ -128,6 +131,9 @@ def RgetDanglingPages(self):
                     "type": "hwpage",
                     "order": pref.order,
                     "code": f"h.{q}.{pref.order}",
+                    "original_name": pref.image.original_name,
+                    "bundle_name": pref.image.bundle.name,
+                    "bundle_order": pref.image.bundle_order,
                 }
             )
         for pref in gref.expages:
@@ -139,6 +145,9 @@ def RgetDanglingPages(self):
                     "type": "expage",
                     "order": pref.order,
                     "code": f"e.{q}.{pref.order}",
+                    "original_name": pref.image.original_name,
+                    "bundle_name": pref.image.bundle.name,
+                    "bundle_order": pref.image.bundle_order,
                 }
             )
     # return list sorted by test-number
