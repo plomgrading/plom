@@ -304,7 +304,7 @@ def get_submissions(
     for sub in unsubmitted:
         print(f"No submission from user_id {sub.user_id}")
     for sub in errors:
-        print(f"Error processing from user_id {sub.user_id}")
+        print(f"Error getting submission from user_id {sub.user_id}")
 
 
 def scan_submissions(num_questions, *, server_dir="."):
