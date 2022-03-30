@@ -640,12 +640,30 @@ def _get_files_from_group(group_ref):
     # add all test_pages
     for pref in group_ref.tpages:
         if pref.scanned:  # only add if actually scanned
-            image_list.append((pref.image.original_name, pref.image.bundle.name))
+            image_list.append(
+                {
+                    "original_name": pref.image.original_name,
+                    "bundle_name": pref.image.bundle.name,
+                    "bundle_order": pref.image.bundle.bundle_order,
+                }
+            )
     # add all hw_pages and extra_pages
     for pref in group_ref.hwpages:
-        image_list.append((pref.image.original_name, pref.image.bundle.name))
+        image_list.append(
+            {
+                "original_name": pref.image.original_name,
+                "bundle_name": pref.image.bundle.name,
+                "bundle_order": pref.image.bundle.bundle_order,
+            }
+        )
     for pref in group_ref.expages:
-        image_list.append((pref.image.original_name, pref.image.bundle.name))
+        image_list.append(
+            {
+                "original_name": pref.image.original_name,
+                "bundle_name": pref.image.bundle.name,
+                "bundle_order": pref.image.bundle.bundle_order,
+            }
+        )
     return image_list
 
 
