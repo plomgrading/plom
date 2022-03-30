@@ -721,14 +721,7 @@ def RgetFileAudit(self):
         }
         for dref in DiscardedPage.select()
     ]
-    audit["unknowns"] = [
-        {
-            "original_name": uref.image.original_name,
-            "bundle_name": uref.image.bundle.name,
-            "bundle_order": uref.image.bundle_order,
-        }
-        for uref in UnknownPage.select()
-    ]
+    audit["unknowns"] = self.getUnknownPages()
     audit["dangling"] = self.RgetDanglingPages()
     audit["collisions"] = self.getCollidingPageNames()
 
