@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 import random
 
@@ -19,4 +19,4 @@ def generate_new_comment_ID(num_of_digits=12):
     # TODO: Why string you ask ? Well because of this:
     # comIDi = QStandardItem(com["id"])
     # OverflowError: argument 1 overflowed: value must be in the range -2147483648 to 2147483647
-    return str(random.randint(10 ** num_of_digits, 10 ** (num_of_digits + 1) - 1))
+    return str(random.randint(10**num_of_digits, 10 ** (num_of_digits + 1) - 1))
