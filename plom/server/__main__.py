@@ -50,10 +50,14 @@ server_instructions = """Overview of running the Plom server:
 """
 
 
-def processUsers(userFile, demo, auto, numbered):
+def processUsers(userFile, demo, auto, numbered, srvdir):
     """Deal with processing and/or creation of username lists.
 
-    Behaviour different depending on the args.
+    Behaviour different depending on the args.  This routine can
+    create two files: a ``userListRaw.csv`` for modifying.  This is
+    created in the current working directory.  The server directory
+    can be specified; the ``bootstrap_initial_users.json`` is saved
+    relative to that path.
 
     args:
         userFile (str/pathlib.Path): a filename of usernames/passwords
@@ -61,17 +65,22 @@ def processUsers(userFile, demo, auto, numbered):
         demo (bool): make canned demo with known usernames/passwords.
         auto (int or None): number of autogenerate usernames and passwords.
         numbered (bool): autogenerate usernames like "user03" and pwds.
+        srvdir (None/str/pathlib.Path): server's filesystem, used to place
+        the ``bootstrap_initial_users.json`` file.
 
     return:
         None
     """
-    init_user_list = confdir / "bootstrap_initial_users.json"
+    if not srvdir:
+        srvdir = Path(".")
+    srvdir = Path(srvdir)
+    init_user_list = srvdir / confdir / "bootstrap_initial_users.json"
     # if we have been passed a userFile then process it and return
     if userFile:
         print(f"Processing user file '{userFile}' to {init_user_list}")
         if init_user_list.exists():
             print(f"WARNING - overwriting existing {init_user_list}")
-        parse_and_save_user_list(userFile)
+        parse_and_save_user_list(userFile, basedir=srvdir)
         return
 
     rawfile = Path("userListRaw.csv")
@@ -84,7 +93,7 @@ def processUsers(userFile, demo, auto, numbered):
             f"Creating a demo user list at {rawfile}. ** DO NOT USE ON REAL SERVER **"
         )
         write_template_csv_user_list(rawfile)
-        parse_and_save_user_list(rawfile)
+        parse_and_save_user_list(rawfile, basedir=srvdir)
         return
 
     if auto is not None:
@@ -241,6 +250,14 @@ def get_parser():
         action="store_true",
         help='Use numbered usernames, e.g. "user17", for the autogeneration.',
     )
+    spU.add_argument(
+        "--server-dir",
+        dest="dir",
+        help="""
+            The server directory.  If omitted, assume server files are
+            in the current directory.
+        """,
+    )
     return parser
 
 
@@ -256,7 +273,7 @@ def main():
             make_selfsigned_keys=args.selfsigned,
         )
     elif args.command == "users":
-        processUsers(args.userlist, args.demo, args.auto, args.numbered)
+        processUsers(args.userlist, args.demo, args.auto, args.numbered, args.dir)
     elif args.command == "launch":
         if args.dir is None:
             args.dir = Path(".")

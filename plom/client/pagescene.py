@@ -1625,22 +1625,19 @@ class PageScene(QGraphicsScene):
 
         # clear all items from scene.
         for X in self.items():
-            if (
-                any(
-                    isinstance(X, Y)
-                    for Y in [
-                        ScoreBox,
-                        QGraphicsPixmapItem,
-                        UnderlyingImages,
-                        UnderlyingRect,
-                        GhostComment,
-                        GhostDelta,
-                        GhostText,
-                        DeleteItem,
-                    ]
-                )
-                and X is not isinstance(X, ImageItem)
-            ):
+            if any(
+                isinstance(X, Y)
+                for Y in [
+                    ScoreBox,
+                    QGraphicsPixmapItem,
+                    UnderlyingImages,
+                    UnderlyingRect,
+                    GhostComment,
+                    GhostDelta,
+                    GhostText,
+                    DeleteItem,
+                ]
+            ) and X is not isinstance(X, ImageItem):
                 # as ImageItem is a subclass of QGraphicsPixmapItem, we have
                 # to make sure ImageItems aren't skipped!
                 continue
