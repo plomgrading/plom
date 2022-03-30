@@ -15,6 +15,7 @@ def main(server=None, password=None):
 
     with open("audit.json", "w+") as fh:
         json.dump(audit, fh, indent="  ")
+    print("Wrote file audit to 'audit.json'")
 
 
 if __name__ == "__main__":
