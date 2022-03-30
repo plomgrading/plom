@@ -644,7 +644,7 @@ def _get_files_from_group(group_ref):
                 {
                     "original_name": pref.image.original_name,
                     "bundle_name": pref.image.bundle.name,
-                    "bundle_order": pref.image.bundle.bundle_order,
+                    "bundle_order": pref.image.bundle_order,
                 }
             )
     # add all hw_pages and extra_pages
@@ -653,7 +653,7 @@ def _get_files_from_group(group_ref):
             {
                 "original_name": pref.image.original_name,
                 "bundle_name": pref.image.bundle.name,
-                "bundle_order": pref.image.bundle.bundle_order,
+                "bundle_order": pref.image.bundle_order,
             }
         )
     for pref in group_ref.expages:
@@ -661,7 +661,7 @@ def _get_files_from_group(group_ref):
             {
                 "original_name": pref.image.original_name,
                 "bundle_name": pref.image.bundle.name,
-                "bundle_order": pref.image.bundle.bundle_order,
+                "bundle_order": pref.image.bundle_order,
             }
         )
     return image_list

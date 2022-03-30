@@ -184,5 +184,4 @@ class FinishMessenger(BaseMessenger):
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
-            finally:
-                self.SRmutex.release()
+
