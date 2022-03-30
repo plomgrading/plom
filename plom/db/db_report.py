@@ -708,14 +708,9 @@ def RgetFileAudit(self):
     """Return an audit of the files used in all the tests, as well as
     dangling pages, discards, unknowns, and collisions."""
 
-    audit = {
-        "tests": {},
-        "dangling": [],
-        "unknowns": [],
-        "discards": [],
-        "collisions": [],
-    }
+    audit = {}
     # put in files used in the tests
+    audit["tests"] = {}
     for tref in Test.select():
         audit["tests"][tref.test_number] = self.RgetFilesInTest(tref.test_number)
     audit["discards"] = [
