@@ -178,6 +178,8 @@ class Annotator(QWidget):
         self.setAllIcons()
         # Set up cursors
         self.loadCursors()
+        # set up held_crop_rectangle - if none, then not holding.
+        self.held_crop_rectangle_dat = None
 
         # Connect all the buttons to relevant functions
         self.setButtons()
@@ -231,6 +233,20 @@ class Annotator(QWidget):
     def getMarkingState(self):
         return self.scene.getMarkingState()
 
+    def toggle_hold_crop(self, checked):
+        if checked:
+            crop_rect = self.scene.current_crop_rectangle()
+            self.held_crop_rectangle_dat = (
+                crop_rect.x(),
+                crop_rect.y(),
+                crop_rect.width(),
+                crop_rect.height(),
+            )
+            log.debug(f"Hold crop for upcoming pages = {self.held_crop_rectangle_dat}")
+        else:
+            log.debug("Released crop")
+            self.held_crop_rectangle_dat = None
+
     def buildHamburger(self):
         # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
@@ -249,6 +265,9 @@ class Annotator(QWidget):
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         m.addAction("Crop to region\tCtrl-p", self.to_crop_mode)
         m.addAction("Uncrop\tCtrl-shift-p", self.uncrop_region)
+        hold_crop = m.addAction("(advanced option) Hold crop")
+        hold_crop.setCheckable(True)
+        hold_crop.triggered.connect(self.toggle_hold_crop)
         m.addSeparator()
         subm = m.addMenu("Tools")
         # to make these actions checkable, they need to belong to self.
@@ -452,9 +471,13 @@ class Annotator(QWidget):
             self.getScore(), self.getMarkingState(), self.maxMark
         )
 
-        # Very last thing = unpickle scene from plomDict
+        # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
             self.unpickleIt(plomDict)
+        else:
+            # if there is a held crop rectangle, then use it.
+            if self.held_crop_rectangle_dat:
+                self.scene.crop_from_plomfile(self.held_crop_rectangle_dat)
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
@@ -1130,10 +1153,25 @@ class Annotator(QWidget):
         self.uncropShortCut.activated.connect(self.uncrop_region)
 
     def to_crop_mode(self):
-        self.setToolMode("crop", self.cursorCrop)
+        # can't re-crop if the crop is being held
+        if self.held_crop_rectangle_dat:
+            WarnMsg(
+                self,
+                "You cannot re-crop while a crop is being held.",
+                info="Unselect 'hold crop' from the menu and then try again.",
+            ).exec_()
+        else:
+            self.setToolMode("crop", self.cursorCrop)
 
     def uncrop_region(self):
-        self.scene.uncrop_underlying_images()
+        if self.held_crop_rectangle_dat:
+            WarnMsg(
+                self,
+                "You cannot un-crop while a crop is being held.",
+                info="Unselect 'hold crop' from the menu and then try again.",
+            ).exec_()
+        else:
+            self.scene.uncrop_underlying_images()
 
     def toUndo(self):
         self.ui.undoButton.animateClick()
@@ -1743,8 +1781,13 @@ class Annotator(QWidget):
         if plomData.get("annotationColor", None):
             self.scene.set_annotation_color(plomData["annotationColor"])
         self.scene.unpickleSceneItems(plomData["sceneItems"])
+        # if plom file contains a crop rectangle, then use that,
+        # else use the passed one.
         if plomData.get("crop_rectangle", None):
             self.scene.crop_from_plomfile(plomData["crop_rectangle"])
+        else:
+            if self.held_crop_rectangle_dat:  # if a crop is being held, use it.
+                self.scene.crop_from_plomfile(self.held_crop_rectangle_dat)
         self.view.setHidden(False)
 
     def setZoomComboBox(self):

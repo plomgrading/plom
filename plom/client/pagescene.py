@@ -2601,11 +2601,30 @@ class PageScene(QGraphicsScene):
         self.views()[0].setZoomSelector(True)
 
     def current_crop_rectangle(self):
-        return self.underImage.currentBound
+        """Return the crop rectangle as proportions of original image"""
+        full_height = self.underImage.originalBound.height()
+        full_width = self.underImage.originalBound.width()
+        rect_in_pix = self.underImage.currentBound
+
+        rect_as_proportion = QRectF(
+            rect_in_pix.x() / full_width,
+            rect_in_pix.y() / full_height,
+            rect_in_pix.width() / full_width,
+            rect_in_pix.height() / full_height,
+        )
+        return rect_as_proportion
 
     def crop_from_plomfile(self, crop_dat):
-        # crop dat = (x,y,w,h)
-        self.trigger_crop(QRectF(*crop_dat))
+        # crop dat = (x,y,w,h) as proportions of full image, so scale by underlying image width/height
+        full_height = self.underImage.originalBound.height()
+        full_width = self.underImage.originalBound.width()
+        crop_rect = QRectF(
+            crop_dat[0] * full_width,
+            crop_dat[1] * full_height,
+            crop_dat[2] * full_width,
+            crop_dat[3] * full_height,
+        )
+        self.trigger_crop(crop_rect)
 
     def uncrop_underlying_images(self):
         original_rect = self.underImage.get_original_rect()
@@ -2613,7 +2632,10 @@ class PageScene(QGraphicsScene):
 
     def trigger_crop(self, crop_rect):
         self.undoStack.beginMacro("Crop region")
-        command = CommandCrop(self, crop_rect, self.current_crop_rectangle())
+        # make sure that the underlying crop-rectangle is normalised
+        command = CommandCrop(
+            self, crop_rect.normalized(), self.current_crop_rectangle()
+        )
         self.undoStack.push(command)
         # look for everything outside the underlying rectangle
         for X in self.items():
