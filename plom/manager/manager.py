@@ -596,7 +596,7 @@ class Manager(QWidget):
         self.refresh_scan_status_lists()
         self.refreshUList()
         self.refreshCList()
-        self.refreshDList()
+        self.refreshDiscardList()
         self.refreshDangList()
 
     def initScanStatusTab(self):
@@ -1229,14 +1229,15 @@ class Manager(QWidget):
         self.ui.discardTV.setIconSize(QSize(32, 32))
         self.ui.discardTV.activated.connect(self.viewDPage)
         self.ui.discardTV.setColumnHidden(0, True)
-        self.refreshDList()
+        self.refreshDiscardList()
 
-    def refreshDList(self):
+    def refreshDiscardList(self):
         self.discardModel.removeRows(0, self.discardModel.rowCount())
         # list of pairs [filename, reason]
-        disList = self.msgr.getDiscardNames()
-        r = 0
-        for fname, reason in disList:
+        discards = self.msgr.getDiscardedPages()
+        for r, d in enumerate(discards):
+            fname = d["server_path"]
+            reason = d["reason"]
             it0 = QStandardItem(fname)
             it1 = QStandardItem(os.path.split(fname)[1])
             pm = QPixmap()
@@ -1248,12 +1249,11 @@ class Manager(QWidget):
             it3 = QStandardItem("")
             it3.setTextAlignment(Qt.AlignCenter)
             self.discardModel.insertRow(r, [it0, it1, it2, it3])
-            r += 1
         self.ui.discardTV.resizeRowsToContents()
         self.ui.discardTV.resizeColumnsToContents()
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.discardTab),
-            "&Discarded Pages ({})".format(len(disList)),
+            "&Discarded Pages ({})".format(len(discards)),
         )
 
     def viewDPage(self):
@@ -1282,7 +1282,7 @@ class Manager(QWidget):
         for r in range(self.discardModel.rowCount()):
             if self.discardModel.item(r, 3).text() == "move":
                 self.msgr.discardToUnknown(self.discardModel.item(r, 0).text())
-        self.refreshDList()
+        self.refreshDiscardList()
         self.refreshUList()
 
     def initDanglingTab(self):

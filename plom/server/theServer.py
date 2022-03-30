@@ -124,7 +124,7 @@ class Server:
         removeAllScannedPages,
         removeSinglePage,
         getUnknownPages,
-        getDiscardNames,
+        getDiscardedPages,
         getCollidingPageNames,
         getCollidingImage,
         getDiscardImage,

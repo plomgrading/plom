@@ -65,13 +65,6 @@ def getDiscardedPages(self):
     return pages
 
 
-def getDiscardNames(self):
-    rval = []
-    for dref in DiscardedPage.select():
-        rval.append([dref.image.file_name, dref.reason])
-    return rval
-
-
 def getCollidingPageNames(self):
     rval = {}
     for cref in CollidingPage.select():
