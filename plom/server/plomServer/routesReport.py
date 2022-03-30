@@ -473,7 +473,6 @@ class ReportHandler:
         # [Test number, User who ID'd the paper, Time of ID'ing, Student ID, Student name]
         return web.json_response(rmsg, status=200)
 
-
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
