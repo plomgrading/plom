@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 
@@ -7,7 +7,16 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
 
-from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
+from plom.db.tables import (
+    Group,
+    IDGroup,
+    QGroup,
+    Test,
+    TPage,
+    User,
+    DiscardedPage,
+    UnknownPage,
+)
 
 
 log = logging.getLogger("DB")
@@ -622,6 +631,69 @@ def RgetUserFullProgress(self, user_name):
         .where(QGroup.user == uref, QGroup.marked == True)  # noqa: E712
         .count(),
     ]
+
+
+def _get_files_from_group(group_ref):
+    """Return a list of images/bundles used in the groups of the given group"""
+
+    image_list = []
+    # add all test_pages
+    for pref in group_ref.tpages:
+        if pref.scanned:  # only add if actually scanned
+            image_list.append((pref.image.original_name, pref.image.bundle.name))
+    # add all hw_pages and extra_pages
+    for pref in group_ref.hwpages:
+        image_list.append((pref.image.original_name, pref.image.bundle.name))
+    for pref in group_ref.expages:
+        image_list.append((pref.image.original_name, pref.image.bundle.name))
+    return image_list
+
+
+def RgetFilesInTest(self, test_number):
+    """Return the files/bundles used in all the groups of the given test"""
+    file_dict = {}
+    tref = Test.get_or_none(test_number=test_number)
+    if tref is None:
+        return file_dict
+
+    for gref in tref.groups:
+        image_list = _get_files_from_group(gref)
+        if gref.group_type == "i":
+            file_dict["id"] = image_list
+        elif gref.group_type == "d":
+            file_dict["dnm"] = image_list
+        elif gref.group_type == "q":
+            question = gref.qgroups[0].question
+            file_dict[f"q{question}"] = image_list
+    return file_dict
+
+
+def RgetFileAudit(self):
+    """Return an audit of the files used in all the tests, as well as
+    dangling pages, discards, unknowns, and collisions."""
+
+    audit = {
+        "tests": {},
+        "dangling": [],
+        "unknowns": [],
+        "discards": [],
+        "collisions": [],
+    }
+    # put in files used in the tests
+    for tref in Test.select():
+        audit["tests"][tref.test_number] = self.RgetFilesInTest(tref.test_number)
+    audit["discards"] = [
+        (dref.image.original_name, dref.image.bundle.name)
+        for dref in DiscardedPage.select()
+    ]
+    audit["unknowns"] = [
+        (uref.image.original_name, uref.image.bundle.name)
+        for uref in UnknownPage.select()
+    ]
+    audit["dangling"] = self.RgetDanglingPages()
+    audit["collisions"] = self.getCollidingPageNames()
+
+    return audit
 
 
 ###

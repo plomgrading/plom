@@ -18,6 +18,7 @@
 
   4. Run the `solutions` command to assemble individualised solution PDFs.
 
+  5. Run the `audit` command to produce an audit of all files used.
 
 ## Digital return
 
@@ -27,7 +28,7 @@ to be distributed to each student e.g., via Canvas or another LMS.
 Running `webpage --solutions` includes solution return on that webpage.
 """
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -49,6 +50,7 @@ import plom.finish.reassemble_ID_only
 import plom.finish.coded_return
 import plom.finish.assemble_solutions
 import plom.finish.rubric_downloads
+import plom.finish.audit
 
 
 def get_parser():
@@ -196,14 +198,30 @@ def get_parser():
             Download list of rubrics as json and the test-rubric use matrix (indexed by test-number and rubric-key) also as json.
         """,
     )
+    spAudit = sub.add_parser(
+        "audit",
+        help="Construct an audit of all image files used",
+        description="""
+        Download an audit of all files + bundles used. Saved as 'audit.json'.
+        """,
+    )
     spClear = sub.add_parser(
         "clear",
         help='Clear "manager" login',
         description='Clear "manager" login after a crash or other expected event.',
     )
-    for x in (spCheck, spCSV, spAssemble, spClear, spSolution, spCodedReturn, spRubric):
+    for x in (
+        spCheck,
+        spCSV,
+        spAssemble,
+        spClear,
+        spSolution,
+        spCodedReturn,
+        spRubric,
+        spAudit,
+    ):
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    for x in (spCheck, spCSV, spAssemble, spSolution, spRubric, spClear):
+    for x in (spCheck, spCSV, spAssemble, spSolution, spRubric, spClear, spAudit):
         x.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
     return parser
@@ -243,6 +261,9 @@ def main():
         )
     elif args.command == "rubric":
         plom.finish.rubric_downloads.main(args.server, args.password)
+    elif args.command == "audit":
+        plom.finish.audit.main(args.server, args.password)
+
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:

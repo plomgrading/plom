@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
@@ -450,6 +450,30 @@ class ReportHandler:
         # [Test number, User who ID'd the paper, Time of ID'ing, Student ID, Student name]
         return web.json_response(rmsg, status=200)
 
+    # @routes.get("/REP/fileAudit")
+    @authenticate_by_token_required_fields(["user"])
+    def RgetFileAudit(self, data, request):
+        """Respond with metadata about files used in all tests.
+
+        Responds with status 200/401.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): Request of type GET /REP/idReview.
+
+        Returns:
+            aiohttp.web_response.Response: A response including metadata about the files used.
+        """
+
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+        rmsg = self.server.RgetFileAudit()
+
+        # A list of lists included information of format below:
+        # [Test number, User who ID'd the paper, Time of ID'ing, Student ID, Student name]
+        return web.json_response(rmsg, status=200)
+
+
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -478,3 +502,4 @@ class ReportHandler:
         router.add_get("/REP/userDetails", self.RgetUserDetails)
         router.add_get("/REP/markReview", self.RgetMarkReview)
         router.add_get("/REP/idReview", self.RgetIDReview)
+        router.add_get("/REP/fileAudit", self.RgetFileAudit)

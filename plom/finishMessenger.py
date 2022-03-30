@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 import requests
@@ -160,6 +160,22 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.get(
                 "/MK/allMax",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def RgetFileAudit(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/REP/fileAudit",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()

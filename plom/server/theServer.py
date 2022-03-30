@@ -216,6 +216,7 @@ class Server:
         RgetIDReview,
         RgetUserList,
         RgetUserDetails,
+        RgetFileAudit,
     )
     from .plomServer.serverSolution import (
         uploadSolutionImage,
