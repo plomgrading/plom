@@ -594,7 +594,7 @@ class Manager(QWidget):
 
     def refreshScanTab(self):
         self.refresh_scan_status_lists()
-        self.refreshUList()
+        self.refreshUnknownList()
         self.refreshCList()
         self.refreshDiscardList()
         self.refreshDangList()
@@ -904,14 +904,14 @@ class Manager(QWidget):
             ]
         )
         self.ui.unknownTV.setIconSize(QSize(32, 32))
-        self.ui.unknownTV.activated.connect(self.viewUPage)
+        self.ui.unknownTV.activated.connect(self.viewUnknownPage)
         self.ui.unknownTV.setColumnHidden(0, True)
-        self.refreshUList()
+        self.refreshUnknownList()
 
-    def refreshUList(self):
+    def refreshUnknownList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
-        unkList = self.msgr.getUnknownPages()
-        for r, u in enumerate(unkList):
+        unknowns = self.msgr.getUnknownPages()
+        for r, u in enumerate(unknowns):
             it0 = QStandardItem(Path(u["server_path"]).name)
             pm = QPixmap()
             pm.loadFromData(
@@ -946,26 +946,26 @@ class Manager(QWidget):
         self.ui.unknownTV.resizeRowsToContents()
         self.ui.unknownTV.resizeColumnsToContents()
 
-        countstr = str(len(unkList))
+        countstr = str(len(unknowns))
         countstr += "*" if countstr != "0" else "\N{Check Mark}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.unknownTab),
             f"&Unknown Pages ({countstr})",
         )
 
-    def viewUPage(self):
+    def viewUnknownPage(self):
         pvi = self.ui.unknownTV.selectedIndexes()
         if len(pvi) == 0:
             return
         r = pvi[0].row()
         pagedata = self.unknownModel.item(r, 0).data()  # .toPyObject?
-        vp = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
+        obj = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
         # get the list of ID'd papers
         iDict = self.msgr.getIdentified()
         # Context manager not appropriate, Issue #1996
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
-            fh.write(vp)
+            fh.write(obj)
         pagedata["local_filename"] = f
         uvw = UnknownViewWindow(
             self,
@@ -1283,7 +1283,7 @@ class Manager(QWidget):
             if self.discardModel.item(r, 3).text() == "move":
                 self.msgr.discardToUnknown(self.discardModel.item(r, 0).text())
         self.refreshDiscardList()
-        self.refreshUList()
+        self.refreshUnknownList()
 
     def initDanglingTab(self):
         self.danglingModel = QStandardItemModel(0, 5)
