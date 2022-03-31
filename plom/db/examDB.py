@@ -155,7 +155,6 @@ class PlomDB:
         moveUnknownToTPage,
         checkTPage,
         removeUnknownImage,
-        getDiscardImage,
         moveDiscardToUnknown,
         moveUnknownToCollision,
         getCollidingImage,

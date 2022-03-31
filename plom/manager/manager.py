@@ -1220,35 +1220,33 @@ class Manager(QWidget):
         self.ui.discardTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.discardModel.setHorizontalHeaderLabels(
             [
-                "FullFile",
+                "ID",
                 "File",
                 "Reason discarded",
                 "Action to be taken",
             ]
         )
         self.ui.discardTV.setIconSize(QSize(32, 32))
-        self.ui.discardTV.activated.connect(self.viewDPage)
+        self.ui.discardTV.activated.connect(self.viewDiscardPage)
         self.ui.discardTV.setColumnHidden(0, True)
         self.refreshDiscardList()
 
     def refreshDiscardList(self):
         self.discardModel.removeRows(0, self.discardModel.rowCount())
-        # list of pairs [filename, reason]
         discards = self.msgr.getDiscardedPages()
         for r, d in enumerate(discards):
-            fname = d["server_path"]
-            reason = d["reason"]
-            it0 = QStandardItem(fname)
-            it1 = QStandardItem(os.path.split(fname)[1])
+            it1 = QStandardItem(Path(d["server_path"]).name)
             pm = QPixmap()
             pm.loadFromData(
                 resources.read_binary(plom.client.icons, "manager_none.svg")
             )
             it1.setIcon(QIcon(pm))
-            it2 = QStandardItem(reason)
+            it2 = QStandardItem(d["reason"])
             it3 = QStandardItem("")
             it3.setTextAlignment(Qt.AlignCenter)
-            self.discardModel.insertRow(r, [it0, it1, it2, it3])
+            raw = QStandardItem(str(d["id"]))
+            raw.setData(d)
+            self.discardModel.insertRow(r, (raw, it1, it2, it3))
         self.ui.discardTV.resizeRowsToContents()
         self.ui.discardTV.resizeColumnsToContents()
         self.ui.scanTabW.setTabText(
@@ -1256,20 +1254,19 @@ class Manager(QWidget):
             "&Discarded Pages ({})".format(len(discards)),
         )
 
-    def viewDPage(self):
+    def viewDiscardPage(self):
         pvi = self.ui.discardTV.selectedIndexes()
         if len(pvi) == 0:
             return
         r = pvi[0].row()
-        fname = self.discardModel.item(r, 0).text()
-        vdp = self.msgr.getDiscardImage(fname)
-        if vdp is None:
-            return
+        pagedata = self.discardModel.item(r, 0).data()
+        obj = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
         # Context manager not appropriate, Issue #1996
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
-            fh.write(vdp)
-        if DiscardViewWindow(self, f).exec_() == QDialog.Accepted:
+            fh.write(obj)
+        pagedata["local_filename"] = f
+        if DiscardViewWindow(self, [pagedata]).exec_() == QDialog.Accepted:
             pm = QPixmap()
             pm.loadFromData(
                 resources.read_binary(plom.client.icons, "manager_move.svg")
