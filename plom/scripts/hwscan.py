@@ -2,12 +2,12 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 
 """Plom tools for scanning homework and pushing to servers."""
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -21,7 +21,6 @@ from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status
 from plom.scan import processHWScans, processMissing
 from plom.scan import processAllHWByQ
-from plom.scan import print_bundle_list
 
 
 def get_parser():
@@ -68,12 +67,19 @@ def get_parser():
         "missing",
         help="Replace missing answers with 'not submitted' pages.",
     )
-    spS = sub.add_parser("status", help="Get scanning status report from server")
-    spB = sub.add_parser(
-        "bundles",
-        help="Get a list of bundles in the plom database",
-        description="Get a list of bundles in the plom database.",
+    spS = sub.add_parser(
+        "status",
+        help="Get scanning status report from server",
+        description="""
+            Get scanning status report from server.
+            You can customize the report using the switches below
+            or omit all switches to get the full report.
+        """,
     )
+    spS.add_argument("--papers", action="store_true", help="show paper info")
+    spS.add_argument("--unknowns", action="store_true", help="Show info about unknowns")
+    spS.add_argument("--bundles", action="store_true", help="Show bundle info")
+
     spC = sub.add_parser(
         "clear",
         help="Clear 'scanner' login",
@@ -180,7 +186,7 @@ def get_parser():
         help="Answer yes to prompts.",
     )
 
-    for x in (spW, spP, spA, spS, spB, spC, spM):
+    for x in (spW, spP, spA, spS, spC, spM):
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
         x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -218,9 +224,9 @@ def main():
     elif args.command == "missing":
         processMissing(yes_flag=args.yes, msgr=(args.server, args.password))
     elif args.command == "status":
-        check_and_print_scan_status(msgr=(args.server, args.password))
-    elif args.command == "bundles":
-        print_bundle_list(msgr=(args.server, args.password))
+        check_and_print_scan_status(
+            args.papers, args.unknowns, args.bundles, msgr=(args.server, args.password)
+        )
     elif args.command == "clear":
         clear_login(args.server, args.password)
     else:

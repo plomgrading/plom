@@ -3,14 +3,42 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Jed Yeo
 
-from pathlib import Path
-
 from plom.misc_utils import format_int_list_with_runs
 from plom.scan import with_scanner_messenger
+from plom.scan.listBundles import print_bundle_list
 
 
 @with_scanner_messenger
-def check_and_print_scan_status(*, msgr):
+def check_and_print_scan_status(papers, unknowns, bundles, *, msgr):
+    """Prints summary of test/hw uploads.
+
+    What is printed is controlled by some boolean switches except that
+    if all switches are false, we print everything.
+
+    Args:
+        papers (bool): print info on test papers.
+        unknowns (bool): print info on unknown pages.
+        bundles (bool): print info about bundles.
+    """
+    if not any((papers, unknowns, bundles)):
+        papers = unknowns = bundles = True
+    dirty = False
+    if papers:
+        check_and_print_scan_status_papers(msgr=msgr)
+        dirty = True
+    if unknowns:
+        if dirty:
+            print("\n" + "- " * 44 + "\n")
+        check_and_print_scan_status_unknowns(msgr=msgr)
+        dirty = True
+    if bundles:
+        if dirty:
+            print("\n" + "- " * 44 + "\n")
+        print_bundle_list(table_width=88, msgr=msgr)
+
+
+@with_scanner_messenger
+def check_and_print_scan_status_papers(*, msgr):
     """Prints summary of test/hw uploads.
 
     More precisely. Prints lists
@@ -18,6 +46,8 @@ def check_and_print_scan_status(*, msgr):
     * which tests completely scanned (both tpages and hwpage)
     * incomplete tests (missing one tpage or one hw-question)
     """
+    print("# Test paper info\n")
+
     # returns pairs of [page,version] - only display pages
     ST = msgr.getScannedTests()
     UT = msgr.getUnusedTests()
@@ -71,6 +101,12 @@ def check_and_print_scan_status(*, msgr):
             )
         )
 
+
+@with_scanner_messenger
+def check_and_print_scan_status_unknowns(*, msgr):
+    """Prints summary of unknown pages."""
+
+    print("# Unknown page info\n")
     unknown_pagedata = msgr.getUnknownPages()
     N = len(unknown_pagedata)
     is_are = "is" if N == 1 else "are"
