@@ -284,8 +284,8 @@ def getUnknownPages(self):
     return self.DB.getUnknownPages()
 
 
-def getDiscardNames(self):
-    return self.DB.getDiscardNames()
+def getDiscardedPages(self):
+    return self.DB.getDiscardedPages()
 
 
 def getCollidingPageNames(self):

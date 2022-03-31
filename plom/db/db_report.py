@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2018-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
@@ -108,6 +108,9 @@ def RgetDanglingPages(self):
                         "type": "tpage",
                         "page": pref.page_number,
                         "code": f"t.{pref.page_number}",
+                        "original_name": pref.image.original_name,
+                        "bundle_name": pref.image.bundle.name,
+                        "bundle_order": pref.image.bundle_order,
                     }
                 )
         for pref in gref.hwpages:
@@ -119,6 +122,9 @@ def RgetDanglingPages(self):
                     "type": "hwpage",
                     "order": pref.order,
                     "code": f"h.{q}.{pref.order}",
+                    "original_name": pref.image.original_name,
+                    "bundle_name": pref.image.bundle.name,
+                    "bundle_order": pref.image.bundle_order,
                 }
             )
         for pref in gref.expages:
@@ -130,6 +136,9 @@ def RgetDanglingPages(self):
                     "type": "expage",
                     "order": pref.order,
                     "code": f"e.{q}.{pref.order}",
+                    "original_name": pref.image.original_name,
+                    "bundle_name": pref.image.bundle.name,
+                    "bundle_order": pref.image.bundle_order,
                 }
             )
     # return list sorted by test-number
@@ -624,4 +633,84 @@ def RgetUserFullProgress(self, user_name):
     ]
 
 
-###
+def _get_files_from_group(group_ref):
+    """Return a list of images and their bundle info in the pages of the given group.
+
+    args:
+        group_ref: can be an IDGroup, DNMGroup or QGroup.
+
+    returns:
+        list: list of dicts with keys `original_name`, `bundle_name`,
+        and `bundle_order`.
+
+    Note: only scanned pages are included.
+    """
+    image_list = []
+    # add all test_pages
+    for pref in group_ref.tpages:
+        if pref.scanned:  # only add if actually scanned
+            image_list.append(
+                {
+                    "original_name": pref.image.original_name,
+                    "bundle_name": pref.image.bundle.name,
+                    "bundle_order": pref.image.bundle_order,
+                }
+            )
+    # add all hw_pages and extra_pages
+    for pref in group_ref.hwpages:
+        image_list.append(
+            {
+                "original_name": pref.image.original_name,
+                "bundle_name": pref.image.bundle.name,
+                "bundle_order": pref.image.bundle_order,
+            }
+        )
+    for pref in group_ref.expages:
+        image_list.append(
+            {
+                "original_name": pref.image.original_name,
+                "bundle_name": pref.image.bundle.name,
+                "bundle_order": pref.image.bundle_order,
+            }
+        )
+    return image_list
+
+
+def RgetFilesInTest(self, test_number):
+    """Return a list of images and their bundle info for all pages of the given test.
+
+    args:
+        test_number (int): which test.
+
+    returns:
+        dict: with keys ``"id"``, ``"dnm"``, ``"q1"``, ``"q2"``, etc.
+        Each value is a list of dicts, one for each page.  Each of those
+        dicts has keys `original_name`, `bundle_name`, `bundle_order`.
+        Additional keys likely to be added.
+
+    Note: only scanned pages are included.
+    """
+    file_dict = {}
+    tref = Test.get_or_none(test_number=test_number)
+    if tref is None:
+        return file_dict
+
+    for gref in tref.groups:
+        image_list = _get_files_from_group(gref)
+        if gref.group_type == "i":
+            file_dict["id"] = image_list
+        elif gref.group_type == "d":
+            file_dict["dnm"] = image_list
+        elif gref.group_type == "q":
+            question = gref.qgroups[0].question
+            file_dict[f"q{question}"] = image_list
+    return file_dict
+
+
+def RgetFilesInAllTests(self):
+    """Return an audit of the files used in all the tests."""
+
+    tests = {}
+    for tref in Test.select():
+        tests[tref.test_number] = self.RgetFilesInTest(tref.test_number)
+    return tests

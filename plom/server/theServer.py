@@ -124,7 +124,7 @@ class Server:
         removeAllScannedPages,
         removeSinglePage,
         getUnknownPages,
-        getDiscardNames,
+        getDiscardedPages,
         getCollidingPageNames,
         getCollidingImage,
         getDiscardImage,
@@ -198,7 +198,7 @@ class Server:
         RgetUnusedTests,
         RgetScannedTests,
         RgetIncompleteTests,
-        RgetDanglingPages,
+        getDanglingPages,
         RgetCompleteHW,
         RgetMissingHWQ,
         RgetProgress,
@@ -216,6 +216,7 @@ class Server:
         RgetIDReview,
         RgetUserList,
         RgetUserDetails,
+        getFilesInAllTests,
     )
     from .plomServer.serverSolution import (
         uploadSolutionImage,

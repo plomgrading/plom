@@ -39,11 +39,30 @@ def getUnknownPages(self):
     return rval
 
 
-def getDiscardNames(self):
-    rval = []
-    for dref in DiscardedPage.select():
-        rval.append([dref.image.file_name, dref.reason])
-    return rval
+def getDiscardedPages(self):
+    """Get information about the discarded pages
+
+    Returns:
+        list: each entry is dict of information about an unknown page.
+        Keys include ``server_path``, ``orientation``, ``bundle_name``,
+        ``bundle_position``, ``md5sum``, ``id``, and ``reason``.
+    """
+    pages = []
+    for r in DiscardedPage.select():
+        pages.append(
+            {
+                "pagename": Path(r.image.file_name).stem,
+                "md5sum": r.image.md5sum,
+                "orientation": r.image.rotation,
+                "id": r.image.id,
+                "server_path": r.image.file_name,
+                "original_name": r.image.original_name,
+                "bundle_name": r.image.bundle.name,
+                "bundle_position": r.image.bundle_order,
+                "reason": r.reason,
+            }
+        )
+    return pages
 
 
 def getCollidingPageNames(self):

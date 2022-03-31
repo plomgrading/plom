@@ -955,3 +955,31 @@ class BaseMessenger:
                 if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def getDiscardedPages(self):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/discardedPages",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def getCollidingPageNames(self):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/collidingPageNames",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None

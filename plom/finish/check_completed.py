@@ -143,7 +143,7 @@ def main(server=None, password=None):
         numberOfQuestions = spec["numberOfQuestions"]
         completions = msgr.RgetCompletionStatus()
         outToDo = msgr.RgetOutToDo()
-        dangling = msgr.RgetDanglingPages()
+        dangling = msgr.getDanglingPages()
         paper_nums_to_ids = msgr.RgetSpreadsheet()
     finally:
         msgr.closeUser()
