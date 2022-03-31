@@ -677,7 +677,19 @@ def _get_files_from_group(group_ref):
 
 
 def RgetFilesInTest(self, test_number):
-    """Return the files/bundles used in all the groups of the given test"""
+    """Return a list of images and their bundle info for all pages of the given gtest.
+
+    args:
+        test_number (int): which test.
+
+    returns:
+        dict: with keys ``"id"``, ``"dnm"``, ``"q1"``, ``"q2"``, etc.
+        Each value is a list of dicts, one for each page.  Each of those
+        dicts has keys `original_name`, `bundle_name`, `bundle_order`.
+        Additional keys likely to be added.
+
+    Note: only scanned pages are included.
+    """
     file_dict = {}
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
