@@ -7,8 +7,13 @@ from plom.finish import start_messenger
 
 def main(server=None, password=None):
     msgr = start_messenger(server, password)
+    audit = {}
     try:
-        audit = msgr.RgetFileAudit()
+        audit["tests"] = msgr.RgetFileAudit()
+        audit["unknowns"] = msgr.getUnknownPages()
+        audit["discards"] = msgr.getDiscardedPages()
+        audit["dangling"] = msgr.RgetDanglingPages()
+        audit["collisions"] = msgr.getCollidingPageNames()
     finally:
         msgr.closeUser()
         msgr.stop()
