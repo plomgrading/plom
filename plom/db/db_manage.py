@@ -546,18 +546,6 @@ def removeUnknownImage(self, file_name):
     return [True]
 
 
-def getDiscardImage(self, file_name):
-    # this really just confirms that the file_name belongs to an discard
-    iref = Image.get_or_none(file_name=file_name)
-    if iref is None:
-        return [False]
-    dref = iref.discards[0]
-    if dref is None:
-        return [False]
-    else:
-        return [True, dref.image.file_name]
-
-
 def moveDiscardToUnknown(self, file_name):
     iref = Image.get_or_none(file_name=file_name)
     if iref is None:  # should not happen

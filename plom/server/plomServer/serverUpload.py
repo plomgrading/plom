@@ -272,10 +272,6 @@ def getEXPageImage(self, testNumber, question, order):
     return self.DB.getEXPageImage(testNumber, question, order)
 
 
-def getDiscardImage(self, fname):
-    return self.DB.getDiscardImage(fname)
-
-
 def getCollidingImage(self, fname):
     return self.DB.getCollidingImage(fname)
 

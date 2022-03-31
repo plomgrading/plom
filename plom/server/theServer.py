@@ -127,7 +127,6 @@ class Server:
         getDiscardedPages,
         getCollidingPageNames,
         getCollidingImage,
-        getDiscardImage,
         getTPageImage,
         getHWPageImage,
         getEXPageImage,

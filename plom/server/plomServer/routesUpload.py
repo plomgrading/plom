@@ -531,21 +531,6 @@ class UploadHandler:
         pagedata = [{k: v for k, v in zip(rownames, val)}]
         return web.json_response(pagedata, status=200)
 
-    async def getDiscardImage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "fileName"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        rval = self.server.getDiscardImage(data["fileName"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
-
     async def getCollidingImage(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "fileName"]):
@@ -985,7 +970,6 @@ class UploadHandler:
         router.add_get("/admin/unknownPages", self.getUnknownPages)
         router.add_get("/admin/discardedPages", self.getDiscardedPages)
         router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
-        router.add_get("/admin/discardImage", self.getDiscardImage)
         router.add_get("/admin/collidingImage", self.getCollidingImage)
         router.add_get("/admin/checkTPage", self.checkTPage)
         router.add_delete("/admin/unknownImage", self.removeUnknownImage)
