@@ -9,8 +9,8 @@ class CommandCrop(QUndoCommand):
         super().__init__()
         self.scene = scene
 
-        self.crop_rect = crop_rect
-        self.prev_crop = current_rect
+        self.crop_rect = crop_rect  # is absolute - not proportions
+        self.prev_crop = current_rect  # is absolute - not proportions
         self.setText("Crop")
 
     def redo(self):

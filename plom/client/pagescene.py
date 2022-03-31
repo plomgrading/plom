@@ -35,7 +35,6 @@ from PyQt5.QtWidgets import (
     QGraphicsSceneDragDropEvent,
     QGraphicsTextItem,
     QGraphicsItemGroup,
-    QGraphicsItem,
     QMessageBox,
     QUndoStack,
 )
@@ -83,6 +82,11 @@ from .elastics import (
 
 
 log = logging.getLogger("pagescene")
+
+# set a margin width variable for use everywhere. Later this should likely be a % of image size.
+margin_width = 512
+# set a variable for a "keep" margin - what items are kept when cropping
+keep_margin = 256
 
 
 class ScoreBox(QGraphicsTextItem):
@@ -194,17 +198,106 @@ class UnderlyingRect(QGraphicsRectItem):
 
     def __init__(self, rect):
         super().__init__()
-        self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
+        self.setPen(QPen(Qt.black, 4, style=Qt.DotLine))
         self.setBrush(QBrush(QColor(249, 249, 249, 255)))
         self.setRect(rect)
         self.setZValue(-10)
 
+
+class MaskingOverlay(QGraphicsItemGroup):
+    """
+    A transparent rectangular border to place over the images.
+    """
+
+    def __init__(self, outer_rect, inner_rect):
+        super().__init__()
+        self.outer_rect = outer_rect
+        self.inner_rect = inner_rect
+        # keep the original inner rectangle for uncropping.
+        self.original_inner_rect = inner_rect
+
+        # set rectangles for semi-transparent boundaries - needs some tmp rectangle.
+        self.top_bar = QGraphicsRectItem(outer_rect)
+        self.bottom_bar = QGraphicsRectItem(outer_rect)
+        self.left_bar = QGraphicsRectItem(outer_rect)
+        self.right_bar = QGraphicsRectItem(outer_rect)
+        self.dotted_boundary = QGraphicsRectItem(inner_rect)
+        # set brush and pen
+        transparent_pen = QPen(QColor(249, 249, 249, 240), 0)
+        transparent_paint = QBrush(QColor(249, 249, 249, 240))
+        dotted_pen = QPen(QColor(128, 128, 128, 128), 2, style=Qt.DotLine)
+        self.top_bar.setBrush(transparent_paint)
+        self.bottom_bar.setBrush(transparent_paint)
+        self.left_bar.setBrush(transparent_paint)
+        self.right_bar.setBrush(transparent_paint)
+        self.top_bar.setPen(transparent_pen)
+        self.bottom_bar.setPen(transparent_pen)
+        self.left_bar.setPen(transparent_pen)
+        self.right_bar.setPen(transparent_pen)
+        self.dotted_boundary.setPen(dotted_pen)
+        # now set the size correctly
+        self.set_bars()
+        # finally add them to the group
+        self.addToGroup(self.top_bar)
+        self.addToGroup(self.bottom_bar)
+        self.addToGroup(self.left_bar)
+        self.addToGroup(self.right_bar)
+        self.addToGroup(self.dotted_boundary)
+        # set with z-value 0
+        self.setZValue(0)
+
     def croppit(self, crop_rect):
-        marg_rect = self.mapRectFromScene(crop_rect)
-        marg = 512  # at some point in future make some function of image width/height
-        marg_rect.adjust(-marg, -marg, marg, marg)
-        self.setRect(marg_rect)
+        log.debug(f"croppit called with {crop_rect}")
+        self.inner_rect = crop_rect
+        self.set_bars()
         self.update()
+
+    def get_original_inner_rect(self):
+        return self.original_inner_rect
+
+    def set_bars(self):
+        # reset the dotted boundary rectangle
+        self.dotted_boundary.setRect(self.inner_rect)
+        # set rectangles using rectangle defined by top-left and bottom-right points.
+        self.top_bar.setRect(
+            QRectF(
+                self.outer_rect.topLeft(),
+                QPointF(
+                    self.outer_rect.topRight().x(),
+                    self.inner_rect.topRight().y(),
+                ),
+            )
+        )
+        self.bottom_bar.setRect(
+            QRectF(
+                QPointF(
+                    self.outer_rect.bottomLeft().x(),
+                    self.inner_rect.bottomLeft().y(),
+                ),
+                self.outer_rect.bottomRight(),
+            )
+        )
+        self.left_bar.setRect(
+            QRectF(
+                QPointF(
+                    self.outer_rect.topLeft().x(),
+                    self.inner_rect.topLeft().y(),
+                ),
+                self.inner_rect.bottomLeft(),
+            )
+        )
+        self.right_bar.setRect(
+            QRectF(
+                QPointF(
+                    self.inner_rect.topRight().x(),
+                    self.outer_rect.topRight().y(),
+                ),
+                QPointF(
+                    self.outer_rect.bottomRight().x(),
+                    self.inner_rect.bottomRight().y(),
+                ),
+            )
+        )
 
 
 class UnderlyingImages(QGraphicsItemGroup):
@@ -258,25 +351,8 @@ class UnderlyingImages(QGraphicsItemGroup):
             x = int(x)
             self.images[n] = img
             self.addToGroup(self.images[n])
-        # set original bounding rectangle
-        self.originalBound = self.boundingRect()
-        # set current bounding rect for cropping functions
-        self.currentBound = self.boundingRect()
-        # set it to clip/crop things
-        self.setFlag(QGraphicsItem.ItemClipsChildrenToShape, True)
 
-    def shape(self):
-        # TODO - remove unused images as well
-        shape_rect = QPainterPath()
-        shape_rect.addRect(self.currentBound)
-        return shape_rect
-
-    def croppit(self, crop_rect):
-        self.currentBound = self.mapRectFromScene(crop_rect)
-        self.update()
-
-    def get_original_rect(self):
-        return self.originalBound
+        self.setZValue(-1)
 
 
 # Dictionaries to translate tool-modes into functions
@@ -368,13 +444,15 @@ class PageScene(QGraphicsScene):
         self.underImage = UnderlyingImages(self.src_img_data)
         self.whichLineToDraw_init()
         # and an underlyingrect for the margin.
-        margin_rect = QRectF(self.underImage.boundingRect())
-        marg = 512  # at some point in future make some function of image width/height
-        margin_rect.adjust(-marg, -marg, marg, marg)
+        margin_rect = QRectF(self.underImage.boundingRect()).adjusted(
+            -margin_width, -margin_width, margin_width, margin_width
+        )
         self.underRect = UnderlyingRect(margin_rect)
+        # and the overlay mask
+        self.overMask = MaskingOverlay(margin_rect, self.underImage.boundingRect())
         self.addItem(self.underRect)
-        # finally add the underimage
         self.addItem(self.underImage)
+        self.addItem(self.overMask)
 
         # Build scene rectangle to fit the image, and place image into it.
         self.setSceneRect(self.underImage.boundingRect())
@@ -770,8 +848,8 @@ class PageScene(QGraphicsScene):
         return False
 
     def getSaveableRectangle(self):
-        # the rectangle is set to our current (potentially cropped) image bound
-        br = self.underImage.mapRectToScene(self.underImage.currentBound)
+        # the rectangle is set to our current (potentially cropped) inner-rect of the masking
+        br = self.overMask.mapRectToScene(self.overMask.inner_rect)
         # go through all saveable items
         for X in self.items():
             if hasattr(X, "saveable"):
@@ -1632,6 +1710,7 @@ class PageScene(QGraphicsScene):
                     QGraphicsPixmapItem,
                     UnderlyingImages,
                     UnderlyingRect,
+                    MaskingOverlay,
                     GhostComment,
                     GhostDelta,
                     GhostText,
@@ -2155,6 +2234,7 @@ class PageScene(QGraphicsScene):
             self.ghostItem.di,
             self.ghostItem.blurb,
             self.underRect,
+            self.overMask,
         ]:
             return
         elif isinstance(item, DeleteItem):  # don't try to delete the animated undo/redo
@@ -2589,8 +2669,7 @@ class PageScene(QGraphicsScene):
     # PAGE SCENE CROPPING STUFF
     def croppit(self, crop_rect):
         # this is called by the actual command-redo.
-        self.underImage.croppit(crop_rect)
-        self.underRect.croppit(crop_rect)
+        self.overMask.croppit(crop_rect)
         self.scoreBox.setPos(crop_rect.topLeft())
         self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # update the scene-rectangle - helps the viewer
@@ -2600,11 +2679,11 @@ class PageScene(QGraphicsScene):
         self.views()[0].scale(0.8, 0.8)
         self.views()[0].setZoomSelector(True)
 
-    def current_crop_rectangle(self):
+    def current_crop_rectangle_as_proportions(self):
         """Return the crop rectangle as proportions of original image"""
-        full_height = self.underImage.originalBound.height()
-        full_width = self.underImage.originalBound.width()
-        rect_in_pix = self.underImage.currentBound
+        full_height = self.underImage.boundingRect().height()
+        full_width = self.underImage.boundingRect().width()
+        rect_in_pix = self.overMask.inner_rect
 
         rect_as_proportion = QRectF(
             rect_in_pix.x() / full_width,
@@ -2616,8 +2695,8 @@ class PageScene(QGraphicsScene):
 
     def crop_from_plomfile(self, crop_dat):
         # crop dat = (x,y,w,h) as proportions of full image, so scale by underlying image width/height
-        full_height = self.underImage.originalBound.height()
-        full_width = self.underImage.originalBound.width()
+        full_height = self.underImage.boundingRect.height()
+        full_width = self.underImage.boundingRect.width()
         crop_rect = QRectF(
             crop_dat[0] * full_width,
             crop_dat[1] * full_height,
@@ -2627,27 +2706,32 @@ class PageScene(QGraphicsScene):
         self.trigger_crop(crop_rect)
 
     def uncrop_underlying_images(self):
-        original_rect = self.underImage.get_original_rect()
-        self.trigger_crop(original_rect)
+        self.trigger_crop(self.overMask.get_original_inner_rect())
 
     def trigger_crop(self, crop_rect):
         self.undoStack.beginMacro("Crop region")
         # make sure that the underlying crop-rectangle is normalised
-        command = CommandCrop(
-            self, crop_rect.normalized(), self.current_crop_rectangle()
-        )
+        # pass new crop rect, as well as current one (for undo)
+        command = CommandCrop(self, crop_rect.normalized(), self.overMask.inner_rect)
         self.undoStack.push(command)
-        # look for everything outside the underlying rectangle
+        # Keep anything "close" to the crop_rect - ie within margin_width of it.
+        keep_rect = crop_rect.adjusted(
+            -keep_margin, -keep_margin, keep_margin, keep_margin
+        )
+        # look for everything outside the "keep" rectangle
         for X in self.items():
             if hasattr(X, "saveable"):
-                # now check it is inside the UnderlyingRect
-                if X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
-                    # is inside bounds so leave it
-                    pass
+                # now check it is close to the crop region, be careful of group objects
+                if X.group() is not None:  # object part of GroupDeltaText
+                    if keep_rect.contains(X.group().boundingRect()):
+                        pass
+                    else:
+                        self.deleteIfLegal(X.group())  # delete the group
                 else:
-                    # outside bounds so delete it
-                    command = CommandDelete(self, X)
-                    self.undoStack.push(command)
+                    if keep_rect.contains(X.boundingRect()):
+                        pass
+                    else:
+                        self.deleteIfLegal(X)
 
         self.undoStack.endMacro()
         # now set mode to move.
