@@ -1307,7 +1307,15 @@ class Manager(QWidget):
         self.ui.danglingTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.danglingTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.danglingModel.setHorizontalHeaderLabels(
-            ["Type", "Test", "Group", "Code", "Page / Order", "Bundle name", "Bundle position"]
+            (
+                "Type",
+                "Test",
+                "Group",
+                "Code",
+                "Page / Order",
+                "Bundle name",
+                "Bundle position",
+            )
         )
         self.ui.danglingTV.activated.connect(self.viewDanglingPage)
         self.refreshDangList()
