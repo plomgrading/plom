@@ -469,7 +469,7 @@ class ReportHandler:
         """
 
         if not data["user"] == "manager":
-            raise web.HTTPForbidden("I want to speak to the manager")
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
         rmsg = self.server.getFilesInAllTests()
 
         return web.json_response(rmsg, status=200)
