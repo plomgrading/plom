@@ -47,7 +47,6 @@ from .tools import (
     CrossItem,
     DeleteItem,
     DeltaItem,
-    ImageItem,
     GhostComment,
     GhostDelta,
     GroupDeltaTextItem,
@@ -84,7 +83,7 @@ from .elastics import (
 log = logging.getLogger("pagescene")
 
 # set a margin width variable for use everywhere. Later this should likely be a % of image size.
-margin_width = 512
+margin_width = 1024
 # set a variable for a "keep" margin - what items are kept when cropping
 keep_margin = 256
 
@@ -1703,26 +1702,13 @@ class PageScene(QGraphicsScene):
 
         # clear all items from scene.
         for X in self.items():
-            if any(
-                isinstance(X, Y)
-                for Y in [
-                    ScoreBox,
-                    QGraphicsPixmapItem,
-                    UnderlyingImages,
-                    UnderlyingRect,
-                    MaskingOverlay,
-                    GhostComment,
-                    GhostDelta,
-                    GhostText,
-                    DeleteItem,
-                ]
-            ) and X is not isinstance(X, ImageItem):
-                # as ImageItem is a subclass of QGraphicsPixmapItem, we have
-                # to make sure ImageItems aren't skipped!
-                continue
-            else:
+            # X is a saveable object then it is user-created.
+            # Hence it can be deleted, otherwise leave it.
+            if hasattr(X, "saveable"):
                 command = CommandDelete(self, X)
                 self.undoStack.push(command)
+            else:
+                continue
         # now load up the new items
         for X in lst:
             CmdCls = globals().get("Command{}".format(X[0]), None)
@@ -2409,11 +2395,11 @@ class PageScene(QGraphicsScene):
         """
         out_objs = []
         for X in self.items():
-            # check all items that are not the image or scorebox
-            if (X is self.underImage) or (X is self.scoreBox):
+            # check all items that are not the image, the mask, or scorebox
+            if (X is self.underImage) or (X is self.overMask) or (X is self.scoreBox):
                 continue
-            # make sure that it is not one of the images inside the underlying image.
-            if X.parentItem() is self.underImage:
+            # make sure that it is not one of the images inside the underlying image, or one of the rect in the overlasy mask.
+            if X.parentItem() is self.underImage or X.parentItem() is self.overMask:
                 continue
             # And be careful - there might be a GhostComment floating about
             if (
@@ -2685,24 +2671,25 @@ class PageScene(QGraphicsScene):
         full_width = self.underImage.boundingRect().width()
         rect_in_pix = self.overMask.inner_rect
 
-        rect_as_proportion = QRectF(
+        rect_as_proportions = (
             rect_in_pix.x() / full_width,
             rect_in_pix.y() / full_height,
             rect_in_pix.width() / full_width,
             rect_in_pix.height() / full_height,
         )
-        return rect_as_proportion
+        return rect_as_proportions
 
     def crop_from_plomfile(self, crop_dat):
         # crop dat = (x,y,w,h) as proportions of full image, so scale by underlying image width/height
-        full_height = self.underImage.boundingRect.height()
-        full_width = self.underImage.boundingRect.width()
+        full_height = self.underImage.boundingRect().height()
+        full_width = self.underImage.boundingRect().width()
         crop_rect = QRectF(
             crop_dat[0] * full_width,
             crop_dat[1] * full_height,
             crop_dat[2] * full_width,
             crop_dat[3] * full_height,
         )
+        log.warn(f"Triggering crop with {crop_dat} = {crop_rect}")
         self.trigger_crop(crop_rect)
 
     def uncrop_underlying_images(self):
@@ -2711,11 +2698,13 @@ class PageScene(QGraphicsScene):
     def trigger_crop(self, crop_rect):
         self.undoStack.beginMacro("Crop region")
         # make sure that the underlying crop-rectangle is normalised
+        # also make sure that it is not larger than the original image - so use their intersection
+        actual_crop = crop_rect.intersected(self.underImage.boundingRect()).normalized()
         # pass new crop rect, as well as current one (for undo)
-        command = CommandCrop(self, crop_rect.normalized(), self.overMask.inner_rect)
+        command = CommandCrop(self, actual_crop, self.overMask.inner_rect)
         self.undoStack.push(command)
         # Keep anything "close" to the crop_rect - ie within margin_width of it.
-        keep_rect = crop_rect.adjusted(
+        keep_rect = actual_crop.adjusted(
             -keep_margin, -keep_margin, keep_margin, keep_margin
         )
         # look for everything outside the "keep" rectangle
