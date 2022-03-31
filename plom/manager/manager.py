@@ -80,22 +80,19 @@ log = logging.getLogger("manager")
 class UserDialog(QDialog):
     """Simple dialog to enter username and password"""
 
-    def __init__(self, name=None, extant=[]):
-        super().__init__()
+    def __init__(self, parent, title, *, name=None, extant=[]):
+        super().__init__(parent)
         self.name = name
-        self.initUI()
-        if name is not None:
-            self.userLE.setEnabled(False)
-        self.extant = [
-            x.lower() for x in extant
-        ]  # put everything in lowercase to simplify checking.
+        # put everything in lowercase to simplify checking.
+        self.extant = [x.lower() for x in extant]
 
-    def initUI(self):
-        self.setWindowTitle("Please enter user")
+        self.setWindowTitle(title)
         self.userL = QLabel("Username:")
         self.pwL = QLabel("Password:")
         self.pwL2 = QLabel("and again:")
         self.userLE = QLineEdit(self.name)
+        if name is not None:
+            self.userLE.setEnabled(False)
         initialpw = simple_password()
         self.pwLE = QLineEdit(initialpw)
         # self.pwLE.setEchoMode(QLineEdit.Password)
@@ -118,14 +115,13 @@ class UserDialog(QDialog):
         grid.addWidget(self.pwL, 2, 1)
         grid.addWidget(self.pwLE, 2, 2)
         grid.addWidget(self.pwCB, 2, 3)
-        grid.addWidget(self.pwNewB, 3, 3)
         grid.addWidget(self.pwL2, 3, 1)
         grid.addWidget(self.pwLE2, 3, 2)
+        grid.addWidget(self.pwNewB, 3, 3)
         grid.addWidget(self.okB, 4, 3)
         grid.addWidget(self.cnB, 4, 1)
 
         self.setLayout(grid)
-        self.show()
 
     def togglePWShow(self):
         if self.pwCB.checkState() == Qt.Checked:
@@ -159,19 +155,27 @@ class UserDialog(QDialog):
 
 
 class QVHistogram(QDialog):
-    def __init__(self, q, v, hist):
-        super().__init__()
+    """A non-modal dialog showing histograms.
+
+    A note on modality: because this is parented to Manager (see super
+    init call) but non-modal you can open as many as you want.  At
+    least in the Gnome environment, the window manager keeps them all
+    on top of Manager (but allows the focus to switch back to Manager).
+    Compare to `SolutionViewer` which is unparented so not on top.
+    """
+
+    def __init__(self, parent, q, v, hist):
+        super().__init__(parent)
         self.question = q
         self.version = v
         self.setWindowTitle("Histograms for question {} version {}".format(q, v))
-        self.hist = hist
         tot = 0
         mx = 0
         dist = {}
-        for u in self.hist:
-            for m in self.hist[u]:
+        for u in hist:
+            for m in hist[u]:
                 im = int(m)
-                s = int(self.hist[u][m])
+                s = int(hist[u][m])
                 mx = max(mx, im)
                 tot += s
                 if im not in dist:
@@ -180,7 +184,7 @@ class QVHistogram(QDialog):
 
         grid = QGridLayout()
 
-        self.eG = QGroupBox("All markers")
+        eG = QGroupBox("All markers")
         gg = QVBoxLayout()
         gg.addWidget(QLabel("Number of papers: {}".format(tot)))
         gp = QHBoxLayout()
@@ -194,19 +198,19 @@ class QVHistogram(QDialog):
             pb.setToolTip("{} = {}%".format(im, pb.value()))
             gp.addWidget(pb)
         gg.addLayout(gp)
-        self.eG.setLayout(gg)
-        grid.addWidget(self.eG, 0, 0)
+        eG.setLayout(gg)
+        grid.addWidget(eG, 0, 0)
 
         max_number_of_rows = 4  # should depend on user's viewport
         current_row = 1
         current_column = 0
 
-        self.uG = {}
-        for u in self.hist:
+        uG = {}
+        for u in hist:
             utot = 0
-            for m in self.hist[u]:
-                utot += self.hist[u][m]
-            self.uG[u] = QGroupBox("Marker: {}".format(u))
+            for m in hist[u]:
+                utot += hist[u][m]
+            uG[u] = QGroupBox("Marker: {}".format(u))
             gg = QVBoxLayout()
             gg.addWidget(QLabel("Number of papers: {}".format(utot)))
             gp = QHBoxLayout()
@@ -214,29 +218,29 @@ class QVHistogram(QDialog):
                 m = str(im)
                 pb = QProgressBar()
                 pb.setOrientation(Qt.Vertical)
-                if m not in self.hist[u]:
+                if m not in hist[u]:
                     pb.setValue(0)
                 else:
-                    pb.setValue((100 * self.hist[u][m]) // utot)
+                    pb.setValue((100 * hist[u][m]) // utot)
                 pb.setToolTip("{} = {}%".format(m, pb.value()))
                 gp.addWidget(pb)
             gg.addLayout(gp)
-            self.uG[u].setLayout(gg)
-            grid.addWidget(self.uG[u], current_row, current_column)
+            uG[u].setLayout(gg)
+            grid.addWidget(uG[u], current_row, current_column)
             current_row = (current_row + 1) % max_number_of_rows
             if current_row == 0:
                 current_column = current_column + 1
 
-        self.cB = QPushButton("&Close")
-        self.cB.clicked.connect(self.accept)
-        grid.addWidget(self.cB)
+        cB = QPushButton("&Close")
+        cB.clicked.connect(self.accept)
+        grid.addWidget(cB)
         self.setLayout(grid)
         self.show()
 
 
 class TestStatus(QDialog):
-    def __init__(self, nq, status):
-        super().__init__()
+    def __init__(self, parent, nq, status):
+        super().__init__(parent)
         self.status = status
         self.setWindowTitle("Status of test {}".format(self.status["number"]))
 
@@ -287,14 +291,15 @@ class TestStatus(QDialog):
 
 
 class ProgressBox(QGroupBox):
-    def __init__(self, parent, qu, v, stats):
-        super().__init__(parent)
-        self._parent = parent
+    def __init__(self, manager, qu, v, stats):
+        # This widget will be re-parented when its added to a layout
+        super().__init__()
+        # TODO: used to call a method of manager, instead use signal/slots?
+        self._manager = manager
         self.question = qu
         self.version = v
         self.setTitle("Q-{} V-{}".format(qu, v))
 
-        self.stats = stats
         grid = QVBoxLayout()
         self.nscL = QLabel()
         grid.addWidget(self.nscL)
@@ -312,55 +317,48 @@ class ProgressBox(QGroupBox):
         self.pb = QProgressBar()
         self.pb.setFormat("%v / %m")
         grid.addWidget(self.pb)
-        self.vhB = QPushButton("View histograms")
-        self.vhB.clicked.connect(self.viewHist)
-        grid.addWidget(self.vhB)
+        vhB = QPushButton("View histograms")
+        vhB.clicked.connect(self.viewHist)
+        grid.addWidget(vhB)
 
         self.setLayout(grid)
-        self.show()
-        self.refresh(self.stats)
+        self.refresh(stats)
 
     def refresh(self, stats):
-        self.stats = stats
-
         self.setEnabled(True)
         self.setVisible(True)
-        self.pb.setMaximum(self.stats["NScanned"])
-        self.pb.setValue(self.stats["NMarked"])
-        self.nscL.setText("# Scanned = {}".format(self.stats["NScanned"]))
-        self.nmkL.setText("# Marked = {}".format(self.stats["NMarked"]))
+        self.pb.setMaximum(stats["NScanned"])
+        self.pb.setValue(stats["NMarked"])
+        self.nscL.setText("# Scanned = {}".format(stats["NScanned"]))
+        self.nmkL.setText("# Marked = {}".format(stats["NMarked"]))
 
-        if self.stats["NScanned"] == 0:
+        if stats["NScanned"] == 0:
             self.setEnabled(False)
             self.setVisible(False)
             return
-        if self.stats["NMarked"] > 0:
+        if stats["NMarked"] > 0:
             self.avgL.setText(
                 "Mean : Median : Mode = {:0.2f} : {} : {}".format(
-                    self.stats["avgMark"],
-                    self.stats["medianMark"],
-                    self.stats["modeMark"],
+                    stats["avgMark"], stats["medianMark"], stats["modeMark"]
                 )
             )
             self.mmfL.setText(
                 "Min : Max : Full = {} : {} : {}".format(
-                    self.stats["minMark"], self.stats["maxMark"], self.stats["fullMark"]
+                    stats["minMark"], stats["maxMark"], stats["fullMark"]
                 )
             )
-            self.mtL.setText(
-                "Avg marking time = {:0.1f}s".format(self.stats["avgMTime"])
-            )
-            self.lhL.setText("# Marked in last hour = {}".format(self.stats["NRecent"]))
+            self.mtL.setText("Avg marking time = {:0.1f}s".format(stats["avgMTime"]))
+            self.lhL.setText("# Marked in last hour = {}".format(stats["NRecent"]))
         else:
             self.avgL.setText("Mean : Median : Mode  = N/A")
             self.mmfL.setText(
-                "Min : Max : Full = N/A : N/A : {}".format(self.stats["fullMark"])
+                "Min : Max : Full = N/A : N/A : {}".format(stats["fullMark"])
             )
             self.mtL.setText("Avg marking time = N/A")
             self.lhL.setText("# Marked in last hour = N/A")
 
     def viewHist(self):
-        self._parent.viewMarkHistogram(self.question, self.version)
+        self._manager.viewMarkHistogram(self.question, self.version)
 
 
 class Manager(QWidget):
@@ -1378,7 +1376,7 @@ class Manager(QWidget):
         r = pvi[0].row()
         testNumber = int(self.ui.overallTW.item(r, 0).text())
         stats = self.msgr.RgetStatus(testNumber)
-        TestStatus(self.numberOfQuestions, stats).exec_()
+        TestStatus(self, self.numberOfQuestions, stats).exec_()
 
     def refreshOverallTab(self):
         self.ui.overallTW.clearContents()
@@ -1594,7 +1592,7 @@ class Manager(QWidget):
 
     def viewMarkHistogram(self, question, version):
         mhist = self.msgr.getMarkHistogram(question, version)
-        QVHistogram(question, version, mhist).exec_()
+        QVHistogram(self, question, version, mhist).exec_()
 
     def initOutTab(self):
         self.ui.tasksOutTW.setColumnCount(3)
@@ -1617,9 +1615,6 @@ class Manager(QWidget):
             self.ui.tasksOutTW.setItem(r, 1, QTableWidgetItem(str(x[1])))
             self.ui.tasksOutTW.setItem(r, 2, QTableWidgetItem(str(x[2])))
             r += 1
-
-    def todo(self, msg=""):
-        ErrorMessage("This is on our to-do list" + msg).exec_()
 
     ##################
     # review tab stuff
@@ -2007,7 +2002,7 @@ class Manager(QWidget):
 
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
-        cpwd = UserDialog(name=user)
+        cpwd = UserDialog(self, f'Change password for "{user}"', name=user)
         if cpwd.exec_() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(user, cpwd.password)
             ErrorMessage(rval[1]).exec_()
@@ -2019,7 +2014,7 @@ class Manager(QWidget):
             self.ui.userListTW.item(r, 0).text()
             for r in range(self.ui.userListTW.rowCount())
         ]
-        cpwd = UserDialog(name=None, extant=uList)
+        cpwd = UserDialog(self, "Create new user", name=None, extant=uList)
         if cpwd.exec_() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(cpwd.name, cpwd.password)
             ErrorMessage(rval[1]).exec_()
