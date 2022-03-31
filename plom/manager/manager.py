@@ -1299,9 +1299,8 @@ class Manager(QWidget):
     def refreshDangList(self):
         self.danglingModel.removeRows(0, self.danglingModel.rowCount())
         # list of dicts
-        dangList = self.msgr.RgetDanglingPages()
-        r = 0
-        for dang in dangList:
+        danglers = self.msgr.getDanglingPages()
+        for r, dang in enumerate(danglers):
             it0 = QStandardItem(f"{dang['type']}")
             it1 = QStandardItem(f"{dang['test']}")
             it2 = QStandardItem(f"{dang['group']}")
@@ -1311,11 +1310,10 @@ class Manager(QWidget):
             else:
                 it4 = QStandardItem(f"{dang['order']}")
             self.danglingModel.insertRow(r, [it0, it1, it2, it3, it4])
-            r += 1
         self.ui.danglingTV.resizeRowsToContents()
         self.ui.danglingTV.resizeColumnsToContents()
 
-        countstr = str(len(dangList))
+        countstr = str(len(danglers))
         countstr += "*" if countstr != "0" else "\N{Check Mark}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.dangleTab),
