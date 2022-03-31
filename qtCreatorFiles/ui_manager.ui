@@ -536,6 +536,13 @@
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_30">
            <item>
+            <widget class="QLabel" name="labelDanglingExplain">
+             <property name="text">
+              <string>Replace with text explaining dangling pages</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QTableView" name="danglingTV">
              <property name="editTriggers">
               <set>QAbstractItemView::NoEditTriggers</set>

@@ -1286,6 +1286,22 @@ class Manager(QWidget):
         self.refreshUList()
 
     def initDanglingTab(self):
+        self.ui.labelDanglingExplain.setText(
+            """
+            <p>A page which is part of a test that is not yet completely
+            scanned and uploaded will show up here as a
+            <em>dangling page</em>.
+            These should go away automatically once tests become complete.
+            Note that this might require dealing with Unknown Pages,
+            Collisions etc.</p>
+            <p>
+            If you have already assigned all extra pages etc and there
+            are still dangling pages, then this might indicates that you
+            have mis-assigned an extra page to a test that has not
+            actually in use.</p>
+            """
+        )
+        self.ui.labelDanglingExplain.setWordWrap(True)
         self.danglingModel = QStandardItemModel(0, 5)
         self.ui.danglingTV.setModel(self.danglingModel)
         self.ui.danglingTV.setSelectionBehavior(QAbstractItemView.SelectRows)
