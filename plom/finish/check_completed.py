@@ -7,6 +7,7 @@
 # Copyright (C) 2022 Joey Shi
 
 import sys
+from textwrap import dedent
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.finish import start_messenger
@@ -93,6 +94,16 @@ def print_dangling(dangling):
                     x["type"], x["test"], x["order"], x["group"]
                 )
             )
+    print(
+        dedent(
+            """
+            A dangling page is part of a test that is not yet completely scanned
+            and uploaded.  If you have assigned all extra pages etc and there
+            are still dangling pages, then this might indicates that you have
+            mis-assigned an extra page to a test that has not actually in use.
+            """
+        )
+    )
 
 
 def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
@@ -143,7 +154,7 @@ def main(server=None, password=None):
         numberOfQuestions = spec["numberOfQuestions"]
         completions = msgr.RgetCompletionStatus()
         outToDo = msgr.RgetOutToDo()
-        dangling = msgr.RgetDanglingPages()
+        dangling = msgr.getDanglingPages()
         paper_nums_to_ids = msgr.RgetSpreadsheet()
     finally:
         msgr.closeUser()

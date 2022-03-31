@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 
@@ -11,7 +11,7 @@ def RgetIncompleteTests(self):
     return self.DB.RgetIncompleteTests()
 
 
-def RgetDanglingPages(self):
+def getDanglingPages(self):
     return self.DB.RgetDanglingPages()
 
 
@@ -89,3 +89,7 @@ def RgetUserList(self):
 
 def RgetUserDetails(self):
     return self.DB.getUserDetails()
+
+
+def getFilesInAllTests(self):
+    return self.DB.RgetFilesInAllTests()

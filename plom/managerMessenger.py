@@ -346,7 +346,7 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def RgetDanglingPages(self):
+    def getDanglingPages(self):
         self.SRmutex.acquire()
         try:
             response = self.get(
@@ -670,38 +670,6 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def getDiscardNames(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/discardNames",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def getCollidingPageNames(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/collidingPageNames",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def getTPageImageData(self, t, p, v):
         with self.SRmutex:
             try:
@@ -770,29 +738,6 @@ class ManagerMessenger(BaseMessenger):
                     # TODO? do something else?
                     return None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
-
-    def getDiscardImage(self, fname):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/discardImage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "fileName": fname,
-                },
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-            return image
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                return None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
 
     def getCollidingImage(self, fname):
         self.SRmutex.acquire()

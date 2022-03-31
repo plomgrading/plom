@@ -144,3 +144,50 @@ One should be very carefully doing this sort of thing: the
 `publicCode` exists to make it difficult to accidentally upload the
 papers to the wrong server.  This question shows you how to defeat
 that mechanism.
+
+
+### I messed up by double-scanning some papers and uploading and now I have collisions!
+
+You can simply delete the collisions using the Manager tool.
+
+
+### I messed up by *double-printing* some papers, now I have collisions!
+
+This is a serious problem which you should avoid getting into...
+If two students have written on (say) paper number 20, then you will
+get collisions at upload time.
+
+Let's suppose the scanned bundles are contiguous: that is, the two
+paper number 20s are not interleaved in the scanning process.  For
+example, they are in two separate bundles.  (If this is not so, have
+a cry and consider sorting and rescanning?)
+
+At this point you have paper 20 "A" scanned into the system.  Now
+upload paper 20 "B" (you'll need to force with ``--collisions``).
+Paper 20 "B" is sitting in Manager -> Collisions.  (We know they
+are not interleaved).
+
+Next: if you have only one version, you can simply use the Manager
+tool to assign the colliding pages to Test Pages of some **unused**
+test number (assuming you have spares; if not see below).  That's it!
+
+
+### I messed up by double-printing and I'm using *multiple versions*
+
+This is similar to the above but we cannot simply push paper number
+20 "B" into a spare unused paper slot (say 107).  This is because
+paper number 107 will have different versions than 20.
+
+A [future version of Plom](https://gitlab.com/plom/plom/-/issues/1745)
+will allow you to instantiate arbitrary new rows of the database using
+the versions of paper number 20.  Roughly: extract the relevant
+version numbers (use `plom-create get-ver-map`) for paper 20.  Use those
+to make the brand new row, using a complete new test number: say 1020.
+
+But for now, the workaround is:
+  1. Clone the server from the pre-scanning state (see question
+     elsewhere), change the port.
+  2. Update the duplicated papers into the 2nd server.
+  3. Have your grading team grade on both (alternatively, have them
+     do most of the grading on Server 1, then download the rubrics
+	 with `plom-create` and push those rubrics to Server 2.

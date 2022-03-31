@@ -150,6 +150,12 @@ class Test:
     def test_random_grading(self):
         subprocess.check_call(split("python3 -m plom.client.randoMarker"), env=self.env)
 
+    def test_finish_audit(self):
+        # TODO: need to save into tmpdir
+        subprocess.check_call(split("python3 -m plom.finish audit"), env=self.env)
+        f = Path("audit.json")
+        assert f.exists()
+
     def test_scan_finish_after(self):
         subprocess.check_call(split("python3 -m plom.scan status"), env=self.env)
         r = subprocess.call(split("python3 -m plom.finish status"), env=self.env)

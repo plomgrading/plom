@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 
@@ -142,7 +142,7 @@ class PlomDB:
 
     from plom.db.db_manage import (
         getUnknownPages,
-        getDiscardNames,
+        getDiscardedPages,
         getCollidingPageNames,
         getTPageImage,
         getHWPageImage,
@@ -155,7 +155,6 @@ class PlomDB:
         moveUnknownToTPage,
         checkTPage,
         removeUnknownImage,
-        getDiscardImage,
         moveDiscardToUnknown,
         moveUnknownToCollision,
         getCollidingImage,
@@ -184,6 +183,8 @@ class PlomDB:
         RgetIDReview,
         RgetUserFullProgress,
         RgetDanglingPages,
+        RgetFilesInTest,
+        RgetFilesInAllTests,
     )
 
     from plom.db.db_identify import (
