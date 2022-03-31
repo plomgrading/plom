@@ -1307,7 +1307,7 @@ class Manager(QWidget):
         self.ui.danglingTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.danglingTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.danglingModel.setHorizontalHeaderLabels(
-            ["Type", "Test", "Group", "Code", "Page / Order"]
+            ["Type", "Test", "Group", "Code", "Page / Order", "Bundle name", "Bundle position"]
         )
         self.ui.danglingTV.activated.connect(self.viewDanglingPage)
         self.refreshDangList()
@@ -1325,7 +1325,9 @@ class Manager(QWidget):
                 it4 = QStandardItem(f"{dang['page']}")
             else:
                 it4 = QStandardItem(f"{dang['order']}")
-            self.danglingModel.insertRow(r, [it0, it1, it2, it3, it4])
+            it5 = QStandardItem(f"{dang['bundle_name']}")
+            it6 = QStandardItem(f"{dang['bundle_order']}")
+            self.danglingModel.insertRow(r, (it0, it1, it2, it3, it4, it5, it6))
         self.ui.danglingTV.resizeRowsToContents()
         self.ui.danglingTV.resizeColumnsToContents()
 
