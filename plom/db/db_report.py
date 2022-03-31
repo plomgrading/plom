@@ -677,7 +677,7 @@ def _get_files_from_group(group_ref):
 
 
 def RgetFilesInTest(self, test_number):
-    """Return a list of images and their bundle info for all pages of the given gtest.
+    """Return a list of images and their bundle info for all pages of the given test.
 
     args:
         test_number (int): which test.
@@ -707,7 +707,7 @@ def RgetFilesInTest(self, test_number):
     return file_dict
 
 
-def RgetFileAudit(self):
+def RgetFilesInAllTests(self):
     """Return an audit of the files used in all the tests."""
 
     tests = {}

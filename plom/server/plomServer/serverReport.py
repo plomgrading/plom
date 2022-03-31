@@ -11,7 +11,7 @@ def RgetIncompleteTests(self):
     return self.DB.RgetIncompleteTests()
 
 
-def RgetDanglingPages(self):
+def getDanglingPages(self):
     return self.DB.RgetDanglingPages()
 
 
@@ -91,5 +91,5 @@ def RgetUserDetails(self):
     return self.DB.getUserDetails()
 
 
-def RgetFileAudit(self):
-    return self.DB.RgetFileAudit()
+def getFilesInAllTests(self):
+    return self.DB.RgetFilesInAllTests()

@@ -9,10 +9,10 @@ def main(server=None, password=None):
     msgr = start_messenger(server, password)
     audit = {}
     try:
-        audit["tests"] = msgr.RgetFileAudit()
+        audit["tests"] = msgr.getFilesInAllTests()
         audit["unknowns"] = msgr.getUnknownPages()
         audit["discards"] = msgr.getDiscardedPages()
-        audit["dangling"] = msgr.RgetDanglingPages()
+        audit["dangling"] = msgr.getDanglingPages()
         audit["collisions"] = msgr.getCollidingPageNames()
     finally:
         msgr.closeUser()

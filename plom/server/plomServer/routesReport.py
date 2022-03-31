@@ -61,7 +61,7 @@ class ReportHandler:
         # @routes.get("/REP/dangling")
 
     @authenticate_by_token_required_fields(["user"])
-    def RgetDanglingPages(self, data, request):
+    def getDanglingPages(self, data, request):
         """Respond with the list of dangling pages - pages attached to groups that are not complete.
 
         Responds with status 200/401.
@@ -83,7 +83,7 @@ class ReportHandler:
         # {'test': number, 'type': 'hwpage', 'order': number, 'code': blah, 'group': blah},
         # {'test': number, 'type': 'expage', 'order': number, 'code': blah, 'group': blah}
         # ]
-        return web.json_response(self.server.RgetDanglingPages(), status=200)
+        return web.json_response(self.server.getDanglingPages(), status=200)
 
     # @routes.get("/REP/completeHW")
     @authenticate_by_token_required_fields(["user"])
@@ -452,13 +452,13 @@ class ReportHandler:
 
     # @routes.get("/REP/fileAudit")
     @authenticate_by_token_required_fields(["user"])
-    def RgetFileAudit(self, data, request):
+    def getFilesInAllTests(self, data, request):
         """Respond with metadata about image-files used in all tests.
-        In particular, for each test, which imagefiles/bundles are used
-        for each id-group, dnm-group, and question-group. Then also
-        reports unknowns, discards, collisions, and dangling pages.
 
-        Responds with status 200/401.
+        In particular, for each test, which imagefiles/bundles are used
+        for each id-group, dnm-group, and question-group.
+
+        Responds with status 200/401/403.
 
         Args:
             data (dict): A dictionary having the user/token.
@@ -469,8 +469,8 @@ class ReportHandler:
         """
 
         if not data["user"] == "manager":
-            return web.Response(status=401)
-        rmsg = self.server.RgetFileAudit()
+            raise web.HTTPForbidden("I want to speak to the manager")
+        rmsg = self.server.getFilesInAllTests()
 
         return web.json_response(rmsg, status=200)
 
@@ -483,7 +483,7 @@ class ReportHandler:
         """
         router.add_get("/REP/scanned", self.RgetScannedTests)
         router.add_get("/REP/incomplete", self.RgetIncompleteTests)
-        router.add_get("/REP/dangling", self.RgetDanglingPages)
+        router.add_get("/REP/dangling", self.getDanglingPages)
         router.add_get("/REP/completeHW", self.RgetCompleteHW)
         router.add_get("/REP/missingHW", self.RgetMissingHWQ)
         router.add_get("/REP/unused", self.RgetUnusedTests)
@@ -502,4 +502,4 @@ class ReportHandler:
         router.add_get("/REP/userDetails", self.RgetUserDetails)
         router.add_get("/REP/markReview", self.RgetMarkReview)
         router.add_get("/REP/idReview", self.RgetIDReview)
-        router.add_get("/REP/fileAudit", self.RgetFileAudit)
+        router.add_get("/REP/filesInAllTests", self.getFilesInAllTests)

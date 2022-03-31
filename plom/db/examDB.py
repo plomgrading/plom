@@ -185,7 +185,7 @@ class PlomDB:
         RgetUserFullProgress,
         RgetDanglingPages,
         RgetFilesInTest,
-        RgetFileAudit,
+        RgetFilesInAllTests,
     )
 
     from plom.db.db_identify import (

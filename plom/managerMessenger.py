@@ -346,7 +346,7 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def RgetDanglingPages(self):
+    def getDanglingPages(self):
         self.SRmutex.acquire()
         try:
             response = self.get(

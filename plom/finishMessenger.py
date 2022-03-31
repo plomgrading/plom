@@ -55,7 +55,7 @@ class FinishMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def RgetDanglingPages(self):
+    def getDanglingPages(self):
         self.SRmutex.acquire()
         try:
             response = self.get(
@@ -171,16 +171,16 @@ class FinishMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def RgetFileAudit(self):
+    def getFilesInAllTests(self):
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/REP/fileAudit",
+                    "/REP/filesInAllTests",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None

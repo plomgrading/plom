@@ -198,7 +198,7 @@ class Server:
         RgetUnusedTests,
         RgetScannedTests,
         RgetIncompleteTests,
-        RgetDanglingPages,
+        getDanglingPages,
         RgetCompleteHW,
         RgetMissingHWQ,
         RgetProgress,
@@ -216,7 +216,7 @@ class Server:
         RgetIDReview,
         RgetUserList,
         RgetUserDetails,
-        RgetFileAudit,
+        getFilesInAllTests,
     )
     from .plomServer.serverSolution import (
         uploadSolutionImage,
