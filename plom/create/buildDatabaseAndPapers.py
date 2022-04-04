@@ -90,11 +90,32 @@ def build_papers(
             print(f"Building only specific paper {indexToMake} (prenamed)")
         else:
             print(f"Building only specific paper {indexToMake} (blank)")
+
+    if classlist[0].get("papernum", None):
+        # use the existing papernum column
+        # TODO: remove papernum from the row
+        classlist_by_papernum = {x["papernum"]: x for x in classlist}
+    else:
+        # no existing papernum column so map by the order in the classlist
+        classlist_by_papernum = {(i + 1): x for i, x in enumerate(classlist)}
+    # filter if we're not making all them
+    if spec["numberToName"] > 0:
+        # TODO: not totally precise how we want this to work with user-specified map
+        classlist_by_papernum = {
+            i: row
+            for i, row in classlist_by_papernum.items()
+            if i <= spec["numberToName"]
+        }
+    if any(i > spec["numberToProduce"] for i in classlist_by_papernum.keys()):
+        raise ValueError(
+            "Not enough papers to prename everything in the filtered classlist"
+        )
+
     with working_directory(basedir):
         build_papers_backend(
             spec,
             qvmap,
-            classlist,
+            classlist_by_papernum=classlist_by_papernum,
             fakepdf=fakepdf,
             no_qr=no_qr,
             indexToMake=indexToMake,
@@ -104,7 +125,11 @@ def build_papers(
 
     print("Checking papers produced and ID-ing any pre-named papers into the database")
     check_pdf_and_id_if_needed(
-        spec, msgr, classlist, paperdir=paperdir, indexToCheck=indexToMake
+        spec,
+        msgr,
+        classlist_by_papernum=classlist_by_papernum,
+        paperdir=paperdir,
+        indexToCheck=indexToMake,
     )
 
 
