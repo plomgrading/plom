@@ -50,6 +50,7 @@ def build_papers(
     basedir = Path(basedir)
     paperdir = basedir / paperdir_name
     paperdir.mkdir(exist_ok=True)
+    classlist = None
 
     # TODO: temporarily avoid changing indent
     if True:
@@ -68,48 +69,46 @@ def build_papers(
                         spec["numberToName"]
                     )
                 )
-            print(
-                'Building {} pre-named papers and {} blank papers in "{}"...'.format(
-                    spec["numberToName"],
-                    spec["numberToProduce"] - spec["numberToName"],
-                    paperdir,
-                )
-            )
-        else:
-            classlist = None
-            print(
-                'Building {} blank papers in "{}"...'.format(
-                    spec["numberToProduce"], paperdir
-                )
-            )
-        if indexToMake:
-            # TODO: Issue #1745?
-            if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
-                raise ValueError(
-                    f"Index out of range. Must be in range [1,{ spec['numberToProduce']}]"
-                )
-            if indexToMake <= spec["numberToName"]:
-                print(f"Building only specific paper {indexToMake} (prenamed)")
-            else:
-                print(f"Building only specific paper {indexToMake} (blank)")
-        with working_directory(basedir):
-            build_papers_backend(
-                spec,
-                qvmap,
-                classlist,
-                fakepdf=fakepdf,
-                no_qr=no_qr,
-                indexToMake=indexToMake,
-                xcoord=xcoord,
-                ycoord=ycoord,
-            )
-
+    if classlist:
         print(
-            "Checking papers produced and ID-ing any pre-named papers into the database"
+            'Building {} pre-named papers and {} blank papers in "{}"...'.format(
+                spec["numberToName"],
+                spec["numberToProduce"] - spec["numberToName"],
+                paperdir,
+            )
         )
-        check_pdf_and_id_if_needed(
-            spec, msgr, classlist, paperdir=paperdir, indexToCheck=indexToMake
+    else:
+        print(
+            'Building {} blank papers in "{}"...'.format(
+                spec["numberToProduce"], paperdir
+            )
         )
+    if indexToMake:
+        # TODO: Issue #1745?
+        if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
+            raise ValueError(
+                f"Index out of range. Must be in range [1,{ spec['numberToProduce']}]"
+            )
+        if indexToMake <= spec["numberToName"]:
+            print(f"Building only specific paper {indexToMake} (prenamed)")
+        else:
+            print(f"Building only specific paper {indexToMake} (blank)")
+    with working_directory(basedir):
+        build_papers_backend(
+            spec,
+            qvmap,
+            classlist,
+            fakepdf=fakepdf,
+            no_qr=no_qr,
+            indexToMake=indexToMake,
+            xcoord=xcoord,
+            ycoord=ycoord,
+        )
+
+    print("Checking papers produced and ID-ing any pre-named papers into the database")
+    check_pdf_and_id_if_needed(
+        spec, msgr, classlist, paperdir=paperdir, indexToCheck=indexToMake
+    )
 
 
 @with_manager_messenger
