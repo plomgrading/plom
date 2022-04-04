@@ -14,7 +14,7 @@ class CommandCrop(QUndoCommand):
         self.setText("Crop")
 
     def redo(self):
-        self.scene.croppit(self.crop_rect)
+        self.scene.crop_to_focus(self.crop_rect)
 
     def undo(self):
-        self.scene.croppit(self.prev_crop)
+        self.scene.crop_to_focus(self.prev_crop)

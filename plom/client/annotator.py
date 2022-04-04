@@ -1143,8 +1143,8 @@ class Annotator(QWidget):
         self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
 
         # cropping hackery.
-        self.croppitShortCut = QShortcut(QKeySequence("Ctrl+p"), self)
-        self.croppitShortCut.activated.connect(self.to_crop_mode)
+        self.crop_to_focus_ShortCut = QShortcut(QKeySequence("Ctrl+p"), self)
+        self.crop_to_focus_ShortCut.activated.connect(self.to_crop_mode)
         self.uncropShortCut = QShortcut(QKeySequence("Ctrl+Shift+p"), self)
         self.uncropShortCut.activated.connect(self.uncrop_region)
 

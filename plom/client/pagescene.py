@@ -85,7 +85,8 @@ log = logging.getLogger("pagescene")
 # set a margin width variable for use everywhere. Later this should likely be a % of image size.
 margin_width = 1024
 # set a variable for a "keep" margin - what items are kept when cropping
-keep_margin = 256
+# set this pretty tight.
+keep_margin = 64
 
 
 class ScoreBox(QGraphicsTextItem):
@@ -245,8 +246,8 @@ class MaskingOverlay(QGraphicsItemGroup):
         # set with z-value 0
         self.setZValue(0)
 
-    def croppit(self, crop_rect):
-        log.debug(f"croppit called with {crop_rect}")
+    def crop_to_focus(self, crop_rect):
+        log.debug(f"Page focus crop called with {crop_rect}")
         self.inner_rect = crop_rect
         self.set_bars()
         self.update()
@@ -2653,9 +2654,9 @@ class PageScene(QGraphicsScene):
         ]
 
     # PAGE SCENE CROPPING STUFF
-    def croppit(self, crop_rect):
+    def crop_to_focus(self, crop_rect):
         # this is called by the actual command-redo.
-        self.overMask.croppit(crop_rect)
+        self.overMask.crop_to_focus(crop_rect)
         self.scoreBox.setPos(crop_rect.topLeft())
         self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # update the scene-rectangle - helps the viewer
