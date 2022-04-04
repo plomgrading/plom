@@ -66,7 +66,7 @@ class IDHandler:
 
         The classlist should be provided as list of dicts.  Each row
         must contain `"id"` and `"studentNumber"` keys (case matters).
-        Current `id` must be a UBC-style student number, although it
+        Currently `id` must be a UBC-style student number, although it
         is anticipated this restriction will be removed in favour of
         an agnostic key.  There can be other keys which should be
         homogeneous between rows (TODO: not well-specified what happens
