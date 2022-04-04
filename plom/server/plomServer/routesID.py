@@ -40,7 +40,7 @@ class IDHandler:
 
         The classlist is an ordered list of dicts where each row has
         at least the primary key `"id"` and `"studentName"`.  It may
-        contain other rows.
+        contain other keys.
 
         Used, for example, to fill in the student details for the searchbar autofill.
 

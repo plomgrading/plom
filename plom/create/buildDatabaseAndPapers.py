@@ -58,11 +58,8 @@ def build_papers(
         pvmap = msgr.getGlobalPageVersionMap()
         qvmap = msgr.getGlobalQuestionVersionMap()
         if spec["numberToName"] > 0:
-            _classlist = msgr.IDrequestClasslist()
+            classlist = msgr.IDrequestClasslist()
             # TODO: Issue #1646 mostly student number (w fallback)
-            # TODO: but careful about identify_prenamed below which may need id
-            classlist = [(x["id"], x["studentName"]) for x in _classlist]
-            # Do sanity check on length of classlist
             if len(classlist) < spec["numberToName"]:
                 raise ValueError(
                     "Classlist is too short for {} pre-named papers".format(
