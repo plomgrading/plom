@@ -84,9 +84,6 @@ log = logging.getLogger("pagescene")
 
 # set a margin width variable for use everywhere. Later this should likely be a % of image size.
 margin_width = 1024
-# set a variable for a "keep" margin - what items are kept when cropping
-# set this pretty tight.
-keep_margin = 64
 
 
 class ScoreBox(QGraphicsTextItem):
@@ -247,7 +244,7 @@ class MaskingOverlay(QGraphicsItemGroup):
         self.setZValue(0)
 
     def crop_to_focus(self, crop_rect):
-        log.debug(f"Page focus crop called with {crop_rect}")
+        log.warn(f"ARGH - Page focus crop called with {crop_rect}")
         self.inner_rect = crop_rect
         self.set_bars()
         self.update()
@@ -2661,8 +2658,9 @@ class PageScene(QGraphicsScene):
         self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # update the scene-rectangle - helps the viewer
         # TODO - work out why the view is borked - doesn't centre correctly
+        log.warn(f"ARGH - calling fit in view with rectangle {crop_rect}")
         self.views()[0].fitInView(crop_rect, Qt.KeepAspectRatio)
-        # zoom out a bit
+        # Zoom out a bit
         self.views()[0].scale(0.8, 0.8)
         self.views()[0].setZoomSelector(True)
 
@@ -2697,33 +2695,12 @@ class PageScene(QGraphicsScene):
         self.trigger_crop(self.overMask.get_original_inner_rect())
 
     def trigger_crop(self, crop_rect):
-        self.undoStack.beginMacro("Crop region")
         # make sure that the underlying crop-rectangle is normalised
         # also make sure that it is not larger than the original image - so use their intersection
         actual_crop = crop_rect.intersected(self.underImage.boundingRect()).normalized()
         # pass new crop rect, as well as current one (for undo)
         command = CommandCrop(self, actual_crop, self.overMask.inner_rect)
         self.undoStack.push(command)
-        # Keep anything "close" to the crop_rect - ie within margin_width of it.
-        keep_rect = actual_crop.adjusted(
-            -keep_margin, -keep_margin, keep_margin, keep_margin
-        )
-        # look for everything outside the "keep" rectangle
-        for X in self.items():
-            if hasattr(X, "saveable"):
-                # now check it is close to the crop region, be careful of group objects
-                if X.group() is not None:  # object part of GroupDeltaText
-                    if keep_rect.contains(X.group().boundingRect()):
-                        pass
-                    else:
-                        self.deleteIfLegal(X.group())  # delete the group
-                else:
-                    if keep_rect.contains(X.boundingRect()):
-                        pass
-                    else:
-                        self.deleteIfLegal(X)
-
-        self.undoStack.endMacro()
         # now set mode to move.
         self.parent().toMoveMode()
 
