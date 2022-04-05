@@ -27,7 +27,7 @@ from plom.create.classlistValidator import (
 # pylint: disable=unsupported-assignment-operation
 
 
-def clean_non_canvas_csv(csv_file_name, minimalist=False):
+def clean_non_canvas_csv(csv_file_name, minimalist=True):
     """Read the csv file and clean the csv file.
 
     1. Retrieve the id.
