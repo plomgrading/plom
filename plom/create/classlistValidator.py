@@ -10,8 +10,7 @@ from plom.rules import validateStudentNumber
 
 
 possible_sid_fields = ["id"]
-possible_one_name_fields = ["studentName"]
-
+possible_fullname_fields = ["studentName"]
 possible_surname_fields = ["surname", "familyName", "lastName"]
 possible_given_name_fields = [
     "name",
@@ -29,7 +28,7 @@ canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 potential_column_names = [
     x.casefold()
     for x in possible_sid_fields
-    + possible_one_name_fields
+    + possible_fullname_fields
     + possible_surname_fields
     + possible_given_name_fields
     + list(canvas_columns_format)
@@ -96,54 +95,50 @@ class PlomClasslistValidator:
                 if single name column then [True, 'id', 'studentName'] ,
                 if surname/given name column then [True, "id", surname_key, given_name_key]
         """
-        theKeys = rowFromDict.keys()
-        casefoldKeyList = [x.casefold() for x in theKeys]
-        id_keys = [x for x in possible_sid_fields if x.casefold() in casefoldKeyList]
-        given_name_keys = [
-            x for x in possible_given_name_fields if x.casefold() in casefoldKeyList
-        ]
-        surname_keys = [
-            x for x in possible_surname_fields if x.casefold() in casefoldKeyList
-        ]
+        id_keys = []
+        fullname_keys = []
+        given_name_keys = []
+        surname_keys = []
+        for x in rowFromDict.keys():
+            cfx = x.casefold()
+            if cfx in map(str.casefold, possible_sid_fields):
+                id_keys.append(x)
+            if cfx in map(str.casefold, possible_fullname_fields):
+                fullname_keys.append(x)
+            if cfx in map(str.casefold, possible_given_name_fields):
+                given_name_keys.append(x)
+            if cfx in map(str.casefold, possible_surname_fields):
+                surname_keys.append(x)
 
         err = []
-        if "id" not in casefoldKeyList:  # must have an id column
+        # Must have at most one of each column
+        if len(id_keys) > 1:
+            err.append("Cannot have multiple id columns")
+        if len(fullname_keys) > 1:  # must have exactly one such column
+            err.append("Cannot have multiple full-name columns")
+        if len(surname_keys) > 1:
+            err.append("Cannot have multiple surname columns")
+        if len(given_name_keys) > 1:
+            err.append("Cannot have multiple given-name columns")
+        # Must have an id column
+        if not id_keys:
             err.append("Missing id column")
+        # And either fullname, or (surname,given-name)
+        if fullname_keys:
+            if surname_keys:
+                err.append("Cannot have both full-name column and surname column")
+            if given_name_keys:
+                err.append("Cannot have both full-name column and given-name column")
+        else:
+            if not surname_keys:
+                err.append("Since no fullname-column, must have one surname column")
+            if not given_name_keys:
+                err.append("Since no fullname-column, must have one given-name column")
 
-        if "studentName" in theKeys:  # if studentName then no other name column
-            if len(given_name_keys) > 0:
-                err.append(
-                    "Cannot have both 'studentName' column and '{}' column(s)".format(
-                        given_name_keys
-                    )
-                )
-            if len(surname_keys) > 0:
-                err.append(
-                    "Cannot have both 'studentName' column and '{}' column(s)".format(
-                        surname_keys
-                    )
-                )
-        else:  # must have one surname col and one given name col
-            if len(surname_keys) == 0:
-                err.append("Must have one surname column")
-            elif len(surname_keys) > 1:
-                err.append(
-                    "Must have one surname column - you have supplied '{}'".format(
-                        surname_keys
-                    )
-                )
-            if len(given_name_keys) == 0:
-                err.append("Must have at least one given-name column")
-            elif len(given_name_keys) > 1:
-                err.append(
-                    "Must have one given-name column - you have supplied '{}'".format(
-                        given_name_keys
-                    )
-                )
-        if len(err) > 0:
+        if err:
             return [False, err]
-        if len(surname_keys) == 0 and len(given_name_keys) == 0:
-            return [True, id_keys[0], "studentName"]
+        if fullname_keys:
+            return [True, id_keys[0], fullname_keys[0]]
         else:
             return [True, id_keys[0], surname_keys[0], given_name_keys[0]]
 
@@ -159,9 +154,9 @@ class PlomClasslistValidator:
                 err.append([x["_src_line"], idv[1]])
             # check non-trivial length after removing spaces and commas
             tmp = x["studentName"].replace(" ", "").replace(",", "")
-            # any other checks?
+            # warn if name-field is very short
             if len(tmp) < 2:  # what is sensible here?
-                err.append([x["_src_line"], "Missing name"])
+                warn.append([x["_src_line"], "Name is very short - please verify."])
             # warn if non-latin char present
             try:
                 tmp = x["studentName"].encode("Latin-1")
@@ -190,10 +185,10 @@ class PlomClasslistValidator:
             # check non-trivial length after removing spaces and commas
             tmp = x[surnameKey].replace(" ", "").replace(",", "")
             if len(tmp) < 2:  # what is sensible here?
-                err.append([x["_src_line"], "Missing surname"])
+                warn.append([x["_src_line"], "Surname is very short - please verify."])
             tmp = x[givenNameKey].replace(" ", "").replace(",", "")
             if len(tmp) < 2:  # what is sensible here?
-                err.append([x["_src_line"], "Missing given name"])
+                warn.append([x["_src_line"], "Given name is very short - please verify."])
             # warn if non-latin char present
             try:
                 tmp = (x[surnameKey] + x[givenNameKey]).encode("Latin-1")
