@@ -31,8 +31,7 @@ class BoxItem(QGraphicsRectItem):
     def __init__(self, rect, style):
         super().__init__()
         self.saveable = True
-        self.rect = rect
-        self.setRect(self.rect)
+        self.setRect(rect)  # don't overwrite native rect function
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -52,10 +51,10 @@ class BoxItem(QGraphicsRectItem):
     def pickle(self):
         return [
             "Box",
-            self.rect.left() + self.x(),
-            self.rect.top() + self.y(),
-            self.rect.width(),
-            self.rect.height(),
+            self.rect().left() + self.x(),
+            self.rect().top() + self.y(),
+            self.rect().width(),
+            self.rect().height(),
         ]
 
     def paint(self, painter, option, widget):

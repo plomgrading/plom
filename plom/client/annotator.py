@@ -179,7 +179,7 @@ class Annotator(QWidget):
         # Set up cursors
         self.loadCursors()
         # set up held_crop_rectangle - if none, then not holding.
-        self.held_crop_rectangle_dat = None
+        self.held_crop_rectangle_data = None
 
         # Connect all the buttons to relevant functions
         self.setButtons()
@@ -235,17 +235,13 @@ class Annotator(QWidget):
 
     def toggle_hold_crop(self, checked):
         if checked:
-            crop_rect = self.scene.current_crop_rectangle()
-            self.held_crop_rectangle_dat = (
-                crop_rect.x(),
-                crop_rect.y(),
-                crop_rect.width(),
-                crop_rect.height(),
+            self.held_crop_rectangle_data = (
+                self.scene.current_crop_rectangle_as_proportions()
             )
-            log.debug(f"Hold crop for upcoming pages = {self.held_crop_rectangle_dat}")
+            log.debug(f"Hold crop for upcoming pages = {self.held_crop_rectangle_data}")
         else:
             log.debug("Released crop")
-            self.held_crop_rectangle_dat = None
+            self.held_crop_rectangle_data = None
 
     def buildHamburger(self):
         # TODO: use QAction, share with other UI, shortcut keys written once
@@ -476,8 +472,8 @@ class Annotator(QWidget):
             self.unpickleIt(plomDict)
         else:
             # if there is a held crop rectangle, then use it.
-            if self.held_crop_rectangle_dat:
-                self.scene.crop_from_plomfile(self.held_crop_rectangle_dat)
+            if self.held_crop_rectangle_data:
+                self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
@@ -1147,14 +1143,14 @@ class Annotator(QWidget):
         self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
 
         # cropping hackery.
-        self.croppitShortCut = QShortcut(QKeySequence("Ctrl+p"), self)
-        self.croppitShortCut.activated.connect(self.to_crop_mode)
+        self.crop_to_focus_ShortCut = QShortcut(QKeySequence("Ctrl+p"), self)
+        self.crop_to_focus_ShortCut.activated.connect(self.to_crop_mode)
         self.uncropShortCut = QShortcut(QKeySequence("Ctrl+Shift+p"), self)
         self.uncropShortCut.activated.connect(self.uncrop_region)
 
     def to_crop_mode(self):
         # can't re-crop if the crop is being held
-        if self.held_crop_rectangle_dat:
+        if self.held_crop_rectangle_data:
             WarnMsg(
                 self,
                 "You cannot re-crop while a crop is being held.",
@@ -1164,7 +1160,7 @@ class Annotator(QWidget):
             self.setToolMode("crop", self.cursorCrop)
 
     def uncrop_region(self):
-        if self.held_crop_rectangle_dat:
+        if self.held_crop_rectangle_data:
             WarnMsg(
                 self,
                 "You cannot un-crop while a crop is being held.",
@@ -1735,14 +1731,9 @@ class Annotator(QWidget):
         aname = self.scene.save(self.saveName)
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
-        # get the crop-rect and rewrite it as a 4-tupple (x,y,w,h)
-        crop_rect = self.scene.current_crop_rectangle()
-        crop_rect_dat = (
-            crop_rect.x(),
-            crop_rect.y(),
-            crop_rect.width(),
-            crop_rect.height(),
-        )
+        # get the crop-rect as proportions of underlying image
+        # is 4-tuple (x,y,w,h) scaled by image width / height
+        crop_rect_data = self.scene.current_crop_rectangle_as_proportions()
         # TODO: consider saving colour only if not red?
         # TODO: someday src_img_data may have other images not used
         plomData = {
@@ -1753,7 +1744,7 @@ class Annotator(QWidget):
             "currentMark": self.getScore(),
             "sceneScale": self.scene.get_scale_factor(),
             "annotationColor": self.scene.ink.color().getRgb()[:3],
-            "crop_rectangle": crop_rect_dat,
+            "crop_rectangle_data": crop_rect_data,
             "sceneItems": lst,
         }
         plomfile = self.saveName.with_suffix(".plom")
@@ -1783,11 +1774,11 @@ class Annotator(QWidget):
         self.scene.unpickleSceneItems(plomData["sceneItems"])
         # if plom file contains a crop rectangle, then use that,
         # else use the passed one.
-        if plomData.get("crop_rectangle", None):
-            self.scene.crop_from_plomfile(plomData["crop_rectangle"])
+        if plomData.get("crop_rectangle_data", None):
+            self.scene.crop_from_plomfile(plomData["crop_rectangle_data"])
         else:
-            if self.held_crop_rectangle_dat:  # if a crop is being held, use it.
-                self.scene.crop_from_plomfile(self.held_crop_rectangle_dat)
+            if self.held_crop_rectangle_data:  # if a crop is being held, use it.
+                self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
         self.view.setHidden(False)
 
     def setZoomComboBox(self):
