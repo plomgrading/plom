@@ -95,8 +95,12 @@ def build_papers(
         classlist_by_papernum = {}
     elif classlist[0].get("papernum", None):
         # use the existing papernum column
-        # TODO: remove papernum from the row
-        classlist_by_papernum = {x["papernum"]: x for x in classlist}
+        # TODO: why are the papernum str not int?
+        classlist_by_papernum = {
+            int(r["papernum"]): {k: v for k, v in r.items() if k != "papernum"}
+            for r in classlist if int(r["papernum"]) > 0
+        }
+        # note ignoring negative papernum: used to indicate blank
     else:
         # no existing papernum column so map by the order in the classlist
         classlist_by_papernum = {(i + 1): x for i, x in enumerate(classlist)}

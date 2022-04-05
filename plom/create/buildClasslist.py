@@ -27,7 +27,7 @@ from plom.create.classlistValidator import (
 # pylint: disable=unsupported-assignment-operation
 
 
-def clean_non_canvas_csv(csv_file_name):
+def clean_non_canvas_csv(csv_file_name, minimalist=False):
     """Read the csv file and clean the csv file.
 
     1. Retrieve the id.
@@ -40,7 +40,11 @@ def clean_non_canvas_csv(csv_file_name):
         csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        pandas.DataFrame: data with columns `id` and `studentName`.
+        pandas.DataFrame: data with columns `id` and `studentName`
+        and possibly `papernum` if you had such a column in the input.
+        With ``minimalist=True`` kwarg specified, this is all you get,
+        otherwise the original columns will be included too, except
+        those renamed to create the required columns.
     """
     df = pandas.read_csv(csv_file_name, dtype="object")
     print('Extracting columns from csv file: "{0}"'.format(csv_file_name))
@@ -64,6 +68,21 @@ def clean_non_canvas_csv(csv_file_name):
     # clean up the column - strip whitespace
     df["id"] = df["id"].apply(lambda X: str(X).strip())  # avoid issues with non-string
     # print('"id" column present')
+    papernum_column = None
+    for c in df.columns:
+        if c.casefold() == "papernum":
+            print(f'"{c}" column present')
+            papernum_column = c
+            break
+    if papernum_column:
+        # JSON + NaN :-( so use negatives for missing: TODO do better?
+        df[papernum_column] = df[papernum_column].apply(
+            lambda x: -1 if pandas.isna(x) else int(x)
+        )
+        df.rename(columns={papernum_column: "papernum"}, inplace=True)
+        return_columns = ["id", "studentName", "papernum"]
+    else:
+        return_columns = ["id", "studentName"]
 
     # see if there is a single name column
     one_name_column = None
@@ -79,8 +98,9 @@ def clean_non_canvas_csv(csv_file_name):
         # clean up the column - strip whitespace
         df["studentName"].apply(lambda X: str(X).strip())  # avoid errors with blanks
         # print('"studentName" column present')
-        # now return only the id and studentName columns
-        return df[["id", "studentName"]]
+        if minimalist:
+            return df[return_columns]
+        return df
 
     # Otherwise, we will check the column headers again taking the first
     # columns that looks like firstname and a lastname fields
@@ -107,8 +127,9 @@ def clean_non_canvas_csv(csv_file_name):
     # concat columns to our preferred column
     df["studentName"] = df[firstname_column] + ", " + df[lastname_column]
 
-    # just return the two relevant columns
-    return df[["id", "studentName"]]
+    if minimalist:
+        return df[return_columns]
+    return df
 
 
 def clean_canvas_csv(csv_file_name):
