@@ -91,7 +91,9 @@ def build_papers(
         else:
             print(f"Building only specific paper {indexToMake} (blank)")
 
-    if classlist[0].get("papernum", None):
+    if not classlist:
+        classlist_by_papernum = {}
+    elif classlist[0].get("papernum", None):
         # use the existing papernum column
         # TODO: remove papernum from the row
         classlist_by_papernum = {x["papernum"]: x for x in classlist}
