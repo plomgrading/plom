@@ -1771,7 +1771,6 @@ class Annotator(QWidget):
             self.scene.set_scale_factor(plomData["sceneScale"])
         if plomData.get("annotationColor", None):
             self.scene.set_annotation_color(plomData["annotationColor"])
-        self.scene.unpickleSceneItems(plomData["sceneItems"])
         # if plom file contains a crop rectangle, then use that,
         # else use the passed one.
         if plomData.get("crop_rectangle_data", None):
@@ -1779,6 +1778,10 @@ class Annotator(QWidget):
         else:
             if self.held_crop_rectangle_data:  # if a crop is being held, use it.
                 self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
+        # finally - put the scene items back
+        self.scene.unpickleSceneItems(plomData["sceneItems"])
+        # note - put scene items back because the crop could exclude (and so delete)
+        # annotation items. (eg if they are put in the margins)
         self.view.setHidden(False)
 
     def setZoomComboBox(self):
