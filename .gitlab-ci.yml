@@ -1117,7 +1117,6 @@ macos11_client:
     expire_in: 16 days
 
 
-# TODO: when: never versus manual
 macos1015_client:
   image: macos-10.15-xcode-11
   tags:
@@ -1210,6 +1209,7 @@ macos1014_client:
     expire_in: 16 days
 
 
+# often fails: currently set to only run manually
 macos1013_client:
   image: macos-10.13-xcode-9
   tags:
@@ -1218,6 +1218,7 @@ macos1013_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
   stage: packaging
   script:
   - sw_vers
