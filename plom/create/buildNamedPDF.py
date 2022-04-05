@@ -86,7 +86,7 @@ def build_papers_backend(
     Keyword arguments:
         classlist_by_papernum (dict): classlist keyed by ``papernum`` (int).
             Each value is a dicts with keys ``id`` and ``studentName``.  Any
-            paper numbers corresponding to keys in `classlits_by_papernum`
+            paper numbers corresponding to keys in `classlists_by_papernum`
             will be have names and IDs stamped on the front.  Can be an empty
             dict or None to not use this feature.
         fakepdf (bool): when true, the build empty pdfs (actually empty files)
@@ -100,9 +100,6 @@ def build_papers_backend(
             ID/Signature box.
         ycoord (float): percentage from top to bottom of page to place
             ID/Signature box.
-
-    Raises:
-        ValueError: classlist is invalid in some way.
     """
     # mapping from pages to groups for labelling top of pages
     make_PDF_args = []
@@ -154,7 +151,7 @@ def check_pdf_and_id_if_needed(
     Keyword Arguments:
         classlist_by_papernum (dict): classlist keyed by ``papernum`` (int).
             Each value is a dicts with keys ``id`` and ``studentName``.  Any
-            paper numbers corresponding to keys in `classlits_by_papernum`
+            paper numbers corresponding to keys in `classlists_by_papernum`
             should have names and IDs stamped on the front.  Can be an empty
             dict or None to not use this feature.
         paperdir (pathlib.Path): where to find the papers to print.
@@ -162,7 +159,6 @@ def check_pdf_and_id_if_needed(
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
-        ValueError: classlist is invalid in some way.
     """
     paperdir = Path(paperdir)
     if classlist_by_papernum is None:
@@ -173,8 +169,8 @@ def check_pdf_and_id_if_needed(
         range_to_check = range(1, spec["numberToProduce"] + 1)
     # now check that paper(s) are actually on disk
     for papernum in range_to_check:
-        if papernum in classlist_by_papernum.keys():
-            r = classlist_by_papernum[papernum]
+        r = classlist_by_papernum.get(papernum, None)
+        if r:
             pdf_file = paperdir / f'exam_{papernum:04}_{r["id"]}.pdf'
             # if file is not there - error, else tell DB it is ID'd
             if not pdf_file.is_file():

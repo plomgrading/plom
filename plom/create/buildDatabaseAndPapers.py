@@ -104,7 +104,8 @@ def build_papers(
         # TODO: why are the papernum str not int?
         classlist_by_papernum = {
             int(r["papernum"]): {k: v for k, v in r.items() if k != "papernum"}
-            for r in classlist if int(r["papernum"]) > 0
+            for r in classlist
+            if int(r["papernum"]) > 0
         }
     else:
         # no existing papernum column so map by the order in the classlist
