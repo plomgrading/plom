@@ -95,15 +95,23 @@ def build_papers(
         classlist_by_papernum = {}
     elif classlist[0].get("papernum", None):
         # use the existing papernum column
+        # note ignoring negative papernum: used to indicate blank
+        # first some sanity checks
+        papernums = [r["papernum"] for r in classlist if int(r["papernum"]) > 0]
+        if len(set(papernums)) != len(papernums):
+            raise ValueError('repeated "papernum": must be unique')
+        del papernums
         # TODO: why are the papernum str not int?
         classlist_by_papernum = {
             int(r["papernum"]): {k: v for k, v in r.items() if k != "papernum"}
             for r in classlist if int(r["papernum"]) > 0
         }
-        # note ignoring negative papernum: used to indicate blank
     else:
         # no existing papernum column so map by the order in the classlist
         classlist_by_papernum = {(i + 1): x for i, x in enumerate(classlist)}
+
+    del classlist
+
     # filter if we're not making all them
     if spec["numberToName"] > 0:
         # TODO: not totally precise how we want this to work with user-specified map
