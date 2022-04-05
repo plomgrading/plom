@@ -238,3 +238,57 @@ def test_check_classlist_length3(tmpdir):
             "werr_text": "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 2",
         }
         assert len(warn_err) == 1
+
+
+def test_short_name_warning1(tmpdir):
+    # for #2052
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"ID","studentName"\n')
+            f.write('12345677,"D"\n')
+            f.write('12345678,""\n')
+        success, warn_err = vlad.validate_csv(foo)
+        # should get warnings
+        # {'warn_or_err': 'warning', 'werr_line': 2, 'werr_text': "Name 'D' is very short  - please verify."},
+        # {'warn_or_err': 'warning', 'werr_line': 3, 'werr_text': "Name '' is very short  - please verify."}
+
+        assert success
+        assert len(warn_err) == 2
+        assert warn_err == [
+            {'warn_or_err': 'warning', 'werr_line': 2, 'werr_text': "Name 'D' is very short  - please verify."},
+            {'warn_or_err': 'warning', 'werr_line': 3, 'werr_text': "Name '' is very short  - please verify."}
+        ]
+
+
+def test_short_name_warning2(tmpdir):
+    # for #2052
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"ID","surName","givenName"\n')
+            f.write('12345677,"Doe","U"\n')
+            f.write('12345678,"D","Carol"\n')
+        success, warn_err = vlad.validate_csv(foo)
+        # should get warnings
+        # {'warn_or_err': 'warning', 'werr_line': 2, 'werr_text': 'Given name 'U' is very short - please verify.'},
+        # {'warn_or_err': 'warning', 'werr_line': 3, 'werr_text': 'Surname 'D' is very short - please verify.'}]
+
+        assert success
+        assert len(warn_err) == 2
+        assert warn_err == [
+            {
+                "warn_or_err": "warning",
+                "werr_line": 2,
+                "werr_text": "Given name 'U' is very short - please verify.",
+            },
+            {
+                "warn_or_err": "warning",
+                "werr_line": 3,
+                "werr_text": "Surname 'D' is very short - please verify.",
+            },
+        ]

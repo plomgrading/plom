@@ -79,10 +79,10 @@ class PlomClasslistValidator:
             return classAsDict
 
     def checkHeaders(self, rowFromDict):
-        """Check existence of given-name and surname columns in the classlist.
+        """Check existence of id and name columns in the classlist.
 
         Checks the column titles (as given by the supplied row from the classlist).
-        Tests for an 'id' column, and then name-columns. Names are either single-column
+        Tests for an id column, and then name-columns. Names are either single-column
         or surname/givenname column pair.  To avoid issues with upper
         and lower case, everything needs to be tested by casefolding.
 
@@ -92,8 +92,8 @@ class PlomClasslistValidator:
 
         Returns:
             list: If errors then return [False, error-list],
-                if single name column then [True, 'id', 'studentName'] ,
-                if surname/given name column then [True, "id", surname_key, given_name_key]
+                if single name column then [True, id_key, fullname_key]
+                if surname/given name column then [True, id_key, surname_key, given_name_key]
         """
         id_keys = []
         fullname_keys = []
@@ -142,24 +142,24 @@ class PlomClasslistValidator:
         else:
             return [True, id_keys[0], surname_keys[0], given_name_keys[0]]
 
-    def check_ID_StudentName(self, classList):
+    def check_ID_StudentName(self, id_key, fullname_key, classList):
         """Check ID and StudentName when student-name is a single field"""
         err = []
         warn = []
         for x in classList:
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
-            idv = validateStudentNumber(x["id"])
+            idv = validateStudentNumber(x[id_key])
             if idv[0] is False:
                 err.append([x["_src_line"], idv[1]])
             # check non-trivial length after removing spaces and commas
-            tmp = x["studentName"].replace(" ", "").replace(",", "")
+            tmp = x[fullname_key].replace(" ", "").replace(",", "")
             # warn if name-field is very short
             if len(tmp) < 2:  # what is sensible here?
-                warn.append([x["_src_line"], "Name is very short - please verify."])
+                warn.append([x["_src_line"], f"Name '{tmp}' is very short  - please verify."])
             # warn if non-latin char present
             try:
-                tmp = x["studentName"].encode("Latin-1")
+                tmp = x[fullname_key].encode("Latin-1")
             except UnicodeEncodeError:
                 warn.append(
                     [
@@ -172,23 +172,25 @@ class PlomClasslistValidator:
         else:
             return [True, warn]
 
-    def check_ID_Surname_GivenName(self, surnameKey, givenNameKey, classList):
+    def check_ID_Surname_GivenName(self, idKey, surnameKey, givenNameKey, classList):
         """Check ID and StudentName when student-name is two-fields"""
         err = []
         warn = []
         for x in classList:
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
-            idv = validateStudentNumber(x["id"])
+            idv = validateStudentNumber(x[idKey])
             if idv[0] is False:
                 err.append([x["_src_line"], idv[1]])
             # check non-trivial length after removing spaces and commas
             tmp = x[surnameKey].replace(" ", "").replace(",", "")
             if len(tmp) < 2:  # what is sensible here?
-                warn.append([x["_src_line"], "Surname is very short - please verify."])
+                warn.append([x["_src_line"], f"Surname '{tmp}' is very short - please verify."])
             tmp = x[givenNameKey].replace(" ", "").replace(",", "")
             if len(tmp) < 2:  # what is sensible here?
-                warn.append([x["_src_line"], "Given name is very short - please verify."])
+                warn.append(
+                    [x["_src_line"], f"Given name '{tmp}' is very short - please verify."]
+                )
             # warn if non-latin char present
             try:
                 tmp = (x[surnameKey] + x[givenNameKey]).encode("Latin-1")
@@ -277,9 +279,11 @@ class PlomClasslistValidator:
                 )
 
         if len(cl_head) == 3:  # is true, id, studentName
-            cid = self.check_ID_StudentName(cl_as_dicts)
+            cid = self.check_ID_StudentName(cl_head[1], cl_head[2], cl_as_dicts)
         elif len(cl_head) == 4:  # is true, id, surname, givenname
-            cid = self.check_ID_Surname_GivenName(cl_head[2], cl_head[3], cl_as_dicts)
+            cid = self.check_ID_Surname_GivenName(
+                cl_head[1], cl_head[2], cl_head[3], cl_as_dicts
+            )
         else:
             return (False, werr)
         # now look at the errors / warnings
