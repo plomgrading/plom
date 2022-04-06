@@ -49,3 +49,5 @@ if __name__ == "__main__":
         json.dump(probabilities, fh, indent="  ")
 
     os.unlink(lock_file)
+
+    print("Auto id reader has finished")
