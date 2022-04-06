@@ -2651,18 +2651,13 @@ class PageScene(QGraphicsScene):
         ]
 
     # PAGE SCENE CROPPING STUFF
-    def crop_to_focus(self, crop_rect):
+    def _crop_to_focus(self, crop_rect):
         # this is called by the actual command-redo.
         self.overMask.crop_to_focus(crop_rect)
         self.scoreBox.setPos(crop_rect.topLeft())
         self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
-        # update the scene-rectangle - helps the viewer
-        # TODO - work out why the view is borked - doesn't centre correctly
-        log.warn(f"ARGH - calling fit in view with rectangle {crop_rect}")
-        self.views()[0].fitInView(crop_rect, Qt.KeepAspectRatio)
-        # Zoom out a bit
-        self.views()[0].scale(0.8, 0.8)
-        self.views()[0].setZoomSelector(True)
+        # set zoom to "fit-page"
+        self.views()[0].zoomFitPage(update=True)
 
     def current_crop_rectangle_as_proportions(self):
         """Return the crop rectangle as proportions of original image"""
