@@ -23,6 +23,9 @@ def test_ok_to_contain_unused_column_names(tmpdir):
         assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
         assert set(df.columns) == set(("id", "name"))
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        assert success
+        assert warn_err == []
 
 
 def test_no_ID_column_fails(tmpdir):
@@ -37,6 +40,40 @@ def test_no_ID_column_fails(tmpdir):
         with raises(ValueError):
             _ = clean_non_canvas_csv(foo)
 
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        expected = [
+            {"warn_or_err": "error", "werr_line": 0, "werr_text": "Missing id column"}
+        ]
+        assert not success
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
+
+
+def test_two_ID_column_fails(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"ID","studentName","id"\n')
+            f.write('12345678,"Doe",98765432\n')
+        assert not vlad.check_is_non_canvas_csv(foo)
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        expected = [
+            {
+                "warn_or_err": "error",
+                "werr_line": 0,
+                "werr_text": "Cannot have multiple id columns",
+            }
+        ]
+        assert not success
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
+
 
 def test_no_name_column_fails(tmpdir):
     tmpdir = Path(tmpdir)
@@ -49,6 +86,40 @@ def test_no_name_column_fails(tmpdir):
         assert not vlad.check_is_non_canvas_csv(foo)
         with raises(ValueError):
             _ = clean_non_canvas_csv(foo)
+
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        expected = [
+            {"warn_or_err": "error", "werr_line": 0, "werr_text": "Missing name column"}
+        ]
+        assert not success
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
+
+
+def test_two_name_column_fails(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"ID","studentName","Name"\n')
+            f.write('12345678,"Doe","John"\n')
+        assert not vlad.check_is_non_canvas_csv(foo)
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        expected = [
+            {
+                "warn_or_err": "error",
+                "werr_line": 0,
+                "werr_text": "Cannot have multiple full-name columns",
+            }
+        ]
+        assert not success
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
 
 
 def test_casefold_column_names1(tmpdir):
@@ -66,6 +137,9 @@ def test_casefold_column_names1(tmpdir):
         assert "id" in df.columns
         assert "name" in df.columns
         assert set(df.columns) == set(("id", "name"))
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        assert success
+        assert warn_err == []
 
 
 def test_casefold_column_names2(tmpdir):
@@ -82,6 +156,9 @@ def test_casefold_column_names2(tmpdir):
         assert "id" in df.columns
         assert "name" in df.columns
         assert set(df.columns) == set(("id", "name"))
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        assert success
+        assert warn_err == []
 
 
 def test_missing_student_info(tmpdir):
