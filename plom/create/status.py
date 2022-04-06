@@ -107,9 +107,12 @@ def status(*, msgr):
     else:
         papernums = []
     if spec:
-        print(check_mark + " Unassigned paper numbers (these will not be prenamed):")
         not_named = set(range(1, spec["numberToProduce"]))
         not_named.difference_update(papernums)
+        print(
+            check_mark
+            + f" {len(not_named)} unassigned paper numbers (these will not be prenamed):"
+        )
         print("    " + "\n    ".join(wrap(format_int_list_with_runs(not_named), 72)))
 
     print("\nDatabase")
