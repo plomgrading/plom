@@ -66,30 +66,12 @@ def build_papers(
                         spec["numberToName"]
                     )
                 )
-    if classlist:
-        print(
-            'Building {} pre-named papers and {} blank papers in "{}"...'.format(
-                spec["numberToName"],
-                spec["numberToProduce"] - spec["numberToName"],
-                paperdir,
-            )
-        )
-    else:
-        print(
-            'Building {} blank papers in "{}"...'.format(
-                spec["numberToProduce"], paperdir
-            )
-        )
     if indexToMake:
         # TODO: Issue #1745?
         if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
             raise ValueError(
                 f"Index out of range. Must be in range [1,{ spec['numberToProduce']}]"
             )
-        if indexToMake <= spec["numberToName"]:
-            print(f"Building only specific paper {indexToMake} (prenamed)")
-        else:
-            print(f"Building only specific paper {indexToMake} (blank)")
 
     if not classlist:
         classlist_by_papernum = {}
@@ -125,6 +107,19 @@ def build_papers(
         raise ValueError(
             "Not enough papers to prename everything in the filtered classlist"
         )
+
+    if indexToMake and indexToMake in classlist_by_papernum:
+        print(f"Building only specific paper {indexToMake} (prenamed) in {paperdir}...")
+    elif indexToMake:
+        print(f"Building only specific paper {indexToMake} (blank) in {paperdir}...")
+    elif classlist_by_papernum:
+        print(
+            f"Building {len(classlist_by_papernum)} prenamed papers and "
+            f'{spec["numberToProduce"] - len(classlist_by_papernum)} blank '
+            f"papers in {paperdir}..."
+        )
+    else:
+        print(f'Building {spec["numberToProduce"]} blank papers in {paperdir}...')
 
     with working_directory(basedir):
         build_papers_backend(
