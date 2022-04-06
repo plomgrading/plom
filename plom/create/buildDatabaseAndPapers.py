@@ -114,7 +114,7 @@ def build_papers(
         print(f"Building only specific paper {indexToMake} (blank) in {paperdir}...")
     elif classlist_by_papernum:
         print(
-            f"Building {len(classlist_by_papernum)} prenamed papers and "
+            f"Building {len(classlist_by_papernum)} pre-named papers and "
             f'{spec["numberToProduce"] - len(classlist_by_papernum)} blank '
             f"papers in {paperdir}..."
         )
