@@ -287,7 +287,7 @@ class IDClient(QWidget):
         for person in classlist:
             # TODO: Issue #1646 here we want student number with id fallback?
             sid = person["id"]
-            sname = person["studentName"]
+            sname = person["name"]
             snid = f"{sid}: {sname}"
             self.snid_to_student_id[snid] = sid
             self.snid_to_student_name[snid] = sname

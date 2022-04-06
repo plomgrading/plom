@@ -16,9 +16,7 @@ from plom.finish.return_tools import import_canvas_csv
 
 from plom.create.classlistValidator import (
     possible_sid_fields,
-    possible_one_name_fields,
-    possible_given_name_fields,
-    possible_surname_fields,
+    possible_fullname_fields,
     PlomClasslistValidator,
 )
 
@@ -31,8 +29,7 @@ def clean_non_canvas_csv(csv_file_name):
     """Read the csv file and clean the csv file.
 
     1. Retrieve the id.
-    2. Retrieve the studentName is preset.
-    3. If not, retrieve student given name and surname in the document.
+    2. Retrieve the name
 
     You may want to check first with `check_is_non_canvas_csv`.
 
@@ -40,7 +37,7 @@ def clean_non_canvas_csv(csv_file_name):
         csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        pandas.DataFrame: data with columns `id` and `studentName`.
+        pandas.DataFrame: data with columns `id` and `name`.
     """
     df = pandas.read_csv(csv_file_name, dtype="object")
     print('Extracting columns from csv file: "{0}"'.format(csv_file_name))
@@ -66,49 +63,24 @@ def clean_non_canvas_csv(csv_file_name):
     # print('"id" column present')
 
     # see if there is a single name column
-    one_name_column = None
+    fullname_column = None
     for c in df.columns:
-        if c.casefold() in (x.casefold() for x in possible_one_name_fields):
+        if c.casefold() in (x.casefold() for x in possible_fullname_fields):
             # print(f'"{c}" column present')
-            one_name_column = c
+            fullname_column = c
             break
-    if one_name_column is not None:
-        # make sure id column named 'id' - lowercase
-        print(f"Renaming column {one_name_column} to 'studentName'")
-        df.rename(columns={one_name_column: "studentName"}, inplace=True)
-        # clean up the column - strip whitespace
-        df["studentName"].apply(lambda X: str(X).strip())  # avoid errors with blanks
-        # print('"studentName" column present')
-        # now return only the id and studentName columns
-        return df[["id", "studentName"]]
+    if fullname_column is None:
+        # note that this should be caught by the validator
+        raise ValueError('no "name" column is present')
 
-    # Otherwise, we will check the column headers again taking the first
-    # columns that looks like firstname and a lastname fields
-    firstname_column = None
-    lastname_column = None
-    for c in df.columns:
-        if c.casefold() in (x.casefold() for x in possible_surname_fields):
-            # print(f'"{c}" column present')
-            firstname_column = c
-            break
-    for c in df.columns:
-        if c.casefold() in (x.casefold() for x in possible_given_name_fields):
-            # print(f'"{c}" column present')
-            lastname_column = c
-            break
-
-    if lastname_column is None or firstname_column is None:
-        raise ValueError("Cannot find appropriate column titles for names")
-
-    # strip excess whitespace
-    df[firstname_column] = df[firstname_column].apply(lambda X: str(X).strip())
-    df[lastname_column] = df[lastname_column].apply(lambda X: str(X).strip())
-
-    # concat columns to our preferred column
-    df["studentName"] = df[firstname_column] + ", " + df[lastname_column]
-
-    # just return the two relevant columns
-    return df[["id", "studentName"]]
+    # make sure fullname column named 'name' - lowercase
+    print(f"Renaming column {fullname_column} to 'name'")
+    df.rename(columns={fullname_column: "name"}, inplace=True)
+    # clean up the column - strip whitespace
+    df["name"].apply(lambda X: str(X).strip())  # avoid errors with blanks
+    # print('"name" column present')
+    # now return only the id and name columns
+    return df[["id", "name"]]
 
 
 def clean_canvas_csv(csv_file_name):
@@ -121,11 +93,11 @@ def clean_canvas_csv(csv_file_name):
         csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        pandas.DataFrame: data with columns `id` and `studentName`
+        pandas.DataFrame: data with columns `id` and `name`
     """
     student_info_df = import_canvas_csv(csv_file_name)
     student_info_df = student_info_df[["Student Number", "Student"]]
-    student_info_df.columns = ["id", "studentName"]
+    student_info_df.columns = ["id", "name"]
     return student_info_df
 
 
@@ -175,24 +147,6 @@ def process_classlist_backend(student_csv_file_name):
     return student_info_df
 
 
-def print_classlist_warnings_errors(warn_err):
-    # separate into warn and err
-    warn = [X for X in warn_err if X["warn_or_err"] == "warning"]
-    err = [X for X in warn_err if X["warn_or_err"] != "warning"]
-    # sort by line number
-    warn.sort(key=lambda X: X["werr_line"])
-    err.sort(key=lambda X: X["werr_line"])
-
-    if warn:
-        print("Classlist validation warnings:")
-        for X in warn:
-            print(f"\tline {X['werr_line']}: {X['werr_text']}")
-    if err:
-        print("Classlist validation errors:")
-        for X in err:
-            print(f"\tline {X['werr_line']}: {X['werr_text']}")
-
-
 def get_demo_classlist(spec):
     """Get the demo classlist."""
     # Direct approach: but maybe I like exercising code-paths with below...
@@ -220,14 +174,11 @@ def get_demo_classlist(spec):
 def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False):
     """Get student names/IDs from a csv file.
 
-    Student numbers come from an `id` column.  There is some
-    flexibility about student names: most straightforward is a
-    second column named `studentNames`.  If that isn't present,
-    try to construct a name from surname, given name, guessing
-    column names from the following lists:
-
-      - :func:`plom.create.possible_surname_fields`
-      - :func:`plom.create.possible_given_name_fields`
+    Student numbers come from an `id` column. Student names
+    must be in a *single* 'name' column. There is some flexiblity
+    in those titles - see
+      - :func:`plom.create.possible_sid_fields`
+      - :func:`plom.create.possible_fullname_fields`
 
     Alternatively, give a .csv exported from Canvas (experimental!)
 
@@ -240,7 +191,7 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
             processing even if there are warnings.  Default False.
 
     Return: tuple: if successful then "(True, clist)" where clist is a
-        list of dicts each with "id" and "studentName". On failure
+        list of dicts each with "id" and "name". On failure
         "(False, warn_err)" where "warn_err" is a list of dicts of
         warnings and errors. Each dict contains "warn_or_err" which is
         'warning' or 'error', "werr_line" being the line number at
@@ -261,7 +212,7 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
 
     # validation passed but there are warnings
     if warn_err:
-        print_classlist_warnings_errors(warn_err)
+        PlomClasslistValidator.print_classlist_warnings_errors(warn_err)
         if ignore_warnings:
             print("Continuing despite warnings")
         else:

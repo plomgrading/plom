@@ -162,7 +162,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
 
     Arguments:
         paper_dir (str/pathlib.Path): Directory containing the blank exams.
-        classlist (list): list of dicts with keys `id` and `studentName`.
+        classlist (list): list of dicts with keys `id` and `name`.
             See also Issue #1646: maybe will use `student_number` someday.
         outfile (str/pathlib.Path): write results into this concatenated PDF file.
 
@@ -202,7 +202,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
             x = available_classlist.pop()
             # TODO: Issue #1646: check for "student_number" fallback to id
             student_number = x["id"]
-            student_name = x["studentName"]
+            student_name = x["name"]
             print(f"{f.name} - scribbled using {student_number} {student_name}")
 
         # TODO: could do `with fitz.open(f) as pdf_document:`

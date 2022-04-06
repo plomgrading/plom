@@ -17,7 +17,7 @@ def upload_classlist(classlist, *, msgr):
 
     Arguments:
         classdict (list): list of dict, each has at least keys `"id"` and
-            `"studentName"`, optionally other fields too.
+            `"name"`, optionally other fields too.
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
     """
@@ -41,13 +41,13 @@ def _ultra_raw_upload_classlist(classlist, msgr):
         print(
             "  First student:  {} - {}".format(
                 censorStudentNumber(classlist[0]["id"]),
-                censorStudentName(classlist[0]["studentName"]),
+                censorStudentName(classlist[0]["name"]),
             )
         )
         print(
             "  Last student:  {} - {}".format(
                 censorStudentNumber(classlist[-1]["id"]),
-                censorStudentName(classlist[-1]["studentName"]),
+                censorStudentName(classlist[-1]["name"]),
             )
         )
     except PlomRangeException as e:

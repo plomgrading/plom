@@ -12,46 +12,20 @@ from .buildClasslist import clean_non_canvas_csv
 from ..misc_utils import working_directory
 
 
-def test_multi_column_names(tmpdir):
-    tmpdir = Path(tmpdir)
-    vlad = PlomClasslistValidator()
-    with working_directory(tmpdir):
-        foo = tmpdir / "foo.csv"
-        with open(foo, "w") as f:
-            f.write('"id","Surname","preferredName"\n')
-            f.write('12345677,"Doe","Ursula"\n')
-            f.write('12345678,"Doe","Carol"\n')
-        assert vlad.check_is_non_canvas_csv(foo)
-        df = clean_non_canvas_csv(foo)
-        assert "id" in df.columns
-        assert "studentName" in df.columns
-        assert set(df.columns) == set(("id", "studentName"))
-
-
 def test_ok_to_contain_unused_column_names(tmpdir):
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
-            f.write('"id","Surname","preferredName","hungry"\n')
-            f.write('12345677,"Doe","Ursula","yes"\n')
+            f.write('"id","name","hungry"\n')
+            f.write('12345677,"Doe, Ursula","yes"\n')
         assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
-        assert set(df.columns) == set(("id", "studentName"))
-
-
-def test_only_one_name_column(tmpdir):
-    tmpdir = Path(tmpdir)
-    vlad = PlomClasslistValidator()
-    with working_directory(tmpdir):
-        foo = tmpdir / "foo.csv"
-        with open(foo, "w") as f:
-            f.write('"id","name"\n')
-            f.write('12345678,"Doe"\n')
-        assert not vlad.check_is_non_canvas_csv(foo)
-        with raises(ValueError):
-            _ = clean_non_canvas_csv(foo)
+        assert set(df.columns) == set(("id", "name"))
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        assert success
+        assert warn_err == []
 
 
 def test_no_ID_column_fails(tmpdir):
@@ -66,6 +40,87 @@ def test_no_ID_column_fails(tmpdir):
         with raises(ValueError):
             _ = clean_non_canvas_csv(foo)
 
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        expected = [
+            {"warn_or_err": "error", "werr_line": 0, "werr_text": "Missing id column"}
+        ]
+        assert not success
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
+
+
+def test_two_ID_column_fails(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"ID","studentName","id"\n')
+            f.write('12345678,"Doe",98765432\n')
+        assert not vlad.check_is_non_canvas_csv(foo)
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        expected = [
+            {
+                "warn_or_err": "error",
+                "werr_line": 0,
+                "werr_text": "Cannot have multiple id columns",
+            }
+        ]
+        assert not success
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
+
+
+def test_no_name_column_fails(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"id","studentZZZ"\n')
+            f.write('12345678,"Doe"\n')
+        assert not vlad.check_is_non_canvas_csv(foo)
+        with raises(ValueError):
+            _ = clean_non_canvas_csv(foo)
+
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        expected = [
+            {"warn_or_err": "error", "werr_line": 0, "werr_text": "Missing name column"}
+        ]
+        assert not success
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
+
+
+def test_two_name_column_fails(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"ID","studentName","Name"\n')
+            f.write('12345678,"Doe","John"\n')
+        assert not vlad.check_is_non_canvas_csv(foo)
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        expected = [
+            {
+                "warn_or_err": "error",
+                "werr_line": 0,
+                "werr_text": "Cannot have multiple full-name columns",
+            }
+        ]
+        assert not success
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
+
 
 def test_casefold_column_names1(tmpdir):
     # for #1140
@@ -74,14 +129,17 @@ def test_casefold_column_names1(tmpdir):
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
-            f.write('"ID","surNaMe","preFeRRedname"\n')
-            f.write('12345677,"Doe","Ursula"\n')
-            f.write('12345678,"Doe","Carol"\n')
+            f.write('"ID","name"\n')
+            f.write('12345677,"Doe, Ursula"\n')
+            f.write('12345678,"Doe, Carol"\n')
         assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
         assert "id" in df.columns
-        assert "studentName" in df.columns
-        assert set(df.columns) == set(("id", "studentName"))
+        assert "name" in df.columns
+        assert set(df.columns) == set(("id", "name"))
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        assert success
+        assert warn_err == []
 
 
 def test_casefold_column_names2(tmpdir):
@@ -91,16 +149,19 @@ def test_casefold_column_names2(tmpdir):
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
-            f.write('"Id","StuDentNamE"\n')
+            f.write('"id","NaMe"\n')
             f.write('12345678,"Doe"\n')
-        assert not vlad.check_is_non_canvas_csv(foo)
+        assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
         assert "id" in df.columns
-        assert "studentName" in df.columns
-        assert set(df.columns) == set(("id", "studentName"))
+        assert "name" in df.columns
+        assert set(df.columns) == set(("id", "name"))
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        assert success
+        assert warn_err == []
 
 
-def test_missing_student_info1(tmpdir):
+def test_missing_student_info(tmpdir):
     # testing for #1314
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
@@ -110,60 +171,49 @@ def test_missing_student_info1(tmpdir):
             f.write('"id","studentName","hungry"\n')
             f.write('12345677,"Doe, Ursula","yes"\n')
             f.write('87654322,"","who knows"\n')
+            f.write('87654323,"A","who knows"\n')
             f.write(',"Doe, John","who knows"\n')
             f.write('"x","Doe, Jan","who knows"\n')
 
         assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
-        assert set(df.columns) == set(("id", "studentName"))
+        assert set(df.columns) == set(("id", "name"))
         success, warn_err = vlad.validate_csv(foo, spec=None)
         assert not success
-        # should see errors on lies 3,4,5
-        # [
-        # {'warn_or_err': 'error', 'werr_line': 3, 'werr_text': 'Missing name'},
-        # {'warn_or_err': 'error', 'werr_line': 4, 'werr_text': "SID '' is not an integer, "}
-        # {'warn_or_err': 'error', 'werr_line': 5, 'werr_text': "SID 'x' is not an integer, "}
-        # ]
-        where_errors = sorted([x["werr_line"] for x in warn_err])
-        assert where_errors == [3, 4, 5]
+        expected = [
+            {
+                "warn_or_err": "error",
+                "werr_line": 5,
+                "werr_text": "SID '' is not an integer, ",
+            },
+            {
+                "warn_or_err": "error",
+                "werr_line": 6,
+                "werr_text": "SID 'x' is not an integer, ",
+            },
+            {
+                "warn_or_err": "warning",
+                "werr_line": 3,
+                "werr_text": "Name '' is very short  - please verify.",
+            },
+            {
+                "warn_or_err": "warning",
+                "werr_line": 4,
+                "werr_text": "Name 'A' is very short  - please verify.",
+            },
+        ]
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
 
 
-def test_missing_student_info2(tmpdir):
-    # testing for #1314
-    tmpdir = Path(tmpdir)
-    vlad = PlomClasslistValidator()
-    with working_directory(tmpdir):
-        foo = tmpdir / "foo.csv"
-        with open(foo, "w") as f:
-            f.write('"id","surname","preferredName","hungry"\n')
-            f.write('12345677,"Doe","Ursula","yes"\n')
-            f.write('87654321,"Doe","","who knows"\n')
-            f.write('87654322,"","John","who knows"\n')
-            f.write(',"Doe","John","who knows"\n')
-            f.write('"x","Doe", "Jan", "who knows"\n')
-
-        assert vlad.check_is_non_canvas_csv(foo)
-        df = clean_non_canvas_csv(foo)
-        assert set(df.columns) == set(("id", "studentName"))
-        success, warn_err = vlad.validate_csv(foo, spec=None)
-        assert not success
-        # should see errors on lies 3,4,5,6
-        # [
-        # {'warn_or_err': 'error', 'werr_line': 3, 'werr_text': 'Missing given name'},
-        # {'warn_or_err': 'error', 'werr_line': 4, 'werr_text': 'Missing surname'},
-        # {'warn_or_err': 'error', 'werr_line': 5, 'werr_text': 'SID '' is not an integer, '}
-        # {'warn_or_err': 'error', 'werr_line': 6, 'werr_text': "SID 'x' is not an integer, "}
-        # ]
-        where_errors = sorted([x["werr_line"] for x in warn_err])
-        assert where_errors == [3, 4, 5, 6]
-
-
-def test_check_classlist_length1(tmpdir):
-    # Issue #927
+def test_check_classlist_length(tmpdir):
+    # Check that classlist is not longer than number to produce
+    # should warn that we are not producing enough tests.
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     spec = SpecVerifier.demo(num_to_produce=2)
-    # by default spec names half, ie 1, so this will return a warning.
 
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
@@ -178,63 +228,74 @@ def test_check_classlist_length1(tmpdir):
             {
                 "warn_or_err": "warning",
                 "werr_line": 0,
-                "werr_text": "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 1",
+                "werr_text": "Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2",
+            }
+        ]
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
+
+
+def test_short_name_warning1(tmpdir):
+    # for #2052
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"ID","studentName"\n')
+            f.write('12345677,"D"\n')
+            f.write('12345678,""\n')
+        success, warn_err = vlad.validate_csv(foo)
+        # should get warnings
+        # {'warn_or_err': 'warning', 'werr_line': 2, 'werr_text': "Name 'D' is very short  - please verify."},
+        # {'warn_or_err': 'warning', 'werr_line': 3, 'werr_text': "Name '' is very short  - please verify."}
+
+        assert success
+        expected = [
+            {
+                "warn_or_err": "warning",
+                "werr_line": 2,
+                "werr_text": "Name 'D' is very short  - please verify.",
             },
             {
                 "warn_or_err": "warning",
-                "werr_line": 0,
-                "werr_text": "Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2",
+                "werr_line": 3,
+                "werr_text": "Name '' is very short  - please verify.",
             },
         ]
-        # here the ordering of the list is not important
-        assert warn_err[0] in expected
-        assert warn_err[1] in expected
-        assert len(warn_err) == 2
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
 
 
-def test_check_classlist_length2(tmpdir):
+def test_non_latin_name(tmpdir):
+    # testing for #1314
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
-    spec = SpecVerifier.demo(num_to_produce=5)
-    # manually set number to name longer than classlist
-    spec.spec["numberToName"] = 5
-
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
-            f.write('"id","studentName"\n')
-            f.write('12345678,"Doe"\n')
-            f.write('12345679,"Doer"\n')
-            f.write('12345680,"Doerr"\n')
-        success, warn_err = vlad.validate_csv(foo, spec=spec)
-        assert not success
-        assert warn_err[0] == {
-            "warn_or_err": "error",
-            "werr_line": 0,
-            "werr_text": "Classlist is too short. Classlist contains 3 names, but spec:numberToName is 5",
-        }
-        assert len(warn_err) == 1
+            f.write('"id","studentName","hungry"\n')
+            f.write('12345677,"Doe, Ursula","yes"\n')
+            f.write('12345678,"Doe, 学生","yes"\n')
+    success, warn_err = vlad.validate_csv(foo)
+    # should get warnings
+    # {'warn_or_err': 'warning', 'werr_line': 2, 'werr_text': "Name 'D' is very short  - please verify."},
+    # {'warn_or_err': 'warning', 'werr_line': 3, 'werr_text': "Name '' is very short  - please verify."}
 
-
-def test_check_classlist_length3(tmpdir):
-    tmpdir = Path(tmpdir)
-    vlad = PlomClasslistValidator()
-    spec = SpecVerifier.demo(num_to_produce=3)
-    # manually set number to name longer than classlist
-    spec.spec["numberToName"] = 2
-
-    with working_directory(tmpdir):
-        foo = tmpdir / "foo.csv"
-        with open(foo, "w") as f:
-            f.write('"id","studentName"\n')
-            f.write('12345678,"Doe"\n')
-            f.write('12345679,"Doer"\n')
-            f.write('12345680,"Doerr"\n')
-        success, warn_err = vlad.validate_csv(foo, spec=spec)
-        assert success
-        assert warn_err[0] == {
+    assert success
+    expected = [
+        {
             "warn_or_err": "warning",
-            "werr_line": 0,
-            "werr_text": "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 2",
+            "werr_line": 3,
+            "werr_text": "Non-latin characters - Doe, 学生 - Apologies for the eurocentricity.",
         }
-        assert len(warn_err) == 1
+    ]
+
+    # check these lists against each other - order not important
+    assert len(warn_err) == len(expected)
+    for X in expected:
+        assert X in warn_err

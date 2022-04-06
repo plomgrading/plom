@@ -16,7 +16,7 @@ from plom.create.scribble_utils import possible_answers
 def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):
     # TODO: Issue #1646 here we want student number with id fallback?
     student_num = who["id"]
-    name = who["studentName"]
+    name = who["name"]
     did = random.randint(numQuestions - 1, numQuestions)  # some subset of questions
     doneQ = sorted(random.sample(list(range(1, 1 + numQuestions)), did))
     for q in doneQ:
@@ -30,7 +30,7 @@ def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):
 def makeFakeHW2(numQuestions, paperNum, who, where, prefix, maxpages=4):
     # TODO: Issue #1646 here we want student number with id fallback?
     student_num = who["id"]
-    name = who["studentName"]
+    name = who["name"]
     doneQ = list(range(1, 1 + numQuestions))
     fname = where / "{}.{}.{}.pdf".format(prefix, student_num, "_")
     doc = fitz.open()
