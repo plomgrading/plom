@@ -244,7 +244,6 @@ class MaskingOverlay(QGraphicsItemGroup):
         self.setZValue(0)
 
     def crop_to_focus(self, crop_rect):
-        log.warn(f"ARGH - Page focus crop called with {crop_rect}")
         self.inner_rect = crop_rect
         self.set_bars()
         self.update()
@@ -2683,7 +2682,6 @@ class PageScene(QGraphicsScene):
             crop_dat[2] * full_width,
             crop_dat[3] * full_height,
         )
-        log.warn(f"Triggering crop with {crop_dat} = {crop_rect}")
         self.trigger_crop(crop_rect)
 
     def uncrop_underlying_images(self):
