@@ -417,18 +417,14 @@ def main():
             msgr.stop()
 
     elif args.command == "class":
-        # we need the spec, so grab it from the server
         msgr = start_messenger(args.server, args.password)
         try:
-            spec = msgr.get_spec()
-        except PlomServerNotReady:
-            print("Server does not yet have a test-spec. We cannot proceed.")
-            # bailing out - close and stop messenger
-            msgr.closeUser()
-            msgr.stop()
-            sys.exit(1)  # TODO = more graceful exit
+            try:
+                spec = msgr.get_spec()
+            except PlomServerNotReady:
+                print("Server does not yet have a test-spec. We cannot proceed.")
+                sys.exit(1)  # TODO = more graceful exit
 
-        try:
             if args.demo:
                 classlist = get_demo_classlist(spec)
                 upload_classlist(classlist, msgr=msgr)
@@ -447,8 +443,6 @@ def main():
                 else:
                     print("Could not process classlist - see messages above")
         finally:
-            # for #2053
-            # close up and stop messenger
             msgr.closeUser()
             msgr.stop()
 
