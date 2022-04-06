@@ -2724,7 +2724,7 @@ class PageScene(QGraphicsScene):
 
     def mouseMoveCrop(self, event):
         """
-        Update the size of the delete box as the mouse is moved.
+        Update the size of the crop box as the mouse is moved.
 
         Notes:
             This animates the drawing of the box for the user.
@@ -2755,10 +2755,7 @@ class PageScene(QGraphicsScene):
 
         Notes:
              Remove the temp boxitem (which was needed for animation)
-            and then delete all objects that lie outside the box, translate everyting.
-            Push the resulting commands onto the undo stack
-        MUCH TODO
-
+             and push the crop command onto the undo stack
 
         Args:
             event (QMouseEvent): the given mouse release.
