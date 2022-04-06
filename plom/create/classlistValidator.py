@@ -12,7 +12,7 @@ from plom.rules import validateStudentNumber
 
 possible_sid_fields = ["id"]
 possible_fullname_fields = ["name", "studentName", "fullName"]
-possible_papernumber_fields = ["paperNum", "paperNumber"]
+possible_papernumber_fields = ["paper_number", "paperNum", "paperNumber"]
 
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 # combine all of these potential column headers into one casefolded list
