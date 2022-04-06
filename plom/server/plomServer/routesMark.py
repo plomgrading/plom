@@ -570,10 +570,10 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: JSON data, a list of dicts
-                where each dict has keys:
-                pagename, md5, included, order, id, orientation, server_path
-                as documented below.
-                A 409 is returned with an explanation if paper number not found.
+            where each dict has keys:
+            pagename, md5, included, order, id, orientation, server_path
+            as documented below.
+            A 409 is returned with an explanation if paper number not found.
 
         The list of dicts (we think of them as rows) have the following
         contents:
@@ -643,7 +643,7 @@ class MarkHandler:
         """
         test_number = request.match_info["number"]
 
-        ok, val = self.server.DB.getAllTestImages(test_number)
+        ok, val = self.server.get_pagedata(test_number)
 
         if not ok:
             raise web.HTTPConflict(reason=val)
@@ -667,15 +667,15 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: JSON data, a list of dicts
-                where each dict has keys:
-                pagename, md5, included, order, id, orientation, server_path
-                as documented in :py:`get_pagedata`.
-                A 409 is returned with an explanation if paper number not found.
+            where each dict has keys:
+            pagename, md5, included, order, id, orientation, server_path
+            as documented in :py:`get_pagedata`.
+            A 409 is returned with an explanation if paper number not found.
         """
         test_number = request.match_info["number"]
         question_number = request.match_info["question"]
 
-        ok, val = self.server.DB.getQuestionImages(test_number, question_number)
+        ok, val = self.server.get_pagedata_question(test_number, question_number)
 
         if not ok:
             raise web.HTTPConflict(reason=val)
@@ -739,7 +739,9 @@ class MarkHandler:
         test_number = request.match_info["number"]
         # this is used to determine the true/false "included" info
         question_number = request.match_info["question"]
-        ok, val = self.server.MgetWholePaper(test_number, question_number)
+        ok, val = self.server.get_pagedata_context_question(
+            test_number, question_number
+        )
         if not ok:
             raise web.HTTPConflict(reason=val)
         return web.json_response(val, status=200)

@@ -328,7 +328,15 @@ def remove_tag(self, task, tag_text):
     return self.DB.MremoveExistingTag(task, tag_text)
 
 
-def MgetWholePaper(self, *args, **kwargs):
+def get_pagedata(self, *args, **kwargs):
+    return self.DB.getAllTestImages(*args, **kwargs)
+
+
+def get_pagedata_question(self, *args, **kwargs):
+    return self.DB.getQuestionImages(*args, **kwargs)
+
+
+def get_pagedata_context_question(self, *args, **kwargs):
     return self.DB.MgetWholePaper(*args, **kwargs)
 
 

@@ -162,8 +162,6 @@ def getAllTestImages(self, test_number):
             Here `msg` is an error message and rval is a list of lists
             where each inner "row" consists of:
             `name`, `md5sum`, `id`, `orientation`, `server_path`
-
-    TODO: orientation hardcoded to zero: see #1879, !1310
     """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
@@ -244,11 +242,9 @@ def getQuestionImages(self, test_number, question):
 
     Returns:
         tuple: `(True, rval)` on success or `(False, msg)` on failure.
-            Here `msg` is an error message and rval is a list of lists
-            where each inner "row" consists of:
-            `name`, `md5sum`, `id`, `orientation`, `server_path`
-
-    TODO: orientation hardcoded to zero: see #1879, !1310
+        Here `msg` is an error message and `rval` is a list of lists
+        where each inner "row" consists of:
+        `name`, `md5sum`, `id`, `orientation`, `server_path`
     """
 
     tref = Test.get_or_none(Test.test_number == test_number)

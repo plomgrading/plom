@@ -644,10 +644,7 @@ class BaseMessenger:
             self.SRmutex.release()
 
     def get_pagedata(self, code):
-        """Get metadata about the images in this paper.
-
-        TODO: returns 404/409, so why not raise that instead?
-        """
+        """Get metadata about the images in this paper."""
         with self.SRmutex:
             try:
                 response = self.get(
@@ -658,14 +655,13 @@ class BaseMessenger:
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_pagedata_question(self, code, questionNumber):
-        """Get metadata about the images in this paper and question.
-
-        TODO: returns 404, so why not raise that instead?
-        """
+        """Get metadata about the images in this paper and question."""
         with self.SRmutex:
             try:
                 response = self.get(
@@ -676,7 +672,9 @@ class BaseMessenger:
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_pagedata_context_question(self, code, questionNumber):
