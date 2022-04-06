@@ -77,9 +77,12 @@ def lap_solver(test_numbers, student_IDs, costs):
         list: pairs of (`paper_number`, `student_ID`).
 
     use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
-    as coded up in lapsolver
-    to find least cost assignment of tests to studentIDs
-    this is potentially time-consuming, cannot be parallelized.
+    (as implemented in the ``lapsolver`` package)
+    to find least cost assignment of tests to studentIDs.
+
+    This is potentially time-consuming but in practice for 1000 papers I observed
+    a tiny fraction of a section.  The package ``lapsolver`` itself notes
+    3000x3000 in around 3 seconds.
     """
     row_IDs, column_IDs = solve_dense(costs)
     prediction_pairs = []

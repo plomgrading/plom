@@ -469,29 +469,24 @@ def MgetWholePaper(self, test_number, question):
     """All non-ID pages of a paper, highlighting which belong to a question.
 
     Returns:
-        list: a list of lists, each "row" currently documented in the
-            caller's implementation.  TODO: consider moving the dict
-            stuff back to here.
+        tuple: `(True, rval)` on success or `(False, msg)` on failure.
+        Here `msg` is an error message and `rval` is a list of dict with
+        keys `pagename`, `md5`, `id`, `orientation`, `server_path`,
+        `order` and `included`.
+
+    Raises:
+        RuntimeError: some unexpected thing that we think cannot happen.
     """
     tref = Test.get_or_none(Test.test_number == test_number)
-    if tref is None:  # don't know that test - this shouldn't happen
-        return [False]  # TODO
-    pageData = []  # for each page append a 4-tuple [
-    # page-code = t.pageNumber, h.questionNumber.order, 3.questionNumber.order, or l.order
-    # image-md5sum,
-    # true/false - if belongs to the given question or not.
-    # position in current annotation (or none if not)
-    pageFiles = []  # the corresponding filenames.
+    if tref is None:
+        return (False, f"Paper {test_number} not found")
+
+    pagedata = []
     question = int(question)
-    if question == 0:
-        # Issue #1549: Identifier uses special question=0, but we need an aref below
-        # TODO: for now we just get question 1 instead...
-        qref = QGroup.get_or_none(test=tref, question=1)
-    else:
-        # get the current annotation and position of images within it.
-        qref = QGroup.get_or_none(test=tref, question=question)
-    if qref is None:  # this should not happen
-        return [False]
+    # get the current annotation and position of images within it.
+    qref = QGroup.get_or_none(test=tref, question=question)
+    if qref is None:
+        return (False, f"Cannot find paper {test_number} question {question}")
     # dict of image-ids and positions in the current annotation
     current_image_orders = {}
     aref = qref.annotations[-1]
@@ -499,9 +494,9 @@ def MgetWholePaper(self, test_number, question):
         # this should never happen (?) no such thing as a "fresh annotation" any more
         log.critical("Oh my, colin thought it cannot happen aref={}".format(aref))
         raise RuntimeError("Oh my, colin thought it cannot happen")
-        # return [False]
     for pref in aref.apages:
         current_image_orders[pref.image.id] = pref.order
+
     # give TPages (aside from ID pages), then HWPages, then EXPages
     for p in tref.tpages.order_by(TPage.page_number):
         if not p.scanned:  # skip unscanned testpages
@@ -509,45 +504,50 @@ def MgetWholePaper(self, test_number, question):
         # skip IDpages (but we'll include dnm pages)
         if p.group.group_type == "i":
             continue
-        val = [
-            "t{}".format(p.page_number),
-            p.image.md5sum,
-            False,
-            current_image_orders.get(p.image.id),
-            p.image.id,
-        ]
+        row = {
+            "pagename": "t{}".format(p.page_number),
+            "md5": p.image.md5sum,
+            "included": False,
+            "order": current_image_orders.get(p.image.id),
+            "id": p.image.id,
+            "server_path": p.image.file_name,
+            "orientation": p.image.rotation,
+        }
         # check if page belongs to our question
         if p.group.group_type == "q" and p.group.qgroups[0].question == question:
-            val[2] = True
-        pageData.append(val)
-        pageFiles.append(p.image.file_name)
+            row["included"] = True
+        pagedata.append(row)
+
     # give HW and EX pages by question
     for qref in tref.qgroups.order_by(QGroup.question):
         for p in qref.group.hwpages:
-            val = [
-                "h{}.{}".format(qref.question, p.order),
-                p.image.md5sum,
-                False,
-                current_image_orders.get(p.image.id),
-                p.image.id,
-            ]
+            row = {
+                "pagename": "h{}.{}".format(qref.question, p.order),
+                "md5": p.image.md5sum,
+                "included": False,
+                "order": current_image_orders.get(p.image.id),
+                "id": p.image.id,
+                "server_path": p.image.file_name,
+                "orientation": p.image.rotation,
+            }
             if qref.question == question:  # check if page belongs to our question
-                val[2] = True
-            pageData.append(val)
-            pageFiles.append(p.image.file_name)
+                row["included"] = True
+            pagedata.append(row)
+
         for p in qref.group.expages:
-            val = [
-                "e{}.{}".format(qref.question, p.order),
-                p.image.md5sum,
-                False,
-                current_image_orders.get(p.image.id),
-                p.image.id,
-            ]
+            row = {
+                "pagename": "e{}.{}".format(qref.question, p.order),
+                "md5": p.image.md5sum,
+                "included": False,
+                "order": current_image_orders.get(p.image.id),
+                "id": p.image.id,
+                "server_path": p.image.file_name,
+                "orientation": p.image.rotation,
+            }
             if qref.question == question:  # check if page belongs to our question
-                val[2] = True
-            pageData.append(val)
-            pageFiles.append(p.image.file_name)
-    return [True, pageData] + pageFiles
+                row["included"] = True
+            pagedata.append(row)
+    return (True, pagedata)
 
 
 def MreviewQuestion(self, test_number, question, version):
