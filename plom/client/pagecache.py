@@ -32,7 +32,8 @@ def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):
         alt_get (None/list): aka ``src_img_data`` a subset of page images
             we must download.  Use this to override the ``included``
             field of the ``pagedata``.  It should also be a list of dicts
-            where only the key ``id`` is used.
+            where only the key ``id`` is used.  Has no effect if
+            ``get_all=True`` is also passed.
 
     Return:
         list: the modified pagedata.  TODO: also modifies the
