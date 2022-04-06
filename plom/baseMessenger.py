@@ -683,24 +683,21 @@ class BaseMessenger:
         """Get metadata about all non-ID page images in this paper, as related to a question.
 
         For now, questionNumber effects the "included" column...
-
-        TODO: returns 404, so why not raise that instead?
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/pagedata/{code}/context/{questionNumber}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            ret = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-        return ret
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/pagedata/{code}/context/{questionNumber}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_image(self, image_id, md5sum):
         """Download one image from server by its database id.
