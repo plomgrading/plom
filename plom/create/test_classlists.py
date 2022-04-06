@@ -210,7 +210,13 @@ def test_non_latin_name(tmpdir):
     # {'warn_or_err': 'warning', 'werr_line': 3, 'werr_text': "Name '' is very short  - please verify."}
 
     assert success
-    expected = [{'warn_or_err': 'warning', 'werr_line': 3, 'werr_text': 'Non-latin characters - Doe, 学生 - Apologies for the eurocentricity.'}]
+    expected = [
+        {
+            "warn_or_err": "warning",
+            "werr_line": 3,
+            "werr_text": "Non-latin characters - Doe, 学生 - Apologies for the eurocentricity.",
+        }
+    ]
 
     # check these lists against each other - order not important
     assert len(warn_err) == len(expected)

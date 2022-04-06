@@ -299,9 +299,7 @@ def insert_extra_info(extra, exam, x=None, y=None):
     box_width = (
         max(
             fitz.get_text_length(extra["id"], fontsize=36, fontname="Helvetica"),
-            fitz.get_text_length(
-                extra["name"], fontsize=36, fontname="Helvetica"
-            ),
+            fitz.get_text_length(extra["name"], fontsize=36, fontname="Helvetica"),
             fitz.get_text_length(sign_here, fontsize=48, fontname="Helvetica"),
         )
         * 1.11  # magic: just til it covers IDbox2

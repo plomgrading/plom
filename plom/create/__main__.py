@@ -428,24 +428,29 @@ def main():
             msgr.stop()
             sys.exit(1)  # TODO = more graceful exit
 
-        if args.demo:
-            classlist = get_demo_classlist(spec)
-            upload_classlist(classlist, msgr=msgr)
-        else:
-
-            success, classlist = process_classlist_file(
-                args.classlist, spec, ignore_warnings=args.ignore_warnings
-            )
-            if success:
-                try:
-                    upload_classlist(classlist, msgr=msgr)
-                except Exception as err:  # TODO - make a better error handler here
-                    print("An error occurred when uploading the valid classlist: ", err)
+        try:
+            if args.demo:
+                classlist = get_demo_classlist(spec)
+                upload_classlist(classlist, msgr=msgr)
             else:
-                print("Could not process classlist - see messages above")
-        # close up and stop messenger
-        msgr.closeUser()
-        msgr.stop()
+                success, classlist = process_classlist_file(
+                    args.classlist, spec, ignore_warnings=args.ignore_warnings
+                )
+                if success:
+                    try:
+                        upload_classlist(classlist, msgr=msgr)
+                    except Exception as err:  # TODO - make a better error handler here
+                        print(
+                            "An error occurred when uploading the valid classlist: ",
+                            err,
+                        )
+                else:
+                    print("Could not process classlist - see messages above")
+        finally:
+            # for #2053
+            # close up and stop messenger
+            msgr.closeUser()
+            msgr.stop()
 
     elif args.command == "make-db":
         if args.from_file is None:
