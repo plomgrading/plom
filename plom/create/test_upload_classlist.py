@@ -10,7 +10,7 @@ from plom.create.upload_classlist import _raw_upload_classlist
 
 
 def test_produce_upload_classlist():
-    classlist = [{"id": 10050380, "studentName": "Fink, Iris"}]
+    classlist = [{"id": 10050380, "name": "Fink, Iris"}]
     expected_call_cl = classlist
 
     msgr = ManagerMessenger()

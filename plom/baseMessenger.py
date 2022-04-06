@@ -382,7 +382,7 @@ class BaseMessenger:
 
         Returns:
             list: list of dict, each with at least the keys
-                `id` and `studentName` and possibly others.
+                `id` and `name` and possibly others.
                 Corresponding values are both strings.
 
         Raises:

@@ -4,33 +4,23 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
+from collections import defaultdict
 import csv
 import pandas
 from plom.rules import validateStudentNumber
 
 
 possible_sid_fields = ["id"]
-possible_fullname_fields = ["studentName"]
-possible_surname_fields = ["surname", "familyName", "lastName"]
-possible_given_name_fields = [
-    "name",
-    "givenName",
-    "firstName",
-    "givenNames",
-    "firstNames",
-    "preferredName",
-    "preferredNames",
-    "nickName",
-    "nickNames",
-]
+possible_fullname_fields = ["name", "studentName", "fullName"]
+possible_papernumber_fields = ["paperNum", "paperNumber"]
+
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 # combine all of these potential column headers into one casefolded list
 potential_column_names = [
     x.casefold()
     for x in possible_sid_fields
     + possible_fullname_fields
-    + possible_surname_fields
-    + possible_given_name_fields
+    + possible_papernumber_fields
     + list(canvas_columns_format)
 ]
 
@@ -81,34 +71,32 @@ class PlomClasslistValidator:
     def checkHeaders(self, rowFromDict):
         """Check existence of id and name columns in the classlist.
 
-        Checks the column titles (as given by the supplied row from the classlist).
-        Tests for an id column, and then name-columns. Names are either single-column
-        or surname/givenname column pair.  To avoid issues with upper
-        and lower case, everything needs to be tested by casefolding.
+        Checks the column titles (as given by the supplied row from
+        the classlist).  Tests for an id column, name-column, and an
+        (optional) papernumber column. Names must be a single
+        column. To avoid issues with upper and lower case, everything
+        needs to be tested by casefolding.
 
         Arguments:
             rowFromDict (dict): a row from the classlist encoded as a dictionary.
                 The keys give the column titles.
 
         Returns:
-            list: If errors then return [False, error-list],
-                if single name column then [True, id_key, fullname_key]
-                if surname/given name column then [True, id_key, surname_key, given_name_key]
+            dict: If errors then return {'success': False, 'errors': error-list},
+                else return {'success': True, 'id': id_key, 'fullname': fullname_key, 'papernumber': papernumber_key/None}
+
         """
         id_keys = []
         fullname_keys = []
-        given_name_keys = []
-        surname_keys = []
+        papernumber_keys = []
         for x in rowFromDict.keys():
             cfx = x.casefold()
             if cfx in map(str.casefold, possible_sid_fields):
                 id_keys.append(x)
             if cfx in map(str.casefold, possible_fullname_fields):
                 fullname_keys.append(x)
-            if cfx in map(str.casefold, possible_given_name_fields):
-                given_name_keys.append(x)
-            if cfx in map(str.casefold, possible_surname_fields):
-                surname_keys.append(x)
+            if cfx in map(str.casefold, possible_papernumber_fields):
+                papernumber_keys.append(x)
 
         err = []
         # Must have at most one of each column
@@ -116,47 +104,85 @@ class PlomClasslistValidator:
             err.append("Cannot have multiple id columns")
         if len(fullname_keys) > 1:  # must have exactly one such column
             err.append("Cannot have multiple full-name columns")
-        if len(surname_keys) > 1:
-            err.append("Cannot have multiple surname columns")
-        if len(given_name_keys) > 1:
-            err.append("Cannot have multiple given-name columns")
+        if len(papernumber_keys) > 1:
+            err.append("Cannot have multiple paper-number columns")
         # Must have an id column
         if not id_keys:
             err.append("Missing id column")
-        # And either fullname, or (surname,given-name)
-        if fullname_keys:
-            if surname_keys:
-                err.append("Cannot have both full-name column and surname column")
-            if given_name_keys:
-                err.append("Cannot have both full-name column and given-name column")
-        else:
-            if not surname_keys:
-                err.append("Since no fullname-column, must have one surname column")
-            if not given_name_keys:
-                err.append("Since no fullname-column, must have one given-name column")
+        # And a name (ie full name) column
+        if not fullname_keys:
+            err.append("Missing name column")
+        # if no papernumber_key then put None into list for return value
+        if not papernumber_keys:
+            papernumber_keys.append(None)
 
         if err:
-            return [False, err]
-        if fullname_keys:
-            return [True, id_keys[0], fullname_keys[0]]
-        else:
-            return [True, id_keys[0], surname_keys[0], given_name_keys[0]]
+            return {"success": False, "errors": err}
+        return {
+            "success": True,
+            "id": id_keys[0],
+            "name": fullname_keys[0],
+            "papernumber": papernumber_keys[0],
+        }
 
-    def check_ID_StudentName(self, id_key, fullname_key, classList):
-        """Check ID and StudentName when student-name is a single field"""
+    def check_ID_column(self, id_key, classList):
+        """Check the ID column of the classlist"""
         err = []
-        warn = []
+        ids_used = defaultdict(list)
         for x in classList:
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
             idv = validateStudentNumber(x[id_key])
             if idv[0] is False:
                 err.append([x["_src_line"], idv[1]])
+            ids_used[x[id_key]].append(x["_src_line"])
+        for x, v in ids_used.items():
+            if len(v) > 1:
+                err.append([v[0], f"ID '{x}' is used multiple times - on lines {v}"])
+        if len(err) > 0:
+            return (False, err)
+        else:
+            return (True, [])
+
+    def check_papernumber_column(self, papernum_key, classList):
+        """Check the papernumber column of the classlist"""
+        if papernum_key is None:
+            return (True, [])
+
+        err = []
+        numbers_used = defaultdict(list)
+        for x in classList:
+            try:
+                int(x[papernum_key])
+            except ValueError:
+                err.append(
+                    [
+                        x["_src_line"],
+                        f"Paper-number {x[papernum_key]} is not an integer",
+                    ]
+                )
+            numbers_used[x[papernum_key]].append(x["_src_line"])
+        for x, v in numbers_used.items():
+            if len(v) > 1:
+                err.append(
+                    [v[0], f"Paper-number '{x}' is used multiple times - on lines {v}"]
+                )
+        if len(err) > 0:
+            return (False, err)
+        else:
+            return (True, [])
+
+    def check_name_column(self, fullname_key, classList):
+        """Check name column return any warnings"""
+        warn = []
+        for x in classList:
             # check non-trivial length after removing spaces and commas
             tmp = x[fullname_key].replace(" ", "").replace(",", "")
             # warn if name-field is very short
-            if len(tmp) < 2:  # what is sensible here?
-                warn.append([x["_src_line"], f"Name '{tmp}' is very short  - please verify."])
+            if len(tmp) < 2:  # Is this okay? TODO - decide a better bound here
+                warn.append(
+                    [x["_src_line"], f"Name '{tmp}' is very short  - please verify."]
+                )
             # warn if non-latin char present
             try:
                 tmp = x[fullname_key].encode("Latin-1")
@@ -164,47 +190,32 @@ class PlomClasslistValidator:
                 warn.append(
                     [
                         x["_src_line"],
-                        f"Non-latin characters - {x['studentName']} - Apologies for the eurocentricity.",
+                        f"Non-latin characters - {x[fullname_key]} - Apologies for the eurocentricity.",
                     ]
                 )
-        if len(err) > 0:
-            return [False, warn, err]
-        else:
-            return [True, warn]
+        # return any warnings
+        return warn
 
-    def check_ID_Surname_GivenName(self, idKey, surnameKey, givenNameKey, classList):
-        """Check ID and StudentName when student-name is two-fields"""
-        err = []
-        warn = []
-        for x in classList:
-            # this is separate function - will be institution dependent.
-            # will be better when we move to UIDs.
-            idv = validateStudentNumber(x[idKey])
-            if idv[0] is False:
-                err.append([x["_src_line"], idv[1]])
-            # check non-trivial length after removing spaces and commas
-            tmp = x[surnameKey].replace(" ", "").replace(",", "")
-            if len(tmp) < 2:  # what is sensible here?
-                warn.append([x["_src_line"], f"Surname '{tmp}' is very short - please verify."])
-            tmp = x[givenNameKey].replace(" ", "").replace(",", "")
-            if len(tmp) < 2:  # what is sensible here?
-                warn.append(
-                    [x["_src_line"], f"Given name '{tmp}' is very short - please verify."]
-                )
-            # warn if non-latin char present
-            try:
-                tmp = (x[surnameKey] + x[givenNameKey]).encode("Latin-1")
-            except UnicodeEncodeError:
-                warn.append(
-                    [
-                        x["_src_line"],
-                        f"Non-latin characters - {x['studentName']} - Apologies for the eurocentricity.",
-                    ]
-                )
-        if len(err) > 0:
-            return [False, warn, err]
-        else:
-            return [True, warn]
+    def check_classlist_against_spec(self, spec, classlist_length):
+        """
+        Validate the classlist-length against spec parameters
+
+        Args:
+            spec (None/dict/SpecVerifier): an optional test specification,
+                 if given then run additional classlist-related tests.
+            classlist_length (int): the number of students in the classlist.
+
+        Returns:
+            list: if 'numberToProduce' is positive but less than classlist_length then returns [warning_message], else returns empty list.
+        """
+        if spec is None:
+            return []
+        elif spec["numberToProduce"] == -1:
+            return []
+        elif spec["numberToProduce"] < classlist_length:
+            return [
+                f"Classlist is long. Classlist contains {classlist_length} names, but spec:numberToProduce is {spec['numberToProduce']}"
+            ]
 
     def validate_csv(self, filename, spec=None):
         """
@@ -237,69 +248,44 @@ class PlomClasslistValidator:
 
         werr = []
 
-        cl_head = self.checkHeaders(cl_as_dicts[0])
-        if cl_head[0] is False:
-            for e in cl_head[1]:
+        # check the headers - potentially un-recoverable errors here
+        cl_header_info = self.checkHeaders(cl_as_dicts[0])
+        if cl_header_info["success"] is False:  # format errors and bail-out
+            for e in cl_header_info["errors"]:
                 werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
             return (False, werr)
 
-        # if spec is present run sanity tests against that
-        if spec is not None:
-            if spec["numberToName"] == -1:
-                # nothing to check - will use all names in classlist
-                pass
-            elif spec["numberToName"] > len(cl_as_dicts):
-                werr.append(
-                    {
-                        "warn_or_err": "error",
-                        "werr_line": 0,
-                        "werr_text": f"Classlist is too short. Classlist contains {len(cl_as_dicts)} names, but spec:numberToName is {spec['numberToName']}",
-                    }
-                )
-                return (False, werr)  # Fail out here
-            elif spec["numberToName"] < len(cl_as_dicts):  # see issue 927
-                werr.append(
-                    {
-                        "warn_or_err": "warning",
-                        "werr_line": 0,
-                        "werr_text": f"Classlist is longer than numberToName. Classlist contains {len(cl_as_dicts)} names, but spec:numberToName is {spec['numberToName']}",
-                    }
-                )
-
-            if spec["numberToProduce"] == -1:
-                # nothing to check - will produce as many as in classlist
-                pass
-            elif spec["numberToProduce"] < len(cl_as_dicts):
-                werr.append(
-                    {
-                        "warn_or_err": "warning",
-                        "werr_line": 0,
-                        "werr_text": f"Classlist is long. Classlist contains {len(cl_as_dicts)} names, but spec:numberToProduce is {spec['numberToProduce']}",
-                    }
-                )
-
-        if len(cl_head) == 3:  # is true, id, studentName
-            cid = self.check_ID_StudentName(cl_head[1], cl_head[2], cl_as_dicts)
-        elif len(cl_head) == 4:  # is true, id, surname, givenname
-            cid = self.check_ID_Surname_GivenName(
-                cl_head[1], cl_head[2], cl_head[3], cl_as_dicts
-            )
-        else:
-            return (False, werr)
-        # now look at the errors / warnings
-        if len(cid[1]) > 0:
-            for w in cid[1]:
-                werr.append(
-                    {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
-                )
-        if cid[0] is False:  # big errors in id/name checking
-            for e in cid[2]:
+        # collect all errors and warnings before bailing out.
+        validity = True
+        # check the ID column - again, potentially errors here (not just warnings)
+        success, errors = self.check_ID_column(cl_header_info["id"], cl_as_dicts)
+        if not success:  # format errors and set invalid
+            validity = False
+            for e in errors:
                 werr.append(
                     {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
                 )
-            return (False, werr)
-        else:
-            return (True, werr)
+
+        # check the paperNumber column - again, potentially errors here (not just warnings)
+        success, errors = self.check_papernumber_column(
+            cl_header_info["papernumber"], cl_as_dicts
+        )
+        if not success:  # format errors and set invalid
+            validity = False
+            for e in errors[1]:
+                werr.append(
+                    {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
+                )
+        # check against spec - only warnings returned
+        for w in self.check_classlist_against_spec(spec, len(cl_as_dicts)):
+            werr.append({"warn_or_err": "warning", "werr_line": 0, "werr_text": w})
+        # check the name column - only warnings returned
+        for w in self.check_name_column(cl_header_info["name"], cl_as_dicts):
+            werr.append(
+                {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
+            )
+
+        return (validity, werr)
 
     def check_is_canvas_csv(self, csv_file_name):
         """Detect if a csv file is likely a Canvas-exported classlist.
@@ -317,11 +303,10 @@ class PlomClasslistValidator:
         return all(x in csv_fields for x in canvas_columns_format)
 
     def check_is_non_canvas_csv(self, csv_file_name):
-        """Read the csv file and check if id and appropriate student name exist.
+        """Read the csv file and check if id and name columns exist.
 
-        1. Check if id is present.
-        2. Check if studentName is preset.
-        3. If not, check for given name and surname in the document.
+        1. Check if id is present or any of possible_sid_fields.
+        2. Check if name is preset or any of possible_fullname_fields.
 
         Arguments:
             csv_file_name (pathlib.Path/str): the csv file.
@@ -336,55 +321,38 @@ class PlomClasslistValidator:
                 csv_file_name
             )
         )
-
         # strip excess whitespace from column names
         student_info_df.rename(
             columns=lambda x: str(x).strip(), inplace=True
         )  # avoid issues with blanks
 
-        if "id" not in [x.casefold() for x in student_info_df.columns]:
-            print('Cannot find "id" column')
+        id_cols = []
+        fullname_cols = []
+        for x in student_info_df.columns:
+            cfx = x.casefold()
+            print(">>>> checking ", cfx)
+            if cfx in map(str.casefold, possible_sid_fields):
+                id_cols.append(x)
+            if cfx in map(str.casefold, possible_fullname_fields):
+                fullname_cols.append(x)
+
+        if not id_cols:
+            print(f"Cannot find an id column - {id_cols}")
+            print("Columns present = {}".format(student_info_df.columns))
+            return False
+        elif len(id_cols) > 1:
+            print(f"Multiple id columns - {id_cols}")
             print("Columns present = {}".format(student_info_df.columns))
             return False
 
-        # if we have don't have  then we are good to go.
-        if "studentName" not in student_info_df.columns:
-
-            # we need one of some approx of last-name field
-            firstname_column_title = None
-            for column_title in student_info_df.columns:
-                if column_title.casefold() in (
-                    x.casefold() for x in possible_surname_fields
-                ):
-                    print('"{}" column present'.format(column_title))
-                    firstname_column_title = column_title
-                    break
-            if firstname_column_title is None:
-                print(
-                    'Cannot find column to use for "surname", tried: {}'.format(
-                        ", ".join(possible_surname_fields)
-                    )
-                )
-                print("Columns present = {}".format(student_info_df.columns))
-                return False
-
-            # we need one of some approx of given-name field
-            lastname_column_title = None
-            for column_title in student_info_df.columns:
-                if column_title.casefold() in (
-                    x.casefold() for x in possible_given_name_fields
-                ):
-                    print('"{}" column present'.format(column_title))
-                    lastname_column_title = column_title
-                    break
-            if lastname_column_title is None:
-                print(
-                    'Cannot find column to use for "given name", tried: {}'.format(
-                        ", ".join(possible_given_name_fields)
-                    )
-                )
-                print("Columns present = {}".format(student_info_df.columns))
-                return False
+        if not fullname_cols:
+            print(f"Cannot find an name column - {fullname_cols}")
+            print("Columns present = {}".format(student_info_df.columns))
+            return False
+        elif len(fullname_cols) > 1:
+            print("Multiple name columns - {fullname_cols}")
+            print("Columns present = {}".format(student_info_df.columns))
+            return False
 
         return True
 

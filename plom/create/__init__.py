@@ -18,9 +18,9 @@ paperdir = Path("papersToPrint")
 from .start_messenger import start_messenger, with_manager_messenger
 from plom.finish import clear_manager_login
 
-from .buildClasslist import possible_surname_fields, possible_given_name_fields
 from .buildDatabaseAndPapers import build_database, build_papers
 
+from .classlistValidator import possible_sid_fields, possible_fullname_fields
 from .buildClasslist import process_classlist_file, get_demo_classlist
 from .upload_classlist import upload_classlist, upload_demo_classlist
 

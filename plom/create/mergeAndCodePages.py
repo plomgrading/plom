@@ -263,7 +263,7 @@ def insert_extra_info(extra, exam, x=None, y=None):
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
-        extra (dict): dictionary with keys ``id`` and ``studentName``.
+        extra (dict): dictionary with keys ``id`` and ``name``.
         exam (fitz.Document): PDF document.
         x (float): specifies the x-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 has the centre
@@ -293,14 +293,14 @@ def insert_extra_info(extra, exam, x=None, y=None):
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height
 
-    txt = f'{extra["studentName"]}\n{extra["id"]}'
+    txt = f'{extra["name"]}\n{extra["id"]}'
     sign_here = "Please sign here"
 
     box_width = (
         max(
             fitz.get_text_length(extra["id"], fontsize=36, fontname="Helvetica"),
             fitz.get_text_length(
-                extra["studentName"], fontsize=36, fontname="Helvetica"
+                extra["name"], fontsize=36, fontname="Helvetica"
             ),
             fitz.get_text_length(sign_here, fontsize=48, fontname="Helvetica"),
         )

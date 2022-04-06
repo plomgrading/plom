@@ -55,7 +55,7 @@ def outputProductionCSV(spec, make_PDF_args):
             page_to_version = build_page_to_version_dict(spec, qver)
             # print the student info if there.
             if student_info:
-                row = [idx, student_info["id"], student_info["studentName"]]
+                row = [idx, student_info["id"], student_info["name"]]
             else:  # just skip those columns
                 row = [idx, None, None]
             for q in range(1, numberOfQuestions + 1):
@@ -89,7 +89,7 @@ def build_papers_backend(
         global_question_version_map (dict): dict of dicts mapping first by
             paper number (int) then by question number (int) to version (int).
         classlist (list, None): ordered list of dicts with keys ``id``
-            and ``studentName``.
+            and ``name``.
 
     Keyword arguments:
         fakepdf (bool): when true, the build empty pdfs (actually empty files)
@@ -162,7 +162,7 @@ def check_pdf_and_id_if_needed(
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         msgr (Messenger): an open active connection to the server.
         classlist (list, None): ordered list of dicts with keys ``id``
-            and ``studentName``.
+            and ``name``.
 
     Keyword Arguments:
         paperdir (pathlib.Path): where to find the papers to print.
@@ -181,7 +181,7 @@ def check_pdf_and_id_if_needed(
     for papernum in range_to_check:
         if papernum <= spec["numberToName"]:
             sid = classlist[papernum - 1]["id"]
-            sname = classlist[papernum - 1]["studentName"]
+            sname = classlist[papernum - 1]["name"]
             pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
             # if file is not there - error, else tell DB it is ID'd
             if not pdf_file.is_file():
