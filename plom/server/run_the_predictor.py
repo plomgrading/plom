@@ -14,7 +14,7 @@ __credits__ = ["Andrew Rechnitzer", "Dryden Wiebe", "Vala Vakilian"]
 __license__ = "AGPLv3"
 
 import json
-import os
+from pathlib import Path
 import sys
 
 from plom.idreader.model_utils import download_or_train_model
@@ -24,10 +24,10 @@ from plom import specdir
 
 
 if __name__ == "__main__":
-    lock_file = sys.argv[1]
+    lock_file = Path(sys.argv[1])
 
-    if not os.path.isfile(lock_file):
-        raise RuntimeError('Cannot acquire file "{}"'.format(lock_file))
+    if lock_file.exists():
+        raise RuntimeError(f'Cannot acquire file "{lock_file}"')
 
     with open(lock_file) as fh:
         files, info = json.load(fh)
@@ -48,4 +48,6 @@ if __name__ == "__main__":
     with open(specdir / "id_prob_heatmaps.json", "w") as fh:
         json.dump(probabilities, fh, indent="  ")
 
-    os.unlink(lock_file)
+    lock_file.unlink()
+
+    print("Auto id reader has finished")
