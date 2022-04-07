@@ -268,15 +268,16 @@ class PlomClasslistValidator:
                 )
 
         # check the paperNumber column - again, potentially errors here (not just warnings)
-        success, errors = self.check_papernumber_column(
-            cl_header_info["papernumber"], cl_as_dicts
-        )
-        if not success:  # format errors and set invalid
-            validity = False
-            for e in errors:
-                werr.append(
-                    {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
-                )
+        # success, errors = self.check_papernumber_column(
+        #     cl_header_info["papernumber"], cl_as_dicts
+        # )
+        # if not success:  # format errors and set invalid
+        #     validity = False
+        #     for e in errors:
+        #         werr.append(
+        #             {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
+        #         )
+
         # check against spec - only warnings returned
         for w in self.check_classlist_against_spec(spec, len(cl_as_dicts)):
             werr.append({"warn_or_err": "warning", "werr_line": 0, "werr_text": w})
