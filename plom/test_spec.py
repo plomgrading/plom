@@ -28,6 +28,13 @@ def test_spec_verify_quiet():
     s.verify()
 
 
+def test_deprecated_numberToName():
+    s = SpecVerifier.demo()
+    s.spec["numberToName"] = 10
+    with raises(DeprecationWarning):
+        s.verify()
+
+
 def test_spec_wrong_number_questions():
     r = raw.copy()
     r["numberOfQuestions"] = 2
