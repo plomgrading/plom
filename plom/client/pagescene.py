@@ -219,28 +219,24 @@ class MaskingOverlay(QGraphicsItemGroup):
         self.left_bar = QGraphicsRectItem(outer_rect)
         self.right_bar = QGraphicsRectItem(outer_rect)
         self.dotted_boundary = QGraphicsRectItem(inner_rect)
-        # set brush and pen
-        transparent_pen = QPen(QColor(249, 249, 249, 240), 0)
         transparent_paint = QBrush(QColor(249, 249, 249, 220))
         dotted_pen = QPen(QColor(0, 0, 0, 128), 2, style=Qt.DotLine)
         self.top_bar.setBrush(transparent_paint)
         self.bottom_bar.setBrush(transparent_paint)
         self.left_bar.setBrush(transparent_paint)
         self.right_bar.setBrush(transparent_paint)
-        self.top_bar.setPen(transparent_pen)
-        self.bottom_bar.setPen(transparent_pen)
-        self.left_bar.setPen(transparent_pen)
-        self.right_bar.setPen(transparent_pen)
+        self.top_bar.setPen(QPen(Qt.NoPen))
+        self.bottom_bar.setPen(QPen(Qt.NoPen))
+        self.left_bar.setPen(QPen(Qt.NoPen))
+        self.right_bar.setPen(QPen(Qt.NoPen))
         self.dotted_boundary.setPen(dotted_pen)
         # now set the size correctly
         self.set_bars()
-        # finally add them to the group
         self.addToGroup(self.top_bar)
         self.addToGroup(self.bottom_bar)
         self.addToGroup(self.left_bar)
         self.addToGroup(self.right_bar)
         self.addToGroup(self.dotted_boundary)
-        # set with z-value 0
         self.setZValue(0)
 
     def crop_to_focus(self, crop_rect):
