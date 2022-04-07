@@ -284,10 +284,7 @@ class MaskingOverlay(QGraphicsItemGroup):
         )
         self.right_bar.setRect(
             QRectF(
-                QPointF(
-                    self.inner_rect.topRight().x(),
-                    self.outer_rect.topRight().y(),
-                ),
+                self.inner_rect.topRight(),
                 QPointF(
                     self.outer_rect.bottomRight().x(),
                     self.inner_rect.bottomRight().y(),
