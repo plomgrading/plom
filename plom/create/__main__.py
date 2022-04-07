@@ -83,13 +83,6 @@ def parse_verify_save_spec(fname, save=True):
         '\nSee "plom-server --help" for more information on how to get the server up and running.\n'
     )
 
-    spec = SpecVerifier.load_verified()
-    if spec["numberToName"] > 0:
-        print(
-            ">>> Note <<<\n"
-            'Your spec indicates that you wish to print named papers.\nWhen the server is running, please process your class list using "plom-create class ".\n'
-        )
-
 
 def get_parser():
     parser = argparse.ArgumentParser(

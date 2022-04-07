@@ -57,15 +57,6 @@ def build_papers(
         spec = msgr.get_spec()
         # pvmap = msgr.getGlobalPageVersionMap()
         qvmap = msgr.getGlobalQuestionVersionMap()
-        if spec["numberToName"] > 0:
-            classlist = msgr.IDrequestClasslist()
-            # TODO: Issue #1646 mostly student number (w fallback)
-            if len(classlist) < spec["numberToName"]:
-                raise ValueError(
-                    "Classlist is too short for {} pre-named papers".format(
-                        spec["numberToName"]
-                    )
-                )
     if indexToMake:
         # TODO: Issue #1745?
         if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
@@ -75,19 +66,19 @@ def build_papers(
 
     if not classlist:
         classlist_by_papernum = {}
-    elif classlist[0].get("papernum", None):
+    elif classlist[0].get("paper_number", None):
         # use the existing papernum column
-        # note ignoring negative papernum: used to indicate blank
+        # note ignoring non-positive papernum: used to indicate blank
         # first some sanity checks
-        papernums = [r["papernum"] for r in classlist if int(r["papernum"]) > 0]
+        papernums = [r["paper_number"] for r in classlist if int(r["paper_number"]) > 0]
         if len(set(papernums)) != len(papernums):
-            raise ValueError('repeated "papernum": must be unique')
+            raise ValueError('repeated "paper_number": must be unique')
         del papernums
         # TODO: why are the papernum str not int?
         classlist_by_papernum = {
-            int(r["papernum"]): {k: v for k, v in r.items() if k != "papernum"}
+            int(r["paper_number"]): {k: v for k, v in r.items() if k != "paper_number"}
             for r in classlist
-            if int(r["papernum"]) > 0
+            if int(r["paper_number"]) > 0
         }
     else:
         # no existing papernum column so map by the order in the classlist
@@ -96,13 +87,6 @@ def build_papers(
     del classlist
 
     # filter if we're not making all them
-    if spec["numberToName"] > 0:
-        # TODO: not totally precise how we want this to work with user-specified map
-        classlist_by_papernum = {
-            i: row
-            for i, row in classlist_by_papernum.items()
-            if i <= spec["numberToName"]
-        }
     if any(i > spec["numberToProduce"] for i in classlist_by_papernum.keys()):
         raise ValueError(
             "Not enough papers to prename everything in the filtered classlist"
