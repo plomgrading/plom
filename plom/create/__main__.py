@@ -34,7 +34,7 @@ from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
 from plom.create import build_database, build_papers
-from plom.create import possible_surname_fields, possible_given_name_fields
+from plom.create import possible_sid_fields, possible_fullname_fields
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
@@ -188,17 +188,15 @@ def get_parser():
 
             Alternatively, the classlist can be a .csv file with column headers:
               * id - student ID number
-              * studentName - student name in a single field
+              * name - student name in a single field
 
-            The student name can be split into multiple fields; the following names
-            will be tried for each header:
-              * id
+            Plom will accept different equivalent headers
               * {}
               * {}
             """
         ).format(
-            "\n    ".join(wrap(", ".join(possible_surname_fields), 72)),
-            "\n    ".join(wrap(", ".join(possible_given_name_fields), 72)),
+            "\n    ".join(wrap(", ".join(possible_sid_fields), 72)),
+            "\n    ".join(wrap(", ".join(possible_fullname_fields), 72)),
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -430,24 +428,29 @@ def main():
             msgr.stop()
             sys.exit(1)  # TODO = more graceful exit
 
-        if args.demo:
-            classlist = get_demo_classlist(spec)
-            upload_classlist(classlist, msgr=msgr)
-        else:
-
-            success, classlist = process_classlist_file(
-                args.classlist, spec, ignore_warnings=args.ignore_warnings
-            )
-            if success:
-                try:
-                    upload_classlist(classlist, msgr=msgr)
-                except Exception as err:  # TODO - make a better error handler here
-                    print("An error occurred when uploading the valid classlist: ", err)
+        try:
+            if args.demo:
+                classlist = get_demo_classlist(spec)
+                upload_classlist(classlist, msgr=msgr)
             else:
-                print("Could not process classlist - see messages above")
-        # close up and stop messenger
-        msgr.closeUser()
-        msgr.stop()
+                success, classlist = process_classlist_file(
+                    args.classlist, spec, ignore_warnings=args.ignore_warnings
+                )
+                if success:
+                    try:
+                        upload_classlist(classlist, msgr=msgr)
+                    except Exception as err:  # TODO - make a better error handler here
+                        print(
+                            "An error occurred when uploading the valid classlist: ",
+                            err,
+                        )
+                else:
+                    print("Could not process classlist - see messages above")
+        finally:
+            # for #2053
+            # close up and stop messenger
+            msgr.closeUser()
+            msgr.stop()
 
     elif args.command == "make-db":
         if args.from_file is None:

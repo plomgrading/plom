@@ -179,7 +179,9 @@ class Server:
         MgetTagsOfTask,
         MgetAllTags,
         McreateNewTag,
-        MgetWholePaper,
+        get_pagedata,
+        get_pagedata_question,
+        get_pagedata_context_question,
         MreviewQuestion,
         MrevertTask,
     )

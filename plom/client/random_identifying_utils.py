@@ -36,7 +36,7 @@ def do_rando_identifying_backend(messenger):
         while True:
             try:
                 person = random.choice(classlist)
-                name = person["studentName"] + " [randomly chosen]"
+                name = person["name"] + " [randomly chosen]"
                 messenger.IDreturnIDdTask(task, person["id"], name)
                 break
             except PlomConflict:

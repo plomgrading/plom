@@ -111,7 +111,7 @@ def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
 
     # Note: note all rows of pns_to_ids are identified: does this matter?
 
-    students_from_cl = {(s["id"], s["studentName"]) for s in classlist}
+    students_from_cl = {(s["id"], s["name"]) for s in classlist}
     students_from_db = {(s["sid"], s["sname"]) for n, s in pns_to_ids.items()}
     students_to_papernum = {(s["sid"], s["sname"]): n for n, s in pns_to_ids.items()}
 

@@ -612,9 +612,7 @@ class UploadHandler:
                     test (str): paper number to map onto (int passed as str).
                     page (str): page number (again, an int)
                     rotation (str): an integer, presumably a multiple of 90
-                        0, 90, -90, 180, 270, etc.  TODO: needs an overhaul
-                        to support immutable server side images (with in-DB
-                        metadata rotations (Issue #1879).
+                        0, 90, -90, 180, 270, etc.
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
@@ -653,9 +651,7 @@ class UploadHandler:
                     test (str): paper number to map onto (int passed as str).
                     questions (list): question numbers, ints.
                     rotation (str): an integer, presumably a multiple of 90
-                        0, 90, -90, 180, 270, etc.  TODO: needs an overhaul
-                        to support immutable server side images (with in-DB
-                        metadata rotations (Issue #1879).
+                        0, 90, -90, 180, 270, etc.
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
@@ -693,9 +689,7 @@ class UploadHandler:
                     test (str): paper number to map onto (int passed as str).
                     questions (list): question numbers, a list of integers.
                     rotation (str): an integer, presumably a multiple of 90
-                        0, 90, -90, 180, 270, etc.  TODO: needs an overhaul
-                        to support immutable server side images (with in-DB
-                        metadata rotations (Issue #1879).
+                        0, 90, -90, 180, 270, etc.
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,

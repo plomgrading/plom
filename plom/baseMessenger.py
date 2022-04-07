@@ -382,7 +382,7 @@ class BaseMessenger:
 
         Returns:
             list: list of dict, each with at least the keys
-                `id` and `studentName` and possibly others.
+                `id` and `name` and possibly others.
                 Corresponding values are both strings.
 
         Raises:
@@ -644,10 +644,7 @@ class BaseMessenger:
             self.SRmutex.release()
 
     def get_pagedata(self, code):
-        """Get metadata about the images in this paper.
-
-        TODO: returns 404/409, so why not raise that instead?
-        """
+        """Get metadata about the images in this paper."""
         with self.SRmutex:
             try:
                 response = self.get(
@@ -658,14 +655,13 @@ class BaseMessenger:
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_pagedata_question(self, code, questionNumber):
-        """Get metadata about the images in this paper and question.
-
-        TODO: returns 404, so why not raise that instead?
-        """
+        """Get metadata about the images in this paper and question."""
         with self.SRmutex:
             try:
                 response = self.get(
@@ -676,31 +672,30 @@ class BaseMessenger:
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_pagedata_context_question(self, code, questionNumber):
         """Get metadata about all non-ID page images in this paper, as related to a question.
 
         For now, questionNumber effects the "included" column...
-
-        TODO: returns 404, so why not raise that instead?
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/pagedata/{code}/context/{questionNumber}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            ret = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-        return ret
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/pagedata/{code}/context/{questionNumber}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_image(self, image_id, md5sum):
         """Download one image from server by its database id.

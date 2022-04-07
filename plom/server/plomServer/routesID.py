@@ -39,7 +39,7 @@ class IDHandler:
         """Returns the classlist to the client.
 
         The classlist is an ordered list of dicts where each row has
-        at least the primary key `"id"` and `"studentName"`.  It may
+        at least the primary key `"id"` and `"name"`.  It may
         contain other keys.
 
         Used, for example, to fill in the student details for the searchbar autofill.
@@ -118,7 +118,7 @@ class IDHandler:
                 raise web.HTTPNotAcceptable(reason=str(e))
             spec.saveVerifiedSpec()
         # these keys first...
-        fieldnames = ["id", "studentName"]
+        fieldnames = ["id", "name"]
         # then all the others in any order
         fieldnames.extend(set(classlist[0].keys()) - set(fieldnames))
         log.info(f"Classlist upload w/ fieldnames {fieldnames}")

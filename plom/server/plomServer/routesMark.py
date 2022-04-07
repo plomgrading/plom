@@ -570,10 +570,10 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: JSON data, a list of dicts
-                where each dict has keys:
-                pagename, md5, included, order, id, orientation, server_path
-                as documented below.
-                A 409 is returned with an explanation if paper number not found.
+            where each dict has keys:
+            pagename, md5, included, order, id, orientation, server_path
+            as documented below.
+            A 409 is returned with an explanation if paper number not found.
 
         The list of dicts (we think of them as rows) have the following
         contents:
@@ -643,7 +643,7 @@ class MarkHandler:
         """
         test_number = request.match_info["number"]
 
-        ok, val = self.server.DB.getAllTestImages(test_number)
+        ok, val = self.server.get_pagedata(test_number)
 
         if not ok:
             raise web.HTTPConflict(reason=val)
@@ -667,15 +667,15 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: JSON data, a list of dicts
-                where each dict has keys:
-                pagename, md5, included, order, id, orientation, server_path
-                as documented in :py:`get_pagedata`.
-                A 409 is returned with an explanation if paper number not found.
+            where each dict has keys:
+            pagename, md5, included, order, id, orientation, server_path
+            as documented in :py:`get_pagedata`.
+            A 409 is returned with an explanation if paper number not found.
         """
         test_number = request.match_info["number"]
         question_number = request.match_info["question"]
 
-        ok, val = self.server.DB.getQuestionImages(test_number, question_number)
+        ok, val = self.server.get_pagedata_question(test_number, question_number)
 
         if not ok:
             raise web.HTTPConflict(reason=val)
@@ -686,7 +686,7 @@ class MarkHandler:
             pages_data.append({k: v for k, v in zip(rownames, row)})
         return web.json_response(pages_data, status=200)
 
-    # @routes.get("/pagedata/{number}/{question}")
+    # @routes.get("/pagedata/{number}/context/{question}")
     @authenticate_by_token_required_fields([])
     def get_pagedata_context_question(self, data, request):
         """Metadata for all non-ID images associated with a paper, highlighting those initially related to a question.
@@ -699,9 +699,9 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: JSON data, a list of dicts
-                where each dict has keys:
-                pagename, md5, included, order, id, orientation, server_path
-                as documented below.
+            where each dict has keys: `pagename`, `md5`, `included`,
+            `order`, `id`, `orientation`, `server_path` as documented below.
+            A 409 is returned with an explanation if paper number not found.
 
         The list of dicts (we think of them as rows) have the same content
         as documented in ``get_pagedata`` except an additional key:
@@ -739,30 +739,12 @@ class MarkHandler:
         test_number = request.match_info["number"]
         # this is used to determine the true/false "included" info
         question_number = request.match_info["question"]
-
-        # TODO: now that getWholePaper API is gone, we could refactor this
-        # return [True, pageData, f1, f2, f3, ...] or [False]
-        # 1. True/False for operation status.
-        # 2. A list of lists, as doc'd above
-        # 3. 3rd element onward: paths for each page of the paper in server.
-        r = self.server.MgetWholePaper(test_number, question_number)
-
-        if not r[0]:
-            return web.Response(status=404)
-
-        all_pages_paths = r[2:]
-        assert len(r[1]) == len(all_pages_paths)
-        rownames = ("pagename", "md5", "included", "order", "id", "server_path")
-        pages_data = []
-        for i, row in enumerate(r[1]):
-            pages_data.append({k: v for k, v in zip(rownames, row)})
-            pages_data[i]["server_path"] = all_pages_paths[i]
-            # For now, server has no orientation data but callers expect it
-            image_found, rotation = self.server.DB.MgetOneImageRotation(
-                pages_data[i]["id"], pages_data[i]["md5"]
-            )
-            pages_data[i]["orientation"] = rotation if image_found else 0
-        return web.json_response(pages_data, status=200)
+        ok, val = self.server.get_pagedata_context_question(
+            test_number, question_number
+        )
+        if not ok:
+            raise web.HTTPConflict(reason=val)
+        return web.json_response(val, status=200)
 
     # @routes.get("/MK/allMax")
     @authenticate_by_token

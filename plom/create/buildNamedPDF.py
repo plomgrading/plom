@@ -55,7 +55,7 @@ def outputProductionCSV(spec, make_PDF_args):
             page_to_version = build_page_to_version_dict(spec, qver)
             # print the student info if there.
             if student_info:
-                row = [idx, student_info["id"], student_info["studentName"]]
+                row = [idx, student_info["id"], student_info["name"]]
             else:  # just skip those columns
                 row = [idx, None, None]
             for q in range(1, numberOfQuestions + 1):
@@ -85,7 +85,7 @@ def build_papers_backend(
 
     Keyword arguments:
         classlist_by_papernum (dict): classlist keyed by ``papernum`` (int).
-            Each value is a dicts with keys ``id`` and ``studentName``.  Any
+            Each value is a dicts with keys ``id`` and ``name``.  Any
             paper numbers corresponding to keys in `classlists_by_papernum`
             will be have names and IDs stamped on the front.  Can be an empty
             dict or None to not use this feature.
@@ -150,7 +150,7 @@ def check_pdf_and_id_if_needed(
 
     Keyword Arguments:
         classlist_by_papernum (dict): classlist keyed by ``papernum`` (int).
-            Each value is a dicts with keys ``id`` and ``studentName``.  Any
+            Each value is a dicts with keys ``id`` and ``name``.  Any
             paper numbers corresponding to keys in `classlists_by_papernum`
             should have names and IDs stamped on the front.  Can be an empty
             dict or None to not use this feature.
@@ -176,7 +176,7 @@ def check_pdf_and_id_if_needed(
             if not pdf_file.is_file():
                 raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
             else:
-                msgr.id_paper(papernum, r["id"], r["studentName"])
+                msgr.id_paper(papernum, r["id"], r["name"])
         else:
             pdf_file = paperdir / f"exam_{papernum:04}.pdf"
             # if file is not there - error.
