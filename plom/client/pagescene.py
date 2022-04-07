@@ -843,7 +843,7 @@ class PageScene(QGraphicsScene):
         # the rectangle is set to our current (potentially cropped) inner-rect of the masking
         br = self.overMask.mapRectToScene(self.overMask.inner_rect)
         # for context in cropped case, expand the crop-rect in each direction
-        pad = max(64, 0.1 * min(br.height(), br.width()))
+        pad = max(128, 0.1 * min(br.height(), br.width()))
         br.adjust(-pad, -pad, pad, pad)
         # and then intersect that with the underlying-image rect
         br = br.intersected(self.underImage.boundingRect())
