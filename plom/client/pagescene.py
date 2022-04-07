@@ -2088,7 +2088,7 @@ class PageScene(QGraphicsScene):
             self.zoomFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.zoomBoxItem is None:
-                log.error("EEK - should not be here")
+                log.error("EEK: the zoombox was unexpectedly None, working around...")
                 # somehow missed the mouse-press
                 self.zoomBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
@@ -2176,7 +2176,7 @@ class PageScene(QGraphicsScene):
             self.deleteFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.delBoxItem is None:
-                log.error("EEK - should not be here")
+                log.error("EEK: the delbox was unexpectedly None, working around...")
                 # somehow missed the mouse-press
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
@@ -2731,7 +2731,7 @@ class PageScene(QGraphicsScene):
             self.deleteFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.delBoxItem is None:
-                log.error("EEK - should not be here")
+                log.error("EEK: the delbox was unexpectedly None, working around...")
                 # somehow missed the mouse-press
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
