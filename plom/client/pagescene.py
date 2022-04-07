@@ -343,6 +343,10 @@ class UnderlyingImages(QGraphicsItemGroup):
 
         self.setZValue(-1)
 
+    @property
+    def min_dimension(self):
+        return min(self.boundingRect().height(), self.boundingRect().width())
+
 
 # Dictionaries to translate tool-modes into functions
 # for mouse press, move and release
@@ -2761,9 +2765,14 @@ class PageScene(QGraphicsScene):
             return
         # check to see if box is quite small (since very hard
         # to click button without moving a little)
-        # if small then set flag to 0 and return
 
-        minbox = max(256, 0.2*min(self.underImage.boundingRect().height(), self. underImage.boundingRect().width()))
+        # box should not be smaller than 256px
+        # at same time, box should not be smaller than 20% of width or height of underlying image
+        # however if image very wide, we want to take 20% of height, or if very tall, then 20% of width
+        # so take min of 20%*width and 20%height, and then max that with 256.
+        minbox = max(256, 0.2 * self.underImage.min_dimension)
+
+        # if small then set flag to 0 and return
         if (
             self.delBoxItem.rect().height() < minbox
             or self.delBoxItem.rect().width() < minbox
