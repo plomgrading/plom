@@ -62,7 +62,7 @@ def clean_non_canvas_csv(csv_file_name):
     df["id"] = df["id"].apply(lambda X: str(X).strip())  # avoid issues with non-string
     # print('"id" column present')
 
-    # see if there is a single name column
+    # We require a single name column
     fullname_column = None
     for c in df.columns:
         if c.casefold() in (x.casefold() for x in possible_fullname_fields):
