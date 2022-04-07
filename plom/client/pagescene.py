@@ -2764,7 +2764,7 @@ class PageScene(QGraphicsScene):
         # if small then set flag to 0 and return
         if (
             self.delBoxItem.rect().height() < 128
-            and self.delBoxItem.rect().width() < 128
+            or self.delBoxItem.rect().width() < 128
         ):
             self.removeItem(self.delBoxItem)
             self.deleteFlag = 0
