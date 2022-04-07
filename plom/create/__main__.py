@@ -22,7 +22,7 @@ import sys
 import argparse
 import os
 from pathlib import Path
-from textwrap import dedent, wrap
+from textwrap import dedent
 
 from stdiomask import getpass
 
@@ -34,7 +34,6 @@ from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
 from plom.create import build_database, build_papers
-from plom.create import possible_sid_fields, possible_fullname_fields
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
@@ -182,14 +181,12 @@ def get_parser():
             Alternatively, the classlist can be a .csv file with column headers:
               * id - student ID number
               * name - student name in a single field
+              * paper_number - the test-number to assign to that student for
+                               prenaming papers. If unsure, include the column,
+                               but leave it blank.
 
-            Plom will accept different equivalent headers
-              * {}
-              * {}
+            Plom will accept uppercase or lowercase column headers.
             """
-        ).format(
-            "\n    ".join(wrap(", ".join(possible_sid_fields), 72)),
-            "\n    ".join(wrap(", ".join(possible_fullname_fields), 72)),
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
