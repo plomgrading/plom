@@ -2762,9 +2762,11 @@ class PageScene(QGraphicsScene):
         # check to see if box is quite small (since very hard
         # to click button without moving a little)
         # if small then set flag to 0 and return
+
+        minbox = max(256, 0.2*min(self.underImage.boundingRect().height(), self. underImage.boundingRect().width()))
         if (
-            self.delBoxItem.rect().height() < 128
-            or self.delBoxItem.rect().width() < 128
+            self.delBoxItem.rect().height() < minbox
+            or self.delBoxItem.rect().width() < minbox
         ):
             self.removeItem(self.delBoxItem)
             self.deleteFlag = 0
