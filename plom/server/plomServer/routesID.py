@@ -39,8 +39,8 @@ class IDHandler:
         """Returns the classlist to the client.
 
         The classlist is an ordered list of dicts where each row has
-        at least the primary key `"id"` and `"name"`.  It may
-        contain other keys.
+        at least the primary key `"id"` and `"name"` and `"paper_number"`.
+        It may contain other keys.
 
         Used, for example, to fill in the student details for the searchbar autofill.
 

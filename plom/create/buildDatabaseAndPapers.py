@@ -52,11 +52,10 @@ def build_papers(
     paperdir.mkdir(exist_ok=True)
     classlist = None
 
-    # TODO: temporarily avoid changing indent
-    if True:
-        spec = msgr.get_spec()
-        # pvmap = msgr.getGlobalPageVersionMap()
-        qvmap = msgr.getGlobalQuestionVersionMap()
+    spec = msgr.get_spec()
+    qvmap = msgr.getGlobalQuestionVersionMap()
+    classlist = msgr.IDrequestClasslist()
+
     if indexToMake:
         # TODO: Issue #1745?
         if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
@@ -64,33 +63,27 @@ def build_papers(
                 f"Index out of range. Must be in range [1,{ spec['numberToProduce']}]"
             )
 
-    if not classlist:
-        classlist_by_papernum = {}
-    elif classlist[0].get("paper_number", None):
-        # use the existing papernum column
-        # note ignoring non-positive papernum: used to indicate blank
-        # first some sanity checks
-        papernums = [r["paper_number"] for r in classlist if int(r["paper_number"]) > 0]
-        if len(set(papernums)) != len(papernums):
-            raise ValueError('repeated "paper_number": must be unique')
-        del papernums
-        # TODO: why are the papernum str not int?
-        classlist_by_papernum = {
-            int(r["paper_number"]): {k: v for k, v in r.items() if k != "paper_number"}
-            for r in classlist
-            if int(r["paper_number"]) > 0
-        }
-    else:
-        # no existing papernum column so map by the order in the classlist
-        classlist_by_papernum = {(i + 1): x for i, x in enumerate(classlist)}
-
+    # do sanity checks on the paper_number data in the classlist.
+    papernums = [r["paper_number"] for r in classlist if int(r["paper_number"]) > 0]
+    # make sure no duplications
+    if len(set(papernums)) != len(papernums):
+        raise ValueError('repeated "paper_number": must be unique')
+    # make sure no index too big - have to cast to ints for this.
+    for n in papernums:
+        if int(n) > spec["numberToProduce"]:
+            raise ValueError(
+                "Not enough papers to prename everything in the filtered classlist"
+            )
+    # all okay, so get rid of that list.
+    del papernums
+    # reorganise the class list into a dict indexed by paper_number
+    classlist_by_papernum = {
+        int(r["paper_number"]): {k: v for k, v in r.items() if k != "paper_number"}
+        for r in classlist
+        if int(r["paper_number"]) > 0
+    }
+    # get rid of the old classlist
     del classlist
-
-    # filter if we're not making all them
-    if any(i > spec["numberToProduce"] for i in classlist_by_papernum.keys()):
-        raise ValueError(
-            "Not enough papers to prename everything in the filtered classlist"
-        )
 
     if indexToMake and indexToMake in classlist_by_papernum:
         print(f"Building only specific paper {indexToMake} (prenamed) in {paperdir}...")
