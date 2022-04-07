@@ -216,6 +216,7 @@ class PlomClasslistValidator:
             return [
                 f"Classlist is long. Classlist contains {classlist_length} names, but spec:numberToProduce is {spec['numberToProduce']}"
             ]
+        return []
 
     def validate_csv(self, filename, spec=None):
         """
@@ -272,7 +273,7 @@ class PlomClasslistValidator:
         )
         if not success:  # format errors and set invalid
             validity = False
-            for e in errors[1]:
+            for e in errors:
                 werr.append(
                     {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
                 )
