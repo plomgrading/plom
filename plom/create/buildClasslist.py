@@ -15,8 +15,9 @@ import plom
 from plom.finish.return_tools import import_canvas_csv
 
 from plom.create.classlistValidator import (
-    possible_sid_fields,
-    possible_fullname_fields,
+    sid_field,
+    fullname_field,
+    papernumber_field,
     PlomClasslistValidator,
 )
 
@@ -49,59 +50,53 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     # strip excess whitespace from column names
     df.rename(columns=lambda x: str(x).strip(), inplace=True)
 
-    # find the id column
+    # find the id column and clean it up.
     id_column = None
     for c in df.columns:
-        if c.casefold() in (x.casefold() for x in possible_sid_fields):
-            # print(f'"{c}" column present')
+        if c.casefold() == sid_field:
             id_column = c
             break
     if id_column is None:
-        # note that this should be caught by the validator
         raise ValueError('no "id" column is present')
     # make sure id column named 'id' - lowercase
     print(f"Renaming column {id_column} to 'id'")
     df.rename(columns={id_column: "id"}, inplace=True)
     # clean up the column - strip whitespace
     df["id"] = df["id"].apply(lambda X: str(X).strip())  # avoid issues with non-string
-    # print('"id" column present')
 
-    papernum_column = None
-    for c in df.columns:
-        if c.casefold() == "papernum":
-            print(f'"{c}" column present')
-            papernum_column = c
-            break
-    if papernum_column:
-        # JSON + NaN :-( so use negatives for missing: TODO Issue #2059.
-        df[papernum_column] = df[papernum_column].apply(
-            lambda x: -1 if pandas.isna(x) else int(x)
-        )
-        df.rename(columns={papernum_column: "papernum"}, inplace=True)
-        return_columns = ["id", "name", "papernum"]
-    else:
-        return_columns = ["id", "name"]
-
-    # we require a single name column
+    # find the name column and clean it up.
     fullname_column = None
     for c in df.columns:
-        if c.casefold() in (x.casefold() for x in possible_fullname_fields):
-            # print(f'"{c}" column present')
+        if c.casefold() == fullname_field.casefold():
             fullname_column = c
             break
     if fullname_column is None:
-        # note that this should be caught by the validator
         raise ValueError('no "name" column is present')
-
     # make sure fullname column named 'name' - lowercase
     print(f"Renaming column {fullname_column} to 'name'")
     df.rename(columns={fullname_column: "name"}, inplace=True)
     # clean up the column - strip whitespace
     df["name"].apply(lambda X: str(X).strip())  # avoid errors with blanks
-    # print('"name" column present')
 
+    # find the paper-number column and clean it up.
+    papernumber_column = None
+    for c in df.columns:
+        if c.casefold() == papernumber_field.casefold():
+            papernumber_column = c
+            break
+    if not papernumber_column:
+        # TODO - decide whether we should make one and populate it with sentinel -1s.
+        raise ValueError('no "paper_number" column is present.')
+    # clean it up.
+    df[papernumber_column] = df[papernumber_column].apply(
+            lambda x: -1 if pandas.isna(x) else int(x)
+        )
+    print(f"Renaming column {papernumber_column} to 'paper_number'")
+    df.rename(columns={papernumber_column: "paper_number"}, inplace=True)
+
+    # everything clean - now either return just the necessary columns or all cols.
     if minimalist:
-        return df[return_columns]
+        return df[["id", "name", "paper_number"]]
     return df
 
 
