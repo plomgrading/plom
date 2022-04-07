@@ -222,7 +222,7 @@ class MaskingOverlay(QGraphicsItemGroup):
         # set brush and pen
         transparent_pen = QPen(QColor(249, 249, 249, 240), 0)
         transparent_paint = QBrush(QColor(249, 249, 249, 240))
-        dotted_pen = QPen(QColor(128, 128, 128, 128), 2, style=Qt.DotLine)
+        dotted_pen = QPen(QColor(0, 0, 0, 128), 2, style=Qt.DotLine)
         self.top_bar.setBrush(transparent_paint)
         self.bottom_bar.setBrush(transparent_paint)
         self.left_bar.setBrush(transparent_paint)
