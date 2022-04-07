@@ -47,7 +47,6 @@ from .tools import (
     CrossItem,
     DeleteItem,
     DeltaItem,
-    ImageItem,
     GhostComment,
     GhostDelta,
     GroupDeltaTextItem,
@@ -71,6 +70,7 @@ from .tools import (
     CommandPen,
     CommandHighlight,
     CommandPenArrow,
+    CommandCrop,
 )
 from .elastics import (
     which_horizontal_step,
@@ -192,10 +192,98 @@ class UnderlyingRect(QGraphicsRectItem):
 
     def __init__(self, rect):
         super().__init__()
-        self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
-        self.setBrush(QBrush(Qt.white))
+        self.setPen(QPen(Qt.black, 4, style=Qt.DotLine))
+        self.setBrush(QBrush(QColor(249, 249, 249, 255)))
         self.setRect(rect)
         self.setZValue(-10)
+
+
+class MaskingOverlay(QGraphicsItemGroup):
+    """
+    A transparent rectangular border to place over the images.
+    """
+
+    def __init__(self, outer_rect, inner_rect):
+        super().__init__()
+        self.outer_rect = outer_rect
+        self.inner_rect = inner_rect
+        # keep the original inner rectangle for uncropping.
+        self.original_inner_rect = inner_rect
+
+        # set rectangles for semi-transparent boundaries - needs some tmp rectangle.
+        self.top_bar = QGraphicsRectItem(outer_rect)
+        self.bottom_bar = QGraphicsRectItem(outer_rect)
+        self.left_bar = QGraphicsRectItem(outer_rect)
+        self.right_bar = QGraphicsRectItem(outer_rect)
+        self.dotted_boundary = QGraphicsRectItem(inner_rect)
+        transparent_paint = QBrush(QColor(249, 249, 249, 220))
+        dotted_pen = QPen(QColor(0, 0, 0, 128), 2, style=Qt.DotLine)
+        self.top_bar.setBrush(transparent_paint)
+        self.bottom_bar.setBrush(transparent_paint)
+        self.left_bar.setBrush(transparent_paint)
+        self.right_bar.setBrush(transparent_paint)
+        self.top_bar.setPen(QPen(Qt.NoPen))
+        self.bottom_bar.setPen(QPen(Qt.NoPen))
+        self.left_bar.setPen(QPen(Qt.NoPen))
+        self.right_bar.setPen(QPen(Qt.NoPen))
+        self.dotted_boundary.setPen(dotted_pen)
+        # now set the size correctly
+        self.set_bars()
+        self.addToGroup(self.top_bar)
+        self.addToGroup(self.bottom_bar)
+        self.addToGroup(self.left_bar)
+        self.addToGroup(self.right_bar)
+        self.addToGroup(self.dotted_boundary)
+        self.setZValue(0)
+
+    def crop_to_focus(self, crop_rect):
+        self.inner_rect = crop_rect
+        self.set_bars()
+        self.update()
+
+    def get_original_inner_rect(self):
+        return self.original_inner_rect
+
+    def set_bars(self):
+        # reset the dotted boundary rectangle
+        self.dotted_boundary.setRect(self.inner_rect)
+        # set rectangles using rectangle defined by top-left and bottom-right points.
+        self.top_bar.setRect(
+            QRectF(
+                self.outer_rect.topLeft(),
+                QPointF(
+                    self.outer_rect.topRight().x(),
+                    self.inner_rect.topRight().y(),
+                ),
+            )
+        )
+        self.bottom_bar.setRect(
+            QRectF(
+                QPointF(
+                    self.outer_rect.bottomLeft().x(),
+                    self.inner_rect.bottomLeft().y(),
+                ),
+                self.outer_rect.bottomRight(),
+            )
+        )
+        self.left_bar.setRect(
+            QRectF(
+                QPointF(
+                    self.outer_rect.topLeft().x(),
+                    self.inner_rect.topLeft().y(),
+                ),
+                self.inner_rect.bottomLeft(),
+            )
+        )
+        self.right_bar.setRect(
+            QRectF(
+                self.inner_rect.topRight(),
+                QPointF(
+                    self.outer_rect.bottomRight().x(),
+                    self.inner_rect.bottomRight().y(),
+                ),
+            )
+        )
 
 
 class UnderlyingImages(QGraphicsItemGroup):
@@ -249,8 +337,12 @@ class UnderlyingImages(QGraphicsItemGroup):
             x = int(x)
             self.images[n] = img
             self.addToGroup(self.images[n])
-        self.rect = UnderlyingRect(self.boundingRect())
-        self.addToGroup(self.rect)
+
+        self.setZValue(-1)
+
+    @property
+    def min_dimension(self):
+        return min(self.boundingRect().height(), self.boundingRect().width())
 
 
 # Dictionaries to translate tool-modes into functions
@@ -268,6 +360,7 @@ mousePress = {
     "tick": "mousePressTick",
     "zoom": "mousePressZoom",
     "image": "mousePressImage",
+    "crop": "mousePressCrop",
 }
 mouseMove = {
     "box": "mouseMoveBox",
@@ -279,6 +372,7 @@ mouseMove = {
     "text": "mouseMoveText",
     "tick": "mouseMoveTick",
     "zoom": "mouseMoveZoom",
+    "crop": "mouseMoveCrop",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -292,6 +386,7 @@ mouseRelease = {
     "rubric": "mouseReleaseRubric",
     "text": "mouseReleaseText",
     "tick": "mouseReleaseTick",
+    "crop": "mouseReleaseCrop",
 }
 
 # things for nice rubric/text drag-box tool
@@ -338,14 +433,18 @@ class PageScene(QGraphicsScene):
         # build pixmap and graphicsitemgroup.
         self.underImage = UnderlyingImages(self.src_img_data)
         self.whichLineToDraw_init()
-        # and an underlyingrect for the margin.
-        margin_rect = QRectF(self.underImage.boundingRect())
-        marg = 512  # at some point in future make some function of image width/height
-        margin_rect.adjust(-marg, -marg, marg, marg)
+        # a margin that surrounds the scanned images, with size related to the
+        # minimum dimensions of the images, but never smaller than 512 pixels
+        margin_width = max(512, 0.20 * self.underImage.min_dimension)
+        margin_rect = QRectF(self.underImage.boundingRect()).adjusted(
+            -margin_width, -margin_width, margin_width, margin_width
+        )
         self.underRect = UnderlyingRect(margin_rect)
+        # and the overlay mask
+        self.overMask = MaskingOverlay(margin_rect, self.underImage.boundingRect())
         self.addItem(self.underRect)
-        # finally add the underimage
         self.addItem(self.underImage)
+        self.addItem(self.overMask)
 
         # Build scene rectangle to fit the image, and place image into it.
         self.setSceneRect(self.underImage.boundingRect())
@@ -741,9 +840,15 @@ class PageScene(QGraphicsScene):
         return False
 
     def getSaveableRectangle(self):
-        # the scenerect is set to the initial images
-        br = self.underImage.mapRectToScene(self.underImage.boundingRect())
-        # go through all saveable items
+        # the rectangle is set to our current (potentially cropped) inner-rect of the masking
+        br = self.overMask.mapRectToScene(self.overMask.inner_rect)
+        # for context in cropped case, expand the crop-rect in each direction
+        pad = max(128, 0.1 * min(br.height(), br.width()))
+        br.adjust(-pad, -pad, pad, pad)
+        # and then intersect that with the underlying-image rect
+        br = br.intersected(self.underImage.boundingRect())
+
+        # now potentially expand again for any annotations still outside
         for X in self.items():
             if hasattr(X, "saveable"):
                 # now check it is inside the UnderlyingRect
@@ -1591,27 +1696,18 @@ class PageScene(QGraphicsScene):
         Raises:
             ValueError: invalid pickle data.
         """
+        # do this as a single undo macro.
+        self.undoStack.beginMacro("Unpickling scene items")
+
         # clear all items from scene.
         for X in self.items():
-            if any(
-                isinstance(X, Y)
-                for Y in [
-                    ScoreBox,
-                    QGraphicsPixmapItem,
-                    UnderlyingImages,
-                    UnderlyingRect,
-                    GhostComment,
-                    GhostDelta,
-                    GhostText,
-                    DeleteItem,
-                ]
-            ) and X is not isinstance(X, ImageItem):
-                # as ImageItem is a subclass of QGraphicsPixmapItem, we have
-                # to make sure ImageItems aren't skipped!
-                continue
-            else:
+            # X is a saveable object then it is user-created.
+            # Hence it can be deleted, otherwise leave it.
+            if hasattr(X, "saveable"):
                 command = CommandDelete(self, X)
                 self.undoStack.push(command)
+            else:
+                continue
         # now load up the new items
         for X in lst:
             CmdCls = globals().get("Command{}".format(X[0]), None)
@@ -1624,6 +1720,8 @@ class PageScene(QGraphicsScene):
         # now make sure focus is cleared from every item
         for X in self.items():
             X.setFocus(False)
+        # finish the macro
+        self.undoStack.endMacro()
 
     def mousePressBox(self, event):
         """
@@ -1999,7 +2097,7 @@ class PageScene(QGraphicsScene):
             self.zoomFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.zoomBoxItem is None:
-                log.error("EEK - should not be here")
+                log.error("EEK: the zoombox was unexpectedly None, working around...")
                 # somehow missed the mouse-press
                 self.zoomBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
@@ -2087,7 +2185,7 @@ class PageScene(QGraphicsScene):
             self.deleteFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.delBoxItem is None:
-                log.error("EEK - should not be here")
+                log.error("EEK: the delbox was unexpectedly None, working around...")
                 # somehow missed the mouse-press
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
@@ -2121,6 +2219,7 @@ class PageScene(QGraphicsScene):
             self.ghostItem.di,
             self.ghostItem.blurb,
             self.underRect,
+            self.overMask,
         ]:
             return
         elif isinstance(item, DeleteItem):  # don't try to delete the animated undo/redo
@@ -2295,11 +2394,11 @@ class PageScene(QGraphicsScene):
         """
         out_objs = []
         for X in self.items():
-            # check all items that are not the image or scorebox
-            if (X is self.underImage) or (X is self.scoreBox):
+            # check all items that are not the image, the mask, or scorebox
+            if (X is self.underImage) or (X is self.overMask) or (X is self.scoreBox):
                 continue
-            # make sure that it is not one of the images inside the underlying image.
-            if X.parentItem() is self.underImage:
+            # make sure that it is not one of the images inside the underlying image, or one of the rect in the overlasy mask.
+            if X.parentItem() is self.underImage or X.parentItem() is self.overMask:
                 continue
             # And be careful - there might be a GhostComment floating about
             if (
@@ -2551,3 +2650,139 @@ class PageScene(QGraphicsScene):
             self.zoomFlag,
             self.boxLineStampState,
         ]
+
+    # PAGE SCENE CROPPING STUFF
+    def _crop_to_focus(self, crop_rect):
+        # this is called by the actual command-redo.
+        self.overMask.crop_to_focus(crop_rect)
+        self.scoreBox.setPos(crop_rect.topLeft())
+        self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
+        # set zoom to "fit-page"
+        self.views()[0].zoomFitPage(update=True)
+
+    def current_crop_rectangle_as_proportions(self):
+        """Return the crop rectangle as proportions of original image"""
+        full_height = self.underImage.boundingRect().height()
+        full_width = self.underImage.boundingRect().width()
+        rect_in_pix = self.overMask.inner_rect
+
+        rect_as_proportions = (
+            rect_in_pix.x() / full_width,
+            rect_in_pix.y() / full_height,
+            rect_in_pix.width() / full_width,
+            rect_in_pix.height() / full_height,
+        )
+        return rect_as_proportions
+
+    def crop_from_plomfile(self, crop_dat):
+        # crop dat = (x,y,w,h) as proportions of full image, so scale by underlying image width/height
+        full_height = self.underImage.boundingRect().height()
+        full_width = self.underImage.boundingRect().width()
+        crop_rect = QRectF(
+            crop_dat[0] * full_width,
+            crop_dat[1] * full_height,
+            crop_dat[2] * full_width,
+            crop_dat[3] * full_height,
+        )
+        self.trigger_crop(crop_rect)
+
+    def uncrop_underlying_images(self):
+        self.trigger_crop(self.overMask.get_original_inner_rect())
+
+    def trigger_crop(self, crop_rect):
+        # make sure that the underlying crop-rectangle is normalised
+        # also make sure that it is not larger than the original image - so use their intersection
+        actual_crop = crop_rect.intersected(self.underImage.boundingRect()).normalized()
+        # pass new crop rect, as well as current one (for undo)
+        command = CommandCrop(self, actual_crop, self.overMask.inner_rect)
+        self.undoStack.push(command)
+        # now set mode to move.
+        self.parent().toMoveMode()
+
+    def mousePressCrop(self, event):
+        """
+        Handle the mouse press when drawing a crop box.
+
+        Notes:
+            Nothing happens until button is released.
+
+        Args:
+            event (QMouseEvent): given mouse press.
+
+        Returns:
+            None
+
+        """
+        if self.deleteFlag:
+            return
+
+        self.deleteFlag = 1
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+        self.delBoxItem.setBrush(self.deleteBrush)
+        self.addItem(self.delBoxItem)
+
+    def mouseMoveCrop(self, event):
+        """
+        Update the size of the crop box as the mouse is moved.
+
+        Notes:
+            This animates the drawing of the box for the user.
+
+        Args (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
+        """
+        if self.deleteFlag:
+            self.deleteFlag = 2  # drag started.
+            self.currentPos = event.scenePos()
+            if self.delBoxItem is None:
+                log.error("EEK: the delbox was unexpectedly None, working around...")
+                # somehow missed the mouse-press
+                self.delBoxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+                self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+                self.delBoxItem.setBrush(self.deleteBrush)
+                self.addItem(self.delBoxItem)
+            else:
+                self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+
+    def mouseReleaseCrop(self, event):
+        """
+        Handle when the mouse is released after drawing a new delete box.
+
+        Notes:
+             Remove the temp boxitem (which was needed for animation)
+             and push the crop command onto the undo stack
+
+        Args:
+            event (QMouseEvent): the given mouse release.
+
+        Returns:
+            None
+
+        """
+        if self.deleteFlag == 0:
+            return
+        # check to see if box is quite small (since very hard
+        # to click button without moving a little)
+
+        # The box should have a minimum size related to the smaller dimension
+        # of the collection of underlying images, but never smaller than 256
+        minbox = max(256, 0.2 * self.underImage.min_dimension)
+
+        # if small then set flag to 0 and return
+        if (
+            self.delBoxItem.rect().height() < minbox
+            or self.delBoxItem.rect().width() < minbox
+        ):
+            self.removeItem(self.delBoxItem)
+            self.deleteFlag = 0
+        else:
+            self.removeItem(self.delBoxItem)
+            self.deleteFlag = 0  # put flag back.
+            self.trigger_crop(self.delBoxItem.rect())

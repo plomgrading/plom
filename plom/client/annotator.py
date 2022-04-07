@@ -128,6 +128,7 @@ class Annotator(QWidget):
 
         # declares some instance vars
         self.cursorBox = None
+        self.cursorCrop = None
         self.cursorCross = None
         self.cursorDelete = None
         self.cursorEllipse = None
@@ -177,6 +178,8 @@ class Annotator(QWidget):
         self.setAllIcons()
         # Set up cursors
         self.loadCursors()
+        # set up held_crop_rectangle - if none, then not holding.
+        self.held_crop_rectangle_data = None
 
         # Connect all the buttons to relevant functions
         self.setButtons()
@@ -230,6 +233,16 @@ class Annotator(QWidget):
     def getMarkingState(self):
         return self.scene.getMarkingState()
 
+    def toggle_hold_crop(self, checked):
+        if checked:
+            self.held_crop_rectangle_data = (
+                self.scene.current_crop_rectangle_as_proportions()
+            )
+            log.debug(f"Hold crop for upcoming pages = {self.held_crop_rectangle_data}")
+        else:
+            log.debug("Released crop")
+            self.held_crop_rectangle_data = None
+
     def buildHamburger(self):
         # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
@@ -246,6 +259,12 @@ class Annotator(QWidget):
         m.addAction("Tag paper...\tF3", self.tag_paper)
         m.addSeparator()
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
+        m.addAction("Crop to region\tCtrl-p", self.to_crop_mode)
+        m.addAction("Uncrop\tCtrl-shift-p", self.uncrop_region)
+        hold_crop = m.addAction("(advanced option) Hold crop")
+        hold_crop.setCheckable(True)
+        hold_crop.triggered.connect(self.toggle_hold_crop)
+        m.addSeparator()
         subm = m.addMenu("Tools")
         # to make these actions checkable, they need to belong to self.
         # submg = QActionGroup(m)
@@ -448,9 +467,13 @@ class Annotator(QWidget):
             self.getScore(), self.getMarkingState(), self.maxMark
         )
 
-        # Very last thing = unpickle scene from plomDict
+        # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
             self.unpickleIt(plomDict)
+        else:
+            # if there is a held crop rectangle, then use it.
+            if self.held_crop_rectangle_data:
+                self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
@@ -526,6 +549,7 @@ class Annotator(QWidget):
         self.cursorBox = QCursor(_pixmap_from("box.png"), 4, 4)
         self.cursorEllipse = QCursor(_pixmap_from("ellipse.png"), 4, 4)
         self.cursorCross = QCursor(_pixmap_from("cross.png"), 4, 4)
+        self.cursorCrop = QCursor(_pixmap_from("crop.png"), 4, 4)
         self.cursorDelete = QCursor(_pixmap_from("delete.png"), 4, 4)
         self.cursorLine = QCursor(_pixmap_from("line.png"), 4, 4)
         self.cursorPen = QCursor(_pixmap_from("pen.png"), 4, 4)
@@ -1118,6 +1142,33 @@ class Annotator(QWidget):
         self.slowDepanShortCut = QShortcut(QKeySequence("Ctrl+Shift+space"), self)
         self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
 
+        # cropping hackery.
+        self.crop_to_focus_ShortCut = QShortcut(QKeySequence("Ctrl+p"), self)
+        self.crop_to_focus_ShortCut.activated.connect(self.to_crop_mode)
+        self.uncropShortCut = QShortcut(QKeySequence("Ctrl+Shift+p"), self)
+        self.uncropShortCut.activated.connect(self.uncrop_region)
+
+    def to_crop_mode(self):
+        # can't re-crop if the crop is being held
+        if self.held_crop_rectangle_data:
+            WarnMsg(
+                self,
+                "You cannot re-crop while a crop is being held.",
+                info="Unselect 'hold crop' from the menu and then try again.",
+            ).exec_()
+        else:
+            self.setToolMode("crop", self.cursorCrop)
+
+    def uncrop_region(self):
+        if self.held_crop_rectangle_data:
+            WarnMsg(
+                self,
+                "You cannot un-crop while a crop is being held.",
+                info="Unselect 'hold crop' from the menu and then try again.",
+            ).exec_()
+        else:
+            self.scene.uncrop_underlying_images()
+
     def toUndo(self):
         self.ui.undoButton.animateClick()
 
@@ -1680,6 +1731,9 @@ class Annotator(QWidget):
         aname = self.scene.save(self.saveName)
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
+        # get the crop-rect as proportions of underlying image
+        # is 4-tuple (x,y,w,h) scaled by image width / height
+        crop_rect_data = self.scene.current_crop_rectangle_as_proportions()
         # TODO: consider saving colour only if not red?
         # TODO: someday src_img_data may have other images not used
         plomData = {
@@ -1690,6 +1744,7 @@ class Annotator(QWidget):
             "currentMark": self.getScore(),
             "sceneScale": self.scene.get_scale_factor(),
             "annotationColor": self.scene.ink.color().getRgb()[:3],
+            "crop_rectangle_data": crop_rect_data,
             "sceneItems": lst,
         }
         plomfile = self.saveName.with_suffix(".plom")
@@ -1716,7 +1771,15 @@ class Annotator(QWidget):
             self.scene.set_scale_factor(plomData["sceneScale"])
         if plomData.get("annotationColor", None):
             self.scene.set_annotation_color(plomData["annotationColor"])
+        # Put the scene items back
         self.scene.unpickleSceneItems(plomData["sceneItems"])
+        # set crop rectangle from plom file contains if present
+        # else, if use held-crop rectangle if present
+        if plomData.get("crop_rectangle_data", None):
+            self.scene.crop_from_plomfile(plomData["crop_rectangle_data"])
+        else:
+            if self.held_crop_rectangle_data:  # if a crop is being held, use it.
+                self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
         self.view.setHidden(False)
 
     def setZoomComboBox(self):
