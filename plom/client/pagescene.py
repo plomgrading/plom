@@ -433,10 +433,8 @@ class PageScene(QGraphicsScene):
         # build pixmap and graphicsitemgroup.
         self.underImage = UnderlyingImages(self.src_img_data)
         self.whichLineToDraw_init()
-        # and an underlyingrect for the margin - should not be smaller than 512px
-        # at same time, box should not be smaller than 20% of width or height of underlying image
-        # however if image very wide, we want to take 20% of height, or if very tall, then 20% of width
-        # so take 20% of min of width and height, and then max that with 512.
+        # a margin that surrounds the scanned images, with size related to the
+        # minimum dimensions of the images, but never smaller than 512 pixels
         margin_width = max(512, 0.20 * self.underImage.min_dimension)
         margin_rect = QRectF(self.underImage.boundingRect()).adjusted(
             -margin_width, -margin_width, margin_width, margin_width
