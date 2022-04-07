@@ -73,7 +73,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
             papernum_column = c
             break
     if papernum_column:
-        # JSON + NaN :-( so use negatives for missing: TODO do better?
+        # JSON + NaN :-( so use negatives for missing: TODO Issue #2059.
         df[papernum_column] = df[papernum_column].apply(
             lambda x: -1 if pandas.isna(x) else int(x)
         )

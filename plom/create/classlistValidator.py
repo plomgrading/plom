@@ -267,6 +267,7 @@ class PlomClasslistValidator:
                     {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
                 )
 
+        # Temporarily disabled: Issue #2059, c.f., "JSON + NaN" in clean_non_canvas_csv
         # check the paperNumber column - again, potentially errors here (not just warnings)
         # success, errors = self.check_papernumber_column(
         #     cl_header_info["papernumber"], cl_as_dicts
