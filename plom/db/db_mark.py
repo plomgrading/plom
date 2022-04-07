@@ -459,10 +459,20 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
         plom_data["currentMark"] = aref.mark
     for i, (id_, md5, _) in enumerate(metadata):
         if id_ != plom_data["base_images"][i]["id"]:
-            log.warning("Plom file has wrong base image id, replacing")
+            log.error(
+                "Plom file has wrong base image id %s, replacing with %s\ndata=%s",
+                plom_data["base_images"][i]["id"],
+                id_,
+                plom_data,
+            )
             plom_data["base_images"][i]["id"] = id_
         if md5 != plom_data["base_images"][i]["md5"]:
-            log.warning("Plom file has wrong base image md5, replacing")
+            log.error(
+                "Plom file has wrong base image md5 %s, replacing with %s\ndata=%s",
+                plom_data["base_images"][i]["md5"],
+                md5,
+                plom_data,
+            )
             plom_data["base_images"][i]["md5"] = md5
     return (True, plom_data, img_file)
 
