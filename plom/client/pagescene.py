@@ -82,9 +82,6 @@ from .elastics import (
 
 log = logging.getLogger("pagescene")
 
-# set a margin width variable for use everywhere. Later this should likely be a % of image size.
-margin_width = 512
-
 
 class ScoreBox(QGraphicsTextItem):
     """A simple graphics item which is place on the top-left
@@ -437,6 +434,7 @@ class PageScene(QGraphicsScene):
         self.underImage = UnderlyingImages(self.src_img_data)
         self.whichLineToDraw_init()
         # and an underlyingrect for the margin.
+        margin_width = max(512, 0.20*self.underImage.min_dimension)
         margin_rect = QRectF(self.underImage.boundingRect()).adjusted(
             -margin_width, -margin_width, margin_width, margin_width
         )
