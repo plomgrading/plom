@@ -31,7 +31,7 @@ def test_spec_verify_quiet():
 def test_deprecated_numberToName():
     s = SpecVerifier.demo()
     s.spec["numberToName"] = 10
-    with raises(DeprecationWarning):
+    with raises(NotImplementedError):
         s.verify()
 
 

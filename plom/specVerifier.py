@@ -494,9 +494,9 @@ class SpecVerifier:
         for x in ["doNotMarkPages", "totalMarks", "numberOfQuestions"]:
             if x in self.spec:
                 print(f'  contains "{x}"{chk}')
-        # check for deprecated numberToName field
+        # check for no longer supported numberToName field
         if "numberToName" in self.spec:
-            raise DeprecationWarning(f'The "numberToName" spec-field is deprecated in favour of the "paper_number" column in the classlist. {self.spec}')
+            raise NotImplementedError(f'The "numberToName" spec-field is removed in favour of the "paper_number" column in the classlist. {self.spec}')
 
     def check_name_and_production_numbers(self, print=print):
         print("Checking specification name and numbers")
