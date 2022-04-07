@@ -15,7 +15,6 @@ raw = SpecVerifier.demo().spec
 
 def test_spec_demo():
     s = SpecVerifier.demo()
-    assert s.number_to_name
     assert s.number_to_produce
 
 
@@ -84,30 +83,17 @@ def test_spec_autocount_missing_total_marks():
     assert s.spec["totalMarks"] == y
 
 
-def test_spec_too_many_named():
-    r = raw.copy()
-    r["numberToProduce"] = 50
-    r["numberToName"] = 60
-    s = SpecVerifier(r)
-    with raises(ValueError):
-        s.verify()
-
-
 def test_spec_negatives_still_pass():
     r = raw.copy()
-    r["numberToName"] = -1
     r["numberToProduce"] = -1
     SpecVerifier(r).verify()
 
 
 def test_spec_setting_adds_spares():
     r = raw.copy()
-    r["numberToName"] = -1
     r["numberToProduce"] = -1
     s = SpecVerifier(r)
-    s.set_number_papers_to_name(16)
     s.set_number_papers_add_spares(16)
-    assert s.numberToName == 16
     # creates some spares
     assert s.numberToProduce > 16
     s.verify()
