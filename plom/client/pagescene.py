@@ -2767,10 +2767,8 @@ class PageScene(QGraphicsScene):
         # check to see if box is quite small (since very hard
         # to click button without moving a little)
 
-        # box should not be smaller than 256px
-        # at same time, box should not be smaller than 20% of width or height of underlying image
-        # however if image very wide, we want to take 20% of height, or if very tall, then 20% of width
-        # so take min of 20%*width and 20%height, and then max that with 256.
+        # The box should have a minimum size related to the smaller dimension
+        # of the collection of underlying images, but never smaller than 256
         minbox = max(256, 0.2 * self.underImage.min_dimension)
 
         # if small then set flag to 0 and return
