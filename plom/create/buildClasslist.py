@@ -89,8 +89,8 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
         raise ValueError('no "paper_number" column is present.')
     # clean it up.
     df[papernumber_column] = df[papernumber_column].apply(
-            lambda x: -1 if pandas.isna(x) else int(x)
-        )
+        lambda x: -1 if pandas.isna(x) else int(x)
+    )
     print(f"Renaming column {papernumber_column} to 'paper_number'")
     df.rename(columns={papernumber_column: "paper_number"}, inplace=True)
 
@@ -185,6 +185,11 @@ def get_demo_classlist(spec):
         )
 
     f.unlink()
+
+    # The raw demo classlist does not have any pre-named students.
+    # So here we pre-name half of spec[numberToProduce] papers
+    for n in range(spec["numberToProduce"] // 2):
+        clist[n]["paper_number"] = n + 1
     return clist
 
 
