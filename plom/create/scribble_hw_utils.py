@@ -87,7 +87,7 @@ def download_classlist_and_spec(server=None, password=None):
     return classlist, spec
 
 
-def make_hw_scribbles(server, password, basedir=Path(".")):
+def make_hw_scribbles(server, password, basedir=Path("."), how_many=10):
     """Fake homework submissions by scribbling on the pages of blank tests.
 
     Args:
@@ -96,6 +96,7 @@ def make_hw_scribbles(server, password, basedir=Path(".")):
         basedir (str/pathlib.Path): the blank tests (for scribbling) will
             be taken from `basedir/papersToPrint`.  The pdf files with
             scribbles will be created in `basedir/submittedHWByQ`.
+        how_many (int): how many hws to create
 
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
@@ -104,20 +105,26 @@ def make_hw_scribbles(server, password, basedir=Path(".")):
        or more than one question in a single bundle.
     """
     classlist, spec = download_classlist_and_spec(server, password)
-    numberNamed = spec["numberToName"]
     numberOfQuestions = spec["numberOfQuestions"]
 
     d = Path(basedir) / "submittedHWByQ"
     d.mkdir(exist_ok=True)
 
-    print("NumberNamed = {}".format(numberNamed))
+    all_in_one_bundle = (
+        4  # how many students with all questions in a single file = semiloose
+    )
+    one_q_per_bundle = (
+        how_many - all_in_one_bundle
+    )  # how many students with one question per file = hwA
+    # half of this get a second file for each question - ie student submits two files per q. = hwB
+    second_one_q_per_bundle = one_q_per_bundle // 2
 
-    num_all_q_one_bundle = 4
-    # "hwA" and "hwB" are two batches, one bigger than other
-    for k in range(numberNamed - num_all_q_one_bundle):
+    for k in range(one_q_per_bundle):
         makeFakeHW(numberOfQuestions, k, classlist[k], d, "hwA")
-    for k in range(numberNamed // 2):
+
+    for k in range(second_one_q_per_bundle):
         makeFakeHW(numberOfQuestions, k, classlist[k], d, "hwB", maxpages=1)
+
     # a few more for "all questions in one" bundling
-    for k in range(numberNamed - num_all_q_one_bundle, numberNamed):
+    for k in range(how_many - one_q_per_bundle, how_many):
         makeFakeHW2(numberOfQuestions, k, classlist[k], d, "semiloose")

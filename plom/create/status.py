@@ -92,14 +92,14 @@ def status(*, msgr):
         # TODO: make PlomServerHasNoClasslist: subclass of PlomServerNotReady?
         print(cross + f" No classlist: {e}")
         classlist = None
-    if classlist and classlist[0].get("papernum", None):
+    if classlist and classlist[0].get("paper_number", None):
         # classlist has papernum column
-        papernums = [int(r["papernum"]) for r in classlist if int(r["papernum"]) > 0]
+        papernums = [int(r["paper_number"]) for r in classlist if int(r["paper_number"]) > 0]
         if len(set(papernums)) != len(papernums):
-            print(cross + ' "papernum" fields are not unique!')
+            print(cross + ' "paper_number" fields are not unique!')
         else:
             print(
-                check_mark + f' {len(papernums)} have "papernum" field for prenaming:'
+                check_mark + f' {len(papernums)} have "paper_number" field for prenaming:'
             )
             print(
                 "    " + "\n    ".join(wrap(format_int_list_with_runs(papernums), 72))

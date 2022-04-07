@@ -72,4 +72,5 @@ def upload_demo_classlist(spec, *, msgr):
     """
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
     classlist = get_demo_classlist(spec)
+
     _ultra_raw_upload_classlist(classlist, msgr)

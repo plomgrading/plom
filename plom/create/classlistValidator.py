@@ -9,20 +9,18 @@ import csv
 import pandas
 from plom.rules import validateStudentNumber
 
-
-possible_sid_fields = ["id"]
-possible_fullname_fields = ["name", "studentName", "fullName"]
-possible_papernumber_fields = ["paper_number", "paperNum", "paperNumber"]
+# important classlist headers - all casefolded
+sid_field = "id".casefold()
+fullname_field = "name".casefold()
+papernumber_field = "paper_number".casefold()
 
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 # combine all of these potential column headers into one casefolded list
 potential_column_names = [
-    x.casefold()
-    for x in possible_sid_fields
-    + possible_fullname_fields
-    + possible_papernumber_fields
-    + list(canvas_columns_format)
-]
+    sid_field,
+    fullname_field,
+    papernumber_field,
+] + [x.casefold() for x in canvas_columns_format]
 
 
 class PlomClasslistValidator:
@@ -72,10 +70,10 @@ class PlomClasslistValidator:
         """Check existence of id and name columns in the classlist.
 
         Checks the column titles (as given by the supplied row from
-        the classlist).  Tests for an id column, name-column, and an
-        (optional) papernumber column. Names must be a single
-        column. To avoid issues with upper and lower case, everything
-        needs to be tested by casefolding.
+        the classlist).  Tests for an id column, name-column, and the
+        papernumber column. Names must be a single column. To avoid
+        issues with upper and lower case, everything needs to be tested
+        by casefolding.
 
         Arguments:
             rowFromDict (dict): a row from the classlist encoded as a dictionary.
@@ -83,7 +81,7 @@ class PlomClasslistValidator:
 
         Returns:
             dict: If errors then return {'success': False, 'errors': error-list},
-                else return {'success': True, 'id': id_key, 'fullname': fullname_key, 'papernumber': papernumber_key/None}
+                else return {'success': True, 'id': id_key, 'fullname': fullname_key, 'papernumber': papernumber_key}
 
         """
         id_keys = []
@@ -91,11 +89,11 @@ class PlomClasslistValidator:
         papernumber_keys = []
         for x in rowFromDict.keys():
             cfx = x.casefold()
-            if cfx in map(str.casefold, possible_sid_fields):
+            if cfx == sid_field:
                 id_keys.append(x)
-            if cfx in map(str.casefold, possible_fullname_fields):
+            if cfx == fullname_field:
                 fullname_keys.append(x)
-            if cfx in map(str.casefold, possible_papernumber_fields):
+            if cfx == papernumber_field:
                 papernumber_keys.append(x)
 
         err = []
@@ -103,18 +101,16 @@ class PlomClasslistValidator:
         if len(id_keys) > 1:
             err.append("Cannot have multiple id columns")
         if len(fullname_keys) > 1:  # must have exactly one such column
-            err.append("Cannot have multiple full-name columns")
+            err.append("Cannot have multiple name columns")
         if len(papernumber_keys) > 1:
-            err.append("Cannot have multiple paper-number columns")
-        # Must have an id column
+            err.append("Cannot have multiple paper number columns")
+        # Must have an id, name and paper_number columns
         if not id_keys:
             err.append("Missing id column")
-        # And a name (ie full name) column
         if not fullname_keys:
             err.append("Missing name column")
-        # if no papernumber_key then put None into list for return value
         if not papernumber_keys:
-            papernumber_keys.append(None)
+            err.append("Missing paper number column")
 
         if err:
             return {"success": False, "errors": err}
@@ -146,9 +142,6 @@ class PlomClasslistValidator:
 
     def check_papernumber_column(self, papernum_key, classList):
         """Check the papernumber column of the classlist"""
-        if papernum_key is None:
-            return (True, [])
-
         err = []
         numbers_used = defaultdict(list)
         for x in classList:
@@ -181,7 +174,7 @@ class PlomClasslistValidator:
             # check non-trivial length after removing spaces and commas
             tmp = x[fullname_key].replace(" ", "").replace(",", "")
             # warn if name-field is very short
-            if len(tmp) < 2:  # Is this okay? TODO - decide a better bound here
+            if len(tmp) < 2:  # TODO - decide a better bound here
                 warn.append(
                     [x["_src_line"], f"Name '{tmp}' is very short  - please verify."]
                 )
@@ -269,7 +262,6 @@ class PlomClasslistValidator:
                     {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
                 )
 
-        # Temporarily disabled: Issue #2059, c.f., "JSON + NaN" in clean_non_canvas_csv
         # check the paperNumber column - again, potentially errors here (not just warnings)
         success, errors = self.check_papernumber_column(
             cl_header_info["papernumber"], cl_as_dicts
@@ -333,13 +325,16 @@ class PlomClasslistValidator:
 
         id_cols = []
         fullname_cols = []
+        papernumber_cols = []
         for x in student_info_df.columns:
             cfx = x.casefold()
             print(">>>> checking ", cfx)
-            if cfx in map(str.casefold, possible_sid_fields):
+            if cfx == sid_field:
                 id_cols.append(x)
-            if cfx in map(str.casefold, possible_fullname_fields):
+            if cfx == fullname_field:
                 fullname_cols.append(x)
+            if cfx == papernumber_field:
+                papernumber_cols.append(x)
 
         if not id_cols:
             print(f"Cannot find an id column - {id_cols}")
@@ -356,6 +351,15 @@ class PlomClasslistValidator:
             return False
         elif len(fullname_cols) > 1:
             print("Multiple name columns - {fullname_cols}")
+            print("Columns present = {}".format(student_info_df.columns))
+            return False
+
+        if not papernumber_cols:
+            print(f"Cannot find a paper number column - {papernumber_cols}")
+            print("Columns present = {}".format(student_info_df.columns))
+            return False
+        elif len(papernumber_cols) > 1:
+            print("Multiple paper number columns - {papernumber_cols}")
             print("Columns present = {}".format(student_info_df.columns))
             return False
 

@@ -39,8 +39,8 @@ class IDHandler:
         """Returns the classlist to the client.
 
         The classlist is an ordered list of dicts where each row has
-        at least the primary key `"id"` and `"name"`.  It may
-        contain other keys.
+        at least the primary key `"id"` and `"name"` and `"paper_number"`.
+        It may contain other keys.
 
         Used, for example, to fill in the student details for the searchbar autofill.
 
@@ -74,10 +74,8 @@ class IDHandler:
         classlist later.
 
         Side effects on the server test spec file:
-          * If numberToName and/or numberToProduce are -1, values are
-            set based on this classlist (spec is permanently altered).
-          * If numberToName < 0 but numberToProduce is too small for the
-            result, respond with HTTPNotAcceptable.
+          * If  numberToProduce is -1, value is set based on 
+                this classlist (spec is permanently altered).
 
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
@@ -100,6 +98,9 @@ class IDHandler:
         if (specdir / "classlist.csv").exists():
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]
+
+        # TODO - these checks should likely go into a serverBlah.py
+    
         # verify classlist: all rows must have non-empty ID
         for row in classlist:
             if "id" not in row:
@@ -107,18 +108,15 @@ class IDHandler:
             if not row["id"]:
                 raise web.HTTPBadRequest(reason="Every row must non-empty id")
 
-        if spec.numberToName < 0 or spec.numberToProduce < 0:
-            if spec.number_to_name < 0:
-                spec.set_number_papers_to_name(len(classlist))
-            if spec.number_to_produce < 0:
-                spec.set_number_papers_add_spares(len(classlist))
+        if spec.numberToProduce < 0:
+            spec.set_number_papers_add_spares(len(classlist))
             try:
                 spec.verifySpec(verbose="log")
             except ValueError as e:
                 raise web.HTTPNotAcceptable(reason=str(e))
             spec.saveVerifiedSpec()
         # these keys first...
-        fieldnames = ["id", "name"]
+        fieldnames = ["id", "name", "paper_number"]
         # then all the others in any order
         fieldnames.extend(set(classlist[0].keys()) - set(fieldnames))
         log.info(f"Classlist upload w/ fieldnames {fieldnames}")

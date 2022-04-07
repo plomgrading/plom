@@ -160,7 +160,6 @@ class SpecVerifier:
     ... 'numberOfQuestions': 3,
     ... 'totalMarks': 25,
     ... 'numberToProduce': 20,
-    ... 'numberToName': 10,
     ... 'privateSeed': '1001378822317872',
     ... 'publicCode': '270385',
     ... 'idPage': 1,
@@ -271,7 +270,7 @@ class SpecVerifier:
         if num_to_produce:
             from plom.create.demotools import getDemoClassListLength
 
-            # TODO: 20 and 10 in source file hardcoded here, use regex instead
+            # TODO: 20 in source file hardcoded here, use regex instead
             s = s.replace(
                 "numberToProduce = 20",
                 "numberToProduce = {}".format(num_to_produce),
@@ -281,10 +280,6 @@ class SpecVerifier:
                 raise ValueError(
                     "Demo size capped at classlist length of {}".format(classlist_len)
                 )
-            s = s.replace(
-                "numberToName = 10",
-                "numberToName = {}".format(min(num_to_produce // 2, classlist_len)),
-            )
         return s
 
     @classmethod
@@ -310,24 +305,8 @@ class SpecVerifier:
     def number_to_produce(self):
         return self.spec["numberToProduce"]
 
-    @property
-    def number_to_name(self):
-        return self.spec["numberToName"]
-
     # aliases to match the toml file
     numberToProduce = number_to_produce
-    numberToName = number_to_name
-
-    def set_number_papers_to_name(self, n):
-        """Set previously-deferred number of named papers.
-
-        exceptions:
-            ValueError: number of named papers already set.
-        """
-        if self.numberToName >= 0:
-            raise ValueError("Number of named papers already set: read-only")
-        self.spec["numberToName"] = n
-        log.info('deferred number of named papers now set to "{}"'.format(n))
 
     def set_number_papers_add_spares(
         self, n, spare_percent=10, min_extra=5, max_extra=100
@@ -369,9 +348,6 @@ class SpecVerifier:
                 # "Public code (to prevent project collisions) = {}".format(self.spec["publicCode"]),
                 # "Private random seed (for randomisation) = {}".format(self.spec["privateSeed"]),
                 "Number of tests to produce = {}".format(self.numberToProduce),
-                "Number of those to be printed with names = {}".format(
-                    self.numberToName
-                ),
                 "Number of pages = {}".format(self.spec["numberOfPages"]),
                 "IDpage = {}".format(self.spec["idPage"]),
                 "Do not mark pages = {}".format(self.spec["doNotMarkPages"]),
@@ -504,7 +480,6 @@ class SpecVerifier:
             "numberOfVersions",
             "numberOfPages",
             "numberToProduce",
-            "numberToName",
             "idPage",
         ]:
             if x not in self.spec:
@@ -519,6 +494,9 @@ class SpecVerifier:
         for x in ["doNotMarkPages", "totalMarks", "numberOfQuestions"]:
             if x in self.spec:
                 print(f'  contains "{x}"{chk}')
+        # check for no longer supported numberToName field
+        if "numberToName" in self.spec:
+            raise NotImplementedError(f'The "numberToName" spec-field is removed in favour of the "paper_number" column in the classlist. {self.spec}')
 
     def check_name_and_production_numbers(self, print=print):
         print("Checking specification name and numbers")
@@ -544,7 +522,7 @@ class SpecVerifier:
                 )
             print('    "{}" = {} is positive integer{}'.format(x, self.spec[x], chk))
 
-        for x in ("numberToName", "numberToProduce"):
+        for x in ["numberToProduce"]:
             try:
                 self.spec[x] = int(self.spec[x])
             except ValueError:
@@ -561,22 +539,6 @@ class SpecVerifier:
 
         if self.numberToProduce == 0:
             raise ValueError('Specification error - "numberToProduce" cannot be zero.')
-
-        if self.numberToProduce > 0:
-            if self.numberToProduce < self.numberToName:
-                raise ValueError(
-                    "Specification error - insufficient papers: producing fewer papers {} than you wish to name {}. Produce more papers.".format(
-                        self.numberToProduce, self.numberToName
-                    )
-                )
-            print("    Producing enough papers to cover named papers" + chk)
-            if self.numberToProduce < 1.05 * self.numberToName:
-                print(
-                    "WARNING: you are producing less than 5% un-named papers; you may want more spares"
-                    + warn_mark
-                )
-            else:
-                print("    Producing sufficiently many spare papers" + chk)
 
     def check_questions(self, print=print):
         if "numberOfQuestions" not in self.spec:
