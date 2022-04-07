@@ -83,7 +83,7 @@ from .elastics import (
 log = logging.getLogger("pagescene")
 
 # set a margin width variable for use everywhere. Later this should likely be a % of image size.
-margin_width = 1024
+margin_width = 512
 
 
 class ScoreBox(QGraphicsTextItem):
