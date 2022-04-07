@@ -221,7 +221,7 @@ class MaskingOverlay(QGraphicsItemGroup):
         self.dotted_boundary = QGraphicsRectItem(inner_rect)
         # set brush and pen
         transparent_pen = QPen(QColor(249, 249, 249, 240), 0)
-        transparent_paint = QBrush(QColor(249, 249, 249, 240))
+        transparent_paint = QBrush(QColor(249, 249, 249, 220))
         dotted_pen = QPen(QColor(0, 0, 0, 128), 2, style=Qt.DotLine)
         self.top_bar.setBrush(transparent_paint)
         self.bottom_bar.setBrush(transparent_paint)
