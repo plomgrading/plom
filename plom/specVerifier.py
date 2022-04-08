@@ -179,7 +179,6 @@ class SpecVerifier:
       Long name of exam = Midterm Demo using Plom
       Number of source versions = 2
       Number of tests to produce = 20
-      Number of those to be printed with names = 10
       Number of pages = 6
       IDpage = 1
       Do not mark pages = [2]
