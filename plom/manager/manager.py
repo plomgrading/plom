@@ -1695,8 +1695,7 @@ class Manager(QWidget):
 
         self.ui.reviewTW.clearContents()
         self.ui.reviewTW.setRowCount(0)
-        r = 0
-        for dat in mrList:
+        for r, dat in enumerate(mrList):
             self.ui.reviewTW.insertRow(r)
             # rjust(4) entries so that they can sort like integers... without actually being integers
             for k in range(7):
@@ -1709,7 +1708,6 @@ class Manager(QWidget):
             if dat[3] == "n/a":
                 for k in range(7):
                     self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.yellow))
-            r += 1
 
     def reviewAnnotated(self):
         rvi = self.ui.reviewTW.selectedIndexes()
