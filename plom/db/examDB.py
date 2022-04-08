@@ -32,6 +32,7 @@ class PlomDB:
                     ##
                     Group,
                     IDGroup,
+                    IDPrediction,
                     DNMGroup,
                     QGroup,
                     ##
@@ -102,7 +103,7 @@ class PlomDB:
         getPageVersions,
         get_question_versions,
         get_all_question_versions,
-        id_paper,
+        prename_paper,
         remove_id_from_paper,
         createNoAnswerRubric,
     )
@@ -201,6 +202,7 @@ class PlomDB:
         ID_id_paper,
         IDgetImageFromATest,
         IDreviewID,
+        ID_predict_paper_id,
     )
 
     from plom.db.db_mark import (

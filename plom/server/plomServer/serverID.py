@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
@@ -96,9 +96,9 @@ def IDclaimThisTask(self, username, test_number):
 
 
 # TODO: These two functions seem the same.
-def id_paper(self, *args, **kwargs):
-    """Assign a student name/id combination to a paper in the database, manager only."""
-    return self.DB.id_paper(*args, **kwargs)
+def prename_paper(self, *args, **kwargs):
+    """Prename a student name/id combination to a paper in the database, manager only."""
+    return self.DB.prename_paper(*args, **kwargs)
 
 
 def ID_id_paper(self, *args, **kwargs):
@@ -144,7 +144,7 @@ def IDdeletePredictions(self):
 
 
 def IDputPredictions(self, predictions, classlist, spec):
-    """Save predictions in the server's prediction file.
+    """Push predictions to the database
 
     Note - does sanity checks against the current classlist
 
@@ -159,6 +159,8 @@ def IDputPredictions(self, predictions, classlist, spec):
     """
 
     log.info("ID prediction list uploaded")
+    # do sanity check that the ID is in the classlist and the
+    # test number is in range.
     ids = {int(X["id"]) for X in classlist}
     for test, sid in predictions:
         if int(sid) not in ids:
@@ -167,17 +169,33 @@ def IDputPredictions(self, predictions, classlist, spec):
         if test < 0 or test > spec["numberToProduce"]:
             return [False, f"Test {test} outside range"]
 
-    # now save the result
-    try:
-        with open(specdir / "predictionlist.csv", "w") as fh:
-            fh.write("test, id\n")
-            for test, sid in predictions:
-                log.info(f"ID prediction writing {test}, {sid}")
-                fh.write("{}, {}\n".format(test, sid))
-    except Exception as err:
-        return [False, f"Some sort of file error - {err}"]
+    # now make a dict of id: [test,name] to push to database
+    id_predictions = {}
+    for test, sid in predictions:
+        id_predictions[int(sid)] = [test]
+    for X in classlist:
+        if int(X["id"]) in id_predictions:
+            id_predictions[int(sid)].append(X["name"])
+    # now push everything into the DB
+    problem_list = []
+    for sid, test_and_name in id_predictions.items():
+        # get the student_name from the classlist
+        # returns (True,None,None) or (False, 409, msg) or (False, 404, msg)
+        r, what, msg = self.server.DB.ID_predict_paper_id(
+            test_and_name[0], sid, test_and_name[1]
+        )
+        if r:  # all good, continue pushing
+            pass
+        else:  # append the error to the problem list
+            problem_list.append((what, msg))
 
-    return [True, "Prediction list saved successfully"]
+    if problem_list:
+        return [
+            False,
+            "Some predictions could not be saved to the database",
+            problem_list,
+        ]
+    return [True, "All predictions saved to DB successfully"]
 
 
 def IDreviewID(self, test_number):

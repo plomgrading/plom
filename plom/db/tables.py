@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Joey Shi
@@ -53,6 +53,14 @@ class Group(BaseModel):
     group_type = pw.CharField()  # to distinguish between ID, DNM, and Mark groups
     queue_position = pw.IntegerField(unique=True, null=False)
     scanned = pw.BooleanField(default=False)  # should get all its tpages
+
+
+class IDPrediction(BaseModel):
+    test = pw.ForeignKeyField(Test, backref="idpredictions")
+    student_id = pw.CharField(unique=True, null=True)
+    student_name = pw.CharField(null=True)
+    user = pw.ForeignKeyField(User, backref="idpredictions", null=True)
+    certainty = pw.DoubleField(null=False, default=0.0)
 
 
 class IDGroup(BaseModel):

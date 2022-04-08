@@ -10,7 +10,7 @@ import peewee as pw
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 from plom.db.tables import plomdb
-from plom.db.tables import DNMPage, Group, IDGroup, Test, User
+from plom.db.tables import DNMPage, Group, IDGroup, IDPrediction, Test, User
 
 
 log = logging.getLogger("DB")
@@ -381,3 +381,53 @@ def IDreviewID(self, test_number):
         iref.save()
     log.info("ID task {} set for review".format(test_number))
     return [True]
+
+
+def ID_predict_paper_id(self, paper_number, sid, sname):
+    """Put predicted test student name id into paper. If that test
+    already has a prediction of that sid, then do nothing.
+
+    See also :func:`plom.db.db_create.prename_paper` which is similar.
+    This one is called by manager when running the automagical
+    id reader.
+
+    Args:
+        paper_num (int)
+        sid (str): student id.
+        sname (str): student name.
+
+    Returns:
+        tuple: `(True, None, None)` if successful, `(False, 409, msg)`
+        or `(False, 404, msg)` on error.  See docs in other function.
+    """
+    uref = User.get(name="manager")
+    # since requires authentication this will always give valid uref.
+
+    logbase = f"Manager predicts id of paper {paper_number}"
+    with plomdb.atomic():
+        # find the test-ref
+        tref = Test.get_or_none(Test.test_number == paper_number)
+        if tref is None:
+            msg = "denied b/c paper not found"
+            log.error("{}: {}".format(logbase, msg))
+            return False, 404, msg
+
+        # check if pushing identical predicted sid to that test
+        if IDPrediction.get_or_none(test=tref, student_id=sid):
+            # this prediction already exists, so do nothing - just return
+            return True, None, None
+
+        # now try to create a predicted_id entry - certainty is 0.5
+        try:
+            IDPrediction.create(
+                test=tref, user=uref, certainty=0.5, student_id=sid, student_name=sname
+            )
+        except pw.IntegrityError:
+            log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
+            return False, 409, f"student id {sid} in use elsewhere"
+        log.info(
+            'Manager predicts paper {} belongs to "{}" "{}"'.format(
+                paper_number, censorID(sid), censorName(sname)
+            )
+        )
+    return True, None, None

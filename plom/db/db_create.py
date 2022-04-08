@@ -17,6 +17,7 @@ from plom.db.tables import (
     DNMGroup,
     Group,
     IDGroup,
+    IDPrediction,
     QGroup,
     Rubric,
     Test,
@@ -388,16 +389,14 @@ def get_all_question_versions(self):
     return qvmap
 
 
-def id_paper(self, paper_num, user_name, sid, sname):
-    """Associate student name and id with a paper in the database.
+def prename_paper(self, paper_number, sid, sname):
+    """Prename a paper with a given student name and id. If that test
+    already has a prediction of that sid, then do nothing.
 
-    See also :func:`plom.db.db_identify.ID_id_paper` which is similar.
-    This one is typically called by manager, although this is not
-    enforced at the database level.  TODO: dedupe these two.
+    See also :func:`plom.db.db_identify.ID_predict_paper_id` which is similar.
 
     Args:
-        paper_num (int)
-        user_name (str): User who did the IDing.
+        paper_number (int)
         sid (str): student id.
         sname (str): student name.
 
@@ -405,33 +404,34 @@ def id_paper(self, paper_num, user_name, sid, sname):
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`
         or `(False, 404, msg)` on error.  See docs in other function.
     """
-    uref = User.get(name=user_name)  # TODO: or hardcode HAL like before
-    # since user authenticated, this will always return legit ref.
+    uref = User.get(name="HAL")
+    # Manager calls this function, but since these are build by
+    # by the plom system, we put user = HAL.
 
-    logbase = 'User "{}" tried to ID paper {}'.format(user_name, paper_num)
+    logbase = "Manager tried to prename paper {}".format(paper_number)
     with plomdb.atomic():
-        tref = Test.get_or_none(Test.test_number == paper_num)
+        # find the test-ref
+        tref = Test.get_or_none(Test.test_number == paper_number)
         if tref is None:
             msg = "denied b/c paper not found"
             log.error("{}: {}".format(logbase, msg))
             return False, 404, msg
-        iref = tref.idgroups[0]
-        iref.user = uref
-        iref.status = "done"
-        iref.student_id = sid
-        iref.student_name = sname
-        iref.identified = True
-        iref.time = datetime.now()
+
+        # check if pushing identical predicted sid to that test
+        if IDPrediction.get_or_none(test=tref, student_id=sid):
+            # this prediction already exists, so do nothing - just return
+            return True, None, None
+        # now try to create a predicted_id entry - certainty is 0.9
         try:
-            iref.save()
+            IDPrediction.create(
+                test=tref, user=uref, certainty=0.9, student_id=sid, student_name=sname
+            )
         except pw.IntegrityError:
             log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
             return False, 409, f"student id {sid} in use elsewhere"
-        tref.identified = True
-        tref.save()
         log.info(
-            'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
-                paper_num, user_name, censorID(sid), censorName(sname)
+            'Paper {} prenamed by HAL as "{}" "{}"'.format(
+                paper_number, censorID(sid), censorName(sname)
             )
         )
     return True, None, None

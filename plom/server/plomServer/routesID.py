@@ -341,10 +341,10 @@ class IDHandler:
         else:
             raise web.HTTPInternalServerError(reason=msg)
 
-    # @routes.put("/ID/{papernum}")
+    # @routes.put("/ID/prename/{paper_number}")
     @authenticate_by_token_required_fields(["user", "sid", "sname"])
-    def IdentifyPaper(self, data, request):
-        """Identify a paper directly without certain checks.
+    def PrenamePaper(self, data, request):
+        """Prename a paper.
 
         Only "manager" can perform this action.  Typical client IDing
         would call func:`IdentifyPaperTask` instead.
@@ -360,15 +360,9 @@ class IDHandler:
         """
         if not data["user"] == "manager":
             raise web.HTTPBadRequest(reason="Not manager")
-        papernum = request.match_info["papernum"]
+        papernum = request.match_info["paper_number"]
 
-        # special feature to unidentify: move elsewhere?
-        if not data["sid"] and not data["sname"]:
-            if self.server.DB.remove_id_from_paper(papernum):
-                return web.Response(status=200)
-            raise web.HTTPNotFound(reason=f"Did not find papernum {papernum}")
-
-        r, what, msg = self.server.id_paper(papernum, "HAL", data["sid"], data["sname"])
+        r, what, msg = self.server.prename_paper(papernum, data["sid"], data["sname"])
         if r:
             return web.Response(status=200)
         elif what == 409:
@@ -457,6 +451,7 @@ class IDHandler:
         if data["user"] != "manager":
             return web.Response(status=401)
 
+        # this classlist reading should probably happen in the serverID not here.
         try:
             with open(specdir / "classlist.csv") as f:
                 reader = csv.DictReader(f)
@@ -575,11 +570,9 @@ class IDHandler:
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
+        router.add_put("/ID/prename/{paper_number}", self.PrenamePaper)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.predict_id_lap_solver)
         router.add_post("/ID/run_id_reader", self.run_id_reader)
         router.add_patch("/ID/review", self.IDreviewID)
-        # be careful with this one - since is such a general route
-        # put it last
-        router.add_put("/ID/{papernum}", self.IdentifyPaper)
