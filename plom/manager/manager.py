@@ -1657,6 +1657,8 @@ class Manager(QWidget):
         self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
+        # TODO: possibly I will monkey-patch my review_row_insert into reviewTW here!
+        # TODO: am I reinventing MVC? probably!
 
         # maps zero to special text
         self.ui.reviewPaperNumSpinBox.setSpecialValueText("*")
@@ -1692,22 +1694,38 @@ class Manager(QWidget):
             filterUser=self.ui.userCB.currentText(),
             filterMarked=markedOnly,
         )
-
         self.ui.reviewTW.clearContents()
         self.ui.reviewTW.setRowCount(0)
+
+        # TODO: where to define this function?  Probably a method of a subclass of reviewTW
+        def review_row_insert(tw, i, row):
+            """Insert 7 things from row into the ith row of the table tw."""
+            assert len(row) == 7
+            # otherwise they resort between elements of the row (!)
+            tw.setSortingEnabled(False)
+            tw.insertRow(i)
+            # first 4 values are numbers
+            for k, x in enumerate(row[:4]):
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, x)
+                tw.setItem(i, k, item)
+            tw.setItem(i, 4, QTableWidgetItem(str(row[4])))
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, row[5])
+            tw.setItem(i, 5, item)
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, row[6])
+            tw.setItem(i, 6, item)
+            if row[4] == "reviewer":
+                for k in range(7):
+                    tw.item(i, k).setBackground(QBrush(Qt.green))
+            if row[3] == "n/a":
+                for k in range(7):
+                    tw.item(i, k).setBackground(QBrush(Qt.yellow))
+            tw.setSortingEnabled(True)
+
         for r, dat in enumerate(mrList):
-            self.ui.reviewTW.insertRow(r)
-            # rjust(4) entries so that they can sort like integers... without actually being integers
-            for k in range(7):
-                self.ui.reviewTW.setItem(
-                    r, k, QTableWidgetItem("{}".format(dat[k]).rjust(4))
-                )
-            if dat[4] == "reviewer":
-                for k in range(7):
-                    self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.green))
-            if dat[3] == "n/a":
-                for k in range(7):
-                    self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.yellow))
+            review_row_insert(self.ui.reviewTW, r, dat)
 
     def reviewAnnotated(self):
         rvi = self.ui.reviewTW.selectedIndexes()
@@ -1715,8 +1733,7 @@ class Manager(QWidget):
             return
         r = rvi[0].row()
         # no action if row is unmarked
-        # text in item is rjust(4)'d - so <space>n/a is the string
-        if self.ui.reviewTW.item(r, 3).text() == " n/a":
+        if self.ui.reviewTW.item(r, 3).text() == "n/a":
             # TODO - in future fire up reviewer with original pages
             return
         test = int(self.ui.reviewTW.item(r, 0).text())
