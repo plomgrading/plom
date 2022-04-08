@@ -190,7 +190,7 @@ def get_demo_classlist(spec):
     # So here we pre-name half of spec[numberToProduce] papers
     for n in range(spec["numberToProduce"] // 2):
         clist[n]["paper_number"] = n + 1
-    # now only return the classlist trunacted to numberToProduce lines
+    # now only return the classlist truncated to numberToProduce lines
     return clist[: (spec["numberToProduce"] + 1)]
 
 
