@@ -496,7 +496,10 @@ class SpecVerifier:
                 print(f'  contains "{x}"{chk}')
         # check for no longer supported numberToName field
         if "numberToName" in self.spec:
-            raise NotImplementedError(f'The "numberToName" spec-field is removed in favour of the "paper_number" column in the classlist. {self.spec}')
+            raise NotImplementedError(
+                'The "numberToName" spec-field is removed in favour of'
+                f' the "paper_number" column in the classlist. {self.spec}'
+            )
 
     def check_name_and_production_numbers(self, print=print):
         print("Checking specification name and numbers")

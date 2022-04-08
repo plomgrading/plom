@@ -191,7 +191,7 @@ def get_demo_classlist(spec):
     for n in range(spec["numberToProduce"] // 2):
         clist[n]["paper_number"] = n + 1
     # now only return the classlist trunacted to numberToProduce lines
-    return clist[:spec["numberToProduce"]+1]
+    return clist[: (spec["numberToProduce"] + 1)]
 
 
 def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False):

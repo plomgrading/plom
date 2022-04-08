@@ -74,8 +74,8 @@ class IDHandler:
         classlist later.
 
         Side effects on the server test spec file:
-          * If  numberToProduce is -1, value is set based on 
-                this classlist (spec is permanently altered).
+          * If numberToProduce is -1, value is set based on
+            this classlist (spec is permanently altered).
 
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
@@ -100,7 +100,7 @@ class IDHandler:
         classlist = data["classlist"]
 
         # TODO - these checks should likely go into a serverBlah.py
-    
+
         # verify classlist: all rows must have non-empty ID
         for row in classlist:
             if "id" not in row:

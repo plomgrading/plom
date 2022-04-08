@@ -94,12 +94,15 @@ def status(*, msgr):
         classlist = None
     if classlist and classlist[0].get("paper_number", None):
         # classlist has papernum column
-        papernums = [int(r["paper_number"]) for r in classlist if int(r["paper_number"]) > 0]
+        papernums = [
+            int(r["paper_number"]) for r in classlist if int(r["paper_number"]) > 0
+        ]
         if len(set(papernums)) != len(papernums):
             print(cross + ' "paper_number" fields are not unique!')
         else:
             print(
-                check_mark + f' {len(papernums)} have "paper_number" field for prenaming:'
+                check_mark
+                + f' {len(papernums)} have "paper_number" field for prenaming:'
             )
             print(
                 "    " + "\n    ".join(wrap(format_int_list_with_runs(papernums), 72))
