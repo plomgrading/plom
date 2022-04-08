@@ -140,12 +140,9 @@ class IDHandler:
         Responds with status 200/404.
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: File response including the predictions.
+            aiohttp.web_json_response: Dict of test:(sid, sname, certainty)
         """
-        if os.path.isfile(specdir / "predictionlist.csv"):
-            return web.FileResponse(specdir / "predictionlist.csv", status=200)
-        else:
-            return web.Response(status=404)
+        return web.json_response(self.server.ID_get_predictions())
 
     # @routes.get("/ID/tasks/complete")
     @authenticate_by_token_required_fields(["user"])

@@ -10,9 +10,7 @@ __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-
 from collections import defaultdict
-import csv
 import imghdr
 import logging
 from pathlib import Path
@@ -303,14 +301,13 @@ class IDClient(QWidget):
         """Send request for prediction list (iRPL) to server. The server then sends
         back the CSV of the predictions testnumber -> studentID.
         """
-        # Send request for prediction list to server
-        csvfile = self.msgr.IDrequestPredictions()
-
-        # create dictionary from the prediction list
+        # create dictionary to store predictions in 
         self.predictedTestToNumbers = defaultdict(int)
-        reader = csv.DictReader(csvfile, skipinitialspace=True)
-        for row in reader:
-            self.predictedTestToNumbers[int(row["test"])] = str(row["id"])
+        # Send request for prediction list to server
+        prediction_dict = self.msgr.IDrequestPredictions()
+        # dict is test_number:(sid, sname, certainty)
+        for tn, val in prediction_dict.items():
+            self.predictedTestToNumbers[int(tn)] = str(val[0])
 
         # Also tweak font size
         fnt = self.font()

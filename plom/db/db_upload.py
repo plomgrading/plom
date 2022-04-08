@@ -594,24 +594,23 @@ def updateIDGroup(self, idref):
         gref.save()
         # we'll need a ref to the test
         tref = idref.test
-        # if IDGroup belongs to HAL then don't mess with it - was auto IDd.
-        if idref.user == User.get(name="HAL"):
-            log.info(f"IDGroup of test {tref.test_number} is present and already IDd.")
-        else:
-            # need to clean it off and set it ready to do.
-            idref.status = "todo"
-            idref.user = None
-            idref.time = datetime.now()
-            idref.student_id = None
-            idref.student_name = None
-            idref.identified = False
-            idref.time = datetime.now()
-            idref.save()
-            tref.identified = False
-            tref.save()
-            log.info(
-                f"IDGroup of test {tref.test_number} is updated and ready to be identified."
-            )
+        # need to clean it off and set it ready to do.
+        # -----
+        # TODO - if predicted_id is above certain threshold then identify the test here.
+        # -----
+        idref.status = "todo"
+        idref.user = None
+        idref.time = datetime.now()
+        idref.student_id = None
+        idref.student_name = None
+        idref.identified = False
+        idref.time = datetime.now()
+        idref.save()
+        tref.identified = False
+        tref.save()
+        log.info(
+            f"IDGroup of test {tref.test_number} is updated and ready to be identified."
+        )
 
     return True
 

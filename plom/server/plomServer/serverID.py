@@ -116,6 +116,12 @@ def IDgetImageFromATest(self):
     return self.DB.IDgetImageFromATest()
 
 
+def ID_get_predictions(self):
+    """Return dict of test:(sid, sname, certainty) of all predictions in DB"""
+
+    return self.DB.ID_get_all_predictions()
+
+
 def IDdeletePredictions(self):
     """Delete the latest result from ID prediction/detection file.
 

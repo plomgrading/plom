@@ -431,3 +431,15 @@ def ID_predict_paper_id(self, paper_number, sid, sname):
             )
         )
     return True, None, None
+
+
+def ID_get_all_predictions(self):
+    """Return a dict of predicted test:student_ids"""
+    predictions = {}
+    for preidref in IDPrediction.select():
+        predictions[preidref.test.test_number] = (
+            preidref.student_id,
+            preidref.student_name,
+            preidref.certainty,
+        )
+    return predictions
