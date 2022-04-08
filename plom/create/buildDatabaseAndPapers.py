@@ -52,49 +52,57 @@ def build_papers(
     paperdir.mkdir(exist_ok=True)
     classlist = None
 
-    # TODO: temporarily avoid changing indent
-    if True:
-        spec = msgr.get_spec()
-        # pvmap = msgr.getGlobalPageVersionMap()
-        qvmap = msgr.getGlobalQuestionVersionMap()
-        if spec["numberToName"] > 0:
-            classlist = msgr.IDrequestClasslist()
-            # TODO: Issue #1646 mostly student number (w fallback)
-            if len(classlist) < spec["numberToName"]:
-                raise ValueError(
-                    "Classlist is too short for {} pre-named papers".format(
-                        spec["numberToName"]
-                    )
-                )
-    if classlist:
-        print(
-            'Building {} pre-named papers and {} blank papers in "{}"...'.format(
-                spec["numberToName"],
-                spec["numberToProduce"] - spec["numberToName"],
-                paperdir,
-            )
-        )
-    else:
-        print(
-            'Building {} blank papers in "{}"...'.format(
-                spec["numberToProduce"], paperdir
-            )
-        )
+    spec = msgr.get_spec()
+    qvmap = msgr.getGlobalQuestionVersionMap()
+    classlist = msgr.IDrequestClasslist()
+
     if indexToMake:
         # TODO: Issue #1745?
         if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
             raise ValueError(
                 f"Index out of range. Must be in range [1,{ spec['numberToProduce']}]"
             )
-        if indexToMake <= spec["numberToName"]:
-            print(f"Building only specific paper {indexToMake} (prenamed)")
-        else:
-            print(f"Building only specific paper {indexToMake} (blank)")
+
+    # do sanity checks on the paper_number data in the classlist.
+    papernums = [r["paper_number"] for r in classlist if int(r["paper_number"]) > 0]
+    # make sure no duplications
+    if len(set(papernums)) != len(papernums):
+        raise ValueError('repeated "paper_number": must be unique')
+    # make sure no index too big - have to cast to ints for this.
+    for n in papernums:
+        if int(n) > spec["numberToProduce"]:
+            raise ValueError(
+                "Not enough papers to prename everything in the filtered classlist"
+            )
+    # all okay, so get rid of that list.
+    del papernums
+    # reorganise the class list into a dict indexed by paper_number
+    classlist_by_papernum = {
+        int(r["paper_number"]): {k: v for k, v in r.items() if k != "paper_number"}
+        for r in classlist
+        if int(r["paper_number"]) > 0
+    }
+    # get rid of the old classlist
+    del classlist
+
+    if indexToMake and indexToMake in classlist_by_papernum:
+        print(f"Building only specific paper {indexToMake} (prenamed) in {paperdir}...")
+    elif indexToMake:
+        print(f"Building only specific paper {indexToMake} (blank) in {paperdir}...")
+    elif classlist_by_papernum:
+        print(
+            f"Building {len(classlist_by_papernum)} pre-named papers and "
+            f'{spec["numberToProduce"] - len(classlist_by_papernum)} blank '
+            f"papers in {paperdir}..."
+        )
+    else:
+        print(f'Building {spec["numberToProduce"]} blank papers in {paperdir}...')
+
     with working_directory(basedir):
         build_papers_backend(
             spec,
             qvmap,
-            classlist,
+            classlist_by_papernum=classlist_by_papernum,
             fakepdf=fakepdf,
             no_qr=no_qr,
             indexToMake=indexToMake,
@@ -104,7 +112,11 @@ def build_papers(
 
     print("Checking papers produced and ID-ing any pre-named papers into the database")
     check_pdf_and_id_if_needed(
-        spec, msgr, classlist, paperdir=paperdir, indexToCheck=indexToMake
+        spec,
+        msgr,
+        classlist_by_papernum=classlist_by_papernum,
+        paperdir=paperdir,
+        indexToCheck=indexToMake,
     )
 
 

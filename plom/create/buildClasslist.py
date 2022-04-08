@@ -15,8 +15,9 @@ import plom
 from plom.finish.return_tools import import_canvas_csv
 
 from plom.create.classlistValidator import (
-    possible_sid_fields,
-    possible_fullname_fields,
+    sid_field,
+    fullname_field,
+    papernumber_field,
     PlomClasslistValidator,
 )
 
@@ -25,7 +26,7 @@ from plom.create.classlistValidator import (
 # pylint: disable=unsupported-assignment-operation
 
 
-def clean_non_canvas_csv(csv_file_name):
+def clean_non_canvas_csv(csv_file_name, minimalist=True):
     """Read the csv file and clean the csv file.
 
     1. Retrieve the id.
@@ -37,7 +38,11 @@ def clean_non_canvas_csv(csv_file_name):
         csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        pandas.DataFrame: data with columns `id` and `name`.
+        pandas.DataFrame: data with columns `id` and `name`
+        and possibly `papernum` if you had such a column in the input.
+        With ``minimalist=True`` kwarg specified, this is all you get,
+        otherwise the original columns will be included too, except
+        those renamed to create the required columns.
     """
     df = pandas.read_csv(csv_file_name, dtype="object")
     print('Extracting columns from csv file: "{0}"'.format(csv_file_name))
@@ -45,42 +50,54 @@ def clean_non_canvas_csv(csv_file_name):
     # strip excess whitespace from column names
     df.rename(columns=lambda x: str(x).strip(), inplace=True)
 
-    # find the id column
+    # find the id column and clean it up.
     id_column = None
     for c in df.columns:
-        if c.casefold() in (x.casefold() for x in possible_sid_fields):
-            # print(f'"{c}" column present')
+        if c.casefold() == sid_field:
             id_column = c
             break
     if id_column is None:
-        # note that this should be caught by the validator
         raise ValueError('no "id" column is present')
     # make sure id column named 'id' - lowercase
     print(f"Renaming column {id_column} to 'id'")
     df.rename(columns={id_column: "id"}, inplace=True)
     # clean up the column - strip whitespace
     df["id"] = df["id"].apply(lambda X: str(X).strip())  # avoid issues with non-string
-    # print('"id" column present')
 
-    # We require a single name column
+    # find the name column and clean it up.
     fullname_column = None
     for c in df.columns:
-        if c.casefold() in (x.casefold() for x in possible_fullname_fields):
-            # print(f'"{c}" column present')
+        if c.casefold() == fullname_field.casefold():
             fullname_column = c
             break
     if fullname_column is None:
-        # note that this should be caught by the validator
         raise ValueError('no "name" column is present')
-
     # make sure fullname column named 'name' - lowercase
     print(f"Renaming column {fullname_column} to 'name'")
     df.rename(columns={fullname_column: "name"}, inplace=True)
     # clean up the column - strip whitespace
     df["name"].apply(lambda X: str(X).strip())  # avoid errors with blanks
-    # print('"name" column present')
-    # now return only the id and name columns
-    return df[["id", "name"]]
+
+    # find the paper-number column and clean it up.
+    papernumber_column = None
+    for c in df.columns:
+        if c.casefold() == papernumber_field.casefold():
+            papernumber_column = c
+            break
+    if not papernumber_column:
+        # TODO - decide whether we should make one and populate it with sentinel -1s.
+        raise ValueError('no "paper_number" column is present.')
+    # clean it up.
+    df[papernumber_column] = df[papernumber_column].apply(
+        lambda x: -1 if pandas.isna(x) else int(x)
+    )
+    print(f"Renaming column {papernumber_column} to 'paper_number'")
+    df.rename(columns={papernumber_column: "paper_number"}, inplace=True)
+
+    # everything clean - now either return just the necessary columns or all cols.
+    if minimalist:
+        return df[["id", "name", "paper_number"]]
+    return df
 
 
 def clean_canvas_csv(csv_file_name):
@@ -168,7 +185,13 @@ def get_demo_classlist(spec):
         )
 
     f.unlink()
-    return clist
+
+    # The raw demo classlist does not have any pre-named students.
+    # So here we pre-name half of spec[numberToProduce] papers
+    for n in range(spec["numberToProduce"] // 2):
+        clist[n]["paper_number"] = n + 1
+    # now only return the classlist truncated to numberToProduce lines
+    return clist[: (spec["numberToProduce"] + 1)]
 
 
 def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False):

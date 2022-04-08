@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Plom now requires Python 3.7.
 * `plom-create` DB creation now done one test at a time which avoids timeouts and enables future flexibility.
 * Manager: improvements to the prediction-related UI.
+* The plom test-spec no longer uses 'numberToName', instead use the (compulsory) "paper_number" column in the classlist.
 
 ### Fixed
 * Non-zero initial orientations should now work properly.
