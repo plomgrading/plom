@@ -1684,6 +1684,7 @@ class Manager(QWidget):
         self.ui.userCB.addItem("*")
         for u in ulist:
             self.ui.userCB.addItem(u)
+        # TODO: but we need to re-run the query else its bloody confusing!
 
     def filterReview(self):
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
