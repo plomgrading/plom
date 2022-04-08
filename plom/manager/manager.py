@@ -1704,18 +1704,10 @@ class Manager(QWidget):
             # otherwise they resort between elements of the row (!)
             tw.setSortingEnabled(False)
             tw.insertRow(i)
-            # first 4 values are numbers
-            for k, x in enumerate(row[:4]):
+            for k, x in enumerate(row):
                 item = QTableWidgetItem()
                 item.setData(Qt.DisplayRole, x)
                 tw.setItem(i, k, item)
-            tw.setItem(i, 4, QTableWidgetItem(str(row[4])))
-            item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, row[5])
-            tw.setItem(i, 5, item)
-            item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, row[6])
-            tw.setItem(i, 6, item)
             if row[4] == "reviewer":
                 for k in range(7):
                     tw.item(i, k).setBackground(QBrush(Qt.green))
