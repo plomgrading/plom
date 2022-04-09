@@ -1411,36 +1411,48 @@ class Manager(QWidget):
         self.ui.overallTW.setRowCount(0)
 
         opDict = self.msgr.RgetCompletionStatus()
+
+        # TODO: why not let Qt do it for us...?
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
         # each dict value is [Scanned, Identified, #Marked]
-        r = 0
-        for t in tk:
+
+        for r, t in enumerate(tk):
+            # for some reason t is string instead of an int
+            tstr = str(t)
+            t = int(t)
             self.ui.overallTW.insertRow(r)
-            self.ui.overallTW.setItem(r, 0, QTableWidgetItem(str(t).rjust(4)))
+            self.ui.overallTW.setSortingEnabled(False)
+            item = QTableWidgetItem()
+            assert isinstance(t, int)
+            item.setData(Qt.DisplayRole, t)
+            self.ui.overallTW.setItem(r, 0, item)
 
-            it = QTableWidgetItem("{}".format(opDict[t][0]))
-            if opDict[t][0]:
-                it.setBackground(QBrush(QColor(0, 255, 0, 48)))
-                it.setToolTip("Has been scanned")
-            elif opDict[t][2] > 0:
-                it.setBackground(QBrush(QColor(255, 0, 0, 48)))
-                it.setToolTip("Has been (part-)marked but not completely scanned.")
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, opDict[tstr][0])
+            if opDict[tstr][0]:
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+                item.setToolTip("Has been scanned")
+            elif opDict[tstr][2] > 0:
+                item.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                item.setToolTip("Has been (part-)marked but not completely scanned.")
+            self.ui.overallTW.setItem(r, 1, item)
 
-            self.ui.overallTW.setItem(r, 1, it)
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, opDict[tstr][1])
+            if opDict[tstr][1]:
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+                item.setToolTip("Has been identified")
+            self.ui.overallTW.setItem(r, 2, item)
 
-            it = QTableWidgetItem("{}".format(opDict[t][1]))
-            if opDict[t][1]:
-                it.setBackground(QBrush(QColor(0, 255, 0, 48)))
-                it.setToolTip("Has been identified")
-            self.ui.overallTW.setItem(r, 2, it)
-
-            it = QTableWidgetItem(str(opDict[t][2]).rjust(3))
-            if opDict[t][2] == self.numberOfQuestions:
-                it.setBackground(QBrush(QColor(0, 255, 0, 48)))
-                it.setToolTip("Has been marked")
-            self.ui.overallTW.setItem(r, 3, it)
-            r += 1
+            item = QTableWidgetItem()
+            assert isinstance(opDict[tstr][2], int)
+            item.setData(Qt.DisplayRole, opDict[tstr][2])
+            if opDict[tstr][2] == self.numberOfQuestions:
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+                item.setToolTip("Has been marked")
+            self.ui.overallTW.setItem(r, 3, item)
+            self.ui.overallTW.setSortingEnabled(True)
 
     def initIDTab(self):
         self.refreshIDTab()
