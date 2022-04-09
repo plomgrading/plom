@@ -1641,6 +1641,7 @@ class Manager(QWidget):
     def initOutTab(self):
         self.ui.tasksOutTW.setColumnCount(3)
         self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time"])
+        self.ui.tasksOutTW.setSortingEnabled(True)
 
     def refreshOutTab(self):
         tasksOut = self.msgr.RgetOutToDo()
@@ -1652,13 +1653,14 @@ class Manager(QWidget):
             return
 
         self.ui.tasksOutTW.setEnabled(True)
-        r = 0
-        for x in tasksOut:
+        self.ui.tasksOutTW.setSortingEnabled(False)
+        for r, x in enumerate(tasksOut):
             self.ui.tasksOutTW.insertRow(r)
-            self.ui.tasksOutTW.setItem(r, 0, QTableWidgetItem(str(x[0])))
-            self.ui.tasksOutTW.setItem(r, 1, QTableWidgetItem(str(x[1])))
-            self.ui.tasksOutTW.setItem(r, 2, QTableWidgetItem(str(x[2])))
-            r += 1
+            for k in range(3):
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, x[k])
+                self.ui.tasksOutTW.setItem(r, k, item)
+        self.ui.tasksOutTW.setSortingEnabled(True)
 
     ##################
     # review tab stuff
