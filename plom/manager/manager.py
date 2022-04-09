@@ -2076,7 +2076,7 @@ class Manager(QWidget):
         self.ui.userListTW.clearContents()
         self.ui.userListTW.setRowCount(0)
         for r, (u, dat) in enumerate(uDict.items()):
-            self.ui.overallTW.setSortingEnabled(False)
+            self.ui.userListTW.setSortingEnabled(False)
             self.ui.userListTW.insertRow(r)
 
             item = QTableWidgetItem()
@@ -2113,7 +2113,7 @@ class Manager(QWidget):
                 item = QTableWidgetItem()
                 item.setData(Qt.DisplayRole, dat[k])
                 self.ui.userListTW.setItem(r, k + 1, item)
-            self.ui.overallTW.setSortingEnabled(True)
+            self.ui.userListTW.setSortingEnabled(True)
 
     def refreshProgressQU(self):
         # delete the children of each toplevel items
