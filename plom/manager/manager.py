@@ -19,7 +19,14 @@ import arrow
 import urllib3
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import (
+    QBrush,
+    QColor,
+    QIcon,
+    QPixmap,
+    QStandardItem,
+    QStandardItemModel,
+)
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -1711,10 +1718,10 @@ class Manager(QWidget):
                 tw.setItem(i, k, item)
             if row[4] == "reviewer":
                 for k in range(7):
-                    tw.item(i, k).setBackground(QBrush(Qt.green))
+                    tw.item(i, k).setBackground(QBrush(QColor(0, 255, 0, 48)))
             if row[3] == "n/a":
                 for k in range(7):
-                    tw.item(i, k).setBackground(QBrush(Qt.yellow))
+                    tw.item(i, k).setBackground(QBrush(QColor(255, 255, 128, 64)))
             tw.setSortingEnabled(True)
 
         for r, dat in enumerate(mrList):
@@ -1771,10 +1778,10 @@ class Manager(QWidget):
                 tw.setItem(i, k, item)
             if row[1] == "reviewer":
                 for k in range(5):
-                    tw.item(i, k).setBackground(QBrush(Qt.green))
+                    tw.item(i, k).setBackground(QBrush(QColor(0, 255, 0, 48)))
             elif row[1] == "automatic":
                 for k in range(5):
-                    tw.item(i, k).setBackground(QBrush(Qt.cyan))
+                    tw.item(i, k).setBackground(QBrush(QColor(0, 255, 255, 48)))
             tw.setSortingEnabled(True)
 
         # self.ui.reviewIDTW.__class__.fill_row_from = f
@@ -2081,14 +2088,23 @@ class Manager(QWidget):
                     r, k + 1, QTableWidgetItem("{}".format(dat[k]))
                 )
             if dat[0]:
-                self.ui.userListTW.item(r, 1).setBackground(QBrush(Qt.green))
+                self.ui.userListTW.item(r, 1).setBackground(
+                    QBrush(QColor(0, 255, 0, 32))
+                )
             else:
-                self.ui.userListTW.item(r, 1).setBackground(QBrush(Qt.red))
+                self.ui.userListTW.item(r, 1).setBackground(
+                    QBrush(QColor(255, 0, 0, 48))
+                )
+
             if dat[1]:
-                self.ui.userListTW.item(r, 2).setBackground(QBrush(Qt.green))
+                self.ui.userListTW.item(r, 2).setBackground(
+                    QBrush(QColor(0, 255, 0, 32))
+                )
 
             if u in ["manager", "scanner", "reviewer"]:
-                self.ui.userListTW.item(r, 0).setBackground(QBrush(Qt.green))
+                self.ui.userListTW.item(r, 0).setBackground(
+                    QBrush(QColor(0, 255, 0, 32))
+                )
 
             # add tooltip to show timestamp when hovering over human readable description
             self.ui.userListTW.item(r, 3).setToolTip(rawTimestamp)
