@@ -1664,8 +1664,29 @@ class Manager(QWidget):
         self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
-        # TODO: possibly I will monkey-patch my review_row_insert into reviewTW here!
-        # TODO: am I reinventing MVC? probably!
+
+        # TODO: where to define this function?  Probably a method of a subclass of reviewTW
+        def f(tw, i, row):
+            """Insert 7 things from row into the ith row of the table tw."""
+            assert len(row) == 7
+            # otherwise they resort between elements of the row (!)
+            tw.setSortingEnabled(False)
+            tw.insertRow(i)
+            for k, x in enumerate(row):
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, x)
+                tw.setItem(i, k, item)
+            if row[4] == "reviewer":
+                for k in range(7):
+                    tw.item(i, k).setBackground(QBrush(QColor(0, 255, 0, 48)))
+            if row[3] == "n/a":
+                for k in range(7):
+                    tw.item(i, k).setBackground(QBrush(QColor(255, 255, 128, 64)))
+            tw.setSortingEnabled(True)
+
+        # TODO: for now, monkey-patch the inserter into reviewTW
+        # self.ui.reviewTW.__class__._fill_row_from = f
+        self.ui.reviewTW._fill_row_from = f
 
         # maps zero to special text
         self.ui.reviewPaperNumSpinBox.setSpecialValueText("*")
@@ -1704,28 +1725,8 @@ class Manager(QWidget):
         )
         self.ui.reviewTW.clearContents()
         self.ui.reviewTW.setRowCount(0)
-
-        # TODO: where to define this function?  Probably a method of a subclass of reviewTW
-        def review_row_insert(tw, i, row):
-            """Insert 7 things from row into the ith row of the table tw."""
-            assert len(row) == 7
-            # otherwise they resort between elements of the row (!)
-            tw.setSortingEnabled(False)
-            tw.insertRow(i)
-            for k, x in enumerate(row):
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, x)
-                tw.setItem(i, k, item)
-            if row[4] == "reviewer":
-                for k in range(7):
-                    tw.item(i, k).setBackground(QBrush(QColor(0, 255, 0, 48)))
-            if row[3] == "n/a":
-                for k in range(7):
-                    tw.item(i, k).setBackground(QBrush(QColor(255, 255, 128, 64)))
-            tw.setSortingEnabled(True)
-
         for r, dat in enumerate(mrList):
-            review_row_insert(self.ui.reviewTW, r, dat)
+            self.ui.reviewTW._fill_row_from(self.ui.reviewTW, r, dat)
 
     def reviewAnnotated(self):
         rvi = self.ui.reviewTW.selectedIndexes()
@@ -1784,8 +1785,8 @@ class Manager(QWidget):
                     tw.item(i, k).setBackground(QBrush(QColor(0, 255, 255, 48)))
             tw.setSortingEnabled(True)
 
-        # self.ui.reviewIDTW.__class__.fill_row_from = f
-        self.ui.reviewIDTW.fill_row_from = f
+        # self.ui.reviewIDTW.__class__._fill_row_from = f
+        self.ui.reviewIDTW._fill_row_from = f
 
     def refreshIDRev(self):
         irList = self.msgr.getIDReview()
@@ -1793,7 +1794,7 @@ class Manager(QWidget):
         self.ui.reviewIDTW.setRowCount(0)
         for r, row_data in enumerate(irList):
             self.ui.reviewIDTW.insertRow(r)
-            self.ui.reviewIDTW.fill_row_from(self.ui.reviewIDTW, r, row_data)
+            self.ui.reviewIDTW._fill_row_from(self.ui.reviewIDTW, r, row_data)
 
     def reviewIDd(self):
         rvi = self.ui.reviewIDTW.selectedIndexes()
