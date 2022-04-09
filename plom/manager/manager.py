@@ -1759,25 +1759,34 @@ class Manager(QWidget):
         self.ui.reviewIDTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewIDTW.activated.connect(self.reviewIDd)
 
+        # monkey-patch in a row-insert routine
+        def f(tw, i, row):
+            """Insert data from row into the ith row of this table."""
+            assert len(row) == 5
+            # otherwise they resort during the insert, between elements!
+            tw.setSortingEnabled(False)
+            for k, x in enumerate(row):
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, x)
+                tw.setItem(i, k, item)
+            if row[1] == "reviewer":
+                for k in range(5):
+                    tw.item(i, k).setBackground(QBrush(Qt.green))
+            elif row[1] == "automatic":
+                for k in range(5):
+                    tw.item(i, k).setBackground(QBrush(Qt.cyan))
+            tw.setSortingEnabled(True)
+
+        # self.ui.reviewIDTW.__class__.fill_row_from = f
+        self.ui.reviewIDTW.fill_row_from = f
+
     def refreshIDRev(self):
         irList = self.msgr.getIDReview()
         self.ui.reviewIDTW.clearContents()
         self.ui.reviewIDTW.setRowCount(0)
-        r = 0
-        for dat in irList:
+        for r, row_data in enumerate(irList):
             self.ui.reviewIDTW.insertRow(r)
-            # rjust(4) entries so that they can sort like integers... without actually being integers
-            for k in range(5):
-                self.ui.reviewIDTW.setItem(
-                    r, k, QTableWidgetItem("{}".format(dat[k]).rjust(4))
-                )
-            if dat[1] == "reviewer":
-                for k in range(5):
-                    self.ui.reviewIDTW.item(r, k).setBackground(QBrush(Qt.green))
-            elif dat[1] == "automatic":
-                for k in range(5):
-                    self.ui.reviewIDTW.item(r, k).setBackground(QBrush(Qt.cyan))
-            r += 1
+            self.ui.reviewIDTW.fill_row_from(self.ui.reviewIDTW, r, row_data)
 
     def reviewIDd(self):
         rvi = self.ui.reviewIDTW.selectedIndexes()
