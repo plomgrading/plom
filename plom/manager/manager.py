@@ -1449,7 +1449,8 @@ class Manager(QWidget):
         self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID", "Name"])
         self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.predictionTW.setAlternatingRowColors(True)
+        # Seemed broken so commented out
+        # self.ui.predictionTW.setAlternatingRowColors(True)
         self.ui.predictionTW.activated.connect(self.viewIDPage)
 
     def refreshIDTab(self):
@@ -1571,21 +1572,24 @@ class Manager(QWidget):
 
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
-        r = 0
-        for t in pdict.keys():
+        for r, t in enumerate(pdict.keys()):
             self.ui.predictionTW.insertRow(r)
-            self.ui.predictionTW.setItem(r, 0, QTableWidgetItem("{}".format(t)))
-            it = QTableWidgetItem("{}".format(pdict[t]))
-            it2 = QTableWidgetItem("")
+            self.ui.predictionTW.setSortingEnabled(False)
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, t)
+            self.ui.predictionTW.setItem(r, 0, item)
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, pdict[t])
+            item2 = QTableWidgetItem()
             if str(t) in iDict:
-                it.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                it.setToolTip("Has been identified")
-                it2.setText(iDict[str(t)][1])
-                it2.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                it2.setToolTip("Has been identified")
-            self.ui.predictionTW.setItem(r, 1, it)
-            self.ui.predictionTW.setItem(r, 2, it2)
-            r += 1
+                item.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                item.setToolTip("Has been identified")
+                item2.setData(Qt.DisplayRole, iDict[str(t)][1])
+                item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                item2.setToolTip("Has been identified")
+            self.ui.predictionTW.setItem(r, 1, item)
+            self.ui.predictionTW.setItem(r, 2, item2)
+            self.ui.predictionTW.setSortingEnabled(True)
 
     def deletePredictions(self):
         msg = SimpleQuestion(
