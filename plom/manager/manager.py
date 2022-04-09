@@ -2070,46 +2070,45 @@ class Manager(QWidget):
         uDict = self.msgr.getUserDetails()
         self.ui.userListTW.clearContents()
         self.ui.userListTW.setRowCount(0)
-        r = 0
-        for u in uDict:
-            dat = uDict[u]
+        for r, (u, dat) in enumerate(uDict.items()):
+            self.ui.overallTW.setSortingEnabled(False)
             self.ui.userListTW.insertRow(r)
 
-            # change the last activity to be human readable
-            rawTimestamp = dat[2]
-
-            time = arrow.get(rawTimestamp, "YY:MM:DD-HH:mm:ss")
-            dat[2] = time.humanize()
-
-            # rjust(4) entries so that they can sort like integers... without actually being integers
-            self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
-            for k in range(6):
-                self.ui.userListTW.setItem(
-                    r, k + 1, QTableWidgetItem("{}".format(dat[k]))
-                )
-            if dat[0]:
-                self.ui.userListTW.item(r, 1).setBackground(
-                    QBrush(QColor(0, 255, 0, 32))
-                )
-            else:
-                self.ui.userListTW.item(r, 1).setBackground(
-                    QBrush(QColor(255, 0, 0, 48))
-                )
-
-            if dat[1]:
-                self.ui.userListTW.item(r, 2).setBackground(
-                    QBrush(QColor(0, 255, 0, 32))
-                )
-
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, u)
             if u in ["manager", "scanner", "reviewer"]:
-                self.ui.userListTW.item(r, 0).setBackground(
-                    QBrush(QColor(0, 255, 0, 32))
-                )
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+            self.ui.userListTW.setItem(r, 0, item)
 
-            # add tooltip to show timestamp when hovering over human readable description
-            self.ui.userListTW.item(r, 3).setToolTip(rawTimestamp)
+            k = 0
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, dat[k])
+            if not dat[k]:
+                item.setBackground(QBrush(QColor(255, 0, 0, 48)))
+            self.ui.userListTW.setItem(r, k + 1, item)
 
-            r += 1
+            k = 1
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, dat[k])
+            if dat[k]:
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+            self.ui.userListTW.setItem(r, k + 1, item)
+
+            k = 2
+            # change the last activity to be human readable
+            time = arrow.get(dat[k], "YY:MM:DD-HH:mm:ss")
+            time.humanize()
+            item = QTableWidgetItem()
+            # TODO: want human-readable w/ raw tooltip but breaks sorting
+            item.setData(Qt.DisplayRole, dat[k])
+            item.setToolTip(time.humanize())
+            self.ui.userListTW.setItem(r, k + 1, item)
+
+            for k in range(3, 6):
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, dat[k])
+                self.ui.userListTW.setItem(r, k + 1, item)
+            self.ui.overallTW.setSortingEnabled(True)
 
     def refreshProgressQU(self):
         # delete the children of each toplevel items
