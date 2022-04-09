@@ -638,7 +638,7 @@ class Manager(QWidget):
                     l0.addChild(QTreeWidgetItem(["", str(p), str(v), "scanned"]))
                 else:
                     it = QTreeWidgetItem(["", str(p), str(v), "missing"])
-                    it.setBackground(3, QBrush(Qt.red))
+                    it.setBackground(3, QBrush(QColor(255, 0, 0, 48)))
                     l0.addChild(it)
             self.ui.incompTW.addTopLevelItem(l0)
 
@@ -665,9 +665,9 @@ class Manager(QWidget):
             for (p, v) in scanned[t]:
                 l1 = QTreeWidgetItem(["", str(p), str(v)])
                 if "{}.{}".format(t, p) in cdtp.values():
-                    l0.setBackground(0, QBrush(Qt.cyan))
+                    l0.setBackground(0, QBrush(QColor(0, 255, 255, 48)))
                     l0.setToolTip(0, "Has collisions")
-                    l1.setBackground(1, QBrush(Qt.cyan))
+                    l1.setBackground(1, QBrush(QColor(0, 255, 255, 48)))
                     l0.setToolTip(1, "Has collisions")
                 l0.addChild(l1)
             self.ui.scanTW.addTopLevelItem(l0)
@@ -1421,23 +1421,23 @@ class Manager(QWidget):
 
             it = QTableWidgetItem("{}".format(opDict[t][0]))
             if opDict[t][0]:
-                it.setBackground(QBrush(Qt.green))
+                it.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 it.setToolTip("Has been scanned")
             elif opDict[t][2] > 0:
-                it.setBackground(QBrush(Qt.red))
+                it.setBackground(QBrush(QColor(255, 0, 0, 48)))
                 it.setToolTip("Has been (part-)marked but not completely scanned.")
 
             self.ui.overallTW.setItem(r, 1, it)
 
             it = QTableWidgetItem("{}".format(opDict[t][1]))
             if opDict[t][1]:
-                it.setBackground(QBrush(Qt.green))
+                it.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 it.setToolTip("Has been identified")
             self.ui.overallTW.setItem(r, 2, it)
 
             it = QTableWidgetItem(str(opDict[t][2]).rjust(3))
             if opDict[t][2] == self.numberOfQuestions:
-                it.setBackground(QBrush(Qt.green))
+                it.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 it.setToolTip("Has been marked")
             self.ui.overallTW.setItem(r, 3, it)
             r += 1
@@ -1578,10 +1578,10 @@ class Manager(QWidget):
             it = QTableWidgetItem("{}".format(pdict[t]))
             it2 = QTableWidgetItem("")
             if str(t) in iDict:
-                it.setBackground(QBrush(Qt.cyan))
+                it.setBackground(QBrush(QColor(0, 255, 255, 48)))
                 it.setToolTip("Has been identified")
                 it2.setText(iDict[str(t)][1])
-                it2.setBackground(QBrush(Qt.cyan))
+                it2.setBackground(QBrush(QColor(0, 255, 255, 48)))
                 it2.setToolTip("Has been identified")
             self.ui.predictionTW.setItem(r, 1, it)
             self.ui.predictionTW.setItem(r, 2, it2)
