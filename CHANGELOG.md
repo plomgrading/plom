@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Non-zero initial orientations should now work properly.
+* Slow client during Rearrange Page dialog use immediately on new page should be fixed.
 
 
 
