@@ -769,10 +769,9 @@ class Annotator(QWidget):
             log.debug("permuted: new stuff is {}".format(stuff))
             if not stuff:
                 txt = """
-                    <p>Marker did not give us back the permuted material for
-                    marking.</p>
-                    <p>Probably you cancelled a download that we shouldn't be waiting
-                    on anyway&mdash;see
+                    <p>Unexpectedly, Marker did not give us back the permuted
+                    material for marking.</p>
+                    <p>Something has gone wrong, maybe related to
                     <a href="https://gitlab.com/plom/plom/-/issues/1967">Issue #1967</a>.
                     </p>
                 """
