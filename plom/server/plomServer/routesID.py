@@ -343,6 +343,7 @@ class IDHandler:
 
     # @routes.put("/ID/{papernum}")
     @authenticate_by_token_required_fields(["user", "sid", "sname"])
+    @write_admin
     def IdentifyPaper(self, data, request):
         """Identify a paper directly without certain checks.
 
@@ -354,12 +355,10 @@ class IDHandler:
         in the future.
 
         Returns:
-            400: not manager.
+            403: not manager.
             404: papernum not found, or other data errors.
             409: student number `data["sid"]` is already in use.
         """
-        if not data["user"] == "manager":
-            raise web.HTTPBadRequest(reason="Not manager")
         papernum = request.match_info["papernum"]
 
         # special feature to unidentify: move elsewhere?
@@ -380,12 +379,13 @@ class IDHandler:
 
     # @routes.get("/ID/randomImage")
     @authenticate_by_token_required_fields(["user"])
+    @readonly_admin
     def IDgetImageFromATest(self, data, request):
         """Gets a random image to extract the bounding box corresponding to the student name and id.
 
         The bounding box indicated on this image will be later used to extract the
         student ids from the other papers.
-        Responds with status 200/401/404/410.
+        Responds with status 200/401/403/404/410.
         Logs activity.
 
         Args:
@@ -395,11 +395,6 @@ class IDHandler:
             aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which
                 includes a multipart object with the images.
         """
-
-        # TODO: maybe we want some special message here?
-        if data["user"] != "manager":
-            return web.Response(status=401)  # only manager
-
         # A list with a boolean (indicating whether the objects exist) and a list of the exam images.
         random_image_paths = self.server.IDgetImageFromATest()
 
@@ -420,7 +415,9 @@ class IDHandler:
                 writer.append(raw_bytes)
             return web.Response(body=writer, status=200)
 
+    # @routes.delete("/ID/predictedID")
     @authenticate_by_token_required_fields(["user"])
+    @write_admin
     def IDdeletePredictions(self, data, request):
         """Deletes the machine-learning predicted IDs for all papers.
 
@@ -434,18 +431,13 @@ class IDHandler:
             aiohttp.web_response.Response: Returns a response with a True or False indicating if the deletion
                 was successful.
         """
-
-        # TODO: maybe we want some special message here?
-        if data["user"] != "manager":
-            return web.Response(status=401)
-
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
+    # @routes.put("/ID/predictedID")
     @authenticate_by_token_required_fields(["user", "predictions"])
+    @write_admin
     def IDputPredictions(self, data, request):
         """Upload and save id-predictions (eg via machine learning)
-
-        Responds with status 200/401.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user`, `token` and `predictions`.
@@ -454,9 +446,6 @@ class IDHandler:
         Returns:
             aiohttp.web_response.Response: Returns a response with a [True, message] or [False,message] indicating if predictions upload was successful.
         """
-        if data["user"] != "manager":
-            return web.Response(status=401)
-
         try:
             with open(specdir / "classlist.csv") as f:
                 reader = csv.DictReader(f)

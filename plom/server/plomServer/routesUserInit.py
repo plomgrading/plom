@@ -5,12 +5,10 @@
 
 from aiohttp import web
 
-from .routeutils import (
-    authenticate_by_token,
-    authenticate_by_token_required_fields,
-    no_authentication_only_log_request,
-)
+from .routeutils import authenticate_by_token_required_fields
+from .routeutils import no_authentication_only_log_request
 from .routeutils import validate_required_fields, log_request
+from .routeutils import write_admin
 from .routeutils import log
 
 from plom import SpecVerifier
@@ -90,11 +88,9 @@ class UserInitHandler:
             return web.Response(text=rval[1], status=406)
 
     # @routes.put("/enable/{user}")
-    async def enableUser(self, request):
-        log_request("enableUser", request)
-        data = await request.json()
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="I want to speak to the manager")
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def enableUser(self, data, request):
         theuser = request.match_info["user"]
         if theuser in ("manager", "HAL"):
             raise web.HTTPBadRequest(reason="HAL/manager cannot be enabled/disabled")
@@ -103,11 +99,9 @@ class UserInitHandler:
         return web.Response(status=200)
 
     # @routes.put("/disable/{user}")
-    async def disableUser(self, request):
-        log_request("disableUser", request)
-        data = await request.json()
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="I want to speak to the manager")
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def disableUser(self, data, request):
         theuser = request.match_info["user"]
         if theuser == "manager":
             raise web.HTTPBadRequest(reason="Cannot disable the manager account")
@@ -175,6 +169,7 @@ class UserInitHandler:
 
     # @routes.put("/info/spec")
     @authenticate_by_token_required_fields(["user", "spec"])
+    @write_admin
     def put_spec(self, data, request):
         """Accept an uploaded exam specification.
 
@@ -185,9 +180,6 @@ class UserInitHandler:
             200: new spec file accepted.  TODO: would be polite to inform
                 caller if we already had one or not.
         """
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="Not manager")
-
         if self.server.DB.is_paper_database_populated():
             raise web.HTTPConflict(reason="Server has populated DB: cannot accept spec")
         sv = SpecVerifier(data["spec"])

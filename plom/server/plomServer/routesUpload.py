@@ -8,6 +8,7 @@ from aiohttp import web, MultipartWriter, MultipartReader
 from plom import undo_json_packing_of_version_map
 from .routeutils import authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request, log
+from .routeutils import readonly_admin, write_admin
 
 
 class UploadHandler:
@@ -599,7 +600,9 @@ class UploadHandler:
         else:
             return web.Response(status=404)
 
-    async def unknownToTestPage(self, request):
+    @authenticate_by_token_required_fields(["fileName", "test", "page", "rotation"])
+    @write_admin
+    def unknownToTestPage(self, data, request):
         """The unknown page is moved to the indicated tpage.
 
         The minimal set of groups are reset when this happens
@@ -619,16 +622,6 @@ class UploadHandler:
                 401 for authentication, or 403 is not manager. 409 in other
                 such as test number or page number do not exist.
         """
-        data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "fileName", "test", "page", "rotation"]
-        ):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="I can only speak to the manager")
-
         status, code, msg = self.server.unknownToTestPage(
             data["fileName"], data["test"], data["page"], data["rotation"]
         )
@@ -641,7 +634,9 @@ class UploadHandler:
         log.warn("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
-    async def unknownToHWPage(self, request):
+    @authenticate_by_token_required_fields(["fileName", "test", "questions", "rotation"])
+    @write_admin
+    def unknownToHWPage(self, data, request):
         """Map an unknown page onto one or more HomeworkPages.
 
         args:
@@ -658,16 +653,6 @@ class UploadHandler:
                 401 for authentication, or 403 is not manager. 409 if paper
                 number or question number do not exist (e.g., out of range).
         """
-        data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "fileName", "test", "questions", "rotation"]
-        ):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="I can only speak to the manager")
-
         status, code, msg = self.server.unknownToHWPage(
             data["fileName"], data["test"], data["questions"], data["rotation"]
         )
@@ -679,7 +664,9 @@ class UploadHandler:
         log.warn("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
-    async def unknownToExtraPage(self, request):
+    @authenticate_by_token_required_fields(["fileName", "test", "questions", "rotation"])
+    @write_admin
+    def unknownToExtraPage(self, data, request):
         """Map an unknown page onto one or more extra pages.
 
         args:
@@ -700,16 +687,6 @@ class UploadHandler:
                 bypass the scanned mechanism and a test of only extra pages
                 could be overlooked (not graded nor returned).
         """
-        data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "fileName", "test", "questions", "rotation"]
-        ):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="I can only speak to the manager")
-
         status, code, msg = self.server.unknownToExtraPage(
             data["fileName"], data["test"], data["questions"], data["rotation"]
         )
@@ -749,15 +726,9 @@ class UploadHandler:
         log.warn("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
-    async def discardToUnknown(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "fileName"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
+    @authenticate_by_token_required_fields(["fileName"])
+    @write_admin
+    def discardToUnknown(self, data, request):
         rval = self.server.discardToUnknown(data["fileName"])
         if rval[0]:
             return web.Response(status=200)  # all fine
@@ -765,10 +736,9 @@ class UploadHandler:
             return web.Response(status=404)
 
     @authenticate_by_token_required_fields(["user", "version_map"])
+    @write_admin
     def initialiseExamDatabase(self, data, request):
         """Instruct the server to generate paper data in the database."""
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
             raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
@@ -788,6 +758,7 @@ class UploadHandler:
         return web.json_response(new_vmap, status=200)
 
     @authenticate_by_token_required_fields(["user", "test_number", "vmap_for_test"])
+    @write_admin
     def appendTestToExamDatabase(self, data, request):
         """Append given test to database using given version map.
 
@@ -801,8 +772,6 @@ class UploadHandler:
                 be created.
                 500 for unexpected errors.
         """
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
             raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
@@ -889,14 +858,13 @@ class UploadHandler:
     # Some more bundle things
 
     @authenticate_by_token_required_fields(["user", "filename"])
+    @readonly_admin
     def getBundleFromImage(self, data, request):
         """Returns the name of the bundle that contains the given image.
 
         If DB can't find the file then returns HTTPGone error.
         If not manager, then raise an HTTPUnauthorized error.
         """
-        if not data["user"] == "manager":
-            return web.HTTPUnauthorized(reason="You are not manager")
         rval = self.server.getBundleFromImage(data["filename"])
         if rval[0]:
             return web.json_response(rval[1], status=200)  # all fine
