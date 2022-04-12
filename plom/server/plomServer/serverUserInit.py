@@ -57,41 +57,6 @@ def info_spec(self):
     return self.testSpec.get_public_spec_dict()
 
 
-def reloadUsers(self, password):
-    """Reload the user list."""
-    # Check user is manager.
-    if not self.authority.authoriseUser("manager", password):
-        log.warning("Unauthorised attempt to reload users")
-        return False
-    log.info("Reloading the user list")
-    # Load in the user list and check against existing user list for differences
-    try:
-        with open(os.path.join(confdir, "userList.json")) as data_file:
-            newUserList = json.load(data_file)
-            # for each user in the new list..
-            for u in newUserList:
-                if u not in self.userList:
-                    # This is a new user - add them in.
-                    self.userList[u] = newUserList[u]
-                    self.authority.addUser(u, newUserList[u])
-                    log.info("Adding new user = {}".format(u))
-            # for each user in the old list..
-            for u in self.userList:
-                if u not in newUserList:
-                    # this user has been removed
-                    log.info("Removing user = {}".format(u))
-                    # Anything out at user should go back on todo pile.
-                    self.DB.resetUsersToDo(u)
-                    # remove user's authorisation token.
-                    self.authority.detoken(u)
-    except FileNotFoundError:
-        # TODO?  really not even return False?
-        pass
-    log.debug("Current user list = {}".format(list(self.userList.keys())))
-    # return acknowledgement
-    return True
-
-
 def checkPassword(self, user, password):
     """Does user's password match the hashed one on file?"""
     hashed_pwd = self.DB.getUserPasswordHash(user)
