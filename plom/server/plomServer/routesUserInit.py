@@ -72,20 +72,20 @@ class UserInitHandler:
 
     # @routes.post("/authorisation/{user}")
     @authenticate_by_token_required_fields(["password"])
+    @write_admin
     def createModifyUser(self, data, request):
-        # update password of existing user, or create new user.
+        """Update password of existing user, or create new user."""
         theuser = request.match_info["user"]
-        rval = self.server.createModifyUser(theuser, data["password"])
-        if rval[0]:  # successful
-            if rval[1]:  # created new user
-                log.info('Manager created new user "{}"'.format(theuser))
-                return web.Response(status=201)
-            else:  # updated password of existing user
-                log.info('Manager updated password of user "{}"'.format(theuser))
-                return web.Response(status=202)
-        else:  # failed.
-            log.info('Manager failed to create/modify user "{}"'.format(theuser))
-            return web.Response(text=rval[1], status=406)
+        ok, val = self.server.createModifyUser(theuser, data["password"])
+        if not ok:
+            log.info('Manager failed to create/modify user "%s"', theuser)
+            return web.HTTPNotAcceptable(reason=val)
+        if val:
+            log.info('Manager created new user "%s"', theuser)
+            return web.Response(status=201)
+        else:
+            log.info('Manager updated password of user "%s"', theuser)
+            return web.Response(status=202)
 
     # @routes.put("/enable/{user}")
     @authenticate_by_token_required_fields([])
