@@ -292,12 +292,10 @@ def MtakeTaskFromClient(
         # keep the refs for apage creation
         image_ref_list = []
         for img in images_used:
-            iref = Image.get_or_none(id=img["id"])
+            # img["md5"] is a sanity check here
+            iref = Image.get_or_none(id=img["id"], md5sum=img["md5"])
             if iref is None:
                 return [False, "No_such_image"]
-            # TODO: sanity check here
-            # if img["md5"] != iref.get_md5:
-            #    return (False, "integrity_fail")
             image_ref_list.append(iref)
 
         # grab the group corresponding to that task
