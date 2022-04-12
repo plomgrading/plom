@@ -10,6 +10,7 @@ from aiohttp import web, MultipartWriter
 
 from plom import specdir
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
+from .routeutils import readonly_admin, write_admin
 from .routeutils import log
 
 # I couldn't make this work with the auth deco
@@ -59,6 +60,7 @@ class IDHandler:
 
     # @routes.put("/ID/classlist")
     @authenticate_by_token_required_fields(["user", "classlist"])
+    @write_admin
     def IDputClasslist(self, data, request):
         """Accept classlist upload.
 
@@ -88,8 +90,6 @@ class IDHandler:
                     TODO: would be nice to be able to "try again".
                 HTTPNotAcceptable: classlist too short (see above).
         """
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
             raise web.HTTPBadRequest(
@@ -340,6 +340,7 @@ class IDHandler:
 
     # @routes.put("/ID/prename/{paper_number}")
     @authenticate_by_token_required_fields(["user", "sid", "sname"])
+    @write_admin
     def PrenamePaper(self, data, request):
         """Prename a paper.
 
@@ -351,14 +352,17 @@ class IDHandler:
         in the future.
 
         Returns:
-            400: not manager.
+            403: not manager.
             404: papernum not found, or other data errors.
             409: student number `data["sid"]` is already in use.
         """
-        if not data["user"] == "manager":
-            raise web.HTTPBadRequest(reason="Not manager")
         papernum = request.match_info["paper_number"]
 
+        # special feature to unidentify: move elsewhere?
+        if not data["sid"] and not data["sname"]:
+            if self.server.DB.remove_id_from_paper(papernum):
+                return web.Response(status=200)
+            raise web.HTTPNotFound(reason=f"Did not find papernum {papernum}")
         r, what, msg = self.server.prename_paper(papernum, data["sid"], data["sname"])
         if r:
             return web.Response(status=200)
@@ -371,12 +375,13 @@ class IDHandler:
 
     # @routes.get("/ID/randomImage")
     @authenticate_by_token_required_fields(["user"])
+    @readonly_admin
     def IDgetImageFromATest(self, data, request):
         """Gets a random image to extract the bounding box corresponding to the student name and id.
 
         The bounding box indicated on this image will be later used to extract the
         student ids from the other papers.
-        Responds with status 200/401/404/410.
+        Responds with status 200/401/403/404/410.
         Logs activity.
 
         Args:
@@ -386,11 +391,6 @@ class IDHandler:
             aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which
                 includes a multipart object with the images.
         """
-
-        # TODO: maybe we want some special message here?
-        if data["user"] != "manager":
-            return web.Response(status=401)  # only manager
-
         # A list with a boolean (indicating whether the objects exist) and a list of the exam images.
         random_image_paths = self.server.IDgetImageFromATest()
 
@@ -411,7 +411,9 @@ class IDHandler:
                 writer.append(raw_bytes)
             return web.Response(body=writer, status=200)
 
+    # @routes.delete("/ID/predictedID")
     @authenticate_by_token_required_fields(["user"])
+    @write_admin
     def IDdeletePredictions(self, data, request):
         """Deletes the machine-learning predicted IDs for all papers.
 
@@ -425,18 +427,13 @@ class IDHandler:
             aiohttp.web_response.Response: Returns a response with a True or False indicating if the deletion
                 was successful.
         """
-
-        # TODO: maybe we want some special message here?
-        if data["user"] != "manager":
-            return web.Response(status=401)
-
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
+    # @routes.put("/ID/predictedID")
     @authenticate_by_token_required_fields(["user", "predictions"])
+    @write_admin
     def IDputPredictions(self, data, request):
         """Upload and save id-predictions (eg via machine learning)
-
-        Responds with status 200/401.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user`, `token` and `predictions`.
@@ -445,11 +442,7 @@ class IDHandler:
         Returns:
             aiohttp.web_response.Response: Returns a response with a [True, message] or [False,message] indicating if predictions upload was successful.
         """
-        if data["user"] != "manager":
-            return web.Response(status=401)
-
-        # this classlist reading should probably happen in the serverID not here.
-        try:
+        # this classlist reading should probably happen in the serverID not h        try:
             with open(specdir / "classlist.csv") as f:
                 reader = csv.DictReader(f)
                 classlist = list(reader)
@@ -466,6 +459,7 @@ class IDHandler:
     @authenticate_by_token_required_fields(
         ["user", "crop_top", "crop_bottom", "ignoreStamp"]
     )
+    @write_admin
     def run_id_reader(self, data, request):
         """Runs the id digit reader on all paper ID pages.
 
@@ -480,9 +474,6 @@ class IDHandler:
             aiohttp.web_response.Response: Returns a response with the date and time of the machine reader run.
             Or responds with saying the machine reader is already running.
         """
-        if data["user"] != "manager":
-            raise web.HTTPForbidden(reason="I only speak to the manager")
-
         is_running, other = self.server.run_id_reader(
             data["crop_top"], data["crop_bottom"], data["ignoreStamp"]
         )
@@ -496,6 +487,7 @@ class IDHandler:
             return web.Response(text=other, status=205)
 
     @authenticate_by_token_required_fields(["user"])
+    @write_admin
     def predict_id_lap_solver(self, data, request):
         """Match Runs the id digit reader on all paper ID pages.
 
@@ -510,9 +502,6 @@ class IDHandler:
             409 (conflict): ID reader still running
             412 (precondition failed) for no ID reader
         """
-        if data["user"] != "manager":
-            raise web.HTTPForbidden(reason="I only speak to the manager")
-
         try:
             status = self.server.predict_id_lap_solver()
         except RuntimeError as e:

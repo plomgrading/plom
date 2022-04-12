@@ -303,7 +303,7 @@ def upload(
     ver,
     rubrics,
     integrity_check,
-    image_md5_list,
+    images_used,
     knownFailCallback=None,
     unknownFailCallback=None,
     successCallback=None,
@@ -321,7 +321,9 @@ def upload(
         question (int or str): the question number
         ver (int or str): the version number
         integrity_check (str): the integrity_check string of the task.
-        image_md5_list (list[str]): a list of image md5sums used.
+        images_used (list[dict]): a list of dicts of the images used.
+            Must have keys ``id`` and ``md5``, other keys ignored.
+            If you have a ``img_src_data``, that should work.
         knownFailCallback: if we fail in a way that is reasonably expected,
             call this function.
         unknownFailCallback: if we fail but don't really know why or what
@@ -359,7 +361,7 @@ def upload(
             pname,
             rubrics,
             integrity_check,
-            image_md5_list,
+            images_used,
         )
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
@@ -1894,7 +1896,7 @@ class MarkerClient(QWidget):
             self.version,
             rubrics,
             integrity_check,
-            [x["md5"] for x in src_img_data],
+            src_img_data,
         )
         if self.allowBackgroundOps:
             # the actual upload will happen in another thread

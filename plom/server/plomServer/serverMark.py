@@ -130,7 +130,7 @@ def MreturnMarkedTask(
     time_spent_marking,
     annotated_image_md5,
     integrity_check,
-    image_md5s,
+    images_used,
 ):
     """Save the marked paper's information to database and respond with grading progress.
 
@@ -148,7 +148,8 @@ def MreturnMarkedTask(
         time_spent_marking (int): Seconds spent marking the paper.
         annotated_image_md5 (str): MD5 hash of the annotated image.
         integrity_check (str): the integrity_check string for this task
-        image_md5s (list[str]): list of image md5sums used.
+        images_used (list[dict]): list of images used, with keys "md5"
+            and "id" (and optionally other keys that we don't use).
 
     Returns:
         list: Respond with a list which includes:
@@ -181,11 +182,11 @@ def MreturnMarkedTask(
         return [False, f"Invalid JSON in plom file data: {str(e)}"]
     if plom_data.get("currentMark") != mark:
         return [False, f"Mark mismatch: {mark} does not match plomfile content"]
-    for x, y in zip(image_md5s, plom_data["base_images"]):
-        if x != y["md5"]:
+    for x, y in zip(images_used, plom_data["base_images"]):
+        if x["md5"] != y["md5"]:
             errstr = (
                 "data mismatch: base image md5s do not match plomfile: "
-                + f'{image_md5s} versus {plom_data["base_images"]}'
+                + f'{images_used} versus {plom_data["base_images"]}'
             )
             return [False, errstr]
 
@@ -200,7 +201,7 @@ def MreturnMarkedTask(
         time_spent_marking,
         annotated_image_md5,
         integrity_check,
-        image_md5s,
+        images_used,
     )
 
     if database_task_response[0] is False:

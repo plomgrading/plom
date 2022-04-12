@@ -278,7 +278,7 @@ def MtakeTaskFromClient(
     marking_time,
     md5,
     integrity_check,
-    image_md5_list,
+    images_used,
 ):
     """Get marked image back from client and update the record
     in the database.
@@ -291,12 +291,12 @@ def MtakeTaskFromClient(
         # make sure all returned image-ids are actually images
         # keep the refs for apage creation
         image_ref_list = []
-        for img_md5 in image_md5_list:
-            iref = Image.get_or_none(md5sum=img_md5)
-            if iref:
-                image_ref_list.append(iref)
-            else:
+        for img in images_used:
+            # img["md5"] is a sanity check here
+            iref = Image.get_or_none(id=img["id"], md5sum=img["md5"])
+            if iref is None:
                 return [False, "No_such_image"]
+            image_ref_list.append(iref)
 
         # grab the group corresponding to that task
         gref = Group.get_or_none(Group.gid == task)
@@ -330,8 +330,8 @@ def MtakeTaskFromClient(
         for pref in tref.expages:
             test_image_md5s.append(pref.image.md5sum)
         # check image_id_list against this list
-        for img_md5 in image_md5_list:
-            if img_md5 not in test_image_md5s:
+        for img in images_used:
+            if img["md5"] not in test_image_md5s:
                 return [False, "image_not_in_test"]
         # check rubrics keys are valid
         # TODO - should these check question of rubric agrees with question of task?
@@ -457,10 +457,20 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
         plom_data["currentMark"] = aref.mark
     for i, (id_, md5, _) in enumerate(metadata):
         if id_ != plom_data["base_images"][i]["id"]:
-            log.warning("Plom file has wrong base image id, replacing")
+            log.error(
+                "Plom file has wrong base image id %s, replacing with %s\ndata=%s",
+                plom_data["base_images"][i]["id"],
+                id_,
+                plom_data,
+            )
             plom_data["base_images"][i]["id"] = id_
         if md5 != plom_data["base_images"][i]["md5"]:
-            log.warning("Plom file has wrong base image md5, replacing")
+            log.error(
+                "Plom file has wrong base image md5 %s, replacing with %s\ndata=%s",
+                plom_data["base_images"][i]["md5"],
+                md5,
+                plom_data,
+            )
             plom_data["base_images"][i]["md5"] = md5
     return (True, plom_data, img_file)
 
