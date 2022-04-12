@@ -1283,7 +1283,8 @@ class Manager(QWidget):
     def doDActions(self):
         for r in range(self.discardModel.rowCount()):
             if self.discardModel.item(r, 3).text() == "move":
-                self.msgr.discardToUnknown(self.discardModel.item(r, 0).text())
+                pagedata = self.discardModel.item(r, 0).data()
+                self.msgr.discardToUnknown(pagedata["server_path"])
         self.refreshDiscardList()
         self.refreshUnknownList()
 

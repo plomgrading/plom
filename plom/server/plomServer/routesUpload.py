@@ -733,11 +733,10 @@ class UploadHandler:
     @authenticate_by_token_required_fields(["fileName"])
     @write_admin
     def discardToUnknown(self, data, request):
-        rval = self.server.discardToUnknown(data["fileName"])
-        if rval[0]:
-            return web.Response(status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, msg = self.server.discardToUnknown(data["fileName"])
+        if not ok:
+            return web.HTTPNotAcceptable(reason=msg)
+        return web.Response(status=200)
 
     @authenticate_by_token_required_fields(["user", "version_map"])
     @write_admin
