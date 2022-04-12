@@ -411,8 +411,7 @@ class ManagerMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
-            # TODO: print(response.encoding) autodetected
-            predictions = StringIO(response.text)
+            predictions = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None

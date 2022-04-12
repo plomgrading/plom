@@ -7,7 +7,6 @@
 # Copyright (C) 2021-2022 Elizabeth Xiao
 
 from collections import defaultdict
-import csv
 import imghdr
 import importlib.resources as resources
 import logging
@@ -1458,8 +1457,10 @@ class Manager(QWidget):
     def initIDTab(self):
         self.refreshIDTab()
         self.ui.idPB.setFormat("%v / %m")
-        self.ui.predictionTW.setColumnCount(3)
-        self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID", "Name"])
+        self.ui.predictionTW.setColumnCount(4)
+        self.ui.predictionTW.setHorizontalHeaderLabels(
+            ["Test", "Certainty", "Student ID", "Name"]
+        )
         self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         # Seemed broken so commented out
@@ -1500,7 +1501,7 @@ class Manager(QWidget):
         if len(idi) == 0:
             return
         test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
-        sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
+        sid = int(self.ui.predictionTW.item(idi[0].row(), 2).text())
         try:
             img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
@@ -1556,7 +1557,7 @@ class Manager(QWidget):
         # idi = self.ui.predictionTW.selectedIndexes()
         # if idi:
         #     test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
-        #     sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
+        #     sid = int(self.ui.predictionTW.item(idi[0].row(), 2).text())
 
         test, ok = QInputDialog.getText(self, "Unidentify a paper", "Un-ID which paper")
         if not ok or not test:
@@ -1574,35 +1575,44 @@ class Manager(QWidget):
         self.msgr.un_id_paper(test)
 
     def getPredictions(self):
-        csvfile = self.msgr.IDrequestPredictions()
-        pdict = {}
-        reader = csv.DictReader(csvfile, skipinitialspace=True)
-        for row in reader:
-            pdict[int(row["test"])] = str(row["id"])
+        prediction_dict = self.msgr.IDrequestPredictions()
+        # prediction_dict = { test_number: (sid, certainty) }
+        # put any identified papers into the same dict too
         iDict = self.msgr.getIdentified()
-        for t in iDict.keys():
-            pdict[int(t)] = str(iDict[t][0])
+        for t in iDict.keys():  # put sid in there with certainty 0.95
+            prediction_dict[t] = (str(iDict[t][0]), 0.95)
 
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
-        for r, t in enumerate(pdict.keys()):
+        for r, t in enumerate(prediction_dict.keys()):
             self.ui.predictionTW.insertRow(r)
             self.ui.predictionTW.setSortingEnabled(False)
-            item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, t)
-            self.ui.predictionTW.setItem(r, 0, item)
-            item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, pdict[t])
+            # put in the test-number
+            item0 = QTableWidgetItem()
+            item0.setData(Qt.DisplayRole, t)
+            self.ui.predictionTW.setItem(r, 0, item0)
+            # and now the certainty
+            item1 = QTableWidgetItem()
+            item1.setData(Qt.DisplayRole, prediction_dict[t][1])
+            self.ui.predictionTW.setItem(r, 1, item1)
+            # and now the SID
             item2 = QTableWidgetItem()
-            if str(t) in iDict:
-                item.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                item.setToolTip("Has been identified")
-                item2.setData(Qt.DisplayRole, iDict[str(t)][1])
-                item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                item2.setToolTip("Has been identified")
-            self.ui.predictionTW.setItem(r, 1, item)
+            item2.setData(Qt.DisplayRole, prediction_dict[t][0])
             self.ui.predictionTW.setItem(r, 2, item2)
-            self.ui.predictionTW.setSortingEnabled(True)
+            item3 = QTableWidgetItem()
+            item3.setData(Qt.DisplayRole, "")
+            self.ui.predictionTW.setItem(r, 3, item3)
+            if t in iDict:
+                self.ui.predictionTW.item(r, 2).setBackground(
+                    QBrush(QColor(0, 255, 255, 48))
+                )
+                self.ui.predictionTW.item(r, 2).setToolTip("Has been identified")
+                self.ui.predictionTW.item(r, 3).setData(Qt.DisplayRole, iDict[t][1])
+                self.ui.predictionTW.item(r, 3).setBackground(
+                    QBrush(QColor(0, 255, 255, 48))
+                )
+                self.ui.predictionTW.item(r, 3).setToolTip("Has been identified")
+        self.ui.predictionTW.setSortingEnabled(True)
 
     def deletePredictions(self):
         msg = SimpleQuestion(

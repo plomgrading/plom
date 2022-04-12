@@ -438,4 +438,5 @@ def ID_get_all_predictions(self):
             preidref.student_id,
             preidref.certainty,
         )
+    log.warn(f"Returning predictions {predictions}")
     return predictions
