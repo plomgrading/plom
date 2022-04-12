@@ -1648,13 +1648,25 @@ class MarkerClient(QWidget):
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
 
-    def getDataForAnnotator(self, task):
-        """
-        Start annotator on a particular task.
+    def getDataForAnnotator(self, task, check_bguploader=True):
+        """Start annotator on a particular task.
 
         Args:
             task (str): the task id.  If original qXXXXgYY, then annotated
                 version is GXXXXgYY (G=graded).
+
+        Keyword Args:
+            check_bguploader (bool): default True.  False if you are
+                *sure* we already have the required images.
+                Usually when this function is called, it will be for
+                the next paper and we will need to check if the
+                background downloader is done.  But the PageRearranger
+                also calls this and it *should not* wait for the next
+                paper.  In this case, pass False here to avoid waiting
+                on the backgrounder downloader in the common case when
+                users do Ctrl-R immediately upon starting a new paper.
+                See Issue 1967.  Long term: new background downloader.
+
         Returns:
             list/None: as described by startTheAnnotator, if successful.
         """
@@ -1679,7 +1691,7 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         img_src_data = self.examModel.get_source_image_data(task)
-        if self.backgroundDownloader:
+        if check_bguploader and self.backgroundDownloader:
             count = 0
             # Notes: we could check using `while not os.path.exists(fname):`
             # Or we can wait on the downloader, which works when there is only
@@ -1981,7 +1993,7 @@ class MarkerClient(QWidget):
         self.examModel.setOriginalFilesAndData(task, src_img_data)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
-        return self.getDataForAnnotator(task)
+        return self.getDataForAnnotator(task, check_bguploader=False)
 
     def backgroundUploadFinished(self, task, numDone, numtotal):
         """

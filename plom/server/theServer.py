@@ -101,7 +101,6 @@ class Server:
         createModifyUser,
         InfoShortName,
         info_spec,
-        reloadUsers,
         giveUserToken,
         setUserEnable,
         closeUser,

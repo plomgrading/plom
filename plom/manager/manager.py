@@ -19,7 +19,14 @@ import arrow
 import urllib3
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import (
+    QBrush,
+    QColor,
+    QIcon,
+    QPixmap,
+    QStandardItem,
+    QStandardItemModel,
+)
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -631,7 +638,7 @@ class Manager(QWidget):
                     l0.addChild(QTreeWidgetItem(["", str(p), str(v), "scanned"]))
                 else:
                     it = QTreeWidgetItem(["", str(p), str(v), "missing"])
-                    it.setBackground(3, QBrush(Qt.red))
+                    it.setBackground(3, QBrush(QColor(255, 0, 0, 48)))
                     l0.addChild(it)
             self.ui.incompTW.addTopLevelItem(l0)
 
@@ -658,9 +665,9 @@ class Manager(QWidget):
             for (p, v) in scanned[t]:
                 l1 = QTreeWidgetItem(["", str(p), str(v)])
                 if "{}.{}".format(t, p) in cdtp.values():
-                    l0.setBackground(0, QBrush(Qt.cyan))
+                    l0.setBackground(0, QBrush(QColor(0, 255, 255, 48)))
                     l0.setToolTip(0, "Has collisions")
-                    l1.setBackground(1, QBrush(Qt.cyan))
+                    l1.setBackground(1, QBrush(QColor(0, 255, 255, 48)))
                     l0.setToolTip(1, "Has collisions")
                 l0.addChild(l1)
             self.ui.scanTW.addTopLevelItem(l0)
@@ -1276,7 +1283,8 @@ class Manager(QWidget):
     def doDActions(self):
         for r in range(self.discardModel.rowCount()):
             if self.discardModel.item(r, 3).text() == "move":
-                self.msgr.discardToUnknown(self.discardModel.item(r, 0).text())
+                pagedata = self.discardModel.item(r, 0).data()
+                self.msgr.discardToUnknown(pagedata["server_path"])
         self.refreshDiscardList()
         self.refreshUnknownList()
 
@@ -1404,36 +1412,48 @@ class Manager(QWidget):
         self.ui.overallTW.setRowCount(0)
 
         opDict = self.msgr.RgetCompletionStatus()
+
+        # TODO: why not let Qt do it for us...?
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
         # each dict value is [Scanned, Identified, #Marked]
-        r = 0
-        for t in tk:
+
+        for r, t in enumerate(tk):
+            # for some reason t is string instead of an int
+            tstr = str(t)
+            t = int(t)
             self.ui.overallTW.insertRow(r)
-            self.ui.overallTW.setItem(r, 0, QTableWidgetItem(str(t).rjust(4)))
+            self.ui.overallTW.setSortingEnabled(False)
+            item = QTableWidgetItem()
+            assert isinstance(t, int)
+            item.setData(Qt.DisplayRole, t)
+            self.ui.overallTW.setItem(r, 0, item)
 
-            it = QTableWidgetItem("{}".format(opDict[t][0]))
-            if opDict[t][0]:
-                it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been scanned")
-            elif opDict[t][2] > 0:
-                it.setBackground(QBrush(Qt.red))
-                it.setToolTip("Has been (part-)marked but not completely scanned.")
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, opDict[tstr][0])
+            if opDict[tstr][0]:
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+                item.setToolTip("Has been scanned")
+            elif opDict[tstr][2] > 0:
+                item.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                item.setToolTip("Has been (part-)marked but not completely scanned.")
+            self.ui.overallTW.setItem(r, 1, item)
 
-            self.ui.overallTW.setItem(r, 1, it)
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, opDict[tstr][1])
+            if opDict[tstr][1]:
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+                item.setToolTip("Has been identified")
+            self.ui.overallTW.setItem(r, 2, item)
 
-            it = QTableWidgetItem("{}".format(opDict[t][1]))
-            if opDict[t][1]:
-                it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been identified")
-            self.ui.overallTW.setItem(r, 2, it)
-
-            it = QTableWidgetItem(str(opDict[t][2]).rjust(3))
-            if opDict[t][2] == self.numberOfQuestions:
-                it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been marked")
-            self.ui.overallTW.setItem(r, 3, it)
-            r += 1
+            item = QTableWidgetItem()
+            assert isinstance(opDict[tstr][2], int)
+            item.setData(Qt.DisplayRole, opDict[tstr][2])
+            if opDict[tstr][2] == self.numberOfQuestions:
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+                item.setToolTip("Has been marked")
+            self.ui.overallTW.setItem(r, 3, item)
+            self.ui.overallTW.setSortingEnabled(True)
 
     def initIDTab(self):
         self.refreshIDTab()
@@ -1442,7 +1462,8 @@ class Manager(QWidget):
         self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID", "Name"])
         self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.predictionTW.setAlternatingRowColors(True)
+        # Seemed broken so commented out
+        # self.ui.predictionTW.setAlternatingRowColors(True)
         self.ui.predictionTW.activated.connect(self.viewIDPage)
 
     def refreshIDTab(self):
@@ -1564,21 +1585,24 @@ class Manager(QWidget):
 
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
-        r = 0
-        for t in pdict.keys():
+        for r, t in enumerate(pdict.keys()):
             self.ui.predictionTW.insertRow(r)
-            self.ui.predictionTW.setItem(r, 0, QTableWidgetItem("{}".format(t)))
-            it = QTableWidgetItem("{}".format(pdict[t]))
-            it2 = QTableWidgetItem("")
+            self.ui.predictionTW.setSortingEnabled(False)
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, t)
+            self.ui.predictionTW.setItem(r, 0, item)
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, pdict[t])
+            item2 = QTableWidgetItem()
             if str(t) in iDict:
-                it.setBackground(QBrush(Qt.cyan))
-                it.setToolTip("Has been identified")
-                it2.setText(iDict[str(t)][1])
-                it2.setBackground(QBrush(Qt.cyan))
-                it2.setToolTip("Has been identified")
-            self.ui.predictionTW.setItem(r, 1, it)
-            self.ui.predictionTW.setItem(r, 2, it2)
-            r += 1
+                item.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                item.setToolTip("Has been identified")
+                item2.setData(Qt.DisplayRole, iDict[str(t)][1])
+                item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                item2.setToolTip("Has been identified")
+            self.ui.predictionTW.setItem(r, 1, item)
+            self.ui.predictionTW.setItem(r, 2, item2)
+            self.ui.predictionTW.setSortingEnabled(True)
 
     def deletePredictions(self):
         msg = SimpleQuestion(
@@ -1618,6 +1642,7 @@ class Manager(QWidget):
     def initOutTab(self):
         self.ui.tasksOutTW.setColumnCount(3)
         self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time"])
+        self.ui.tasksOutTW.setSortingEnabled(True)
 
     def refreshOutTab(self):
         tasksOut = self.msgr.RgetOutToDo()
@@ -1629,13 +1654,14 @@ class Manager(QWidget):
             return
 
         self.ui.tasksOutTW.setEnabled(True)
-        r = 0
-        for x in tasksOut:
+        self.ui.tasksOutTW.setSortingEnabled(False)
+        for r, x in enumerate(tasksOut):
             self.ui.tasksOutTW.insertRow(r)
-            self.ui.tasksOutTW.setItem(r, 0, QTableWidgetItem(str(x[0])))
-            self.ui.tasksOutTW.setItem(r, 1, QTableWidgetItem(str(x[1])))
-            self.ui.tasksOutTW.setItem(r, 2, QTableWidgetItem(str(x[2])))
-            r += 1
+            for k in range(3):
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, x[k])
+                self.ui.tasksOutTW.setItem(r, k, item)
+        self.ui.tasksOutTW.setSortingEnabled(True)
 
     ##################
     # review tab stuff
@@ -1657,6 +1683,29 @@ class Manager(QWidget):
         self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
+
+        # TODO: where to define this function?  Probably a method of a subclass of reviewTW
+        def f(tw, i, row):
+            """Insert 7 things from row into the ith row of the table tw."""
+            assert len(row) == 7
+            # otherwise they resort between elements of the row (!)
+            tw.setSortingEnabled(False)
+            tw.insertRow(i)
+            for k, x in enumerate(row):
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, x)
+                tw.setItem(i, k, item)
+            if row[4] == "reviewer":
+                for k in range(7):
+                    tw.item(i, k).setBackground(QBrush(QColor(0, 255, 0, 48)))
+            if row[3] == "n/a":
+                for k in range(7):
+                    tw.item(i, k).setBackground(QBrush(QColor(255, 255, 128, 64)))
+            tw.setSortingEnabled(True)
+
+        # TODO: for now, monkey-patch the inserter into reviewTW
+        # self.ui.reviewTW.__class__._fill_row_from = f
+        self.ui.reviewTW._fill_row_from = f
 
         # maps zero to special text
         self.ui.reviewPaperNumSpinBox.setSpecialValueText("*")
@@ -1682,6 +1731,7 @@ class Manager(QWidget):
         self.ui.userCB.addItem("*")
         for u in ulist:
             self.ui.userCB.addItem(u)
+        # TODO: but we need to re-run the query else its bloody confusing!
 
     def filterReview(self):
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
@@ -1692,22 +1742,10 @@ class Manager(QWidget):
             filterUser=self.ui.userCB.currentText(),
             filterMarked=markedOnly,
         )
-
         self.ui.reviewTW.clearContents()
         self.ui.reviewTW.setRowCount(0)
         for r, dat in enumerate(mrList):
-            self.ui.reviewTW.insertRow(r)
-            # rjust(4) entries so that they can sort like integers... without actually being integers
-            for k in range(7):
-                self.ui.reviewTW.setItem(
-                    r, k, QTableWidgetItem("{}".format(dat[k]).rjust(4))
-                )
-            if dat[4] == "reviewer":
-                for k in range(7):
-                    self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.green))
-            if dat[3] == "n/a":
-                for k in range(7):
-                    self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.yellow))
+            self.ui.reviewTW._fill_row_from(self.ui.reviewTW, r, dat)
 
     def reviewAnnotated(self):
         rvi = self.ui.reviewTW.selectedIndexes()
@@ -1715,8 +1753,7 @@ class Manager(QWidget):
             return
         r = rvi[0].row()
         # no action if row is unmarked
-        # text in item is rjust(4)'d - so <space>n/a is the string
-        if self.ui.reviewTW.item(r, 3).text() == " n/a":
+        if self.ui.reviewTW.item(r, 3).text() == "n/a":
             # TODO - in future fire up reviewer with original pages
             return
         test = int(self.ui.reviewTW.item(r, 0).text())
@@ -1749,25 +1786,34 @@ class Manager(QWidget):
         self.ui.reviewIDTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewIDTW.activated.connect(self.reviewIDd)
 
+        # monkey-patch in a row-insert routine
+        def f(tw, i, row):
+            """Insert data from row into the ith row of this table."""
+            assert len(row) == 5
+            # otherwise they resort during the insert, between elements!
+            tw.setSortingEnabled(False)
+            for k, x in enumerate(row):
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, x)
+                tw.setItem(i, k, item)
+            if row[1] == "reviewer":
+                for k in range(5):
+                    tw.item(i, k).setBackground(QBrush(QColor(0, 255, 0, 48)))
+            elif row[1] == "automatic":
+                for k in range(5):
+                    tw.item(i, k).setBackground(QBrush(QColor(0, 255, 255, 48)))
+            tw.setSortingEnabled(True)
+
+        # self.ui.reviewIDTW.__class__._fill_row_from = f
+        self.ui.reviewIDTW._fill_row_from = f
+
     def refreshIDRev(self):
         irList = self.msgr.getIDReview()
         self.ui.reviewIDTW.clearContents()
         self.ui.reviewIDTW.setRowCount(0)
-        r = 0
-        for dat in irList:
+        for r, row_data in enumerate(irList):
             self.ui.reviewIDTW.insertRow(r)
-            # rjust(4) entries so that they can sort like integers... without actually being integers
-            for k in range(5):
-                self.ui.reviewIDTW.setItem(
-                    r, k, QTableWidgetItem("{}".format(dat[k]).rjust(4))
-                )
-            if dat[1] == "reviewer":
-                for k in range(5):
-                    self.ui.reviewIDTW.item(r, k).setBackground(QBrush(Qt.green))
-            elif dat[1] == "automatic":
-                for k in range(5):
-                    self.ui.reviewIDTW.item(r, k).setBackground(QBrush(Qt.cyan))
-            r += 1
+            self.ui.reviewIDTW._fill_row_from(self.ui.reviewIDTW, r, row_data)
 
     def reviewIDd(self):
         rvi = self.ui.reviewIDTW.selectedIndexes()
@@ -2044,37 +2090,45 @@ class Manager(QWidget):
         uDict = self.msgr.getUserDetails()
         self.ui.userListTW.clearContents()
         self.ui.userListTW.setRowCount(0)
-        r = 0
-        for u in uDict:
-            dat = uDict[u]
+        for r, (u, dat) in enumerate(uDict.items()):
+            self.ui.userListTW.setSortingEnabled(False)
             self.ui.userListTW.insertRow(r)
 
-            # change the last activity to be human readable
-            rawTimestamp = dat[2]
-
-            time = arrow.get(rawTimestamp, "YY:MM:DD-HH:mm:ss")
-            dat[2] = time.humanize()
-
-            # rjust(4) entries so that they can sort like integers... without actually being integers
-            self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
-            for k in range(6):
-                self.ui.userListTW.setItem(
-                    r, k + 1, QTableWidgetItem("{}".format(dat[k]))
-                )
-            if dat[0]:
-                self.ui.userListTW.item(r, 1).setBackground(QBrush(Qt.green))
-            else:
-                self.ui.userListTW.item(r, 1).setBackground(QBrush(Qt.red))
-            if dat[1]:
-                self.ui.userListTW.item(r, 2).setBackground(QBrush(Qt.green))
-
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, u)
             if u in ["manager", "scanner", "reviewer"]:
-                self.ui.userListTW.item(r, 0).setBackground(QBrush(Qt.green))
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+            self.ui.userListTW.setItem(r, 0, item)
 
-            # add tooltip to show timestamp when hovering over human readable description
-            self.ui.userListTW.item(r, 3).setToolTip(rawTimestamp)
+            k = 0
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, dat[k])
+            if not dat[k]:
+                item.setBackground(QBrush(QColor(255, 0, 0, 48)))
+            self.ui.userListTW.setItem(r, k + 1, item)
 
-            r += 1
+            k = 1
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, dat[k])
+            if dat[k]:
+                item.setBackground(QBrush(QColor(0, 255, 0, 48)))
+            self.ui.userListTW.setItem(r, k + 1, item)
+
+            k = 2
+            # change the last activity to be human readable
+            time = arrow.get(dat[k], "YY:MM:DD-HH:mm:ss")
+            time.humanize()
+            item = QTableWidgetItem()
+            # TODO: want human-readable w/ raw tooltip but breaks sorting
+            item.setData(Qt.DisplayRole, dat[k])
+            item.setToolTip(time.humanize())
+            self.ui.userListTW.setItem(r, k + 1, item)
+
+            for k in range(3, 6):
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, dat[k])
+                self.ui.userListTW.setItem(r, k + 1, item)
+            self.ui.userListTW.setSortingEnabled(True)
 
     def refreshProgressQU(self):
         # delete the children of each toplevel items

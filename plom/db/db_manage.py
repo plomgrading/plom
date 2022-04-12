@@ -544,18 +544,20 @@ def removeUnknownImage(self, file_name):
 
 def moveDiscardToUnknown(self, file_name):
     iref = Image.get_or_none(file_name=file_name)
-    if iref is None:  # should not happen
-        return [False, "Cannot find image"]
+    if iref is None:
+        log.warn("Tried to rescue non-existent discarded image %s", file_name)
+        return (False, "Cannot find image")
     dref = iref.discards[0]
-    if dref is None:  # should not happen
-        return [False, "Cannot find discard page for that image."]
+    if dref is None:
+        log.warn("Tried to rescue non-existent discarded image %s", file_name)
+        return (False, "Cannot find discard page for that image.")
 
     with plomdb.atomic():
         # we have lost order information.
         UnknownPage.create(image=iref, order=1)
         dref.delete_instance()
-    log.info("Moving discarded image {} to unknown image".format(file_name))
-    return [True]
+    log.info("Moving discarded image %s to unknown image", file_name)
+    return (True, None)
 
 
 def moveUnknownToCollision(self, file_name, test_number, page_number):
