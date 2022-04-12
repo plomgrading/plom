@@ -28,3 +28,4 @@ scikit-learn==0.23.1
 stdiomask==0.0.6
 toml==0.10.0
 weasyprint==52.5
+PyQt5-sip==12.9.1
