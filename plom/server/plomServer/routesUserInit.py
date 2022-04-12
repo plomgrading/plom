@@ -142,23 +142,6 @@ class UserInitHandler:
             # various sorts of non-auth conflated: response has details
             return web.json_response(rmsg[2], status=401)
 
-    # @routes.put("/admin/reloadUsers")
-    async def adminReloadUsers(self, request):
-        log_request("adminReloadUsers", request)
-        # TODO: future proof: require user here and check for manager
-        # TODO: safer to do this with token auth, to centralize pw auth?
-        data = await request.json()
-        # TODO: future proof by requiring username here too?
-        if not validate_required_fields(data, ["pw"]):
-            return web.Response(status=400)  # malformed request.
-
-        rmsg = self.server.reloadUsers(data["pw"])
-        # returns either True (success) or False (auth-error)
-        if rmsg:
-            return web.json_response(status=200)  # all good
-        else:
-            return web.Response(status=401)  # you are not authorised
-
     # @routes.get("/info/spec")
     @no_authentication_only_log_request
     async def info_spec(self, request):
@@ -219,7 +202,6 @@ class UserInitHandler:
         router.add_get("/Version", self.version)
         router.add_delete("/users/{user}", self.closeUser)
         router.add_put("/users/{user}", self.giveUserToken)
-        router.add_put("/admin/reloadUsers", self.adminReloadUsers)
         router.add_get("/info/shortName", self.InfoShortName)
         router.add_get("/info/spec", self.info_spec)
         router.add_put("/info/spec", self.put_spec)
