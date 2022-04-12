@@ -167,7 +167,7 @@ def no_authentication_only_log_request(f):
 def readonly_admin(f):
     """Decorator for requiring the manager account to get something read-only.
 
-    In the future, more than one user might satify this via ACL, but for
+    In the future, more than one user might satisfy this via ACL, but for
     now if just checks for the "manager" account.
 
     Arguments:
@@ -195,7 +195,7 @@ def readonly_admin(f):
 def write_admin(f):
     """Decorator for requiring the manager account to push or other change something in the state of the server.
 
-    In the future, more than one user might satify this via ACL, but for
+    In the future, more than one user might satisfy this via ACL, but for
     now if just checks for the "manager" account.
 
     Arguments:

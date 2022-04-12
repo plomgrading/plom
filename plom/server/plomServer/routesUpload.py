@@ -634,7 +634,9 @@ class UploadHandler:
         log.warn("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
-    @authenticate_by_token_required_fields(["fileName", "test", "questions", "rotation"])
+    @authenticate_by_token_required_fields(
+        ["fileName", "test", "questions", "rotation"]
+    )
     @write_admin
     def unknownToHWPage(self, data, request):
         """Map an unknown page onto one or more HomeworkPages.
@@ -664,7 +666,9 @@ class UploadHandler:
         log.warn("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
-    @authenticate_by_token_required_fields(["fileName", "test", "questions", "rotation"])
+    @authenticate_by_token_required_fields(
+        ["fileName", "test", "questions", "rotation"]
+    )
     @write_admin
     def unknownToExtraPage(self, data, request):
         """Map an unknown page onto one or more extra pages.
