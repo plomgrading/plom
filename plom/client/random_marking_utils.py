@@ -245,7 +245,7 @@ def do_random_marking_backend(question, version, *, messenger):
                 plomfile,
                 rubrics,
                 integrity_check,
-                [r["md5"] for r in src_img_data],
+                src_img_data,
             )
 
 
