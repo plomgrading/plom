@@ -338,23 +338,24 @@ class IDHandler:
         else:
             raise web.HTTPInternalServerError(reason=msg)
 
-    # @routes.put("/ID/prename/{paper_number}")
-    @authenticate_by_token_required_fields(["user", "sid", "sname"])
+    # @routes.put("/ID/preid/{paper_number}")
+    @authenticate_by_token_required_fields(["user", "sid"])
     @write_admin
-    def PrenamePaper(self, data, request):
+    def PreIDPaper(self, data, request):
         """Prename a paper.
 
         Only "manager" can perform this action.  Typical client IDing
         would call func:`IdentifyPaperTask` instead.
 
-        By passing empty `sid` and `sname`, this API can be used to
-        unidentify a paper.  This feature may move to its own API call
-        in the future.
+        By passing empty `sid`, this API can be used to unidentify a
+        paper.  This feature may move to its own API call in the
+        future.
 
         Returns:
             403: not manager.
             404: papernum not found, or other data errors.
             409: student number `data["sid"]` is already in use.
+
         """
         papernum = request.match_info["paper_number"]
 
@@ -363,7 +364,7 @@ class IDHandler:
             if self.server.DB.remove_id_from_paper(papernum):
                 return web.Response(status=200)
             raise web.HTTPNotFound(reason=f"Did not find papernum {papernum}")
-        r, what, msg = self.server.prename_paper(papernum, data["sid"], data["sname"])
+        r, what, msg = self.server.pre_id_paper(papernum, data["sid"])
         if r:
             return web.Response(status=200)
         elif what == 409:
@@ -442,7 +443,8 @@ class IDHandler:
         Returns:
             aiohttp.web_response.Response: Returns a response with a [True, message] or [False,message] indicating if predictions upload was successful.
         """
-        # this classlist reading should probably happen in the serverID not h        try:
+        # this classlist reading should probably happen in the serverID not here
+        try:
             with open(specdir / "classlist.csv") as f:
                 reader = csv.DictReader(f)
                 classlist = list(reader)
@@ -556,7 +558,7 @@ class IDHandler:
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
-        router.add_put("/ID/prename/{paper_number}", self.PrenamePaper)
+        router.add_put("/ID/preid/{paper_number}", self.PreIDPaper)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.predict_id_lap_solver)

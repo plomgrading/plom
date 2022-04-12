@@ -156,7 +156,7 @@ class Server:
         IDgetImageFromATest,
         ID_get_donotmark_images,
         IDclaimThisTask,
-        prename_paper,
+        pre_id_paper,
         ID_id_paper,
         ID_get_predictions,
         IDdeletePredictions,

@@ -176,7 +176,8 @@ def check_pdf_and_prename_if_needed(
             if not pdf_file.is_file():
                 raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
             else:
-                msgr.prename_paper(papernum, r["id"], r["name"])
+                # push the student ID to the prediction-table in the database
+                msgr.pre_id_paper(papernum, r["id"])
         else:
             pdf_file = paperdir / f"exam_{papernum:04}.pdf"
             # if file is not there - error.

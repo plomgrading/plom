@@ -301,7 +301,7 @@ class IDClient(QWidget):
         """Send request for prediction list (iRPL) to server. The server then sends
         back the CSV of the predictions testnumber -> studentID.
         """
-        # create dictionary to store predictions in 
+        # create dictionary to store predictions in
         self.predictedTestToNumbers = defaultdict(int)
         # Send request for prediction list to server
         prediction_dict = self.msgr.IDrequestPredictions()

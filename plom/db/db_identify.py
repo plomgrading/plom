@@ -383,8 +383,8 @@ def IDreviewID(self, test_number):
     return [True]
 
 
-def ID_predict_paper_id(self, paper_number, sid, sname):
-    """Put predicted test student name id into paper. If that test
+def ID_predict_paper_id(self, paper_number, sid):
+    """Put predicted test student id into DB. If that test
     already has a prediction of that sid, then do nothing.
 
     See also :func:`plom.db.db_create.prename_paper` which is similar.
@@ -394,7 +394,6 @@ def ID_predict_paper_id(self, paper_number, sid, sname):
     Args:
         paper_num (int)
         sid (str): student id.
-        sname (str): student name.
 
     Returns:
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`
@@ -419,15 +418,13 @@ def ID_predict_paper_id(self, paper_number, sid, sname):
 
         # now try to create a predicted_id entry - certainty is 0.5
         try:
-            IDPrediction.create(
-                test=tref, user=uref, certainty=0.5, student_id=sid, student_name=sname
-            )
+            IDPrediction.create(test=tref, user=uref, certainty=0.5, student_id=sid)
         except pw.IntegrityError:
             log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
             return False, 409, f"student id {sid} in use elsewhere"
         log.info(
-            'Manager predicts paper {} belongs to "{}" "{}"'.format(
-                paper_number, censorID(sid), censorName(sname)
+            'Manager predicts paper {} belongs to "{}"'.format(
+                paper_number, censorID(sid)
             )
         )
     return True, None, None
@@ -439,7 +436,6 @@ def ID_get_all_predictions(self):
     for preidref in IDPrediction.select():
         predictions[preidref.test.test_number] = (
             preidref.student_id,
-            preidref.student_name,
             preidref.certainty,
         )
     return predictions

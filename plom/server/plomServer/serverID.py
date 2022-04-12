@@ -95,10 +95,9 @@ def IDclaimThisTask(self, username, test_number):
     return self.DB.IDgiveTaskToClient(username, test_number)
 
 
-# TODO: These two functions seem the same.
-def prename_paper(self, *args, **kwargs):
-    """Prename a student name/id combination to a paper in the database, manager only."""
-    return self.DB.prename_paper(*args, **kwargs)
+def pre_id_paper(self, *args, **kwargs):
+    """Put a student id into database prediction table, manager only."""
+    return self.DB.pre_id_paper(*args, **kwargs)
 
 
 def ID_id_paper(self, *args, **kwargs):

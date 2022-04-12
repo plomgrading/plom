@@ -58,7 +58,6 @@ class Group(BaseModel):
 class IDPrediction(BaseModel):
     test = pw.ForeignKeyField(Test, backref="idpredictions")
     student_id = pw.CharField(unique=True, null=True)
-    student_name = pw.CharField(null=True)
     user = pw.ForeignKeyField(User, backref="idpredictions", null=True)
     certainty = pw.DoubleField(null=False, default=0.0)
 

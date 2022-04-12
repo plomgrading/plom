@@ -146,7 +146,7 @@ class ScanMessenger(BaseMessenger):
 
         Typically the page is QR coded, and thus we know precisely what
         paper number, what question and what page.  We may not know the
-        student depending on whether it was prenamed or not.
+        student depending on whether it was pre-ided or not.
 
         args:
             code (str): a string such as "t0020p06v1".

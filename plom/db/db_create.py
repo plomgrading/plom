@@ -389,8 +389,8 @@ def get_all_question_versions(self):
     return qvmap
 
 
-def prename_paper(self, paper_number, sid, sname):
-    """Prename a paper with a given student name and id. If that test
+def pre_id_paper(self, paper_number, sid):
+    """Pre-id a paper with a given student id. If that test
     already has a prediction of that sid, then do nothing.
 
     See also :func:`plom.db.db_identify.ID_predict_paper_id` which is similar.
@@ -398,7 +398,6 @@ def prename_paper(self, paper_number, sid, sname):
     Args:
         paper_number (int)
         sid (str): student id.
-        sname (str): student name.
 
     Returns:
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`
@@ -408,7 +407,7 @@ def prename_paper(self, paper_number, sid, sname):
     # Manager calls this function, but since these are build by
     # by the plom system, we put user = HAL.
 
-    logbase = "Manager tried to prename paper {}".format(paper_number)
+    logbase = "Manager tried to pre-id paper {}".format(paper_number)
     with plomdb.atomic():
         # find the test-ref
         tref = Test.get_or_none(Test.test_number == paper_number)
@@ -423,16 +422,12 @@ def prename_paper(self, paper_number, sid, sname):
             return True, None, None
         # now try to create a predicted_id entry - certainty is 0.9
         try:
-            IDPrediction.create(
-                test=tref, user=uref, certainty=0.9, student_id=sid, student_name=sname
-            )
+            IDPrediction.create(test=tref, user=uref, certainty=0.9, student_id=sid)
         except pw.IntegrityError:
             log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
             return False, 409, f"student id {sid} in use elsewhere"
         log.info(
-            'Paper {} prenamed by HAL as "{}" "{}"'.format(
-                paper_number, censorID(sid), censorName(sname)
-            )
+            'Paper {} pre-ided by HAL as "{}" '.format(paper_number, censorID(sid))
         )
     return True, None, None
 

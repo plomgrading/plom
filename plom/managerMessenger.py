@@ -134,8 +134,8 @@ class ManagerMessenger(BaseMessenger):
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
 
-    def prename_paper(self, paper_number, studentID, studentName):
-        """Prename a paper, not as part of a IDing task.
+    def pre_id_paper(self, paper_number, studentID):
+        """Pre-id a paper.
 
         Exceptions:
             PlomConflict: `studentID` already used on a different paper.
@@ -145,12 +145,11 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                f"/ID/prename/{paper_number}",
+                f"/ID/preid/{paper_number}",
                 json={
                     "user": self.user,
                     "token": self.token,
                     "sid": studentID,
-                    "sname": studentName,
                 },
             )
             response.raise_for_status()
