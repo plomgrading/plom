@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* For now, only manager can change passwords.
 * Slow client during Rearrange Page dialog use immediately on new page should be fixed.
 
 
