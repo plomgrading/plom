@@ -75,6 +75,8 @@ class UserInitHandler:
     # @routes.post("/authorisation/{user}")
     @authenticate_by_token_required_fields(["password"])
     def createModifyUser(self, data, request):
+        if not data["user"] == "manager":
+            raise web.HTTPForbidden(reason="Not manager")
         # update password of existing user, or create new user.
         theuser = request.match_info["user"]
         rval = self.server.createModifyUser(theuser, data["password"])
