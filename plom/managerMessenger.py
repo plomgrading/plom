@@ -156,10 +156,10 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 409:
                 raise PlomConflict(e) from None
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
             if response.status_code == 404:
                 raise PlomSeriousException(e) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -188,8 +188,8 @@ class ManagerMessenger(BaseMessenger):
                 )
                 response.raise_for_status()
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 404:
                     raise PlomSeriousException(e) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -443,8 +443,8 @@ class ManagerMessenger(BaseMessenger):
                 )  # pass back image as bytes
             return imageList
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 410:
                 raise PlomNoMoreException("Cannot find ID image.") from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -952,8 +952,8 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 404:
                 return False
             raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -974,8 +974,8 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -994,8 +994,8 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1489,8 +1489,8 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 410:
                 raise PlomNoMoreException("Cannot find that image.") from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
