@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Slow client during Rearrange Page dialog use immediately on new page should be fixed.
 
 
 ## [0.8.10] - 2022-03-27
