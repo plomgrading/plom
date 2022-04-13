@@ -23,8 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Non-zero initial orientations should now work properly.
-* Slow client during Rearrange Page dialog use immediately on new page should be fixed.
 
+
+## [0.8.11] - 2022-04-12
+
+### Fixed
+* For now, only manager can change passwords.
+* Slow client during Rearrange Page dialog use immediately on new page should be fixed.
 
 
 ## [0.8.10] - 2022-03-27
@@ -743,7 +748,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.8.10...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.8.11...main
+[0.8.11]: https://gitlab.com/plom/plom/compare/v0.8.10...v0.8.11
 [0.8.10]: https://gitlab.com/plom/plom/compare/v0.8.8...v0.8.10
 [0.8.8]: https://gitlab.com/plom/plom/compare/v0.8.7...v0.8.8
 [0.8.7]: https://gitlab.com/plom/plom/compare/v0.8.6...v0.8.7
