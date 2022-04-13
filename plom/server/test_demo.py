@@ -71,7 +71,39 @@ class Test:
         qvmap2 = version_map_from_file(f)
         assert qvmap == qvmap2
 
-    # TODO: temporarily disabled
+    # This test assumes very specific setup of the Lite Demo
+    # The test can be updated if those details change.
+    def test_predictions(self):
+        # TODO: use connectmanager messenger, See MR !1275.
+        from plom.create import start_messenger
+
+        msgr = start_messenger(
+            self.env["PLOM_SERVER"], self.env["PLOM_MANAGER_PASSWORD"], verify_ssl=False
+        )
+        try:
+            predictions = msgr.IDrequestPredictions()
+            assert "1" in predictions, "The lite demo has the first one predicted"
+            sid, cert = predictions["1"]
+            assert sid == "10050380"
+            assert 0.5 < cert < 1
+            assert "2" not in predictions, "only first one predicted"
+
+            # TODO: did we want this to test for conflict?
+            with raises(PlomConflict, match="elsewhere"):
+                msgr.pre_id_paper(2, sid)
+
+            # TODO: not yet implemented!!
+            # msgr.un_pre_id_paper(1)
+
+            # TODO: now we can assign `sid` to paper 2
+            # TODO: see below for identified
+
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    # This test assumes very specific setup of the Lite Demo
+    # The test can be updated if those details change.
     def untest_unid(self):
         # TODO: use connectmanager messenger, See MR !1275.
         from plom.create import start_messenger
@@ -81,7 +113,10 @@ class Test:
         )
         try:
             iDict = msgr.getIdentified()
-            assert "1" in iDict
+            assert len(iDict) == 0, "Currently no one IDed in the lite demo"
+
+            # TODO: test more, but currently we have no `msgr.id_paper` method
+
             # need not be 2, any unID'd paper
             assert "2" not in iDict
             sid, name = iDict["1"]
