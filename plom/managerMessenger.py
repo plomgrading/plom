@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
-from io import StringIO, BytesIO
+from io import BytesIO
 import json
 
 import requests

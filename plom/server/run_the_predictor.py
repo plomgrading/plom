@@ -26,7 +26,7 @@ from plom import specdir
 if __name__ == "__main__":
     lock_file = Path(sys.argv[1])
 
-    if lock_file.exists():
+    if not lock_file.exists():
         raise RuntimeError(f'Cannot acquire file "{lock_file}"')
 
     with open(lock_file) as fh:

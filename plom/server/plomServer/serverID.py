@@ -302,11 +302,11 @@ def predict_id_lap_solver(self):
     prediction_pairs = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
-    log.info("Saving results in predictionlist.csv")
-    with open(specdir / "predictionlist.csv", "w") as fh:
-        fh.write("test, id\n")
-        for test_number, student_ID in prediction_pairs:
-            fh.write("{}, {}\n".format(test_number, student_ID))
+    log.info("Saving prediction results into database")
+    for test_number, student_ID in prediction_pairs:
+        self.DB.ID_predict_paper_id(test_number, student_ID)
+        # TODO - capture any error outputs
+
     return status
 
 
@@ -344,7 +344,7 @@ def run_id_reader(self, top, bottom, ignore_stamp):
 
     # get list of [test_number, image]
     log.info("ID get images for ID reader")
-    test_image_dict = self.DB.IDgetImagesOfNotAutoIdentified()
+    test_image_dict = self.DB.IDgetImagesOfUnidentified()
 
     # dump this as json / lock_file for subprocess to use in background.
     with open(lock_file, "w") as fh:
@@ -358,6 +358,14 @@ def run_id_reader(self, top, bottom, ignore_stamp):
     # run the reader
     log.info("ID launch ID reader in background")
 
+    # TODO - this is currently blocking I think.
+
     # Yuck, should at least check its running, Issue #862
-    subprocess.Popen(["python3", "-m", "plom.server.run_the_predictor", lock_file])
+    proc = subprocess.run(
+        ["python3", "-m", "plom.server.run_the_predictor", lock_file],
+        capture_output=True,
+    )
+    log.warn(f"Predicter subprocess.return code = {proc.returncode}")
+    log.warn(f"Predicter subprocess.stdout = {proc.stdout.decode()}")
+    log.warn(f"Predicter subprocess.stderr = {proc.stdout.decode()}")
     return [True, True]
