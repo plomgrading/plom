@@ -255,7 +255,7 @@ class ClientSettingsDialog(QDialog):
 
         self.checkLogFile = QCheckBox("Log to file (requires restart)")
         self.checkLogFile.setCheckState(
-            Qt.Checked if s.get("LogToFile") else Qt.Unchecked
+            Qt.CheckState.Checked if s.get("LogToFile") else Qt.CheckState.Unchecked
         )
         flay.addWidget(self.checkLogFile)
         flay.addWidget(QLabel("(Logs stored in {})".format(logdir)))
@@ -267,7 +267,7 @@ class ClientSettingsDialog(QDialog):
 
         self.checkFore = QCheckBox("Force foreground upload/downloads")
         self.checkFore.setCheckState(
-            Qt.Checked if s.get("FOREGROUND") else Qt.Unchecked
+            Qt.CheckState.Checked if s.get("FOREGROUND") else Qt.CheckState.Unchecked
         )
         flay.addWidget(self.checkFore)
 
@@ -291,10 +291,12 @@ class ClientSettingsDialog(QDialog):
         flay.addWidget(self.checkWarnCom)
         flay.addWidget(self.checkWarnMark)
         self.checkWarnCom.setCheckState(
-            Qt.Checked if s.get("CommentsWarnings") else Qt.Unchecked
+            Qt.CheckState.Checked
+            if s.get("CommentsWarnings")
+            else Qt.CheckState.Unchecked
         )
         self.checkWarnMark.setCheckState(
-            Qt.Checked if s.get("MarkWarnings") else Qt.Unchecked
+            Qt.CheckState.Checked if s.get("MarkWarnings") else Qt.CheckState.Unchecked
         )
         if not s.get("POWERUSER"):
             self.checkWarnCom.setEnabled(False)
@@ -323,11 +325,11 @@ class ClientSettingsDialog(QDialog):
 
     def getStuff(self):
         return (
-            self.checkFore.checkState() == Qt.Checked,
+            self.checkFore.checkState() == Qt.CheckState.Checked,
             self.comboLog.currentText(),
-            self.checkLogFile.checkState() == Qt.Checked,
-            self.checkWarnCom.checkState() == Qt.Checked,
-            self.checkWarnMark.checkState() == Qt.Checked,
+            self.checkLogFile.checkState() == Qt.CheckState.Checked,
+            self.checkWarnCom.checkState() == Qt.CheckState.Checked,
+            self.checkWarnMark.checkState() == Qt.CheckState.Checked,
         )
 
 
