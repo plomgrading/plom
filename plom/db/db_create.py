@@ -397,7 +397,10 @@ def pre_id_paper(self, paper_number, sid):
 
     Args:
         paper_number (int)
-        sid (str): student id.
+        sid (str): student id.  TODO: consider the sentinel case for
+            removing, or write a new function for that.
+
+    TODO: pass in certainty too.
 
     Returns:
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`
@@ -416,20 +419,31 @@ def pre_id_paper(self, paper_number, sid):
             log.error("{}: {}".format(logbase, msg))
             return False, 404, msg
 
-        # check if pushing identical predicted sid to that test
-        if IDPrediction.get_or_none(test=tref, student_id=sid):
-            # this prediction already exists, so do nothing - just return
+        p = IDPrediction.get_or_none(test=tref)
+        if p is None and sid == "":
+            # we have no prediction and we don't want one: life is good
             return True, None, None
-        # now try to create a predicted_id entry - certainty is 0.9
-        try:
-            IDPrediction.create(test=tref, user=uref, certainty=0.9, student_id=sid)
-        except pw.IntegrityError:
-            log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
-            return False, 409, f"student id {sid} in use elsewhere"
-        log.info(
-            'Paper {} pre-ided by HAL as "{}" '.format(paper_number, censorID(sid))
-        )
-    return True, None, None
+        elif p is None:
+            try:
+                IDPrediction.create(test=tref, user=uref, certainty=0.9, student_id=sid)
+            except pw.IntegrityError:
+                log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
+                return False, 409, f"student id {sid} in use elsewhere"
+            log.info('Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid))
+            return True, None, None
+        elif sid == "":
+            # removal: TODO: not sure how yet, empty string for now
+            # TODO: how does setting work?  NOT LIKE THIS
+            p.student_id = ""
+            p.certainty = 0.0
+            log.info("Paper %s removed predicted ID", paper_number)
+            return True, None, None
+        else:
+            # changing
+            p.student_id = sid
+            p.certainty = 0.9  # hardcoded
+            log.info('Paper %s changed predicted ID by HAL to "%s"', paper_number, censorID(sid))
+            return True, None, None
 
 
 def remove_id_from_paper(self, paper_num):
