@@ -1500,19 +1500,17 @@ class Manager(QWidget):
         idx = self.ui.predictionTW.selectedIndexes()
         if len(idx) == 0:
             return
-        test = self.ui.predictionTW.item(idx[0].row(), 0).data(
-            Qt.ItemDataRole.DisplayRole
-        )
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
         # TODO: should we populate with empty string to avoid dealing with None here?
         sid = self.ui.predictionTW.item(idx[0].row(), 1)
         if sid is not None:
-            sid = sid.data(Qt.ItemDataRole.DisplayRole)
+            sid = sid.data(Qt.DisplayRole)
         pred_sid = self.ui.predictionTW.item(idx[0].row(), 3)
         if pred_sid is not None:
-            pred_sid = pred_sid.data(Qt.ItemDataRole.DisplayRole)
+            pred_sid = pred_sid.data(Qt.DisplayRole)
         certainty = self.ui.predictionTW.item(idx[0].row(), 4)
         if certainty is not None:
-            certainty = certainty.data(Qt.ItemDataRole.DisplayRole)
+            certainty = certainty.data(Qt.DisplayRole)
         try:
             img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
