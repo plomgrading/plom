@@ -290,7 +290,7 @@ class BackgroundUploader(QThread):
         timer = QTimer()
         timer.timeout.connect(tryToUpload)
         timer.start(250)
-        self.exec_()
+        self.exec()
 
 
 def upload(
@@ -476,7 +476,7 @@ class MarkerExamModel(QStandardItemModel):
         else:
             ErrorMessage(
                 f"Task {paper.prefix} has been modified by server - you will need to annotate it again."
-            ).exec_()
+            ).exec()
             self.removeRow(r)
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
@@ -1018,7 +1018,7 @@ class MarkerClient(QWidget):
         try:
             self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
         except PlomRangeException as err:
-            ErrorMessage(str(err)).exec_()
+            ErrorMessage(str(err)).exec()
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
@@ -1222,7 +1222,7 @@ class MarkerClient(QWidget):
                 "<p>This is a rare situation; just in case, we'll now force a "
                 "shutdown of your client.  Sorry.</p>"
                 "<p>Please log back in and continue marking.</p>".format(task, str(ex))
-            ).exec_()
+            ).exec()
             # Log out the user and then raise an exception
             try:
                 self.msgr.closeUser()
@@ -1315,12 +1315,12 @@ class MarkerClient(QWidget):
                 log.exception("Serious error detected while updating progress: %s", err)
                 msg = f"A serious error happened while updating progress:\n{err}"
                 msg += "\nThis is not good: restart, report bug, etc."
-                ErrorMessage(msg).exec_()
+                ErrorMessage(msg).exec()
                 return
         if maxm == 0:
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
-            ErrorMessage("No papers to mark.").exec_()
+            ErrorMessage("No papers to mark.").exec()
         else:
             # Neither is quite right, instead, we cache on init
             self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
@@ -1346,7 +1346,7 @@ class MarkerClient(QWidget):
             PlomRangeException,
             PlomVersionMismatchException,
         ) as err:
-            ErrorMessage(f"Cannot get get paper {n}: {err}").exec_()
+            ErrorMessage(f"Cannot get get paper {n}: {err}").exec()
 
     def requestNext(self):
         """Ask server for an unmarked paper, get file, add to list, update view.
@@ -1371,7 +1371,7 @@ class MarkerClient(QWidget):
                 log.exception("Unexpected error getting next task: %s", err)
                 ErrorMessage(
                     f"Unexpected error getting next task:\n{err}\nClient will now crash!"
-                ).exec_()
+                ).exec()
                 raise
 
             num = int(task[1:5])
@@ -1526,7 +1526,7 @@ class MarkerClient(QWidget):
             "next paper.\n\n{}\n\n"
             "Please consider filing an issue?  I don't know if its "
             "safe to continue from here...".format(errmsg)
-        ).exec_()
+        ).exec()
 
     def moveToNextUnmarkedTest(self, task=None):
         """
@@ -1556,7 +1556,7 @@ class MarkerClient(QWidget):
                         "Do you want to wait a few more seconds?\n\n"
                         "(It is safe to choose 'no': the Annotator will simply close)",
                     )
-                    if msg.exec_() == QMessageBox.No:
+                    if msg.exec() == QMessageBox.No:
                         return False
                     count = 0
             self.Qapp.processEvents()
@@ -1596,7 +1596,7 @@ class MarkerClient(QWidget):
             msg = ErrorMessage(
                 "Cannot defer a marked test. We will change this in a future version."
             )
-            msg.exec_()
+            msg.exec()
             return
         self.examModel.deferPaper(task)
 
@@ -1682,7 +1682,7 @@ class MarkerClient(QWidget):
 
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
-            if not msg.exec_() == QMessageBox.Yes:
+            if not msg.exec() == QMessageBox.Yes:
                 return
             oldpname = self.examModel.getPlomFileByTask(task)
             with open(oldpname, "r") as fh:
@@ -1708,7 +1708,7 @@ class MarkerClient(QWidget):
                         self,
                         "Still waiting for download.  Do you want to wait a bit longer?",
                     )
-                    if msg.exec_() == QMessageBox.No:
+                    if msg.exec() == QMessageBox.No:
                         return
                     count = 0
 
@@ -1958,7 +1958,7 @@ class MarkerClient(QWidget):
 
         if self.allowBackgroundOps:
             # while annotator is firing up request next paper in background
-            # after giving system a moment to do `annotator.exec_()`
+            # after giving system a moment to do `annotator.exec()`
             if self.examModel.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
@@ -2037,7 +2037,7 @@ class MarkerClient(QWidget):
             "<p>Please log back in and continue marking.</p>".format(
                 task, error_message
             )
-        ).exec_()
+        ).exec()
         # Log out the user and then raise an exception
         try:
             self.msgr.closeUser()
@@ -2067,7 +2067,7 @@ class MarkerClient(QWidget):
             "not accept our marked paper {}.\n\n{}\n\n"
             "If the problem persists consider filing an issue."
             "Please close this window and log in again.".format(task, errmsg)
-        ).exec_()
+        ).exec()
         return
 
     def updateImg(self, newImg, oldImg):
@@ -2154,7 +2154,7 @@ class MarkerClient(QWidget):
             button = msg.button(QMessageBox.Cancel)
             button.setText("Wait (cancel close)")
             msg.setIcon(QMessageBox.Warning)
-            if msg.exec_() == QMessageBox.Cancel:
+            if msg.exec() == QMessageBox.Cancel:
                 event.ignore()
                 return
         if self.backgroundUploader is not None:
@@ -2296,12 +2296,12 @@ class MarkerClient(QWidget):
                         """,
                         details=fragment,
                         info=info,
-                    ).exec_()
+                    ).exec()
                 else:
                     ErrorMessage(
                         "<p>The server reported an error processing your TeX fragment.</p>",
                         details=fragment,
-                    ).exec_()
+                    ).exec()
             if cache_invalid:
                 self.commentCache[txt] = None
             return None
@@ -2344,7 +2344,7 @@ class MarkerClient(QWidget):
         tag_choices = [X for X in all_tags if X not in current_tags]
 
         artd = AddRemoveTagDialog(parent, task, current_tags, tag_choices=tag_choices)
-        if artd.exec_() == QDialog.Accepted:
+        if artd.exec() == QDialog.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":
                 if len(new_tag) == 0:
@@ -2357,12 +2357,12 @@ class MarkerClient(QWidget):
                         self.msgr.add_single_tag(task, new_tag)
                         log.debug('tagging paper "%s" with "%s"', task, new_tag)
                     except PlomBadTagError as e:
-                        ErrorMessage(f"Tag not acceptable: {e}").exec_()
+                        ErrorMessage(f"Tag not acceptable: {e}").exec()
             elif cmd == "remove":
                 try:
                     self.msgr.remove_single_tag(task, new_tag)
                 except PlomBadTagError as e:
-                    ErrorMessage(f"Problem removing tag: {e}").exec_()
+                    ErrorMessage(f"Problem removing tag: {e}").exec()
             else:
                 # do nothing - shouldn't arrive here.
                 pass
@@ -2390,7 +2390,7 @@ class MarkerClient(QWidget):
     def view_testnum_question(self):
         """Shows a particular paper number and question."""
         tgs = SelectTestQuestion(self, self.exam_spec, self.question)
-        if tgs.exec_() != QDialog.Accepted:
+        if tgs.exec() != QDialog.Accepted:
             return
         tn = tgs.tsb.value()
         gn = tgs.gsb.value()
@@ -2403,4 +2403,4 @@ class MarkerClient(QWidget):
         # (but the images are cacheable)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
-        QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec_()
+        QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec()

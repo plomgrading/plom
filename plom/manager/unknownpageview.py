@@ -120,7 +120,7 @@ class ExtraTab(QWidget):
         # make sure at least one question is checked
         checked = [q for q in self.qcbd if self.qcbd[q].isChecked()]
         if not checked:
-            ErrorMessage("You must select at least one question.").exec_()
+            ErrorMessage("You must select at least one question.").exec()
             return
         self._parent.action = "extra"
         self._parent.test = self.tsb.value()
@@ -197,7 +197,7 @@ class HWTab(QWidget):
         # make sure at least one question is checked
         checked = [q for q in self.qcbd if self.qcbd[q].isChecked()]
         if not checked:
-            ErrorMessage("You must select at least one question.").exec_()
+            ErrorMessage("You must select at least one question.").exec()
             return
         self._parent.action = "homework"
         self._parent.sid = self.sidle.text()

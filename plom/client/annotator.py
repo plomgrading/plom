@@ -656,7 +656,7 @@ class Annotator(QWidget):
             for x in pagedata
         ]
         labels = [x["pagename"] for x in pagedata]
-        WholeTestView(testnum, files, labels, parent=self).exec_()
+        WholeTestView(testnum, files, labels, parent=self).exec()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -700,7 +700,7 @@ class Annotator(QWidget):
                 details=f"Annotator's image_md5_list is\n  {image_md5_list}\n"
                 f"The src_img_data is\n  {self.src_img_data}\n"
                 f"Include this info if you think this is a bug!",
-            ).exec_()
+            ).exec()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
         self.parentMarkerUI.downloadAnyMissingPages(testNumber)
 
@@ -725,7 +725,7 @@ class Annotator(QWidget):
                     )
                 ).strip()
                 log.error(s)
-                ErrorMessage(s).exec_()
+                ErrorMessage(s).exec()
 
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
@@ -733,7 +733,7 @@ class Annotator(QWidget):
             self, testNumber, self.src_img_data, page_data, is_dirty
         )
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
-        if rearrangeView.exec_() == QDialog.Accepted:
+        if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: {}".format(perm))
         else:
@@ -762,7 +762,7 @@ class Annotator(QWidget):
                     )
                 ).strip()
                 log.error(s)
-                ErrorMessage(s).exec_()
+                ErrorMessage(s).exec()
             oldtgv = self.tgvID
             self.closeCurrentTGV()
             stuff = self.parentMarkerUI.PermuteAndGetSamePaper(oldtgv, perm)
@@ -775,7 +775,7 @@ class Annotator(QWidget):
                     <a href="https://gitlab.com/plom/plom/-/issues/1967">Issue #1967</a>.
                     </p>
                 """
-                ErrorMsg(self, txt).exec_()
+                ErrorMsg(self, txt).exec()
             self.loadNewTGV(*stuff)
         self.setEnabled(True)
         return
@@ -787,7 +787,7 @@ class Annotator(QWidget):
         """Sets KeyPress shortcuts."""
         kp = KeyHelp()
         # Pop it up.
-        kp.exec_()
+        kp.exec()
 
     def setViewAndScene(self):
         """
@@ -941,11 +941,11 @@ class Annotator(QWidget):
                 + "<p>You should consider closing the Annotator, and waiting "
                 + "a moment to see if the queue of &ldquo;uploading...&rdquo; "
                 + "papers clear.</p>"
-            ).exec_()
+            ).exec()
 
         stuff = self.parentMarkerUI.getMorePapers(oldtgv)
         if not stuff:
-            ErrorMessage("No more to grade?").exec_()
+            ErrorMessage("No more to grade?").exec()
             # Not really safe to give it back? (at least we did the view...)
             return
         log.debug("saveAndGetNext: new stuff is {}".format(stuff))
@@ -989,7 +989,7 @@ class Annotator(QWidget):
 
     def setKeyBindings(self):
         kw = KeyWrangler(self, self.keyBindings)
-        if kw.exec_() == QDialog.Accepted:
+        if kw.exec() == QDialog.Accepted:
             self.changeMainShortCuts(kw.getKeyBindings())
 
     def setKeyBindingsToDefault(self, name):
@@ -1154,7 +1154,7 @@ class Annotator(QWidget):
                 self,
                 "You cannot re-crop while a crop is being held.",
                 info="Unselect 'hold crop' from the menu and then try again.",
-            ).exec_()
+            ).exec()
         else:
             self.setToolMode("crop", self.cursorCrop)
 
@@ -1164,7 +1164,7 @@ class Annotator(QWidget):
                 self,
                 "You cannot un-crop while a crop is being held.",
                 info="Unselect 'hold crop' from the menu and then try again.",
-            ).exec_()
+            ).exec()
         else:
             self.scene.uncrop_underlying_images()
 
@@ -1464,7 +1464,7 @@ class Annotator(QWidget):
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if there is no answer.")
-            msg.exec_()
+            msg.exec()
             return False
 
         # check annotations are inside the margins
@@ -1498,13 +1498,13 @@ class Annotator(QWidget):
                     details += f"\n     - style: {x.brush().style()}"
             details += "\n\n## Object serialization\n\n  "
             details += "\n".join(str(x) for x in self.scene.pickleSceneItems())
-            WarnMsg(self, msg, info=info, info_pre=False, details=details).exec_()
+            WarnMsg(self, msg, info=info, info_pre=False, details=details).exec()
             return False
 
         # make sure not still in "neutral" marking-state = no score given
         if self.getMarkingState() == "neutral":
             msg = ErrorMessage("You have not yet set a score.")
-            msg.exec_()
+            msg.exec()
             return False
 
         # do some checks when score is zero
@@ -1532,7 +1532,7 @@ class Annotator(QWidget):
                 "<p>Are you sure you wish to continue?</p>",
                 "Don't ask me again this session.",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 return False
             if msg.cb.checkState() == Qt.Checked:
                 # Note: these are only saved if we ultimately accept
@@ -1587,13 +1587,13 @@ class Annotator(QWidget):
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
                 msg = SimpleQuestion(self, msg)
-                if msg.exec_() == QMessageBox.No:
+                if msg.exec() == QMessageBox.No:
                     return False
             elif self.markWarn:
                 msg = SimpleQuestionCheckBox(
                     self, msg, "Don't ask me again this session."
                 )
-                if msg.exec_() == QMessageBox.No:
+                if msg.exec() == QMessageBox.No:
                     return False
                 if msg.cb.checkState() == Qt.Checked:
                     self.markWarn = False
@@ -1630,13 +1630,13 @@ class Annotator(QWidget):
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
                 msg = SimpleQuestion(self, msg)
-                if msg.exec_() == QMessageBox.No:
+                if msg.exec() == QMessageBox.No:
                     return False
             elif self.markWarn:
                 msg = SimpleQuestionCheckBox(
                     self, msg, "Don't ask me again this session."
                 )
-                if msg.exec_() == QMessageBox.No:
+                if msg.exec() == QMessageBox.No:
                     return False
                 if msg.cb.checkState() == Qt.Checked:
                     self.markWarn = False
@@ -1690,7 +1690,7 @@ class Annotator(QWidget):
                 "<p>There are annotations on the page.</p>\n"
                 "<p>Do you want to discard them and close the annotator?</p>",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 event.ignore()
                 return
 
@@ -1884,11 +1884,11 @@ class Annotator(QWidget):
         if self.getMarkingState() != "neutral":
             ErrorMessage(
                 'You have marked the page - cannot then set "No answer given". Delete mark-changes before trying again.'
-            ).exec_()
+            ).exec()
             return
 
         self.scene.noAnswer(noAnswerCID)
-        nabValue = NoAnswerBox(self).exec_()
+        nabValue = NoAnswerBox(self).exec()
         if nabValue == 0:
             # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
             self.scene.undo()
@@ -1927,7 +1927,7 @@ class Annotator(QWidget):
     def viewSolutions(self):
         solutionFile = self.parentMarkerUI.getSolutionImage()
         if solutionFile is None:
-            ErrorMessage("No solution has been uploaded").exec_()
+            ErrorMessage("No solution has been uploaded").exec()
             return
 
         if self.solutionView is None:

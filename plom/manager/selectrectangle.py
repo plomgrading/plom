@@ -91,7 +91,7 @@ class SelectRectangleWindow(QDialog):
         """Checks and accepts only if there is a valid rectangle."""
         if self.rectangle is None:
             # if the user has selected a valid rectangle then we accept it, otherwise do we throw this warning.
-            ErrorMessage("Error: no rectangle selected.").exec_()
+            ErrorMessage("Error: no rectangle selected.").exec()
             pass
         else:
             t = self.view.imageGItem.boundingRect().top()
