@@ -423,6 +423,7 @@ class Manager(QWidget):
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
         self.ui.unidB.clicked.connect(self.un_id_paper)
+        self.ui.unpredB.clicked.connect(self.remove_id_prediction)
 
         self.ui.refreshRevB.clicked.connect(self.refreshRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
@@ -1582,6 +1583,17 @@ class Manager(QWidget):
         if SimpleQuestion(self, msg).exec_() == QMessageBox.No:
             return
         self.msgr.un_id_paper(test)
+        self.getPredictions()
+
+    def remove_id_prediction(self):
+        idx = self.ui.predictionTW.selectedIndexes()
+        if not idx:
+            return
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
+        msg = f"Do you want to reset the predicted ID of test number {test}?"
+        if SimpleQuestion(self, msg).exec_() == QMessageBox.No:
+            return
+        self.msgr.remove_id_prediction(test)
         self.getPredictions()
 
     def getPredictions(self):
