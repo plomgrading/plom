@@ -420,20 +420,21 @@ def pre_id_paper(self, paper_number, sid):
             return False, 404, msg
 
         p = IDPrediction.get_or_none(test=tref)
-        if p is None and sid == "":
-            # we have no prediction and we don't want one: life is good
+        if sid == "":
+            if p is None:
+                log.info("Paper %s remove predicted ID was unnecessary", paper_number)
+            else:
+                p.delete_instance()
+                log.info("Paper %s removed predicted ID", paper_number)
             return True, None, None
-        elif p is None:
+
+        if p is None:
             try:
                 IDPrediction.create(test=tref, user=uref, certainty=0.9, student_id=sid)
             except pw.IntegrityError:
                 log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
                 return False, 409, f"student id {sid} in use elsewhere"
             log.info('Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid))
-            return True, None, None
-        elif sid == "":
-            p.delete_instance()
-            log.info("Paper %s removed predicted ID", paper_number)
             return True, None, None
         else:
             # changing
