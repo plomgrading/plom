@@ -1568,26 +1568,21 @@ class Manager(QWidget):
             WarnMsg(self, "ID matching procedure failed:", info=f"{e}").exec_()
 
     def un_id_paper(self):
-        # should we populate "test" from the list view?
-        # idi = self.ui.predictionTW.selectedIndexes()
-        # if idi:
-        #     test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
-        #     sid = int(self.ui.predictionTW.item(idi[0].row(), 2).text())
-
-        test, ok = QInputDialog.getText(self, "Unidentify a paper", "Un-ID which paper")
-        if not ok or not test:
+        idx = self.ui.predictionTW.selectedIndexes()
+        if not idx:
             return
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
         iDict = self.msgr.getIdentified()
         msg = f"Do you want to reset the ID of test number {test}?"
-        if test in iDict:
-            sid, sname = iDict[test]
+        if str(test) in iDict:
+            sid, sname = iDict[str(test)]
             msg += f"\n\nCurrently is {sid}: {sname}"
         else:
             msg += "\n\nCan't find current ID - is likely not ID'd yet."
         if SimpleQuestion(self, msg).exec_() == QMessageBox.No:
             return
-        # self.msgr.id_paper(test, "", "")
         self.msgr.un_id_paper(test)
+        self.getPredictions()
 
     def getPredictions(self):
         prediction_dict = self.msgr.IDrequestPredictions()

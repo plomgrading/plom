@@ -164,10 +164,8 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def un_id_paper(self, code):
+    def un_id_paper(self, paper_number):
         """Remove the identify of a paper directly.
-
-        TODO: eventually this may want its own API call.
 
         Exceptions:
             PlomAuthenticationException: login problems.
@@ -175,21 +173,16 @@ class ManagerMessenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                response = self.put(
-                    f"/ID/{code}",
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                        "sid": "",
-                        "sname": "",
-                    },
+                response = self.delete(
+                    f"/ID/{paper_number}",
+                    json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
-                if response.status_code == 404:
-                    raise PlomSeriousException(e) from None
+                if response.status_code == 406:
+                    raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def upload_classlist(self, classdict):
