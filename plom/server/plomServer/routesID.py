@@ -347,10 +347,6 @@ class IDHandler:
         Only "manager" can perform this action.  Typical client IDing
         would call func:`IdentifyPaperTask` instead.
 
-        By passing empty `sid`, this API can be used to unidentify a
-        paper.  This feature may move to its own API call in the
-        future.
-
         Returns:
             403: not manager.
             404: papernum not found, or other data errors.
@@ -358,13 +354,6 @@ class IDHandler:
 
         """
         papernum = request.match_info["paper_number"]
-
-        # special feature to unidentify: move elsewhere?
-        # TODO: perhaps we want this to unpredict a paper?  OR maybe we yet another API...
-        if not data["sid"] and not data["sname"]:
-            if self.server.DB.remove_id_from_paper(papernum):
-                return web.Response(status=200)
-            raise web.HTTPNotFound(reason=f"Did not find papernum {papernum}")
         r, what, msg = self.server.pre_id_paper(papernum, data["sid"])
         if r:
             return web.Response(status=200)

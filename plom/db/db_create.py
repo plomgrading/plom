@@ -450,16 +450,11 @@ def remove_id_prediction(self, paper_number):
         tuple: `(True, None, None)` if successful, or `(False, 404, msg)`
             if ``paper_number`` does not exist.
     """
-    uref = User.get(name="HAL")
-    # Manager calls this function, but since these are build by
-    # by the plom system, we put user = HAL.
-
-    logbase = "Manager tried to pre-id paper {}".format(paper_number)
     with plomdb.atomic():
         tref = Test.get_or_none(Test.test_number == paper_number)
         if tref is None:
-            msg = "denied b/c paper not found"
-            log.error("{}: {}".format(logbase, msg))
+            msg = f"denied b/c paper {paper_number} not found"
+            log.error(f"Tried to remove prediction: {msg}")
             return False, 404, msg
 
         p = IDPrediction.get_or_none(test=tref)
