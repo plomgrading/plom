@@ -4,7 +4,9 @@
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartWriter, MultipartReader
+import csv
 
+from plom import specdir
 from plom import undo_json_packing_of_version_map
 from .routeutils import authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request, log
@@ -212,9 +214,29 @@ class UploadHandler:
         if part1 is None:  # weird error
             return web.Response(status=406)  # should have sent 3 parts
         image = await part1.read()
+
+        # load up the classlist to get the student-name from the sid.
+        # TODO - move classlist stuff into database.
+        student_name = None
+        try:
+            with open(specdir / "classlist.csv") as f:
+                reader = csv.DictReader(f)
+                # extract the student-name based on the ID.
+                for row in reader:
+                    if str(row["id"]) == str(param["sid"]):
+                        student_name = row["name"]
+                        break
+        except FileNotFoundError:
+            raise web.HTTPNotFound(reason="classlist not found")
+        if student_name is None:
+            raise web.HTTPNotFound(
+                reason="cannot find student with that ID in classlist"
+            )
+
         # file it away.
         rmsg = self.server.addHWPage(
             param["sid"],
+            student_name,
             param["questions"],
             param["order"],
             param["fileName"],

@@ -113,6 +113,7 @@ class PlomDB:
         attachImageToTPage,
         createNewHWPage,
         uploadTestPage,
+        is_sid_used,
         doesHWHaveIDPage,
         getMissingDNMPages,
         uploadHWPage,
