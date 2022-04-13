@@ -1604,11 +1604,10 @@ class Manager(QWidget):
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
 
-        # TODO: what do we want here?  all papers?  Or all scanned papers?
-        alltests = set(identified.keys()).union(prediction_dict.keys())
-        # stupid keys not staying ints
-        alltests = [int(x) for x in alltests]
-        alltests.sort()
+        # TODO: Issue #1745
+        # TODO: all existing papers or scanned only?
+        s = self.msgr.get_spec()
+        alltests = range(1, s["numberToProduce"] + 1)
 
         for r, t in enumerate(alltests):
             self.ui.predictionTW.setSortingEnabled(False)
