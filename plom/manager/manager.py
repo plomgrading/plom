@@ -1627,7 +1627,7 @@ class Manager(QWidget):
                 item1.setData(Qt.DisplayRole, pred[1])
                 self.ui.predictionTW.setItem(r, 4, item1)
                 if identity:
-                    # prediction less important but perhaps not irrelevent
+                    # prediction less important but perhaps not irrelevant
                     item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
                     item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
                     # This doesn't work
