@@ -299,15 +299,17 @@ class IDClient(QWidget):
 
     def getPredictions(self):
         """Send request for prediction list (iRPL) to server. The server then sends
-        back the CSV of the predictions testnumber -> studentID.
+        back a dict of the predictions testnumber -> studentID, certainty.
         """
         # create dictionary to store predictions in
         self.predictedTestToNumbers = defaultdict(int)
+        self.predictedTestCertainty = defaultdict(float)
         # Send request for prediction list to server
         prediction_dict = self.msgr.IDrequestPredictions()
-        # dict is test_number:(sid, sname, certainty)
+        # dict is test_number:(sid, certainty)
         for tn, val in prediction_dict.items():
             self.predictedTestToNumbers[int(tn)] = str(val[0])
+            self.predictedTestCertainty[int(tn)] = val[1]
 
         # Also tweak font size
         fnt = self.font()
@@ -422,6 +424,15 @@ class IDClient(QWidget):
                 self.ui.predButton.setEnabled(True)
                 self.ui.pSIDLabel.setText(psid)
                 self.ui.pNameLabel.setText(pname)
+                # TODO - set thresholds
+                # when certainty level is high, set the background to green
+                if self.predictedTestCertainty[tn] > 0.8:  # pre-id'd has certainty 0.9
+                    self.ui.predictionBox.setStyleSheet("background-color: #00FA9A")
+                elif self.predictedTestCertainty[tn] > 0.4:  # machine prediction has certainty 0.5
+                    self.ui.predictionBox.setStyleSheet("background-color: #FFD700")
+                else:  # else leave background unset.
+                    self.ui.predictionBox.setStyleSheet("background-color:")
+
         else:
             self.ui.predButton.setEnabled(False)
             self.ui.pSIDLabel.setText("")
