@@ -432,17 +432,19 @@ def pre_id_paper(self, paper_number, sid):
             log.info('Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid))
             return True, None, None
         elif sid == "":
-            # removal: TODO: not sure how yet, empty string for now
-            # TODO: how does setting work?  NOT LIKE THIS
-            p.student_id = ""
-            p.certainty = 0.0
+            p.delete_instance()
             log.info("Paper %s removed predicted ID", paper_number)
             return True, None, None
         else:
             # changing
             p.student_id = sid
             p.certainty = 0.9  # hardcoded
-            log.info('Paper %s changed predicted ID by HAL to "%s"', paper_number, censorID(sid))
+            p.save()
+            log.info(
+                'Paper %s changed predicted ID by HAL to "%s"',
+                paper_number,
+                censorID(sid),
+            )
             return True, None, None
 
 

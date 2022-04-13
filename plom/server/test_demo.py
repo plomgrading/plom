@@ -92,24 +92,27 @@ class Test:
             with raises(PlomConflict, match="elsewhere"):
                 msgr.pre_id_paper(2, sid)
 
-            # TODO: not yet implemented!!
             msgr.remove_id_prediction(1)
 
             predictions = msgr.IDrequestPredictions()
-            # TODO: currently we reset to empty!
-            # assert "1" not in predictions
-            # TODO: instead we expect empty with bullshit confidence
-            assert predictions["1"][0] == ""
-
-            print("*"*120)
-            print(predictions)
-            print("*"*120)
+            assert "1" not in predictions
 
             # now we can assign `sid` to paper 2
             # TODO: but this is failing with 409!  Not sure why yet
             msgr.pre_id_paper(2, sid)
             predictions = msgr.IDrequestPredictions()
-            # TODO: see below for identified
+            assert "2" in predictions
+            assert sid in predictions["2"]
+
+            msgr.remove_id_prediction(2)
+            msgr.pre_id_paper(1, sid)
+
+            # we leave the state hopefully as we found it
+            predictions = msgr.IDrequestPredictions()
+            assert "1" in predictions
+            assert "2" not in predictions
+            assert predictions["1"][0] == sid
+            assert predictions["1"][1] == cert
 
         finally:
             msgr.closeUser()
