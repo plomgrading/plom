@@ -135,7 +135,7 @@ class IDHandler:
     # @routes.get("/ID/predictions")
     @authenticate_by_token
     def IDgetPredictions(self):
-        """Returns the files involving the ML model's student id's prediction.
+        """Returns current predictions for the identification of each paper.
 
         Responds with status 200/404.
 
