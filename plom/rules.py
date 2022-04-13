@@ -60,8 +60,13 @@ def is_z_padded_integer(n):
 
 
 def censorStudentNumber(n):
-    """Replace some parts of student number with astericks."""
+    """Replace some parts of student number with astericks.
+
+    If it doesn't look like a student number, we don't censor it.
+    """
     n = str(n)
+    if not is_z_padded_integer(n):
+        return n
     r = n[:2] + "****" + n[-2:]
     assert len(n) == len(r)
     return r
