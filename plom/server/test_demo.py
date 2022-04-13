@@ -92,11 +92,31 @@ class Test:
             with raises(PlomConflict, match="elsewhere"):
                 msgr.pre_id_paper(2, sid)
 
-            # TODO: not yet implemented!!
-            # msgr.un_pre_id_paper(1)
+            msgr.remove_id_prediction(1)
 
-            # TODO: now we can assign `sid` to paper 2
-            # TODO: see below for identified
+            predictions = msgr.IDrequestPredictions()
+            assert "1" not in predictions
+
+            # now we can assign `sid` to paper 2
+            msgr.pre_id_paper(2, sid)
+            predictions = msgr.IDrequestPredictions()
+            assert "2" in predictions
+            assert sid in predictions["2"]
+
+            # now we can assign ANYTHING else to paper 2's prediction
+            msgr.pre_id_paper(2, "eleventyfour")
+            predictions = msgr.IDrequestPredictions()
+            assert "2" in predictions
+            assert "eleventyfour" in predictions["2"]
+
+            # we leave the state hopefully as we found it
+            msgr.remove_id_prediction(2)
+            msgr.pre_id_paper(1, sid)
+            predictions = msgr.IDrequestPredictions()
+            assert "1" in predictions
+            assert "2" not in predictions
+            assert predictions["1"][0] == sid
+            assert predictions["1"][1] == cert
 
         finally:
             msgr.closeUser()
