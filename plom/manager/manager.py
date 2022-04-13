@@ -1500,7 +1500,9 @@ class Manager(QWidget):
         idx = self.ui.predictionTW.selectedIndexes()
         if len(idx) == 0:
             return
-        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.ItemDataRole.DisplayRole)
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(
+            Qt.ItemDataRole.DisplayRole
+        )
         # TODO: should we populate with empty string to avoid dealing with None here?
         sid = self.ui.predictionTW.item(idx[0].row(), 1)
         if sid is not None:
