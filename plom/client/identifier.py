@@ -428,7 +428,8 @@ class IDClient(QWidget):
                 # when certainty level is high, set the background to green
                 if self.predictedTestCertainty[tn] > 0.8:  # pre-id'd has certainty 0.9
                     self.ui.predictionBox.setStyleSheet("background-color: #00FA9A")
-                elif self.predictedTestCertainty[tn] > 0.4:  # machine prediction has certainty 0.5
+                elif self.predictedTestCertainty[tn] > 0.4:
+                    # machine prediction currently hardcoded to 0.5
                     self.ui.predictionBox.setStyleSheet("background-color: #FFD700")
                 else:  # else leave background unset.
                     self.ui.predictionBox.setStyleSheet("background-color:")
