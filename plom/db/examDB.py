@@ -103,7 +103,8 @@ class PlomDB:
         getPageVersions,
         get_question_versions,
         get_all_question_versions,
-        pre_id_paper,
+        add_or_change_id_prediction,
+        remove_id_prediction,
         remove_id_from_paper,
         createNoAnswerRubric,
     )

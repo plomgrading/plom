@@ -97,7 +97,12 @@ def IDclaimThisTask(self, username, test_number):
 
 def pre_id_paper(self, *args, **kwargs):
     """Put a student id into database prediction table, manager only."""
-    return self.DB.pre_id_paper(*args, **kwargs)
+    return self.DB.add_or_change_id_prediction(*args, **kwargs)
+
+
+def remove_id_prediction(self, *args, **kwargs):
+    """Remove a particular test from the database prediction table, manager only."""
+    return self.DB.remove_id_prediction(*args, **kwargs)
 
 
 def ID_id_paper(self, *args, **kwargs):

@@ -389,9 +389,8 @@ def get_all_question_versions(self):
     return qvmap
 
 
-def pre_id_paper(self, paper_number, sid, certainty=0.9):
-    """Pre-id a paper with a given student id. If that test
-    already has a prediction of that sid, then do nothing.
+def add_or_change_id_prediction(self, paper_number, sid, certainty=0.9):
+    """Pre-id a paper with a given student id. If that test already has a prediction of that sid, then do nothing.
 
     See also :func:`plom.db.db_identify.ID_predict_paper_id` which is similar.
 
@@ -418,13 +417,6 @@ def pre_id_paper(self, paper_number, sid, certainty=0.9):
             return False, 404, msg
 
         p = IDPrediction.get_or_none(test=tref)
-        if sid == "":
-            if p is None:
-                log.info("Paper %s remove predicted ID was unnecessary", paper_number)
-            else:
-                p.delete_instance()
-                log.info("Paper %s removed predicted ID", paper_number)
-            return True, None, None
 
         if p is None:
             try:
@@ -436,17 +428,47 @@ def pre_id_paper(self, paper_number, sid, certainty=0.9):
                 return False, 409, f"student id {sid} in use elsewhere"
             log.info('Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid))
             return True, None, None
+
+        p.student_id = sid
+        p.certainty = certainty
+        p.save()
+        log.info(
+            'Paper %s changed predicted ID by HAL to "%s"',
+            paper_number,
+            censorID(sid),
+        )
+        return True, None, None
+
+
+def remove_id_prediction(self, paper_number):
+    """Remove any id predictions associated with a particular paper.
+
+    Args:
+        paper_number (int)
+
+    Returns:
+        tuple: `(True, None, None)` if successful, or `(False, 404, msg)`
+            if ``paper_number`` does not exist.
+    """
+    uref = User.get(name="HAL")
+    # Manager calls this function, but since these are build by
+    # by the plom system, we put user = HAL.
+
+    logbase = "Manager tried to pre-id paper {}".format(paper_number)
+    with plomdb.atomic():
+        tref = Test.get_or_none(Test.test_number == paper_number)
+        if tref is None:
+            msg = "denied b/c paper not found"
+            log.error("{}: {}".format(logbase, msg))
+            return False, 404, msg
+
+        p = IDPrediction.get_or_none(test=tref)
+        if p is None:
+            log.info("Paper %s remove predicted ID was unnecessary", paper_number)
         else:
-            # changing
-            p.student_id = sid
-            p.certainty = certainty
-            p.save()
-            log.info(
-                'Paper %s changed predicted ID by HAL to "%s"',
-                paper_number,
-                censorID(sid),
-            )
-            return True, None, None
+            p.delete_instance()
+            log.info("Paper %s removed predicted ID", paper_number)
+        return True, None, None
 
 
 def remove_id_from_paper(self, paper_num):

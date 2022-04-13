@@ -389,7 +389,7 @@ class IDHandler:
             404: papernum not found, or other data errors.
         """
         papernum = request.match_info["paper_number"]
-        r, what, msg = self.server.pre_id_paper(papernum, "")  # or None?
+        r, what, msg = self.server.remove_id_prediction(papernum)
         if r:
             return web.Response(status=200)
         elif what == 404:
