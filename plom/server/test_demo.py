@@ -93,7 +93,10 @@ class Test:
                 msgr.pre_id_paper(2, sid)
 
             # TODO: not yet implemented!!
-            # msgr.un_pre_id_paper(1)
+            msgr.remove_id_prediction(1)
+
+            predictions = msgr.IDrequestPredictions()
+            assert "1" not in predictions
 
             # TODO: now we can assign `sid` to paper 2
             # TODO: see below for identified

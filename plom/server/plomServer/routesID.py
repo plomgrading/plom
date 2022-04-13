@@ -375,6 +375,32 @@ class IDHandler:
         else:
             raise web.HTTPInternalServerError(reason=msg)
 
+    # @routes.delete("/ID/preid/{paper_number}")
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def remove_id_prediction(self, data, request):
+        """Remove the prediction identification for a paper.
+
+        Only "manager" can perform this action.  Typical client IDing
+        would call func:`IdentifyPaperTask` instead.
+
+        Returns:
+            403: not manager.
+            404: papernum not found, or other data errors.
+            409: student number `data["sid"]` is already in use.
+
+        """
+        papernum = request.match_info["paper_number"]
+        r, what, msg = self.server.pre_id_paper(papernum, "")  # or None?
+        if r:
+            return web.Response(status=200)
+        elif what == 409:
+            raise web.HTTPConflict(reason=msg)
+        elif what == 404:
+            raise web.HTTPNotFound(reason=msg)
+        else:
+            raise web.HTTPInternalServerError(reason=msg)
+
     # @routes.deletet("/ID/{paper_number}")
     @authenticate_by_token_required_fields([])
     @write_admin
@@ -569,6 +595,7 @@ class IDHandler:
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
         router.add_put("/ID/preid/{paper_number}", self.PreIDPaper)
+        router.add_delete("/ID/preid/{paper_number}", self.remove_id_prediction)
         router.add_delete("/ID/{paper_number}", self.un_id_paper)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
