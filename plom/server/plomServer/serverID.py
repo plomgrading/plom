@@ -191,8 +191,8 @@ def IDputPredictions(self, predictions, classlist, spec):
     for sid, test_and_name in id_predictions.items():
         # get the student_name from the classlist
         # returns (True,None,None) or (False, 409, msg) or (False, 404, msg)
-        r, what, msg = self.server.DB.ID_predict_paper_id(
-            test_and_name[0], sid, test_and_name[1]
+        r, what, msg = self.server.DB.add_or_change_id_prediction(
+            test_and_name[0], sid, 0.5
         )
         if r:  # all good, continue pushing
             pass
@@ -307,9 +307,9 @@ def predict_id_lap_solver(self):
     prediction_pairs = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
-    log.info("Saving prediction results into database")
+    log.info("Saving prediction results into database /w certainty 0.5")
     for test_number, student_ID in prediction_pairs:
-        self.DB.ID_predict_paper_id(test_number, student_ID)
+        self.DB.add_or_change_id_prediction(test_number, student_ID, 0.5)
         # TODO - capture any error outputs
 
     return status

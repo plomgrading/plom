@@ -392,8 +392,6 @@ def get_all_question_versions(self):
 def add_or_change_id_prediction(self, paper_number, sid, certainty=0.9):
     """Pre-id a paper with a given student id. If that test already has a prediction of that sid, then do nothing.
 
-    See also :func:`plom.db.db_identify.ID_predict_paper_id` which is similar.
-
     Args:
         paper_number (int)
         sid (str): a student id.
