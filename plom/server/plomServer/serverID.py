@@ -188,6 +188,7 @@ def IDputPredictions(self, predictions, classlist, spec):
             id_predictions[int(sid)].append(X["name"])
     # now push everything into the DB
     problem_list = []
+    # TODO: may need to erase the table here?
     for sid, test_and_name in id_predictions.items():
         # get the student_name from the classlist
         # returns (True,None,None) or (False, 409, msg) or (False, 404, msg)
@@ -307,6 +308,7 @@ def predict_id_lap_solver(self):
     prediction_pairs = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
+    # TODO: may need to erase the table here?
     log.info("Saving prediction results into database /w certainty 0.5")
     for test_number, student_ID in prediction_pairs:
         self.DB.add_or_change_id_prediction(test_number, student_ID, 0.5)
