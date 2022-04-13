@@ -71,7 +71,8 @@ class Test:
         qvmap2 = version_map_from_file(f)
         assert qvmap == qvmap2
 
-    def test_unid(self):
+    # TODO: temporarily disabled
+    def untest_unid(self):
         # TODO: use connectmanager messenger, See MR !1275.
         from plom.create import start_messenger
 
