@@ -379,8 +379,7 @@ def IDreviewID(self, test_number):
 
 
 def ID_predict_paper_id(self, paper_number, sid):
-    """Put predicted test student id into DB. If that test
-    already has a prediction of that sid, then do nothing.
+    """Put predicted test student id into DB. If that test already has a prediction of that sid, then do nothing.
 
     See also :func:`plom.db.db_create.prename_paper` which is similar.
     This one is called by manager when running the automagical
@@ -388,7 +387,8 @@ def ID_predict_paper_id(self, paper_number, sid):
 
     Args:
         paper_num (int)
-        sid (str): student id.
+        sid (str): student id.  If it is the empty string then we are
+            removing the prediction.
 
     Returns:
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`

@@ -924,8 +924,21 @@
                   <layout class="QHBoxLayout" name="horizontalLayout_4">
                    <item>
                     <widget class="QPushButton" name="unidB">
+                     <property name="toolTip">
+                      <string>Unidentify selected paper</string>
+                     </property>
                      <property name="text">
                       <string>Un-ID</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="unpredB">
+                     <property name="toolTip">
+                      <string>Remove prediction for selected</string>
+                     </property>
+                     <property name="text">
+                      <string>Un-pred</string>
                      </property>
                     </widget>
                    </item>

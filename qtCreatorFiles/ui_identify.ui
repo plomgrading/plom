@@ -137,8 +137,7 @@
            </property>
            <property name="text">
             <string>&amp;Accept
- machine
- prediction</string>
+prediction</string>
            </property>
           </widget>
          </item>

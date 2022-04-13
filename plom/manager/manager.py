@@ -423,6 +423,7 @@ class Manager(QWidget):
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
         self.ui.unidB.clicked.connect(self.un_id_paper)
+        self.ui.unpredB.clicked.connect(self.remove_id_prediction)
 
         self.ui.refreshRevB.clicked.connect(self.refreshRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
@@ -1584,6 +1585,17 @@ class Manager(QWidget):
         self.msgr.un_id_paper(test)
         self.getPredictions()
 
+    def remove_id_prediction(self):
+        idx = self.ui.predictionTW.selectedIndexes()
+        if not idx:
+            return
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
+        msg = f"Do you want to reset the predicted ID of test number {test}?"
+        if SimpleQuestion(self, msg).exec_() == QMessageBox.No:
+            return
+        self.msgr.remove_id_prediction(test)
+        self.getPredictions()
+
     def getPredictions(self):
         prediction_dict = self.msgr.IDrequestPredictions()
         # prediction_dict = { test_number: (sid, certainty) }
@@ -1592,11 +1604,10 @@ class Manager(QWidget):
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
 
-        # TODO: what do we want here?  all papers?  Or all scanned papers?
-        alltests = set(identified.keys()).union(prediction_dict.keys())
-        # stupid keys not staying ints
-        alltests = [int(x) for x in alltests]
-        alltests.sort()
+        # TODO: Issue #1745
+        # TODO: all existing papers or scanned only?
+        s = self.msgr.get_spec()
+        alltests = range(1, s["numberToProduce"] + 1)
 
         for r, t in enumerate(alltests):
             self.ui.predictionTW.setSortingEnabled(False)
@@ -1627,7 +1638,7 @@ class Manager(QWidget):
                 item1.setData(Qt.DisplayRole, pred[1])
                 self.ui.predictionTW.setItem(r, 4, item1)
                 if identity:
-                    # prediction less important but perhaps not irrelevent
+                    # prediction less important but perhaps not irrelevant
                     item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
                     item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
                     # This doesn't work

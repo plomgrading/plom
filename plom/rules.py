@@ -7,8 +7,8 @@
 StudentIDLength = 8
 
 
-def isValidUBCStudentNumber(n):
-    """Is this a valid student number for UBC?
+def testValidUBCStudentNumber(n):
+    """Check if input is a valid student number for UBC and an explanation.
 
     Input must be a string or string like or convertible by str().
     """
@@ -26,8 +26,14 @@ def isValidUBCStudentNumber(n):
     return (True, "")
 
 
-def is_z_padded_integer(n):
-    """Is this string a z-padded int
+def isValidUBCStudentNumber(n):
+    """Is this a valid student number for UBC?"""
+    ok, _ = testValidUBCStudentNumber(n)
+    return ok
+
+
+def test_z_padded_integer(n):
+    """Is this string a z-padded integer, and an explanation.
 
     Input must be a string that when z's (or Z's) are removed gives a non-negative integer. We may require this for debugging with 'fake' student numbers which are constructed from some other id by padding with z's. Must have correct length - as per StudentIDLength
     """
@@ -47,9 +53,20 @@ def is_z_padded_integer(n):
     return (True, "")
 
 
+def is_z_padded_integer(n):
+    """Is this string a z-padded integer?"""
+    ok, _ = test_z_padded_integer(n)
+    return ok
+
+
 def censorStudentNumber(n):
-    """Replace some parts of student number with astericks."""
+    """Replace some parts of student number with astericks.
+
+    If it doesn't look like a student number, we don't censor it.
+    """
     n = str(n)
+    if not is_z_padded_integer(n):
+        return n
     r = n[:2] + "****" + n[-2:]
     assert len(n) == len(r)
     return r
@@ -66,12 +83,12 @@ def censorStudentName(s):
 
 def validateStudentNumber(n):
     """Check if is either a valid UBC SID or a z-padded int of correct length, and return any errors."""
-    s, msg1 = isValidUBCStudentNumber(n)
+    s, msg1 = testValidUBCStudentNumber(n)
     if s:
         # is valid UBC SID.
         return s, msg1
     else:  # Could still be z-padded int
-        s, msg2 = is_z_padded_integer(n)
+        s, msg2 = test_z_padded_integer(n)
         if s:
             return (s, msg2)
         else:
@@ -81,4 +98,4 @@ def validateStudentNumber(n):
 def isValidStudentNumber(n):
     """Check if is either a valid UBC SID or a z-padded int of correct length. Ignores any error messages"""
 
-    return isValidUBCStudentNumber(n)[0] or is_z_padded_integer(n)[0]
+    return isValidUBCStudentNumber(n) or is_z_padded_integer(n)
