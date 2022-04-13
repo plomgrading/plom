@@ -168,7 +168,6 @@ class ManagerMessenger(BaseMessenger):
         """Remove the predicted "pre-id" for a particular paper.
 
         Exceptions:
-            PlomConflict: `studentID` already used on a different paper.  TODO
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
@@ -182,9 +181,6 @@ class ManagerMessenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
-                if response.status_code == 409:
-                    # TODO: remove this?
-                    raise PlomConflict(response.reason) from None
                 if response.status_code == 404:
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
