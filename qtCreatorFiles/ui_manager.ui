@@ -839,7 +839,7 @@
                    <item>
                     <widget class="QPushButton" name="machineReadButton">
                      <property name="toolTip">
-                      <string>Maachine read the digits from the ID pages</string>
+                      <string>Machine read the digits from the ID pages</string>
                      </property>
                      <property name="text">
                       <string>Recognize digits in IDs</string>
@@ -884,7 +884,7 @@
               <item>
                <widget class="QGroupBox" name="predGB">
                 <property name="title">
-                 <string>ID prediction list</string>
+                 <string>Identified papers and predictions</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_13">
                  <item>
@@ -905,7 +905,7 @@
                     <bool>true</bool>
                    </property>
                    <property name="columnCount">
-                    <number>4</number>
+                    <number>5</number>
                    </property>
                    <attribute name="horizontalHeaderStretchLastSection">
                     <bool>true</bool>
@@ -913,6 +913,7 @@
                    <attribute name="verticalHeaderVisible">
                     <bool>false</bool>
                    </attribute>
+                   <column/>
                    <column/>
                    <column/>
                    <column/>
