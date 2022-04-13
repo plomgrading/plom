@@ -389,7 +389,7 @@ def get_all_question_versions(self):
     return qvmap
 
 
-def pre_id_paper(self, paper_number, sid):
+def pre_id_paper(self, paper_number, sid, certainty=0.9):
     """Pre-id a paper with a given student id. If that test
     already has a prediction of that sid, then do nothing.
 
@@ -397,10 +397,8 @@ def pre_id_paper(self, paper_number, sid):
 
     Args:
         paper_number (int)
-        sid (str): student id.  TODO: consider the sentinel case for
-            removing, or write a new function for that.
-
-    TODO: pass in certainty too.
+        sid (str): a student id.
+        certaintly (float): TODO: meaning of this is stil evolving.
 
     Returns:
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`
@@ -430,7 +428,9 @@ def pre_id_paper(self, paper_number, sid):
 
         if p is None:
             try:
-                IDPrediction.create(test=tref, user=uref, certainty=0.9, student_id=sid)
+                IDPrediction.create(
+                    test=tref, user=uref, certainty=certainty, student_id=sid
+                )
             except pw.IntegrityError:
                 log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
                 return False, 409, f"student id {sid} in use elsewhere"
@@ -439,7 +439,7 @@ def pre_id_paper(self, paper_number, sid):
         else:
             # changing
             p.student_id = sid
-            p.certainty = 0.9  # hardcoded
+            p.certainty = certainty
             p.save()
             log.info(
                 'Paper %s changed predicted ID by HAL to "%s"',
