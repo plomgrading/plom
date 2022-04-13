@@ -397,7 +397,7 @@ def add_or_change_id_prediction(self, paper_number, sid, certainty=0.9):
     Args:
         paper_number (int)
         sid (str): a student id.
-        certaintly (float): TODO: meaning of this is stil evolving.
+        certaintly (float): TODO: meaning of this is still evolving.
 
     Returns:
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`
