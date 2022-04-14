@@ -389,7 +389,9 @@ def get_all_question_versions(self):
     return qvmap
 
 
-def add_or_change_id_prediction(self, paper_number, sid, certainty=0.9):
+def add_or_change_id_prediction(
+    self, paper_number, sid, certainty=0.9, predictor="prename"
+):
     """Pre-id a paper with a given student id. If that test already has a prediction of that sid, then do nothing.
 
     Args:
@@ -418,7 +420,11 @@ def add_or_change_id_prediction(self, paper_number, sid, certainty=0.9):
         try:
             if p is None:
                 IDPrediction.create(
-                    test=tref, user=uref, certainty=certainty, student_id=sid
+                    test=tref,
+                    user=uref,
+                    certainty=certainty,
+                    student_id=sid,
+                    predictor=predictor,
                 )
                 log.info(
                     'Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid)
@@ -426,6 +432,7 @@ def add_or_change_id_prediction(self, paper_number, sid, certainty=0.9):
             else:
                 p.student_id = sid
                 p.certainty = certainty
+                p.predictor = predictor
                 p.save()
                 log.info(
                     'Paper %s changed predicted ID by HAL to "%s"',

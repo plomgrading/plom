@@ -381,5 +381,6 @@ def ID_get_all_predictions(self):
         predictions[preidref.test.test_number] = (
             preidref.student_id,
             preidref.certainty,
+            preidref.predictor,
         )
     return predictions

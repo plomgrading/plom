@@ -376,7 +376,7 @@ class IDHandler:
         raise web.HTTPNotAcceptable(reason=f"Did not find papernum {paper_number}")
 
     # @routes.put("/ID/preid/{paper_number}")
-    @authenticate_by_token_required_fields(["user", "sid"])
+    @authenticate_by_token_required_fields(["user", "sid", "predictor"])
     @write_admin
     def PreIDPaper(self, data, request):
         """Set the prediction identification for a paper.
@@ -387,7 +387,7 @@ class IDHandler:
             409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["paper_number"]
-        r, what, msg = self.server.pre_id_paper(papernum, data["sid"])
+        r, what, msg = self.server.pre_id_paper(papernum, data["sid"], predictor=data["predictor"])
         if r:
             return web.Response(status=200)
         elif what == 409:
