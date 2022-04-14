@@ -315,7 +315,7 @@ def predict_id_lap_solver(self):
     old_predictions = self.DB.ID_get_all_predictions()
     for papernum, v in old_predictions.items():
         # TODO: flaky!
-        if v[1] < 0.9:
+        if v[1] < 0.8:
             ok, code, msg = self.DB.remove_id_prediction(papernum)
             if not ok:
                 raise RuntimeError(
