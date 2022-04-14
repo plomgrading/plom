@@ -188,7 +188,7 @@ def IDputPredictions(self, predictions, classlist, spec):
             id_predictions[int(sid)].append(X["name"])
     # now push everything into the DB
     raise NotImplementedError(
-        "We have no decided what this operation should do with the old prediction list!"
+        "We have not decided what this operation should do with the old prediction list!  See Issue #2080"
     )
     problem_list = []
     for sid, test_and_name in id_predictions.items():

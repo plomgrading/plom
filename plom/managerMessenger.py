@@ -1021,6 +1021,10 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
     def IDputPredictions(self, predictions):
+        raise NotImplementedError(
+            "No one is using this API call right now and it needs work: Issue #2080"
+        )
+
         self.SRmutex.acquire()
         try:
             response = self.put(
