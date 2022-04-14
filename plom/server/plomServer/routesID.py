@@ -481,6 +481,12 @@ class IDHandler:
     def IDputPredictions(self, data, request):
         """Upload and save id-predictions (eg via machine learning)
 
+        TODO: is anyone calling this?  It seems to be a bulk setter, in principle
+        we could require callers to do per-paper in a loop.  But perhaps this is
+        intended to have different semantics with respect to existing predictions?
+        E.g., perhaps this could wipe the table first?  Sort these things out and
+        then document them here!
+
         Args:
             data (dict): A (str:str) dictionary having keys `user`, `token` and `predictions`.
             request (aiohttp.web_request.Request): PUT /ID/put type request object.

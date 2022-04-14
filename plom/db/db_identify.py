@@ -235,7 +235,10 @@ def ID_get_donotmark_images(self, test_number):
 
 def IDgetImagesOfUnidentified(self):
     """
-    For every used by un-identified test, find the filename of its idpage. So gives returns a dictionary of testNumber -> filename.
+    For every used but un-identified test, find the filename of its idpage. So gives returns a dictionary of testNumber -> filename.
+
+    TODO: add an optional flag to drop those with high (prenamed) level of
+    prediction confidence?
     """
     rval = {}
     query = Group.select().where(

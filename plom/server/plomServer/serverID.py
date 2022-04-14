@@ -187,10 +187,13 @@ def IDputPredictions(self, predictions, classlist, spec):
         if int(X["id"]) in id_predictions:
             id_predictions[int(sid)].append(X["name"])
     # now push everything into the DB
+    raise NotImplementedError(
+        "We have not decided what this operation should do with the old prediction list!  See Issue #2080"
+    )
     problem_list = []
-    # TODO: may need to erase the table here?
     for sid, test_and_name in id_predictions.items():
         # get the student_name from the classlist
+        # TODO: probably we should only do this if current certainty less than 0.5
         # returns (True,None,None) or (False, 409, msg) or (False, 404, msg)
         r, what, msg = self.server.DB.add_or_change_id_prediction(
             test_and_name[0], sid, 0.5
@@ -308,11 +311,34 @@ def predict_id_lap_solver(self):
     prediction_pairs = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
-    # TODO: may need to erase the table here?
+    log.info("Wiping prediction results with uncertainty <= 0.5")
+    old_predictions = self.DB.ID_get_all_predictions()
+    for papernum, v in old_predictions.items():
+        # TODO: flaky!
+        if v[1] < 0.8:
+            ok, code, msg = self.DB.remove_id_prediction(papernum)
+            if not ok:
+                raise RuntimeError(
+                    f"Unexpectedly cannot find promised paper {papernum} in prediction DB"
+                )
+
+    log.info("Sanity check that no *paper numbers* from the prenamed are in LAP output")
+    predictions = self.DB.ID_get_all_predictions()
+    for papernum, _ in prediction_pairs:
+        if papernum in predictions.keys():
+            raise RuntimeError(f"Unexpectedly, found paper {papernum} in both LAP output and prename!")
+
     log.info("Saving prediction results into database /w certainty 0.5")
-    for test_number, student_ID in prediction_pairs:
-        self.DB.add_or_change_id_prediction(test_number, student_ID, 0.5)
-        # TODO - capture any error outputs
+    errs = []
+    for papernum, student_ID in prediction_pairs:
+        ok, code, msg = self.DB.add_or_change_id_prediction(papernum, student_ID, 0.5)
+        if not ok:
+            # TODO: perhaps we want to decrease the prename confidence?  Or even delete it.
+            # We may have detected student who should have been in the prename but wrote elsewhere
+            errs.append(msg)
+    if errs:
+        status += "\n\nThe following LAP results where not used:\n"
+        status += "  - " + "\n  - ".join(errs)
 
     return status
 
@@ -352,6 +378,19 @@ def run_id_reader(self, top, bottom, ignore_stamp):
     # get list of [test_number, image]
     log.info("ID get images for ID reader")
     test_image_dict = self.DB.IDgetImagesOfUnidentified()
+
+    # TODO: here we perhaps want to discard prenamed: currently those are in
+    # the prediction table with a special sentinel value of 0.9.  So we drop
+    # all those
+    predictions = self.DB.ID_get_all_predictions()
+    for k in list(test_image_dict.keys()):
+        P = predictions.get(k, None)
+        if P:
+            if P[1] > 0.8:
+                test_image_dict.pop(k)
+                log.info(
+                    'ID reader: drop test number "%s" b/c we think its prenamed', k
+                )
 
     # dump this as json / lock_file for subprocess to use in background.
     with open(lock_file, "w") as fh:
