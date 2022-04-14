@@ -308,11 +308,41 @@ def predict_id_lap_solver(self):
     prediction_pairs = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
+    log.info("Wiping prediction results with uncertainty <= 0.5")
+    old_predictions = self.DB.ID_get_all_predictions()
+    for papernum, v in old_predictions.items():
+        # TODO: flaky!
+        if v[1] < 0.9:
+            ok, code, msg = self.DB.remove_id_prediction(papernum)
+            if not ok:
+                raise RuntimeError(
+                    f"Unexpectedly cannot find promised paper {papernum} in prediction DB"
+                )
+
     log.info("Saving prediction results into database /w certainty 0.5")
-    for test_number, student_ID in prediction_pairs:
-        # TODO: we probably should get current uncertainties and not overwrite if above 0.5
-        self.DB.add_or_change_id_prediction(test_number, student_ID, 0.5)
-        # TODO - capture any error outputs
+    # TODO: a sentinel value, must be less than 0.9
+    ML_CERT = 0.5
+    errs = []
+    for papernum, student_ID in prediction_pairs:
+        if old_predictions.get(papernum, None):
+            if ML_CERT < old_predictions[papernum][1]:
+                # TODO if papernumber already in the prediction DB with high uncertainty delete it
+                # because we have conflicting information?
+                msg = (
+                    f"paper {papernum}: "
+                    + f'old prediction "{old_predictions[papernum][0]}" '
+                    + f'had higher certainty than new "{student_ID}"'
+                )
+                log.warn(msg)
+                errs.append(msg)
+                continue
+        ok, code, msg = self.DB.add_or_change_id_prediction(papernum, student_ID, 0.5)
+        if not ok:
+            # TODO: anything do be done if in-use elsewhere case?
+            errs.append(msg)
+    if errs:
+        status += "\n\nThe following LAP results where not used:\n"
+        status += "  - " + "\n  - ".join(errs)
 
     return status
 
