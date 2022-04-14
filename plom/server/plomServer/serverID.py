@@ -326,16 +326,14 @@ def predict_id_lap_solver(self):
     predictions = self.DB.ID_get_all_predictions()
     for papernum, _ in prediction_pairs:
         if papernum in predictions.keys():
-            raise RuntimeError(f"Unexpectedly, found paper {papernum} in both LAP output and prename!")
+            raise RuntimeError(
+                f"Unexpectedly, found paper {papernum} in both LAP output and prename!"
+            )
 
     log.info("Saving prediction results into database /w certainty 0.5")
-    # TODO: a sentinel value, must be less than 0.9
-    ML_CERT = 0.5
     errs = []
     for papernum, student_ID in prediction_pairs:
-        ok, code, msg = self.DB.add_or_change_id_prediction(
-            papernum, student_ID, ML_CERT
-        )
+        ok, code, msg = self.DB.add_or_change_id_prediction(papernum, student_ID, 0.5)
         if not ok:
             # TODO: anything do be done if in-use elsewhere case?
             errs.append(msg)
