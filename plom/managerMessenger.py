@@ -185,6 +185,35 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def id_paper(self, paper_number, studentID, studentName):
+        """Identify a paper directly, not as part of a IDing task.
+
+        Exceptions:
+            PlomConflict: `studentID` already used on a different paper.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    f"/ID/{paper_number}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "sid": studentID,
+                        "sname": studentName,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(e) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def un_id_paper(self, paper_number):
         """Remove the identify of a paper directly.
 

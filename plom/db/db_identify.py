@@ -319,18 +319,11 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
         uref.last_action = "Returned ID task {}".format(paper_num)
         uref.last_activity = datetime.now()
         uref.save()
-        if sid:
-            log.info(
-                'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
-                    paper_num, user_name, censorID(sid), censorName(sname)
-                )
+        log.info(
+            'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
+                paper_num, user_name, censorID(sid), censorName(sname)
             )
-        else:
-            log.info(
-                'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
-                    paper_num, user_name, sid, sname
-                )
-            )
+        )
     return True, None, None
 
 

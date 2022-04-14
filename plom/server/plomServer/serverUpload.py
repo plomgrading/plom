@@ -75,7 +75,9 @@ def createIDPageForHW(self, sid, student_name):
     if (
         why == "identified"
     ):  # the sid has been used to identify a test, so ID page exists.
-        log.warning(f"HW from sid {sid} is test {test_number} - already has an ID Page.")
+        log.warning(
+            f"HW from sid {sid} is test {test_number} - already has an ID Page."
+        )
         return True
     # so at this point we have a predicted ID, so we need to make an ID page and identify the test.
     # to identify the test we need to grab name from classlist.
