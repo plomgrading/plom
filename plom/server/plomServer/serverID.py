@@ -404,14 +404,17 @@ def run_id_reader(self, top, bottom, ignore_stamp):
     log.info("ID get images for ID reader")
     test_image_dict = self.DB.IDgetImagesOfUnidentified()
 
-    # TODO: here we perhaps want to discard prenamed: currently those are in
-    # the prediction table with a special sentinel value of 0.9.  So we drop
-    # all those
+    # Only mess with predictions that were created by MLLAP and not
+    # any prenaming.
     predictions = self.DB.ID_get_all_predictions()
+    # is dict {paper_number: (sid, certainty, who)}
     for k in list(test_image_dict.keys()):
         P = predictions.get(k, None)
         if P:
-            if P[1] > 0.8:
+            # if the prediction for this test is by MLLAP (machine learning linear assignment problem)
+            # then we can pass back to the MLLAP, else someone else made the prediction, so we
+            # don't mess with it. Remove it from the test image dictionary.
+            if P[2] != "MLLAP":
                 test_image_dict.pop(k)
                 log.info(
                     'ID reader: drop test number "%s" b/c we think its prenamed', k
