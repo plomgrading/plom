@@ -322,23 +322,17 @@ def predict_id_lap_solver(self):
                     f"Unexpectedly cannot find promised paper {papernum} in prediction DB"
                 )
 
+    log.info("Sanity check that no *paper numbers* from the prenamed are in LAP output")
+    predictions = self.DB.ID_get_all_predictions()
+    for papernum, _ in prediction_pairs:
+        if papernum in predictions.keys():
+            raise RuntimeError(f"Unexpectedly, found paper {papernum} in both LAP output and prename!")
+
     log.info("Saving prediction results into database /w certainty 0.5")
     # TODO: a sentinel value, must be less than 0.9
     ML_CERT = 0.5
     errs = []
     for papernum, student_ID in prediction_pairs:
-        if old_predictions.get(papernum, None):
-            if ML_CERT < old_predictions[papernum][1]:
-                # TODO if papernumber already in the prediction DB with high uncertainty delete it
-                # because we have conflicting information?
-                msg = (
-                    f"paper {papernum}: "
-                    + f'old prediction "{old_predictions[papernum][0]}" '
-                    + f'had higher certainty than new "{student_ID}"'
-                )
-                log.warn(msg)
-                errs.append(msg)
-                continue
         ok, code, msg = self.DB.add_or_change_id_prediction(
             papernum, student_ID, ML_CERT
         )
