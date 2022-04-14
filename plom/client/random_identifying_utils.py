@@ -20,6 +20,15 @@ from plom.messenger import Messenger
 
 def do_rando_identifying_backend(messenger):
     classlist = messenger.IDrequestClasslist()
+    # classlist is a list of dicts {'id': sid, 'name: name}
+    predictions = messenger.IDrequestPredictions()
+    # predictions are {test_number: [sid, certainty]}
+    # due to jsonnery the test_number is a string (sigh).
+
+    # make sid to name look up for predictions
+    sid_to_name = {X["id"]: X["name"] for X in classlist}
+    # and a sid to test look up
+    sid_to_test = {predictions[X][0]: X for X in predictions}
 
     while True:
         task = messenger.IDaskNextTask()
@@ -33,14 +42,27 @@ def do_rando_identifying_backend(messenger):
             # task already taken.
             continue
 
-        while True:
+        # where possible take the predicted ID
+        if str(task) in predictions:
+            sid = predictions[str(task)][0]
+            name = sid_to_name[sid]
+            print(f"Task {task} predicted to be {sid} {name} - using that")
             try:
-                person = random.choice(classlist)
-                name = person["name"] + " [randomly chosen]"
-                messenger.IDreturnIDdTask(task, person["id"], name)
-                break
+                messenger.IDreturnIDdTask(task, sid, name)
             except PlomConflict:
-                print(f"Already used: {person}")
+                print(f"Already used: {name}")
+        else:
+            # otherwise pull one randomly from the classlist
+            # but not one that is used for a prediction.
+            while True:
+                try:
+                    person = random.choice(classlist)
+                    if person["id"] not in sid_to_test:
+                        name = person["name"] + " [randomly chosen]"
+                        messenger.IDreturnIDdTask(task, person["id"], name)
+                        break
+                except PlomConflict:
+                    print(f"Already used: {person}")
 
 
 def do_rando_identifying(server, user, password):
