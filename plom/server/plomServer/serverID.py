@@ -336,7 +336,7 @@ def predict_id_lap_solver(self):
                 log.warn(msg)
                 errs.append(msg)
                 continue
-        ok, code, msg = self.DB.add_or_change_id_prediction(papernum, student_ID, 0.5)
+        ok, code, msg = self.DB.add_or_change_id_prediction(papernum, student_ID, ML_CERT)
         if not ok:
             # TODO: anything do be done if in-use elsewhere case?
             errs.append(msg)
