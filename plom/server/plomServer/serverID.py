@@ -187,6 +187,9 @@ def IDputPredictions(self, predictions, classlist, spec):
         if int(X["id"]) in id_predictions:
             id_predictions[int(sid)].append(X["name"])
     # now push everything into the DB
+    raise NotImplementedError(
+        "We have no decided what this operation should do with the old prediction list!"
+    )
     problem_list = []
     for sid, test_and_name in id_predictions.items():
         # get the student_name from the classlist
@@ -336,7 +339,9 @@ def predict_id_lap_solver(self):
                 log.warn(msg)
                 errs.append(msg)
                 continue
-        ok, code, msg = self.DB.add_or_change_id_prediction(papernum, student_ID, ML_CERT)
+        ok, code, msg = self.DB.add_or_change_id_prediction(
+            papernum, student_ID, ML_CERT
+        )
         if not ok:
             # TODO: anything do be done if in-use elsewhere case?
             errs.append(msg)
