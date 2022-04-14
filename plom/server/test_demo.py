@@ -83,9 +83,10 @@ class Test:
         try:
             predictions = msgr.IDrequestPredictions()
             assert "1" in predictions, "The lite demo has the first one predicted"
-            sid, cert = predictions["1"]
+            sid, cert, predictor = predictions["1"]
             assert sid == "10050380"
             assert 0.5 < cert < 1
+            assert predictor == "prename"
             assert "2" not in predictions, "only first one predicted"
 
             # TODO: did we want this to test for conflict?

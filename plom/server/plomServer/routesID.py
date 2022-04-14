@@ -387,7 +387,9 @@ class IDHandler:
             409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["paper_number"]
-        r, what, msg = self.server.pre_id_paper(papernum, data["sid"], predictor=data["predictor"])
+        r, what, msg = self.server.pre_id_paper(
+            papernum, data["sid"], predictor=data["predictor"]
+        )
         if r:
             return web.Response(status=200)
         elif what == 409:
