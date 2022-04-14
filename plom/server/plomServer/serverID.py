@@ -384,6 +384,9 @@ def run_id_reader(self, top, bottom, ignore_stamp):
         else:
             os.unlink(timestamp)
 
+    # TODO: here we perhaps want to discard prenamed: currently those are in
+    # the prediction table with a special sentinel value of 0.9
+
     # get list of [test_number, image]
     log.info("ID get images for ID reader")
     test_image_dict = self.DB.IDgetImagesOfUnidentified()
