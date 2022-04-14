@@ -204,7 +204,6 @@ class PlomDB:
         ID_id_paper,
         IDgetImageFromATest,
         IDreviewID,
-        ID_predict_paper_id,
         ID_get_all_predictions,
     )
 
