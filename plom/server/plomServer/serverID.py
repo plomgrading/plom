@@ -372,5 +372,5 @@ def run_id_reader(self, top, bottom, ignore_stamp):
     )
     log.warn(f"Predicter subprocess.return code = {proc.returncode}")
     log.warn(f"Predicter subprocess.stdout = {proc.stdout.decode()}")
-    log.warn(f"Predicter subprocess.stderr = {proc.stdout.decode()}")
+    log.warn(f"Predicter subprocess.stderr = {proc.stderr.decode()}")
     return [True, True]
