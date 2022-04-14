@@ -384,12 +384,22 @@ def run_id_reader(self, top, bottom, ignore_stamp):
         else:
             os.unlink(timestamp)
 
-    # TODO: here we perhaps want to discard prenamed: currently those are in
-    # the prediction table with a special sentinel value of 0.9
-
     # get list of [test_number, image]
     log.info("ID get images for ID reader")
     test_image_dict = self.DB.IDgetImagesOfUnidentified()
+
+    # TODO: here we perhaps want to discard prenamed: currently those are in
+    # the prediction table with a special sentinel value of 0.9.  So we drop
+    # all those
+    predictions = self.DB.ID_get_all_predictions()
+    for k in list(test_image_dict.keys()):
+        P = predictions.get(k, None)
+        if P:
+            if P[1] > 0.8:
+                test_image_dict.pop(k)
+                log.info(
+                    'ID reader: drop test number "%s" b/c we think its prenamed', k
+                )
 
     # dump this as json / lock_file for subprocess to use in background.
     with open(lock_file, "w") as fh:
