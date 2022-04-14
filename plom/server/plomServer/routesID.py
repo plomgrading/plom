@@ -338,11 +338,11 @@ class IDHandler:
         else:
             raise web.HTTPInternalServerError(reason=msg)
 
-    # @routes.put("/ID/preid/{paper_number}")
-    @authenticate_by_token_required_fields(["user", "sid"])
+    # @routes.put("/ID/{papernum}")
+    @authenticate_by_token_required_fields(["user", "sid", "sname"])
     @write_admin
-    def PreIDPaper(self, data, request):
-        """Set the prediction identification for a paper.
+    def IdentifyPaper(self, data, request):
+        """Identify a paper directly without certain checks.
 
         Only "manager" can perform this action.  Typical client IDing
         would call func:`IdentifyPaperTask` instead.
@@ -351,7 +351,40 @@ class IDHandler:
             403: not manager.
             404: papernum not found, or other data errors.
             409: student number `data["sid"]` is already in use.
+        """
+        papernum = request.match_info["paper_number"]
 
+        r, what, msg = self.server.ID_id_paper(
+            papernum, "HAL", data["sid"], data["sname"], checks=False
+        )
+        if r:
+            return web.Response(status=200)
+        elif what == 409:
+            raise web.HTTPConflict(reason=msg)
+        elif what == 404:
+            raise web.HTTPNotFound(reason=msg)
+        else:
+            raise web.HTTPInternalServerError(reason=msg)
+
+    # @routes.deletet("/ID/{paper_number}")
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def un_id_paper(self, data, request):
+        paper_number = request.match_info["paper_number"]
+        if self.server.DB.remove_id_from_paper(paper_number):
+            return web.Response(status=200)
+        raise web.HTTPNotAcceptable(reason=f"Did not find papernum {paper_number}")
+
+    # @routes.put("/ID/preid/{paper_number}")
+    @authenticate_by_token_required_fields(["user", "sid"])
+    @write_admin
+    def PreIDPaper(self, data, request):
+        """Set the prediction identification for a paper.
+
+        Returns:
+            403: not manager.
+            404: papernum not found, or other data errors.
+            409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["paper_number"]
         r, what, msg = self.server.pre_id_paper(papernum, data["sid"])
@@ -385,15 +418,6 @@ class IDHandler:
             raise web.HTTPNotFound(reason=msg)
         else:
             raise web.HTTPInternalServerError(reason=msg)
-
-    # @routes.deletet("/ID/{paper_number}")
-    @authenticate_by_token_required_fields([])
-    @write_admin
-    def un_id_paper(self, data, request):
-        paper_number = request.match_info["paper_number"]
-        if self.server.DB.remove_id_from_paper(paper_number):
-            return web.Response(status=200)
-        raise web.HTTPNotAcceptable(reason=f"Did not find papernum {paper_number}")
 
     # @routes.get("/ID/randomImage")
     @authenticate_by_token_required_fields(["user"])
@@ -579,9 +603,10 @@ class IDHandler:
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
+        router.add_put("/ID/{paper_number}", self.IdentifyPaper)
+        router.add_delete("/ID/{paper_number}", self.un_id_paper)
         router.add_put("/ID/preid/{paper_number}", self.PreIDPaper)
         router.add_delete("/ID/preid/{paper_number}", self.remove_id_prediction)
-        router.add_delete("/ID/{paper_number}", self.un_id_paper)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.predict_id_lap_solver)

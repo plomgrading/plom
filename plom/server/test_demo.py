@@ -124,7 +124,7 @@ class Test:
 
     # This test assumes very specific setup of the Lite Demo
     # The test can be updated if those details change.
-    def untest_unid(self):
+    def test_unid(self):
         # TODO: use connectmanager messenger, See MR !1275.
         from plom.create import start_messenger
 
@@ -135,7 +135,14 @@ class Test:
             iDict = msgr.getIdentified()
             assert len(iDict) == 0, "Currently no one IDed in the lite demo"
 
-            # TODO: test more, but currently we have no `msgr.id_paper` method
+            predictions = msgr.IDrequestPredictions()
+            p = predictions["1"]
+            cl = msgr.IDrequestClasslist()
+            (person,) = [x for x in cl if x["id"] == p[0]]
+            msgr.id_paper(1, person["id"], person["name"])
+
+            iDict = msgr.getIdentified()
+            assert len(iDict) == 1
 
             # need not be 2, any unID'd paper
             assert "2" not in iDict
@@ -145,9 +152,8 @@ class Test:
             # paper 2 is not ID'd but we expect an error if we ID it to Fink
             with raises(PlomConflict, match="elsewhere"):
                 msgr.id_paper("2", sid, name)
-            # Issue 1944: not yet an error to unid the unid'd
-            # with raises(...):
-            # msgr.un_id_paper(2)
+            # not an error to unid the unid'd
+            msgr.un_id_paper(2)
 
             msgr.un_id_paper(1)
             # now paper 1 is unid'd
@@ -157,15 +163,11 @@ class Test:
             # so now we can ID paper 2 to Iris, then immediately unID it
             msgr.id_paper("2", sid, name)
             msgr.un_id_paper(2)
-            # ID paper one back to Iris
-            msgr.id_paper("1", sid, name)
 
             # we leave the state hopefully as we found it
             iDict = msgr.getIdentified()
-            assert "1" in iDict
+            assert "1" not in iDict
             assert "2" not in iDict
-            assert iDict["1"][0] == sid
-            assert iDict["1"][1] == name
         finally:
             msgr.closeUser()
             msgr.stop()
