@@ -415,25 +415,30 @@ def add_or_change_id_prediction(self, paper_number, sid, certainty=0.9):
 
         p = IDPrediction.get_or_none(test=tref)
 
-        if p is None:
-            try:
+        try:
+            if p is None:
                 IDPrediction.create(
                     test=tref, user=uref, certainty=certainty, student_id=sid
                 )
-            except pw.IntegrityError:
-                log.error("HAL tried to predict ID: but student id %s in use elsewhere", censorID(sid))
-                return False, 409, f"student id {sid} in use elsewhere"
-            log.info('Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid))
-            return True, None, None
-
-        p.student_id = sid
-        p.certainty = certainty
-        p.save()
-        log.info(
-            'Paper %s changed predicted ID by HAL to "%s"',
-            paper_number,
-            censorID(sid),
-        )
+                log.info(
+                    'Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid)
+                )
+            else:
+                p.student_id = sid
+                p.certainty = certainty
+                p.save()
+                log.info(
+                    'Paper %s changed predicted ID by HAL to "%s"',
+                    paper_number,
+                    censorID(sid),
+                )
+        except pw.IntegrityError:
+            log.error(
+                'HAL tried to predict ID: paper %s but student id "%s" in use elsewhere',
+                paper_number,
+                censorID(sid),
+            )
+            return False, 409, f"student id {sid} in use elsewhere"
         return True, None, None
 
 
