@@ -411,10 +411,11 @@ def run_id_reader(self, top, bottom, ignore_stamp):
     for k in list(test_image_dict.keys()):
         P = predictions.get(k, None)
         if P:
-            # if the prediction for this test is by MLLAP (machine learning linear assignment problem)
-            # then we can pass back to the MLLAP, else someone else made the prediction, so we
-            # don't mess with it. Remove it from the test image dictionary.
-            if P[2] != "MLLAP":
+            # if the predictor for this test is "prename" then don't mess
+            # with it. Remove it from the test image dictionary.
+            # TODO - future this might be "prename" or "human"
+            # so this will need changing to blah in ["prename", "human", "foo", ...]
+            if P[2] == "prename":
                 test_image_dict.pop(k)
                 log.info(
                     'ID reader: drop test number "%s" b/c we think its prenamed', k
