@@ -411,26 +411,39 @@ class IDClient(QWidget):
             psid = prediction["student_id"]  # predicted student ID
             psnid = self.student_id_to_snid[psid]  # predicted SNID
             pname = self.snid_to_student_name[psnid]  # predicted student name
-            if pname == "":  # disable accept prediction button
-                self.ui.predButton.setEnabled(False)
+            if pname == "":
+                # disable accept prediction button
+                prediction = []
+        if prediction:
+            self.ui.predButton.setText("&Accept\nPrediction")
+            self.ui.predButton.show()
+            self.ui.pSIDLabel.setText(psid)
+            self.ui.pNameLabel.setText(pname)
+            if prediction["predictor"] == "prename":
+                self.ui.predictionBox.setTitle("Prenamed paper: is it signed?  if not signed, is it blank?")
+                self.ui.predButton.setText("Confirm\n&Prename")
             else:
-                self.ui.predButton.setEnabled(True)
-                self.ui.pSIDLabel.setText(psid)
-                self.ui.pNameLabel.setText(pname)
-                # TODO - set thresholds
-                # when certainty level is high, set the background to green
-                if prediction["certainty"] > 0.8:  # pre-id'd has certainty 0.9
-                    self.ui.predictionBox.setStyleSheet("background-color: #00FA9A")
-                elif prediction["certainty"] > 0.4:
-                    # machine prediction currently hardcoded to 0.5
-                    self.ui.predictionBox.setStyleSheet("background-color: #FFD700")
-                else:  # else leave background unset.
-                    self.ui.predictionBox.setStyleSheet("background-color:")
+                self.ui.predictionBox.setTitle(
+                    f"Prediction by {prediction['predictor']}"
+                )
+
+            # TODO - set thresholds
+            # when certainty level is high, set the background to green
+            if prediction["certainty"] > 0.8:  # pre-id'd has certainty 0.9
+                self.ui.predictionBox.setStyleSheet("background-color: #00FA9A")
+            elif prediction["certainty"] > 0.4:
+                # machine prediction currently hardcoded to 0.5
+                self.ui.predictionBox.setStyleSheet("background-color: #FFD700")
+            else:  # else leave background unset.
+                self.ui.predictionBox.setStyleSheet("background-color:")
 
         else:
-            self.ui.predButton.setEnabled(False)
+            self.ui.predButton.hide()
             self.ui.pSIDLabel.setText("")
             self.ui.pNameLabel.setText("")
+            self.ui.predictionBox.setTitle("No prediction")
+            self.ui.predictionBox.setStyleSheet("background-color:")
+
         # now update the snid entry line-edit.
         # if test is already identified then populate the idlinedit accordingly
         if self.exM.paperList[r].status == "identified":
