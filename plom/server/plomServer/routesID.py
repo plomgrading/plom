@@ -618,5 +618,6 @@ class IDHandler:
         router.add_post("/ID/predictedID", self.predict_id_lap_solver)
         router.add_post("/ID/run_id_reader", self.run_id_reader)
         router.add_patch("/ID/review", self.IDreviewID)
+        # careful, list these last as they can glob other URLs
         router.add_put("/ID/{paper_number}", self.IdentifyPaper)
         router.add_delete("/ID/{paper_number}", self.un_id_paper)
