@@ -420,7 +420,9 @@ class IDClient(QWidget):
             self.ui.pSIDLabel.setText(psid)
             self.ui.pNameLabel.setText(pname)
             if prediction["predictor"] == "prename":
-                self.ui.predictionBox.setTitle("Prenamed paper: is it signed?  if not signed, is it blank?")
+                self.ui.predictionBox.setTitle(
+                    "Prenamed paper: is it signed?  if not signed, is it blank?"
+                )
                 self.ui.predButton.setText("Confirm\n&Prename")
             else:
                 self.ui.predictionBox.setTitle(
