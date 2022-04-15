@@ -1567,6 +1567,7 @@ class Manager(QWidget):
             InfoMsg(self, "Results of ID matching:", info=status).exec_()
         except PlomConflict as e:
             WarnMsg(self, "ID matching procedure failed:", info=f"{e}").exec_()
+        self.getPredictions()
 
     def un_id_paper(self):
         idx = self.ui.predictionTW.selectedIndexes()
