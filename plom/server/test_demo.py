@@ -83,10 +83,12 @@ class Test:
         try:
             predictions = msgr.IDrequestPredictions()
             assert "1" in predictions, "The lite demo has the first one predicted"
-            sid, cert, predictor = predictions["1"]
+            sid = predictions["1"]["student_id"]
+            cert = predictions["1"]["certainty"]
+            pred = predictions["1"]["predictor"]
             assert sid == "10050380"
             assert 0.5 < cert < 1
-            assert predictor == "prename"
+            assert pred == "prename"
             assert "2" not in predictions, "only first one predicted"
 
             # TODO: did we want this to test for conflict?
@@ -102,22 +104,23 @@ class Test:
             msgr.pre_id_paper(2, sid)
             predictions = msgr.IDrequestPredictions()
             assert "2" in predictions
-            assert sid in predictions["2"]
+            assert predictions["2"]["student_id"] == sid
 
             # now we can assign ANYTHING else to paper 2's prediction
             msgr.pre_id_paper(2, "eleventyfour")
             predictions = msgr.IDrequestPredictions()
             assert "2" in predictions
-            assert "eleventyfour" in predictions["2"]
+            assert predictions["2"]["student_id"] == "eleventyfour"
 
             # we leave the state hopefully as we found it
             msgr.remove_id_prediction(2)
-            msgr.pre_id_paper(1, sid)
+            msgr.pre_id_paper(1, sid, predictor="prename")
             predictions = msgr.IDrequestPredictions()
             assert "1" in predictions
             assert "2" not in predictions
-            assert predictions["1"][0] == sid
-            assert predictions["1"][1] == cert
+            assert predictions["1"]["student_id"] == sid
+            assert predictions["1"]["centainty"] == cert
+            assert predictions["1"]["predictor"] == pred
 
         finally:
             msgr.closeUser()
@@ -137,9 +140,9 @@ class Test:
             assert len(iDict) == 0, "Currently no one IDed in the lite demo"
 
             predictions = msgr.IDrequestPredictions()
-            p = predictions["1"]
+            sid = predictions["1"]["student_id"]
             cl = msgr.IDrequestClasslist()
-            (person,) = [x for x in cl if x["id"] == p[0]]
+            (person,) = [x for x in cl if x["id"] == sid]
             msgr.id_paper(1, person["id"], person["name"])
 
             iDict = msgr.getIdentified()

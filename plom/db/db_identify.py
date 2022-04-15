@@ -384,13 +384,13 @@ def IDreviewID(self, test_number):
     return [True]
 
 
-def ID_get_all_predictions(self):
+def ID_get_predictions(self):
     """Return a dict of predicted test:student_ids"""
     predictions = {}
     for preidref in IDPrediction.select():
-        predictions[preidref.test.test_number] = (
-            preidref.student_id,
-            preidref.certainty,
-            preidref.predictor,
-        )
+        predictions[preidref.test.test_number] = {
+            "student_id": preidref.student_id,
+            "certainty": preidref.certainty,
+            "predictor": preidref.predictor,
+        }
     return predictions

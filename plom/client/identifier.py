@@ -298,18 +298,11 @@ class IDClient(QWidget):
             name_list.append(sname)
 
     def getPredictions(self):
-        """Send request for prediction list (iRPL) to server. The server then sends
-        back a dict of the predictions testnumber -> studentID, certainty.
+        """Send request for prediction list to server.
+
+        For some reason, this also updates font-sizes and stuff.
         """
-        # create dictionary to store predictions in
-        self.predictedTestToNumbers = defaultdict(int)
-        self.predictedTestCertainty = defaultdict(float)
-        # Send request for prediction list to server
-        prediction_dict = self.msgr.IDrequestPredictions()
-        # dict is test_number:(sid, certainty)
-        for tn, val in prediction_dict.items():
-            self.predictedTestToNumbers[int(tn)] = str(val[0])
-            self.predictedTestCertainty[int(tn)] = val[1]
+        self.predictions = self.msgr.IDrequestPredictions()
 
         # Also tweak font size
         fnt = self.font()
@@ -321,10 +314,9 @@ class IDClient(QWidget):
         fnt.setPointSizeF(fnt.pointSize() * 1.5)
         self.ui.pSIDLabel.setFont(fnt)
         # And if no predictions then hide that box
-        if len(self.predictedTestToNumbers) == 0:
+        # TODO do this on a paper-by-paper basis
+        if not self.predictions:
             self.ui.predictionBox.hide()
-
-        return True
 
     def setCompleters(self):
         """Set up the studentname + studentnumber line-edit completers.
@@ -414,8 +406,9 @@ class IDClient(QWidget):
         self.testImg.updateImage(self.exM.paperList[r].originalFile)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
-        if tn in self.predictedTestToNumbers:
-            psid = self.predictedTestToNumbers[tn]  # predicted student ID
+        prediction = self.predictions.get(str(tn), None)
+        if prediction:
+            psid = prediction["student_id"]  # predicted student ID
             psnid = self.student_id_to_snid[psid]  # predicted SNID
             pname = self.snid_to_student_name[psnid]  # predicted student name
             if pname == "":  # disable accept prediction button
@@ -426,9 +419,9 @@ class IDClient(QWidget):
                 self.ui.pNameLabel.setText(pname)
                 # TODO - set thresholds
                 # when certainty level is high, set the background to green
-                if self.predictedTestCertainty[tn] > 0.8:  # pre-id'd has certainty 0.9
+                if prediction["certainty"] > 0.8:  # pre-id'd has certainty 0.9
                     self.ui.predictionBox.setStyleSheet("background-color: #00FA9A")
-                elif self.predictedTestCertainty[tn] > 0.4:
+                elif prediction["certainty"] > 0.4:
                     # machine prediction currently hardcoded to 0.5
                     self.ui.predictionBox.setStyleSheet("background-color: #FFD700")
                 else:  # else leave background unset.

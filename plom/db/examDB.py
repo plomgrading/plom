@@ -204,7 +204,7 @@ class PlomDB:
         ID_id_paper,
         IDgetImageFromATest,
         IDreviewID,
-        ID_get_all_predictions,
+        ID_get_predictions,
     )
 
     from plom.db.db_mark import (
