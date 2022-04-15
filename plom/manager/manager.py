@@ -1460,7 +1460,7 @@ class Manager(QWidget):
         self.ui.idPB.setFormat("%v / %m")
         self.ui.predictionTW.setColumnCount(6)
         self.ui.predictionTW.setHorizontalHeaderLabels(
-            ("Test", "Student ID", "Name", "Predicted ID", "Certainty", "Predictor")
+            ("Test", "Student ID", "Name", "Predicted ID", "Predictor", "Certainty")
         )
         self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -1629,29 +1629,27 @@ class Manager(QWidget):
                 self.ui.predictionTW.setItem(r, 2, item)
             pred = predictions.get(str(t), None)
             if pred:
-                # the predicted SID
                 item0 = QTableWidgetItem()
                 item0.setData(Qt.DisplayRole, pred["student_id"])
                 self.ui.predictionTW.setItem(r, 3, item0)
-                # the prediction certainty
                 item1 = QTableWidgetItem()
-                item1.setData(Qt.DisplayRole, pred["certainty"])
+                item1.setData(Qt.DisplayRole, pred["predictor"])
                 self.ui.predictionTW.setItem(r, 4, item1)
+                item2 = QTableWidgetItem()
+                item2.setData(Qt.DisplayRole, pred["certainty"])
+                self.ui.predictionTW.setItem(r, 5, item2)
                 if identity:
                     # prediction less important but perhaps not irrelevant
                     item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
                     item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                    item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
                     # This doesn't work
                     # item0.setEnabled(False)
-                    # item1.setenabled(False)
                 else:
                     # TODO: colour-code based on confidence?
                     item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
                     item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                # the predictor
-                item0 = QTableWidgetItem()
-                item0.setData(Qt.DisplayRole, pred["predictor"])
-                self.ui.predictionTW.setItem(r, 5, item0)
+                    item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
         self.ui.predictionTW.setSortingEnabled(True)
 
     def deletePredictions(self):
