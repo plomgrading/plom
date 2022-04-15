@@ -119,7 +119,7 @@ class Test:
             assert "1" in predictions
             assert "2" not in predictions
             assert predictions["1"]["student_id"] == sid
-            assert predictions["1"]["centainty"] == cert
+            assert predictions["1"]["certainty"] == cert
             assert predictions["1"]["predictor"] == pred
 
         finally:
