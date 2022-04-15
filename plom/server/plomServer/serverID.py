@@ -32,14 +32,9 @@ def IDgetNextTask(self):
     """Send the ID number of the next task.
 
     Returns:
-        list: A list including the next task number.
+        int/none: the next task number or None if no more.
     """
-    # Get number of next unidentified test from the database
-    give = self.DB.IDgetNextTask()
-    if give is None:
-        return [False]
-    else:
-        return [True, give]
+    return self.DB.IDgetNextTask()
 
 
 def IDgetDoneTasks(self, username):

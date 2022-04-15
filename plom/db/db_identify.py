@@ -89,26 +89,48 @@ def IDgetUnidentifiedTests(self):
 def IDgetNextTask(self):
     """Find unid'd test and send test_number to client"""
     with plomdb.atomic():
-        try:  # grab the IDData reference provided not IDd but has been scanned
-            iref = (
-                IDGroup.select()
-                .join(Group)
-                .where(
-                    IDGroup.status == "todo",
-                    Group.scanned == True,  # noqa: E712
-                )
-                .get()
+        # grab the IDData reference provided not IDd but has been scanned
+        irefs = (
+            IDGroup.select()
+            .join(Group)
+            .where(
+                IDGroup.status == "todo",
+                Group.scanned == True,  # noqa: E712
             )
-            # as per #1811 - the user should be none here - assert here.
-            assert (
-                iref.user is None
-            ), f"ID-Task for test {iref.test.test_number} is todo, but has a user = {iref.user.name}"
-            # note - test need not be all scanned, just the ID page.
-        except pw.DoesNotExist:
-            log.info("Nothing left on ID to-do pile")
-            return None
+        )
 
-        log.debug("Next ID task = {}".format(iref.test.test_number))
+        # Priority for giving out:
+        #   - any without predictions
+        #   - lowest confidence (TODO: not implemented)
+        # TODO: perhaps better performance to do as some kind of DB joinery
+        predictions = self.ID_get_predictions()
+        iref = None
+        for x in irefs:
+            if x.test.test_number not in predictions.keys():
+                log.info(
+                    "Found paper %s with no prediction: using as next ID task",
+                    x.test.test_number,
+                )
+                iref = x
+                break
+
+        if iref is None:
+            try:
+                iref = irefs.get()
+            except pw.DoesNotExist:
+                log.info("Nothing left on ID to-do pile")
+                return None
+            log.info(
+                "All papers have predictions: arbitrary next ID task of %s",
+                iref.test.test_number,
+            )
+
+        # as per #1811 - the user should be none here
+        assert (
+            iref.user is None
+        ), f"ID-Task for test {iref.test.test_number} is todo, but has a user = {iref.user.name}"
+        # note - test need not be all scanned, just the ID page.
+
         return iref.test.test_number
 
 
