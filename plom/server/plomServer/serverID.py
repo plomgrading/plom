@@ -127,30 +127,20 @@ def ID_get_predictions(self):
 
 
 def IDdeletePredictions(self):
-    """Delete the latest result from ID prediction/detection file.
-
-    Log activity.
+    """Deletes the machine-learning predicted IDs for all papers.
 
     Returns:
-        list: first entry is True/False for success.  If False, second
-            entry is a string with an explanation.
+        None
     """
-
-    # check to see if predictor is running
-    lock_file = specdir / "IDReader.lock"
-    if os.path.isfile(lock_file):
-        log.info("ID reader currently running.")
-        return [False, "ID reader is currently running"]
-
-    # move old file out of way
-    if not os.path.isfile(specdir / "predictionlist.csv"):
-        return [False, "No prediction file present."]
-    shutil.move(specdir / "predictionlist.csv", specdir / "predictionlist.bak")
-    with open(specdir / "predictionlist.csv", "w") as fh:
-        fh.write("test, id\n")
-    log.info("ID prediction list deleted")
-
-    return [True]
+    log.info("Wiping predictions by lap-solver")
+    old_predictions = self.DB.ID_get_all_predictions()
+    for papernum, v in old_predictions.items():  # v = (sid, certainty, predictor)
+        if v[2] == "MLLAP":
+            ok, code, msg = self.DB.remove_id_prediction(papernum)
+            if not ok:
+                raise RuntimeError(
+                    f"Unexpectedly cannot find promised paper {papernum} in prediction DB"
+                )
 
 
 def IDputPredictions(self, predictions, classlist, spec):
@@ -311,15 +301,8 @@ def predict_id_lap_solver(self):
     prediction_pairs = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
-    log.info("Wiping predictions by lap-solver")
-    old_predictions = self.DB.ID_get_all_predictions()
-    for papernum, v in old_predictions.items():  # v = (sid, certainty, predictor)
-        if v[2] == "MLLAP":
-            ok, code, msg = self.DB.remove_id_prediction(papernum)
-            if not ok:
-                raise RuntimeError(
-                    f"Unexpectedly cannot find promised paper {papernum} in prediction DB"
-                )
+    self.IDdeletePredictions()
+
     # ------------------------ #
     # Maintain uniqueness in test and sid in the prediction list
     # our prediction_pairs should not (by construction) overlap with existing predictions on papernumber

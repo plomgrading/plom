@@ -1657,17 +1657,14 @@ class Manager(QWidget):
     def deletePredictions(self):
         msg = SimpleQuestion(
             self,
-            "Are you sure you want the server to delete predicted IDs?"
-            " (note that this does not delete user-inputted IDs)",
+            "Delete the auto-read predicted IDs?"
+            " (note that this does not delete user-confirmed IDs or"
+            " prenamed predictions)",
         )
         if msg.exec_() == QMessageBox.No:
             return
-        # returns [True] or [False, message]
-        rval = self.msgr.IDdeletePredictions()
-        if rval[0] is False:  # some sort of problem, show returned message
-            ErrorMessage(rval[1]).exec_()
-        else:
-            self.getPredictions()
+        self.msgr.IDdeletePredictions()
+        self.getPredictions()
 
     def initMarkTab(self):
         grid = QGridLayout()
