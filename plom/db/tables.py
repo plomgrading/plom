@@ -61,6 +61,7 @@ class IDPrediction(BaseModel):
     test = pw.ForeignKeyField(Test, backref="idpredictions")
     student_id = pw.CharField(unique=True, null=True)
     user = pw.ForeignKeyField(User, backref="idpredictions", null=True)
+    predictor = pw.CharField(null=False)
     certainty = pw.DoubleField(null=False, default=0.0)
 
 

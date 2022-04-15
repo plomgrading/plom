@@ -134,7 +134,7 @@ class ManagerMessenger(BaseMessenger):
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
 
-    def pre_id_paper(self, paper_number, studentID):
+    def pre_id_paper(self, paper_number, studentID, predictor="prename"):
         """Pre-id a paper.
 
         Exceptions:
@@ -150,6 +150,7 @@ class ManagerMessenger(BaseMessenger):
                     "user": self.user,
                     "token": self.token,
                     "sid": studentID,
+                    "predictor": predictor,
                 },
             )
             response.raise_for_status()

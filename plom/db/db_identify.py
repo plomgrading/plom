@@ -318,6 +318,16 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
             return False, 409, f"student id {sid} in use elsewhere"
         tref.identified = True
         tref.save()
+        # TODO - decide if it is better to simply update the predictions
+        # with something like certainty 0.99 and predictor = "human"
+        # remove any predictions associated with this test_number
+        for preidref in tref.idpredictions:
+            preidref.delete_instance()
+        # remove any predictions associated with the student id
+        for preidref in IDPrediction.select().where(
+            IDPrediction.student_id == sid
+        ):  # noqa: E712
+            preidref.delete_instance()
         # update user activity
         uref.last_action = "Returned ID task {}".format(paper_num)
         uref.last_activity = datetime.now()
@@ -381,5 +391,6 @@ def ID_get_all_predictions(self):
         predictions[preidref.test.test_number] = (
             preidref.student_id,
             preidref.certainty,
+            preidref.predictor,
         )
     return predictions

@@ -311,31 +311,56 @@ def predict_id_lap_solver(self):
     prediction_pairs = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
-    log.info("Wiping prediction results with uncertainty <= 0.5")
+    log.info("Wiping predictions by lap-solver")
     old_predictions = self.DB.ID_get_all_predictions()
-    for papernum, v in old_predictions.items():
-        # TODO: flaky!
-        if v[1] < 0.8:
+    for papernum, v in old_predictions.items():  # v = (sid, certainty, predictor)
+        if v[2] == "MLLAP":
             ok, code, msg = self.DB.remove_id_prediction(papernum)
             if not ok:
                 raise RuntimeError(
                     f"Unexpectedly cannot find promised paper {papernum} in prediction DB"
                 )
-
+    # ------------------------ #
+    # Maintain uniqueness in test and sid in the prediction list
+    # our prediction_pairs should not (by construction) overlap with existing predictions on papernumber
+    # but it might on SID - if an overlap in SID then remove from prediction_pairs and DB.
+    # ------------------------ #
     log.info("Sanity check that no *paper numbers* from the prenamed are in LAP output")
+    # 'predictions' only contains **non**MLLAP predictions
     predictions = self.DB.ID_get_all_predictions()
     for papernum, _ in prediction_pairs:
+        # verify that there is no paper-number overlap between existing predictions
+        # and those from MLLAP
         if papernum in predictions.keys():
-            raise RuntimeError(f"Unexpectedly, found paper {papernum} in both LAP output and prename!")
-
+            raise RuntimeError(
+                f"Unexpectedly, found paper {papernum} in both LAP output and prename!"
+            )
+    # at this point the database and the prediction_pairs contain no overlaps in paper_number.
+    # but we need to keep uniqueness in SID, so construct SID-lookup dict from existing predictions
+    existing_sid_to_papernum = {predictions[X][0]: X for X in predictions}
     log.info("Saving prediction results into database /w certainty 0.5")
     errs = []
     for papernum, student_ID in prediction_pairs:
-        ok, code, msg = self.DB.add_or_change_id_prediction(papernum, student_ID, 0.5)
-        if not ok:
-            # TODO: perhaps we want to decrease the prename confidence?  Or even delete it.
-            # We may have detected student who should have been in the prename but wrote elsewhere
-            errs.append(msg)
+        # check if that SID is used in an existing prediction
+        if student_ID in existing_sid_to_papernum:
+            other_paper = existing_sid_to_papernum[student_ID]
+            # delete from both the prediction_pairs and from the database.
+            log.info(
+                f"New prediction that {student_ID} wrote paper {papernum} conflicts with existing prediction of paper {other_paper}, so discarding both."
+            )
+            ok, code, msg = self.DB.remove_id_prediction(other_paper)
+            if not ok:
+                raise RuntimeError(
+                    f"Unexpectedly cannot find promised paper {other_paper} in prediction DB"
+                )
+        else:  # is safe to add it to prediction list
+            ok, code, msg = self.DB.add_or_change_id_prediction(
+                papernum, student_ID, 0.5, predictor="MLLAP"
+            )
+            if not ok:
+                # TODO: perhaps we want to decrease the prename confidence?  Or even delete it.
+                # We may have detected student who should have been in the prename but wrote elsewhere
+                errs.append(msg)
     if errs:
         status += "\n\nThe following LAP results where not used:\n"
         status += "  - " + "\n  - ".join(errs)
@@ -379,14 +404,18 @@ def run_id_reader(self, top, bottom, ignore_stamp):
     log.info("ID get images for ID reader")
     test_image_dict = self.DB.IDgetImagesOfUnidentified()
 
-    # TODO: here we perhaps want to discard prenamed: currently those are in
-    # the prediction table with a special sentinel value of 0.9.  So we drop
-    # all those
+    # Only mess with predictions that were created by MLLAP and not
+    # any prenaming.
     predictions = self.DB.ID_get_all_predictions()
+    # is dict {paper_number: (sid, certainty, who)}
     for k in list(test_image_dict.keys()):
         P = predictions.get(k, None)
         if P:
-            if P[1] > 0.8:
+            # if the predictor for this test is "prename" then don't mess
+            # with it. Remove it from the test image dictionary.
+            # TODO - future this might be "prename" or "human"
+            # so this will need changing to blah in ["prename", "human", "foo", ...]
+            if P[2] == "prename":
                 test_image_dict.pop(k)
                 log.info(
                     'ID reader: drop test number "%s" b/c we think its prenamed', k

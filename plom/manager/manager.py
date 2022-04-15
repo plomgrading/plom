@@ -1458,9 +1458,9 @@ class Manager(QWidget):
     def initIDTab(self):
         self.refreshIDTab()
         self.ui.idPB.setFormat("%v / %m")
-        self.ui.predictionTW.setColumnCount(5)
+        self.ui.predictionTW.setColumnCount(6)
         self.ui.predictionTW.setHorizontalHeaderLabels(
-            ("Test", "Student ID", "Name", "Predicted ID", "Certainty")
+            ("Test", "Student ID", "Name", "Predicted ID", "Certainty", "Predictor")
         )
         self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -1598,7 +1598,7 @@ class Manager(QWidget):
 
     def getPredictions(self):
         prediction_dict = self.msgr.IDrequestPredictions()
-        # prediction_dict = { test_number: (sid, certainty) }
+        # prediction_dict = { test_number: (sid, certainty, predictor) }
         identified = self.msgr.getIdentified()
 
         self.ui.predictionTW.clearContents()
@@ -1648,6 +1648,10 @@ class Manager(QWidget):
                     # TODO: colour-code based on confidence?
                     item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
                     item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                # the predictor
+                item0 = QTableWidgetItem()
+                item0.setData(Qt.DisplayRole, pred[2])
+                self.ui.predictionTW.setItem(r, 5, item0)
         self.ui.predictionTW.setSortingEnabled(True)
 
     def deletePredictions(self):
