@@ -1003,23 +1003,17 @@ class ManagerMessenger(BaseMessenger):
         return True
 
     def IDdeletePredictions(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                "/ID/predictedID",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code in (401, 403):
-                raise PlomAuthenticationException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    "/ID/predictedID",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def IDputPredictions(self, predictions):
         raise NotImplementedError(

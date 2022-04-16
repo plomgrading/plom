@@ -465,17 +465,17 @@ class IDHandler:
     def IDdeletePredictions(self, data, request):
         """Deletes the machine-learning predicted IDs for all papers.
 
-        Responds with status 200/401.
+        Responds with status 200/401/403.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
-            request (aiohttp.web_request.Request): DELETE /ID/predictedID type request object.
+            request (aiohttp.web_request.Request):
 
         Returns:
-            aiohttp.web_response.Response: Returns a response with a True or False indicating if the deletion
-                was successful.
+            aiohttp.web_response.Response: 200 if successful.
         """
-        return web.json_response(self.server.IDdeletePredictions(), status=200)
+        self.server.IDdeletePredictions()
+        return web.Response(status=200)
 
     # @routes.put("/ID/predictedID")
     @authenticate_by_token_required_fields(["user", "predictions"])
@@ -611,8 +611,6 @@ class IDHandler:
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
-        router.add_put("/ID/{paper_number}", self.IdentifyPaper)
-        router.add_delete("/ID/{paper_number}", self.un_id_paper)
         router.add_put("/ID/preid/{paper_number}", self.PreIDPaper)
         router.add_delete("/ID/preid/{paper_number}", self.remove_id_prediction)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
@@ -620,3 +618,6 @@ class IDHandler:
         router.add_post("/ID/predictedID", self.predict_id_lap_solver)
         router.add_post("/ID/run_id_reader", self.run_id_reader)
         router.add_patch("/ID/review", self.IDreviewID)
+        # careful, list these last as they can glob other URLs
+        router.add_put("/ID/{paper_number}", self.IdentifyPaper)
+        router.add_delete("/ID/{paper_number}", self.un_id_paper)
