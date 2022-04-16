@@ -8,7 +8,6 @@ from datetime import datetime
 import json
 import logging
 import os
-import shutil
 import subprocess
 import time
 
@@ -120,10 +119,8 @@ def IDgetImageFromATest(self):
     return self.DB.IDgetImageFromATest()
 
 
-def ID_get_predictions(self):
-    """Return dict of test:(sid, sname, certainty) of all predictions in DB"""
-
-    return self.DB.ID_get_all_predictions()
+def ID_get_predictions(self, *args, **kwargs):
+    return self.DB.ID_get_predictions(*args, **kwargs)
 
 
 def IDdeletePredictions(self):
@@ -133,9 +130,9 @@ def IDdeletePredictions(self):
         None
     """
     log.info("Wiping predictions by lap-solver")
-    old_predictions = self.DB.ID_get_all_predictions()
-    for papernum, v in old_predictions.items():  # v = (sid, certainty, predictor)
-        if v[2] == "MLLAP":
+    old_predictions = self.DB.ID_get_predictions()
+    for papernum, v in old_predictions.items():
+        if v["predictor"] == "MLLAP":
             ok, code, msg = self.DB.remove_id_prediction(papernum)
             if not ok:
                 raise RuntimeError(
@@ -310,7 +307,7 @@ def predict_id_lap_solver(self):
     # ------------------------ #
     log.info("Sanity check that no *paper numbers* from the prenamed are in LAP output")
     # 'predictions' only contains **non**MLLAP predictions
-    predictions = self.DB.ID_get_all_predictions()
+    predictions = self.DB.ID_get_predictions()
     for papernum, _ in prediction_pairs:
         # verify that there is no paper-number overlap between existing predictions
         # and those from MLLAP
@@ -320,7 +317,7 @@ def predict_id_lap_solver(self):
             )
     # at this point the database and the prediction_pairs contain no overlaps in paper_number.
     # but we need to keep uniqueness in SID, so construct SID-lookup dict from existing predictions
-    existing_sid_to_papernum = {predictions[X][0]: X for X in predictions}
+    existing_sid_to_papernum = {predictions[X]["student_id"]: X for X in predictions}
     log.info("Saving prediction results into database /w certainty 0.5")
     errs = []
     for papernum, student_ID in prediction_pairs:
@@ -389,16 +386,14 @@ def run_id_reader(self, top, bottom, ignore_stamp):
 
     # Only mess with predictions that were created by MLLAP and not
     # any prenaming.
-    predictions = self.DB.ID_get_all_predictions()
+    predictions = self.DB.ID_get_predictions()
     # is dict {paper_number: (sid, certainty, who)}
     for k in list(test_image_dict.keys()):
         P = predictions.get(k, None)
         if P:
-            # if the predictor for this test is "prename" then don't mess
-            # with it. Remove it from the test image dictionary.
-            # TODO - future this might be "prename" or "human"
-            # so this will need changing to blah in ["prename", "human", "foo", ...]
-            if P[2] == "prename":
+            # TODO: future may need in ["prename", "human", ...]
+            if P["predictor"] == "prename":
+                # Don't try to read IDs from prenamed papers
                 test_image_dict.pop(k)
                 log.info(
                     'ID reader: drop test number "%s" b/c we think its prenamed', k

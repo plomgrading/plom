@@ -22,13 +22,12 @@ def do_rando_identifying_backend(messenger):
     classlist = messenger.IDrequestClasslist()
     # classlist is a list of dicts {'id': sid, 'name: name}
     predictions = messenger.IDrequestPredictions()
-    # predictions are {test_number: [sid, certainty]}
-    # due to jsonnery the test_number is a string (sigh).
+    # due to jsonnery the key test_number is a string (sigh).
 
     # make sid to name look up for predictions
     sid_to_name = {X["id"]: X["name"] for X in classlist}
     # and a sid to test look up
-    sid_to_test = {predictions[X][0]: X for X in predictions}
+    sid_to_test = {predictions[X]["student_id"]: X for X in predictions}
 
     while True:
         task = messenger.IDaskNextTask()
@@ -44,7 +43,7 @@ def do_rando_identifying_backend(messenger):
 
         # where possible take the predicted ID
         if str(task) in predictions:
-            sid = predictions[str(task)][0]
+            sid = predictions[str(task)]["student_id"]
             name = sid_to_name[sid]
             print(f"Task {task} predicted to be {sid} {name} - using that")
             try:
