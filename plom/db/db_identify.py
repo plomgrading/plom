@@ -88,50 +88,55 @@ def IDgetUnidentifiedTests(self):
 
 def IDgetNextTask(self):
     """Find unid'd test and send test_number to client"""
+
+    # priority given to tests without prediction
+    # then tests with prediction - low certainty before high certainty.
+
     with plomdb.atomic():
-        # grab the IDData reference provided not IDd but has been scanned
-        irefs = (
-            IDGroup.select()
-            .join(Group)
-            .where(
-                IDGroup.status == "todo",
-                Group.scanned == True,  # noqa: E712
-            )
+        # Filter tests that have IDGroup.status = todo and Group.scanned=True.
+        # get tests whose id groups are on the todo pile
+        unidentified_tests = Test.select().join(IDGroup).where(IDGroup.status == "todo")
+        # now make sure they are all scanned.
+        unidentified_tests = unidentified_tests.join(Group).where(Group.scanned == True)  # noqa: E712
+        # Now refine this to get tests with no IDPrediction.
+        # so join the IDpred table (outer join to get things even when test-link - then we can test on that field being null)
+        no_prediction = (
+            unidentified_tests.switch(Test)
+            .join(IDPrediction, pw.JOIN.LEFT_OUTER)
+            .where(IDPrediction.test.is_null())
         )
-
-        # Priority for giving out:
-        #   - any without predictions
-        #   - lowest confidence (TODO: not implemented)
-        # TODO: perhaps better performance to do as some kind of DB joinery
-        predictions = self.ID_get_predictions()
-        iref = None
-        for x in irefs:
-            if x.test.test_number not in predictions.keys():
-                log.info(
-                    "Found paper %s with no prediction: using as next ID task",
-                    x.test.test_number,
-                )
-                iref = x
-                break
-
-        if iref is None:
+        try:
+            tref = no_prediction.get()
+            log.info(
+                f"ID-task {tref.test_number} has no prediction and is todo - telling client"
+            )
+            # got one!
+        except Test.DoesNotExist:
+            # all tests id'd or have a prediction
+            # so grab un-id'd test with lowest certainty
+            with_prediction = (
+                unidentified_tests.switch(Test)
+                .join(IDPrediction)
+                .order_by(IDPrediction.certainty)
+            )
             try:
-                iref = irefs.get()
-            except pw.DoesNotExist:
+                tref = with_prediction.get()
+                log.info(
+                    f"ID-task {tref.test_number} has prediction with certainty {tref.idpredictions[0].certainty} and is todo - telling client"
+                )
+                # got one!
+            except Test.DoesNotExist:
+                # all jobs must be done.
                 log.info("Nothing left on ID to-do pile")
                 return None
-            log.info(
-                "All papers have predictions: arbitrary next ID task of %s",
-                iref.test.test_number,
-            )
-
+        # get the idgroup associated to the test
+        iref = tref.idgroups[0]
         # as per #1811 - the user should be none here
         assert (
             iref.user is None
-        ), f"ID-Task for test {iref.test.test_number} is todo, but has a user = {iref.user.name}"
+        ), f"ID-Task for test {tref.test_number} is todo, but has a user = {iref.user.name}"
         # note - test need not be all scanned, just the ID page.
-
-        return iref.test.test_number
+        return tref.test_number
 
 
 def IDgiveTaskToClient(self, user_name, test_number):
