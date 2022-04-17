@@ -523,17 +523,20 @@ class IDHandler:
             aiohttp.web_response.Response: Returns a response with the date and time of the machine reader run.
             Or responds with saying the machine reader is already running.
         """
-        is_running, other, stuff = self.server.run_id_reader(
-            data["crop_top"], data["crop_bottom"], data["ignoreStamp"]
+        is_running, new_start, time_stamp, partial_log = self.server.run_id_reader(
+            data["crop_top"],
+            data["crop_bottom"],
+            kill_running=False,
+            ignore_timestamp=data["ignoreStamp"],
         )
 
         if is_running:
-            if other:  # if OUR job started
-                return web.json_response(stuff, status=200)
+            if new_start:
+                return web.json_response(partial_log, status=200)
             else:  # ... or one was already running
-                return web.json_response(stuff, status=202)
-        else:  # isn't running (we found a time-stamp, in other)
-            return web.json_response([other, stuff], status=205)
+                return web.json_response(partial_log, status=202)
+        else:
+            return web.json_response([time_stamp, partial_log], status=205)
 
     @authenticate_by_token_required_fields(["user"])
     @write_admin

@@ -1536,31 +1536,25 @@ class Manager(QWidget):
             GroupView(self, img_name, title=title).exec()
 
     def run_id_reader(self, ignoreStamp=False):
-        rmsg = self.msgr.run_id_reader(
+        is_running, new_start, timestamp, msg = self.msgr.run_id_reader(
             float(self.ui.cropTopLE.text()) / 100,
             float(self.ui.cropBottomLE.text()) / 100,
             ignoreStamp,
         )
-        # returns [True, True] = off and running,
-        # [True, False] = currently running.
-        # [False, time] = found a timestamp
-        if rmsg[0]:
-            if rmsg[1]:
-                txt = "IDReader launched. It may take some time to run. Please be patient."
+        if is_running:
+            if new_start:
+                txt = "IDReader launched. It may take some time to run. Click button again to refresh log."
             else:
                 txt = "IDReader currently running. Current output:"
-            InfoMsg(self, txt, info=f"{len(rmsg[2])} lines/chars of output", details="OUTPUT\n"+"".join(rmsg[2])+"END").exec()
+            InfoMsg(self, txt, info=f"{len(msg)} chars of logs", details=msg).exec()
             return
-        else:  # not running because we found a timestamp = rmsg[1]
-            if rmsg[2] is not None:
-                print("*"*90)
-                print(rmsg[2])
-                print("*"*90)
-                InfoMsg(self, "foo", info=f"{len(rmsg[2])} lines/chars of output", details="OUTPUT\n"+rmsg[2]+"\nEND").exec()
+        else:
+            # if msg is not None:
             sm = SimpleQuestion(
                 self,
-                f"IDReader was last run at {rmsg[1]}",
+                f"IDReader was last run at {timestamp}",
                 "Do you want to rerun it?",
+                details=msg,  # TODO not explained
             )
             if sm.exec() == QMessageBox.No:
                 return
