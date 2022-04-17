@@ -1101,10 +1101,12 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
             if response.status_code == 202:
-                return [True, False]
+                return [True, False, response.json()]
             if response.status_code == 205:
-                return [False, response.text]
-            return [True, True]
+                # clean up!
+                tmp = response.json()
+                return [False, tmp[0], tmp[1]]
+            return [True, True, response.json()]
         except requests.HTTPError as e:
             if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None

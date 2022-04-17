@@ -11,6 +11,9 @@ import os
 import subprocess
 import time
 
+# TODO: new dependency :(
+from nonblock import nonblock_read
+
 from plom import specdir
 from plom.idreader.assign_prob import assemble_cost_matrix, lap_solver
 
@@ -361,17 +364,43 @@ def run_id_reader(self, top, bottom, ignore_stamp):
         `[True, True]`: we started a new prediction run.
     """
     lock_file = specdir / "IDReader.lock"
+    log_file = specdir / "IDReader.log"
     timestamp = specdir / "IDReader.timestamp"
     if os.path.isfile(lock_file):
         log.info("ID reader is already running.")
-        return [True, False]
+        data = nonblock_read(self.id_reader_proc.stdout)
+        if data is None:
+            log.info("background proc done and no more stdout")
+            self.id_reader_proc.wait()
+        elif data:
+            log.info("background proc still going, grabbed latest stdout")
+            self.id_reader_stdout += data
+        else:
+            log.info("background proc still going, no new stdout")
+            pass
+        return [True, False, self.id_reader_stdout]
 
     # check the timestamp - unless manager tells you to ignore it.
     if os.path.isfile(timestamp):
         if ignore_stamp is False:
             with open(timestamp, "r") as fh:
                 txt = json.load(fh)
-            return [False, txt]
+            if hasattr(self, "id_reader_proc"):
+                log.info("still have a proc, try to get its stdout")
+                # TODO: blocking
+                data = nonblock_read(self.id_reader_proc.stdout)
+                if data is None:
+                    log.info("background proc done and no more stdout")
+                    self.id_reader_proc.wait()
+                elif data:
+                    log.info("background proc still going, grabbed latest stdout")
+                    self.id_reader_stdout += data
+                else:
+                    log.info("background proc still going, no new stdout")
+                    pass
+            else:
+                self.id_reader_stdout = None
+            return [False, txt, self.id_reader_stdout]
         else:
             os.unlink(timestamp)
 
@@ -409,11 +438,36 @@ def run_id_reader(self, top, bottom, ignore_stamp):
     # TODO - this is currently blocking I think.
 
     # Yuck, should at least check its running, Issue #862
-    proc = subprocess.run(
-        ["python3", "-m", "plom.server.run_the_predictor", lock_file],
-        capture_output=True,
+    self.id_reader_stdout = ""
+    # or maybe
+    # stderr=subprocess.STDOUT
+    # stdout=subprocess.PIPE
+
+    self.id_reader_proc = subprocess.Popen(
+        ["python3", "-u", "-m", "plom.server.run_the_predictor", lock_file],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True,
+        text=True,
     )
-    log.warn(f"Predicter subprocess.return code = {proc.returncode}")
-    log.warn(f"Predicter subprocess.stdout = {proc.stdout.decode()}")
-    log.warn(f"Predicter subprocess.stderr = {proc.stderr.decode()}")
-    return [True, True]
+    # list_of_bytes = self.id_reader_proc.stdout.readlines()
+    #try:
+    # (A, B) = self.id_reader_proc.communicate(timeout=1)
+    #self.id_reader_stdout.extend(A)
+    #self.id_reader_stdout.extend(B)
+
+    try:
+        self.id_reader_proc.wait(timeout=1)
+    except subprocess.TimeoutExpired:
+        pass
+
+    data = nonblock_read(self.id_reader_proc.stdout)
+    if data is None:
+        log.info("background proc done and no more stdout")
+        self.id_reader_proc.wait()
+    elif data:
+        log.info("background proc still going, grabbed latest stdout")
+        self.id_reader_stdout += data
+    else:
+        log.info("background proc still going, no new stdout")
+        pass
+
+    return [True, True, self.id_reader_stdout]

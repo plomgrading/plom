@@ -1548,10 +1548,15 @@ class Manager(QWidget):
             if rmsg[1]:
                 txt = "IDReader launched. It may take some time to run. Please be patient."
             else:
-                txt = "IDReader currently running. Please be patient."
-            ErrorMessage(txt).exec()
+                txt = "IDReader currently running. Current output:"
+            InfoMsg(self, txt, info=f"{len(rmsg[2])} lines/chars of output", details="OUTPUT\n"+"".join(rmsg[2])+"END").exec()
             return
         else:  # not running because we found a timestamp = rmsg[1]
+            if rmsg[2] is not None:
+                print("*"*90)
+                print(rmsg[2])
+                print("*"*90)
+                InfoMsg(self, "foo", info=f"{len(rmsg[2])} lines/chars of output", details="OUTPUT\n"+rmsg[2]+"\nEND").exec()
             sm = SimpleQuestion(
                 self,
                 f"IDReader was last run at {rmsg[1]}",
