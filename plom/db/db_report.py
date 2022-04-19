@@ -464,6 +464,8 @@ def RgetSpreadsheet(self):
         if tref.identified:  # set the sid and sname.
             this_test["sid"] = iref.student_id
             this_test["sname"] = iref.student_name
+        # compute the time of last update across the idgroup and each qgroup
+        last_update = tref.idgroups[0].time  # even if un-id'd will show creation time.
         # check each question (in order)
         for qref in tref.qgroups.order_by(QGroup.question):
             # store the version and mark
@@ -471,6 +473,10 @@ def RgetSpreadsheet(self):
             this_test["q{}m".format(qref.question)] = ""  # blank unless marked
             if qref.marked:  # if marked, updated.
                 this_test["q{}m".format(qref.question)] = qref.annotations[-1].mark
+            if last_update < qref.time:
+                last_update = qref.time
+        # last_update time is now most recent group update time.
+        this_test["last_update"] = last_update.strftime("%y:%m:%d-%H:%M:%S")
         # insert the data for this_test into the spreadsheet dict.
         sheet[tref.test_number] = this_test
     log.debug("Sending spreadsheet data.")
