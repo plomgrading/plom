@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 
 import csv
+from datetime import datetime
 
 from plom import get_question_label
 from plom.finish import start_messenger
@@ -30,7 +31,8 @@ def writeSpreadsheet(spreadSheetDict, labels):
     head.append("Total")
     for label in labels:
         head.append(f"{label} version")
-    head.append("LastUpdate")
+    head.append("LastUpdate")  # last time any part of the test was updated on server
+    head.append("CSVWriteTime")  # when the test's row written in this csv file.
     head.append("Warnings")
 
     with open(CSVFilename, "w") as csvfile:
@@ -64,6 +66,8 @@ def writeSpreadsheet(spreadSheetDict, labels):
 
             row["LastUpdate"] = thisTest["last_update"]
 
+            row["CSVWriteTime"] = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
+            
             warnString = ""
             if not thisTest["identified"]:
                 warnString += "[Unidentified]"
