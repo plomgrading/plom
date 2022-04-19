@@ -1074,7 +1074,30 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def run_id_reader(self, top, bottom, *, ignore_timestamp, kill_running):
+    def id_reader_get_logs(self):
+        """Get the logs for the background id digit reader.
+
+        Returns:
+            list: TODO.
+
+        Raises:
+            PlomAuthenticationException:
+            PlomSeriousException: something unexpected.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/ID/id_reader",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def id_reader_run(self, top, bottom, *, ignore_timestamp):
         """Runs the id digit reader on the ID pages of all papers.
 
         Returns:
@@ -1090,30 +1113,50 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.post(
-                "/ID/run_id_reader",
+                "/ID/id_reader",
                 json={
                     "user": self.user,
                     "token": self.token,
                     "crop_top": top,
                     "crop_bottom": bottom,
                     "ignore_timestamp": ignore_timestamp,
-                    "kill_running": kill_running,
                 },
             )
             response.raise_for_status()
             if response.status_code == 202:
-                return [True, False, None, response.json()]
+                return [True, False, *response.json()]
             if response.status_code == 205:
-                # clean up!
-                tmp = response.json()
-                return [False, None, tmp[0], tmp[1]]
-            return [True, True, None, response.json()]
+                return [False, None, *response.json()]
+            return [True, True, *response.json()]
         except requests.HTTPError as e:
             if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+
+    def id_reader_kill(self):
+        """Kill a running background id digit reader job.
+
+        Returns:
+            list: TODO
+
+        Raises:
+            PlomAuthenticationException:
+            PlomSeriousException: something unexpected.
+        """
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    "/ID/id_reader",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getIdentified(self):
         self.SRmutex.acquire()

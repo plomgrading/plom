@@ -7,7 +7,6 @@ import csv
 from datetime import datetime
 import json
 import logging
-import os
 import subprocess
 import time
 
@@ -343,16 +342,58 @@ def predict_id_lap_solver(self):
     return status
 
 
-def run_id_reader(self, top, bottom, *, kill_running=False, ignore_timestamp=False):
-    """Run the ML prediction model on the papers and saves the information.
+def id_reader_get_log(self):
+    """Get the log for the running background ID reader process.
+
+    Returns:
+        list: A ``[is_running, time_stamp, partial_log]`` where
+        ``is_running`` is a boolean whether the process is currently
+        running, ``time_stamp`` is string for when the process started
+        or None if no process was ever started.  ``partial_log`` is
+        a string of the process's stdout and stderr; or None if no
+        process was started (or perhaps if its started by no output
+        written yet).
+    """
+    log_file = specdir / "IDReader.log"
+    timestamp_file = specdir / "IDReader.timestamp"
+
+    # TODO: need some mutex for thread safety around this variable?
+    if not hasattr(self, "id_reader_proc"):
+        self.id_reader_proc = None
+
+    is_running = None
+    if self.id_reader_proc:
+        r = self.id_reader_proc.poll()
+        if r is None:
+            log.info("ID Reader process still running pid=%s", self.id_reader_proc.pid)
+            is_running = True
+        else:
+            log.info(f"ID Reader process was running but stopped with code {r}")
+            is_running = False
+
+    try:
+        with open(log_file, "r") as f:
+            log_so_far = "".join(f.readlines())
+    except FileNotFoundError:
+        log_so_far = None
+
+    timestamp = None
+    if timestamp_file.exists():
+        with open(timestamp_file, "r") as fh:
+            timestamp = json.load(fh)
+            log.info(f"Previous ID Reader process started at {timestamp}")
+
+    return [is_running, timestamp, log_so_far]
+
+
+def id_reader_run(self, top, bottom, *, ignore_timestamp=False):
+    """Run the ML ID reader model on the papers and saves the information.
 
     Args:
         top (float): where to crop in `[0, 1]`.
         bottom (float): where to crop in `[0, 1]`.
 
     Keyword Args:
-        kill_running (bool): Whether to kill an exsiting running job.
-            Not yet implemented!  Implies ``ignore_timestamp``.
         ignore_timestamp (bool): Whether to ignore the timestamp when
             deciding whether to skip the run.
 
@@ -383,13 +424,6 @@ def run_id_reader(self, top, bottom, *, kill_running=False, ignore_timestamp=Fal
             log.info(f"ID Reader process was running but stopped with code {r}")
             is_running = False
 
-    # current partial contents of the log
-    try:
-        with open(log_file, "r") as f:
-            log_so_far = "".join(f.readlines())
-    except FileNotFoundError:
-        log_so_far = None
-
     timestamp = None
     if timestamp_file.exists():
         with open(timestamp_file, "r") as fh:
@@ -401,17 +435,10 @@ def run_id_reader(self, top, bottom, *, kill_running=False, ignore_timestamp=Fal
     # normally we stop if running or if timestamp exists but both
     # can be overridden
     if is_running:
-        if not kill_running:
-            return [is_running, new_start, timestamp, log_so_far]
-        raise NotImplementedError("lazy")
-        # self.id_reader_proc.wait(2)
-        # self.id_reader.proc.kill(TODO)
-        # self.id_reader_proc.wait(1)
-        # self.id_reader.proc.terminate(TODO)
-        # self.id_reader_proc.wait(1)
+        return [is_running, new_start, timestamp]
     elif timestamp:
         if not ignore_timestamp:
-            return [is_running, new_start, timestamp, log_so_far]
+            return [is_running, new_start, timestamp]
 
     # we're launching a new job
     new_start = True
@@ -459,7 +486,25 @@ def run_id_reader(self, top, bottom, *, kill_running=False, ignore_timestamp=Fal
     except subprocess.TimeoutExpired:
         pass
 
-    with open(log_file, "r") as f:
-        log_so_far = "".join(f.readlines())
+    return [True, new_start, timestamp]
 
-    return [True, new_start, timestamp, log_so_far]
+
+def id_reader_kill(self):
+    """Kill any running machine ID reader.
+
+    Returns:
+    """
+    params_file = specdir / "IDReader.json"
+    log_file = specdir / "IDReader.log"
+    timestamp_file = specdir / "IDReader.timestamp"
+
+    # TODO: need some mutex for thread safety around this variable?
+    if not hasattr(self, "id_reader_proc"):
+        self.id_reader_proc = None
+
+    raise NotImplementedError("lazy")
+    # self.id_reader_proc.wait(2)
+    # self.id_reader.proc.kill(TODO)
+    # self.id_reader_proc.wait(1)
+    # self.id_reader.proc.terminate(TODO)
+    # self.id_reader_proc.wait(1)

@@ -438,7 +438,9 @@ class Manager(QWidget):
         self.ui.actionCButton.clicked.connect(self.doCActions)
         self.ui.actionDButton.clicked.connect(self.doDActions)
         self.ui.selectRectButton.clicked.connect(self.selectRectangle)
-        self.ui.machineReadButton.clicked.connect(self.run_id_reader)
+        self.ui.machineReadButton.clicked.connect(self.id_reader_run)
+        self.ui.machineReadRefreshButton.clicked.connect(self.id_reader_get_log)
+        self.ui.machineReadKillButton.clicked.connect(self.id_reader_kill)
         self.ui.predictButton.clicked.connect(self.run_predictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
@@ -1535,41 +1537,47 @@ class Manager(QWidget):
                 title = f"ID page: IDed as {sid} but predicted as {pred_sid} certainty {certainty}"
             GroupView(self, img_name, title=title).exec()
 
-    def run_id_reader(self, ignore_timestamp=False, kill_running=False):
-        is_running, new_start, timestamp, msg = self.msgr.run_id_reader(
+    def id_reader_get_log(self):
+        # TODO: where to display is_running, and timestamp?
+        is_running, timestamp, msg = self.msgr.id_reader_get_logs()
+        self.ui.idReaderLogTextEdit.setPlainText(msg)
+
+    def id_reader_run(self, ignore_timestamp=False):
+        is_running, new_start, timestamp = self.msgr.id_reader_run(
             float(self.ui.cropTopLE.text()) / 100,
             float(self.ui.cropBottomLE.text()) / 100,
             ignore_timestamp=ignore_timestamp,
-            kill_running=kill_running,
         )
+        # TODO: maybe that API need not return this, just call refreshbutton instead (w/ timer?)
+        # self.ui.idReaderLogTextEdit.setPlainText(msg)
         if is_running:
             if new_start:
                 txt = (
                     f"IDReader launched in background at {timestamp}."
                     + " It may take some time to run."
                 )
-                info = (
-                    f"Currently have {len(msg)} chars of logs:"
-                    + " you can click this button again to refresh log."
-                )
-                InfoMsg(self, txt, info=info, details=msg).exec()
-                return
+                info = None
             else:
-                txt = f"""<p>IDReader currently running (started at {timestamp}).
-                    Current output shown under details below.</p>
+                txt = f"IDReader currently running (started at {timestamp})."
+                info = """
                     <p>If its been a while or output is unexpected, perhaps it
                     crashed.</p>
                 """
-                q = "Do you want to kill it and start again?"
-                if SimpleQuestion(self, txt, q, details=msg).exec() == QMessageBox.Yes:
-                    self.run_id_reader(kill_running=True)
-                    return
+            InfoMsg(self, txt, info=info, info_pre=False).exec()
+            return
         else:
-            txt = f"IDReader was last run at {timestamp}.  Logs shown in details below."
+            txt = f"IDReader was last run at {timestamp}."
             q = "Do you want to rerun it?"
-            if SimpleQuestion(self, txt, q, details=msg).exec_() == QMessageBox.No:
+            if SimpleQuestion(self, txt, q).exec_() == QMessageBox.No:
                 return
-            self.run_id_reader(ignore_timestamp=True)
+            self.id_reader_run(ignore_timestamp=True)
+
+    def id_reader_kill(self):
+        # TODO: code
+        if SimpleQuestion(self, "Force quit running process", "Are you sure?").exec_() == QMessageBox.No:
+            return
+        is_running, new_start, timestamp, msg = self.msgr.id_reader_kill()
+        self.ui.idReaderLogTextEdit.setPlainText(msg)
 
     def run_predictor(self):
         try:

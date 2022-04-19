@@ -505,14 +505,22 @@ class IDHandler:
             status=200,
         )
 
+    # @routes.get("/ID/id_reader"
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def id_reader_get_log(self, data, request):
+        is_running, time_stamp, partial_log = self.server.id_reader_get_log()
+        return web.json_response([is_running, time_stamp, partial_log], status=200)
+
+    # @routes.post("/ID/id_reader")
     @authenticate_by_token_required_fields(
-        ["user", "crop_top", "crop_bottom", "ignore_timestamp", "kill_running"]
+        ["user", "crop_top", "crop_bottom", "ignore_timestamp"]
     )
     @write_admin
-    def run_id_reader(self, data, request):
+    def id_reader_run(self, data, request):
         """Runs the id digit reader on all paper ID pages.
 
-        Responds with status 200/202/205/401.
+        Responds with status 200/202/205/401/403.
 
         Args:
             data (dict): A dictionary having the user/token, cropping info
@@ -523,20 +531,27 @@ class IDHandler:
             aiohttp.web_response.Response: Returns a response with the date and time of the machine reader run.
             Or responds with saying the machine reader is already running.
         """
-        is_running, new_start, time_stamp, partial_log = self.server.run_id_reader(
+        is_running, new_start, time_stamp = self.server.id_reader_run(
             data["crop_top"],
             data["crop_bottom"],
             ignore_timestamp=data["ignore_timestamp"],
-            kill_running=data["kill_running"],
         )
-
         if is_running:
             if new_start:
-                return web.json_response(partial_log, status=200)
+                return web.json_response([time_stamp], status=200)
             else:  # ... or one was already running
-                return web.json_response(partial_log, status=202)
+                return web.json_response([time_stamp], status=202)
         else:
-            return web.json_response([time_stamp, partial_log], status=205)
+            return web.json_response([time_stamp], status=205)
+
+    # @routes.delete("/ID/id_reader")
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def id_reader_kill(self, data, request):
+        ok, msg = self.server.id_reader_kill()
+        # if not ok:
+        #
+        return web.json_response(["wot"], status=200)
 
     @authenticate_by_token_required_fields(["user"])
     @write_admin
@@ -613,7 +628,9 @@ class IDHandler:
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.predict_id_lap_solver)
-        router.add_post("/ID/run_id_reader", self.run_id_reader)
+        router.add_get("/ID/id_reader", self.id_reader_get_log)
+        router.add_post("/ID/id_reader", self.id_reader_run)
+        router.add_delete("/ID/id_reader", self.id_reader_kill)
         router.add_patch("/ID/review", self.IDreviewID)
         # careful, list these last as they can glob other URLs
         router.add_put("/ID/{paper_number}", self.IdentifyPaper)
