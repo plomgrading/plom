@@ -493,18 +493,48 @@ def id_reader_kill(self):
     """Kill any running machine ID reader.
 
     Returns:
+        tuple: ``(bool, str)``, True if it wasn't running or stopped
+        when asked, False if things got messy.  The string is a
+        human-readable explanation.
     """
-    params_file = specdir / "IDReader.json"
-    log_file = specdir / "IDReader.log"
-    timestamp_file = specdir / "IDReader.timestamp"
-
     # TODO: need some mutex for thread safety around this variable?
     if not hasattr(self, "id_reader_proc"):
         self.id_reader_proc = None
 
-    raise NotImplementedError("lazy")
-    # self.id_reader_proc.wait(2)
-    # self.id_reader.proc.kill(TODO)
-    # self.id_reader_proc.wait(1)
-    # self.id_reader.proc.terminate(TODO)
-    # self.id_reader_proc.wait(1)
+    if self.id_reader_proc is None:
+        return (True, "Process was not running")
+
+    pid = self.id_reader_proc.pid
+    try:
+        self.id_reader_proc.wait(timeout=0.1)
+    except subprocess.TimeoutExpired:
+        pass
+    else:
+        return (True, f"Process {pid} was already stopped")
+
+    log.info("ID Reader process %s: asking politely to stop", pid)
+    self.id_reader_proc.kill()
+    try:
+        self.id_reader_proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        pass
+    else:
+        self.id_reader_proc = None
+        log.info("Process %s stopped within 5 seconds", pid)
+        return (True, f"Process {pid} stopped within 5 seconds")
+
+    # now we insist
+    self.id_reader_proc.terminate()
+    log.info("ID Reader process %s: insisting (SIGTERM) that it stop...", pid)
+    try:
+        self.id_reader_proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        pass
+    else:
+        self.id_reader_proc = None
+        log.info("Process %s stopped within 10 seconds of SIGTERM", pid)
+        return (True, f"Process {pid} stopped within 10 seconds of SIGTERM")
+
+    log.info("ID Reader process %s: did not stop when asked too, leaving zombie", pid)
+    self.id_reader_proc = None
+    return (False, f"Process {pid} has likely become a zombie: talk to server admin")

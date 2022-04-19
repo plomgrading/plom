@@ -549,9 +549,8 @@ class IDHandler:
     @write_admin
     def id_reader_kill(self, data, request):
         ok, msg = self.server.id_reader_kill()
-        # if not ok:
-        #
-        return web.json_response(["wot"], status=200)
+        # TODO not ok?  or remove this feature?
+        return web.json_response(msg, status=200)
 
     @authenticate_by_token_required_fields(["user"])
     @write_admin

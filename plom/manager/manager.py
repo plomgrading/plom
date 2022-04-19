@@ -1548,15 +1548,13 @@ class Manager(QWidget):
             float(self.ui.cropBottomLE.text()) / 100,
             ignore_timestamp=ignore_timestamp,
         )
-        # TODO: maybe that API need not return this, just call refreshbutton instead (w/ timer?)
-        # self.ui.idReaderLogTextEdit.setPlainText(msg)
         if is_running:
             if new_start:
-                txt = (
-                    f"IDReader launched in background at {timestamp}."
-                    + " It may take some time to run."
-                )
-                info = None
+                txt = f"IDReader launched in background at {timestamp}."
+                info = """
+                    <p>It may take some time to run; click &ldquo;refresh&rdquo;
+                    to update output.</p>
+                """
             else:
                 txt = f"IDReader currently running (started at {timestamp})."
                 info = """
@@ -1564,6 +1562,7 @@ class Manager(QWidget):
                     crashed.</p>
                 """
             InfoMsg(self, txt, info=info, info_pre=False).exec()
+            self.id_reader_get_log()
             return
         else:
             txt = f"IDReader was last run at {timestamp}."
@@ -1573,11 +1572,14 @@ class Manager(QWidget):
             self.id_reader_run(ignore_timestamp=True)
 
     def id_reader_kill(self):
-        # TODO: code
-        if SimpleQuestion(self, "Force quit running process", "Are you sure?").exec_() == QMessageBox.No:
+        if (
+            SimpleQuestion(self, "Stop running process", "Are you sure?").exec_()
+            == QMessageBox.No
+        ):
             return
-        is_running, new_start, timestamp, msg = self.msgr.id_reader_kill()
-        self.ui.idReaderLogTextEdit.setPlainText(msg)
+        msg = self.msgr.id_reader_kill()
+        txt = "Stopped background ID reader process.  Server response:"
+        InfoMsg(self, txt, info=msg).exec_()
 
     def run_predictor(self):
         try:
