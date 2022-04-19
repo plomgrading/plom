@@ -377,9 +377,7 @@ def run_id_reader(self, top, bottom, *, kill_running=False, ignore_timestamp=Fal
     if self.id_reader_proc:
         r = self.id_reader_proc.poll()
         if r is None:
-            log.info(
-                "ID Reader process is still running pid=%s", self.id_reader_proc.pid
-            )
+            log.info("ID Reader process still running pid=%s", self.id_reader_proc.pid)
             is_running = True
         else:
             log.info(f"ID Reader process was running but stopped with code {r}")

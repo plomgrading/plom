@@ -506,7 +506,7 @@ class IDHandler:
         )
 
     @authenticate_by_token_required_fields(
-        ["user", "crop_top", "crop_bottom", "ignoreStamp"]
+        ["user", "crop_top", "crop_bottom", "ignore_timestamp", "kill_running"]
     )
     @write_admin
     def run_id_reader(self, data, request):
@@ -526,8 +526,8 @@ class IDHandler:
         is_running, new_start, time_stamp, partial_log = self.server.run_id_reader(
             data["crop_top"],
             data["crop_bottom"],
-            kill_running=False,
-            ignore_timestamp=data["ignoreStamp"],
+            ignore_timestamp=data["ignore_timestamp"],
+            kill_running=data["kill_running"],
         )
 
         if is_running:

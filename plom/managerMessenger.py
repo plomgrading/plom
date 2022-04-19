@@ -1074,7 +1074,7 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def run_id_reader(self, top, bottom, ignoreTimeStamp):
+    def run_id_reader(self, top, bottom, *, ignore_timestamp, kill_running):
         """Runs the id digit reader on the ID pages of all papers.
 
         Returns:
@@ -1096,7 +1096,8 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "crop_top": top,
                     "crop_bottom": bottom,
-                    "ignoreStamp": ignoreTimeStamp,
+                    "ignore_timestamp": ignore_timestamp,
+                    "kill_running": kill_running,
                 },
             )
             response.raise_for_status()

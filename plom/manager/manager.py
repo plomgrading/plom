@@ -1535,30 +1535,41 @@ class Manager(QWidget):
                 title = f"ID page: IDed as {sid} but predicted as {pred_sid} certainty {certainty}"
             GroupView(self, img_name, title=title).exec()
 
-    def run_id_reader(self, ignoreStamp=False):
+    def run_id_reader(self, ignore_timestamp=False, kill_running=False):
         is_running, new_start, timestamp, msg = self.msgr.run_id_reader(
             float(self.ui.cropTopLE.text()) / 100,
             float(self.ui.cropBottomLE.text()) / 100,
-            ignoreStamp,
+            ignore_timestamp=ignore_timestamp,
+            kill_running=kill_running,
         )
         if is_running:
             if new_start:
-                txt = "IDReader launched. It may take some time to run. Click button again to refresh log."
-            else:
-                txt = "IDReader currently running. Current output:"
-            InfoMsg(self, txt, info=f"{len(msg)} chars of logs", details=msg).exec()
-            return
-        else:
-            # if msg is not None:
-            sm = SimpleQuestion(
-                self,
-                f"IDReader was last run at {timestamp}",
-                "Do you want to rerun it?",
-                details=msg,  # TODO not explained
-            )
-            if sm.exec() == QMessageBox.No:
+                txt = (
+                    f"IDReader launched in background at {timestamp}."
+                    + " It may take some time to run."
+                )
+                info = (
+                    f"Currently have {len(msg)} chars of logs:"
+                    + " you can click this button again to refresh log."
+                )
+                InfoMsg(self, txt, info=info, details=msg).exec()
                 return
-            self.run_id_reader(ignoreStamp=True)
+            else:
+                txt = f"""<p>IDReader currently running (started at {timestamp}).
+                    Current output shown under details below.</p>
+                    <p>If its been a while or output is unexpected, perhaps it
+                    crashed.</p>
+                """
+                q = "Do you want to kill it and start again?"
+                if SimpleQuestion(self, txt, q, details=msg).exec() == QMessageBox.Yes:
+                    self.run_id_reader(kill_running=True)
+                    return
+        else:
+            txt = f"IDReader was last run at {timestamp}.  Logs shown in details below."
+            q = "Do you want to rerun it?"
+            if SimpleQuestion(self, txt, q, details=msg).exec_() == QMessageBox.No:
+                return
+            self.run_id_reader(ignore_timestamp=True)
 
     def run_predictor(self):
         try:
