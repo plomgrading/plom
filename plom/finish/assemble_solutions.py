@@ -55,7 +55,9 @@ def _assemble_one_soln(
     if skip and outname.exists():
         print(f"Skipping {outname}: already exists")
         return
-    coverfile = download_data_build_cover_page(msgr, tmpdir, t, max_marks)
+    coverfile = download_data_build_cover_page(
+        msgr, tmpdir, t, max_marks, solution=True
+    )
 
     info = msgr.RgetCoverPageInfo(t)
     # info is list of [[sid, sname], [q,v,m], [q,v,m]]

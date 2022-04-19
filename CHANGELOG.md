@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Non-zero initial orientations should now work properly.
+* Custom solutions had the wrong coverpage, showing instead the reassembled coverpage.
 
 
 ## [0.8.11] - 2022-04-12
