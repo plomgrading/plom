@@ -1472,7 +1472,6 @@ class Manager(QWidget):
 
     def refreshIDTab(self):
         ti = self.msgr.IDprogressCount()
-        self.ui.papersLE.setText(str(ti[1]))
         self.ui.idPB.setValue(ti[0])
         self.ui.idPB.setMaximum(ti[1])
         self.getPredictions()
