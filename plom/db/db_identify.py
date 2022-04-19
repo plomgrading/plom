@@ -97,7 +97,9 @@ def IDgetNextTask(self):
         # get tests whose id groups are on the todo pile
         unidentified_tests = Test.select().join(IDGroup).where(IDGroup.status == "todo")
         # now make sure they are all scanned.
-        unidentified_tests = unidentified_tests.join(Group).where(Group.scanned == True)  # noqa: E712
+        unidentified_tests = unidentified_tests.join(Group).where(
+            Group.scanned == True  # noqa: E712
+        )
         # Now refine this to get tests with no IDPrediction.
         # so join the IDpred table (outer join to get things even when test-link - then we can test on that field being null)
         no_prediction = (
@@ -111,7 +113,7 @@ def IDgetNextTask(self):
                 f"ID-task {tref.test_number} has no prediction and is todo - telling client"
             )
             # got one!
-        except Test.DoesNotExist:
+        except pw.DoesNotExist:
             # all tests id'd or have a prediction
             # so grab un-id'd test with lowest certainty
             with_prediction = (
@@ -125,7 +127,7 @@ def IDgetNextTask(self):
                     f"ID-task {tref.test_number} has prediction with certainty {tref.idpredictions[0].certainty} and is todo - telling client"
                 )
                 # got one!
-            except Test.DoesNotExist:
+            except pw.DoesNotExist:
                 # all jobs must be done.
                 log.info("Nothing left on ID to-do pile")
                 return None
