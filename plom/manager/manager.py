@@ -1537,8 +1537,17 @@ class Manager(QWidget):
             GroupView(self, img_name, title=title).exec()
 
     def id_reader_get_log(self):
-        # TODO: where to display is_running, and timestamp?
         is_running, timestamp, msg = self.msgr.id_reader_get_logs()
+        # TODO: perhaps we want msgr to do this?
+        timestamp = arrow.get(timestamp)
+        if is_running:
+            stat = "<em>Running</em>"
+        else:
+            stat = "Stopped"
+        self.ui.idReaderStatusLabel.setText(
+            f"<p>{stat}, started {timestamp.humanize()} ({timestamp})."
+            "<br />Log output:</p>"
+        )
         self.ui.idReaderLogTextEdit.setPlainText(msg)
 
     def id_reader_run(self, ignore_timestamp=False):
