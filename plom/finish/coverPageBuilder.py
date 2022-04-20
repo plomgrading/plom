@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 
+from datetime import datetime
 from weasyprint import HTML, CSS
 
 
@@ -83,7 +84,17 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
             )
         )
     htmlText += """
-</table>
+    </table>
+    <footer style="position:absolute; bottom:0;">
+    """
+    htmlText += """
+    Coverpage produced on {}
+    </ul>
+    </footer>
+    """.format(
+        datetime.now().strftime("%y:%m:%d at %H:%M")
+    )
+    htmlText += """
 </body>
 </html>"""
     # Pipe the htmltext into weasyprint.

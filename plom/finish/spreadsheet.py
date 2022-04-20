@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Colin B. Macdonald
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
 import csv
+from datetime import datetime
 
 from plom import get_question_label
 from plom.finish import start_messenger
@@ -30,6 +31,8 @@ def writeSpreadsheet(spreadSheetDict, labels):
     head.append("Total")
     for label in labels:
         head.append(f"{label} version")
+    head.append("LastUpdate")  # last time any part of the test was updated on server
+    head.append("CSVWriteTime")  # when the test's row written in this csv file.
     head.append("Warnings")
 
     with open(CSVFilename, "w") as csvfile:
@@ -60,6 +63,10 @@ def writeSpreadsheet(spreadSheetDict, labels):
                 row["Total"] = tot
             else:
                 row["Total"] = ""
+
+            row["LastUpdate"] = thisTest["last_update"]
+
+            row["CSVWriteTime"] = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
 
             warnString = ""
             if not thisTest["identified"]:

@@ -672,6 +672,7 @@ def buildUpToDateAnnotation(self, qref):
         qref.user = None
         qref.marked = False
         qref.status = ""
+        qref.time = datetime.now()
         qref.save()
         tref.marked = False
         tref.save()
@@ -738,6 +739,7 @@ def updateQGroup(self, qref):
         gref.scanned = True
         gref.save()
         qref.status = "todo"
+        qref.time = datetime.now()
         qref.save()
         log.info(
             "QGroup {} of test {} is ready to be marked.".format(
