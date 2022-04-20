@@ -438,7 +438,9 @@ class Manager(QWidget):
         self.ui.actionCButton.clicked.connect(self.doCActions)
         self.ui.actionDButton.clicked.connect(self.doDActions)
         self.ui.selectRectButton.clicked.connect(self.selectRectangle)
-        self.ui.machineReadButton.clicked.connect(self.run_id_reader)
+        self.ui.machineReadButton.clicked.connect(self.id_reader_run)
+        self.ui.machineReadRefreshButton.clicked.connect(self.id_reader_get_log)
+        self.ui.machineReadKillButton.clicked.connect(self.id_reader_kill)
         self.ui.predictButton.clicked.connect(self.run_predictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
@@ -1470,7 +1472,6 @@ class Manager(QWidget):
 
     def refreshIDTab(self):
         ti = self.msgr.IDprogressCount()
-        self.ui.papersLE.setText(str(ti[1]))
         self.ui.idPB.setValue(ti[0])
         self.ui.idPB.setMaximum(ti[1])
         self.getPredictions()
@@ -1535,31 +1536,49 @@ class Manager(QWidget):
                 title = f"ID page: IDed as {sid} but predicted as {pred_sid} certainty {certainty}"
             GroupView(self, img_name, title=title).exec()
 
-    def run_id_reader(self, ignoreStamp=False):
-        rmsg = self.msgr.run_id_reader(
+    def id_reader_get_log(self):
+        # TODO: where to display is_running, and timestamp?
+        is_running, timestamp, msg = self.msgr.id_reader_get_logs()
+        self.ui.idReaderLogTextEdit.setPlainText(msg)
+
+    def id_reader_run(self, ignore_timestamp=False):
+        is_running, new_start, timestamp = self.msgr.id_reader_run(
             float(self.ui.cropTopLE.text()) / 100,
             float(self.ui.cropBottomLE.text()) / 100,
-            ignoreStamp,
+            ignore_timestamp=ignore_timestamp,
         )
-        # returns [True, True] = off and running,
-        # [True, False] = currently running.
-        # [False, time] = found a timestamp
-        if rmsg[0]:
-            if rmsg[1]:
-                txt = "IDReader launched. It may take some time to run. Please be patient."
+        if is_running:
+            if new_start:
+                txt = f"IDReader launched in background at {timestamp}."
+                info = """
+                    <p>It may take some time to run; click &ldquo;refresh&rdquo;
+                    to update output.</p>
+                """
             else:
-                txt = "IDReader currently running. Please be patient."
-            ErrorMessage(txt).exec()
+                txt = f"IDReader currently running (started at {timestamp})."
+                info = """
+                    <p>If its been a while or output is unexpected, perhaps it
+                    crashed.</p>
+                """
+            InfoMsg(self, txt, info=info, info_pre=False).exec()
+            self.id_reader_get_log()
             return
-        else:  # not running because we found a timestamp = rmsg[1]
-            sm = SimpleQuestion(
-                self,
-                f"IDReader was last run at {rmsg[1]}",
-                "Do you want to rerun it?",
-            )
-            if sm.exec() == QMessageBox.No:
+        else:
+            txt = f"IDReader was last run at {timestamp}."
+            q = "Do you want to rerun it?"
+            if SimpleQuestion(self, txt, q).exec_() == QMessageBox.No:
                 return
-            self.run_id_reader(ignoreStamp=True)
+            self.id_reader_run(ignore_timestamp=True)
+
+    def id_reader_kill(self):
+        if (
+            SimpleQuestion(self, "Stop running process", "Are you sure?").exec_()
+            == QMessageBox.No
+        ):
+            return
+        msg = self.msgr.id_reader_kill()
+        txt = "Stopped background ID reader process.  Server response:"
+        InfoMsg(self, txt, info=msg).exec_()
 
     def run_predictor(self):
         try:

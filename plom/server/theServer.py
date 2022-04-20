@@ -162,7 +162,9 @@ class Server:
         IDdeletePredictions,
         IDputPredictions,
         predict_id_lap_solver,
-        run_id_reader,
+        id_reader_get_log,
+        id_reader_run,
+        id_reader_kill,
         IDreviewID,
     )
     from .plomServer.serverMark import (
