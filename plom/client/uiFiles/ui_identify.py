@@ -170,8 +170,7 @@ class Ui_IdentifyWindow(object):
         self.pSIDLabel.setText(_translate("IdentifyWindow", "Predicted Student ID"))
         self.pNameLabel.setText(_translate("IdentifyWindow", "Predicted Student Name"))
         self.predButton.setText(_translate("IdentifyWindow", "&Accept\n"
-" machine\n"
-" prediction"))
+"prediction"))
         self.nextButton.setText(_translate("IdentifyWindow", "Skip (for now) and &get next"))
         self.userBox.setTitle(_translate("IdentifyWindow", "User"))
         self.userLabel.setText(_translate("IdentifyWindow", "Username"))

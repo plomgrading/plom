@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
-from io import StringIO, BytesIO
+from io import BytesIO
 import json
 
 import requests
@@ -134,9 +134,8 @@ class ManagerMessenger(BaseMessenger):
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
 
-    # TODO: copy pasted from Messenger.IDreturnIDdTask: can we dedupe?
-    def id_paper(self, code, studentID, studentName):
-        """Identify a paper directly, not as part of a IDing task.
+    def pre_id_paper(self, paper_number, studentID, predictor="prename"):
+        """Pre-id a paper.
 
         Exceptions:
             PlomConflict: `studentID` already used on a different paper.
@@ -146,12 +145,12 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                f"/ID/{code}",
+                f"/ID/preid/{paper_number}",
                 json={
                     "user": self.user,
                     "token": self.token,
                     "sid": studentID,
-                    "sname": studentName,
+                    "predictor": predictor,
                 },
             )
             response.raise_for_status()
@@ -166,10 +165,8 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def un_id_paper(self, code):
-        """Remove the identify of a paper directly.
-
-        TODO: eventually this may want its own API call.
+    def remove_id_prediction(self, paper_number):
+        """Remove the predicted "pre-id" for a particular paper.
 
         Exceptions:
             PlomAuthenticationException: login problems.
@@ -177,21 +174,66 @@ class ManagerMessenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                response = self.put(
-                    f"/ID/{code}",
-                    json={
-                        "user": self.user,
-                        "token": self.token,
-                        "sid": "",
-                        "sname": "",
-                    },
+                response = self.delete(
+                    f"/ID/preid/{paper_number}",
+                    json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def id_paper(self, paper_number, studentID, studentName):
+        """Identify a paper directly, not as part of a IDing task.
+
+        Exceptions:
+            PlomConflict: `studentID` already used on a different paper.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    f"/ID/{paper_number}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "sid": studentID,
+                        "sname": studentName,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 404:
                     raise PlomSeriousException(e) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def un_id_paper(self, paper_number):
+        """Remove the identify of a paper directly.
+
+        Exceptions:
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    f"/ID/{paper_number}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def upload_classlist(self, classdict):
@@ -413,8 +455,7 @@ class ManagerMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
-            # TODO: print(response.encoding) autodetected
-            predictions = StringIO(response.text)
+            predictions = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -962,25 +1003,23 @@ class ManagerMessenger(BaseMessenger):
         return True
 
     def IDdeletePredictions(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                "/ID/predictedID",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code in (401, 403):
-                raise PlomAuthenticationException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    "/ID/predictedID",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def IDputPredictions(self, predictions):
+        raise NotImplementedError(
+            "No one is using this API call right now and it needs work: Issue #2080"
+        )
+
         self.SRmutex.acquire()
         try:
             response = self.put(

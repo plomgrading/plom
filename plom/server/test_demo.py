@@ -71,6 +71,63 @@ class Test:
         qvmap2 = version_map_from_file(f)
         assert qvmap == qvmap2
 
+    # This test assumes very specific setup of the Lite Demo
+    # The test can be updated if those details change.
+    def test_predictions(self):
+        # TODO: use connectmanager messenger, See MR !1275.
+        from plom.create import start_messenger
+
+        msgr = start_messenger(
+            self.env["PLOM_SERVER"], self.env["PLOM_MANAGER_PASSWORD"], verify_ssl=False
+        )
+        try:
+            predictions = msgr.IDrequestPredictions()
+            assert "1" in predictions, "The lite demo has the first one predicted"
+            sid = predictions["1"]["student_id"]
+            cert = predictions["1"]["certainty"]
+            pred = predictions["1"]["predictor"]
+            assert sid == "10050380"
+            assert 0.5 < cert < 1
+            assert pred == "prename"
+            assert "2" not in predictions, "only first one predicted"
+
+            # TODO: did we want this to test for conflict?
+            with raises(PlomConflict, match="elsewhere"):
+                msgr.pre_id_paper(2, sid)
+
+            msgr.remove_id_prediction(1)
+
+            predictions = msgr.IDrequestPredictions()
+            assert "1" not in predictions
+
+            # now we can assign `sid` to paper 2
+            msgr.pre_id_paper(2, sid)
+            predictions = msgr.IDrequestPredictions()
+            assert "2" in predictions
+            assert predictions["2"]["student_id"] == sid
+
+            # now we can assign ANYTHING else to paper 2's prediction
+            msgr.pre_id_paper(2, "eleventyfour")
+            predictions = msgr.IDrequestPredictions()
+            assert "2" in predictions
+            assert predictions["2"]["student_id"] == "eleventyfour"
+
+            # we leave the state hopefully as we found it
+            msgr.remove_id_prediction(2)
+            msgr.pre_id_paper(1, sid, predictor="prename")
+            predictions = msgr.IDrequestPredictions()
+            assert "1" in predictions
+            assert "2" not in predictions
+            assert predictions["1"]["student_id"] == sid
+            assert predictions["1"]["certainty"] == cert
+            assert predictions["1"]["predictor"] == pred
+
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    # This test assumes very specific setup of the Lite Demo
+    # The test can be updated if those details change.
     def test_unid(self):
         # TODO: use connectmanager messenger, See MR !1275.
         from plom.create import start_messenger
@@ -80,7 +137,17 @@ class Test:
         )
         try:
             iDict = msgr.getIdentified()
-            assert "1" in iDict
+            assert len(iDict) == 0, "Currently no one IDed in the lite demo"
+
+            predictions = msgr.IDrequestPredictions()
+            sid = predictions["1"]["student_id"]
+            cl = msgr.IDrequestClasslist()
+            (person,) = [x for x in cl if x["id"] == sid]
+            msgr.id_paper(1, person["id"], person["name"])
+
+            iDict = msgr.getIdentified()
+            assert len(iDict) == 1
+
             # need not be 2, any unID'd paper
             assert "2" not in iDict
             sid, name = iDict["1"]
@@ -89,9 +156,8 @@ class Test:
             # paper 2 is not ID'd but we expect an error if we ID it to Fink
             with raises(PlomConflict, match="elsewhere"):
                 msgr.id_paper("2", sid, name)
-            # Issue 1944: not yet an error to unid the unid'd
-            # with raises(...):
-            # msgr.un_id_paper(2)
+            # not an error to unid the unid'd
+            msgr.un_id_paper(2)
 
             msgr.un_id_paper(1)
             # now paper 1 is unid'd
@@ -101,15 +167,11 @@ class Test:
             # so now we can ID paper 2 to Iris, then immediately unID it
             msgr.id_paper("2", sid, name)
             msgr.un_id_paper(2)
-            # ID paper one back to Iris
-            msgr.id_paper("1", sid, name)
 
             # we leave the state hopefully as we found it
             iDict = msgr.getIdentified()
-            assert "1" in iDict
+            assert "1" not in iDict
             assert "2" not in iDict
-            assert iDict["1"][0] == sid
-            assert iDict["1"][1] == name
         finally:
             msgr.closeUser()
             msgr.stop()

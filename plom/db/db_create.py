@@ -17,6 +17,7 @@ from plom.db.tables import (
     DNMGroup,
     Group,
     IDGroup,
+    IDPrediction,
     QGroup,
     Rubric,
     Test,
@@ -388,53 +389,90 @@ def get_all_question_versions(self):
     return qvmap
 
 
-def id_paper(self, paper_num, user_name, sid, sname):
-    """Associate student name and id with a paper in the database.
-
-    See also :func:`plom.db.db_identify.ID_id_paper` which is similar.
-    This one is typically called by manager, although this is not
-    enforced at the database level.  TODO: dedupe these two.
+def add_or_change_id_prediction(
+    self, paper_number, sid, certainty=0.9, predictor="prename"
+):
+    """Pre-id a paper with a given student id. If that test already has a prediction of that sid, then do nothing.
 
     Args:
-        paper_num (int)
-        user_name (str): User who did the IDing.
-        sid (str): student id.
-        sname (str): student name.
+        paper_number (int)
+        sid (str): a student id.
+        certaintly (float): TODO: meaning of this is still evolving.
 
     Returns:
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`
         or `(False, 404, msg)` on error.  See docs in other function.
     """
-    uref = User.get(name=user_name)  # TODO: or hardcode HAL like before
-    # since user authenticated, this will always return legit ref.
+    # TODO: Issue #2075
+    uref = User.get(name="HAL")
+    # Manager calls this function, but since these are build by
+    # by the plom system, we put user = HAL.
 
-    logbase = 'User "{}" tried to ID paper {}'.format(user_name, paper_num)
     with plomdb.atomic():
-        tref = Test.get_or_none(Test.test_number == paper_num)
+        # find the test-ref
+        tref = Test.get_or_none(Test.test_number == paper_number)
         if tref is None:
-            msg = "denied b/c paper not found"
-            log.error("{}: {}".format(logbase, msg))
-            return False, 404, msg
-        iref = tref.idgroups[0]
-        iref.user = uref
-        iref.status = "done"
-        iref.student_id = sid
-        iref.student_name = sname
-        iref.identified = True
-        iref.time = datetime.now()
+            log.error("HAL tried to predict ID: paper %s not found", paper_number)
+            return False, 404, f"denied b/c paper {paper_number} not found"
+
+        p = IDPrediction.get_or_none(test=tref)
+
         try:
-            iref.save()
+            if p is None:
+                IDPrediction.create(
+                    test=tref,
+                    user=uref,
+                    certainty=certainty,
+                    student_id=sid,
+                    predictor=predictor,
+                )
+                log.info(
+                    'Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid)
+                )
+            else:
+                p.student_id = sid
+                p.certainty = certainty
+                p.predictor = predictor
+                p.save()
+                log.info(
+                    'Paper %s changed predicted ID by HAL to "%s"',
+                    paper_number,
+                    censorID(sid),
+                )
         except pw.IntegrityError:
-            log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
-            return False, 409, f"student id {sid} in use elsewhere"
-        tref.identified = True
-        tref.save()
-        log.info(
-            'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
-                paper_num, user_name, censorID(sid), censorName(sname)
+            log.error(
+                'HAL tried to predict ID: paper %s but student id "%s" in use elsewhere',
+                paper_number,
+                censorID(sid),
             )
-        )
-    return True, None, None
+            return False, 409, f"student id {sid} in use elsewhere"
+        return True, None, None
+
+
+def remove_id_prediction(self, paper_number):
+    """Remove any id predictions associated with a particular paper.
+
+    Args:
+        paper_number (int)
+
+    Returns:
+        tuple: `(True, None, None)` if successful, or `(False, 404, msg)`
+            if ``paper_number`` does not exist.
+    """
+    with plomdb.atomic():
+        tref = Test.get_or_none(Test.test_number == paper_number)
+        if tref is None:
+            msg = f"denied b/c paper {paper_number} not found"
+            log.error(f"Tried to remove prediction: {msg}")
+            return False, 404, msg
+
+        p = IDPrediction.get_or_none(test=tref)
+        if p is None:
+            log.info("Paper %s remove predicted ID was unnecessary", paper_number)
+        else:
+            p.delete_instance()
+            log.info("Paper %s removed predicted ID", paper_number)
+        return True, None, None
 
 
 def remove_id_from_paper(self, paper_num):

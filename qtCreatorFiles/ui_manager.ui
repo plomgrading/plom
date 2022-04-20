@@ -617,7 +617,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="overallTab">
           <property name="enabled">
@@ -839,7 +839,7 @@
                    <item>
                     <widget class="QPushButton" name="machineReadButton">
                      <property name="toolTip">
-                      <string>Maachine read the digits from the ID pages</string>
+                      <string>Machine read the digits from the ID pages</string>
                      </property>
                      <property name="text">
                       <string>Recognize digits in IDs</string>
@@ -884,7 +884,7 @@
               <item>
                <widget class="QGroupBox" name="predGB">
                 <property name="title">
-                 <string>ID prediction list</string>
+                 <string>Identified papers and predictions</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_13">
                  <item>
@@ -905,7 +905,7 @@
                     <bool>true</bool>
                    </property>
                    <property name="columnCount">
-                    <number>3</number>
+                    <number>6</number>
                    </property>
                    <attribute name="horizontalHeaderStretchLastSection">
                     <bool>true</bool>
@@ -916,14 +916,29 @@
                    <column/>
                    <column/>
                    <column/>
+                   <column/>
+                   <column/>
                   </widget>
                  </item>
                  <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_4">
                    <item>
                     <widget class="QPushButton" name="unidB">
+                     <property name="toolTip">
+                      <string>Unidentify selected paper</string>
+                     </property>
                      <property name="text">
                       <string>Un-ID</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="unpredB">
+                     <property name="toolTip">
+                      <string>Remove prediction for selected</string>
+                     </property>
+                     <property name="text">
+                      <string>Un-pred</string>
                      </property>
                     </widget>
                    </item>

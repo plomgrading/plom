@@ -32,6 +32,7 @@ class PlomDB:
                     ##
                     Group,
                     IDGroup,
+                    IDPrediction,
                     DNMGroup,
                     QGroup,
                     ##
@@ -102,7 +103,8 @@ class PlomDB:
         getPageVersions,
         get_question_versions,
         get_all_question_versions,
-        id_paper,
+        add_or_change_id_prediction,
+        remove_id_prediction,
         remove_id_from_paper,
         createNoAnswerRubric,
     )
@@ -112,6 +114,7 @@ class PlomDB:
         attachImageToTPage,
         createNewHWPage,
         uploadTestPage,
+        is_sid_used,
         doesHWHaveIDPage,
         getMissingDNMPages,
         uploadHWPage,
@@ -197,10 +200,11 @@ class PlomDB:
         IDgetDoneTasks,
         IDgetImage,
         ID_get_donotmark_images,
-        IDgetImagesOfNotAutoIdentified,
+        IDgetImagesOfUnidentified,
         ID_id_paper,
         IDgetImageFromATest,
         IDreviewID,
+        ID_get_predictions,
     )
 
     from plom.db.db_mark import (

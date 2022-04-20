@@ -10,7 +10,7 @@ import peewee as pw
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 from plom.db.tables import plomdb
-from plom.db.tables import DNMPage, Group, IDGroup, Test, User
+from plom.db.tables import DNMPage, Group, IDGroup, IDPrediction, Test, User
 
 
 log = logging.getLogger("DB")
@@ -88,28 +88,57 @@ def IDgetUnidentifiedTests(self):
 
 def IDgetNextTask(self):
     """Find unid'd test and send test_number to client"""
-    with plomdb.atomic():
-        try:  # grab the IDData reference provided not IDd but has been scanned
-            iref = (
-                IDGroup.select()
-                .join(Group)
-                .where(
-                    IDGroup.status == "todo",
-                    Group.scanned == True,  # noqa: E712
-                )
-                .get()
-            )
-            # as per #1811 - the user should be none here - assert here.
-            assert (
-                iref.user is None
-            ), f"ID-Task for test {iref.test.test_number} is todo, but has a user = {iref.user.name}"
-            # note - test need not be all scanned, just the ID page.
-        except pw.DoesNotExist:
-            log.info("Nothing left on ID to-do pile")
-            return None
 
-        log.debug("Next ID task = {}".format(iref.test.test_number))
-        return iref.test.test_number
+    # priority given to tests without prediction
+    # then tests with prediction - low certainty before high certainty.
+
+    with plomdb.atomic():
+        # Filter tests that have IDGroup.status = todo and Group.scanned=True.
+        # get tests whose id groups are on the todo pile
+        unidentified_tests = Test.select().join(IDGroup).where(IDGroup.status == "todo")
+        # now make sure they are all scanned.
+        unidentified_tests = unidentified_tests.join(Group).where(
+            Group.scanned == True  # noqa: E712
+        )
+        # Now refine this to get tests with no IDPrediction.
+        # so join the IDpred table (outer join to get things even when test-link - then we can test on that field being null)
+        no_prediction = (
+            unidentified_tests.switch(Test)
+            .join(IDPrediction, pw.JOIN.LEFT_OUTER)
+            .where(IDPrediction.test.is_null())
+        )
+        try:
+            tref = no_prediction.get()
+            log.info(
+                f"ID-task {tref.test_number} has no prediction and is todo - telling client"
+            )
+            # got one!
+        except pw.DoesNotExist:
+            # all tests id'd or have a prediction
+            # so grab un-id'd test with lowest certainty
+            with_prediction = (
+                unidentified_tests.switch(Test)
+                .join(IDPrediction)
+                .order_by(IDPrediction.certainty)
+            )
+            try:
+                tref = with_prediction.get()
+                log.info(
+                    f"ID-task {tref.test_number} has prediction with certainty {tref.idpredictions[0].certainty} and is todo - telling client"
+                )
+                # got one!
+            except pw.DoesNotExist:
+                # all jobs must be done.
+                log.info("Nothing left on ID to-do pile")
+                return None
+        # get the idgroup associated to the test
+        iref = tref.idgroups[0]
+        # as per #1811 - the user should be none here
+        assert (
+            iref.user is None
+        ), f"ID-Task for test {tref.test_number} is todo, but has a user = {iref.user.name}"
+        # note - test need not be all scanned, just the ID page.
+        return tref.test_number
 
 
 def IDgiveTaskToClient(self, user_name, test_number):
@@ -233,21 +262,19 @@ def ID_get_donotmark_images(self, test_number):
     return (True, file_list)
 
 
-def IDgetImagesOfNotAutoIdentified(self):
+def IDgetImagesOfUnidentified(self):
     """
-    For every non-auto'd test, find the filename of its idpage. So gives returns a dictionary of testNumber -> filename.
+    For every used but un-identified test, find the filename of its idpage. So gives returns a dictionary of testNumber -> filename.
+
+    TODO: add an optional flag to drop those with high (prenamed) level of
+    prediction confidence?
     """
     rval = {}
-    uref = User.get(User.name == "HAL")
     query = Group.select().where(
         Group.group_type == "i", Group.scanned == True  # noqa: E712
     )
     for gref in query:
         iref = gref.idgroups[0]  # there is always exactly 1.
-        # we want to ignore pre-named papers - those are owned by HAL
-        # can improve this query.
-        if iref.user == uref:
-            continue
         # grab the relevant page if it is there
         if len(iref.idpages) == 0:
             # otherwise we don't add that test to the dictionary.
@@ -320,22 +347,25 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
             return False, 409, f"student id {sid} in use elsewhere"
         tref.identified = True
         tref.save()
+        # TODO - decide if it is better to simply update the predictions
+        # with something like certainty 0.99 and predictor = "human"
+        # remove any predictions associated with this test_number
+        for preidref in tref.idpredictions:
+            preidref.delete_instance()
+        # remove any predictions associated with the student id
+        for preidref in IDPrediction.select().where(
+            IDPrediction.student_id == sid
+        ):  # noqa: E712
+            preidref.delete_instance()
         # update user activity
         uref.last_action = "Returned ID task {}".format(paper_num)
         uref.last_activity = datetime.now()
         uref.save()
-        if sid:
-            log.info(
-                'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
-                    paper_num, user_name, censorID(sid), censorName(sname)
-                )
+        log.info(
+            'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
+                paper_num, user_name, censorID(sid), censorName(sname)
             )
-        else:
-            log.info(
-                'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
-                    paper_num, user_name, sid, sname
-                )
-            )
+        )
     return True, None, None
 
 
@@ -381,3 +411,15 @@ def IDreviewID(self, test_number):
         iref.save()
     log.info("ID task {} set for review".format(test_number))
     return [True]
+
+
+def ID_get_predictions(self):
+    """Return a dict of predicted test:student_ids"""
+    predictions = {}
+    for preidref in IDPrediction.select():
+        predictions[preidref.test.test_number] = {
+            "student_id": preidref.student_id,
+            "certainty": preidref.certainty,
+            "predictor": preidref.predictor,
+        }
+    return predictions

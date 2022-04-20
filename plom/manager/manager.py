@@ -7,7 +7,6 @@
 # Copyright (C) 2021-2022 Elizabeth Xiao
 
 from collections import defaultdict
-import csv
 import imghdr
 import importlib.resources as resources
 import logging
@@ -424,6 +423,7 @@ class Manager(QWidget):
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
         self.ui.unidB.clicked.connect(self.un_id_paper)
+        self.ui.unpredB.clicked.connect(self.remove_id_prediction)
 
         self.ui.refreshRevB.clicked.connect(self.refreshRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
@@ -1458,8 +1458,10 @@ class Manager(QWidget):
     def initIDTab(self):
         self.refreshIDTab()
         self.ui.idPB.setFormat("%v / %m")
-        self.ui.predictionTW.setColumnCount(3)
-        self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID", "Name"])
+        self.ui.predictionTW.setColumnCount(6)
+        self.ui.predictionTW.setHorizontalHeaderLabels(
+            ("Test", "Student ID", "Name", "Predicted ID", "Predictor", "Certainty")
+        )
         self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         # Seemed broken so commented out
@@ -1496,11 +1498,20 @@ class Manager(QWidget):
                 self.ui.cropBottomLE.setText(str(100 * bottom))
 
     def viewIDPage(self):
-        idi = self.ui.predictionTW.selectedIndexes()
-        if len(idi) == 0:
+        idx = self.ui.predictionTW.selectedIndexes()
+        if len(idx) == 0:
             return
-        test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
-        sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
+        # TODO: should we populate with empty string to avoid dealing with None here?
+        sid = self.ui.predictionTW.item(idx[0].row(), 1)
+        if sid is not None:
+            sid = sid.data(Qt.DisplayRole)
+        pred_sid = self.ui.predictionTW.item(idx[0].row(), 3)
+        if pred_sid is not None:
+            pred_sid = pred_sid.data(Qt.DisplayRole)
+        certainty = self.ui.predictionTW.item(idx[0].row(), 4)
+        if certainty is not None:
+            certainty = certainty.data(Qt.DisplayRole)
         try:
             img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
@@ -1516,7 +1527,13 @@ class Manager(QWidget):
                 fh.write(img_bytes)
             if not img_ext:
                 raise PlomSeriousException(f"Could not identify image type: {img_name}")
-            GroupView(self, img_name, title=f"ID page currently IDed as {sid}").exec_()
+            if sid is None and pred_sid is not None:
+                title = f"ID page: predicted as {pred_sid} certainty {certainty}"
+            elif sid == pred_sid:
+                title = f"ID page: IDed as {sid}"
+            else:
+                title = f"ID page: IDed as {sid} but predicted as {pred_sid} certainty {certainty}"
+            GroupView(self, img_name, title=title).exec()
 
     def run_id_reader(self, ignoreStamp=False):
         rmsg = self.msgr.run_id_reader(
@@ -1550,74 +1567,102 @@ class Manager(QWidget):
             InfoMsg(self, "Results of ID matching:", info=status).exec_()
         except PlomConflict as e:
             WarnMsg(self, "ID matching procedure failed:", info=f"{e}").exec_()
+        self.getPredictions()
 
     def un_id_paper(self):
-        # should we populate "test" from the list view?
-        # idi = self.ui.predictionTW.selectedIndexes()
-        # if idi:
-        #     test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
-        #     sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
-
-        test, ok = QInputDialog.getText(self, "Unidentify a paper", "Un-ID which paper")
-        if not ok or not test:
+        idx = self.ui.predictionTW.selectedIndexes()
+        if not idx:
             return
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
         iDict = self.msgr.getIdentified()
         msg = f"Do you want to reset the ID of test number {test}?"
-        if test in iDict:
-            sid, sname = iDict[test]
+        if str(test) in iDict:
+            sid, sname = iDict[str(test)]
             msg += f"\n\nCurrently is {sid}: {sname}"
         else:
             msg += "\n\nCan't find current ID - is likely not ID'd yet."
         if SimpleQuestion(self, msg).exec_() == QMessageBox.No:
             return
-        # self.msgr.id_paper(test, "", "")
         self.msgr.un_id_paper(test)
+        self.getPredictions()
+
+    def remove_id_prediction(self):
+        idx = self.ui.predictionTW.selectedIndexes()
+        if not idx:
+            return
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
+        msg = f"Do you want to reset the predicted ID of test number {test}?"
+        if SimpleQuestion(self, msg).exec_() == QMessageBox.No:
+            return
+        self.msgr.remove_id_prediction(test)
+        self.getPredictions()
 
     def getPredictions(self):
-        csvfile = self.msgr.IDrequestPredictions()
-        pdict = {}
-        reader = csv.DictReader(csvfile, skipinitialspace=True)
-        for row in reader:
-            pdict[int(row["test"])] = str(row["id"])
-        iDict = self.msgr.getIdentified()
-        for t in iDict.keys():
-            pdict[int(t)] = str(iDict[t][0])
+        predictions = self.msgr.IDrequestPredictions()
+        identified = self.msgr.getIdentified()
 
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
-        for r, t in enumerate(pdict.keys()):
-            self.ui.predictionTW.insertRow(r)
+
+        # TODO: Issue #1745
+        # TODO: all existing papers or scanned only?
+        s = self.msgr.get_spec()
+        alltests = range(1, s["numberToProduce"] + 1)
+
+        for r, t in enumerate(alltests):
             self.ui.predictionTW.setSortingEnabled(False)
+            self.ui.predictionTW.insertRow(r)
+            # put in the test-number
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, t)
+            item.setData(Qt.DisplayRole, int(t))
             self.ui.predictionTW.setItem(r, 0, item)
-            item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, pdict[t])
-            item2 = QTableWidgetItem()
-            if str(t) in iDict:
-                item.setBackground(QBrush(QColor(0, 255, 255, 48)))
+
+            identity = identified.get(str(t), None)
+            if identity:
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, identity[0])
                 item.setToolTip("Has been identified")
-                item2.setData(Qt.DisplayRole, iDict[str(t)][1])
-                item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                item2.setToolTip("Has been identified")
-            self.ui.predictionTW.setItem(r, 1, item)
-            self.ui.predictionTW.setItem(r, 2, item2)
-            self.ui.predictionTW.setSortingEnabled(True)
+                self.ui.predictionTW.setItem(r, 1, item)
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, identity[1])
+                item.setToolTip("Has been identified")
+                self.ui.predictionTW.setItem(r, 2, item)
+            pred = predictions.get(str(t), None)
+            if pred:
+                item0 = QTableWidgetItem()
+                item0.setData(Qt.DisplayRole, pred["student_id"])
+                self.ui.predictionTW.setItem(r, 3, item0)
+                item1 = QTableWidgetItem()
+                item1.setData(Qt.DisplayRole, pred["predictor"])
+                self.ui.predictionTW.setItem(r, 4, item1)
+                item2 = QTableWidgetItem()
+                item2.setData(Qt.DisplayRole, pred["certainty"])
+                self.ui.predictionTW.setItem(r, 5, item2)
+                if identity:
+                    # prediction less important but perhaps not irrelevant
+                    item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                    item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                    item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                    # This doesn't work
+                    # item0.setEnabled(False)
+                else:
+                    # TODO: colour-code based on confidence?
+                    item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                    item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                    item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
+        self.ui.predictionTW.setSortingEnabled(True)
 
     def deletePredictions(self):
         msg = SimpleQuestion(
             self,
-            "Are you sure you want the server to delete predicted IDs?"
-            " (note that this does not delete user-inputted IDs)",
+            "Delete the auto-read predicted IDs?"
+            " (note that this does not delete user-confirmed IDs or"
+            " prenamed predictions)",
         )
         if msg.exec_() == QMessageBox.No:
             return
-        # returns [True] or [False, message]
-        rval = self.msgr.IDdeletePredictions()
-        if rval[0] is False:  # some sort of problem, show returned message
-            ErrorMessage(rval[1]).exec_()
-        else:
-            self.getPredictions()
+        self.msgr.IDdeletePredictions()
+        self.getPredictions()
 
     def initMarkTab(self):
         grid = QGridLayout()

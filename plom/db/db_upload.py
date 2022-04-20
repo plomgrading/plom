@@ -10,7 +10,7 @@ import uuid
 from peewee import fn
 
 from plom.db.tables import plomdb
-from plom.db.tables import Bundle, IDGroup, Image, QGroup, Test, User
+from plom.db.tables import Bundle, IDGroup, IDPrediction, Image, QGroup, Test, User
 from plom.db.tables import Annotation, APage, DNMPage, EXPage, HWPage, IDPage, TPage
 from plom.db.tables import CollidingPage, DiscardedPage, UnknownPage
 
@@ -201,6 +201,18 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
         return pref
 
 
+def is_sid_used(self, sid):
+    preidref = IDPrediction.get_or_none(student_id=sid)
+    iref = IDGroup.get_or_none(student_id=sid)
+    if iref is None:
+        if preidref is None:
+            return (False, "unknown", 0)
+        else:
+            return (True, "prediction", preidref.test.test_number)
+    else:
+        return (True, "identified", iref.test.test_number)
+
+
 def doesHWHaveIDPage(self, sid):
     iref = IDGroup.get_or_none(student_id=sid)
     if iref is None:
@@ -237,11 +249,13 @@ def uploadHWPage(
     bundle_name,
     bundle_order,
 ):
-    # first of all find the test corresponding to that sid.
+    # since we don't yet know which test this belongs to
+    # first try searching in IDGroups for tests already ID'd
     iref = IDGroup.get_or_none(student_id=sid)
     if iref is None:
         return [False, "SID does not correspond to any test on file."]
     tref = iref.test
+    # okay - we now have an ID'd test corresponding to that student.
 
     # we need the bundle.
     bref = Bundle.get_or_none(name=bundle_name)
@@ -320,7 +334,11 @@ def getSIDFromTest(self, test_number):
 def sidToTest(self, student_id):
     iref = IDGroup.get_or_none(student_id=student_id)
     if iref is None:
-        return [False, "Cannot find test with sid {}".format(student_id)]
+        preidref = IDPrediction.get_or_none(student_id=student_id)
+        if preidref is None:
+            return [False, "Cannot find test with sid {}".format(student_id)]
+        else:
+            return [True, preidref.test.test_number]
     else:
         return [True, iref.test.test_number]
 
@@ -594,24 +612,23 @@ def updateIDGroup(self, idref):
         gref.save()
         # we'll need a ref to the test
         tref = idref.test
-        # if IDGroup belongs to HAL then don't mess with it - was auto IDd.
-        if idref.user == User.get(name="HAL"):
-            log.info(f"IDGroup of test {tref.test_number} is present and already IDd.")
-        else:
-            # need to clean it off and set it ready to do.
-            idref.status = "todo"
-            idref.user = None
-            idref.time = datetime.now()
-            idref.student_id = None
-            idref.student_name = None
-            idref.identified = False
-            idref.time = datetime.now()
-            idref.save()
-            tref.identified = False
-            tref.save()
-            log.info(
-                f"IDGroup of test {tref.test_number} is updated and ready to be identified."
-            )
+        # need to clean it off and set it ready to do.
+        # -----
+        # TODO - if predicted_id is above certain threshold then identify the test here.
+        # -----
+        idref.status = "todo"
+        idref.user = None
+        idref.time = datetime.now()
+        idref.student_id = None
+        idref.student_name = None
+        idref.identified = False
+        idref.time = datetime.now()
+        idref.save()
+        tref.identified = False
+        tref.save()
+        log.info(
+            f"IDGroup of test {tref.test_number} is updated and ready to be identified."
+        )
 
     return True
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 
@@ -8,7 +8,7 @@ from pathlib import Path
 from plom import check_version_map
 from plom.misc_utils import working_directory
 from plom.create.buildNamedPDF import build_papers_backend
-from plom.create.buildNamedPDF import check_pdf_and_id_if_needed
+from plom.create.buildNamedPDF import check_pdf_and_prename_if_needed
 from plom.create import paperdir as paperdir_name
 from plom.create import with_manager_messenger
 
@@ -110,8 +110,10 @@ def build_papers(
             ycoord=ycoord,
         )
 
-    print("Checking papers produced and ID-ing any pre-named papers into the database")
-    check_pdf_and_id_if_needed(
+    print(
+        "Checking papers produced and prename-ing any pre-named papers into the database"
+    )
+    check_pdf_and_prename_if_needed(
         spec,
         msgr,
         classlist_by_papernum=classlist_by_papernum,

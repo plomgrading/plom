@@ -135,17 +135,14 @@ class IDHandler:
     # @routes.get("/ID/predictions")
     @authenticate_by_token
     def IDgetPredictions(self):
-        """Returns the files involving the ML model's student id's prediction.
+        """Returns current predictions for the identification of each paper.
 
         Responds with status 200/404.
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: File response including the predictions.
+            aiohttp.web_json_response: Dict of test:(sid, sname, certainty)
         """
-        if os.path.isfile(specdir / "predictionlist.csv"):
-            return web.FileResponse(specdir / "predictionlist.csv", status=200)
-        else:
-            return web.Response(status=404)
+        return web.json_response(self.server.ID_get_predictions())
 
     # @routes.get("/ID/tasks/complete")
     @authenticate_by_token_required_fields(["user"])
@@ -277,16 +274,10 @@ class IDHandler:
         Returns:
             aiohttp.web_response.Response: A response object with the code for the next task/paper.
         """
-
-        # returns [True, code] or [False]
         next_task_code = self.server.IDgetNextTask()
-        next_task_available = next_task_code[0]
-
-        if next_task_available:
-            next_task_code = next_task_code[1]
-            return web.json_response(next_task_code, status=200)
-        else:
+        if next_task_code is None:
             return web.Response(status=204)  # no papers left
+        return web.json_response(next_task_code, status=200)
 
     # @routes.patch("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
@@ -350,28 +341,75 @@ class IDHandler:
         Only "manager" can perform this action.  Typical client IDing
         would call func:`IdentifyPaperTask` instead.
 
-        By passing empty `sid` and `sname`, this API can be used to
-        unidentify a paper.  This feature may move to its own API call
-        in the future.
+        Returns:
+            403: not manager.
+            404: papernum not found, or other data errors.
+            409: student number `data["sid"]` is already in use.
+        """
+        papernum = request.match_info["paper_number"]
+
+        r, what, msg = self.server.ID_id_paper(
+            papernum, "HAL", data["sid"], data["sname"], checks=False
+        )
+        if r:
+            return web.Response(status=200)
+        elif what == 409:
+            raise web.HTTPConflict(reason=msg)
+        elif what == 404:
+            raise web.HTTPNotFound(reason=msg)
+        else:
+            raise web.HTTPInternalServerError(reason=msg)
+
+    # @routes.deletet("/ID/{paper_number}")
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def un_id_paper(self, data, request):
+        paper_number = request.match_info["paper_number"]
+        if self.server.DB.remove_id_from_paper(paper_number):
+            return web.Response(status=200)
+        raise web.HTTPNotAcceptable(reason=f"Did not find papernum {paper_number}")
+
+    # @routes.put("/ID/preid/{paper_number}")
+    @authenticate_by_token_required_fields(["user", "sid", "predictor"])
+    @write_admin
+    def PreIDPaper(self, data, request):
+        """Set the prediction identification for a paper.
 
         Returns:
             403: not manager.
             404: papernum not found, or other data errors.
             409: student number `data["sid"]` is already in use.
         """
-        papernum = request.match_info["papernum"]
-
-        # special feature to unidentify: move elsewhere?
-        if not data["sid"] and not data["sname"]:
-            if self.server.DB.remove_id_from_paper(papernum):
-                return web.Response(status=200)
-            raise web.HTTPNotFound(reason=f"Did not find papernum {papernum}")
-
-        r, what, msg = self.server.id_paper(papernum, "HAL", data["sid"], data["sname"])
+        papernum = request.match_info["paper_number"]
+        r, what, msg = self.server.pre_id_paper(
+            papernum, data["sid"], predictor=data["predictor"]
+        )
         if r:
             return web.Response(status=200)
         elif what == 409:
             raise web.HTTPConflict(reason=msg)
+        elif what == 404:
+            raise web.HTTPNotFound(reason=msg)
+        else:
+            raise web.HTTPInternalServerError(reason=msg)
+
+    # @routes.delete("/ID/preid/{paper_number}")
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def remove_id_prediction(self, data, request):
+        """Remove the prediction identification for a paper.
+
+        Only "manager" can perform this action.  Typical client IDing
+        would call func:`IdentifyPaperTask` instead.
+
+        Returns:
+            403: not manager.
+            404: papernum not found, or other data errors.
+        """
+        papernum = request.match_info["paper_number"]
+        r, what, msg = self.server.remove_id_prediction(papernum)
+        if r:
+            return web.Response(status=200)
         elif what == 404:
             raise web.HTTPNotFound(reason=msg)
         else:
@@ -421,23 +459,29 @@ class IDHandler:
     def IDdeletePredictions(self, data, request):
         """Deletes the machine-learning predicted IDs for all papers.
 
-        Responds with status 200/401.
+        Responds with status 200/401/403.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
-            request (aiohttp.web_request.Request): DELETE /ID/predictedID type request object.
+            request (aiohttp.web_request.Request):
 
         Returns:
-            aiohttp.web_response.Response: Returns a response with a True or False indicating if the deletion
-                was successful.
+            aiohttp.web_response.Response: 200 if successful.
         """
-        return web.json_response(self.server.IDdeletePredictions(), status=200)
+        self.server.IDdeletePredictions()
+        return web.Response(status=200)
 
     # @routes.put("/ID/predictedID")
     @authenticate_by_token_required_fields(["user", "predictions"])
     @write_admin
     def IDputPredictions(self, data, request):
         """Upload and save id-predictions (eg via machine learning)
+
+        TODO: is anyone calling this?  It seems to be a bulk setter, in principle
+        we could require callers to do per-paper in a loop.  But perhaps this is
+        intended to have different semantics with respect to existing predictions?
+        E.g., perhaps this could wipe the table first?  Sort these things out and
+        then document them here!
 
         Args:
             data (dict): A (str:str) dictionary having keys `user`, `token` and `predictions`.
@@ -446,6 +490,7 @@ class IDHandler:
         Returns:
             aiohttp.web_response.Response: Returns a response with a [True, message] or [False,message] indicating if predictions upload was successful.
         """
+        # this classlist reading should probably happen in the serverID not here
         try:
             with open(specdir / "classlist.csv") as f:
                 reader = csv.DictReader(f)
@@ -560,11 +605,13 @@ class IDHandler:
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
+        router.add_put("/ID/preid/{paper_number}", self.PreIDPaper)
+        router.add_delete("/ID/preid/{paper_number}", self.remove_id_prediction)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.predict_id_lap_solver)
         router.add_post("/ID/run_id_reader", self.run_id_reader)
         router.add_patch("/ID/review", self.IDreviewID)
-        # be careful with this one - since is such a general route
-        # put it last
-        router.add_put("/ID/{papernum}", self.IdentifyPaper)
+        # careful, list these last as they can glob other URLs
+        router.add_put("/ID/{paper_number}", self.IdentifyPaper)
+        router.add_delete("/ID/{paper_number}", self.un_id_paper)

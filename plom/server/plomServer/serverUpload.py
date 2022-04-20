@@ -64,21 +64,32 @@ def replaceMissingIDPage(self, test_number):
     return self.createIDPageForHW(sid)
 
 
-def createIDPageForHW(self, sid):
-    # ask DB if that SID belongs to a test and if that has an ID page
-    val = self.DB.doesHWHaveIDPage(sid)
-    # returns [False, 'unknown'], [False, 'noid', test_number, student_name], or
-    # [True, 'idpage', test_number, student_name]
-    if val[0]:  # page already has an idpage, so we can just return
-        log.debug(f"HW from sid {sid} is test {val[2]} - already has an ID Page.")
-        return True
-    if val[1] == "unknown":
-        log.debug(f"The sid {sid} does not correspond to any test in the DB.")
+def createIDPageForHW(self, sid, student_name):
+    # first check if that sid has been used to ID a test.
+    used, why, test_number = self.DB.is_sid_used(sid)
+    if used is False:
+        log.warning(
+            f"The sid {sid} does not correspond to any test or prediction in the DB."
+        )
         return False
-    test_number = val[2]
-    student_name = val[3]
-    log.debug(f"HW from sid {sid} is test {val[2]}, {student_name} - creating ID page.")
-    return autogenerateIDPage(self, test_number, sid, student_name)
+    if (
+        why == "identified"
+    ):  # the sid has been used to identify a test, so ID page exists.
+        log.warning(
+            f"HW from sid {sid} is test {test_number} - already has an ID Page."
+        )
+        return True
+    # so at this point we have a predicted ID, so we need to make an ID page and identify the test.
+    # to identify the test we need to grab name from classlist.
+    log.warning(
+        f"HW from {sid} {student_name} is test {test_number} - creating ID page and identifying test."
+    )
+    # this makes a auto-gen id page and uploads it into the db
+    autogenerateIDPage(self, test_number, sid, student_name)
+    # now identify the test
+    log.warning("About to id it")
+    self.DB.ID_id_paper(test_number, "scanner", sid, student_name, checks=False)
+    log.warning("Hopefully have id'd it.")
 
 
 def createDNMPagesForHW(self, sid):
@@ -98,9 +109,10 @@ def createDNMPagesForHW(self, sid):
         replaceMissingDNMPage(self, test_number, page_number)
 
 
-def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
+def addHWPage(self, sid, student_name, q, o, fname, image, md5o, bundle, bundle_order):
     # Create an ID page and DNM for that HW if it is needed
-    self.createIDPageForHW(sid)
+    # This also "identifies" the corresponding test from data in the prediction list.
+    self.createIDPageForHW(sid, student_name)
     self.createDNMPagesForHW(sid)
 
     # take extension from the client filename

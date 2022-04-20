@@ -212,6 +212,7 @@ def RgetNotAutoIdentified(self):
     Return list of test numbers of scanned but unidentified tests.
     See also IDgetImagesOfUnIDd
     """
+    # TODO - fix this for new prediction table stuff
     unidd_list = []
     hal_ref = User.get(User.name == "HAL")
     query = Group.select().where(

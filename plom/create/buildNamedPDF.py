@@ -134,7 +134,7 @@ def build_papers_backend(
     outputProductionCSV(spec, make_PDF_args)
 
 
-def check_pdf_and_id_if_needed(
+def check_pdf_and_prename_if_needed(
     spec,
     msgr,
     *,
@@ -155,7 +155,7 @@ def check_pdf_and_id_if_needed(
             should have names and IDs stamped on the front.  Can be an empty
             dict or None to not use this feature.
         paperdir (pathlib.Path): where to find the papers to print.
-        indexToID (int,None): the index of single paper to ID or (if none), then ID all.
+        indexToCheck (int,None): the index of single paper to prename or (if none), then prename all.
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
@@ -176,7 +176,8 @@ def check_pdf_and_id_if_needed(
             if not pdf_file.is_file():
                 raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
             else:
-                msgr.id_paper(papernum, r["id"], r["name"])
+                # push the student ID to the prediction-table in the database
+                msgr.pre_id_paper(papernum, r["id"], predictor="prename")
         else:
             pdf_file = paperdir / f"exam_{papernum:04}.pdf"
             # if file is not there - error.
