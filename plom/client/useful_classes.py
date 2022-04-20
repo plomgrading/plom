@@ -263,14 +263,14 @@ class SNIDBox(QDialog):
         self.sid = self.sidLE.text().strip()
         self.sname = self.snameLE.text().strip()
         if not isValidStudentNumber(self.sid):
-            ErrorMsg(self, "Not a valid student number.").exec_()
+            ErrorMsg(self, "Not a valid student number.").exec()
             return
         if not self.sname:
             ErrorMsg(
                 self,
                 "<p>Student name should not be blank.</p>"
                 "<p>(If you cannot read it, use &ldquo;Unknown&rdquo;.)</p>",
-            ).exec_()
+            ).exec()
             return
         self.accept()
 

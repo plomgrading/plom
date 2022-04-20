@@ -149,7 +149,7 @@ class Chooser(QDialog):
         d = ClientSettingsDialog(
             self, self.lastTime, logdir, cfgfile, tempfile.gettempdir()
         )
-        d.exec_()
+        d.exec()
         # TODO: do something more proper like QSettings
         stuff = d.getStuff()
         self.lastTime["FOREGROUND"] = stuff[0]
@@ -185,7 +185,7 @@ class Chooser(QDialog):
                 "<p>You are not allowed to mark or ID papers while logged-in as &ldquo;manager&rdquo;.</p>",
                 "Would you instead like to run the Server Management tool?",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 return
             which_subapp = "Manager"
             self.messenger = None
@@ -206,7 +206,7 @@ class Chooser(QDialog):
                     details=f"{e}",
                 )
                 msg.setDefaultButton(QMessageBox.No)
-                if msg.exec_() == QMessageBox.No:
+                if msg.exec() == QMessageBox.No:
                     self.messenger = None
                     return
                 self.messenger.force_ssl_unverified()
@@ -214,7 +214,7 @@ class Chooser(QDialog):
         except PlomBenignException as e:
             WarnMsg(
                 self, "Could not connect to server:", info=f"{e}", info_pre=False
-            ).exec_()
+            ).exec()
             self.messenger = None
             return
 
@@ -226,11 +226,11 @@ class Chooser(QDialog):
                 "Could not authenticate due to API mismatch.",
                 info=f"Client version is {__version__}.  {e}",
                 info_pre=False,
-            ).exec_()
+            ).exec()
             self.messenger = None
             return
         except PlomAuthenticationException as e:
-            InfoMsg(self, f"Could not authenticate: {e}").exec_()
+            InfoMsg(self, f"Could not authenticate: {e}").exec()
             self.messenger = None
             return
         except PlomExistingLoginException:
@@ -244,7 +244,7 @@ class Chooser(QDialog):
                 " (and then you can try to log in again)\n\n"
                 "The other client will likely crash.",
             )
-            if msg.exec_() == QMessageBox.Yes:
+            if msg.exec() == QMessageBox.Yes:
                 self.messenger.clearAuthorisation(user, pwd)
             self.messenger = None
             return
@@ -254,7 +254,7 @@ class Chooser(QDialog):
                 self,
                 "Could not get authentication token.\n\n"
                 "Unexpected error: {}".format(e),
-            ).exec_()
+            ).exec()
             self.messenger = None
             return
 
@@ -272,7 +272,7 @@ class Chooser(QDialog):
                     f"Regex-extracted server version: {srv_ver}."
                 ),
             )
-            if msg.exec_() != QMessageBox.Yes:
+            if msg.exec() != QMessageBox.Yes:
                 self.messenger.closeUser()
                 self.messenger.stop()
                 self.messenger = None
@@ -349,7 +349,7 @@ class Chooser(QDialog):
                 "    {}\n\n"
                 "Any settings will not be saved for future sessions.\n\n"
                 "Error msg: {}.".format(cfgfile, e),
-            ).exec_()
+            ).exec()
 
     def closeEvent(self, event):
         self.saveDetails()
@@ -437,7 +437,7 @@ class Chooser(QDialog):
                     details=f"{e}",
                 )
                 msg.setDefaultButton(QMessageBox.No)
-                if msg.exec_() == QMessageBox.No:
+                if msg.exec() == QMessageBox.No:
                     self.messenger = None
                     return
                 self.messenger.force_ssl_unverified()
@@ -445,7 +445,7 @@ class Chooser(QDialog):
         except PlomBenignException as e:
             WarnMsg(
                 self, "Could not connect to server:", info=f"{e}", info_pre=False
-            ).exec_()
+            ).exec()
             self.messenger = None
             return
         self.ui.infoLabel.setText(server_ver_str)
@@ -463,12 +463,12 @@ class Chooser(QDialog):
                     f"\nServer version string: “{server_ver_str}”\n"
                     f"Regex-extracted server version: {srv_ver}."
                 ),
-            ).exec_()
+            ).exec()
 
         try:
             spec = self.messenger.get_spec()
         except PlomException as e:
-            WarnMsg(self, "Could not connect to server", info=str(e)).exec_()
+            WarnMsg(self, "Could not connect to server", info=str(e)).exec()
             self.messenger = None
             return
 

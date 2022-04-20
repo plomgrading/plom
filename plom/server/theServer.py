@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
@@ -162,7 +162,9 @@ class Server:
         IDdeletePredictions,
         IDputPredictions,
         predict_id_lap_solver,
-        run_id_reader,
+        id_reader_get_log,
+        id_reader_run,
+        id_reader_kill,
         IDreviewID,
     )
     from .plomServer.serverMark import (
@@ -263,7 +265,9 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     """
     basedir = Path(basedir)
     if not logfile:
-        logfile = basedir / datetime.utcnow().strftime("plomserver-%Y%m%d_%H-%M-%S_%Z.log")
+        logfile = basedir / datetime.utcnow().strftime(
+            "plomserver-%Y%m%d_%H-%M-%S_%Z.log"
+        )
     logfile = Path(logfile)
     # if just filename, make log in basedir
     if logfile.parent == Path("."):

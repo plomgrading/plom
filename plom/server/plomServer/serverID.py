@@ -7,7 +7,6 @@ import csv
 from datetime import datetime
 import json
 import logging
-import os
 import subprocess
 import time
 
@@ -343,37 +342,106 @@ def predict_id_lap_solver(self):
     return status
 
 
-def run_id_reader(self, top, bottom, ignore_stamp):
-    """Run the ML prediction model on the papers and saves the information.
+def id_reader_get_log(self):
+    """Get the log for the running background ID reader process.
+
+    Returns:
+        list: A ``[is_running, time_stamp, partial_log]`` where
+        ``is_running`` is a boolean whether the process is currently
+        running, ``time_stamp`` is string for when the process started
+        or None if no process was ever started.  ``partial_log`` is
+        a string of the process's stdout and stderr; or None if no
+        process was started (or perhaps if its started by no output
+        written yet).
+    """
+    log_file = specdir / "IDReader.log"
+    timestamp_file = specdir / "IDReader.timestamp"
+
+    # TODO: need some mutex for thread safety around this variable?
+    if not hasattr(self, "id_reader_proc"):
+        self.id_reader_proc = None
+
+    is_running = None
+    if self.id_reader_proc:
+        r = self.id_reader_proc.poll()
+        if r is None:
+            log.info("ID Reader process still running pid=%s", self.id_reader_proc.pid)
+            is_running = True
+        else:
+            log.info(f"ID Reader process was running but stopped with code {r}")
+            is_running = False
+
+    try:
+        with open(log_file, "r") as f:
+            log_so_far = "".join(f.readlines())
+    except FileNotFoundError:
+        log_so_far = None
+
+    timestamp = None
+    if timestamp_file.exists():
+        with open(timestamp_file, "r") as fh:
+            timestamp = json.load(fh)
+            log.info(f"Previous ID Reader process started at {timestamp}")
+
+    return [is_running, timestamp, log_so_far]
+
+
+def id_reader_run(self, top, bottom, *, ignore_timestamp=False):
+    """Run the ML ID reader model on the papers and saves the information.
 
     Args:
         top (float): where to crop in `[0, 1]`.
         bottom (float): where to crop in `[0, 1]`.
-        ignore_stamp (bool): Whether to ignore the timestamp when
+
+    Keyword Args:
+        ignore_timestamp (bool): Whether to ignore the timestamp when
             deciding whether to skip the run.
 
     Returns:
         list: A list with first value boolean and second value boolean or a
         message string of the format:
+        `[is_running, ??, time_stamp, log_out]`
         `[True, False]`: it is already running.
         `[False, str]`: prediction already exists, `str` is the
-        timestamp of the last time prediction run.
+        timestamp the last time prediction runs started.
         `[True, True]`: we started a new prediction run.
     """
-    lock_file = specdir / "IDReader.lock"
-    timestamp = specdir / "IDReader.timestamp"
-    if os.path.isfile(lock_file):
-        log.info("ID reader is already running.")
-        return [True, False]
+    params_file = specdir / "IDReader.json"
+    log_file = specdir / "IDReader.log"
+    timestamp_file = specdir / "IDReader.timestamp"
 
-    # check the timestamp - unless manager tells you to ignore it.
-    if os.path.isfile(timestamp):
-        if ignore_stamp is False:
-            with open(timestamp, "r") as fh:
-                txt = json.load(fh)
-            return [False, txt]
+    # TODO: need some mutex for thread safety around this variable?
+    if not hasattr(self, "id_reader_proc"):
+        self.id_reader_proc = None
+
+    is_running = None
+    if self.id_reader_proc:
+        r = self.id_reader_proc.poll()
+        if r is None:
+            log.info("ID Reader process still running pid=%s", self.id_reader_proc.pid)
+            is_running = True
         else:
-            os.unlink(timestamp)
+            log.info(f"ID Reader process was running but stopped with code {r}")
+            is_running = False
+
+    timestamp = None
+    if timestamp_file.exists():
+        with open(timestamp_file, "r") as fh:
+            timestamp = json.load(fh)
+            log.info(f"Previous ID Reader process started at {timestamp}")
+
+    new_start = False
+
+    # normally we stop if running or if timestamp exists but both
+    # can be overridden
+    if is_running:
+        return [is_running, new_start, timestamp]
+    elif timestamp:
+        if not ignore_timestamp:
+            return [is_running, new_start, timestamp]
+
+    # we're launching a new job
+    new_start = True
 
     # get list of [test_number, image]
     log.info("ID get images for ID reader")
@@ -394,26 +462,79 @@ def run_id_reader(self, top, bottom, ignore_stamp):
                     'ID reader: drop test number "%s" b/c we think its prenamed', k
                 )
 
-    # dump this as json / lock_file for subprocess to use in background.
-    with open(lock_file, "w") as fh:
+    # dump this as parameters_file for subprocess to use in background.
+    with open(params_file, "w") as fh:
         json.dump([test_image_dict, {"crop_top": top, "crop_bottom": bottom}], fh)
-    # make a timestamp
-    last_run_timestamp = datetime.utcnow().strftime("%y:%m:%d-%H:%M:%S_%Z")
 
-    with open(timestamp, "w") as fh:
-        json.dump(last_run_timestamp, fh)
+    log.info("launch ID reader in background")
+    timestamp = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
+    with open(timestamp_file, "w") as fh:
+        json.dump(timestamp, fh)
 
-    # run the reader
-    log.info("ID launch ID reader in background")
-
-    # TODO - this is currently blocking I think.
-
-    # Yuck, should at least check its running, Issue #862
-    proc = subprocess.run(
-        ["python3", "-m", "plom.server.run_the_predictor", lock_file],
-        capture_output=True,
+    # TODO: I hope close_fds=True implies this will be closed
+    _fd = open(log_file, "w")
+    self.id_reader_proc = subprocess.Popen(
+        ["python3", "-u", "-m", "plom.server.run_the_predictor", params_file],
+        stdout=_fd,
+        stderr=subprocess.STDOUT,
+        close_fds=True,
+        text=True,
     )
-    log.warn(f"Predicter subprocess.return code = {proc.returncode}")
-    log.warn(f"Predicter subprocess.stdout = {proc.stdout.decode()}")
-    log.warn(f"Predicter subprocess.stderr = {proc.stderr.decode()}")
-    return [True, True]
+
+    try:
+        self.id_reader_proc.wait(timeout=0.25)
+    except subprocess.TimeoutExpired:
+        pass
+
+    return [True, new_start, timestamp]
+
+
+def id_reader_kill(self):
+    """Kill any running machine ID reader.
+
+    Returns:
+        tuple: ``(bool, str)``, True if it wasn't running or stopped
+        when asked, False if things got messy.  The string is a
+        human-readable explanation.
+    """
+    # TODO: need some mutex for thread safety around this variable?
+    if not hasattr(self, "id_reader_proc"):
+        self.id_reader_proc = None
+
+    if self.id_reader_proc is None:
+        return (True, "Process was not running")
+
+    pid = self.id_reader_proc.pid
+    try:
+        self.id_reader_proc.wait(timeout=0.1)
+    except subprocess.TimeoutExpired:
+        pass
+    else:
+        return (True, f"Process {pid} was already stopped")
+
+    log.info("ID Reader process %s: asking politely to stop", pid)
+    self.id_reader_proc.kill()
+    try:
+        self.id_reader_proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        pass
+    else:
+        self.id_reader_proc = None
+        log.info("Process %s stopped within 5 seconds", pid)
+        return (True, f"Process {pid} stopped within 5 seconds")
+
+    # now we insist
+    self.id_reader_proc.terminate()
+    log.info("ID Reader process %s: insisting (SIGTERM) that it stop...", pid)
+    try:
+        self.id_reader_proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        pass
+    else:
+        self.id_reader_proc = None
+        log.info("Process %s stopped within 10 seconds of SIGTERM", pid)
+        return (True, f"Process {pid} stopped within 10 seconds of SIGTERM")
+
+    log.info("ID Reader process %s: did not stop when asked too, leaving zombie", pid)
+    self.id_reader_proc = None
+    return (False, f"Process {pid} has likely become a zombie: talk to server admin")

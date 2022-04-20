@@ -256,7 +256,7 @@ class RubricTable(QTableWidget):
                 f"<p>Are you sure you want to delete the tab &ldquo;{self.shortname}&rdquo;?</p>"
                 "<p>(The rubrics themselves will not be deleted).<p>",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 return
             for n in range(self._parent.RTW.count()):
                 tab = self._parent.RTW.widget(n)
@@ -854,7 +854,7 @@ class RubricWidget(QWidget):
             msg,
             QMessageBox.Ok,
             self,
-        ).exec_()
+        ).exec()
         # TODO: could add a "Open Rubric Wrangler" button to above dialog?
         # self.wrangleRubricsInteractively()
         # TODO: if adding that, it should push tabs *again* on accept but not on cancel
@@ -868,7 +868,7 @@ class RubricWidget(QWidget):
             self.username,
             annotator_size=self._parent.size(),
         )
-        if wr.exec_() != QDialog.Accepted:
+        if wr.exec() != QDialog.Accepted:
             return
         else:
             self.setRubricTabsFromState(wr.wranglerState)
@@ -1132,7 +1132,7 @@ class RubricWidget(QWidget):
             f"(it was created by &ldquo;{com['username']}&rdquo;).</p>",
             "Do you want to make a copy and edit that instead?",
         )
-        if msg.exec_() == QMessageBox.No:
+        if msg.exec() == QMessageBox.No:
             return
         com = com.copy()  # don't muck-up the original
         newmeta = [com["meta"]] if com["meta"] else []
@@ -1173,7 +1173,7 @@ class RubricWidget(QWidget):
             com,
             annotator_size=self._parent.size(),
         )
-        if arb.exec_() != QDialog.Accepted:  # ARB does some simple validation
+        if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
             return
         if arb.DE.checkState() == Qt.Checked:
             dlt = str(arb.SB.textFromValue(arb.SB.value()))
@@ -1409,14 +1409,14 @@ class AddRubricBox(QDialog):
     def validate_and_accept(self):
         """Make sure rubric is valid before accepting"""
         if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
-            ErrorMessage("Your rubric must contain some text.").exec_()
+            ErrorMessage("Your rubric must contain some text.").exec()
             return
         # make sure that when delta-enabled we dont have delta=0
         # part of fixing #1561
         if self.SB.value() == 0 and self.DE.checkState() == Qt.Checked:
             ErrorMessage(
                 "If 'Delta mark' is checked then the rubric cannot have a delta of zero."
-            ).exec_()
+            ).exec()
             return
 
         # future checks go here.

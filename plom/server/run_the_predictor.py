@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/bin/env -S python3 -u
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
