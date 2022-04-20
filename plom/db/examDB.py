@@ -4,7 +4,7 @@
 # Copyright (C) 2022 Joey Shi
 
 from plom.db.tables import *
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from peewee import *
 
@@ -63,7 +63,7 @@ class PlomDB:
             User.create(
                 name="HAL",
                 password=None,
-                last_activity=datetime.utcnow(),
+                last_activity=datetime.now(timezone.utc),
                 last_action="Created",
             )
             log.info("User 'HAL' created to do all our automated tasks.")

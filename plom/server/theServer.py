@@ -5,7 +5,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Peter Lee
 
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import logging
 from pathlib import Path
@@ -265,7 +265,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     """
     basedir = Path(basedir)
     if not logfile:
-        logfile = basedir / datetime.utcnow().strftime(
+        logfile = basedir / datetime.now(timezone.utc).strftime(
             "plomserver-%Y%m%d_%H-%M-%S_%Z.log"
         )
     logfile = Path(logfile)

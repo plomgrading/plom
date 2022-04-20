@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import imghdr
 from io import BytesIO
@@ -213,7 +213,7 @@ def MreturnMarkedTask(
         if os.path.isfile(filename):
             os.rename(
                 filename,
-                filename + ".rgd" + datetime.utcnow().strftime("%d_%H-%M-%S_%Z"),
+                filename + ".rgd" + datetime.now(timezone.utc).strftime("%d_%H-%M-%S_%Z"),
             )
 
     # now write in the files
@@ -249,7 +249,7 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking):
                 annotated_filename,
                 mark,
                 username,
-                datetime.utcnow().strftime("%Y-%m-%d,%H:%M"),
+                datetime.now(timezone.utc).strftime("%Y-%m-%d,%H:%M"),
                 time_spent_marking,
             )
         )

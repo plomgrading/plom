@@ -4,7 +4,7 @@
 # Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
@@ -261,7 +261,7 @@ def RgetProgress(self, spec, q, v):
             NMarked += 1
             mark_list.append(qref.annotations[-1].mark)
             SMTime += qref.annotations[-1].marking_time
-            if datetime.utcnow() - qref.annotations[-1].time < one_hour:
+            if datetime.now(timezone.utc) - qref.annotations[-1].time < one_hour:
                 NRecent += 1
 
     log.debug("Sending progress summary for Q{}v{}".format(q, v))

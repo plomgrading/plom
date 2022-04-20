@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 import peewee as pw
@@ -168,11 +168,11 @@ def IDgiveTaskToClient(self, user_name, test_number):
         # update status, owner of task, time
         iref.status = "out"
         iref.user = uref
-        iref.time = datetime.utcnow()
+        iref.time = datetime.now(timezone.utc)
         iref.save()
         # update user activity
         uref.last_action = "Took ID task {}".format(test_number)
-        uref.last_activity = datetime.utcnow()
+        uref.last_activity = datetime.now(timezone.utc)
         uref.save()
         log.debug("Giving ID task {} to user {}".format(test_number, user_name))
         return (True, iref.idpages[0].image.file_name)
@@ -339,7 +339,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
         iref.student_id = sid
         iref.student_name = sname
         iref.identified = True
-        iref.time = datetime.utcnow()
+        iref.time = datetime.now(timezone.utc)
         try:
             iref.save()
         except pw.IntegrityError:
@@ -359,7 +359,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
             preidref.delete_instance()
         # update user activity
         uref.last_action = "Returned ID task {}".format(paper_num)
-        uref.last_activity = datetime.utcnow()
+        uref.last_activity = datetime.now(timezone.utc)
         uref.save()
         log.info(
             'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
@@ -407,7 +407,7 @@ def IDreviewID(self, test_number):
         return [False]
     with plomdb.atomic():
         iref.user = revref
-        iref.time = datetime.utcnow()
+        iref.time = datetime.now(timezone.utc)
         iref.save()
     log.info("ID task {} set for review".format(test_number))
     return [True]

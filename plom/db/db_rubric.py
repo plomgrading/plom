@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2021-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
@@ -56,8 +56,8 @@ def McreateRubric(self, user_name, rubric):
             kind=rubric["kind"],
             delta=rubric["delta"],
             text=rubric["text"],
-            creationTime=datetime.utcnow(),
-            modificationTime=datetime.utcnow(),
+            creationTime=datetime.now(timezone.utc),
+            modificationTime=datetime.now(timezone.utc),
             meta=rubric["meta"],
             tags=rubric["tags"],
         )
@@ -137,7 +137,7 @@ def MmodifyRubric(self, user_name, key, change):
         rref.kind = change["kind"]
         rref.delta = change["delta"]
         rref.text = change["text"]
-        rref.modificationTime = datetime.utcnow()
+        rref.modificationTime = datetime.now(timezone.utc)
         rref.revision += 1
         rref.meta = change["meta"]
         rref.tags = change["tags"]
