@@ -5,9 +5,8 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 
-from datetime import datetime
 from weasyprint import HTML, CSS
-
+from plom.misc_utils import utc_now_to_simple_string, local_now_to_simple_string
 
 # A simple CSS header to style the cover page nicely.
 css = CSS(
@@ -88,11 +87,11 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     <footer style="position:absolute; bottom:0;">
     """
     htmlText += """
-    Coverpage produced on {}
+    Coverpage produced on {}  ==  {}
     </ul>
     </footer>
     """.format(
-        datetime.now().strftime("%y:%m:%d at %H:%M")
+        local_now_to_simple_string(), utc_now_to_simple_string()
     )
     htmlText += """
 </body>

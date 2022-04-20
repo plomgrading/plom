@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import logging
 import subprocess
@@ -12,7 +12,7 @@ import time
 
 from plom import specdir
 from plom.idreader.assign_prob import assemble_cost_matrix, lap_solver
-
+from plom.misc_utils import datetime_to_json
 
 log = logging.getLogger("servID")
 
@@ -467,7 +467,7 @@ def id_reader_run(self, top, bottom, *, ignore_timestamp=False):
         json.dump([test_image_dict, {"crop_top": top, "crop_bottom": bottom}], fh)
 
     log.info("launch ID reader in background")
-    timestamp = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
+    timestamp = datetime_to_json(datetime.now(timezone.utc))
     with open(timestamp_file, "w") as fh:
         json.dump(timestamp, fh)
 

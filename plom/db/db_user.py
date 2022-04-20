@@ -9,7 +9,7 @@ import peewee as pw
 
 from plom.db.tables import plomdb
 from plom.db.tables import IDGroup, QGroup, User
-
+from plom.misc_utils import datetime_to_json
 
 log = logging.getLogger("DB")
 
@@ -175,7 +175,7 @@ def getUserDetails(self):
             val += ["", ""]
         else:
             val += [
-                uref.last_activity.strftime("%y:%m:%d-%H:%M:%S"),
+                datetime_to_json(uref.last_activity),
                 uref.last_action,
             ]
         rval[uref.name] = val + self.RgetUserFullProgress(uref.name)

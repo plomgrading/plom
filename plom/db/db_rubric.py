@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
+from plom.misc_utils import datetime_to_json
 from plom.db.tables import Rubric, User, Test, QGroup
 from plom.db.tables import plomdb
 
@@ -85,8 +86,8 @@ def MgetRubrics(self, question_number=None):
                 "tags": r.tags,
                 "meta": r.meta,
                 "count": r.count,
-                "created": r.creationTime.strftime("%y:%m:%d-%H:%M:%S"),
-                "modified": r.modificationTime.strftime("%y:%m:%d-%H:%M:%S"),
+                "created": datetime_to_json(r.creationTime),
+                "modified": datetime_to_json(r.modificationTime),
                 "username": r.user.name,
                 "question_number": r.question,
             }
@@ -241,8 +242,8 @@ def Rget_rubric_details(self, key):
         "tags": r.tags,
         "meta": r.meta,
         "count": r.count,
-        "created": r.creationTime.strftime("%y:%m:%d-%H:%M:%S"),
-        "modified": r.modificationTime.strftime("%y:%m:%d-%H:%M:%S"),
+        "created": datetime_to_json(r.creationTime),
+        "modified": datetime_to_json(r.modificationTime),
         "username": r.user.name,
         "question_number": r.question,
         "test_list": [],

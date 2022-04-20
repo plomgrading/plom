@@ -3,16 +3,16 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 
-from plom.db.tables import *
 from datetime import datetime, timedelta, timezone
+import logging
+
+from plom.db.tables import *
 
 from peewee import *
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 
-
-import logging
 
 log = logging.getLogger("DB")
 

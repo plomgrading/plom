@@ -5,7 +5,6 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Peter Lee
 
-from datetime import datetime, timezone
 import json
 import logging
 from pathlib import Path
@@ -34,7 +33,7 @@ from .plomServer.routesMark import MarkHandler
 from .plomServer.routesRubric import RubricHandler
 from .plomServer.routesReport import ReportHandler
 from .plomServer.routesSolution import SolutionHandler
-from ..misc_utils import working_directory
+from ..misc_utils import working_directory, utc_now_to_string
 
 
 class Server:
@@ -265,9 +264,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     """
     basedir = Path(basedir)
     if not logfile:
-        logfile = basedir / datetime.now(timezone.utc).strftime(
-            "plomserver-%Y%m%d_%H-%M-%S_%Z.log"
-        )
+        logfile = basedir / "plom-server-{}.log".format(utc_now_to_string())
     logfile = Path(logfile)
     # if just filename, make log in basedir
     if logfile.parent == Path("."):

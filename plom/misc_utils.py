@@ -1,16 +1,44 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019 Omer Angel
 # Copyright (C) 2019, 2021 Colin B. Macdonald
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Peter Lee
 
 """Misc utilities"""
 
+import arrow
 from contextlib import contextmanager
 import math
 import os
 import string
 import sys
+
+
+# ------------------------------------------------
+# some time conversion tools put here nice and central
+
+
+def datetime_to_json(timestamp):
+    return arrow.get(timestamp).for_json()
+
+
+def json_to_arrow(timestring):
+    return arrow.get(timestring)
+
+
+def utc_now_to_string():
+    return arrow.utcnow().format("YYYY-MM-DD_HH-mm-ss_ZZ")
+
+
+def utc_now_to_simple_string():
+    return arrow.utcnow().format("YYYY-MM-DD at HH-mm ZZ")
+
+
+def local_now_to_simple_string():
+    return arrow.utcnow().to("local").format("YYYY-MM-DD at HH-mm ZZ")
+
+
+# ------------------------------------------------
 
 
 def format_int_list_with_runs(L, use_unicode=None):
