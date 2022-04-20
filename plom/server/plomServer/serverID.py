@@ -349,10 +349,10 @@ def id_reader_get_log(self):
         list: A ``[is_running, time_stamp, partial_log]`` where
         ``is_running`` is a boolean whether the process is currently
         running, ``time_stamp`` is string for when the process started
-        or None if no process was ever started.  ``partial_log`` is
-        a string of the process's stdout and stderr; or None if no
-        process was started (or perhaps if its started by no output
-        written yet).
+        (in ISO 6801) or None if no process was ever started.
+        ``partial_log`` is a string of the process's stdout and stderr;
+        or None if no process was started (or perhaps if its started by
+        no output written yet).
     """
     log_file = specdir / "IDReader.log"
     timestamp_file = specdir / "IDReader.timestamp"
@@ -398,13 +398,11 @@ def id_reader_run(self, top, bottom, *, ignore_timestamp=False):
             deciding whether to skip the run.
 
     Returns:
-        list: A list with first value boolean and second value boolean or a
-        message string of the format:
-        `[is_running, ??, time_stamp, log_out]`
-        `[True, False]`: it is already running.
-        `[False, str]`: prediction already exists, `str` is the
-        timestamp the last time prediction runs started.
-        `[True, True]`: we started a new prediction run.
+        list: of the form ``[is_running, new_job, time_stamp]`` where
+        ``is_running`` is a boolean whether the process is currently
+        running, ``new_job`` is boolean whether we just started a new
+        job or not, and ``time_stamp`` is string for when the process
+        started (in ISO 6801) or None if no process was ever started.
     """
     params_file = specdir / "IDReader.json"
     log_file = specdir / "IDReader.log"
@@ -468,6 +466,7 @@ def id_reader_run(self, top, bottom, *, ignore_timestamp=False):
 
     log.info("launch ID reader in background")
     timestamp = datetime_to_json(datetime.now(timezone.utc))
+
     with open(timestamp_file, "w") as fh:
         json.dump(timestamp, fh)
 
