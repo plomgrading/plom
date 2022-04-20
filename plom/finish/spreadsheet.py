@@ -67,7 +67,7 @@ def writeSpreadsheet(spreadSheetDict, labels):
             row["LastUpdate"] = thisTest["last_update"]
 
             row["CSVWriteTime"] = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
-            
+
             warnString = ""
             if not thisTest["identified"]:
                 warnString += "[Unidentified]"
