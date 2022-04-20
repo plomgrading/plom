@@ -149,11 +149,11 @@ class UserDialog(QDialog):
         if self.userLE.isEnabled() and self.userLE.text().lower() in self.extant:
             ErrorMessage(
                 "Username = '{}' already in user list".format(self.userLE.text())
-            ).exec_()
+            ).exec()
             return
 
         if self.pwLE.text() != self.pwLE2.text():
-            ErrorMessage("Passwords do not match").exec_()
+            ErrorMessage("Passwords do not match").exec()
             return
         self.name = self.userLE.text()
         self.password = self.pwLE.text()
@@ -492,7 +492,7 @@ class Manager(QWidget):
             self.msgr = ManagerMessenger(server, mport)
             self.msgr.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n{}".format(e)).exec_()
+            ErrorMessage("Could not connect to server.\n\n{}".format(e)).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
 
@@ -503,7 +503,7 @@ class Manager(QWidget):
                 "Could not authenticate due to API mismatch."
                 "Your client version is {}.\n\n"
                 "Error was: {}".format(__version__, e)
-            ).exec_()
+            ).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomExistingLoginException:
@@ -517,7 +517,7 @@ class Manager(QWidget):
                     "Should I force-logout the existing authorisation?"
                     " (and then you can try to log in again)\n\n"
                     "The other client will likely crash.",
-                ).exec_()
+                ).exec()
                 == QMessageBox.Yes
             ):
                 self.msgr.clearAuthorisation("manager", pwd)
@@ -527,14 +527,14 @@ class Manager(QWidget):
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomAuthenticationException as e:
-            ErrorMessage("Could not authenticate: {}".format(e)).exec_()
+            ErrorMessage("Could not authenticate: {}".format(e)).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomSeriousException as e:
             ErrorMessage(
                 "Could not get authentication token.\n\n"
                 "Unexpected error: {}".format(e)
-            ).exec_()
+            ).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
         self.initial_login()
@@ -696,7 +696,7 @@ class Manager(QWidget):
             return
         with tempfile.TemporaryDirectory() as td:
             pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
-            GroupView(self, pagedata).exec_()
+            GroupView(self, pagedata).exec()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -742,10 +742,10 @@ class Manager(QWidget):
                 f"Will remove the selected page {page_name} from the selected test {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 return
             rval = self.msgr.removeSinglePage(test_number, page_name)
-            ErrorMessage("{}".format(rval)).exec_()
+            ErrorMessage("{}".format(rval)).exec()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -753,11 +753,11 @@ class Manager(QWidget):
                 f"Will remove all scanned pages from the selected test - test number {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
-            ErrorMessage("{}".format(rval)).exec_()
+            ErrorMessage("{}".format(rval)).exec()
         self.refresh_scan_status_lists()
 
     def substituteTestQuestionPage(self, test_number, page_number, question, version):
@@ -766,11 +766,11 @@ class Manager(QWidget):
             'Are you sure you want to substitute a "Missing Page" blank for '
             f"tpage {page_number} of question {question} test {test_number}?",
         )
-        if msg.exec_() == QMessageBox.No:
+        if msg.exec() == QMessageBox.No:
             return
 
         rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
-        ErrorMessage("{}".format(rval)).exec_()
+        ErrorMessage("{}".format(rval)).exec()
 
     def substituteTestDNMPage(self, test_number, page_number):
         msg = SimpleQuestion(
@@ -778,11 +778,11 @@ class Manager(QWidget):
             'Are you sure you want to substitute a "Missing Page" blank for '
             f"tpage {page_number} of test {test_number} - it is a Do Not Mark page?",
         )
-        if msg.exec_() == QMessageBox.No:
+        if msg.exec() == QMessageBox.No:
             return
 
         rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
-        ErrorMessage("{}".format(rval)).exec_()
+        ErrorMessage("{}".format(rval)).exec()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(
@@ -790,17 +790,17 @@ class Manager(QWidget):
             f"Are you sure you want to generate an ID for test {test_number}? "
             "You can only do this for homeworks or pre-named tests.",
         )
-        if msg.exec_() == QMessageBox.No:
+        if msg.exec() == QMessageBox.No:
             return
         try:
             rval = self.msgr.replaceMissingIDPage(test_number)
-            ErrorMessage("{}".format(rval)).exec_()
+            ErrorMessage("{}".format(rval)).exec()
         except PlomUnidentifiedPaperException as err:
             ErrorMessage(
                 "Cannot substitute that page - that paper has not been identified: {}".format(
                     err
                 )
-            ).exec_()
+            ).exec()
 
     def substituteTestPage(self, test_number, page_number, version):
         page_type = self.testPageTypes[page_number]
@@ -820,15 +820,15 @@ class Manager(QWidget):
             'Are you sure you want to substitute a "Missing Page" blank for '
             f"question {question} of test {test_number}?",
         )
-        if msg.exec_() == QMessageBox.No:
+        if msg.exec() == QMessageBox.No:
             return
         try:
             rval = self.msgr.replaceMissingHWQuestion(
                 student_id=None, test=test_number, question=question
             )
-            ErrorMessage("{}".format(rval)).exec_()
+            ErrorMessage("{}".format(rval)).exec()
         except PlomTakenException:
-            ErrorMessage("That question already has hw pages present.").exec_()
+            ErrorMessage("That question already has hw pages present.").exec()
 
         self.refresh_scan_status_lists()
 
@@ -872,11 +872,11 @@ class Manager(QWidget):
                 f"Will remove the selected page {page_name} from the selected test {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 return
 
             rval = self.msgr.removeSinglePage(test_number, page_name)
-            ErrorMessage("{}".format(rval)).exec_()
+            ErrorMessage("{}".format(rval)).exec()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -884,11 +884,11 @@ class Manager(QWidget):
                 f"Will remove all scanned pages from the selected test - test number {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
-            ErrorMessage("{}".format(rval)).exec_()
+            ErrorMessage("{}".format(rval)).exec()
         self.refresh_scan_status_lists()
 
     def initUnknownTab(self):
@@ -978,7 +978,7 @@ class Manager(QWidget):
             [self.max_papers, self.numberOfPages, self.numberOfQuestions],
             iDict,
         )
-        if uvw.exec_() == QDialog.Accepted:
+        if uvw.exec() == QDialog.Accepted:
             # Colin hates all these hardcoded integers!
             self.unknownModel.item(r, 4).setText(uvw.action)
             self.unknownModel.item(r, 5).setText("{}".format(uvw.get_orientation()))
@@ -1030,7 +1030,7 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 5).text(),
                     )
                 except PlomConflict as err:
-                    ErrorMessage(f"{err}").exec_()
+                    ErrorMessage(f"{err}").exec()
             elif action == "test":
                 try:
                     if (
@@ -1046,9 +1046,9 @@ class Manager(QWidget):
                             "Collision created in test {}".format(
                                 self.unknownModel.item(r, 6).text()
                             )
-                        ).exec_()
+                        ).exec()
                 except PlomConflict as err:
-                    ErrorMessage(f"{err}").exec_()
+                    ErrorMessage(f"{err}").exec()
             elif action == "homework":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
@@ -1062,7 +1062,7 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 5).text(),
                     )
                 except PlomConflict as err:
-                    ErrorMessage(f"{err}").exec_()
+                    ErrorMessage(f"{err}").exec()
 
             else:
                 pass
@@ -1083,7 +1083,7 @@ class Manager(QWidget):
             # get_all=True should be default?
             pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
             labels = [x["pagename"] for x in pagedata]
-            WholeTestView(testnum, pagedata, labels, parent=parent).exec_()
+            WholeTestView(testnum, pagedata, labels, parent=parent).exec()
 
     def checkTPage(self, testNumber, pageNumber, parent=None):
         if parent is None:
@@ -1096,7 +1096,7 @@ class Manager(QWidget):
                 "Page {} of test {} is not scanned - should be version {}".format(
                     pageNumber, testNumber, cp[0]
                 ),
-            ).exec_()
+            ).exec()
             return
         # Context manager not appropriate, Issue #1996
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
@@ -1108,7 +1108,7 @@ class Manager(QWidget):
             title=f"Paper {testNumber} page {pageNumber} already has an image",
             before_text="Existing image:",
             after_text=f"Performing this action would create a collision with paper {testNumber} p. {pageNumber}",
-        ).exec_()
+        ).exec()
         f.unlink()
 
     def initCollideTab(self):
@@ -1178,7 +1178,7 @@ class Manager(QWidget):
         with open(f_collides, "wb") as fh:
             fh.write(vcp)
         cvw = CollideViewWindow(self, f_orig, f_collides, test, page)
-        if cvw.exec_() == QDialog.Accepted:
+        if cvw.exec() == QDialog.Accepted:
             if cvw.action == "original":
                 pm = QPixmap()
                 pm.loadFromData(
@@ -1210,7 +1210,7 @@ class Manager(QWidget):
                     )
                 except PlomConflict as err:
 
-                    ErrorMessage(f"{err}").exec_()
+                    ErrorMessage(f"{err}").exec()
             else:
                 pass
                 # print(
@@ -1271,7 +1271,7 @@ class Manager(QWidget):
         with open(f, "wb") as fh:
             fh.write(obj)
         pagedata["local_filename"] = f
-        if DiscardViewWindow(self, [pagedata]).exec_() == QDialog.Accepted:
+        if DiscardViewWindow(self, [pagedata]).exec() == QDialog.Accepted:
             pm = QPixmap()
             pm.loadFromData(
                 resources.read_binary(plom.client.icons, "manager_move.svg")
@@ -1370,11 +1370,11 @@ class Manager(QWidget):
             f"Will remove the selected page {page_name} from the selected test {test_number}.",
             "Are you sure you wish to do this? (not reversible)",
         )
-        if msg.exec_() == QMessageBox.No:
+        if msg.exec() == QMessageBox.No:
             return
 
         rval = self.msgr.removeSinglePage(test_number, page_name)
-        ErrorMessage("{}".format(rval)).exec_()
+        ErrorMessage("{}".format(rval)).exec()
 
     # ###################
     # Progress tab stuff
@@ -1405,7 +1405,7 @@ class Manager(QWidget):
         r = pvi[0].row()
         testNumber = int(self.ui.overallTW.item(r, 0).text())
         stats = self.msgr.RgetStatus(testNumber)
-        TestStatus(self, self.numberOfQuestions, stats).exec_()
+        TestStatus(self, self.numberOfQuestions, stats).exec()
 
     def refreshOverallTab(self):
         self.ui.overallTW.clearContents()
@@ -1479,7 +1479,7 @@ class Manager(QWidget):
         try:
             imageList = self.msgr.IDgetImageFromATest()
         except PlomNoMoreException as err:
-            ErrorMessage(f"No unIDd images to show - {err}").exec_()
+            ErrorMessage(f"No unIDd images to show - {err}").exec()
             return
         with tempfile.TemporaryDirectory() as td:
             inames = []
@@ -1492,7 +1492,7 @@ class Manager(QWidget):
                     raise PlomSeriousException(f"Could not identify image type: {tmp}")
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
-            if srw.exec_() == QDialog.Accepted:
+            if srw.exec() == QDialog.Accepted:
                 top, bottom = srw.top_bottom_values
                 self.ui.cropTopLE.setText(str(100 * top))
                 self.ui.cropBottomLE.setText(str(100 * bottom))
@@ -1515,7 +1515,7 @@ class Manager(QWidget):
         try:
             img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
-            ErrorMessage(err).exec_()
+            ErrorMessage(err).exec()
             return
 
         if not img_bytes:
@@ -1549,7 +1549,7 @@ class Manager(QWidget):
                 txt = "IDReader launched. It may take some time to run. Please be patient."
             else:
                 txt = "IDReader currently running. Please be patient."
-            ErrorMessage(txt).exec_()
+            ErrorMessage(txt).exec()
             return
         else:  # not running because we found a timestamp = rmsg[1]
             sm = SimpleQuestion(
@@ -1557,16 +1557,16 @@ class Manager(QWidget):
                 f"IDReader was last run at {rmsg[1]}",
                 "Do you want to rerun it?",
             )
-            if sm.exec_() == QMessageBox.No:
+            if sm.exec() == QMessageBox.No:
                 return
             self.run_id_reader(ignoreStamp=True)
 
     def run_predictor(self):
         try:
             status = self.msgr.run_predictor()
-            InfoMsg(self, "Results of ID matching:", info=status).exec_()
+            InfoMsg(self, "Results of ID matching:", info=status).exec()
         except PlomConflict as e:
-            WarnMsg(self, "ID matching procedure failed:", info=f"{e}").exec_()
+            WarnMsg(self, "ID matching procedure failed:", info=f"{e}").exec()
         self.getPredictions()
 
     def un_id_paper(self):
@@ -1581,7 +1581,7 @@ class Manager(QWidget):
             msg += f"\n\nCurrently is {sid}: {sname}"
         else:
             msg += "\n\nCan't find current ID - is likely not ID'd yet."
-        if SimpleQuestion(self, msg).exec_() == QMessageBox.No:
+        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
             return
         self.msgr.un_id_paper(test)
         self.getPredictions()
@@ -1592,7 +1592,7 @@ class Manager(QWidget):
             return
         test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
         msg = f"Do you want to reset the predicted ID of test number {test}?"
-        if SimpleQuestion(self, msg).exec_() == QMessageBox.No:
+        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
             return
         self.msgr.remove_id_prediction(test)
         self.getPredictions()
@@ -1659,7 +1659,7 @@ class Manager(QWidget):
             " (note that this does not delete user-confirmed IDs or"
             " prenamed predictions)",
         )
-        if msg.exec_() == QMessageBox.No:
+        if msg.exec() == QMessageBox.No:
             return
         self.msgr.IDdeletePredictions()
         self.getPredictions()
@@ -1682,7 +1682,7 @@ class Manager(QWidget):
 
     def viewMarkHistogram(self, question, version):
         mhist = self.msgr.getMarkHistogram(question, version)
-        QVHistogram(self, question, version, mhist).exec_()
+        QVHistogram(self, question, version, mhist).exec()
 
     def initOutTab(self):
         self.ui.tasksOutTW.setColumnCount(3)
@@ -1871,7 +1871,7 @@ class Manager(QWidget):
                 SimpleQuestion(
                     self,
                     "This paper was ID'd automatically, are you sure you wish to review it?",
-                ).exec_()
+                ).exec()
                 != QMessageBox.Yes
             ):
                 return
@@ -1971,7 +1971,7 @@ class Manager(QWidget):
                 f"Are you sure that you want to delete solution to"
                 f" question {self.ui.solnQSB.value()}"
                 f" version {self.ui.solnVSB.value()}.",
-            ).exec_()
+            ).exec()
             == QMessageBox.Yes
         ):
             self.msgr.deleteSolutionImage(
@@ -2053,14 +2053,14 @@ class Manager(QWidget):
         if "manager" in selectedUsers:
             ErrorMessage(
                 "You cannot force-logout the manager. To logout, click on the Quit button."
-            ).exec_()
+            ).exec()
             return
         if (
             SimpleQuestion(
                 self,
                 "Are you sure you want to force-logout users {}?".format(selectedUsers)
                 # do something about this formatting, right now it's just a python list
-            ).exec_()
+            ).exec()
             == QMessageBox.Yes
         ):
             for user in selectedUsers:
@@ -2078,7 +2078,7 @@ class Manager(QWidget):
             try:
                 self.msgr.enableUser(user)
             except PlomConflict as e:
-                WarnMsg(self, str(e)).exec_()
+                WarnMsg(self, str(e)).exec()
         self.refreshUserList()
 
     def disableUsers(self):
@@ -2091,13 +2091,13 @@ class Manager(QWidget):
         msg = "Are you sure you want to disable "
         msg += "users " if len(selectedUsers) > 1 else "user "
         msg += ", ".join(f'"{x}"' for x in selectedUsers)
-        if SimpleQuestion(self, msg).exec_() != QMessageBox.Yes:
+        if SimpleQuestion(self, msg).exec() != QMessageBox.Yes:
             return
         for user in selectedUsers:
             try:
                 self.msgr.disableUser(user)
             except PlomConflict as e:
-                WarnMsg(self, str(e)).exec_()
+                WarnMsg(self, str(e)).exec()
         self.refreshUserList()
 
     def changeUserPassword(self):
@@ -2113,9 +2113,9 @@ class Manager(QWidget):
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
         cpwd = UserDialog(self, f'Change password for "{user}"', name=user)
-        if cpwd.exec_() == QDialog.Accepted:
+        if cpwd.exec() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(user, cpwd.password)
-            ErrorMessage(rval[1]).exec_()
+            ErrorMessage(rval[1]).exec()
         return
 
     def createUser(self):
@@ -2125,9 +2125,9 @@ class Manager(QWidget):
             for r in range(self.ui.userListTW.rowCount())
         ]
         cpwd = UserDialog(self, "Create new user", name=None, extant=uList)
-        if cpwd.exec_() == QDialog.Accepted:
+        if cpwd.exec() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(cpwd.name, cpwd.password)
-            ErrorMessage(rval[1]).exec_()
+            ErrorMessage(rval[1]).exec()
             self.refreshUserList()
         return
 

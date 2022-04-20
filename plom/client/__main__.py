@@ -51,7 +51,7 @@ def add_popup_to_toplevel_exception_handler():
             details="".join(lines),
         )
         msg.setIcon(QMessageBox.Critical)
-        msg.exec_()
+        msg.exec()
         # call the original hook after our dialog closes
         sys._excepthook(exctype, value, traceback)
         sys.exit(1)
@@ -71,7 +71,7 @@ def sigint_handler(*args):
         None, "Caught interrupt signal!", "Do you want to force-quit?"
     )
     msg.setDefaultButton(QMessageBox.No)
-    if msg.exec_() == QMessageBox.Yes:
+    if msg.exec() == QMessageBox.Yes:
         QApplication.exit(42)
 
 
@@ -164,7 +164,7 @@ def main():
                 sys.exit(43)
 
         window.ui.markButton.animateClick()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

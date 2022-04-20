@@ -753,7 +753,7 @@ class RearrangementViewer(QDialog):
 
     def viewImage(self, image_data):
         """Shows a larger view of one or more pages."""
-        GroupView(self, image_data, bigger=True).exec_()
+        GroupView(self, image_data, bigger=True).exec()
 
     def doShuffle(self):
         """

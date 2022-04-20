@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeySequence
@@ -223,7 +223,7 @@ class KeyWrangler(QDialog):
         for act in self.actions:
             actToCode[act] = getattr(self, act + "Key").theCode
             if actToCode[act] is None:
-                ErrorMessage("Is invalid - '{}' is missing a key".format(act)).exec_()
+                ErrorMessage("Is invalid - '{}' is missing a key".format(act)).exec()
                 return False
         # check for duplications
         for n, act in enumerate(self.actions):
@@ -235,7 +235,7 @@ class KeyWrangler(QDialog):
                             self.actions[k],
                             QKeySequence(actToCode[act]).toString(),
                         )
-                    ).exec_()
+                    ).exec()
                     return False
         return True
 

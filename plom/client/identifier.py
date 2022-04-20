@@ -378,7 +378,7 @@ class IDClient(QWidget):
             imageDat = self.msgr.request_ID_image(test)
         except PlomBenignException as e:
             log.error("Somewhat unexpected error getting image for %s: %s", test, e)
-            WarnMsg(self, f'Unexpected but benign exception:\n"{e}"').exec_()
+            WarnMsg(self, f'Unexpected but benign exception:\n"{e}"').exec()
             # self.exM.removePaper(r)
             return
 
@@ -390,7 +390,7 @@ class IDClient(QWidget):
                 msg = f"Failed to identify extension of {len(imageDat)} bytes"
                 msg += f" of image data for test {test}"
                 log.error(msg)
-                WarnMsg(self, msg).exec_()
+                WarnMsg(self, msg).exec()
                 imageName = None
             else:
                 imageName = self.workingDirectory / f"i{test}.0.{image_ext}"
@@ -472,7 +472,7 @@ class IDClient(QWidget):
         if m == 0:
             v, m = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.idProgressBar.setFormat("No papers to identify")
-            InfoMsg(self, "No papers to identify.").exec_()
+            InfoMsg(self, "No papers to identify.").exec()
         else:
             self.ui.idProgressBar.resetFormat()
         self.ui.idProgressBar.setMaximum(m)
@@ -495,14 +495,14 @@ class IDClient(QWidget):
             try:
                 test = self.msgr.IDaskNextTask()
                 if not test:  # no tasks left
-                    InfoMsg(self, "No more tasks left on server.").exec_()
+                    InfoMsg(self, "No more tasks left on server.").exec()
                     return False
             except PlomSeriousException as err:
                 log.exception("Unexpected error getting next task: %s", err)
                 ErrorMsg(
                     self,
                     f"Unexpected error getting next task:\n{err}\nClient will now crash!",
-                ).exec_()
+                ).exec()
                 raise
 
             try:
@@ -539,7 +539,7 @@ class IDClient(QWidget):
         if status != "unidentified":
             msg = SimpleQuestion(self, "Do you want to change the ID?")
             # Put message popup on top-corner of idenfier window
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 return
         # code = self.exM.data(index[0])
         sname = self.ui.pNameLabel.text()
@@ -606,7 +606,7 @@ class IDClient(QWidget):
             self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomBenignException as err:
             log.error("Somewhat unexpected error when returning %s: %s", code, err)
-            WarnMsg(self, f'Unexpected but benign exception:\n"{err}"').exec_()
+            WarnMsg(self, f'Unexpected but benign exception:\n"{err}"').exec()
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
             return False
@@ -640,7 +640,7 @@ class IDClient(QWidget):
                 self,
                 'Please use the "Blank page" button if student has not '
                 "given their name or ID.",
-            ).exec_()
+            ).exec()
             return
 
         # if no papers then simply return.
@@ -660,7 +660,7 @@ class IDClient(QWidget):
         if status == "identified":
             msg = SimpleQuestion(self, "Do you want to change the ID?")
             # Put message popup on top-corner of idenfier window
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 return
             else:
                 alreadyIDd = True
@@ -678,7 +678,7 @@ class IDClient(QWidget):
                 msg.setGeometry(self.msgGeometry)
 
             # If user says "no" then just return from function.
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 self.msgGeometry = msg.geometry()
                 return
             self.msgGeometry = msg.geometry()
@@ -696,13 +696,13 @@ class IDClient(QWidget):
             # Put message popup on top-corner of idenfier window
             msg.move(self.pos())
             # If no then return from function.
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec() == QMessageBox.No:
                 self.msgPosition = msg.pos()
                 return
             self.msgPosition = msg.pos()
             # Otherwise get an id and name from the user (and the okay)
             snidbox = SNIDBox(self, self.ui.idEdit.text())
-            if snidbox.exec_() != QDialog.Accepted:
+            if snidbox.exec() != QDialog.Accepted:
                 return
             sid = snidbox.sid.strip()
             sname = snidbox.sname.strip()
@@ -722,7 +722,7 @@ class IDClient(QWidget):
                     f"&ldquo;{self.student_id_to_snid[sid]}&rdquo;.</p>"
                     "<p>Cannot enter them into the classlist without "
                     "a unique ID.</p>",
-                ).exec_()
+                ).exec()
                 return
             snid = f"{sid}: {sname}"
             # update our lists
@@ -753,7 +753,7 @@ class IDClient(QWidget):
             self.msgr, pagedata, self.workingDirectory, get_all=True
         )
         labels = [x["pagename"] for x in pagedata]
-        WholeTestView(testnum, pagedata, labels, parent=self).exec_()
+        WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
     def blankPaper(self):
         # first check currently selected paper is unidentified - else do nothing
@@ -764,7 +764,7 @@ class IDClient(QWidget):
         # if status != "unidentified":
         # return
         code = self.exM.data(index[0])
-        rv = BlankIDBox(self, code).exec_()
+        rv = BlankIDBox(self, code).exec()
         # return values 0=cancel, 1=blank paper, 2=no id given.
         if rv == 0:
             return

@@ -253,7 +253,7 @@ class SolutionViewer(QWidget):
         solnfile = self._annotr.refreshSolutionImage()
         self.sv.updateImage(solnfile)
         if solnfile is None:
-            WarnMsg(self, "Server no longer has a solution.  Try again later?").exec_()
+            WarnMsg(self, "Server no longer has a solution.  Try again later?").exec()
 
 
 class CatViewer(QDialog):
@@ -320,7 +320,7 @@ class CatViewer(QDialog):
                 )
             logging.debug("Cat image refreshed")
         except Exception:
-            WarnMsg(self, "Cannot get cat picture.  Try again later?").exec_()
+            WarnMsg(self, "Cannot get cat picture.  Try again later?").exec()
             self.catz = None
 
     def eraseImageFile(self):
@@ -342,5 +342,5 @@ class CatViewer(QDialog):
         self.getNewImageFile(msg=msg)
         self.img.updateImage(self.catz)
         if self.count > 5:
-            InfoMsg(self, "Enough break time").exec_()
+            InfoMsg(self, "Enough break time").exec()
             self.close()
