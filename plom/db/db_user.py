@@ -19,7 +19,7 @@ def createUser(self, uname, passwordHash):
         User.create(
             name=uname,
             password=passwordHash,
-            last_activity=datetime.now(),
+            last_activity=datetime.utcnow(),
             last_action="Created",
         )
     except pw.IntegrityError as e:
@@ -46,7 +46,7 @@ def setUserPasswordHash(self, uname, passwordHash):
         return False
     with plomdb.atomic():
         uref.password = passwordHash
-        uref.last_activity = datetime.now()
+        uref.last_activity = datetime.utcnow()
         uref.last_action = "Password set"
         uref.save()
     return True
@@ -100,7 +100,7 @@ def setUserToken(self, uname, token, msg="Log on"):
         return False
     with plomdb.atomic():
         uref.token = token
-        uref.last_activity = datetime.now()
+        uref.last_activity = datetime.utcnow()
         uref.last_action = msg
         uref.save()
     return True
@@ -191,7 +191,7 @@ def resetUsersToDo(self, uname):
         for x in query:
             x.status = "todo"
             x.user = None
-            x.time = datetime.now()
+            x.time = datetime.utcnow()
             x.save()
             log.info("Reset user {} ID task {}".format(uname, x.group.gid))
     with plomdb.atomic():
@@ -202,7 +202,7 @@ def resetUsersToDo(self, uname):
         for x in query:
             x.status = "todo"
             x.user = None
-            x.time = datetime.now()
+            x.time = datetime.utcnow()
             x.save()
             log.info(
                 "Reset user {} question-annotation task {}".format(uname, x.group.gid)

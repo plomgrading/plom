@@ -505,7 +505,7 @@ def remove_id_from_paper(self, paper_num):
         iref.student_id = None
         iref.student_name = None
         iref.identified = False
-        iref.time = datetime.now()
+        iref.time = datetime.utcnow()
         iref.save()
         tref.identified = False
         tref.save()
@@ -538,8 +538,8 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
             kind="absolute",
             question=questionNumber,
             user=uref,
-            creationTime=datetime.now(),
-            modificationTime=datetime.now(),
+            creationTime=datetime.utcnow(),
+            modificationTime=datetime.utcnow(),
         )
         log.info("Created no-answer-rubric for question {}".format(questionNumber))
     else:

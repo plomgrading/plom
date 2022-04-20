@@ -168,11 +168,11 @@ def IDgiveTaskToClient(self, user_name, test_number):
         # update status, owner of task, time
         iref.status = "out"
         iref.user = uref
-        iref.time = datetime.now()
+        iref.time = datetime.utcnow()
         iref.save()
         # update user activity
         uref.last_action = "Took ID task {}".format(test_number)
-        uref.last_activity = datetime.now()
+        uref.last_activity = datetime.utcnow()
         uref.save()
         log.debug("Giving ID task {} to user {}".format(test_number, user_name))
         return (True, iref.idpages[0].image.file_name)
@@ -339,7 +339,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
         iref.student_id = sid
         iref.student_name = sname
         iref.identified = True
-        iref.time = datetime.now()
+        iref.time = datetime.utcnow()
         try:
             iref.save()
         except pw.IntegrityError:
@@ -359,7 +359,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
             preidref.delete_instance()
         # update user activity
         uref.last_action = "Returned ID task {}".format(paper_num)
-        uref.last_activity = datetime.now()
+        uref.last_activity = datetime.utcnow()
         uref.save()
         log.info(
             'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
@@ -407,7 +407,7 @@ def IDreviewID(self, test_number):
         return [False]
     with plomdb.atomic():
         iref.user = revref
-        iref.time = datetime.now()
+        iref.time = datetime.utcnow()
         iref.save()
     log.info("ID task {} set for review".format(test_number))
     return [True]

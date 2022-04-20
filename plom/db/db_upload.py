@@ -618,11 +618,11 @@ def updateIDGroup(self, idref):
         # -----
         idref.status = "todo"
         idref.user = None
-        idref.time = datetime.now()
+        idref.time = datetime.utcnow()
         idref.student_id = None
         idref.student_name = None
         idref.identified = False
-        idref.time = datetime.now()
+        idref.time = datetime.utcnow()
         idref.save()
         tref.identified = False
         tref.save()
@@ -689,7 +689,7 @@ def buildUpToDateAnnotation(self, qref):
         qref.user = None
         qref.marked = False
         qref.status = ""
-        qref.time = datetime.now()
+        qref.time = datetime.utcnow()
         qref.save()
         tref.marked = False
         tref.save()
@@ -756,7 +756,7 @@ def updateQGroup(self, qref):
         gref.scanned = True
         gref.save()
         qref.status = "todo"
-        qref.time = datetime.now()
+        qref.time = datetime.utcnow()
         qref.save()
         log.info(
             "QGroup {} of test {} is ready to be marked.".format(

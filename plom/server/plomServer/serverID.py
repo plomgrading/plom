@@ -398,7 +398,7 @@ def run_id_reader(self, top, bottom, ignore_stamp):
     with open(lock_file, "w") as fh:
         json.dump([test_image_dict, {"crop_top": top, "crop_bottom": bottom}], fh)
     # make a timestamp
-    last_run_timestamp = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
+    last_run_timestamp = datetime.utcnow().strftime("%y:%m:%d-%H:%M:%S_%Z")
 
     with open(timestamp, "w") as fh:
         json.dump(last_run_timestamp, fh)

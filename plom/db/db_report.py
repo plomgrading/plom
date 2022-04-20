@@ -261,7 +261,7 @@ def RgetProgress(self, spec, q, v):
             NMarked += 1
             mark_list.append(qref.annotations[-1].mark)
             SMTime += qref.annotations[-1].marking_time
-            if datetime.now() - qref.annotations[-1].time < one_hour:
+            if datetime.utcnow() - qref.annotations[-1].time < one_hour:
                 NRecent += 1
 
     log.debug("Sending progress summary for Q{}v{}".format(q, v))

@@ -63,7 +63,7 @@ class PlomDB:
             User.create(
                 name="HAL",
                 password=None,
-                last_activity=datetime.now(),
+                last_activity=datetime.utcnow(),
                 last_action="Created",
             )
             log.info("User 'HAL' created to do all our automated tasks.")

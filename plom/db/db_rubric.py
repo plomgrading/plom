@@ -56,8 +56,8 @@ def McreateRubric(self, user_name, rubric):
             kind=rubric["kind"],
             delta=rubric["delta"],
             text=rubric["text"],
-            creationTime=datetime.now(),
-            modificationTime=datetime.now(),
+            creationTime=datetime.utcnow(),
+            modificationTime=datetime.utcnow(),
             meta=rubric["meta"],
             tags=rubric["tags"],
         )
@@ -137,7 +137,7 @@ def MmodifyRubric(self, user_name, key, change):
         rref.kind = change["kind"]
         rref.delta = change["delta"]
         rref.text = change["text"]
-        rref.modificationTime = datetime.now()
+        rref.modificationTime = datetime.utcnow()
         rref.revision += 1
         rref.meta = change["meta"]
         rref.tags = change["tags"]

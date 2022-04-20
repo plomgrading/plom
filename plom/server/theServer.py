@@ -263,7 +263,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     """
     basedir = Path(basedir)
     if not logfile:
-        logfile = basedir / datetime.now().strftime("plomserver-%Y%m%d_%H-%M-%S.log")
+        logfile = basedir / datetime.utcnow().strftime("plomserver-%Y%m%d_%H-%M-%S_%Z.log")
     logfile = Path(logfile)
     # if just filename, make log in basedir
     if logfile.parent == Path("."):
@@ -273,7 +273,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     logging.basicConfig(format=fmtstr, datefmt="%b%d %H:%M:%S %Z", filename=logfile)
     if logconsole:
         h = logging.StreamHandler()
-        h.setFormatter(logging.Formatter(fmtstr, datefmt="%b%d %H:%M:%S"))
+        h.setFormatter(logging.Formatter(fmtstr, datefmt="%b%d %H:%M:%S %Z"))
         logging.getLogger().addHandler(h)
 
     log = logging.getLogger("server")

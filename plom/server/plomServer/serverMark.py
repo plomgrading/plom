@@ -213,7 +213,7 @@ def MreturnMarkedTask(
         if os.path.isfile(filename):
             os.rename(
                 filename,
-                filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
+                filename + ".rgd" + datetime.utcnow().strftime("%d_%H-%M-%S_%Z"),
             )
 
     # now write in the files
@@ -249,7 +249,7 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking):
                 annotated_filename,
                 mark,
                 username,
-                datetime.now().strftime("%Y-%m-%d,%H:%M"),
+                datetime.utcnow().strftime("%Y-%m-%d,%H:%M"),
                 time_spent_marking,
             )
         )
