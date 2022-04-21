@@ -1538,7 +1538,6 @@ class Manager(QWidget):
 
     def id_reader_get_log(self):
         is_running, timestamp, msg = self.msgr.id_reader_get_logs()
-        # TODO: perhaps we want msgr to do this?
         timestamp = arrow.get(timestamp)
         if is_running:
             stat = "<em>Running</em>"
@@ -1556,7 +1555,6 @@ class Manager(QWidget):
             float(self.ui.cropBottomLE.text()) / 100,
             ignore_timestamp=ignore_timestamp,
         )
-        # TODO: perhaps we want msgr to do this?
         timestamp = arrow.get(timestamp)
         if is_running:
             if new_start:
