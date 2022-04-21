@@ -87,7 +87,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     <footer style="position:absolute; bottom:0;">
     """
     htmlText += """
-    Coverpage produced on {}  ==  {}
+    Coverpage produced on {}  &equiv;  {}
     </ul>
     </footer>
     """.format(

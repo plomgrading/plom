@@ -27,15 +27,15 @@ def json_to_arrow(timestring):
 
 
 def utc_now_to_string():
-    return arrow.utcnow().format("YYYY-MM-DD_HH-mm-ss_ZZ")
+    return arrow.utcnow().format("YYYY-MM-DD_HH:mm:ss_ZZ")
 
 
 def utc_now_to_simple_string():
-    return arrow.utcnow().format("YYYY-MM-DD at HH-mm ZZ")
+    return arrow.utcnow().format("YYYY-MM-DD [at] HH:mm ZZZ")
 
 
 def local_now_to_simple_string():
-    return arrow.utcnow().to("local").format("YYYY-MM-DD at HH-mm ZZ")
+    return arrow.utcnow().to("local").format("YYYY-MM-DD [at] HH:mm ZZZ")
 
 
 def delta_time_strings(ta, tb):
