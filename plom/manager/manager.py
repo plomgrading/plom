@@ -1537,8 +1537,16 @@ class Manager(QWidget):
             GroupView(self, img_name, title=title).exec()
 
     def id_reader_get_log(self):
-        # TODO: where to display is_running, and timestamp?
         is_running, timestamp, msg = self.msgr.id_reader_get_logs()
+        timestamp = arrow.get(timestamp)
+        if is_running:
+            stat = "<em>Running</em>"
+        else:
+            stat = "Stopped"
+        self.ui.idReaderStatusLabel.setText(
+            f"<p>{stat}, started {timestamp.humanize()} ({timestamp})."
+            "<br />Log output:</p>"
+        )
         self.ui.idReaderLogTextEdit.setPlainText(msg)
 
     def id_reader_run(self, ignore_timestamp=False):
@@ -1547,15 +1555,17 @@ class Manager(QWidget):
             float(self.ui.cropBottomLE.text()) / 100,
             ignore_timestamp=ignore_timestamp,
         )
+        timestamp = arrow.get(timestamp)
         if is_running:
             if new_start:
-                txt = f"IDReader launched in background at {timestamp}."
+                txt = "IDReader launched in background."
                 info = """
                     <p>It may take some time to run; click &ldquo;refresh&rdquo;
                     to update output.</p>
                 """
             else:
-                txt = f"IDReader currently running (started at {timestamp})."
+                txt = "IDReader currently running, "
+                txt += f"launched {timestamp.humanize()} at {timestamp}."
                 info = """
                     <p>If its been a while or output is unexpected, perhaps it
                     crashed.</p>
@@ -1564,7 +1574,7 @@ class Manager(QWidget):
             self.id_reader_get_log()
             return
         else:
-            txt = f"IDReader was last run at {timestamp}."
+            txt = f"IDReader was last run {timestamp.humanize()} at {timestamp}."
             q = "Do you want to rerun it?"
             if SimpleQuestion(self, txt, q).exec_() == QMessageBox.No:
                 return

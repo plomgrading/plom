@@ -882,6 +882,13 @@
                      </widget>
                     </item>
                     <item>
+                     <widget class="QLabel" name="idReaderStatusLabel">
+                      <property name="text">
+                       <string>&lt;refresh for status&gt;</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
                      <widget class="QPlainTextEdit" name="idReaderLogTextEdit">
                       <property name="readOnly">
                        <bool>true</bool>
