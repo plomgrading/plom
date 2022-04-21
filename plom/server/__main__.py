@@ -19,7 +19,7 @@ from pathlib import Path
 
 from plom import __version__
 from plom import Default_Port
-from plom.server import specdir, confdir
+from plom.server import confdir
 from plom.server import theServer
 from plom.server.prepare import initialise_server
 from plom.server import (
@@ -178,6 +178,15 @@ def get_parser():
             provide plom-custom.key and plom-custom.cert in this case.
         """,
     )
+    spI.add_argument(
+        "--manager-pw",
+        metavar="STR",
+        help="""
+            An initial password for the manager account.  You can also
+            use the "users" command or even omit altogether and the
+            server will autogenerate a password.
+        """,
+    )
 
     spU = sub.add_parser(
         "users",
@@ -271,7 +280,9 @@ def main():
             port=args.port,
             name=args.server_name,
             make_selfsigned_keys=args.selfsigned,
+            manager_pw=args.manager_pw,
         )
+
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered, args.dir)
     elif args.command == "launch":
