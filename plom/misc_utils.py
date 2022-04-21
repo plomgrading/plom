@@ -38,6 +38,16 @@ def local_now_to_simple_string():
     return arrow.utcnow().to("local").format("YYYY-MM-DD at HH-mm ZZ")
 
 
+def delta_time_strings(ta, tb):
+    return arrow.get(ta)-arrow.get(tb)
+
+
+def is_within_one_hour_of_now(timestamp):
+    if arrow.get(timestamp) > arrow.utcnow().shift(hours=-1):
+        return True
+    else:
+        return False
+
 # ------------------------------------------------
 
 

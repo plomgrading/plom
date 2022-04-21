@@ -12,7 +12,6 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-from datetime import datetime
 import signal
 import os
 import sys
@@ -25,6 +24,7 @@ from plom import __version__
 from plom import Default_Port
 from plom.client import Chooser
 from plom.client.useful_classes import ErrorMsg, WarningQuestion
+from plom.misc_utils import utc_now_to_string
 
 
 def add_popup_to_toplevel_exception_handler():
@@ -38,7 +38,7 @@ def add_popup_to_toplevel_exception_handler():
             abbrev = "".join(["\N{Vertical Ellipsis}\n", *lines[-8:]])
         else:
             abbrev = "".join(lines)
-        lines.insert(0, f"Timestamp: {datetime.now()}\n\n")
+        lines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")
 
         txt = """<p><b>Something unexpected has happened!</b>
         A partial error message is shown below.</p>

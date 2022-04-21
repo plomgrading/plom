@@ -4,11 +4,10 @@
 # Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
 import logging
 
 from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
-from plom.misc_utils import datetime_to_json
+from plom.misc_utils import datetime_to_json, is_within_one_hour_of_now
 
 log = logging.getLogger("DB")
 
@@ -234,8 +233,6 @@ def RgetProgress(self, spec, q, v):
     medianMark, minMark, modeMark, maxMark] and their values
     numberRecent = number done in the last hour.
     """
-    # set up a time-delta of 1 hour for calc of number done recently.
-    one_hour = timedelta(hours=1)
 
     NScanned = 0  # number scanned
     NMarked = 0  # number marked
@@ -261,7 +258,11 @@ def RgetProgress(self, spec, q, v):
             NMarked += 1
             mark_list.append(qref.annotations[-1].mark)
             SMTime += qref.annotations[-1].marking_time
-            if datetime.now(timezone.utc) - qref.annotations[-1].time < one_hour:
+            # https://github.com/coleifer/peewee/issues/2318
+            # peewee datetime with timezone stored as string.
+            # http://docs.peewee-orm.com/en/latest/peewee/api.html#DateTimeField
+            # so call helper function which does conversions for us
+            if is_within_one_hour_of_now(qref.annotations[-1].time):
                 NRecent += 1
 
     log.debug("Sending progress summary for Q{}v{}".format(q, v))
