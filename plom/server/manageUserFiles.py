@@ -170,11 +170,13 @@ def parse_and_save_user_list(user_file_path, basedir=Path(".")):
     Raises:
         ValueError
     """
-    save_user_list(get_raw_user_dict_from_csv(user_file_path), basedir=basedir)
+    check_and_save_user_list(
+        get_raw_user_dict_from_csv(user_file_path), basedir=basedir
+    )
 
 
-def save_user_list(username_password_dict, basedir=Path(".")):
-    """Saves userlist and their hashed passwords.
+def check_and_save_user_list(username_password_dict, basedir=Path(".")):
+    """Check and saves userlist and the hashed passwords.
 
     Do some checking of users/password rules.  Then get the hashed password
     dictionary and saves it.
@@ -196,6 +198,27 @@ def save_user_list(username_password_dict, basedir=Path(".")):
         raise ValueError(
             "Userlist must contain 'manager', 'scanner', 'reviewer' and at least 1 regular user."
         )
+    save_initial_user_list(username_password_dict, basedir=basedir)
+
+
+def save_initial_user_list(username_password_dict, basedir=Path(".")):
+    """Save userlist and the hashed passwords.
+
+    Compute hashed passwords and save them to the initial user list file.
+
+    Arguments:
+        username_password_dict (dict): keys are names and values passwords.
+        basedir (pathlib.Path): the usernames and hashed passwords are
+            written to `basedir/serverConfiguration/bootstrap_initial_users.json`
+            where basedir defaults to "." if omitted.
+
+    Returns:
+        None: has side effect of saving user hash dictionary.
+
+    Raises:
+        ValueError
+    """
+    basedir = Path(basedir)
     if not check_username_password_format(username_password_dict):
         raise ValueError("Username and passwords are not in the required format.")
 
