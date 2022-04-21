@@ -38,6 +38,10 @@ def local_now_to_simple_string():
     return arrow.utcnow().to("local").format("YYYY-MM-DD [at] HH:mm ZZZ")
 
 
+def arrowtime_to_simple_string(arrowtime):
+    return arrowtime.format("YYYY-MM-DD [at] HH:mm:ss")
+
+
 def delta_time_strings(ta, tb):
     return arrow.get(ta) - arrow.get(tb)
 
@@ -51,6 +55,7 @@ def is_within_one_hour_of_now(timestamp):
 
 # ---------------------------------------------
 # tools for printing lists and other miscellany
+# ------------------------------------------------
 
 
 def format_int_list_with_runs(L, use_unicode=None):

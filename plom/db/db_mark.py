@@ -754,6 +754,3 @@ def MremoveExistingTag(self, task, tag_text):
     else:
         log.warn(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
         return False
-
-
-##

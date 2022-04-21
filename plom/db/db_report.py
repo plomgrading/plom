@@ -354,15 +354,27 @@ def RgetQuestionUserProgress(self, q, v):
 
 
 def RgetCompletionStatus(self):
-    """Return a dict of every (ie whether completely scanned or not). Each dict entry is of the form dict[test_number] = [scanned_or_not, identified_or_not, number_of_questions_marked]"""
+    """Return a dict of every (ie whether completely scanned or not).
+    Each dict entry is of the form
+    dict[test_number] = [scanned_or_not, identified_or_not, number_of_questions_marked, time_of_last_update]
+    """
     progress = {}
+
     for tref in Test.select():
-        number_marked = (
-            QGroup.select()
-            .where(QGroup.test == tref, QGroup.marked == True)  # noqa: E712
-            .count()
-        )
-        progress[tref.test_number] = [tref.scanned, tref.identified, number_marked]
+        # get update times for each group starting with the idgroup
+        last_update = tref.idgroups[0].time  # even if un-id'd will show creation time.
+        number_marked = 0
+        for qref in tref.qgroups:
+            if qref.marked:
+                number_marked += 1
+            if last_update < qref.time:
+                last_update = qref.time
+        progress[tref.test_number] = [
+            tref.scanned,
+            tref.identified,
+            number_marked,
+            datetime_to_json(last_update),
+        ]
     log.debug("Sending list of completed tests")
     return progress
 
