@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2021-2022 Andrew Rechnitzer
 
-from multiprocessing import Pool
 import os
 from pathlib import Path
 import shutil
@@ -9,7 +8,6 @@ import tempfile
 
 from tqdm import tqdm
 
-from plom import get_question_label
 from plom.finish import start_messenger
 from plom.finish.solutionAssembler import assemble
 from plom.finish.reassemble_completed import download_data_build_cover_page
@@ -100,6 +98,7 @@ def main(testnum=None, server=None, pwd=None, watermark=False):
             t = str(testnum)
             try:
                 completed = completedTests[t]
+                # is 4-tuple [Scanned, IDed, #Marked, Last_update_time]
             except KeyError:
                 raise ValueError(
                     f"Paper {t} does not exist or otherwise not ready"

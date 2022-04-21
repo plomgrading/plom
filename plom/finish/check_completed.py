@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
@@ -20,7 +20,7 @@ def proc_everything(comps, numberOfQuestions):
     histList = [[] for j in range(numberOfQuestions + 1)]  # test numbers
     cList = []  # completed
     partMarked = []
-    # each comps item = [Scanned, IDed, #Marked]
+    # each comps item = [Scanned, IDed, #Marked, Last_update_time]
     for t, v in comps.items():
         if v[0]:
             scannedList.append(int(t))
