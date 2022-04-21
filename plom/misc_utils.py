@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019 Omer Angel
-# Copyright (C) 2019, 2021 Colin B. Macdonald
+# Copyright (C) 2019, 2021-2022 Colin B. Macdonald
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Peter Lee
 
@@ -39,7 +39,7 @@ def local_now_to_simple_string():
 
 
 def delta_time_strings(ta, tb):
-    return arrow.get(ta)-arrow.get(tb)
+    return arrow.get(ta) - arrow.get(tb)
 
 
 def is_within_one_hour_of_now(timestamp):
@@ -48,7 +48,9 @@ def is_within_one_hour_of_now(timestamp):
     else:
         return False
 
-# ------------------------------------------------
+
+# ---------------------------------------------
+# tools for printing lists and other miscellany
 
 
 def format_int_list_with_runs(L, use_unicode=None):

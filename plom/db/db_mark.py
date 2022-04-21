@@ -650,7 +650,9 @@ def McreateNewTag(self, user_name, tag_text):
         key = generate_new_comment_ID(10)
         while Tag.get_or_none(key=key) is not None:
             key = generate_new_comment_ID(10)
-        Tag.create(key=key, user=uref, creationTime=datetime.now(timezone.utc), text=tag_text)
+        Tag.create(
+            key=key, user=uref, creationTime=datetime.now(timezone.utc), text=tag_text
+        )
     return (True, key)
 
 
