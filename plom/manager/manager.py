@@ -1552,16 +1552,19 @@ class Manager(QWidget):
 
     def id_reader_get_log(self):
         is_running, timestamp, msg = self.msgr.id_reader_get_logs()
-        timestamp = arrow.get(timestamp)
         if is_running:
-            stat = "<em>Running</em>"
+            label = "<em>Running</em>"
+            timestamp = arrow.get(timestamp)
+        elif timestamp is None:
+            label = "Never run"
         else:
-            stat = "Stopped"
-        self.ui.idReaderStatusLabel.setText(
-            f"<p>{stat}, started {timestamp.humanize()} "
-            f"({arrowtime_to_simple_string(timestamp)})."
-            "<br />Log output:</p>"
-        )
+            label = "Stopped"
+            timestamp = arrow.get(timestamp)
+        if timestamp:
+            label += f", started {timestamp.humanize()}"
+            label += f" ({arrowtime_to_simple_string(timestamp)})."
+        label = f"<p>{label}<br />Log output:</p>"
+        self.ui.idReaderStatusLabel.setText(label)
         self.ui.idReaderLogTextEdit.setPlainText(msg)
 
     def id_reader_run(self, ignore_timestamp=False):
