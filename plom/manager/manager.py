@@ -1570,7 +1570,6 @@ class Manager(QWidget):
             float(self.ui.cropBottomLE.text()) / 100,
             ignore_timestamp=ignore_timestamp,
         )
-        timestamp = arrow.get(timestamp)
         if is_running:
             if new_start:
                 txt = "IDReader launched in background."
@@ -1579,6 +1578,7 @@ class Manager(QWidget):
                     to update output.</p>
                 """
             else:
+                timestamp = arrow.get(timestamp)
                 txt = "IDReader currently running, "
                 txt += f"launched {timestamp.humanize()} at "
                 txt += f"{arrowtime_to_simple_string(timestamp)}."
@@ -1590,6 +1590,7 @@ class Manager(QWidget):
             self.id_reader_get_log()
             return
         else:
+            timestamp = arrow.get(timestamp)
             msg = SimpleQuestion(
                 self,
                 f"IDReader was last run {timestamp.humanize()} at"
