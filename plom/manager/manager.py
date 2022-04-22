@@ -1562,7 +1562,7 @@ class Manager(QWidget):
             timestamp = arrow.get(timestamp)
         if timestamp:
             label += f", started {timestamp.humanize()}"
-            label += f" ({arrowtime_to_simple_string(timestamp)})."
+            label += f' {timestamp.isoformat(" ", "seconds")}.'
         label = f"<p>{label}<br />Log output:</p>"
         self.ui.idReaderStatusLabel.setText(label)
         self.ui.idReaderLogTextEdit.setPlainText(msg)
@@ -1582,9 +1582,9 @@ class Manager(QWidget):
                 """
             else:
                 timestamp = arrow.get(timestamp)
-                txt = "IDReader currently running, "
-                txt += f"launched {timestamp.humanize()} at "
-                txt += f"{arrowtime_to_simple_string(timestamp)}."
+                txt = "IDReader currently running,"
+                txt += f" launched {timestamp.humanize()} at"
+                txt += f' {timestamp.isoformat(" ", "seconds")}.'
                 info = """
                     <p>If its been a while or output is unexpected, perhaps it
                     crashed.</p>
@@ -1597,7 +1597,7 @@ class Manager(QWidget):
             msg = SimpleQuestion(
                 self,
                 f"IDReader was last run {timestamp.humanize()} at"
-                f" {arrowtime_to_simple_string(timestamp)}.",
+                f' {timestamp.isoformat(" ", "seconds")}.',
                 question="Do you want to rerun it?",
             )
             if msg.exec_() == QMessageBox.No:
