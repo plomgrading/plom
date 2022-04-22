@@ -1558,7 +1558,8 @@ class Manager(QWidget):
         else:
             stat = "Stopped"
         self.ui.idReaderStatusLabel.setText(
-            f"<p>{stat}, started {timestamp.humanize()} ({arrowtime_to_simple_string(timestamp)})."
+            f"<p>{stat}, started {timestamp.humanize()} "
+            f"({arrowtime_to_simple_string(timestamp)})."
             "<br />Log output:</p>"
         )
         self.ui.idReaderLogTextEdit.setPlainText(msg)
@@ -1579,7 +1580,8 @@ class Manager(QWidget):
                 """
             else:
                 txt = "IDReader currently running, "
-                txt += f"launched {timestamp.humanize()} at {arrowtime_to_simple_string(timestamp)}."
+                txt += f"launched {timestamp.humanize()} at "
+                txt += f"{arrowtime_to_simple_string(timestamp)}."
                 info = """
                     <p>If its been a while or output is unexpected, perhaps it
                     crashed.</p>
@@ -1588,9 +1590,13 @@ class Manager(QWidget):
             self.id_reader_get_log()
             return
         else:
-            txt = f"IDReader was last run {timestamp.humanize()} at {arrowtime_to_simple_string(timestamp)}."
-            q = "Do you want to rerun it?"
-            if SimpleQuestion(self, txt, q).exec_() == QMessageBox.No:
+            msg = SimpleQuestion(
+                self,
+                f"IDReader was last run {timestamp.humanize()} at"
+                f" {arrowtime_to_simple_string(timestamp)}.",
+                question="Do you want to rerun it?",
+            )
+            if msg.exec_() == QMessageBox.No:
                 return
             self.id_reader_run(ignore_timestamp=True)
 
@@ -2022,7 +2028,7 @@ class Manager(QWidget):
         if (
             SimpleQuestion(
                 self,
-                f"Are you sure that you want to delete solution to"
+                "Are you sure that you want to delete solution to"
                 f" question {self.ui.solnQSB.value()}"
                 f" version {self.ui.solnVSB.value()}.",
             ).exec()
