@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021-2022 Elizabeth Xiao
 
-import arrow
 from collections import defaultdict
 import imghdr
 import importlib.resources as resources
@@ -14,6 +13,8 @@ import logging
 import os
 from pathlib import Path
 import tempfile
+
+import arrow
 import urllib3
 
 from PyQt5.QtCore import Qt, QSize
