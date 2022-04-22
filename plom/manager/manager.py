@@ -1462,7 +1462,6 @@ class Manager(QWidget):
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 item.setToolTip("Has been marked")
             self.ui.overallTW.setItem(r, 3, item)
-            self.ui.overallTW.setSortingEnabled(True)
 
             item = QTableWidgetItem()
             assert isinstance(opDict[tstr][3], str)
