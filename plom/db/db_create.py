@@ -314,7 +314,13 @@ def createQGroup(self, t, q, v, pages):
             # qref = QGroup.create(
             #     test=tref, group=gref, question=q, version=v, fullmark=mark
             # )
-            qref = QGroup.create(test=tref, group=gref, question=q, version=v, time=datetime.now(timezone.utc))
+            qref = QGroup.create(
+                test=tref,
+                group=gref,
+                question=q,
+                version=v,
+                time=datetime.now(timezone.utc),
+            )
         except pw.IntegrityError as e:
             log.error(
                 "Create Q - cannot create QGroup of question {} error - {}.".format(
@@ -325,7 +331,9 @@ def createQGroup(self, t, q, v, pages):
         # create annotation 0 owned by HAL
         try:
             uref = User.get(name="HAL")
-            Annotation.create(qgroup=qref, edition=0, user=uref, time=datetime.now(timezone.utc))
+            Annotation.create(
+                qgroup=qref, edition=0, user=uref, time=datetime.now(timezone.utc)
+            )
             # pylint: disable=no-member
             log.warn(
                 f"Created edition {len(qref.annotations)} annotation for qgroup {gid}"

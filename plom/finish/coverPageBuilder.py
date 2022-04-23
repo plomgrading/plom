@@ -6,7 +6,7 @@
 # Copyright (C) 2021 Liam Yih
 
 from weasyprint import HTML, CSS
-from plom.misc_utils import utc_now_to_simple_string, local_now_to_simple_string
+from plom.misc_utils import local_now_to_simple_string
 
 # A simple CSS header to style the cover page nicely.
 css = CSS(
@@ -87,11 +87,11 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     <footer style="position:absolute; bottom:0;">
     """
     htmlText += """
-    Coverpage produced on {}  &equiv;  {}
+    Coverpage produced on {}
     </ul>
     </footer>
     """.format(
-        local_now_to_simple_string(), utc_now_to_simple_string()
+        local_now_to_simple_string()
     )
     htmlText += """
 </body>

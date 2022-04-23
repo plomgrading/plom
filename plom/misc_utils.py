@@ -38,6 +38,10 @@ def local_now_to_simple_string():
     return arrow.utcnow().to("local").format("YYYY-MM-DD [at] HH:mm ZZZ")
 
 
+def arrowtime_to_string(arrowtime):
+    return arrowtime.format("YYYY-MM-DD_HH:mm:ss_ZZ")
+
+
 def arrowtime_to_simple_string(arrowtime):
     return arrowtime.format("YYYY-MM-DD [at] HH:mm:ss")
 
