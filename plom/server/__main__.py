@@ -14,7 +14,6 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import csv
 from pathlib import Path
 
 from plom import __version__
@@ -27,10 +26,9 @@ from plom.server import (
     check_server_directories,
     check_server_fully_configured,
 )
-from plom.server.manageUserFiles import (
-    parse_and_save_user_list,
-    write_template_csv_user_list,
-)
+from plom.server.manageUserFiles import write_csv_user_list
+from plom.server.manageUserFiles import get_template_user_list
+from plom.server.manageUserFiles import parse_and_save_user_list
 
 
 server_instructions = """Overview of running the Plom server:
@@ -92,7 +90,8 @@ def processUsers(userFile, demo, auto, numbered, srvdir):
         print(
             f"Creating a demo user list at {rawfile}. ** DO NOT USE ON REAL SERVER **"
         )
-        write_template_csv_user_list(rawfile)
+        lst = get_template_user_list()
+        write_csv_user_list(lst, rawfile)
         parse_and_save_user_list(rawfile, basedir=srvdir)
         return
 
@@ -105,12 +104,8 @@ def processUsers(userFile, demo, auto, numbered, srvdir):
             )
         )
         # grab required users and regular users
-        lst = build_canned_users(auto, numbered)
-        with open(rawfile, "w") as fh:
-            writer = csv.writer(fh, quoting=csv.QUOTE_NONNUMERIC)
-            writer.writerow(["user", "password"])
-            for row in lst:
-                writer.writerow(row)
+        lst = build_canned_users(auto, numbered=numbered, manager=True)
+        write_csv_user_list(lst, rawfile)
         return
 
     if not userFile:
@@ -119,7 +114,8 @@ def processUsers(userFile, demo, auto, numbered, srvdir):
                 rawfile
             )
         )
-        write_template_csv_user_list(rawfile)
+        lst = get_template_user_list()
+        write_csv_user_list(lst, rawfile)
 
 
 def check_non_negative(arg):

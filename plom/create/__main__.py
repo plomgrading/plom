@@ -18,7 +18,6 @@ __copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-import csv
 import sys
 import argparse
 import os
@@ -43,8 +42,9 @@ from plom.create import version_map_from_file
 from plom.create import save_version_map
 
 # we may want to shift some files around
-from plom.server.manageUserFiles import write_template_csv_user_list
+from plom.server.manageUserFiles import write_csv_user_list
 from plom.server.manageUserFiles import get_raw_user_dict_from_csv
+from plom.server.manageUserFiles import get_template_user_dict
 from plom.server.manageUserFiles import build_canned_users
 
 
@@ -112,7 +112,10 @@ def autogen_users_file(demo, auto, numbered, rawfile=Path("userListRaw.csv")):
         print(
             f"Creating a demo user list at {rawfile}. ** DO NOT USE ON REAL SERVER **"
         )
-        write_template_csv_user_list(rawfile)
+        users = get_template_user_dict()
+        users.pop("manager")
+        users = [(k, v) for k, v in users.items()]
+        write_csv_user_list(users, rawfile)
         return rawfile
 
     assert auto is not None, "auto cannot be None unless demo is specified"
@@ -123,12 +126,8 @@ def autogen_users_file(demo, auto, numbered, rawfile=Path("userListRaw.csv")):
             rawfile,
         )
     )
-    lst = build_canned_users(auto, numbered)
-    with open(rawfile, "w") as fh:
-        writer = csv.writer(fh, quoting=csv.QUOTE_NONNUMERIC)
-        writer.writerow(["user", "password"])
-        for row in lst:
-            writer.writerow(row)
+    users = build_canned_users(auto, numbered=numbered, manager=False)
+    write_csv_user_list(users, rawfile)
     return rawfile
 
 
@@ -392,14 +391,20 @@ def get_parser():
         action="store_true",
         help="""
             Use fixed prepopulated demo userlist and passwords.
-            **DO NOT USE THIS ON REAL SERVER**
+            **DO NOT USE THIS ON REAL SERVER**.
+            Includes "scanner" and "reviewer" BUT NOT "manager" accounts
+            (because the server must already have that).
         """,
     )
     group.add_argument(
         "--auto",
         type=check_non_negative,
         metavar="N",
-        help="Auto-generate a random user list of N users with real-ish usernames.",
+        help="""
+            Auto-generate a random user list of N users with real-ish usernames.
+            This will also create "scanner" and "reviewer" accounts BUT NOT a
+            "manager" account (because the server must already have that).
+        """,
     )
     # TODO: goes with --auto
     sp.add_argument(
@@ -619,7 +624,8 @@ def main():
             print("Users:")
             for user, stuff in user_dict.items():
                 if user != "HAL":
-                    print(f"  {user}\t{stuff}")
+                    stuffit = "\t".join(str(x) for x in stuff)
+                    print(f"  {user:10}\t{stuffit}")
             if "scanner" not in user_dict:
                 print('WARNING: server has no "scanner" user')
             if "reviewer" not in user_dict:
