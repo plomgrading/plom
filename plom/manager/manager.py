@@ -1554,13 +1554,12 @@ class Manager(QWidget):
         is_running, timestamp, msg = self.msgr.id_reader_get_logs()
         if is_running:
             label = "<em>Running</em>"
-            timestamp = arrow.get(timestamp)
         elif timestamp is None:
             label = "Never run"
         else:
             label = "Stopped"
-            timestamp = arrow.get(timestamp)
         if timestamp:
+            timestamp = arrow.get(timestamp)
             label += f", started {timestamp.humanize()}"
             label += f' {timestamp.isoformat(" ", "seconds")}.'
         label = f"<p>{label}<br />Log output:</p>"
