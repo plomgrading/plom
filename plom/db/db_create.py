@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from peewee import fn
@@ -243,7 +243,7 @@ def createIDGroup(self, t, pages):
             return False
         # make the IDGroup
         try:
-            IDGroup.create(test=tref, group=gref)
+            IDGroup.create(test=tref, group=gref, time=datetime.now(timezone.utc))
         except pw.IntegrityError as e:
             log.error(
                 "Create ID for gid={} test={} Group={}: cannot create IDGroup - {}.".format(
@@ -314,7 +314,13 @@ def createQGroup(self, t, q, v, pages):
             # qref = QGroup.create(
             #     test=tref, group=gref, question=q, version=v, fullmark=mark
             # )
-            qref = QGroup.create(test=tref, group=gref, question=q, version=v)
+            qref = QGroup.create(
+                test=tref,
+                group=gref,
+                question=q,
+                version=v,
+                time=datetime.now(timezone.utc),
+            )
         except pw.IntegrityError as e:
             log.error(
                 "Create Q - cannot create QGroup of question {} error - {}.".format(
@@ -325,7 +331,9 @@ def createQGroup(self, t, q, v, pages):
         # create annotation 0 owned by HAL
         try:
             uref = User.get(name="HAL")
-            Annotation.create(qgroup=qref, edition=0, user=uref)
+            Annotation.create(
+                qgroup=qref, edition=0, user=uref, time=datetime.now(timezone.utc)
+            )
             # pylint: disable=no-member
             log.warn(
                 f"Created edition {len(qref.annotations)} annotation for qgroup {gid}"
@@ -505,7 +513,7 @@ def remove_id_from_paper(self, paper_num):
         iref.student_id = None
         iref.student_name = None
         iref.identified = False
-        iref.time = datetime.now()
+        iref.time = datetime.now(timezone.utc)
         iref.save()
         tref.identified = False
         tref.save()
@@ -538,8 +546,8 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
             kind="absolute",
             question=questionNumber,
             user=uref,
-            creationTime=datetime.now(),
-            modificationTime=datetime.now(),
+            creationTime=datetime.now(timezone.utc),
+            modificationTime=datetime.now(timezone.utc),
         )
         log.info("Created no-answer-rubric for question {}".format(questionNumber))
     else:

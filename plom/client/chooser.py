@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -12,7 +12,6 @@ __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from datetime import datetime
 import logging
 from pathlib import Path
 import tempfile
@@ -45,7 +44,7 @@ from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQ
 from .useful_classes import ClientSettingsDialog
 
 from plom.messenger import ManagerMessenger
-
+from plom.misc_utils import utc_now_to_string
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -87,7 +86,7 @@ class Chooser(QDialog):
 
         kwargs = {}
         if self.lastTime.get("LogToFile"):
-            logfile = datetime.now().strftime("plomclient-%Y%m%d_%H-%M-%S.log")
+            logfile = "plomclient-{}.log".format(utc_now_to_string())
             try:
                 logdir.mkdir(parents=True, exist_ok=True)
                 logfile = logdir / logfile
@@ -96,7 +95,7 @@ class Chooser(QDialog):
             kwargs = {"filename": logfile}
         logging.basicConfig(
             format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
-            datefmt="%b%d %H:%M:%S",
+            datefmt="%b%d %H:%M:%S %Z",
             **kwargs,
         )
         # Default to INFO log level

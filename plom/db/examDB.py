@@ -3,16 +3,16 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 
+from datetime import datetime, timedelta, timezone
+import logging
+
 from plom.db.tables import *
-from datetime import datetime, timedelta
 
 from peewee import *
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 
-
-import logging
 
 log = logging.getLogger("DB")
 
@@ -63,7 +63,7 @@ class PlomDB:
             User.create(
                 name="HAL",
                 password=None,
-                last_activity=datetime.now(),
+                last_activity=datetime.now(timezone.utc),
                 last_action="Created",
             )
             log.info("User 'HAL' created to do all our automated tasks.")

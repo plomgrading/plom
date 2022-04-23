@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import imghdr
 from io import BytesIO
@@ -11,6 +11,7 @@ import json
 import os
 import logging
 
+from plom.misc_utils import datetime_to_json
 from plom.textools import texFragmentToPNG
 
 
@@ -211,10 +212,15 @@ def MreturnMarkedTask(
     #  check if those files exist already - back up if so
     for filename in (annotated_filename, plom_filename):
         if os.path.isfile(filename):
-            os.rename(
-                filename,
-                filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
-            )
+            # start with suffix 0 and keep incrementing until get a safe suffix.
+            suffix = 0
+            while True:
+                newname = filename + f".rgd.{suffix}"
+                if os.path.isfile(newname):
+                    suffix += 1
+                else:
+                    break
+            os.rename(filename, newname)
 
     # now write in the files
     with open(annotated_filename, "wb") as file_header:
@@ -249,7 +255,7 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking):
                 annotated_filename,
                 mark,
                 username,
-                datetime.now().strftime("%Y-%m-%d,%H:%M"),
+                datetime_to_json(datetime.now(timezone.utc)),
                 time_spent_marking,
             )
         )

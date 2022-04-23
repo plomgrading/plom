@@ -4,11 +4,10 @@
 # Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
-from datetime import datetime, timedelta
 import logging
 
 from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
-
+from plom.misc_utils import datetime_to_json, is_within_one_hour_of_now
 
 log = logging.getLogger("DB")
 
@@ -234,8 +233,6 @@ def RgetProgress(self, spec, q, v):
     medianMark, minMark, modeMark, maxMark] and their values
     numberRecent = number done in the last hour.
     """
-    # set up a time-delta of 1 hour for calc of number done recently.
-    one_hour = timedelta(hours=1)
 
     NScanned = 0  # number scanned
     NMarked = 0  # number marked
@@ -261,7 +258,11 @@ def RgetProgress(self, spec, q, v):
             NMarked += 1
             mark_list.append(qref.annotations[-1].mark)
             SMTime += qref.annotations[-1].marking_time
-            if datetime.now() - qref.annotations[-1].time < one_hour:
+            # https://github.com/coleifer/peewee/issues/2318
+            # peewee datetime with timezone stored as string.
+            # http://docs.peewee-orm.com/en/latest/peewee/api.html#DateTimeField
+            # so call helper function which does conversions for us
+            if is_within_one_hour_of_now(qref.annotations[-1].time):
                 NRecent += 1
 
     log.debug("Sending progress summary for Q{}v{}".format(q, v))
@@ -353,15 +354,27 @@ def RgetQuestionUserProgress(self, q, v):
 
 
 def RgetCompletionStatus(self):
-    """Return a dict of every (ie whether completely scanned or not). Each dict entry is of the form dict[test_number] = [scanned_or_not, identified_or_not, number_of_questions_marked]"""
+    """Return a dict of every (ie whether completely scanned or not).
+    Each dict entry is of the form
+    dict[test_number] = [scanned_or_not, identified_or_not, number_of_questions_marked, time_of_last_update]
+    """
     progress = {}
+
     for tref in Test.select():
-        number_marked = (
-            QGroup.select()
-            .where(QGroup.test == tref, QGroup.marked == True)  # noqa: E712
-            .count()
-        )
-        progress[tref.test_number] = [tref.scanned, tref.identified, number_marked]
+        # get update times for each group starting with the idgroup
+        last_update = tref.idgroups[0].time  # even if un-id'd will show creation time.
+        number_marked = 0
+        for qref in tref.qgroups:
+            if qref.marked:
+                number_marked += 1
+            if last_update < qref.time:
+                last_update = qref.time
+        progress[tref.test_number] = [
+            tref.scanned,
+            tref.identified,
+            number_marked,
+            datetime_to_json(last_update),
+        ]
     log.debug("Sending list of completed tests")
     return progress
 
@@ -370,10 +383,9 @@ def RgetOutToDo(self):
     """Return a list of tasks that are currently out with clients. These have status "todo".
     For each task we return a triple of [code, user, time]
     code = id-t{testnumber} or mrk-t{testnumber}-q{question}-v{version}
-    note that the datetime object is not jsonable, so we format it using strftime.
+    note that the datetime object is not directly jsonable, so convert it to a
+    string via datetime_to_json which uses arrow.
     """
-    # note - have to format the time as string since not jsonable.
-    # x.time.strftime("%y:%m:%d-%H:%M:%S"),
 
     out_tasks = []
     for iref in IDGroup.select().where(IDGroup.status == "out"):
@@ -381,7 +393,7 @@ def RgetOutToDo(self):
             [
                 "id-t{}".format(iref.test.test_number),
                 iref.user.name,
-                iref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                datetime_to_json(iref.time),
             ]
         )
     for qref in QGroup.select().where(QGroup.status == "out"):
@@ -391,7 +403,7 @@ def RgetOutToDo(self):
                     qref.test.test_number, qref.question, qref.version
                 ),
                 qref.user.name,
-                qref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                datetime_to_json(qref.time),
             ]
         )
     log.debug("Sending list of tasks that are still out")
@@ -477,7 +489,7 @@ def RgetSpreadsheet(self):
             if last_update < qref.time:
                 last_update = qref.time
         # last_update time is now most recent group update time.
-        this_test["last_update"] = last_update.strftime("%y:%m:%d-%H:%M:%S")
+        this_test["last_update"] = datetime_to_json(last_update)
         # insert the data for this_test into the spreadsheet dict.
         sheet[tref.test_number] = this_test
     log.debug("Sending spreadsheet data.")
@@ -575,8 +587,8 @@ def RgetMarkReview(
                     qref.annotations[-1].mark,
                     qref.user.name,
                     qref.annotations[-1].marking_time,
-                    # CANNOT JSON DATETIMEFIELD.
-                    qref.annotations[-1].time.strftime("%y:%m:%d-%H:%M:%S"),
+                    # Cannot json datetime, so convert it to string
+                    datetime_to_json(qref.annotations[-1].time),
                 ]
             )
         else:
@@ -611,7 +623,7 @@ def RgetIDReview(self):
             [
                 iref.test.test_number,
                 iref.user.name,
-                iref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                datetime_to_json(iref.time),
                 iref.student_id,
                 iref.student_name,
             ]

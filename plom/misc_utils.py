@@ -1,16 +1,65 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019 Omer Angel
-# Copyright (C) 2019, 2021 Colin B. Macdonald
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2019, 2021-2022 Colin B. Macdonald
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Peter Lee
 
 """Misc utilities"""
 
+import arrow
 from contextlib import contextmanager
 import math
 import os
 import string
 import sys
+
+
+# ------------------------------------------------
+# some time conversion tools put here nice and central
+
+
+def datetime_to_json(timestamp):
+    return arrow.get(timestamp).for_json()
+
+
+def json_to_arrow(timestring):
+    return arrow.get(timestring)
+
+
+def utc_now_to_string():
+    return arrow.utcnow().format("YYYY-MM-DD_HH:mm:ss_ZZ")
+
+
+def utc_now_to_simple_string():
+    return arrow.utcnow().format("YYYY-MM-DD [at] HH:mm ZZZ")
+
+
+def local_now_to_simple_string():
+    return arrow.utcnow().to("local").format("YYYY-MM-DD [at] HH:mm ZZZ")
+
+
+def arrowtime_to_string(arrowtime):
+    return arrowtime.format("YYYY-MM-DD_HH:mm:ss_ZZ")
+
+
+def arrowtime_to_simple_string(arrowtime):
+    return arrowtime.format("YYYY-MM-DD [at] HH:mm:ss")
+
+
+def delta_time_strings(ta, tb):
+    return arrow.get(ta) - arrow.get(tb)
+
+
+def is_within_one_hour_of_now(timestamp):
+    if arrow.get(timestamp) > arrow.utcnow().shift(hours=-1):
+        return True
+    else:
+        return False
+
+
+# ---------------------------------------------
+# tools for printing lists and other miscellany
+# ------------------------------------------------
 
 
 def format_int_list_with_runs(L, use_unicode=None):

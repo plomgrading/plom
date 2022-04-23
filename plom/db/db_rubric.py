@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2021-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
+from plom.misc_utils import datetime_to_json
 from plom.db.tables import Rubric, User, Test, QGroup
 from plom.db.tables import plomdb
 
@@ -56,8 +57,8 @@ def McreateRubric(self, user_name, rubric):
             kind=rubric["kind"],
             delta=rubric["delta"],
             text=rubric["text"],
-            creationTime=datetime.now(),
-            modificationTime=datetime.now(),
+            creationTime=datetime.now(timezone.utc),
+            modificationTime=datetime.now(timezone.utc),
             meta=rubric["meta"],
             tags=rubric["tags"],
         )
@@ -85,8 +86,8 @@ def MgetRubrics(self, question_number=None):
                 "tags": r.tags,
                 "meta": r.meta,
                 "count": r.count,
-                "created": r.creationTime.strftime("%y:%m:%d-%H:%M:%S"),
-                "modified": r.modificationTime.strftime("%y:%m:%d-%H:%M:%S"),
+                "created": datetime_to_json(r.creationTime),
+                "modified": datetime_to_json(r.modificationTime),
                 "username": r.user.name,
                 "question_number": r.question,
             }
@@ -137,7 +138,7 @@ def MmodifyRubric(self, user_name, key, change):
         rref.kind = change["kind"]
         rref.delta = change["delta"]
         rref.text = change["text"]
-        rref.modificationTime = datetime.now()
+        rref.modificationTime = datetime.now(timezone.utc)
         rref.revision += 1
         rref.meta = change["meta"]
         rref.tags = change["tags"]
@@ -241,8 +242,8 @@ def Rget_rubric_details(self, key):
         "tags": r.tags,
         "meta": r.meta,
         "count": r.count,
-        "created": r.creationTime.strftime("%y:%m:%d-%H:%M:%S"),
-        "modified": r.modificationTime.strftime("%y:%m:%d-%H:%M:%S"),
+        "created": datetime_to_json(r.creationTime),
+        "modified": datetime_to_json(r.modificationTime),
         "username": r.user.name,
         "question_number": r.question,
         "test_list": [],

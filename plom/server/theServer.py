@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Peter Lee
 
-from datetime import datetime
 import json
 import logging
 from pathlib import Path
@@ -34,7 +33,7 @@ from .plomServer.routesMark import MarkHandler
 from .plomServer.routesRubric import RubricHandler
 from .plomServer.routesReport import ReportHandler
 from .plomServer.routesSolution import SolutionHandler
-from ..misc_utils import working_directory
+from ..misc_utils import working_directory, utc_now_to_string
 
 
 class Server:
@@ -265,7 +264,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     """
     basedir = Path(basedir)
     if not logfile:
-        logfile = basedir / datetime.now().strftime("plomserver-%Y%m%d_%H-%M-%S.log")
+        logfile = basedir / "plom-server-{}.log".format(utc_now_to_string())
     logfile = Path(logfile)
     # if just filename, make log in basedir
     if logfile.parent == Path("."):
@@ -275,7 +274,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     logging.basicConfig(format=fmtstr, datefmt="%b%d %H:%M:%S %Z", filename=logfile)
     if logconsole:
         h = logging.StreamHandler()
-        h.setFormatter(logging.Formatter(fmtstr, datefmt="%b%d %H:%M:%S"))
+        h.setFormatter(logging.Formatter(fmtstr, datefmt="%b%d %H:%M:%S %Z"))
         logging.getLogger().addHandler(h)
 
     log = logging.getLogger("server")

@@ -19,8 +19,8 @@ class User(BaseModel):
     enabled = pw.BooleanField(default=True)
     password = pw.CharField(null=True)  # hash of password for comparison
     token = pw.CharField(null=True)  # authentication token
-    last_activity = pw.DateTimeField(null=True)
-    last_action = pw.CharField(null=True)
+    last_activity = pw.DateTimeField(null=False)
+    last_action = pw.CharField(null=False)
 
 
 class Bundle(BaseModel):
@@ -72,7 +72,7 @@ class IDGroup(BaseModel):
     student_name = pw.CharField(null=True)
     user = pw.ForeignKeyField(User, backref="idgroups", null=True)
     status = pw.CharField(default="")
-    time = pw.DateTimeField(null=True)
+    time = pw.DateTimeField(null=False)
     identified = pw.BooleanField(default=False)
 
 
@@ -88,7 +88,7 @@ class QGroup(BaseModel):
     version = pw.IntegerField(null=False, default=1)
     user = pw.ForeignKeyField(User, backref="qgroups", null=True)
     status = pw.CharField(default="")
-    time = pw.DateTimeField(null=True)
+    time = pw.DateTimeField(null=False)
     marked = pw.BooleanField(default=False)
     # fullmark = pw.IntegerField(null=False)
 
@@ -169,7 +169,7 @@ class Annotation(BaseModel):
     plom_file = pw.CharField(null=True)
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
-    time = pw.DateTimeField(null=True)
+    time = pw.DateTimeField(null=False)
 
 
 class APage(BaseModel):

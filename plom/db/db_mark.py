@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import logging
 
@@ -186,7 +186,7 @@ def MgiveTaskToClient(self, user_name, group_id, version):
         # update status, username
         qref.status = "out"
         qref.user = uref
-        qref.time = datetime.now()
+        qref.time = datetime.now(timezone.utc)
         qref.save()
         # get tag_list
         tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
@@ -203,7 +203,7 @@ def MgiveTaskToClient(self, user_name, group_id, version):
             image_metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
-        uref.last_activity = datetime.now()
+        uref.last_activity = datetime.now(timezone.utc)
         uref.save()
         log.debug(
             'Giving marking task {} to user "{}" with integrity_check {}'.format(
@@ -344,7 +344,7 @@ def MtakeTaskFromClient(
             user=uref,
             edition=oldaref.edition + 1,
             outdated=False,
-            time=datetime.now(),
+            time=datetime.now(timezone.utc),
             integrity_check=oldaref.integrity_check,
         )
         # create apages from the image_ref_list.
@@ -356,7 +356,7 @@ def MtakeTaskFromClient(
         # update status, mark, annotate-file-name, time, and
         # time spent marking the image
         qref.status = "done"
-        qref.time = datetime.now()
+        qref.time = datetime.now(timezone.utc)
         qref.marked = True
         # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
         aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
@@ -367,7 +367,7 @@ def MtakeTaskFromClient(
         aref.save()
         # update user activity
         uref.last_action = "Returned M task {}".format(task)
-        uref.last_activity = datetime.now()
+        uref.last_activity = datetime.now(timezone.utc)
         uref.save()
         # since this has been marked - check if all questions for test have been marked
         log.info(
@@ -578,7 +578,7 @@ def MreviewQuestion(self, test_number, question, version):
         return [False]
     with plomdb.atomic():
         qref.user = revref
-        qref.time = datetime.now()
+        qref.time = datetime.now(timezone.utc)
         qref.save()
     log.info("Setting tqv {}.{}.{} for reviewer".format(test_number, question, version))
     return [True]
@@ -604,7 +604,7 @@ def MrevertTask(self, task):
         # clean up the qgroup
         qref.marked = False
         qref.status = "todo"
-        qref.time = datetime.now()
+        qref.time = datetime.now(timezone.utc)
         qref.user = None
         qref.save()
     # now we need to set annotations to "outdated"
@@ -650,7 +650,9 @@ def McreateNewTag(self, user_name, tag_text):
         key = generate_new_comment_ID(10)
         while Tag.get_or_none(key=key) is not None:
             key = generate_new_comment_ID(10)
-        Tag.create(key=key, user=uref, creationTime=datetime.now(), text=tag_text)
+        Tag.create(
+            key=key, user=uref, creationTime=datetime.now(timezone.utc), text=tag_text
+        )
     return (True, key)
 
 
@@ -752,6 +754,3 @@ def MremoveExistingTag(self, task, tag_text):
     else:
         log.warn(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
         return False
-
-
-##

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -171,6 +171,7 @@ def reassemble_one_paper(
         t = str(testnum)  # dicts keyed by strings
         try:
             completed = completedTests[t]
+            # is 4-tuple [Scanned, IDed, #Marked, Last_update_time]
         except KeyError:
             raise ValueError(f"Paper {t} does not exist or is not marked") from None
         if not completed[0]:

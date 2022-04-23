@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import uuid
 
@@ -618,11 +618,11 @@ def updateIDGroup(self, idref):
         # -----
         idref.status = "todo"
         idref.user = None
-        idref.time = datetime.now()
+        idref.time = datetime.now(timezone.utc)
         idref.student_id = None
         idref.student_name = None
         idref.identified = False
-        idref.time = datetime.now()
+        idref.time = datetime.now(timezone.utc)
         idref.save()
         tref.identified = False
         tref.save()
@@ -689,7 +689,7 @@ def buildUpToDateAnnotation(self, qref):
         qref.user = None
         qref.marked = False
         qref.status = ""
-        qref.time = datetime.now()
+        qref.time = datetime.now(timezone.utc)
         qref.save()
         tref.marked = False
         tref.save()
@@ -756,7 +756,7 @@ def updateQGroup(self, qref):
         gref.scanned = True
         gref.save()
         qref.status = "todo"
-        qref.time = datetime.now()
+        qref.time = datetime.now(timezone.utc)
         qref.save()
         log.info(
             "QGroup {} of test {} is ready to be marked.".format(

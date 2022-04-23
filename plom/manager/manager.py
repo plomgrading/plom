@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -34,7 +34,6 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QGridLayout,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -76,6 +75,7 @@ from plom.plom_exceptions import (
 from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
+from plom.misc_utils import arrowtime_to_simple_string
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -1394,9 +1394,16 @@ class Manager(QWidget):
 
     def initOverallTab(self):
         self.ui.overallTW.setHorizontalHeaderLabels(
-            ["Test number", "Scanned", "Identified", "Questions Marked"]
+            [
+                "Test number",
+                "Scanned",
+                "Identified",
+                "Questions Marked",
+                "Last Update (UTC)",
+            ]
         )
         self.ui.overallTW.activated.connect(self.viewTestStatus)
+        self.ui.overallTW.resizeRowsToContents()
         self.ui.overallTW.setSortingEnabled(True)
         self.refreshOverallTab()
 
@@ -1418,14 +1425,14 @@ class Manager(QWidget):
         # TODO: why not let Qt do it for us...?
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
-        # each dict value is [Scanned, Identified, #Marked]
+        # each dict value is [Scanned, Identified, #Marked, LastUpdate]
 
+        self.ui.overallTW.setSortingEnabled(False)
         for r, t in enumerate(tk):
             # for some reason t is string instead of an int
             tstr = str(t)
             t = int(t)
             self.ui.overallTW.insertRow(r)
-            self.ui.overallTW.setSortingEnabled(False)
             item = QTableWidgetItem()
             assert isinstance(t, int)
             item.setData(Qt.DisplayRole, t)
@@ -1455,7 +1462,14 @@ class Manager(QWidget):
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 item.setToolTip("Has been marked")
             self.ui.overallTW.setItem(r, 3, item)
-            self.ui.overallTW.setSortingEnabled(True)
+
+            item = QTableWidgetItem()
+            assert isinstance(opDict[tstr][3], str)
+            time = arrow.get(opDict[tstr][3])
+            item.setData(Qt.DisplayRole, arrowtime_to_simple_string(time))
+            item.setToolTip(time.humanize())
+            self.ui.overallTW.setItem(r, 4, item)
+        self.ui.overallTW.setSortingEnabled(True)
 
     def initIDTab(self):
         self.refreshIDTab()
@@ -1537,8 +1551,19 @@ class Manager(QWidget):
             GroupView(self, img_name, title=title).exec()
 
     def id_reader_get_log(self):
-        # TODO: where to display is_running, and timestamp?
         is_running, timestamp, msg = self.msgr.id_reader_get_logs()
+        if is_running:
+            label = "<em>Running</em>"
+        elif timestamp is None:
+            label = "Never run"
+        else:
+            label = "Stopped"
+        if timestamp:
+            timestamp = arrow.get(timestamp)
+            label += f", started {timestamp.humanize()}"
+            label += f' {timestamp.isoformat(" ", "seconds")}.'
+        label = f"<p>{label}<br />Log output:</p>"
+        self.ui.idReaderStatusLabel.setText(label)
         self.ui.idReaderLogTextEdit.setPlainText(msg)
 
     def id_reader_run(self, ignore_timestamp=False):
@@ -1549,13 +1574,16 @@ class Manager(QWidget):
         )
         if is_running:
             if new_start:
-                txt = f"IDReader launched in background at {timestamp}."
+                txt = "IDReader launched in background."
                 info = """
                     <p>It may take some time to run; click &ldquo;refresh&rdquo;
                     to update output.</p>
                 """
             else:
-                txt = f"IDReader currently running (started at {timestamp})."
+                timestamp = arrow.get(timestamp)
+                txt = "IDReader currently running,"
+                txt += f" launched {timestamp.humanize()} at"
+                txt += f' {timestamp.isoformat(" ", "seconds")}.'
                 info = """
                     <p>If its been a while or output is unexpected, perhaps it
                     crashed.</p>
@@ -1564,9 +1592,14 @@ class Manager(QWidget):
             self.id_reader_get_log()
             return
         else:
-            txt = f"IDReader was last run at {timestamp}."
-            q = "Do you want to rerun it?"
-            if SimpleQuestion(self, txt, q).exec_() == QMessageBox.No:
+            timestamp = arrow.get(timestamp)
+            msg = SimpleQuestion(
+                self,
+                f"IDReader was last run {timestamp.humanize()} at"
+                f' {timestamp.isoformat(" ", "seconds")}.',
+                question="Do you want to rerun it?",
+            )
+            if msg.exec_() == QMessageBox.No:
                 return
             self.id_reader_run(ignore_timestamp=True)
 
@@ -1705,7 +1738,7 @@ class Manager(QWidget):
 
     def initOutTab(self):
         self.ui.tasksOutTW.setColumnCount(3)
-        self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time"])
+        self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time (UTC)"])
         self.ui.tasksOutTW.setSortingEnabled(True)
 
     def refreshOutTab(self):
@@ -1721,10 +1754,21 @@ class Manager(QWidget):
         self.ui.tasksOutTW.setSortingEnabled(False)
         for r, x in enumerate(tasksOut):
             self.ui.tasksOutTW.insertRow(r)
-            for k in range(3):
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, x[k])
-                self.ui.tasksOutTW.setItem(r, k, item)
+            k = 0
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, x[k])
+            self.ui.tasksOutTW.setItem(r, k, item)
+            k = 1
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, x[k])
+            self.ui.tasksOutTW.setItem(r, k, item)
+            k = 2  # the time - so set a tooltip too.
+            time = arrow.get(x[k])
+            item = QTableWidgetItem()
+            item.setData(Qt.DisplayRole, arrowtime_to_simple_string(time))
+            item.setToolTip(time.humanize())
+            self.ui.tasksOutTW.setItem(r, k, item)
+
         self.ui.tasksOutTW.setSortingEnabled(True)
 
     ##################
@@ -1987,7 +2031,7 @@ class Manager(QWidget):
         if (
             SimpleQuestion(
                 self,
-                f"Are you sure that you want to delete solution to"
+                "Are you sure that you want to delete solution to"
                 f" question {self.ui.solnQSB.value()}"
                 f" version {self.ui.solnVSB.value()}.",
             ).exec()
@@ -2021,13 +2065,14 @@ class Manager(QWidget):
                 "Username",
                 "Enabled",
                 "Logged in",
-                "Last activity",
+                "Last activity (UTC)",
                 "Last action",
                 "Papers IDd",
                 "Questions Marked",
             ]
         )
         self.ui.userListTW.setSortingEnabled(True)
+        self.ui.userListTW.resizeColumnsToContents()
         self.ui.userListTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.userListTW.setSelectionBehavior(QAbstractItemView.SelectRows)
 
@@ -2154,10 +2199,9 @@ class Manager(QWidget):
         uDict = self.msgr.getUserDetails()
         self.ui.userListTW.clearContents()
         self.ui.userListTW.setRowCount(0)
+        self.ui.userListTW.setSortingEnabled(False)
         for r, (u, dat) in enumerate(uDict.items()):
-            self.ui.userListTW.setSortingEnabled(False)
             self.ui.userListTW.insertRow(r)
-
             item = QTableWidgetItem()
             item.setData(Qt.DisplayRole, u)
             if u in ["manager", "scanner", "reviewer"]:
@@ -2180,11 +2224,11 @@ class Manager(QWidget):
 
             k = 2
             # change the last activity to be human readable
-            time = arrow.get(dat[k], "YY:MM:DD-HH:mm:ss")
+            time = arrow.get(dat[k])
             time.humanize()
             item = QTableWidgetItem()
             # TODO: want human-readable w/ raw tooltip but breaks sorting
-            item.setData(Qt.DisplayRole, dat[k])
+            item.setData(Qt.DisplayRole, arrowtime_to_simple_string(time))
             item.setToolTip(time.humanize())
             self.ui.userListTW.setItem(r, k + 1, item)
 
@@ -2192,7 +2236,7 @@ class Manager(QWidget):
                 item = QTableWidgetItem()
                 item.setData(Qt.DisplayRole, dat[k])
                 self.ui.userListTW.setItem(r, k + 1, item)
-            self.ui.userListTW.setSortingEnabled(True)
+        self.ui.userListTW.setSortingEnabled(True)
 
     def refreshProgressQU(self):
         # delete the children of each toplevel items

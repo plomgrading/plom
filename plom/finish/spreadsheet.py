@@ -3,12 +3,13 @@
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
+import arrow
 import csv
-from datetime import datetime
 
 from plom import get_question_label
 from plom.finish import start_messenger
 from plom.finish import CSVFilename
+from plom.misc_utils import utc_now_to_string, arrowtime_to_string
 
 
 def writeSpreadsheet(spreadSheetDict, labels):
@@ -64,9 +65,10 @@ def writeSpreadsheet(spreadSheetDict, labels):
             else:
                 row["Total"] = ""
 
-            row["LastUpdate"] = thisTest["last_update"]
+            lu = arrow.get(thisTest["last_update"])
+            row["LastUpdate"] = arrowtime_to_string(lu)
 
-            row["CSVWriteTime"] = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
+            row["CSVWriteTime"] = utc_now_to_string()
 
             warnString = ""
             if not thisTest["identified"]:
