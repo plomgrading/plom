@@ -73,10 +73,6 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
     convert PDF to images and read QR codes from those.
     """
     pdf_fname = Path(pdf_fname)
-    if not pdf_fname.is_file():
-        print("Cannot find file {} - skipping".format(pdf_fname))
-        return
-    # TODO: replace above with letting exception rise from next:
     bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
 
     print(f'Checking if bundle "{bundle_name}" already exists on server')
