@@ -3,12 +3,16 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
-import shutil
+import logging
 from pathlib import Path
+import shutil
 
 from plom.scan import with_scanner_messenger
 from plom import PlomImageExts
 from plom.scan.sendPagesToServer import extract_order
+
+
+log = logging.getLogger("scan")
 
 
 def doFiling(rmsg, bundle, f):
@@ -95,7 +99,11 @@ def print_unknowns_warning(bundle_dir):
     for ext in PlomImageExts:
         files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
     if not files:
+        log.info("Processing resulted in **no** UnknownPages")
         return
+    log.info("Processing resulted in %s UnknownPages", len(files))
+    log.info("Unknowns: " + "; ".join([x.name for x in files]))
+
     print("\n>>>>>>>>>> NOTE <<<<<<<<<<")
     print("Processing resulted in these {} unknown files:".format(len(files)))
     print("  {}".format("\n  ".join([x.name for x in files])))

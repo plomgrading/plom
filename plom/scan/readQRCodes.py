@@ -275,6 +275,7 @@ def moveScansIntoPlace(bundledir, examsScannedNow):
         dpath = bundledir / "decodedPages"
         # move blah-n.png to txxxxpyyvz.blah-n.png
         dest = dpath / f"t{t:04}p{p:02}v{v}.{fname.name}"
+        log.info("Successfully decoded QRs: moving %s to %s", fname, dest)
         shutil.move(fname, dest)
         shutil.move(Path(str(fname) + ".qr"), Path(str(dest) + ".qr"))
 
