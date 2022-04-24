@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * plom-server will autogenerate a manager password if it is started without one.
+* plom-create can manage user accounts of a running server.
 * Manager displays bundle name/page of unknown pages.
 * `plom-scan status` now displays information about bundles and unknown pages.
 * `plom-finish audit` produces a JSON file for post-grading checking/followup/etc
