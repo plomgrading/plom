@@ -220,16 +220,18 @@ def checkQRsValid(bundledir, spec):
                 problemFlag = True
 
         if not problemFlag:
-            # we have a valid TGVC and the code matches.
             if warnFlag:
                 explain = "(high occurrences of these warnings may mean printer/scanner problems)"
                 print(f"[W] {fname}: {msg}\n    {explain}")
                 log.warn(f"[W] {fname}: {msg}\n    {explain}")
-            # store the tpv in examsScannedNow
-            examsScannedNow[fname] = [tn, pn, vn]
-            # later we check that list against those produced during build
 
-        if problemFlag:
+        if not problemFlag:
+            problemFlag, msg = validateQRsAgainstSpec(spec, fname, tn, pn, vn)
+
+        if not problemFlag:
+            # we have a valid TGVC and the code matches.
+            examsScannedNow[fname] = [tn, pn, vn]
+        else:
             # Difficulty scanning this pageimage so move it to unknownPages
             # fname =  bname/pageImages/blah-n.png
             # dest = bname/unknownPages/blah-n.png
@@ -242,40 +244,25 @@ def checkQRsValid(bundledir, spec):
     return examsScannedNow
 
 
-def validateQRsAgainstSpec(bundledir, spec, examsScannedNow):
+def validateQRsAgainstSpec(spec, fname, t, p, v):
     """After pageimages have been decoded we need to check the results
     against the spec. A simple check of test-name and magic-code were
     done already, but now the test-page-version triples are checked.
 
     TODO: shouldn't this be more serious?
     """
-    for fname in examsScannedNow:
-        t = examsScannedNow[fname][0]
-        p = examsScannedNow[fname][1]
-        v = examsScannedNow[fname][2]
-        errs = []
-        if t < 0 or t > spec["numberToProduce"]:
-            # TODO: Issue #1745
-            errs.append("t outside [1, {}]".format(spec["numberToProduce"]))
-        if p < 0 or p > spec["numberOfPages"]:
-            errs.append("p outside [1, {}]".format(spec["numberOfPages"]))
-        if v < 0 or v > spec["numberOfVersions"]:
-            errs.append("v outside [1, {}]".format(spec["numberOfVersions"]))
-        if errs:
-            msg = f'Mismatch b/w scan "t{t}p{p}v{v}" and spec: {"; ".join(errs)}'
-            msg += f"[F] {fname}: moving to unknownPages"
-            print(msg)
-            log.warn(msg)
-            # fname =  bname/pageImages/blah-n.png
-            # dest = bname/unknownPages/blah-n.png
-            dest = bundledir / "unknownPages" / fname.name
-            # move the blah.<ext> and blah.<ext>.qr
-            # this means that they won't be added to the
-            # list of correctly scanned page images
-            # TODO: I don't above is correct: not unless we pop them from the dict
-            # TODO: I suspect this code has never been used: just raise RuntimeException?
-            shutil.move(fname, dest)
-            shutil.move(Path(str(fname) + ".qr"), Path(str(dest) + ".qr"))
+    errs = []
+    if t < 1 or t > spec["numberToProduce"]:
+        # TODO: Issue #1745
+        errs.append("t outside [1, {}]".format(spec["numberToProduce"]))
+    if p < 1 or p > spec["numberOfPages"]:
+        errs.append("p outside [1, {}]".format(spec["numberOfPages"]))
+    if v < 1 or v > spec["numberOfVersions"]:
+        errs.append("v outside [1, {}]".format(spec["numberOfVersions"]))
+    if errs:
+        msg = f'Mismatch b/w scan "t{t}p{p}v{v}" and spec: {"; ".join(errs)}'
+        return True, msg
+    return False, ""
 
 
 def moveScansIntoPlace(bundledir, examsScannedNow):
@@ -298,5 +285,4 @@ def processBitmaps(bundledir, *, msgr):
 
     decode_QRs_in_image_files(bundledir / "pageImages")
     examsScannedNow = checkQRsValid(bundledir, spec)
-    validateQRsAgainstSpec(bundledir, spec, examsScannedNow)
     moveScansIntoPlace(bundledir, examsScannedNow)
