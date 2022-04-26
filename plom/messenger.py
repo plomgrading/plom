@@ -157,36 +157,39 @@ class Messenger(BaseMessenger):
                     raise PlomTakenException(response.reason)
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def IDreturnIDdTask(self, code, studentID, studentName):
+    def IDreturnIDdTask(self, task, studentID, studentName):
         """Return a completed IDing task: identify a paper.
 
         Exceptions:
             PlomConflict: `studentID` already used on a different paper.
+            PlomTakenException: someone else owns that task.  This is unexpected
+                if you Claimed this task.
+            PlomRangeException: no such test number or not yet scanned
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                f"/ID/tasks/{code}",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "sid": studentID,
-                    "sname": studentName,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 409:
-                raise PlomConflict(e) from None
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(e) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    f"/ID/tasks/{task}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "sid": studentID,
+                        "sname": studentName,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomTakenException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     # ------------------------
     # ------------------------

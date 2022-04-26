@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 """
@@ -10,7 +10,6 @@ __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from collections import defaultdict
 import imghdr
 import logging
 from pathlib import Path
@@ -33,8 +32,9 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.plom_exceptions import (
-    PlomSeriousException,
     PlomBenignException,
+    PlomConflict,
+    PlomSeriousException,
     PlomTakenException,
 )
 from plom import isValidStudentNumber
@@ -604,17 +604,24 @@ class IDClient(QWidget):
         # Return paper to server with the code, ID, name.
         try:
             self.msgr.IDreturnIDdTask(code, sid, sname)
+        except PlomConflict as err:
+            log.warn("Conflict when returning paper %s: %s", code, err)
+            hints = """
+                <p>If you are unable to resolve this conflict, you may need
+                to use the Manager tool to "Un-ID" the other paper.</p>
+            """
+            WarnMsg(self, str(err), info=hints, info_pre=False).exec()
+            self.exM.revertStudent(index)
+            return False
         except PlomBenignException as err:
             log.error("Somewhat unexpected error when returning %s: %s", code, err)
             WarnMsg(self, f'Unexpected but benign exception:\n"{err}"').exec()
-            # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
             return False
         # successful ID
         # Issue #25: Use timer to avoid macOS conflict between completer and
         # clearing the line-edit. Very annoying but this fixes it.
         QTimer.singleShot(0, self.ui.idEdit.clear)
-        # Update progressbars
         self.updateProgress()
         return True
 
