@@ -64,7 +64,7 @@ def authenticate_by_token(f):
         data = await request.json()
         fields = ["user", "token"]
         if not validate_required_fields(data, fields):
-            log.warn(
+            log.warning(
                 "%s: fields %s do not match expected %s",
                 f.__name__,
                 list(data.keys()),
@@ -74,7 +74,7 @@ def authenticate_by_token(f):
                 reason=f"fields {list(data.keys())} do not match expected {fields}"
             )
         if not zelf.server.validate(data["user"], data["token"]):
-            log.warn(
+            log.warning(
                 '%s user "%s": login token could not be validated',
                 f.__name__,
                 data["user"],
@@ -122,7 +122,7 @@ def authenticate_by_token_required_fields(fields):
             data = await request.json()
             log.debug("{} validating fields {}".format(f.__name__, fields))
             if not validate_required_fields(data, fields):
-                log.warn(
+                log.warning(
                     "%s: fields %s do not match expected %s",
                     f.__name__,
                     list(data.keys()),
@@ -132,7 +132,7 @@ def authenticate_by_token_required_fields(fields):
                     reason=f"fields {list(data.keys())} do not match expected {fields}"
                 )
             if not zelf.server.validate(data["user"], data["token"]):
-                log.warn(
+                log.warning(
                     '%s user "%s": login token could not be validated',
                     f.__name__,
                     data["user"],
@@ -180,7 +180,7 @@ def readonly_admin(f):
     @functools.wraps(f)
     def wrapped(zelf, data, request):
         if data["user"] != "manager":
-            log.warn(
+            log.warning(
                 '%s user "%s": tried to connect to admin (read-only) feature',
                 f.__name__,
                 data["user"],
@@ -208,7 +208,7 @@ def write_admin(f):
     @functools.wraps(f)
     def wrapped(zelf, data, request):
         if data["user"] != "manager":
-            log.warn(
+            log.warning(
                 '%s user "%s": tried to connect to admin (write) feature',
                 f.__name__,
                 data["user"],

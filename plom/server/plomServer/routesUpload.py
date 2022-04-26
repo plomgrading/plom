@@ -651,9 +651,9 @@ class UploadHandler:
             assert msg is None
             return web.json_response(code, status=200)  # all fine
         if code == "notfound":
-            log.warn(msg)
+            log.warning(msg)
             raise web.HTTPConflict(reason=msg)
-        log.warn("Unexpected situation: %s", msg)
+        log.warning("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
     @authenticate_by_token_required_fields(
@@ -683,9 +683,9 @@ class UploadHandler:
         if status:
             return web.Response(status=200)  # all fine
         if code == "notfound":
-            log.warn(msg)
+            log.warning(msg)
             raise web.HTTPConflict(reason=msg)
-        log.warn("Unexpected situation: %s", msg)
+        log.warning("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
     @authenticate_by_token_required_fields(
@@ -719,12 +719,12 @@ class UploadHandler:
         if status:
             return web.Response(status=200)
         if code == "notfound":
-            log.warn(msg)
+            log.warning(msg)
             raise web.HTTPConflict(reason=msg)
         if code == "unscanned":
-            log.warn(msg)
+            log.warning(msg)
             raise web.HTTPConflict(reason=msg)
-        log.warn("Unexpected situation: %s", msg)
+        log.warning("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
     async def collidingToTestPage(self, request):
@@ -747,9 +747,9 @@ class UploadHandler:
         if status:
             return web.Response(status=200)  # all fine
         if code == "notfound":
-            log.warn(msg)
+            log.warning(msg)
             raise web.HTTPConflict(reason=msg)
-        log.warn("Unexpected situation: %s", msg)
+        log.warning("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
     @authenticate_by_token_required_fields(["fileName"])
@@ -844,7 +844,7 @@ class UploadHandler:
             ver = self.server.getPageVersions(paper_idx)
             if not ver:
                 _msg = "There is no version map: have you built the database?"
-                log.warn(_msg)
+                log.warning(_msg)
                 raise web.HTTPConflict(reason=_msg)
             vers[paper_idx] = ver
         return web.json_response(vers, status=200)
@@ -862,7 +862,7 @@ class UploadHandler:
         vers = self.server.get_question_versions(paper_idx)
         if not vers:
             _msg = f"paper {paper_idx} does not (yet?) have a version map"
-            log.warn(_msg)
+            log.warning(_msg)
             raise web.HTTPConflict(reason=_msg)
         return web.json_response(vers, status=200)
 

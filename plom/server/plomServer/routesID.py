@@ -571,13 +571,13 @@ class IDHandler:
         try:
             status = self.server.predict_id_lap_solver()
         except RuntimeError as e:
-            log.warn(e)
+            log.warning(e)
             return web.HTTPConflict(reason=e)
         except IndexError as e:
-            log.warn(e)
+            log.warning(e)
             return web.HTTPNotAcceptable(reason=e)
         except FileNotFoundError as e:
-            log.warn(e)
+            log.warning(e)
             return web.HTTPPreconditionFailed(reason=f"Must run id reader first: {e}")
         return web.Response(text=status, status=200)
 

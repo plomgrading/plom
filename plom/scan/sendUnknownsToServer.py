@@ -30,7 +30,7 @@ def doFiling(rmsg, bundle, f):
     elif rmsg[1] == "duplicate":
         # should be [False, reason, message]
         # TODO: clarify is something happened or what?
-        log.warn("Duplicate! TODO, server msg: %s", rmsg[2])
+        log.warning("Duplicate! TODO, server msg: %s", rmsg[2])
         print(rmsg[2])
         shutil.move(f, bundle / "uploads/discardedPages" / f.name)
         shutil.move(

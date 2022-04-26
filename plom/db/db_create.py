@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 
 from datetime import datetime, timezone
@@ -335,7 +335,7 @@ def createQGroup(self, t, q, v, pages):
                 qgroup=qref, edition=0, user=uref, time=datetime.now(timezone.utc)
             )
             # pylint: disable=no-member
-            log.warn(
+            log.warning(
                 f"Created edition {len(qref.annotations)} annotation for qgroup {gid}"
             )
         except pw.IntegrityError as e:

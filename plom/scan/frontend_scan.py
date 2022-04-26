@@ -170,7 +170,9 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
             print(msg)
             print(f"Skipping previously uploaded pages: {', '.join(skip_list)}")
             log.warning(msg)
-            log.warning("Skipping previous uploaded pages:\n  %s", "\n  ".join(skip_list))
+            log.warning(
+                "Skipping previous uploaded pages:\n  %s", "\n  ".join(skip_list)
+            )
     else:
         print("There was a problem with this bundle.")
         if extra == "name":

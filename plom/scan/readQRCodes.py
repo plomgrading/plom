@@ -223,7 +223,7 @@ def checkQRsValid(bundledir, spec):
             if warnFlag:
                 explain = "(high occurrences of these warnings may mean printer/scanner problems)"
                 print(f"[W] {fname}: {msg}\n    {explain}")
-                log.warn(f"[W] {fname}: {msg}\n    {explain}")
+                log.warning(f"[W] {fname}: {msg}\n    {explain}")
 
         if not problemFlag:
             problemFlag, msg = validateQRsAgainstSpec(spec, fname, tn, pn, vn)
@@ -237,7 +237,7 @@ def checkQRsValid(bundledir, spec):
             # dest = bname/unknownPages/blah-n.png
             dest = bundledir / "unknownPages" / fname.name
             print(f"[F] {fname}: {msg}  Moving to unknownPages")
-            log.warn(f"[F] {fname}: {msg}  Moving to unknownPages")
+            log.warning(f"[F] {fname}: {msg}  Moving to unknownPages")
             # move blah.<ext> and blah.<ext>.qr
             shutil.move(fname, dest)
             shutil.move(Path(str(fname) + ".qr"), Path(str(dest) + ".qr"))
