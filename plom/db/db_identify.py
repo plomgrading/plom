@@ -342,9 +342,19 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
         iref.time = datetime.now(timezone.utc)
         try:
             iref.save()
-        except pw.IntegrityError:
-            log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
-            return False, 409, f"student id {sid} in use elsewhere"
+        except pw.IntegrityError as e:
+            log.error(f"{logbase}: {e}; determining where sid %s used", censorID(sid))
+            other = IDGroup.get_or_none(IDGroup.student_id == sid)
+            if other is None:
+                msg = f"student id {sid} in use but we don't know where!"
+                msg += " This is unexpected - please report an issue"
+                logmsg = "student id %s in use but we don't know where!"
+                logmsg += " This is unexpected - please report an issue"
+            else:
+                msg = f"student id {sid} in use in paper {other.test.test_number:04}"
+                logmsg = f"student id %s in use in paper {other.test.test_number}"
+            log.error(f"{logbase}: {logmsg}", censorID(sid))
+            return False, 409, msg
         tref.identified = True
         tref.save()
         # TODO - decide if it is better to simply update the predictions
