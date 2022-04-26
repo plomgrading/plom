@@ -4,6 +4,7 @@
 
 import hashlib
 import json
+import logging
 from pathlib import Path
 import shutil
 from textwrap import dedent
@@ -13,27 +14,35 @@ from plom import PlomImageExts
 from plom.scan.sendPagesToServer import extract_order
 
 
+log = logging.getLogger("scan")
+
+
 def doFiling(rmsg, bundle, f):
-    if rmsg[0]:  # msg should be [True, "success", success message]
+    if rmsg[0]:
+        # should be [True, "success", message]
+        assert rmsg[1] == "success"
+        log.info("%s uploaded as CollidingPage.  Server says: %s", f, rmsg[2])
+        # TODO: this didn't used to print: should it?  Unknown does...
+        print(f"{f} uploaded as CollidingPage.")
         for suf in ["", ".qr", ".collide"]:
             shutil.move(
                 Path(str(f) + suf),
                 bundle / "uploads/sentPages/collisions" / (f.name + suf),
             )
-    else:  # msg = [False, reason, message]
-        if rmsg[1] == "duplicate":
-            print(rmsg[2])
-            for suf in ["", ".qr", ".collide"]:
-                shutil.move(
-                    Path(str(f) + suf),
-                    bundle / "uploads/discardedPages" / (f.name + suf),
-                )
-        elif rmsg[1] == "original":
-            print(rmsg[2])
-            print("This should not happen - todo = log error in a sensible way")
-        else:
-            print(rmsg[2])
-            print("This should not happen - todo = log error in sensible way")
+    elif rmsg[1] == "duplicate":
+        # should be [False, reason, message]
+        # TODO: clarify is something happened or what?
+        log.warn("Collision! TODO!, server msg: %s", rmsg[2])
+        print(rmsg[2])
+        for suf in ["", ".qr", ".collide"]:
+            shutil.move(
+                Path(str(f) + suf),
+                bundle / "uploads/discardedPages" / (f.name + suf),
+            )
+    elif rmsg[1] == "original":
+        raise RuntimeError("Unexpected code path that should not happen! msg={rmsg}")
+    else:
+        raise RuntimeError("Unexpected code path that should not happen! msg={rmsg}")
 
 
 def sendCollidingFiles(scanMessenger, bundle_name, files):
@@ -114,7 +123,11 @@ def print_collision_warning(bundle_dir):
     """
     files = list_bundle_nonuploaded_collisions(bundle_dir)
     if not files:
+        log.info("Processing resulted in **no** Colliding Pages")
         return
+    log.info("Processing resulted in %s Colliding Pages", len(files))
+    log.info("Collisions list:\n    " + "\n    ".join([x.name for x in files]))
+
     print("\n>>>>>>>>>> WARNING <<<<<<<<<<")
     print("Detected the following {} colliding files:".format(len(files)))
     print("  {}".format("\n  ".join([x.name for x in files])))

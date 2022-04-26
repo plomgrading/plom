@@ -16,24 +16,29 @@ log = logging.getLogger("scan")
 
 
 def doFiling(rmsg, bundle, f):
-    if rmsg[0]:  # msg should be [True, "success", success message]
-        print("{} uploaded as unknown page.".format(f))
+    if rmsg[0]:
+        # should be [True, "success", message]
+        assert rmsg[1] == "success"
+        log.info("%s uploaded as UnknownPage.  Server says: %s", f, rmsg[2])
+        # TODO: should this still print?  probably
+        print(f"{f} uploaded as UnknownPage.")
         shutil.move(f, bundle / "uploads/sentPages/unknowns" / f.name)
         shutil.move(
             Path(str(f) + ".qr"),
             bundle / "uploads/sentPages/unknowns" / f"{f.name}.qr",
         )
-    else:  # msg = [False, reason, message]
-        if rmsg[1] == "duplicate":
-            print(rmsg[2])
-            shutil.move(f, bundle / "uploads/discardedPages" / f.name)
-            shutil.move(
-                Path(str(f) + ".qr"),
-                bundle / "uploads/discardedPages" / f"{f.name}.qr",
-            )
-        else:
-            print(rmsg[2])
-            print("This should not happen - todo = log error in sensible way")
+    elif rmsg[1] == "duplicate":
+        # should be [False, reason, message]
+        # TODO: clarify is something happened or what?
+        log.warn("Duplicate! TODO, server msg: %s", rmsg[2])
+        print(rmsg[2])
+        shutil.move(f, bundle / "uploads/discardedPages" / f.name)
+        shutil.move(
+            Path(str(f) + ".qr"),
+            bundle / "uploads/discardedPages" / f"{f.name}.qr",
+        )
+    else:
+        raise RuntimeError("Unexpected code path that should not happen! msg={rmsg}")
 
 
 def sendUnknownFiles(msgr, bundle_name, files):
@@ -100,7 +105,7 @@ def print_unknowns_warning(bundle_dir):
         log.info("Processing resulted in **no** UnknownPages")
         return
     log.info("Processing resulted in %s UnknownPages", len(files))
-    log.info("Unknowns: " + "; ".join([x.name for x in files]))
+    log.info("Unknowns list:\n    " + "\n    ".join([x.name for x in files]))
 
     print("\n>>>>>>>>>> NOTE <<<<<<<<<<")
     print("Processing resulted in these {} unknown files:".format(len(files)))

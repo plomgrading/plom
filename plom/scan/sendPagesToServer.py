@@ -6,10 +6,14 @@ from collections import defaultdict
 import hashlib
 import json
 import shutil
+import logging
 from pathlib import Path
 
 from plom.scan import with_scanner_messenger
 from plom import PlomImageExts
+
+
+log = logging.getLogger("scan")
 
 
 def extract_order(filename):
@@ -129,7 +133,7 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
             continue
 
         ts, ps, vs = extractTPV(f.name)
-        print("Upload {},{},{} = {} to server".format(ts, ps, vs, f.name))
+        log.info("Upload %s,%s,%s - %s to server", ts, ps, vs, f.name)
         with open(f, "rb") as fh:
             md5 = hashlib.md5(fh.read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
