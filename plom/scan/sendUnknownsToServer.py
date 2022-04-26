@@ -95,9 +95,7 @@ def print_unknowns_warning(bundle_dir):
     Args:
         bundle_dir (str, Path): path to a bundle.
     """
-    files = []
-    for ext in PlomImageExts:
-        files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
+    files = list_bundle_nonuploaded_unknowns(bundle_dir)
     if not files:
         log.info("Processing resulted in **no** UnknownPages")
         return

@@ -88,7 +88,10 @@ def list_bundle_nonuploaded_collisions(bundle_dir):
     Return:
         list(Path)
     """
-    return list(((Path(bundle_dir) / "uploads") / "collidingPages").glob("*.png"))
+    files = []
+    for ext in PlomImageExts:
+        files.extend((bundle_dir / "uploads/collidingPages").glob(f"*.{ext}"))
+    return files
 
 
 def count_bundle_nonuploaded_collisions(bundle_dir):
@@ -109,9 +112,7 @@ def print_collision_warning(bundle_dir):
     Args:
         bundle_dir (str, Path): path to a bundle.
     """
-    files = []
-    for ext in PlomImageExts:
-        files.extend((bundle_dir / "uploads/collidingPages").glob("*.{}".format(ext)))
+    files = list_bundle_nonuploaded_collisions(bundle_dir)
     if not files:
         return
     print("\n>>>>>>>>>> WARNING <<<<<<<<<<")
