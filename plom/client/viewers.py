@@ -344,3 +344,40 @@ class CatViewer(QDialog):
         if self.count > 5:
             InfoMsg(self, "Enough break time").exec()
             self.close()
+
+
+class PreviousPaperViewer(QDialog):
+    """A modal dialog for displaying annotations of the previous paper.
+
+    """
+
+    def __init__(self, parent, task, fname):
+        super().__init__(parent)
+        self._annotr = parent
+        grid = QGridLayout()
+        self.sv = ImageViewWidget(self, fname)
+        self.refreshButton = QPushButton("&Do stuff")
+        self.closeButton = QPushButton("&Close")
+        self.maxNormButton = QPushButton("&Max/Norm")
+        grid.addWidget(self.sv, 1, 1, 6, 6)
+        grid.addWidget(self.refreshButton, 7, 1)
+        grid.addWidget(self.closeButton, 7, 7)
+        grid.addWidget(self.maxNormButton, 1, 7)
+        self.setLayout(grid)
+        self.closeButton.clicked.connect(self.close)
+        self.maxNormButton.clicked.connect(self.swapMaxNorm)
+        # self.refreshButton.clicked.connect(self.refresh)
+
+        self.setWindowTitle(f"Previous annotations - {task}")
+
+        self.setMinimumSize(500, 500)
+
+        self.show()
+
+    def swapMaxNorm(self):
+        """Toggles the window size between max and normal"""
+        if self.windowState() != Qt.WindowMaximized:
+            self.setWindowState(Qt.WindowMaximized)
+        else:
+            self.setWindowState(Qt.WindowNoState)
+

@@ -55,11 +55,7 @@ from .key_wrangler import KeyWrangler, key_layouts
 from .key_help import KeyHelp
 
 from .pagerearranger import RearrangementViewer
-from .viewers import (
-    SolutionViewer,
-    WholeTestView,
-    CatViewer,
-)
+from .viewers import SolutionViewer, WholeTestView, CatViewer, PreviousPaperViewer
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
@@ -118,12 +114,13 @@ class Annotator(QWidget):
         self.username = username
         self.parentMarkerUI = parentMarkerUI
         self.tgvID = None
+        self.previous_tgv = None
 
         # Show warnings or not
         self.markWarn = True
         self.rubricWarn = True
 
-        # a solution view pop-up window - initially set to None
+        # a solution view / previous annotation pop-up window - initially set to None
         self.solutionView = None
 
         # declares some instance vars
@@ -249,8 +246,9 @@ class Annotator(QWidget):
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
-        m.addAction("Previous paper", lambda: None).setEnabled(False)
         m.addAction("Close without saving\tctrl-c", self.close)
+        m.addSeparator()
+        m.addAction("Show previous paper\tctrl-left", self.show_previous)
         m.addSeparator()
         m.addAction("View cat", self.viewCat)
         m.addAction("View dog", self.viewNotCat)
@@ -763,9 +761,10 @@ class Annotator(QWidget):
                 ).strip()
                 log.error(s)
                 ErrorMessage(s).exec()
-            oldtgv = self.tgvID
+
+            self.previous_tgv = self.tgvID
             self.closeCurrentTGV()
-            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(oldtgv, perm)
+            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(self.previous_tgv, perm)
             log.debug("permuted: new stuff is {}".format(stuff))
             if not stuff:
                 txt = """
@@ -925,10 +924,10 @@ class Annotator(QWidget):
             if not self.saveAnnotations():
                 return
             log.debug("We have surrendered {}".format(self.tgvID))
-            oldtgv = self.tgvID
+            self.previous_tgv = self.tgvID
             self.closeCurrentTGV()
         else:
-            oldtgv = None
+            self.previous_tgv = None
 
         # Workaround getting too far ahead of Marker's upload queue
         queue_len = self.parentMarkerUI.get_upload_queue_length()
@@ -943,7 +942,7 @@ class Annotator(QWidget):
                 + "papers clear.</p>"
             ).exec()
 
-        stuff = self.parentMarkerUI.getMorePapers(oldtgv)
+        stuff = self.parentMarkerUI.getMorePapers(self.previous_tgv)
         if not stuff:
             ErrorMessage("No more to grade?").exec()
             # Not really safe to give it back? (at least we did the view...)
@@ -1124,6 +1123,9 @@ class Annotator(QWidget):
         # TODO: this is one of our left/right keybindings
         self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
         self.redoShortCut2.activated.connect(self.ui.redoButton.animateClick)
+
+        self.showPrevShortCut = QShortcut(QKeySequence("Ctrl+left"), self)
+        self.showPrevShortCut.activated.connect(self.show_previous)
 
         self.twisterShortCut = QShortcut(QKeySequence("Ctrl+r"), self)
         self.twisterShortCut.activated.connect(self.rearrangePages)
@@ -1947,3 +1949,18 @@ class Annotator(QWidget):
     def refreshSolutionImage(self):
         log.debug("force a refresh")
         return self.parentMarkerUI.refreshSolutionImage()
+
+    def show_previous(self):
+        if self.previous_tgv is None:
+            WarnMsg(
+                self,
+                "The client cannot determine the previous paper. Please cancel this annotation and select from the list.",
+            ).exec()
+            return
+
+        previous_annotation_image = (
+            self.parentMarkerUI.examModel.getAnnotatedFileByTask(
+                "q" + self.previous_tgv
+            )
+        )
+        PreviousPaperViewer(self, self.previous_tgv, previous_annotation_image).exec()
