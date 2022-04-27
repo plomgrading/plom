@@ -251,7 +251,7 @@ def uploadImages(
                 print(m)
                 doit = True
             else:
-                log.info("Collisions upload flag present w/ interacive prompts enabled")
+                log.info("Collisions upload flag present w/ interactive prompts enabled")
                 print("Collisions upload flag present.")
                 yn = input(
                     "Are you sure you want to upload these colliding pages? [y/N] "
