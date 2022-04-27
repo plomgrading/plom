@@ -185,11 +185,12 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
         )
         pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
         if not (W == pix.width or H == pix.height):
-            # TODO: log.warn?
-            warn(
+            _m = (
                 "Debug: some kind of rounding error in scaling image?"
                 f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
             )
+            warn(_m)
+            log.warning(_m)
 
         # For testing, randomly make jpegs, rotated a bit, of various qualities
         if debug_jpeg and random.uniform(0, 1) <= 0.5:
