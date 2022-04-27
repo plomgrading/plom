@@ -358,26 +358,13 @@ class PreviousPaperViewer(QDialog):
         self.sv = ImageViewWidget(self, fname)
         self.refreshButton = QPushButton("&Do stuff")
         self.closeButton = QPushButton("&Close")
-        self.maxNormButton = QPushButton("&Max/Norm")
         grid.addWidget(self.sv, 1, 1, 6, 6)
         grid.addWidget(self.refreshButton, 7, 1)
         grid.addWidget(self.closeButton, 7, 7)
-        grid.addWidget(self.maxNormButton, 1, 7)
         self.setLayout(grid)
         self.closeButton.clicked.connect(self.close)
-        self.maxNormButton.clicked.connect(self.swapMaxNorm)
         # self.refreshButton.clicked.connect(self.refresh)
 
         self.setWindowTitle(f"Previous annotations - {task}")
 
         self.setMinimumSize(500, 500)
-
-        self.show()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
-
