@@ -347,9 +347,7 @@ class CatViewer(QDialog):
 
 
 class PreviousPaperViewer(QDialog):
-    """A modal dialog for displaying annotations of the previous paper.
-
-    """
+    """A modal dialog for displaying annotations of the previous paper."""
 
     def __init__(self, parent, task, fname):
         super().__init__(parent)
