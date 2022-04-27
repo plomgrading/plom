@@ -160,6 +160,15 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
     info = toml.load(bundledir / "source.toml")
     md5 = info["md5"]
 
+    logfile = bundledir / "processing.log"
+    print(f"Logging details to {logfile}")
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
+        datefmt="%b%d %H:%M:%S %Z",
+        filename=logfile,
+    )
+    logging.getLogger().setLevel("INFO")
+
     log.info(f'Trying to create bundle "{bundle_name}" on server')
     exists, extra = createNewBundle(bundle_name, md5, msgr=msgr)
     # should be (True, skip_list) or (False, reason)
@@ -177,18 +186,20 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
         print("There was a problem with this bundle.")
         if extra == "name":
             msg = "A different bundle with the same name was uploaded previously."
+            msg += " Aborting bundle upload."
             print(msg)
             log.error(msg)
+            return
         elif extra == "md5sum":
             msg = "Differently-named bundle with same md5sum previously uploaded."
+            msg += " Aborting bundle upload."
             print(msg)
             log.error(msg)
+            return
         else:
-            raise RuntimeError("Should not be here: unexpected code path! File issue")
-        msg = "Aborting this bundle upload early due to above errors"
-        print(msg)
-        log.warning(msg)
-        return
+            msg = "Should not be here: unexpected code path! File issue"
+            log.error(msg)
+            raise RuntimeError(msg)
 
     print("Upload images to server")
     TPN = uploadTPages(bundledir, skip_list, msgr=msgr)
