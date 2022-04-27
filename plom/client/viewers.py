@@ -354,17 +354,11 @@ class PreviousPaperViewer(QDialog):
     def __init__(self, parent, task, fname):
         super().__init__(parent)
         self._annotr = parent
-        grid = QGridLayout()
-        self.sv = ImageViewWidget(self, fname)
-        self.refreshButton = QPushButton("&Do stuff")
-        self.closeButton = QPushButton("&Close")
-        grid.addWidget(self.sv, 1, 1, 6, 6)
-        grid.addWidget(self.refreshButton, 7, 1)
-        grid.addWidget(self.closeButton, 7, 7)
+        grid = QVBoxLayout()
+        grid.addWidget(ImageViewWidget(self, fname))
+        grid.addSpacing(6)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons.accepted.connect(self.accept)
+        grid.addWidget(buttons)
         self.setLayout(grid)
-        self.closeButton.clicked.connect(self.close)
-        # self.refreshButton.clicked.connect(self.refresh)
-
         self.setWindowTitle(f"Previous annotations - {task}")
-
-        self.setMinimumSize(500, 500)
