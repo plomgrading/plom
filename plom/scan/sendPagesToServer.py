@@ -123,6 +123,7 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
     bundle's "uploads" subdirectory.
     """
     TUP = defaultdict(list)
+    # TODO: wrap in tqdm
     for f in files:
         f = Path(f)
         bundle_order = extract_order(f)
