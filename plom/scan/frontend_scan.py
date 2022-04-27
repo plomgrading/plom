@@ -128,12 +128,12 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
         print('You can upload these by passing "--unknowns" to the upload command')
 
 
-def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
+def uploadImages(
+    bundle_name, *, msgr, do_unknowns=False, do_collisions=False, prompt=True
+):
     """Upload processed images from bundle.
 
     args:
-        server (str)
-        password (str)
         bundle_name (str): usually the PDF filename but in general
             whatever string was used to define a bundle.
 
@@ -142,6 +142,7 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
             tuple appropriate for credientials.
         do_unknowns (bool):
         do_collisions (bool):
+        prompt (bool): ok to interactively prompt (default: True).
 
     return:
         None
@@ -201,28 +202,23 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
             log.error(msg)
             raise RuntimeError(msg)
 
-    print("Upload images to server")
+    print(f"Upload images to server from {bundledir}")
+    log.info("Upload images to server from %s", bundledir)
     TPN = uploadTPages(bundledir, skip_list, msgr=msgr)
-    print(
-        "Tests were uploaded to the following studentIDs: {}".format(
-            ", ".join(TPN.keys())
-        )
-    )
+    msg = f'Tests were uploaded to the following papers: {", ".join(TPN.keys())}'
+    print(msg)
+    log.info(msg)
 
     pdf_fname = Path(info["file"])
     if pdf_fname.exists():
-        print(
-            'Original PDF "{}" still in place: archiving to "{}"...'.format(
-                pdf_fname, str(archivedir)
-            )
-        )
+        msg = f'Original PDF "{pdf_fname}" still in place: archiving to "{archivedir}"'
+        print(msg)
+        log.info(msg)
         archiveTBundle(pdf_fname)
     elif (archivedir / pdf_fname).exists():
-        print(
-            'Original PDF "{}" is already archived in "{}".'.format(
-                pdf_fname, str(archivedir)
-            )
-        )
+        msg = f'Original PDF "{pdf_fname}" is already archived in "{archivedir}"'
+        print(msg)
+        log.info(msg)
     else:
         raise RuntimeError("Did you move the archived PDF?  Please don't do that!")
 
@@ -231,13 +227,15 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
 
     if do_unknowns:
         if bundle_has_nonuploaded_unknowns(bundledir):
-            print_unknowns_warning(bundledir)
-            print("Unknowns upload flag present: uploading...")
+            msg = "Unknowns upload flag present: uploading..."
+            print(msg)
+            log.info(msg)
             upload_unknowns(bundledir, msgr=msgr)
         else:
-            print(
-                "Unknowns upload flag present: but no unknowns - so no actions required."
-            )
+            m = "Unknowns upload flag present: but no unknowns - no action required."
+            print(m)
+            log.info(m)
+
     else:
         if bundle_has_nonuploaded_unknowns(bundledir):
             print_unknowns_warning(bundledir)
@@ -246,16 +244,28 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
     if do_collisions:
         if bundle_has_nonuploaded_collisions(bundledir):
             print_collision_warning(bundledir)
-            print("Collisions upload flag present.")
-            # TODO:add a --yes flag?
-            yn = input("Are you sure you want to upload these colliding pages? [y/N] ")
-            if yn.lower() == "y":
-                print("Proceeding.")
+            doit = False
+            if not prompt:
+                m = "Collisions upload flag present and prompts disabled: uploading..."
+                log.info(m)
+                print(m)
+                doit = True
+            else:
+                log.info("Collisions upload flag present w/ interacive prompts enabled")
+                print("Collisions upload flag present.")
+                yn = input(
+                    "Are you sure you want to upload these colliding pages? [y/N] "
+                )
+                if yn.lower() == "y":
+                    print("Proceeding.")
+                    doit = True
+            if doit:
                 upload_collisions(bundledir, msgr=msgr)
         else:
-            print(
-                "Collisions upload flag present: but no collisions - so no actions required."
-            )
+            m = "Collisions upload flag present: but no collisions - no action required."
+            print(m)
+            log.info(m)
+
     else:
         if bundle_has_nonuploaded_collisions(bundledir):
             print_collision_warning(bundledir)

@@ -172,8 +172,19 @@ def get_parser():
         "-c",
         "--collisions",
         action="store_true",
-        help='Upload "collisions", pages which appear to already be on the server. '
-        + "You should not need this option except under exceptional circumstances.",
+        help="""
+            Upload "collisions", pages which appear to already be on the server.
+            You should not need this option except under exceptional circumstances.
+        """,
+    )
+    spU.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="""
+            Assume yes to any prompts (skipping --collisions prompts for
+            confirmation).
+        """,
     )
     for x in (spU, spS, spC, spP):
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
@@ -208,6 +219,7 @@ def main():
             args.bundleName,
             do_unknowns=args.unknowns,
             do_collisions=args.collisions,
+            prompt=(not args.yes),
             msgr=(args.server, args.password),
         )
     elif args.command == "status":
