@@ -249,7 +249,7 @@ def validateQRsAgainstSpec(spec, fname, t, p, v):
     against the spec. A simple check of test-name and magic-code were
     done already, but now the test-page-version triples are checked.
 
-    TODO: shouldn't this be more serious?
+    TODO: shouldn't this be more serious?  Issue #2114.
     """
     errs = []
     if t < 1 or t > spec["numberToProduce"]:
