@@ -64,6 +64,7 @@ from plom.plom_exceptions import (
     PlomSeriousException,
     PlomAPIException,
     PlomAuthenticationException,
+    PlomBadTagError,
     PlomBenignException,
     PlomConflict,
     PlomExistingLoginException,
@@ -1901,16 +1902,51 @@ class Manager(QWidget):
         f.unlink()
 
     def reviewChangeTags(self):
+        rvi = self.ui.reviewTW.selectedIndexes()
+        if len(rvi) == 0:
+            return
+        r = rvi[0].row()
+        # TODO: hardcoded index nonsense: why can't we get the original row dict?
+        paper_num = int(self.ui.reviewTW.item(r, 0).text())
+        question = int(self.ui.reviewTW.item(r, 1).text())
+        # ugh, "GQ" nonsense:
+        task = f"q{paper_num:04}g{question}"
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
-        print(all_tags)
-        task = "q0002g3"  # No, take from currently selected row
         current_tags = self.msgr.get_tags(task)
-        print(current_tags)
         tag_choices = [X for X in all_tags if X not in current_tags]
         artd = AddRemoveTagDialog(self, task, current_tags, tag_choices=tag_choices)
         if artd.exec() == QDialog.Accepted:
             cmd, new_tag = artd.return_values
-            InfoMsg(self, f"TODO: cmd={cmd}, new_tag={new_tag}").exec()
+            if cmd == "add":
+                if len(new_tag) == 0:
+                    pass  # user is not adding a tag
+                #elif new_tag in current_tags:
+                #    pass  # already have that tag
+                # an actual new tag for this task (though it may exist already)
+                else:
+                    try:
+                        self.msgr.add_single_tag(task, new_tag)
+                        log.debug('tagging paper "%s" with "%s"', task, new_tag)
+                    except PlomBadTagError as e:
+                        WarnMsg(self, f"Tag not acceptable: {e}").exec()
+            elif cmd == "remove":
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomBadTagError as e:
+                    WarnMsg(self, f"Problem removing tag: {e}").exec()
+            else:
+                # do nothing - shouldn't arrive here.
+                pass
+
+            # refresh the tags
+            current_tags = self.msgr.get_tags(task)
+
+            # TODO: but how to update?  Talk to the table?
+            # For now just refresh?
+            # try:
+            #     ...
+            # except ValueError:
+            #     pass
 
     def initRevIDTab(self):
         self.ui.reviewIDTW.setColumnCount(5)

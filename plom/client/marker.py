@@ -67,7 +67,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
-from .useful_classes import ErrorMessage, SimpleQuestion
+from .useful_classes import ErrorMessage, WarnMsg, SimpleQuestion
 from .pagecache import download_pages
 
 if platform.system() == "Darwin":
@@ -2365,12 +2365,12 @@ class MarkerClient(QWidget):
                         self.msgr.add_single_tag(task, new_tag)
                         log.debug('tagging paper "%s" with "%s"', task, new_tag)
                     except PlomBadTagError as e:
-                        ErrorMessage(f"Tag not acceptable: {e}").exec()
+                        WarnMsg(parent, f"Tag not acceptable: {e}").exec()
             elif cmd == "remove":
                 try:
                     self.msgr.remove_single_tag(task, new_tag)
                 except PlomBadTagError as e:
-                    ErrorMessage(f"Problem removing tag: {e}").exec()
+                    WarnMsg(parent, f"Problem removing tag: {e}").exec()
             else:
                 # do nothing - shouldn't arrive here.
                 pass
