@@ -24,8 +24,8 @@ class ReviewViewWindow(QDialog):
         explanation = QLabel(
             """
             <p>Reviewing is a <em>beta</em> feature; it is not well-tested.
-            Use this at your own risk.</p>
-            <p>If you do tag this work for review, you'll then need to login
+            Use this at your own risk!</p>
+            <p>If you do flag this work for review, you'll then need to login
             with the Client using a special "reviewer" account.</p>
             """
         )
@@ -35,7 +35,7 @@ class ReviewViewWindow(QDialog):
         grid.addWidget(self.img, 1)
         grid.addWidget(explanation)
         buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
-        reviewB = QPushButton("Tag for &review")
+        reviewB = QPushButton("Flag for &review")
         reviewB.clicked.connect(self.accept)
         buttons.addButton(reviewB, QDialogButtonBox.AcceptRole)
         buttons.rejected.connect(self.reject)
