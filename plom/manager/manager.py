@@ -1807,8 +1807,9 @@ class Manager(QWidget):
 
         # TODO: where to define this function?  Probably a method of a subclass of reviewTW
         def f(tw, i, row):
-            """Insert 8 things from row into the ith row of the table tw."""
-            assert len(row) == 8
+            """Insert N = 8 things from row into the ith row of the table tw."""
+            N = 8
+            assert len(row) == N
             # otherwise they resort between elements of the row (!)
             tw.setSortingEnabled(False)
             tw.insertRow(i)
@@ -1821,10 +1822,10 @@ class Manager(QWidget):
                 item.setData(Qt.DisplayRole, x)
                 tw.setItem(i, k, item)
             if row[4] == "reviewer":
-                for k in range(7):
+                for k in range(N):
                     tw.item(i, k).setBackground(QBrush(QColor(0, 255, 0, 48)))
             if row[3] == "n/a":
-                for k in range(7):
+                for k in range(N):
                     tw.item(i, k).setBackground(QBrush(QColor(255, 255, 128, 64)))
             tw.setSortingEnabled(True)
 
@@ -1872,8 +1873,14 @@ class Manager(QWidget):
         )
         self.ui.reviewTW.clearContents()
         self.ui.reviewTW.setRowCount(0)
-        for r, dat in enumerate(mrList):
+        # TODO: for some reason, doing tag filtering client side but is not obvious to user
+        filter_tag = self.ui.tagsCB.currentText()
+        r = 0
+        for dat in mrList:
+            if filter_tag and filter_tag not in dat[7]:
+                continue
             self.ui.reviewTW._fill_row_from(self.ui.reviewTW, r, dat)
+            r += 1
 
     def reviewAnnotated(self):
         rvi = self.ui.reviewTW.selectedIndexes()
