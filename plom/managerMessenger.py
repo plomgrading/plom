@@ -1254,9 +1254,7 @@ class ManagerMessenger(BaseMessenger):
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                if response.status_code == 403:
+                if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 

@@ -1783,9 +1783,18 @@ class Manager(QWidget):
         self.refreshMRev()
 
     def initRevMTab(self):
-        self.ui.reviewTW.setColumnCount(7)
+        self.ui.reviewTW.setColumnCount(8)
         self.ui.reviewTW.setHorizontalHeaderLabels(
-            ["Test", "Question", "Version", "Mark", "Username", "Marking Time", "When"]
+            [
+                "Test",
+                "Question",
+                "Version",
+                "Mark",
+                "Username",
+                "Marking Time",
+                "When",
+                "Tags",
+            ]
         )
         self.ui.reviewTW.setSortingEnabled(True)
         self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1794,13 +1803,17 @@ class Manager(QWidget):
 
         # TODO: where to define this function?  Probably a method of a subclass of reviewTW
         def f(tw, i, row):
-            """Insert 7 things from row into the ith row of the table tw."""
-            assert len(row) == 7
+            """Insert 8 things from row into the ith row of the table tw."""
+            assert len(row) == 8
             # otherwise they resort between elements of the row (!)
             tw.setSortingEnabled(False)
             tw.insertRow(i)
             for k, x in enumerate(row):
                 item = QTableWidgetItem()
+                if k == 7:
+                    # flatten the tag list to a string
+                    # TODO: possible to keep the list too, in some other Role?
+                    x = ", ".join(x)
                 item.setData(Qt.DisplayRole, x)
                 tw.setItem(i, k, item)
             if row[4] == "reviewer":
