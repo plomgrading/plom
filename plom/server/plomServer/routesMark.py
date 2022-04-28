@@ -469,18 +469,25 @@ class MarkHandler:
             data (dict): user, token and the text for the given tag (str).
 
         Returns:
-            aiohttp.web_response.Response: 200 on success or
-            HTTPNotAcceptable (406) if tag is invalid
-            HTTPGone (410) if cannot find task
+            aiohttp.web_response.Response: 200/204 on success, 200 for
+            tag added and 204 indicates it was already there.
+            HTTPNotAcceptable (406) if tag is invalid.
+            HTTPGone (410) if cannot find task.
+            HTTPBadRequest (400) something else went wrong.
         """
         task = request.match_info["task"]
         tag_text = data["tag_text"]
         if not self.server.checkTagTextValid(tag_text):
             raise web.HTTPNotAcceptable(reason="Text contains disallowed characters.")
 
-        if not self.server.add_tag(data["user"], task, tag_text):
-            raise web.HTTPGone(reason="No such task.")
-        return web.Response(status=200)
+        ok, errcode, msg = self.server.add_tag(data["user"], task, tag_text)
+        if ok:
+            return web.Response(status=200)
+        if errcode == "already":
+            return web.Response(status=204)
+        elif errcode == "notfound":
+            raise web.HTTPGone(reason=msg)
+        raise web.HTTPBadRequest(reason=msg)
 
     # @routes.delete("/tags/{task}")
     @authenticate_by_token_required_fields(["user", "tag_text"])

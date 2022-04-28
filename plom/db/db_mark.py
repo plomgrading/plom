@@ -702,29 +702,35 @@ def MgetTagsOfTask(self, task):
 
 
 def MaddExistingTag(self, username, task, tag_text):
-    """Add an existing tag to the task"""
+    """Add an existing tag to the task
+
+    Returns:
+        tuple: ``ok, errcode, msg``.
+    """
     uref = User.get(name=username)  # authenticated, so not-None
 
     gref = Group.get_or_none(Group.gid == task)
     if gref is None:
-        log.error("MaddExistingTag - task {} not known".format(task))
-        return False
+        msg = f"task {task} not known"
+        log.error(f"tag task: {msg}")
+        return False, "notfound", msg
     # get the question-group and the tag
     qref = gref.qgroups[0]
     tgref = Tag.get(text=tag_text)
     if tgref is None:
-        # server existence of tag before, so this should not happen.
-        log.warning(f"MaddExistingTag - tag {tag_text} is not in the system.")
-        return False
+        # server ensured existence of tag before, so this should not happen.
+        msg = f"tag {tag_text} is not in the system"
+        log.warning(f"tag task: {msg}")
+        return False, "nosuchtag", msg
     qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
     # check if task is already tagged
     if qtref is not None:
-        log.warning(f"MaddExistingTag - task {task} is already tagged with {tag_text}.")
-        return False
-    else:
-        QuestionTagLink.create(tag=tgref, qgroup=qref, user=uref)
-        log.info(f"MaddExistingTag - tag {tag_text} added to task {task}.")
-        return True
+        msg = f"task {task} is already tagged with {tag_text}"
+        log.warning(f"tag task: {msg}")
+        return False, "already", msg
+    QuestionTagLink.create(tag=tgref, qgroup=qref, user=uref)
+    log.info(f"tag {tag_text} added to task {task}.")
+    return True, None, None
 
 
 def MremoveExistingTag(self, task, tag_text):

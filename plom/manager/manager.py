@@ -1918,12 +1918,7 @@ class Manager(QWidget):
         if artd.exec() == QDialog.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":
-                if len(new_tag) == 0:
-                    pass  # user is not adding a tag
-                #elif new_tag in current_tags:
-                #    pass  # already have that tag
-                # an actual new tag for this task (though it may exist already)
-                else:
+                if new_tag:
                     try:
                         self.msgr.add_single_tag(task, new_tag)
                         log.debug('tagging paper "%s" with "%s"', task, new_tag)
@@ -1935,7 +1930,7 @@ class Manager(QWidget):
                 except PlomBadTagError as e:
                     WarnMsg(self, f"Problem removing tag: {e}").exec()
             else:
-                # do nothing - shouldn't arrive here.
+                # do nothing - but shouldn't arrive here.
                 pass
 
             # refresh the tags
