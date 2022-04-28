@@ -662,7 +662,12 @@ def buildUpToDateAnnotation(self, qref):
                 aref.save()
             # now create a new latest annotation
             new_ed = qref.annotations[-1].edition + 1
-            aref = Annotation.create(qgroup=qref, edition=new_ed, user=HAL_ref)
+            aref = Annotation.create(
+                qgroup=qref,
+                edition=new_ed,
+                user=HAL_ref,
+                time=datetime.now(timezone.utc),
+            )
         else:  # only zeroth annotation is present - recycle it.
             aref = qref.annotations[0]
             # clean off its old pages
