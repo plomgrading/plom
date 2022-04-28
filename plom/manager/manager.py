@@ -1858,6 +1858,8 @@ class Manager(QWidget):
         # clean out the tag box and rebuild
         self.ui.tagsCB.clear()
         self.ui.tagsCB.addItem("")
+        self.ui.tagsCB.addItem("<any tags>")
+        self.ui.tagsCB.addItem("<no tags>")
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
         self.ui.tagsCB.addItems(all_tags)
         # TODO: but we need to re-run the query else its bloody confusing!
@@ -1877,7 +1879,16 @@ class Manager(QWidget):
         filter_tag = self.ui.tagsCB.currentText()
         r = 0
         for dat in mrList:
-            if filter_tag and filter_tag not in dat[7]:
+            # under various tagging conditions, we do *not* add this row
+            if filter_tag == "":
+                pass
+            elif filter_tag == "<any tags>":
+                if len(dat[7]) == 0:
+                    continue
+            elif filter_tag == "<no tags>":
+                if len(dat[7]) != 0:
+                    continue
+            elif filter_tag not in dat[7]:
                 continue
             self.ui.reviewTW._fill_row_from(self.ui.reviewTW, r, dat)
             r += 1
