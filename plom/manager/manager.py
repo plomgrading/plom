@@ -1842,20 +1842,23 @@ class Manager(QWidget):
         self.ui.versionCB.addItem("*")
         for v in range(self.numberOfVersions):
             self.ui.versionCB.addItem(str(v + 1))
-        ulist = self.msgr.getUserList()
-        self.ui.userCB.addItem("*")
-        for u in ulist:
-            self.ui.userCB.addItem(u)
         self.ui.filterB.clicked.connect(self.filterReview)
+        self.refreshMRev()
 
     def refreshMRev(self):
-        """Refresh the user list in the marking review tab."""
+        """Refresh user list, tags, and any other server-dependent fields in marking review tab."""
         # clean out the combox box and then rebuild it.
+        # TODO: bit annoying that these remove your selection: should we save that?
         self.ui.userCB.clear()
         ulist = self.msgr.getUserList()
         self.ui.userCB.addItem("*")
         for u in ulist:
             self.ui.userCB.addItem(u)
+        # clean out the tag box and rebuild
+        self.ui.tagsCB.clear()
+        self.ui.tagsCB.addItem("")
+        all_tags = [tag for key, tag in self.msgr.get_all_tags()]
+        self.ui.tagsCB.addItems(all_tags)
         # TODO: but we need to re-run the query else its bloody confusing!
 
     def filterReview(self):
