@@ -2,12 +2,11 @@
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
-from collections import defaultdict
 import json
-import os
-import shutil
+import logging
 from multiprocessing import Pool
 from pathlib import Path
+import shutil
 
 from tqdm import tqdm
 
@@ -22,6 +21,9 @@ from plom.scan import with_scanner_messenger
 from plom.scan import QRextract
 from plom.scan.rotate import rotateBitmap
 from plom import PlomImageExts
+
+
+log = logging.getLogger("scan")
 
 
 def decode_QRs_in_image_files(where):
@@ -108,10 +110,10 @@ def reOrientPage(fname, qrs):
     return True
 
 
-def checkQRsValid(bundledir, spec, examsScannedNow):
+def checkQRsValid(bundledir, spec):
     """Check that the QRcodes in each pageimage are valid.
 
-    When each bitmap is scanned a .qr is produced.  Load the dict of
+    When each bitmap was scanned a .qr was produced.  Load the dict of
     QR codes from that file and do some sanity checks.
 
     Rotate any images that we can.
@@ -120,7 +122,9 @@ def checkQRsValid(bundledir, spec, examsScannedNow):
         bundledir (str, Path): look for images in the subdir
             `bundledir/pageImages` and other subdirs.
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
-        examsScannedNow: TODO?
+
+    Returns:
+        dict: keys are filenames of images; values are ``(t, p, v)``.
 
     TODO: maybe we should split this function up a bit!
 
@@ -128,10 +132,11 @@ def checkQRsValid(bundledir, spec, examsScannedNow):
     Perhaps we should discard non-Plom codes before other processing
     instead of that being an error.
     """
+    examsScannedNow = {}
+
     # go into page image directory of each bundle and look at each .qr file.
     for fnqr in (bundledir / "pageImages").glob("*.qr"):
-        # fname = fnqr.stem  # strip .qr from blah.<ext>.qr
-        fname = Path(str(fnqr)[0:-3])  # Yuck, TODO
+        fname = fnqr.with_suffix("")  # strip .qr from blah.<ext>.qr
         with open(fnqr, "r") as qrfile:
             qrs = json.load(qrfile)
 
@@ -215,106 +220,70 @@ def checkQRsValid(bundledir, spec, examsScannedNow):
                 problemFlag = True
 
         if not problemFlag:
-            # we have a valid TGVC and the code matches.
             if warnFlag:
-                print("[W] {0}: {1}".format(fname, msg))
-                print(
-                    "   (high occurrences of these warnings may mean printer/scanner problems)"
-                )
-            # store the tpv in examsScannedNow
-            examsScannedNow[fname] = [tn, pn, vn]
-            # later we check that list against those produced during build
+                explain = "(high occurrences of these warnings may mean printer/scanner problems)"
+                print(f"[W] {fname}: {msg}\n    {explain}")
+                log.warning(f"[W] {fname}: {msg}\n    {explain}")
 
-        if problemFlag:
+        if not problemFlag:
+            problemFlag, msg = validateQRsAgainstSpec(spec, fname, tn, pn, vn)
+
+        if not problemFlag:
+            # we have a valid TGVC and the code matches.
+            examsScannedNow[fname] = [tn, pn, vn]
+        else:
             # Difficulty scanning this pageimage so move it to unknownPages
             # fname =  bname/pageImages/blah-n.png
-            # dst = bname/unknownPages/blah-n.png
-            [prefix, suffix] = os.path.split(
-                fname
-            )  # pref = "bname/pageImages", suf = blah-n.png
-            dst = os.path.join(os.path.split(prefix)[0], "unknownPages", suffix)
-
-            print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
+            # dest = bname/unknownPages/blah-n.png
+            dest = bundledir / "unknownPages" / fname.name
+            print(f"[F] {fname}: {msg}  Moving to unknownPages")
+            log.warning(f"[F] {fname}: {msg}  Moving to unknownPages")
             # move blah.<ext> and blah.<ext>.qr
-            shutil.move(fname, dst)
-            # TODO: better with some `.with_suffix()` juggling
-            # TODO: there are at least two other places
-            shutil.move(Path(str(fname) + ".qr"), Path(str(dst) + ".qr"))
+            shutil.move(fname, dest)
+            shutil.move(Path(str(fname) + ".qr"), Path(str(dest) + ".qr"))
+    return examsScannedNow
 
 
-def validateQRsAgainstSpec(spec, examsScannedNow):
+def validateQRsAgainstSpec(spec, fname, t, p, v):
     """After pageimages have been decoded we need to check the results
     against the spec. A simple check of test-name and magic-code were
     done already, but now the test-page-version triples are checked.
+
+    TODO: shouldn't this be more serious?  Issue #2114.
     """
-    for fname in examsScannedNow:
-        t = examsScannedNow[fname][0]
-        p = examsScannedNow[fname][1]
-        v = examsScannedNow[fname][2]
-        # make a valid flag
-        flag = True
-        if t < 0 or t > spec["numberToProduce"]:
-            flag = False
-        if p < 0 or p > spec["numberOfPages"]:
-            flag = False
-        if v < 0 or v > spec["numberOfVersions"]:
-            flag = False
-        if not flag:
-            print(">> Mismatch between page scanned and spec - this should NOT happen")
-            print(f">> Produced t{t} p{p} v{v}")
-            print(
-                ">> Must have t-code in [1,{}], p-code in [1,{}], v-code in [1,{}]".format(
-                    spec["numberToProduce"],
-                    spec["numberOfPages"],
-                    spec["numberOfVersions"],
-                )
-            )
-            print(">> Moving problem files to unknownPages")
-            # fname =  bname/pageImages/blah-n.png
-            # dst = bname/unknownPages/blah-n.png
-            [prefix, suffix] = os.path.split(
-                fname
-            )  # pref = "bname/pageImages", suf = blah-n.png
-            dst = os.path.join(os.path.split(prefix)[0], "unknownPages", suffix)
-
-            print(f"[F] {fname}: moving to unknownPages")
-            # move the blah.<ext> and blah.<ext>.qr
-            # this means that they won't be added to the
-            # list of correctly scanned page images
-            shutil.move(fname, dst)
-            # TODO: better with some `.with_suffix()` juggling
-            # TODO: there are at least two other places
-            shutil.move(Path(str(fname) + ".qr"), Path(str(dst) + ".qr"))
+    errs = []
+    if t < 1 or t > spec["numberToProduce"]:
+        # TODO: Issue #1745
+        errs.append("t outside [1, {}]".format(spec["numberToProduce"]))
+    if p < 1 or p > spec["numberOfPages"]:
+        errs.append("p outside [1, {}]".format(spec["numberOfPages"]))
+    if v < 1 or v > spec["numberOfVersions"]:
+        errs.append("v outside [1, {}]".format(spec["numberOfVersions"]))
+    if errs:
+        msg = f'Mismatch b/w scan "t{t}p{p}v{v}" and spec: {"; ".join(errs)}'
+        return True, msg
+    return False, ""
 
 
-def moveScansIntoPlace(examsScannedNow):
+def moveScansIntoPlace(bundledir, examsScannedNow):
     # For each test we have just scanned
     for fname in examsScannedNow:
         t = examsScannedNow[fname][0]
         p = examsScannedNow[fname][1]
         v = examsScannedNow[fname][2]
 
-        [prefix, suffix] = os.path.split(
-            fname
-        )  # pref = "bname/pageImages", suf = blah-n.png
-        dpath = os.path.join(os.path.split(prefix)[0], "decodedPages")
+        dpath = bundledir / "decodedPages"
         # move blah-n.png to txxxxpyyvz.blah-n.png
-        dname = "t{}p{}v{}.{}".format(str(t).zfill(4), str(p).zfill(2), str(v), suffix)
-        shutil.move(fname, os.path.join(dpath, dname))
-        # TODO: better with some `.with_suffix()` juggling
-        # TODO: there are at least two other places
-        shutil.move(
-            Path(str(fname) + ".qr"), os.path.join(dpath, Path(str(dname) + ".qr"))
-        )
+        dest = dpath / f"t{t:04}p{p:02}v{v}.{fname.name}"
+        log.info("Successfully decoded QRs: moving %s to %s", fname.name, dest)
+        shutil.move(fname, dest)
+        shutil.move(Path(str(fname) + ".qr"), Path(str(dest) + ".qr"))
 
 
 @with_scanner_messenger
-def processBitmaps(bundle, *, msgr):
-    examsScannedNow = defaultdict(list)
-
+def processBitmaps(bundledir, *, msgr):
     spec = msgr.get_spec()
 
-    decode_QRs_in_image_files(bundle / "pageImages")
-    checkQRsValid(bundle, spec, examsScannedNow)
-    validateQRsAgainstSpec(spec, examsScannedNow)
-    moveScansIntoPlace(examsScannedNow)
+    decode_QRs_in_image_files(bundledir / "pageImages")
+    examsScannedNow = checkQRsValid(bundledir, spec)
+    moveScansIntoPlace(bundledir, examsScannedNow)

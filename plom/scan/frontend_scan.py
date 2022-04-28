@@ -16,6 +16,7 @@ their work.  But the precise relationship between this work and questions
 in the exam is less clear.  For these, see :py:module:`frontend_hwscan`.
 """
 
+import logging
 from pathlib import Path
 
 import toml
@@ -43,6 +44,9 @@ from plom.scan.bundle_utils import (
 )
 from plom.scan.scansToImages import process_scans
 from plom.scan import readQRCodes
+
+
+log = logging.getLogger("scan")
 
 
 def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
@@ -73,12 +77,9 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
     convert PDF to images and read QR codes from those.
     """
     pdf_fname = Path(pdf_fname)
-    if not pdf_fname.is_file():
-        print("Cannot find file {} - skipping".format(pdf_fname))
-        return
-    # TODO: replace above with letting exception rise from next:
     bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
 
+    new_bundle = True
     print(f'Checking if bundle "{bundle_name}" already exists on server')
     exists, reason = does_bundle_exist_on_server(bundle_name, md5, msgr=msgr)
     if exists:
@@ -93,13 +94,26 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
             )
             return
         elif reason == "both":
-            print(
-                f'Warning - bundle "{bundle_name}" has been declared previously - you are likely trying again as a result of a crash. Continuing'
-            )
+            new_bundle = False
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
     bundledir = get_bundle_dir(bundle_name)
+
+    logfile = bundledir / "processing.log"
+    print(f"Logging details to {logfile}")
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
+        datefmt="%b%d %H:%M:%S %Z",
+        filename=logfile,
+    )
+    logging.getLogger().setLevel("INFO")
+    if new_bundle:
+        log.info(f'Starting processing new bundle "{bundle_name}", {md5}')
+    else:
+        m = f'bundle "{bundle_name}" {md5} previously declared: you are likely trying again after a crash.'
+        print(f"Warning {m}")
+        log.warning(m)
 
     with open(bundledir / "source.toml", "w") as f:
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)
@@ -114,12 +128,12 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
         print('You can upload these by passing "--unknowns" to the upload command')
 
 
-def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
+def uploadImages(
+    bundle_name, *, msgr, do_unknowns=False, do_collisions=False, prompt=True
+):
     """Upload processed images from bundle.
 
     args:
-        server (str)
-        password (str)
         bundle_name (str): usually the PDF filename but in general
             whatever string was used to define a bundle.
 
@@ -128,6 +142,7 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
             tuple appropriate for credientials.
         do_unknowns (bool):
         do_collisions (bool):
+        prompt (bool): ok to interactively prompt (default: True).
 
     return:
         None
@@ -146,48 +161,64 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
     info = toml.load(bundledir / "source.toml")
     md5 = info["md5"]
 
-    print(f'Trying to create bundle "{bundle_name}" on server')
+    logfile = bundledir / "processing.log"
+    print(f"Logging details to {logfile}")
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
+        datefmt="%b%d %H:%M:%S %Z",
+        filename=logfile,
+    )
+    logging.getLogger().setLevel("INFO")
+
+    log.info(f'Trying to create bundle "{bundle_name}" on server')
     exists, extra = createNewBundle(bundle_name, md5, msgr=msgr)
     # should be (True, skip_list) or (False, reason)
     if exists:
         skip_list = extra
         if len(skip_list) > 0:
-            print("Some images from that bundle were uploaded previously:")
-            print("Pages {}".format(skip_list))
-            print("Skipping those images.")
+            msg = "Some images from that bundle were previously uploaded"
+            print(msg)
+            print(f"Skipping previously uploaded pages: {', '.join(skip_list)}")
+            log.warning(msg)
+            log.warning(
+                "Skipping previous uploaded pages:\n  %s", "\n  ".join(skip_list)
+            )
     else:
         print("There was a problem with this bundle.")
         if extra == "name":
-            print("A different bundle with the same name was uploaded previously.")
+            msg = "A different bundle with the same name was uploaded previously."
+            msg += " Aborting bundle upload."
+            print(msg)
+            log.error(msg)
+            return
         elif extra == "md5sum":
-            print("Differently-named bundle with same md5sum previously uploaded.")
+            msg = "Differently-named bundle with same md5sum previously uploaded."
+            msg += " Aborting bundle upload."
+            print(msg)
+            log.error(msg)
+            return
         else:
-            raise RuntimeError("Should not be here: unexpected code path! File issue")
-        print("Aborting this bundle upload early!")
-        return
+            msg = "Should not be here: unexpected code path! File issue"
+            log.error(msg)
+            raise RuntimeError(msg)
 
-    print("Upload images to server")
+    print(f"Upload images to server from {bundledir}")
+    log.info("Upload images to server from %s", bundledir)
     TPN = uploadTPages(bundledir, skip_list, msgr=msgr)
-    print(
-        "Tests were uploaded to the following studentIDs: {}".format(
-            ", ".join(TPN.keys())
-        )
-    )
+    msg = f'Tests were uploaded to the following papers: {", ".join(TPN.keys())}'
+    print(msg)
+    log.info(msg)
 
     pdf_fname = Path(info["file"])
     if pdf_fname.exists():
-        print(
-            'Original PDF "{}" still in place: archiving to "{}"...'.format(
-                pdf_fname, str(archivedir)
-            )
-        )
+        msg = f'Original PDF "{pdf_fname}" still in place: archiving to "{archivedir}"'
+        print(msg)
+        log.info(msg)
         archiveTBundle(pdf_fname)
     elif (archivedir / pdf_fname).exists():
-        print(
-            'Original PDF "{}" is already archived in "{}".'.format(
-                pdf_fname, str(archivedir)
-            )
-        )
+        msg = f'Original PDF "{pdf_fname}" is already archived in "{archivedir}"'
+        print(msg)
+        log.info(msg)
     else:
         raise RuntimeError("Did you move the archived PDF?  Please don't do that!")
 
@@ -196,13 +227,15 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
 
     if do_unknowns:
         if bundle_has_nonuploaded_unknowns(bundledir):
-            print_unknowns_warning(bundledir)
-            print("Unknowns upload flag present: uploading...")
+            msg = "Unknowns upload flag present: uploading..."
+            print(msg)
+            log.info(msg)
             upload_unknowns(bundledir, msgr=msgr)
         else:
-            print(
-                "Unknowns upload flag present: but no unknowns - so no actions required."
-            )
+            m = "Unknowns upload flag present: but no unknowns - no action required."
+            print(m)
+            log.info(m)
+
     else:
         if bundle_has_nonuploaded_unknowns(bundledir):
             print_unknowns_warning(bundledir)
@@ -211,16 +244,30 @@ def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
     if do_collisions:
         if bundle_has_nonuploaded_collisions(bundledir):
             print_collision_warning(bundledir)
-            print("Collisions upload flag present.")
-            # TODO:add a --yes flag?
-            yn = input("Are you sure you want to upload these colliding pages? [y/N] ")
-            if yn.lower() == "y":
-                print("Proceeding.")
+            doit = False
+            if not prompt:
+                m = "Collisions upload flag present and prompts disabled: uploading..."
+                log.info(m)
+                print(m)
+                doit = True
+            else:
+                log.info(
+                    "Collisions upload flag present w/ interactive prompts enabled"
+                )
+                print("Collisions upload flag present.")
+                yn = input(
+                    "Are you sure you want to upload these colliding pages? [y/N] "
+                )
+                if yn.lower() == "y":
+                    print("Proceeding.")
+                    doit = True
+            if doit:
                 upload_collisions(bundledir, msgr=msgr)
         else:
-            print(
-                "Collisions upload flag present: but no collisions - so no actions required."
-            )
+            m = "Collisions upload flag present: but no collisions - no action required."
+            print(m)
+            log.info(m)
+
     else:
         if bundle_has_nonuploaded_collisions(bundledir):
             print_collision_warning(bundledir)

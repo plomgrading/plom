@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 
 from datetime import datetime, timezone
@@ -899,11 +899,11 @@ def removeScannedTestPage(self, test_number, page_number):
 
     pref = tref.tpages.where(TPage.page_number == page_number).first()
     if pref is None:
-        log.warn(f"Cannot find t-page {page_number} of test {test_number}.")
+        log.warning(f"Cannot find t-page {page_number} of test {test_number}.")
         return [False, "unknown"]
 
     if not pref.scanned:
-        log.warn(
+        log.warning(
             f"T-Page {page_number} of test {test_number} is not scanned - cannot remove."
         )
         return [False, "unscanned"]
@@ -935,12 +935,12 @@ def removeScannedHWPage(self, test_number, question, order):
 
     qref = tref.qgroups.where(QGroup.question == question).first()
     if qref is None:
-        log.warn(f"Cannot find question {question} - cannot remove page {order}")
+        log.warning(f"Cannot find question {question} - cannot remove page {order}")
         return [False, "unknown"]
     gref = qref.group
     pref = gref.hwpages.where(HWPage.order == order).first()
     if pref is None:
-        log.warn(f"Cannot find hw-page {question}.{order} of test {test_number}.")
+        log.warning(f"Cannot find hw-page {question}.{order} of test {test_number}.")
         return [False, "unknown"]
     # create the discard page
     iref = pref.image
@@ -972,12 +972,12 @@ def removeScannedEXPage(self, test_number, question, order):
 
     qref = tref.qgroups.where(QGroup.question == question).first()
     if qref is None:
-        log.warn(f"Cannot find question {question} - cannot remove page {order}")
+        log.warning(f"Cannot find question {question} - cannot remove page {order}")
         return [False, "unknown"]
     gref = qref.group
     pref = gref.expages.where(EXPage.order == order).first()
     if pref is None:
-        log.warn(f"Cannot find extra-page {question}.{order} of test {test_number}.")
+        log.warning(f"Cannot find extra-page {question}.{order} of test {test_number}.")
         return [False, "unknown"]
     # create the discard page
     iref = pref.image

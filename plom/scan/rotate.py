@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
+import logging
 from pathlib import Path
 import PIL.Image
 import PIL.ExifTags
@@ -16,6 +17,9 @@ try:
 except ImportError:
     # warn("jpegtran-cffi package not available: jpeg rotations will be lossy")
     have_jpegtran = False
+
+
+log = logging.getLogger("scan")
 
 
 def rotateBitmap(fname, angle):
@@ -56,11 +60,11 @@ def rotate_bitmap_jpeg_exif(fname, angle):
     support exif tags: perhaps they should and we revisit this decision.
     """
     assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
-    print(f"Rotation of {angle} on JPEG {fname}: doing metadata EXIF rotations")
+    log.info(f"Rotation of {angle:3} on JPEG {fname}: doing metadata EXIF rotations")
     with open(fname, "rb") as f:
         im = exif.Image(f)
     if im.has_exif:
-        print(f'{fname} has exif already, orientation: {im.get("orientation")}')
+        log.info(f'{fname} has exif already, orientation: {im.get("orientation")}')
     # Notation is OrigTop_OrigLeft -> RIGHT_TOP (90 degree rot)
     table = {
         0: exif.Orientation.TOP_LEFT,
@@ -137,7 +141,7 @@ def normalizeJPEGOrientation(f):
     if im.width % 16 or im.height % 16:
         warn(f'  jpeg "{f}" dims not mult of 16: re-orientations may be lossy')
     im2 = im.exif_autotransform()
-    print(
+    log.info(
         '  normalizing "{}" {}x{} to "{}" {}x{}'.format(
             im.exif_orientation,
             im.width,

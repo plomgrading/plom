@@ -456,7 +456,7 @@ class Manager(QWidget):
             if self.msgr:
                 self.msgr.closeUser()
         except PlomAuthenticationException:
-            log.warn("User tried to logout but was already logged out.")
+            log.warning("User tried to logout but was already logged out.")
             pass
         event.accept()
 

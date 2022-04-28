@@ -3,10 +3,15 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
+import logging
 from pathlib import Path
 import shutil
 
 import toml
+
+
+log = logging.getLogger("scan")
+
 
 archivedir = Path("archivedPDFs")
 
@@ -120,11 +125,11 @@ def _archiveBundle(filename, *, basedir=Path("."), subdir=Path(".")):
 
 def archiveHWBundle(file_name, *, basedir=Path(".")):
     """Archive a hw-pages bundle pdf"""
-    print(f"Archiving homework bundle {file_name}")
+    log.debug(f"Archiving homework bundle {file_name}")
     _archiveBundle(file_name, basedir=basedir, subdir=Path("HW"))
 
 
 def archiveTBundle(file_name):
     """Archive a test-pages bundle pdf"""
-    print(f"Archiving test-page bundle {file_name}")
+    log.debug(f"Archiving test-page bundle {file_name}")
     _archiveBundle(file_name)

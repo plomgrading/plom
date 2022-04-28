@@ -6,10 +6,16 @@ from collections import defaultdict
 import hashlib
 import json
 import shutil
+import logging
 from pathlib import Path
+
+from tqdm import tqdm
 
 from plom.scan import with_scanner_messenger
 from plom import PlomImageExts
+
+
+log = logging.getLogger("scan")
 
 
 def extract_order(filename):
@@ -84,7 +90,9 @@ def fileFailedUpload(reason, message, bundle, f):
      * testError - the database has no record of the test which you were trying to upload to.
      * pageError - the database has no record of the tpage (of that test) which you were trying to upload to.
     """
-    print("Failed upload = {}, {}".format(reason, message))
+    errmsg = "Failed upload = {}, {}".format(reason, message)
+    log.error(errmsg)
+    print(errmsg)
     if reason == "duplicate":
         to = bundle / "uploads/discardedPages"
         shutil.move(f, to / f.name)
@@ -96,10 +104,8 @@ def fileFailedUpload(reason, message, bundle, f):
         # write stuff into a file: [collidingFile, test, page, version]
         with open(to / f"{f.name}.collide", "w") as fh:
             json.dump(message, fh)
-    else:  # now bad errors
-        print("Image upload failed for *bad* reason - this should not happen.")
-        print("Reason = {}".format(reason))
-        print("Message = {}".format(message))
+    else:
+        log.error("Upload failed for UNEXPECTED reason = %s, %s", reason, message)
 
 
 def sendTestFiles(msgr, bundle_name, files, skip_list):
@@ -119,17 +125,15 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
     bundle's "uploads" subdirectory.
     """
     TUP = defaultdict(list)
-    for f in files:
+    for f in tqdm(files):
         f = Path(f)
         bundle_order = extract_order(f)
         if bundle_order in skip_list:
-            print(
-                f"Image {f} with bundle_order {bundle_order} already uploaded. Skipping."
-            )
+            log.info("Already uploaded: skipping %s bundle_order %s:", f, bundle_order)
             continue
 
         ts, ps, vs = extractTPV(f.name)
-        print("Upload {},{},{} = {} to server".format(ts, ps, vs, f.name))
+        log.info("Upload %s,%s,%s - %s to server", ts, ps, vs, f.name)
         with open(f, "rb") as fh:
             md5 = hashlib.md5(fh.read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)

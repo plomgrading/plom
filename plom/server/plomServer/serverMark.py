@@ -309,7 +309,7 @@ def add_tag(self, username, task, tag_text):
     """
     # do sanity check of the tag-text
     if self.DB.McheckTagTextExists(tag_text) is False:
-        log.warn(f'tag with text "{tag_text}" does not exist - creating it now.')
+        log.warning(f'tag with text "{tag_text}" does not exist - creating it now.')
         self.DB.McreateNewTag(username, tag_text)
 
     return self.DB.MaddExistingTag(username, task, tag_text)
@@ -329,7 +329,7 @@ def remove_tag(self, task, tag_text):
     """
     # do sanity check of the tag-text
     if self.DB.McheckTagTextExists(tag_text) is False:
-        log.warn(f'tag "{tag_text}" does not exist')
+        log.warning(f'tag "{tag_text}" does not exist')
         return False
 
     return self.DB.MremoveExistingTag(task, tag_text)

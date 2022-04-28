@@ -1227,7 +1227,7 @@ class MarkerClient(QWidget):
             try:
                 self.msgr.closeUser()
             except PlomAuthenticationException:
-                log.warn("We tried to logout user but they were already logged out.")
+                log.warning("We tried to logout user but they were already logged out.")
                 pass
             # exit with code that is not 0 or 1
             self.Qapp.exit(57)
@@ -2042,7 +2042,7 @@ class MarkerClient(QWidget):
         try:
             self.msgr.closeUser()
         except PlomAuthenticationException:
-            log.warn("We tried to log out user but they were already logged out.")
+            log.warning("We tried to log out user but they were already logged out.")
             pass
         # exit with code that is not 0 or 1
         self.Qapp.exit(57)
@@ -2171,7 +2171,7 @@ class MarkerClient(QWidget):
         try:
             self.msgr.closeUser()
         except PlomAuthenticationException:
-            log.warn("User tried to logout but was already logged out.")
+            log.warning("User tried to logout but was already logged out.")
             pass
         sidebarRight = self.ui.sidebarRightCB.isChecked()
         log.debug("Emitting Marker shutdown signal")
