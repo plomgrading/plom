@@ -434,6 +434,18 @@ class BaseMessenger:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_tags(self, code):
+        """Get a list of tags associated with a paper and question.
+
+        Args:
+            code (str): For example "q0009g3" for paper number 9, question 3.
+                TODO: consider passing paper_num and question instead of this
+                nonsense.
+
+        Returns:
+            list: a list of strings, one for each tag.  If there are no tags,
+            you get an empty list.  If the task was not found, you get ``None``.
+            TODO: maybe raising an exception would be friendlier.
+        """
         self.SRmutex.acquire()
         try:
             response = self.get(

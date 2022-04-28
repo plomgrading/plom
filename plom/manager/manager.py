@@ -49,6 +49,7 @@ import plom.client.icons
 
 from plom.client.useful_classes import ErrorMessage, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
+from plom.client.useful_classes import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
 from plom.client import ImageViewWidget
 from plom.client.pagecache import download_pages
@@ -1800,6 +1801,8 @@ class Manager(QWidget):
         self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
+        self.ui.viewAnnotationsButton.clicked.connect(self.reviewAnnotated)
+        self.ui.changeTagsButton.clicked.connect(self.reviewChangeTags)
 
         # TODO: where to define this function?  Probably a method of a subclass of reviewTW
         def f(tw, i, row):
@@ -1896,6 +1899,18 @@ class Manager(QWidget):
             self.msgr.MreviewQuestion(test, question, version)
             self.ui.reviewTW.item(r, 4).setText("reviewer")
         f.unlink()
+
+    def reviewChangeTags(self):
+        all_tags = [tag for key, tag in self.msgr.get_all_tags()]
+        print(all_tags)
+        task = "q0002g3"  # No, take from currently selected row
+        current_tags = self.msgr.get_tags(task)
+        print(current_tags)
+        tag_choices = [X for X in all_tags if X not in current_tags]
+        artd = AddRemoveTagDialog(self, task, current_tags, tag_choices=tag_choices)
+        if artd.exec() == QDialog.Accepted:
+            cmd, new_tag = artd.return_values
+            InfoMsg(self, f"TODO: cmd={cmd}, new_tag={new_tag}").exec()
 
     def initRevIDTab(self):
         self.ui.reviewIDTW.setColumnCount(5)
