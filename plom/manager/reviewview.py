@@ -19,7 +19,7 @@ class ReviewViewWindow(QDialog):
     def __init__(self, parent, fnames, what="question"):
         super().__init__(parent)
         self.img = ImageViewWidget(self, fnames, dark_background=True)
-        self.setWindowTitle(f"Does this {what} need reviewing")
+        self.setWindowTitle(f"Does this {what} need reviewing?")
 
         explanation = QLabel(
             """
