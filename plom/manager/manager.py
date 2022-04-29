@@ -427,7 +427,8 @@ class Manager(QWidget):
         self.ui.unidB.clicked.connect(self.un_id_paper)
         self.ui.unpredB.clicked.connect(self.remove_id_prediction)
 
-        self.ui.refreshRevB.clicked.connect(self.refreshRev)
+        self.ui.refreshReviewMarkingButton.clicked.connect(self.refreshMRev)
+        self.ui.refreshReviewIDButton.clicked.connect(self.refreshIDRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
 
@@ -1779,10 +1780,6 @@ class Manager(QWidget):
     def initReviewTab(self):
         self.initRevMTab()
         self.initRevIDTab()
-
-    def refreshRev(self):
-        self.refreshIDRev()
-        self.refreshMRev()
 
     def initRevMTab(self):
         self.ui.reviewTW.setColumnCount(8)
