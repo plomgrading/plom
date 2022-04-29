@@ -875,6 +875,9 @@ def updateTestAfterChange(self, tref, group_refs=None):
 
     for gref in group_refs:
         self.updateGroupAfterChange(gref)
+    # tref may have been updated so we have to grab it from the DB again.
+    tn = tref.test_number
+    tref = Test.get_or_none(Test.test_number == tn)
 
     # now make sure the whole thing is scanned.
     if self.checkTestScanned(tref):
