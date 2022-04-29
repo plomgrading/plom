@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox,
     QFormLayout,
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QPushButton,
     QSizePolicy,
@@ -349,14 +350,46 @@ class CatViewer(QDialog):
 class PreviousPaperViewer(QDialog):
     """A modal dialog for displaying annotations of the previous paper."""
 
-    def __init__(self, parent, task, fname):
+    def __init__(self, parent, task_history):
         super().__init__(parent)
         self._annotr = parent
+        self.task_history = task_history
+        self.index = len(task_history) - 1
+        self.task = self.task_history[-1]
+
+        fname = self._annotr._get_annotation_by_task(self.task)
+        self.ivw = ImageViewWidget(self, fname)
         grid = QVBoxLayout()
-        grid.addWidget(ImageViewWidget(self, fname))
+        grid.addWidget(self.ivw)
+
+        self.prevTaskB = QPushButton("&Previous")
+        self.prevTaskB.clicked.connect(self.previous_task)
+        self.nextTaskB = QPushButton("&Next")
+        self.nextTaskB.clicked.connect(self.next_task)
+        subgrid = QHBoxLayout()
+        subgrid.addWidget(self.prevTaskB)
+        subgrid.addWidget(self.nextTaskB)
+        grid.addLayout(subgrid)
+
         grid.addSpacing(6)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         buttons.accepted.connect(self.accept)
         grid.addWidget(buttons)
         self.setLayout(grid)
-        self.setWindowTitle(f"Previous annotations - {task}")
+        self.setWindowTitle(f"Previous annotations - {self.task}")
+
+    def previous_task(self):
+        if self.index == 0:
+            return
+        self.index -= 1
+        self.task = self.task_history[self.index]
+        self.ivw.updateImage(self._annotr._get_annotation_by_task(self.task))
+        self.setWindowTitle(f"Previous annotations - {self.task}")
+
+    def next_task(self):
+        if self.index == len(self.task_history) - 1:
+            return
+        self.index += 1
+        self.task = self.task_history[self.index]
+        self.ivw.updateImage(self._annotr._get_annotation_by_task(self.task))
+        self.setWindowTitle(f"Previous annotations - {self.task}")

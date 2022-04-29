@@ -971,6 +971,9 @@ class MarkerClient(QWidget):
         self.exam_spec = None
         self.ui = None
         self.msgr = None
+        self.marking_history = (
+            None  # contain all the tgv in order of being marked except the current one.
+        )
         self._cachedProgressFormatStr = None
 
     def setup(self, messenger, question, version, lastTime):
@@ -1023,6 +1026,7 @@ class MarkerClient(QWidget):
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
         # Get list of papers already marked and add to table.
+        # also read these into the history variable
         self.loadMarkedList()
 
         # Keep the original format around in case we need to change it
@@ -1166,6 +1170,7 @@ class MarkerClient(QWidget):
         """
         # Ask server for list of previously marked papers
         markedList = self.msgr.MrequestDoneTasks(self.question, self.version)
+        self.marking_history = []
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
@@ -1179,6 +1184,7 @@ class MarkerClient(QWidget):
                     integrity_check=x[4],
                 )
             )
+            self.marking_history.append(x[0])
 
     def get_files_for_previously_annotated(self, task):
         """
@@ -2013,6 +2019,8 @@ class MarkerClient(QWidget):
         if stat == "uploading...":
             self.examModel.setStatusByTask(task, "marked")
         self.updateProgress(numDone, numtotal)
+        # successfully marked and uploaded the task, so update the marking history
+        self.marking_history.append(task)
 
     def backgroundUploadFailedServerChanged(self, task, error_message):
         """An upload has failed because server changed something, safest to quit.
@@ -2404,3 +2412,9 @@ class MarkerClient(QWidget):
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec()
+
+    def get_file_for_previous_viewer(self, task):
+        if not self.get_files_for_previously_annotated(task):
+            return None
+        else:
+            return self.examModel.getAnnotatedFileByTask(task)

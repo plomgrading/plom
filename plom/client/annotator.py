@@ -114,7 +114,6 @@ class Annotator(QWidget):
         self.username = username
         self.parentMarkerUI = parentMarkerUI
         self.tgvID = None
-        self.previous_tgv = None
 
         # Show warnings or not
         self.markWarn = True
@@ -762,9 +761,9 @@ class Annotator(QWidget):
                 log.error(s)
                 ErrorMessage(s).exec()
 
-            self.previous_tgv = self.tgvID
+            tmp_tgv = self.tgvID
             self.closeCurrentTGV()
-            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(self.previous_tgv, perm)
+            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(tmp_tgv, perm)
             log.debug("permuted: new stuff is {}".format(stuff))
             if not stuff:
                 txt = """
@@ -924,10 +923,10 @@ class Annotator(QWidget):
             if not self.saveAnnotations():
                 return
             log.debug("We have surrendered {}".format(self.tgvID))
-            self.previous_tgv = self.tgvID
+            tmp_tgv = self.tgvID
             self.closeCurrentTGV()
         else:
-            self.previous_tgv = None
+            tmp_tgv = None
 
         # Workaround getting too far ahead of Marker's upload queue
         queue_len = self.parentMarkerUI.get_upload_queue_length()
@@ -942,7 +941,7 @@ class Annotator(QWidget):
                 + "papers clear.</p>"
             ).exec()
 
-        stuff = self.parentMarkerUI.getMorePapers(self.previous_tgv)
+        stuff = self.parentMarkerUI.getMorePapers(tmp_tgv)
         if not stuff:
             ErrorMessage("No more to grade?").exec()
             # Not really safe to give it back? (at least we did the view...)
@@ -1951,16 +1950,15 @@ class Annotator(QWidget):
         return self.parentMarkerUI.refreshSolutionImage()
 
     def show_previous(self):
-        if self.previous_tgv is None:
+        log.warning(f"ARGH - {self.parentMarkerUI.marking_history}")
+
+        if not self.parentMarkerUI.marking_history:
             WarnMsg(
                 self,
                 "The client cannot determine the previous paper. Please cancel this annotation and select from the list.",
             ).exec()
             return
+        PreviousPaperViewer(self, self.parentMarkerUI.marking_history).exec()
 
-        previous_annotation_image = (
-            self.parentMarkerUI.examModel.getAnnotatedFileByTask(
-                "q" + self.previous_tgv
-            )
-        )
-        PreviousPaperViewer(self, self.previous_tgv, previous_annotation_image).exec()
+    def _get_annotation_by_task(self, task):
+        return self.parentMarkerUI.get_file_for_previous_viewer(task)
