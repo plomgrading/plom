@@ -431,6 +431,7 @@ class Manager(QWidget):
         self.ui.refreshReviewIDButton.clicked.connect(self.refreshIDRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
+        self.ui.flagReviewButton.clicked.connect(self.reviewFlagTableRowsForReview)
 
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
@@ -1780,6 +1781,8 @@ class Manager(QWidget):
     def initReviewTab(self):
         self.initRevMTab()
         self.initRevIDTab()
+        # not implemented yet
+        self.ui.removeAnnotationsButton.setEnabled(False)
 
     def initRevMTab(self):
         self.ui.reviewTW.setColumnCount(8)
@@ -1796,7 +1799,8 @@ class Manager(QWidget):
             ]
         )
         self.ui.reviewTW.setSortingEnabled(True)
-        self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        # TODO: change this, so we can tag multiple things at once...
+        #self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
         self.ui.viewAnnotationsButton.clicked.connect(self.reviewAnnotated)
@@ -1911,13 +1915,38 @@ class Manager(QWidget):
             fh.write(img)
         rvw = ReviewViewWindow(self, [f])
         if rvw.exec() == QDialog.Accepted:
-            # first remove auth from that user - safer.
-            if self.ui.reviewTW.item(r, 4).text() != "reviewer":
-                self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
-            # then map that question's owner "reviewer"
-            self.msgr.MreviewQuestion(test, question, version)
-            self.ui.reviewTW.item(r, 4).setText("reviewer")
+            current_user = self.ui.reviewTW.item(r, 4).text()
+            self.flag_test_for_review(test, question, version, current_user, r)
         f.unlink()
+
+    def reviewFlagTableRowsForReview(self):
+        # TODO: support multiple selections here
+        rvi = self.ui.reviewTW.selectedIndexes()
+        if len(rvi) == 0:
+            return
+        r = rvi[0].row()
+        # no action if row is unmarked
+        if self.ui.reviewTW.item(r, 3).text() == "n/a":
+            # TODO - in future fire up reviewer with original pages
+            return
+        # TODO: copy beta feature text from other dialog
+        if not SimpleQuestion(self, "are you sure?").exec() == QDialog.Accepted:
+            return
+        test = int(self.ui.reviewTW.item(r, 0).text())
+        question = int(self.ui.reviewTW.item(r, 1).text())
+        version = int(self.ui.reviewTW.item(r, 2).text())
+        current_user = self.ui.reviewTW.item(r, 4).text()
+        self.flag_test_for_review(test, question, version, current_user, r)
+
+    def flag_test_for_review(self, test, question, version, current_user, r):
+        # TODO: bit unhappy about passing r (which row in table)
+        # first remove auth from that user - safer.
+        if current_user != "reviewer":
+            self.msgr.clearAuthorisationUser(current_user)
+        # then map that question's owner "reviewer"
+        self.msgr.MreviewQuestion(test, question, version)
+        # TODO: row could resort so caller's r is invalid Issue #2118
+        self.ui.reviewTW.item(r, 4).setText("reviewer")
 
     def reviewChangeTags(self):
         rvi = self.ui.reviewTW.selectedIndexes()

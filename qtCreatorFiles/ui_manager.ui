@@ -1451,7 +1451,21 @@
                  <string>Modify the tags of the highlighted row</string>
                 </property>
                 <property name="text">
-                 <string>Change tags</string>
+                 <string>Tags...</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="flagReviewButton">
+                <property name="text">
+                 <string>Flag for review</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="removeAnnotationsButton">
+                <property name="text">
+                 <string>Remove annotations</string>
                 </property>
                </widget>
               </item>
