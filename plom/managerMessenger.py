@@ -1382,8 +1382,8 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
             # rval = response.json()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 404:
                 raise PlomSeriousException(
                     "Could not find t/q/v = {}/{}/{}.".format(
@@ -1407,8 +1407,8 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 404:
                 raise PlomSeriousException(
                     f"Could not find test {testNumber}."

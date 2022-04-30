@@ -8,6 +8,7 @@ from aiohttp import web, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request
+from .routeutils import write_admin
 from .routeutils import log
 
 
@@ -774,6 +775,7 @@ class MarkHandler:
 
     # @routes.patch("/MK/review")
     @authenticate_by_token_required_fields(["testNumber", "questionNumber", "version"])
+    @write_admin
     def MreviewQuestion(self, data, request):
         """Confirm the question review done on plom-manager.
 

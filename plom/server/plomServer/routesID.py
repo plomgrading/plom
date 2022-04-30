@@ -612,6 +612,7 @@ class IDHandler:
 
     # @routes.patch("/ID/review")
     @authenticate_by_token_required_fields(["testNumber"])
+    @write_admin
     def IDreviewID(self, data, request):
         """Responds with an empty response object indicating if the review ID is possible and the document exists.
 
