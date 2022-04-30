@@ -285,6 +285,21 @@ class _ExamView(QGraphicsView):
         self.setScene(self.scene)
         self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
 
+    def wheelEvent(self, event):
+        #TODO subclass the scene to add this function there - is a little simpler I think.
+        
+        # note that this is QWheelEvent, while in pagescene it is the slightly different QGraphicsSceneWheelEvent
+        # they have similar but slightly different calls.
+        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+            # TODO - allow user to tweak scaling speed / direction.
+            if event.angleDelta().y() < 0:
+                self.scale(63 / 64, 63 / 64)
+            else:
+                self.scale(64 / 63, 64 / 63)
+            # sets the view rectangle and updates zoom-dropdown.
+            self.centerOn(self.mapToScene(event.position()))
+            return super().wheelEvent(event)
+
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""
         if (event.button() == Qt.RightButton) or (
