@@ -18,7 +18,7 @@ class ReviewViewWindow(QDialog):
 
     def __init__(self, parent, fnames, what="question"):
         super().__init__(parent)
-        self.img = ImageViewWidget(self, fnames, dark_background=True)
+        img = ImageViewWidget(self, fnames, dark_background=True)
         self.setWindowTitle(f"Does this {what} need reviewing?")
 
         explanation = QLabel(
@@ -32,7 +32,7 @@ class ReviewViewWindow(QDialog):
         explanation.setWordWrap(True)
 
         grid = QVBoxLayout()
-        grid.addWidget(self.img, 1)
+        grid.addWidget(img, 1)
         grid.addWidget(explanation)
         buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
         reviewB = QPushButton("Flag for &review")
