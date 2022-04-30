@@ -1905,6 +1905,7 @@ class Manager(QWidget):
             return
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
+        owner = self.ui.reviewTW.item(r, 4).text()
         img = self.msgr.get_annotations_image(test, question)
         # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
         # TODO: but more likely superseded by "pagedata" changes
@@ -1912,10 +1913,7 @@ class Manager(QWidget):
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
             fh.write(img)
-        rvw = ReviewViewWindow(self, [f])
-        if rvw.exec() == QDialog.Accepted:
-            current_user = self.ui.reviewTW.item(r, 4).text()
-            self.flag_question_for_review(test, question, current_user, r)
+        ReviewViewWindow(self, [f], stuff=(test, question, owner)).exec()
         f.unlink()
 
     def reviewFlagTableRowsForReview(self):
@@ -1942,18 +1940,16 @@ class Manager(QWidget):
             return
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
-        current_user = self.ui.reviewTW.item(r, 4).text()
-        self.flag_question_for_review(test, question, current_user, r)
+        owner = self.ui.reviewTW.item(r, 4).text()
+        self.flag_question_for_review(test, question, owner)
+        self.ui.reviewTW.item(r, 4).setText("reviewer")
 
-    def flag_question_for_review(self, test, question, current_user, r):
-        # TODO: bit unhappy about passing r (which row in table)
+    def flag_question_for_review(self, test, question, owner):
         # first remove auth from that user - safer.
-        if current_user != "reviewer":
-            self.msgr.clearAuthorisationUser(current_user)
+        if owner != "reviewer":
+            self.msgr.clearAuthorisationUser(owner)
         # then map that question's owner "reviewer"
         self.msgr.MreviewQuestion(test, question)
-        # TODO: row could resort so caller's r is invalid Issue #2118
-        self.ui.reviewTW.item(r, 4).setText("reviewer")
 
     def reviewChangeTags(self):
         rvi = self.ui.reviewTW.selectedIndexes()
