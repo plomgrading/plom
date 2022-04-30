@@ -1010,6 +1010,21 @@ class PageScene(QGraphicsScene):
         else:
             pass
 
+    def wheelEvent(self, event):
+        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+            # TODO - allow user to tweak scaling speed / direction.
+            if event.delta() < 0:
+                self.views()[0].scale(63 / 64, 63 / 64)
+            else:
+                self.views()[0].scale(64 / 63, 64 / 63)
+
+            # sets the view rectangle and updates zoom-dropdown.
+            self.views()[0].centerOn(event.scenePos())
+            self.views()[0].setZoomSelector(True)
+            self.zoomFlag = 0
+
+            return super().wheelEvent(event)
+
     def mousePressEvent(self, event):
         """
         Call various tool functions depending on the mouse press' location.
