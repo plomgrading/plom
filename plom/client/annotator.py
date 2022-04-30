@@ -247,7 +247,7 @@ class Annotator(QWidget):
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
-        m.addAction("Show previous paper\tctrl-left", self.show_previous)
+        m.addAction("Show previous paper(s)\tctrl-left", self.show_previous)
         m.addSeparator()
         m.addAction("View cat", self.viewCat)
         m.addAction("View dog", self.viewNotCat)
