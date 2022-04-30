@@ -1929,8 +1929,17 @@ class Manager(QWidget):
         if self.ui.reviewTW.item(r, 3).text() == "n/a":
             # TODO - in future fire up reviewer with original pages
             return
-        # TODO: copy beta feature text from other dialog
-        if not SimpleQuestion(self, "are you sure?").exec() == QDialog.Accepted:
+        d = SimpleQuestion(
+            self,
+            "Are you sure?",
+            question="""
+                <p>Reviewing is a <em>beta</em> feature; it is not well-tested.
+                Use this at your own risk!</p>
+                <p>If you do flag this work for review, you'll then need to login
+                with the Client using a special "reviewer" account.</p>
+            """,
+        )
+        if not d.exec() == QMessageBox.Yes:
             return
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
