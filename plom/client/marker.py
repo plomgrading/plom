@@ -971,9 +971,8 @@ class MarkerClient(QWidget):
         self.exam_spec = None
         self.ui = None
         self.msgr = None
-        self.marking_history = (
-            None  # contain all the tgv in order of being marked except the current one.
-        )
+        # history contains all the tgv in order of being marked except the current one.
+        self.marking_history = []
         self._cachedProgressFormatStr = None
 
     def setup(self, messenger, question, version, lastTime):
@@ -2414,7 +2413,17 @@ class MarkerClient(QWidget):
         QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec()
 
     def get_file_for_previous_viewer(self, task):
+        """Get the annotation file for the given task. Check to see if the
+            local system already has the files for that task and if not grab them
+            from the server. Then pass the annotation-image-file back to the
+            caller.
+        """
+        # this checks to see if (all) the files for that task have
+        # been downloaded locally already. If already present it
+        # returns true, and if not then it grabs them from the server
+        # and returns true. A 'false' is returned only when the
+        # get-from-server fails.
         if not self.get_files_for_previously_annotated(task):
             return None
-        else:
-            return self.examModel.getAnnotatedFileByTask(task)
+        # now grab the actual annotated-image filename
+        return self.examModel.getAnnotatedFileByTask(task)

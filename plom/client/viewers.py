@@ -11,6 +11,7 @@ import tempfile
 import urllib.request
 
 from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -19,6 +20,7 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QShortcut,
     QSizePolicy,
     QSpinBox,
     QTabWidget,
@@ -362,9 +364,9 @@ class PreviousPaperViewer(QDialog):
         grid = QVBoxLayout()
         grid.addWidget(self.ivw)
 
-        self.prevTaskB = QPushButton("&Previous")
+        self.prevTaskB = QPushButton("&Previous (ctrl+left)")
         self.prevTaskB.clicked.connect(self.previous_task)
-        self.nextTaskB = QPushButton("&Next")
+        self.nextTaskB = QPushButton("&Next (ctrl+right)")
         self.nextTaskB.clicked.connect(self.next_task)
         subgrid = QHBoxLayout()
         subgrid.addWidget(self.prevTaskB)
@@ -377,6 +379,11 @@ class PreviousPaperViewer(QDialog):
         grid.addWidget(buttons)
         self.setLayout(grid)
         self.setWindowTitle(f"Previous annotations - {self.task}")
+
+        self.prevShortCut = QShortcut(QKeySequence("Ctrl+left"), self)
+        self.prevShortCut.activated.connect(self.previous_task)
+        self.nextShortCut = QShortcut(QKeySequence("Ctrl+right"), self)
+        self.nextShortCut.activated.connect(self.next_task)
 
     def previous_task(self):
         if self.index == 0:

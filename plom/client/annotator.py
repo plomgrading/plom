@@ -1950,7 +1950,7 @@ class Annotator(QWidget):
         return self.parentMarkerUI.refreshSolutionImage()
 
     def show_previous(self):
-        log.warning(f"ARGH - {self.parentMarkerUI.marking_history}")
+        log.debug(f"Show previous called: debug history = {self.parentMarkerUI.marking_history}")
 
         if not self.parentMarkerUI.marking_history:
             WarnMsg(
