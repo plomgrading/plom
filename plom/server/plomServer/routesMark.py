@@ -774,7 +774,7 @@ class MarkHandler:
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")
-    @authenticate_by_token_required_fields(["testNumber", "questionNumber", "version"])
+    @authenticate_by_token_required_fields(["testNumber", "questionNumber"])
     @write_admin
     def MreviewQuestion(self, data, request):
         """Confirm the question review done on plom-manager.
@@ -782,21 +782,18 @@ class MarkHandler:
         Respond with status 200/404.
 
         Args:
-            data (dict): Dictionary including user data in addition to question number
-                and test version.
+            data (dict): Dictionary including user data, test_number (int)
+                and question_number (int).
             request (aiohttp.web_request.Request): Request of type PATCH /MK/review .
 
         Returns:
-            aiohttp.web_response.Response: Empty status response indication if the question
-            review was successful.
+            aiohttp.web.Response: 200 on success, 404 on failure (could not find).
         """
-
-        if self.server.MreviewQuestion(
-            data["testNumber"], data["questionNumber"], data["version"]
-        ):
-            return web.Response(status=200)
-        else:
-            return web.Response(status=404)
+        if not self.server.MreviewQuestion(data["testNumber"], data["questionNumber"]):
+            raise web.HTTPNotFound(
+                reason=f'Could not find t/q {data["testNumber"]}/{data["questionNumber"]}'
+            )
+        return web.Response(status=200)
 
     # @routes.patch("/MK/revert/{task}")
     # TODO: Deprecated.

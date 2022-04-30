@@ -563,7 +563,7 @@ def MgetWholePaper(self, test_number, question):
     return (True, pagedata)
 
 
-def MreviewQuestion(self, test_number, question, version):
+def MreviewQuestion(self, test_number, question):
     """Give ownership of the given marking task to the reviewer."""
     revref = User.get(name="reviewer")  # should always be there
 
@@ -573,9 +573,9 @@ def MreviewQuestion(self, test_number, question, version):
     qref = QGroup.get_or_none(
         QGroup.test == tref,
         QGroup.question == question,
-        QGroup.version == version,
         QGroup.marked == True,  # noqa: E712
     )
+    version = qref.version
     if qref is None:
         return False
     with plomdb.atomic():

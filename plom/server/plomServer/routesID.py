@@ -623,14 +623,11 @@ class IDHandler:
             request (aiohttp.web_request.Request): Request of type PATCH /ID/review.
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: An empty response indicating the availability status of
-            the review document.
+            aiohttp.web.Response: 200 on success, 404 on failure (could not find).
         """
-
-        if self.server.IDreviewID(data["testNumber"]):
-            return web.Response(status=200)
-        else:
-            return web.Response(status=404)
+        if not self.server.IDreviewID(data["testNumber"]):
+            raise web.HTTPNotFound(reason=f'Could not find paper {data["testNumber"]}')
+        return web.Response(status=200)
 
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.

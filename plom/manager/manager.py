@@ -1905,7 +1905,6 @@ class Manager(QWidget):
             return
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
-        version = int(self.ui.reviewTW.item(r, 2).text())
         img = self.msgr.get_annotations_image(test, question)
         # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
         # TODO: but more likely superseded by "pagedata" changes
@@ -1916,7 +1915,7 @@ class Manager(QWidget):
         rvw = ReviewViewWindow(self, [f])
         if rvw.exec() == QDialog.Accepted:
             current_user = self.ui.reviewTW.item(r, 4).text()
-            self.flag_test_for_review(test, question, version, current_user, r)
+            self.flag_question_for_review(test, question, current_user, r)
         f.unlink()
 
     def reviewFlagTableRowsForReview(self):
@@ -1943,17 +1942,16 @@ class Manager(QWidget):
             return
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
-        version = int(self.ui.reviewTW.item(r, 2).text())
         current_user = self.ui.reviewTW.item(r, 4).text()
-        self.flag_test_for_review(test, question, version, current_user, r)
+        self.flag_question_for_review(test, question, current_user, r)
 
-    def flag_test_for_review(self, test, question, version, current_user, r):
+    def flag_question_for_review(self, test, question, current_user, r):
         # TODO: bit unhappy about passing r (which row in table)
         # first remove auth from that user - safer.
         if current_user != "reviewer":
             self.msgr.clearAuthorisationUser(current_user)
         # then map that question's owner "reviewer"
-        self.msgr.MreviewQuestion(test, question, version)
+        self.msgr.MreviewQuestion(test, question)
         # TODO: row could resort so caller's r is invalid Issue #2118
         self.ui.reviewTW.item(r, 4).setText("reviewer")
 
