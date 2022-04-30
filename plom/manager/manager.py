@@ -58,7 +58,8 @@ from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
 from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
-from .reviewview import ReviewViewWindow
+from .reviewview import ReviewViewWindow, ReviewViewWindowID
+from .reviewview import review_beta_warning
 from .selectrectangle import SelectRectangleWindow
 from plom.plom_exceptions import (
     PlomSeriousException,
@@ -1926,15 +1927,10 @@ class Manager(QWidget):
         if self.ui.reviewTW.item(r, 3).text() == "n/a":
             # TODO - in future fire up reviewer with original pages
             return
-        d = SimpleQuestion(
+        d = WarningQuestion(
             self,
-            "Are you sure?",
-            question="""
-                <p>Reviewing is a <em>beta</em> feature; it is not well-tested.
-                Use this at your own risk!</p>
-                <p>If you do flag this work for review, you'll then need to login
-                with the Client using a special "reviewer" account.</p>
-            """,
+            review_beta_warning,
+            question="Are you sure you want to flag this for review?",
         )
         if not d.exec() == QMessageBox.Yes:
             return
@@ -1942,6 +1938,7 @@ class Manager(QWidget):
         question = int(self.ui.reviewTW.item(r, 1).text())
         owner = self.ui.reviewTW.item(r, 4).text()
         self.flag_question_for_review(test, question, owner)
+        # TODO: needs to be a method call to fix highlighting
         self.ui.reviewTW.item(r, 4).setText("reviewer")
 
     def flag_question_for_review(self, test, question, owner):
@@ -2076,7 +2073,7 @@ class Manager(QWidget):
                 fh.write(img_bytes)
             if not img_ext:
                 raise PlomSeriousException(f"Could not identify image type: {img_name}")
-            rvw = ReviewViewWindow(self, img_name, "ID page")
+            rvw = ReviewViewWindowID(self, img_name)
             if rvw.exec() == QDialog.Accepted:
                 # first remove auth from that user - safer.
                 if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
@@ -2084,6 +2081,7 @@ class Manager(QWidget):
                         self.ui.reviewIDTW.item(r, 1).text()
                     )
                 # then map that question's owner "reviewer"
+                # TODO: needs to be a method call to fix highlighting
                 self.ui.reviewIDTW.item(r, 1).setText("reviewer")
                 self.msgr.IDreviewID(test)
 
