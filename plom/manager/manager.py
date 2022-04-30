@@ -1965,6 +1965,32 @@ class Manager(QWidget):
         # TODO: hardcoded index nonsense: why can't we get the original row dict?
         paper_num = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
+        current_tags = self.manage_task_tags(paper_num, question)
+        # TODO: carefully if we look here: this could re-sort, Issue #2118.
+        self.ui.reviewTW.item(r, 7).setText(", ".join(current_tags))
+
+    def manage_task_tags(self, paper_num, question, parent=None):
+        """Manage the tags of a task.
+
+        args:
+            paper_num (int/str):
+            question (int/str):
+
+        keyword args:
+            parent (Window/None): Which window should be dialog's parent?
+                If None, then use `self` (which is Marker) but if other
+                windows (such as Annotator or PageRearranger) are calling
+                this and if so they should pass themselves: that way they
+                would be the visual parents of this dialog.
+
+        returns:
+            list: the current tags of paper/question.  Note even if the
+            dialog is cancelled, this will be updated (as someone else
+            could've changed tags).
+        """
+        if not parent:
+            parent = self
+
         # ugh, "GQ" nonsense:
         task = f"q{paper_num:04}g{question}"
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
@@ -1989,15 +2015,8 @@ class Manager(QWidget):
                 # do nothing - but shouldn't arrive here.
                 pass
 
-            # refresh the tags
-            current_tags = self.msgr.get_tags(task)
-
-            # TODO: but how to update?  Talk to the table?
-            # For now just refresh?
-            # try:
-            #     ...
-            # except ValueError:
-            #     pass
+        current_tags = self.msgr.get_tags(task)
+        return current_tags
 
     def initRevIDTab(self):
         self.ui.reviewIDTW.setColumnCount(5)
