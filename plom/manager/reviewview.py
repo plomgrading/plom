@@ -38,6 +38,13 @@ class ReviewViewWindow(QDialog):
         reviewB = QPushButton("Flag for &review")
         reviewB.clicked.connect(self.accept)
         buttons.addButton(reviewB, QDialogButtonBox.AcceptRole)
+        b = QPushButton("&Tags...")
+        print(self.parent())
+        b.clicked.connect(self.tags)
+        buttons.addButton(b, QDialogButtonBox.ActionRole)
         buttons.rejected.connect(self.reject)
         grid.addWidget(buttons)
         self.setLayout(grid)
+
+    def tags(self):
+        self.parent().manage_task_tags(10, 2, parent=self)
