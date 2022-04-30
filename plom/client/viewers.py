@@ -386,17 +386,23 @@ class PreviousPaperViewer(QDialog):
         self.nextShortCut.activated.connect(self.next_task)
 
     def previous_task(self):
+        self.nextTaskB.setEnabled(True)
         if self.index == 0:
             return
         self.index -= 1
         task = self.task_history[self.index]
         self.ivw.updateImage(self._annotr._get_annotation_by_task(task))
         self.setWindowTitle(f"Previous annotations - {task}")
+        if self.index == 0:
+            self.prevTaskB.setEnabled(False)
 
     def next_task(self):
+        self.prevTaskB.setEnabled(True)
         if self.index == len(self.task_history) - 1:
             return
         self.index += 1
         task = self.task_history[self.index]
         self.ivw.updateImage(self._annotr._get_annotation_by_task(task))
         self.setWindowTitle(f"Previous annotations - {task}")
+        if self.index == len(self.task_history) - 1:
+            self.nextTaskB.setEnabled(False)
