@@ -1800,7 +1800,7 @@ class Manager(QWidget):
         )
         self.ui.reviewTW.setSortingEnabled(True)
         # TODO: change this, so we can tag multiple things at once...
-        #self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        # self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
         self.ui.viewAnnotationsButton.clicked.connect(self.reviewAnnotated)
