@@ -1926,6 +1926,9 @@ class MarkerClient(QWidget):
                 unknownFailCallback=self.backgroundUploadFailed,
                 successCallback=self.backgroundUploadFinished,
             )
+        # successfully marked and put on the upload list.
+        # now update the marking history with the task.
+        self.marking_history.append(task)
 
     def getMorePapers(self, oldtgvID):
         """
@@ -2018,8 +2021,6 @@ class MarkerClient(QWidget):
         if stat == "uploading...":
             self.examModel.setStatusByTask(task, "marked")
         self.updateProgress(numDone, numtotal)
-        # successfully marked and uploaded the task, so update the marking history
-        self.marking_history.append(task)
 
     def backgroundUploadFailedServerChanged(self, task, error_message):
         """An upload has failed because server changed something, safest to quit.
@@ -2414,9 +2415,9 @@ class MarkerClient(QWidget):
 
     def get_file_for_previous_viewer(self, task):
         """Get the annotation file for the given task. Check to see if the
-            local system already has the files for that task and if not grab them
-            from the server. Then pass the annotation-image-file back to the
-            caller.
+        local system already has the files for that task and if not grab them
+        from the server. Then pass the annotation-image-file back to the
+        caller.
         """
         # this checks to see if (all) the files for that task have
         # been downloaded locally already. If already present it
