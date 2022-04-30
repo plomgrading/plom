@@ -971,6 +971,8 @@ class MarkerClient(QWidget):
         self.exam_spec = None
         self.ui = None
         self.msgr = None
+        # history contains all the tgv in order of being marked except the current one.
+        self.marking_history = []
         self._cachedProgressFormatStr = None
 
     def setup(self, messenger, question, version, lastTime):
@@ -1023,6 +1025,7 @@ class MarkerClient(QWidget):
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
         # Get list of papers already marked and add to table.
+        # also read these into the history variable
         self.loadMarkedList()
 
         # Keep the original format around in case we need to change it
@@ -1166,6 +1169,7 @@ class MarkerClient(QWidget):
         """
         # Ask server for list of previously marked papers
         markedList = self.msgr.MrequestDoneTasks(self.question, self.version)
+        self.marking_history = []
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
@@ -1179,6 +1183,7 @@ class MarkerClient(QWidget):
                     integrity_check=x[4],
                 )
             )
+            self.marking_history.append(x[0])
 
     def get_files_for_previously_annotated(self, task):
         """
@@ -1921,6 +1926,9 @@ class MarkerClient(QWidget):
                 unknownFailCallback=self.backgroundUploadFailed,
                 successCallback=self.backgroundUploadFinished,
             )
+        # successfully marked and put on the upload list.
+        # now update the marking history with the task.
+        self.marking_history.append(task)
 
     def getMorePapers(self, oldtgvID):
         """
@@ -2404,3 +2412,19 @@ class MarkerClient(QWidget):
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec()
+
+    def get_file_for_previous_viewer(self, task):
+        """Get the annotation file for the given task. Check to see if the
+        local system already has the files for that task and if not grab them
+        from the server. Then pass the annotation-image-file back to the
+        caller.
+        """
+        # this checks to see if (all) the files for that task have
+        # been downloaded locally already. If already present it
+        # returns true, and if not then it grabs them from the server
+        # and returns true. A 'false' is returned only when the
+        # get-from-server fails.
+        if not self.get_files_for_previously_annotated(task):
+            return None
+        # now grab the actual annotated-image filename
+        return self.examModel.getAnnotatedFileByTask(task)

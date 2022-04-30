@@ -11,13 +11,16 @@ import tempfile
 import urllib.request
 
 from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QPushButton,
+    QShortcut,
     QSizePolicy,
     QSpinBox,
     QTabWidget,
@@ -344,3 +347,62 @@ class CatViewer(QDialog):
         if self.count > 5:
             InfoMsg(self, "Enough break time").exec()
             self.close()
+
+
+class PreviousPaperViewer(QDialog):
+    """A modal dialog for displaying annotations of the previous paper."""
+
+    def __init__(self, parent, task_history):
+        super().__init__(parent)
+        self._annotr = parent
+        self.task_history = task_history
+        self.index = len(task_history) - 1
+        task = self.task_history[-1]
+
+        fname = self._annotr._get_annotation_by_task(task)
+        self.ivw = ImageViewWidget(self, fname)
+        grid = QVBoxLayout()
+        grid.addWidget(self.ivw)
+
+        self.prevTaskB = QPushButton("&Previous (ctrl+left)")
+        self.prevTaskB.clicked.connect(self.previous_task)
+        self.nextTaskB = QPushButton("&Next (ctrl+right)")
+        self.nextTaskB.clicked.connect(self.next_task)
+        subgrid = QHBoxLayout()
+        subgrid.addWidget(self.prevTaskB)
+        subgrid.addWidget(self.nextTaskB)
+        grid.addLayout(subgrid)
+
+        grid.addSpacing(6)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons.accepted.connect(self.accept)
+        grid.addWidget(buttons)
+        self.setLayout(grid)
+        self.setWindowTitle(f"Previous annotations - {task}")
+
+        self.prevShortCut = QShortcut(QKeySequence("Ctrl+left"), self)
+        self.prevShortCut.activated.connect(self.previous_task)
+        self.nextShortCut = QShortcut(QKeySequence("Ctrl+right"), self)
+        self.nextShortCut.activated.connect(self.next_task)
+
+    def previous_task(self):
+        self.nextTaskB.setEnabled(True)
+        if self.index == 0:
+            return
+        self.index -= 1
+        task = self.task_history[self.index]
+        self.ivw.updateImage(self._annotr._get_annotation_by_task(task))
+        self.setWindowTitle(f"Previous annotations - {task}")
+        if self.index == 0:
+            self.prevTaskB.setEnabled(False)
+
+    def next_task(self):
+        self.prevTaskB.setEnabled(True)
+        if self.index == len(self.task_history) - 1:
+            return
+        self.index += 1
+        task = self.task_history[self.index]
+        self.ivw.updateImage(self._annotr._get_annotation_by_task(task))
+        self.setWindowTitle(f"Previous annotations - {task}")
+        if self.index == len(self.task_history) - 1:
+            self.nextTaskB.setEnabled(False)
