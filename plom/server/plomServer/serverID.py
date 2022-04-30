@@ -193,18 +193,8 @@ def IDputPredictions(self, predictions, classlist, spec):
     return [True, "All predictions saved to DB successfully"]
 
 
-def IDreviewID(self, test_number):
-    """Handle manager GUI's review of an ID'd paper.
-
-    Args:
-        test_number (str): ID reviewed test number.
-
-    Returns:
-        list: A list with a single True/False indicating
-        if the review was successful.
-    """
-
-    return self.DB.IDreviewID(test_number)
+def IDreviewID(self, *args, **kwargs):
+    return self.DB.IDreviewID(*args, **kwargs)
 
 
 def predict_id_lap_solver(self):
