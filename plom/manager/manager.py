@@ -1800,8 +1800,7 @@ class Manager(QWidget):
             ]
         )
         self.ui.reviewTW.setSortingEnabled(True)
-        # TODO: change this, so we can tag multiple things at once...
-        # self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.reviewTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
         self.ui.viewAnnotationsButton.clicked.connect(self.reviewAnnotated)
@@ -1918,28 +1917,33 @@ class Manager(QWidget):
         f.unlink()
 
     def reviewFlagTableRowsForReview(self):
-        # TODO: support multiple selections here
-        rvi = self.ui.reviewTW.selectedIndexes()
-        if len(rvi) == 0:
+        ri = self.ui.reviewTW.selectedIndexes()
+        # index is over rows and columns (yuck) so need some modular arithmetic
+        mod = 8
+        if len(ri) == 0:
             return
-        r = rvi[0].row()
-        # no action if row is unmarked
-        if self.ui.reviewTW.item(r, 3).text() == "n/a":
-            # TODO - in future fire up reviewer with original pages
-            return
+        howmany = len(ri) // mod
+        howmany = "1 question" if howmany == 1 else f"{howmany} questions"
         d = WarningQuestion(
             self,
             review_beta_warning,
-            question="Are you sure you want to flag this for review?",
+            question=f"Are you sure you want to <b>flag {howmany}</b> for review?",
         )
         if not d.exec() == QMessageBox.Yes:
             return
-        test = int(self.ui.reviewTW.item(r, 0).text())
-        question = int(self.ui.reviewTW.item(r, 1).text())
-        owner = self.ui.reviewTW.item(r, 4).text()
-        self.flag_question_for_review(test, question, owner)
-        # TODO: needs to be a method call to fix highlighting
-        self.ui.reviewTW.item(r, 4).setText("reviewer")
+        self.ui.reviewIDTW.setSortingEnabled(False)
+        for tmp in ri[::mod]:
+            r = tmp.row()
+            # no action if row is unmarked
+            if self.ui.reviewTW.item(r, 3).text() == "n/a":
+                continue
+            test = int(self.ui.reviewTW.item(r, 0).text())
+            question = int(self.ui.reviewTW.item(r, 1).text())
+            owner = self.ui.reviewTW.item(r, 4).text()
+            self.flag_question_for_review(test, question, owner)
+            # TODO: needs to be a method call to fix highlighting
+            self.ui.reviewTW.item(r, 4).setText("reviewer")
+        self.ui.reviewIDTW.setSortingEnabled(True)
 
     def flag_question_for_review(self, test, question, owner):
         # first remove auth from that user - safer.
