@@ -1895,10 +1895,11 @@ class Manager(QWidget):
             r += 1
 
     def reviewAnnotated(self):
-        rvi = self.ui.reviewTW.selectedIndexes()
-        if len(rvi) == 0:
+        ri = self.ui.reviewTW.selectedIndexes()
+        if len(ri) != 8:
+            # don't do anything unless we have exactly one row
             return
-        r = rvi[0].row()
+        r = ri[0].row()
         # no action if row is unmarked
         if self.ui.reviewTW.item(r, 3).text() == "n/a":
             # TODO - in future fire up reviewer with original pages
