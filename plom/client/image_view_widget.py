@@ -176,6 +176,26 @@ class ImageViewWidget(QWidget):
         QTimer.singleShot(32, self.view.resetView)
 
 
+class _ExamScene(QGraphicsScene):
+    """Subclass the qgraphicsscene to overide the wheel-event and so
+    trigger nice scroll-to-zoom behaviour.
+    """
+
+    def wheelEvent(self, event):
+        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+            # TODO - allow user to tweak scaling speed / direction.
+            if event.delta() < 0:
+                self.views()[0].scale(63 / 64, 63 / 64)
+            else:
+                self.views()[0].scale(64 / 63, 64 / 63)
+
+            # sets the view rectangle and updates zoom-dropdown.
+            self.views()[0].centerOn(event.scenePos())
+            self.zoomFlag = 0
+        else:
+            return super().wheelEvent(event)
+
+
 class _ExamView(QGraphicsView):
     """Display images with some interaction: click-to-zoom/unzoom
 
@@ -201,7 +221,7 @@ class _ExamView(QGraphicsView):
             self.setBackgroundBrush(BackGrid())
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        self.scene = QGraphicsScene()
+        self.scene = _ExamScene()
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
         # we track the total user-performed rotations in case caller is interested
@@ -284,21 +304,6 @@ class _ExamView(QGraphicsView):
         )
         self.setScene(self.scene)
         self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
-
-    def wheelEvent(self, event):
-        #TODO subclass the scene to add this function there - is a little simpler I think.
-        
-        # note that this is QWheelEvent, while in pagescene it is the slightly different QGraphicsSceneWheelEvent
-        # they have similar but slightly different calls.
-        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
-            # TODO - allow user to tweak scaling speed / direction.
-            if event.angleDelta().y() < 0:
-                self.scale(63 / 64, 63 / 64)
-            else:
-                self.scale(64 / 63, 64 / 63)
-            # sets the view rectangle and updates zoom-dropdown.
-            self.centerOn(self.mapToScene(event.position()))
-            return super().wheelEvent(event)
 
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""

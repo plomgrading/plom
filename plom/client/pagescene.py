@@ -1022,7 +1022,7 @@ class PageScene(QGraphicsScene):
             self.views()[0].centerOn(event.scenePos())
             self.views()[0].setZoomSelector(True)
             self.zoomFlag = 0
-
+        else:
             return super().wheelEvent(event)
 
     def mousePressEvent(self, event):
