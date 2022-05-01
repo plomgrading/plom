@@ -2351,7 +2351,7 @@ class MarkerClient(QWidget):
         current_tags = self.msgr.get_tags(task)
         tag_choices = [X for X in all_tags if X not in current_tags]
 
-        artd = AddRemoveTagDialog(parent, task, current_tags, tag_choices=tag_choices)
+        artd = AddRemoveTagDialog(parent, current_tags, tag_choices, label=task)
         if artd.exec() == QDialog.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":

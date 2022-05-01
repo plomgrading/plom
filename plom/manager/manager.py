@@ -1954,16 +1954,66 @@ class Manager(QWidget):
         self.msgr.MreviewQuestion(test, question)
 
     def reviewChangeTags(self):
-        rvi = self.ui.reviewTW.selectedIndexes()
-        if len(rvi) == 0:
+        ri = self.ui.reviewTW.selectedIndexes()
+        if len(ri) == 0:
             return
-        r = rvi[0].row()
-        # TODO: hardcoded index nonsense: why can't we get the original row dict?
-        paper_num = int(self.ui.reviewTW.item(r, 0).text())
-        question = int(self.ui.reviewTW.item(r, 1).text())
-        current_tags = self.manage_task_tags(paper_num, question)
-        # TODO: careful if we loop here: this could re-sort, Issue #2118.
-        self.ui.reviewTW.item(r, 7).setText(", ".join(current_tags))
+        mod = self.ui.reviewTW.columnCount()
+        howmany = len(ri) // mod
+        howmany = "1 question" if howmany == 1 else f"{howmany} questions"
+        self.ui.reviewIDTW.setSortingEnabled(False)
+        # TODO: this loop is expensive when many rows higlighted
+        # TODO: maybe just use the 7th column instead of talking to server
+        tags = set()
+        for tmp in ri[::mod]:
+            r = tmp.row()
+            paper = int(self.ui.reviewTW.item(r, 0).text())
+            question = int(self.ui.reviewTW.item(r, 1).text())
+            task = f"q{paper:04}g{question}"
+            tags.update(self.msgr.get_tags(task))
+        all_tags = [tag for key, tag in self.msgr.get_all_tags()]
+        tag_choices = [X for X in all_tags if X not in tags]
+        artd = AddRemoveTagDialog(self, tags, tag_choices, label=howmany)
+        if artd.exec() != QDialog.Accepted:
+            return
+        cmd, new_tag = artd.return_values
+        if cmd == "add":
+            if new_tag:
+                try:
+                    for tmp in ri[::mod]:
+                        r = tmp.row()
+                        paper = int(self.ui.reviewTW.item(r, 0).text())
+                        question = int(self.ui.reviewTW.item(r, 1).text())
+                        task = f"q{paper:04}g{question}"
+                        log.debug('%s: tagging "%s"', task, new_tag)
+                        self.msgr.add_single_tag(task, new_tag)
+                except PlomBadTagError as e:
+                    WarnMsg(self, f"Tag not acceptable: {e}").exec()
+        elif cmd == "remove":
+            for tmp in ri[::mod]:
+                r = tmp.row()
+                paper = int(self.ui.reviewTW.item(r, 0).text())
+                question = int(self.ui.reviewTW.item(r, 1).text())
+                task = f"q{paper:04}g{question}"
+                log.debug('%s: removing tag "%s"', task, new_tag)
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomBadTagError as e:
+                    # TODO: I think this should succeed
+                    log.debug("%s did not have tag: %s", task, str(e))
+                    pass
+        else:
+            # do nothing - but shouldn't arrive here.
+            pass
+
+        # update the relevant table fields
+        for tmp in ri[::mod]:
+            r = tmp.row()
+            paper = int(self.ui.reviewTW.item(r, 0).text())
+            question = int(self.ui.reviewTW.item(r, 1).text())
+            task = f"q{paper:04}g{question}"
+            tags = self.msgr.get_tags(task)
+            self.ui.reviewTW.item(r, 7).setData(Qt.DisplayRole, ", ".join(tags))
+        self.ui.reviewIDTW.setSortingEnabled(True)
 
     def manage_task_tags(self, paper_num, question, parent=None):
         """Manage the tags of a task.
@@ -1990,20 +2040,21 @@ class Manager(QWidget):
         # ugh, "GQ" nonsense:
         task = f"q{paper_num:04}g{question}"
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
-        current_tags = self.msgr.get_tags(task)
-        tag_choices = [X for X in all_tags if X not in current_tags]
-        artd = AddRemoveTagDialog(self, task, current_tags, tag_choices=tag_choices)
+        tags = self.msgr.get_tags(task)
+        tag_choices = [X for X in all_tags if X not in tags]
+        artd = AddRemoveTagDialog(self, tags, tag_choices, label=task)
         if artd.exec() == QDialog.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":
                 if new_tag:
                     try:
+                        log.debug('%s: tagging "%s"', task, new_tag)
                         self.msgr.add_single_tag(task, new_tag)
-                        log.debug('tagging paper "%s" with "%s"', task, new_tag)
                     except PlomBadTagError as e:
                         WarnMsg(self, f"Tag not acceptable: {e}").exec()
             elif cmd == "remove":
                 try:
+                    log.debug('%s: removing tag "%s"', task, new_tag)
                     self.msgr.remove_single_tag(task, new_tag)
                 except PlomBadTagError as e:
                     WarnMsg(self, f"Problem removing tag: {e}").exec()
