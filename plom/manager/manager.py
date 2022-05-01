@@ -1808,9 +1808,10 @@ class Manager(QWidget):
 
         # TODO: where to define this function?  Probably a method of a subclass of reviewTW
         def f(tw, i, row):
-            """Insert N = 8 things from row into the ith row of the table tw."""
+            """Insert the things from row into the ith row of the table tw."""
             N = 8
             assert len(row) == N
+            assert tw.columnCount() == N
             # otherwise they resort between elements of the row (!)
             tw.setSortingEnabled(False)
             tw.insertRow(i)
@@ -1863,7 +1864,6 @@ class Manager(QWidget):
         self.ui.tagsCB.addItem("<no tags>")
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
         self.ui.tagsCB.addItems(all_tags)
-        # TODO: but we need to re-run the query else its bloody confusing!
 
     def filterReview(self):
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
@@ -1896,7 +1896,7 @@ class Manager(QWidget):
 
     def reviewAnnotated(self):
         ri = self.ui.reviewTW.selectedIndexes()
-        if len(ri) != 8:
+        if len(ri) != self.ui.reviewTW.columnCount():
             # don't do anything unless we have exactly one row
             return
         r = ri[0].row()
@@ -1919,10 +1919,10 @@ class Manager(QWidget):
 
     def reviewFlagTableRowsForReview(self):
         ri = self.ui.reviewTW.selectedIndexes()
-        # index is over rows and columns (yuck) so need some modular arithmetic
-        mod = 8
         if len(ri) == 0:
             return
+        # index is over rows and columns (yuck) so need some modular arithmetic
+        mod = self.ui.reviewTW.columnCount()
         howmany = len(ri) // mod
         howmany = "1 question" if howmany == 1 else f"{howmany} questions"
         d = WarningQuestion(
@@ -1962,7 +1962,7 @@ class Manager(QWidget):
         paper_num = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
         current_tags = self.manage_task_tags(paper_num, question)
-        # TODO: carefully if we look here: this could re-sort, Issue #2118.
+        # TODO: careful if we loop here: this could re-sort, Issue #2118.
         self.ui.reviewTW.item(r, 7).setText(", ".join(current_tags))
 
     def manage_task_tags(self, paper_num, question, parent=None):
