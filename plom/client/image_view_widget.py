@@ -176,6 +176,28 @@ class ImageViewWidget(QWidget):
         QTimer.singleShot(32, self.view.resetView)
 
 
+class _ExamScene(QGraphicsScene):
+    """Subclass the qgraphicsscene to override the wheel-event and so
+    trigger nice scroll-to-zoom behaviour.
+    """
+
+    def wheelEvent(self, event):
+        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+            # TODO - allow user to tweak scaling speed / direction.
+            # TODO: should also use abs(delta):
+            #    - my cheap bluetooth mouse is 120 (sometimes 240) and feels way to slow
+            #    - my generic lenovo USB mouse is same
+            #    - my thinkpad feel great: is pressure sensitive and gives 12 up to maybe 200
+            #    - all these are on Wayland.
+            if event.delta() < 0:
+                self.views()[0].scale(63 / 64, 63 / 64)
+            else:
+                self.views()[0].scale(64 / 63, 64 / 63)
+            # Unpleasant to grub in parent but want mouse events to lock zoom
+            self.views()[0].parent().zoomLockSetOn()
+            event.accept()
+
+
 class _ExamView(QGraphicsView):
     """Display images with some interaction: click-to-zoom/unzoom
 
@@ -201,7 +223,8 @@ class _ExamView(QGraphicsView):
             self.setBackgroundBrush(BackGrid())
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        self.scene = QGraphicsScene()
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.scene = _ExamScene()
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
         # we track the total user-performed rotations in case caller is interested
@@ -296,6 +319,7 @@ class _ExamView(QGraphicsView):
         self.centerOn(event.pos())
         # Unpleasant to grub in parent but want mouse events to lock zoom
         self.parent().zoomLockSetOn()
+        return super().mouseReleaseEvent(event)
 
     def zoomOut(self):
         self.scale(0.8, 0.8)

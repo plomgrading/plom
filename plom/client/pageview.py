@@ -38,6 +38,7 @@ class PageView(QGraphicsView):
 
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         # the graphics view accepts drag/drop from the comment list
         self.setAcceptDrops(True)
         self.paperWindow = None

@@ -1019,11 +1019,9 @@ class PageScene(QGraphicsScene):
                 self.views()[0].scale(64 / 63, 64 / 63)
 
             # sets the view rectangle and updates zoom-dropdown.
-            self.views()[0].centerOn(event.scenePos())
             self.views()[0].setZoomSelector(True)
             self.zoomFlag = 0
-
-            return super().wheelEvent(event)
+            event.accept()
 
     def mousePressEvent(self, event):
         """
