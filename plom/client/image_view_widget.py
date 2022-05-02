@@ -218,6 +218,7 @@ class _ExamView(QGraphicsView):
             self.setBackgroundBrush(BackGrid())
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.scene = _ExamScene()
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
