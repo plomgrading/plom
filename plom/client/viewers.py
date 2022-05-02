@@ -21,7 +21,6 @@ from PyQt5.QtWidgets import (
     QLabel,
     QPushButton,
     QShortcut,
-    QSizePolicy,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -144,15 +143,19 @@ class WholeTestView(QDialog):
         closeButton = QPushButton("&Close")
         prevButton = QPushButton("&Previous")
         nextButton = QPushButton("&Next")
-        grid = QGridLayout()
-        grid.addWidget(self.pageTabs, 1, 1, 6, 6)
-        grid.addWidget(prevButton, 7, 1)
-        grid.addWidget(nextButton, 7, 2)
-        grid.addWidget(closeButton, 7, 6)
+        grid = QVBoxLayout()
+        grid.addWidget(self.pageTabs)
+        buttons = QHBoxLayout()
+        buttons.addWidget(prevButton, 1)
+        buttons.addWidget(nextButton, 1)
+        buttons.addSpacing(64)
+        buttons.addStretch(2)
+        buttons.addWidget(closeButton)
+        grid.addLayout(buttons)
         self.setLayout(grid)
         prevButton.clicked.connect(self.previousTab)
         nextButton.clicked.connect(self.nextTab)
-        closeButton.clicked.connect(self.close)
+        closeButton.clicked.connect(self.accept)
         self.pageTabs.currentChanged.connect(self.tabSelected)
         self.setMinimumSize(500, 500)
         if not labels:
@@ -361,19 +364,20 @@ class PreviousPaperViewer(QDialog):
         grid = QVBoxLayout()
         grid.addWidget(self.ivw)
 
+        grid.addSpacing(6)
+        buttons = QHBoxLayout()
         self.prevTaskB = QPushButton("&Previous (ctrl+left)")
         self.prevTaskB.clicked.connect(self.previous_task)
         self.nextTaskB = QPushButton("&Next (ctrl+right)")
         self.nextTaskB.clicked.connect(self.next_task)
-        subgrid = QHBoxLayout()
-        subgrid.addWidget(self.prevTaskB)
-        subgrid.addWidget(self.nextTaskB)
-        grid.addLayout(subgrid)
-
-        grid.addSpacing(6)
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
-        buttons.accepted.connect(self.accept)
-        grid.addWidget(buttons)
+        buttons.addWidget(self.prevTaskB, 1)
+        buttons.addWidget(self.nextTaskB, 1)
+        buttons.addSpacing(64)
+        buttons.addStretch(2)
+        b = QPushButton("&Close")
+        b.clicked.connect(self.accept)
+        buttons.addWidget(b)
+        grid.addLayout(buttons)
         self.setLayout(grid)
         self.setWindowTitle(f"Previous annotations - {task}")
 
