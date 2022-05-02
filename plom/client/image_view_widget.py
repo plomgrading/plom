@@ -177,7 +177,7 @@ class ImageViewWidget(QWidget):
 
 
 class _ExamScene(QGraphicsScene):
-    """Subclass the qgraphicsscene to overide the wheel-event and so
+    """Subclass the qgraphicsscene to override the wheel-event and so
     trigger nice scroll-to-zoom behaviour.
     """
 
