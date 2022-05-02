@@ -191,8 +191,6 @@ class _ExamScene(QGraphicsScene):
             # Unpleasant to grub in parent but want mouse events to lock zoom
             self.views()[0].parent().zoomLockSetOn()
             event.accept()
-        else:
-            return super().wheelEvent(event)
 
 
 class _ExamView(QGraphicsView):
