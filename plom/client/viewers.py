@@ -83,6 +83,8 @@ class GroupView(QDialog):
         grid.addSpacing(6)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         buttons.accepted.connect(self.accept)
+        # keep a instance var incase a subclass wants to inject other buttons
+        self._buttonBox = buttons
         grid.addWidget(buttons)
         self.setLayout(grid)
         if bigger:
@@ -121,16 +123,11 @@ class QuestionViewDialog(GroupView):
             s += f" (ver {ver})"
         self.setWindowTitle(s)
         self.tgv = (testnum, questnum, ver)
-        layout = self.layout()
         if marker:
             self.marker = marker
             tagButton = QPushButton("&Tags")
             tagButton.clicked.connect(self.tags)
-            # insert the tag button just before the standard buttons
-            # cosmetic fixes - fix size of button and align-right
-            tagButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            layout.insertWidget(layout.count() - 1, tagButton)
-            layout.setAlignment(tagButton, Qt.AlignRight)
+            self._buttonBox.addButton(tagButton, QDialogButtonBox.ActionRole)
 
     def tags(self):
         """If we have a marker parent then use it to manage tags"""
