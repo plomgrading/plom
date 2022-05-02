@@ -189,6 +189,8 @@ class _ExamScene(QGraphicsScene):
             #    - my generic lenovo USB mouse is same
             #    - my thinkpad feel great: is pressure sensitive and gives 12 up to maybe 200
             #    - all these are on Wayland.
+            # TODO: delete this debugging:
+            print(event.delta())
             if event.delta() < 0:
                 self.views()[0].scale(63 / 64, 63 / 64)
             else:
