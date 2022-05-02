@@ -85,7 +85,7 @@ Approx: 11500 over 9 course
 
 | Course  |  Tasks                  | # students |  Notes                      |
 |---------|-------------------------|:----------:|-----------------------------|
-| 101     | 2 midterms, ?           | 1350       |                             |
+| 101     | 2 midterms, final exam  | 1350       | Philip Loewen               |
 | 105     | midterm                 | 1020       | self-submitted              |
 | 303     | 2 midterms, 1 HW + ?    | 180        |                             |
 | 317     | midterm                 | 160        |                             |
