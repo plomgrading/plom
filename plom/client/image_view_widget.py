@@ -189,9 +189,10 @@ class _ExamScene(QGraphicsScene):
             else:
                 self.views()[0].scale(64 / 63, 64 / 63)
 
-            # sets the view rectangle and updates zoom-dropdown.
+            # sets the view rectangle and updates zoom
             self.views()[0].centerOn(event.scenePos())
-            self.zoomFlag = 0
+            # Unpleasant to grub in parent but want mouse events to lock zoom
+            self.views()[0].parent().zoomLockSetOn()
 
         return super().wheelEvent(event)
 
