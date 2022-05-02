@@ -184,6 +184,11 @@ class _ExamScene(QGraphicsScene):
     def wheelEvent(self, event):
         if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
             # TODO - allow user to tweak scaling speed / direction.
+            # TODO: should also use abs(delta):
+            #    - my cheap bluetooth mouse is 120 (sometimes 240) and feels way to slow
+            #    - my generic lenovo USB mouse is same
+            #    - my thinkpad feel great: is pressure sensitive and gives 12 up to maybe 200
+            #    - all these are on Wayland.
             if event.delta() < 0:
                 self.views()[0].scale(63 / 64, 63 / 64)
             else:
