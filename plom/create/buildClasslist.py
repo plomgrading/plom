@@ -199,9 +199,10 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
 
     Student numbers come from an `id` column. Student names
     must be in a *single* 'name' column. There is some flexiblity
-    in those titles - see
-      - :func:`plom.create.possible_sid_fields`
-      - :func:`plom.create.possible_fullname_fields`
+    in those titles, see
+
+    - :func:`plom.create.possible_sid_fields`
+    - :func:`plom.create.possible_fullname_fields`
 
     Alternatively, give a .csv exported from Canvas (experimental!)
 
@@ -213,7 +214,8 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
         ignore_warnings (bool): if true, proceed with classlist
             processing even if there are warnings.  Default False.
 
-    Return: tuple: if successful then "(True, clist)" where clist is a
+    Return:
+        tuple: if successful then "(True, clist)" where clist is a
         list of dicts each with "id" and "name". On failure
         "(False, warn_err)" where "warn_err" is a list of dicts of
         warnings and errors. Each dict contains "warn_or_err" which is
