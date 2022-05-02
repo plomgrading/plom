@@ -1961,7 +1961,7 @@ class Manager(QWidget):
         howmany = len(ri) // mod
         howmany = "1 question" if howmany == 1 else f"{howmany} questions"
         self.ui.reviewIDTW.setSortingEnabled(False)
-        # TODO: this loop is expensive when many rows higlighted
+        # TODO: this loop is expensive when many rows highlighted
         # TODO: maybe just use the 7th column instead of talking to server
         tags = set()
         for tmp in ri[::mod]:
