@@ -192,8 +192,8 @@ class _ExamScene(QGraphicsScene):
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].centerOn(event.scenePos())
             self.zoomFlag = 0
-        else:
-            return super().wheelEvent(event)
+
+        return super().wheelEvent(event)
 
 
 class _ExamView(QGraphicsView):
