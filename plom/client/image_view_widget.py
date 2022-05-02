@@ -317,6 +317,7 @@ class _ExamView(QGraphicsView):
         self.centerOn(event.pos())
         # Unpleasant to grub in parent but want mouse events to lock zoom
         self.parent().zoomLockSetOn()
+        return super().mouseReleaseEvent(event)
 
     def zoomOut(self):
         self.scale(0.8, 0.8)
