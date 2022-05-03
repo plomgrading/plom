@@ -17,6 +17,7 @@ from pathlib import Path
 import tempfile
 
 import appdirs
+import arrow
 from packaging.version import Version
 import toml
 
@@ -44,7 +45,6 @@ from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQ
 from .useful_classes import ClientSettingsDialog
 
 from plom.messenger import ManagerMessenger
-from plom.misc_utils import utc_now_to_string
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -86,7 +86,10 @@ class Chooser(QDialog):
 
         kwargs = {}
         if self.lastTime.get("LogToFile"):
-            logfile = "plomclient-{}.log".format(utc_now_to_string())
+            # filename must not have ":" (forbidden on win32)
+            # e.g., use "ZZZ" not "ZZ" as the latter has "+00:00"
+            now = arrow.now().format("YYYY-MM-DD_HH-mm-ss_ZZZ")
+            logfile = f"plomclient-{now}.log"
             try:
                 logdir.mkdir(parents=True, exist_ok=True)
                 logfile = logdir / logfile
