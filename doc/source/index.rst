@@ -22,6 +22,8 @@ Welcome to Plom's documentation!
 
    returning.rst
 
+   cmdline.rst
+
    install.rst
 
    code.rst

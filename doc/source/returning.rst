@@ -10,13 +10,6 @@ Returning Work to Students
 
    Stub: move and/or write documentation.
 
-``plom-finish`` command line tool
-------------------------------------
-
-.. argparse::
-   :ref: plom.solutions.__main__.get_parser
-   :prog: plom-solutions
-
 
 Python module: ``plom.finish``
 ---------------------------------
