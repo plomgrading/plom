@@ -192,11 +192,11 @@ Note currently its not easy to wipe a bundle and start again,
 `see for example Issue #1189 <https://gitlab.com/plom/plom/-/issues/1189>`_.
 
 
+Technical docs
+--------------
 
-Python module: ``plom.scan``
-----------------------------
+* The command-line tool :doc:`plom-scan` is the current front-end for
+  most tasks related to returning work.
 
-For scripting or other advanced usage, you can ``import plom.scan``
-in your own Python code.
-
-TODO: instead of including automodule here, try linking to a common code section?
+* For scripting or other advanced usage, you can ``import plom.scan``
+  in your own Python code.  See :doc:`module-plom-scan`.

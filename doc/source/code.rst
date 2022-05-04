@@ -2,51 +2,22 @@
    Copyright 2021-2022 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
-Understanding the code
-======================
+Python modules
+==============
 
-The Plom code is organized into several main modules.
-The primary modules are:
+The Plom code is organized into several main modules along with
+various supporting code.
 
+.. toctree::
+   :maxdepth: 1
 
-Plom Client
------------
+   module-plom-create
+   module-plom-scan
+   module-plom-solutions
+   module-plom-finish
 
-.. automodule:: plom.client
-    :members:
-.. automodule:: plom.client.annotator
-    :members:
+   module-plom-client
+   module-plom-server
 
-
-Plom Server
------------
-
-.. automodule:: plom.server
-    :members:
-
-
-Tools for producing papers, scanning papers, and finishing the grading process.
-
-.. automodule:: plom.create
-    :members:
-
-.. automodule:: plom.scan
-    :members:
-
-
-Other supporting code
----------------------
-
-.. automodule:: plom.db
-
-.. automodule:: plom.manager
-
-.. automodule:: plom.create.scribble_utils
-    :members:
-
-TeX Tools
----------
-
-.. automodule:: plom.textools
-    :members:
+   module-plom-other
 
