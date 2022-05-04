@@ -544,8 +544,8 @@ def updateDNMGroup(self, dref):
         dref (DNMGroup): a reference to the DNM group to be updated
 
     returns:
-        bool: True means DNM group is ready (ie all tpages scanned),
-              False otherwise (ie missing some tpages)
+        bool: True means DNM group is ready (i.e., all tpages scanned),
+        False otherwise (i.e., missing some tpages).
     """
     # get the parent-group of the dnm-group
     gref = dref.group
@@ -714,11 +714,13 @@ def updateQGroup(self, qref):
     now out-of-date and get flagged as such by that aux function.
 
     args:
-        qref (QGroup): a reference to the QGroup to be updated
+        qref (QGroup): a reference to the QGroup to be updated.
+
     returns:
-        bool: True means that the qgroup is ready (ie all tpages present, or hwpages present).
-              False means that either that the group is missing some (but not all) tpages,
-                or no tpages and no hwpages.
+        bool: `True` means that the qgroup is ready (i.e., all tpages
+        present, or hwpages present).
+        `False` means that either that the group is missing some (but
+        not all) tpages, or no tpages and no hwpages.
     """
     # first set old annotations as out-of-date and,
     # create a new up-to-date annotation, and
@@ -1059,9 +1061,9 @@ def listBundles(self):
     Args: None
 
     Returns:
-        List (dict). One for each bundle. Each dict contains three
-            key-value pairs: "name", "md5sum" and "numberOfPages".
-            If no bundles in the system, then it returns an empty list.
+        list-of-dict: One `dict` for each bundle. Each dict contains three
+        key-value pairs: "name", "md5sum" and "numberOfPages".
+        If no bundles in the system, then it returns an empty list.
     """
 
     bundle_info = []

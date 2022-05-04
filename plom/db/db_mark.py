@@ -136,15 +136,18 @@ def MgiveTaskToClient(self, user_name, group_id, version):
 
     Return:
         list: On error, `[False, code, errmsg]` where `code` is a string:
-            `"other_claimed"`, `"not_known"`, `"not_scanned"`, `"unexpected"`, `"mismatch"`
-            and `errmsg` is a human-readable error message.
-            Otherwise, the list is
-                `[True, metadata, [list of tag texts], integrity_check]`
-            where each row of `metadata` consists of
-                `[DB_id, md5_sum, server_filename]`
-            Note: `server_filename` is implementation-dependent, could change
-            without notice, etc.  Clients could use this to get hints for a
-            a local file name for example.
+        ``"other_claimed"``, ``"not_known"``, ``"not_scanned"``,
+        ``"unexpected"``, ``"mismatch"``
+        and `errmsg` is a human-readable error message.
+
+        On success, the list is
+        `[True, metadata, [list of tag texts], integrity_check]`
+        where each row of `metadata` consists of
+        `[DB_id, md5_sum, server_filename]`.
+
+        Note: `server_filename` is implementation-dependent, could change
+        without notice, etc.  Clients could use this to get hints for
+        what to use for a local file name for example.
 
     question/version via group_id as a task to the given user, unless has been
     taken by another user.
@@ -221,9 +224,9 @@ def MgetOneImageRotation(self, image_id, md5):
         md5: the md5sum of that image (as sanity check)
 
     Returns:
-        list: [True, rotation] or [False, error_msg] where
-            error_msg is `"no such image"` or `"wrong md5sum"`.
-            rotation is a float.
+        list: `[True, rotation]` or `[False, error_msg]` where
+        `error_msg` is the string ``"no such image"`` or
+        ``"wrong md5sum"``, and `rotation` is a float.
     """
     with plomdb.atomic():
         iref = Image.get_or_none(id=image_id)
@@ -248,9 +251,9 @@ def MgetOneImageFilename(self, image_id, md5):
         md5: the md5sum of that image (as sanity check)
 
     Returns:
-        list: [True, file_name] or [False, error_msg] where
-            error_msg is `"no such image"` or `"wrong md5sum"`.
-            file_name is a string.
+        list: `[True, file_name]` or `[False, error_msg]` where
+        `error_msg` is the string ``"no such image"`` or
+        ``"wrong md5sum"``, and `file_name` is a string.
     """
     with plomdb.atomic():
         iref = Image.get_or_none(id=image_id)
@@ -416,8 +419,8 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
 
     Returns:
         list: `[True, plom_file_data, annotation_image]` on success or
-            on error `[False, error_msg]`.  If the task is not yet
-            annotated, the error will be `"no_such_task"`.
+        on error `[False, error_msg]`.  If the task is not yet
+        annotated, the error will be ``"no_such_task"``.
     """
     if edition is None:
         edition = -1
@@ -638,7 +641,8 @@ def McreateNewTag(self, user_name, tag_text):
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
-            key for the new tag.  Can fail if tag text is not alphanum, or if tag already exists.
+        key for the new tag.  Can fail if tag text is not alphanum, or
+        if tag already exists.
     """
     if Tag.get_or_none(text=tag_text) is not None:
         return (False, "Tag already exists")

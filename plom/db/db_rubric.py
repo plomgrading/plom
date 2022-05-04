@@ -34,7 +34,7 @@ def McreateRubric(self, user_name, rubric):
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
-            key for the new rubric.  Can fail if missing fields.
+        key for the new rubric.  Can fail if missing fields.
     """
     need_fields = ("kind", "delta", "text", "question")
     optional_fields = ("tags", "meta")
@@ -120,8 +120,8 @@ def MmodifyRubric(self, user_name, key, change):
 
     Returns:
         tuple: `(True, new_key)` containing the newly generated key
-             (which might be the old key but this is not promised),
-             or `(False, "incomplete")`, or `(False, "noSuchRubric")`.
+        (which might be the old key but this is not promised),
+        or `(False, "incomplete")`, or `(False, "noSuchRubric")`.
     """
     need_fields = ("delta", "text", "tags", "meta", "kind")
     if any(x not in change for x in need_fields):
