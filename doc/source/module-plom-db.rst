@@ -2,8 +2,9 @@
    Copyright 2022 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
-Database: ``plom.db`` module
-============================
+Plom database
+=============
+
 
 The Plom database uses the `Peewee ORM
 <https://pypi.org/project/peewee>`_ as a front-end to its database.
@@ -21,9 +22,11 @@ There is a rough convention:
 * methods that start with ``R`` are for reporting.
 * Everything else that does not fit these (loose) conventions.
 
+Further docs
+------------
 
-Module docs
------------
+.. toctree::
+   :maxdepth: 2
 
-.. automodule:: plom.db
-   :members:
+   notesOnDB.md
+   module-plom-db-autogen
