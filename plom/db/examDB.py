@@ -19,6 +19,7 @@ log = logging.getLogger("DB")
 
 class PlomDB:
     """The main Plom database."""
+
     def __init__(self, dbfile_name="plom.db"):
         # can't handle pathlib?
         plomdb.init(str(dbfile_name))
