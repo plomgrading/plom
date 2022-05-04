@@ -90,9 +90,9 @@ If the total number of collisions and unknowns is fairly low, then the known ima
 
     $ plom-scan upload mABCmt1-s1-b2.pdf
     Upload images to server
-    Upload 0006,06,2 = t0006p06v2.mt1b1-36.png to server
-    Upload 0008,03,1 = t0008p03v1.mt1b1-45.png to server
-    Upload 0005,05,1 = t0005p05v1.mt1b1-29.png to server
+    Upload 0006,06,2 = t0006p06v2.mABCmt1-s1-b2-36.jpg to server
+    Upload 0008,03,1 = t0008p03v1.mABCmt1-s1-b2-45.jpg to server
+    Upload 0005,05,1 = t0005p05v1.mABCmt1-s1-b2-29.png to server
 
 Your original PDF file should have now moved to a ``archivedPDFs/``
 subdirectory.
