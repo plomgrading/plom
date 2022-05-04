@@ -25,7 +25,7 @@ details.
 Getting solutions onto the server
 ---------------------------------
 
-The ``plom-solutions`` command-line tool can extract solutions from
+The command-line tool :doc:`plom-solutions` can extract solutions from
 PDF files, push to server, etc.  See ``plom-solutions --help`` for
 more information.
 
@@ -36,23 +36,18 @@ the solutions but is not yet a replacement for the command-line tool.
 Preparing solutions for students
 --------------------------------
 
-As part of a digital return, ``plom-finish`` can construct individual
-PDF files for each student based on the question-versions used in
-their test.  See :doc:`returning`.
+As part of a digital return, The command-line tool :doc:`plom-finish`
+can construct individual PDF files for each student based on the
+question-versions used in their test.  See :doc:`returning` for more
+information.
 
-
-``plom-solutions`` command line tool
-------------------------------------
-
-.. argparse::
-   :ref: plom.solutions.__main__.get_parser
-   :prog: plom-solutions
 
 
 Python module: ``plom.solutions``
 ---------------------------------
 
-For scripting or other advanced usage, you can ``import plom.solutions``.
+For scripting or other advanced usage, you can ``import plom.solutions``
+in your own Python code.
 
 .. automodule:: plom.solutions
     :members:
