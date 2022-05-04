@@ -26,16 +26,13 @@ Welcome to Plom's documentation!
 
    cmdline.rst
 
-   install.rst
-
    code.rst
+
+   install.rst
 
    faq.md
 
    changelog.md
-
-
-.. automodule:: plom
 
 
 ##################
