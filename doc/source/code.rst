@@ -19,5 +19,6 @@ various supporting code.
    module-plom-client
    module-plom-server
 
-   module-plom-other
+   module-plom-db
 
+   module-plom-other

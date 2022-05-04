@@ -5,7 +5,10 @@
 Other supporting code
 =====================
 
-.. automodule:: plom.db
+``plom.manager`` module
+-----------------------
+
+TODO: where do we want to document this?
 
 .. automodule:: plom.manager
 
