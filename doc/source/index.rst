@@ -2,8 +2,9 @@
    Copyright 2020-2022 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
+################################
 Welcome to Plom's documentation!
-================================
+################################
 
 .. toctree::
    :maxdepth: 2
@@ -33,9 +34,9 @@ Welcome to Plom's documentation!
 .. automodule:: plom
 
 
-
+##################
 Indices and tables
-==================
+##################
 
 * :ref:`genindex`
 * :ref:`modindex`
