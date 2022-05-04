@@ -12,6 +12,7 @@ import ssl
 import subprocess
 import tempfile
 
+import arrow
 import toml
 from aiohttp import web
 
@@ -22,9 +23,9 @@ from plom import SpecVerifier
 from plom.aliceBob import simple_password
 from plom.db import PlomDB
 from plom.server import specdir, confdir, check_server_directories
+from plom.misc_utils import working_directory
 
 from .authenticate import Authority
-
 
 from .plomServer.routesUserInit import UserInitHandler
 from .plomServer.routesUpload import UploadHandler
@@ -33,7 +34,6 @@ from .plomServer.routesMark import MarkHandler
 from .plomServer.routesRubric import RubricHandler
 from .plomServer.routesReport import ReportHandler
 from .plomServer.routesSolution import SolutionHandler
-from ..misc_utils import working_directory, utc_now_to_string
 
 
 class Server:
@@ -264,7 +264,10 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     """
     basedir = Path(basedir)
     if not logfile:
-        logfile = basedir / "plom-server-{}.log".format(utc_now_to_string())
+        # filename must not have ":" (forbidden on win32)
+        # e.g., use "ZZZ" not "ZZ" as the latter has "+00:00"
+        now = arrow.utcnow().format("YYYY-MM-DD_HH-mm-ss_ZZZ")
+        logfile = basedir / f"plom-server-{now}.log"
     logfile = Path(logfile)
     # if just filename, make log in basedir
     if logfile.parent == Path("."):

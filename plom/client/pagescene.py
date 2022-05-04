@@ -42,6 +42,7 @@ from PyQt5.QtCore import Qt
 
 from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubricsException
+from plom.client.image_view_widget import mousewheel_delta_to_scale
 
 from .tools import (
     CrossItem,
@@ -1012,12 +1013,8 @@ class PageScene(QGraphicsScene):
 
     def wheelEvent(self, event):
         if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
-            # TODO - allow user to tweak scaling speed / direction.
-            if event.delta() < 0:
-                self.views()[0].scale(63 / 64, 63 / 64)
-            else:
-                self.views()[0].scale(64 / 63, 64 / 63)
-
+            s = mousewheel_delta_to_scale(event.delta())
+            self.views()[0].scale(s, s)
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].setZoomSelector(True)
             self.zoomFlag = 0

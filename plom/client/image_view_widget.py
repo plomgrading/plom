@@ -22,6 +22,34 @@ from plom import ScenePixelHeight
 from plom.client.backGrid import BackGrid
 
 
+def mousewheel_delta_to_scale(d):
+    """Certain mousewheel events produce "delta", change that into an appropriate scale value.
+
+    Args:
+        d (int): a signed delta value, e.g., from a `QGraphicsSceneWheelEvent`.
+
+    Returns:
+        float: e.g., 1.1 to zoom in and 0.90909 to zoom out.
+
+    Observations on the delta value:
+
+    - Wayland: cheap bluetooth mouse is 120 (sometimes 240)
+    - Wayland: generic lenovo USB mouse is same
+    - Wayland: Thinkpad trackpoint: pressure sensitive, 12 up to maybe 200
+    - Windows 10: I also observed 120/-120 with same bluetooth mouse
+
+    We threshold the in [-300, 300].  The 800 constant is tweakable.
+    In theory one could allow user to tweak scaling speed / direction.
+    """
+    if d < 0:
+        d = max(-300, d)
+        s = 800.0 / (800.0 + abs(d))
+    else:
+        d = min(300, d)
+        s = (800.0 + abs(d)) / 800.0
+    return s
+
+
 class ImageViewWidget(QWidget):
     """Simple view widget for pageimages to be embedded in other windows.
 
@@ -183,16 +211,8 @@ class _ExamScene(QGraphicsScene):
 
     def wheelEvent(self, event):
         if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
-            # TODO - allow user to tweak scaling speed / direction.
-            # TODO: should also use abs(delta):
-            #    - my cheap bluetooth mouse is 120 (sometimes 240) and feels way to slow
-            #    - my generic lenovo USB mouse is same
-            #    - my thinkpad feel great: is pressure sensitive and gives 12 up to maybe 200
-            #    - all these are on Wayland.
-            if event.delta() < 0:
-                self.views()[0].scale(63 / 64, 63 / 64)
-            else:
-                self.views()[0].scale(64 / 63, 64 / 63)
+            s = mousewheel_delta_to_scale(event.delta())
+            self.views()[0].scale(s, s)
             # Unpleasant to grub in parent but want mouse events to lock zoom
             self.views()[0].parent().zoomLockSetOn()
             event.accept()
