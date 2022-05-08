@@ -26,6 +26,8 @@ Welcome to Plom's documentation!
 
    cmdline.rst
 
+   api.rst
+
    code.rst
 
    install.rst

@@ -27,13 +27,15 @@ from plom.misc_utils import working_directory
 
 from .authenticate import Authority
 
-from .plomServer.routesUserInit import UserInitHandler
-from .plomServer.routesUpload import UploadHandler
-from .plomServer.routesID import IDHandler
-from .plomServer.routesMark import MarkHandler
-from .plomServer.routesRubric import RubricHandler
-from .plomServer.routesReport import ReportHandler
-from .plomServer.routesSolution import SolutionHandler
+from .plomServer import (
+    IDHandler,
+    MarkHandler,
+    ReportHandler,
+    RubricHandler,
+    SolutionHandler,
+    UploadHandler,
+    UserInitHandler,
+)
 
 
 class Server:

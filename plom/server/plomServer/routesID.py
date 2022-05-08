@@ -18,6 +18,11 @@ from .routeutils import log
 
 
 class IDHandler:
+    """The ID Handler interfaces between the HTTP API and the server itself.
+
+    These routes handle requests related to identifying papers.
+    """
+
     def __init__(self, plomServer):
         self.server = plomServer
         # self.local_route_table = routes
@@ -48,7 +53,7 @@ class IDHandler:
         Responds with status success or HTTPNotFound.
 
         Returns:
-            class 'aiohttp.json_response: list of dicts as above.
+            aiohttp.json_response: list of dicts as above.
         """
         try:
             with open(specdir / "classlist.csv") as f:
@@ -76,19 +81,21 @@ class IDHandler:
         classlist later.
 
         Side effects on the server test spec file:
-          * If numberToProduce is -1, value is set based on
-            this classlist (spec is permanently altered).
+
+        * If numberToProduce is -1, value is set based on
+          this classlist (spec is permanently altered).
 
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
-                200: success
-                401: authentication problem.
-                403: not manager.
-                HTTPBadRequest (400): malformed request such as missing
-                    required fields or server has no spec.
-                HTTPConflict: we already have a classlist.
-                    TODO: would be nice to be able to "try again".
-                HTTPNotAcceptable: classlist too short (see above).
+
+            - 200: success.
+            - 401: authentication problem.
+            - 403: not manager.
+            - HTTPBadRequest (400): malformed request such as missing
+              required fields or server has no spec.
+            - HTTPConflict: we already have a classlist.
+              TODO: would be nice to be able to "try again".
+            - HTTPNotAcceptable: classlist too short (see above).
         """
         spec = self.server.testSpec
         if not spec:
@@ -140,7 +147,7 @@ class IDHandler:
         Responds with status 200/404.
 
         Returns:
-            aiohttp.web_json_response: Dict of test:(sid, sname, certainty)
+            aiohttp.web_json_response: Dict of ``test: (sid, sname, certainty)``.
         """
         return web.json_response(self.server.ID_get_predictions())
 
@@ -155,8 +162,8 @@ class IDHandler:
 
         Returns:
             aiohttp.web_request.Request: A response including a list of lists indicating information about
-                the users who already have confirmed predictions.
-                Each list in the response is of the format: [task_number, task_status, student_id, student_name]
+            the users who already have confirmed predictions.
+            Each list in the response is of the format: `[task_number, task_status, student_id, student_name]`.
         """
 
         # return the completed list
@@ -178,11 +185,13 @@ class IDHandler:
             status 200 is returned with a (positive length) multipart
             object of the images, or status 204 is returned when no
             images. Unsuccessful return values include:
-                    HTTPBadRequest: authentication problem.
-                    HTTPNotFound (404): no such paper.
-                    HTTPConflict (409): not the owner, or not manager.
-                    HTTPGone (410): the paper is not scanned *and* has not been ID'd.
-                        Note: if the paper is not fully scanned---specifically
+
+            - HTTPBadRequest: authentication problem.
+            - HTTPNotFound (404): no such paper.
+            - HTTPConflict (409): not the owner, or not manager.
+            - HTTPGone (410): the paper is not scanned *and* has not been ID'd.
+
+        .. note:: if the paper is not fully scanned---specifically
                         if the ID pages are not scanned but nonetheless the
                         paper is identified, then you won't get 410, but rather 204.
                         This is required to handle the case of HW uploads in which
@@ -225,10 +234,12 @@ class IDHandler:
             status 200 is returned with a (positive length) multipart
             object of the images, or status 204 is returned when no
             images. Unsuccessful return values include:
-                    HTTPBadRequest: authentication problem.
-                    HTTPNotFound (404): no such paper.
-                    HTTPGone (410): the paper is not scanned *and* has not been ID'd.
-                        Note: if the paper is not fully scanned---specifically
+
+            - HTTPBadRequest: authentication problem.
+            - HTTPNotFound (404): no such paper.
+            - HTTPGone (410): the paper is not scanned *and* has not been ID'd.
+
+        .. note:: if the paper is not fully scanned---specifically
                         if the DNM pages are not scanned but nonetheless the
                         paper is identified, then you won't get 410, but rather 204.
                         This is required to handle the case of HW uploads in which
@@ -290,10 +301,11 @@ class IDHandler:
 
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
-                200: success, you have claimed the task.
-                401: authentication problem.
-                409: someone else claimed it before you.
-                404/410: no such paper or not scanned.
+
+            - 200: success, you have claimed the task.
+            - 401: authentication problem.
+            - 409: someone else claimed it before you.
+            - 404/410: no such paper or not scanned.
         """
         testNumber = request.match_info["task"]
         status, output = self.server.IDclaimThisTask(data["user"], testNumber)
@@ -313,9 +325,12 @@ class IDHandler:
         """Identify a paper based on a task.
 
         Returns:
-            403: some other user owns this task.
-            404: papernum not found, or other data errors.
-            409: student number `data["sid"]` is already in use.
+            aiohttp.web_response.Response: Success or failure.  Can be:
+
+            - 200: success.
+            - 403: some other user owns this task.
+            - 404: papernum not found, or other data errors.
+            - 409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["task"]
         r, what, msg = self.server.ID_id_paper(
@@ -342,9 +357,12 @@ class IDHandler:
         would call func:`IdentifyPaperTask` instead.
 
         Returns:
-            403: not manager.
-            404: papernum not found, or other data errors.
-            409: student number `data["sid"]` is already in use.
+            aiohttp.web_response.Response: Success or failure.  Can be:
+
+            - 200: success.
+            - 403: not manager.
+            - 404: papernum not found, or other data errors.
+            - 409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["paper_number"]
 
@@ -376,9 +394,12 @@ class IDHandler:
         """Set the prediction identification for a paper.
 
         Returns:
-            403: not manager.
-            404: papernum not found, or other data errors.
-            409: student number `data["sid"]` is already in use.
+            aiohttp.web_response.Response: Success or failure.  Can be:
+
+            - 200: success.
+            - 403: not manager.
+            - 404: papernum not found, or other data errors.
+            - 409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["paper_number"]
         r, what, msg = self.server.pre_id_paper(
@@ -403,8 +424,11 @@ class IDHandler:
         would call func:`IdentifyPaperTask` instead.
 
         Returns:
-            403: not manager.
-            404: papernum not found, or other data errors.
+            aiohttp.web_response.Response: Success or failure.  Can be:
+
+            - 200: success.
+            - 403: not manager.
+            - 404: papernum not found, or other data errors.
         """
         papernum = request.match_info["paper_number"]
         r, what, msg = self.server.remove_id_prediction(papernum)
@@ -429,9 +453,10 @@ class IDHandler:
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
             request (aiohttp.web_request.Request): request of type GET /ID/randomImage.
+
         Returns:
             aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which
-                includes a multipart object with the images.
+            includes a multipart object with the images.
         """
         # A list with a boolean (indicating whether the objects exist) and a list of the exam images.
         random_image_paths = self.server.IDgetImageFromATest()
@@ -488,7 +513,9 @@ class IDHandler:
             request (aiohttp.web_request.Request): PUT /ID/put type request object.
 
         Returns:
-            aiohttp.web_response.Response: Returns a response with a [True, message] or [False,message] indicating if predictions upload was successful.
+            aiohttp.web_response.Response: Returns a response with a
+            `[True, message]` or `[False,message]` indicating if
+            predictions upload was successful.
         """
         # this classlist reading should probably happen in the serverID not here
         try:
@@ -562,11 +589,13 @@ class IDHandler:
             request (aiohttp.web_request.Request):
 
         Returns:
-            aiohttp.web_response.Response: 200/401/403
-            401/403: authentication ttroubles
-            406 (not acceptable): LAP is degenerate
-            409 (conflict): ID reader still running
-            412 (precondition failed) for no ID reader
+            aiohttp.web_response.Response: Can be:
+
+            - 200: successful.
+            - 401/403: authentication ttroubles
+            - 406 (not acceptable): LAP is degenerate
+            - 409 (conflict): ID reader still running
+            - 412 (precondition failed) for no ID reader
         """
         try:
             status = self.server.predict_id_lap_solver()
@@ -594,7 +623,7 @@ class IDHandler:
 
         Returns:
             aiohttp.web_fileresponse.FileResponse: An empty response indicating the availability status of
-                the review document.
+            the review document.
         """
 
         if self.server.IDreviewID(data["testNumber"]):

@@ -11,6 +11,11 @@ from .routeutils import log
 
 
 class RubricHandler:
+    """The Rubric Handler interfaces between the HTTP API and the server itself.
+
+    These routes handle requests related to rubrics.
+    """
+
     def __init__(self, plomServer):
         self.server = plomServer
 
@@ -21,8 +26,8 @@ class RubricHandler:
             username (str): the name of the user trying to create the rubric
             rubric (dict): a dict containing the rubric info
         Returns:
-            bool: true if valid, false otherwise"""
-
+            bool: true if valid, false otherwise.
+        """
         # check rubric has minimal fields needed
         need_fields = ("kind", "delta", "text", "question")
         if any(x not in rubric for x in need_fields):
@@ -124,7 +129,7 @@ class RubricHandler:
     # @routes.get("/MK/rubric")
     @authenticate_by_token_required_fields(["user"])
     def MgetRubrics(self, data, request):
-        """Respond with updated comment list and add received comments to the database.
+        """Respond with the current comment list.
 
         Args:
             data (dict): A dictionary including user/token
@@ -141,7 +146,7 @@ class RubricHandler:
     # @routes.get("/MK/rubric/{question}")
     @authenticate_by_token_required_fields(["user"])
     def MgetRubricsByQuestion(self, data, request):
-        """Respond with updated comment list and add received comments to the database.
+        """Respond with the comment list for a particular question.
 
         Args:
             data (dict): A dictionary including user/token
@@ -199,10 +204,11 @@ class RubricHandler:
 
         Returns:
             aiohttp.web_response.Response: success and the config (as json),
-                or 204 if nothing available.  Error responses:
-                HTTPUnauthorized
-                HTTPBadRequest: inconsistent question or missing fields.
-                HTTPForbidden: trying to save to another user.
+            or 204 if nothing available.  Error responses:
+
+            - HTTPUnauthorized
+            - HTTPBadRequest: inconsistent question or missing fields.
+            - HTTPForbidden: trying to save to another user.
         """
         username = data["user"]
         question = data["question"]
@@ -233,9 +239,10 @@ class RubricHandler:
 
         Returns:
             aiohttp.web_response.Response: 200 on success or
-                HTTPUnauthorized
-                HTTPBadRequest: inconsistent question or missing fields.
-                HTTPForbidden: trying to save to another user.
+
+            - HTTPUnauthorized
+            - HTTPBadRequest: inconsistent question or missing fields.
+            - HTTPForbidden: trying to save to another user.
         """
         username = data["user"]
         question = data["question"]
@@ -266,7 +273,12 @@ class RubricHandler:
             request (aiohttp.web_request.Request): Request of type GET /REP/test_rubric_adjacency.
 
         Returns:
-            aiohttp.web_response.Response: A response including metadata encoding the test-rubric adjacency / count matrix. The matrix is encoded as an adjacency list, ie. {testnumber: [rubric_id1, rubric_id2, ...]} where (test_n,rubric_k) means that rubric_k was used in test_n.
+            aiohttp.web_response.Response: A response including metadata
+            encoding the test-rubric adjacency / count matrix. The matrix
+            is encoded as an adjacency list, i.e.,
+            ``{testnumber: [rubric_id1, rubric_id2, ...]}``
+            where `(test_n, rubric_k)` means that `rubric_k` was used in
+            `test_n`.
         """
 
         if not data["user"] == "manager":
