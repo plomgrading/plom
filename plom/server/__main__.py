@@ -19,7 +19,7 @@ from pathlib import Path
 from plom import __version__
 from plom import Default_Port
 from plom.server import confdir
-from plom.server import theServer
+from plom.server import launch
 from plom.server.prepare import initialise_server
 from plom.server import (
     build_canned_users,
@@ -287,7 +287,7 @@ def main():
         # TODO: probably these checks are unnecessary and done by the server
         check_server_directories(args.dir)
         check_server_fully_configured(args.dir)
-        theServer.launch(
+        launch(
             args.dir,
             master_token=args.mastertoken,
             logfile=args.logfile,
