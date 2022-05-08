@@ -336,7 +336,7 @@ class MarkHandler:
     def get_annotations_latest(self, data, request):
         """Get the annotations of a marked question as JSON.
 
-        See :py:method:`get_annotations`.
+        See :func:`get_annotations`.
         """
         number = int(request.match_info["number"])
         question = int(request.match_info["question"])
@@ -398,7 +398,7 @@ class MarkHandler:
     def get_annotations_img_latest(self, data, request):
         """Get the image of an annotated question (a marked question).
 
-        See :py:method:`get_annotations_img`.
+        See :func:`get_annotations_img`.
         """
         number = int(request.match_info["number"])
         question = int(request.match_info["question"])
@@ -675,7 +675,7 @@ class MarkHandler:
             aiohttp.web_response.Response: JSON data, a list of dicts
             where each dict has keys:
             pagename, md5, included, order, id, orientation, server_path
-            as documented in :py:`get_pagedata`.
+            as documented in :func:`get_pagedata`.
             A 409 is returned with an explanation if paper number not found.
         """
         test_number = request.match_info["number"]

@@ -354,7 +354,7 @@ class IDHandler:
         """Identify a paper directly without certain checks.
 
         Only "manager" can perform this action.  Typical client IDing
-        would call func:`IdentifyPaperTask` instead.
+        would call :func:`IdentifyPaperTask` instead.
 
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
