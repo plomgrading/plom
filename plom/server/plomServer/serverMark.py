@@ -23,7 +23,7 @@ def MgetAllMax(self):
 
     Returns:
         dict: A dictionary of the form {key: question_number, value: question_max_grade}
-            for the exam questions.
+        for the exam questions.
     """
 
     max_grades = {}
@@ -41,8 +41,8 @@ def MprogressCount(self, question_number, version_number):
 
     Returns:
         list: A list of two integers indicating the number of questions graded
-            and the total number of assigned question to be graded of this question number
-            and question version.
+        and the total number of assigned question to be graded of this question number
+        and question version.
     """
 
     version_number = int(version_number)
@@ -63,7 +63,7 @@ def MgetDoneTasks(self, username, question_number, version_number):
 
     Returns:
         list: Respond with a list of done tasks, each list includes
-            [question_code string, maximum_mark, question_grade, [list of tag_texts] ].
+        `[question_code string, maximum_mark, question_grade, [list of tag_texts]]`.
     """
 
     version_number = int(version_number)
@@ -80,7 +80,7 @@ def MgetNextTask(self, question_number, version_number):
 
     Returns:
         list: Respond with a list with either value False or the value
-            of True with the question code string for next task.
+        of True with the question code string for next task.
     """
 
     give = self.DB.MgetNextTask(question_number, version_number)
@@ -112,7 +112,7 @@ def MclaimThisTask(self, username, task_code, version):
 
     Returns:
         list: A list which either only has a False value included or
-            [True, `question_tag`, `integrity_check`, `list_of_image_md5s` `image_file1`, `image_file2`,...]
+        `[True, question_tag, integrity_check, list_of_image_md5s, image_file1, image_file2, ...]`.
     """
 
     return self.DB.MgiveTaskToClient(username, task_code, version)
@@ -154,8 +154,8 @@ def MreturnMarkedTask(
 
     Returns:
         list: Respond with a list which includes:
-            [False, Error message of either mismatching codes or database owning the task.]
-            [True, number of graded tasks, total number of tasks.]
+        `[False, error_msg]`, either mismatching codes or database owning the task,
+        `[True, number of graded tasks, total number of tasks]`.
     """
     # do sanity checks on incoming annotation image file
     # first the image header to determine the filetype and check if admissible
@@ -305,7 +305,7 @@ def add_tag(self, username, task, tag_text):
 
     Returns:
         bool: True if tag was set in database successfully if the tag
-            was already set.  False if no such paper or other error.
+        was already set.  False if no such paper or other error.
     """
     # do sanity check of the tag-text
     if self.DB.McheckTagTextExists(tag_text) is False:
@@ -324,8 +324,8 @@ def remove_tag(self, task, tag_text):
 
     Returns:
         bool: True if the tag was removed, or if it was not present to
-            start with.  False is not such paper, permissions or other
-            error.
+        start with.  False is not such paper, permissions or other
+        error.
     """
     # do sanity check of the tag-text
     if self.DB.McheckTagTextExists(tag_text) is False:
