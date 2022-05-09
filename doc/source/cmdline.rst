@@ -9,7 +9,6 @@ Plom includes various command-line tools for managing servers:
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
 
    plom-demo
    plom-create

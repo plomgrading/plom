@@ -43,11 +43,11 @@ information.
 
 
 
-Python module: ``plom.solutions``
----------------------------------
+Technical docs
+--------------
 
-For scripting or other advanced usage, you can ``import plom.solutions``
-in your own Python code.
+* The command-line tool :doc:`plom-solutions` is the current front-end
+  for most tasks related to returning work.
 
-.. automodule:: plom.solutions
-    :members:
+* For scripting or other advanced usage, you can ``import plom.solutions``
+  in your own Python code.  See :doc:`module-plom-solutions`.

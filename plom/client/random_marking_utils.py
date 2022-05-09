@@ -250,6 +250,19 @@ def do_random_marking_backend(question, version, *, messenger):
 
 
 def build_random_rubrics(question, *, messenger):
+    """Push random rubrics into a server: only for testing/demo purposes
+
+    .. caution:: Do not use on a real production server.
+
+    args:
+        question (int)
+
+    keyword args:
+        messenger: a messenger object already connected to the server.
+
+    returns:
+        None
+    """
     for (d, t) in positiveComments:
         com = {
             "delta": d,

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2021 Elizabeth Xiao
 
-"""Randomly scribble on papers to mark them for testing purposes.
+"""Randomly scribble marks and annotations on papers for testing purposes.
 
-This is a very very cut-down version of Annotator, used to
-automate some random marking of papers.
+This is a very very cut-down version of Annotator, and a command-line
+tool used to automate some random marking of papers.
 """
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer and others"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -21,10 +21,15 @@ import sys
 
 from stdiomask import getpass
 
-from .random_marking_utils import do_rando_marking
+from .random_marking_utils import do_rando_marking, build_random_rubrics
+
+__all__ = [
+    "do_rando_marking",
+    "build_random_rubrics",
+]
 
 
-if __name__ == "__main__":
+def get_parser():
     parser = argparse.ArgumentParser(
         description="Perform marking tasks randomly, generally for testing."
     )
@@ -38,6 +43,11 @@ if __name__ == "__main__":
         action="store",
         help="Which server to contact.",
     )
+    return parser
+
+
+if __name__ == "__main__":
+    parser = get_parser()
     args = parser.parse_args()
 
     args.server = args.server or os.environ.get("PLOM_SERVER")

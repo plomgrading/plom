@@ -10,15 +10,12 @@ Returning Work to Students
 
    Stub: move and/or write documentation.
 
-The command-line tool :doc:`plom-finish` is the current front-end for
-most tasks related to returning work.
 
+Technical docs
+--------------
 
-Python module: ``plom.finish``
----------------------------------
+* The command-line tool :doc:`plom-finish` is the current front-end
+  for most tasks related to returning work.
 
-For scripting or other advanced usage, you can ``import plom.finish``
-in your own Python code.
-
-.. automodule:: plom.finish
-    :members:
+* For scripting or other advanced usage, you can ``import plom.finish``
+  in your own Python code.  See :doc:`module-plom-finish`.

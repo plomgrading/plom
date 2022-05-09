@@ -16,6 +16,8 @@ Welcome to Plom's documentation!
 
    preparing_an_exam.rst
 
+   scanning
+
    identifying_papers.rst
 
    solutions.rst
