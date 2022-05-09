@@ -12,7 +12,7 @@ from plom.finish import CSVFilename
 from plom.misc_utils import utc_now_to_string, arrowtime_to_string
 
 
-def writeSpreadsheet(spreadSheetDict, labels):
+def writeSpreadsheet(spreadSheetDict, labels, filename=CSVFilename):
     """Writes all of the current marks to a local csv file.
 
     Arguments:
@@ -20,10 +20,13 @@ def writeSpreadsheet(spreadSheetDict, labels):
             written to a spreadsheet.
         labels (list): string labels for each question.
 
+    Keyword Arguments:
+        filename (pathlib.Path/str): where to save the csv.
+
     Returns:
         tuple: Two booleans, the first is False if each test in
-            spreadSheetDict is marked, True otherwise . The second
-            is False if there is a test with no ID, True otherwise.
+        spreadSheetDict is marked, True otherwise . The second
+        is False if there is a test with no ID, True otherwise.
     """
     head = ["StudentID", "StudentName", "TestNumber"]
     # Note: csv library seems smart enough to escape the labels (comma, quotes, etc)
@@ -36,7 +39,7 @@ def writeSpreadsheet(spreadSheetDict, labels):
     head.append("CSVWriteTime")  # when the test's row written in this csv file.
     head.append("Warnings")
 
-    with open(CSVFilename, "w") as csvfile:
+    with open(filename, "w") as csvfile:
         testWriter = csv.DictWriter(
             csvfile,
             fieldnames=head,
@@ -88,6 +91,7 @@ def writeSpreadsheet(spreadSheetDict, labels):
     return existsUnmarked, existsMissingID
 
 
+# TODO: need to split new function and need msgr decorator?
 def main(server=None, password=None):
     msgr = start_messenger(server, password)
     try:

@@ -425,6 +425,7 @@ class Manager(QWidget):
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.scanRefreshB.clicked.connect(self.refreshScanTab)
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
+        self.ui.downloadCSVButton.clicked.connect(self.downloadCSV)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
         self.ui.unidB.clicked.connect(self.un_id_paper)
         self.ui.unpredB.clicked.connect(self.remove_id_prediction)
@@ -1406,6 +1407,14 @@ class Manager(QWidget):
         self.ui.overallTW.resizeRowsToContents()
         self.ui.overallTW.setSortingEnabled(True)
         self.refreshOverallTab()
+
+    def downloadCSV(self):
+        filename = QFileDialog.getSaveFileName(
+            self, "Save File", "", "Comma Separated Values (*.csv)"
+        )
+        print(filename)
+        print(type(filename))
+        # tr("Images (*.png *.xpm *.jpg)"));
 
     def viewTestStatus(self):
         pvi = self.ui.overallTW.selectedItems()
