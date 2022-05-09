@@ -7,8 +7,7 @@
 
 """Plom tools for scanning tests and pushing to servers.
 
-Overview of the scanning process
---------------------------------
+## Overview of the scanning process
 
   1. Decide on a working directory for your scans, copy your PDFs into
      that directory and then cd into it.

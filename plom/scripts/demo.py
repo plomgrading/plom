@@ -31,42 +31,48 @@ from plom.misc_utils import working_directory
 from plom.server import PlomServer
 
 
-parser = argparse.ArgumentParser(
-    description=__doc__,
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
-parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-parser.add_argument(
-    "server_dir",
-    nargs="?",
-    help="""The directory containing the filespace to be used by this server.
-        It will be created if it does not exist.
-        You can specify "." to use the current directory.
-        If omitted, a uniquely-named directory will be used.
-    """,
-)
-parser.add_argument(
-    "-n",
-    "--num-papers",
-    type=int,
-    # default=20,  # we want it to give None
-    metavar="N",
-    help="How many fake exam papers for the demo (defaults to 20 if omitted)",
-)
-parser.add_argument(
-    "--port",
-    type=int,
-    help=f"Which port to use for the demo server ({Default_Port} if omitted)",
-)
-parser.add_argument(
-    "--no-scans",
-    action="store_true",
-    help="Start demo server but without uploading fake-scans. For testing purposes.",
-)
+def get_parser():
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
+    parser.add_argument(
+        "server_dir",
+        nargs="?",
+        help="""The directory containing the filespace to be used by this server.
+            It will be created if it does not exist.
+            You can specify "." to use the current directory.
+            If omitted, a uniquely-named directory will be used.
+        """,
+    )
+    parser.add_argument(
+        "-n",
+        "--num-papers",
+        type=int,
+        # default=20,  # we want it to give None
+        metavar="N",
+        help="How many fake exam papers for the demo (defaults to 20 if omitted)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        help=f"Which port to use for the demo server ({Default_Port} if omitted)",
+    )
+    parser.add_argument(
+        "--no-scans",
+        action="store_true",
+        help="Start demo server but without uploading fake-scans. For testing purposes.",
+    )
+    return parser
 
 
 def main():
+    parser = get_parser()
     args = parser.parse_args()
+
     print("Plom version {}".format(__version__))
 
     # TODO: much of this could in theory be replaced by PlomDemoServer
