@@ -57,6 +57,8 @@ positiveComments = [
 negativeRubrics = {}
 positiveRubrics = {}
 
+tag_list = ["creative", "suspicious", "needs_review", "hall_of_fame", "needs_iic"]
+
 
 class RW:
     """A dummy class needed for compatibility with pagescene."""
@@ -247,6 +249,17 @@ def do_random_marking_backend(question, version, *, messenger):
                 integrity_check,
                 src_img_data,
             )
+        # tag one in three papers
+        if random.randrange(3) == 0:
+            # use up to 3 tags, skewed towards single tag
+            num_tag = random.choice([1] * 4 + [2] * 2 + [3])
+            the_tags = []
+            for k in range(num_tag):
+                the_tag = random.choice(tag_list)
+                if the_tag not in the_tags:
+                    the_tags.append(the_tag)
+                    messenger.add_single_tag(task, the_tag)
+            print(f"Tagged task with: {the_tags}")
 
 
 def build_random_rubrics(question, *, messenger):
@@ -295,6 +308,11 @@ def build_random_rubrics(question, *, messenger):
 
 def do_rando_marking(server, user, password):
     """Randomly annotate the papers assigning RANDOM grades: only for testing please.
+
+    .. caution:: Only for testing/demos.  Do not use for real tests.
+
+    Also, for each paper, with probability 1/3, we tag with up to 3
+    randomly selected tags.
 
     args:
         server (str)
