@@ -6,11 +6,15 @@
 from aiohttp import web, MultipartReader
 
 from .routeutils import authenticate_by_token_required_fields
-from .routeutils import validate_required_fields, log_request
-from .routeutils import log
+from .routeutils import validate_required_fields
 
 
 class SolutionHandler:
+    """The Solution Handler interfaces between the HTTP API and the server itself.
+
+    These routes handle requests related to solutions.
+    """
+
     def __init__(self, plomServer):
         self.server = plomServer
 

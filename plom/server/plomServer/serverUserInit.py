@@ -3,9 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-import json
 import logging
-import os
 
 log = logging.getLogger("servUI")
 
@@ -49,8 +47,8 @@ def info_spec(self):
 
     Returns:
         dict/None: the spec dict or None, e.g., when the server
-            does not yet have a spec.  This function is not
-            authenticated so ask for the public parts of the spec.
+        does not yet have a spec.  This function is not
+        authenticated so ask for the public parts of the spec.
     """
     if not self.testSpec:
         return None
@@ -68,7 +66,9 @@ def checkUserEnabled(self, user):
 
 
 def giveUserToken(self, user, password, clientAPI, client_ver, remote_ip):
-    """When a user requests authorisation
+    """Verify a user's password and give them back a token for quicker future actions.
+
+    When a user requests authorisation
     They have sent their name and password
     first check if they are a valid user
     if so then anything that is recorded as out with that user
@@ -78,9 +78,9 @@ def giveUserToken(self, user, password, clientAPI, client_ver, remote_ip):
 
     returns:
         tuple: `(True, token)` on success, `(False, code, user_readable)`
-            on failure.  Here `code` can be one of the strings "API",
-            "NotAuth", "Disabled", "HasToken" and `user_readable` is a
-            longer string appropriate for an user-centred error message.
+        on failure.  Here `code` can be one of the strings "API",
+        "NotAuth", "Disabled", "HasToken" and `user_readable` is a
+        longer string appropriate for an user-centred error message.
     """
     if clientAPI != self.API:
         return (

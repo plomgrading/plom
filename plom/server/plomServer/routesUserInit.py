@@ -15,6 +15,11 @@ from plom import SpecVerifier
 
 
 class UserInitHandler:
+    """The UserInit Handler interfaces between the HTTP API and the server itself.
+
+    These routes handle requests related to administration of user accounts.
+    """
+
     def __init__(self, plomServer):
         self.server = plomServer
 
@@ -47,9 +52,9 @@ class UserInitHandler:
 
         Returns:
             aiohttp.web.Response: 200 for success, unless a user tries to
-                close another which is BadRequest (400) or user is already
-                logged out, or nonexistent, both of which will give an
-                Unauthorized (401).
+            close another which is BadRequest (400) or user is already
+            logged out, or nonexistent, both of which will give an
+            Unauthorized (401).
         """
         # TODO: should manager be allowed to do this for anyone?
         if data["user"] != request.match_info["user"]:
@@ -141,9 +146,11 @@ class UserInitHandler:
     async def info_spec(self, request):
         """Return the public part of the server specification.
 
-        Response:
-            200: the public part of the spec.
-            400: spec not found (server does not have one yet).
+        Returns:
+            aiohttp.json_response:
+
+            - 200: the public part of the spec.
+            - 400: spec not found (server does not have one yet).
         """
         spec = self.server.info_spec()
         if not spec:
@@ -156,12 +163,14 @@ class UserInitHandler:
     def put_spec(self, data, request):
         """Accept an uploaded exam specification.
 
-        Response:
-            403: only manager can upload a spec.
-            400: the provided spec is not valid.
-            409: Conflict: server has already populated the database.
-            200: new spec file accepted.  TODO: would be polite to inform
-                caller if we already had one or not.
+        Returns:
+            aiohttp.Response:
+
+            - 403: only manager can upload a spec.
+            - 400: the provided spec is not valid.
+            - 409: Conflict: server has already populated the database.
+            - 200: new spec file accepted.  TODO: would be polite to inform
+              caller if we already had one or not.
         """
         if self.server.DB.is_paper_database_populated():
             raise web.HTTPConflict(reason="Server has populated DB: cannot accept spec")
@@ -181,9 +190,9 @@ class UserInitHandler:
     async def InfoShortName(self, request):
         """The short name of the exam.
 
-        Response:
-            200: the short name.
-            400: server has no spec.
+        Returns:
+            aiohttp.Response: 200 and the short name or 400 if the
+            server has no spec.
         """
         name = self.server.InfoShortName()
         if not name:

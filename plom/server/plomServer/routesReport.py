@@ -10,6 +10,13 @@ from .routeutils import authenticate_by_token_required_fields
 
 
 class ReportHandler:
+    """The Report Handler interfaces between the HTTP API and the server itself.
+
+    These routes handle requests related to reporting such as
+    information requests about progress and late-stage actions
+    such as reassembly.  Typically, these are manager-only calls.
+    """
+
     def __init__(self, plomServer):
         self.server = plomServer
 
@@ -25,7 +32,7 @@ class ReportHandler:
             request (aiohttp.web_request.Request): Request of type GET /REP/scanned.
 
         Returns:
-            aiohttp.web_response.Response: [description]
+            aiohttp.web_response.Response:
         """
 
         if not data["user"] in ("manager", "scanner"):
@@ -48,7 +55,7 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response which includes a dictionary of pages for
-                incomplete exams.
+            incomplete exams.
         """
 
         if not data["user"] in ("manager", "scanner"):
@@ -120,7 +127,7 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response which includes a dictionary of pages for
-                incomplete exams.
+            incomplete exams.
         """
 
         # An example of the report sent as a response:  TODO: Should I explain this better.
@@ -145,7 +152,7 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response with information on the progress of each
-                use on each question.
+            use on each question.
         """
 
         if not data["user"] == "manager":
@@ -170,7 +177,7 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response object with the grading histogram info
-                for a question.
+            for a question.
         """
 
         if not data["user"] == "manager":
@@ -195,8 +202,7 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response object including a dictionary of
-                identified papers.
-
+            identified papers.
         """
 
         if not data["user"] == "manager":
@@ -215,7 +221,6 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response object including a dictionary of scanned but not auto-id'd papers.
-
         """
 
         if not data["user"] == "manager":
@@ -235,8 +240,8 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: a dictionary keyed by test
-                number (str), where the values are a 3-list:
-                    `[is_scanned, is_identified, number_of_questions_marked]`.
+            number (str), where the values are a 3-list:
+            `[is_scanned, is_identified, number_of_questions_marked]`.
         """
 
         if not data["user"] == "manager":
@@ -254,7 +259,7 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response that includes a list of todo
-                tasks.
+            tasks.
         """
 
         if not data["user"] == "manager":
@@ -278,7 +283,7 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response including a dictionary for information on
-                grading status for an exam.
+            grading status for an exam.
         """
 
         if not data["user"] == "manager":
@@ -310,7 +315,7 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response object that includes the csv dictionary
-                for the grading results spreadsheet.
+            for the grading results spreadsheet.
         """
 
         if not data["user"] == "manager":
@@ -439,7 +444,7 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: A response including metadata about the identified
-                papers queued for reviewing.
+            papers queued for reviewing.
         """
 
         if not data["user"] == "manager":

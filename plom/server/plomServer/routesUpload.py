@@ -14,6 +14,16 @@ from .routeutils import readonly_admin, write_admin
 
 
 class UploadHandler:
+    """The Upload Handler interfaces between the HTTP API and the server itself.
+
+    These routes handle requests related to uploading of images, such
+    as at scanning time.  Also included are various administrative actions
+    such as shifting UnknownPages into ExtraPages.
+
+    Various miscellaneous routes about initialising and configuring the
+    server seem to have landed here as well.
+    """
+
     def __init__(self, plomServer):
         self.server = plomServer
 
@@ -21,6 +31,7 @@ class UploadHandler:
         """Returns whether given bundle/md5sum known to database
 
         Checks both bundle's name and md5sum
+
         * neither = no matching bundle, return [False, None]
         * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
         * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
@@ -42,17 +53,19 @@ class UploadHandler:
         """Try to create bundle with given name/md5sum.
 
         First check name / md5sum of bundle.
+
         * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldn't happen if scanner working correctly.
         * If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
         * If no such bundle return [True, []] - create the bundle and return an empty skip-list.
 
-        Notes:
-        * after declaring a bundle you may upload images to it.
-        * uploading pages to an undeclared bundle is not allowed.
-        * bundles traditionally correspond to one "pile" of physical
-          papers scanned together.
-        * there does not need to be one-to-one relationship betewen
-          bundles and Exam Papers or Homework Papers.
+        .. note::
+
+            * after declaring a bundle you may upload images to it.
+            * uploading pages to an undeclared bundle is not allowed.
+            * bundles traditionally correspond to one "pile" of physical
+              papers scanned together.
+            * there does not need to be one-to-one relationship betewen
+              bundles and Exam Papers or Homework Papers.
         """
         log_request("createNewBundle", request)
 
@@ -81,9 +94,11 @@ class UploadHandler:
     async def sidToTest(self, request):
         """Match given student_id to a test-number.
 
-        Returns
-        * [True, test_number]
-        * [False, 'Cannot find test with that student id']
+        Returns:
+            list: depend on success or failure, gives:
+
+            * ``[True, test_number]``
+            * ``[False, "Cannot find test with that student id"]``
         """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "sid"]):
@@ -107,7 +122,7 @@ class UploadHandler:
 
         Returns:
             aiohttp.web_response.Response: JSON data directly from the
-                database call.
+            database call.
 
         Note: this uses the `status=200` success return code for some
         kinds of failures: it simply returns whatever data the DB gave
@@ -176,7 +191,7 @@ class UploadHandler:
 
         Returns:
             aiohttp.web_response.Response: JSON data directly from the
-                database call.
+            database call.
 
         Note: this uses the `status=200` success return code for some
         kinds of failures: it simply returns whatever data the DB gave
@@ -633,16 +648,17 @@ class UploadHandler:
         args:
             request (aiohttp.web_request.Request): This has the usual "user"
                 and "token" fields but also:
-                    fileName (str): identifies the UnknownPage.
-                    test (str): paper number to map onto (int passed as str).
-                    page (str): page number (again, an int)
-                    rotation (str): an integer, presumably a multiple of 90
-                        0, 90, -90, 180, 270, etc.
+
+                - fileName (str): identifies the UnknownPage.
+                - test (str): paper number to map onto (int passed as str).
+                - page (str): page number (again, an int)
+                - rotation (str): an integer, presumably a multiple of 90
+                  0, 90, -90, 180, 270, etc.
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authentication, or 403 is not manager. 409 in other
-                such as test number or page number do not exist.
+            401 for authentication, or 403 is not manager. 409 in other
+            such as test number or page number do not exist.
         """
         status, code, msg = self.server.unknownToTestPage(
             data["fileName"], data["test"], data["page"], data["rotation"]
@@ -666,16 +682,17 @@ class UploadHandler:
         args:
             request (aiohttp.web_request.Request): This has the usual "user"
                 and "token" fields but also:
-                    fileName (str): identifies the UnknownPage.
-                    test (str): paper number to map onto (int passed as str).
-                    questions (list): question numbers, ints.
-                    rotation (str): an integer, presumably a multiple of 90
-                        0, 90, -90, 180, 270, etc.
+
+                - fileName (str): identifies the UnknownPage.
+                - test (str): paper number to map onto (int passed as str).
+                - questions (list): question numbers, ints.
+                - rotation (str): an integer, presumably a multiple of 90
+                  0, 90, -90, 180, 270, etc.
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authentication, or 403 is not manager. 409 if paper
-                number or question number do not exist (e.g., out of range).
+            401 for authentication, or 403 is not manager. 409 if paper
+            number or question number do not exist (e.g., out of range).
         """
         status, code, msg = self.server.unknownToHWPage(
             data["fileName"], data["test"], data["questions"], data["rotation"]
@@ -698,20 +715,21 @@ class UploadHandler:
         args:
             request (aiohttp.web_request.Request): This has the usual "user"
                 and "token" fields but also:
-                    fileName (str): identifies the UnknownPage.
-                    test (str): paper number to map onto (int passed as str).
-                    questions (list): question numbers, a list of integers.
-                    rotation (str): an integer, presumably a multiple of 90
-                        0, 90, -90, 180, 270, etc.
+
+                - fileName (str): identifies the UnknownPage.
+                - test (str): paper number to map onto (int passed as str).
+                - questions (list): question numbers, a list of integers.
+                - rotation (str): an integer, presumably a multiple of 90
+                  0, 90, -90, 180, 270, etc.
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authentication, or 403 is not manager. 409 if paper
-                number or question number do not exist (e.g., out of range).
-                Also, 409 if one or more questions not scanned (so cannot
-                attach extra page).  This is important as otherwise we can
-                bypass the scanned mechanism and a test of only extra pages
-                could be overlooked (not graded nor returned).
+            401 for authentication, or 403 is not manager. 409 if paper
+            number or question number do not exist (e.g., out of range).
+            Also, 409 if one or more questions not scanned (so cannot
+            attach extra page).  This is important as otherwise we can
+            bypass the scanned mechanism and a test of only extra pages
+            could be overlooked (not graded nor returned).
         """
         status, code, msg = self.server.unknownToExtraPage(
             data["fileName"], data["test"], data["questions"], data["rotation"]
@@ -729,6 +747,7 @@ class UploadHandler:
 
     async def collidingToTestPage(self, request):
         """The group containing the tpage is reset when it is replaced.
+
         At the same time, any annotation that involved the old tpage is reset.
         """
         data = await request.json()
@@ -789,13 +808,14 @@ class UploadHandler:
 
         Returns:
             web.Response: 200 on success and a status message summarizing
-                the newly created row.
-                400 for server does not have spec.
-                401 for authentication, or 403 if not manager.
-                406 (unacceptable) for problems with version map or spec.
-                409 (conflict) for row already exists or otherwise cannot
-                be created.
-                500 for unexpected errors.
+            the newly created row.  Errors:
+
+            - 400 for server does not have spec.
+            - 401 for authentication, or 403 if not manager.
+            - 406 (unacceptable) for problems with version map or spec.
+            - 409 (conflict) for row already exists or otherwise cannot
+              be created.
+            - 500 for unexpected errors.
         """
         spec = self.server.testSpec
         if not spec:
@@ -828,12 +848,11 @@ class UploadHandler:
 
         Returns:
             dict: dict of dicts, keyed first by paper index then by page
-                number.  Both keys are strings b/c of json limitations;
-                you may need to iterate and convert back to int.  Fails
-                with 409 if the version map database has not been built
-                yet.
+            number.  Both keys are strings b/c of json limitations;
+            you may need to iterate and convert back to int.  Fails
+            with 409 if the version map database has not been built yet.
 
-        Note: careful not to confuse this with /admin/questionVersionMap
+        .. caution:: careful not to confuse this with `/admin/questionVersionMap`
             which is much more likely what you are looking for.
         """
         spec = self.server.testSpec

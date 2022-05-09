@@ -12,6 +12,11 @@ from .routeutils import log
 
 
 class MarkHandler:
+    """The Mark Handler interfaces between the HTTP API and the server itself.
+
+    These routes handle requests related to marking papers.
+    """
+
     def __init__(self, plomServer):
         self.server = plomServer
 
@@ -29,9 +34,9 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: JSON with the maximum mark for
-                the question and version.  Or 416 if question/version values
-                out of range.  Or BadRequest (400) if question/version cannot
-                be converted to integers.
+            the question and version.  Or 416 if question/version values
+            out of range.  Or BadRequest (400) if question/version cannot
+            be converted to integers.
         """
         question = data["q"]
         version = data["v"]
@@ -65,7 +70,7 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: Includes the number of marked
-                tasks and the total number of marked/unmarked tasks.
+            tasks and the total number of marked/unmarked tasks.
         """
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
@@ -85,9 +90,9 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: A response object including a
-                list of lists with the already processed questions. The
-                list involves the question string, question mark, time
-                spent grading and list of tag-texts.
+            list of lists with the already processed questions. The
+            list involves the question string, question mark, time
+            spent grading and list of tag-texts.
         """
         # return the completed list
         return web.json_response(
@@ -108,8 +113,9 @@ class MarkHandler:
             request (aiohttp.web_request.Request): Request of type GET /MK/tasks/available.
 
         Returns:
-            aiohttp.web_response.Response: A response which includes the next question's string.
-                For example: q0013g1
+            aiohttp.web_response.Response: A response which includes the
+            next question's string.
+            For example: ``q0013g1``.
         """
         next_task_response = self.server.MgetNextTask(data["q"], data["v"])
 
@@ -135,7 +141,7 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_fileresponse.FileResponse: A response which includes the image for
-                the latex string.
+            the latex string.
         """
         valid, value = self.server.MlatexFragment(data["fragment"])
         if valid:
@@ -157,10 +163,11 @@ class MarkHandler:
 
         Returns:
             aiohttp.json_response: JSON of metadata about the images in the
-               task with status 200, or 409 if someone else has claimed this
-               task, or a 404 if there it not yet such a task (not scanned yet)
-               or 410 if there will never be such a task, or 400/401 for
-               other or authentication problems. Also 417 when the version requested does not match the version of the task.
+            task with status 200, or 409 if someone else has claimed this
+            task, or a 404 if there it not yet such a task (not scanned yet)
+            or 410 if there will never be such a task, or 400/401 for
+            other or authentication problems.  Also 417 when the version
+            requested does not match the version of the task.
         """
 
         task_code = request.match_info["task"]
@@ -205,7 +212,7 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: Responses with a list including
-                the number of graded tasks and the overall number of tasks.
+            the number of graded tasks and the overall number of tasks.
         """
 
         log_request("MreturnMarkedTask", request)
@@ -307,8 +314,8 @@ class MarkHandler:
 
         Returns:
             aiohttp.json_response.Response: JSON of the annotations with
-                status 200, or a 404 if no such image, or 400/401 for
-                authentication problems.
+            status 200, or a 404 if no such image, or 400/401 for
+            authentication problems.
 
         Note: if you want the annotated image corresponding to these
         annotations, extract the edition from the JSON, then call
@@ -329,7 +336,7 @@ class MarkHandler:
     def get_annotations_latest(self, data, request):
         """Get the annotations of a marked question as JSON.
 
-        See :py:method:`get_annotations`.
+        See :func:`get_annotations`.
         """
         number = int(request.match_info["number"])
         question = int(request.match_info["question"])
@@ -367,8 +374,8 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: the binary image data with
-                status 200, or a 404 if no such image, or 400/401 for
-                authentication problems.
+            status 200, or a 404 if no such image, or 400/401 for
+            authentication problems.
 
         Note: if you want *both* the latest annotated image and the
         latest annotations (in `.plom` format), do not simply omit the
@@ -391,7 +398,7 @@ class MarkHandler:
     def get_annotations_img_latest(self, data, request):
         """Get the image of an annotated question (a marked question).
 
-        See :py:method:`get_annotations_img`.
+        See :func:`get_annotations_img`.
         """
         number = int(request.match_info["number"])
         question = int(request.match_info["question"])
@@ -419,8 +426,8 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: the binary image data, or
-                a 404 response if no such image, or a 409 if wrong
-                md5sum saniity check was provided.
+            a 404 response if no such image, or a 409 if wrong
+            md5sum saniity check was provided.
         """
         image_id = request.match_info["image_id"]
         md5sum = request.match_info["md5sum"]
@@ -463,9 +470,8 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: 200 on success or
-                HTTPNotAcceptable (406) if tag is invalid
-                HTTPGone (410) if cannot find task
-
+            HTTPNotAcceptable (406) if tag is invalid
+            HTTPGone (410) if cannot find task
         """
         task = request.match_info["task"]
         tag_text = data["tag_text"]
@@ -488,7 +494,7 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: 200 on success or
-                HTTPGone (410) if no such tag.
+            HTTPGone (410) if no such tag.
         """
         task = request.match_info["task"]
         tag_text = data["tag_text"].strip()
@@ -525,8 +531,8 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: 200 with key for new tag or
-                HTTPNotAcceptable if tag text is not acceptable or
-                HTTPConflict if tag already in system.
+            HTTPNotAcceptable if tag text is not acceptable or
+            HTTPConflict if tag already in system.
         """
         if not self.server.checkTagTextValid(data["tag_text"]):
             raise web.HTTPNotAcceptable(reason="Text contains disallowed characters")
@@ -546,8 +552,8 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.json_response: list of strings, one for each
-                tag, or HTTPConflict (409) if user not permitted to get tags
-                for that paper.
+            tag, or HTTPConflict (409) if user not permitted to get tags
+            for that paper.
         """
         task = request.match_info["task"]
         tags = self.server.DB.MgetTags(task)
@@ -669,7 +675,7 @@ class MarkHandler:
             aiohttp.web_response.Response: JSON data, a list of dicts
             where each dict has keys:
             pagename, md5, included, order, id, orientation, server_path
-            as documented in :py:`get_pagedata`.
+            as documented in :func:`get_pagedata`.
             A 409 is returned with an explanation if paper number not found.
         """
         test_number = request.match_info["number"]
@@ -755,7 +761,7 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: A response which includes a dictionary
-                for the highest mark possible for each question of the exam.
+            for the highest mark possible for each question of the exam.
         """
         return web.json_response(self.server.MgetAllMax(), status=200)
 
@@ -773,7 +779,7 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: Empty status response indication if the question
-                review was successful.
+            review was successful.
         """
 
         if self.server.MreviewQuestion(

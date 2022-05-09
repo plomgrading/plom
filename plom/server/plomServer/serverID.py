@@ -22,7 +22,7 @@ def IDprogressCount(self):
 
     Returns:
         list: A list including the number of identified papers
-            and the total number of papers.
+        and the total number of papers.
     """
     return [self.DB.IDcountIdentified(), self.DB.IDcountAll()]
 
@@ -44,7 +44,7 @@ def IDgetDoneTasks(self, username):
 
     Returns:
         list: A list of list with sublists of the form
-            [paper_number, user_ID, username]
+        `[paper_number, user_ID, username]`.
     """
 
     return self.DB.IDgetDoneTasks(username)
@@ -146,7 +146,7 @@ def IDputPredictions(self, predictions, classlist, spec):
 
     Returns:
         list: first entry is True/False for success.  If False, second
-            entry is a string with an explanation.
+        entry is a string with an explanation.
     """
 
     log.info("ID prediction list uploaded")
@@ -201,7 +201,7 @@ def IDreviewID(self, test_number):
 
     Returns:
         list: A list with a single True/False indicating
-            if the review was successful.
+        if the review was successful.
     """
 
     return self.DB.IDreviewID(test_number)

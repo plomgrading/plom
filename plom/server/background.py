@@ -22,7 +22,7 @@ import toml
 from plom import Default_Port
 from plom import SpecVerifier
 from plom.create.demotools import buildDemoSourceFiles
-from plom.server import theServer
+from plom.server import launch
 from plom.server import specdir as specdirname
 from plom.server import confdir
 from plom.server.prepare import initialise_server
@@ -60,10 +60,12 @@ class _PlomServerProcess(Process):
         self.basedir = basedir
 
     def run(self):
-        theServer.launch(self.basedir, logfile="server.log", logconsole=False)
+        launch(self.basedir, logfile="server.log", logconsole=False)
 
 
 class PlomServer:
+    """A wrapper class from running a background PlomServer, returning controller to caller."""
+
     @classmethod
     def initialise_server(cls, basedir, *, port=None, manager_pw=None):
         """Prepare a directory for a Plom server, roughly equivalent to `plom-server init` on cmdline.
