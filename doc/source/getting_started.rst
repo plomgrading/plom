@@ -16,42 +16,8 @@ obtained in several ways:
 .. _from Flathub: https://flathub.org/apps/details/org.plomgrading.PlomClient
 .. _releases page: https://gitlab.com/plom/plom/-/releases/
 
-
-macOS binary
-------------
-
-The macOS client ships as a ``.zip`` file.  Open it and drag the ``.app``
-bundle out onto your desktop or into your Applications folder.  You can
-then delete the ``.zip`` file if you wish.
-
-.. note::
-
-    Unfortunately the .app is not “signed” which means you will likely
-    get a security warning preventing you from opening it.  You may
-    need to change something in “Privacy & Security” in “System
-    Preferences”, see `Issue #1676`_ for details.
-
-    .. _Issue #1676: https://gitlab.com/plom/plom/-/issues/1676
-
-
-Windows binary
---------------
-
-Locate the ``.exe`` file on your computer and double-click on it.
-
-(You may get warnings about unsigned files, but it should be possible to
-continue.  You can check the md5sums in our `releases page`_ if you
-want to verify your download.)
-
-
-Linux binary
-------------
-
-You may need to change the permissions on the binary to make it executable.
-Open a terminal and go to the directory where you saved the binary::
-
-  chmod +x PlomClient-x.y.z-x86_64.AppImage
-  ./PlomClient-x.y.z-x86_64.AppImage
+See :doc:`install-client` for more details, including a few caveats
+and "gotchas".
 
 
 Using the client
