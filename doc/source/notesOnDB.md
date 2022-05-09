@@ -1,8 +1,13 @@
-# A hack at trying to make some notes / questions on the database for plom.
+# Explanation of the Plom database
 
-## Explanation of main classes in the DB presently.
+A hack at trying to make some notes / questions on the database for plom.
 
-This is trying to explain the structure of the database in `plom/db/examDB.py`.
+This document tries to explain the structure of the database in `plom/db/examDB.py`.
+
+WARNING: it may be out of date as it was last modified in 2021.
+
+
+## The tables in the Plom database
 
 ### User
 Who is allowed to do things in Plom - including some higher-authority actors, like the "manage" and "HAL" (who does some automatic tasks for us).
@@ -116,7 +121,7 @@ Note
 
 
 
-### Where are the pages?
+## Where are the pages?
 Notice that the above structure does not explain how images are connected to groups. This actually gets a little complicated due to the all the possibilities. Ideally, if everyone follows instructions, a single page will contain answers to only a single question (though, of course a single question might be over several pages). However, we need to allow for the possibility that a page (esp a student uploaded page) might contain answers for multiple questions.
 
 So - first up, what are the different page-types, and then we'll explain how they are tied to Groups and Annotations.

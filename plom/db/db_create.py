@@ -50,15 +50,16 @@ def doesBundleExist(self, bundle_name, md5):
 
     Returns:
         2-tuple: there are 4 possibilities:
-            * neither match: no matching bundle, return `(False, None)`
-            * name but not md5: return `(True, "name")` - user is trying
-              to upload different bundles with same name.
-            * md5 but not name: return `(True, "md5sum")` - user is trying
-              to upload same bundle with different name.
-            * both match: return `(True, "both")` - user could be retrying
-              after network failure (for example) or uploading unknown or
-              colliding pages.  That is, they previously uploaded some
-              from the bundle but now are uploading more (Issue #1008).
+
+        * neither match: no matching bundle, return `(False, None)`
+        * name but not md5: return `(True, "name")` - user is trying
+          to upload different bundles with same name.
+        * md5 but not name: return `(True, "md5sum")` - user is trying
+          to upload same bundle with different name.
+        * both match: return `(True, "both")` - user could be retrying
+          after network failure (for example) or uploading unknown or
+          colliding pages.  That is, they previously uploaded some
+          from the bundle but now are uploading more (Issue #1008).
     """
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is not None:
@@ -81,13 +82,13 @@ def createNewBundle(self, bundle_name, md5):
 
     Returns:
         2-tuple: If bundle exists that matches by name *xor* by md5sum
-            then return `(False, "name")` or `(False, "md5sum")`.
-            If bundle matches both 'name' *and* 'md5sum' then return
-            `(True, skip_list)` where `skip_list` is a list of the
-            page-orders from that bundle that are already in the
-            system.  The scan scripts will then skip those uploads.
-            If no such bundle return `(True, [])`: we have created
-            the bundle and return an empty skip-list.
+        then return `(False, "name")` or `(False, "md5sum")`.
+        If bundle matches both 'name' *and* 'md5sum' then return
+        `(True, skip_list)` where `skip_list` is a list of the
+        page-orders from that bundle that are already in the
+        system.  The scan scripts will then skip those uploads.
+        If no such bundle return `(True, [])`: we have created
+        the bundle and return an empty skip-list.
     """
     exists, reason = self.doesBundleExist(bundle_name, md5)
     if not exists:
@@ -113,7 +114,7 @@ def is_paper_database_populated(self):
     """True if any papers have been created in the DB.
 
     The database is initially created with empty tables.  Users get added.
-    This function still returns False.  Eventually `Test`s (i.e., "papers")
+    This function still returns False.  Eventually Tests (i.e., "papers")
     get created.  Then this function returns True.
     """
     return self.how_many_papers_in_database() > 0
@@ -139,9 +140,9 @@ def addSingleTestToDB(self, spec, t, vmap_for_test):
             the given test. It is a slice of the global version_map
 
     Returns:
-        (bool, str): where bool is true if succuess, and str is a
-            status string, one line per test, ending with an error
-            if failure.
+        2-tuple: `(ok, status)`, where `ok` is True if succuess, and
+        `status` is a status string with newlines: one line per test,
+        ending with an error message if failure (`ok` False).
 
     Raises:
         KeyError: problems with version map or spec
@@ -357,7 +358,7 @@ def getPageVersions(self, t):
 
     Returns:
         dict: keys are page numbers (int) and value is the page
-            version (int), or empty dict if there was no such paper.
+        version (int), or empty dict if there was no such paper.
     """
     tref = Test.get_or_none(test_number=t)
     if tref is None:
@@ -465,7 +466,7 @@ def remove_id_prediction(self, paper_number):
 
     Returns:
         tuple: `(True, None, None)` if successful, or `(False, 404, msg)`
-            if ``paper_number`` does not exist.
+        if `paper_number` does not exist.
     """
     with plomdb.atomic():
         tref = Test.get_or_none(Test.test_number == paper_number)

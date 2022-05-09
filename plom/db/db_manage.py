@@ -159,9 +159,9 @@ def getAllTestImages(self, test_number):
 
     Returns:
         tuple: `(True, rval)` on success or `(False, msg)` on failure.
-            Here `msg` is an error message and rval is a list of lists
-            where each inner "row" consists of:
-            `name`, `md5sum`, `id`, `orientation`, `server_path`
+        Here `msg` is an error message and `rval` is a list of lists
+        where each inner "row" consists of:
+        `[name, md5sum, id, orientation, server_path]`.
     """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
@@ -322,10 +322,9 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
 
     returns:
         tuple: a 3-tuple, either (True, None, None) if the action worked
-            or `(False, code, msg)` where code is a short string, which
-            currently can be "notfound", or "unscanned" and
-            `msg` is a human-readable string suitable for an error
-            message.
+        or `(False, code, msg)` where code is a short string, which
+        currently can be "notfound", or "unscanned" and
+        `msg` is a human-readable string suitable for an error message.
     """
     iref = Image.get_or_none(file_name=file_name)
     if iref is None:
@@ -412,10 +411,10 @@ def moveUnknownToHWPage(self, file_name, test_number, questions):
         questions (list): a list of ints.
 
     returns:
-        tuple: a 3-tuple, either (True, None, None) if the action worked
-            or `(False, code, msg)` where code is a short string, which
-            currently can be "notfound" and `msg` is a
-            human-readable string suitable for an error message.
+        tuple: a 3-tuple, either `(True, None, None)` if the action worked
+        or `(False, code, msg)` where `code` is a short string, which
+        currently can be "notfound", and `msg` is a
+        human-readable string suitable for an error message.
     """
     iref = Image.get_or_none(file_name=file_name)
     if iref is None:
@@ -630,8 +629,8 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
     """Move the collision into a TPage and move the original TPage to discards.
 
     return:
-        triple: (True, None, None), or (status, code, error_msg) where the last
-            field is human-readable.
+        3-tuple: `(True, None, None)`, or `(status, code, error_msg)`
+        where the last field is human-readable.
     """
     # this really just confirms that the file_name belongs to an collidingpage
     iref = Image.get_or_none(file_name=file_name)

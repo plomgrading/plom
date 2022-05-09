@@ -145,8 +145,8 @@ def IDgiveTaskToClient(self, user_name, test_number):
     """Assign test #test_number as a task to the given user if available.
 
     Returns:
-        2-tuple: (True, image_file) if available else (False, msg) where
-             msg is a short message: "NoTest", "NotScanned", "NotOwner".
+        2-tuple: `(True, image_file)` if available else `(False, msg)`
+        where `msg` is a short string: "NoTest", "NotScanned", "NotOwner".
     """
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
@@ -238,8 +238,8 @@ def ID_get_donotmark_images(self, test_number):
 
     Returns:
         2-tuple: `(True, file_list)` where `file_list` is a possibly-empty
-            list of file names.  Otherwise, `(False, "NoTest")` or
-            `(False, "NoScanAndNotIDd")`.
+        list of file names.  Otherwise, `(False, "NoTest")` or
+        `(False, "NoScanAndNotIDd")`.
     """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:

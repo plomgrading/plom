@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 
@@ -87,7 +87,7 @@ def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
 
     Raises:
         ValueError: if database already populated, or attempt to
-        build paper n without paper n-1.
+            build paper n without paper n-1.
         KeyError: invalid question selection scheme in spec.
     """
     if db.is_paper_database_populated():

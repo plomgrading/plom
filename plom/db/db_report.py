@@ -412,20 +412,29 @@ def RgetOutToDo(self):
 
 def RgetStatus(self, test_number):
     """For the given test_number return detailed status information.
-    Return a dict containing keys and values
-    * number = test_number
-    * identified = id'd or not (boolean)
-    * marked = marked or not (boolean)
-    Then if id'd we also add keys/values
-    * sid = student id
-    * sname = student name
-    * iwho = who did the id-ing.
-    For each question then add a sub-dict with key = that question number, and key/values
-    * marked = marked or not
-    * version = the version of that question
-    if marked also add
-    * mark = the score
-    * who = who did the marking.
+
+    Return:
+        dict: keys and values:
+
+        * number = test_number
+        * identified = id'd or not (boolean)
+        * marked = marked or not (boolean)
+
+        Then if id'd we also add keys/values:
+
+        * sid = student id
+        * sname = student name
+        * iwho = who did the id-ing
+
+        For each question then add a sub-dict with key = that question number, and key/values:
+
+        * marked = marked or not
+        * version = the version of that question
+
+        if marked also add:
+
+        * mark = the score
+        * who = who did the marking.
     """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
@@ -556,8 +565,8 @@ def RgetMarkReview(
     would it be better to use None/int with None as the wildcard?
 
     Returns:
-        list: for each matching qgroup we return a list of
-        [testnumber, question, version, mark of latest annotation, username, marking_time, time finished.]
+        list-of-lists: for each matching qgroup we return a list of the form:
+        `[testnumber, question, version, mark of latest annotation, username, marking_time, time finished]`.
     """
     query = QGroup.select()
     if filterMarked is True:
