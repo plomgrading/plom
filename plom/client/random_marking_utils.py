@@ -308,7 +308,8 @@ def build_random_rubrics(question, *, messenger):
 
 def do_rando_marking(server, user, password):
     """Randomly annotate the papers assigning RANDOM grades: only for testing please.
-    Also tags 1/3 tasks with up to 3 randomly selected tags.
+
+    Also tags one in three tasks with up to 3 randomly selected tags.
 
     args:
         server (str)
