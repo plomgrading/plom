@@ -1196,7 +1196,8 @@ class MarkerClient(QWidget):
                 Takes the form "q1234g9" = test 1234 question 9
 
         Returns:
-            True/False
+            bool: currently this returns True.  Unless it fails which will
+            induce a crash (after some popup dialogs).
 
         Raises:
             Uses error dialogs; not currently expected to throw exceptions
@@ -1280,8 +1281,16 @@ class MarkerClient(QWidget):
         return True
 
     def _updateImage(self, pr):
-        """
-        Updates the image if needed.
+        """Updates the preview image for a particular row of the table.
+
+        .. caution:: This is a strange function: its not really
+        well-defined what happens if `pr` is *not* the current
+        highlighted row.  Which seems odd: "you have to tell me which
+        row is highlighted and if you're wrong something will break."
+        Like don't you know what row you have highlighted?!  Its like
+        filing Canadian taxes: "please tell us some numbers we already
+        know." Hence this is suggested for internal use only (the
+        function, not the taxes).
 
         Args:
             pr (int): which row is highlighted.
@@ -1300,6 +1309,19 @@ class MarkerClient(QWidget):
             self.testImg.updateImage(self.examModel.get_source_image_data(task))
         self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
+
+    def _updateCurrentlySelectedRow(self):
+        """Updates the preview image for the currently selected row of the table.
+
+        Returns:
+            None
+        """
+        prIndex = self.ui.tableView.selectedIndexes()
+        if len(prIndex) == 0:
+            return
+        # Note: a single selection should have length 11: could assert
+        pr = prIndex[0].row()
+        self._updateImage(pr)
 
     def updateProgress(self, val=None, maxm=None):
         """
@@ -1438,7 +1460,8 @@ class MarkerClient(QWidget):
         if pr is not None:
             # if newly-added row is visible, select it and redraw
             self.ui.tableView.selectRow(pr)
-            self._updateImage(pr)
+            # this might redraw it twice: oh well this is not common operation
+            self._updateCurrentlySelectedRow()
             # Clean up the table
             self.ui.tableView.resizeColumnsToContents()
             self.ui.tableView.resizeRowsToContents()
@@ -1827,14 +1850,8 @@ class MarkerClient(QWidget):
             prevState = self.examModel.getStatusByTask("q" + task).split(":")[-1]
             # TODO: could also erase the paperdir
             self.examModel.setStatusByTask("q" + task, prevState)
-        # TODO: see below re "done grading", Issue #2136
-        prIndex = self.ui.tableView.selectedIndexes()
-        if len(prIndex) == 0:
-            return
-        pr = prIndex[0].row()
-        if task:
-            if self.prxM.getPrefix(pr) == "q" + task:
-                self._updateImage(pr)
+        # update image view b/c its image might have changed
+        self._updateCurrentlySelectedRow()
 
     @pyqtSlot(str)
     def callbackAnnDoneClosing(self, task):
@@ -1849,15 +1866,8 @@ class MarkerClient(QWidget):
 
         """
         self.setEnabled(True)
-        # update image view, if the row we just finished is selected
-        prIndex = self.ui.tableView.selectedIndexes()
-        if len(prIndex) == 0:
-            return
-        pr = prIndex[0].row()
-        # TODO: when done grading, if ann stays open, then close, this doesn't happen, Issue #2136
-        if task:
-            if self.prxM.getPrefix(pr) == "q" + task:
-                self._updateImage(pr)
+        # update image view b/c its image might have changed
+        self._updateCurrentlySelectedRow()
 
     @pyqtSlot(str, list)
     def callbackAnnWantsUsToUpload(self, task, stuff):
