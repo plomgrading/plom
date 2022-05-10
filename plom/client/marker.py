@@ -1034,7 +1034,9 @@ class MarkerClient(QWidget):
 
         # Connect the view **after** list updated.
         # Connect the table-model's selection change to appropriate function
-        self.ui.tableView.selectionModel().selectionChanged.connect(self.updateImg)
+        self.ui.tableView.selectionModel().selectionChanged.connect(
+            self.updatePreviewImage
+        )
 
         self.requestNext()  # Get a question to mark from the server
         # reset the view so whole exam shown.
@@ -2084,21 +2086,24 @@ class MarkerClient(QWidget):
         ).exec()
         return
 
-    def updateImg(self, newImg, oldImg):
-        """
-        Updates the displayed image when the selection has changed.
+    def updatePreviewImage(self, new, old):
+        """Updates the displayed image when the selection changes.
 
         Args:
-            newImg (QItem): new image
-            oldImg (QItem): old image
+            new (QItemSelection): the newly selected cells.
+            old (QItemSelection): the previously selected cells.
 
         Returns:
             None
-
         """
-        idx = newImg.indexes()
-        if len(idx) > 0:
-            self._updateImage(idx[0].row())
+        idx = new.indexes()
+        if len(idx) == 0:
+            # TODO: should we remove preview is user unselects row?
+            # (This can be done with ctrl-click, maybe other ways too)
+            log.debug("User managed to unselect current row")
+            return
+        # Note: a single selection should have length 11: could assert
+        self._updateImage(idx[0].row())
 
     def get_upload_queue_length(self):
         """How long is the upload queue?
