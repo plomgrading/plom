@@ -1277,7 +1277,7 @@ class MarkerClient(QWidget):
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
 
-    def _updateImage(self, pr=0):
+    def _updateImage(self, pr):
         """
         Updates the image if needed.
 
