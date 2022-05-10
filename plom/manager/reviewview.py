@@ -6,38 +6,93 @@ from PyQt5.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
 )
 
 from plom.client import ImageViewWidget
+from plom.client.useful_classes import WarningQuestion
+
+
+review_beta_warning = """
+    <p><b>Caution:</b> reviewing is a <em>beta</em> feature;
+    it is not well-tested.  Use this at your own risk!</p>
+    <p>If you flag this work for review, you'll then need to login
+    with the Client using a special "reviewer" account.</p>
+"""
 
 
 class ReviewViewWindow(QDialog):
-    """Simple view window for pageimages"""
+    """View annotated image and provide access to parent's features for tagging and flagging for review.
 
-    def __init__(self, parent, fnames, what="question"):
+    Note: parent will need to have two specific functions for the action
+    buttons to work: see code.
+    """
+
+    def __init__(self, parent, fnames, *, stuff=None):
         super().__init__(parent)
-        self.img = ImageViewWidget(self, fnames, dark_background=True)
-        self.setWindowTitle(f"Does this {what} need reviewing?")
+        img = ImageViewWidget(self, fnames, dark_background=True)
 
+        self.papernum, self.question, self.who = stuff
+        # TODO: need the display question label TODO: Look up issue #
+        self.setWindowTitle(f"Paper {self.papernum} question {self.question}")
         explanation = QLabel(
-            """
-            <p>Reviewing is a <em>beta</em> feature; it is not well-tested.
-            Use this at your own risk!</p>
-            <p>If you do flag this work for review, you'll then need to login
-            with the Client using a special "reviewer" account.</p>
+            f"""
+            <p>Paper {self.papernum} question {self.question}.
+            Graded by: {self.who}</p>
             """
         )
         explanation.setWordWrap(True)
 
         grid = QVBoxLayout()
-        grid.addWidget(self.img, 1)
+        grid.addWidget(img, 1)
+        grid.addWidget(explanation)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        # connect the okay-button to 'accept'
+        buttons.accepted.connect(self.accept)
+        # construct and connect other buttons
+        b = QPushButton("Flag for &review")
+        b.clicked.connect(self.flag)
+        buttons.addButton(b, QDialogButtonBox.ActionRole)
+        b = QPushButton("&Tags...")
+        b.clicked.connect(self.tags)
+        buttons.addButton(b, QDialogButtonBox.ActionRole)
+        grid.addWidget(buttons)
+        self.setLayout(grid)
+
+    def tags(self):
+        self.parent().manage_task_tags(self.papernum, self.question, parent=self)
+
+    def flag(self):
+        d = WarningQuestion(
+            self,
+            review_beta_warning,
+            question="Are you sure you want to flag this for review?",
+        )
+        if not d.exec() == QMessageBox.Yes:
+            return
+        self.parent().flag_question_for_review(self.papernum, self.question, self.who)
+
+
+class ReviewViewWindowID(QDialog):
+    """View image and ask a Yes/No question about reviewing."""
+
+    def __init__(self, parent, fnames):
+        super().__init__(parent)
+        img = ImageViewWidget(self, fnames, dark_background=True)
+        self.setWindowTitle("Does this ID need reviewing?")
+
+        explanation = QLabel(review_beta_warning)
+        explanation.setWordWrap(True)
+
+        grid = QVBoxLayout()
+        grid.addWidget(img, 1)
         grid.addWidget(explanation)
         buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
-        reviewB = QPushButton("Flag for &review")
-        reviewB.clicked.connect(self.accept)
-        buttons.addButton(reviewB, QDialogButtonBox.AcceptRole)
+        b = QPushButton("Yes, &flag for review")
+        b.clicked.connect(self.accept)
+        buttons.addButton(b, QDialogButtonBox.YesRole)
         buttons.rejected.connect(self.reject)
         grid.addWidget(buttons)
         self.setLayout(grid)

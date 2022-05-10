@@ -403,24 +403,23 @@ def IDgetImageFromATest(self):
 
 def IDreviewID(self, test_number):
     """Replace the owner of the ID task for test test_number, with the reviewer."""
-    # shift ownership to "reviewer"
     revref = User.get(name="reviewer")  # should always be there
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
+        return False
     iref = IDGroup.get_or_none(
         IDGroup.test == tref,
         IDGroup.identified == True,  # noqa: E712
     )
     if iref is None:
-        return [False]
+        return False
     with plomdb.atomic():
         iref.user = revref
         iref.time = datetime.now(timezone.utc)
         iref.save()
-    log.info("ID task {} set for review".format(test_number))
-    return [True]
+    log.info("ID task %s set for review", test_number)
+    return True
 
 
 def ID_get_predictions(self):

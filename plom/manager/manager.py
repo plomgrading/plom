@@ -58,7 +58,8 @@ from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
 from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
-from .reviewview import ReviewViewWindow
+from .reviewview import ReviewViewWindow, ReviewViewWindowID
+from .reviewview import review_beta_warning
 from .selectrectangle import SelectRectangleWindow
 from plom.plom_exceptions import (
     PlomSeriousException,
@@ -431,6 +432,7 @@ class Manager(QWidget):
         self.ui.refreshReviewIDButton.clicked.connect(self.refreshIDRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
+        self.ui.flagReviewButton.clicked.connect(self.reviewFlagTableRowsForReview)
 
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
@@ -1780,6 +1782,8 @@ class Manager(QWidget):
     def initReviewTab(self):
         self.initRevMTab()
         self.initRevIDTab()
+        # not implemented yet
+        self.ui.removeAnnotationsButton.setEnabled(False)
 
     def initRevMTab(self):
         self.ui.reviewTW.setColumnCount(8)
@@ -1796,7 +1800,7 @@ class Manager(QWidget):
             ]
         )
         self.ui.reviewTW.setSortingEnabled(True)
-        self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.reviewTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
         self.ui.viewAnnotationsButton.clicked.connect(self.reviewAnnotated)
@@ -1804,9 +1808,10 @@ class Manager(QWidget):
 
         # TODO: where to define this function?  Probably a method of a subclass of reviewTW
         def f(tw, i, row):
-            """Insert N = 8 things from row into the ith row of the table tw."""
+            """Insert the things from row into the ith row of the table tw."""
             N = 8
             assert len(row) == N
+            assert tw.columnCount() == N
             # otherwise they resort between elements of the row (!)
             tw.setSortingEnabled(False)
             tw.insertRow(i)
@@ -1859,7 +1864,6 @@ class Manager(QWidget):
         self.ui.tagsCB.addItem("<no tags>")
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
         self.ui.tagsCB.addItems(all_tags)
-        # TODO: but we need to re-run the query else its bloody confusing!
 
     def filterReview(self):
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
@@ -1891,17 +1895,18 @@ class Manager(QWidget):
             r += 1
 
     def reviewAnnotated(self):
-        rvi = self.ui.reviewTW.selectedIndexes()
-        if len(rvi) == 0:
+        ri = self.ui.reviewTW.selectedIndexes()
+        if len(ri) != self.ui.reviewTW.columnCount():
+            # don't do anything unless we have exactly one row
             return
-        r = rvi[0].row()
+        r = ri[0].row()
         # no action if row is unmarked
         if self.ui.reviewTW.item(r, 3).text() == "n/a":
             # TODO - in future fire up reviewer with original pages
             return
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
-        version = int(self.ui.reviewTW.item(r, 2).text())
+        owner = self.ui.reviewTW.item(r, 4).text()
         img = self.msgr.get_annotations_image(test, question)
         # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
         # TODO: but more likely superseded by "pagedata" changes
@@ -1909,41 +1914,147 @@ class Manager(QWidget):
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
             fh.write(img)
-        rvw = ReviewViewWindow(self, [f])
-        if rvw.exec() == QDialog.Accepted:
-            # first remove auth from that user - safer.
-            if self.ui.reviewTW.item(r, 4).text() != "reviewer":
-                self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
-            # then map that question's owner "reviewer"
-            self.msgr.MreviewQuestion(test, question, version)
-            self.ui.reviewTW.item(r, 4).setText("reviewer")
+        ReviewViewWindow(self, [f], stuff=(test, question, owner)).exec()
         f.unlink()
 
-    def reviewChangeTags(self):
-        rvi = self.ui.reviewTW.selectedIndexes()
-        if len(rvi) == 0:
+    def reviewFlagTableRowsForReview(self):
+        ri = self.ui.reviewTW.selectedIndexes()
+        if len(ri) == 0:
             return
-        r = rvi[0].row()
-        # TODO: hardcoded index nonsense: why can't we get the original row dict?
-        paper_num = int(self.ui.reviewTW.item(r, 0).text())
-        question = int(self.ui.reviewTW.item(r, 1).text())
+        # index is over rows and columns (yuck) so need some modular arithmetic
+        mod = self.ui.reviewTW.columnCount()
+        howmany = len(ri) // mod
+        howmany = "1 question" if howmany == 1 else f"{howmany} questions"
+        d = WarningQuestion(
+            self,
+            review_beta_warning,
+            question=f"Are you sure you want to <b>flag {howmany}</b> for review?",
+        )
+        if not d.exec() == QMessageBox.Yes:
+            return
+        self.ui.reviewIDTW.setSortingEnabled(False)
+        for tmp in ri[::mod]:
+            r = tmp.row()
+            # no action if row is unmarked
+            if self.ui.reviewTW.item(r, 3).text() == "n/a":
+                continue
+            test = int(self.ui.reviewTW.item(r, 0).text())
+            question = int(self.ui.reviewTW.item(r, 1).text())
+            owner = self.ui.reviewTW.item(r, 4).text()
+            self.flag_question_for_review(test, question, owner)
+            # TODO: needs to be a method call to fix highlighting
+            self.ui.reviewTW.item(r, 4).setText("reviewer")
+        self.ui.reviewIDTW.setSortingEnabled(True)
+
+    def flag_question_for_review(self, test, question, owner):
+        # first remove auth from that user - safer.
+        if owner != "reviewer":
+            self.msgr.clearAuthorisationUser(owner)
+        # then map that question's owner "reviewer"
+        self.msgr.MreviewQuestion(test, question)
+
+    def reviewChangeTags(self):
+        ri = self.ui.reviewTW.selectedIndexes()
+        if len(ri) == 0:
+            return
+        mod = self.ui.reviewTW.columnCount()
+        howmany = len(ri) // mod
+        howmany = "1 question" if howmany == 1 else f"{howmany} questions"
+        self.ui.reviewIDTW.setSortingEnabled(False)
+        # TODO: this loop is expensive when many rows highlighted
+        # TODO: maybe just use the 7th column instead of talking to server
+        tags = set()
+        for tmp in ri[::mod]:
+            r = tmp.row()
+            paper = int(self.ui.reviewTW.item(r, 0).text())
+            question = int(self.ui.reviewTW.item(r, 1).text())
+            task = f"q{paper:04}g{question}"
+            tags.update(self.msgr.get_tags(task))
+        all_tags = [tag for key, tag in self.msgr.get_all_tags()]
+        tag_choices = [X for X in all_tags if X not in tags]
+        artd = AddRemoveTagDialog(self, tags, tag_choices, label=howmany)
+        if artd.exec() != QDialog.Accepted:
+            return
+        cmd, new_tag = artd.return_values
+        if cmd == "add":
+            if new_tag:
+                try:
+                    for tmp in ri[::mod]:
+                        r = tmp.row()
+                        paper = int(self.ui.reviewTW.item(r, 0).text())
+                        question = int(self.ui.reviewTW.item(r, 1).text())
+                        task = f"q{paper:04}g{question}"
+                        log.debug('%s: tagging "%s"', task, new_tag)
+                        self.msgr.add_single_tag(task, new_tag)
+                except PlomBadTagError as e:
+                    WarnMsg(self, f"Tag not acceptable: {e}").exec()
+        elif cmd == "remove":
+            for tmp in ri[::mod]:
+                r = tmp.row()
+                paper = int(self.ui.reviewTW.item(r, 0).text())
+                question = int(self.ui.reviewTW.item(r, 1).text())
+                task = f"q{paper:04}g{question}"
+                log.debug('%s: removing tag "%s"', task, new_tag)
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomBadTagError as e:
+                    # TODO: I think this should succeed
+                    log.debug("%s did not have tag: %s", task, str(e))
+                    pass
+        else:
+            # do nothing - but shouldn't arrive here.
+            pass
+
+        # update the relevant table fields
+        for tmp in ri[::mod]:
+            r = tmp.row()
+            paper = int(self.ui.reviewTW.item(r, 0).text())
+            question = int(self.ui.reviewTW.item(r, 1).text())
+            task = f"q{paper:04}g{question}"
+            tags = self.msgr.get_tags(task)
+            self.ui.reviewTW.item(r, 7).setData(Qt.DisplayRole, ", ".join(tags))
+        self.ui.reviewIDTW.setSortingEnabled(True)
+
+    def manage_task_tags(self, paper_num, question, parent=None):
+        """Manage the tags of a task.
+
+        args:
+            paper_num (int/str):
+            question (int/str):
+
+        keyword args:
+            parent (Window/None): Which window should be dialog's parent?
+                If None, then use `self` (which is Marker) but if other
+                windows (such as Annotator or PageRearranger) are calling
+                this and if so they should pass themselves: that way they
+                would be the visual parents of this dialog.
+
+        returns:
+            list: the current tags of paper/question.  Note even if the
+            dialog is cancelled, this will be updated (as someone else
+            could've changed tags).
+        """
+        if not parent:
+            parent = self
+
         # ugh, "GQ" nonsense:
         task = f"q{paper_num:04}g{question}"
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
-        current_tags = self.msgr.get_tags(task)
-        tag_choices = [X for X in all_tags if X not in current_tags]
-        artd = AddRemoveTagDialog(self, task, current_tags, tag_choices=tag_choices)
+        tags = self.msgr.get_tags(task)
+        tag_choices = [X for X in all_tags if X not in tags]
+        artd = AddRemoveTagDialog(self, tags, tag_choices, label=task)
         if artd.exec() == QDialog.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":
                 if new_tag:
                     try:
+                        log.debug('%s: tagging "%s"', task, new_tag)
                         self.msgr.add_single_tag(task, new_tag)
-                        log.debug('tagging paper "%s" with "%s"', task, new_tag)
                     except PlomBadTagError as e:
                         WarnMsg(self, f"Tag not acceptable: {e}").exec()
             elif cmd == "remove":
                 try:
+                    log.debug('%s: removing tag "%s"', task, new_tag)
                     self.msgr.remove_single_tag(task, new_tag)
                 except PlomBadTagError as e:
                     WarnMsg(self, f"Problem removing tag: {e}").exec()
@@ -1951,15 +2062,8 @@ class Manager(QWidget):
                 # do nothing - but shouldn't arrive here.
                 pass
 
-            # refresh the tags
-            current_tags = self.msgr.get_tags(task)
-
-            # TODO: but how to update?  Talk to the table?
-            # For now just refresh?
-            # try:
-            #     ...
-            # except ValueError:
-            #     pass
+        current_tags = self.msgr.get_tags(task)
+        return current_tags
 
     def initRevIDTab(self):
         self.ui.reviewIDTW.setColumnCount(5)
@@ -2025,7 +2129,7 @@ class Manager(QWidget):
                 fh.write(img_bytes)
             if not img_ext:
                 raise PlomSeriousException(f"Could not identify image type: {img_name}")
-            rvw = ReviewViewWindow(self, img_name, "ID page")
+            rvw = ReviewViewWindowID(self, img_name)
             if rvw.exec() == QDialog.Accepted:
                 # first remove auth from that user - safer.
                 if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
@@ -2033,6 +2137,7 @@ class Manager(QWidget):
                         self.ui.reviewIDTW.item(r, 1).text()
                     )
                 # then map that question's owner "reviewer"
+                # TODO: needs to be a method call to fix highlighting
                 self.ui.reviewIDTW.item(r, 1).setText("reviewer")
                 self.msgr.IDreviewID(test)
 

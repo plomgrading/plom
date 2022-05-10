@@ -563,28 +563,27 @@ def MgetWholePaper(self, test_number, question):
     return (True, pagedata)
 
 
-def MreviewQuestion(self, test_number, question, version):
+def MreviewQuestion(self, test_number, question):
     """Give ownership of the given marking task to the reviewer."""
-    # shift ownership to "reviewer"
     revref = User.get(name="reviewer")  # should always be there
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
+        return False
     qref = QGroup.get_or_none(
         QGroup.test == tref,
         QGroup.question == question,
-        QGroup.version == version,
         QGroup.marked == True,  # noqa: E712
     )
+    version = qref.version
     if qref is None:
-        return [False]
+        return False
     with plomdb.atomic():
         qref.user = revref
         qref.time = datetime.now(timezone.utc)
         qref.save()
-    log.info("Setting tqv {}.{}.{} for reviewer".format(test_number, question, version))
-    return [True]
+    log.info("Setting tqv %s for reviewer", (test_number, question, version))
+    return True
 
 
 def MrevertTask(self, task):
