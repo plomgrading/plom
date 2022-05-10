@@ -1826,7 +1826,13 @@ class MarkerClient(QWidget):
             # TODO: could also erase the paperdir
             self.examModel.setStatusByTask("q" + task, prevState)
         # TODO: see below re "done grading".
-        self._updateImage()
+        prIndex = self.ui.tableView.selectedIndexes()
+        if len(prIndex) == 0:
+            return
+        pr = prIndex[0].row()
+        if task:
+            if self.prxM.getPrefix(pr) == "q" + task:
+                self._updateImage(pr)
 
     @pyqtSlot(str)
     def callbackAnnDoneClosing(self, task):
