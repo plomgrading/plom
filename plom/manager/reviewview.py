@@ -49,13 +49,15 @@ class ReviewViewWindow(QDialog):
         grid.addWidget(img, 1)
         grid.addWidget(explanation)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        # connect the okay-button to 'accept'
+        buttons.accepted.connect(self.accept)
+        # construct and connect other buttons
         b = QPushButton("Flag for &review")
         b.clicked.connect(self.flag)
         buttons.addButton(b, QDialogButtonBox.ActionRole)
         b = QPushButton("&Tags...")
         b.clicked.connect(self.tags)
         buttons.addButton(b, QDialogButtonBox.ActionRole)
-        buttons.rejected.connect(self.reject)
         grid.addWidget(buttons)
         self.setLayout(grid)
 
