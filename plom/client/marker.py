@@ -2107,9 +2107,9 @@ class MarkerClient(QWidget):
         """
         idx = new.indexes()
         if len(idx) == 0:
-            # TODO: should we remove preview is user unselects row?
-            # (This can be done with ctrl-click, maybe other ways too)
+            # Remove preview when user unselects row (e.g., ctrl-click)
             log.debug("User managed to unselect current row")
+            self.testImg.updateImage(None)
             return
         # Note: a single selection should have length 11: could assert
         self._updateImage(idx[0].row())
