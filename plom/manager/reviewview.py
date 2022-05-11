@@ -22,6 +22,12 @@ review_beta_warning = """
     with the Client using a special "reviewer" account.</p>
 """
 
+revert_beta_warning = """
+    <p><b>Caution:</b> reverting is a <em>beta</em> feature;
+    it is not well-tested.  Use this at your own risk!</p>
+    <p>You cannot undo reversion of tasks.</p>
+"""
+
 
 class ReviewViewWindow(QDialog):
     """View annotated image and provide access to parent's features for tagging and flagging for review.
