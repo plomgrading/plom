@@ -517,19 +517,17 @@ class Manager(QWidget):
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomExistingLoginException:
-            if (
-                SimpleQuestion(
-                    self,
-                    "You appear to be already logged in!\n\n"
-                    "  * Perhaps a previous session crashed?\n"
-                    "  * Do you have another client running,\n"
-                    "    e.g., on another computer?\n\n"
-                    "Should I force-logout the existing authorisation?"
-                    " (and then you can try to log in again)\n\n"
-                    "The other client will likely crash.",
-                ).exec()
-                == QMessageBox.Yes
-            ):
+            msg = WarningQuestion(
+                self,
+                "You appear to be already logged in!\n\n"
+                "  * Perhaps a previous session crashed?\n"
+                "  * Do you have another client running,\n"
+                "    e.g., on another computer?\n\n"
+                "Should I force-logout the existing authorisation?"
+                " (and then you can try to log in again)\n\n"
+                "The other client will likely crash.",
+            )
+            if msg.exec() == QMessageBox.Yes:
                 self.msgr.clearAuthorisation("manager", pwd)
                 self.msgr = None
                 self.login()
