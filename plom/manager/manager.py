@@ -1817,10 +1817,11 @@ class Manager(QWidget):
             for k, x in enumerate(row):
                 item = QTableWidgetItem()
                 if k == 6:
-                    # is the time field so use the tooltip to display humanised time
-                    time = arrow.get(x)
-                    x = arrowtime_to_simple_string(time)
-                    item.setToolTip(time.humanize())
+                    # if we have a time value, use tooltip for humanised time
+                    if x and x != "n/a":
+                        time = arrow.get(x)
+                        x = arrowtime_to_simple_string(time)
+                        item.setToolTip(time.humanize())
                 elif k == 7:
                     # flatten the tag list to a string
                     # TODO: possible to keep the list too, in some other Role?
