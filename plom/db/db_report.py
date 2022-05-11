@@ -609,9 +609,9 @@ def RgetMarkReview(
                     qref.question,
                     qref.version,
                     "n/a",  # mark
-                    "unmarked",  # username
+                    "<unmarked>",  # username
                     "n/a",  # marking time
-                    "n/a",  # when
+                    "",  # when
                     tags,
                 ]
             )
