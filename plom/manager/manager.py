@@ -1984,6 +1984,14 @@ class Manager(QWidget):
             self.remove_annotations_from_task(test, question)
             # TODO: needs to be a method call to fix highlighting
         self.ui.reviewIDTW.setSortingEnabled(True)
+        rf = SimpleQuestion(
+            self,
+            "The data in the table is now outdated.",
+            question="Do you want to refresh the table?",
+        )
+        if not rf.exec() == QMessageBox.Yes:
+            return
+        self.filterReview()
 
     def remove_annotations_from_task(self, test, question):
         task = f"q{test:04}g{question}"
