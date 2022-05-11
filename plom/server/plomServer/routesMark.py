@@ -499,6 +499,9 @@ class MarkHandler:
 
         Args:
             data (dict): user, token and the text of the tag (str).
+            request (aiohttp.Request): type GET `/tags/{task}` where
+                `task` a string like ``q0013g1``, for paper 13
+                question 1.
 
         Returns:
             aiohttp.web_response.Response: 200 on success or
