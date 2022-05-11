@@ -428,7 +428,7 @@ class MarkHandler:
         Returns:
             aiohttp.web_response.Response: the binary image data, or
             a 404 response if no such image, or a 409 if wrong
-            md5sum saniity check was provided.
+            md5sum sanity check was provided.
         """
         image_id = request.match_info["image_id"]
         md5sum = request.match_info["md5sum"]
