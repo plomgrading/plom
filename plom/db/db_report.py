@@ -587,6 +587,7 @@ def RgetMarkReview(
         query = query.where(QGroup.user == uref)
     filtered = []
     for qref in query:
+        tags = [t.tag.text for t in qref.questiontaglinks]
         if qref.marked is True:
             filtered.append(
                 [
@@ -598,6 +599,7 @@ def RgetMarkReview(
                     qref.annotations[-1].marking_time,
                     # Cannot json datetime, so convert it to string
                     datetime_to_json(qref.annotations[-1].time),
+                    tags,
                 ]
             )
         else:
@@ -610,6 +612,7 @@ def RgetMarkReview(
                     "unmarked",  # username
                     "n/a",  # marking time
                     "n/a",  # when
+                    tags,
                 ]
             )
 

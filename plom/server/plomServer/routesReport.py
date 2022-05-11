@@ -7,6 +7,7 @@
 from aiohttp import web
 
 from .routeutils import authenticate_by_token_required_fields
+from .routeutils import readonly_admin
 
 
 class ReportHandler:
@@ -406,6 +407,7 @@ class ReportHandler:
             "filterMarked",
         ]
     )
+    @readonly_admin
     def RgetMarkReview(self, data, request):
         """Respond with a list of graded tasks that match the filter description.
 
@@ -416,12 +418,10 @@ class ReportHandler:
 
         Returns:
             aiohttp.web_response.Response: JSON of a list of lists of the form
-            [Test number, Question number, Version number, Mark, Username, seconds spent marking, date/time of marking].
-            For example: ``[[3, 1, 1, 5, 'user0', 7, '20:06:21-01:21:56'], [...]]``.
+            [Test number, Question number, Version number, Mark, Username, seconds spent marking, date/time of marking, tags].
+            For example: ``[[3, 1, 1, 5, 'user0', 7, '20:06:21-01:21:56', ''], [...]]``.
             Can fail with 401/403 for authentication problems.
         """
-        if not data["user"] == "manager":
-            raise web.HTTPConflict(reason="I want to speak to the manager")
         matches = self.server.RgetMarkReview(
             filterPaperNumber=data["filterPaperNumber"],
             filterQ=data["filterQ"],

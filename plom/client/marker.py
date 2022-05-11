@@ -67,7 +67,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
-from .useful_classes import ErrorMessage, SimpleQuestion
+from .useful_classes import ErrorMessage, WarnMsg, SimpleQuestion
 from .pagecache import download_pages
 
 if platform.system() == "Darwin":
@@ -2357,28 +2357,23 @@ class MarkerClient(QWidget):
         current_tags = self.msgr.get_tags(task)
         tag_choices = [X for X in all_tags if X not in current_tags]
 
-        artd = AddRemoveTagDialog(parent, task, current_tags, tag_choices=tag_choices)
+        artd = AddRemoveTagDialog(parent, current_tags, tag_choices, label=task)
         if artd.exec() == QDialog.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":
-                if len(new_tag) == 0:
-                    pass  # user is not adding a tag
-                elif new_tag in current_tags:
-                    pass  # already have that tag
-                # an actual new tag for this task (though it may exist already)
-                else:
+                if new_tag:
                     try:
                         self.msgr.add_single_tag(task, new_tag)
                         log.debug('tagging paper "%s" with "%s"', task, new_tag)
                     except PlomBadTagError as e:
-                        ErrorMessage(f"Tag not acceptable: {e}").exec()
+                        WarnMsg(parent, f"Tag not acceptable: {e}").exec()
             elif cmd == "remove":
                 try:
                     self.msgr.remove_single_tag(task, new_tag)
                 except PlomBadTagError as e:
-                    ErrorMessage(f"Problem removing tag: {e}").exec()
+                    WarnMsg(parent, f"Problem removing tag: {e}").exec()
             else:
-                # do nothing - shouldn't arrive here.
+                # do nothing - but shouldn't arrive here.
                 pass
 
             # refresh the tags

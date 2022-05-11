@@ -347,19 +347,8 @@ def get_pagedata_context_question(self, *args, **kwargs):
     return self.DB.MgetWholePaper(*args, **kwargs)
 
 
-def MreviewQuestion(self, test_number, question_number, version_number):
-    """Save question results in database.
-
-    Args:
-        test_number (int): Reviewed test number.
-        question_number (int): Review queston number.
-        version_number (int): Marked question version number.
-
-    Returns:
-        list: Respond with a list with value of either True or False.
-    """
-
-    return self.DB.MreviewQuestion(test_number, question_number, version_number)
+def MreviewQuestion(self, *args, **kwargs):
+    return self.DB.MreviewQuestion(*args, **kwargs)
 
 
 # TODO: Deprecated.

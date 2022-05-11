@@ -1254,9 +1254,7 @@ class ManagerMessenger(BaseMessenger):
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                if response.status_code == 403:
+                if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
@@ -1368,7 +1366,7 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MreviewQuestion(self, testNumber, questionNumber, version):
+    def MreviewQuestion(self, testNumber, questionNumber):
         self.SRmutex.acquire()
         try:
             response = self.patch(
@@ -1378,20 +1376,14 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "testNumber": testNumber,
                     "questionNumber": questionNumber,
-                    "version": version,
                 },
             )
             response.raise_for_status()
-            # rval = response.json()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Could not find t/q/v = {}/{}/{}.".format(
-                        testNumber, questionNumber, version
-                    )
-                ) from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1409,12 +1401,10 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 404:
-                raise PlomSeriousException(
-                    f"Could not find test {testNumber}."
-                ) from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

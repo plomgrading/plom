@@ -8,6 +8,7 @@ from aiohttp import web, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request
+from .routeutils import write_admin
 from .routeutils import log
 
 
@@ -469,18 +470,25 @@ class MarkHandler:
             data (dict): user, token and the text for the given tag (str).
 
         Returns:
-            aiohttp.web_response.Response: 200 on success or
-            HTTPNotAcceptable (406) if tag is invalid
-            HTTPGone (410) if cannot find task
+            aiohttp.web_response.Response: 200/204 on success, 200 for
+            tag added and 204 indicates it was already there.
+            HTTPNotAcceptable (406) if tag is invalid.
+            HTTPGone (410) if cannot find task.
+            HTTPBadRequest (400) something else went wrong.
         """
         task = request.match_info["task"]
         tag_text = data["tag_text"]
         if not self.server.checkTagTextValid(tag_text):
             raise web.HTTPNotAcceptable(reason="Text contains disallowed characters.")
 
-        if not self.server.add_tag(data["user"], task, tag_text):
-            raise web.HTTPGone(reason="No such task.")
-        return web.Response(status=200)
+        ok, errcode, msg = self.server.add_tag(data["user"], task, tag_text)
+        if ok:
+            return web.Response(status=200)
+        if errcode == "already":
+            return web.Response(status=204)
+        elif errcode == "notfound":
+            raise web.HTTPGone(reason=msg)
+        raise web.HTTPBadRequest(reason=msg)
 
     # @routes.delete("/tags/{task}")
     @authenticate_by_token_required_fields(["user", "tag_text"])
@@ -766,28 +774,26 @@ class MarkHandler:
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")
-    @authenticate_by_token_required_fields(["testNumber", "questionNumber", "version"])
+    @authenticate_by_token_required_fields(["testNumber", "questionNumber"])
+    @write_admin
     def MreviewQuestion(self, data, request):
         """Confirm the question review done on plom-manager.
 
         Respond with status 200/404.
 
         Args:
-            data (dict): Dictionary including user data in addition to question number
-                and test version.
+            data (dict): Dictionary including user data, test_number (int)
+                and question_number (int).
             request (aiohttp.web_request.Request): Request of type PATCH /MK/review .
 
         Returns:
-            aiohttp.web_response.Response: Empty status response indication if the question
-            review was successful.
+            aiohttp.web.Response: 200 on success, 404 on failure (could not find).
         """
-
-        if self.server.MreviewQuestion(
-            data["testNumber"], data["questionNumber"], data["version"]
-        ):
-            return web.Response(status=200)
-        else:
-            return web.Response(status=404)
+        if not self.server.MreviewQuestion(data["testNumber"], data["questionNumber"]):
+            raise web.HTTPNotFound(
+                reason=f'Could not find t/q {data["testNumber"]}/{data["questionNumber"]}'
+            )
+        return web.Response(status=200)
 
     # @routes.patch("/MK/revert/{task}")
     # TODO: Deprecated.
