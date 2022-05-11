@@ -540,13 +540,6 @@ class Manager(QWidget):
             InfoMsg(self, "Could not authenticate:", info=e).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
-        except PlomSeriousException as e:
-            ErrorMessage(
-                "Could not get authentication token.\n\n"
-                "Unexpected error: {}".format(e)
-            ).exec()
-            self.msgr = None  # reset to avoid Issue #1622
-            return
         self.initial_login()
 
     def initial_login(self):
