@@ -59,7 +59,7 @@ from .unknownpageview import UnknownViewWindow
 from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
 from .reviewview import ReviewViewWindow, ReviewViewWindowID
-from .reviewview import review_beta_warning
+from .reviewview import review_beta_warning, revert_beta_warning
 from .selectrectangle import SelectRectangleWindow
 from plom.plom_exceptions import (
     PlomSeriousException,
@@ -433,6 +433,7 @@ class Manager(QWidget):
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
         self.ui.flagReviewButton.clicked.connect(self.reviewFlagTableRowsForReview)
+        self.ui.removeAnnotationsButton.clicked.connect(self.removeAnnotationsFromRange)
 
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
@@ -1782,8 +1783,6 @@ class Manager(QWidget):
     def initReviewTab(self):
         self.initRevMTab()
         self.initRevIDTab()
-        # not implemented yet: Issue #2130
-        self.ui.removeAnnotationsButton.setVisible(False)
 
     def initRevMTab(self):
         self.ui.reviewTW.setColumnCount(8)
@@ -1817,7 +1816,13 @@ class Manager(QWidget):
             tw.insertRow(i)
             for k, x in enumerate(row):
                 item = QTableWidgetItem()
-                if k == 7:
+                if k == 6:
+                    # if we have a time value, use tooltip for humanised time
+                    if x and x != "n/a":
+                        time = arrow.get(x)
+                        x = arrowtime_to_simple_string(time)
+                        item.setToolTip(time.humanize())
+                elif k == 7:
                     # flatten the tag list to a string
                     # TODO: possible to keep the list too, in some other Role?
                     x = ", ".join(x)
@@ -1952,6 +1957,45 @@ class Manager(QWidget):
             self.msgr.clearAuthorisationUser(owner)
         # then map that question's owner "reviewer"
         self.msgr.MreviewQuestion(test, question)
+
+    def removeAnnotationsFromRange(self):
+        ri = self.ui.reviewTW.selectedIndexes()
+        if len(ri) == 0:
+            return
+        # index is over rows and columns (yuck) so need some modular arithmetic
+        mod = self.ui.reviewTW.columnCount()
+        howmany = len(ri) // mod
+        howmany = "1 question" if howmany == 1 else f"{howmany} questions"
+        d = WarningQuestion(
+            self,
+            revert_beta_warning,
+            question=f"Are you sure you want to <b>revert {howmany}</b>?",
+        )
+        if not d.exec() == QMessageBox.Yes:
+            return
+        self.ui.reviewIDTW.setSortingEnabled(False)
+        for tmp in ri[::mod]:
+            r = tmp.row()
+            # no action if row is unmarked
+            if self.ui.reviewTW.item(r, 3).text() == "n/a":
+                continue
+            test = int(self.ui.reviewTW.item(r, 0).text())
+            question = int(self.ui.reviewTW.item(r, 1).text())
+            self.remove_annotations_from_task(test, question)
+            # TODO: needs to be a method call to fix highlighting
+        self.ui.reviewIDTW.setSortingEnabled(True)
+        rf = SimpleQuestion(
+            self,
+            "The data in the table is now outdated.",
+            question="Do you want to refresh the table?",
+        )
+        if not rf.exec() == QMessageBox.Yes:
+            return
+        self.filterReview()
+
+    def remove_annotations_from_task(self, test, question):
+        task = f"q{test:04}g{question}"
+        self.msgr.MrevertTask(task)
 
     def reviewChangeTags(self):
         ri = self.ui.reviewTW.selectedIndexes()
