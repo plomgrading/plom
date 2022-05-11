@@ -746,7 +746,8 @@ class Manager(QWidget):
             if msg.exec() == QMessageBox.No:
                 return
             rval = self.msgr.removeSinglePage(test_number, page_name)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            InfoMsg(self, "{}".format(rval)).exec()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -758,7 +759,8 @@ class Manager(QWidget):
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            InfoMsg(self, "{}".format(rval)).exec()
         self.refresh_scan_status_lists()
 
     def substituteTestQuestionPage(self, test_number, page_number, question, version):
@@ -771,7 +773,8 @@ class Manager(QWidget):
             return
 
         rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
-        ErrorMessage("{}".format(rval)).exec()
+        # Cleanup, Issue #2141
+        InfoMsg(self, "{}".format(rval)).exec()
 
     def substituteTestDNMPage(self, test_number, page_number):
         msg = SimpleQuestion(
@@ -783,7 +786,8 @@ class Manager(QWidget):
             return
 
         rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
-        ErrorMessage("{}".format(rval)).exec()
+        # Cleanup, Issue #2141
+        InfoMsg(self, "{}".format(rval)).exec()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(
@@ -795,12 +799,13 @@ class Manager(QWidget):
             return
         try:
             rval = self.msgr.replaceMissingIDPage(test_number)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            InfoMsg(self, "{}".format(rval)).exec()
         except PlomUnidentifiedPaperException as err:
-            ErrorMessage(
-                "Cannot substitute that page - that paper has not been identified: {}".format(
-                    err
-                )
+            WarnMsg(
+                self,
+                "Cannot substitute that page - that paper has not been identified",
+                info=err,
             ).exec()
 
     def substituteTestPage(self, test_number, page_number, version):
@@ -827,7 +832,8 @@ class Manager(QWidget):
             rval = self.msgr.replaceMissingHWQuestion(
                 student_id=None, test=test_number, question=question
             )
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            InfoMsg(self, "{}".format(rval)).exec()
         except PlomTakenException:
             ErrorMessage("That question already has hw pages present.").exec()
 
@@ -877,7 +883,8 @@ class Manager(QWidget):
                 return
 
             rval = self.msgr.removeSinglePage(test_number, page_name)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            WarnMsg(self, "{}".format(rval)).exec()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -889,7 +896,8 @@ class Manager(QWidget):
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            WarnMsg(self, "{}".format(rval)).exec()
         self.refresh_scan_status_lists()
 
     def initUnknownTab(self):
@@ -1375,7 +1383,8 @@ class Manager(QWidget):
             return
 
         rval = self.msgr.removeSinglePage(test_number, page_name)
-        ErrorMessage("{}".format(rval)).exec()
+        # Cleanup, Issue #2141
+        WarnMsg(self, "{}".format(rval)).exec()
 
     # ###################
     # Progress tab stuff
