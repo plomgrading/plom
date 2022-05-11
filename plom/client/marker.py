@@ -1283,14 +1283,13 @@ class MarkerClient(QWidget):
     def _updateImage(self, pr):
         """Updates the preview image for a particular row of the table.
 
-        .. caution:: This is a strange function: its not really
-        well-defined what happens if `pr` is *not* the current
-        highlighted row.  Which seems odd: "you have to tell me which
-        row is highlighted and if you're wrong something will break."
-        Like don't you know what row you have highlighted?!  Its like
-        filing Canadian taxes: "please tell us some numbers we already
-        know." Hence this is suggested for internal use only (the
-        function, not the taxes).
+        .. note::
+           This function is a workaround used to keep the preview
+           up-to-date as the table of papers changes.  Ideally
+           the two widgets would be linked with some slots/signals
+           so that they were automatically in-sync and updates to
+           the table would automatically reload the preview.  Perhaps
+           some future Qt expert will help us...
 
         Args:
             pr (int): which row is highlighted.
