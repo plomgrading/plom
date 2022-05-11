@@ -742,8 +742,7 @@ def MremoveExistingTag(self, task, tag_text):
     qref = gref.qgroups[0]
     tgref = Tag.get(text=tag_text)
     if tgref is None:
-        # server existence of tag before, so this should not happen.
-        log.warning(f"MaddExistingTag - tag {tag_text} is not in the system.")
+        log.warning(f"MremoveExistingTag - tag {tag_text} is not in the system.")
         return False
     qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
     if qtref is not None:
