@@ -504,14 +504,19 @@ class MarkHandler:
                 question 1.
 
         Returns:
-            aiohttp.web_response.Response: 200 on success or
-            HTTPGone (410) if no such tag.
+            aiohttp.web_response.Response: 200 on successful removal,
+            204 if the task or system had no such tag, 404 if no such
+            task,
         """
         task = request.match_info["task"]
         tag_text = data["tag_text"].strip()
 
-        if not self.server.remove_tag(task, tag_text):
-            raise web.HTTPGone(reason="No such tag")
+        try:
+            self.server.remove_tag(task, tag_text)
+        except KeyError:
+            return web.Response(status=204)
+        except ValueError as e:
+            raise web.HTTPNotFound(reason=str(e))
         return web.Response(status=200)
 
     # @routes.get("/all_tags")

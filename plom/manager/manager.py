@@ -1995,12 +1995,7 @@ class Manager(QWidget):
                 question = int(self.ui.reviewTW.item(r, 1).text())
                 task = f"q{paper:04}g{question}"
                 log.debug('%s: removing tag "%s"', task, new_tag)
-                try:
-                    self.msgr.remove_single_tag(task, new_tag)
-                except PlomBadTagError as e:
-                    # TODO: I think this should succeed
-                    log.debug("%s did not have tag: %s", task, str(e))
-                    pass
+                self.msgr.remove_single_tag(task, new_tag)
         else:
             # do nothing - but shouldn't arrive here.
             pass
@@ -2053,11 +2048,8 @@ class Manager(QWidget):
                     except PlomBadTagError as e:
                         WarnMsg(self, f"Tag not acceptable: {e}").exec()
             elif cmd == "remove":
-                try:
-                    log.debug('%s: removing tag "%s"', task, new_tag)
-                    self.msgr.remove_single_tag(task, new_tag)
-                except PlomBadTagError as e:
-                    WarnMsg(self, f"Problem removing tag: {e}").exec()
+                log.debug('%s: removing tag "%s"', task, new_tag)
+                self.msgr.remove_single_tag(task, new_tag)
             else:
                 # do nothing - but shouldn't arrive here.
                 pass

@@ -733,22 +733,32 @@ def MaddExistingTag(self, username, task, tag_text):
 
 
 def MremoveExistingTag(self, task, tag_text):
-    """Remove an existing tag to the task"""
+    """Remove an existing tag from the task
+
+    Args:
+        task (str): Code string for the task (paper number and question).
+        tag_text (str): Text of tag to remove.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: no such task.
+        KeyError: no such tag.
+    """
     gref = Group.get_or_none(Group.gid == task)
     if gref is None:
-        log.error("MremoveExistingTag - task {} not known".format(task))
-        return False
+        log.error("MremoveTag - task %s not known", task)
+        raise ValueError(f"No such task {task}")
     # get the question-group and the tag
     qref = gref.qgroups[0]
-    tgref = Tag.get(text=tag_text)
-    if tgref is None:
-        log.warning(f"MremoveExistingTag - tag {tag_text} is not in the system.")
-        return False
-    qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
-    if qtref is not None:
-        qtref.delete_instance()
-        log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
-        return True
-    else:
-        log.warning(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
-        return False
+    tagref = Tag.get(text=tag_text)
+    if tagref is None:
+        log.warning('MremoveTag - tag "%s" is not in the system', tag_text)
+        raise KeyError(f'The system has no such tag "{tag_text}"')
+    qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tagref)
+    if qtref is None:
+        log.warning('MremoveTag - task %s does not have tag "%s"', task, tag_text)
+        raise KeyError(f'Task {task} has no such tag "{tag_text}"')
+    qtref.delete_instance()
+    log.info('MremoveTag - tag "%s" removed from task %s', tag_text, task)
