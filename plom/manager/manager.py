@@ -1782,8 +1782,8 @@ class Manager(QWidget):
     def initReviewTab(self):
         self.initRevMTab()
         self.initRevIDTab()
-        # not implemented yet
-        self.ui.removeAnnotationsButton.setEnabled(False)
+        # not implemented yet: Issue #2130
+        self.ui.removeAnnotationsButton.setVisible(False)
 
     def initRevMTab(self):
         self.ui.reviewTW.setColumnCount(8)
