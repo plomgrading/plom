@@ -150,13 +150,13 @@ class UserDialog(QDialog):
         # make sure that we only do this check if the LE is enabled.
         # put username into lowercase to check against extant which is in lowercase.
         if self.userLE.isEnabled() and self.userLE.text().lower() in self.extant:
-            ErrorMessage(
-                "Username = '{}' already in user list".format(self.userLE.text())
+            WarnMsg(
+                self, f'Username "{self.userLE.text()}" already in user list'
             ).exec()
             return
 
         if self.pwLE.text() != self.pwLE2.text():
-            ErrorMessage("Passwords do not match").exec()
+            WarnMsg(self, "Passwords do not match").exec()
             return
         self.name = self.userLE.text()
         self.password = self.pwLE.text()
@@ -500,17 +500,19 @@ class Manager(QWidget):
             self.msgr = ManagerMessenger(server, mport)
             self.msgr.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n{}".format(e)).exec()
+            WarnMsg(self, "Could not connect to server.", info=str(e)).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
 
         try:
             self.msgr.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
-            ErrorMessage(
-                "Could not authenticate due to API mismatch."
-                "Your client version is {}.\n\n"
-                "Error was: {}".format(__version__, e)
+            WarnMsg(
+                self,
+                "Could not authenticate due to API mismatch. "
+                f"Your client version is {__version__}. "
+                "Error message from server is:",
+                info=str(e),
             ).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
@@ -535,7 +537,7 @@ class Manager(QWidget):
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomAuthenticationException as e:
-            ErrorMessage("Could not authenticate: {}".format(e)).exec()
+            InfoMsg(self, "Could not authenticate:", info=e).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomSeriousException as e:
@@ -2397,7 +2399,7 @@ class Manager(QWidget):
         cpwd = UserDialog(self, f'Change password for "{user}"', name=user)
         if cpwd.exec() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(user, cpwd.password)
-            ErrorMessage(rval[1]).exec()
+            InfoMsg(self, rval[1]).exec()
         return
 
     def createUser(self):
@@ -2409,7 +2411,7 @@ class Manager(QWidget):
         cpwd = UserDialog(self, "Create new user", name=None, extant=uList)
         if cpwd.exec() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(cpwd.name, cpwd.password)
-            ErrorMessage(rval[1]).exec()
+            InfoMsg(self, rval[1]).exec()
             self.refreshUserList()
         return
 
