@@ -797,11 +797,9 @@ class MarkHandler:
 
     # @routes.patch("/MK/revert/{task}")
     @authenticate_by_token_required_fields(["user"])
+    @write_admin
     def MrevertTask(self, data, request):
-        # only manager can do this
         task = request.match_info["task"]
-        if not data["user"] == "manager":
-            return web.Response(status=401)  # malformed request.
         ok, msg = self.server.MrevertTask(task)
         if ok:
             return web.Response(status=200)

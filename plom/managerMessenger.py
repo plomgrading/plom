@@ -1360,8 +1360,8 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomBenignException("No action to be taken.")
 
         except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+            if response.status_code in (401, 403):
+                raise PlomAuthenticationException(response.reason) from None
             elif response.status_code == 409:
                 raise PlomConflict(response.reason) from None
             else:
