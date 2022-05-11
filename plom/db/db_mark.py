@@ -746,16 +746,6 @@ def MremoveExistingTag(self, task, tag_text):
         log.warning(f"MaddExistingTag - tag {tag_text} is not in the system.")
         return False
     qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
-    # check if task is already tagged
-    if qtref is not None:
-        qtref.delete_instance()
-        log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
-        return True
-    else:
-        log.warning(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
-        return False
-
-    ##
     if qtref is not None:
         qtref.delete_instance()
         log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
