@@ -590,6 +590,13 @@ def MreviewQuestion(self, test_number, question):
 
 
 def MrevertTask(self, task):
+    """Reset task, removing all annotations.
+
+    Returns:
+        list: `[bool, error_msg]` where `bool` is True on success
+        and False on failure.  On failure, `error_msg` is string
+        explanation appropriate for showing to users.
+    """
     # This should be quite similar to the process of updating a qgroup after some changes in the underlying pages.
     gref = Group.get_or_none(Group.gid == task)
     if gref is None:
@@ -642,7 +649,7 @@ def MrevertTask(self, task):
         tref.save()
     # finally log it!
     log.info(f"Task {task} of test {tref.test_number} reverted.")
-    return [True]
+    return [True, None]
 
 
 # ===== tag stuff

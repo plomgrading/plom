@@ -802,11 +802,11 @@ class MarkHandler:
         task = request.match_info["task"]
         if not data["user"] == "manager":
             return web.Response(status=401)  # malformed request.
-        rval = self.server.MrevertTask(task)
-        if rval[0]:
+        ok, msg = self.server.MrevertTask(task)
+        if ok:
             return web.Response(status=200)
         else:
-            raise web.HTTPConflict(reason=rval[1])
+            raise web.HTTPConflict(reason=msg)
 
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
