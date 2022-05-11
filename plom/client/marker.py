@@ -1277,7 +1277,7 @@ class MarkerClient(QWidget):
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
 
-    def _updateImage(self, pr=0):
+    def _updateImage(self, pr):
         """
         Updates the image if needed.
 
@@ -1825,8 +1825,14 @@ class MarkerClient(QWidget):
             prevState = self.examModel.getStatusByTask("q" + task).split(":")[-1]
             # TODO: could also erase the paperdir
             self.examModel.setStatusByTask("q" + task, prevState)
-        # TODO: see below re "done grading".
-        self._updateImage()
+        # TODO: see below re "done grading", Issue #2136
+        prIndex = self.ui.tableView.selectedIndexes()
+        if len(prIndex) == 0:
+            return
+        pr = prIndex[0].row()
+        if task:
+            if self.prxM.getPrefix(pr) == "q" + task:
+                self._updateImage(pr)
 
     @pyqtSlot(str)
     def callbackAnnDoneClosing(self, task):
@@ -1846,7 +1852,7 @@ class MarkerClient(QWidget):
         if len(prIndex) == 0:
             return
         pr = prIndex[0].row()
-        # TODO: when done grading, if ann stays open, then close, this doesn't happen
+        # TODO: when done grading, if ann stays open, then close, this doesn't happen, Issue #2136
         if task:
             if self.prxM.getPrefix(pr) == "q" + task:
                 self._updateImage(pr)
