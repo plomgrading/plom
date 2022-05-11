@@ -1859,9 +1859,9 @@ class Manager(QWidget):
             self.ui.userCB.addItem(u)
         # clean out the tag box and rebuild
         self.ui.tagsCB.clear()
-        self.ui.tagsCB.addItem("")
-        self.ui.tagsCB.addItem("<any tags>")
-        self.ui.tagsCB.addItem("<no tags>")
+        self.ui.tagsCB.addItem("*")
+        self.ui.tagsCB.addItem("<1+ tags>")
+        self.ui.tagsCB.addItem("<0 tags>")
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
         self.ui.tagsCB.addItems(all_tags)
 
@@ -1881,12 +1881,12 @@ class Manager(QWidget):
         r = 0
         for dat in mrList:
             # under various tagging conditions, we do *not* add this row
-            if filter_tag == "":
+            if filter_tag == "*":
                 pass
-            elif filter_tag == "<any tags>":
+            elif filter_tag == "<1+ tags>":
                 if len(dat[7]) == 0:
                     continue
-            elif filter_tag == "<no tags>":
+            elif filter_tag == "<0 tags>":
                 if len(dat[7]) != 0:
                     continue
             elif filter_tag not in dat[7]:
