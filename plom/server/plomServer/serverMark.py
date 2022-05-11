@@ -351,5 +351,5 @@ def MreviewQuestion(self, *args, **kwargs):
     return self.DB.MreviewQuestion(*args, **kwargs)
 
 
-def MrevertTask(self, code):
-    return self.DB.MrevertTask(code)
+def MrevertTask(self, *args, **kwargs):
+    return self.DB.MrevertTask(*args, **kwargs)
