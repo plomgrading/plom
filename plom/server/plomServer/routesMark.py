@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Joey Shi
@@ -796,8 +796,6 @@ class MarkHandler:
         return web.Response(status=200)
 
     # @routes.patch("/MK/revert/{task}")
-    # TODO: Deprecated.
-    # TODO: Should be removed.
     @authenticate_by_token_required_fields(["user"])
     def MrevertTask(self, data, request):
         # only manager can do this
@@ -807,10 +805,8 @@ class MarkHandler:
         rval = self.server.MrevertTask(task)
         if rval[0]:
             return web.Response(status=200)
-        elif rval[1] == "NAC":  # nothing to be done here.
-            return web.Response(status=204)
-        else:  # cannot find that task
-            return web.Response(status=404)
+        else:
+            raise web.HTTPConflict(reason=rval[1])
 
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.

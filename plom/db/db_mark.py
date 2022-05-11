@@ -6,6 +6,7 @@
 from datetime import datetime, timezone
 import json
 import logging
+import uuid
 
 import peewee as pw
 
@@ -19,6 +20,8 @@ from plom.db.tables import (
     Rubric,
     Test,
     TPage,
+    HWPage,
+    EXPage,
     User,
     Tag,
     QuestionTagLink,
@@ -587,44 +590,58 @@ def MreviewQuestion(self, test_number, question):
 
 
 def MrevertTask(self, task):
-    """This needs work. The qgroup is set back to its original state, the annotations (and images) are deleted, and the corresponding to-delete-filenames are returned to the server which does the actual deleting of files. In future we should probably not delete any files and just move the references within the system?"""
+    # This should be quite similar to the process of updating a qgroup after some changes in the underlying pages.
     gref = Group.get_or_none(Group.gid == task)
     if gref is None:
-        return [False, "NST"]  # no such task
-    # from the group get the test and question - all need cleaning.
+        return [False, f"Cannot find task {task}"]
+    if gref.group_type != "q":
+        return [False, f"Task {task} is not a marking task"]
+    # get the test and qgroup associated with this group
     qref = gref.qgroups[0]
     tref = gref.test
-    # check task is "done"
-    if qref.status != "done" or not qref.marked:
-        return [False, "NAC"]  # nothing to do here
-    # now update things
-    log.info("Manager reverting task {}".format(task))
+    # get ref to HAL who will instantiate the new annotation
+    HAL_ref = User.get(name="HAL")
+
+    # reset all the qgroup info
     with plomdb.atomic():
-        # clean up test
+        # clean up the now-outdated annotations
+        for aref in qref.annotations:
+            aref.outdated = True
+            aref.save()
+        # now create a new latest annotation
+        new_ed = qref.annotations[-1].edition + 1
+        new_aref = Annotation.create(
+            qgroup=qref,
+            edition=new_ed,
+            user=HAL_ref,
+            time=datetime.now(timezone.utc),
+        )
+        # Add the relevant pages to the new annotation
+        ord = 0
+        for p in gref.tpages.order_by(TPage.page_number):
+            if p.scanned:  # make sure the tpage is actually scanned.
+                ord += 1
+                APage.create(annotation=new_aref, image=p.image, order=ord)
+        for p in gref.hwpages.order_by(HWPage.order):
+            ord += 1
+            APage.create(annotation=new_aref, image=p.image, order=ord)
+        for p in gref.expages.order_by(EXPage.order):
+            ord += 1
+            APage.create(annotation=new_aref, image=p.image, order=ord)
+        # set the integrity_check string to a UUID
+        new_aref.integrity_check = uuid.uuid4().hex
+        new_aref.save()
+        # clean up the qgroup
+        qref.status = "todo"
+        qref.user = None
+        qref.marked = False
+        qref.time = datetime.now(timezone.utc)
+        qref.save()
+        # set the test as unmarked.
         tref.marked = False
         tref.save()
-        # clean up the qgroup
-        qref.marked = False
-        qref.status = "todo"
-        qref.time = datetime.now(timezone.utc)
-        qref.user = None
-        qref.save()
-    # now we need to set annotations to "outdated"
-    # first find the first not-outdated annotation - that is the "original" state
-    aref0 = (
-        gref.qgroups[0]
-        .annotations.where(Annotation.outdated == False)  # noqa: E712
-        .order_by(Annotation.edition)
-        .get()
-    )
-    # now set all subsequent annotations to outdated
-    for aref in gref.qgroups[0].annotations.where(
-        Annotation.outdated == False, Annotation.edition > aref0.edition  # noqa: E712
-    ):
-        aref.outdated = True
-        aref.save()
-
-    log.info(f"Reverted tq {task}")
+    # finally log it!
+    log.info(f"Task {task} of test {tref.test_number} reverted.")
     return [True]
 
 

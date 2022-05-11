@@ -351,9 +351,5 @@ def MreviewQuestion(self, *args, **kwargs):
     return self.DB.MreviewQuestion(*args, **kwargs)
 
 
-# TODO: Deprecated.
-# TODO: Should be removed.
 def MrevertTask(self, code):
-    rval = self.DB.MrevertTask(code)
-    # response is [False, "NST"] or [False, "NAC"] or [True]
-    return rval
+    return self.DB.MrevertTask(code)
