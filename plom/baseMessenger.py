@@ -478,22 +478,37 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def remove_single_tag(self, code, tag_text):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag_text": tag_text},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 410:
-                raise PlomBadTagError(response.reason)
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def remove_single_tag(self, task, tag_text):
+        """Remove a tag from a task.
+
+        args:
+            task (str): e.g., like ``q0013g1``, for paper 13 question 1.
+            tag_text (str): the tag.
+
+        returns:
+            None
+
+        raises:
+            PlomAuthenticationException
+            PlomConflict: no such task
+        """
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    f"/tags/{task}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "tag_text": tag_text,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def create_new_tag(self, tag_text):
         self.SRmutex.acquire()

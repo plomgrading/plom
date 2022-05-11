@@ -2368,10 +2368,7 @@ class MarkerClient(QWidget):
                     except PlomBadTagError as e:
                         WarnMsg(parent, f"Tag not acceptable: {e}").exec()
             elif cmd == "remove":
-                try:
-                    self.msgr.remove_single_tag(task, new_tag)
-                except PlomBadTagError as e:
-                    WarnMsg(parent, f"Problem removing tag: {e}").exec()
+                self.msgr.remove_single_tag(task, new_tag)
             else:
                 # do nothing - but shouldn't arrive here.
                 pass

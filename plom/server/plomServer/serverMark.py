@@ -315,24 +315,8 @@ def add_tag(self, username, task, tag_text):
     return self.DB.MaddExistingTag(username, task, tag_text)
 
 
-def remove_tag(self, task, tag_text):
-    """Remove a tag from a paper.
-
-    Args:
-        task (str): Code string for the task (paper).
-        tag_text (str): Text of tag to remove.
-
-    Returns:
-        bool: True if the tag was removed, or if it was not present to
-        start with.  False is not such paper, permissions or other
-        error.
-    """
-    # do sanity check of the tag-text
-    if self.DB.McheckTagTextExists(tag_text) is False:
-        log.warning(f'tag "{tag_text}" does not exist')
-        return False
-
-    return self.DB.MremoveExistingTag(task, tag_text)
+def remove_tag(self, *args, **kwargs):
+    return self.DB.MremoveExistingTag(*args, **kwargs)
 
 
 def get_pagedata(self, *args, **kwargs):

@@ -428,7 +428,7 @@ class MarkHandler:
         Returns:
             aiohttp.web_response.Response: the binary image data, or
             a 404 response if no such image, or a 409 if wrong
-            md5sum saniity check was provided.
+            md5sum sanity check was provided.
         """
         image_id = request.match_info["image_id"]
         md5sum = request.match_info["md5sum"]
@@ -499,16 +499,24 @@ class MarkHandler:
 
         Args:
             data (dict): user, token and the text of the tag (str).
+            request (aiohttp.Request): type GET `/tags/{task}` where
+                `task` a string like ``q0013g1``, for paper 13
+                question 1.
 
         Returns:
-            aiohttp.web_response.Response: 200 on success or
-            HTTPGone (410) if no such tag.
+            aiohttp.web_response.Response: 200 on successful removal,
+            204 if the task or system had no such tag, 409 if no such
+            task,
         """
         task = request.match_info["task"]
         tag_text = data["tag_text"].strip()
 
-        if not self.server.remove_tag(task, tag_text):
-            raise web.HTTPGone(reason="No such tag")
+        try:
+            self.server.remove_tag(task, tag_text)
+        except KeyError:
+            return web.Response(status=204)
+        except ValueError as e:
+            raise web.HTTPConflict(reason=str(e))
         return web.Response(status=200)
 
     # @routes.get("/all_tags")
