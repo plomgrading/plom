@@ -880,6 +880,21 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
     def unknownToTestPage(self, fname, test, page, theta):
+        """Map UnknownPage onto a TestPage.
+
+        This is most likely used for QR-coded page where the QR
+        codes were not read clearly, but in principle it can
+        push any UnknownPage to a TestPage.
+
+        returns:
+            str: "collision" if a colliding page created, something
+                else otherwise ("testPage" currently but this is not
+                guaranteed.
+
+        raises:
+            PlomAuthenticationException
+            PlomConflict
+        """
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -894,21 +909,29 @@ class ManagerMessenger(BaseMessenger):
                 },
             )
             response.raise_for_status()
-            collisionTest = response.json()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 406:
-                raise PlomOwnersLoggedInException(response.reason) from None
+            # Currently the route does not do this
+            # if response.status_code == 406:
+            #    raise PlomOwnersLoggedInException(response.reason) from None
+            if response.status_code == 409:
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
-        return collisionTest  # "collision" if colliding page created.
-
     def unknownToExtraPage(self, fname, test, questions, theta):
-        # TODO: uncomment for very questionable testing
-        # questions.append(3)
+        """Map Unknown Page to an Extra Page
+
+        returns:
+            None
+
+        raises:
+            PlomAuthenticationException
+            PlomConflict
+        """
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -926,13 +949,25 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 406:
-                raise PlomOwnersLoggedInException(response.reason) from None
+            # Currently the route does not do this
+            # if response.status_code == 406:
+            #     raise PlomOwnersLoggedInException(response.reason) from None
+            if response.status_code == 409:
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
     def unknownToHWPage(self, fname, test, questions, theta):
+        """Map Unknown Page to a Homework Page.
+
+        returns:
+            None
+
+        raises:
+            PlomAuthenticationException
+            PlomConflict
+        """
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -950,8 +985,11 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 406:
-                raise PlomOwnersLoggedInException(response.reason) from None
+            # Currently the route does not do this
+            # if response.status_code == 406:
+            #     raise PlomOwnersLoggedInException(response.reason) from None
+            if response.status_code == 409:
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
