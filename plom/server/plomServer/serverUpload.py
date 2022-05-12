@@ -359,29 +359,29 @@ def removeSinglePage(self, test_number, page_name):
     # page name should be "t.n" or "h.q.o" or "e.q.o"
     splut = page_name.split(".")
     if len(splut) not in [2, 3]:
-        return [False, "invalid"]
+        return (False, "invalid", f"page name {page_name} invalid")
     if splut[0] == "t":
         try:
             page_number = int(splut[1])
         except ValueError:
-            return [False, "page name invalid"]
+            return (False, "invalid", f"page name {page_name} invalid")
         return self.DB.removeScannedTestPage(test_number, page_number)
     elif splut[0] == "h":
         try:
             question = int(splut[1])
             order = int(splut[2])
         except ValueError:
-            return [False, "page name invalid"]
+            return (False, "invalid", f"page name {page_name} invalid")
         return self.DB.removeScannedHWPage(test_number, question, order)
     elif splut[0] == "e":
         try:
             question = int(splut[1])
             order = int(splut[2])
         except ValueError:
-            return [False, "page name invalid"]
+            return (False, "invalid", f"page name {page_name} invalid")
         return self.DB.removeScannedEXPage(test_number, question, order)
     else:
-        return [False, "invalid"]
+        return (False, "invalid", f"page name {page_name} invalid")
 
 
 def collidingToTestPage(self, file_name, test, page, version):

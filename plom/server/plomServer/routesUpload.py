@@ -449,11 +449,12 @@ class UploadHandler:
 
     async def removeSinglePage(self, request):
         """Remove the page (as described by its name) and reset any tasks that involve that page.
+
         This tries to be as minimal as possible - so, for example, if a tpage is removed, then
         the question that included that page goes back on the todo-list (after a newpage is uploaded),
         but at the same time if a TA has used a copy of that page in the annotation of another
-        question, that group is also reset and goes back on the todo-list."""
-
+        question, that group is also reset and goes back on the todo-list.
+        """
         data = await request.json()
         if not validate_required_fields(
             data,
@@ -463,18 +464,19 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            return web.Response(status=403)
 
-        rval = self.server.removeSinglePage(data["test"], data["page_name"])
-        if rval[0]:
-            return web.json_response(rval, status=200)  # all fine
+        ok, code, msg = self.server.removeSinglePage(data["test"], data["page_name"])
+        if ok:
+            return web.json_response(msg, status=200)  # all fine
+        if code == "unknown":
+            raise web.HTTPConflict(reason=msg)
+        elif code == "unscanned":
+            raise web.HTTPGone(reason=msg)
+        elif code == "invalid":
+            raise web.HTTPNotAcceptable(reason=msg)
         else:
-            if rval[1] == "unknown":  # [False, "unknown"]
-                raise web.HTTPGone(reason="Cannot find that page.")
-            elif rval[1] == "invalid":
-                raise web.HTTPNotAcceptable(reason="Page name is invalid")
-            else:
-                raise web.HTTPBadRequest()
+            raise web.HTTPBadRequest(reason=msg)
 
     async def getUnknownPages(self, request):
         data = await request.json()

@@ -897,21 +897,28 @@ def updateTestAfterChange(self, tref, group_refs=None):
 
 
 def removeScannedTestPage(self, test_number, page_number):
-    """Remove a single scanned test-page."""
+    """Remove a single scanned test-page.
+
+    Returns:
+        tuple: `(ok, code, errmsg)`, where `ok` is boolean, `code`
+        is a short string, "testError", "unknown", "unscanned",
+        or None when `ok` is True.
+    """
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return [False, "testError", f"Cannot find test {test_number}"]
+        return (False, "testError", f"Cannot find test {test_number}")
 
     pref = tref.tpages.where(TPage.page_number == page_number).first()
     if pref is None:
-        log.warning(f"Cannot find t-page {page_number} of test {test_number}.")
-        return [False, "unknown"]
+        msg = f"Cannot find t-page {page_number} of test {test_number}."
+        log.warning(msg)
+        return (False, "unknown", msg)
 
     if not pref.scanned:
-        log.warning(
-            f"T-Page {page_number} of test {test_number} is not scanned - cannot remove."
-        )
-        return [False, "unscanned"]
+        msg = f"T-Page {page_number} of test {test_number} is not scanned - cannot remove."
+        log.warning(msg)
+        return (False, "unscanned", msg)
+
     iref = pref.image
     gref = pref.group
     with plomdb.atomic():
@@ -928,25 +935,33 @@ def removeScannedTestPage(self, test_number, page_number):
     groups_to_update = self.get_groups_using_image(iref)
     groups_to_update.add(gref)
     self.updateTestAfterChange(tref, group_refs=groups_to_update)
-    log.info(f"Removed t-page {page_number} of test {test_number} and updated test.")
-    return [True, f"Removed tpage-{page_number} form test {test_number}."]
+    msg = f"Removed t-page {page_number} from test {test_number} and updated test."
+    log.info(msg)
+    return (True, None, msg)
 
 
 def removeScannedHWPage(self, test_number, question, order):
-    """Remove a single scanned hw-page."""
+    """Remove a single scanned hw-page.
+
+    Returns:
+        tuple: `(ok, code, errmsg)`, where `ok` is boolean, `code`
+        is a short string, "testError", "unknown", or None when `ok` is True.
+    """
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return [False, "testError", f"Cannot find test {test_number}"]
+        return (False, "testError", f"Cannot find test {test_number}")
 
     qref = tref.qgroups.where(QGroup.question == question).first()
     if qref is None:
-        log.warning(f"Cannot find question {question} - cannot remove page {order}")
-        return [False, "unknown"]
+        msg = f"Cannot find question {question} - cannot remove page {order}"
+        log.warning(msg)
+        return (False, "unknown", msg)
     gref = qref.group
     pref = gref.hwpages.where(HWPage.order == order).first()
     if pref is None:
-        log.warning(f"Cannot find hw-page {question}.{order} of test {test_number}.")
-        return [False, "unknown"]
+        msg = f"Cannot find hw-page {question}.{order} of test {test_number}."
+        log.warning(msg)
+        return (False, "unknown", msg)
     # create the discard page
     iref = pref.image
     gref = pref.group
@@ -963,27 +978,33 @@ def removeScannedHWPage(self, test_number, question, order):
     groups_to_update.add(qref.group)
     # update the test
     self.updateTestAfterChange(tref, group_refs=groups_to_update)
-    log.info(
-        f"Removed hwpage {question}.{order} of test {test_number} and updated test."
-    )
-    return [True, f"Removed hwpage {question}.{order} form test {test_number}."]
+    msg = f"Removed hwpage {question}.{order} of test {test_number} and updated test."
+    log.info(msg)
+    return (True, None, msg)
 
 
 def removeScannedEXPage(self, test_number, question, order):
-    """Remove a single scanned extra-page."""
+    """Remove a single scanned extra-page.
+
+    Returns:
+        tuple: `(ok, code, errmsg)`, where `ok` is boolean, `code`
+        is a short string, "testError", "unknown", or None when `ok` is True.
+    """
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return [False, "testError", f"Cannot find test {test_number}"]
+        return (False, "testError", f"Cannot find test {test_number}")
 
     qref = tref.qgroups.where(QGroup.question == question).first()
     if qref is None:
-        log.warning(f"Cannot find question {question} - cannot remove page {order}")
-        return [False, "unknown"]
+        msg = f"Cannot find question {question} - cannot remove page {order}"
+        log.warning(msg)
+        return (False, "unknown", msg)
     gref = qref.group
     pref = gref.expages.where(EXPage.order == order).first()
     if pref is None:
-        log.warning(f"Cannot find extra-page {question}.{order} of test {test_number}.")
-        return [False, "unknown"]
+        msg = f"Cannot find extra-page {question}.{order} of test {test_number}."
+        log.warning(msg)
+        return (False, "unknown", msg)
     # create the discard page
     iref = pref.image
     gref = pref.group
@@ -999,10 +1020,9 @@ def removeScannedEXPage(self, test_number, question, order):
     groups_to_update = self.get_groups_using_image(iref)
     groups_to_update.add(gref)
     self.updateTestAfterChange(tref, group_refs=groups_to_update)
-    log.info(
-        f"Removed expage {question}.{order} of test {test_number} and updated test."
-    )
-    return [True, f"Removed expage {question}.{order} form test {test_number}."]
+    msg = f"Removed expage {question}.{order} of test {test_number} and updated test."
+    log.info(msg)
+    return (True, None, msg)
 
 
 def removeAllScannedPages(self, test_number):

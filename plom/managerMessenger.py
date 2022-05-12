@@ -673,16 +673,11 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
-            if response.status_code == 410:
-                raise PlomSeriousException(
-                    "Server could not find the page - this should not happen!"
-                ) from None
-            if response.status_code == 406:
-                raise PlomSeriousException(
-                    f"Page name '{page_name}' is invalid"
-                ) from None
-            if response.status_code == 401:
+            if response.status_code in (401, 403):
+                # TODO: modernise: response.reason, decorators
                 raise PlomAuthenticationException() from None
+            if response.status_code in (406, 409, 410):
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
