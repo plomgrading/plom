@@ -520,9 +520,9 @@
               </spacer>
              </item>
              <item>
-              <widget class="QPushButton" name="actionDButton">
+              <widget class="QPushButton" name="discardToUnknownButton">
                <property name="text">
-                <string>Perform actions</string>
+                <string>Move to Unknown Pages...</string>
                </property>
               </widget>
              </item>
@@ -1867,7 +1867,7 @@
   <tabstop>collideTV</tabstop>
   <tabstop>actionCButton</tabstop>
   <tabstop>discardTV</tabstop>
-  <tabstop>actionDButton</tabstop>
+  <tabstop>discardToUnknownButton</tabstop>
   <tabstop>closeButton</tabstop>
  </tabstops>
  <resources/>

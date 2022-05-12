@@ -443,7 +443,7 @@ class Manager(QWidget):
 
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
-        self.ui.actionDButton.clicked.connect(self.doDActions)
+        self.ui.discardToUnknownButton.clicked.connect(self.viewDiscardPage)
         self.ui.selectRectButton.clicked.connect(self.selectRectangle)
         self.ui.machineReadButton.clicked.connect(self.id_reader_run)
         self.ui.machineReadRefreshButton.clicked.connect(self.id_reader_get_log)
@@ -1233,7 +1233,7 @@ class Manager(QWidget):
         self.refreshCList()
 
     def initDiscardTab(self):
-        self.discardModel = QStandardItemModel(0, 4)
+        self.discardModel = QStandardItemModel(0, 3)
         self.ui.discardTV.setModel(self.discardModel)
         self.ui.discardTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.discardTV.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1242,7 +1242,6 @@ class Manager(QWidget):
                 "ID",
                 "File",
                 "Reason discarded",
-                "Action to be taken",
             ]
         )
         self.ui.discardTV.setIconSize(QSize(32, 32))
@@ -1261,11 +1260,9 @@ class Manager(QWidget):
             )
             it1.setIcon(QIcon(pm))
             it2 = QStandardItem(d["reason"])
-            it3 = QStandardItem("")
-            it3.setTextAlignment(Qt.AlignCenter)
             raw = QStandardItem(str(d["id"]))
             raw.setData(d)
-            self.discardModel.insertRow(r, (raw, it1, it2, it3))
+            self.discardModel.insertRow(r, (raw, it1, it2))
         self.ui.discardTV.resizeRowsToContents()
         self.ui.discardTV.resizeColumnsToContents()
         self.ui.scanTabW.setTabText(
@@ -1286,21 +1283,10 @@ class Manager(QWidget):
             fh.write(obj)
         pagedata["local_filename"] = f
         if DiscardViewWindow(self, [pagedata]).exec() == QDialog.Accepted:
-            pm = QPixmap()
-            pm.loadFromData(
-                resources.read_binary(plom.client.icons, "manager_move.svg")
-            )
-            self.discardModel.item(r, 1).setIcon(QIcon(pm))
-            self.discardModel.item(r, 3).setText("move")
+            self.msgr.discardToUnknown(pagedata["server_path"])
+            self.refreshDiscardList()
+            self.refreshUnknownList()
         f.unlink()
-
-    def doDActions(self):
-        for r in range(self.discardModel.rowCount()):
-            if self.discardModel.item(r, 3).text() == "move":
-                pagedata = self.discardModel.item(r, 0).data()
-                self.msgr.discardToUnknown(pagedata["server_path"])
-        self.refreshDiscardList()
-        self.refreshUnknownList()
 
     def initDanglingTab(self):
         self.ui.labelDanglingExplain.setText(

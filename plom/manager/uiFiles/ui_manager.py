@@ -232,9 +232,9 @@ class Ui_Manager(object):
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
         spacerItem9 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_8.addItem(spacerItem9)
-        self.actionDButton = QtWidgets.QPushButton(self.discardTab)
-        self.actionDButton.setObjectName("actionDButton")
-        self.horizontalLayout_8.addWidget(self.actionDButton)
+        self.discardToUnknownButton = QtWidgets.QPushButton(self.discardTab)
+        self.discardToUnknownButton.setObjectName("discardToUnknownButton")
+        self.horizontalLayout_8.addWidget(self.discardToUnknownButton)
         self.verticalLayout_9.addLayout(self.horizontalLayout_8)
         self.scanTabW.addTab(self.discardTab, "")
         self.dangleTab = QtWidgets.QWidget()
@@ -820,8 +820,8 @@ class Ui_Manager(object):
         Manager.setTabOrder(self.actionUButton, self.collideTV)
         Manager.setTabOrder(self.collideTV, self.actionCButton)
         Manager.setTabOrder(self.actionCButton, self.discardTV)
-        Manager.setTabOrder(self.discardTV, self.actionDButton)
-        Manager.setTabOrder(self.actionDButton, self.closeButton)
+        Manager.setTabOrder(self.discardTV, self.discardToUnknownButton)
+        Manager.setTabOrder(self.discardToUnknownButton, self.closeButton)
 
     def retranslateUi(self, Manager):
         _translate = QtCore.QCoreApplication.translate
@@ -848,7 +848,7 @@ class Ui_Manager(object):
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.unknownTab), _translate("Manager", "&Unknown Pages"))
         self.actionCButton.setText(_translate("Manager", "Perform actions"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.collideTab), _translate("Manager", "&Colliding Pages"))
-        self.actionDButton.setText(_translate("Manager", "Perform actions"))
+        self.discardToUnknownButton.setText(_translate("Manager", "Move to Unknown Pages..."))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.discardTab), _translate("Manager", "&Discarded Pages"))
         self.labelDanglingExplain.setText(_translate("Manager", "Replace with text explaining dangling pages"))
         self.removeDanglingB.setText(_translate("Manager", "Remove page"))
