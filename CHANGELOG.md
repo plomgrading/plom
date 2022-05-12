@@ -8,15 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* plom-server will autogenerate a manager password if it is started without one.
-* plom-create can manage user accounts of a running server.
+* `plom-server` will autogenerate a manager password if it is started without one.
+* `plom-create` can manage user accounts of a running server.
 * Manager displays bundle name/page of unknown pages.
 * `plom-scan status` now displays information about bundles and unknown pages.
 * `plom-finish audit` produces a JSON file for post-grading checking/followup/etc
-* Annotator now has a crop tool (in menu) that allows user to excluded unwanted parts of page. Works with undo/redo.
-* Annotator now has a "view previous" function that pops up a window that will show previously marked paper(s). Has simple keyboard shortcuts.
+* Annotator now has a crop tool (in menu) that allows user to excluded unwanted parts of page.
+* Annotator now has a "view previous" function that pops up a window that will show previously marked paper(s).
 * Clients can use ctrl-mousewheel to zoom in and out.
-* randoMarker now also tags random selection of tasks.
+* Demos and testing: randoMarker now also tags random selection of tasks.
 
 ### Changed
 * Plom now requires Python 3.7.
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Non-zero initial orientations should now work properly.
 * Custom solutions had the wrong coverpage, showing instead the reassembled coverpage.
+* Many other fixes.
 
 
 ## [0.8.11] - 2022-04-12
