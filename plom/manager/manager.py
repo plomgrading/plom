@@ -47,7 +47,6 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-from plom.client.useful_classes import ErrorMessage
 from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.useful_classes import AddRemoveTagDialog
