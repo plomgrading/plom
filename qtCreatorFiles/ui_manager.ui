@@ -439,8 +439,11 @@
              </item>
              <item>
               <widget class="QPushButton" name="actionUButton">
+               <property name="toolTip">
+                <string>Changes to Unknown Pages are not performed immediately; pushing this button will perform them en masse.</string>
+               </property>
                <property name="text">
-                <string>Perform actions</string>
+                <string>Perform staged actions</string>
                </property>
               </widget>
              </item>
@@ -481,7 +484,7 @@
              <item>
               <widget class="QPushButton" name="actionCButton">
                <property name="text">
-                <string>Perform actions</string>
+                <string>Perform staged actions</string>
                </property>
               </widget>
              </item>
@@ -582,7 +585,7 @@
          <item>
           <widget class="QPushButton" name="scanRefreshB">
            <property name="text">
-            <string>Refresh scanning tab</string>
+            <string>Refresh scanning tab (and discard any staged actions)</string>
            </property>
           </widget>
          </item>
