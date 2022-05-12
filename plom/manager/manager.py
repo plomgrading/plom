@@ -1285,7 +1285,6 @@ class Manager(QWidget):
         if DiscardViewWindow(self, [pagedata]).exec() == QDialog.Accepted:
             self.msgr.discardToUnknown(pagedata["server_path"])
             self.refreshDiscardList()
-            self.refreshUnknownList()
         f.unlink()
 
     def initDanglingTab(self):
