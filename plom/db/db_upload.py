@@ -901,12 +901,12 @@ def removeScannedTestPage(self, test_number, page_number):
 
     Returns:
         tuple: `(ok, code, errmsg)`, where `ok` is boolean, `code`
-        is a short string, "testError", "unknown", "unscanned",
-        or None when `ok` is True.
+        is a short string, "unknown", "unscanned", or None when `ok`
+        is True.
     """
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return (False, "testError", f"Cannot find test {test_number}")
+        return (False, "unknown", f"Cannot find test {test_number}")
 
     pref = tref.tpages.where(TPage.page_number == page_number).first()
     if pref is None:
@@ -945,11 +945,11 @@ def removeScannedHWPage(self, test_number, question, order):
 
     Returns:
         tuple: `(ok, code, errmsg)`, where `ok` is boolean, `code`
-        is a short string, "testError", "unknown", or None when `ok` is True.
+        is a short string, "unknown", or None when `ok` is True.
     """
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return (False, "testError", f"Cannot find test {test_number}")
+        return (False, "unknown", f"Cannot find test {test_number}")
 
     qref = tref.qgroups.where(QGroup.question == question).first()
     if qref is None:
@@ -988,11 +988,11 @@ def removeScannedEXPage(self, test_number, question, order):
 
     Returns:
         tuple: `(ok, code, errmsg)`, where `ok` is boolean, `code`
-        is a short string, "testError", "unknown", or None when `ok` is True.
+        is a short string, "unknown", or None when `ok` is True.
     """
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return (False, "testError", f"Cannot find test {test_number}")
+        return (False, "unknown", f"Cannot find test {test_number}")
 
     qref = tref.qgroups.where(QGroup.question == question).first()
     if qref is None:

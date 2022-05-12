@@ -356,6 +356,14 @@ def removeAllScannedPages(self, test_number):
 
 
 def removeSinglePage(self, test_number, page_name):
+    """Remove a single page based on a rather cryptic internal page name.
+
+    Returns:
+        tuple: `(ok, code, errmsg)` where `ok` is a boolean, `code` is a
+        short string for machines to recognize what errors and `errmsg`
+        is human-readable error message.  The codes include "invalid",
+        "unknown", "unscanned", None (when `ok` is True).
+    """
     # page name should be "t.n" or "h.q.o" or "e.q.o"
     splut = page_name.split(".")
     if len(splut) not in [2, 3]:
