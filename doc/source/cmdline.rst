@@ -16,9 +16,10 @@ Plom includes various command-line tools for managing servers:
    plom-solutions
    plom-finish
 
-There are also commands to launch the server and client:
+There are also commands to launch the server and client themselves:
 
-- ``plom-client``
-- ``plom-server``
+.. toctree::
+   :maxdepth: 1
 
-These are documented elsewhere.
+   plom-client
+   plom-server
