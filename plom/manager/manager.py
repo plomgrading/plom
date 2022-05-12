@@ -47,7 +47,7 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-from plom.client.useful_classes import ErrorMessage, InfoMsg, WarnMsg
+from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.useful_classes import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
@@ -834,8 +834,8 @@ class Manager(QWidget):
             )
             # Cleanup, Issue #2141
             InfoMsg(self, "{}".format(rval)).exec()
-        except PlomTakenException:
-            ErrorMessage("That question already has hw pages present.").exec()
+        except PlomTakenException as e:
+            WarnMsg(self, "That question already has hw pages present.", info=e).exec()
 
         self.refresh_scan_status_lists()
 
@@ -1219,7 +1219,7 @@ class Manager(QWidget):
                     )
                 except PlomConflict as err:
 
-                    ErrorMessage(f"{err}").exec()
+                    WarnMsg(self, f"{err}").exec()
             else:
                 pass
                 # print(
@@ -1502,7 +1502,7 @@ class Manager(QWidget):
         try:
             imageList = self.msgr.IDgetImageFromATest()
         except PlomNoMoreException as err:
-            ErrorMessage(f"No unIDd images to show - {err}").exec()
+            InfoMsg(self, "No unIDd images to show.", info=err).exec()
             return
         with tempfile.TemporaryDirectory() as td:
             inames = []
@@ -1538,7 +1538,7 @@ class Manager(QWidget):
         try:
             img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
-            ErrorMessage(err).exec()
+            ErrorMsg(self, err).exec()
             return
 
         if not img_bytes:
@@ -2335,8 +2335,9 @@ class Manager(QWidget):
         selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
 
         if "manager" in selectedUsers:
-            ErrorMessage(
-                "You cannot force-logout the manager. To logout, click on the Quit button."
+            WarnMsg(
+                self,
+                "You cannot force-logout the manager. To logout, click on the Quit button.",
             ).exec()
             return
         if (
@@ -2389,8 +2390,8 @@ class Manager(QWidget):
         if len(ri) == 0:
             return
         if len(ri) > 7:
-            ErrorMessage(
-                "You can only change the password of one user at a time."
+            WarnMsg(
+                self, "You can only change the password of one user at a time."
             ).exec()
             return
 
