@@ -311,7 +311,7 @@
                 <item>
                  <widget class="QPushButton" name="removePagesB">
                   <property name="text">
-                   <string>Remove Scanned Page(s) from Test</string>
+                   <string>Remove scanned page(s) from Test</string>
                   </property>
                  </widget>
                 </item>
@@ -396,7 +396,7 @@
                 <item>
                  <widget class="QPushButton" name="removePartScanB">
                   <property name="text">
-                   <string>Remove Page(s) From Part-scanned Test</string>
+                   <string>Remove page(s) from partially-scanned Test</string>
                   </property>
                  </widget>
                 </item>
