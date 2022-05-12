@@ -16,18 +16,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Annotator now has a crop tool (in menu) that allows user to excluded unwanted parts of page.
 * Annotator now has a "view previous" function that pops up a window that will show previously marked paper(s).
 * Clients can use ctrl-mousewheel to zoom in and out.
+* Manager: can tag questions and remove annotations, in bulk.
 * Demos and testing: randoMarker now also tags random selection of tasks.
 
 ### Changed
 * Plom now requires Python 3.7.
+* Plom no longer supports older macOS 10.13 as we cannot reliably build binaries on that system.
 * `plom-create` DB creation now done one test at a time which avoids timeouts and enables future flexibility.
 * Manager: improvements to the prediction-related UI.
 * Classlists that are not from Canvas must now include a `paper_number` column, which can be left blank.
 * The Plom test-spec no longer uses `numberToName`, instead use the "paper_number" column in the classlist.
+* Reassembled files are now time-stamped.
+* It is easier to insert extra pages during marking and fewer annotations are wiped (only those in the question directly effected).
+* Manager: improved interface around IDing and predictions.
+* Manager: improved control of the automatic ID reader.
+* Prenamed papers and machine ID reading are in flux: currently both need to be confirmed by a human in the Identifier client.  Expect further future changes.
+* Many API changes and tweaks.
 
 ### Fixed
 * Non-zero initial orientations should now work properly.
 * Custom solutions had the wrong coverpage, showing instead the reassembled coverpage.
+* Rapid use of the Ctrl-R dialog no longer needs to wait on the background downloader.
+* Improved and hopefully less crashing in classlist validation.
+* Timezones are now made explicit.
+* Many UI fixes and tweaks.
+* Ongoing documentation improvements.
 * Many other fixes.
 
 
