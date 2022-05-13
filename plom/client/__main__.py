@@ -75,7 +75,7 @@ def sigint_handler(*args):
         QApplication.exit(42)
 
 
-def main():
+def get_parser():
     parser = argparse.ArgumentParser(
         description="Run the Plom client. No arguments = run as normal."
     )
@@ -118,6 +118,11 @@ def main():
         type=str,
         help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
     )
+    return parser
+
+
+def main():
+    parser = get_parser()
     args = parser.parse_args()
 
     args.server = args.server or os.environ.get("PLOM_SERVER")
