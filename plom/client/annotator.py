@@ -59,9 +59,8 @@ from .viewers import SolutionViewer, WholeTestView, CatViewer, PreviousPaperView
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
-from .useful_classes import ErrorMsg, WarnMsg
+from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import (
-    ErrorMessage,
     SimpleQuestion,
     SimpleQuestionCheckBox,
     NoAnswerBox,
@@ -690,7 +689,8 @@ class Annotator(QWidget):
             for md5, pages in repeats.items():
                 info += f"<li>pages {pages} @ md5: {md5}</li>"
             info += "</ul>"
-            ErrorMessage(
+            ErrorMsg(
+                self,
                 "Warning: duplicate pages detected!",
                 info=info,
                 info_pre=False,
@@ -722,7 +722,7 @@ class Annotator(QWidget):
                     )
                 ).strip()
                 log.error(s)
-                ErrorMessage(s).exec()
+                ErrorMsg(self, s).exec()
 
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
@@ -759,7 +759,7 @@ class Annotator(QWidget):
                     )
                 ).strip()
                 log.error(s)
-                ErrorMessage(s).exec()
+                ErrorMsg(self, s).exec()
 
             tmp_tgv = self.tgvID
             self.closeCurrentTGV()
@@ -931,19 +931,20 @@ class Annotator(QWidget):
         # Workaround getting too far ahead of Marker's upload queue
         queue_len = self.parentMarkerUI.get_upload_queue_length()
         if queue_len >= 3:
-            ErrorMessage(
+            WarnMsg(
+                self,
                 f"<p>Plom is waiting to upload {queue_len} papers.</p>"
                 + "<p>This might indicate network trouble: unfortunately Plom "
                 + "does not yet deal with this gracefully and there is a risk "
                 + "we might lose your non-uploaded work!</p>"
                 + "<p>You should consider closing the Annotator, and waiting "
                 + "a moment to see if the queue of &ldquo;uploading...&rdquo; "
-                + "papers clear.</p>"
+                + "papers clear.</p>",
             ).exec()
 
         stuff = self.parentMarkerUI.getMorePapers(tmp_tgv)
         if not stuff:
-            ErrorMessage("No more to grade?").exec()
+            InfoMsg(self, "No more to grade?").exec()
             # Not really safe to give it back? (at least we did the view...)
             return
         log.debug("saveAndGetNext: new stuff is {}".format(stuff))
@@ -1464,7 +1465,9 @@ class Annotator(QWidget):
         """
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
-            msg = ErrorMessage("Please make an annotation, even if there is no answer.")
+            msg = InfoMsg(
+                self, "Please make an annotation, even if there is no answer."
+            )
             msg.exec()
             return False
 
@@ -1504,7 +1507,7 @@ class Annotator(QWidget):
 
         # make sure not still in "neutral" marking-state = no score given
         if self.getMarkingState() == "neutral":
-            msg = ErrorMessage("You have not yet set a score.")
+            msg = InfoMsg(self, "You have not yet set a score.")
             msg.exec()
             return False
 
@@ -1883,8 +1886,10 @@ class Annotator(QWidget):
         # else user has scored the page
 
         if self.getMarkingState() != "neutral":
-            ErrorMessage(
-                'You have marked the page - cannot then set "No answer given". Delete mark-changes before trying again.'
+            WarnMsg(
+                self,
+                '<p>You have marked the page - cannot then set "No answer given".</p>'
+                "<p>Delete mark-changing annotations then try again.</p>",
             ).exec()
             return
 
@@ -1928,7 +1933,7 @@ class Annotator(QWidget):
     def viewSolutions(self):
         solutionFile = self.parentMarkerUI.getSolutionImage()
         if solutionFile is None:
-            ErrorMessage("No solution has been uploaded").exec()
+            InfoMsg(self, "No solution has been uploaded").exec()
             return
 
         if self.solutionView is None:

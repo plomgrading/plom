@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import ErrorMessage, SimpleQuestion
+from .useful_classes import WarnMsg, SimpleQuestion
 from .rubric_wrangler import RubricWrangler
 
 log = logging.getLogger("annotr")
@@ -1409,13 +1409,14 @@ class AddRubricBox(QDialog):
     def validate_and_accept(self):
         """Make sure rubric is valid before accepting"""
         if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
-            ErrorMessage("Your rubric must contain some text.").exec()
+            WarnMsg(self, "Your rubric must contain some text.").exec()
             return
         # make sure that when delta-enabled we dont have delta=0
         # part of fixing #1561
         if self.SB.value() == 0 and self.DE.checkState() == Qt.Checked:
-            ErrorMessage(
-                "If 'Delta mark' is checked then the rubric cannot have a delta of zero."
+            WarnMsg(
+                self,
+                "If 'Delta mark' is checked then the rubric cannot have a delta of zero.",
             ).exec()
             return
 
