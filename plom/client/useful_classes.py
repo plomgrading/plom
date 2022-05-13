@@ -83,17 +83,6 @@ class InfoMsg(ErrorMsg):
         self.setIcon(QMessageBox.Information)
 
 
-class ErrorMessage(ErrorMsg):
-    """A simple error message pop-up
-
-    Deprecated: new code should not use me!
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(None, *args, **kwargs)
-        self.setIcon(QMessageBox.NoIcon)
-
-
 class SimpleQuestion(QMessageBox):
     """A simple message pop-up with yes/no buttons and question icon."""
 
