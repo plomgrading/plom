@@ -67,7 +67,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
-from .useful_classes import ErrorMessage, ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
+from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .pagecache import download_pages
 
 if platform.system() == "Darwin":
@@ -1222,8 +1222,9 @@ class MarkerClient(QWidget):
             # TODO: better action we can take here?
             # TODO: the real problem here is that the full_pagedata is potentially out of date!
             # TODO: we also need (and maybe already have) a mechanism to invalidate existing annotations
+            # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
             ErrorMsg(
-                self,
+                None,
                 '<p>The task "{}" has changed in some way by the manager; it '
                 "may need to be remarked.</p>\n\n"
                 '<p>Specifically, the server says: "{}"</p>\n\n'
@@ -1354,7 +1355,7 @@ class MarkerClient(QWidget):
             PlomRangeException,
             PlomVersionMismatchException,
         ) as err:
-            WarnMsg(self, f"Cannot get paper {n}: {err}").exec()
+            WarnMsg(self, f"Cannot get paper {n}.", info=err).exec()
 
     def requestNext(self):
         """Ask server for an unmarked paper, get file, add to list, update view.
@@ -1377,8 +1378,9 @@ class MarkerClient(QWidget):
                     return
             except PlomSeriousException as err:
                 log.exception("Unexpected error getting next task: %s", err)
+                # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
                 ErrorMsg(
-                    self,
+                    None,
                     "Unexpected error getting next task. Client will now crash!",
                     info=err,
                 ).exec()
@@ -1531,8 +1533,9 @@ class MarkerClient(QWidget):
         """
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
+        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
         ErrorMsg(
-            self,
+            None,
             "Unfortunately, there was an unexpected error downloading "
             "next paper.\n\n{}\n\n"
             "Please consider filing an issue?  I don't know if its "
@@ -2042,8 +2045,9 @@ class MarkerClient(QWidget):
             None
         """
         self.examModel.setStatusByTask(task, "???")
+        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
         ErrorMsg(
-            self,
+            None,
             '<p>Background upload of "{}" has failed because the server '
             "changed something underneath us.</p>\n\n"
             '<p>Specifically, the server says: "{}"</p>\n\n'
@@ -2080,11 +2084,14 @@ class MarkerClient(QWidget):
 
         """
         self.examModel.setStatusByTask(task, "???")
-        ErrorMessage(
+        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+        ErrorMsg(
+            None,
             "Unfortunately, there was an unexpected error; the server did "
-            "not accept our marked paper {}.\n\n{}\n\n"
-            "If the problem persists consider filing an issue."
-            "Please close this window and log in again.".format(task, errmsg)
+            f"not accept our marked paper {task}.\n\n"
+            "If the problem persists consider filing an issue. "
+            "Please close this window and log in again.",
+            info=errmsg,
         ).exec()
         return
 
@@ -2306,7 +2313,9 @@ class MarkerClient(QWidget):
                 if any(idx):
                     n = idx[0]  # could be fancier if more than one match
                     info = "\n".join(lines[max(0, n - 5) : n + 5])
-                    ErrorMessage(
+                    # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+                    WarnMsg(
+                        None,
                         """
                         <p>The server reported an error processing your TeX fragment.</p>
                         <p>Perhaps the error is visible in the following snippet,
@@ -2316,7 +2325,8 @@ class MarkerClient(QWidget):
                         info=info,
                     ).exec()
                 else:
-                    ErrorMessage(
+                    WarnMsg(
+                        None,
                         "<p>The server reported an error processing your TeX fragment.</p>",
                         details=fragment,
                     ).exec()
