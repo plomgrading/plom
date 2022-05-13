@@ -67,7 +67,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
-from .useful_classes import ErrorMessage, WarnMsg, SimpleQuestion
+from .useful_classes import ErrorMessage, ErrorMsg, WarnMsg, SimpleQuestion
 from .pagecache import download_pages
 
 if platform.system() == "Darwin":
@@ -474,8 +474,10 @@ class MarkerExamModel(QStandardItemModel):
         except ValueError:
             pass
         else:
-            ErrorMessage(
-                f"Task {paper.prefix} has been modified by server - you will need to annotate it again."
+            # TODO: why is the model opening dialogs?!  Issue #2145.
+            ErrorMsg(
+                None,
+                f"Task {paper.prefix} has been modified by server - you will need to annotate it again.",
             ).exec()
             self.removeRow(r)
         # Append new groupimage to list and append new row to table.
