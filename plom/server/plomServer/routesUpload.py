@@ -656,9 +656,13 @@ class UploadHandler:
                   0, 90, -90, 180, 270, etc.
 
         returns:
-            web.Response: 200 if all went well.  400 for incorrect fields,
-            401 for authentication, or 403 is not manager. 409 in other
-            such as test number or page number do not exist.
+            web.Response: 200 if all went well, with a string in JSON which
+            can be "collision" if a collision was created or "testPage" in
+            the usual successful case.
+            400 for incorrect fields,
+            401 for authentication, or 403 is not manager. 409 in one of
+            various "not found" situations, such as test number or page
+            number do not exist.
         """
         status, code, msg = self.server.unknownToTestPage(
             data["fileName"], data["test"], data["page"], data["rotation"]

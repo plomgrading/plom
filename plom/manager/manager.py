@@ -47,7 +47,6 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-from plom.client.useful_classes import ErrorMessage
 from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.useful_classes import AddRemoveTagDialog
@@ -1040,7 +1039,7 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 5).text(),
                     )
                 except PlomConflict as err:
-                    ErrorMessage(f"{err}").exec()
+                    WarnMsg(self, f"{err}").exec()
             elif action == "test":
                 try:
                     if (
@@ -1052,13 +1051,14 @@ class Manager(QWidget):
                         )
                         == "collision"
                     ):
-                        ErrorMessage(
+                        WarnMsg(
+                            self,
                             "Collision created in test {}".format(
                                 self.unknownModel.item(r, 6).text()
-                            )
+                            ),
                         ).exec()
                 except PlomConflict as err:
-                    ErrorMessage(f"{err}").exec()
+                    WarnMsg(self, f"{err}").exec()
             elif action == "homework":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
@@ -1072,7 +1072,7 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 5).text(),
                     )
                 except PlomConflict as err:
-                    ErrorMessage(f"{err}").exec()
+                    WarnMsg(self, f"{err}").exec()
 
             else:
                 pass
