@@ -47,7 +47,8 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-from plom.client.useful_classes import ErrorMessage, InfoMsg, WarnMsg
+from plom.client.useful_classes import ErrorMessage
+from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.useful_classes import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
@@ -150,13 +151,13 @@ class UserDialog(QDialog):
         # make sure that we only do this check if the LE is enabled.
         # put username into lowercase to check against extant which is in lowercase.
         if self.userLE.isEnabled() and self.userLE.text().lower() in self.extant:
-            ErrorMessage(
-                "Username = '{}' already in user list".format(self.userLE.text())
+            WarnMsg(
+                self, f'Username "{self.userLE.text()}" already in user list'
             ).exec()
             return
 
         if self.pwLE.text() != self.pwLE2.text():
-            ErrorMessage("Passwords do not match").exec()
+            WarnMsg(self, "Passwords do not match").exec()
             return
         self.name = self.userLE.text()
         self.password = self.pwLE.text()
@@ -500,34 +501,34 @@ class Manager(QWidget):
             self.msgr = ManagerMessenger(server, mport)
             self.msgr.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n{}".format(e)).exec()
+            WarnMsg(self, "Could not connect to server.", info=str(e)).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
 
         try:
             self.msgr.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
-            ErrorMessage(
-                "Could not authenticate due to API mismatch."
-                "Your client version is {}.\n\n"
-                "Error was: {}".format(__version__, e)
+            WarnMsg(
+                self,
+                "Could not authenticate due to API mismatch. "
+                f"Your client version is {__version__}. "
+                "Error message from server is:",
+                info=str(e),
             ).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomExistingLoginException:
-            if (
-                SimpleQuestion(
-                    self,
-                    "You appear to be already logged in!\n\n"
-                    "  * Perhaps a previous session crashed?\n"
-                    "  * Do you have another client running,\n"
-                    "    e.g., on another computer?\n\n"
-                    "Should I force-logout the existing authorisation?"
-                    " (and then you can try to log in again)\n\n"
-                    "The other client will likely crash.",
-                ).exec()
-                == QMessageBox.Yes
-            ):
+            msg = WarningQuestion(
+                self,
+                "You appear to be already logged in!\n\n"
+                "  * Perhaps a previous session crashed?\n"
+                "  * Do you have another client running,\n"
+                "    e.g., on another computer?\n\n"
+                "Should I force-logout the existing authorisation?"
+                " (and then you can try to log in again)\n\n"
+                "The other client will likely crash.",
+            )
+            if msg.exec() == QMessageBox.Yes:
                 self.msgr.clearAuthorisation("manager", pwd)
                 self.msgr = None
                 self.login()
@@ -535,14 +536,7 @@ class Manager(QWidget):
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomAuthenticationException as e:
-            ErrorMessage("Could not authenticate: {}".format(e)).exec()
-            self.msgr = None  # reset to avoid Issue #1622
-            return
-        except PlomSeriousException as e:
-            ErrorMessage(
-                "Could not get authentication token.\n\n"
-                "Unexpected error: {}".format(e)
-            ).exec()
+            InfoMsg(self, "Could not authenticate:", info=e).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
         self.initial_login()
@@ -753,7 +747,8 @@ class Manager(QWidget):
             if msg.exec() == QMessageBox.No:
                 return
             rval = self.msgr.removeSinglePage(test_number, page_name)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            InfoMsg(self, "{}".format(rval)).exec()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -765,7 +760,8 @@ class Manager(QWidget):
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            InfoMsg(self, "{}".format(rval)).exec()
         self.refresh_scan_status_lists()
 
     def substituteTestQuestionPage(self, test_number, page_number, question, version):
@@ -778,7 +774,8 @@ class Manager(QWidget):
             return
 
         rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
-        ErrorMessage("{}".format(rval)).exec()
+        # Cleanup, Issue #2141
+        InfoMsg(self, "{}".format(rval)).exec()
 
     def substituteTestDNMPage(self, test_number, page_number):
         msg = SimpleQuestion(
@@ -790,7 +787,8 @@ class Manager(QWidget):
             return
 
         rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
-        ErrorMessage("{}".format(rval)).exec()
+        # Cleanup, Issue #2141
+        InfoMsg(self, "{}".format(rval)).exec()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(
@@ -802,12 +800,13 @@ class Manager(QWidget):
             return
         try:
             rval = self.msgr.replaceMissingIDPage(test_number)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            InfoMsg(self, "{}".format(rval)).exec()
         except PlomUnidentifiedPaperException as err:
-            ErrorMessage(
-                "Cannot substitute that page - that paper has not been identified: {}".format(
-                    err
-                )
+            WarnMsg(
+                self,
+                "Cannot substitute that page - that paper has not been identified",
+                info=err,
             ).exec()
 
     def substituteTestPage(self, test_number, page_number, version):
@@ -834,9 +833,10 @@ class Manager(QWidget):
             rval = self.msgr.replaceMissingHWQuestion(
                 student_id=None, test=test_number, question=question
             )
-            ErrorMessage("{}".format(rval)).exec()
-        except PlomTakenException:
-            ErrorMessage("That question already has hw pages present.").exec()
+            # Cleanup, Issue #2141
+            InfoMsg(self, "{}".format(rval)).exec()
+        except PlomTakenException as e:
+            WarnMsg(self, "That question already has hw pages present.", info=e).exec()
 
         self.refresh_scan_status_lists()
 
@@ -884,7 +884,8 @@ class Manager(QWidget):
                 return
 
             rval = self.msgr.removeSinglePage(test_number, page_name)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            WarnMsg(self, "{}".format(rval)).exec()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -896,7 +897,8 @@ class Manager(QWidget):
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
-            ErrorMessage("{}".format(rval)).exec()
+            # Cleanup, Issue #2141
+            WarnMsg(self, "{}".format(rval)).exec()
         self.refresh_scan_status_lists()
 
     def initUnknownTab(self):
@@ -1218,7 +1220,7 @@ class Manager(QWidget):
                     )
                 except PlomConflict as err:
 
-                    ErrorMessage(f"{err}").exec()
+                    WarnMsg(self, f"{err}").exec()
             else:
                 pass
                 # print(
@@ -1382,7 +1384,8 @@ class Manager(QWidget):
             return
 
         rval = self.msgr.removeSinglePage(test_number, page_name)
-        ErrorMessage("{}".format(rval)).exec()
+        # Cleanup, Issue #2141
+        WarnMsg(self, "{}".format(rval)).exec()
 
     # ###################
     # Progress tab stuff
@@ -1500,7 +1503,7 @@ class Manager(QWidget):
         try:
             imageList = self.msgr.IDgetImageFromATest()
         except PlomNoMoreException as err:
-            ErrorMessage(f"No unIDd images to show - {err}").exec()
+            InfoMsg(self, "No unIDd images to show.", info=err).exec()
             return
         with tempfile.TemporaryDirectory() as td:
             inames = []
@@ -1536,7 +1539,7 @@ class Manager(QWidget):
         try:
             img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
-            ErrorMessage(err).exec()
+            ErrorMsg(self, err).exec()
             return
 
         if not img_bytes:
@@ -2333,8 +2336,9 @@ class Manager(QWidget):
         selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
 
         if "manager" in selectedUsers:
-            ErrorMessage(
-                "You cannot force-logout the manager. To logout, click on the Quit button."
+            WarnMsg(
+                self,
+                "You cannot force-logout the manager. To logout, click on the Quit button.",
             ).exec()
             return
         if (
@@ -2387,8 +2391,8 @@ class Manager(QWidget):
         if len(ri) == 0:
             return
         if len(ri) > 7:
-            ErrorMessage(
-                "You can only change the password of one user at a time."
+            WarnMsg(
+                self, "You can only change the password of one user at a time."
             ).exec()
             return
 
@@ -2397,7 +2401,7 @@ class Manager(QWidget):
         cpwd = UserDialog(self, f'Change password for "{user}"', name=user)
         if cpwd.exec() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(user, cpwd.password)
-            ErrorMessage(rval[1]).exec()
+            InfoMsg(self, rval[1]).exec()
         return
 
     def createUser(self):
@@ -2409,7 +2413,7 @@ class Manager(QWidget):
         cpwd = UserDialog(self, "Create new user", name=None, extant=uList)
         if cpwd.exec() == QDialog.Accepted:
             rval = self.msgr.createModifyUser(cpwd.name, cpwd.password)
-            ErrorMessage(rval[1]).exec()
+            InfoMsg(self, rval[1]).exec()
             self.refreshUserList()
         return
 
