@@ -8,25 +8,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* plom-server will autogenerate a manager password if it is started without one.
-* plom-create can manage user accounts of a running server.
+* `plom-server` will autogenerate a manager password if it is started without one.
+* `plom-create` can manage user accounts of a running server.
 * Manager displays bundle name/page of unknown pages.
 * `plom-scan status` now displays information about bundles and unknown pages.
 * `plom-finish audit` produces a JSON file for post-grading checking/followup/etc
-* Annotator now has a crop tool (in menu) that allows user to excluded unwanted parts of page. Works with undo/rego.
-* Annotator now has a "view previous" function that pops up a window that will show previously marked paper(s). Has simple keyboard shortcuts.
+* Annotator now has a crop tool (in menu) that allows user to excluded unwanted parts of page.
+* Annotator now has a "view previous" function that pops up a window that will show previously marked paper(s).
 * Clients can use ctrl-mousewheel to zoom in and out.
-* randoMarker now also tags random selection of tasks.
+* Manager: can tag questions and remove annotations, in bulk.
+* Demos and testing: randoMarker now also tags random selection of tasks.
 
 ### Changed
 * Plom now requires Python 3.7.
+* Plom no longer supports older macOS 10.13 as we cannot reliably build binaries on that system.
 * `plom-create` DB creation now done one test at a time which avoids timeouts and enables future flexibility.
 * Manager: improvements to the prediction-related UI.
-* The plom test-spec no longer uses 'numberToName', instead use the (compulsory) "paper_number" column in the classlist.
+* Classlists that are not from Canvas must now include a `paper_number` column, which can be left blank.
+* The Plom test-spec no longer uses `numberToName`, instead use the "paper_number" column in the classlist.
+* Reassembled files are now time-stamped.
+* It is easier to insert extra pages during marking and fewer annotations are wiped (only those in the question directly effected).
+* Manager: improved interface around IDing and predictions.
+* Manager: improved control of the automatic ID reader.
+* Prenamed papers and machine ID reading are in flux: currently both need to be confirmed by a human in the Identifier client.  Expect further future changes.
+* Many API changes and tweaks.
 
 ### Fixed
 * Non-zero initial orientations should now work properly.
 * Custom solutions had the wrong coverpage, showing instead the reassembled coverpage.
+* Rapid use of the Ctrl-R dialog no longer needs to wait on the background downloader.
+* Improved and hopefully less crashing in classlist validation.
+* Timezones are now made explicit.
+* Many UI fixes and tweaks.
+* Ongoing documentation improvements.
+* Many other fixes.
 
 
 ## [0.8.11] - 2022-04-12
