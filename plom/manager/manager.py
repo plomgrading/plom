@@ -745,9 +745,11 @@ class Manager(QWidget):
             )
             if msg.exec() == QMessageBox.No:
                 return
-            rval = self.msgr.removeSinglePage(test_number, page_name)
-            # Cleanup, Issue #2141
-            InfoMsg(self, "{}".format(rval)).exec()
+            try:
+                msg = self.msgr.removeSinglePage(test_number, page_name)
+                InfoMsg(self, msg).exec()
+            except PlomConflict as e:
+                WarnMsg(self, "Could not remove page", info=e).exec()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -882,9 +884,11 @@ class Manager(QWidget):
             if msg.exec() == QMessageBox.No:
                 return
 
-            rval = self.msgr.removeSinglePage(test_number, page_name)
-            # Cleanup, Issue #2141
-            WarnMsg(self, "{}".format(rval)).exec()
+            try:
+                s = self.msgr.removeSinglePage(test_number, page_name)
+                InfoMsg(self, s).exec()
+            except PlomConflict as e:
+                WarnMsg(self, "Could not remove page", info=e).exec()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = WarningQuestion(
@@ -1383,9 +1387,11 @@ class Manager(QWidget):
         if msg.exec() == QMessageBox.No:
             return
 
-        rval = self.msgr.removeSinglePage(test_number, page_name)
-        # Cleanup, Issue #2141
-        WarnMsg(self, "{}".format(rval)).exec()
+        try:
+            s = self.msgr.removeSinglePage(test_number, page_name)
+            InfoMsg(self, s).exec()
+        except PlomConflict as e:
+            WarnMsg(self, "Could not remove page", info=e).exec()
 
     # ###################
     # Progress tab stuff
