@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QPushButton,
 )
-from .useful_classes import ErrorMessage
+from .useful_classes import WarnMsg
 
 
 stringOfLegalKeys = "qwertyuiop[]asdfghjkl;'zxcvbnm,./"
@@ -223,18 +223,19 @@ class KeyWrangler(QDialog):
         for act in self.actions:
             actToCode[act] = getattr(self, act + "Key").theCode
             if actToCode[act] is None:
-                ErrorMessage("Is invalid - '{}' is missing a key".format(act)).exec()
+                WarnMsg(self, f"Is invalid - '{act}' is missing a key").exec()
                 return False
         # check for duplications
         for n, act in enumerate(self.actions):
             for k in range(0, n):
                 if actToCode[act] == actToCode[self.actions[k]]:
-                    ErrorMessage(
+                    WarnMsg(
+                        self,
                         "Is invalid '{}' and '{}' have same key '{}'".format(
                             act,
                             self.actions[k],
                             QKeySequence(actToCode[act]).toString(),
-                        )
+                        ),
                     ).exec()
                     return False
         return True

@@ -67,7 +67,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
-from .useful_classes import ErrorMessage, WarnMsg, SimpleQuestion
+from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .pagecache import download_pages
 
 if platform.system() == "Darwin":
@@ -474,8 +474,10 @@ class MarkerExamModel(QStandardItemModel):
         except ValueError:
             pass
         else:
-            ErrorMessage(
-                f"Task {paper.prefix} has been modified by server - you will need to annotate it again."
+            # TODO: why is the model opening dialogs?!  Issue #2145.
+            ErrorMsg(
+                None,
+                f"Task {paper.prefix} has been modified by server - you will need to annotate it again.",
             ).exec()
             self.removeRow(r)
         # Append new groupimage to list and append new row to table.
@@ -1020,7 +1022,7 @@ class MarkerClient(QWidget):
         try:
             self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
         except PlomRangeException as err:
-            ErrorMessage(str(err)).exec()
+            ErrorMsg(self, str(err)).exec()
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
@@ -1223,13 +1225,15 @@ class MarkerClient(QWidget):
             # TODO: better action we can take here?
             # TODO: the real problem here is that the full_pagedata is potentially out of date!
             # TODO: we also need (and maybe already have) a mechanism to invalidate existing annotations
-            ErrorMessage(
+            # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+            ErrorMsg(
+                None,
                 '<p>The task "{}" has changed in some way by the manager; it '
                 "may need to be remarked.</p>\n\n"
                 '<p>Specifically, the server says: "{}"</p>\n\n'
                 "<p>This is a rare situation; just in case, we'll now force a "
                 "shutdown of your client.  Sorry.</p>"
-                "<p>Please log back in and continue marking.</p>".format(task, str(ex))
+                "<p>Please log back in and continue marking.</p>".format(task, str(ex)),
             ).exec()
             # Log out the user and then raise an exception
             try:
@@ -1343,12 +1347,12 @@ class MarkerClient(QWidget):
                 log.exception("Serious error detected while updating progress: %s", err)
                 msg = f"A serious error happened while updating progress:\n{err}"
                 msg += "\nThis is not good: restart, report bug, etc."
-                ErrorMessage(msg).exec()
+                ErrorMsg(self, msg).exec()
                 return
         if maxm == 0:
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
-            ErrorMessage("No papers to mark.").exec()
+            InfoMsg(self, "No papers to mark.").exec()
         else:
             # Neither is quite right, instead, we cache on init
             self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
@@ -1374,7 +1378,7 @@ class MarkerClient(QWidget):
             PlomRangeException,
             PlomVersionMismatchException,
         ) as err:
-            ErrorMessage(f"Cannot get get paper {n}: {err}").exec()
+            WarnMsg(self, f"Cannot get paper {n}.", info=err).exec()
 
     def requestNext(self):
         """Ask server for an unmarked paper, get file, add to list, update view.
@@ -1397,8 +1401,11 @@ class MarkerClient(QWidget):
                     return
             except PlomSeriousException as err:
                 log.exception("Unexpected error getting next task: %s", err)
-                ErrorMessage(
-                    f"Unexpected error getting next task:\n{err}\nClient will now crash!"
+                # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+                ErrorMsg(
+                    None,
+                    "Unexpected error getting next task. Client will now crash!",
+                    info=err,
                 ).exec()
                 raise
 
@@ -1550,11 +1557,13 @@ class MarkerClient(QWidget):
         """
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
-        ErrorMessage(
+        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+        ErrorMsg(
+            None,
             "Unfortunately, there was an unexpected error downloading "
             "next paper.\n\n{}\n\n"
             "Please consider filing an issue?  I don't know if its "
-            "safe to continue from here...".format(errmsg)
+            "safe to continue from here...".format(errmsg),
         ).exec()
 
     def moveToNextUnmarkedTest(self, task=None):
@@ -1622,10 +1631,7 @@ class MarkerClient(QWidget):
         if self.examModel.getStatusByTask(task) == "deferred":
             return
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
-            msg = ErrorMessage(
-                "Cannot defer a marked test. We will change this in a future version."
-            )
-            msg.exec()
+            InfoMsg(self, "Cannot defer a marked test.").exec()
             return
         self.examModel.deferPaper(task)
 
@@ -2050,7 +2056,9 @@ class MarkerClient(QWidget):
             None
         """
         self.examModel.setStatusByTask(task, "???")
-        ErrorMessage(
+        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+        ErrorMsg(
+            None,
             '<p>Background upload of "{}" has failed because the server '
             "changed something underneath us.</p>\n\n"
             '<p>Specifically, the server says: "{}"</p>\n\n'
@@ -2061,7 +2069,7 @@ class MarkerClient(QWidget):
             "of your client.  Sorry.</p>"
             "<p>Please log back in and continue marking.</p>".format(
                 task, error_message
-            )
+            ),
         ).exec()
         # Log out the user and then raise an exception
         try:
@@ -2087,11 +2095,14 @@ class MarkerClient(QWidget):
 
         """
         self.examModel.setStatusByTask(task, "???")
-        ErrorMessage(
+        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+        ErrorMsg(
+            None,
             "Unfortunately, there was an unexpected error; the server did "
-            "not accept our marked paper {}.\n\n{}\n\n"
-            "If the problem persists consider filing an issue."
-            "Please close this window and log in again.".format(task, errmsg)
+            f"not accept our marked paper {task}.\n\n"
+            "If the problem persists consider filing an issue. "
+            "Please close this window and log in again.",
+            info=errmsg,
         ).exec()
         return
 
@@ -2316,7 +2327,9 @@ class MarkerClient(QWidget):
                 if any(idx):
                     n = idx[0]  # could be fancier if more than one match
                     info = "\n".join(lines[max(0, n - 5) : n + 5])
-                    ErrorMessage(
+                    # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+                    WarnMsg(
+                        None,
                         """
                         <p>The server reported an error processing your TeX fragment.</p>
                         <p>Perhaps the error is visible in the following snippet,
@@ -2326,7 +2339,8 @@ class MarkerClient(QWidget):
                         info=info,
                     ).exec()
                 else:
-                    ErrorMessage(
+                    WarnMsg(
+                        None,
                         "<p>The server reported an error processing your TeX fragment.</p>",
                         details=fragment,
                     ).exec()
