@@ -311,7 +311,7 @@
                 <item>
                  <widget class="QPushButton" name="removePagesB">
                   <property name="text">
-                   <string>Remove Scanned Page(s) from Test</string>
+                   <string>Remove scanned page(s) from Test</string>
                   </property>
                  </widget>
                 </item>
@@ -396,7 +396,7 @@
                 <item>
                  <widget class="QPushButton" name="removePartScanB">
                   <property name="text">
-                   <string>Remove Page(s) From Part-scanned Test</string>
+                   <string>Remove page(s) from partially-scanned Test</string>
                   </property>
                  </widget>
                 </item>
@@ -439,8 +439,11 @@
              </item>
              <item>
               <widget class="QPushButton" name="actionUButton">
+               <property name="toolTip">
+                <string>Changes to Unknown Pages are not performed immediately; pushing this button will perform them en masse.</string>
+               </property>
                <property name="text">
-                <string>Perform actions</string>
+                <string>Perform staged actions</string>
                </property>
               </widget>
              </item>
@@ -481,7 +484,7 @@
              <item>
               <widget class="QPushButton" name="actionCButton">
                <property name="text">
-                <string>Perform actions</string>
+                <string>Perform staged actions</string>
                </property>
               </widget>
              </item>
@@ -520,9 +523,9 @@
               </spacer>
              </item>
              <item>
-              <widget class="QPushButton" name="actionDButton">
+              <widget class="QPushButton" name="discardToUnknownButton">
                <property name="text">
-                <string>Perform actions</string>
+                <string>Move to Unknown Pages...</string>
                </property>
               </widget>
              </item>
@@ -582,7 +585,7 @@
          <item>
           <widget class="QPushButton" name="scanRefreshB">
            <property name="text">
-            <string>Refresh scanning tab</string>
+            <string>Refresh scanning tab (and discard any staged actions)</string>
            </property>
           </widget>
          </item>
@@ -1867,7 +1870,7 @@
   <tabstop>collideTV</tabstop>
   <tabstop>actionCButton</tabstop>
   <tabstop>discardTV</tabstop>
-  <tabstop>actionDButton</tabstop>
+  <tabstop>discardToUnknownButton</tabstop>
   <tabstop>closeButton</tabstop>
  </tabstops>
  <resources/>
