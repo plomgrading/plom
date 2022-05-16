@@ -130,6 +130,10 @@ class PlomServerNotReady(PlomBenignException):
     pass
 
 
+class PlomNoClasslist(PlomServerNotReady):
+    pass
+
+
 class PlomInconsistentRubricsException(PlomSeriousException):
     pass
 

@@ -5,7 +5,7 @@ from textwrap import wrap
 
 from plom import SpecVerifier
 from plom.create import with_manager_messenger
-from plom.plom_exceptions import PlomServerNotReady, PlomBenignException
+from plom.plom_exceptions import PlomServerNotReady, PlomNoClasslist
 from plom.misc_utils import format_int_list_with_runs
 
 
@@ -88,8 +88,7 @@ def status(*, msgr):
     try:
         classlist = msgr.IDrequestClasslist()
         print(check_mark + f" Server has a classlist with {len(classlist)} entries")
-    except PlomBenignException as e:
-        # TODO: make PlomServerHasNoClasslist: subclass of PlomServerNotReady?
+    except PlomNoClasslist as e:
         print(cross + f" No classlist: {e}")
         classlist = None
     if classlist and classlist[0].get("paper_number", None):
