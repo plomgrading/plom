@@ -68,10 +68,12 @@ from plom.plom_exceptions import (
     PlomBadTagError,
     PlomBenignException,
     PlomConflict,
+    PlomExistingDatabase,
     PlomExistingLoginException,
     # PlomOwnersLoggedInException,
-    PlomUnidentifiedPaperException,
+    PlomServerNotReady,
     PlomTakenException,
+    PlomUnidentifiedPaperException,
     PlomNoMoreException,
     PlomNoSolutionException,
 )
@@ -408,6 +410,7 @@ class Manager(QWidget):
 
         self.ui.passwordLE.setFocus(True)
         self.connectButtons()
+        self.ui.configTab.setEnabled(False)
         self.ui.scanningAllTab.setEnabled(False)
         self.ui.progressAllTab.setEnabled(False)
         self.ui.solnTab.setEnabled(False)
@@ -429,6 +432,11 @@ class Manager(QWidget):
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
         self.ui.unidB.clicked.connect(self.un_id_paper)
         self.ui.unpredB.clicked.connect(self.remove_id_prediction)
+
+        self.ui.uploadSpecButton.clicked.connect(self.uploadSpec)
+        self.ui.uploadClasslistButton.clicked.connect(self.uploadClasslist)
+        self.ui.makeDatabaseButton.clicked.connect(self.makeDataBase)
+        self.ui.makePapersButton.clicked.connect(self.buildPapers)
 
         self.ui.refreshReviewMarkingButton.clicked.connect(self.refreshMRev)
         self.ui.refreshReviewIDButton.clicked.connect(self.refreshIDRev)
@@ -546,9 +554,14 @@ class Manager(QWidget):
         self.ui.userGBox.setEnabled(False)
         self.ui.serverGBox.setEnabled(False)
         self.ui.loginButton.setEnabled(False)
+        self.ui.configTab.setEnabled(True)
         self.ui.userAllTab.setEnabled(True)
         self.initUserTab()
-        self.getTPQV()
+        # self.initConfigTab()
+        try:
+            self.getTPQV()
+        except PlomServerNotReady:
+            return
         self.ui.scanningAllTab.setEnabled(True)
         self.ui.progressAllTab.setEnabled(True)
         self.ui.reviewAllTab.setEnabled(True)
@@ -588,6 +601,110 @@ class Manager(QWidget):
         for q in range(1, info["numberOfQuestions"] + 1):
             for pg in info["question"][str(q)]["pages"]:
                 self.testPageTypes[pg] = f"q{q}"
+
+    ##################
+    # config tab stuff
+
+    def uploadSpec(self):
+        # TODO: on gnome "" is not cwd... str(Path.cwd()
+        # options=QFileDialog.DontUseNativeDialog
+        # TODO: str(Path.cwd() / "testSpec.toml")
+        fname, ftype = QFileDialog.getOpenFileName(
+            self, "Get server spec file", None, "TOML files (*.toml)"
+        )
+        if fname == "":
+            return
+        fname = Path(fname)
+        if not fname.is_file():
+            return
+        from plom import SpecVerifier
+
+        sv = SpecVerifier.from_toml_file(fname)
+        try:
+            sv.verifySpec()
+        except ValueError as e:
+            WarnMsg(self, "Spec not valid", info=e).exec()
+            return
+        sv.checkCodes()
+        try:
+            self.msgr.upload_spec(sv.spec)
+        except PlomConflict as e:
+            WarnMsg(self, "Could not accept a new spec", info=e).exec()
+            return
+        self.ui.statusSpecLabel.setText(
+            "spec was uploaded: TODO: display something more useful"
+        )
+
+    def uploadClasslist(self):
+        from plom.create import process_classlist_file, upload_classlist
+
+        fname, ftype = QFileDialog.getOpenFileName(
+            self, "Get classlist", None, "CSV files (*.csv)"
+        )
+        if fname == "":
+            return
+        fname = Path(fname)
+        if not fname.is_file():
+            return
+
+        # A copy-paste job from plom.create.__main__:
+        try:
+            spec = self.msgr.get_spec()
+        except PlomServerNotReady as e:
+            WarnMsg(self, "Server not ready.", info=e).exec()
+            return
+        success, classlist = process_classlist_file(fname, spec, ignore_warnings=False)
+        if not success:
+            WarnMsg(
+                self, "Problems parsing classlist?", info="TODO: for now, check stdout?"
+            ).exec()
+            return
+        try:
+            upload_classlist(classlist, msgr=self.msgr)
+        except Exception as err:
+            # TODO - make a better error handler here
+            WarnMsg(self, "Problem uploading classlist?", info=err).exec()
+            return
+        self.ui.statusClasslistLabel.setText(
+            "classlist was uploaded: TODO: display something more useful"
+        )
+
+    def makeDataBase(self):
+        from plom.create import build_database
+
+        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        # disable ui before calling process events
+        self.setEnabled(False)
+        self.Qapp.processEvents()
+
+        try:
+            build_database(msgr=self.msgr)
+        except (PlomServerNotReady, PlomExistingDatabase) as e:
+            # WarnMsg(self, "Could not build database", info=e).exec()
+            self.ui.statusDatabaseLabel.setText(str(e))
+            return
+        finally:
+            self.Qapp.restoreOverrideCursor()
+            self.setEnabled(True)
+        # call some status update method...?
+        self.ui.statusDatabaseLabel.setText("TODO")
+
+    def buildPapers(self):
+        from plom.create import build_papers
+
+        where = Path(self.ui.makePapersFolderLineEdit.text())
+        try:
+            build_papers(
+                basedir=where,
+                fakepdf=False,
+                no_qr=False,
+                indexToMake=1,
+                xcoord=42.5,
+                ycoord=50,
+                msgr=self.msgr,
+            )
+        except PlomServerNotReady as e:
+            WarnMsg(self, "Could not build papers", info=e).exec()
 
     ################
     # scan tab stuff
