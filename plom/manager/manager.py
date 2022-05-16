@@ -410,6 +410,7 @@ class Manager(QWidget):
         self.connectButtons()
         self.ui.scanningAllTab.setEnabled(False)
         self.ui.progressAllTab.setEnabled(False)
+        self.ui.solnTab.setEnabled(False)
         self.ui.reviewAllTab.setEnabled(False)
         self.ui.userAllTab.setEnabled(False)
         if self.msgr:
@@ -541,19 +542,18 @@ class Manager(QWidget):
         self.initial_login()
 
     def initial_login(self):
-        self.ui.scanningAllTab.setEnabled(True)
-        self.ui.progressAllTab.setEnabled(True)
-        self.ui.reviewAllTab.setEnabled(True)
-        self.ui.userAllTab.setEnabled(True)
-
         self.ui.userGBox.setEnabled(False)
         self.ui.serverGBox.setEnabled(False)
         self.ui.loginButton.setEnabled(False)
-
+        self.ui.userAllTab.setEnabled(True)
+        self.initUserTab()
         self.getTPQV()
+        self.ui.scanningAllTab.setEnabled(True)
+        self.ui.progressAllTab.setEnabled(True)
+        self.ui.reviewAllTab.setEnabled(True)
+        self.ui.solnTab.setEnabled(True)
         self.initScanTab()
         self.initProgressTab()
-        self.initUserTab()
         self.initReviewTab()
         self.initSolutionTab()
 
