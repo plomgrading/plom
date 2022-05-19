@@ -433,6 +433,7 @@ class Manager(QWidget):
         self.ui.unidB.clicked.connect(self.un_id_paper)
         self.ui.unpredB.clicked.connect(self.remove_id_prediction)
 
+        self.ui.configRefreshButton.clicked.connect(self.refreshConfig)
         self.ui.uploadSpecButton.clicked.connect(self.uploadSpec)
         self.ui.uploadClasslistButton.clicked.connect(self.uploadClasslist)
         self.ui.makeDatabaseButton.clicked.connect(self.makeDataBase)
@@ -604,6 +605,34 @@ class Manager(QWidget):
 
     ##################
     # config tab stuff
+
+    def refreshConfig(self):
+        check_mark = "\N{Check Mark}"
+        cross = "\N{Multiplication Sign}"
+        try:
+            spec = self.msgr.get_spec()
+        except PlomServerNotReady as e:
+            txt = cross + f"server not ready: {e}"
+            spec = None
+        else:
+            txt = "<p>" + check_mark + " server has a spec: "
+            txt += f"&ldquo;{spec['longName']}&rdquo;.</p>"
+        self.ui.statusSpecLabel.setText(txt)
+
+        try:
+            classlist = self.msgr.IDrequestClasslist()
+        except PlomServerNotReady as e:
+            txt = cross + f"Server not ready: {e}"
+        else:
+            txt = check_mark + f" {len(classlist)} names in the classlist."
+        self.ui.statusClasslistLabel.setText(txt)
+
+        vmap = self.msgr.getGlobalQuestionVersionMap()
+        if len(vmap) > 0:
+            txt = check_mark + f" {len(vmap)} rows in the papers table."
+        else:
+            txt = "No rows have been inserted in the papers table,"
+        self.ui.statusDatabaseLabel.setText(txt)
 
     def uploadSpec(self):
         # TODO: on gnome "" is not cwd... str(Path.cwd()

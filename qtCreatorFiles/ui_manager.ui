@@ -278,15 +278,36 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>40</height>
+           <height>20</height>
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLabel" name="label_14">
+         <property name="text">
+          <string>Classlist CSV</string>
+         </property>
+        </widget>
        </item>
        <item row="9" column="1">
         <widget class="QPushButton" name="uploadClasslistButton">
          <property name="text">
           <string>Upload classlist...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QLabel" name="label_21">
+         <property name="text">
+          <string>Status</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <widget class="QLabel" name="statusClasslistLabel">
+         <property name="text">
+          <string/>
          </property>
         </widget>
        </item>
@@ -298,7 +319,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>40</height>
+           <height>20</height>
           </size>
          </property>
         </spacer>
@@ -339,7 +360,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>40</height>
+           <height>20</height>
           </size>
          </property>
         </spacer>
@@ -392,10 +413,8 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Currently, you need to place version1.pdf, version2.pdf etc in &quot;sourceVersions&quot; within this directory.  The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
+          <string>&lt;p&gt;Currently, you need to place version1.pdf, version2.pdf etc in &quot;sourceVersions&quot; within this directory.&lt;br /&gt;
+The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&lt;/p&gt;</string>
          </property>
         </widget>
        </item>
@@ -406,24 +425,23 @@
          </property>
         </widget>
        </item>
-       <item row="9" column="0">
-        <widget class="QLabel" name="label_14">
-         <property name="text">
-          <string>Classlist CSV</string>
+       <item row="19" column="1">
+        <spacer name="verticalSpacer_15">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
          </property>
-        </widget>
-       </item>
-       <item row="10" column="1">
-        <widget class="QLabel" name="statusClasslistLabel">
-         <property name="text">
-          <string/>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
          </property>
-        </widget>
+        </spacer>
        </item>
-       <item row="10" column="0">
-        <widget class="QLabel" name="label_21">
+       <item row="20" column="0">
+        <widget class="QPushButton" name="configRefreshButton">
          <property name="text">
-          <string>Status</string>
+          <string>Refresh</string>
          </property>
         </widget>
        </item>
