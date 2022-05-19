@@ -628,7 +628,7 @@ class Manager(QWidget):
         sv.checkCodes()
         try:
             self.msgr.upload_spec(sv.spec)
-        except PlomConflict as e:
+        except (PlomConflict, ValueError) as e:
             WarnMsg(self, "Could not accept a new spec", info=e).exec()
             return
         self.ui.statusSpecLabel.setText(

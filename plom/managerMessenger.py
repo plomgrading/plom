@@ -287,6 +287,7 @@ class ManagerMessenger(BaseMessenger):
         Exceptions:
             PlomConflict: server already has a database, cannot accept spec.
             PlomAuthenticationException: login problems.
+            ValueError: invalid spec
             PlomSeriousException: other errors.
 
         Returns:
@@ -307,7 +308,7 @@ class ManagerMessenger(BaseMessenger):
                 if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 400:
-                    raise PlomSeriousException(response.reason) from None
+                    raise ValueError(response.reason) from None
                 if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
