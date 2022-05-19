@@ -46,6 +46,8 @@ def build_papers(
     Raises:
         PlomConflict: server does not yet have a version map database, say
             b/c build_database has not yet been called.
+        ValueError: not enough papers for prenamed, indexToMake out of range,
+            maybe other cases.
     """
     basedir = Path(basedir)
     paperdir = basedir / paperdir_name

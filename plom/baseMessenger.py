@@ -360,6 +360,7 @@ class BaseMessenger:
             number (`int`) and value version (`int`).  Note the raw API call
             uses strings for keys b/c of JSON (transport) limitations but
             this function converts them for us.
+            If we don't yet have a version map, the result is an empty dict.
 
         Raises:
             PlomAuthenticationException: login troubles.
