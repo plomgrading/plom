@@ -732,7 +732,7 @@ class Manager(QWidget):
                 ycoord=50,
                 msgr=self.msgr,
             )
-        except PlomServerNotReady as e:
+        except (PlomServerNotReady, OSError) as e:
             WarnMsg(self, "Could not build papers", info=e).exec()
 
     ################
