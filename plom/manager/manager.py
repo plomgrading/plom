@@ -722,14 +722,19 @@ class Manager(QWidget):
         from plom.create import build_papers
 
         where = Path(self.ui.makePapersFolderLineEdit.text())
+        which = self.ui.makePapersWhichSpinBox.value()
+        if self.ui.radioButtonProduceAll.isChecked():
+            which = None
+        xpos = self.ui.makePapersXPosSpinBox.value()
+        ypos = self.ui.makePapersYPosSpinBox.value()
         try:
             build_papers(
                 basedir=where,
                 fakepdf=False,
                 no_qr=False,
-                indexToMake=1,
-                xcoord=42.5,
-                ycoord=50,
+                indexToMake=which,
+                xcoord=xpos,
+                ycoord=ypos,
                 msgr=self.msgr,
             )
         except (PlomServerNotReady, OSError) as e:
