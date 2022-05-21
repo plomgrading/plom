@@ -715,6 +715,12 @@ class Manager(QWidget):
     def buildPapers(self):
         from plom.create import build_papers
 
+        # TODO: better to display progress bar, for now tqdm appears on stdout
+        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        # disable ui before calling process events
+        self.setEnabled(False)
+        self.Qapp.processEvents()
+
         where = Path(self.ui.makePapersFolderLineEdit.text())
         which = self.ui.makePapersWhichSpinBox.value()
         if self.ui.radioButtonProduceAll.isChecked():
@@ -732,7 +738,10 @@ class Manager(QWidget):
                 msgr=self.msgr,
             )
         except (PlomServerNotReady, PlomConflict, OSError) as e:
+            self.Qapp.restoreOverrideCursor()
             WarnMsg(self, "Could not build papers.", info=e).exec()
+        self.Qapp.restoreOverrideCursor()
+        self.setEnabled(True)
 
     ################
     # scan tab stuff
