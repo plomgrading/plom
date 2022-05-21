@@ -737,8 +737,8 @@ class Manager(QWidget):
                 ycoord=ypos,
                 msgr=self.msgr,
             )
-        except (PlomServerNotReady, OSError) as e:
-            WarnMsg(self, "Could not build papers", info=e).exec()
+        except (PlomServerNotReady, PlomConflict, OSError) as e:
+            WarnMsg(self, "Could not build papers.", info=e).exec()
 
     ################
     # scan tab stuff
