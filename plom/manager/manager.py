@@ -660,9 +660,7 @@ class Manager(QWidget):
         except (PlomConflict, ValueError) as e:
             WarnMsg(self, "Could not accept a new spec", info=e).exec()
             return
-        self.ui.statusSpecLabel.setText(
-            "spec was uploaded: TODO: display something more useful"
-        )
+        self.refreshConfig()
 
     def uploadClasslist(self):
         from plom.create import process_classlist_file, upload_classlist
@@ -693,9 +691,7 @@ class Manager(QWidget):
         except (PlomConflict, PlomRangeException, PlomServerNotReady) as e:
             WarnMsg(self, "Problem uploading classlist?", info=e).exec()
             return
-        self.ui.statusClasslistLabel.setText(
-            "classlist was uploaded: TODO: display something more useful"
-        )
+        self.refreshConfig()
 
     def makeDataBase(self):
         from plom.create import build_database
@@ -714,8 +710,7 @@ class Manager(QWidget):
         finally:
             self.Qapp.restoreOverrideCursor()
             self.setEnabled(True)
-        # call some status update method...?
-        self.ui.statusDatabaseLabel.setText("TODO")
+        self.refreshConfig()
 
     def buildPapers(self):
         from plom.create import build_papers
