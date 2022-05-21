@@ -690,9 +690,8 @@ class Manager(QWidget):
             return
         try:
             upload_classlist(classlist, msgr=self.msgr)
-        except Exception as err:
-            # TODO - make a better error handler here
-            WarnMsg(self, "Problem uploading classlist?", info=err).exec()
+        except (PlomConflict, PlomRangeException, PlomServerNotReady) as e:
+            WarnMsg(self, "Problem uploading classlist?", info=e).exec()
             return
         self.ui.statusClasslistLabel.setText(
             "classlist was uploaded: TODO: display something more useful"
