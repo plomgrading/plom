@@ -11,6 +11,7 @@ from plom.create.buildNamedPDF import build_papers_backend
 from plom.create.buildNamedPDF import check_pdf_and_prename_if_needed
 from plom.create import paperdir as paperdir_name
 from plom.create import with_manager_messenger
+from plom.plom_exceptions import PlomConflict
 
 
 @with_manager_messenger
@@ -56,6 +57,8 @@ def build_papers(
 
     spec = msgr.get_spec()
     qvmap = msgr.getGlobalQuestionVersionMap()
+    if not qvmap:
+        raise PlomConflict("No version map: have you build the database?")
     classlist = msgr.IDrequestClasslist()
 
     if indexToMake:
