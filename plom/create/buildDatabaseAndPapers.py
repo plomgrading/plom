@@ -11,7 +11,7 @@ from plom.create.buildNamedPDF import build_papers_backend
 from plom.create.buildNamedPDF import check_pdf_and_prename_if_needed
 from plom.create import paperdir as paperdir_name
 from plom.create import with_manager_messenger
-from plom.plom_exceptions import PlomConflict
+from plom.plom_exceptions import PlomConflict, PlomNoClasslist
 
 
 @with_manager_messenger
@@ -49,6 +49,10 @@ def build_papers(
             b/c build_database has not yet been called.
         ValueError: not enough papers for prenamed, indexToMake out of range,
             maybe other cases.
+
+    We try to get a classlist from the server to prename any papers
+    where the `paper_number` is specified.  If the server does not yet
+    have a classlist, we create no prenamed papers.
     """
     basedir = Path(basedir)
     paperdir = basedir / paperdir_name
@@ -59,7 +63,10 @@ def build_papers(
     qvmap = msgr.getGlobalQuestionVersionMap()
     if not qvmap:
         raise PlomConflict("No version map: have you build the database?")
-    classlist = msgr.IDrequestClasslist()
+    try:
+        classlist = msgr.IDrequestClasslist()
+    except PlomNoClasslist:
+        classlist = []
 
     if indexToMake:
         # TODO: Issue #1745?
