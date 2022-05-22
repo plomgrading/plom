@@ -71,6 +71,7 @@ from plom.plom_exceptions import (
     PlomExistingDatabase,
     PlomExistingLoginException,
     # PlomOwnersLoggedInException,
+    PlomRangeException,
     PlomServerNotReady,
     PlomTakenException,
     PlomUnidentifiedPaperException,
