@@ -986,16 +986,16 @@ macos11_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.12
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.13
   - asdf which python
-  - asdf shell python 3.9.12
+  - asdf shell python 3.9.13
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.12/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.13/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1016,6 +1016,7 @@ macos11_client:
     expire_in: 16 days
 
 
+# set to manual to reduce number of macOS jobs #2149
 macos1015_client:
   image: macos-10.15-xcode-11
   tags:
@@ -1024,6 +1025,8 @@ macos1015_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
   stage: packaging
   script:
   - sw_vers
@@ -1034,16 +1037,16 @@ macos1015_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.12
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.13
   - asdf which python
-  - asdf shell python 3.9.12
+  - asdf shell python 3.9.13
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.12/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.13/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1078,8 +1081,8 @@ macos1014_client:
   - echo $SHELL
   - asdf current
   # asdf which python  # has no python for some reason
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.12
-  - asdf local python 3.9.12
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.13
+  - asdf local python 3.9.13
   - asdf which python
   - python --version
   - pip --version
@@ -1087,7 +1090,7 @@ macos1014_client:
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.12/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.13/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1118,22 +1121,23 @@ macos1013_client:
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
     when: manual
+  allow_failure: true
   stage: packaging
   script:
   - sw_vers
   - echo $SHELL
   - asdf current
   - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.12
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.13
   - asdf which python
-  - asdf local python 3.9.12
+  - asdf local python 3.9.13
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.12/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.13/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1147,7 +1151,6 @@ macos1013_client:
   - md5 $ZIPNAME > md5sum
   - ls $ZIPNAME
   - cat md5sum
-  allow_failure: true
   artifacts:
     paths:
     - PlomClient*.zip
@@ -1168,7 +1171,7 @@ winmintest:
   stage: test
   needs: []
   script:
-  - choco install -y python3 --version 3.9.12
+  - choco install -y python3 --version 3.9.13
   - refreshenv
   - c:\Python39\Scripts\pip install -r requirements.txt.client
   - refreshenv
@@ -1183,7 +1186,7 @@ winpyinst:
   - .shared_windows_runners
   stage: packaging
   before_script:
-  - choco install -y python3 --version 3.9.12
+  - choco install -y python3 --version 3.9.13
   - refreshenv
   - c:\python39\python -m pip --version
   - c:\python39\python -m pip install --user --upgrade pip
@@ -1192,7 +1195,7 @@ winpyinst:
   script:
   - c:\python39\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python39\python -m pip install pyinstaller==4.10
+  - c:\python39\python -m pip install pyinstaller==5.1
   - refreshenv
   - c:\python39\python -m plom.client -h
   - c:\python39\scripts\pyinstaller client.windows.spec
