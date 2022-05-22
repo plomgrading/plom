@@ -641,7 +641,7 @@ class Manager(QWidget):
 
         try:
             spec_dict = self.msgr.get_spec()
-        except (PlomConflict, ValueError) as e:
+        except (PlomServerNotReady, PlomConflict, ValueError) as e:
             WarnMsg(self, "Could not get spec.", info=e).exec()
             return
         sv = SpecVerifier(spec_dict)
