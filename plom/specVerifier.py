@@ -296,6 +296,10 @@ class SpecVerifier:
         # TODO: maybe we should do some testing here?
         return cls(toml.load(fname))
 
+    def as_toml_string(self):
+        """Return the spec as a string in the TOML format."""
+        return toml.dumps(self.spec)
+
     # this allows spec["key"] instead of spec.spec["key"] for all
     def __getitem__(self, what):
         return self.spec[what]

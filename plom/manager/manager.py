@@ -643,8 +643,11 @@ class Manager(QWidget):
             WarnMsg(self, "Could not get spec.", info=e).exec()
             return
         sv = SpecVerifier(spec_dict)
-        txt = str(sv)
-        InfoMsg(self, "Server's spec:", info=txt).exec()
+        txt = "<p>Server's spec is shown below. The <tt>.toml</tt> format "
+        txt += "is given below under &ldquo;details&rdquo;.</p>"
+        info = str(sv)
+        spec_toml = sv.as_toml_string()
+        InfoMsg(self, txt, info=info, details=spec_toml).exec()
         self.refreshConfig()
 
     def uploadSpec(self):
