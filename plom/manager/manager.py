@@ -437,6 +437,7 @@ class Manager(QWidget):
         self.ui.configRefreshButton.clicked.connect(self.refreshConfig)
         self.ui.uploadSpecButton.clicked.connect(self.uploadSpec)
         self.ui.viewSpecButton.clicked.connect(self.viewSpec)
+        self.ui.uploadClasslistButton.clicked.connect(self.uploadClasslist)
         self.ui.makeDatabaseButton.clicked.connect(self.makeDataBase)
         self.ui.makePapersButton.clicked.connect(self.buildPapers)
 
