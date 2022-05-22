@@ -676,6 +676,13 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="viewSpecButton">
+            <property name="text">
+             <string>View spec...</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer_24">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>

@@ -435,7 +435,7 @@ class Manager(QWidget):
 
         self.ui.configRefreshButton.clicked.connect(self.refreshConfig)
         self.ui.uploadSpecButton.clicked.connect(self.uploadSpec)
-        self.ui.uploadClasslistButton.clicked.connect(self.uploadClasslist)
+        self.ui.viewSpecButton.clicked.connect(self.viewSpec)
         self.ui.makeDatabaseButton.clicked.connect(self.makeDataBase)
         self.ui.makePapersButton.clicked.connect(self.buildPapers)
 
@@ -633,6 +633,19 @@ class Manager(QWidget):
         else:
             txt = "No rows have been inserted in the papers table,"
         self.ui.statusDatabaseLabel.setText(txt)
+
+    def viewSpec(self):
+        from plom import SpecVerifier
+
+        try:
+            spec_dict = self.msgr.get_spec()
+        except (PlomConflict, ValueError) as e:
+            WarnMsg(self, "Could not get spec.", info=e).exec()
+            return
+        sv = SpecVerifier(spec_dict)
+        txt = str(sv)
+        InfoMsg(self, "Server's spec:", info=txt).exec()
+        self.refreshConfig()
 
     def uploadSpec(self):
         # TODO: on gnome "" is not cwd... str(Path.cwd()
