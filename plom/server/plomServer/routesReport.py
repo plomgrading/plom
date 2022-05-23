@@ -303,31 +303,47 @@ class ReportHandler:
         else:
             return web.Response(status=404)
 
-    # @routes.get("/REP/spreadSheet")
+    # @routes.get("/REP/spreadsheet")
     @authenticate_by_token_required_fields(["user"])
+    @readonly_admin
     def RgetSpreadsheet(self, data, request):
-        """Creates a spreadsheet csv file of the grading information.
+        """Information used to create a spreadsheet during or post-grading.
 
-        Responds with status 200/401.
+        Responds with status 200/401/403.
 
         Args:
             data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type GET /REP/spreadSheet.
+            request (aiohttp.web_request.Request): Request of type GET /REP/spreadsheet.
 
         Returns:
-            aiohttp.web_response.Response: A response object that includes the csv dictionary
-            for the grading results spreadsheet.
+            aiohttp.web_response.Response: Information needed to build the
+            grading results spreadsheet.
+            The result is a large dict, keyed by paper number (integer but
+            here a string).  The value for each paper is another dict::
+
+                {
+                    "1": {
+                       'identified': True,
+                       'marked': False,
+                       'sid': '12345678',
+                       'sname': 'Fink, Iris',
+                       'q1v': 2, 'q1m': 3,
+                       'q2v': 1, 'q2m': '',
+                       'q3v': 2, 'q3m': '',
+                       'last_update': '2022-05-13T21:15:02.072122+00:00'
+                    },
+                    "2": {
+                       ...
+                    }
+                }
+
+            Notable here is ``q1v`` which is "Question 1 version" (an integer),
+            and ``q1m`` which is "Question 1 mark", an integer or the empty
+            string if the question is still being marked (``marked`` should be
+            `False` in this case).
         """
-
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-        rmsg = self.server.RgetSpreadsheet()
-
-        # TODO: Understand this better.
-        # For each paper, the response includes the following information:
-        # {1: {'identified': True, 'marked': False, 'totalled': False, 'sid': '10050380',
-        # 'sname': 'Fink, Iris', 'q1v': 2, 'q1m': '', 'q2v': 1, 'q2m': '', 'q3v': 2, 'q3m': ''}
-        return web.json_response(rmsg, status=200)
+        r = self.server.RgetSpreadsheet()
+        return web.json_response(r, status=200)
 
     # @routes.get("/REP/coverPageInfo/{test}")
     @authenticate_by_token_required_fields(["user"])
@@ -500,7 +516,7 @@ class ReportHandler:
         router.add_get("/REP/completionStatus", self.RgetCompletionStatus)
         router.add_get("/REP/outToDo", self.RgetOutToDo)
         router.add_get("/REP/status/{test}", self.RgetStatus)
-        router.add_get("/REP/spreadSheet", self.RgetSpreadsheet)
+        router.add_get("/REP/spreadsheet", self.RgetSpreadsheet)
         router.add_get("/REP/originalFiles/{test}", self.RgetOriginalFiles)
         router.add_get("/REP/coverPageInfo/{test}", self.RgetCoverPageInfo)
         router.add_get("/REP/userList", self.RgetUserList)
