@@ -1409,12 +1409,18 @@ class Manager(QWidget):
         self.refreshOverallTab()
 
     def downloadCSV(self):
-        filename = QFileDialog.getSaveFileName(
-            self, "Save File", "", "Comma Separated Values (*.csv)"
+        from plom.finish import CSVFilename, pull_spreadsheet
+
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Save File", CSVFilename, "Comma Separated Values (*.csv)"
         )
-        print(filename)
-        print(type(filename))
-        # tr("Images (*.png *.xpm *.jpg)"));
+        if not pull_spreadsheet(msgr=self.msgr, filename=filename, verbose=False):
+            WarnMsg(
+                self,
+                f"Spreadsheet written to {filename} but grading is not complete.",
+                info="Either some papers are unidentified or they are not fully marked.",
+                info_pre=False,
+            ).exec_()
 
     def viewTestStatus(self):
         pvi = self.ui.overallTW.selectedItems()
