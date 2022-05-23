@@ -2,6 +2,8 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018-2021 Colin B. Macdonald
 
+import functools
+
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
@@ -26,3 +28,33 @@ def start_messenger(server=None, pwd=None):
         )
         raise
     return msgr
+
+
+def with_finish_messenger(f):
+    """Decorator for flexible credentials or open messenger.
+
+    Arguments:
+        f (function):
+
+    Returns:
+        function: the original wrapped with logging.
+    """
+
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        # if we have a messenger, nothing special, just call function
+        msgr = kwargs.get("msgr")
+        if isinstance(msgr, FinishMessenger):
+            return f(*args, **kwargs)
+
+        # if not, we assume its appropriate args to make a messenger
+        credentials = kwargs.pop("msgr")
+        msgr = start_messenger(*credentials)
+        kwargs["msgr"] = msgr
+        try:
+            return f(*args, **kwargs)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    return wrapped

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -7,20 +7,18 @@ import arrow
 import csv
 
 from plom import get_question_label
-from plom.finish import start_messenger
+from plom.finish import with_finish_messenger
 from plom.finish import CSVFilename
 from plom.misc_utils import utc_now_to_string, arrowtime_to_string
 
 
-def writeSpreadsheet(spreadSheetDict, labels, filename=CSVFilename):
+def write_spreadsheet(spreadSheetDict, labels, filename):
     """Writes all of the current marks to a local csv file.
 
     Arguments:
         spreadSheetDict (dict): Dictionary containing the tests to be
             written to a spreadsheet.
         labels (list): string labels for each question.
-
-    Keyword Arguments:
         filename (pathlib.Path/str): where to save the csv.
 
     Returns:
@@ -91,40 +89,35 @@ def writeSpreadsheet(spreadSheetDict, labels, filename=CSVFilename):
     return existsUnmarked, existsMissingID
 
 
-# TODO: need to split new function and need msgr decorator?
-def main(server=None, password=None):
-    msgr = start_messenger(server, password)
-    try:
-        spec = msgr.get_spec()
-        numberOfQuestions = spec["numberOfQuestions"]
-        spreadSheetDict = msgr.RgetSpreadsheet()
-    finally:
-        msgr.closeUser()
-        msgr.stop()
+@with_finish_messenger
+def pull_spreadsheet(*, msgr, filename=CSVFilename, verbose=True):
+    """Download the "marks.csv" spreadsheet from the server, optionally printing status messages.
+
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+        filename (pathlib.Path/str): where to save the csv, defaults
+            to "marks.csv".
+        verbose (bool): echo diagnostics to stdout, default True.
+
+    Returns:
+        bool: True if all grading is complete and identified.  False if
+        grading is incomplete or some papers are not IDed.  Note in
+        either case we write the spreadsheet.
+    """
+    spec = msgr.get_spec()
+    numberOfQuestions = spec["numberOfQuestions"]
+    spreadSheetDict = msgr.RgetSpreadsheet()
 
     qlabels = [get_question_label(spec, n + 1) for n in range(numberOfQuestions)]
-    existsUnmarked, existsMissingID = writeSpreadsheet(spreadSheetDict, qlabels)
-    if existsUnmarked and existsMissingID:
-        print(
-            'Partial marks written to "{}" (marking is not complete). Warning: not every test is identified.'.format(
-                CSVFilename
-            )
-        )
-    elif existsUnmarked:
-        print(
-            'Partial marks written to "{}" (marking is not complete)'.format(
-                CSVFilename
-            )
-        )
-    elif existsMissingID:
-        print(
-            'Marks written to "{}". Warning: not every test is identified.'.format(
-                CSVFilename
-            )
-        )
-    else:
-        print('Marks written to "{}"'.format(CSVFilename))
-
-
-if __name__ == "__main__":
-    main()
+    existsUnmarked, existsMissingID = write_spreadsheet(
+        spreadSheetDict, qlabels, filename
+    )
+    if verbose:
+        if existsUnmarked:
+            print(f'Partial marks written to "{filename}" (marking is not complete).')
+        else:
+            print(f'Marks written to "{filename}".')
+        if existsMissingID:
+            print("Warning: not every test is identified.")
+    return not existsUnmarked and not existsMissingID

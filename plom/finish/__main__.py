@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-21 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 
 """Plom script for post-grading tasks.
@@ -42,9 +42,9 @@ from plom import __version__
 
 # TODO: be more decisive about how this should be
 from plom.finish import clear_manager_login
+from plom.finish import CSVFilename
+from plom.finish import pull_spreadsheet
 import plom.finish.check_completed
-import plom.finish.spreadsheet
-from plom.finish.spreadsheet import CSVFilename
 import plom.finish.reassemble_completed
 import plom.finish.reassemble_ID_only
 import plom.finish.coded_return
@@ -239,11 +239,11 @@ def main():
         if not args.password:
             args.password = getpass('Please enter the "manager" password: ')
 
-    # Note: many of these commands use exit() directly
+    # Note: some of these commands use exit() directly
     if args.command == "status":
         plom.finish.check_completed.main(args.server, args.password)
     elif args.command == "csv":
-        plom.finish.spreadsheet.main(args.server, args.password)
+        pull_spreadsheet(msgr=(args.server, args.password))
     elif args.command == "reassemble":
         if args.ided_only:
             plom.finish.reassemble_ID_only.main(args.server, args.password)
