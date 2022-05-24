@@ -45,6 +45,7 @@ from plom.finish import clear_manager_login
 from plom.finish import CSVFilename
 from plom.finish import pull_spreadsheet
 from plom.finish import reassemble_paper, reassemble_all_papers
+from plom.finish import assemble_solutions
 import plom.finish.check_completed
 import plom.finish.reassemble_ID_only
 import plom.finish.coded_return
@@ -256,8 +257,11 @@ def main():
                 msgr=(args.server, args.password), skip=args.skip_existing
             )
     elif args.command == "solutions":
-        plom.finish.assemble_solutions.main(
-            args.testnum, args.server, args.password, watermark=args.mark
+        assemble_solutions(
+            testnum=args.testnum,
+            msgr=(args.server, args.password),
+            watermark=args.mark,
+            verbose=True,
         )
     elif args.command == "webpage":
         plom.finish.coded_return.main(
