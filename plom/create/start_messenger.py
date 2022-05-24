@@ -58,3 +58,22 @@ def with_manager_messenger(f):
             msgr.stop()
 
     return wrapped
+
+
+def clear_manager_login(server=None, password=None):
+    """Force clear the "manager" authorisation, e.g., after a crash.
+
+    Args:
+        server (str): in the form "example.com" or "example.com:41984".
+        password (str): if not specified, prompt on the command line.
+    """
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    msgr.clearAuthorisation("manager", password)
+    print("Manager login cleared.")
+    msgr.stop()

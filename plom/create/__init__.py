@@ -16,7 +16,7 @@ from plom import __version__
 paperdir = Path("papersToPrint")
 
 from .start_messenger import start_messenger, with_manager_messenger
-from plom.finish import clear_manager_login
+from .start_messenger import clear_manager_login
 
 from .buildDatabaseAndPapers import build_database, build_papers
 
