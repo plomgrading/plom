@@ -538,57 +538,35 @@ fedora_build:
     # Build tests
     - mkdir play
     - pushd play
-    - plom-server init
-    - plom-server users --demo
-    - plom-create new
-    - plom-create parse
-    - python3 -m plom.create.demotools
+    - plom-demo . --num-papers 3 --prepare-only
     - ip addr
-    - plom-server launch &
+    - plom-server launch . &
     - sleep 2
     - sleep 2
     - echo "Server should be in background"
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-create class --demo -w 1234
-    - plom-create make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
-    - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.create.exam_scribbler -w 1234
-    # Scan and upload
-    # supposed to fail:
-    - if (plom-scan process); then false; else true; fi
-    - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams1.pdf
-    # TODO: I removed some -c lines here...
-    - plom-scan status -w 4567
-    - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams2.pdf
-    - plom-scan status -w 4567
-    - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams3.pdf
-    - plom-scan status -w 4567
+    - bash -c "[[ $A == 3 ]]"        # should be 3
+    - export PLOM_MANAGER_PASSWORD=1234
     # not supposed to be done yet:
-    - if (plom-finish status -w 1234); then false; else true; fi
+    - if (plom-finish status); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
     - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
-    - plom-finish status -w 1234
-    - plom-finish csv -w 1234
+    - plom-finish status
+    - plom-finish csv
     - A=`cat marks.csv  | wc -l`      # How many lines?
     - echo $A
     - A="$((A-1))"
-    - bash -c "[[ $A == 19 ]]"        # b/c 1 page from 1 test is deleted
+    - bash -c "[[ $A == 2 ]]"         # b/c 1 page from 1 test is deleted
     - file marks.csv
     - file marks.csv | grep text
-    - plom-finish reassemble -w 1234
+    - plom-finish reassemble
     - A=`ls reassembled/ | wc -l`    # How many files?
-    - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
+    - bash -c "[[ $A == 2 ]]" # since 1 test incomplete
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
-    - bash -c "[[ $A -lt 40 ]]"          # not more than 10 MB
-    - plom-finish webpage
-    - A=`ls codedReturn/ | wc -l`    # How many files?
-    - bash -c "[[ $A == 20 ]]"       # 20-1 pdf + 1 html
+    - bash -c "[[ $A -lt 10 ]]"          # not more than 10 MB
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
