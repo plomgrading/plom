@@ -137,10 +137,10 @@ def _reassemble_one_paper(
 
 @with_finish_messenger
 def reassemble_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
-    """Reassemble a test paper.
+    """Reassemble a particular test paper.
 
     Args:
-        testnum (int): which test number would be reassembled.
+        testnum (int): which test number to reassemble.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
@@ -155,7 +155,7 @@ def reassemble_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
         outname (pathlib.Path): the full path of the reassembled test pdf.
 
     Raises:
-        ValueError: does not exist, or not ready.
+        ValueError: paper number does not exist, or is not ready.
     """
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
