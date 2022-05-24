@@ -44,8 +44,8 @@ from plom import __version__
 from plom.finish import clear_manager_login
 from plom.finish import CSVFilename
 from plom.finish import pull_spreadsheet
+from plom.finish import reassemble_paper, reassemble_all_papers
 import plom.finish.check_completed
-import plom.finish.reassemble_completed
 import plom.finish.reassemble_ID_only
 import plom.finish.coded_return
 import plom.finish.assemble_solutions
@@ -247,9 +247,13 @@ def main():
     elif args.command == "reassemble":
         if args.ided_only:
             plom.finish.reassemble_ID_only.main(args.server, args.password)
+        elif args.testnum:
+            reassemble_paper(
+                args.testnum, msgr=(args.server, args.password), skip=args.skip_existing
+            )
         else:
-            plom.finish.reassemble_completed.main(
-                args.testnum, args.server, args.password, args.skip_existing
+            reassemble_all_papers(
+                msgr=(args.server, args.password), skip=args.skip_existing
             )
     elif args.command == "solutions":
         plom.finish.assemble_solutions.main(

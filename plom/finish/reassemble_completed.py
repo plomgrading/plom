@@ -136,7 +136,7 @@ def _reassemble_one_paper(
 
 
 @with_finish_messenger
-def reassemble_one_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
+def reassemble_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
     """Reassemble a test paper.
 
     Args:
@@ -148,7 +148,7 @@ def reassemble_one_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=Fals
         outdir (pathlib.Path/str): where to save the reassembled pdf file
             Defaults to "reassembled/" in the current working directory.
             It will be created if it does not exist.
-        skip_existing (bool): Default False, but if True, skip any pdf files
+        skip (bool): Default False, but if True, skip any pdf files
             we already have (Careful: without checking for changes!)
 
     Returns:
@@ -241,10 +241,3 @@ def reassemble_all_papers(*, msgr, outdir=Path("reassembled"), skip=False):
                 skip,
             )
     shutil.rmtree(tmpdir)
-
-
-def main(testnum, server, password, skip):
-    if testnum is None:
-        reassemble_all_papers(msgr=(server, password), skip=skip)
-    else:
-        reassemble_one_paper(testnum, msgr=(server, password), skip=skip)
