@@ -11,8 +11,9 @@ from plom import __version__
 from .utils import rand_integer_code, salted_int_hash_from_str
 from .utils import rand_hex, salted_hex_hash_from_str
 
+# previous had it centrally defined but Issue #2154
+from .spreadsheet import CSVFilename
 
-CSVFilename = "marks.csv"
 RubricListFilename = "rubric_list.json"
 TestRubricMatrixFilename = "test_rubric_matrix.json"
 

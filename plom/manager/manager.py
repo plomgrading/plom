@@ -1409,7 +1409,10 @@ class Manager(QWidget):
         self.refreshOverallTab()
 
     def downloadCSV(self):
-        from plom.finish import CSVFilename, pull_spreadsheet
+        # TODO: avoid pandas dep by not importing plom.finish directly, Issue #2154
+        # from plom.finish import CSVFilename, pull_spreadsheet
+        from plom.finish.spreadsheet import CSVFilename
+        from plom.finish.spreadsheet import pull_spreadsheet
 
         filename, _ = QFileDialog.getSaveFileName(
             self, "Save File", CSVFilename, "Comma Separated Values (*.csv)"

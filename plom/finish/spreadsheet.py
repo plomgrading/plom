@@ -7,9 +7,12 @@ import arrow
 import csv
 
 from plom import get_question_label
-from plom.finish import with_finish_messenger
-from plom.finish import CSVFilename
+# Issue 2154 otherwise I'd prefer to import from plom.finish?
+from plom.finish.start_messenger import with_finish_messenger
 from plom.misc_utils import utc_now_to_string, arrowtime_to_string
+
+
+CSVFilename = "marks.csv"
 
 
 def write_spreadsheet(spreadSheetDict, labels, filename):
