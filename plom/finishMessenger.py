@@ -18,7 +18,11 @@ from plom.baseMessenger import BaseMessenger
 
 
 class FinishMessenger(BaseMessenger):
-    """Finishing-related communications."""
+    """Finishing-related communications.
+
+    TODO: much of this class is duplicated in/from ManagerMessenger
+    TODO: make it a subclass?  remove it?  See Issue #5152.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -76,20 +80,18 @@ class FinishMessenger(BaseMessenger):
             self.SRmutex.release()
 
     def RgetSpreadsheet(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/REP/spreadSheet",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/REP/spreadsheet",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def RgetIdentified(self):
         self.SRmutex.acquire()
