@@ -826,7 +826,7 @@ binary_upload:
     - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
     - export FILENAME1="PlomClient-$VER.exe"
     - export FILENAME2="PlomClient-$VER-macos11.zip"
-    - export FILENAME3="PlomClient-$VER-macos10.zip"
+    - export FILENAME3="PlomClient-$VER-macos10_14.zip"
     - export URL0="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME0"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME2"
