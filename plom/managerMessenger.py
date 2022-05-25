@@ -250,8 +250,8 @@ class ManagerMessenger(BaseMessenger):
             PlomRangeException: this classlist causes an invalid server
                 spec.  Most likely numberToProduce is too small but
                 check error message to be sure.
-            PlomAuthenticationException: login problems.
             PlomServerNotReady: e.g., it has no spec.
+            PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
         self.SRmutex.acquire()
@@ -267,11 +267,11 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 409:
-                raise PlomConflict(e) from None
+                raise PlomConflict(response.reason) from None
             if response.status_code == 400 and "no spec" in response.reason:
                 raise PlomServerNotReady(response.reason) from None
             if response.status_code == 406:
-                raise PlomRangeException(e) from None
+                raise PlomRangeException(response.reason) from None
             if response.status_code in (401, 403):
                 raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
