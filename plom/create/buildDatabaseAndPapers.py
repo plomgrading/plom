@@ -62,7 +62,7 @@ def build_papers(
     spec = msgr.get_spec()
     qvmap = msgr.getGlobalQuestionVersionMap()
     if not qvmap:
-        raise PlomConflict("No version map: have you build the database?")
+        raise PlomConflict("No version map: have you built the database?")
     try:
         classlist = msgr.IDrequestClasslist()
     except PlomNoClasslist:
