@@ -41,7 +41,7 @@ def check_version_map(vm, spec=None):
             assert isinstance(v, int)
             assert v > 0
             if spec:
-                assert v <= spec["numberOfQuestions"]
+                assert v <= spec["numberOfVersions"]
                 if spec["question"][str(q)]["select"] == "fix":
                     assert v == 1
     assert len(rowlens) <= 1, "Not all rows had same length"
