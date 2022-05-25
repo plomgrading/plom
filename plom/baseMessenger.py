@@ -22,6 +22,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomConnectionError,
     PlomExistingLoginException,
+    PlomNoClasslist,
     PlomNoMoreException,
     PlomNoSolutionException,
     PlomServerNotReady,
@@ -382,13 +383,13 @@ class BaseMessenger:
 
         Returns:
             list: list of dict, each with at least the keys
-                `id` and `name` and possibly others.
-                Corresponding values are both strings.
+            `id`, `name`, `paper_number`, and possibly others.
+            Corresponding values are str, str, and integer.
 
         Raises:
             PlomAuthenticationException: login troubles.
-            PlomBenignException: server has no classlist.
-            PlomSeriousException: all other failures.
+            PlomNoClasslist: server has no classlist.
+            PlomSeriousException: any other unexpected failures.
         """
         self.SRmutex.acquire()
         try:
@@ -407,9 +408,9 @@ class BaseMessenger:
             return classlist
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 404:
-                raise PlomBenignException("Server cannot find the class list") from None
+                raise PlomNoClasslist(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

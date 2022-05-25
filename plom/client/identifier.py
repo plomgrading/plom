@@ -34,6 +34,7 @@ from PyQt5.QtWidgets import (
 from plom.plom_exceptions import (
     PlomBenignException,
     PlomConflict,
+    PlomNoClasslist,
     PlomSeriousException,
     PlomTakenException,
 )
@@ -219,8 +220,18 @@ class IDClient(QWidget):
         self.testImg = ImageViewWidget(self)
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
 
+        self.ui.closeButton.clicked.connect(self.close)
+
         # Get the classlist from server for name/ID completion.
-        self.getClassList()
+        try:
+            self.getClassList()
+        except PlomNoClasslist as e:
+            WarnMsg(
+                self,
+                "Cannot identify papers until server has a classlist.",
+                info=str(e),
+            ).exec()
+            return
 
         # Init the name/ID completers and a validator for ID
         self.setCompleters()
@@ -229,7 +240,6 @@ class IDClient(QWidget):
 
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
-        self.ui.closeButton.clicked.connect(self.close)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
         self.ui.predButton.clicked.connect(self.acceptPrediction)
         self.ui.blankButton.clicked.connect(self.blankPaper)
@@ -276,6 +286,9 @@ class IDClient(QWidget):
         `snid_to_student_id`
         `snid_to_student_name`
         `student_id_to_snid`
+
+        Raises:
+            PlomNoClasslist
         """
         classlist = self.msgr.IDrequestClasslist()
         self.snid_to_student_id = dict()
