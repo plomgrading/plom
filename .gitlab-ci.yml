@@ -512,7 +512,7 @@ docs_sphinx:
 fedora_build:
   stage: alt_build
   needs: []
-  image: fedora:35
+  image: fedora:36
   allow_failure: true
   before_script:
     - dnf install -y ImageMagick openssl zbar gcc gcc-c++ cmake
