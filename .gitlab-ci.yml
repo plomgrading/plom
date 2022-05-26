@@ -583,7 +583,7 @@ fedora_build:
 nodock_newdeps:
   stage: alt_build
   needs: []
-  image: ubuntu:21.10
+  image: ubuntu:22.04
   allow_failure: true
   before_script:
     - apt-get update
