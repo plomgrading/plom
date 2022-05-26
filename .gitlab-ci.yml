@@ -206,12 +206,12 @@ black:
   allow_failure: true
 
 
-basic:
-  stage: test
-  needs: ["docker-image"]
-  image: $IM
-  script:
-    - plom-init
+# basic:
+#   stage: test
+#   needs: ["docker-image"]
+#   image: $IM
+#   script:
+#     - plom-init
 
 
 unittests:
