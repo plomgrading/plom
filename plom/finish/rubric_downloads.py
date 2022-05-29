@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2022 Colin B. Macdonald
 
 import json
 
@@ -9,6 +10,11 @@ from plom.finish import RubricListFilename, TestRubricMatrixFilename
 
 
 def download_rubric_files(server=None, password=None):
+    """Download two files with information about rubrics.
+
+    TODO: uses ManagerMessenger rather than FinishMessenger Issue #2152
+    """
+
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -45,7 +51,3 @@ def download_rubric_files(server=None, password=None):
 
     with open(TestRubricMatrixFilename, "w") as fh:
         json.dump(tr_matrix, fh)
-
-
-def main(server=None, password=None):
-    download_rubric_files(server, password)
