@@ -152,7 +152,7 @@ def reassemble_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
             we already have (Careful: without checking for changes!)
 
     Returns:
-        outname (pathlib.Path): the full path of the reassembled test pdf.
+        pathlib.Path: the full path of the reassembled test pdf.
 
     Raises:
         ValueError: paper number does not exist, or is not ready.

@@ -13,17 +13,17 @@ from plom.finish.solutionAssembler import assemble
 from plom.finish.reassemble_completed import download_data_build_cover_page
 
 
-def checkAllSolutionsPresent(solutionList):
-    # soln list = [ [q,v,md5sum], [q,v,""]]
-    for X in solutionList:
-        if X[2] == "":
-            print("Missing solution to question {} version {}".format(X[0], X[1]))
-            return False
-    return True
-
-
 def _assemble_one_soln(
-    msgr, tmpdir, outdir, short_name, max_marks, t, sid, skip, watermark=False
+    msgr,
+    tmpdir,
+    outdir,
+    short_name,
+    max_marks,
+    t,
+    sid,
+    skip=True,
+    watermark=False,
+    verbose=True,
 ):
     """Assemble a solution for one particular paper.
 
@@ -39,8 +39,11 @@ def _assemble_one_soln(
         t (int): Test number.
         sid (str/None): The student number as a string.  Maybe `None` which
             means that student has no ID (?)  Currently we just skip these.
+
+    Keyword Args:
         skip (bool): whether to skip existing pdf files.
         watermark (bool): whether to watermark solns with student-id.
+        verbose (bool): print messages or not.
 
     Returns:
         None
@@ -51,7 +54,8 @@ def _assemble_one_soln(
         return
     outname = outdir / f"{short_name}_solutions_{sid}.pdf"
     if skip and outname.exists():
-        print(f"Skipping {outname}: already exists")
+        if verbose:
+            print(f"Skipping {outname}: already exists")
         return
     coverfile = download_data_build_cover_page(
         msgr, tmpdir, t, max_marks, solution=True
@@ -69,7 +73,7 @@ def _assemble_one_soln(
 def assemble_solutions(
     *, msgr, testnum=None, watermark=False, outdir=Path("solutions"), verbose=True
 ):
-    """Assessemble solution document for a particular test paper.
+    """Assessemble solution documents.
 
     Keyword Args:
         testnum (int): which test number to reassemble.
@@ -80,9 +84,7 @@ def assemble_solutions(
             Defaults to "solutions/" in the current working directory.
             It will be created if it does not exist.
         verbose (bool): print messages or not.
-            Note: still prints in many cases and probably also
-            assumes a human reads that output: perhaps needs different
-            error handling.
+            Note: still prints in case of `None` for an student id.
 
     Returns:
         None
@@ -100,15 +102,15 @@ def assemble_solutions(
     tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=Path.cwd()))
 
     solutionList = msgr.getSolutionStatus()
-    if not checkAllSolutionsPresent(solutionList):
-        raise RuntimeError("Problems getting solution images.")
+    for q, v, md5 in solutionList:
+        if md5 == "":
+            raise RuntimeError(f"Missing solution to question {q} version {v}")
     if verbose:
         print("All solutions present.")
         print(f"Downloading solution images to temp directory {tmpdir}")
-    for X in tqdm(solutionList):
-        # triples [q,v,md5]
-        img = msgr.getSolutionImage(X[0], X[1])
-        filename = tmpdir / f"solution.{X[0]}.{X[1]}.png"
+    for q, v, md5 in tqdm(solutionList):
+        img = msgr.getSolutionImage(q, v)
+        filename = tmpdir / f"solution.{q}.{v}.png"
         with open(filename, "wb") as f:
             f.write(img)
 
@@ -136,7 +138,7 @@ def assemble_solutions(
                 print(f"Note: paper {t} not fully marked but building soln anyway")
         sid = identifiedTests[t][0]
         _assemble_one_soln(
-            msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False, watermark
+            msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False, watermark, verbose
         )
     else:
         if verbose:
@@ -151,7 +153,16 @@ def assemble_solutions(
             #     continue
             sid = identifiedTests[t][0]
             _assemble_one_soln(
-                msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False, watermark
+                msgr,
+                tmpdir,
+                outdir,
+                shortName,
+                maxMarks,
+                t,
+                sid,
+                False,
+                watermark,
+                verbose,
             )
             N += 1
         if verbose:
