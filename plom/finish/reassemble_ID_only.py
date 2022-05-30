@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Colin B. Macdonald
+# Copyright (C) 2018-2022 Colin B. Macdonald
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -61,7 +61,7 @@ def main(server=None, pwd=None):
         tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=Path.cwd()))
         print(f"Downloading to temp directory {tmpdir}")
 
-        identifiedTests = msgr.RgetIdentified()
+        identifiedTests = msgr.getIdentified()
         pagelists = []
         for t in identifiedTests:
             if identifiedTests[t][0] is not None:

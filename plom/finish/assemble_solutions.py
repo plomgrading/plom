@@ -116,7 +116,7 @@ def assemble_solutions(
 
     completedTests = msgr.RgetCompletionStatus()
     # dict testnumber -> [scanned, id'd, #q's marked]
-    identifiedTests = msgr.RgetIdentified()
+    identifiedTests = msgr.getIdentified()
     # dict testNumber -> [sid, sname]
     maxMarks = msgr.MgetAllMax()
 

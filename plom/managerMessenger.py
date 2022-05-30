@@ -1209,10 +1209,7 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.get(
                 "/REP/identified",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
+                json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
             return response.json()
@@ -1466,14 +1463,13 @@ class ManagerMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return response.json()
 
     def RgetMarked(self, q, v):
         self.SRmutex.acquire()

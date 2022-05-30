@@ -178,7 +178,7 @@ def reassemble_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
     if completed[2] != num_questions:
         raise ValueError(f"Paper {t} is not complete: unmarked questions")
 
-    identifiedTests = msgr.RgetIdentified()
+    identifiedTests = msgr.getIdentified()
     # dict testNumber -> [sid, sname]
     sid = identifiedTests[t][0]
     # TODO: will a context manager delete content too? helpful here!
@@ -220,7 +220,7 @@ def reassemble_all_papers(*, msgr, outdir=Path("reassembled"), skip=False):
 
     completedTests = msgr.RgetCompletionStatus()
     # dict testnumber -> [scanned, id'd, #q's marked]
-    identifiedTests = msgr.RgetIdentified()
+    identifiedTests = msgr.getIdentified()
     # dict testNumber -> [sid, sname]
 
     tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))

@@ -8,7 +8,7 @@ from plom.plom_exceptions import (
     PlomSeriousException,
     PlomAuthenticationException,
 )
-from plom.baseMessenger import BaseMessenger
+from plom.managerMessenger import ManagerMessenger
 
 # TODO: how to do this in subclass?
 # TODO: set username method?
@@ -17,97 +17,14 @@ from plom.baseMessenger import BaseMessenger
 # ----------------------
 
 
-class FinishMessenger(BaseMessenger):
+class FinishMessenger(ManagerMessenger):
     """Finishing-related communications.
 
-    TODO: much of this class is duplicated in/from ManagerMessenger
-    TODO: make it a subclass?  remove it?  See Issue #5152.
+    TODO: should we merge these few methods into ManagerMessenger?  Issue #5152.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def RgetCompletionStatus(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/REP/completionStatus",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def RgetOutToDo(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/REP/outToDo",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def getDanglingPages(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/REP/dangling",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the spec - this should not happen!"
-                ) from None
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def RgetSpreadsheet(self):
-        with self.SRmutex:
-            try:
-                response = self.get(
-                    "/REP/spreadsheet",
-                    json={"user": self.user, "token": self.token},
-                )
-                response.raise_for_status()
-                return response.json()
-            except requests.HTTPError as e:
-                if response.status_code in (401, 403):
-                    raise PlomAuthenticationException(response.reason) from None
-                raise PlomSeriousException(f"Some other sort of error {e}") from None
-
-    def RgetIdentified(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/REP/identified",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
 
     def RgetCompletions(self):
         self.SRmutex.acquire()
