@@ -266,7 +266,7 @@ def main():
             args.hex, args.digits, args.salt, args.server, args.solutions
         )
     elif args.command == "rubric":
-        download_rubric_files(args.server, args.password)
+        download_rubric_files(msgr=(args.server, args.password))
     elif args.command == "audit":
         audit(msgr=(args.server, args.password))
 

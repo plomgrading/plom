@@ -4,43 +4,20 @@
 
 import json
 
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.finish import with_finish_messenger
 from plom.finish import RubricListFilename, TestRubricMatrixFilename
 
 
-def download_rubric_files(server=None, password=None):
+@with_finish_messenger
+def download_rubric_files(*, msgr):
     """Download two files with information about rubrics.
 
-    TODO: uses ManagerMessenger rather than FinishMessenger Issue #2152
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
     """
-
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another finishing-script or manager-client running,\n"
-            "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorization run `plom-finish clear`."
-        )
-        raise
-
-    try:
-        counts = msgr.RgetRubricCounts()
-        tr_matrix = msgr.RgetTestRubricMatrix()
-
-    finally:
-        msgr.closeUser()
-        msgr.stop()
+    counts = msgr.RgetRubricCounts()
+    tr_matrix = msgr.RgetTestRubricMatrix()
 
     # counts is a dict indexed by key - turn it into a list
     # this makes it compatible with plom-create rubric upload
