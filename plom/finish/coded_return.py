@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Colin B. Macdonald
+# Copyright (C) 2018-2022 Colin B. Macdonald
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -7,7 +7,7 @@
 Gather reassembled papers with html page for digital return.
 """
 
-__copyright__ = "Copyright (C) 2018-2021 Colin B. Macdonald and others"
+__copyright__ = "Copyright (C) 2018-2022 Colin B. Macdonald and others"
 __credits__ = ["The Plom Project Developers"]
 __license__ = "AGPL-3.0-or-later"
 
@@ -17,7 +17,8 @@ import sys
 import shutil
 from pathlib import Path
 
-from plom.messenger import FinishMessenger
+# actually BaseMessenger would work
+from plom.messenger import ManagerMessenger
 from plom.rules import isValidStudentNumber, StudentIDLength
 from plom.finish import CSVFilename
 from .return_tools import csv_add_return_codes
@@ -73,9 +74,9 @@ def main(use_hex, digits, salt=None, server=None, solutions=False):
     """
     if server and ":" in server:
         s, p = server.split(":")
-        msgr = FinishMessenger(s, port=p)
+        msgr = ManagerMessenger(s, port=p)
     else:
-        msgr = FinishMessenger(server)
+        msgr = ManagerMessenger(server)
     msgr.start()
 
     spec = msgr.get_spec()
