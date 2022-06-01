@@ -47,9 +47,9 @@ from plom.finish import reassemble_paper, reassemble_all_papers
 from plom.finish import assemble_solutions
 from plom.finish import download_rubric_files
 from plom.finish import audit
+from plom.finish import make_coded_return_webpage
 import plom.finish.check_completed
 import plom.finish.reassemble_ID_only
-import plom.finish.coded_return
 
 
 def get_parser():
@@ -262,7 +262,7 @@ def main():
             verbose=True,
         )
     elif args.command == "webpage":
-        plom.finish.coded_return.main(
+        make_coded_return_webpage(
             args.hex, args.digits, args.salt, args.server, args.solutions
         )
     elif args.command == "rubric":

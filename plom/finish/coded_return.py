@@ -7,10 +7,6 @@
 Gather reassembled papers with html page for digital return.
 """
 
-__copyright__ = "Copyright (C) 2018-2022 Colin B. Macdonald and others"
-__credits__ = ["The Plom Project Developers"]
-__license__ = "AGPL-3.0-or-later"
-
 import html
 import os
 import sys
@@ -58,7 +54,7 @@ def copy_soln_files(shortname, todir, sns):
             print("No solution file for student id = {}".format(sid))
 
 
-def main(use_hex, digits, salt=None, server=None, solutions=False):
+def make_coded_return_webpage(use_hex, digits, salt=None, server=None, solutions=False):
     """Make the secret codes and the return-code webpage.
 
     args:
@@ -69,7 +65,7 @@ def main(use_hex, digits, salt=None, server=None, solutions=False):
             with this string.  Defaults to None, which means do not
             do this, use random secret codes.
         solutions (bool): add a solutions link to the website
-        server (str/None): server to contain or None for default
+        server (str/None): server to contact or None for default
             (probably localhost).
     """
     if server and ":" in server:
