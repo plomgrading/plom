@@ -244,8 +244,6 @@ class SolutionViewer(QWidget):
 
         self.setWindowTitle(f"Solutions - {Path(fname).stem}")
 
-        self.setMinimumSize(500, 500)
-
         self.show()
 
     def swapMaxNorm(self):
