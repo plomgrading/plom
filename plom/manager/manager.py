@@ -327,7 +327,6 @@ class ProgressBox(QGroupBox):
         grid.addWidget(vhB)
 
         self.setLayout(grid)
-        self.refresh(stats)
 
     def refresh(self, stats):
         self.setEnabled(True)
@@ -1377,6 +1376,7 @@ class Manager(QWidget):
     def initProgressTab(self):
         self.initOverallTab()
         self.initMarkTab()
+        self.refreshMarkTab()
         self.initIDTab()
         self.initOutTab()
 
