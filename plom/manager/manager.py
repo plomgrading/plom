@@ -350,14 +350,14 @@ class ProgressBox(QGroupBox):
                 )
             )
             self.mtL.setText("Avg marking time = {:0.1f}s".format(stats["avgMTime"]))
-            self.lhL.setText("# Marked in last hour = {}".format(stats["NRecent"]))
+            self.lhL.setText("{} marked in last hour".format(stats["NRecent"]))
         else:
             self.avgL.setText("Mean : Median : Mode  = N/A")
             self.mmfL.setText(
                 "Min : Max : Full = N/A : N/A : {}".format(stats["fullMark"])
             )
             self.mtL.setText("Avg marking time = N/A")
-            self.lhL.setText("# Marked in last hour = N/A")
+            self.lhL.setText("None have been marked")
 
     def viewHist(self):
         self._manager.viewMarkHistogram(self.question, self.version)
