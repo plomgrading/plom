@@ -178,10 +178,14 @@ def uploadImages(
         if len(skip_list) > 0:
             msg = "Some images from that bundle were previously uploaded"
             print(msg)
-            print(f"Skipping previously uploaded pages: {', '.join(skip_list)}")
+            print(
+                "Skipping previously uploaded pages: "
+                + ", ".join(str(x) for x in skip_list)
+            )
             log.warning(msg)
             log.warning(
-                "Skipping previous uploaded pages:\n  %s", "\n  ".join(skip_list)
+                "Skipping previous uploaded pages:\n  %s",
+                "\n  ".join(str(x) for x in skip_list),
             )
     else:
         print("There was a problem with this bundle.")

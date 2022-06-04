@@ -431,6 +431,7 @@ fullworkflow:
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
     - plom-scan process --demo fake_scribbled_exams1.pdf
+    - plom-scan upload fake_scribbled_exams1.pdf
     - plom-scan upload -u fake_scribbled_exams1.pdf
     # TODO: I removed some -c lines here...
     - plom-scan status
