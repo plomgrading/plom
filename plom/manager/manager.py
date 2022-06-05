@@ -179,8 +179,6 @@ class QVHistogram(QDialog):
 
     def __init__(self, parent, q, v, hist):
         super().__init__(parent)
-        self.question = q
-        self.version = v
         self.setWindowTitle("Histograms for question {} version {}".format(q, v))
         tot = 0
         mx = 0
@@ -307,12 +305,7 @@ class ProgressBox(QGroupBox):
     def __init__(self, manager, question, version):
         # This widget will be re-parented when its added to a layout
         super().__init__()
-        # TODO: used to call a method of manager, instead use signal/slots?
-        self._manager = manager
-        self.question = question
-        self.version = version
         self.setTitle(f"Q-{question} V-{version}")
-
         grid = QVBoxLayout()
         self.lhL = QLabel()
         grid.addWidget(self.lhL)
@@ -327,7 +320,7 @@ class ProgressBox(QGroupBox):
         self.pb.setFormat("%v / %m")
         grid.addWidget(self.pb)
         vhB = QPushButton("View histograms")
-        vhB.clicked.connect(self.viewHist)
+        vhB.clicked.connect(lambda: manager.viewMarkHistogram(question, version))
         grid.addWidget(vhB)
 
         self.setLayout(grid)
@@ -362,9 +355,6 @@ class ProgressBox(QGroupBox):
             )
             self.mtL.setText("Avg marking time = N/A")
             self.lhL.setText("None have been marked")
-
-    def viewHist(self):
-        self._manager.viewMarkHistogram(self.question, self.version)
 
 
 class Manager(QWidget):
