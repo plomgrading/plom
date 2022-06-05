@@ -306,7 +306,7 @@ class RubricTable(QTableWidget):
                 menu.addAction(a)
             menu.addSeparator()
 
-            hideAction = QAction("Hide", self)
+            hideAction = QAction("Hide rubric", self)
             hideAction.triggered.connect(self.hideCurrentRubric)
             menu.addAction(hideAction)
             menu.addSeparator()
