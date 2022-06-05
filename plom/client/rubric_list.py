@@ -746,6 +746,18 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.tabS, self.tabS.shortname)
         self.RTW.addTab(self.tabDeltaP, self.tabDeltaP.shortname)
         self.RTW.addTab(self.tabDeltaN, self.tabDeltaN.shortname)
+        b = QToolButton()
+        b.setText("+")
+        b.setAutoRaise(True)  # flat until hover, but not on macOS?
+        b.clicked.connect(self.add_new_tab)
+        m = QMenu()
+        m.addAction("Add tab", self.add_new_tab)
+        m.addAction("Rename current tab...", self.rename_current_tab)
+        m.addSeparator()
+        m.addAction("Remove current tab...", self.remove_current_tab)
+        b.setMenu(m)
+        # b.setPopupMode(QToolButton.MenuButtonPopup)
+        self.RTW.setCornerWidget(b)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         # connect the 'tab-change'-signal to 'handleClick' to fix #1497
         self.RTW.currentChanged.connect(self.handleClick)
