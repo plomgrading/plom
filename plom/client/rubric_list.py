@@ -241,32 +241,14 @@ class RubricTable(QTableWidget):
             menu.addAction(remAction)
             menu.addSeparator()
 
-        renameTabAction = QAction("Rename this tab...", self)
-        menu.addAction(renameTabAction)
-        renameTabAction.triggered.connect(self.rename_current_tab)
+        a = QAction("Rename this tab...", self)
+        a.triggered.connect(self._parent.rename_current_tab)
+        menu.addAction(a)
         a = QAction("Add new tab", self)
-        a.triggered.connect(lambda: self._parent.add_new_tab())
+        a.triggered.connect(self._parent.add_new_tab)
         menu.addAction(a)
         a = QAction("Remove this tab...", self)
-
-        def _local_delete_thyself():
-            # TODO: can we put all this in some close event?
-            # TODO: I don't like that we're hardcoding the parent structure here
-            msg = SimpleQuestion(
-                self,
-                f"<p>Are you sure you want to delete the tab &ldquo;{self.shortname}&rdquo;?</p>"
-                "<p>(The rubrics themselves will not be deleted).<p>",
-            )
-            if msg.exec() == QMessageBox.No:
-                return
-            for n in range(self._parent.RTW.count()):
-                tab = self._parent.RTW.widget(n)
-                if tab == self:
-                    self._parent.RTW.removeTab(n)
-            self.clear()
-            self.deleteLater()
-
-        a.triggered.connect(_local_delete_thyself)
+        a.triggered.connect(self._parent.remove_current_tab)
         menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
@@ -311,11 +293,11 @@ class RubricTable(QTableWidget):
             hideAction.triggered.connect(self.hideCurrentRubric)
             menu.addAction(hideAction)
             menu.addSeparator()
-        renameTabAction = QAction("Rename this tab...", self)
-        menu.addAction(renameTabAction)
-        renameTabAction.triggered.connect(self.rename_current_tab)
+        a = QAction("Rename this tab...", self)
+        a.triggered.connect(self._parent.rename_current_tab)
+        menu.addAction(a)
         a = QAction("Add new tab", self)
-        a.triggered.connect(lambda: self._parent.add_new_tab())
+        a.triggered.connect(self._parent.add_new_tab)
         menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
@@ -384,26 +366,6 @@ class RubricTable(QTableWidget):
             self.selectRow(targetRow)
             self.removeRow(sourceRow)
             event.accept()
-
-    def rename_current_tab(self):
-        # this is really a method for the current tab, not current row
-        # TODO: perhaps this method is in the wrong place
-        curtab_widget = self._parent.RTW.currentWidget()
-        if not curtab_widget:
-            return
-        curname = curtab_widget.shortname
-        s1, ok1 = QInputDialog.getText(
-            self, 'Rename tab "{}"'.format(curname), "Enter new name"
-        )
-        if not ok1:
-            return
-        # TODO: hint that "&nice" will enable "alt-n" shortcut on most OSes
-        # TODO: use a custom dialog
-        # s2, ok2 = QInputDialog.getText(
-        #     self, 'Rename tab "{}"'.format(curname), "Enter long name"
-        # )
-        log.debug('refresh tab text from "%s" to "%s"', curname, s1)
-        curtab_widget.set_name(s1)
 
     def appendByKey(self, key):
         """Append the rubric associated with a key to the end of the list
