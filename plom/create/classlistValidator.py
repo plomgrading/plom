@@ -7,8 +7,6 @@
 from collections import defaultdict
 import csv
 
-import pandas
-
 from plom.rules import validateStudentNumber
 
 # important classlist headers - all casefolded
@@ -295,8 +293,8 @@ class PlomClasslistValidator:
             bool: True if we think the input was from Canvas, based on
             presence of certain header names.  Otherwise False.
         """
-        with open(csv_file_name) as csvfile:
-            csv_reader = csv.DictReader(csvfile, skipinitialspace=True)
+        with open(csv_file_name) as f:
+            csv_reader = csv.DictReader(f, skipinitialspace=True)
             csv_fields = csv_reader.fieldnames
         return all(x in csv_fields for x in canvas_columns_format)
 
@@ -312,22 +310,19 @@ class PlomClasslistValidator:
         Returns:
             bool
         """
-
-        student_info_df = pandas.read_csv(csv_file_name, dtype="object")
         print(
-            'Loading from non-Canvas csv file to check file: "{0}"'.format(
-                csv_file_name
-            )
+            f'Loading from non-Canvas csv file to check file: "{csv_file_name}"'
         )
-        # strip excess whitespace from column names
-        student_info_df.rename(
-            columns=lambda x: str(x).strip(), inplace=True
-        )  # avoid issues with blanks
+        with open(csv_file_name) as f:
+            csv_reader = csv.DictReader(f, skipinitialspace=True)
+            column_names = csv_reader.fieldnames
+        # strip excess whitespace from column names to avoid issues with blanks
+        column_names = [str(x).strip() for x in column_names]
 
         id_cols = []
         fullname_cols = []
         papernumber_cols = []
-        for x in student_info_df.columns:
+        for x in column_names:
             cfx = x.casefold()
             print(">>>> checking ", cfx)
             if cfx == sid_field:
@@ -339,29 +334,29 @@ class PlomClasslistValidator:
 
         if not id_cols:
             print(f"Cannot find an id column - {id_cols}")
-            print("Columns present = {}".format(student_info_df.columns))
+            print(f"Columns present = {column_names}")
             return False
         elif len(id_cols) > 1:
             print(f"Multiple id columns - {id_cols}")
-            print("Columns present = {}".format(student_info_df.columns))
+            print(f"Columns present = {column_names}")
             return False
 
         if not fullname_cols:
             print(f"Cannot find an name column - {fullname_cols}")
-            print("Columns present = {}".format(student_info_df.columns))
+            print(f"Columns present = {column_names}")
             return False
         elif len(fullname_cols) > 1:
             print("Multiple name columns - {fullname_cols}")
-            print("Columns present = {}".format(student_info_df.columns))
+            print(f"Columns present = {column_names}")
             return False
 
         if not papernumber_cols:
             print(f"Cannot find a paper number column - {papernumber_cols}")
-            print("Columns present = {}".format(student_info_df.columns))
+            print(f"Columns present = {column_names}")
             return False
         elif len(papernumber_cols) > 1:
             print("Multiple paper number columns - {papernumber_cols}")
-            print("Columns present = {}".format(student_info_df.columns))
+            print(f"Columns present = {column_names}")
             return False
 
         return True
