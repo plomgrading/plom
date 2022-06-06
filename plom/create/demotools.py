@@ -10,12 +10,10 @@ __copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
+import csv
 import importlib.resources as resources
 from pathlib import Path
 import sys
-
-# try to avoid importing Pandas unless we use specific functions: Issue #2154
-# import pandas
 
 import plom
 from plom.textools import buildLaTeX
@@ -25,18 +23,19 @@ def getDemoClassList():
     """A classlist for demos.
 
     returns:
-        pandas.dataframe: the classlist as a Pandas dataframe.
+        list: each entry is dict of one row of the demo classlist.
     """
-    # TODO: replace without Canvas: maybe only caller is getLength below?
-    import pandas
-
-    with resources.open_binary(plom, "demoClassList.csv") as f:
-        return pandas.read_csv(f)
+    d = []
+    with resources.open_text(plom, "demoClassList.csv") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            d.append(row)
+    return d
 
 
 def getDemoClassListLength():
     """How long is the built-in demo classlist."""
-    return getDemoClassList().shape[0]
+    return len(getDemoClassList())
 
 
 def buildDemoSourceFiles(basedir=Path("."), solutions=False):
