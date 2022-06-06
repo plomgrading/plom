@@ -14,7 +14,7 @@ __license__ = "AGPL-3.0-or-later"
 
 from pathlib import Path
 
-# try to avoid importing Pandas unless we use specific functions: Issue #2152
+# try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
 
 from plom.finish import CSVFilename
