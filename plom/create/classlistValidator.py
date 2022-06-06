@@ -310,9 +310,7 @@ class PlomClasslistValidator:
         Returns:
             bool
         """
-        print(
-            f'Loading from non-Canvas csv file to check file: "{csv_file_name}"'
-        )
+        print(f'Loading from non-Canvas csv file to check file: "{csv_file_name}"')
         with open(csv_file_name) as f:
             csv_reader = csv.DictReader(f, skipinitialspace=True)
             column_names = csv_reader.fieldnames
