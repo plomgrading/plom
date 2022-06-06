@@ -82,9 +82,8 @@ class PlomClasslistValidator:
                 The keys give the column titles.
 
         Returns:
-            dict: If errors then return {'success': False, 'errors': error-list},
-                else return {'success': True, 'id': id_key, 'fullname': fullname_key, 'papernumber': papernumber_key}
-
+            dict: If errors then return ``{'success': False, 'errors': error-list}``,
+            else return ``{'success': True, 'id': id_key, 'fullname': fullname_key, 'papernumber': papernumber_key}``
         """
         id_keys = []
         fullname_keys = []
@@ -294,7 +293,7 @@ class PlomClasslistValidator:
 
         Returns:
             bool: True if we think the input was from Canvas, based on
-                presence of certain header names.  Otherwise False.
+            presence of certain header names.  Otherwise False.
         """
         with open(csv_file_name) as csvfile:
             csv_reader = csv.DictReader(csvfile, skipinitialspace=True)
