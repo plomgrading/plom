@@ -20,7 +20,7 @@ from plom.managerMessenger import ManagerMessenger
 class FinishMessenger(ManagerMessenger):
     """Finishing-related communications.
 
-    TODO: should we merge these few methods into ManagerMessenger?  Issue #5152.
+    TODO: should we merge these few methods into ManagerMessenger?  Issue #2152.
     """
 
     def __init__(self, *args, **kwargs):

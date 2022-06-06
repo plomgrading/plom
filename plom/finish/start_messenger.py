@@ -43,7 +43,7 @@ def with_finish_messenger(f):
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
         # if we have a messenger, nothing special, just call function
-        # Note: hacking to allow a ManagerMessenger too, Issue #5152
+        # Note: hacking to allow a ManagerMessenger too, Issue #2152
         msgr = kwargs.get("msgr")
         if isinstance(msgr, (FinishMessenger, ManagerMessenger)):
             return f(*args, **kwargs)
