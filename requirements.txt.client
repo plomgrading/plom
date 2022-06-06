@@ -13,6 +13,7 @@ PyQt5-sip==12.10.1
 appdirs==1.4.4
 arrow==1.2.2
 packaging==21.3
+# Pandas increases binaries by about 36%, temporarily needed for classlist upload
 pandas==1.4.2
 passlib==1.7.4
 Pillow==9.1.1
