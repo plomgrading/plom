@@ -425,6 +425,7 @@ class Manager(QWidget):
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.scanRefreshB.clicked.connect(self.refreshScanTab)
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
+        self.ui.downloadCSVButton.clicked.connect(self.downloadCSV)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
         self.ui.unidB.clicked.connect(self.un_id_paper)
         self.ui.unpredB.clicked.connect(self.remove_id_prediction)
@@ -1406,6 +1407,20 @@ class Manager(QWidget):
         self.ui.overallTW.resizeRowsToContents()
         self.ui.overallTW.setSortingEnabled(True)
         self.refreshOverallTab()
+
+    def downloadCSV(self):
+        from plom.finish import CSVFilename, pull_spreadsheet
+
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Save File", CSVFilename, "Comma Separated Values (*.csv)"
+        )
+        if not pull_spreadsheet(msgr=self.msgr, filename=filename, verbose=False):
+            WarnMsg(
+                self,
+                f"Spreadsheet written to {filename} but grading is not complete.",
+                info="Either some papers are unidentified or they are not fully marked.",
+                info_pre=False,
+            ).exec_()
 
     def viewTestStatus(self):
         pvi = self.ui.overallTW.selectedItems()

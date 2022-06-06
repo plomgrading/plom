@@ -17,11 +17,17 @@ RubricListFilename = "rubric_list.json"
 TestRubricMatrixFilename = "test_rubric_matrix.json"
 
 from .start_messenger import start_messenger
+from .start_messenger import with_finish_messenger
 from .clear_manager_login import clear_manager_login
+
+from .spreadsheet import pull_spreadsheet
 
 from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
 from .return_tools import make_canvas_gradefile
 
 # TODO: expose the contents from __main__ here
-# TODO: what you get from "from plom.finish import *"
-# __all__ = ["clear_manager_login"]
+# what you get from "from plom.finish import *"
+__all__ = [
+    "clear_manager_login",
+    "pull_spreadsheet",
+]

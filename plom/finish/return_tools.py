@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Colin B. Macdonald
+# Copyright (C) 2018-2022 Colin B. Macdonald
 # Copyright (C) 2020 Matthew Coles
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
@@ -14,7 +14,8 @@ __license__ = "AGPL-3.0-or-later"
 
 from pathlib import Path
 
-import pandas
+# try to avoid importing Pandas unless we use specific functions: Issue #2154
+# import pandas
 
 from plom.finish import CSVFilename
 from .utils import salted_int_hash_from_str
@@ -30,6 +31,8 @@ def import_canvas_csv(canvas_fromfile):
     Returns:
         pandas.DataFrame: dataframe of student information.
     """
+    import pandas
+
     df = pandas.read_csv(canvas_fromfile, dtype="object")
     print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
 
@@ -106,6 +109,8 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
     Returns:
         pandas.DataFrame : the dataframe with student information (it is also written to a csv).
     """
+    import pandas
+
     print("*** Generating Grade Spreadsheet ***")
     df = import_canvas_csv(canvas_fromfile)
 
@@ -176,6 +181,7 @@ def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits, salt=None):
     Returns:
         dict of the mapping from student number to secret code.
     """
+    import pandas
     from plom import isValidStudentNumber
 
     df = pandas.read_csv(csvin, dtype="object")
@@ -233,6 +239,8 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr, digits=9):
     Returns:
         dict: student number (str) -> hashed code.
     """
+    import pandas
+
     print("*** Generating Return Codes Spreadsheet ***")
     df = import_canvas_csv(csvin)
 
