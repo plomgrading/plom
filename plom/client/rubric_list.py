@@ -846,12 +846,14 @@ class RubricWidget(QWidget):
         if not tab.is_user_tab():  # no removing shared and delta tabs
             return
         # TODO: consider not asking or asking differently if empty?
-        msg = SimpleQuestion(
-            self,
-            f"<p>Are you sure you want to delete the tab &ldquo;{tab.shortname}&rdquo;?</p>"
-            "<p>(The rubrics themselves will not be deleted).<p>",
-        )
-        if msg.exec() == QMessageBox.No:
+        if tab.rowCount() > 0:
+            msg = "<p>Are you sure you want to delete the "
+            msg += f"tab &ldquo;{tab.shortname}&rdquo;?</p>"
+            msg += "<p>(The rubrics themselves will not be deleted).<p>"
+        else:
+            msg = "<p>Are you sure you want to delete the empty "
+            msg += f"tab &ldquo;{tab.shortname}&rdquo;?</p>"
+        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
             return
         self.RTW.removeTab(n)
         tab.clear()
