@@ -1545,7 +1545,7 @@ class Manager(QWidget):
         try:
             img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
-            ErrorMsg(self, err).exec()
+            ErrorMsg(self, str(err)).exec()
             return
 
         if not img_bytes:

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2019-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 
 """Exceptions for the Plom software.
@@ -102,6 +102,10 @@ class PlomOwnersLoggedInException(PlomBenignException):
 
 
 class PlomUnidentifiedPaperException(PlomBenignException):
+    pass
+
+
+class PlomUnscannedPaper(PlomBenignException):
     pass
 
 
