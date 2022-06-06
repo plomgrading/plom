@@ -6,7 +6,9 @@
 
 from collections import defaultdict
 import csv
+
 import pandas
+
 from plom.rules import validateStudentNumber
 
 # important classlist headers - all casefolded
