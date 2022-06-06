@@ -6,7 +6,8 @@ import json
 from pathlib import Path
 from warnings import warn
 
-import pandas
+# try to avoid importing Pandas unless we use specific functions: Issue #2154
+# import pandas
 
 from plom import undo_json_packing_of_version_map, check_version_map
 from plom.create import with_manager_messenger
@@ -38,6 +39,8 @@ def _version_map_from_csv(f):
     information.  In particular, it does not try to verify that they match
     the current server's classlist.
     """
+    import pandas
+
     df = pandas.read_csv(f, dtype="object")
 
     # autodetect number of questions from column headers

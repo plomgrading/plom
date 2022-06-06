@@ -14,7 +14,8 @@ import importlib.resources as resources
 from pathlib import Path
 import sys
 
-import pandas
+# try to avoid importing Pandas unless we use specific functions: Issue #2154
+# import pandas
 
 import plom
 from plom.textools import buildLaTeX
@@ -26,6 +27,9 @@ def getDemoClassList():
     returns:
         pandas.dataframe: the classlist as a Pandas dataframe.
     """
+    # TODO: replace without Canvas: maybe only caller is getLength below?
+    import pandas
+
     with resources.open_binary(plom, "demoClassList.csv") as f:
         return pandas.read_csv(f)
 
