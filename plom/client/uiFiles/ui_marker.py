@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './qtCreatorFiles/ui_marker.ui'
+# Form implementation generated from reading ui file 'qtCreatorFiles/ui_marker.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.6
 #
@@ -28,7 +28,7 @@ class Ui_MarkerWindow(object):
         self.frame.setFrameShadow(QtWidgets.QFrame.Plain)
         self.frame.setObjectName("frame")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.frame)
-        self.verticalLayout.setContentsMargins(0, 0, 0, -1)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.infoBox = QtWidgets.QGroupBox(self.frame)
         self.infoBox.setObjectName("infoBox")
@@ -159,15 +159,16 @@ class Ui_MarkerWindow(object):
         self.closeButton.setObjectName("closeButton")
         self.layoutClose.addWidget(self.closeButton)
         self.verticalLayout.addWidget(self.frameClose)
-        self.paperBox = QtWidgets.QGroupBox(self.splitter)
+        self.paperBox = QtWidgets.QFrame(self.splitter)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.paperBox.sizePolicy().hasHeightForWidth())
         self.paperBox.setSizePolicy(sizePolicy)
         self.paperBox.setObjectName("paperBox")
-        self.gridLayout_6 = QtWidgets.QGridLayout(self.paperBox)
-        self.gridLayout_6.setObjectName("gridLayout_6")
+        self.paperBoxLayout = QtWidgets.QVBoxLayout(self.paperBox)
+        self.paperBoxLayout.setContentsMargins(0, 0, 0, 0)
+        self.paperBoxLayout.setObjectName("paperBoxLayout")
         self.horizontalLayout.addWidget(self.splitter)
 
         self.retranslateUi(MarkerWindow)
@@ -194,5 +195,4 @@ class Ui_MarkerWindow(object):
         self.labelProgress.setText(_translate("MarkerWindow", "Progress:"))
         self.mProgressBar.setFormat(_translate("MarkerWindow", "%v of %m"))
         self.closeButton.setText(_translate("MarkerWindow", "&Close"))
-        self.paperBox.setTitle(_translate("MarkerWindow", "Current paper"))
 from plom.client.useful_classes import SimpleTableView
