@@ -126,7 +126,7 @@ def build_papers_backend(
 
     if os.name == "nt":
         # Issue #2172, Pool/multiproc failing on Windows, use loop
-        for x in make_PDF_args:
+        for x in tqdm(make_PDF_args):
             make_PDF(*x)
     else:
         num_PDFs = len(make_PDF_args)
