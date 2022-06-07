@@ -146,11 +146,29 @@ class ImageViewWidget(QWidget):
 
         self.setLayout(grid)
 
-    def updateImage(self, image_data):
-        """Pass file(s) to the view to update the image"""
+    def updateImage(self, image_data, keep_zoom=False):
+        """Pass file(s) to the view to update the image
+
+        args:
+            image_data: documented elsewhere
+
+        keyword args:
+            keep_zoom (bool): by default (when `False`) we reset the
+                view to the default on new images.  Pass `True` if you
+                want to instead try to maintain the current zoom and
+                pan; but be aware if the new images have changed in
+                number or in resolution, then the result may be
+                poor or ill-defined.
+        """
+        if keep_zoom:
+            stuff = self.view.get_pan_and_zoom()
+            print(stuff)
+            print(type(stuff))
         self.view.updateImages(image_data)
-        # at least for now, view always resets on updateImages
-        self.resetView()
+        if keep_zoom:
+            self.view.set_pan_and_zoom(stuff)
+        else:
+            self.resetView()
 
     def get_orientation(self):
         """Report the sum of user-performed rotations."""
@@ -362,3 +380,17 @@ class _ExamView(QGraphicsView):
             self.theta = 270
         # Unpleasant to grub in parent but want to unlock zoom not just refit
         self.parent().resetView()
+
+    def get_pan_and_zoom(self):
+        """Record the pan and zoom information of the view.
+
+        Returns:
+            object: this can be given back to ``set_pan_and_zoom`` but
+            otherwise should be considered an opaque but picklable
+            object.  Having said all that, its probably just a tuple of
+            numbers.
+        """
+        return self.scene.sceneRect()
+
+    def set_pan_and_zoom(self, p_and_z):
+        self.scene.setSceneRect(p_and_z)

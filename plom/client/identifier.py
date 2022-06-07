@@ -418,7 +418,7 @@ class IDClient(QWidget):
         # Here the system should check if imagefile exist and grab if needed.
         self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
-        self.testImg.updateImage(self.exM.paperList[r].originalFile)
+        self.testImg.updateImage(self.exM.paperList[r].originalFile, keep_zoom=True)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
         prediction = self.predictions.get(str(tn), None)
