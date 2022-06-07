@@ -149,6 +149,8 @@ class ImageViewWidget(QWidget):
     def updateImage(self, image_data):
         """Pass file(s) to the view to update the image"""
         self.view.updateImages(image_data)
+        # at least for now, view always resets on updateImages
+        self.resetView()
 
     def get_orientation(self):
         """Report the sum of user-performed rotations."""
