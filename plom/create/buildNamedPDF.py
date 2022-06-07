@@ -7,6 +7,7 @@
 
 import csv
 from multiprocessing import Pool
+import os
 from pathlib import Path
 
 from tqdm import tqdm
@@ -123,12 +124,14 @@ def build_papers_backend(
             )
         )
 
-    # Same as:
-    # for x in make_PDF_args:
-    #     make_PDF(*x)
-    num_PDFs = len(make_PDF_args)
-    with Pool() as pool:
-        list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
+    if os.name == "nt":
+        # Issue #2172, Pool/multiproc failing on Windows, use loop
+        for x in make_PDF_args:
+            make_PDF(*x)
+    else:
+        num_PDFs = len(make_PDF_args)
+        with Pool() as pool:
+            list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
     # output CSV with all this info in it
     print("Writing produced_papers.csv.")
     outputProductionCSV(spec, make_PDF_args)
