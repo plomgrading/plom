@@ -1310,7 +1310,8 @@ class MarkerClient(QWidget):
             # Colin doesn't understand this proxy: just pull task and query examModel
             task = self.prxM.getPrefix(pr)
             self.testImg.updateImage(self.examModel.get_source_image_data(task))
-        self.testImg.forceRedrawOrSomeBullshit()
+        # TODO: seems to behave ok without this hack: delete?
+        # self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
 
     def _updateCurrentlySelectedRow(self):

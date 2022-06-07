@@ -258,8 +258,10 @@ class IDClient(QWidget):
         # Connect the table's model sel-changed to appropriate function.
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         self.requestNext()
-        # make sure exam view window's view is reset....
-        self.testImg.forceRedrawOrSomeBullshit()
+
+        # TODO: seems to behave ok without this hack: delete?
+        # self.testImg.forceRedrawOrSomeBullshit()
+
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
