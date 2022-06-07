@@ -16,6 +16,7 @@ import signal
 import os
 import sys
 import traceback as tblib
+from multiprocessing import freeze_support
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
@@ -173,4 +174,6 @@ def main():
 
 
 if __name__ == "__main__":
+    # See Issue #2172: needed for Windows + PyInstaller
+    freeze_support()
     main()
