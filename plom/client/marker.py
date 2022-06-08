@@ -1117,7 +1117,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
-        self.ui.gridLayout_6.addWidget(self.testImg, 0, 0)
+        self.ui.paperBoxLayout.addWidget(self.testImg, 10)
 
     def connectGuiButtons(self):
         """

@@ -45,6 +45,9 @@
        <property name="rightMargin">
         <number>0</number>
        </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
         <widget class="QGroupBox" name="infoBox">
          <property name="title">
@@ -341,17 +344,27 @@
        </item>
       </layout>
      </widget>
-     <widget class="QGroupBox" name="paperBox">
+     <widget class="QFrame" name="paperBox">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <property name="title">
-       <string>Current paper</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_6"/>
+      <layout class="QVBoxLayout" name="paperBoxLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+      </layout>
      </widget>
     </widget>
    </item>
