@@ -32,6 +32,7 @@ from PyQt5.QtWidgets import (
     QSpacerItem,
     QSpinBox,
     QStackedWidget,
+    QTabBar,
     QTabWidget,
     QTableWidget,
     QTableWidgetItem,
@@ -240,32 +241,14 @@ class RubricTable(QTableWidget):
             menu.addAction(remAction)
             menu.addSeparator()
 
-        renameTabAction = QAction("Rename this tab...", self)
-        menu.addAction(renameTabAction)
-        renameTabAction.triggered.connect(self.rename_current_tab)
+        a = QAction("Rename this tab...", self)
+        a.triggered.connect(self._parent.rename_current_tab)
+        menu.addAction(a)
         a = QAction("Add new tab", self)
-        a.triggered.connect(lambda: self._parent.add_new_tab())
+        a.triggered.connect(self._parent.add_new_tab)
         menu.addAction(a)
         a = QAction("Remove this tab...", self)
-
-        def _local_delete_thyself():
-            # TODO: can we put all this in some close event?
-            # TODO: I don't like that we're hardcoding the parent structure here
-            msg = SimpleQuestion(
-                self,
-                f"<p>Are you sure you want to delete the tab &ldquo;{self.shortname}&rdquo;?</p>"
-                "<p>(The rubrics themselves will not be deleted).<p>",
-            )
-            if msg.exec() == QMessageBox.No:
-                return
-            for n in range(self._parent.RTW.count()):
-                tab = self._parent.RTW.widget(n)
-                if tab == self:
-                    self._parent.RTW.removeTab(n)
-            self.clear()
-            self.deleteLater()
-
-        a.triggered.connect(_local_delete_thyself)
+        a.triggered.connect(self._parent.remove_current_tab)
         menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
@@ -306,15 +289,15 @@ class RubricTable(QTableWidget):
                 menu.addAction(a)
             menu.addSeparator()
 
-            hideAction = QAction("Hide", self)
+            hideAction = QAction("Hide rubric", self)
             hideAction.triggered.connect(self.hideCurrentRubric)
             menu.addAction(hideAction)
             menu.addSeparator()
-        renameTabAction = QAction("Rename this tab...", self)
-        menu.addAction(renameTabAction)
-        renameTabAction.triggered.connect(self.rename_current_tab)
+        a = QAction("Rename this tab...", self)
+        a.triggered.connect(self._parent.rename_current_tab)
+        menu.addAction(a)
         a = QAction("Add new tab", self)
-        a.triggered.connect(lambda: self._parent.add_new_tab())
+        a.triggered.connect(self._parent.add_new_tab)
         menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
@@ -383,26 +366,6 @@ class RubricTable(QTableWidget):
             self.selectRow(targetRow)
             self.removeRow(sourceRow)
             event.accept()
-
-    def rename_current_tab(self):
-        # this is really a method for the current tab, not current row
-        # TODO: perhaps this method is in the wrong place
-        curtab_widget = self._parent.RTW.currentWidget()
-        if not curtab_widget:
-            return
-        curname = curtab_widget.shortname
-        s1, ok1 = QInputDialog.getText(
-            self, 'Rename tab "{}"'.format(curname), "Enter new name"
-        )
-        if not ok1:
-            return
-        # TODO: hint that "&nice" will enable "alt-n" shortcut on most OSes
-        # TODO: use a custom dialog
-        # s2, ok2 = QInputDialog.getText(
-        #     self, 'Rename tab "{}"'.format(curname), "Enter long name"
-        # )
-        log.debug('refresh tab text from "%s" to "%s"', curname, s1)
-        curtab_widget.set_name(s1)
 
     def appendByKey(self, key):
         """Append the rubric associated with a key to the end of the list
@@ -670,6 +633,43 @@ class RubricTable(QTableWidget):
                 self.item(r, 3).setToolTip(hoverText.strip())
 
 
+class TabBarWithAddRenameRemoveContext(QTabBar):
+    """A QTabBar with a context right-click menu for add/rename/remove tabs.
+
+    Has slots for add, renaming and removing tabs:
+
+    * add_tab_signal
+    * rename_tab_signal
+    * remove_tab_signal
+    """
+
+    add_tab_signal = pyqtSignal()
+    rename_tab_signal = pyqtSignal(int)
+    remove_tab_signal = pyqtSignal(int)
+
+    def __init__(self):
+        super().__init__()
+
+    def mousePressEvent(self, mouseEvent):
+        if mouseEvent.button() == Qt.RightButton:
+            point = mouseEvent.pos()
+            n = self.tabAt(point)
+            if n >= 0:
+                name = self.tabText(n)
+                menu = QMenu()
+                # rename/remove will silently skip delta/shared tabs
+                # TODO: grey-out nicer but how to cleanly check `tab.is_user_tab`?
+                menu.addAction(
+                    f'Rename tab "{name}"...', lambda: self.rename_tab_signal.emit(n)
+                )
+                menu.addAction(
+                    f'Remove tab "{name}"...', lambda: self.remove_tab_signal.emit(n)
+                )
+                menu.addAction("Add new tab", self.add_tab_signal.emit)
+                menu.exec(self.mapToGlobal(point))
+        super().mousePressEvent(mouseEvent)
+
+
 class RubricWidget(QWidget):
     """The RubricWidget is a multi-tab interface for displaying, choosing and managing rubrics."""
 
@@ -697,11 +697,29 @@ class RubricWidget(QWidget):
         self.tabDeltaP = RubricTable(self, shortname=deltaP_label, tabType="delta")
         self.tabDeltaN = RubricTable(self, shortname=deltaN_label, tabType="delta")
         self.RTW = QTabWidget()
+        tb = TabBarWithAddRenameRemoveContext()
+        # TODO: is this normal or should one connect the signals in the ctor?
+        tb.add_tab_signal.connect(self.add_new_tab)
+        tb.rename_tab_signal.connect(self.rename_tab)
+        tb.remove_tab_signal.connect(self.remove_tab)
+        self.RTW.setTabBar(tb)
         self.RTW.setMovable(True)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
         self.RTW.addTab(self.tabS, self.tabS.shortname)
         self.RTW.addTab(self.tabDeltaP, self.tabDeltaP.shortname)
         self.RTW.addTab(self.tabDeltaN, self.tabDeltaN.shortname)
+        b = QToolButton()
+        b.setText("+")
+        b.setAutoRaise(True)  # flat until hover, but not on macOS?
+        b.clicked.connect(self.add_new_tab)
+        m = QMenu()
+        m.addAction("Add tab", self.add_new_tab)
+        m.addAction("Rename current tab...", self.rename_current_tab)
+        m.addSeparator()
+        m.addAction("Remove current tab...", self.remove_current_tab)
+        b.setMenu(m)
+        # b.setPopupMode(QToolButton.MenuButtonPopup)
+        self.RTW.setCornerWidget(b)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         # connect the 'tab-change'-signal to 'handleClick' to fix #1497
         self.RTW.currentChanged.connect(self.handleClick)
@@ -814,6 +832,59 @@ class RubricWidget(QWidget):
             n = n - 1
         # insert tab after it
         self.RTW.insertTab(n + 1, tab, tab.shortname)
+
+    def remove_current_tab(self):
+        n = self.RTW.currentIndex()
+        self.remove_tab(n)
+
+    def remove_tab(self, n):
+        if n < 0:  # -1 means no current tab
+            return
+        tab = self.RTW.widget(n)
+        if not tab:
+            return
+        if not tab.is_user_tab():  # no removing shared and delta tabs
+            return
+        # TODO: consider not asking or asking differently if empty?
+        if tab.rowCount() > 0:
+            msg = "<p>Are you sure you want to delete the "
+            msg += f"tab &ldquo;{tab.shortname}&rdquo;?</p>"
+            msg += "<p>(The rubrics themselves will not be deleted).<p>"
+        else:
+            msg = "<p>Are you sure you want to delete the empty "
+            msg += f"tab &ldquo;{tab.shortname}&rdquo;?</p>"
+        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+            return
+        self.RTW.removeTab(n)
+        tab.clear()
+        tab.deleteLater()
+
+    def rename_current_tab(self):
+        n = self.RTW.currentIndex()
+        self.rename_tab(n)
+
+    def rename_tab(self, n):
+        if n < 0:  # -1 means no current tab
+            return
+        tab = self.RTW.widget(n)
+        if not tab:
+            return
+        # TODO: Issue #2165: should we disable renaming Shared tab?
+        if tab.is_delta_tab():  # no renaming +/- delta tabs
+            return
+        curname = tab.shortname
+        s, ok = QInputDialog.getText(
+            self, f'Rename tab "{curname}"', f'Enter new name for tab "{curname}"'
+        )
+        if not ok:
+            return
+        # TODO: hint that "&nice" will enable "alt-n" shortcut on most OSes
+        # TODO: use a custom dialog
+        # s2, ok2 = QInputDialog.getText(
+        #     self, 'Rename tab "{}"'.format(curname), "Enter long name"
+        # )
+        log.debug('changing tab name from "%s" to "%s"', curname, s)
+        tab.set_name(s)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
