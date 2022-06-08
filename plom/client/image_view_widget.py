@@ -158,16 +158,12 @@ class ImageViewWidget(QWidget):
                 want to instead try to maintain the current zoom and
                 pan; but be aware if the new images have changed in
                 number or in resolution, then the result may be
-                poor or ill-defined.
+                poor or ill-defined.  If there was no previous image
+                the underlying view will ignore our request.
         """
-        if keep_zoom:
-            stuff = self.view.get_pan_and_zoom()
-            print(stuff)
-            print(type(stuff))
-        self.view.updateImages(image_data)
-        if keep_zoom:
-            self.view.set_pan_and_zoom(stuff)
-        else:
+        self.view.updateImages(image_data, keep_zoom)
+        if not keep_zoom:
+            # to reset the view lock icon
             self.resetView()
 
     def get_orientation(self):
@@ -271,7 +267,7 @@ class _ExamView(QGraphicsView):
         self.theta = 0
         self.updateImages(image_data)
 
-    def updateImages(self, image_data):
+    def updateImages(self, image_data, keep_zoom=False):
         """Update the images new ones from filenames and optionally metadata.
 
         Args:
@@ -285,12 +281,20 @@ class _ExamView(QGraphicsView):
                 filenames.  Can also be a single `str`/`pathlib.Path`,
                 for a single image.
 
+        Keyword Args:
+                keep_zoom (bool): if we already have an image, try to
+                leave it alone and replace with a new one without
+                changing the zoom or pan.  Default: False.
+
         Raises:
             ValueError: an image did not load, for example if was empty.
             KeyError: dict did not have appropriate keys.
         """
         if isinstance(image_data, (str, Path)):
             image_data = [image_data]
+        if len(self.imageGItem.childItems()) < 1:
+            # no previous image: do not honour request to persist zoom
+            keep_zoom = False
         for img in self.imageGItem.childItems():
             self.imageGItem.removeFromGroup(img)
             self.scene.removeItem(img)
@@ -298,7 +302,8 @@ class _ExamView(QGraphicsView):
 
         # we may use the viewing angle instead of rotating the item so reset
         # if we have new images, even if they have non-zero orientation
-        self.resetTransform()
+        if not keep_zoom:
+            self.resetTransform()
 
         if image_data is not None:
             x = 0
@@ -337,6 +342,8 @@ class _ExamView(QGraphicsView):
                 # TODO: don't floor here if units of scene are large!
                 x = int(x)
 
+        if keep_zoom:
+            return
         # Set sensible sizes and put into the view, and fit view to the image
         br = self.imageGItem.boundingRect()
         self.scene.setSceneRect(
@@ -380,17 +387,3 @@ class _ExamView(QGraphicsView):
             self.theta = 270
         # Unpleasant to grub in parent but want to unlock zoom not just refit
         self.parent().resetView()
-
-    def get_pan_and_zoom(self):
-        """Record the pan and zoom information of the view.
-
-        Returns:
-            object: this can be given back to ``set_pan_and_zoom`` but
-            otherwise should be considered an opaque but picklable
-            object.  Having said all that, its probably just a tuple of
-            numbers.
-        """
-        return self.scene.sceneRect()
-
-    def set_pan_and_zoom(self, p_and_z):
-        self.scene.setSceneRect(p_and_z)
