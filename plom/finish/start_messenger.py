@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2018-2021 Colin B. Macdonald
+# Copyright (C) 2018-2022 Colin B. Macdonald
 
 import functools
 
@@ -43,7 +43,7 @@ def with_finish_messenger(f):
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
         # if we have a messenger, nothing special, just call function
-        # Note: hacking to allow a ManagerMessenger too, Issue #5152
+        # Note: hacking to allow a ManagerMessenger too, Issue #2152
         msgr = kwargs.get("msgr")
         if isinstance(msgr, (FinishMessenger, ManagerMessenger)):
             return f(*args, **kwargs)

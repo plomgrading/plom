@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import tempfile
@@ -63,8 +63,7 @@ def assemble(outname, shortName, sid, coverfile, img_list, watermark=False):
                 jpeg_file.seek(0)
                 pg.insert_image(rec, stream=jpeg_file.read())
             else:
-                # TODO: can remove str() once minimum pymupdf is 1.18.9
-                pg.insert_image(rec, filename=str(img_name))
+                pg.insert_image(rec, filename=img_name)
             # add a watermark of the student-id in rect at bottom of page
         if watermark:
             wm_rect = fitz.Rect(margin, h - margin - 24, margin + 200, h - margin)

@@ -44,10 +44,13 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, s=None, port=Default_Port, verify_ssl=True):
+    def __init__(self, s=None, port=Default_Port, *, verify_ssl=True):
         """Initialize a new BaseMessenger.
 
         Args:
+            s (str/None): URL or None to default to localhost.
+            port (int): What port to try to connect to.  Defaults
+                to 41984 if omitted.
 
         Keyword Arguments:
             verify_ssl (True/False/str): controls where SSL certs are

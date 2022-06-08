@@ -21,6 +21,11 @@ from .start_messenger import with_finish_messenger
 from .clear_manager_login import clear_manager_login
 
 from .spreadsheet import pull_spreadsheet
+from .reassemble_completed import reassemble_paper, reassemble_all_papers
+from .assemble_solutions import assemble_solutions
+from .rubric_downloads import download_rubric_files
+from .coded_return import make_coded_return_webpage
+from .audit import audit
 
 from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
 from .return_tools import make_canvas_gradefile
@@ -30,4 +35,9 @@ from .return_tools import make_canvas_gradefile
 __all__ = [
     "clear_manager_login",
     "pull_spreadsheet",
+    "reassemble_paper",
+    "reassemble_all_papers",
+    "assemble_solutions",
+    "download_rubric_files",
+    "make_coded_return_webpage",
 ]

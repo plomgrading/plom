@@ -40,17 +40,16 @@ from stdiomask import getpass
 
 from plom import __version__
 
-# TODO: be more decisive about how this should be
 from plom.finish import clear_manager_login
 from plom.finish import CSVFilename
 from plom.finish import pull_spreadsheet
+from plom.finish import reassemble_paper, reassemble_all_papers
+from plom.finish import assemble_solutions
+from plom.finish import download_rubric_files
+from plom.finish import audit
+from plom.finish import make_coded_return_webpage
 import plom.finish.check_completed
-import plom.finish.reassemble_completed
 import plom.finish.reassemble_ID_only
-import plom.finish.coded_return
-import plom.finish.assemble_solutions
-import plom.finish.rubric_downloads
-import plom.finish.audit
 
 
 def get_parser():
@@ -247,22 +246,29 @@ def main():
     elif args.command == "reassemble":
         if args.ided_only:
             plom.finish.reassemble_ID_only.main(args.server, args.password)
+        elif args.testnum:
+            reassemble_paper(
+                args.testnum, msgr=(args.server, args.password), skip=args.skip_existing
+            )
         else:
-            plom.finish.reassemble_completed.main(
-                args.testnum, args.server, args.password, args.skip_existing
+            reassemble_all_papers(
+                msgr=(args.server, args.password), skip=args.skip_existing
             )
     elif args.command == "solutions":
-        plom.finish.assemble_solutions.main(
-            args.testnum, args.server, args.password, watermark=args.mark
+        assemble_solutions(
+            testnum=args.testnum,
+            msgr=(args.server, args.password),
+            watermark=args.mark,
+            verbose=True,
         )
     elif args.command == "webpage":
-        plom.finish.coded_return.main(
+        make_coded_return_webpage(
             args.hex, args.digits, args.salt, args.server, args.solutions
         )
     elif args.command == "rubric":
-        plom.finish.rubric_downloads.main(args.server, args.password)
+        download_rubric_files(msgr=(args.server, args.password))
     elif args.command == "audit":
-        plom.finish.audit.main(args.server, args.password)
+        audit(msgr=(args.server, args.password))
 
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)

@@ -12,7 +12,7 @@ import tempfile
 from tqdm import tqdm
 
 from plom import get_question_label
-from plom.finish import start_messenger
+from plom.finish import with_finish_messenger
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 from plom.plom_exceptions import PlomSeriousException
@@ -135,85 +135,76 @@ def _reassemble_one_paper(
     return outname
 
 
-def reassemble_one_paper(
-    testnum, server=None, pwd=None, outdir=Path("reassembled"), skip=False
-):
-    """Reassemble a test paper.
+@with_finish_messenger
+def reassemble_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
+    """Reassemble a particular test paper.
 
     Args:
-        testnum (int): which test number would be reassembled.
-        server (str)
-        pwd (str)
+        testnum (int): which test number to reassemble.
 
     Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
         outdir (pathlib.Path/str): where to save the reassembled pdf file
             Defaults to "reassembled/" in the current working directory.
             It will be created if it does not exist.
-        skip_existing (bool): Default False, but if True, skip any pdf files
+        skip (bool): Default False, but if True, skip any pdf files
             we already have (Careful: without checking for changes!)
 
     Returns:
-        outname (pathlib.Path): the full path of the reassembled test pdf.
+        pathlib.Path: the full path of the reassembled test pdf.
 
     Raises:
-        ValueError: does not exist, or not ready.
+        ValueError: paper number does not exist, or is not ready.
     """
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
-    msgr = start_messenger(server, pwd)
+    short_name = msgr.getInfoShortName()
+    spec = msgr.get_spec()
+    num_questions = spec["numberOfQuestions"]
+    max_marks = msgr.MgetAllMax()
+
+    completedTests = msgr.RgetCompletionStatus()
+    t = str(testnum)  # dicts keyed by strings
     try:
-        short_name = msgr.getInfoShortName()
-        spec = msgr.get_spec()
-        num_questions = spec["numberOfQuestions"]
-        max_marks = msgr.MgetAllMax()
+        completed = completedTests[t]
+        # is 4-tuple [Scanned, IDed, #Marked, Last_update_time]
+    except KeyError:
+        raise ValueError(f"Paper {t} does not exist or is not marked") from None
+    if not completed[0]:
+        raise ValueError(f"Paper {t} is not completed: not scanned")
+    if not completed[1]:
+        raise ValueError(f"Paper {t} is not completed: not identified")
+    if completed[2] != num_questions:
+        raise ValueError(f"Paper {t} is not complete: unmarked questions")
 
-        completedTests = msgr.RgetCompletionStatus()
-        t = str(testnum)  # dicts keyed by strings
-        try:
-            completed = completedTests[t]
-            # is 4-tuple [Scanned, IDed, #Marked, Last_update_time]
-        except KeyError:
-            raise ValueError(f"Paper {t} does not exist or is not marked") from None
-        if not completed[0]:
-            raise ValueError(f"Paper {t} is not completed: not scanned")
-        if not completed[1]:
-            raise ValueError(f"Paper {t} is not completed: not identified")
-        if completed[2] != num_questions:
-            raise ValueError(f"Paper {t} is not complete: unmarked questions")
-
-        identifiedTests = msgr.RgetIdentified()
-        # dict testNumber -> [sid, sname]
-        sid = identifiedTests[t][0]
-        # TODO: will a context manager delete content too? helpful here!
-        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-        outname = _reassemble_one_paper(
-            msgr,
-            tmpdir,
-            outdir,
-            short_name,
-            max_marks,
-            num_questions,
-            testnum,
-            sid,
-            skip,
-        )
-        shutil.rmtree(tmpdir)
-    finally:
-        msgr.closeUser()
-        msgr.stop()
+    identifiedTests = msgr.getIdentified()
+    # dict testNumber -> [sid, sname]
+    sid = identifiedTests[t][0]
+    # TODO: will a context manager delete content too? helpful here!
+    tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+    outname = _reassemble_one_paper(
+        msgr,
+        tmpdir,
+        outdir,
+        short_name,
+        max_marks,
+        num_questions,
+        testnum,
+        sid,
+        skip,
+    )
+    shutil.rmtree(tmpdir)
     return outname
 
 
-def reassemble_all_papers(
-    server=None, pwd=None, outdir=Path("reassembled"), skip=False
-):
+@with_finish_messenger
+def reassemble_all_papers(*, msgr, outdir=Path("reassembled"), skip=False):
     """Reassemble all test papers.
 
-    Args:
-        server (str)
-        pwd (str)
-
     Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
         outdir (pathlib.Path/str): where to save the reassembled pdf file
             Defaults to "reassembled/" in the current working directory.
             It will be created if it does not exist.
@@ -222,43 +213,31 @@ def reassemble_all_papers(
     """
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
-    msgr = start_messenger(server, pwd)
-    try:
-        short_name = msgr.getInfoShortName()
-        spec = msgr.get_spec()
-        num_questions = spec["numberOfQuestions"]
-        max_marks = msgr.MgetAllMax()
+    short_name = msgr.getInfoShortName()
+    spec = msgr.get_spec()
+    num_questions = spec["numberOfQuestions"]
+    max_marks = msgr.MgetAllMax()
 
-        completedTests = msgr.RgetCompletionStatus()
-        # dict testnumber -> [scanned, id'd, #q's marked]
-        identifiedTests = msgr.RgetIdentified()
-        # dict testNumber -> [sid, sname]
+    completedTests = msgr.RgetCompletionStatus()
+    # dict testnumber -> [scanned, id'd, #q's marked]
+    identifiedTests = msgr.getIdentified()
+    # dict testNumber -> [sid, sname]
 
-        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-        print(f"Downloading to temp directory {tmpdir}")
+    tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+    print(f"Downloading to temp directory {tmpdir}")
 
-        for t, completed in tqdm(completedTests.items()):
-            if completed[0] and completed[1] and completed[2] == num_questions:
-                sid = identifiedTests[t][0]
-                _reassemble_one_paper(
-                    msgr,
-                    tmpdir,
-                    outdir,
-                    short_name,
-                    max_marks,
-                    num_questions,
-                    t,
-                    sid,
-                    skip,
-                )
-        shutil.rmtree(tmpdir)
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-
-
-def main(testnum, server, password, skip):
-    if testnum is None:
-        reassemble_all_papers(server, password, skip=skip)
-    else:
-        reassemble_one_paper(testnum, server, password, skip=skip)
+    for t, completed in tqdm(completedTests.items()):
+        if completed[0] and completed[1] and completed[2] == num_questions:
+            sid = identifiedTests[t][0]
+            _reassemble_one_paper(
+                msgr,
+                tmpdir,
+                outdir,
+                short_name,
+                max_marks,
+                num_questions,
+                t,
+                sid,
+                skip,
+            )
+    shutil.rmtree(tmpdir)
