@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-21 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Victoria Schuster
@@ -69,7 +69,10 @@ def get_parser():
     parser.add_argument(
         "--prepare-only",
         action="store_true",
-        help="Start the demo server long enough to get things running, then stop",
+        help="""
+            Start the demo server long enough to get things running, then stop.
+            This is primarily for testing and debugging.
+        """,
     )
     return parser
 
@@ -184,8 +187,6 @@ def main():
         port = args.port if args.port else Default_Port
         print(f"  * Server running on port {port} with PID {background_server.pid}\n")
         print(f"  * Account login info: {args.server_dir / 'userListRaw.csv'}\n")
-        # print("  * Press Ctrl-C to stop this demo")
-        # background_server.wait()
         input("Press enter when you want to stop the server...")
     background_server.stop()
     print("Server stopped, goodbye!")
