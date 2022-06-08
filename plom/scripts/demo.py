@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-21 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Victoria Schuster
@@ -65,6 +65,14 @@ def get_parser():
         "--no-scans",
         action="store_true",
         help="Start demo server but without uploading fake-scans. For testing purposes.",
+    )
+    parser.add_argument(
+        "--prepare-only",
+        action="store_true",
+        help="""
+            Start the demo server long enough to get things running, then stop.
+            This is primarily for testing and debugging.
+        """,
     )
     return parser
 
@@ -171,13 +179,15 @@ def main():
     assert background_server.ping_server(), "cannot ping server, something gone wrong?"
     print("Server seems to still be running: demo setup is complete")
 
-    print('\n*** Now run "plom-client" ***\n')
-    port = args.port if args.port else Default_Port
-    print(f"  * Server running on port {port} with PID {background_server.pid}\n")
-    print(f"  * Account login info: {args.server_dir / 'userListRaw.csv'}\n")
-    # print("  * Press Ctrl-C to stop this demo")
-    # background_server.wait()
-    input("Press enter when you want to stop the server...")
+    if args.prepare_only:
+        print("\n*** We will now stop the demo server...")
+        print(f'*** You can run it again with "plom-server launch {args.server_dir}"\n')
+    else:
+        print('\n*** Now run "plom-client" ***\n')
+        port = args.port if args.port else Default_Port
+        print(f"  * Server running on port {port} with PID {background_server.pid}\n")
+        print(f"  * Account login info: {args.server_dir / 'userListRaw.csv'}\n")
+        input("Press enter when you want to stop the server...")
     background_server.stop()
     print("Server stopped, goodbye!")
 
