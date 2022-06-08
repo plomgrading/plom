@@ -313,10 +313,6 @@ class ProgressBox(QGroupBox):
         self.setTitle("Q-{} V-{}".format(qu, v))
 
         grid = QVBoxLayout()
-        self.nscL = QLabel()
-        grid.addWidget(self.nscL)
-        self.nmkL = QLabel()
-        grid.addWidget(self.nmkL)
         self.lhL = QLabel()
         grid.addWidget(self.lhL)
         self.mtL = QLabel()
@@ -334,15 +330,12 @@ class ProgressBox(QGroupBox):
         grid.addWidget(vhB)
 
         self.setLayout(grid)
-        self.refresh(stats)
 
     def refresh(self, stats):
         self.setEnabled(True)
         self.setVisible(True)
         self.pb.setMaximum(stats["NScanned"])
         self.pb.setValue(stats["NMarked"])
-        self.nscL.setText("# Scanned = {}".format(stats["NScanned"]))
-        self.nmkL.setText("# Marked = {}".format(stats["NMarked"]))
 
         if stats["NScanned"] == 0:
             self.setEnabled(False)
@@ -360,14 +353,14 @@ class ProgressBox(QGroupBox):
                 )
             )
             self.mtL.setText("Avg marking time = {:0.1f}s".format(stats["avgMTime"]))
-            self.lhL.setText("# Marked in last hour = {}".format(stats["NRecent"]))
+            self.lhL.setText("{} marked in last hour".format(stats["NRecent"]))
         else:
             self.avgL.setText("Mean : Median : Mode  = N/A")
             self.mmfL.setText(
                 "Min : Max : Full = N/A : N/A : {}".format(stats["fullMark"])
             )
             self.mtL.setText("Avg marking time = N/A")
-            self.lhL.setText("# Marked in last hour = N/A")
+            self.lhL.setText("None have been marked")
 
     def viewHist(self):
         self._manager.viewMarkHistogram(self.question, self.version)
@@ -1556,6 +1549,7 @@ class Manager(QWidget):
     def initProgressTab(self):
         self.initOverallTab()
         self.initMarkTab()
+        self.refreshMarkTab()
         self.initIDTab()
         self.initOutTab()
 
