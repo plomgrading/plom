@@ -218,7 +218,7 @@ class IDClient(QWidget):
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
         self.testImg = ImageViewWidget(self)
-        self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
+        self.ui.paperBoxLayout.addWidget(self.testImg, 0, 0)
 
         self.ui.closeButton.clicked.connect(self.close)
 
