@@ -188,7 +188,8 @@ class IDHandler:
 
             - HTTPBadRequest: authentication problem.
             - HTTPNotFound (404): no such paper.
-            - HTTPConflict (409): not the owner, or not manager.
+            - HTTPConflict (409): not the owner, or not manager, and
+              someone else has the image
             - HTTPGone (410): the paper is not scanned *and* has not been ID'd.
 
         .. note:: if the paper is not fully scanned---specifically
@@ -207,10 +208,10 @@ class IDHandler:
                 raise web.HTTPConflict(reason="Not owner, someone else has that image")
             elif output == "NoScanAndNotIDd":
                 raise web.HTTPGone(
-                    reason="Paper has not been ID'd and the ID-pages have not been scanned"
+                    reason=f"Paper {test_number} has not been ID'd and the ID-pages have not been scanned"
                 )
             else:  # output == "NoTest":
-                raise web.HTTPNotFound(reason="No such paper")
+                raise web.HTTPNotFound(reason=f"No such paper number {test_number}")
 
         # if there are no such files return a success but with code 204 = no content.
         if not output:
