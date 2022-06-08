@@ -225,23 +225,24 @@ class SolutionViewer(QWidget):
     def __init__(self, parent, fname):
         super().__init__()
         self._annotr = parent
-        grid = QGridLayout()
+        grid = QVBoxLayout()
         self.sv = ImageViewWidget(self, fname)
-        self.refreshButton = QPushButton("&Refresh")
-        self.closeButton = QPushButton("&Close")
-        self.maxNormButton = QPushButton("&Max/Norm")
-        grid.addWidget(self.sv, 1, 1, 6, 6)
-        grid.addWidget(self.refreshButton, 7, 1)
-        grid.addWidget(self.closeButton, 7, 7)
-        grid.addWidget(self.maxNormButton, 1, 7)
+        refreshButton = QPushButton("&Refresh")
+        closeButton = QPushButton("&Close")
+        maxNormButton = QPushButton("&Max/Norm")
+        grid.addWidget(self.sv)
+        buttons = QHBoxLayout()
+        buttons.addWidget(refreshButton)
+        buttons.addWidget(maxNormButton)
+        buttons.addStretch(1)
+        buttons.addWidget(closeButton)
+        grid.addLayout(buttons)
         self.setLayout(grid)
-        self.closeButton.clicked.connect(self.close)
-        self.maxNormButton.clicked.connect(self.swapMaxNorm)
-        self.refreshButton.clicked.connect(self.refresh)
+        closeButton.clicked.connect(self.close)
+        maxNormButton.clicked.connect(self.swapMaxNorm)
+        refreshButton.clicked.connect(self.refresh)
 
         self.setWindowTitle(f"Solutions - {Path(fname).stem}")
-
-        self.setMinimumSize(500, 500)
 
         self.show()
 
@@ -280,14 +281,14 @@ class CatViewer(QDialog):
             self.getNewImageFile()
         self.img = ImageViewWidget(self, self.catz)
 
-        self.refreshButton = QPushButton("&Refresh")
-        self.closeButton = QPushButton("&Close")
+        refreshButton = QPushButton("&Refresh")
+        closeButton = QPushButton("&Close")
         grid.addWidget(self.img, 1, 1, 6, 7)
-        grid.addWidget(self.refreshButton, 7, 1)
-        grid.addWidget(self.closeButton, 7, 7)
+        grid.addWidget(refreshButton, 7, 1)
+        grid.addWidget(closeButton, 7, 7)
         self.setLayout(grid)
-        self.closeButton.clicked.connect(self.close)
-        self.refreshButton.clicked.connect(self.refresh)
+        closeButton.clicked.connect(self.close)
+        refreshButton.clicked.connect(self.refresh)
 
         self.setWindowTitle("Catz")
 
