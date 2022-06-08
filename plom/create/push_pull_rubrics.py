@@ -6,7 +6,9 @@
 import importlib.resources as resources
 import json
 
-import pandas
+# try to avoid importing Pandas unless we use specific functions: Issue #2154
+# import pandas
+
 import toml
 
 from plom.create import with_manager_messenger
@@ -57,6 +59,8 @@ def download_rubrics_to_file(filename, *, msgr, verbose=True):
         elif suffix == ".toml":
             toml.dump({"rubric": rubrics}, f)
         elif suffix == ".csv":
+            import pandas
+
             df = pandas.json_normalize(rubrics)
             df.to_csv(f, index=False, sep=",", encoding="utf-8")
         else:
@@ -85,6 +89,8 @@ def upload_rubrics_from_file(filename, *, msgr, verbose=True):
         elif suffix == ".toml":
             rubrics = toml.load(f)["rubric"]
         elif suffix == ".csv":
+            import pandas
+
             df = pandas.read_csv(f)
             df.fillna("", inplace=True)
             # TODO: flycheck is whining about this to_json

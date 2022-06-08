@@ -9,7 +9,8 @@ import importlib.resources as resources
 from pathlib import Path
 import tempfile
 
-import pandas
+# try to avoid importing Pandas unless we use specific functions: Issue #2154
+# import pandas
 
 import plom
 from plom.finish.return_tools import import_canvas_csv
@@ -44,6 +45,8 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
         otherwise the original columns will be included too, except
         those renamed to create the required columns.
     """
+    import pandas
+
     df = pandas.read_csv(csv_file_name, dtype="object")
     print('Extracting columns from csv file: "{0}"'.format(csv_file_name))
 
