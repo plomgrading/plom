@@ -15,7 +15,7 @@ import math
 from pathlib import Path
 
 import numpy as np
-from cv2 import cv2
+import cv2
 import imutils
 from imutils.perspective import four_point_transform
 
