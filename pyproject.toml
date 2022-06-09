@@ -9,7 +9,7 @@ target-version = ['py36']
 exclude = '/(\.eggs|\.git|\.hg|\.mypy _cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/|ui_.+\.py'
 
 [tool.pylint.master]
-extension-pkg-allow-list = ["PyQt5"]
+extension-pkg-allow-list = ["PyQt5", "cv2"]
 generated-members = ["pandas"]
 # order matters: need errors-only before disable
 errors-only = true

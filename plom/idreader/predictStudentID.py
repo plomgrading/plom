@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (c) 2022 Edith Coates
 
 """
 Use image processing to extract and "read" student numbers.
