@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Manager UI tool can add spec and build papers, and download the `marks.csv`.
 
 ### Changed
 
 ### Fixed
-
+* Client: creating and modifying tabs is more obvious with context menus and `+` button.
+* UI and other fixes.
 
 
 ## [0.9.0] - 2022-05-25
