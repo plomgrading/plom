@@ -5,19 +5,19 @@ These are as best we can recall.  Currently UBC Maths-centric.
 
 ## 2018-19
 
-| Course |  Task    | Student count | Notes                            |
-|--------|----------|:-------------:|----------------------------------|
-| 220    | Midterm  | 350           | Very first Plom                  |
-| 405    | Midterm  | 50            | Colin joins                      |
-| 104    | Midterm  | 200           | MacLean section: online return   |
-| 253    | Midterm  | 100     | MacLean section graded + online return |
-| 253    | Midterm  | 600     | Colin all 5 sections + online return   |
-| 253    | Exam     | 600     | assigned seating, grading done offline |
-| 221    | Midterm  | 650           | BenW and MattC                   |
-| 101    | Midterm  | 1000          | Online return                    |
-| 317    | Midterm  | 100           |                                  |
-| 318    | Midterm, Exam   | 100    | Omer                             |
-| 264    | Quizzes  | 200           | Seckin                           |
+| Course |  Task         | # students | Notes                                  |
+|--------|---------------|:----------:|----------------------------------------|
+| 220    | Midterm       | 350        | Very first Plom                        |
+| 405    | Midterm       | 50         | Colin joins                            |
+| 104    | Midterm       | 200        | MacLean section: online return         |
+| 253    | Midterm       | 100        | MacLean section graded + online return |
+| 253    | Midterm       | 600        | Colin all 5 sections + online return   |
+| 253    | Exam          | 600        | assigned seating, grading done offline |
+| 221    | Midterm       | 650        | BenW and MattC                         |
+| 101    | Midterm       | 1000       | Online return                          |
+| 317    | Midterm       | 100        |                                        |
+| 318    | Midterm, Exam | 100        | Omer                                   |
+| 264    | Quizzes       | 200        | Seckin                                 |
 
 Approx 5000 papers over 9 courses.
 
@@ -50,15 +50,15 @@ Approx 7500 papers over 7 courses.
 
 ## 2020-2021
 
-| Course  |  Tasks                  | # students |  Notes              |
-|---------|-------------------------|:----------:|---------------------|
-| 253     | 5 quizzes + exam        | 640        | 1st student-uploaded|
-| 344     | 2 midterms + exam       | 80         | Omer                |
-| 220     | exam                    | 460        | Seckin/Andrew       |
-| 256     | exam                    | 420        | Eric/AndreasB       |
-| BMEG220 | quiz x2, midterm, exam  | 120        | 1st non-math        |
-| 340     | 11 homework sets        | 127        | Forest, 1st homework|
-| 253S1   | 5 quizzes + exam        | 200        |                     |
+| Course  |  Tasks                  | # students |  Notes               |
+|---------|-------------------------|:----------:|----------------------|
+| 253     | 5 quizzes + exam        | 640        | 1st student-uploaded |
+| 344     | 2 midterms + exam       | 80         | Omer                 |
+| 220     | exam                    | 460        | Seckin/Andrew        |
+| 256     | exam                    | 420        | Eric/AndreasB        |
+| BMEG220 | quiz x2, midterm, exam  | 120        | 1st non-math         |
+| 340     | 11 homework sets        | 127        | Forest, 1st homework |
+| 253S1   | 5 quizzes + exam        | 200        |                      |
 
 Approx 8000 papers over 7 courses
 
@@ -86,15 +86,23 @@ Approx: 11500 over 9 course
 | Course  |  Tasks                  | # students |  Notes                      |
 |---------|-------------------------|:----------:|-----------------------------|
 | 101     | 2 midterms, final exam  | 1350       | Philip Loewen               |
-| 105     | midterm                 | 1020       | self-submitted              |
-| 303     | 2 midterms, 1 HW + ?    | 180        |                             |
-| 317     | midterm                 | 160        |                             |
-| BMEG220 | midterm, 2 quizzes, ?   | 110        |                             |
-| ELEC221 | midterm, ?              | 160        |                             |
+| 105     | 2 midterms, final exam  | 1020       | self-submitted              |
+| 303     | 2 midterms, 1 HW, exam  | 180        |                             |
+| 307     | exam                    | 160        |                             |
+| 317     | midterm, exam           | 160        |                             |
+| BMEG220 | midterm, 2 quiz, exam   | 110        |                             |
+| ELEC211 | 2 midterms, exam        | 160        |                             |
 
-(term in progress: do not add to totals below)
+Approx: 9230 over 7 courses
 
 
-## Totals up to Dec 31st 2021
+## 2022S1
 
-  * Approx 33500 papers in 35 courses.
+| Course  |  Tasks                  | # students |  Notes                      |
+|---------|-------------------------|:----------:|-----------------------------|
+| 253     | 2 midterms, final exam  | 140        |                             |
+
+
+## Totals up to June 30th 2022
+
+  * Approx 43150 papers in 43 courses.
