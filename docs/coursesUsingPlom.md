@@ -86,15 +86,23 @@ Approx: 11500 over 9 course
 | Course  |  Tasks                  | # students |  Notes                      |
 |---------|-------------------------|:----------:|-----------------------------|
 | 101     | 2 midterms, final exam  | 1350       | Philip Loewen               |
-| 105     | midterm                 | 1020       | self-submitted              |
-| 303     | 2 midterms, 1 HW + ?    | 180        |                             |
-| 317     | midterm                 | 160        |                             |
-| BMEG220 | midterm, 2 quizzes, ?   | 110        |                             |
-| ELEC221 | midterm, ?              | 160        |                             |
+| 105     | 2 midterms, final exam  | 1020       | self-submitted              |
+| 303     | 2 midterms, 1 HW, exam  | 180        |                             |
+| 307     | exam                    | 160        |                             |
+| 317     | midterm, exam           | 160        |                             |
+| BMEG220 | midterm, 2 quiz, exam   | 110        |                             |
+| ELEC211 | 2 midterms, exam        | 160        |                             |
 
-(term in progress: do not add to totals below)
+Approx: 9230 over 7 courses
 
 
-## Totals up to Dec 31st 2021
+## 2022S1
 
-  * Approx 33500 papers in 35 courses.
+| Course  |  Tasks                  | # students |  Notes                      |
+|---------|-------------------------|:----------:|-----------------------------|
+| 253     | 2 midterms, final exam  | 140        |                             |
+
+
+## Totals up to June 30th 2022
+
+  * Approx 43150 papers in 43 courses.
