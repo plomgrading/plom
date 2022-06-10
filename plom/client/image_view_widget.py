@@ -365,6 +365,7 @@ class _ExamView(QGraphicsView):
             self.zoomIn()
         self.centerOn(event.pos())
         # Unpleasant to grub in parent but want mouse events to lock zoom
+        # TODO: instead use a signal/slot mechanism
         self.parent().zoomLockSetOn()
         return super().mouseReleaseEvent(event)
 
@@ -386,4 +387,5 @@ class _ExamView(QGraphicsView):
         if self.theta == -90:
             self.theta = 270
         # Unpleasant to grub in parent but want to unlock zoom not just refit
+        # TODO: instead use a signal/slot mechanism
         self.parent().resetView()
