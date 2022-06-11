@@ -786,7 +786,8 @@ class BaseMessenger:
             PlomUnscannedPaper: In some special cases, you could get `None`
                 instead, see note above.
             PlomTakenException: someone else has it and we're not manager.
-            PlomSeriousException: no such paper or other errors.
+            PlomNoPaper: no such paper.
+            PlomSeriousException: Other errors.
         """
         with self.SRmutex:
             try:
@@ -802,7 +803,7 @@ class BaseMessenger:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 elif response.status_code == 404:
-                    raise PlomSeriousException(response.reason) from None
+                    raise PlomNoPaper(response.reason) from None
                 elif response.status_code == 410:
                     raise PlomUnscannedPaper(response.reason) from None
                 elif response.status_code == 409:
@@ -828,7 +829,7 @@ class BaseMessenger:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
-                raise PlomSeriousException(
+                raise PlomNoPaper(
                     f"Cannot find DNW image files for {papernum}."
                 ) from None
             elif response.status_code == 410:
@@ -856,6 +857,7 @@ class BaseMessenger:
             PlomAuthenticationException
             PlomTaskChangedError
             PlomTaskDeletedError
+            PlomNoPaper
             PlomSeriousException
         """
         if edition is None:
@@ -880,7 +882,7 @@ class BaseMessenger:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
-                raise PlomSeriousException(
+                raise PlomNoPaper(
                     "Cannot find image file for {}.".format(num)
                 ) from None
             elif response.status_code == 406:
@@ -910,6 +912,7 @@ class BaseMessenger:
             PlomAuthenticationException
             PlomTaskChangedError: TODO: add this back again, with integriy_check??
             PlomTaskDeletedError
+            PlomNoPaper
             PlomSeriousException
         """
         if edition is None:
@@ -925,7 +928,7 @@ class BaseMessenger:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
-                raise PlomSeriousException(
+                raise PlomNoPaper(
                     "Cannot find image file for {}.".format(num)
                 ) from None
             elif response.status_code == 406:

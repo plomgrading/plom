@@ -146,4 +146,8 @@ class PlomTimeoutError(PlomSeriousException):
     """Some message failed due to network trouble such as a timeout.
 
     TODO: currently a PlomSeriousException but consider making this
-    a PlomBenignException laer."""
+    a PlomBenignException later."""
+
+class PlomNoPaper(PlomBenignException):
+    """Plom doesn't have a paper"""
+    pass
