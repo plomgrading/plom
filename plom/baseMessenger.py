@@ -24,6 +24,7 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomNoClasslist,
     PlomNoMoreException,
+    PlomNoPaper,
     PlomNoSolutionException,
     PlomServerNotReady,
     PlomSSLError,

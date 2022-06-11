@@ -148,6 +148,8 @@ class PlomTimeoutError(PlomSeriousException):
     TODO: currently a PlomSeriousException but consider making this
     a PlomBenignException later."""
 
+
 class PlomNoPaper(PlomBenignException):
     """Plom doesn't have a paper"""
+
     pass
