@@ -146,9 +146,25 @@ class ImageViewWidget(QWidget):
 
         self.setLayout(grid)
 
-    def updateImage(self, image_data):
-        """Pass file(s) to the view to update the image"""
-        self.view.updateImages(image_data)
+    def updateImage(self, image_data, keep_zoom=False):
+        """Pass file(s) to the view to update the image
+
+        args:
+            image_data: documented elsewhere
+
+        keyword args:
+            keep_zoom (bool): by default (when `False`) we reset the
+                view to the default on new images.  Pass `True` if you
+                want to instead try to maintain the current zoom and
+                pan; but be aware if the new images have changed in
+                number or in resolution, then the result may be
+                poor or ill-defined.  If there was no previous image
+                the underlying view will ignore our request.
+        """
+        self.view.updateImages(image_data, keep_zoom)
+        if not keep_zoom:
+            # to reset the view lock icon
+            self.resetView()
 
     def get_orientation(self):
         """Report the sum of user-performed rotations."""
@@ -251,7 +267,7 @@ class _ExamView(QGraphicsView):
         self.theta = 0
         self.updateImages(image_data)
 
-    def updateImages(self, image_data):
+    def updateImages(self, image_data, keep_zoom=False):
         """Update the images new ones from filenames and optionally metadata.
 
         Args:
@@ -265,12 +281,20 @@ class _ExamView(QGraphicsView):
                 filenames.  Can also be a single `str`/`pathlib.Path`,
                 for a single image.
 
+        Keyword Args:
+                keep_zoom (bool): if we already have an image, try to
+                leave it alone and replace with a new one without
+                changing the zoom or pan.  Default: False.
+
         Raises:
             ValueError: an image did not load, for example if was empty.
             KeyError: dict did not have appropriate keys.
         """
         if isinstance(image_data, (str, Path)):
             image_data = [image_data]
+        if len(self.imageGItem.childItems()) < 1:
+            # no previous image: do not honour request to persist zoom
+            keep_zoom = False
         for img in self.imageGItem.childItems():
             self.imageGItem.removeFromGroup(img)
             self.scene.removeItem(img)
@@ -278,7 +302,8 @@ class _ExamView(QGraphicsView):
 
         # we may use the viewing angle instead of rotating the item so reset
         # if we have new images, even if they have non-zero orientation
-        self.resetTransform()
+        if not keep_zoom:
+            self.resetTransform()
 
         if image_data is not None:
             x = 0
@@ -317,6 +342,8 @@ class _ExamView(QGraphicsView):
                 # TODO: don't floor here if units of scene are large!
                 x = int(x)
 
+        if keep_zoom:
+            return
         # Set sensible sizes and put into the view, and fit view to the image
         br = self.imageGItem.boundingRect()
         self.scene.setSceneRect(
@@ -338,6 +365,7 @@ class _ExamView(QGraphicsView):
             self.zoomIn()
         self.centerOn(event.pos())
         # Unpleasant to grub in parent but want mouse events to lock zoom
+        # TODO: instead use a signal/slot mechanism
         self.parent().zoomLockSetOn()
         return super().mouseReleaseEvent(event)
 
@@ -359,4 +387,5 @@ class _ExamView(QGraphicsView):
         if self.theta == -90:
             self.theta = 270
         # Unpleasant to grub in parent but want to unlock zoom not just refit
+        # TODO: instead use a signal/slot mechanism
         self.parent().resetView()

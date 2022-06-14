@@ -258,8 +258,10 @@ class IDClient(QWidget):
         # Connect the table's model sel-changed to appropriate function.
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         self.requestNext()
-        # make sure exam view window's view is reset....
-        self.testImg.forceRedrawOrSomeBullshit()
+
+        # TODO: seems to behave ok without this hack: delete?
+        # self.testImg.forceRedrawOrSomeBullshit()
+
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
@@ -416,7 +418,7 @@ class IDClient(QWidget):
         # Here the system should check if imagefile exist and grab if needed.
         self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
-        self.testImg.updateImage(self.exM.paperList[r].originalFile)
+        self.testImg.updateImage(self.exM.paperList[r].originalFile, keep_zoom=True)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
         prediction = self.predictions.get(str(tn), None)
