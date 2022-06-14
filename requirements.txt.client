@@ -18,7 +18,7 @@ Pillow==9.1.1
 pymupdf==1.19.6
 requests==2.27.1
 requests-toolbelt==0.9.1
-segno==1.4.1
+segno==1.5.2
 stdiomask==0.0.6
 toml==0.10.2
 tqdm==4.64.0
