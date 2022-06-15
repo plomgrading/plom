@@ -2327,22 +2327,24 @@ class MarkerClient(QWidget):
                 idx = [i for i, line in enumerate(lines) if line.startswith("! ")]
                 if any(idx):
                     n = idx[0]  # could be fancier if more than one match
-                    info = "\n".join(lines[max(0, n - 5) : n + 5])
+                    info = '<font size="-3"><pre style="white-space: pre-wrap;">\n'
+                    info += "\n".join(lines[max(0, n - 5) : n + 5])
+                    info += "\n</pre></font>"
                     # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
-                    WarnMsg(
+                    InfoMsg(
                         None,
                         """
-                        <p>The server reported an error processing your TeX fragment.</p>
-                        <p>Perhaps the error is visible in the following snippet,
-                        otherwise see full logs under details:</p>
+                        <p>The server was unable to process your TeX fragment.</p>
+                        <p>Partial error message:</p>
                         """,
                         details=fragment,
                         info=info,
+                        info_pre=False,
                     ).exec()
                 else:
-                    WarnMsg(
+                    InfoMsg(
                         None,
-                        "<p>The server reported an error processing your TeX fragment.</p>",
+                        "<p>The server was unable to process your TeX fragment.</p>",
                         details=fragment,
                     ).exec()
             if cache_invalid:
