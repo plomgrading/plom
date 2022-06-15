@@ -2342,9 +2342,9 @@ class MarkerClient(QWidget):
                         info_pre=False,
                     ).exec()
                 else:
-                    WarnMsg(
+                    InfoMsg(
                         None,
-                        "<p>The server reported an error processing your TeX fragment.</p>",
+                        "<p>The server was unable to process your TeX fragment.</p>",
                         details=fragment,
                     ).exec()
             if cache_invalid:
