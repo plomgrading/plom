@@ -16,7 +16,7 @@
 # TODO: what bits of our source code to put in src?
 
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get install -y python3-dev && \
