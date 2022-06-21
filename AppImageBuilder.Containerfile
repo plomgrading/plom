@@ -30,7 +30,7 @@ RUN apt-get -y update && \
 # RUN apt-get -y install appstream
 
 RUN python3 -m pip install --upgrade pip
-RUN pip install appimage-builder
+RUN pip install appimage-builder>=1.0.3
 
 COPY AppImageBuilder.yml /app/
 COPY . /app/src/
