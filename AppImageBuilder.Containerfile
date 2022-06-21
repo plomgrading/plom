@@ -13,6 +13,8 @@
 # Instead of running this file you can execute the commands interactively,
 # e.g., inside `podman run -it --rm -v ./:/media:z ubuntu:20.04`.
 #
+# Do we want to keep Ubuntu back on 20.04 to have earliest supported OS?
+#
 # TODO: what bits of our source code to put in src?
 
 
@@ -26,7 +28,7 @@ RUN apt-get -y update && \
         gtk-update-icon-cache \
         squashfs-tools zsync
 
-# too old?  errors on validating our file
+# used to get errors on validating our file
 RUN apt-get -y install appstream appstream-util
 
 RUN python3 -m pip install --upgrade pip
