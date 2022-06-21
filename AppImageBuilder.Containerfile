@@ -27,7 +27,7 @@ RUN apt-get -y update && \
         squashfs-tools zsync
 
 # too old?  errors on validating our file
-# RUN apt-get -y install appstream
+RUN apt-get -y install appstream appstream-util
 
 RUN python3 -m pip install --upgrade pip
 RUN pip install appimage-builder>=1.0.3
