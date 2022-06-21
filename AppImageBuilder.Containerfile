@@ -13,6 +13,8 @@
 # Instead of running this file you can execute the commands interactively,
 # e.g., inside `podman run -it --rm -v ./:/media:z ubuntu:20.04`.
 #
+# Do we want to keep Ubuntu back on 20.04 to have earliest supported OS?
+#
 # TODO: what bits of our source code to put in src?
 
 
@@ -24,17 +26,13 @@ RUN apt-get -y update && \
         python3-setuptools patchelf desktop-file-utils libgdk-pixbuf2.0-dev \
         fakeroot strace fuse \
         gtk-update-icon-cache \
-        wget
+        squashfs-tools zsync
 
-# too old?  errors on validating our file
-# RUN apt-get -y install appstream
-
-RUN wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool && \
-    chmod +x /usr/local/bin/appimagetool
+# used to get errors on validating our file
+RUN apt-get -y install appstream appstream-util
 
 RUN python3 -m pip install --upgrade pip
-# pinned to 1.0.2 for Issue #2179
-RUN pip install appimage-builder==1.0.2
+RUN pip install appimage-builder>=1.0.3
 
 COPY AppImageBuilder.yml /app/
 COPY . /app/src/
