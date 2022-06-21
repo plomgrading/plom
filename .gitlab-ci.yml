@@ -816,7 +816,6 @@ binary_upload:
 # These are run once tests pass: to change re-add `needs: []`
 linux_client_appimage:
   stage: packaging
-  needs: []
   script:
     - docker build --tag appimagebuilder_tmp -f AppImageBuilder.Containerfile .
     - docker create -ti --name dummy appimagebuilder_tmp bash
