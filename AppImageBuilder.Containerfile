@@ -33,8 +33,7 @@ RUN wget https://github.com/AppImage/AppImageKit/releases/download/continuous/ap
     chmod +x /usr/local/bin/appimagetool
 
 RUN python3 -m pip install --upgrade pip
-# pinned to 1.0.2 for Issue #2179
-RUN pip install appimage-builder==1.0.2
+RUN pip install appimage-builder
 
 COPY AppImageBuilder.yml /app/
 COPY . /app/src/
