@@ -24,7 +24,7 @@ RUN apt-get -y update && \
         python3-setuptools patchelf desktop-file-utils libgdk-pixbuf2.0-dev \
         fakeroot strace fuse \
         gtk-update-icon-cache \
-        wget squashfs-tools zsync
+        squashfs-tools zsync
 
 # too old?  errors on validating our file
 # RUN apt-get -y install appstream
