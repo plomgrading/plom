@@ -232,8 +232,10 @@ class TextItem(QGraphicsTextItem):
             log.warning(
                 "TextItem needs to tex but does not yet have a scene, probably came from rubric placement?"
             )
+            # This is associated with some QTimer nonsense, see #2188 and #1624
+            # TODO: at least do it quietly without popping a duplicate dialog
             fragfilename = self._texmaker.latexAFragment(
-                texIt, quiet=False, cache_invalid_tryagain=True
+                texIt, quiet=True, cache_invalid_tryagain=True
             )
         else:
             fragfilename = self.scene().latexAFragment(
