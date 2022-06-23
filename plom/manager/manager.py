@@ -441,6 +441,8 @@ class Manager(QWidget):
         self.ui.flagReviewButton.clicked.connect(self.reviewFlagTableRowsForReview)
         self.ui.removeAnnotationsButton.clicked.connect(self.removeAnnotationsFromRange)
 
+        self.ui.rubricsRefreshButton.clicked.connect(self.rubricsRefresh)
+
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
         self.ui.removePartScanB.clicked.connect(self.removePagesFromPartScan)
@@ -1951,6 +1953,14 @@ class Manager(QWidget):
             self.ui.tasksOutTW.setItem(r, k, item)
 
         self.ui.tasksOutTW.setSortingEnabled(True)
+
+    ##################
+    # rubrics tab stuff
+
+    def rubricsRefresh(self):
+        r = self.msgr.MgetRubrics()
+        # TODO fill a table
+        self.ui.rubricsLabel.setText(f"Server has {len(r)} rubrics.")
 
     ##################
     # review tab stuff
