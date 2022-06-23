@@ -15,7 +15,7 @@ arrow==1.2.2
 packaging==21.3
 passlib==1.7.4
 Pillow==9.1.1
-pymupdf==1.19.6
+pymupdf==1.20.0
 requests==2.27.1
 requests-toolbelt==0.9.1
 segno==1.5.2
