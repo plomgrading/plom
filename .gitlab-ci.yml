@@ -257,9 +257,9 @@ pylint:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    # Trying to workaround Issue #2088:
-    - python3 -m pip install astroid==2.11.2
-    - python3 -m pip install pylint==2.13.5
+    # These are pinned at 2.14.*: should be manually bumped eventually
+    - python3 -m pip install astroid~=2.11.6
+    - python3 -m pip install pylint~=2.14.3
   script:
     - pylint plom
   allow_failure: true
