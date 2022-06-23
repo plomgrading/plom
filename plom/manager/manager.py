@@ -441,7 +441,11 @@ class Manager(QWidget):
         self.ui.flagReviewButton.clicked.connect(self.reviewFlagTableRowsForReview)
         self.ui.removeAnnotationsButton.clicked.connect(self.removeAnnotationsFromRange)
 
+        self.ui.rubricsDownloadButton.clicked.connect(self.rubricsDownload)
+        self.ui.rubricsUploadButton.clicked.connect(self.rubricsUpload)
         self.ui.rubricsRefreshButton.clicked.connect(self.rubricsRefresh)
+
+        self.ui.reassembleButton.clicked.connect(self.reassemblePapers)
 
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
@@ -1961,6 +1965,12 @@ class Manager(QWidget):
         r = self.msgr.MgetRubrics()
         # TODO fill a table
         self.ui.rubricsLabel.setText(f"Server has {len(r)} rubrics.")
+
+    def rubricsDownload(self):
+        WarnMsg(self, "Not implemented!").exec()
+
+    rubricsUpload = rubricsDownload
+    reassemblePapers = rubricsDownload
 
     ##################
     # review tab stuff
