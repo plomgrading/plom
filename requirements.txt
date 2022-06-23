@@ -21,10 +21,10 @@ exif==1.3.5
 file-magic==0.4.0
 imutils==0.5.4
 lapsolver==1.1.0
-numpy==1.22.4
-opencv-python-headless==4.5.5.64
+numpy==1.23.0
+opencv-python-headless==4.6.0.66
 packaging==21.3
-pandas==1.4.2
+pandas==1.4.3
 passlib==1.7.4
 peewee==3.14.10
 Pillow==9.1.1
@@ -35,7 +35,7 @@ pyzbar==0.1.9
 requests==2.27.1
 requests-toolbelt==0.9.1
 scikit-learn==1.1.1
-segno==1.4.1
+segno==1.5.2
 stdiomask==0.0.6
 toml==0.10.2
 tqdm==4.64.0
