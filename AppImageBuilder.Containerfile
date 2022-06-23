@@ -18,15 +18,26 @@
 # TODO: what bits of our source code to put in src?
 
 
+# from "bash" onward is copy-paste from appimage-builder-1.0.3:
 FROM ubuntu:20.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get install -y python3-dev && \
-    apt-get install -y python3-pip \
-        python3-setuptools patchelf desktop-file-utils libgdk-pixbuf2.0-dev \
-        fakeroot strace fuse \
+    apt-get install -y python3-pip python3-setuptools \
+        fuse \
         gtk-update-icon-cache \
-        squashfs-tools zsync
+        bash \
+        coreutils \
+        binutils \
+        util-linux \
+        file \
+        desktop-file-utils \
+        fakeroot \
+        libgdk-pixbuf2.0-dev \
+        patchelf \
+        squashfs-tools \
+        strace \
+        zsync
 
 # used to get errors on validating our file
 RUN apt-get -y install appstream appstream-util
