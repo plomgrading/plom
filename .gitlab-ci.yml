@@ -1136,16 +1136,16 @@ macos_tests:
   - brew install zbar
   - brew install imagemagick
   - brew install openssl
-  # brew install mactex-no-gui
-  - brew install basictex
+  - brew install mactex-no-gui
+  # brew install basictex
   # brew install libjpeg libjpeg-turbo jpeg-turbo
-  # pip install cffi
-  # pip install jpegtran-cffi
   - pip install pytest
   - pip install wheel
   - pip install .
   - python -m plom.create --version
   - python -m plom.server --version
+  - which latexmk
+  - latexmk -h
   - python -m pytest -l --pyargs plom
 
 
