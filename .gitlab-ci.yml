@@ -1126,8 +1126,8 @@ macos_tests:
   - pip --version
   - echo $USER
   - brew --version
-  - brew update
-  - brew --version
+  # brew update
+  # brew --version
   - brew install cmake
   - brew install zbar
   - brew install imagemagick
