@@ -384,7 +384,7 @@ class Messenger(BaseMessenger):
             PlomTaskDeletedError
             PlomSeriousException
         """
-        # Python 3.6 fails on pathlib.Path. remove `str` when we drop Python 3.6
+        # Python <= 3.7 fails on pathlib.Path. remove `str` when we drop Python 3.7
         img_mime_type = mimetypes.guess_type(str(annotated_img))[0]
         with self.SRmutex:
             try:
