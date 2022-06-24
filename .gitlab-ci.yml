@@ -1116,6 +1116,8 @@ macos_tests:
   - if: $CI_PROJECT_PATH == "plom/plom"
   stage: test
   needs: []
+  variables:
+    HOMEBREW_NO_AUTO_UPDATE: 1
   script:
   - sw_vers
   - echo $SHELL
@@ -1134,10 +1136,12 @@ macos_tests:
   - brew install openssl
   # brew install mactex-no-gui
   - brew install basictex
+  - brew install libffi
   # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
   # pip install cffi
   # pip install jpegtran-cffi
   - pip install pytest
+  - pip install wheel
   - pip install .
   - python -m plom.create --version
   - python -m plom.server --version
