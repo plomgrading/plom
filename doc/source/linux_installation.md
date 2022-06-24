@@ -42,7 +42,7 @@ At this point `pip install plom` (or `pip install --user .` from inside
 the Plom source tree) should pull in the remaining dependencies.
 Alternatively, you can do something like:
 ```
-  # pip install --upgrade --user pyzbar jpegtran-cffi
+  # pip install --upgrade --user pyzbar
 ```
 There are additional dependencies for the machine-learning-based ID Reader:
 ```
