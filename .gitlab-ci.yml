@@ -1139,9 +1139,9 @@ macos_tests:
   # pip install jpegtran-cffi
   - pip install pytest
   - pip install .
-  - python -m plom.scripts.build --version
-  - python -m plom.scripts.client --version
-  - /Users/gitlab/.asdf/installs/python/3.9.1/bin/pytest -l --pyargs plom
+  - python -m plom.create --version
+  - python -m plom.server --version
+  - python -m pytest -l --pyargs plom
 
 
 .shared_windows_runners:
