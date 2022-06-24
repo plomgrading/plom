@@ -13,7 +13,7 @@ First some stuff from a package manager, here using [Homebrew](https://brew.sh):
 
 ```
 $ brew install libjpeg libjpeg-turbo jpeg-turbo imagemagick zbar \
-               libffi jsmin python3 openssl cmake
+               libffi jsmin python3 openssl cmake pango
 ```
 
 TODO: are those really the only dependencies, no latex for example?
