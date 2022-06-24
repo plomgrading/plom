@@ -177,7 +177,7 @@ class ScanMessenger(BaseMessenger):
                     "bundle": bundle,
                     "bundle_order": bundle_order,
                 }
-                mime_type = mimetypes.guess_type(f)[0]
+                mime_type = mimetypes.guess_type(f.name)[0]
                 with open(f, "rb") as fh:
                     dat = MultipartEncoder(
                         fields={
@@ -245,7 +245,7 @@ class ScanMessenger(BaseMessenger):
                     "bundle": bundle,
                     "bundle_order": bundle_order,
                 }
-                mime_type = mimetypes.guess_type(f)[0]
+                mime_type = mimetypes.guess_type(f.name)[0]
                 with open(f, "rb") as fh:
                     dat = MultipartEncoder(
                         fields={
@@ -279,7 +279,7 @@ class ScanMessenger(BaseMessenger):
                     "bundle": bundle,
                     "bundle_order": bundle_order,
                 }
-                mime_type = mimetypes.guess_type(f)[0]
+                mime_type = mimetypes.guess_type(f.name)[0]
                 with open(f, "rb") as fh:
                     dat = MultipartEncoder(
                         fields={
@@ -316,7 +316,7 @@ class ScanMessenger(BaseMessenger):
                     "bundle": bundle,
                     "bundle_order": bundle_order,
                 }
-                mime_type = mimetypes.guess_type(f)[0]
+                mime_type = mimetypes.guess_type(f.name)[0]
                 with open(f, "rb") as fh:
                     dat = MultipartEncoder(
                         fields={
