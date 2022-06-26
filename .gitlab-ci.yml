@@ -581,7 +581,7 @@ fedora_build:
 
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
-nodock_newdeps:
+newOS_newdeps:
   stage: alt_build
   needs: []
   image: ubuntu:22.04
@@ -658,7 +658,7 @@ nodock_newdeps:
 # 2. take python deps from package manager
 # 3. force the minimum version from setup.py
 # Goal here is to catch changes that need newer features of a dependency.
-nodock_mindeps:
+oldOS_mindeps:
   stage: alt_build
   needs: []
   image: ubuntu:20.04
@@ -727,7 +727,7 @@ nodock_mindeps:
 
 
 # Minimum Python, minimum deps
-nodock_minpy_mindeps:
+minpy_mindeps:
   stage: alt_build
   needs: []
   image: python:3.7
@@ -743,11 +743,7 @@ nodock_minpy_mindeps:
   script:
     - pip install -r requirements.txt.tempminima
     - pip install .
-    # run the unit tests
     - pytest -l --pyargs plom
-    # run the demo-server
-    - mkdir play
-    - pushd play
     - plom-demo . --num-papers 3 --prepare-only
 
 
