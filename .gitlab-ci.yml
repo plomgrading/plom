@@ -1136,13 +1136,14 @@ macos_tests:
   - time brew install zbar
   - brew install imagemagick
   - brew install openssl
-  # time brew install mactex-no-gui
   - time brew install basictex
-  # brew install libjpeg libjpeg-turbo jpeg-turbo
   - echo $PATH
-  - ls /usr/local/bin
-  - which pdflatex
+  - eval "$(/usr/libexec/path_helper)"
+  - echo $PATH
+  # time brew install mactex-no-gui
+  # brew install libjpeg libjpeg-turbo jpeg-turbo
   - ls /Library/TeX/texbin/
+  - which pdflatex
   - which tlmgr
   - tlmgr install latexmk
   # tlmgr path add?
