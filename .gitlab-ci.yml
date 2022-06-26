@@ -1148,6 +1148,8 @@ macos_tests:
   # try sudo, "You don't have permission to change the installation in any way"
   - time sudo tlmgr update --self
   - sudo tlmgr install latexmk
+  - sudo tlmgr install dvipng
+  - sudo tlmgr install preview exam preprint
   # tlmgr path add?
   - which latexmk
   - latexmk -h
