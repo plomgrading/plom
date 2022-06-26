@@ -1145,16 +1145,16 @@ macos_tests:
   - ls /Library/TeX/texbin/
   - which pdflatex
   - which tlmgr
-  - tlmgr install latexmk
+  # try sudo, "You don't have permission to change the installation in any way"
+  - sudo tlmgr install latexmk
   # tlmgr path add?
   - which latexmk
+  - latexmk -h
   - pip install pytest
   - pip install wheel
   - pip install .
   - python -m plom.create --version
   - python -m plom.server --version
-  - which latexmk
-  - latexmk -h
   - python -m pytest -l --pyargs plom
 
 
