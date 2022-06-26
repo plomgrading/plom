@@ -726,6 +726,31 @@ nodock_mindeps:
     - popd
 
 
+# Minimum Python, minimum deps
+nodock_minpy_mindeps:
+  stage: alt_build
+  needs: []
+  image: python:3.7
+  before_script:
+    - apt-get --yes update
+    - apt-get --no-install-recommends --yes install
+      cmake make imagemagick dvipng g++ openssl
+      libzbar0
+      texlive-latex-extra latexmk texlive-fonts-recommended
+      libpango-1.0-0 libpangocairo-1.0-0
+      libgl1-mesa-glx libsm6 libxrender1
+    - pip install pytest
+  script:
+    - pip install -r requirements.txt.tempminima
+    - pip install .
+    # run the unit tests
+    - pytest -l --pyargs plom
+    # run the demo-server
+    - mkdir play
+    - pushd play
+    - plom-demo . --num-papers 3 --prepare-only
+
+
 # upload binaries are generic gitlab packages
 binary_upload:
   stage: prep
