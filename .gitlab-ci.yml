@@ -1146,6 +1146,7 @@ macos_tests:
   - which pdflatex
   - which tlmgr
   # try sudo, "You don't have permission to change the installation in any way"
+  - time sudo tlmgr update --self
   - sudo tlmgr install latexmk
   # tlmgr path add?
   - which latexmk
