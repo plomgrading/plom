@@ -1133,11 +1133,11 @@ macos_tests:
   # brew update
   # brew --version
   - brew install cmake libffi pango
-  - brew install zbar
+  - time brew install zbar
   - brew install imagemagick
   - brew install openssl
-  - brew install mactex-no-gui
-  # brew install basictex
+  # time brew install mactex-no-gui
+  - time brew install basictex
   # brew install libjpeg libjpeg-turbo jpeg-turbo
   - pip install pytest
   - pip install wheel
