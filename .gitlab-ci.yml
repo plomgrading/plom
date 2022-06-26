@@ -1139,6 +1139,14 @@ macos_tests:
   # time brew install mactex-no-gui
   - time brew install basictex
   # brew install libjpeg libjpeg-turbo jpeg-turbo
+  - echo $PATH
+  - ls /usr/local/bin
+  - which pdflatex
+  - ls /Library/TeX/texbin/
+  - which tlmgr
+  - tlmgr install latexmk
+  # tlmgr path add?
+  - which latexmk
   - pip install pytest
   - pip install wheel
   - pip install .
