@@ -581,7 +581,7 @@ fedora_build:
 
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
-nodock_newdeps:
+newOS_newdeps:
   stage: alt_build
   needs: []
   image: ubuntu:22.04
@@ -658,7 +658,7 @@ nodock_newdeps:
 # 2. take python deps from package manager
 # 3. force the minimum version from setup.py
 # Goal here is to catch changes that need newer features of a dependency.
-nodock_mindeps:
+oldOS_mindeps:
   stage: alt_build
   needs: []
   image: ubuntu:20.04
@@ -724,6 +724,27 @@ nodock_mindeps:
     - echo "Should be no jobs and this should succeed"
     - jobs -l
     - popd
+
+
+# Minimum Python, minimum deps
+minpy_mindeps:
+  stage: alt_build
+  needs: []
+  image: python:3.7
+  before_script:
+    - apt-get --yes update
+    - apt-get --no-install-recommends --yes install
+      cmake make imagemagick dvipng g++ openssl
+      libzbar0
+      texlive-latex-extra latexmk texlive-fonts-recommended
+      libpango-1.0-0 libpangocairo-1.0-0
+      libgl1-mesa-glx libsm6 libxrender1
+    - pip install pytest
+  script:
+    - pip install -r requirements.txt.tempminima
+    - pip install .
+    - pytest -l --pyargs plom
+    - plom-demo . --num-papers 3 --prepare-only
 
 
 # upload binaries are generic gitlab packages
