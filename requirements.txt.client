@@ -8,15 +8,15 @@
 # without any warranty.
 
 # These should be kept lock-step with `requirements.txt`
-PyQt5==5.15.6
-PyQt5-sip==12.10.1
+PyQt5==5.15.7
+PyQt5-sip==12.11.0
 appdirs==1.4.4
 arrow==1.2.2
 packaging==21.3
 passlib==1.7.4
 Pillow==9.1.1
-pymupdf==1.19.6
-requests==2.27.1
+pymupdf==1.20.0
+requests==2.28.0
 requests-toolbelt==0.9.1
 segno==1.5.2
 stdiomask==0.0.6

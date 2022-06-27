@@ -26,13 +26,13 @@ opencv-python-headless==4.6.0.66
 packaging==21.3
 pandas==1.4.3
 passlib==1.7.4
-peewee==3.14.10
+peewee==3.15.0
 Pillow==9.1.1
 # note: pycparser also in Dockerfile
 pycparser==2.21
-pymupdf==1.19.6
+pymupdf==1.20.0
 pyzbar==0.1.9
-requests==2.27.1
+requests==2.28.0
 requests-toolbelt==0.9.1
 scikit-learn==1.1.1
 segno==1.5.2
