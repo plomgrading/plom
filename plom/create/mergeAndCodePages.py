@@ -176,7 +176,7 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     BR = fitz.Rect(page_width - 85, page_height - 90, page_width - 15, page_height - 20)
 
     # stamp in top-centre of page (TODO: fix hardcoded width Issue #1902)
-    rect = fitz.Rect(page_width // 2 - 90, 20, page_width // 2 + 90, 46)
+    rect = fitz.Rect(page_width // 2 - 100, 20, page_width // 2 + 100, 46)
     excess = page.insert_textbox(
         rect,
         stamp,
