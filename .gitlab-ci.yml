@@ -1098,7 +1098,7 @@ macos1013_client:
     expire_in: 16 days
 
 
-# this was slow and failed:
+# this was slow and failed, went back to "brew"
 #   asdf plugin-add imagemagick
 #   asdf install imagemagick 7.0.11-5
 # Other possible images: macos-10.15-xcode-11, macos-11-xcode-12
@@ -1135,21 +1135,20 @@ macos_server:
   - brew install openssl
   - time brew install basictex
   - echo $PATH
+  # pdflatex et al not in path until we do this:
   - eval "$(/usr/libexec/path_helper)"
   - echo $PATH
+  # alternative slower tex install:
   # time brew install mactex-no-gui
-  # brew install libjpeg libjpeg-turbo jpeg-turbo
   - ls /Library/TeX/texbin/
   - which pdflatex
   - which tlmgr
-  # try sudo, "You don't have permission to change the installation in any way"
+  # need sudo, "You don't have permission to change the installation in any way"
   - time sudo tlmgr update --self
   - sudo tlmgr install latexmk
   - sudo tlmgr install dvipng
   - sudo tlmgr install preview exam preprint
-  # tlmgr path add?
   - which latexmk
-  - latexmk -h
   - pip install pytest
   - pip install wheel
   - pip install .
