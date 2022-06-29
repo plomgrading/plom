@@ -1111,6 +1111,7 @@ macos_server:
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
     when: manual
+  allow_failure: true
   stage: alt_build
   needs: []
   variables:
