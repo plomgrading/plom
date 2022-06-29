@@ -12,12 +12,22 @@ Tested on Catalina 10.15.4.
 First some stuff from a package manager, here using [Homebrew](https://brew.sh):
 
 ```
-$ brew install libjpeg libjpeg-turbo jpeg-turbo imagemagick zbar \
-               libffi jsmin python3 openssl cmake pango
+brew install imagemagick zbar \
+             libjpeg libjpeg-turbo jpeg-turbo \
+             libffi openssl cmake pango
 ```
-
-TODO: are those really the only dependencies, no latex for example?
-Older instructions suggested `pip3 install tex`: does that really work?
+You will also need Python, perhaps:
+```
+brew install python3
+```
+You will also need latex.  Here is one approach:
+```
+brew install basictex
+eval "$(/usr/libexec/path_helper)"
+sudo tlmgr update --self
+sudo tlmgr install latexmk dvipng preview exam preprint
+```
+or maybe `brew install mactex-no-gui` or perhaps via some other UI means.
 
 At this point `pip install plom` (or `pip install --user .` from inside
 the Plom source tree) should pull in the remaining dependencies.
