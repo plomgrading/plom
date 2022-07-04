@@ -175,7 +175,6 @@ class Server:
         MgetNextTask,
         MlatexFragment,
         MclaimThisTask,
-        MrecordMark,
         MreturnMarkedTask,
         checkTagTextValid,
         add_tag,
