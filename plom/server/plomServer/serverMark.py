@@ -228,7 +228,6 @@ def MreturnMarkedTask(
     with open(plom_filename, "wb") as file_header:
         file_header.write(plomdat)
 
-    self.MrecordMark(username, mark, annotated_filename, time_spent_marking)
     # return ack with current counts.
     return [
         True,
@@ -237,31 +236,6 @@ def MreturnMarkedTask(
             self.DB.McountAll(question_number, version_number),
         ),
     ]
-
-
-def MrecordMark(self, username, mark, annotated_filename, time_spent_marking):
-    """Saves the marked paper information as a backup, independent of the server
-
-    Args:
-        username (str): User who marked the paper.
-        mark (int): Question mark.
-        annotated_filename (str): Name of the annotated image file.
-        time_spent_marking (int): Seconds spent marking the paper.
-    """
-
-    with open("{}.txt".format(annotated_filename), "w") as file_header:
-        file_header.write(
-            "{}\t{}\t{}\t{}\t{}".format(
-                annotated_filename,
-                mark,
-                username,
-                datetime_to_json(datetime.now(timezone.utc)),
-                time_spent_marking,
-            )
-        )
-
-
-# ==== tag stuff
 
 
 def checkTagTextValid(self, tag_text):
