@@ -2,8 +2,8 @@
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Chris Jin
 
-from datetime import datetime, timezone
 import hashlib
 import imghdr
 from io import BytesIO
@@ -11,7 +11,6 @@ import json
 import os
 import logging
 
-from plom.misc_utils import datetime_to_json
 from plom.textools import texFragmentToPNG
 
 

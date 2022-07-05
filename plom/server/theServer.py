@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2022 Chris Jin
 
 import json
 import logging
