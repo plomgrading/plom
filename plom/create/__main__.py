@@ -454,6 +454,44 @@ def get_parser():
         help="Upload an auto-generated rubric list for demos.",
     )
 
+    sp = sub.add_parser(
+        "tags",
+        help="List tags",
+        description="""
+          List all the tags defined on the server.
+        """,
+    )
+    sp.add_argument(
+        "--list",
+        action="store_true",
+        help="""List the tags on the server (default behaviour).""",
+    )
+    sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
+
+    sp = sub.add_parser(
+        "tag",
+        help="Add/remove tags from papers",
+        description="""
+          Add or remove tags from a paper and question.
+        """,
+    )
+    sp.add_argument(
+        "--rm",
+        action="store_true",
+        help="""Remove tag(s) from paper (if omitted we add tags).""",
+    )
+    sp.add_argument(
+        "task", nargs=1, help="""
+            Which task to tag, e.g., q0123g4 for paper 123 question 4.
+        """
+    )
+    sp.add_argument(
+        "tags", nargs="+", help="Tag(s) to add to task."
+    )
+    sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
+
     spClear = sub.add_parser(
         "clear",
         help='Clear "manager" login',
@@ -678,6 +716,35 @@ def main():
                 download_rubrics_to_file(Path(args.dump), msgr=msgr)
             else:
                 upload_rubrics_from_file(Path(args.rubric_file), msgr=msgr)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    elif args.command == "tags":
+        msgr = start_messenger(args.server, args.password)
+        try:
+            # if not args.list:
+            #     print("default behaviour")
+            tags = msgr.get_all_tags()
+            print("Tags on server:\n    " + "\n    ".join(t for tid, t in tags))
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    elif args.command == "tag":
+        msgr = start_messenger(args.server, args.password)
+        try:
+            # TODO: probably we want something sane like --paper 123 --question 4
+            # task = f"q{paper:04}g{question}"
+            task, = args.task
+            if args.rm:
+                print(f"Task {task}, removing tags: {args.tags}")
+                for t in args.tags:
+                    msgr.remove_single_tag(task, t)
+            else:
+                print(f"Task {task}, adding tags: {args.tags}")
+                for t in args.tags:
+                    msgr.add_single_tag(task, t)
         finally:
             msgr.closeUser()
             msgr.stop()
