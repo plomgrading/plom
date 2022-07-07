@@ -46,7 +46,6 @@ from plom.client.image_view_widget import mousewheel_delta_to_scale
 
 from .tools import (
     CrossItem,
-    DeleteItem,
     DeltaItem,
     GhostComment,
     GroupDeltaTextItem,
@@ -2392,10 +2391,9 @@ class PageScene(QGraphicsScene):
         """
         out_objs = []
         for X in self.items():
-            if not getattr(X, "saveable", False):
-                continue
-            if not self.itemWithinBounds(X):
-                out_objs.append(X)
+            if getattr(X, "saveable", False):
+                if not self.itemWithinBounds(X):
+                    out_objs.append(X)
         return out_objs
 
     def updateGhost(self, dlt, txt, legal=True):
