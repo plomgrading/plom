@@ -2390,19 +2390,15 @@ class PageScene(QGraphicsScene):
         Checks that all objects are within the boundary of the page.
 
         Returns:
-            True if all objects are within the page's bounds, false otherwise.
+            list: All annotation (saveable) objects that are outside
+            of the boundaries of the margin box (annotable area).
+            The list will be empty in the good case of no ojects being
+            outside.
         """
         out_objs = []
         for X in self.items():
-            # check all items that are not the image, the mask, or scorebox
-            if (X is self.underImage) or (X is self.overMask) or (X is self.scoreBox):
-                continue
-            # make sure that it is not one of the images inside the underlying image, or one of the rect in the overlasy mask.
-            if X.parentItem() is self.underImage or X.parentItem() is self.overMask:
-                continue
             if not getattr(X, "saveable", False):
                 continue
-            # make sure is inside image
             if not self.itemWithinBounds(X):
                 out_objs.append(X)
         return out_objs
