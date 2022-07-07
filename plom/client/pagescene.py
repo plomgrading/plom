@@ -2219,7 +2219,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if not hasattr(item, "saveable", False):
+        if not hasattr(item, "saveable"):
             return
         if isinstance(item, DeleteItem):
             # don't try to delete the animated undo/redo
