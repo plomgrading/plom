@@ -39,6 +39,7 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
+    QAction,
     QDialog,
     QInputDialog,
     QMessageBox,
@@ -1024,6 +1025,16 @@ class MarkerClient(QWidget):
         self.ui.closeButton.clicked.connect(self.close)
         m = QMenu()
         m.addAction("Get nth...", self.requestInteractive)
+        m.addSeparator().setText("Options")
+        a = QAction("prefer tasks tagged for me", self)
+        a.triggered.connect(self.toggle_prefer_tagged)
+        a.setCheckable(True)
+        a.setChecked(True)
+        m.addAction(a)
+        a = QAction("prefer paper number \N{Greater-than Or Equal To} 0", self)
+        a.setCheckable(True)
+        a.setChecked(False)
+        m.addAction(a)
         self.ui.getNextButton.setMenu(m)
         # self.ui.getNextButton.setPopupMode(QToolButton.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
@@ -1054,6 +1065,11 @@ class MarkerClient(QWidget):
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)
+
+    def toggle_prefer_tagged(self):
+        print("hello, toggle stuff TODO")
+        m = self.ui.getNextButton.menu()
+        print(m)
 
     def loadMarkedList(self):
         """
