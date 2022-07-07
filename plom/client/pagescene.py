@@ -49,9 +49,7 @@ from .tools import (
     DeleteItem,
     DeltaItem,
     GhostComment,
-    GhostDelta,
     GroupDeltaTextItem,
-    GhostText,
     TextItem,
     TickItem,
 )
@@ -2208,36 +2206,27 @@ class PageScene(QGraphicsScene):
 
     def deleteIfLegal(self, item):
         """
-        Deletes the item if it is a legal action.
+        Deletes the annotation item if that is a legal action.
 
         Notes:
             Can't delete the pageimage, scorebox, delete-box, ghostitem and
-                its constituents.
+            its constituents, probably other things too.  You can delete
+            annotations: those all have a "saveable" attribute.
 
         Args:
-            item (QGraphicsItem): the item to be deleted.
+            item (QGraphicsItem): the item to possibly be deleted.
 
         Returns:
             None
-
         """
-        # TODO: can this allowlist be replaced with "if not saveable"?
-        if item in [
-            self.underImage,
-            self.scoreBox,
-            self.delBoxItem,
-            self.ghostItem,
-            self.ghostItem.di,
-            self.ghostItem.blurb,
-            self.underRect,
-            self.overMask,
-        ]:
+        if not hasattr(item, "saveable", False):
             return
-        elif isinstance(item, DeleteItem):  # don't try to delete the animated undo/redo
+        if isinstance(item, DeleteItem):
+            # don't try to delete the animated undo/redo
+            # probably that are not saveable so we never get here but doesn't hurt
             return
-        else:
-            command = CommandDelete(self, item)
-            self.undoStack.push(command)
+        command = CommandDelete(self, item)
+        self.undoStack.push(command)
 
     def mouseReleaseRubric(self, event):
         # if haven't started drawing, or are mid draw of line be careful of what is underneath
