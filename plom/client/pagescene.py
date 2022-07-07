@@ -2392,7 +2392,7 @@ class PageScene(QGraphicsScene):
         Returns:
             list: All annotation (saveable) objects that are outside
             of the boundaries of the margin box (annotable area).
-            The list will be empty in the good case of no ojects being
+            The list will be empty in the good case of no objects being
             outside.
         """
         out_objs = []
