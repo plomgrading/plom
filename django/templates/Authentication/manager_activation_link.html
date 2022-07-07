@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Activation Link</title>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine-next/packages/alpinejs/dist/cdn.min.js" defer></script>
+</head>
+<body>
+    <p id="link">http://{{ domain }}{% url 'activate' uidb64=uid token=token %}</p>
+    <button onclick="copyClipboard()">Copy</button>
+    <button href="{% url 'home' %}">Home</button>
+    <script>
+        function copyClipboard() {
+            const link = document.getElementById("link")
+            const linkText = link.textContent.trim()
+            console.log(linkText)
+        }
+    </script>
+</body>
+</html>
