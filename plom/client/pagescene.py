@@ -2221,6 +2221,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
+        # TODO: can this allowlist be replaced with "if not saveable"?
         if item in [
             self.underImage,
             self.scoreBox,
