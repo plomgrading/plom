@@ -482,13 +482,13 @@ def get_parser():
         help="""Remove tag(s) from paper (if omitted we add tags).""",
     )
     sp.add_argument(
-        "task", nargs=1, help="""
+        "task",
+        nargs=1,
+        help="""
             Which task to tag, e.g., q0123g4 for paper 123 question 4.
-        """
+        """,
     )
-    sp.add_argument(
-        "tags", nargs="+", help="Tag(s) to add to task."
-    )
+    sp.add_argument("tags", nargs="+", help="Tag(s) to add to task.")
     sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
@@ -736,7 +736,7 @@ def main():
         try:
             # TODO: probably we want something sane like --paper 123 --question 4
             # task = f"q{paper:04}g{question}"
-            task, = args.task
+            (task,) = args.task
             if args.rm:
                 print(f"Task {task}, removing tags: {args.tags}")
                 for t in args.tags:
