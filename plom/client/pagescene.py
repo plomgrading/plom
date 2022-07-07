@@ -833,7 +833,7 @@ class PageScene(QGraphicsScene):
                 False otherwise.
         """
         for X in self.items():
-            if hasattr(X, "saveable"):
+            if getattr(X, "saveable", False):
                 return True
         # no pickle-able items means no annotations.
         return False
@@ -849,7 +849,7 @@ class PageScene(QGraphicsScene):
 
         # now potentially expand again for any annotations still outside
         for X in self.items():
-            if hasattr(X, "saveable"):
+            if getattr(X, "saveable", False):
                 # now check it is inside the UnderlyingRect
                 if X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
                     # add a little padding around things.
@@ -1711,7 +1711,7 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             # X is a saveable object then it is user-created.
             # Hence it can be deleted, otherwise leave it.
-            if hasattr(X, "saveable"):
+            if getattr(X, "saveable", False):
                 command = CommandDelete(self, X)
                 self.undoStack.push(command)
             else:
@@ -2219,14 +2219,9 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if not hasattr(item, "saveable"):
-            return
-        if isinstance(item, DeleteItem):
-            # don't try to delete the animated undo/redo
-            # probably that are not saveable so we never get here but doesn't hurt
-            return
-        command = CommandDelete(self, item)
-        self.undoStack.push(command)
+        if getattr(item, "saveable", False):  # we can only delete "saveable" items
+            command = CommandDelete(self, item)
+            self.undoStack.push(command)
 
     def mouseReleaseRubric(self, event):
         # if haven't started drawing, or are mid draw of line be careful of what is underneath
