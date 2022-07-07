@@ -1155,6 +1155,7 @@ macos_server:
   - pip install .
   - python -m plom.create --version
   - python -m plom.server --version
+  # TODO: this fails on multiprocessing, Issue #2198.
   - python -m pytest -l --pyargs plom
 
 
