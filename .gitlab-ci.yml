@@ -514,6 +514,7 @@ fedora_build:
   stage: alt_build
   needs: []
   image: fedora:36
+  when: manual
   allow_failure: true
   before_script:
     - dnf install -y ImageMagick openssl zbar gcc gcc-c++ cmake
@@ -1113,6 +1114,67 @@ macos1013_client:
     - PlomClient*.zip
     - md5sum
     expire_in: 16 days
+
+
+# this was slow and failed, went back to "brew"
+#   asdf plugin-add imagemagick
+#   asdf install imagemagick 7.0.11-5
+# Other possible images: macos-10.15-xcode-11, macos-11-xcode-12
+macos_server:
+  image: macos-12-xcode-13
+  tags:
+  - shared-macos-amd64
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
+  stage: alt_build
+  needs: []
+  variables:
+    HOMEBREW_NO_AUTO_UPDATE: 1
+    HOMEBREW_NO_INSTALL_CLEANUP: 1
+    HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - echo $USER
+  - brew --version
+  # brew update
+  # brew --version
+  - brew install cmake libffi pango
+  - time brew install zbar
+  - brew install imagemagick
+  - brew install openssl
+  - time brew install basictex
+  - echo $PATH
+  # pdflatex et al not in path until we do this:
+  - eval "$(/usr/libexec/path_helper)"
+  - echo $PATH
+  # alternative slower tex install:
+  # time brew install mactex-no-gui
+  - ls /Library/TeX/texbin/
+  - which pdflatex
+  - which tlmgr
+  # need sudo, "You don't have permission to change the installation in any way"
+  - time sudo tlmgr update --self
+  - sudo tlmgr install latexmk
+  - sudo tlmgr install dvipng
+  - sudo tlmgr install preview exam preprint
+  - which latexmk
+  - pip install pytest
+  - pip install wheel
+  - pip install .
+  - python -m plom.create --version
+  - python -m plom.server --version
+  # TODO: this fails on multiprocessing, Issue #2198.
+  - python -m pytest -l --pyargs plom
 
 
 .shared_windows_runners:
