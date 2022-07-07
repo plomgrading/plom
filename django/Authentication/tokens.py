@@ -1,4 +1,5 @@
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+# pip install django-utils-six
 from django.utils import six
 
 """
