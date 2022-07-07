@@ -2395,7 +2395,7 @@ class PageScene(QGraphicsScene):
         """Check if given item is within the margins or not."""
         return item.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape)
 
-    def checkAllObjectsInside(self):
+    def check_all_saveable_objects_inside(self):
         """
         Checks that all objects are within the boundary of the page.
 
@@ -2410,12 +2410,7 @@ class PageScene(QGraphicsScene):
             # make sure that it is not one of the images inside the underlying image, or one of the rect in the overlasy mask.
             if X.parentItem() is self.underImage or X.parentItem() is self.overMask:
                 continue
-            # And be careful - there might be a GhostComment floating about
-            if (
-                isinstance(X, GhostComment)
-                or isinstance(X, GhostDelta)
-                or isinstance(X, GhostText)
-            ):
+            if not getattr(X, "saveable", False):
                 continue
             # make sure is inside image
             if not self.itemWithinBounds(X):
