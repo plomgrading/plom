@@ -1713,8 +1713,6 @@ class PageScene(QGraphicsScene):
             if getattr(X, "saveable", False):
                 command = CommandDelete(self, X)
                 self.undoStack.push(command)
-            else:
-                continue
         # now load up the new items
         for X in lst:
             CmdCls = globals().get("Command{}".format(X[0]), None)
