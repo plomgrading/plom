@@ -102,11 +102,11 @@ def MgetDoneTasks(self, user_name, q, v):
     return mark_list
 
 
-def MgetNextTask(self, q, v):
+def MgetNextTask(self, q, v, *, tag, above):
     """Find unmarked (but scanned) q/v-group and send the group-id back to client."""
     with plomdb.atomic():
         try:
-            qref = (
+            query = (
                 QGroup.select()
                 .join(Group)
                 .where(
@@ -114,9 +114,31 @@ def MgetNextTask(self, q, v):
                     QGroup.question == q,
                     QGroup.version == v,
                     Group.scanned == True,  # noqa: E712
+                    # QGroup.tag == tag,  # HELP!!
+                    # QGroup.questiontaglink == tag,  # HELP!!
                 )
-                .get()
             )
+            if tag and above:
+                raise NotImplementedError("For now, 'tag' & 'above' mutually exclusive")
+            elif above:
+                # TODO: can't we SQL query it above without looping?
+                for qref in query:
+                    if qref.test.test_number >= above:
+                        print(f"we got match with paper_num >= {above}")
+                        break
+                else:
+                    qref = query.get()
+            elif tag:
+                # TODO: can't we SQL query it above without looping?
+                for qref in query:
+                    tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
+                    if tag in tag_list:
+                        print(f"we got tag match for '{tag}' in {tag_list}")
+                        break
+                else:
+                    qref = query.get()
+            else:
+                qref = query.get()
             # as per #1811 - the user should be none here - assert here.
             assert (
                 qref.user is None

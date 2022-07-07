@@ -70,23 +70,8 @@ def MgetDoneTasks(self, username, question_number, version_number):
     return self.DB.MgetDoneTasks(username, question_number, version_number)
 
 
-def MgetNextTask(self, question_number, version_number):
-    """Retrieve the next unmarked paper from the database.
-
-    Args:
-        question_number (int): Next question's question number.
-        version_number (int): Next question's version number.
-
-    Returns:
-        list: Respond with a list with either value False or the value
-        of True with the question code string for next task.
-    """
-
-    give = self.DB.MgetNextTask(question_number, version_number)
-    if give is None:
-        return [False]
-    else:
-        return [True, give]
+def MgetNextTask(self, *args, **kwargs):
+    return self.DB.MgetNextTask(*args, **kwargs)
 
 
 def MlatexFragment(self, latex_fragment):

@@ -102,7 +102,7 @@ class MarkHandler:
         )
 
     # @routes.get("/MK/tasks/available")
-    @authenticate_by_token_required_fields(["q", "v"])
+    @authenticate_by_token_required_fields(["q", "v", "tag", "above"])
     def MgetNextTask(self, data, request):
         """Respond with the next task/question's string.
 
@@ -114,20 +114,17 @@ class MarkHandler:
             request (aiohttp.web_request.Request): Request of type GET /MK/tasks/available.
 
         Returns:
-            aiohttp.web_response.Response: A response which includes the
-            next question's string.
-            For example: ``q0013g1``.
+            aiohttp.web_response.Response: A 200 response which includes
+            the next question's string, e.g., ``q0013g1``.  If no more
+            available, return 204.
         """
-        next_task_response = self.server.MgetNextTask(data["q"], data["v"])
-
-        next_task_available = next_task_response[0]
-
-        # returns [True, task] or [False]
-        if next_task_available:
-            next_task_code = next_task_response[1]
-            return web.json_response(next_task_code, status=200)
-        else:
+        print(data)
+        give = self.server.MgetNextTask(
+            data["q"], data["v"], tag=data["tag"], above=data["above"]
+        )
+        if give is None:
             return web.Response(status=204)  # no papers left
+        return web.json_response(give)
 
     # @routes.get("/MK/latex")
     @authenticate_by_token_required_fields(["user", "fragment"])
