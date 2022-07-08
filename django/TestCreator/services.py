@@ -365,6 +365,14 @@ def create_pdf(slug: str, pages: int, pdf) -> models.ReferencePDF:
     return pdf
 
 
+def delete_pdf():
+    """
+    Clear the ReferencePDF table
+    """
+    pdfs = models.ReferencePDF.objects.all()
+    pdfs.delete()
+
+
 def get_and_save_pdf_images(pdf: models.ReferencePDF) -> None:
     """
     Get raster image of each PDF page, and save them to disk for displaying

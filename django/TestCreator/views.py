@@ -287,6 +287,8 @@ class TestSpecSummaryView(BaseTestSpecFormView):
 def test_spec_reset_view_pdf(request):
     if request.method == 'POST':
         services.reset_spec()
+        services.delete_pdf()
+        services.clear_questions()
         return HttpResponseRedirect(reverse('names'))
         
 
