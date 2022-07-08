@@ -4,3 +4,4 @@ from . import models
 # Register your models here.
 admin.site.register(models.ReferencePDF)
 admin.site.register(models.TestSpecInfo)
+admin.site.register(models.TestSpecQuestion)
