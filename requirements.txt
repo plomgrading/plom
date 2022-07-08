@@ -28,8 +28,6 @@ pandas==1.4.3
 passlib==1.7.4
 peewee==3.15.0
 Pillow==9.2.0
-# note: pycparser also in Dockerfile
-pycparser==2.21
 pymupdf==1.20.1
 pyzbar==0.1.9
 requests==2.28.1
