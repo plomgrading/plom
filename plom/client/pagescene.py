@@ -46,12 +46,9 @@ from plom.client.image_view_widget import mousewheel_delta_to_scale
 
 from .tools import (
     CrossItem,
-    DeleteItem,
     DeltaItem,
     GhostComment,
-    GhostDelta,
     GroupDeltaTextItem,
-    GhostText,
     TextItem,
     TickItem,
 )
@@ -835,7 +832,7 @@ class PageScene(QGraphicsScene):
                 False otherwise.
         """
         for X in self.items():
-            if hasattr(X, "saveable"):
+            if getattr(X, "saveable", False):
                 return True
         # no pickle-able items means no annotations.
         return False
@@ -851,7 +848,7 @@ class PageScene(QGraphicsScene):
 
         # now potentially expand again for any annotations still outside
         for X in self.items():
-            if hasattr(X, "saveable"):
+            if getattr(X, "saveable", False):
                 # now check it is inside the UnderlyingRect
                 if X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
                     # add a little padding around things.
@@ -1713,11 +1710,9 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             # X is a saveable object then it is user-created.
             # Hence it can be deleted, otherwise leave it.
-            if hasattr(X, "saveable"):
+            if getattr(X, "saveable", False):
                 command = CommandDelete(self, X)
                 self.undoStack.push(command)
-            else:
-                continue
         # now load up the new items
         for X in lst:
             CmdCls = globals().get("Command{}".format(X[0]), None)
@@ -2208,33 +2203,20 @@ class PageScene(QGraphicsScene):
 
     def deleteIfLegal(self, item):
         """
-        Deletes the item if it is a legal action.
+        Deletes the annotation item if that is a legal action.
 
         Notes:
             Can't delete the pageimage, scorebox, delete-box, ghostitem and
-                its constituents.
+            its constituents, probably other things too.  You can delete
+            annotations: those all have a "saveable" attribute.
 
         Args:
-            item (QGraphicsItem): the item to be deleted.
+            item (QGraphicsItem): the item to possibly be deleted.
 
         Returns:
             None
-
         """
-        if item in [
-            self.underImage,
-            self.scoreBox,
-            self.delBoxItem,
-            self.ghostItem,
-            self.ghostItem.di,
-            self.ghostItem.blurb,
-            self.underRect,
-            self.overMask,
-        ]:
-            return
-        elif isinstance(item, DeleteItem):  # don't try to delete the animated undo/redo
-            return
-        else:
+        if getattr(item, "saveable", False):  # we can only delete "saveable" items
             command = CommandDelete(self, item)
             self.undoStack.push(command)
 
@@ -2395,31 +2377,21 @@ class PageScene(QGraphicsScene):
         """Check if given item is within the margins or not."""
         return item.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape)
 
-    def checkAllObjectsInside(self):
+    def check_all_saveable_objects_inside(self):
         """
         Checks that all objects are within the boundary of the page.
 
         Returns:
-            True if all objects are within the page's bounds, false otherwise.
+            list: All annotation (saveable) objects that are outside
+            of the boundaries of the margin box (annotable area).
+            The list will be empty in the good case of no objects being
+            outside.
         """
         out_objs = []
         for X in self.items():
-            # check all items that are not the image, the mask, or scorebox
-            if (X is self.underImage) or (X is self.overMask) or (X is self.scoreBox):
-                continue
-            # make sure that it is not one of the images inside the underlying image, or one of the rect in the overlasy mask.
-            if X.parentItem() is self.underImage or X.parentItem() is self.overMask:
-                continue
-            # And be careful - there might be a GhostComment floating about
-            if (
-                isinstance(X, GhostComment)
-                or isinstance(X, GhostDelta)
-                or isinstance(X, GhostText)
-            ):
-                continue
-            # make sure is inside image
-            if not self.itemWithinBounds(X):
-                out_objs.append(X)
+            if getattr(X, "saveable", False):
+                if not self.itemWithinBounds(X):
+                    out_objs.append(X)
         return out_objs
 
     def updateGhost(self, dlt, txt, legal=True):
