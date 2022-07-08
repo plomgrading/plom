@@ -1,0 +1,23 @@
+{% extends "test_creator/base-test-spec-2col.html" %}
+
+{% load static %}
+
+{% block page_title %}Test Spec Frontend Mockup{% endblock %}
+
+{% block title %}Create a test specification{% endblock %}
+
+{% block right_column %}
+
+<div class="columns is-multiline is-mobile is-fullwidth">
+    {% for page in pages %}
+    <div class="column is-narrow">
+        <div class="box is_pdf_page">
+            {% with page as image_static %}
+            <img class="is_thumbnail" src="{% static image_static %}">
+            {% endwith %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base-2col.html" %}
+
+{% block title %} Create Specification {% endblock %}
+
+{% block page_heading %} Create a test specification {% endblock %}
+
+
+{% block left_column %}
+
+<div class="list-group list-group-flush" style="overflow: scroll; max-height: 85vh">
+    <div class="list-group-item">
+        <p class="is_test_spec_nav_text fs-4">{{ long_name }}</p>
+        <p class="is_test_spec_nav_text">{{ short_name }}</p>
+    </div>
+    <a class="list-group-item list-group-item-action" href="{% url 'names' %}">
+        <div class="d-flex w-100 justify-content-between">
+            {% if curr_page == 'names' %}
+            <p class="is_test_spec_nav_text fw-bold">Test names</p>
+            {% else %}
+            <p class="is_test_spec_nav_text">Test names</p>
+            {% endif %}
+            <i class="bi bi-three-dots"></i>
+        </div>
+    </a>
+    <a class="list-group-item list-group-item-action" href="{% url 'upload' %}">
+        <div class="d-flex w-100 justify-content-between">
+            {% if curr_page == 'upload' %}
+            <p class="is_test_spec_nav_text fw-bold">Versions and reference PDF</p>
+            {% else %}
+            <p class="is_test_spec_nav_text">Versions and reference PDF</p>
+            {% endif %}
+            <i class="bi bi-three-dots"></i>
+        </div>
+    </a>
+    <a class="list-group-item list-group-item-action" href="{% url 'id_page' %}">
+        <div class="d-flex w-100 justify-content-between">
+            {% if curr_page == 'id_page' %}
+            <p class="is_test_spec_nav_text fw-bold">ID page</p>
+            {% else %}
+            <p class="is_test_spec_nav_text">ID page</p>
+            {% endif %}
+            <i class="bi bi-three-dots"></i>
+        </div>
+    </a>
+    <a class="list-group-item list-group-item-action" href="{% url 'questions' %}">
+        <div class="d-flex w-100 justify-content-between">
+            {% if curr_page == 'questions' %}
+            <p class="is_test_spec_nav_text fw-bold">Questions</p>
+            {% else %}
+            <p class="is_test_spec_nav_text">Questions</p>
+            {% endif %}
+            <i class="bi bi-three-dots"></i>
+        </div>
+    </a>
+    {% if questions %}
+        <div class="list-group-item list-group-flush" style="padding-right: 0;">
+            {% for q in questions %}
+            <a class="list-group-item list-group-item-action" href="{% url 'q_detail' forloop.counter %}">
+                <div class="d-flex w-100 justify-content-between">
+                    {% if question_id == forloop.counter %}
+                    <p class="is_test_spec_nav_text fw-bold">Question {{forloop.counter }}</p>
+                    {% else %}
+                    <p class="is_test_spec_nav_text">Question {{forloop.counter }}</p>
+                    {% endif %}
+                    <i class="bi bi-three-dots"></i>
+                </div>
+            </a>
+            {% endfor %}
+        </div> 
+    {% endif %}
+    <a class="list-group-item list-group-item-action" href="{% url 'dnm_page' %}">
+        <div class="d-flex w-100 justify-content-between">
+            {% if curr_page == 'dnm_page' %}
+            <p class="is_test_spec_nav_text fw-bold">Do-not-mark pages</p>
+            {% else %}
+            <p class="is_test_spec_nav_text">Do-not-mark pages</p>
+            {% endif %}
+            <i class="bi bi-three-dots"></i>
+        </div>
+    </a>
+    <a class="list-group-item list-group-item-action" href="{% url 'summary' %}">
+        <div class="d-flex w-100 justify-content-between">
+            {% if curr_page == 'summary' %}
+            <p class="is_test_spec_nav_text fw-bold">Summary</p>
+            {% else %}
+            <p class="is_test_spec_nav_text">Summary</p>
+            {% endif %}
+            <i class="bi bi-three-dots"></i>
+        </div>
+    </a>
+    <form action="{% url 'reset' %}" method="post"
+        onsubmit="return confirm('Are you sure? All changes to the test specification will be lost.');"
+    >
+        {% csrf_token %}
+        <input 
+            type="submit" 
+            value="Reset" 
+            class="list-group-item list-group-item-action" 
+            style="border: 0;"
+        >
+    </form>
+    
+</div>
+
+{% endblock %}

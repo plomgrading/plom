@@ -1,0 +1,64 @@
+{% extends "test_creator/base-test-spec-cards.html" %}
+
+{% block title %}Create Specification - Question {{ question_id }}{% endblock %}
+
+{% block pre_cards %}
+<h4>Question {{ question_id }}</h4>
+
+<div class="row">
+    <label for="{{ form.label.id_for_label }}" class="col-sm-2 col-form-label fs-5">{{ form.label.label }}</label>
+    <div class="col-sm-3">
+        {{ form.label }}
+        <p>{{form.label.help_text}}</p>
+    </div>
+</div>
+
+<div class="row">
+    <label for="{{ form.mark.id_for_label }}" class="col-sm-2 col-form-label fs-5">{{ form.mark.label }}</label>
+    <div class="col-sm-3">
+        {{ form.mark }}
+        <p></p>
+    </div>
+    <div class="col-sm-2" style="padding-left: 0;">
+        <p style="margin-top: 5px;">/ {{ total_marks }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <label for="{{ form.shuffle.id_for_label }}" class="col-sm-2 col-form-label fs-5">{{ form.shuffle.label }}</label>
+    <div class="col-sm" style="padding-top: 8px;">
+        {% for radio in form.shuffle %}
+        <div class="form-check form-check-inline">
+            {{ radio.tag }}
+            <label for="{{ radio.id_for_label }}" class="form-check-label">{{ radio.choice_label }}</label>
+        </div>
+        {% endfor %}
+        <p>{{ form.shuffle.help_text }}</p>
+    </div>
+</div>
+
+<p class="fs-5">Select pages:</p>
+
+{% endblock %}
+
+{% block card_badge %}
+{% if page.id_page %}
+<span class="p-2 badge text-bg-light">ID</span>
+{% elif page.dnm_page %}
+<span class="p-2 badge text-bg-secondary">DNM</span>
+{% elif page.question_page and page.question_page != question_id %}
+<span class="p-2 badge text-bg-info" >Q{{ page.question_page }}</span>
+{% else %}
+<span class="p-2 badge text-bg-info" x-cloak x-show="page{{ forloop.counter0 }}selected">Q{{ question_id }}</span>
+{% endif %}
+{% endblock %}
+
+{% block form_action %}action="{% url 'q_detail' question_id %}"{% endblock %}
+
+{% block back_href %}
+{% if question_id > 1 %}
+href="{% url 'q_detail' prev_id %}"
+{% else %}
+href="{% url 'questions' %}"
+{% endif %}
+{% endblock %}

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # add newly created app folder below
     'Authentication',
+    'TestCreator',
 ]
 
 MIDDLEWARE = [

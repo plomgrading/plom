@@ -20,4 +20,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # contains all the url path from Authentication App
     path('', include('Authentication.urls')),
+    path('create/', include('TestCreator.urls')),
 ]

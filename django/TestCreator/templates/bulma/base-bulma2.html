@@ -1,0 +1,62 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Alpine -->
+        <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+        <!-- Bulma stylesheet-->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+
+        <!-- Base stylesheet -->
+        <link rel="stylesheet" href="{% static 'base.css' %}">
+
+        <title>{% block page_title %}{% endblock %}</title>
+    </head>
+    <body style="background-color: #F5F6FA; display: flex;">
+
+        <div class="columns is-gapless is-mobile" style="width: 100%; min-height: 100vh;">
+
+            <!-- Sidebar -->
+            <div class="column is-narrow is_sidebar">
+                <div class="section is_sidebar_section">
+                    <!-- Title -->
+                    <div class="block">
+                        <a class="title is-4 has-text-light">Plom</a>
+                    </div>
+
+                    <!-- Nav links -->
+                    <div class="block">
+                        <a class="has-text-light">Account</a>
+                    </div>
+                    <div class="block">
+                        <a class="has-text-light">Users</a>
+                    </div>
+                    <div class="block">
+                        <a class="has-text-light">Create test</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page content -->
+            <div class="column">
+                <div class="section is_content_section">
+                    <div class="content">
+
+                        <!-- Header -->
+                        <h1 class="title">{% block title %}{% endblock %}</h1>
+                        <p class="subtitle">{% block subtitle %}{% endblock %}</p>
+
+                        <div class="section is_main_content">
+                            {% block main_content %}
+                            {% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>  
+    </body>
+</html>

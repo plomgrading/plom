@@ -1,0 +1,69 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Alpine -->
+        <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+        <!-- Bootstrap stylesheet -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+
+        <!-- Bootstrap icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css">
+
+        <!-- Base stylesheet -->
+        <link rel="stylesheet" href="{% static 'base.css' %}">
+
+        <!-- Title -->
+        <title>{% block title %}Test Specification Creator Mockup{% endblock %}</title>
+    </head>
+    <body style="background-color: #F5F6FA; display: flex;">
+        <!-- Bootsrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+
+        <div class="container-fluid" style="padding: 0px;">
+            <div class="row" style="min-height: 100vh; margin: 0px;">
+                <div class="col-auto shadow" style="background-color: #AD9CFF; padding: 0px;">
+                    <nav class="navbar">
+                        <div class="container-fluid" style="padding: 0px;">
+                            
+                            <!-- Navbar links -->
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <!-- Plom logo -->
+                                    <a class="navbar-brand nav-link" style="padding-right: 15px; padding-left: 0px; margin: 0px" href="#">
+                                        <img class="img-fluid" src="{% static 'plomLogo.png' %}" style="max-width: 8rem">
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link link-light is_sidebar_link" href="#">Account</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link link-light is_sidebar_link" href="#">Users</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link link-light is_sidebar_link" href="#">Create test</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </nav>
+                    
+                </div>
+                <div class="col">
+                    <div class="container-fluid" style="padding-top: 12px; min-height: 100%;">
+                        <!-- Page heading -->
+                        <h1 class="fw-lighter" style="margin: 15px;">{% block page_heading %}{% endblock %}</h1>
+                        <p class="lead" style="margin-bottom: 25px;">{% block page_subheading %} {% endblock %}</p>
+                        <!-- Main content -->
+                        {% block main_content %}{% endblock %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </body>
+</html>

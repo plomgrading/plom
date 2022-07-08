@@ -1,0 +1,59 @@
+{% extends 'test_creator/base-test-spec-2col.html' %}
+
+{% load static %}
+
+{% block right_column %}
+
+<div class="container-fluid" x-data="{{ x_data }}"">
+    
+    <form class="w-100" {% block form_action %}{% endblock %} method="post">
+        {% csrf_token %}
+
+        {% block pre_cards %}
+        <p>Select an ID page:</p>
+        {% endblock %}
+
+        <!-- Container of card elements -->
+        {% if pages %}
+        <div class="row row-cols-auto">
+            {% for page in pages %}
+
+            <!-- Card element -->
+            <div class="col" style="margin-bottom: 24px;">
+                <div class="card shadow-sm is_pdf_thumbnail" @click="{{ page.at_click }}">
+                    <img src="{% static page.thumbnail %}" class="img-fluid card-img">
+                    <div class="card-img-overlay d-flex">
+                        <div class="flex-column d-flex">
+                            <div style="height: 100%;"></div>
+                            {% block card_badge %}
+                            {% endblock %}
+                        </div>
+                        <div class="flex-grow-1"></div>              
+                    </div>
+                </div>
+            </div>
+
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No reference PDF uploaded yet.</p>
+        {% endif %}
+
+        {% for e in form.non_field_errors %}
+        <p class="text-danger">{{ e }}</p>
+        {% endfor %}
+        
+        <div>
+            {% for f in form.hidden_fields %}
+            {{f}}
+            {% endfor %}
+        </div>
+        
+        <div>
+            <a type="button" class="btn btn-primary btn-lg" {% block back_href %}{% endblock %}>Back</a>
+            <input type="submit" class="btn btn-primary btn-lg float-end" value="Next">
+        </div>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+
+<div class="container-fluid gx-0">
+    <div class="row d-flex" style="min-height: 80vh">
+        <div class="col-auto d-flex">
+            {% block left_column %}{% endblock %}
+            <div class="vr" style="margin-top: 1rem;"></div>
+        </div>
+        <div class="col">
+            <div class="d-flex justify-content-center h-100" style="padding: 2rem;">
+                {% block right_column %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
