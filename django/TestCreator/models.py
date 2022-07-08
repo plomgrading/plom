@@ -2,6 +2,7 @@ from operator import mod
 import os
 import shutil
 import re
+import pathlib
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -17,14 +18,14 @@ def unique_slug(filename):
     Generate a slug from the input filename, and append '-copy' if that file already exists on disk
     """
     slug = slugify(re.sub('.pdf$', '', filename))
-    while os.path.exists(f'test_creator/media/{slug}.pdf'):
+    while os.path.exists(pathlib.Path('TestCreator') / 'media' / f'{slug}.pdf'):
         slug = slug + '-copy'
     return slug
 
 # just a simple folder for media for now
 def temp_filename_path(instance, filename):
     slug = slugify(re.sub('.pdf$', '', filename))
-    return f'test_creator/media/{slug}.pdf'
+    return pathlib.Path('TestCreator') / 'media' / f'{slug}.pdf'
 
 class ReferencePDF(models.Model):
     # TODO: use TextField instead of CharField, don't hardcode field lengths!
@@ -34,13 +35,13 @@ class ReferencePDF(models.Model):
 
 def pre_delete_reference_pdf(sender, instance, **kwargs):
     # delete thumbnails
-    thumbnail_folder = f'test_creator/static/thumbnails/{instance.filename_slug}'
-    if os.path.exists(thumbnail_folder):
+    thumbnail_folder = pathlib.Path('TestCreator') / 'static' / 'thumbnails' / instance.filename_slug
+    if thumbnail_folder.exists():
         shutil.rmtree(thumbnail_folder)
 
     # delete pdf from disk
-    pdf_path = f'test_creator/media/{instance.filename_slug}.pdf'
-    if os.path.exists(pdf_path):
+    pdf_path = pathlib.Path('TestCreator') / 'media' / f'{instance.filename_slug}.pdf'
+    if pdf_path.exists():
         os.remove(pdf_path)
 
 pre_delete.connect(

@@ -1,5 +1,5 @@
 import os
-import re
+import pathlib
 import fitz
 import json
 from django.utils.text import slugify
@@ -72,14 +72,15 @@ def set_pages(pdf: models.ReferencePDF):
     """
     test_spec = load_spec()
 
-    thumbnail_folder = f'thumbnails/{pdf.filename_slug}'
+    thumbnail_folder = pathlib.Path('thumbnails') / pdf.filename_slug
 
     for i in range(pdf.num_pages):
+        thumbnail_path = thumbnail_folder / f'{pdf.filename_slug}-thumbnail{i}.png'
         test_spec.pages[i] = {
             'id_page': False,
             'dnm_page': False,
             'question_page': False,
-            'thumbnail': f'{thumbnail_folder}/{pdf.filename_slug}-thumbnail{i}.png'
+            'thumbnail': str(thumbnail_path)
         }
     test_spec.save()
 
@@ -369,18 +370,18 @@ def get_and_save_pdf_images(pdf: models.ReferencePDF) -> None:
     Get raster image of each PDF page, and save them to disk for displaying
     """
     slug = pdf.filename_slug
-    pathname = f'test_creator/media/{slug}.pdf'
+    pathname = pathlib.Path('TestCreator') / 'media' / f'{slug}.pdf'
     # TODO: use pathlib
-    if os.path.exists(pathname):
+    if pathname.exists():
         pdf_doc = fitz.Document(pathname)
 
-        thumbnail_dir = f'test_creator/static/thumbnails/{slug}'
-        if not os.path.exists(thumbnail_dir):
+        thumbnail_dir = pathlib.Path('TestCreator') / 'static' / 'thumbnails' / slug
+        if not thumbnail_dir.exists():
             os.mkdir(thumbnail_dir)
 
         for i in range(pdf_doc.page_count):
             page_pixmap = pdf_doc[i].get_pixmap()
-            save_path = f'{thumbnail_dir}/{slug}-thumbnail{i}.png'
+            save_path = thumbnail_dir / f'{slug}-thumbnail{i}.png'
             page_pixmap.save(save_path)
 
     else:
@@ -393,9 +394,9 @@ def create_page_thumbnail_list(pdf: models.ReferencePDF) -> None:
     """
 
     pages = []
-    thumbnail_folder = f'thumbnails/{pdf.filename_slug}'
+    thumbnail_folder = pathlib.Path('thumbnails') / pdf.filename_slug
     for i in range(pdf.num_pages):
-        thumbnail = f'{thumbnail_folder}/{pdf.filename_slug}-thumbnail{i}.png'
+        thumbnail = thumbnail_folder / f'{pdf.filename_slug}-thumbnail{i}.png'
         pages.append(thumbnail)
 
     return pages

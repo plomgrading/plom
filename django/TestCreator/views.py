@@ -1,5 +1,5 @@
 import re
-import json
+import pathlib
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -13,6 +13,8 @@ from . import services
 
 
 class BaseTestSpecFormView(FormView):
+    TEMPLATES = pathlib.Path('test_creator')
+
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(**kwargs)
         context['long_name'] = services.get_long_name()
