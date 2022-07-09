@@ -6,8 +6,6 @@ from io import BytesIO
 import subprocess
 import tempfile
 
-from pytest import raises
-
 from PIL import Image
 
 import plom.server
@@ -51,6 +49,7 @@ def test_frag_image_size():
     r, imgdata = processFragment(frag)
     assert r
     img = Image.open(BytesIO(imgdata))
+    # same width
     assert relativeErr(img.width, imgt.width) < 0.1
     # but much much taller
     assert img.height > 3 * imgt.height
