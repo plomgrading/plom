@@ -83,6 +83,7 @@ def texFragmentToPNG(fragment, *, dpi=225):
         convertIt = subprocess.run(
             [
                 "dvipng",
+                "--width",
                 "--picky",
                 "-q",
                 "-D",
