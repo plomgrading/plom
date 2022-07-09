@@ -273,6 +273,9 @@ class Messenger(BaseMessenger):
                 number at least this large, but wrapping around if
                 necessary.
 
+        If you specify both ``tag`` and ``above``, the logic is
+        currently "or" but this could change without notice!
+
         Return:
             str/None: either the task string or `None` indicated no
             more tasks available.
