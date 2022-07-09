@@ -47,6 +47,14 @@ def test_frag_image_size():
     assert relativeErr(img.width, imgt.width) < 0.1
     assert relativeErr(img.height, imgt.height) < 0.1
 
+    frag = r"$\mathbb{Q}$ \LaTeX\ Plom\\made\\taller\\not\\longer"
+    r, imgdata = processFragment(frag)
+    assert r
+    img = Image.open(BytesIO(imgdata))
+    assert relativeErr(img.width, imgt.width) < 0.1
+    # but much much taller
+    assert img.height > 3 * imgt.height
+
     frag = r"$z = \frac{x + 3}{y}$ and lots and lots more, so its much longer."
     r, imgdata = processFragment(frag)
     assert r

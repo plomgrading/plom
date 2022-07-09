@@ -34,7 +34,7 @@ def texFragmentToPNG(fragment, *, dpi=225):
         \usepackage[letterpaper, textwidth=5in]{geometry}
         \usepackage{amsmath, amsfonts}
         \usepackage{xcolor}
-        \usepackage[active, tightpage]{preview}
+        \usepackage[active]{preview}
         \begin{document}
         \begin{preview}
         \color{red}
