@@ -1027,14 +1027,19 @@ class MarkerClient(QWidget):
         m.addAction("Get nth...", self.requestInteractive)
         m.addSection("Options")
         a = QAction("Prefer tasks tagged for me", self)
-        a.triggered.connect(self.toggle_prefer_tagged)
         a.setCheckable(True)
         a.setChecked(True)
+        a.triggered.connect(self.toggle_prefer_tagged)
         self._prefer_tags_action = a
         m.addAction(a)
-        a = QAction("prefer paper number \N{Greater-than Or Equal To} 0", self)
+        a = QAction("placeholder", self)
         a.setCheckable(True)
         a.setChecked(False)
+        a.triggered.connect(self.toggle_prefer_above)
+        # TODO: probably we should write a subclass, or a use an embedded lineEdit
+        a.stored_value = 0
+        a.setText(f"Prefer paper number \N{Greater-than Or Equal To} {a.stored_value}")
+        self._prefer_above_action = a
         m.addAction(a)
         self.ui.getNextButton.setMenu(m)
         # self.ui.getNextButton.setPopupMode(QToolButton.MenuButtonPopup)
@@ -1075,6 +1080,33 @@ class MarkerClient(QWidget):
     @property
     def prefer_tagged(self):
         return self._prefer_tags_action.isChecked()
+
+    def toggle_prefer_above(self):
+        a = self._prefer_above_action
+        if not a.isChecked():
+            return
+        max_papernum = self.exam_spec["numberToProduce"]
+        n, ok = QInputDialog.getInt(
+            self,
+            "Prefer paper numbers above...",
+            "<p>Perhaps you want to start marking at a particular paper number.</p>"
+            "<p>Preference for paper numbers at or above this value.</p>",
+            0,
+            a.stored_value,
+            max_papernum,
+        )
+        if not ok:
+            a.setChecked(False)
+            return
+        a.stored_value = n
+        a.setText(f"Prefer paper number \N{Greater-than Or Equal To} {a.stored_value}")
+
+    @property
+    def prefer_above(self):
+        """User prefers to mark papers above this value, or None if no preference."""
+        if not self._prefer_above_action.isChecked():
+            return None
+        return self._prefer_above_action.stored_value
 
     def loadMarkedList(self):
         """
@@ -1308,6 +1340,9 @@ class MarkerClient(QWidget):
             # TODO: @user not yet implemented server-side
             tag = f"attn:{self.msgr.username}"
             log.info('Asking for next available, prefer tagged with "%s"', tag)
+        above = self.prefer_above
+        if above:
+            log.info("Asking for next available, prefer above %s", above)
         while True:
             attempts += 1
             # little sanity check - shouldn't be needed.
@@ -1315,7 +1350,9 @@ class MarkerClient(QWidget):
             if attempts > 5:
                 return
             try:
-                task = self.msgr.MaskNextTask(self.question, self.version, tag=tag)
+                task = self.msgr.MaskNextTask(
+                    self.question, self.version, tag=tag, above=above
+                )
                 if not task:
                     return
             except PlomSeriousException as err:
