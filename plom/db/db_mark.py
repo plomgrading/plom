@@ -130,6 +130,7 @@ def MgetNextTask(self, q, v, *, tag, above):
                     qref = query.get()
             elif tag:
                 # TODO: can't we SQL query it above without looping?
+                log.info('We are looking for tag "%s"', tag)
                 for qref in query:
                     tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
                     if tag in tag_list:

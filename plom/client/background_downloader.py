@@ -83,6 +83,7 @@ class BackgroundDownloader(QThread):
             # ask server for task-code of next task
             try:
                 log.debug("bgdownloader: about to download")
+                # TODO: does not yet read tagging preference
                 task = self._msgr.MaskNextTask(self.question, self.version)
                 if not task:  # no more tests left
                     self.downloadNoneAvailable.emit()

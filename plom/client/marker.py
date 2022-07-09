@@ -984,7 +984,7 @@ class MarkerClient(QWidget):
         self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         # Paste the username, question and version into GUI.
-        self.ui.userLabel.setText(self.msgr.whoami())
+        self.ui.userLabel.setText(self.msgr.username)
         try:
             question_label = get_question_label(self.exam_spec, self.question)
         except (ValueError, KeyError):
@@ -1025,11 +1025,12 @@ class MarkerClient(QWidget):
         self.ui.closeButton.clicked.connect(self.close)
         m = QMenu()
         m.addAction("Get nth...", self.requestInteractive)
-        m.addSeparator().setText("Options")
-        a = QAction("prefer tasks tagged for me", self)
+        m.addSection("Options")
+        a = QAction("Prefer tasks tagged for me", self)
         a.triggered.connect(self.toggle_prefer_tagged)
         a.setCheckable(True)
         a.setChecked(True)
+        self._prefer_tags_action = a
         m.addAction(a)
         a = QAction("prefer paper number \N{Greater-than Or Equal To} 0", self)
         a.setCheckable(True)
@@ -1067,9 +1068,13 @@ class MarkerClient(QWidget):
         super().resizeEvent(event)
 
     def toggle_prefer_tagged(self):
-        print("hello, toggle stuff TODO")
-        m = self.ui.getNextButton.menu()
-        print(m)
+        pass
+        # m = self.ui.getNextButton.menu()
+        # print(self._prefer_tags_action.isChecked())
+
+    @property
+    def prefer_tagged(self):
+        return self._prefer_tags_action.isChecked()
 
     def loadMarkedList(self):
         """
@@ -1298,6 +1303,11 @@ class MarkerClient(QWidget):
             None
         """
         attempts = 0
+        tag = None
+        if self.prefer_tagged:
+            # TODO: @user not yet implemented server-side
+            tag = f"attn:{self.msgr.username}"
+            log.info('Asking for next available, prefer tagged with "%s"', tag)
         while True:
             attempts += 1
             # little sanity check - shouldn't be needed.
@@ -1305,7 +1315,7 @@ class MarkerClient(QWidget):
             if attempts > 5:
                 return
             try:
-                task = self.msgr.MaskNextTask(self.question, self.version)
+                task = self.msgr.MaskNextTask(self.question, self.version, tag=tag)
                 if not task:
                     return
             except PlomSeriousException as err:

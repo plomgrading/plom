@@ -109,6 +109,10 @@ class BaseMessenger:
     def whoami(self):
         return self.user
 
+    @property
+    def username(self):
+        return self.whoami()
+
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout

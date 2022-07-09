@@ -279,8 +279,6 @@ class Messenger(BaseMessenger):
 
         TODO: why are we using json for a string return?
         """
-        # tag = "attn:user0"
-        # above = 10
         self.SRmutex.acquire()
         try:
             response = self.get(
