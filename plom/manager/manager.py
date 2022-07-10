@@ -1586,6 +1586,8 @@ class Manager(QWidget):
         filename, _ = QFileDialog.getSaveFileName(
             self, "Save File", CSVFilename, "Comma Separated Values (*.csv)"
         )
+        if not filename:
+            return
         if not pull_spreadsheet(msgr=self.msgr, filename=filename, verbose=False):
             WarnMsg(
                 self,

@@ -285,7 +285,7 @@ class PlomServer:
         while True:
             if not self.process_is_running():
                 return False
-            if not self._brief_wait(0.25):
+            if not self._brief_wait(0.5):
                 print("Server died while we waited for ping")
                 return False
             try:
@@ -297,7 +297,7 @@ class PlomServer:
                 break
             count += 1
             if count >= 10:
-                print("we tried 10 times but server is not up yet!")
+                print("we tried 20 times (over 10 seconds) but server is not up yet!")
                 return False
         if not self.process_is_running():
             return False
