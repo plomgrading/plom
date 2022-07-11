@@ -215,6 +215,7 @@ def set_question_pages(pages: list, question: int):
             test_spec.pages[idx]['question_page'] = question
         elif test_spec.pages[idx]['question_page'] == question:
             test_spec.pages[idx]['question_page'] = False
+
     test_spec.save()
 
 

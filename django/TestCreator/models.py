@@ -50,8 +50,8 @@ pre_delete.connect(
 
 
 class TestSpecInfo(models.Model):
-    long_name = models.CharField(max_length=150)
-    short_name = models.CharField(max_length=100)
+    long_name = models.TextField()
+    short_name = models.TextField()
     n_questions = models.IntegerField(default=0)
     total_marks = models.IntegerField(default=0)
     pages = models.JSONField(default=dict)
@@ -66,6 +66,6 @@ SHUFFLE_CHOICES = (
 # TODO: enforce field lengths in the form, not the database?
 class TestSpecQuestion(models.Model):
     index = models.PositiveIntegerField(default=1)
-    label = models.CharField(max_length=15)
+    label = models.TextField()
     mark = models.PositiveIntegerField(default=0)
     shuffle = models.CharField(choices=SHUFFLE_CHOICES, max_length=100)
