@@ -353,6 +353,10 @@ def get_question_fix_or_shuffle(index: int):
             return 'Fix'
 
 
+def is_question_completed(index: int):
+    return get_question_label(index) and get_question_marks(index) and get_question_fix_or_shuffle(index)
+
+
 """
 PDF functions
 """

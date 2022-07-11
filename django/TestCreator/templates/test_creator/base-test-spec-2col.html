@@ -19,7 +19,10 @@
             {% else %}
             <p class="is_test_spec_nav_text">Test names</p>
             {% endif %}
-            <i class="bi bi-three-dots"></i>
+
+            {% if 'names' in completed %}
+            <i class="bi bi-check"></i>
+            {% endif %}
         </div>
     </a>
     <a class="list-group-item list-group-item-action" href="{% url 'upload' %}">
@@ -29,7 +32,10 @@
             {% else %}
             <p class="is_test_spec_nav_text">Versions and reference PDF</p>
             {% endif %}
-            <i class="bi bi-three-dots"></i>
+            
+            {% if 'upload' in completed %}
+            <i class="bi bi-check"></i>
+            {% endif %}
         </div>
     </a>
     <a class="list-group-item list-group-item-action" href="{% url 'id_page' %}">
@@ -39,7 +45,10 @@
             {% else %}
             <p class="is_test_spec_nav_text">ID page</p>
             {% endif %}
-            <i class="bi bi-three-dots"></i>
+
+            {% if 'id_page' in completed %}
+            <i class="bi bi-check"></i>
+            {% endif %}
         </div>
     </a>
     <a class="list-group-item list-group-item-action" href="{% url 'questions' %}">
@@ -49,7 +58,10 @@
             {% else %}
             <p class="is_test_spec_nav_text">Questions</p>
             {% endif %}
-            <i class="bi bi-three-dots"></i>
+
+            {% if 'questions_page' in completed %}
+            <i class="bi bi-check"></i>
+            {% endif %}
         </div>
     </a>
     {% if questions %}
@@ -62,7 +74,10 @@
                     {% else %}
                     <p class="is_test_spec_nav_text">Question {{forloop.counter }}</p>
                     {% endif %}
-                    <i class="bi bi-three-dots"></i>
+
+                    {% if forloop.counter in completed.question_list %}
+                    <i class="bi bi-check"></i>
+                    {% endif %}
                 </div>
             </a>
             {% endfor %}
@@ -75,7 +90,10 @@
             {% else %}
             <p class="is_test_spec_nav_text">Do-not-mark pages</p>
             {% endif %}
-            <i class="bi bi-three-dots"></i>
+
+            {% if 'dnm_page' in completed %}
+            <i class="bi bi-check"></i>
+            {% endif %}
         </div>
     </a>
     <a class="list-group-item list-group-item-action" href="{% url 'summary' %}">
@@ -85,7 +103,6 @@
             {% else %}
             <p class="is_test_spec_nav_text">Summary</p>
             {% endif %}
-            <i class="bi bi-three-dots"></i>
         </div>
     </a>
     <form action="{% url 'reset' %}" method="post"

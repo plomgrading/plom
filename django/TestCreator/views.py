@@ -21,6 +21,34 @@ class BaseTestSpecFormView(FormView):
         context['short_name'] = services.get_short_name()
         context['curr_page'] = page_name
         context['questions'] = [i for i in range(services.get_num_questions())]
+
+        context['completed'] = {}
+
+        # did we complete the 'names' page?
+        if context['long_name'] and context['short_name']:
+            context['completed']['names'] = True
+
+        # or the reference pdf page?
+        saved_pdfs = models.ReferencePDF.objects.all()
+        if len(saved_pdfs) > 0:
+            context['completed']['upload'] = True
+
+        # or select the ID page?
+        id_page = services.get_id_page_number()
+        if id_page:
+            context['completed']['id_page'] = True
+
+        # or the questions page?
+        total_marks = services.get_total_marks()
+        if total_marks and context['questions']:
+            context['completed']['questions_page'] = True
+
+        # or the question details?
+        context['completed']['question_list'] = []
+        for i in range(len(context['questions'])):
+            if services.is_question_completed(i+1):
+                context['completed']['question_list'].append(i+1)
+
         return context
 
 
