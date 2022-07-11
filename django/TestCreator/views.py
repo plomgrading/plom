@@ -201,6 +201,13 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
         form_data = form.cleaned_data
         question_id = self.kwargs['q_idx']
 
+        # save the question to the database
+        label = form_data['label']
+        mark = form_data['mark']
+        shuffle = form_data['shuffle']
+
+        services.create_or_replace_question(question_id, label, mark, shuffle)
+
         # save the question pages
         question_ids = []
         for key, value in form_data.items():
@@ -208,13 +215,6 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
                 idx = int(re.sub('\D', '', key))
                 question_ids.append(idx)
         services.set_question_pages(question_ids, question_id)
-
-        # save the question to the database
-        label = form_data['label']
-        mark = form_data['mark']
-        shuffle = form_data['shuffle']
-
-        services.create_or_replace_question(question_id, label, mark, shuffle)
         
         return super().form_valid(form)
 
