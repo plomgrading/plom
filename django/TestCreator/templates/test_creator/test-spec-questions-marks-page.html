@@ -11,6 +11,7 @@
     {% endif %}   
 >
     {% csrf_token %}
+
     <div class="vstack d-flex h-100">
         <div class="h-100">
             <div class="row">
@@ -27,6 +28,11 @@
                     <p></p>
                 </div>                   
             </div>
+            
+            {% for e in form.non_field_errors %}
+            <p class="text-danger">{{ e }}</p>
+            {% endfor %}
+
         </div>
         <div>
             <a type="button" class="btn btn-primary btn-lg" href="{% url 'id_page' %}">Back</a>

@@ -47,7 +47,7 @@
 {% elif page.dnm_page %}
 <span class="p-2 badge text-bg-secondary">DNM</span>
 {% elif page.question_page and page.question_page != question_id %}
-<span class="p-2 badge text-bg-info" >Q{{ page.question_page }}</span>
+<span class="p-2 badge text-bg-info" style="opacity: 50%;">Q{{ page.question_page }}</span>
 {% else %}
 <span class="p-2 badge text-bg-info" x-cloak x-show="page{{ forloop.counter0 }}selected">Q{{ question_id }}</span>
 {% endif %}

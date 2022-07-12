@@ -1,8 +1,10 @@
 from django import forms
 from django.forms import ModelForm
 import fitz
+import re
 from django.core.exceptions import ValidationError
 from . import models
+from . import services
 
 
 class TestSpecNamesForm(forms.Form):
@@ -14,7 +16,7 @@ class TestSpecNamesForm(forms.Form):
     short_name = forms.CharField(
         max_length=50, 
         label="Name:", 
-        help_text="The short name for the test, for example \"m101mt2\"",
+        help_text="The short name of the test, for example \"m101mt2\"",
         widget=forms.TextInput(attrs={'class': 'form-control'}))
 
 
@@ -74,6 +76,11 @@ class TestSpecQuestionsMarksForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
 
+    def clean(self):
+        data = self.cleaned_data
+        if data['total_marks'] > data['questions']:
+            raise ValidationError('Marks should not exceed the number of questions.')
+
 
 class TestSpecQuestionForm(TestSpecPDFSelectForm):
     label = forms.CharField(
@@ -92,6 +99,45 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
         help_text="Shuffle over test versions, or use first version",
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
     )
+
+    # def clean(self):
+    #     data = self.cleaned_data
+
+    #     # are the selected pages next to each other?
+    #     pages = [int(re.sub('\D', '', key)) for key in data.keys() if 'page' in key]
+        
+    #     seen_first_selected = False
+    #     seen_next_deselected = False
+    #     for i in range(1, len(pages)):  # We don't need to worry about the first page
+    #         if data[f'page{i}'] and seen_next_deselected:
+    #             raise ValidationError('Question pages must be consecutive.')
+    #         elif data[f'page{i}'] and not seen_first_selected:
+    #             seen_first_selected = 
+
+    def clean(self):
+        data = self.cleaned_data
+
+        # Are the marks less than the test's total marks?
+        if data['mark'] > services.get_total_marks():
+            raise ValidationError("Question cannot have more marks than the test.")
+
+        selected_pages = []
+        for key, value in data.items():
+            if 'page' in key and value:
+                selected_pages.append(int(re.sub('\D', '', key)))
+        selected_pages = sorted(selected_pages)
+
+        # Was at least one page selected?
+        if len(selected_pages) < 1:
+            raise ValidationError('At least one page must be selected.')
+
+        # Are the selected pages next to each other?
+        for i in range(len(selected_pages)-1):
+            curr = selected_pages[i]
+            next = selected_pages[i+1]
+
+            if next - curr > 1:
+                raise ValidationError('Question pages must be consecutive.')
 
 
 class TestSpecSummaryForm(forms.Form):

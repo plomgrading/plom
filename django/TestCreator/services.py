@@ -293,8 +293,10 @@ def create_question(index: int, label: str, mark: int, shuffle: bool):
 
 
 def remove_question(index: int):
-    question = models.TestSpecQuestion.objects.get(index=index)
-    question.delete()
+    question_exists = models.TestSpecQuestion.objects.filter(index=index)
+    if question_exists:
+        question = models.TestSpecQuestion.objects.get(index=index)
+        question.delete()
 
     # remove question data from pages
     test_spec = load_spec()

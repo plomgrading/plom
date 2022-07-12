@@ -13,6 +13,10 @@
         <p>Select an ID page:</p>
         {% endblock %}
 
+        {% for e in form.non_field_errors %}
+        <p class="text-danger">{{ e }}</p>
+        {% endfor %}
+
         <!-- Container of card elements -->
         {% if pages %}
         <div class="row row-cols-auto">
@@ -38,10 +42,6 @@
         {% else %}
         <p>No reference PDF uploaded yet.</p>
         {% endif %}
-
-        {% for e in form.non_field_errors %}
-        <p class="text-danger">{{ e }}</p>
-        {% endfor %}
         
         <div>
             {% for f in form.hidden_fields %}
@@ -51,7 +51,11 @@
         
         <div>
             <a type="button" class="btn btn-primary btn-lg" {% block back_href %}{% endblock %}>Back</a>
+            {% if pages %}
             <input type="submit" class="btn btn-primary btn-lg float-end" value="Next">
+            {% else %}
+            <input type="submit" class="btn btn-primary btn-lg float-end" value="Next" disabled>
+            {% endif %}
         </div>
     </form>
 </div>
