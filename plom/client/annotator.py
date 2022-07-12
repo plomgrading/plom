@@ -10,7 +10,6 @@ __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
-from copy import deepcopy
 import importlib.resources as resources
 import json
 import logging

@@ -1200,6 +1200,7 @@ class MarkerClient(QWidget):
         # filenames likely stale: could have restarted client in meantime
         src_img_data = plomdata["base_images"]
 
+        # TODO: download direct from src_img_data...?  no server_path field, just a stale "filename"
         pagedata = self.msgr.get_pagedata_context_question(num, self.question)
         pagedata = self.pagecache.download_page_images(pagedata, alt_get=src_img_data)
 
