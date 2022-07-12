@@ -11,6 +11,8 @@ from . import forms
 from . import models
 from . import services
 
+# TODO: docstrings!! On the methods
+# Top-level blurb for each class, type hints for methods
 
 class BaseTestSpecFormView(FormView):
     TEMPLATES = pathlib.Path('test_creator')

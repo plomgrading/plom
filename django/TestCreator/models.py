@@ -41,8 +41,7 @@ def pre_delete_reference_pdf(sender, instance, **kwargs):
 
     # delete pdf from disk
     pdf_path = pathlib.Path('TestCreator') / 'media' / f'{instance.filename_slug}.pdf'
-    if pdf_path.exists():
-        os.remove(pdf_path)
+    pdf_path.unlink(missing_ok=True)
 
 pre_delete.connect(
     pre_delete_reference_pdf, sender=ReferencePDF

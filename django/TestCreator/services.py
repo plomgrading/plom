@@ -1,4 +1,3 @@
-import os
 import pathlib
 import fitz
 import json
@@ -392,7 +391,7 @@ def get_and_save_pdf_images(pdf: models.ReferencePDF) -> None:
 
         thumbnail_dir = pathlib.Path('TestCreator') / 'static' / 'thumbnails' / slug
         if not thumbnail_dir.exists():
-            os.mkdir(thumbnail_dir)
+            thumbnail_dir.mkdir()
 
         for i in range(pdf_doc.page_count):
             page_pixmap = pdf_doc[i].get_pixmap()
