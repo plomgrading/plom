@@ -654,7 +654,7 @@ class Annotator(QWidget):
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
         self.parentMarkerUI.downloadAnyMissingPages(int(testnum))
-        pagedata = self.parentMarkerUI._full_pagedata[int(testnum)]
+        pagedata = self.parentMarkerUI.pagecache._full_pagedata[int(testnum)]
         # TODO: if we unified img_src_data and pagedata, could just pass onwards
         files = [
             {"filename": x["local_filename"], "orientation": x["orientation"]}
@@ -712,7 +712,9 @@ class Annotator(QWidget):
 
         # do a deep copy of this list of dict - else hit #1690
         # keep original readonly?
-        page_data = deepcopy(self.parentMarkerUI._full_pagedata[int(testNumber)])
+        page_data = deepcopy(
+            self.parentMarkerUI.pagecache._full_pagedata[int(testNumber)]
+        )
         #
         for x in image_md5_list:
             if x not in [p["md5"] for p in page_data]:

@@ -16,6 +16,71 @@ from pathlib import Path
 log = logging.getLogger("marker")
 
 
+class PageCache:
+    """Manage a local on-disc cache of page images."""
+
+    def __init__(self, basedir, *, msgr=None):
+        # TODO: a not-fully-thought-out datastore for immutable pagedata
+        # Note: specific to this question: relax that!
+        self._full_pagedata = {}
+        self._image_paths = {}
+        self._rows_by_id = {}
+        self.basedir = basedir
+        self.msgr = msgr
+
+    def has_task_page_images(self, papernum, question):
+        return True
+
+    def has_page_image(self, img_id):
+        r = self._image_paths.get(img_id, None)
+        return r is not None
+
+    def page_image_path(self, img_id):
+        return self._image_paths[img_id]
+
+    def _download_pages(self, pagedata, *, alt_get=None, get_all=False):
+        """Temporary code?"""
+
+        return download_pages(
+            self.msgr, pagedata, self.basedir, alt_get=alt_get, get_all=get_all
+        )
+
+    def download_from_pagedata(
+        self, papernum, question, pagedata, *, alt_get=None, get_all=False
+    ):
+        """TODO"""
+
+        pagedata = self._download_pages(pagedata, alt_get=alt_get, get_all=get_all)
+        self._full_pagedata[papernum] = pagedata
+        for r in pagedata:
+            if r["local_filename"]:
+                assert (
+                    self._image_paths.get(r["id"], None) is None
+                ), "TODO, better error"
+                self._image_paths[r["id"]] = r["local_filename"]
+                self._rows_by_id[r["id"]] = r
+        # TODO?
+        return pagedata
+
+    def messy_hacky_temp_update(self, papernum, pagedata):
+        # TODO: roughly a copy of part of download_from_pagedata, w/o download
+        self._full_pagedata[papernum] = pagedata
+        for r in pagedata:
+            if r["local_filename"]:
+                cur = self._image_paths.get(r["id"], None)
+                if cur is not None:
+                    assert cur == r["local_filename"]
+                else:
+                    self._image_paths[r["id"]] = r["local_filename"]
+                    # self._rows_by_id[r["id"]] = r
+
+    def download_in_background_thread(self, img_id):
+        raise NotImplementedError("lazy devs")
+
+    def sync_download(self, img_id):
+        pass
+
+
 def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):
     """Download all or some of the page images for a set of pagedata.
 

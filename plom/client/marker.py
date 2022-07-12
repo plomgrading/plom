@@ -69,7 +69,7 @@ from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
-from .pagecache import download_pages
+from .pagecache import download_pages, PageCache
 from .background_downloader import BackgroundDownloader
 
 
@@ -842,9 +842,8 @@ class MarkerClient(QWidget):
         log.debug("Working directory set to %s", self.workingDirectory)
 
         self.maxMark = -1  # temp value
-        # TODO: a not-fully-thought-out datastore for immutable pagedata
         # Note: specific to this question
-        self._full_pagedata = {}
+        self.pagecache = PageCache(self.workingDirectory)
         self.examModel = (
             MarkerExamModel()
         )  # Exam model for the table of groupimages - connect to table
@@ -899,6 +898,9 @@ class MarkerClient(QWidget):
             None
         """
         self.msgr = messenger
+        # TODO: should we clone it?
+        # TODO: use some setter method, or in the ctor etc?
+        self.pagecache.msgr = messenger
         # BackgroundDownloaders come and go but share a single cloned Messenger
         # Note: BackgroundUploader is persistent and makes its own clone.
         self._bgdownloader_msgr = Messenger.clone(self.msgr)
@@ -1202,15 +1204,16 @@ class MarkerClient(QWidget):
         src_img_data = plomdata["base_images"]
 
         pagedata = self.msgr.get_pagedata_context_question(num, self.question)
-        pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
+        pagedata = self.pagecache.download_from_pagedata(
+            num, question, pagedata, alt_get=src_img_data
         )
-        self._full_pagedata[num] = pagedata
 
         for row in src_img_data:
+            row["filename"] = self.pagecache.page_image_path(row["id"])
+            # TODO: sanity check to remove later
             for r in pagedata:
                 if r["md5"] == row["md5"]:
-                    row["filename"] = r["local_filename"]
+                    assert row["filename"] == r["local_filename"]
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1401,10 +1404,9 @@ class MarkerClient(QWidget):
         del page_metadata
 
         pagedata = self.msgr.get_pagedata_context_question(papernum, self.question)
-        pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
+        pagedata = self.pagecache.download_from_pagedata(
+            papernum, self.question, pagedata, alt_get=src_img_data
         )
-        self._full_pagedata[papernum] = pagedata
 
         # Populate the orientation keys from the pagedata
         for row in src_img_data:
@@ -1413,9 +1415,11 @@ class MarkerClient(QWidget):
             row["orientation"] = ori[0]  # just take first one
 
         for row in src_img_data:
+            row["filename"] = self.pagecache.page_image_path(row["id"])
+            # TODO: sanity check to remove later
             for r in pagedata:
                 if r["md5"] == row["md5"]:
-                    row["filename"] = r["local_filename"]
+                    assert row["filename"] == r["local_filename"]
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -1499,7 +1503,8 @@ class MarkerClient(QWidget):
             None
         """
         num = int(task[1:5])
-        self._full_pagedata[num] = pagedata
+        # TODO: get question here from task?
+        self.pagecache.messy_hacky_temp_update(num, pagedata)
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -2205,11 +2210,12 @@ class MarkerClient(QWidget):
 
     def downloadAnyMissingPages(self, test_number):
         test_number = int(test_number)
-        pagedata = self._full_pagedata[test_number]
+        # TODO: redo all this
+        pagedata = self.pagecache._full_pagedata[test_number]
         pagedata = download_pages(
             self.msgr, pagedata, self.workingDirectory, get_all=True
         )
-        self._full_pagedata[test_number] = pagedata
+        self.pagecache.messy_hacky_temp_update(test_number, pagedata)
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""
