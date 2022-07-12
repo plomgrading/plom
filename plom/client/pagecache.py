@@ -22,10 +22,9 @@ class PageCache:
     def __init__(self, basedir, *, msgr=None):
         # TODO: a not-fully-thought-out datastore for immutable pagedata
         # Note: specific to this question: relax that!
-        self._full_pagedata = {}
         self._image_paths = {}
         self._rows_by_id = {}
-        self.basedir = basedir
+        self.basedir = Path(basedir)
         self.msgr = msgr
 
     def has_task_page_images(self, papernum, question):
@@ -51,7 +50,6 @@ class PageCache:
         """TODO"""
 
         pagedata = self._download_pages(pagedata, alt_get=alt_get, get_all=get_all)
-        self._full_pagedata[papernum] = pagedata
         for r in pagedata:
             if r["local_filename"]:
                 assert (
@@ -62,9 +60,8 @@ class PageCache:
         # TODO?
         return pagedata
 
-    def messy_hacky_temp_update(self, papernum, pagedata):
-        # TODO: roughly a copy of part of download_from_pagedata, w/o download
-        self._full_pagedata[papernum] = pagedata
+    def update_from_someone_elses_downloads(self, pagedata):
+        # hopefully tempoary!
         for r in pagedata:
             if r["local_filename"]:
                 cur = self._image_paths.get(r["id"], None)
@@ -72,13 +69,38 @@ class PageCache:
                     assert cur == r["local_filename"]
                 else:
                     self._image_paths[r["id"]] = r["local_filename"]
-                    # self._rows_by_id[r["id"]] = r
+
+    def sync_download_missing_images(self, pagedata):
+        # don't cache the pagedata
+        for row in pagedata:
+            row = self.sync_download(row)
+        return pagedata
 
     def download_in_background_thread(self, img_id):
         raise NotImplementedError("lazy devs")
 
-    def sync_download(self, img_id):
-        pass
+    def sync_download(self, row):
+        """Give the pagedata in row, download, cache and return edited row."""
+
+        row["local_filename"] = None
+        f = self.basedir / row["server_path"]
+        # if cache_do_we_have(row["id"]):
+        cur = self._image_paths.get(row["id"], None)
+        if f.exists():
+            assert cur == str(f)
+            log.debug("PageCache: asked to download %s; we already have it", f)
+            row["local_filename"] = str(f)
+            return row
+        assert cur is None
+        log.debug("PageCache: downloading %s", f)
+        f.parent.mkdir(exist_ok=True, parents=True)
+        im_bytes = self.msgr.get_image(row["id"], row["md5"])
+        # im_type = imghdr.what(None, h=im_bytes)
+        with open(f, "wb") as fh:
+            fh.write(im_bytes)
+        row["local_filename"] = str(f)
+        self._image_paths[row["id"]] = row["local_filename"]
+        return row
 
 
 def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):

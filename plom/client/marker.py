@@ -1197,8 +1197,6 @@ class MarkerClient(QWidget):
             self.Qapp.exit(57)
             # raise PlomForceLogoutException("Manager changed task") from ex
 
-        # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
-        # column means different things).  Instead, extract from .plom file.
         log.info("importing source image data (orientations etc) from .plom file")
         # filenames likely stale: could have restarted client in meantime
         src_img_data = plomdata["base_images"]
@@ -1502,9 +1500,7 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        num = int(task[1:5])
-        # TODO: get question here from task?
-        self.pagecache.messy_hacky_temp_update(num, pagedata)
+        self.pagecache.update_from_someone_elses_downloads(pagedata)
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -2207,15 +2203,6 @@ class MarkerClient(QWidget):
         )
         event.accept()
         log.debug("Marker: goodbye!")
-
-    def downloadAnyMissingPages(self, test_number):
-        test_number = int(test_number)
-        # TODO: redo all this
-        pagedata = self.pagecache._full_pagedata[test_number]
-        pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, get_all=True
-        )
-        self.pagecache.messy_hacky_temp_update(test_number, pagedata)
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""

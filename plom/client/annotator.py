@@ -653,8 +653,9 @@ class Annotator(QWidget):
             return
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
-        self.parentMarkerUI.downloadAnyMissingPages(int(testnum))
-        pagedata = self.parentMarkerUI.pagecache._full_pagedata[int(testnum)]
+        PC = self.parentMarkerUI.pagecache
+        pagedata = PC.msgr.get_pagedata_context_question(testnum, self.question_num)
+        pagedata = PC.sync_download_missing_images(pagedata)
         # TODO: if we unified img_src_data and pagedata, could just pass onwards
         files = [
             {"filename": x["local_filename"], "orientation": x["orientation"]}
@@ -676,7 +677,6 @@ class Annotator(QWidget):
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
-        # TODO: maybe download should happen in Marker?
         image_md5_list = [x["md5"] for x in self.src_img_data]
         # Look for duplicates by first inverting the dict
         repeats = {}
@@ -708,13 +708,11 @@ class Annotator(QWidget):
                 f"Include this info if you think this is a bug!",
             ).exec()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
-        self.parentMarkerUI.downloadAnyMissingPages(testNumber)
 
-        # do a deep copy of this list of dict - else hit #1690
-        # keep original readonly?
-        page_data = deepcopy(
-            self.parentMarkerUI.pagecache._full_pagedata[int(testNumber)]
-        )
+        PC = self.parentMarkerUI.pagecache
+        page_data = PC.msgr.get_pagedata_context_question(testNumber, self.question_num)
+        page_data = PC.sync_download_missing_images(page_data)
+
         #
         for x in image_md5_list:
             if x not in [p["md5"] for p in page_data]:

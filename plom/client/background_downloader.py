@@ -123,7 +123,7 @@ class BackgroundDownloader(QThread):
         pagedata = download_pages(
             self._msgr, pagedata, self.workingDirectory, alt_get=src_img_data
         )
-        # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
+        # don't ask PageCache b/c we're in another thread: see downloadSuccess emitted below
 
         # Populate the orientation keys from the full pagedata
         for row in src_img_data:
