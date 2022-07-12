@@ -13,22 +13,20 @@ from pathlib import Path
 # import time
 
 
-log = logging.getLogger("marker")
+log = logging.getLogger("PageCache")
 
 
 class PageCache:
-    """Manage a local on-disc cache of page images."""
+    """Manage a local on-disc cache of page images.
+
+    TODO: record the time of caching
+    """
 
     def __init__(self, basedir, *, msgr=None):
-        # TODO: a not-fully-thought-out datastore for immutable pagedata
-        # Note: specific to this question: relax that!
         self._image_paths = {}
-        self._rows_by_id = {}
+        # self._image_md5 = {}
         self.basedir = Path(basedir)
         self.msgr = msgr
-
-    def has_task_page_images(self, papernum, question):
-        return True
 
     def has_page_image(self, img_id):
         r = self._image_paths.get(img_id, None)
@@ -37,31 +35,33 @@ class PageCache:
     def page_image_path(self, img_id):
         return self._image_paths[img_id]
 
-    def _download_pages(self, pagedata, *, alt_get=None, get_all=False):
-        """Temporary code?"""
+    def download_page_images(self, pagedata, *, alt_get=None, get_all=False):
+        """Download and cache images
 
-        return download_pages(
+        TODO: make it idempotent
+        TODO: make it robust-ish if someone deletes files under us
+
+        Returns:
+            list: updated list of pagedata input (which was also changed: no
+            copy is made).
+        """
+        # TODO: Consider rewriting to use self.sync_download directly?
+        pagedata = download_pages(
             self.msgr, pagedata, self.basedir, alt_get=alt_get, get_all=get_all
         )
-
-    def download_from_pagedata(
-        self, papernum, question, pagedata, *, alt_get=None, get_all=False
-    ):
-        """TODO"""
-
-        pagedata = self._download_pages(pagedata, alt_get=alt_get, get_all=get_all)
         for r in pagedata:
+            # if r.get("local_filename", None):
             if r["local_filename"]:
                 assert (
                     self._image_paths.get(r["id"], None) is None
                 ), "TODO, better error"
                 self._image_paths[r["id"]] = r["local_filename"]
-                self._rows_by_id[r["id"]] = r
-        # TODO?
+            # r = self. sync_download(r)
         return pagedata
 
     def update_from_someone_elses_downloads(self, pagedata):
         # hopefully tempoary!
+        # TODO: maybe check the md5sums since we didn't get it ourselves
         for r in pagedata:
             if r["local_filename"]:
                 cur = self._image_paths.get(r["id"], None)
@@ -71,7 +71,6 @@ class PageCache:
                     self._image_paths[r["id"]] = r["local_filename"]
 
     def sync_download_missing_images(self, pagedata):
-        # don't cache the pagedata
         for row in pagedata:
             row = self.sync_download(row)
         return pagedata
@@ -88,11 +87,11 @@ class PageCache:
         cur = self._image_paths.get(row["id"], None)
         if f.exists():
             assert cur == str(f)
-            log.debug("PageCache: asked to download %s; we already have it", f)
+            log.info("asked to download %s; we already have it", f)
             row["local_filename"] = str(f)
             return row
         assert cur is None
-        log.debug("PageCache: downloading %s", f)
+        log.info("downloading %s", f)
         f.parent.mkdir(exist_ok=True, parents=True)
         im_bytes = self.msgr.get_image(row["id"], row["md5"])
         # im_type = imghdr.what(None, h=im_bytes)

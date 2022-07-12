@@ -842,7 +842,6 @@ class MarkerClient(QWidget):
         log.debug("Working directory set to %s", self.workingDirectory)
 
         self.maxMark = -1  # temp value
-        # Note: specific to this question
         self.pagecache = PageCache(self.workingDirectory)
         self.examModel = (
             MarkerExamModel()
@@ -1202,9 +1201,7 @@ class MarkerClient(QWidget):
         src_img_data = plomdata["base_images"]
 
         pagedata = self.msgr.get_pagedata_context_question(num, self.question)
-        pagedata = self.pagecache.download_from_pagedata(
-            num, question, pagedata, alt_get=src_img_data
-        )
+        pagedata = self.pagecache.download_page_images(pagedata, alt_get=src_img_data)
 
         for row in src_img_data:
             row["filename"] = self.pagecache.page_image_path(row["id"])
@@ -1402,9 +1399,7 @@ class MarkerClient(QWidget):
         del page_metadata
 
         pagedata = self.msgr.get_pagedata_context_question(papernum, self.question)
-        pagedata = self.pagecache.download_from_pagedata(
-            papernum, self.question, pagedata, alt_get=src_img_data
-        )
+        pagedata = self.pagecache.download_page_images(pagedata, alt_get=src_img_data)
 
         # Populate the orientation keys from the pagedata
         for row in src_img_data:
@@ -2410,11 +2405,9 @@ class MarkerClient(QWidget):
         gn = tgs.gsb.value()
 
         pagedata = self.msgr.get_pagedata_question(tn, gn)
-        pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, get_all=True
-        )
         # don't cache this pagedata: "gn" might not be our question number
         # (but the images are cacheable)
+        pagedata = self.pagecache.download_page_images(pagedata, get_all=True)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec()
