@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,15 +7,12 @@
     <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine-next/packages/alpinejs/dist/cdn.min.js" defer></script>
 </head>
 <body>
-    <p id="link">http://{{ domain }}{% url 'activate' uidb64=uid token=token %}</p>
-    <button onclick="copyClipboard()">Copy</button>
-    <button href="{% url 'home' %}">Home</button>
-    <script>
-        function copyClipboard() {
-            const link = document.getElementById("link")
-            const linkText = link.textContent.trim()
-            console.log(linkText)
-        }
-    </script>
+    <h1>Manager Reset Password Link</h1>
+    <h4>Below is the Manager's link to activate account and reset password.</h4>
+    <p>- Click on copy to copy link to clipboard</p>
+    <p id="link">http://{{ domain }}{% url 'password_reset' uidb64=uid token=token %}</p>
+    <button id="copy">Copy</button>
+    <a href="{% url 'home' %}">Home</a>
+    <script type="module" src="{% static '/js/activation_link.js' %}"></script>
 </body>
 </html>

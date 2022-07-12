@@ -10,26 +10,62 @@ from django.views.generic import View
 # pip install django-braces
 from braces.views import GroupRequiredMixin
 
+from django.contrib.auth.forms import SetPasswordForm
+
 from .signupForm import CreateUserForm
 from .tokens import activation_token
 
 
 # Create your views here.
-# activate account
-def activate(request, uidb64, token):
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        user = None
-    if user is not None and activation_token.check_token(user, token):
-        user.is_active = True
-        user.profile.signup_confirmation = True
-        user.save()
-        login(request, user)
-        return redirect('home')
-    else:
-        return render(request, 'Authentication/activation_invalid.html')
+# Set User Password
+class SetPassword(View):
+    template_name = 'Authentication/set_password.html'
+    reset_invalid = 'Authentication/activation_invalid.html'
+    set_password_complete = 'Authentication/set_password_complete.html'
+
+    def get(self, request, uidb64, token):
+        try:
+            uid = force_str((urlsafe_base64_decode(uidb64)))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+        reset_form = SetPasswordForm(user)
+        if user is not None and activation_token.check_token(user, token):
+            user.is_active = True
+            user.profile.signup_confirmation = False
+            user.save()
+            context = {'form': reset_form}
+            return render(request, self.template_name, context)
+        else:
+            return render(request, self.reset_invalid)
+
+    def post(self, request, uidb64, token):
+        try:
+            uid = force_str((urlsafe_base64_decode(uidb64)))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+        if user is not None and activation_token.check_token(user, token):
+            reset_form = SetPasswordForm(user, request.POST)
+            if reset_form.is_valid():
+                user = reset_form.save()
+                user.is_active = True
+                user.profile.signup_confirmation = True
+                user.save()
+                return render(request, self.set_password_complete)
+            else:
+                context = {'form': reset_form}
+                return render(request, self.template_name, context)
+        else:
+            return render(request, 'Authentication/activation_invalid.html')
+
+
+# When users their password successfully
+class SetPasswordComplete(View):
+    template_name = 'Authentication/set_password_complete.html'
+
+    def get(self, request):
+        return render(request, self.template_name)
 
 
 # login_required make sure user is log in
@@ -68,6 +104,7 @@ class LoginView(View):
             return render(request, self.template_name)
 
 
+# Logout User
 class LogoutView(View):
     def get(self, request):
         logout(request)
@@ -78,6 +115,7 @@ class LogoutView(View):
 class SignupManager(GroupRequiredMixin, View):
     template_name = 'Authentication/manager_signup.html'
     activation_link = 'Authentication/manager_activation_link.html'
+    home = 'Authentication/home.html'
     form = CreateUserForm()
     group_required = [u"admin"]
 
@@ -104,8 +142,5 @@ class SignupManager(GroupRequiredMixin, View):
             }
             return render(request, self.activation_link, activation_link)
         else:
-            context = {'form': SignupManager.form}
+            context = {'form': SignupManager.form, 'error': form.errors}
             return render(request, self.template_name, context)
-
-# email optional
-# django
