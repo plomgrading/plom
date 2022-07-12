@@ -13,15 +13,6 @@ from jinja2 import ModuleLoader
 TODO: move util functions outside models file, clean up old functions
 """
 
-def unique_slug(filename):
-    """
-    Generate a slug from the input filename, and append '-copy' if that file already exists on disk
-    """
-    slug = slugify(re.sub('.pdf$', '', filename))
-    while os.path.exists(pathlib.Path('TestCreator') / 'media' / f'{slug}.pdf'):
-        slug = slug + '-copy'
-    return slug
-
 # just a simple folder for media for now
 def temp_filename_path(instance, filename):
     slug = slugify(re.sub('.pdf$', '', filename))
