@@ -78,8 +78,8 @@ class TestSpecQuestionsMarksForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
-        if data['total_marks'] > data['questions']:
-            raise ValidationError('Marks should not exceed the number of questions.')
+        if data['total_marks'] < data['questions']:
+            raise ValidationError('Number of questions should not exceed the total marks.')
 
 
 class TestSpecQuestionForm(TestSpecPDFSelectForm):

@@ -281,7 +281,7 @@ class TestSpecCreatorDNMPage(BaseTestSpecFormPDFView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('names')
+        return reverse('summary')
 
 
 class TestSpecSummaryView(BaseTestSpecFormView):
