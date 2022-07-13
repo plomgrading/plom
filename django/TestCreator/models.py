@@ -16,7 +16,7 @@ def temp_filename_path(instance, filename):
 
 class ReferencePDF(models.Model):
     # TODO: use TextField instead of CharField, don't hardcode field lengths!
-    filename_slug = models.CharField(max_length=100, default='')
+    filename_slug = models.TextField(default='')
     pdf = models.FileField(upload_to=temp_filename_path)
     num_pages = models.IntegerField(default=0)
 
@@ -57,3 +57,10 @@ class TestSpecQuestion(models.Model):
     label = models.TextField()
     mark = models.PositiveIntegerField(default=0)
     shuffle = models.CharField(choices=SHUFFLE_CHOICES, max_length=100)
+
+
+class TestSpecProgress(models.Model):
+    is_names_completed = models.BooleanField(default=False)
+    is_versions_pdf_completed = models.BooleanField(default=False)
+    is_id_page_completed = models.BooleanField(default=False)
+    is_question_page_completed = models.BooleanField(default=False)

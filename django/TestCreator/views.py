@@ -338,6 +338,28 @@ class TestSpecSummaryView(BaseTestSpecFormView):
             context['questions'].append(question)
         return context
 
+    def form_valid(self, form):
+        
+        """
+        Things to does is check:
+
+        Is there a long name and a short name?
+
+        Are there test versions, num_to_produce, and a reference PDF?
+
+        Is there an ID page?
+
+        Are there questions?
+
+        Do all the questions have pages attached?
+
+        Do all the questions have the relevant fields?
+
+        Are all the pages selected by something?
+        """
+
+        return super().form_valid(form)
+
 
 def test_spec_reset_view_pdf(request):
     if request.method == 'POST':

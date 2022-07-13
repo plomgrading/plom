@@ -4,7 +4,7 @@
 
 {% block right_column %}
 
-<form class="w-100" action="{% url 'questions' %}" method="post" enctype="multipart/form-data">
+<form class="w-100" action="{% url 'summary' %}" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="vstack d-flex h-100">
         <div class="h-100">
