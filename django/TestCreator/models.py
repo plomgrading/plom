@@ -1,13 +1,9 @@
-from operator import mod
-import os
 import shutil
 import re
 import pathlib
 from django.db import models
 from django.db.models.signals import pre_delete
-from django.dispatch import receiver
 from django.utils.text import slugify
-from jinja2 import ModuleLoader
 
 """
 TODO: move util functions outside models file, clean up old functions
@@ -42,6 +38,7 @@ pre_delete.connect(
 class TestSpecInfo(models.Model):
     long_name = models.TextField()
     short_name = models.TextField()
+    n_versions = models.PositiveIntegerField(default=0)
     n_questions = models.IntegerField(default=0)
     total_marks = models.IntegerField(default=0)
     pages = models.JSONField(default=dict)

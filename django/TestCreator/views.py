@@ -109,9 +109,9 @@ class TestSpecCreatorNamesPage(BaseTestSpecFormView):
         return reverse('upload')
 
 
-class TestSpecCreatorUploadPDFPage(BaseTestSpecFormView):
+class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
     template_name = 'test_creator/test-spec-upload-pdf.html'
-    form_class = forms.SimpleUploadFormPDF
+    form_class = forms.TestSpecVersionsRefPDFForm
     slug = None
 
     def get_context_data(self, **kwargs):
@@ -120,6 +120,9 @@ class TestSpecCreatorUploadPDFPage(BaseTestSpecFormView):
 
     def form_valid(self, form):
         form_data = form.cleaned_data
+
+        services.set_num_versions(form_data['versions'])
+
         self.num_pages = form_data['num_pages']
         self.slug = slugify(re.sub('.pdf$', '', str(form_data['pdf'])))
 
@@ -296,6 +299,7 @@ class TestSpecSummaryView(BaseTestSpecFormView):
         num_questions = services.get_num_questions()
 
         context['num_pages'] = len(pages)
+        context['num_versions'] = services.get_num_versions()
         context['num_questions'] = num_questions
         context['id_page'] = services.get_id_page_number()
         context['dnm_pages'] = ', '.join(str(i) for i in services.get_dnm_page_numbers())

@@ -20,11 +20,18 @@ class TestSpecNamesForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control'}))
 
 
-class SimpleUploadFormPDF(forms.Form):
+class TestSpecVersionsRefPDFForm(forms.Form):
+    versions = forms.IntegerField(
+        label='Number of versions:',
+        help_text="For shuffling questions over multiple test papers.",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1})
+    )
+
     pdf = forms.FileField(
         allow_empty_file=False,
         max_length=100,
-        label='Reference PDF',
+        label='Reference PDF:',
+        help_text='Upload a PDF of a test version for rendering page thumbnails.',
         widget=forms.FileInput(attrs={'accept': 'application/pdf', 'class': 'form-control'})
     )
 

@@ -39,6 +39,16 @@ def get_short_name():
     return load_spec().short_name
 
 
+def get_num_versions():
+    return load_spec().n_versions
+
+
+def set_num_versions(n_versions: str):
+    test_spec = load_spec()
+    test_spec.n_versions = n_versions
+    test_spec.save()
+
+
 def set_short_name(short_name: str):
     test_spec = load_spec()
     test_spec.short_name = short_name

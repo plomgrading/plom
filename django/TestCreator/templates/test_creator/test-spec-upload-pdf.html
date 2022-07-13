@@ -7,9 +7,17 @@
     <div class="vstack d-flex h-100">
         <div class="h-100">
             <div class="row">
-                <label for="{{ form.pdf.id_for_label }}" class="col-sm-2 col-form-label fs-5">Reference PDF:</label>
-                <div class="col-sm-10">
+                <label for="{{ form.versions.id_for_label }}" class="col-sm-3 col-form-label fs-5">{{ form.versions.label }}</label>
+                <div class="col-sm-9">
+                    {{ form.versions }}
+                    <p>{{ form.versions.help_text }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <label for="{{ form.pdf.id_for_label }}" class="col-sm-3 col-form-label fs-5">{{ form.pdf.label }}</label>
+                <div class="col-sm-9">
                     {{ form.pdf }}
+                    <p>{{ form.pdf.help_text }}</p>
                 </div>
             </div>
         </div>

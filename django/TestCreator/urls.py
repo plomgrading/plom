@@ -5,7 +5,7 @@ from . import views
 
 urlpatterns = [
     path('names/', views.TestSpecCreatorNamesPage.as_view(), name='names'),
-    path('upload', views.TestSpecCreatorUploadPDFPage.as_view(), name='upload'),
+    path('upload', views.TestSpecCreatorVersionsRefPDFPage.as_view(), name='upload'),
     # path('id_page/<str:slug>', views.TestSpecCreatorIDPage.as_view(), name='id_page'),
     path('id_page/', views.TestSpecCreatorIDPage.as_view(), name='id_page'),
     path('questions/', views.TestSpecCreatorQuestionsPage.as_view(), name='questions'),
