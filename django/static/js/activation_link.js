@@ -1,4 +1,5 @@
 let copiedLink = document.getElementById("link").textContent.trim();
+
 function copyToClipboard() {
     let copyBtn = document.getElementById("copy");
     copyBtn.addEventListener('click', () => {

@@ -11,8 +11,6 @@ Also can customize the default form that django gives us.
 class CreateUserForm(UserCreationForm):
     username = forms.CharField(max_length=40, help_text='Username')
     email = forms.EmailField(max_length=100, help_text='Email', required=False)
-    password1 = forms.CharField(help_text='Password1')
-    password2 = forms.CharField(help_text='Password2')
 
     def __init__(self, *args, **kwargs):
         super(CreateUserForm, self).__init__(*args, **kwargs)

@@ -3,10 +3,12 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.views.generic import View
+
 # pip install django-braces
 from braces.views import GroupRequiredMixin
 
@@ -18,10 +20,11 @@ from .tokens import activation_token
 
 # Create your views here.
 # Set User Password
-class SetPassword(View):
+class SetPassword(GroupRequiredMixin, View):
     template_name = 'Authentication/set_password.html'
     reset_invalid = 'Authentication/activation_invalid.html'
     set_password_complete = 'Authentication/set_password_complete.html'
+    group_required = [u"Manager", u"Scanner", u"Marker"]
 
     def get(self, request, uidb64, token):
         try:
@@ -61,7 +64,7 @@ class SetPassword(View):
 
 
 # When users their password successfully
-class SetPasswordComplete(View):
+class SetPasswordComplete(LoginRequiredMixin, View):
     template_name = 'Authentication/set_password_complete.html'
 
     def get(self, request):
@@ -95,7 +98,6 @@ class LoginView(View):
                 username=username,
                 password=password
             )
-
             if user is not None:
                 login(request, user)
                 return redirect('home')

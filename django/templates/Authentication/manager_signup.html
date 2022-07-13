@@ -17,18 +17,10 @@
         {{ form.email.label }}
         {{ form.email }}<br>
 
-        {{ form.password1.label }}
-        {{ form.password1 }}
-        <i class="bi-eye" id="togglePassword1"></i><br>
-
-        {{ form.password2.label }}
-        {{ form.password2 }}
-
         <input type="submit" name="Create User"><br>
     </form>
     <button id="generate-username">Generate Username</button>
-    <button id="generate-password">Generate Password</button>
     {{ error }}
-    <script type="module" src="{% static '/js/generate_random_user&pass.js' %}"></script>
+    <script type="module" src="{% static '/js/generate_random_user.js' %}"></script>
 </body>
 </html>
