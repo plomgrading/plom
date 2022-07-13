@@ -55,7 +55,7 @@ class BackgroundImageDownloader(QObject):
                 with open(f, "wb") as fh:
                     fh.write(im_bytes)
                 status = "we_won"
-        time.sleep(3)
+        time.sleep(8)
         self.heres_the_goods.emit(self.img_id, self.md5, str(self.target_name), status)
         self.finished.emit()
 

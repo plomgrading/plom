@@ -80,7 +80,8 @@ if platform.system() == "Darwin":
 log = logging.getLogger("marker")
 
 
-PLACEHOLDER_TODO = Path("/home/cbm/src/plom/plom.git/placeholder.png")
+# TODO raw string not path cuz of some dumb proxy thingies in ExamQuestion
+PLACEHOLDER_TODO = "/home/cbm/src/plom/plom.git/placeholder.png"
 
 
 class BackgroundUploader(QThread):
@@ -870,7 +871,6 @@ class MarkerClient(QWidget):
             lambda: None
         )  # settings variable for annotator settings (initially None)
         self.commentCache = {}  # cache for Latex Comments
-        self.backgroundDownloader = None
         self.backgroundUploader = None
 
         self.allowBackgroundOps = True
@@ -1481,30 +1481,6 @@ class MarkerClient(QWidget):
         Returns:
              True if move was successful, False if not, for any reason.
         """
-        # TODO: ?
-        if self.backgroundDownloader:
-            # Might need to wait for a background downloader.  Important to
-            # processEvents() so we can receive the downloader-finished signal.
-            # TODO: assumes the downloader tries to stay just one ahead.
-            count = 0
-            while self.backgroundDownloader.isRunning():
-                time.sleep(0.05)
-                self.Qapp.processEvents()
-                count += 1
-                if (count % 10) == 0:
-                    log.info("waiting for downloader to fill table...")
-                if count >= 100:
-                    msg = SimpleQuestion(
-                        self,
-                        "Still waiting for downloader to get the next image.  "
-                        "Do you want to wait a few more seconds?\n\n"
-                        "(It is safe to choose 'no': the Annotator will simply close)",
-                    )
-                    if msg.exec() == QMessageBox.No:
-                        return False
-                    count = 0
-            self.Qapp.processEvents()
-
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
@@ -1525,6 +1501,37 @@ class MarkerClient(QWidget):
         if pr == prstart:
             return False  # have looped over all rows and not found anything.
         self.ui.tableView.selectRow(pr)
+
+        # Might need to wait for a background downloader.  Important to
+        # processEvents() so we can receive the downloader-finished signal.
+        task = self.prxM.getPrefix(pr)
+        count = 0
+        while True:
+            keep_waiting = False
+            foo = self.examModel.get_source_image_data(task)
+            for row in foo:
+                if "placeholder" in row["filename"]:  # TODO: a sane test
+                    keep_waiting = True
+                    print(f">>>> row still has placeholder: {row}")
+            if not keep_waiting:
+                break
+            time.sleep(0.05)
+            self.Qapp.processEvents()
+            count += 1
+            if (count % 10) == 0:
+                log.info("waiting for downloader to fill table...")
+            if count >= 100:
+                msg = SimpleQuestion(
+                    self,
+                    "Still waiting for downloader to get the next image.  "
+                    "Do you want to wait a few more seconds?\n\n"
+                    "(It is safe to choose 'no': the Annotator will simply close)",
+                )
+                if msg.exec() == QMessageBox.No:
+                    return False
+                count = 0
+            self.Qapp.processEvents()
+
         return True
 
     def deferTest(self):
@@ -1632,17 +1639,19 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         img_src_data = self.examModel.get_source_image_data(task)
-        # TODO: ?
-        if check_bguploader and self.backgroundDownloader:
+        # TODO: probably we don't need this flag
+        if check_bguploader:
             count = 0
-            # Notes: we could check using `while not os.path.exists(fname):`
-            # Or we can wait on the downloader, which works when there is only
-            # one download thread.  Better yet might be a dict/database that
-            # we update on downloadFinished signal.
-            while self.backgroundDownloader.isRunning():
+            while True:
+                keep_waiting = False
+                for row in img_src_data:
+                    if "placeholder" in row["filename"]:  # TODO: a sane test
+                        keep_waiting = True
+                        print(f">>>> row still has placeholder: {row}")
+                if not keep_waiting:
+                    break
                 time.sleep(0.1)
                 count += 1
-                # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
                 if (count % 10) == 0:
                     log.info("waiting for downloader: {}".format(img_src_data))
                 if count >= 40:
