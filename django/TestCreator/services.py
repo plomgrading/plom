@@ -16,70 +16,141 @@ Test spec functions
 """
 
 def load_spec():
+    """Get the singelton TestSpecInfo object from the database 
+
+    Returns:
+        TestSpecInfo: the TestSpec object
+    """
     spec, created = models.TestSpecInfo.objects.get_or_create(pk=1)
     return spec
 
 
 def reset_spec():
+    """Clear the TestSpecInfo object
+
+    Returns:
+        TestSpecInfo: the newly cleared TestSpec object
+    """
     models.TestSpecInfo.objects.all().delete()
     return load_spec()
 
 
 def get_long_name():
+    """Return the TestSpecInfo long_name field
+
+    Returns:
+        str: the test's long name
+    """
     return load_spec().long_name
 
 
 def set_long_name(long_name: str):
+    """Set the test's long name
+    
+    Args:
+        long_name: the new long name
+    """
     test_spec = load_spec()
     test_spec.long_name = long_name
     test_spec.save()
 
 
 def get_short_name():
+    """Return the TestSpecInfo short_name field
+
+    Returns:
+        str: the test's short name
+    """
     return load_spec().short_name
 
 
 def get_num_versions():
+    """Get the number of test versions
+    
+    Returns:
+        int: versions
+    """
     return load_spec().n_versions
 
 
-def set_num_versions(n_versions: str):
+def set_num_versions(n_versions: int):
+    """Set the number of test versions
+    
+    Args:
+        n_versions: number of versions
+    """
     test_spec = load_spec()
     test_spec.n_versions = n_versions
     test_spec.save()
 
 
 def get_num_to_produce():
+    """Get the number of test papers to produce
+    
+    Returns:
+        int: number to produce
+    """
     return load_spec().n_to_produce
 
 
 def set_num_to_produce(num: int):
+    """Set the number of test papers to produce
+    
+    Args:
+        num: number of test papers
+    """
     test_spec = load_spec()
     test_spec.n_to_produce = num
     test_spec.save()
 
 
 def set_short_name(short_name: str):
+    """Set the short name of the test
+    
+    Args:
+        short_name: the short name
+    """
     test_spec = load_spec()
     test_spec.short_name = short_name
     test_spec.save()
 
 
 def get_num_questions():
+    """Get the number of questions
+    
+    Returns:
+        int: number of questions in the test
+    """
     return load_spec().n_questions
 
 
 def set_num_questions(num: int):
+    """Set the number of questions in the test
+
+    Args:
+        num: the number of questions
+    """
     test_spec = load_spec()
     test_spec.n_questions = num
     test_spec.save()
 
 
 def get_total_marks():
+    """Get the total number of marks in the teest
+    
+    Returns:
+        int: total marks
+    """
     return load_spec().total_marks
 
 
 def set_total_marks(total: int):
+    """Set the total number of marks in the test
+
+    Args:
+        total: full number of marks
+    
+    """
     test_spec = load_spec()
     test_spec.total_marks = total
     test_spec.save()
@@ -88,6 +159,9 @@ def set_total_marks(total: int):
 def set_pages(pdf: models.ReferencePDF):
     """
     Initialize page dictionary
+
+    Args:
+        pdf: the ReferencePDF object
     """
     test_spec = load_spec()
 
@@ -107,6 +181,9 @@ def set_pages(pdf: models.ReferencePDF):
 def get_page_list():
     """
     Convert page dict into a list of dicts for looping over in a template
+
+    Returns:
+        list: List of page dictionaries in order
     """
     test_spec = load_spec()
     return [test_spec.pages[str(i)] for i in range(len(test_spec.pages))]
@@ -116,6 +193,9 @@ def get_pages_for_id_select_page():
     """
     Return a list of pages, with an extra field representing the @click statement to pass to alpine
     For the ID page
+
+    Returns:
+        list: page dictionaries
     """
     page_list = get_page_list()
     for i in range(len(page_list)):
@@ -131,6 +211,12 @@ def get_pages_for_question_detail_page(quetion_id: int):
     """
     Return a list of pages, with an extra field representing the @click statement to pass to alpine
     For the question detail page
+
+    Args:
+        question_id: The index of the question page
+    
+    Returns:
+        list: page dictionaries
     """
     page_list = get_page_list()
     for i in range(len(page_list)):
@@ -150,6 +236,9 @@ def get_pages_for_dnm_select_page():
     """
     Return a list of pages, with an extra field representing the @click statement to pass to alpine
     For the do-not-mark page
+
+    Returns:
+        list: page dictionaries
     """
     page_list = get_page_list()
     for i in range(len(page_list)):
@@ -164,6 +253,9 @@ def get_pages_for_dnm_select_page():
 def set_id_page(page_idx: int):
     """
     Set a page as the test's only ID page
+
+    Args:
+        page_idx: the index of the ID page
     """
     test_spec = load_spec()
     str_idx = str(page_idx)
@@ -188,6 +280,9 @@ def clear_id_page():
 def get_id_page_number():
     """
     Get the 1-indexed page number of the ID page
+
+    Returns:
+        int or None: ID page index
     """
     pages = load_spec().pages
     for idx, page in pages.items():
@@ -200,6 +295,9 @@ def get_id_page_number():
 def set_do_not_mark_pages(pages: list):
     """
     Set these pages as the test's do-not-mark pages
+
+    Args:
+        page: list of ints - 0-indexed page numbers
     """
     test_spec = load_spec()
     str_ids = [str(i) for i in pages]
@@ -214,6 +312,9 @@ def set_do_not_mark_pages(pages: list):
 def get_dnm_page_numbers():
     """
     Return a list of one-indexed page numbers for do-not-mark pages
+
+    Returns:
+        list: 0-indexed page numbers
     """
     dnm_pages = []
     pages = load_spec().pages
@@ -226,6 +327,10 @@ def get_dnm_page_numbers():
 def set_question_pages(pages: list, question: int):
     """
     Set these pages as the test's pages for question i
+
+    Args:
+        pages: 0-indexed list of page numbers
+        question: question id
     """
     test_spec = load_spec()
     str_ids = [str(i) for i in pages]
@@ -241,6 +346,12 @@ def set_question_pages(pages: list, question: int):
 def get_question_pages(question_id: int):
     """
     Returns a 1-indexed list of page numbers for a question
+
+    Args:
+        question_id: index of the question
+
+    Returns:
+        list: 0-indexed page numbers
     """
     question_pages = []
     pages = load_spec().pages
@@ -253,6 +364,9 @@ def get_question_pages(question_id: int):
 def get_id_page_alpine_xdata():
     """
     Generate top-level x-data object for the ID page template
+
+    Returns:
+        str: JSON object dump
     """
     pages = get_page_list()
     
@@ -270,6 +384,12 @@ def get_id_page_alpine_xdata():
 def get_question_detail_page_alpine_xdata(question_id: int):
     """
     Generate top-level x-data object for the question detail page template
+
+    Args:
+        question_id: question index
+
+    Returns:
+        str: JSON object dump
     """
     pages = get_page_list()
 
@@ -287,6 +407,9 @@ def get_question_detail_page_alpine_xdata(question_id: int):
 def get_dnm_page_alpine_xdata():
     """
     Generate top-level x-data object for the do not mark page template
+
+    Returns:
+        str: JSON object dump
     """
     pages = get_page_list()
 
@@ -306,12 +429,25 @@ Question functions
 """
 
 def create_question(index: int, label: str, mark: int, shuffle: bool):
+    """ Create a question object
+    
+    Args:
+        index: question number (1-indexed!)
+        label: question label
+        mark: max marks for the question
+        shuffle: Randomize question across test versions?
+    """
     question = models.TestSpecQuestion(index=index, label=label, mark=mark, shuffle=shuffle)
     question.save()
     return question
 
 
 def remove_question(index: int):
+    """ Remove a question from the database, clear any selected pages in TestSpecInfo
+    
+    Args:
+        index: question number (1-indexed!)
+    """
     question_exists = models.TestSpecQuestion.objects.filter(index=index)
     if question_exists:
         question = models.TestSpecQuestion.objects.get(index=index)
@@ -327,6 +463,14 @@ def remove_question(index: int):
 
 
 def get_question(index: int):
+    """ Get a question from the database
+    
+    Args:
+        index: question number (1-indexed!)
+
+    Returns:
+        models.TestSpecQuestion or None: the question object
+    """
     if question_exists(index):
         return models.TestSpecQuestion.objects.get(index=index)
     else:
@@ -334,6 +478,14 @@ def get_question(index: int):
 
 
 def question_exists(index: int):
+    """ Check if a question exists in the database
+    
+    Args:
+        index: question number (1-indexed!)
+
+    Returns:
+        bool: True if it exists, otherwise false
+    """
     try:
         question = models.TestSpecQuestion.objects.get(index=index)
         return True
@@ -342,6 +494,17 @@ def question_exists(index: int):
 
 
 def create_or_replace_question(index: int, label: str, mark: int, shuffle: bool):
+    """Create question in the database. If a question with the same index exists, overwrite it
+    
+    Args:
+        index: question number (1-indexed!)
+        label: question label
+        mark: max marks for the question
+        shuffle: Randomize question across test versions?
+
+    Returns:
+        models.TestSpecQuestion: question object
+    """
     if question_exists(index):
         remove_question(index)
 
@@ -349,29 +512,55 @@ def create_or_replace_question(index: int, label: str, mark: int, shuffle: bool)
 
 
 def clear_questions():
+    """Remove all the questions"""
     for i in range(get_num_questions()):
         remove_question(i+1)
 
 
 def fix_all_questions():
+    """Set all questions to fix (when the user sets the number of test versions to 1)"""
     for i in range(get_num_questions()):
         q = get_question(i+1)
         q.shuffle = 'F'
 
 
 def get_question_label(index: int):
+    """Get the question label
+    
+    Args:
+        index: question number (1-indexed!)
+
+    Returns:
+        str: question label
+    """
     question = get_question(index)
     if question:
         return question.label
 
 
 def get_question_marks(index: int):
+    """Get the number of marks for the question
+    
+    Args:
+        index: question number (1-indexed!)
+
+    Returns:
+        int: question max mark
+    """
     question = get_question(index)
     if question:
         return question.mark
 
 
 def get_question_fix_or_shuffle(index: int):
+    """Get the fix or shuffle status
+    
+    Args:
+        index: question number (1-indexed!)
+
+    Returns:
+        str: 'Shuffle' or 'Fix'
+    """
     question = get_question(index)
     if question:
         if question.shuffle == 'S':
@@ -381,6 +570,14 @@ def get_question_fix_or_shuffle(index: int):
 
 
 def is_question_completed(index: int):
+    """Are all the necessary fields completed for the question?
+    
+    Args:
+        index: question number (1-indexed!)
+
+    Returns:
+        bool: are all the fields truthy?
+    """
     return get_question_label(index) and get_question_marks(index) and get_question_fix_or_shuffle(index)
 
 
@@ -391,6 +588,14 @@ PDF functions
 def create_pdf(slug: str, pages: int, pdf) -> models.ReferencePDF:
     """
     Create a PDF in the database and save the file on disk
+
+    Args:
+        slug: url-safe filename (w/o extension)
+        pages: number of pages in the pdf
+        pdf: in-memory PDF file
+
+    Returns:
+        models.ReferencePDF: the reference PDF object
     """
     pdf = models.ReferencePDF(filename_slug=slug, num_pages=pages, pdf=pdf)
     pdf.save()
@@ -408,6 +613,9 @@ def delete_pdf():
 def get_and_save_pdf_images(pdf: models.ReferencePDF) -> None:
     """
     Get raster image of each PDF page, and save them to disk for displaying
+
+    Args:
+        pdf: ReferencePDF object
     """
     slug = pdf.filename_slug
     pathname = pathlib.Path('TestCreator') / 'media' / f'{slug}.pdf'
@@ -428,9 +636,15 @@ def get_and_save_pdf_images(pdf: models.ReferencePDF) -> None:
         raise RuntimeError(f'Document at {pathname} does not exist.')
 
 
-def create_page_thumbnail_list(pdf: models.ReferencePDF) -> None:
+def create_page_thumbnail_list(pdf: models.ReferencePDF):
     """
     Create list of image paths to send to frontend for pdf thumbnail rendering
+
+    Args:
+        pdf: ReferencePDF object
+
+    Returns:
+        list: page thumbnail paths
     """
 
     pages = []
