@@ -69,8 +69,7 @@ from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
-from .pagecache import download_pages, PageCache
-from .background_downloader import BackgroundDownloader
+from .pagecache import PageCache
 
 
 if platform.system() == "Darwin":
@@ -79,6 +78,9 @@ if platform.system() == "Darwin":
     qt_set_sequence_auto_mnemonic(True)
 
 log = logging.getLogger("marker")
+
+
+PLACEHOLDER_TODO = Path("/home/cbm/src/plom/plom.git/placeholder.png")
 
 
 class BackgroundUploader(QThread):
@@ -398,6 +400,19 @@ class MarkerExamModel(QStandardItemModel):
             ]
         )
         return r
+
+    def _expensive_search_and_update(self, img_id, md5, local_filename):
+        """Yuck, just yuck.
+
+        TODO: need to time this to see how bad it is for couple 100 papers...
+        TODO: we could also just refresh/check the src_img_data on later read
+        """
+        for i in range(self.rowCount()):
+            src_img_data = eval(self.data(self.index(i, 10)))
+            for x in src_img_data:
+                if x["id"] == img_id:
+                    x["filename"] = local_filename
+            self.setData(self.index(i, 10), repr(src_img_data))
 
     def _getPrefix(self, r):
         """
@@ -843,6 +858,8 @@ class MarkerClient(QWidget):
 
         self.maxMark = -1  # temp value
         self.pagecache = PageCache(self.workingDirectory)
+        self.pagecache.a_download_finished.connect(self.background_download_finished)
+
         self.examModel = (
             MarkerExamModel()
         )  # Exam model for the table of groupimages - connect to table
@@ -900,9 +917,6 @@ class MarkerClient(QWidget):
         # TODO: should we clone it?
         # TODO: use some setter method, or in the ctor etc?
         self.pagecache.msgr = messenger
-        # BackgroundDownloaders come and go but share a single cloned Messenger
-        # Note: BackgroundUploader is persistent and makes its own clone.
-        self._bgdownloader_msgr = Messenger.clone(self.msgr)
         self.question = question
         self.version = version
 
@@ -1399,21 +1413,25 @@ class MarkerClient(QWidget):
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
 
+        # TODO: just put orientation, server_path in the MclaimThisTask call!
         pagedata = self.msgr.get_pagedata_context_question(papernum, self.question)
-        pagedata = self.pagecache.download_page_images(pagedata, alt_get=src_img_data)
-
-        # Populate the orientation keys from the pagedata
+        # Populate the orientation keys and server_path from the pagedata
         for row in src_img_data:
             ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
             # There could easily be more than one: what if orientation is contradictory?
             row["orientation"] = ori[0]  # just take first one
+            X = [r["server_path"] for r in pagedata if r["id"] == row["id"]]
+            row["server_path"] = X[0]  # just take first one
 
+        PC = self.pagecache
         for row in src_img_data:
-            row["filename"] = self.pagecache.page_image_path(row["id"])
-            # TODO: sanity check to remove later
-            for r in pagedata:
-                if r["md5"] == row["md5"]:
-                    assert row["filename"] == r["local_filename"]
+            if PC.has_page_image(row["id"]):
+                row["filename"] = PC.page_image_path(row["id"])
+                continue
+            PC.download_in_background_thread(row)
+            # TODO:
+            # row["filename"] = None
+            row["filename"] = PLACEHOLDER_TODO
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -1433,6 +1451,16 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeColumnsToContents()
             self.ui.tableView.resizeRowsToContents()
 
+    def background_download_finished(self, img_id, md5, local_filename):
+        log.debug(f"PageCache has finished downloading {img_id} {local_filename}")
+        # TODO: time this
+        self.examModel._expensive_search_and_update(img_id, md5, local_filename)
+        # log.debug(f"Elapsed time for potentially expensive local DB update: %g", etime)
+        # TODO
+        # if any("placeholder" in x for x in testImg.imagenames):
+        # force a redraw
+        self._updateCurrentlySelectedRow()
+
     def requestNextInBackgroundStart(self):
         """
         Requests the next TGV in the background.
@@ -1441,105 +1469,7 @@ class MarkerClient(QWidget):
             None
 
         """
-        if self.backgroundDownloader:
-            log.info(
-                "Previous Downloader ({}) still here, waiting".format(
-                    str(self.backgroundDownloader)
-                )
-            )
-            # if prev downloader still going than wait.  might block the gui
-            self.backgroundDownloader.wait()
-        tag = None
-        if self.prefer_tagged:
-            tag = "@" + self.msgr.username
-        above = self.prefer_above
-        if tag and above:
-            log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)
-        elif tag:
-            log.info('Next available?  Prefer tagged with "%s"', tag)
-        elif above:
-            log.info("Next available?  Prefer above %s", above)
-        # New downloader but reuse the existing Messenger clone
-        self.backgroundDownloader = BackgroundDownloader(
-            self.question,
-            self.version,
-            self._bgdownloader_msgr,
-            workdir=self.workingDirectory,
-            tag=tag,
-            above=above,
-        )
-        self.backgroundDownloader.downloadSuccess.connect(
-            self._requestNextInBackgroundFinished
-        )
-        self.backgroundDownloader.downloadNoneAvailable.connect(
-            self.requestNextInBackgroundNoneAvailable
-        )
-        self.backgroundDownloader.downloadFail.connect(
-            self.requestNextInBackgroundFailed
-        )
-        self.backgroundDownloader.start()
-
-    def _requestNextInBackgroundFinished(
-        self, task, src_img_data, pagedata, tags, integrity_check
-    ):
-        """
-        Adds paper to exam model once it's been requested.
-
-        Args:
-            task (str): the task name for the next test.
-            src_img_data (list[dict]): the md5sums, filenames, etc for
-                the underlying images.
-            pagedata (list): temporary hacks to merge with above?
-            tags (list[str]): list of texts for tags for the TGV.
-            integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
-
-        Returns:
-            None
-        """
-        self.pagecache.update_from_someone_elses_downloads(pagedata)
-        self.examModel.addPaper(
-            ExamQuestion(
-                task,
-                src_img_data=src_img_data,
-                tags=tags,
-                integrity_check=integrity_check,
-            )
-        )
-        # Clean up the table
-        self.ui.tableView.resizeColumnsToContents()
-        self.ui.tableView.resizeRowsToContents()
-
-    def requestNextInBackgroundNoneAvailable(self):
-        """
-        Empty.
-
-        Notes:
-            Keep this function here just in case we want to do something in the
-            future.
-        """
-        pass
-
-    def requestNextInBackgroundFailed(self, errmsg):
-        """
-        Sends an error message when requesting the next exam fails.
-
-        Args:
-            errmsg (str): Error message received.
-
-        Returns:
-            None
-
-        """
-        # TODO what should we do?  Is there a realistic way forward
-        # or should we just die with an exception?
-        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
-        ErrorMsg(
-            None,
-            "Unfortunately, there was an unexpected error downloading "
-            "next paper.\n\n{}\n\n"
-            "Please consider filing an issue?  I don't know if its "
-            "safe to continue from here...".format(errmsg),
-        ).exec()
+        self.requestNext()
 
     def moveToNextUnmarkedTest(self, task=None):
         """
@@ -1551,6 +1481,7 @@ class MarkerClient(QWidget):
         Returns:
              True if move was successful, False if not, for any reason.
         """
+        # TODO: ?
         if self.backgroundDownloader:
             # Might need to wait for a background downloader.  Important to
             # processEvents() so we can receive the downloader-finished signal.
@@ -1701,6 +1632,7 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         img_src_data = self.examModel.get_source_image_data(task)
+        # TODO: ?
         if check_bguploader and self.backgroundDownloader:
             count = 0
             # Notes: we could check using `while not os.path.exists(fname):`
@@ -2411,7 +2343,11 @@ class MarkerClient(QWidget):
         pagedata = self.pagecache.download_page_images(pagedata, get_all=True)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
-        QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec()
+        d = QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self)
+        # TODO: future-proofing this a bit for live download updates
+        # PC.a_download_finished.connect(d.shake_things_up)
+        d.exec()
+        d.deleteLater()  # disconnects slots and signals
 
     def get_file_for_previous_viewer(self, task):
         """Get the annotation file for the given task. Check to see if the

@@ -6,27 +6,78 @@ Tools for managing the local page cache.
 """
 
 import logging
+import random
+import tempfile
+import time
+import threading
 from pathlib import Path
 
 # import imghdr
-# import tempfile
-# import time
+
+
+from PyQt5.QtCore import (
+    QObject,
+    QThread,
+    pyqtSlot,
+    pyqtSignal,
+)
+
+from plom.messenger import Messenger
 
 
 log = logging.getLogger("PageCache")
 
 
-class PageCache:
+class BackgroundImageDownloader(QObject):
+    finished = pyqtSignal()
+    # id, md5, local_filename, status (useless?)
+    heres_the_goods = pyqtSignal(int, str, str, str)
+    # TODO: failure
+
+    def __init__(self, msgr, img_id, md5, target_name, *, basedir, lock):
+        super().__init__()
+        self._msgr = Messenger.clone(msgr)
+        self.img_id = img_id
+        self.md5 = md5
+        self.target_name = Path(target_name)
+        self.basedir = Path(basedir)
+        self.lock = lock
+
+    def run(self):
+        im_bytes = self._msgr.get_image(self.img_id, self.md5)
+        f = self.target_name
+        with self.lock:
+            if f.exists():
+                # someone beat us to it!
+                status = "lost_race"
+            else:
+                f.parent.mkdir(exist_ok=True, parents=True)
+                with open(f, "wb") as fh:
+                    fh.write(im_bytes)
+                status = "we_won"
+        time.sleep(3)
+        self.heres_the_goods.emit(self.img_id, self.md5, str(self.target_name), status)
+        self.finished.emit()
+
+
+class PageCache(QObject):
     """Manage a local on-disc cache of page images.
 
     TODO: record the time of caching
     """
 
+    # emitted anytime a (background) download finiehes
+    a_download_finished = pyqtSignal(int, str, str)
+
     def __init__(self, basedir, *, msgr=None):
+        super().__init__()
         self._image_paths = {}
         # self._image_md5 = {}
         self.basedir = Path(basedir)
         self.msgr = msgr
+        self._threads = []
+        self._bgs = []
+        self.write_lock = threading.Lock()
 
     def has_page_image(self, img_id):
         r = self._image_paths.get(img_id, None)
@@ -75,8 +126,54 @@ class PageCache:
             row = self.sync_download(row)
         return pagedata
 
-    def download_in_background_thread(self, img_id):
-        raise NotImplementedError("lazy devs")
+    def download_in_background_thread(self, row, callback=None):
+        thread = QThread()
+        target_name = self.basedir / row["server_path"]
+        bg = BackgroundImageDownloader(
+            self.msgr,
+            row["id"],
+            row["md5"],
+            target_name,
+            basedir=self.basedir,
+            lock=self.write_lock,
+        )
+        bg.moveToThread(thread)
+        thread.started.connect(bg.run)
+        bg.finished.connect(thread.quit)
+        bg.finished.connect(bg.deleteLater)
+        bg.heres_the_goods.connect(self.bg_delivers)
+        if callback:
+            bg.heres_the_goods.connect(callback)
+
+        thread.finished.connect(thread.deleteLater)
+        # bg_bgimg.progress.connect(self.reportProgress)
+        thread.start()
+        # TODO: where to put it?  how to clean up?
+        self._threads.append(thread)
+        self._bgs.append(bg)
+
+    def bg_delivers(self, img_id, md5, local_filename, status):
+        print(f">>> BG delivers: {img_id}, {local_filename}")
+        cur = self._image_paths.get(img_id, None)
+        if cur:
+            if cur == local_filename:
+                assert status == "lost_race"
+                log.info(
+                    "Someone else downloaded %d (%s) for us in the meantime, no action",
+                    img_id,
+                    local_filename,
+                )
+                return
+            raise RuntimeError(
+                f"downloaded wrong thing? {cur}, {local_filename}, {md5}"
+            )
+        # Path(tmpfile).rename(target_name)
+        self._image_paths[img_id] = local_filename
+        self.a_download_finished.emit(img_id, md5, local_filename)
+
+    # TODO: I think I'd prefer the PageCache is just a page cache and there is a separate
+    # BGDownloader object, with a priority queue and a thread pool.  But can that background
+    # downloader access the PageCache?
 
     def sync_download(self, row):
         """Give the pagedata in row, download, cache and return edited row."""

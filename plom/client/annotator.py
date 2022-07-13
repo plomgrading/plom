@@ -737,6 +737,8 @@ class Annotator(QWidget):
         rearrangeView = RearrangementViewer(
             self, testNumber, self.src_img_data, page_data, is_dirty
         )
+        # TODO: have rearrange react to new downloads
+        # PC.a_download_finished.connect(rearrangeView.shake_things_up)
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute
@@ -746,6 +748,7 @@ class Annotator(QWidget):
         # Workaround for memory leak Issue #1322, TODO better fix
         rearrangeView.listA.clear()
         rearrangeView.listB.clear()
+        rearrangeView.deleteLater()  # disconnects slots and signals
         del rearrangeView
         if perm:
             # Sanity check for dupes in the permutation
