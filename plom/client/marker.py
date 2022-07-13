@@ -1248,7 +1248,7 @@ class MarkerClient(QWidget):
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
         # column means different things).  Instead, extract from .plom file.
         log.info("importing source image data (orientations etc) from .plom file")
-        # filenames likely stale: but have restarted client in meantime
+        # filenames likely stale: could have restarted client in meantime
         src_img_data = plomdata["base_images"]
 
         pagedata = self.msgr.get_pagedata_context_question(num, self.question)
