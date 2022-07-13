@@ -20,11 +20,11 @@ from .tokens import activation_token
 
 # Create your views here.
 # Set User Password
-class SetPassword(GroupRequiredMixin, View):
+class SetPassword(View):
     template_name = 'Authentication/set_password.html'
     reset_invalid = 'Authentication/activation_invalid.html'
     set_password_complete = 'Authentication/set_password_complete.html'
-    group_required = [u"Manager", u"Scanner", u"Marker"]
+    group_required = [u"manager", u"scanner", u"marker"]
 
     def get(self, request, uidb64, token):
         try:
@@ -131,7 +131,7 @@ class SignupManager(GroupRequiredMixin, View):
             user = form.save()
             user.refresh_from_db()
             user.profile.email = form.cleaned_data.get('email')
-            group = Group.objects.get(name='Manager')
+            group = Group.objects.get(name='manager')
             user.groups.add(group)
             # user can't log in until the link is confirmed
             user.is_active = False

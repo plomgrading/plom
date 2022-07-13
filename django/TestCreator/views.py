@@ -4,9 +4,12 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.text import slugify
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from django.forms import forms, formset_factory
+from braces.views import GroupRequiredMixin, LoginRequiredMixin
 from . import forms
 from . import models
 from . import services
@@ -14,8 +17,10 @@ from . import services
 # TODO: docstrings!! On the methods
 # Top-level blurb for each class, type hints for methods
 
-class BaseTestSpecFormView(FormView):
+class BaseTestSpecFormView(LoginRequiredMixin, GroupRequiredMixin, FormView):
     TEMPLATES = pathlib.Path('test_creator')
+    login_url = 'login'
+    group_required = [u"manager"]
 
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -215,7 +220,10 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
             initial['shuffle'] = question.shuffle
         else:
             initial['label'] = f"Q{question_id}"
-            initial['shuffle'] = 'S'
+            if services.get_num_versions() > 1:
+                initial['shuffle'] = 'S'
+            else:
+                initial['shuffle'] = 'F'
         return initial
 
     def get_context_data(self, **kwargs):
