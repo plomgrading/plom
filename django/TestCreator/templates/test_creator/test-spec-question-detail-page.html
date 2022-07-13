@@ -24,7 +24,7 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row" {% if n_versions == 1 %}style="display: none;"{% endif %}>
     <label for="{{ form.shuffle.id_for_label }}" class="col-sm-2 col-form-label fs-5">{{ form.shuffle.label }}</label>
     <div class="col-sm" style="padding-top: 8px;">
         {% for radio in form.shuffle %}

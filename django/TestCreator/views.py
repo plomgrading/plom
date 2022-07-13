@@ -122,11 +122,20 @@ class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
     def get_context_data(self, **kwargs):
         return super().get_context_data('upload', **kwargs)
 
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['versions'] = services.get_num_versions()
+        initial['num_to_produce'] = services.get_num_to_produce()
+        return initial
 
     def form_valid(self, form):
         form_data = form.cleaned_data
 
-        services.set_num_versions(form_data['versions'])
+        n_versions = form_data['versions']
+        services.set_num_versions(n_versions)
+
+        n_to_produce = form_data['num_to_produce']
+        services.set_num_to_produce(n_to_produce)
 
         self.num_pages = form_data['num_pages']
         self.slug = slugify(re.sub('.pdf$', '', str(form_data['pdf'])))
@@ -139,6 +148,9 @@ class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
         pdf = services.create_pdf(self.slug, self.num_pages, self.request.FILES['pdf'])
         services.get_and_save_pdf_images(pdf)
         services.set_pages(pdf)
+        
+        # when we upload a new PDF, clear questions
+        services.clear_questions()
 
         return super().form_valid(form)
 
@@ -232,6 +244,7 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
         context['question_id'] = question_id
         context['prev_id'] = question_id-1
         context['total_marks'] = services.get_total_marks()
+        context['n_versions'] = services.get_num_versions()
 
         context['x_data'] = services.get_question_detail_page_alpine_xdata(question_id)
         context['pages'] = services.get_pages_for_question_detail_page(question_id)

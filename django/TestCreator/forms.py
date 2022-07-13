@@ -27,6 +27,12 @@ class TestSpecVersionsRefPDFForm(forms.Form):
         widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1})
     )
 
+    num_to_produce = forms.IntegerField(
+        label='Number to produce',
+        help_text='The number of test papers to produce.',
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1})
+    )
+
     pdf = forms.FileField(
         allow_empty_file=False,
         max_length=100,

@@ -49,6 +49,16 @@ def set_num_versions(n_versions: str):
     test_spec.save()
 
 
+def get_num_to_produce():
+    return load_spec().n_to_produce
+
+
+def set_num_to_produce(num: int):
+    test_spec = load_spec()
+    test_spec.n_to_produce = num
+    test_spec.save()
+
+
 def set_short_name(short_name: str):
     test_spec = load_spec()
     test_spec.short_name = short_name
@@ -341,6 +351,12 @@ def create_or_replace_question(index: int, label: str, mark: int, shuffle: bool)
 def clear_questions():
     for i in range(get_num_questions()):
         remove_question(i+1)
+
+
+def fix_all_questions():
+    for i in range(get_num_questions()):
+        q = get_question(i+1)
+        q.shuffle = 'F'
 
 
 def get_question_label(index: int):

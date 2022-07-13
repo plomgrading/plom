@@ -39,6 +39,7 @@ class TestSpecInfo(models.Model):
     long_name = models.TextField()
     short_name = models.TextField()
     n_versions = models.PositiveIntegerField(default=0)
+    n_to_produce = models.PositiveIntegerField(default=0)
     n_questions = models.IntegerField(default=0)
     total_marks = models.IntegerField(default=0)
     pages = models.JSONField(default=dict)
