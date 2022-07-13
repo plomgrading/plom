@@ -225,7 +225,7 @@ def MreturnMarkedTask(
 def checkTagTextValid(self, tag_text):
     # put tag-text validity test in here.
     # what else is reasonable here.
-    allow_list = ["_", "-", "+", ":", ";"]
+    allow_list = ["_", "-", "+", ":", ";", "@"]
     if all(c.isalnum() or c in allow_list for c in tag_text):
         return True
     else:

@@ -1337,8 +1337,7 @@ class MarkerClient(QWidget):
         attempts = 0
         tag = None
         if self.prefer_tagged:
-            # TODO: @user not yet implemented server-side
-            tag = f"attn:{self.msgr.username}"
+            tag = "@" + self.msgr.username
         above = self.prefer_above
         if tag and above:
             log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)
