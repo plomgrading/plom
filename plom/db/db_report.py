@@ -7,11 +7,13 @@ from collections import defaultdict
 import logging
 from time import time
 
-from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
+from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, HWPage, EXPage, User
 from plom.misc_utils import datetime_to_json, is_within_one_hour_of_now
 
 log = logging.getLogger("DB")
 
+from peewee import prefetch
+from time import time
 
 # ------------------
 # Reporting functions
@@ -23,6 +25,7 @@ def RgetScannedTests(self):
     page-code is t{page}, h{question}{order}, or l{order}.
     """
     scan_dict = {}
+    t0 = time()
     for tref in Test.select().where(Test.scanned == True):  # noqa: E712
         pScanned = []
         # first append test-pages
@@ -41,6 +44,56 @@ def RgetScannedTests(self):
                 pScanned.append(["e.{}.{}".format(qref.question, p.order), p.version])
         scan_dict[tref.test_number] = pScanned
     log.debug("Sending list of scanned tests")
+    t1 = time()
+    log.warn(f"rgst = {t1-t0}")
+
+    redux = defaultdict(list)
+    # some code for prefetching things to make this query much faster
+    the_tests = Test.select().where(Test.scanned == True)  # noqa: E712
+    the_pages = TPage.select().where(TPage.scanned == True)  # noqa: E712
+    the_qgroups = QGroup.select()
+    the_groups = Group.select().where(Group.group_type == "q")
+    the_hwpages = HWPage.select()
+    the_expages = EXPage.select()
+
+    combine_tests_tpages = prefetch(the_tests, the_pages)
+    for tref in combine_tests_tpages:
+        redux[tref.test_number] = [
+            ["t.{}".format(p.page_number), p.version] for p in tref.tpages
+        ]
+
+    combine_tests_groups_hwpages = prefetch(
+        the_tests, the_qgroups, the_groups, the_hwpages
+    )
+    for tref in combine_tests_groups_hwpages:
+        for qref in tref.qgroups:
+            gref = qref.group
+            q = qref.question
+            redux[tref.test_number] += [
+                [f"h.{q}.{p.order}", p.version] for p in gref.hwpages
+            ]
+
+    combine_tests_groups_expages = prefetch(
+        the_tests, the_qgroups, the_groups, the_expages
+    )
+    for tref in combine_tests_groups_expages:
+        for qref in tref.qgroups:
+            gref = qref.group
+            q = qref.question
+            redux[tref.test_number] += [
+                [f"e.{q}.{p.order}", p.version] for p in gref.expages
+            ]
+
+    t2 = time()
+    log.warn(f"argh = {t2-t1}")
+    # check both methods give same dict
+    for x in scan_dict:
+        if redux[x] != scan_dict[x]:
+            log.warn(f"ARGH {redux[x]} vs {scan_dict[x]}")
+    for x in redux:
+        if redux[x] != scan_dict[x]:
+            log.warn(f"ARGH {redux[x]} vs {scan_dict[x]}")
+
     return scan_dict
 
 
