@@ -12,7 +12,6 @@ from plom.misc_utils import datetime_to_json, is_within_one_hour_of_now
 
 log = logging.getLogger("DB")
 
-from peewee import prefetch
 from time import time
 
 # ------------------
@@ -22,33 +21,36 @@ from time import time
 def RgetScannedTests(self):
     """Get a dict of all scanned tests indexed by test_number.
     Each test lists pairs [page-code, page-version].
-    page-code is t{page}, h{question}{order}, or l{order}.
+    page-code is t.{page}, h.{question}.{order}, or e.{question}.{order}.
     """
-    scan_dict = {}
-    t0 = time()
-    for tref in Test.select().where(Test.scanned == True):  # noqa: E712
-        pScanned = []
-        # first append test-pages
-        for p in tref.tpages:
-            if p.scanned is True:
-                pScanned.append(["t.{}".format(p.page_number), p.version])
-        # then append hw-pages in question-order
-        for qref in tref.qgroups:
-            gref = qref.group
-            for p in gref.hwpages:
-                pScanned.append(["h.{}.{}".format(qref.question, p.order), p.version])
-        # then append extra-pages in question-order
-        for qref in tref.qgroups:
-            gref = qref.group
-            for p in gref.expages:
-                pScanned.append(["e.{}.{}".format(qref.question, p.order), p.version])
-        scan_dict[tref.test_number] = pScanned
-    log.debug("Sending list of scanned tests")
-    t1 = time()
-    log.warn(f"rgst = {t1-t0}")
+    # SLOW LEGACY CODE
+    # scan_dict = {}
+    # t0 = time()
+    # for tref in Test.select().where(Test.scanned == True):  # noqa: E712
+    #     pScanned = []
+    #     # first append test-pages
+    #     for p in tref.tpages:
+    #         if p.scanned is True:
+    #             pScanned.append(["t.{}".format(p.page_number), p.version])
+    #     # then append hw-pages in question-order
+    #     for qref in tref.qgroups:
+    #         gref = qref.group
+    #         for p in gref.hwpages:
+    #             pScanned.append(["h.{}.{}".format(qref.question, p.order), p.version])
+    #     # then append extra-pages in question-order
+    #     for qref in tref.qgroups:
+    #         gref = qref.group
+    #         for p in gref.expages:
+    #             pScanned.append(["e.{}.{}".format(qref.question, p.order), p.version])
+    #     scan_dict[tref.test_number] = pScanned
+    # log.debug("Sending list of scanned tests")
+    # t1 = time()
+    # log.warn(f"rgst = {t1-t0}")
 
-    redux = defaultdict(list)
+    t1 = time()
     # some code for prefetching things to make this query much faster
+    # roughly - build queries for each of these sets of objects that we need
+    # tests, tpages, qgroups, groups, hwpages, pages
     the_tests = Test.select().where(Test.scanned == True)  # noqa: E712
     the_pages = TPage.select().where(TPage.scanned == True)  # noqa: E712
     the_qgroups = QGroup.select()
@@ -56,16 +58,15 @@ def RgetScannedTests(self):
     the_hwpages = HWPage.select()
     the_expages = EXPage.select()
 
-    combine_tests_tpages = prefetch(the_tests, the_pages)
-    for tref in combine_tests_tpages:
-        redux[tref.test_number] = [
+    # first populate the dict with empty lists for each scanned test
+    redux = {tref.test_number: [] for tref in the_tests}
+    # use prefetch to get peewee to pre-load the tpages
+    for tref in the_tests.prefetch(the_pages):
+        redux[tref.test_number] += [
             ["t.{}".format(p.page_number), p.version] for p in tref.tpages
         ]
-
-    combine_tests_groups_hwpages = prefetch(
-        the_tests, the_qgroups, the_groups, the_hwpages
-    )
-    for tref in combine_tests_groups_hwpages:
+    # use prefetch to preload the qgroups, groups and hwpages
+    for tref in the_tests.prefetch(the_qgroups, the_groups, the_hwpages):
         for qref in tref.qgroups:
             gref = qref.group
             q = qref.question
@@ -73,10 +74,8 @@ def RgetScannedTests(self):
                 [f"h.{q}.{p.order}", p.version] for p in gref.hwpages
             ]
 
-    combine_tests_groups_expages = prefetch(
-        the_tests, the_qgroups, the_groups, the_expages
-    )
-    for tref in combine_tests_groups_expages:
+    # use prefetch to preload the qgroups, groups and expages
+    for tref in the_tests.prefetch(the_qgroups, the_groups, the_expages):
         for qref in tref.qgroups:
             gref = qref.group
             q = qref.question
@@ -86,15 +85,16 @@ def RgetScannedTests(self):
 
     t2 = time()
     log.warn(f"argh = {t2-t1}")
+    # debugging code to make sure redux and scan_dict are the same
     # check both methods give same dict
-    for x in scan_dict:
-        if redux[x] != scan_dict[x]:
-            log.warn(f"ARGH {redux[x]} vs {scan_dict[x]}")
-    for x in redux:
-        if redux[x] != scan_dict[x]:
-            log.warn(f"ARGH {redux[x]} vs {scan_dict[x]}")
-
-    return scan_dict
+    # for x in scan_dict:
+    # if redux[x] != scan_dict[x]:
+    # log.warn(f"ARGH {redux[x]} vs {scan_dict[x]}")
+    # for x in redux:
+    # if redux[x] != scan_dict[x]:
+    # log.warn(f"ARGH {redux[x]} vs {scan_dict[x]}")
+    # return scan_dict
+    return redux
 
 
 def RgetIncompleteTests(self):
