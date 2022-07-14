@@ -1,0 +1,59 @@
+import re
+from django.urls import reverse
+from django.utils.text import slugify
+from . import BaseTestSpecFormView
+from .. import services
+from .. import forms
+from .. import models
+
+
+class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
+    template_name = 'test_creator/test-spec-upload-pdf.html'
+    form_class = forms.TestSpecVersionsRefPDFForm
+    slug = None
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data('upload', **kwargs)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['versions'] = services.get_num_versions()
+        initial['num_to_produce'] = services.get_num_to_produce()
+        return initial
+
+    def form_valid(self, form):
+        form_data = form.cleaned_data
+
+        n_versions = form_data['versions']
+        services.set_num_versions(n_versions)
+
+        n_to_produce = form_data['num_to_produce']
+        services.set_num_to_produce(n_to_produce)
+
+        self.num_pages = form_data['num_pages']
+        self.slug = slugify(re.sub('.pdf$', '', str(form_data['pdf'])))
+
+        # make sure there's only one PDF saved in the database at one time
+        saved_pdfs = models.ReferencePDF.objects.all()
+        if len(saved_pdfs) > 0:
+            saved_pdfs.delete()
+
+        pdf = services.create_pdf(self.slug, self.num_pages, self.request.FILES['pdf'])
+        services.get_and_save_pdf_images(pdf)
+        services.set_pages(pdf)
+        
+        # when we upload a new PDF, clear questions
+        services.clear_questions()
+
+        # update the progress
+        services.progress_set_versions_pdf(True)
+        services.progress_set_id_page(False)
+        services.progress_set_question_page(False)
+        services.progress_set_dnm_page(False)
+        services.progress_clear_questions()
+        services.progress_init_pages()
+
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('id_page')
