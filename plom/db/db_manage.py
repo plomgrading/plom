@@ -115,7 +115,6 @@ def getHWPageImage(self, test_number, question, order):
             False,
             f"Cannot find homework page question {question} order {order} in paper {test_number}",
         )
-    assert p.order == int(p)  # see #2211
     return (
         True,
         [
@@ -141,7 +140,6 @@ def getEXPageImage(self, test_number, question, order):
             False,
             f"Cannot find extra page question {question} order {order} in paper {test_number}",
         )
-    assert p.order == int(order)  # see #2211
     return (
         True,
         [
