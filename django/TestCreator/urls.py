@@ -12,7 +12,5 @@ urlpatterns = [
     path('questions/<int:q_idx>', views.TestSpecCreatorQuestionDetailPage.as_view(), name='q_detail'),
     path('dnm_pages/', views.TestSpecCreatorDNMPage.as_view(), name='dnm_page'),
     path('summary/', views.TestSpecSummaryView.as_view(), name='summary'),
-    path('reset/', views.test_spec_reset_view_pdf, name='reset'),
-    path('pages/<int:num_pages>', views.test_spec_creator_view_pdf, name='pages'),
-    path('pages/<str:slug>', views.test_spec_creator_image_view, name='pages_img'),
+    path('reset/', views.TestSpecResetView.as_view(), name='reset'),
 ]
