@@ -7,12 +7,21 @@ from collections import defaultdict
 import logging
 from time import time
 
-from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, HWPage, EXPage, User
+from plom.db.tables import (
+    Group,
+    IDGroup,
+    QGroup,
+    Test,
+    TPage,
+    HWPage,
+    EXPage,
+    User,
+    Annotation,
+)
 from plom.misc_utils import datetime_to_json, is_within_one_hour_of_now
 
 log = logging.getLogger("DB")
 
-from time import time
 
 # ------------------
 # Reporting functions
@@ -47,7 +56,7 @@ def RgetScannedTests(self):
     # t1 = time()
     # log.warn(f"rgst = {t1-t0}")
 
-    t1 = time()
+    # t1 = time()
     # some code for prefetching things to make this query much faster
     # roughly - build queries for each of these sets of objects that we need
     # tests, tpages, qgroups, groups, hwpages, pages
@@ -83,8 +92,8 @@ def RgetScannedTests(self):
                 [f"e.{q}.{p.order}", p.version] for p in gref.expages
             ]
 
-    t2 = time()
-    log.warn(f"argh = {t2-t1}")
+    # t2 = time()
+    # log.warn(f"argh = {t2-t1}")
     # debugging code to make sure redux and scan_dict are the same
     # check both methods give same dict
     # for x in scan_dict:
@@ -298,28 +307,52 @@ def RgetProgress(self, spec, q, v):
 
     mark_list = []
 
-    for qref in (
-        QGroup.select()
+    # Slower legacy simpler db code - replaced with prefetches below
+    # for qref in (
+    #     QGroup.select()
+    #     .join(Group)
+    #     .where(
+    #         QGroup.question == q,
+    #         QGroup.version == v,
+    #         Group.scanned == True,  # noqa: E712
+    #     )
+    # ):
+    #     NScanned += 1
+    #     if qref.marked is True:
+    #         NMarked += 1
+    #         mark_list.append(qref.annotations[-1].mark)
+    #         SMTime += qref.annotations[-1].marking_time
+    #         # https://github.com/coleifer/peewee/issues/2318
+    #         # peewee datetime with timezone stored as string.
+    #         # http://docs.peewee-orm.com/en/latest/peewee/api.html#DateTimeField
+    #         # so call helper function which does conversions for us
+    #         if is_within_one_hour_of_now(qref.annotations[-1].time):
+    #             NRecent += 1
+
+    # newer prefetch code
+    the_qgroups = (
+        QGroup.select(QGroup, Group)
         .join(Group)
         .where(
             QGroup.question == q,
             QGroup.version == v,
             Group.scanned == True,  # noqa: E712
         )
-    ):
+    )
+    the_annotations = Annotation.select()
+    for qref in the_qgroups.prefetch(
+        the_annotations
+    ):  # TODO work out how to get the last annotation for each qgroup. Seems a little hard.
+        aref = qref.annotations[-1]
         NScanned += 1
         if qref.marked is True:
             NMarked += 1
-            mark_list.append(qref.annotations[-1].mark)
-            SMTime += qref.annotations[-1].marking_time
-            # https://github.com/coleifer/peewee/issues/2318
-            # peewee datetime with timezone stored as string.
-            # http://docs.peewee-orm.com/en/latest/peewee/api.html#DateTimeField
-            # so call helper function which does conversions for us
-            if is_within_one_hour_of_now(qref.annotations[-1].time):
+            mark_list.append(aref.mark)
+            SMTime += aref.marking_time
+            if is_within_one_hour_of_now(aref.time):
                 NRecent += 1
 
-    log.debug("Sending progress summary for Q{}v{}".format(q, v))
+    log.debug(f"Sending progress summary for Q{q}v{v}")
 
     # this function returns Nones if mark_list is empty
     if len(mark_list) == 0:
@@ -414,10 +447,35 @@ def RgetCompletionStatus(self):
     """
     progress = {}
 
-    for tref in Test.select():
-        # get update times for each group starting with the idgroup
-        last_update = tref.idgroups[0].time  # even if un-id'd will show creation time.
+    # slow Legacy db code, replaced by prefetching below
+    # for tref in Test.select():
+    #     # get update times for each group starting with the idgroup
+    #     last_update = tref.idgroups[0].time  # even if un-id'd will show creation time.
+    #     number_marked = 0
+    #     for qref in tref.qgroups:
+    #         if qref.marked:
+    #             number_marked += 1
+    #         if last_update < qref.time:
+    #             last_update = qref.time
+    #     progress[tref.test_number] = [
+    #         tref.scanned,
+    #         tref.identified,
+    #         number_marked,
+    #         datetime_to_json(last_update),
+    #     ]
+
+    last_update_dict = {}  # to hold the ID-group last update for each test between loops over tests
+    the_tests = Test.select()
+    the_idg = IDGroup.select()
+    the_qg = QGroup.select()
+
+    # get the last update time for each idgroup
+    for tref in the_tests.prefetch(the_idg):
+        last_update_dict[tref.test_number] = tref.idgroups[0].time
+    # now loop over each question
+    for tref in the_tests.prefetch(the_qg):
         number_marked = 0
+        last_update = last_update_dict[tref.test_number]
         for qref in tref.qgroups:
             if qref.marked:
                 number_marked += 1
@@ -429,7 +487,8 @@ def RgetCompletionStatus(self):
             number_marked,
             datetime_to_json(last_update),
         ]
-    log.debug("Sending list of completed tests")
+    log.debug(f"Sending list of completed tests")
+    
     return progress
 
 
