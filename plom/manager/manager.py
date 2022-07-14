@@ -304,7 +304,7 @@ class TestStatus(QDialog):
 
 
 class ProgressBox(QGroupBox):
-    def __init__(self, manager, qu, v, stats):
+    def __init__(self, manager, qu, v, stats=None):
         # This widget will be re-parented when its added to a layout
         super().__init__()
         # TODO: used to call a method of manager, instead use signal/slots?
@@ -331,6 +331,9 @@ class ProgressBox(QGroupBox):
         grid.addWidget(vhB)
 
         self.setLayout(grid)
+        # and now set all the stats
+        if stats:
+            self.refresh(stats)
 
     def refresh(self, stats):
         self.setEnabled(True)
@@ -1554,11 +1557,20 @@ class Manager(QWidget):
     # ###################
     # Progress tab stuff
     def initProgressTab(self):
+        import time
+        t = [time.time()]
         self.initOverallTab()
+        t.append(time.time())
         self.initMarkTab()
-        self.refreshMarkTab()
+        t.append(time.time())
         self.initIDTab()
+        t.append(time.time())
         self.initOutTab()
+        t.append(time.time())
+        msg = "ARGH "
+        for n in range(1, len(t)):
+            msg += f" = {t[n]-t[n-1]}"
+        log.warn(msg)
 
     def refreshProgressTab(self):
         self.refreshOverallTab()
@@ -1911,10 +1923,11 @@ class Manager(QWidget):
         self.pd = {}
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
-                stats = self.msgr.getProgress(q, v)
-                self.pd[(q, v)] = ProgressBox(self, q, v, stats)
+                self.pd[(q, v)] = ProgressBox(self, q, v, stats=None)  # set the stats after all built
                 grid.addWidget(self.pd[(q, v)], q, v)
         self.ui.markBucket.setLayout(grid)
+        # now populate the actual stats
+        self.refreshMarkTab()
 
     def refreshMarkTab(self):
         for q in range(1, self.numberOfQuestions + 1):
