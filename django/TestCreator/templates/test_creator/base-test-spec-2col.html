@@ -20,7 +20,7 @@
             <p class="is_test_spec_nav_text">Test names</p>
             {% endif %}
 
-            {% if 'names' in completed %}
+            {% if completed.names %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>
@@ -33,7 +33,7 @@
             <p class="is_test_spec_nav_text">Versions and reference PDF</p>
             {% endif %}
             
-            {% if 'upload' in completed %}
+            {% if completed.upload %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>
@@ -46,7 +46,7 @@
             <p class="is_test_spec_nav_text">ID page</p>
             {% endif %}
 
-            {% if 'id_page' in completed %}
+            {% if completed.id_page %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>
@@ -59,23 +59,24 @@
             <p class="is_test_spec_nav_text">Questions</p>
             {% endif %}
 
-            {% if 'questions_page' in completed %}
+            {% if completed.questions_page %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>
     </a>
+
     {% if questions %}
         <div class="list-group-item list-group-flush" style="padding-right: 0;">
-            {% for q in questions %}
+            {% for q in completed.question_list %}
             <a class="list-group-item list-group-item-action" href="{% url 'q_detail' forloop.counter %}">
                 <div class="d-flex w-100 justify-content-between">
                     {% if question_id == forloop.counter %}
-                    <p class="is_test_spec_nav_text fw-bold">Question {{forloop.counter }}</p>
+                    <p class="is_test_spec_nav_text fw-bold">Question {{ forloop.counter }}</p>
                     {% else %}
-                    <p class="is_test_spec_nav_text">Question {{forloop.counter }}</p>
+                    <p class="is_test_spec_nav_text">Question {{ forloop.counter }}</p>
                     {% endif %}
 
-                    {% if forloop.counter in completed.question_list %}
+                    {% if q %}
                     <i class="bi bi-check"></i>
                     {% endif %}
                 </div>
@@ -91,7 +92,7 @@
             <p class="is_test_spec_nav_text">Do-not-mark pages</p>
             {% endif %}
 
-            {% if 'dnm_page' in completed %}
+            {% if completed.dnm_page %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>

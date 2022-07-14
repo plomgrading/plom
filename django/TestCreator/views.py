@@ -29,33 +29,7 @@ class BaseTestSpecFormView(LoginRequiredMixin, GroupRequiredMixin, FormView):
         context['curr_page'] = page_name
         context['questions'] = [i for i in range(services.get_num_questions())]
 
-        context['completed'] = {}
-
-        # did we complete the 'names' page?
-        if context['long_name'] and context['short_name']:
-            context['completed']['names'] = True
-
-        # or the reference pdf page?
-        saved_pdfs = models.ReferencePDF.objects.all()
-        if len(saved_pdfs) > 0:
-            context['completed']['upload'] = True
-
-        # or select the ID page?
-        id_page = services.get_id_page_number()
-        if id_page:
-            context['completed']['id_page'] = True
-
-        # or the questions page?
-        total_marks = services.get_total_marks()
-        if total_marks and context['questions']:
-            context['completed']['questions_page'] = True
-
-        # or the question details?
-        context['completed']['question_list'] = []
-        for i in range(len(context['questions'])):
-            if services.is_question_completed(i+1):
-                context['completed']['question_list'].append(i+1)
-
+        context['completed'] = services.get_progress_dict()
         return context
 
 
@@ -107,6 +81,7 @@ class TestSpecCreatorNamesPage(BaseTestSpecFormView):
         short_name = form_data['short_name']
         services.set_long_name(long_name)
         services.set_short_name(short_name)
+        services.progress_set_names(True)
 
         return super().form_valid(form)
 
@@ -152,6 +127,14 @@ class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
         # when we upload a new PDF, clear questions
         services.clear_questions()
 
+        # update the progress
+        services.progress_set_versions_pdf(True)
+        services.progress_set_id_page(False)
+        services.progress_set_question_page(False)
+        services.progress_set_dnm_page(False)
+        services.progress_clear_questions()
+        services.progress_init_pages()
+
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -181,6 +164,9 @@ class TestSpecCreatorIDPage(BaseTestSpecFormPDFView):
             if 'page' in key and value == True:
                 idx = int(re.sub('\D', '', key))
                 services.set_id_page(idx)
+                services.progress_set_page_selected(idx, True)
+
+        services.progress_set_id_page(True)
 
         return super().form_valid(form)
 
@@ -211,6 +197,9 @@ class TestSpecCreatorQuestionsPage(BaseTestSpecFormView):
 
         services.set_num_questions(form_data['questions'])
         services.set_total_marks(form_data['total_marks'])
+
+        services.progress_set_question_page(True)
+        services.progress_init_questions()
         
         return super().form_valid(form)
 
@@ -268,7 +257,10 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
             if 'page' in key and value == True:
                 idx = int(re.sub('\D', '', key))
                 question_ids.append(idx)
+                services.progress_set_page_selected(idx, True)
         services.set_question_pages(question_ids, question_id)
+
+        services.progress_set_question_detail_page(question_id-1, True)
         
         return super().form_valid(form)
 
@@ -301,7 +293,10 @@ class TestSpecCreatorDNMPage(BaseTestSpecFormPDFView):
             if 'page' in key and value == True:
                 idx = int(re.sub('\D', '', key))
                 dnm_idx.append(idx)
+                services.progress_set_page_selected(idx, True)
         services.set_do_not_mark_pages(dnm_idx)
+
+        services.progress_set_dnm_page(True)
 
 
         return super().form_valid(form)
@@ -366,6 +361,7 @@ def test_spec_reset_view_pdf(request):
         services.clear_questions()
         services.delete_pdf()
         services.reset_spec()
+        services.reset_progress()
         return HttpResponseRedirect(reverse('names'))
         
 

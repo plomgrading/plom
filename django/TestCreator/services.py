@@ -515,6 +515,7 @@ def clear_questions():
     """Remove all the questions"""
     for i in range(get_num_questions()):
         remove_question(i+1)
+    set_num_questions(0)
 
 
 def fix_all_questions():
@@ -686,9 +687,23 @@ def progress_init_questions():
     """
     Create a dict of each question in the test: is question i's detail page submitted?
     """
-    question_dict = {i: False for i in range(get_num_questions)}
+    question_dict = {i: False for i in range(get_num_questions())}
     progress = get_progress()
     progress.are_questions_completed = question_dict
+    progress.save()
+
+
+def progress_clear_questions():
+    """Reset the questions progress dict"""
+    progress = get_progress()
+    progress.are_questions_completed = {}
+    progress.save()
+
+
+def progress_clear_pages():
+    """Reset the pages progress dict"""
+    progress = get_progress()
+    progress.are_pages_selected = {}
     progress.save()
     
 
@@ -743,3 +758,41 @@ def progress_set_page_selected(index: int, selected: bool):
     progress = get_progress()
     progress.are_pages_selected[index] = selected
     progress.save()
+
+
+def progress_set_dnm_page(complete: bool):
+    """Set the completed status of the Do-not-mark selection page"""
+    progress = get_progress()
+    progress.is_dnm_page_completed = complete
+    progress.save()
+
+
+def get_progress_dict():
+    """Return a dictionary with completion data for the wizard."""
+    progress = get_progress()
+
+    progress_dict = {}
+    progress_dict['names'] = progress.is_names_completed
+    progress_dict['upload'] = progress.is_versions_pdf_completed
+    progress_dict['id_page'] = progress.is_id_page_completed
+    progress_dict['questions_page'] = progress.is_question_page_completed
+    progress_dict['question_list'] = get_question_progress_for_template()
+    progress_dict['dnm_page'] = progress.is_dnm_page_completed
+    progress_dict['selected'] = progress.are_pages_selected
+
+    return progress_dict
+
+
+def get_question_progress_for_template():
+    """Converts the TestSpecProgress questions JSON into a list of bools. For ease in rendering the sidebar.
+    """
+    progress = get_progress()
+    questions = progress.are_questions_completed
+    questions_list = []
+
+    n_questions = len(questions.keys())
+    for i in range(n_questions):
+        val = questions[str(i)]
+        questions_list.append(val)
+
+    return questions_list
