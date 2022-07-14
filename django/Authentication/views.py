@@ -25,6 +25,10 @@ class SetPassword(View):
     reset_invalid = 'Authentication/activation_invalid.html'
     set_password_complete = 'Authentication/set_password_complete.html'
     group_required = [u"manager", u"scanner", u"marker"]
+    help_text = ["Your password can’t be too similar to your other personal information.",
+                 "Your password must contain at least 8 characters.",
+                 "Your password can’t be a commonly used password.",
+                 "Your password can’t be entirely numeric."]
 
     def get(self, request, uidb64, token):
         try:
@@ -37,7 +41,7 @@ class SetPassword(View):
             user.is_active = True
             user.profile.signup_confirmation = False
             user.save()
-            context = {'form': reset_form}
+            context = {'form': reset_form, 'help_text': SetPassword.help_text}
             return render(request, self.template_name, context)
         else:
             return render(request, self.reset_invalid)
@@ -50,6 +54,9 @@ class SetPassword(View):
             user = None
         if user is not None and activation_token.check_token(user, token):
             reset_form = SetPasswordForm(user, request.POST)
+            error_text = ""
+            for error in reset_form.error_messages.values():
+                error_text = error
             if reset_form.is_valid():
                 user = reset_form.save()
                 user.is_active = True
@@ -57,7 +64,7 @@ class SetPassword(View):
                 user.save()
                 return render(request, self.set_password_complete)
             else:
-                context = {'form': reset_form}
+                context = {'form': reset_form, 'help_text': SetPassword.help_text, 'errors': error_text}
                 return render(request, self.template_name, context)
         else:
             return render(request, 'Authentication/activation_invalid.html')

@@ -13,6 +13,6 @@
     <p id="link">http://{{ domain }}{% url 'password_reset' uidb64=uid token=token %}</p>
     <button id="copy">Copy</button>
     <a href="{% url 'home' %}">Home</a>
-    <script type="module" src="{% static '/js/activation_link.js' %}"></script>
+    <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
 </body>
 </html>

@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Plom Manager Sign Up</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
     <link rel="stylesheet" type="text/css" href="{% static '/css/signUpPage.css' %}">
 </head>
 <body>
@@ -21,6 +20,6 @@
     </form>
     <button id="generate-username">Generate Username</button>
     {{ error }}
-    <script type="module" src="{% static '/js/generate_random_user.js' %}"></script>
+    <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
 </body>
 </html>
