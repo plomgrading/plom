@@ -1596,24 +1596,12 @@ class MarkerClient(QWidget):
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
 
-    def getDataForAnnotator(self, task, check_bguploader=True):
+    def getDataForAnnotator(self, task):
         """Start annotator on a particular task.
 
         Args:
             task (str): the task id.  If original qXXXXgYY, then annotated
                 version is GXXXXgYY (G=graded).
-
-        Keyword Args:
-            check_bguploader (bool): default True.  False if you are
-                *sure* we already have the required images.
-                Usually when this function is called, it will be for
-                the next paper and we will need to check if the
-                background downloader is done.  But the PageRearranger
-                also calls this and it *should not* wait for the next
-                paper.  In this case, pass False here to avoid waiting
-                on the backgrounder downloader in the common case when
-                users do Ctrl-R immediately upon starting a new paper.
-                See Issue 1967.  Long term: new background downloader.
 
         Returns:
             list/None: as described by startTheAnnotator, if successful.
@@ -1639,29 +1627,27 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         img_src_data = self.examModel.get_source_image_data(task)
-        # TODO: probably we don't need this flag
-        if check_bguploader:
-            count = 0
-            while True:
-                keep_waiting = False
-                for row in img_src_data:
-                    if "placeholder" in row["filename"]:  # TODO: a sane test
-                        keep_waiting = True
-                        print(f">>>> row still has placeholder: {row}")
-                if not keep_waiting:
-                    break
-                time.sleep(0.1)
-                count += 1
-                if (count % 10) == 0:
-                    log.info("waiting for downloader: {}".format(img_src_data))
-                if count >= 40:
-                    msg = SimpleQuestion(
-                        self,
-                        "Still waiting for download.  Do you want to wait a bit longer?",
-                    )
-                    if msg.exec() == QMessageBox.No:
-                        return
-                    count = 0
+        count = 0
+        while True:
+            keep_waiting = False
+            for row in img_src_data:
+                if "placeholder" in row["filename"]:  # TODO: a sane test
+                    keep_waiting = True
+                    print(f">>>> row still has placeholder: {row}")
+            if not keep_waiting:
+                break
+            time.sleep(0.1)
+            count += 1
+            if (count % 10) == 0:
+                log.info("waiting for downloader: {}".format(img_src_data))
+            if count >= 40:
+                msg = SimpleQuestion(
+                    self,
+                    "Still waiting for download.  Do you want to wait a bit longer?",
+                )
+                if msg.exec() == QMessageBox.No:
+                    return
+                count = 0
 
         # maybe the downloader failed for some (rare) reason
         for data in img_src_data:
@@ -1940,7 +1926,7 @@ class MarkerClient(QWidget):
         self.examModel.setOriginalFilesAndData(task, src_img_data)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
-        return self.getDataForAnnotator(task, check_bguploader=False)
+        return self.getDataForAnnotator(task)
 
     def backgroundUploadFinished(self, task, numDone, numtotal):
         """
