@@ -13,6 +13,7 @@ import logging
 import os
 from pathlib import Path
 import tempfile
+from time import time
 
 import arrow
 import urllib3
@@ -2068,6 +2069,7 @@ class Manager(QWidget):
         self.ui.tagsCB.addItems(all_tags)
 
     def filterReview(self):
+        t0 = time()
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
         mrList = self.msgr.getMarkReview(
             filterPaperNumber=self.ui.reviewPaperNumSpinBox.text(),
@@ -2081,6 +2083,7 @@ class Manager(QWidget):
         # TODO: for some reason, doing tag filtering client side but is not obvious to user
         filter_tag = self.ui.tagsCB.currentText()
         r = 0
+        t1 = time()
         for dat in mrList:
             # under various tagging conditions, we do *not* add this row
             if filter_tag == "*":
@@ -2095,6 +2098,10 @@ class Manager(QWidget):
                 continue
             self.ui.reviewTW._fill_row_from(self.ui.reviewTW, r, dat)
             r += 1
+        t2 = time()
+        log.debug("filterReview: %.3gs waiting for API call", t1 - t0)
+        if t2 - t1 > 0.5:
+            log.warn("filterReview: slow UI table build: %.3gs", t2 - t1)
 
     def reviewAnnotated(self):
         ri = self.ui.reviewTW.selectedIndexes()
