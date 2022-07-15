@@ -375,6 +375,9 @@ class PreviousPaperViewer(QDialog):
         buttons.addWidget(self.nextTaskB, 1)
         buttons.addSpacing(64)
         buttons.addStretch(2)
+        tagButton = QPushButton("&Tag")
+        tagButton.clicked.connect(self.tag_paper)
+        buttons.addWidget(tagButton)
         b = QPushButton("&Close")
         b.clicked.connect(self.accept)
         buttons.addWidget(b)
@@ -408,3 +411,7 @@ class PreviousPaperViewer(QDialog):
         self.setWindowTitle(f"Previous annotations - {task}")
         if self.index == len(self.task_history) - 1:
             self.nextTaskB.setEnabled(False)
+
+    def tag_paper(self):
+        task = self.task_history[self.index]
+        self._annotr.tag_paper(task=task, dialog_parent=self)

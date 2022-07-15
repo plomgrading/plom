@@ -1946,9 +1946,12 @@ class Annotator(QWidget):
     def viewNotCat(self):
         CatViewer(self, dogAttempt=True).exec()
 
-    def tag_paper(self):
-        task = f"q{self.tgvID}"
-        self.parentMarkerUI.manage_task_tags(task, parent=self)
+    def tag_paper(self, task=None, dialog_parent=None):
+        if not task:
+            task = f"q{self.tgvID}"
+        if not dialog_parent:
+            dialog_parent = self
+        self.parentMarkerUI.manage_task_tags(task, parent=dialog_parent)
 
     def refreshSolutionImage(self):
         log.debug("force a refresh")
