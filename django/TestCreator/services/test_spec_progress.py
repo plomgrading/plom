@@ -1,5 +1,5 @@
 from .. import models
-from . import *
+from .test_spec_info import *
 
 """
 Service functions for models.TestsSpecProgress
@@ -122,7 +122,7 @@ def get_progress_dict():
     progress_dict['questions_page'] = progress.is_question_page_completed
     progress_dict['question_list'] = get_question_progress_for_template()
     progress_dict['dnm_page'] = progress.is_dnm_page_completed
-    progress_dict['selected'] = progress.are_pages_selected
+    progress_dict['selected'] = get_page_progress_list()
 
     return progress_dict
 
@@ -140,3 +140,17 @@ def get_question_progress_for_template():
         questions_list.append(val)
 
     return questions_list
+
+def get_page_progress_list():
+    """Converts the TestSpecProgress questions JSON into a list of bools.
+    """
+    progress = get_progress()
+    pages = progress.are_pages_selected
+    pages_list = []
+
+    n_pages = len(pages.keys())
+    for i in range(n_pages):
+        val = pages[str(i)]
+        pages_list.append(val)
+
+    return pages_list

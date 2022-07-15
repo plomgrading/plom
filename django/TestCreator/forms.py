@@ -1,3 +1,4 @@
+from select import select
 from django import forms
 from django.forms import ModelForm
 import fitz
@@ -82,11 +83,11 @@ class TestSpecIDPageForm(TestSpecPDFSelectForm):
 class TestSpecQuestionsMarksForm(forms.Form):
     questions = forms.IntegerField(
         label='Number of questions:',
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
     total_marks = forms.IntegerField(
         label='Total marks:',
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
 
     def clean(self):
@@ -104,7 +105,7 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
     )
     mark = forms.IntegerField(
         label='Mark:',
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
     shuffle = forms.ChoiceField(
         label='Shuffle:',
@@ -154,7 +155,50 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
 
 
 class TestSpecSummaryForm(forms.Form):
-    pass
+    def clean(self):
+        """
+        Things to check:
+
+        Is there a long name and a short name?
+
+        Are there test versions, num_to_produce, and a reference PDF?
+
+        Is there an ID page?
+
+        Are there questions?
+
+        Do all the questions have pages attached?
+
+        Do all the questions have the relevant fields?
+
+        Are all the pages selected by something?
+        """
+
+        progress_dict = services.get_progress_dict()
+        
+        if not progress_dict['names']:
+            raise ValidationError('Test needs a long name and a short name.')
+
+        if not progress_dict['upload']:
+            raise ValidationError('Test needs versions, number to produce, and a reference PDF.')
+
+        if not progress_dict['id_page']:
+            raise ValidationError('Test needs an ID page.')
+
+        if not progress_dict['questions_page']:
+            raise ValidationError('Test needs questions.')
+
+        questions = progress_dict['question_list']
+        print(questions)
+        for i in range(len(questions)):
+            if not questions[i]:
+                raise ValidationError(f'Question {i+1} is incomplete.')
+
+        pages = progress_dict['selected']
+        for i in range(len(pages)):
+            if not pages[i]:
+                raise ValidationError(f'Page {i+1} is empty. Did you mean to make it a do-not-mark page?')
+
 
 """
 Wizard forms

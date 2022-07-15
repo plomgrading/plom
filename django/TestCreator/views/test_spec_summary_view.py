@@ -1,3 +1,5 @@
+from django.forms import ValidationError
+from django.urls import reverse
 from . import BaseTestSpecFormView
 from .. import services
 from .. import forms
@@ -33,7 +35,7 @@ class TestSpecSummaryView(BaseTestSpecFormView):
     def form_valid(self, form):
         
         """
-        Things to does is check:
+        Things to check:
 
         Is there a long name and a short name?
 
@@ -51,3 +53,6 @@ class TestSpecSummaryView(BaseTestSpecFormView):
         """
 
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('home')
