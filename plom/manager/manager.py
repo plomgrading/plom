@@ -572,6 +572,7 @@ class Manager(QWidget):
         self.ui.progressAllTab.setEnabled(True)
         self.ui.reviewAllTab.setEnabled(True)
         self.ui.solnTab.setEnabled(True)
+
         self.initScanTab()
         self.initProgressTab()
         self.initReviewTab()
@@ -1557,20 +1558,10 @@ class Manager(QWidget):
     # ###################
     # Progress tab stuff
     def initProgressTab(self):
-        import time
-        t = [time.time()]
         self.initOverallTab()
-        t.append(time.time())
         self.initMarkTab()
-        t.append(time.time())
         self.initIDTab()
-        t.append(time.time())
         self.initOutTab()
-        t.append(time.time())
-        msg = "ARGH "
-        for n in range(1, len(t)):
-            msg += f" = {t[n]-t[n-1]}"
-        log.warn(msg)
 
     def refreshProgressTab(self):
         self.refreshOverallTab()

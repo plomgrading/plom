@@ -464,7 +464,9 @@ def RgetCompletionStatus(self):
     #         datetime_to_json(last_update),
     #     ]
 
-    last_update_dict = {}  # to hold the ID-group last update for each test between loops over tests
+    last_update_dict = (
+        {}
+    )  # to hold the ID-group last update for each test between loops over tests
     the_tests = Test.select()
     the_idg = IDGroup.select()
     the_qg = QGroup.select()
@@ -487,8 +489,7 @@ def RgetCompletionStatus(self):
             number_marked,
             datetime_to_json(last_update),
         ]
-    log.debug(f"Sending list of completed tests")
-    
+    log.debug("Sending list of completed tests")
     return progress
 
 
