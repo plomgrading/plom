@@ -652,9 +652,9 @@ class Annotator(QWidget):
             return
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
-        PC = self.parentMarkerUI.pagecache
-        pagedata = PC.msgr.get_pagedata_context_question(testnum, self.question_num)
-        pagedata = PC.sync_download_missing_images(pagedata)
+        dl = self.parentMarkerUI.downloader
+        pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
+        pagedata = dl.sync_downloads(pagedata)
         # TODO: if we unified img_src_data and pagedata, could just pass onwards
         files = [
             {"filename": x["local_filename"], "orientation": x["orientation"]}
@@ -708,9 +708,9 @@ class Annotator(QWidget):
             ).exec()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
 
-        PC = self.parentMarkerUI.pagecache
-        page_data = PC.msgr.get_pagedata_context_question(testNumber, self.question_num)
-        page_data = PC.sync_download_missing_images(page_data)
+        dl = self.parentMarkerUI.downloader
+        page_data = dl.msgr.get_pagedata_context_question(testNumber, self.question_num)
+        page_data = dl.sync_downloads(page_data)
 
         #
         for x in image_md5_list:

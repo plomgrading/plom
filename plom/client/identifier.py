@@ -49,7 +49,7 @@ from .useful_classes import SimpleQuestion, WarningQuestion
 from .useful_classes import BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .viewers import WholeTestView
-from .pagecache import download_pages
+from .downloader import download_pages
 
 
 log = logging.getLogger("identr")

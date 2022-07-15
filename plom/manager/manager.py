@@ -54,7 +54,7 @@ from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.useful_classes import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
 from plom.client import ImageViewWidget
-from plom.client.pagecache import download_pages
+from plom.client.downloader import download_pages
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow

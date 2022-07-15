@@ -70,6 +70,7 @@ from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .pagecache import PageCache
+from .downloader import Downloader
 
 
 if platform.system() == "Darwin":
@@ -858,8 +859,9 @@ class MarkerClient(QWidget):
         log.debug("Working directory set to %s", self.workingDirectory)
 
         self.maxMark = -1  # temp value
-        self.pagecache = PageCache(self.workingDirectory)
-        self.pagecache.a_download_finished.connect(self.background_download_finished)
+        # TODO: store in QApp?
+        self.downloader = Downloader(self.workingDirectory)
+        self.downloader.a_download_finished.connect(self.background_download_finished)
 
         self.examModel = (
             MarkerExamModel()
@@ -914,9 +916,9 @@ class MarkerClient(QWidget):
             None
         """
         self.msgr = messenger
-        # TODO: should we clone it?
-        # TODO: use some setter method, or in the ctor etc?
-        self.pagecache.msgr = messenger
+        # TODO: parented by QApp might clean all this up...
+        # TODO: that is, Downloader exists indep of marker
+        self.downloader.temp_attach_messenger(messenger)
         self.question = question
         self.version = version
 
@@ -1216,10 +1218,10 @@ class MarkerClient(QWidget):
 
         # TODO: download direct from src_img_data...?  no server_path field, just a stale "filename"
         pagedata = self.msgr.get_pagedata_context_question(num, self.question)
-        pagedata = self.pagecache.download_page_images(pagedata, alt_get=src_img_data)
+        pagedata = self.downloader.download_page_images(pagedata, alt_get=src_img_data)
 
         for row in src_img_data:
-            row["filename"] = self.pagecache.page_image_path(row["id"])
+            row["filename"] = self.downloader.pagecache.page_image_path(row["id"])
             # TODO: sanity check to remove later
             for r in pagedata:
                 if r["md5"] == row["md5"]:
@@ -1423,12 +1425,12 @@ class MarkerClient(QWidget):
             X = [r["server_path"] for r in pagedata if r["id"] == row["id"]]
             row["server_path"] = X[0]  # just take first one
 
-        PC = self.pagecache
+        PC = self.downloader.pagecache
         for row in src_img_data:
             if PC.has_page_image(row["id"]):
                 row["filename"] = PC.page_image_path(row["id"])
                 continue
-            PC.download_in_background_thread(row)
+            self.downloader.download_in_background_thread(row)
             # TODO:
             # row["filename"] = None
             row["filename"] = PLACEHOLDER_TODO
@@ -2335,7 +2337,7 @@ class MarkerClient(QWidget):
         pagedata = self.msgr.get_pagedata_question(tn, gn)
         # don't cache this pagedata: "gn" might not be our question number
         # (but the images are cacheable)
-        pagedata = self.pagecache.download_page_images(pagedata, get_all=True)
+        pagedata = self.downloader.download_page_images(pagedata, get_all=True)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         d = QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self)

@@ -35,7 +35,7 @@ from plom.client.tools import (
 )
 
 from plom.messenger import Messenger
-from .pagecache import download_pages
+from .downloader import download_pages
 
 
 # comments which will be made into rubrics by pushing them to server and getting back keys
