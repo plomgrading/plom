@@ -5,6 +5,7 @@
 
 from collections import defaultdict
 import logging
+from time import time
 
 from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
 from plom.misc_utils import datetime_to_json, is_within_one_hour_of_now
@@ -568,6 +569,7 @@ def RgetMarkReview(
         list-of-lists: for each matching qgroup we return a list of the form:
         `[testnumber, question, version, mark of latest annotation, username, marking_time, time finished]`.
     """
+    t0 = time()
     query = QGroup.select()
     if filterMarked is True:
         query = query.where(QGroup.marked == True)  # noqa: E712
@@ -616,11 +618,8 @@ def RgetMarkReview(
                 ]
             )
 
-    log.debug(
-        f"Sending {len(filtered)} filtered mark-review data: "
-        + f"(Papernum,Q,V,User,Marked)=({filterPaperNumber},"
-        + f"{filterQ},{filterV},{filterUser},{filterMarked})"
-    )
+    log.debug("db.RgetMarkReview: %.3gs processing", time() - t0)
+    log.debug("db.RgetMarkReview: sending %d rows of mark-review data", len(filtered))
     return filtered
 
 
