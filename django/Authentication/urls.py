@@ -16,4 +16,5 @@ urlpatterns = [
     # path('signup/'),
     # path('signup/marker/'),
     # path('signup/scanner/'),
+    path('rengeneratelinks/', Authentication.views.RegenerateLinks.as_view()),
 ]

@@ -106,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Password reset timeout in seconds
-# PASSWORD_RESET_TIMEOUT = 3600
+PASSWORD_RESET_TIMEOUT = 60
 
 
 # Internationalization

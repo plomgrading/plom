@@ -1,4 +1,6 @@
 from django.contrib.auth.models import User, Group
+# to be taken out below
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -153,3 +155,23 @@ class SignupManager(GroupRequiredMixin, View):
         else:
             context = {'form': SignupManager.form, 'error': form.errors}
             return render(request, self.template_name, context)
+
+
+class RegenerateLinks(View):
+    template_name = 'Authentication/test.html'
+    activation_link = 'Authentication/manager_activation_link.html'
+
+    def get(self, request):
+        users = User.objects.all()
+        context = {'users': users}
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        user = request.POST.get('new_link')
+        current_site = get_current_site(request)
+        activation_link = {
+            'domain': current_site.domain,
+            'uid': urlsafe_base64_encode(force_bytes(User.objects.get(username=user).pk)),
+            'token': activation_token.make_token(User.objects.get(username=user)),
+        }
+        return render(request, self.activation_link, activation_link)
