@@ -1446,9 +1446,24 @@ class MarkerClient(QWidget):
             )
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
+        tag = None
+        if self.prefer_tagged:
+            tag = "@" + self.msgr.username
+        above = self.prefer_above
+        if tag and above:
+            log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)
+        elif tag:
+            log.info('Next available?  Prefer tagged with "%s"', tag)
+        elif above:
+            log.info("Next available?  Prefer above %s", above)
         # New downloader but reuse the existing Messenger clone
         self.backgroundDownloader = BackgroundDownloader(
-            self.question, self.version, self._bgdownloader_msgr, self.workingDirectory
+            self.question,
+            self.version,
+            self._bgdownloader_msgr,
+            workdir=self.workingDirectory,
+            tag=tag,
+            above=above,
         )
         self.backgroundDownloader.downloadSuccess.connect(
             self._requestNextInBackgroundFinished

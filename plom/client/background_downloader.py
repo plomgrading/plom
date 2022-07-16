@@ -40,7 +40,7 @@ class BackgroundDownloader(QThread):
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
-    def __init__(self, question, version, msgr_clone, workdir):
+    def __init__(self, question, version, msgr_clone, *, workdir, tag=None, above=None):
         """
         Initializes a new downloader.
 
@@ -51,7 +51,12 @@ class BackgroundDownloader(QThread):
                 Note Messenger is not multithreaded and blocks using
                 mutexes, so you may want to pass a clone of your
                 Messenger, rather than the one you are using yourself!
+
+        Keyword Args:
             workdir (pathlib.Path): filespace for downloading.
+            tag (str/None): if we prefer tagged papers.
+            above (int/None): if we prefer papers above a certain
+                paper number.
 
         Notes:
             question/version may be able to be type int as well.
@@ -61,6 +66,8 @@ class BackgroundDownloader(QThread):
         self.version = version
         self.workingDirectory = workdir
         self._msgr = msgr_clone
+        self.tag = tag
+        self.above = above
 
     def run(self):
         """
@@ -84,7 +91,9 @@ class BackgroundDownloader(QThread):
             try:
                 log.debug("bgdownloader: about to download")
                 # TODO: does not yet read tagging preference
-                task = self._msgr.MaskNextTask(self.question, self.version)
+                task = self._msgr.MaskNextTask(
+                    self.question, self.version, tag=self.tag, above=self.above
+                )
                 if not task:  # no more tests left
                     self.downloadNoneAvailable.emit()
                     self.quit()
