@@ -45,7 +45,7 @@ def test_frag_image_size():
     assert relativeErr(img.width, imgt.width) < 0.1
     assert relativeErr(img.height, imgt.height) < 0.1
 
-    frag = r"$\mathbb{Q}$ \LaTeX\ Plom\\made\\taller\\not\\longer"
+    frag = r"$\mathbb{Q}$ \LaTeX\ Plom\\made\\taller\\not\\wider"
     r, imgdata = processFragment(frag)
     assert r
     img = Image.open(BytesIO(imgdata))
