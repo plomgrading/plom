@@ -861,7 +861,7 @@ class MarkerClient(QWidget):
         self.maxMark = -1  # temp value
         # TODO: store in QApp?
         self.downloader = Downloader(self.workingDirectory)
-        self.downloader.a_download_finished.connect(self.background_download_finished)
+        self.downloader.download_finished.connect(self.background_download_finished)
 
         self.examModel = (
             MarkerExamModel()
@@ -1214,18 +1214,18 @@ class MarkerClient(QWidget):
 
         log.info("importing source image data (orientations etc) from .plom file")
         # filenames likely stale: could have restarted client in meantime
+        # but does include "server_path" field.
         src_img_data = plomdata["base_images"]
 
-        # TODO: download direct from src_img_data...?  no server_path field, just a stale "filename"
-        pagedata = self.msgr.get_pagedata_context_question(num, self.question)
-        pagedata = self.downloader.download_page_images(pagedata, alt_get=src_img_data)
-
+        PC = self.downloader.pagecache
         for row in src_img_data:
-            row["filename"] = self.downloader.pagecache.page_image_path(row["id"])
-            # TODO: sanity check to remove later
-            for r in pagedata:
-                if r["md5"] == row["md5"]:
-                    assert row["filename"] == r["local_filename"]
+            if PC.has_page_image(row["id"]):
+                row["filename"] = PC.page_image_path(row["id"])
+                continue
+            self.downloader.download_in_background_thread(row)
+            # TODO:
+            # row["filename"] = None
+            row["filename"] = PLACEHOLDER_TODO
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -2344,7 +2344,7 @@ class MarkerClient(QWidget):
         ver = qvmap[gn]
         d = QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self)
         # TODO: future-proofing this a bit for live download updates
-        # PC.a_download_finished.connect(d.shake_things_up)
+        # PC.download_finished.connect(d.shake_things_up)
         d.exec()
         d.deleteLater()  # disconnects slots and signals
 

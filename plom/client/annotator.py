@@ -738,7 +738,7 @@ class Annotator(QWidget):
             self, testNumber, self.src_img_data, page_data, is_dirty
         )
         # TODO: have rearrange react to new downloads
-        # PC.a_download_finished.connect(rearrangeView.shake_things_up)
+        # PC.download_finished.connect(rearrangeView.shake_things_up)
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute

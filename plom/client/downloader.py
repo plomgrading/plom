@@ -14,7 +14,8 @@ import threading
 from time import sleep
 from pathlib import Path
 
-from PyQt5.QtCore import QObject, QThread, pyqtSignal
+from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QThreadPool, QRunnable
 
 from plom.messenger import Messenger
 from .pagecache import PageCache
@@ -46,87 +47,53 @@ class Downloader(QObject):
         TODO: queue unused so far
         """
         super().__init__()
-        self.q = None
-        self.is_download_in_progress = False
+        # self.is_download_in_progress = False
         if msgr:
             self.msgr = Messenger.clone(msgr)
         else:
             self.msgr = None
         self.basedir = Path(basedir)
-        self._threads = []
-        self._bgs = []
         self.write_lock = threading.Lock()
         self.pagecache = PageCache(basedir)
+        # TODO: may want this in the QApp: only have one
+        # TODO: just use QThreadPool.globalInstance()?
+        self.threadpool = QThreadPool()
 
     def temp_attach_messenger(self, msgr):
-        print(msgr)
         self.msgr = Messenger.clone(msgr)
 
-    def enqueueDownload(self, *args):
+    def download_in_background_thread(self, row, callback=None, priority=False):
         """
-        Places something in the download queue.
-
-        Note:
-            If you call this from the main thread, this code runs in the
-            main thread. That is ok because Queue is threadsafe, but it's
-            important to be aware, not all code in this object runs in the new
-            thread: it depends on where that code is called!
 
         Args:
-            *args: all input arguments are cached and will eventually be
-                passed untouched to the `upload` function.  There is one
-                exception: `args[0]` is assumed to contain the task str
-                of the form `"q1234g9"` for printing debugging messages.
+            row (dict): TODO
 
-        Returns:
-            None
-        """
-        log.debug("enqueuing item from main thread " + str(threading.get_ident()))
-        self.q.put(args)
+        Keyword Args:
+            priority (bool): high priority if user requested this (not a
+                background download.
 
-    def queue_size(self):
-        """Return the number of papers waiting or currently downloading."""
-        if self.is_download_in_progress:
-            return self.q.qsize() + 1
-        return self.q.qsize()
+        Does not start a new download if the Page Cache already has that image.
+        """
+        print(f">>> maxThreadCount = {self.threadpool.maxThreadCount()}")
+        print(f">>> activeThreadCount = {self.threadpool.activeThreadCount()}")
 
-    def isEmpty(self):
-        """
-        Checks if the download queue is empty.
-
-        Returns:
-            True if the download queue is empty, false otherwise.
-        """
-        # return self.q.empty()
-        return self.queue_size() == 0
-
-    def download_in_background_thread(self, row, callback=None):
-        """
-        TODO: describe what happens if it already exists.
-        """
-        thread = QThread()
+        if self.pagecache.has_page_image(row["id"]):
+            return
         target_name = self.basedir / row["server_path"]
-        bg = BackgroundImageDownloader(
+        worker = DownloadWorker(
             self.msgr,
             row["id"],
             row["md5"],
             target_name,
             basedir=self.basedir,
         )
-        bg.moveToThread(thread)
-        thread.started.connect(bg.run)
-        bg.finished.connect(thread.quit)
-        bg.finished.connect(bg.deleteLater)
-        bg.heres_the_goods.connect(self.bg_delivers)
-        # if callback:
-        #     bg.heres_the_goods.connect(callback)
-
-        thread.finished.connect(thread.deleteLater)
-        # bg_bgimg.progress.connect(self.reportProgress)
-        thread.start()
-        # TODO: where to put it?  how to clean up?
-        self._threads.append(thread)
-        self._bgs.append(bg)
+        worker.signals.heres_the_goods.connect(self.bg_delivers)
+        if priority:
+            self.threadpool.start(worker, priority=QThread.Priority.HighPriority)
+        else:
+            self.threadpool.start(worker, priority=QThread.Priority.LowPriority)
+        # bg.finished.connect(thread.quit)
+        # bg.finished.connect(bg.deleteLater)
 
     def bg_delivers(self, img_id, md5, tmpfile, local_filename):
         print(f">>> BG delivers: {img_id}, {local_filename}")
@@ -154,7 +121,7 @@ class Downloader(QObject):
         with self.write_lock:
             Path(tmpfile).rename(local_filename)
             self.pagecache.set_page_image_path(img_id, local_filename)
-        self.a_download_finished.emit(img_id, md5, local_filename)
+        self.download_finished.emit(img_id, md5, local_filename)
 
     def sync_downloads(self, pagedata):
         for row in pagedata:
@@ -207,18 +174,32 @@ class Downloader(QObject):
             copy is made).
         """
         for r in pagedata:
-            print(r)
             r = self.sync_download(r)
-            print(r)
         return pagedata
 
 
-class BackgroundImageDownloader(QObject):
-    finished = pyqtSignal()
-    # id, md5, tmpfile, local_filename
-    heres_the_goods = pyqtSignal(int, str, str, str)
-    # TODO: on failure?
+class WorkerSignals(QObject):
+    """Defines the signals available from a running worker thread.
 
+    Supported signals are:
+
+    finished
+        No data
+
+    error
+        TODO: tuple (exctype, value, traceback.format_exc() )
+
+    heres_the_goods
+        int, str, str, str: id, TODO
+    """
+
+    finished = pyqtSignal()
+    # error = pyqtSignal(tuple)
+    # result = pyqtSignal(object)
+    heres_the_goods = pyqtSignal(int, str, str, str)
+
+
+class DownloadWorker(QRunnable):
     def __init__(self, msgr, img_id, md5, target_name, *, basedir):
         super().__init__()
         self._msgr = Messenger.clone(msgr)
@@ -226,7 +207,12 @@ class BackgroundImageDownloader(QObject):
         self.md5 = md5
         self.target_name = Path(target_name)
         self.basedir = Path(basedir)
+        self.signals = WorkerSignals()
 
+    # https://www.pythonguis.com/tutorials/multithreading-pyqt-applications-qthreadpool/
+    # consider try except with error signal
+
+    @pyqtSlot()
     def run(self):
         debug = True
         if debug:
@@ -243,8 +229,10 @@ class BackgroundImageDownloader(QObject):
             f.write(im_bytes)
         if debug:
             sleep(8 - t)
-        self.heres_the_goods.emit(self.img_id, self.md5, f.name, str(self.target_name))
-        self.finished.emit()
+        self.signals.heres_the_goods.emit(
+            self.img_id, self.md5, f.name, str(self.target_name)
+        )
+        self.signals.finished.emit()
 
 
 def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):

@@ -8,20 +8,15 @@ Tools for managing the local page cache.
 import logging
 from pathlib import Path
 
-from PyQt5.QtCore import QObject, pyqtSignal
-
 
 log = logging.getLogger("PageCache")
 
 
-class PageCache(QObject):
+class PageCache:
     """Manage a local on-disc cache of page images.
 
     TODO: record the time of caching
     """
-
-    # emitted anytime a (background) download finiehes
-    a_download_finished = pyqtSignal(int, str, str)
 
     def __init__(self, basedir):
         super().__init__()
