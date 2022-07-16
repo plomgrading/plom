@@ -69,7 +69,6 @@ from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
-from .pagecache import PageCache
 from .downloader import Downloader
 
 
@@ -79,10 +78,6 @@ if platform.system() == "Darwin":
     qt_set_sequence_auto_mnemonic(True)
 
 log = logging.getLogger("marker")
-
-
-# TODO raw string not path cuz of some dumb proxy thingies in ExamQuestion
-PLACEHOLDER_TODO = "/home/cbm/src/plom/plom.git/placeholder.png"
 
 
 class BackgroundUploader(QThread):
@@ -1225,7 +1220,7 @@ class MarkerClient(QWidget):
             self.downloader.download_in_background_thread(row)
             # TODO:
             # row["filename"] = None
-            row["filename"] = PLACEHOLDER_TODO
+            row["filename"] = Downloader.get_placeholder_path()
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1433,7 +1428,7 @@ class MarkerClient(QWidget):
             self.downloader.download_in_background_thread(row)
             # TODO:
             # row["filename"] = None
-            row["filename"] = PLACEHOLDER_TODO
+            row["filename"] = Downloader.get_placeholder_path()
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -1508,11 +1503,12 @@ class MarkerClient(QWidget):
         # processEvents() so we can receive the downloader-finished signal.
         task = self.prxM.getPrefix(pr)
         count = 0
+        placeholder = Downloader.get_placeholder_path()
         while True:
             keep_waiting = False
             foo = self.examModel.get_source_image_data(task)
             for row in foo:
-                if "placeholder" in row["filename"]:  # TODO: a sane test
+                if row["filename"] == placeholder:
                     keep_waiting = True
                     print(f">>>> row still has placeholder: {row}")
             if not keep_waiting:
@@ -1629,11 +1625,12 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         count = 0
+        placeholder = Downloader.get_placeholder_path()
         while True:
             keep_waiting = False
             img_src_data = self.examModel.get_source_image_data(task)
             for row in img_src_data:
-                if "placeholder" in row["filename"]:  # TODO: a sane test
+                if row["filename"] == placeholder:
                     keep_waiting = True
                     print(f">>>> row still has placeholder: {row}")
             if not keep_waiting:

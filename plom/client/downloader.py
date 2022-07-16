@@ -9,6 +9,7 @@ The background downloader downloads images using threads.
 
 import logging
 import random
+import importlib.resources as resources
 import tempfile
 import threading
 from time import sleep
@@ -61,6 +62,20 @@ class Downloader(QObject):
 
     def temp_attach_messenger(self, msgr):
         self.msgr = Messenger.clone(msgr)
+
+    @classmethod
+    def get_placeholder_path(cls):
+        """A static image that can be used as a placeholder while images are downloading.
+
+        Currently this must be a string (not an Path for example) b/c of some Qt
+        limitations in the ExamModel and proxy stuff in Marker.
+
+        TODO: a better image or perhaps an animation?
+        """
+        # Not imported earlier b/c of some circular import stuff (?)
+        import plom.client.icons
+
+        return str(resources.path(plom.client.icons, "manager_unknown.svg"))
 
     def download_in_background_thread(self, row, callback=None, priority=False):
         """
