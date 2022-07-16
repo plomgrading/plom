@@ -175,12 +175,16 @@ class Downloader(QObject):
                 row["local_filename"] = cur
                 # TODO: do we care if this matches row["server_path"]?
                 return row
-            assert row_cur == cur, f"row has a filename which does not match cache: {row_cur} vs {cur}"
+            assert (
+                row_cur == cur
+            ), f"row has a filename which does not match cache: {row_cur} vs {cur}"
             log.info("asked to download id=%d; already in cache", row["id"])
             return row
         f = self.basedir / row["server_path"]
         if f.exists():
-            raise RuntimeError(f"asked to download {f}; unexpectedly we already have it")
+            raise RuntimeError(
+                f"asked to download {f}; unexpectedly we already have it"
+            )
         log.info("downloading %s", f)
         # the server_path might have a few subdirs
         f.parent.mkdir(exist_ok=True, parents=True)

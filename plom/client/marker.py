@@ -1532,7 +1532,7 @@ class MarkerClient(QWidget):
                 if msg.exec() == QMessageBox.No:
                     return False
                 count = 0
-            self.Qapp.processEvents()
+                self.Qapp.processEvents()
 
         return True
 
@@ -1628,10 +1628,10 @@ class MarkerClient(QWidget):
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
-        img_src_data = self.examModel.get_source_image_data(task)
         count = 0
         while True:
             keep_waiting = False
+            img_src_data = self.examModel.get_source_image_data(task)
             for row in img_src_data:
                 if "placeholder" in row["filename"]:  # TODO: a sane test
                     keep_waiting = True
@@ -1639,6 +1639,7 @@ class MarkerClient(QWidget):
             if not keep_waiting:
                 break
             time.sleep(0.1)
+            self.Qapp.processEvents()
             count += 1
             if (count % 10) == 0:
                 log.info("waiting for downloader: {}".format(img_src_data))
@@ -1650,6 +1651,7 @@ class MarkerClient(QWidget):
                 if msg.exec() == QMessageBox.No:
                     return
                 count = 0
+                self.Qapp.processEvents()
 
         # maybe the downloader failed for some (rare) reason
         for data in img_src_data:
