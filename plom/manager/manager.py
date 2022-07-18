@@ -304,7 +304,7 @@ class TestStatus(QDialog):
 
 
 class ProgressBox(QGroupBox):
-    def __init__(self, manager, qu, v, stats=None):
+    def __init__(self, manager, qu, v, stats):
         # This widget will be re-parented when its added to a layout
         super().__init__()
         # TODO: used to call a method of manager, instead use signal/slots?
@@ -331,9 +331,6 @@ class ProgressBox(QGroupBox):
         grid.addWidget(vhB)
 
         self.setLayout(grid)
-        # and now set all the stats
-        if stats:
-            self.refresh(stats)
 
     def refresh(self, stats):
         self.setEnabled(True)
@@ -1910,14 +1907,14 @@ class Manager(QWidget):
         self.getPredictions()
 
     def initMarkTab(self):
+        # initialise the widgets without the actual stats
         grid = QGridLayout()
         self.pd = {}
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
-                self.pd[(q, v)] = ProgressBox(self, q, v, stats=None)  # set the stats after all built
+                self.pd[(q, v)] = ProgressBox(self, q, v, None)
                 grid.addWidget(self.pd[(q, v)], q, v)
         self.ui.markBucket.setLayout(grid)
-        # now populate the actual stats
         self.refreshMarkTab()
 
     def refreshMarkTab(self):
