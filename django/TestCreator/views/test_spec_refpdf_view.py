@@ -24,12 +24,6 @@ class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
     def form_valid(self, form):
         form_data = form.cleaned_data
 
-        n_versions = form_data['versions']
-        services.set_num_versions(n_versions)
-
-        n_to_produce = form_data['num_to_produce']
-        services.set_num_to_produce(n_to_produce)
-
         self.num_pages = form_data['num_pages']
         self.slug = slugify(re.sub('.pdf$', '', str(form_data['pdf'])))
 

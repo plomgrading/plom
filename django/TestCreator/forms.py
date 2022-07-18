@@ -13,15 +13,16 @@ class TestSpecNamesForm(forms.Form):
         max_length=100, 
         label="Long name:", 
         help_text="The full name of the test, for example \"Maths101 Midterm 2\"",
-        widget=forms.TextInput(attrs={'class': 'form-control'}))
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
     short_name = forms.CharField(
         max_length=50, 
         label="Name:", 
         help_text="The short name of the test, for example \"m101mt2\"",
-        widget=forms.TextInput(attrs={'class': 'form-control'}))
-
-
-class TestSpecVersionsRefPDFForm(forms.Form):
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    
     versions = forms.IntegerField(
         label='Number of versions:',
         help_text="For shuffling questions over multiple test papers.",
@@ -34,6 +35,8 @@ class TestSpecVersionsRefPDFForm(forms.Form):
         widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1})
     )
 
+
+class TestSpecVersionsRefPDFForm(forms.Form):
     pdf = forms.FileField(
         allow_empty_file=False,
         max_length=100,
@@ -194,9 +197,10 @@ class TestSpecSummaryForm(forms.Form):
             if not questions[i]:
                 raise ValidationError(f'Question {i+1} is incomplete.')
 
-        pages = progress_dict['selected']
+        pages = services.get_page_list()
         for i in range(len(pages)):
-            if not pages[i]:
+            cur_page = pages[i]
+            if not cur_page['id_page'] and not cur_page['dnm_page'] and not cur_page['question_page']:
                 raise ValidationError(f'Page {i+1} is empty. Did you mean to make it a do-not-mark page?')
 
 

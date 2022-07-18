@@ -10,18 +10,35 @@
         <div class="h-100">
             <div class="row">
                 <!-- Form area -->
-                <label for="{{ form.long_name.id_for_label }}" class="col-sm-2 col-form-label fs-5" style="padding-top: 0px;">{{ form.long_name.label }}</label>
-                <div class="col-sm-10">
+                <label for="{{ form.long_name.id_for_label }}" class="col-sm-3 col-form-label fs-5" style="padding-top: 0px;">{{ form.long_name.label }}</label>
+                <div class="col-sm-9">
                     {{ form.long_name}}
                     <p>{{ form.long_name.help_text }}</p>
                 </div>
 
-                <label for="{{ form.short_name.id_for_label }}" class="col-sm-2 col-form-label fs-5" style="padding-top: 0px;">{{ form.short_name.label }}</label>
-                <div class="col-sm-10">
+                <label for="{{ form.short_name.id_for_label }}" class="col-sm-3 col-form-label fs-5" style="padding-top: 0px;">{{ form.short_name.label }}</label>
+                <div class="col-sm-9 mb-5">
                     {{ form.short_name }}
                     <p>{{ form.short_name.help_text }}</p>
-                </div>                   
+                </div>                    
             </div>
+
+            <div class="row">
+                <label for="{{ form.versions.id_for_label }}" class="col-sm-3 col-form-label fs-5">{{ form.versions.label }}</label>
+                <div class="col-sm-9">
+                    {{ form.versions }}
+                    <p>{{ form.versions.help_text }}</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <label for="{{ form.num_to_produce.id_for_label }}" class="col-sm-3 col-form-label fs-5">{{ form.num_to_produce.label }}</label>
+                <div class="col-sm-9">
+                    {{ form.num_to_produce }}
+                    <p>{{ form.num_to_produce.help_text }}</p>
+                </div>
+            </div>
+
         </div>
         <div>
             <!-- <a type="button" class="btn btn-primary btn-lg">Back</a> -->

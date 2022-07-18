@@ -15,9 +15,9 @@
     <a class="list-group-item list-group-item-action" href="{% url 'names' %}">
         <div class="d-flex w-100 justify-content-between">
             {% if curr_page == 'names' %}
-            <p class="is_test_spec_nav_text fw-bold">Test names</p>
+            <p class="is_test_spec_nav_text fw-bold">Test names and numbers</p>
             {% else %}
-            <p class="is_test_spec_nav_text">Test names</p>
+            <p class="is_test_spec_nav_text">Test names and numbers</p>
             {% endif %}
 
             {% if completed.names %}
@@ -28,9 +28,9 @@
     <a class="list-group-item list-group-item-action" href="{% url 'upload' %}">
         <div class="d-flex w-100 justify-content-between">
             {% if curr_page == 'upload' %}
-            <p class="is_test_spec_nav_text fw-bold">Versions and reference PDF</p>
+            <p class="is_test_spec_nav_text fw-bold">Reference PDF</p>
             {% else %}
-            <p class="is_test_spec_nav_text">Versions and reference PDF</p>
+            <p class="is_test_spec_nav_text">Reference PDF</p>
             {% endif %}
             
             {% if completed.upload %}

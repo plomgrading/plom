@@ -6,7 +6,7 @@
 
 <!-- Extra confirm dialog if we're changing the number of questions -->
 <form class="w-100" action="{% url 'questions' %}" method="post" enctype="multipart/form-data"
-    {% if questions %}
+    {% if completed.questions_page %}
     onsubmit="return confirm('Are you sure? Changing the number of questions will reset the current questions.')" 
     {% endif %}   
 >

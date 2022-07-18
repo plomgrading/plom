@@ -2,27 +2,14 @@
 
 {% block right_column %}
 
-<form class="w-100" action="{% url 'upload' %}" method="post" enctype="multipart/form-data">
+<form class="w-100" action="{% url 'upload' %}" method="post" enctype="multipart/form-data"
+    {% if completed.upload %}
+    onsubmit="return confirm('Are you sure? This will reset all pages and questions.')"
+    {% endif %}
+>
     {% csrf_token %}
     <div class="vstack d-flex h-100">
         <div class="h-100">
-
-            <div class="row">
-                <label for="{{ form.versions.id_for_label }}" class="col-sm-3 col-form-label fs-5">{{ form.versions.label }}</label>
-                <div class="col-sm-9">
-                    {{ form.versions }}
-                    <p>{{ form.versions.help_text }}</p>
-                </div>
-            </div>
-
-            <div class="row">
-                <label for="{{ form.num_to_produce.id_for_label }}" class="col-sm-3 col-form-label fs-5">{{ form.num_to_produce.label }}</label>
-                <div class="col-sm-9">
-                    {{ form.num_to_produce }}
-                    <p>{{ form.num_to_produce.help_text }}</p>
-                </div>
-            </div>
-
             <div class="row">
                 <label for="{{ form.pdf.id_for_label }}" class="col-sm-3 col-form-label fs-5">{{ form.pdf.label }}</label>
                 <div class="col-sm-9">
