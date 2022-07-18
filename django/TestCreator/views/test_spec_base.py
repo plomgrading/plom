@@ -1,4 +1,6 @@
 import pathlib
+from django.views import View
+from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
 from .. import services
@@ -46,4 +48,22 @@ class BaseTestSpecFormPDFView(BaseTestSpecFormView):
             context['pages'] = services.get_page_list()
             context['num_pages'] = len(services.get_page_list())
 
+        return context
+
+
+class BaseTestSpecUtilView(LoginRequiredMixin, GroupRequiredMixin, View):
+    group_required = [u"manager"]
+
+
+class BaseTestSpecTemplateView(LoginRequiredMixin, GroupRequiredMixin, TemplateView):
+    group_required = [u"manager"]
+    
+    def get_context_data(self, page_name, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['long_name'] = services.get_long_name()
+        context['short_name'] = services.get_short_name()
+        context['curr_page'] = page_name
+        context['questions'] = [i for i in range(services.get_num_questions())]
+
+        context['completed'] = services.get_progress_dict()
         return context

@@ -40,6 +40,7 @@ def progress_init_questions():
 def progress_clear_questions():
     """Reset the questions progress dict"""
     progress = get_progress()
+
     progress.are_questions_completed = {}
     progress.save()
 
