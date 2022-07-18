@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * `plom-create` can manipulate tags.
+* Can tag while peeking at previously marked papers.
 
 ### Changed
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix build of papers with DMN on higher pages such as page 16.
 * Annotator: potentially less flaky PageScene due to many bug fixes.
 * Fix duplicated LaTeX error dialog.
+* LaTeX bounding box size fixes on modern systems.
 * Code and dependency cleanups, removal of deprecated code.
 
 
