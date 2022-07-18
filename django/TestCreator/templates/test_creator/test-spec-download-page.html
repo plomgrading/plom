@@ -1,0 +1,24 @@
+{% extends 'test_creator/base-test-spec-2col.html' %}
+
+{% block title %} Create Specification - Save {% endblock %}
+
+{% block right_column %}
+
+<div x-data="{filename: '{{short_name}}_spec.toml' }">
+    <h2>Test created!</h2>
+    <p>Once saved, upload the specfile to the PLOM manager client.</p>
+    <label for="write-filename" class="form-label">Filename</label>
+    <input type="text" class="form-control" id="write-filename" x-bind:value="filename" x-model="filename">
+    <a 
+        type="button" 
+        class="btn btn-primary btn-lg" 
+        href="{% url 'generate_spec' %}"
+        x-bind:download="filename"
+    >
+        Save specfile
+    </a>
+</div>
+
+
+
+{% endblock %}
