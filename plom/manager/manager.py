@@ -304,14 +304,14 @@ class TestStatus(QDialog):
 
 
 class ProgressBox(QGroupBox):
-    def __init__(self, manager, qu, v, stats):
+    def __init__(self, manager, question, version):
         # This widget will be re-parented when its added to a layout
         super().__init__()
         # TODO: used to call a method of manager, instead use signal/slots?
         self._manager = manager
-        self.question = qu
-        self.version = v
-        self.setTitle("Q-{} V-{}".format(qu, v))
+        self.question = question
+        self.version = version
+        self.setTitle(f"Q-{question} V-{version}")
 
         grid = QVBoxLayout()
         self.lhL = QLabel()
@@ -1912,7 +1912,7 @@ class Manager(QWidget):
         self.pd = {}
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
-                self.pd[(q, v)] = ProgressBox(self, q, v, None)
+                self.pd[(q, v)] = ProgressBox(self, q, v)
                 grid.addWidget(self.pd[(q, v)], q, v)
         self.ui.markBucket.setLayout(grid)
         self.refreshMarkTab()
