@@ -19,6 +19,7 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.css"
         rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
     <link rel="stylesheet" type="text/css" href="{% static '/css/loginPage.css' %}">
 </head>
 <body>
@@ -29,9 +30,9 @@
                     <div class="login_card" style="border-radius: 1rem;">
                         <div class="card-body p-5 text-center">
 
-                            <div class="mb-md-5 mt-md-4 pb-5">
-
-                                <h2 class="fw-bold mb-2 text-uppercase">Login</h2>
+                            <div class="mb-md-5 mt-md-4 pb-3">
+                                <img style="width: 200px" src="{% static 'plomLogo.png' %}" alt="Plom Logo"><br><br>
+                                <h3 class="fw-bold mb-2 text-uppercase">Login</h3>
                                 <p class="text-dark-50 mb-5">Please enter your login and password!</p>
 
                                 <form method="POST" action="">
@@ -45,11 +46,14 @@
                                         <input type="password" id="typePasswordX" class="form-control form-control-lg" name="password"/>
                                         <label class="form-label" for="typePasswordX">Password</label>
                                     </div>
-
                                     <p class="small mb-5 pb-lg-2"><a class="text-black-50" href="#!">Forgot password?</a></p>
-
-                                    <input class="btn btn-outline-dark btn-lg px-5" type="submit" value="Login">
+                                    <button class="btn btn-outline-dark btn-lg px-5" type="submit">
+                                        <span class="bi-box-arrow-in-right"></span>
+                                         Login
+                                    </button>
                                 </form>
+                                <br>
+
                                 {% for message in messages %}
                                     <p style="color: red">{{ message }}</p>
                                 {% endfor %}
