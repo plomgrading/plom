@@ -179,7 +179,9 @@ class Downloader(QObject):
         log.info("downloading %s", f)
         # the server_path might have a few subdirs
         f.parent.mkdir(exist_ok=True, parents=True)
-        im_bytes = self.msgr.get_image(row["id"], row["md5"])
+        # we're not entirely consistent...
+        md5 = row.get("md5") or row["md5sum"]
+        im_bytes = self.msgr.get_image(row["id"], md5)
         # im_type = imghdr.what(None, h=im_bytes)
         with open(f, "wb") as fh:
             fh.write(im_bytes)
@@ -259,8 +261,10 @@ class DownloadWorker(QRunnable):
         self.signals.finished.emit()
 
 
-def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):
+def _download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):
     """Download all or some of the page images for a set of pagedata.
+
+    Somewhat deprecated: suggest using a Downloader object instead.
 
     Args:
         msgr: an open connected messenger.  TODO: decorator?

@@ -35,7 +35,7 @@ from plom.client.tools import (
 )
 
 from plom.messenger import Messenger
-from .downloader import download_pages
+from .downloader import _download_pages
 
 
 # comments which will be made into rubrics by pushing them to server and getting back keys
@@ -217,7 +217,7 @@ def do_random_marking_backend(question, version, *, messenger):
         papernum = int(task[1:5])
         pagedata = messenger.get_pagedata_context_question(papernum, question)
         with tempfile.TemporaryDirectory() as td:
-            pagedata = download_pages(messenger, pagedata, td, alt_get=src_img_data)
+            pagedata = _download_pages(messenger, pagedata, td, alt_get=src_img_data)
             # Populate the orientation keys from the full pagedata
             for row in src_img_data:
                 ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]

@@ -317,7 +317,7 @@ class Chooser(QDialog):
         elif which_subapp == "Identifier":
             self.setEnabled(False)
             self.hide()
-            idwin = IDClient()
+            idwin = IDClient(self.Qapp)
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
             idwin.setup(self.messenger)
