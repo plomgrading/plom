@@ -652,7 +652,7 @@ class Annotator(QWidget):
             return
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
-        dl = self.parentMarkerUI.downloader
+        dl = self.parentMarkerUI.Qapp.downloader
         pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
         pagedata = dl.sync_downloads(pagedata)
         # TODO: if we unified img_src_data and pagedata, could just pass onwards
@@ -708,7 +708,7 @@ class Annotator(QWidget):
             ).exec()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
 
-        dl = self.parentMarkerUI.downloader
+        dl = self.parentMarkerUI.Qapp.downloader
         page_data = dl.msgr.get_pagedata_context_question(testNumber, self.question_num)
         page_data = dl.sync_downloads(page_data)
 

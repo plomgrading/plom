@@ -854,8 +854,7 @@ class MarkerClient(QWidget):
         log.debug("Working directory set to %s", self.workingDirectory)
 
         self.maxMark = -1  # temp value
-        # TODO: store in QApp?
-        self.downloader = Downloader(self.workingDirectory)
+        self.downloader = self.Qapp.downloader
         self.downloader.download_finished.connect(self.background_download_finished)
 
         self.examModel = (
@@ -911,9 +910,6 @@ class MarkerClient(QWidget):
             None
         """
         self.msgr = messenger
-        # TODO: parented by QApp might clean all this up...
-        # TODO: that is, Downloader exists indep of marker
-        self.downloader.temp_attach_messenger(messenger)
         self.question = question
         self.version = version
 

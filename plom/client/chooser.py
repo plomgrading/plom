@@ -38,13 +38,13 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomSSLError,
 )
-from plom.messenger import Messenger
+from plom.messenger import Messenger, ManagerMessenger
 from plom.client import MarkerClient, IDClient
+from .downloader import Downloader
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQuestion
 from .useful_classes import ClientSettingsDialog
 
-from plom.messenger import ManagerMessenger
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -283,7 +283,9 @@ class Chooser(QDialog):
                 self.messenger = None
                 return
 
-        # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
+        tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
+        self.Qapp.downloader = Downloader(tmpdir)
+        self.Qapp.downloader.temp_attach_messenger(self.messenger)
 
         if which_subapp == "Manager":
             # Importing here avoids a circular import
