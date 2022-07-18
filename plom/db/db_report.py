@@ -34,7 +34,7 @@ def RgetScannedTests(self):
     page-code is t.{page}, h.{question}.{order}, or e.{question}.{order}.
     """
 
-    t0 = time.time()  # to compute time this takes
+    t0 = time()  # to compute time this takes
     # some code for prefetching things to make this query much faster
     # roughly - build queries for each of these sets of objects that we need
     # tests, tpages, qgroups, groups, hwpages, pages
@@ -70,7 +70,7 @@ def RgetScannedTests(self):
                 [f"e.{q}.{p.order}", p.version] for p in gref.expages
             ]
 
-    log.debug(f"Sending list of scanned tests - took {time.time()-t0}s")
+    log.debug(f"Sending list of scanned tests - took {time() - t0}s")
     return redux
 
 
@@ -275,7 +275,7 @@ def RgetProgress(self, spec, q, v):
 
     mark_list = []
 
-    t0 = time.time()
+    t0 = time()
     # faster prefetch code - replacing slower legacy code.
     the_qgroups = (
         QGroup.select(QGroup, Group)
@@ -298,7 +298,7 @@ def RgetProgress(self, spec, q, v):
             if is_within_one_hour_of_now(aref.time):
                 NRecent += 1
 
-    log.debug(f"Sending progress summary for Q{q}v{v} = took {time.time() - t0}s")
+    log.debug(f"Sending progress summary for Q{q}v{v} = took {time() - t0}s")
 
     # this function returns Nones if mark_list is empty
     if len(mark_list) == 0:
@@ -391,7 +391,7 @@ def RgetCompletionStatus(self):
     Each dict entry is of the form
     dict[test_number] = [scanned_or_not, identified_or_not, number_of_questions_marked, time_of_last_update]
     """
-    t0 = time.time()
+    t0 = time()
     progress = {}
     last_update_dict = (
         {}
@@ -418,7 +418,7 @@ def RgetCompletionStatus(self):
             number_marked,
             datetime_to_json(last_update),
         ]
-    log.debug(f"Sending list of completed tests = took {time.time()-t0}s")
+    log.debug(f"Sending list of completed tests = took {time() - t0}s")
     return progress
 
 
@@ -611,7 +611,7 @@ def RgetMarkReview(
         list-of-lists: for each matching qgroup we return a list of the form:
         `[testnumber, question, version, mark of latest annotation, username, marking_time, time finished]`.
     """
-    t0 = time.time()
+    t0 = time()
     query = QGroup.select()
     if filterMarked is True:
         query = query.where(QGroup.marked == True)  # noqa: E712
@@ -660,7 +660,7 @@ def RgetMarkReview(
                 ]
             )
 
-    log.debug("db.RgetMarkReview: %.3gs processing", time.time() - t0)
+    log.debug("db.RgetMarkReview: %.3gs processing", time() - t0)
     log.debug("db.RgetMarkReview: sending %d rows of mark-review data", len(filtered))
     return filtered
 
