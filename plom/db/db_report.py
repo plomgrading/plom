@@ -19,7 +19,7 @@ from plom.db.tables import (
     Annotation,
 )
 from plom.misc_utils import datetime_to_json, is_within_one_hour_of_now
-import time
+
 
 log = logging.getLogger("DB")
 
@@ -287,9 +287,8 @@ def RgetProgress(self, spec, q, v):
         )
     )
     the_annotations = Annotation.select()
-    for qref in the_qgroups.prefetch(
-        the_annotations
-    ):  # TODO work out how to get the last annotation for each qgroup. Seems a little hard.
+    for qref in the_qgroups.prefetch(the_annotations):
+        # TODO work out how to get the last annotation for each qgroup. Seems a little hard.
         aref = qref.annotations[-1]
         NScanned += 1
         if qref.marked is True:
@@ -299,7 +298,7 @@ def RgetProgress(self, spec, q, v):
             if is_within_one_hour_of_now(aref.time):
                 NRecent += 1
 
-    log.debug(f"Sending progress summary for Q{q}v{v} = took {time.time()-t0}s")
+    log.debug(f"Sending progress summary for Q{q}v{v} = took {time.time() - t0}s")
 
     # this function returns Nones if mark_list is empty
     if len(mark_list) == 0:
@@ -612,7 +611,7 @@ def RgetMarkReview(
         list-of-lists: for each matching qgroup we return a list of the form:
         `[testnumber, question, version, mark of latest annotation, username, marking_time, time finished]`.
     """
-    t0 = time()
+    t0 = time.time()
     query = QGroup.select()
     if filterMarked is True:
         query = query.where(QGroup.marked == True)  # noqa: E712
@@ -661,7 +660,7 @@ def RgetMarkReview(
                 ]
             )
 
-    log.debug("db.RgetMarkReview: %.3gs processing", time() - t0)
+    log.debug("db.RgetMarkReview: %.3gs processing", time.time() - t0)
     log.debug("db.RgetMarkReview: sending %d rows of mark-review data", len(filtered))
     return filtered
 
