@@ -7,8 +7,19 @@ from collections import defaultdict
 import logging
 from time import time
 
-from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
+from plom.db.tables import (
+    Group,
+    IDGroup,
+    QGroup,
+    Test,
+    TPage,
+    HWPage,
+    EXPage,
+    User,
+    Annotation,
+)
 from plom.misc_utils import datetime_to_json, is_within_one_hour_of_now
+
 
 log = logging.getLogger("DB")
 
@@ -20,28 +31,47 @@ log = logging.getLogger("DB")
 def RgetScannedTests(self):
     """Get a dict of all scanned tests indexed by test_number.
     Each test lists pairs [page-code, page-version].
-    page-code is t{page}, h{question}{order}, or l{order}.
+    page-code is t.{page}, h.{question}.{order}, or e.{question}.{order}.
     """
-    scan_dict = {}
-    for tref in Test.select().where(Test.scanned == True):  # noqa: E712
-        pScanned = []
-        # first append test-pages
-        for p in tref.tpages:
-            if p.scanned is True:
-                pScanned.append(["t.{}".format(p.page_number), p.version])
-        # then append hw-pages in question-order
+
+    t0 = time()  # to compute time this takes
+    # some code for prefetching things to make this query much faster
+    # roughly - build queries for each of these sets of objects that we need
+    # tests, tpages, qgroups, groups, hwpages, pages
+    the_tests = Test.select().where(Test.scanned == True)  # noqa: E712
+    the_pages = TPage.select().where(TPage.scanned == True)  # noqa: E712
+    the_qgroups = QGroup.select()
+    the_groups = Group.select().where(Group.group_type == "q")
+    the_hwpages = HWPage.select()
+    the_expages = EXPage.select()
+
+    # first populate the dict with empty lists for each scanned test
+    redux = {tref.test_number: [] for tref in the_tests}
+    # use prefetch to get peewee to pre-load the tpages
+    for tref in the_tests.prefetch(the_pages):
+        redux[tref.test_number] += [
+            ["t.{}".format(p.page_number), p.version] for p in tref.tpages
+        ]
+    # use prefetch to preload the qgroups, groups and hwpages
+    for tref in the_tests.prefetch(the_qgroups, the_groups, the_hwpages):
         for qref in tref.qgroups:
             gref = qref.group
-            for p in gref.hwpages:
-                pScanned.append(["h.{}.{}".format(qref.question, p.order), p.version])
-        # then append extra-pages in question-order
+            q = qref.question
+            redux[tref.test_number] += [
+                [f"h.{q}.{p.order}", p.version] for p in gref.hwpages
+            ]
+
+    # use prefetch to preload the qgroups, groups and expages
+    for tref in the_tests.prefetch(the_qgroups, the_groups, the_expages):
         for qref in tref.qgroups:
             gref = qref.group
-            for p in gref.expages:
-                pScanned.append(["e.{}.{}".format(qref.question, p.order), p.version])
-        scan_dict[tref.test_number] = pScanned
-    log.debug("Sending list of scanned tests")
-    return scan_dict
+            q = qref.question
+            redux[tref.test_number] += [
+                [f"e.{q}.{p.order}", p.version] for p in gref.expages
+            ]
+
+    log.debug(f"Sending list of scanned tests - took {time() - t0}s")
+    return redux
 
 
 def RgetIncompleteTests(self):
@@ -245,28 +275,30 @@ def RgetProgress(self, spec, q, v):
 
     mark_list = []
 
-    for qref in (
-        QGroup.select()
+    t0 = time()
+    # faster prefetch code - replacing slower legacy code.
+    the_qgroups = (
+        QGroup.select(QGroup, Group)
         .join(Group)
         .where(
             QGroup.question == q,
             QGroup.version == v,
             Group.scanned == True,  # noqa: E712
         )
-    ):
+    )
+    the_annotations = Annotation.select()
+    for qref in the_qgroups.prefetch(the_annotations):
+        # TODO work out how to get the last annotation for each qgroup. Seems a little hard.
+        aref = qref.annotations[-1]
         NScanned += 1
         if qref.marked is True:
             NMarked += 1
-            mark_list.append(qref.annotations[-1].mark)
-            SMTime += qref.annotations[-1].marking_time
-            # https://github.com/coleifer/peewee/issues/2318
-            # peewee datetime with timezone stored as string.
-            # http://docs.peewee-orm.com/en/latest/peewee/api.html#DateTimeField
-            # so call helper function which does conversions for us
-            if is_within_one_hour_of_now(qref.annotations[-1].time):
+            mark_list.append(aref.mark)
+            SMTime += aref.marking_time
+            if is_within_one_hour_of_now(aref.time):
                 NRecent += 1
 
-    log.debug("Sending progress summary for Q{}v{}".format(q, v))
+    log.debug(f"Sending progress summary for Q{q}v{v} = took {time() - t0}s")
 
     # this function returns Nones if mark_list is empty
     if len(mark_list) == 0:
@@ -359,12 +391,22 @@ def RgetCompletionStatus(self):
     Each dict entry is of the form
     dict[test_number] = [scanned_or_not, identified_or_not, number_of_questions_marked, time_of_last_update]
     """
+    t0 = time()
     progress = {}
+    last_update_dict = (
+        {}
+    )  # to hold the ID-group last update for each test between loops over tests
+    the_tests = Test.select()
+    the_idg = IDGroup.select()
+    the_qg = QGroup.select()
 
-    for tref in Test.select():
-        # get update times for each group starting with the idgroup
-        last_update = tref.idgroups[0].time  # even if un-id'd will show creation time.
+    # get the last update time for each idgroup
+    for tref in the_tests.prefetch(the_idg):
+        last_update_dict[tref.test_number] = tref.idgroups[0].time
+    # now loop over each question
+    for tref in the_tests.prefetch(the_qg):
         number_marked = 0
+        last_update = last_update_dict[tref.test_number]
         for qref in tref.qgroups:
             if qref.marked:
                 number_marked += 1
@@ -376,7 +418,7 @@ def RgetCompletionStatus(self):
             number_marked,
             datetime_to_json(last_update),
         ]
-    log.debug("Sending list of completed tests")
+    log.debug(f"Sending list of completed tests = took {time() - t0}s")
     return progress
 
 
