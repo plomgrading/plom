@@ -94,7 +94,16 @@ class Downloader(QObject):
 
         if self.pagecache.has_page_image(row["id"]):
             return
-        target_name = self.basedir / row["server_path"]
+        # try some things to get a reasonable local filename
+        target_name = row.get("server_path", None)
+        if target_name is None:
+            target_name = row.get("local_filename", None)
+        if target_name is None:
+            target_name = row.get("filename", None)
+        if target_name is None:
+            raise NotImplementedError("TODO: then use a random value")
+        target_name = self.basedir / target_name
+
         worker = DownloadWorker(
             self.msgr,
             row["id"],
