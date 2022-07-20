@@ -14,7 +14,10 @@ class TestSpecCreatorNamesPage(BaseTestSpecFormView):
         initial = super().get_initial()
         initial['long_name'] = services.get_long_name()
         initial['short_name'] = services.get_short_name()
-        initial['num_versions'] = services.get_num_versions()
+
+        versions = services.get_num_versions()
+        if versions:
+            initial['versions'] = versions
         return initial
 
     def form_valid(self, form):
