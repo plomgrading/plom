@@ -5,7 +5,7 @@ from .. import services
 from .. import forms
 
 class TestSpecCreatorIDPage(BaseTestSpecFormPDFView):
-    template_name = 'test_creator/test-spec-id-page.html'
+    template_name = 'TestCreator/test-spec-id-page.html'
     form_class = forms.TestSpecIDPageForm
 
     def get_context_data(self, **kwargs):

@@ -1,10 +1,11 @@
+from re import TEMPLATE
 from django.urls import reverse
 from . import BaseTestSpecFormView
 from .. import services
 from .. import forms
 
 class TestSpecCreatorNamesPage(BaseTestSpecFormView):
-    template_name = 'test_creator/test-spec-names-page.html'
+    template_name = 'TestCreator/test-spec-names-page.html'
     form_class = forms.TestSpecNamesForm
 
     def get_context_data(self, **kwargs):

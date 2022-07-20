@@ -4,7 +4,7 @@ from .. import forms
 from .. import services
 
 class TestSpecCreatorQuestionsPage(BaseTestSpecFormView):
-    template_name = 'test_creator/test-spec-questions-marks-page.html'
+    template_name = 'TestCreator/test-spec-questions-marks-page.html'
     form_class = forms.TestSpecQuestionsMarksForm
 
     def get_context_data(self, **kwargs):

@@ -5,7 +5,7 @@ from .. import services
 from .. import forms
 
 class TestSpecSummaryView(BaseTestSpecFormView):
-    template_name = 'test_creator/test-spec-summary-page.html'
+    template_name = 'TestCreator/test-spec-summary-page.html'
     form_class = forms.TestSpecSummaryForm
 
     def get_context_data(self, **kwargs):

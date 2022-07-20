@@ -5,7 +5,7 @@ from .. import forms
 from .. import services
 
 class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
-    template_name = 'test_creator/test-spec-question-detail-page.html'
+    template_name = 'TestCreator/test-spec-question-detail-page.html'
     form_class = forms.TestSpecQuestionForm
 
     def get_initial(self):

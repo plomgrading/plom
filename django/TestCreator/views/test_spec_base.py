@@ -7,7 +7,6 @@ from .. import services
 from .. import models
 
 class BaseTestSpecFormView(GroupRequiredMixin, FormView):
-    TEMPLATES = pathlib.Path('test_creator')
     login_url = 'login'
     group_required = u"manager"
     raise_exception = True

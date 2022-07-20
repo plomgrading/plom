@@ -8,7 +8,7 @@ from .. import models
 
 
 class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
-    template_name = 'test_creator/test-spec-upload-pdf.html'
+    template_name = 'TestCreator/test-spec-upload-pdf.html'
     form_class = forms.TestSpecVersionsRefPDFForm
     slug = None
 

@@ -5,7 +5,7 @@ from .. import forms
 from .. import services
 
 class TestSpecCreatorDNMPage(BaseTestSpecFormPDFView):
-    template_name = 'test_creator/test-spec-do-not-mark-page.html'
+    template_name = 'TestCreator/test-spec-do-not-mark-page.html'
     form_class = forms.TestSpecPDFSelectForm
 
     def get_context_data(self, **kwargs):

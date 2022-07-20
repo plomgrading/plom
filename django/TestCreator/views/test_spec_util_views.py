@@ -33,7 +33,7 @@ class TestSpecGenTomlView(BaseTestSpecUtilView):
 
 
 class TestSpecDownloadView(BaseTestSpecTemplateView):
-    template_name = 'test_creator/test-spec-download-page.html'
+    template_name = 'TestCreator/test-spec-download-page.html'
 
     def dispatch(self, request, **kwargs):
         if not services.progress_is_everything_complete():
