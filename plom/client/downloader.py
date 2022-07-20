@@ -12,13 +12,14 @@ import random
 import importlib.resources as resources
 import tempfile
 import threading
-from time import sleep
+from time import sleep, time
 from pathlib import Path
 
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtCore import QThreadPool, QRunnable
 
 from plom.messenger import Messenger
+from plom.plom_exceptions import PlomException
 from .pagecache import PageCache
 
 
@@ -32,9 +33,11 @@ class Downloader(QObject):
     - need to shut this down before we logout
     """
 
-    # emitted anytime a (background) download finiehes
+    # emitted anytime a (background) download finishes
     download_finished = pyqtSignal(int, str, str)
-    # download_failed = pyqtSignal(int, str, str)
+    # emitted anytime a (background) download fails
+    # TODO: document whether it is automatically restarted?
+    download_failed = pyqtSignal(int, str, str)
 
     def __init__(self, basedir, *, msgr=None):
         """Initialize a new Downloader.
@@ -45,7 +48,15 @@ class Downloader(QObject):
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
 
-        TODO: queue unused so far
+        Downloader maintains a queue of downloads and emits signals
+        whenever downloads succeed or fail.
+        TODO: Failed downloads will be automatically restarted?  Should
+        we do that, could be a disaster depending on the reason for failures.
+
+        TODO: document how to query the queue size, etc.
+
+        TODO: how do we shutdown cleanly?  Currently if you logout
+        another msgr while this is downloading, we'll get a crash...
         """
         super().__init__()
         # self.is_download_in_progress = False
@@ -89,8 +100,11 @@ class Downloader(QObject):
 
         Does not start a new download if the Page Cache already has that image.
         """
-        print(f">>> maxThreadCount = {self.threadpool.maxThreadCount()}")
-        print(f">>> activeThreadCount = {self.threadpool.activeThreadCount()}")
+        log.debug(
+            "activeThreadCount = %d, maxThreadCount = %d",
+            self.threadpool.maxThreadCount(),
+            self.threadpool.activeThreadCount(),
+        )
 
         if self.pagecache.has_page_image(row["id"]):
             return
@@ -120,7 +134,7 @@ class Downloader(QObject):
         # bg.finished.connect(bg.deleteLater)
 
     def bg_delivers(self, img_id, md5, tmpfile, local_filename):
-        print(f">>> BG delivers: {img_id}, {local_filename}")
+        log.debug(f"BG delivery: {img_id}, {local_filename}")
         # TODO: maybe pagecache should have the desired filename?
         # TODO: and keep a list of downloads in-progress
         # TODO: revisit once PageCache decides None/Exception...
@@ -248,26 +262,52 @@ class DownloadWorker(QRunnable):
     def run(self):
         debug = True
         if debug:
-            # fail = random.random() < 0.1
-            fail = False
-            debug_wait = random.randint(3, 7)
-            t1 = random.random() * debug_wait
-            t2 = debug_wait - t1
-            sleep(t1)
-        im_bytes = self._msgr.get_image(self.img_id, self.md5)
-        if debug and fail:
-            # TODO: can get PlomNotAuthorized if the pre-clone msgr is logged out
-            raise NotImplementedError("TODO: what sort of exceptions are possible?")
-        with tempfile.NamedTemporaryFile(
-            "wb",
-            dir=self.basedir,
-            prefix="downloading_",
-            suffix=self.target_name.suffix,
-            delete=False,
-        ) as f:
-            f.write(im_bytes)
+            fail = random.random() < 0.1
+            debug_wait2 = random.randint(3, 7)
+            debug_wait1 = random.random() * debug_wait2
+            debug_wait2 -= debug_wait1
+            sleep(debug_wait1)
+        try:
+            t0 = time()
+            try:
+                im_bytes = self._msgr.get_image(self.img_id, self.md5)
+                if debug and fail:
+                    # TODO: can get PlomNotAuthorized if the pre-clone msgr is logged out
+                    raise NotImplementedError(
+                        "TODO: what sort of exceptions are possible?"
+                    )
+            except PlomException as e:
+                log.warning(f"vaguely expected failure! {str(e)}")
+                # self.signals.foo_failed.emit(...)
+                self.signals.finished.emit()
+                return
+            t1 = time()
+            with tempfile.NamedTemporaryFile(
+                "wb",
+                dir=self.basedir,
+                prefix="downloading_",
+                suffix=self.target_name.suffix,
+                delete=False,
+            ) as f:
+                f.write(im_bytes)
+            t2 = time()
+        except Exception as e:
+            # TODO: generic catch-all bad, beer good
+            log.error(f"unexpected failure, wtf we do here?! {str(e)}")
+            # self.signals.foo_failed.emit(...)
+            self.signals.finished.emit()
+            return
         if debug:
-            sleep(t2)
+            sleep(debug_wait2)
+        if debug:
+            log.debug(
+                "worker time: %.3gs download, %.3gs write, %.3gs debuggery",
+                t1 - t0,
+                t2 - t1,
+                debug_wait1 + debug_wait2,
+            )
+        else:
+            log.debug("worker time: %.3gs download, %.3gs write", t1 - t0, t2 - t1)
         self.signals.heres_the_goods.emit(
             self.img_id, self.md5, f.name, str(self.target_name)
         )
