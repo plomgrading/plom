@@ -18,6 +18,7 @@ from django.contrib.auth.forms import SetPasswordForm
 
 from .signupForm import CreateUserForm
 from .tokens import activation_token
+from .models import Profile
 
 
 # Create your views here.
@@ -158,20 +159,25 @@ class SignupManager(GroupRequiredMixin, View):
 
 
 class RegenerateLinks(View):
-    template_name = 'Authentication/test.html'
+    template_name = 'Authentication/regenerative_links.html'
     activation_link = 'Authentication/manager_activation_link.html'
 
     def get(self, request):
-        users = User.objects.all()
-        context = {'users': users}
+        users = User.objects.all()[1:]
+
+        # users_profile = Profile.objects.all().values()
+        print(users.values())
+        context = {'users': users.values()}
         return render(request, self.template_name, context)
 
     def post(self, request):
-        user = request.POST.get('new_link')
+        username = request.POST.get('new_link')
+        user = User.objects.get(username=username)
+
         current_site = get_current_site(request)
         activation_link = {
             'domain': current_site.domain,
-            'uid': urlsafe_base64_encode(force_bytes(User.objects.get(username=user).pk)),
-            'token': activation_token.make_token(User.objects.get(username=user)),
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': activation_token.make_token(user),
         }
         return render(request, self.activation_link, activation_link)
