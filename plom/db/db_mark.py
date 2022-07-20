@@ -129,10 +129,10 @@ def MgetNextTask(self, q, v, *, tag, above):
                     if tag:
                         tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
                         if tag in tag_list:
-                            print(f"we got tag match for '{tag}' in {tag_list}")
+                            log.debug(f"we got tag match for '{tag}' in {tag_list}")
                             break
                     if above and qref.test.test_number >= above:
-                        print(f"we got match with paper_num >= {above}")
+                        log.debug(f"we got match with paper_num >= {above}")
                         break
                 else:
                     qref = query.get()

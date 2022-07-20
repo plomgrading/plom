@@ -118,7 +118,6 @@ class MarkHandler:
             the next question's string, e.g., ``q0013g1``.  If no more
             available, return 204.
         """
-        print(data)
         give = self.server.MgetNextTask(
             data["q"], data["v"], tag=data["tag"], above=data["above"]
         )
