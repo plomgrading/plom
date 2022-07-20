@@ -29,12 +29,6 @@ class TestSpecNamesForm(forms.Form):
         widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1})
     )
 
-    num_to_produce = forms.IntegerField(
-        label='Number to produce',
-        help_text='The number of test papers to produce.',
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1})
-    )
-
 
 class TestSpecVersionsRefPDFForm(forms.Form):
     pdf = forms.FileField(
@@ -95,8 +89,13 @@ class TestSpecQuestionsMarksForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
+
         if data['total_marks'] < data['questions']:
             raise ValidationError('Number of questions should not exceed the total marks.')
+
+        if data['questions'] > 50:
+            # TODO: be nicer
+            raise ValidationError('Your test is too long!')
 
 
 class TestSpecQuestionForm(TestSpecPDFSelectForm):
@@ -135,6 +134,7 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
         data = self.cleaned_data
 
         # Are the marks less than the test's total marks?
+        # TODO: Let them change the total marks
         if data['mark'] > services.get_total_marks():
             raise ValidationError("Question cannot have more marks than the test.")
 
@@ -180,10 +180,10 @@ class TestSpecSummaryForm(forms.Form):
         progress_dict = services.get_progress_dict()
         
         if not progress_dict['names']:
-            raise ValidationError('Test needs a long name and a short name.')
+            raise ValidationError('Test needs a long name, short name, and number of versions.')
 
         if not progress_dict['upload']:
-            raise ValidationError('Test needs versions, number to produce, and a reference PDF.')
+            raise ValidationError('Test needs a reference PDF.')
 
         if not progress_dict['id_page']:
             raise ValidationError('Test needs an ID page.')
@@ -201,13 +201,4 @@ class TestSpecSummaryForm(forms.Form):
         for i in range(len(pages)):
             cur_page = pages[i]
             if not cur_page['id_page'] and not cur_page['dnm_page'] and not cur_page['question_page']:
-                raise ValidationError(f'Page {i+1} is empty. Did you mean to make it a do-not-mark page?')
-
-
-"""
-Wizard forms
-"""
-
-class TestSpecWizardNamesForm(forms.Form):
-    name = forms.CharField(max_length=50, label='Name', help_text="The \"short name\" for the test, for example \"m101mt2\"")
-    long_name = forms.CharField(max_length=100, label='Long name', help_text="The full name of the test, for example \"Maths101 Midterm 2\"")
+                raise ValidationError(f'Page {i+1} has not been assigned. Did you mean to make it a do-not-mark page?')

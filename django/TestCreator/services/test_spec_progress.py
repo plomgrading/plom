@@ -43,25 +43,7 @@ def progress_clear_questions():
 
     progress.are_questions_completed = {}
     progress.save()
-
-
-def progress_clear_pages():
-    """Reset the pages progress dict"""
-    progress = get_progress()
-    progress.are_pages_selected = {}
-    progress.save()
     
-
-def progress_init_pages():
-    """
-    Create a dict of each page in the test: has page i been selected by something?
-    """
-    num_pages = len(load_spec().pages)
-    page_dict = {i: False for i in range(num_pages)}
-    progress = get_progress()
-    progress.are_pages_selected = page_dict
-    progress.save()
-
 
 def progress_set_names(complete: bool):
     """Set the completed status of the names page"""
@@ -98,13 +80,6 @@ def progress_set_question_detail_page(index: int, complete: bool):
     progress.save()
 
 
-def progress_set_page_selected(index: int, selected: bool):
-    """Set the selected status of a test page"""
-    progress = get_progress()
-    progress.are_pages_selected[index] = selected
-    progress.save()
-
-
 def progress_set_dnm_page(complete: bool):
     """Set the completed status of the Do-not-mark selection page"""
     progress = get_progress()
@@ -123,7 +98,6 @@ def get_progress_dict():
     progress_dict['questions_page'] = progress.is_question_page_completed
     progress_dict['question_list'] = get_question_progress_for_template()
     progress_dict['dnm_page'] = progress.is_dnm_page_completed
-    progress_dict['selected'] = get_page_progress_list()
 
     return progress_dict
 
@@ -142,16 +116,17 @@ def get_question_progress_for_template():
 
     return questions_list
 
-def get_page_progress_list():
-    """Converts the TestSpecProgress questions JSON into a list of bools.
-    """
-    progress = get_progress()
-    pages = progress.are_pages_selected
-    pages_list = []
 
-    n_pages = len(pages.keys())
-    for i in range(n_pages):
-        val = pages[str(i)]
-        pages_list.append(val)
+def progress_is_everything_complete():
+    """Return false if any item in the progress dict is false - otherwise, every part of the wizard is complete, so return true"""
+    progress_dict = get_progress_dict()
 
-    return pages_list
+    for key, value in progress_dict.items():
+        if key == 'question_list':
+            for q in value:
+                if not q:
+                    return False
+        elif not value:
+            return False
+
+    return True

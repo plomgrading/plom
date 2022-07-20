@@ -65,5 +65,4 @@ class TestSpecProgress(models.Model):
     is_id_page_completed = models.BooleanField(default=False)
     is_question_page_completed = models.BooleanField(default=False)
     are_questions_completed = models.JSONField(default=dict)
-    are_pages_selected = models.JSONField(default=dict)
     is_dnm_page_completed = models.BooleanField(default=False)

@@ -9,6 +9,7 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
     form_class = forms.TestSpecQuestionForm
 
     def get_initial(self):
+        # TODO: pre-populate marks field
         initial = super().get_initial()
         question_id = self.kwargs['q_idx']
         if services.question_exists(question_id):
@@ -18,6 +19,10 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
             initial['shuffle'] = question.shuffle
         else:
             initial['label'] = f"Q{question_id}"
+
+            total_marks = services.get_total_marks()
+            initial['mark'] = total_marks // services.get_num_questions()
+
             if services.get_num_versions() > 1:
                 initial['shuffle'] = 'S'
             else:

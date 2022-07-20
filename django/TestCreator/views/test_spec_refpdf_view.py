@@ -22,6 +22,7 @@ class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
         return initial
 
     def form_valid(self, form):
+        # TODO: if the uploaded PDF has the same number of pages, don't force reset everything, give an option
         form_data = form.cleaned_data
 
         self.num_pages = form_data['num_pages']

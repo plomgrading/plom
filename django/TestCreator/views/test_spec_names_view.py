@@ -14,6 +14,7 @@ class TestSpecCreatorNamesPage(BaseTestSpecFormView):
         initial = super().get_initial()
         initial['long_name'] = services.get_long_name()
         initial['short_name'] = services.get_short_name()
+        initial['num_versions'] = services.get_num_versions()
         return initial
 
     def form_valid(self, form):
@@ -27,9 +28,6 @@ class TestSpecCreatorNamesPage(BaseTestSpecFormView):
 
         n_versions = form_data['versions']
         services.set_num_versions(n_versions)
-
-        n_to_produce = form_data['num_to_produce']
-        services.set_num_to_produce(n_to_produce)
 
         services.progress_set_names(True)
 
