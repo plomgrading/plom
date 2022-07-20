@@ -6,10 +6,11 @@ from braces.views import LoginRequiredMixin, GroupRequiredMixin
 from .. import services
 from .. import models
 
-class BaseTestSpecFormView(LoginRequiredMixin, GroupRequiredMixin, FormView):
+class BaseTestSpecFormView(GroupRequiredMixin, FormView):
     TEMPLATES = pathlib.Path('test_creator')
     login_url = 'login'
-    group_required = [u"manager"]
+    group_required = u"manager"
+    raise_exception = True
 
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -51,12 +52,14 @@ class BaseTestSpecFormPDFView(BaseTestSpecFormView):
         return context
 
 
-class BaseTestSpecUtilView(LoginRequiredMixin, GroupRequiredMixin, View):
+class BaseTestSpecUtilView(GroupRequiredMixin, View):
     group_required = [u"manager"]
+    raise_exception = True
 
 
-class BaseTestSpecTemplateView(LoginRequiredMixin, GroupRequiredMixin, TemplateView):
+class BaseTestSpecTemplateView(GroupRequiredMixin, TemplateView):
     group_required = [u"manager"]
+    raise_exception = True
     
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(**kwargs)
