@@ -1314,6 +1314,9 @@ class Annotator(QWidget):
 
     def setButtons(self):
         """Connects buttons to their corresponding functions."""
+        # Connect the key-help button
+        self.ui.helpButton.clicked.connect(self.keyPopUp)
+
         # List of tool buttons, the corresponding modes and cursor shapes
         self.ui.boxButton.clicked.connect(self.boxMode)
         self.ui.crossButton.clicked.connect(self.crossMode)
