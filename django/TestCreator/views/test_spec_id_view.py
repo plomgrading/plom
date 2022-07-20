@@ -27,7 +27,6 @@ class TestSpecCreatorIDPage(BaseTestSpecFormPDFView):
             if 'page' in key and value == True:
                 idx = int(re.sub('\D', '', key))
                 services.set_id_page(idx)
-                services.progress_set_page_selected(idx, True)
 
         services.progress_set_id_page(True)
 

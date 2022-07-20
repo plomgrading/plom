@@ -24,7 +24,6 @@ class TestSpecCreatorDNMPage(BaseTestSpecFormPDFView):
             if 'page' in key and value == True:
                 idx = int(re.sub('\D', '', key))
                 dnm_idx.append(idx)
-                services.progress_set_page_selected(idx, True)
         services.set_do_not_mark_pages(dnm_idx)
 
         services.progress_set_dnm_page(True)

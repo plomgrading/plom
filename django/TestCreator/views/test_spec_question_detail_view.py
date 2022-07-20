@@ -59,7 +59,6 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
             if 'page' in key and value == True:
                 idx = int(re.sub('\D', '', key))
                 question_ids.append(idx)
-                services.progress_set_page_selected(idx, True)
         services.set_question_pages(question_ids, question_id)
 
         services.progress_set_question_detail_page(question_id-1, True)

@@ -46,7 +46,6 @@ class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
         services.progress_set_question_page(False)
         services.progress_set_dnm_page(False)
         services.progress_clear_questions()
-        services.progress_init_pages()
 
         return super().form_valid(form)
 
