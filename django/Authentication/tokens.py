@@ -4,6 +4,7 @@ from django.utils import six
 
 """
 Here is to generate a hash token for activating accounts
+https://www.sjoerdlangkemper.nl/2016/04/07/djangos-reset-password-mechanism/#:~:text=Django's%20token%20generator,he%20can%20reset%20his%20password.
 """
 
 
