@@ -5,13 +5,14 @@
 import importlib.resources as resources
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QPainter, QPixmap
+from PyQt5.QtGui import QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QGraphicsScene,
     QGraphicsView,
     QHeaderView,
+    QLabel,
     QPushButton,
     QTabWidget,
     QVBoxLayout,
@@ -154,8 +155,9 @@ class KeyHelp(QDialog):
 
     def setTabs(self):
         # put rubric-nav and tool-nav into a tab
-        self.tab.addTab(ToolNavPage(), "Tool navigation")
         self.tab.addTab(RubricNavPage(), "Rubric navigation")
+        self.tab.addTab(ClickDragPage(), "Rubric click-drag-click")
+        self.tab.addTab(ToolNavPage(), "Tool navigation")
 
         # Build a table for key lists
         tw = QTableWidget()
@@ -343,3 +345,22 @@ class ToolNavPage(QWidget):
         self.dlt.setToolTip("Select delete tool")
         li = self.scene.addWidget(self.dlt)
         li.setPos(-40, 200)
+
+
+class ClickDragPage(QWidget):
+    def __init__(self):
+        super().__init__()
+        grid = QVBoxLayout()
+        film_path = resources.path(plom.client.help_img, "click_drag.gif")
+        film = QMovie(str(film_path))
+        film_label = QLabel()
+        film_label.setStyleSheet("QLabel {border-color: teal; border-style: outset; border-width: 2px;}" )
+        film_label.setMovie(film)
+        grid.addWidget(film_label)
+        grid.addWidget(QLabel("Click-drag-release-move-click to highlight a region, and stamp rubric with a connecting line."))
+
+        self.setLayout(grid)
+
+        
+
+        film.start()

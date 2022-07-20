@@ -31,6 +31,7 @@ include plom/client/backGrid2.png
 include plom/client/cursors/*.png
 include plom/client/icons/*.svg
 include plom/client/help_img/nav*.png
+include plom/client/help_img/nav*.gif
 
 include plom/create/fonts/*.ttf
 
