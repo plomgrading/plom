@@ -242,9 +242,16 @@ class DownloadWorker(QRunnable):
     def run(self):
         debug = True
         if debug:
-            t = random.randint(0, 7)
-            sleep(t)
+            # fail = random.random() < 0.1
+            fail = False
+            debug_wait = random.randint(3, 7)
+            t1 = random.random() * debug_wait
+            t2 = debug_wait - t1
+            sleep(t1)
         im_bytes = self._msgr.get_image(self.img_id, self.md5)
+        if debug and fail:
+            # TODO: can get PlomNotAuthorized if the pre-clone msgr is logged out
+            raise NotImplementedError("TODO: what sort of exceptions are possible?")
         with tempfile.NamedTemporaryFile(
             "wb",
             dir=self.basedir,
@@ -254,7 +261,7 @@ class DownloadWorker(QRunnable):
         ) as f:
             f.write(im_bytes)
         if debug:
-            sleep(8 - t)
+            sleep(t2)
         self.signals.heres_the_goods.emit(
             self.img_id, self.md5, f.name, str(self.target_name)
         )
