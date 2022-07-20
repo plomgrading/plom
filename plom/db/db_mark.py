@@ -147,9 +147,12 @@ def MgetNextTask(self, q, v, *, tag, above):
             log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
             return None
 
-        tstr = f"{t1 - t0}s query + {t2 - t1}s tag filter"
         task = qref.group.gid
-        log.debug(f"Next Q{q}v{v} task = {task}, time = {tstr}")
+        if tag or above:
+            tstr = "%.3gs initial query + %.3gs tag filter" % (t1 - t0, t2 - t1)
+        else:
+            tstr = "%.3gs initial query + %.3gs get" % (t1 - t0, t2 - t1)
+        log.info(f"Next Q{q}v{v} task = {task}, time = {tstr}")
         return task
 
 
