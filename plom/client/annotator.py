@@ -1468,10 +1468,9 @@ class Annotator(QWidget):
             "zoomState"
         ] = self.ui.zoomCB.currentIndex()
         self.parentMarkerUI.annotatorSettings["tool"] = self.scene.mode
-        if self.scene.mode == "rubric":
-            self.parentMarkerUI.annotatorSettings[
-                "rubric"
-            ] = self.rubric_widget.getCurrentRubricKeyAndTab()
+        self.parentMarkerUI.annotatorSettings[
+            "rubric"
+        ] = self.rubric_widget.getCurrentRubricKeyAndTab()
 
         if self.ui.hideableBox.isVisible():
             self.parentMarkerUI.annotatorSettings["compact"] = False
