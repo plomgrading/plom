@@ -149,6 +149,11 @@ class Annotator(QWidget):
         # Set up the gui.
         self.ui.setupUi(self)
 
+        # ordered list of minor mode tools, must match the UI order
+        self._list_of_minor_modes = ["box", "tick", "cross", "text", "line", "pen"]
+        # current or last used tool, tracked so we can switch back
+        self._which_tool = self._list_of_minor_modes[0]
+
         # hide the "revealbox" which is revealed when the hideBox is hidden.
         self.ui.revealBox0.setHidden(True)
         self.wideLayout()
@@ -610,12 +615,7 @@ class Annotator(QWidget):
                 last-used tool.  Often, but not always, we want to
                 switch back to the last-used tool.  False by default.
         """
-        # list of minor modes in order
-        L = ["box", "tick", "cross", "text", "line", "pen"]
-
-        if not hasattr(self, "_which_tool"):
-            self._which_tool = "box"
-
+        L = self._list_of_minor_modes
         # if always-move then select the next/previous tool according to dir
         # elif in a tool-mode then select next/prev tool according to dir
         # elif - non-tool mode, so keep the last tool
@@ -879,6 +879,10 @@ class Annotator(QWidget):
                     X.setAutoExclusive(False)
                     X.setChecked(False)
                     X.setAutoExclusive(True)
+
+        # ensure`_which_tool` is updated via mouse click too, see next_minor_tool()
+        if newMode in self._list_of_minor_modes:
+            self._which_tool = newMode
 
         if imagePath is not None:
             self.scene.tempImagePath = imagePath
