@@ -853,14 +853,32 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self
         """
-        # We have to be a little careful since not all widgets get the styling in the same way.
-        # If the mark-handler widget sent us here, it takes care of its own styling - so we update the little tool-tip
-
         if self.sender() in self.ui.frameTools.children():
-            # tool buttons change the mode
-            self.sender().setChecked(True)
-        else:
+            # old unused code from pre-auto-exclusive?
+            # self.sender().setChecked(True)
             pass
+
+        if newMode == "rubric":
+            # stupid hackery to uncheck an autoexclusive button, can't
+            # decide if hacking rubric_list to somehow be a member of the
+            # exclusive group is worse.  Or whether to revert to few years
+            # ago when we managed the button state ourselves...
+            for X in (
+                self.ui.boxButton,
+                self.ui.crossButton,
+                self.ui.deleteButton,
+                self.ui.lineButton,
+                self.ui.moveButton,
+                self.ui.panButton,
+                self.ui.penButton,
+                self.ui.textButton,
+                self.ui.tickButton,
+                self.ui.zoomButton,
+            ):
+                if X.isChecked():
+                    X.setAutoExclusive(False)
+                    X.setChecked(False)
+                    X.setAutoExclusive(True)
 
         if imagePath is not None:
             self.scene.tempImagePath = imagePath
