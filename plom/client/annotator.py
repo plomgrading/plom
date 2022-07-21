@@ -140,10 +140,6 @@ class Annotator(QWidget):
         self.saveName = None
         self.maxMark = None
 
-        # when rubrics are used, we just outline the rubric widget - not
-        # the whole background - so make a style for that.
-        self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
-
         self.ui = Ui_annotator()
 
         # Set up the gui.
