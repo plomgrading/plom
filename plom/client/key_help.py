@@ -332,13 +332,13 @@ class ToolNavPage(QWidget):
         self.hlp.setStyleSheet(sheet)
         self.hlp.setToolTip("Pop up key help")
         li = self.scene.addWidget(self.hlp)
-        li.setPos(350, -40)
+        li.setPos(350, -50)
 
         self.zm = QPushButton(self.keys["zoom"])
         self.zm.setStyleSheet(sheet)
         self.zm.setToolTip("Select zoom tool")
         li = self.scene.addWidget(self.zm)
-        li.setPos(-40, -10)
+        li.setPos(-40, -5)
 
         self.dlt = QPushButton(self.keys["delete"])
         self.dlt.setStyleSheet(sheet)
