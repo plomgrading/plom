@@ -538,7 +538,7 @@ class MarkHandler:
     # @routes.patch("/tags")
     @authenticate_by_token_required_fields(["user", "tag_text"])
     def create_new_tag(self, data, request):
-        """Get list of all tags in system.
+        """Add a new tag to the system (but don't tag anything in particular with it).
 
         Respond with status 200/406/409.
 
