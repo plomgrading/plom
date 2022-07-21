@@ -37,7 +37,7 @@ class Downloader(QObject):
     download_finished = pyqtSignal(int, str, str)
     # emitted anytime a (background) download fails
     # TODO: document whether it is automatically restarted?
-    download_failed = pyqtSignal(int, str, str)
+    download_failed = pyqtSignal(int)
 
     def __init__(self, basedir, *, msgr=None):
         """Initialize a new Downloader.
@@ -125,7 +125,8 @@ class Downloader(QObject):
             target_name,
             basedir=self.basedir,
         )
-        worker.signals.heres_the_goods.connect(self.bg_delivers)
+        worker.signals.download_succeed.connect(self.worker_delivers)
+        worker.signals.download_fail.connect(self.worker_failed)
         if priority:
             self.threadpool.start(worker, priority=QThread.Priority.HighPriority)
         else:
@@ -133,8 +134,8 @@ class Downloader(QObject):
         # bg.finished.connect(thread.quit)
         # bg.finished.connect(bg.deleteLater)
 
-    def bg_delivers(self, img_id, md5, tmpfile, local_filename):
-        log.debug(f"BG delivery: {img_id}, {local_filename}")
+    def worker_delivers(self, img_id, md5, tmpfile, local_filename):
+        log.debug(f"Worker delivery: {img_id}, {local_filename}")
         # TODO: maybe pagecache should have the desired filename?
         # TODO: and keep a list of downloads in-progress
         # TODO: revisit once PageCache decides None/Exception...
@@ -160,6 +161,14 @@ class Downloader(QObject):
             Path(tmpfile).rename(local_filename)
             self.pagecache.set_page_image_path(img_id, local_filename)
         self.download_finished.emit(img_id, md5, local_filename)
+
+    def worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
+        log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
+        self.download_failed.emit(img_id)
+        # try again, TODO: probably we want to keep track of repeated failures!
+        self.download_in_background_thread(
+            {"id": img_id, "md5": md5, "local_filename": local_filename}
+        )
 
     def sync_downloads(self, pagedata):
         for row in pagedata:
@@ -242,7 +251,8 @@ class WorkerSignals(QObject):
     finished = pyqtSignal()
     # error = pyqtSignal(tuple)
     # result = pyqtSignal(object)
-    heres_the_goods = pyqtSignal(int, str, str, str)
+    download_succeed = pyqtSignal(int, str, str, str)
+    download_fail = pyqtSignal(int, str, str, tuple)
 
 
 class DownloadWorker(QRunnable):
@@ -262,7 +272,7 @@ class DownloadWorker(QRunnable):
     def run(self):
         debug = True
         if debug:
-            fail = random.random() < 0.1
+            fail = random.random() < 0.2
             debug_wait2 = random.randint(3, 7)
             debug_wait1 = random.random() * debug_wait2
             debug_wait2 -= debug_wait1
@@ -278,7 +288,9 @@ class DownloadWorker(QRunnable):
                     )
             except PlomException as e:
                 log.warning(f"vaguely expected failure! {str(e)}")
-                # self.signals.foo_failed.emit(...)
+                self.signals.download_fail.emit(
+                    self.img_id, self.md5, str(self.target_name), (str(e), "whut else?")
+                )
                 self.signals.finished.emit()
                 return
             t1 = time()
@@ -294,7 +306,9 @@ class DownloadWorker(QRunnable):
         except Exception as e:
             # TODO: generic catch-all bad, beer good
             log.error(f"unexpected failure, wtf we do here?! {str(e)}")
-            # self.signals.foo_failed.emit(...)
+            self.signals.download_fail.emit(
+                self.img_id, self.md5, str(self.target_name), (str(e), "whut else?")
+            )
             self.signals.finished.emit()
             return
         if debug:
@@ -308,7 +322,7 @@ class DownloadWorker(QRunnable):
             )
         else:
             log.debug("worker time: %.3gs download, %.3gs write", t1 - t0, t2 - t1)
-        self.signals.heres_the_goods.emit(
+        self.signals.download_succeed.emit(
             self.img_id, self.md5, f.name, str(self.target_name)
         )
         self.signals.finished.emit()
