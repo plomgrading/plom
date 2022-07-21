@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2022 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 
 import importlib.resources as resources
@@ -364,10 +364,12 @@ class ClickDragPage(QWidget):
         film_label.setStyleSheet("QLabel {border-style: outset; border-width: 2px;}")
         film_label.setMovie(film)
         grid.addWidget(film_label)
-        grid.addWidget(QLabel("Click-drag-release-move-click to highlight a region, and stamp rubric with a connecting line."))
+        grid.addWidget(
+            QLabel(
+                "Click-drag-release-move-click to highlight a region, and stamp rubric with a connecting line."
+            )
+        )
 
         self.setLayout(grid)
-
-        
 
         film.start()
