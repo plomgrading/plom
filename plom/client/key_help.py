@@ -278,6 +278,7 @@ class ToolNavPage(QWidget):
         "help": "?",
         "delete": "q",
         "zoom": "z",
+        "move": "a",
     }
 
     def __init__(self):
@@ -308,43 +309,49 @@ class ToolNavPage(QWidget):
         self.tn.setStyleSheet(sheet)
         self.tn.setToolTip("Select next tool")
         li = self.scene.addWidget(self.tn)
-        li.setPos(240, 300)
+        li.setPos(240, 320)
 
         self.tp = QPushButton(self.keys["tool_prev"])
         self.tp.setStyleSheet(sheet)
         self.tp.setToolTip("Select previous tool")
         li = self.scene.addWidget(self.tp)
-        li.setPos(40, 300)
+        li.setPos(40, 320)
+
+        self.mv = QPushButton(self.keys["move"])
+        self.mv.setStyleSheet(sheet)
+        self.mv.setToolTip("Select move tool")
+        li = self.scene.addWidget(self.mv)
+        li.setPos(395, 170)
 
         self.ud = QPushButton(self.keys["undo"])
         self.ud.setStyleSheet(sheet)
         self.ud.setToolTip("Undo last action")
         li = self.scene.addWidget(self.ud)
-        li.setPos(395, 155)
+        li.setPos(120, -40)
 
         self.rd = QPushButton(self.keys["redo"])
         self.rd.setStyleSheet(sheet)
         self.rd.setToolTip("Redo action")
         li = self.scene.addWidget(self.rd)
-        li.setPos(395, 85)
+        li.setPos(210, -40)
 
         self.hlp = QPushButton(self.keys["help"])
         self.hlp.setStyleSheet(sheet)
         self.hlp.setToolTip("Pop up key help")
         li = self.scene.addWidget(self.hlp)
-        li.setPos(350, -50)
+        li.setPos(350, -30)
 
         self.zm = QPushButton(self.keys["zoom"])
         self.zm.setStyleSheet(sheet)
         self.zm.setToolTip("Select zoom tool")
         li = self.scene.addWidget(self.zm)
-        li.setPos(-40, -5)
+        li.setPos(-40, 15)
 
         self.dlt = QPushButton(self.keys["delete"])
         self.dlt.setStyleSheet(sheet)
         self.dlt.setToolTip("Select delete tool")
         li = self.scene.addWidget(self.dlt)
-        li.setPos(-40, 200)
+        li.setPos(-40, 220)
 
 
 class ClickDragPage(QWidget):
@@ -354,7 +361,7 @@ class ClickDragPage(QWidget):
         film_path = resources.path(plom.client.help_img, "click_drag.gif")
         film = QMovie(str(film_path))
         film_label = QLabel()
-        film_label.setStyleSheet("QLabel {border-color: teal; border-style: outset; border-width: 2px;}" )
+        film_label.setStyleSheet("QLabel {border-style: outset; border-width: 2px;}")
         film_label.setMovie(film)
         grid.addWidget(film_label)
         grid.addWidget(QLabel("Click-drag-release-move-click to highlight a region, and stamp rubric with a connecting line."))
