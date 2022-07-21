@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './qtCreatorFiles/ui_annotator.ui'
+# Form implementation generated from reading ui file 'qtCreatorFiles/ui_annotator.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.6
 #
@@ -91,7 +91,6 @@ class Ui_annotator(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.zoomCB.sizePolicy().hasHeightForWidth())
         self.zoomCB.setSizePolicy(sizePolicy)
-        self.zoomCB.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.zoomCB.setObjectName("zoomCB")
         self.horizontalLayout2.addWidget(self.zoomCB)
         self.zoomButton = QtWidgets.QToolButton(self.frameTools)
