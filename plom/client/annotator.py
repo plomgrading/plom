@@ -834,9 +834,17 @@ class Annotator(QWidget):
         # row is one less than key
         self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
 
-    def setToolMode(self, newMode, newCursor, imagePath=None):
+    def setToolMode(self, newMode, newCursor, *, imagePath=None):
         """
         Changes the current tool mode and cursor.
+
+        Args:
+            newMode (str): ``"move"``, ``"rubric"`` etc.
+            newCursor (?): TODO doc
+
+        Keyword Args:
+            imagePath (?): an argument for the "image" tool, used
+                used only by the image tool.
 
         Notes:
             TODO: this does various other mucking around for legacy
@@ -1310,7 +1318,7 @@ class Annotator(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
         else:
-            self.setToolMode("image", Qt.ClosedHandCursor, fileName)
+            self.setToolMode("image", Qt.ClosedHandCursor, imagePath=fileName)
 
     def setButtons(self):
         """Connects buttons to their corresponding functions."""
