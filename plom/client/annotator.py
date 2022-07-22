@@ -855,26 +855,7 @@ class Annotator(QWidget):
             pass
 
         if newMode == "rubric":
-            # stupid hackery to uncheck an autoexclusive button, can't
-            # decide if hacking rubric_list to somehow be a member of the
-            # exclusive group is worse.  Or whether to revert to few years
-            # ago when we managed the button state ourselves...
-            for X in (
-                self.ui.boxButton,
-                self.ui.crossButton,
-                self.ui.deleteButton,
-                self.ui.lineButton,
-                self.ui.moveButton,
-                self.ui.panButton,
-                self.ui.penButton,
-                self.ui.textButton,
-                self.ui.tickButton,
-                self.ui.zoomButton,
-            ):
-                if X.isChecked():
-                    X.setAutoExclusive(False)
-                    X.setChecked(False)
-                    X.setAutoExclusive(True)
+            self._uncheck_exclusive_group()
 
         # ensure`_which_tool` is updated via mouse click too, see next_minor_tool()
         if newMode in self._list_of_minor_modes:
@@ -1380,6 +1361,29 @@ class Annotator(QWidget):
 
         # connect the "wide" button in the narrow-view
         self.ui.wideButton.clicked.connect(self.wideLayout)
+
+    def _uncheck_exclusive_group(self):
+        # Stupid hackery to uncheck an autoexclusive button.
+        # For example, when we switch focus to the rubric_list, we want to
+        # unselect all the tools.  An alternative would be somehow hacking
+        # the autoexclusive property into rubric_list (its normally for
+        # buttons).  Or to revert managing the button state ourselves.
+        for X in (
+            self.ui.boxButton,
+            self.ui.crossButton,
+            self.ui.deleteButton,
+            self.ui.lineButton,
+            self.ui.moveButton,
+            self.ui.panButton,
+            self.ui.penButton,
+            self.ui.textButton,
+            self.ui.tickButton,
+            self.ui.zoomButton,
+        ):
+            if X.isChecked():
+                X.setAutoExclusive(False)
+                X.setChecked(False)
+                X.setAutoExclusive(True)
 
     def handleRubric(self, dlt_txt):
         """Pass rubric ID, delta, and text the scene.
