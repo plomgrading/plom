@@ -1,0 +1,68 @@
+from django.test import TestCase, Client
+from django.contrib.auth.models import User, Group
+from django.urls import reverse
+from model_bakery import baker
+from .. import services
+
+
+class TestSpecCreatorQuestionDetailPageTests(TestCase):
+    """Test the question detail page view"""
+
+    def setUp(self):
+        """Create/force login a dummy manager user in order to access the view"""
+        self.manager_user = baker.make('User')
+        self.manager_group = baker.make('Group', name='manager')
+        self.manager_user.groups.add(self.manager_group)
+
+        self.cli = Client()
+        self.cli.force_login(self.manager_user)
+        return super().setUp()
+
+    def test_reverses(self):
+        """Test that the question detail view reverses with the right name"""
+        view_url = reverse('q_detail', args=(1,))
+        self.assertEqual(view_url, '/create/questions/1')
+
+    def test_get_not_logged_in(self):
+        """Test accessing the view when not logged in, should return a 403"""
+        self.cli.logout()
+        response = self.cli.get(reverse('q_detail', args=(1,)))
+        self.assertEqual(response.status_code, 403)
+
+    def test_get_wrong_group(self):
+        """Test getting the view when logged in but not as a manager, should return a 403"""
+        scanner_group = baker.make('Group', name='scanner')
+        self.manager_user.groups.all().delete()
+        self.manager_user.groups.add(scanner_group)
+        response = self.cli.get(reverse('q_detail', args=(1,)))
+        self.assertEqual(response.status_code, 403)
+
+    def test_get_initial_no_question(self):
+        """Test the question detail view's get_initial function without an existing question"""
+
+        # TODO: getting this page before completing the questions page should raise an error
+        # TODO: what happens when accessing an invalid question index in the URL?
+        services.set_num_questions(1)
+        services.set_total_marks(1)
+
+        response = self.cli.get(reverse('q_detail', args=(1,)))
+        self.assertEqual(response.status_code, 200)
+
+        initial = response.context['form'].initial
+        self.assertEqual(initial['label'], 'Q1')
+        self.assertEqual(initial['mark'], 1)
+        self.assertEqual(initial['shuffle'], 'F')
+
+    def test_get_initial_with_question(self):
+        """Test the question detail view's get_initial function with an existing question"""
+        services.set_num_questions(1)
+        services.set_total_marks(2)
+        services.create_question(1, 'Ex.1', 2, True)
+
+        response = self.cli.get(reverse('q_detail', args=(1,)))
+        self.assertEqual(response.status_code, 200)
+
+        initial = response.context['form'].initial
+        self.assertEqual(initial['label'], 'Ex.1')
+        self.assertEqual(initial['mark'], 2)
+        self.assertEqual(initial['shuffle'], 'True')  # TODO: what's going on with the choice field?
