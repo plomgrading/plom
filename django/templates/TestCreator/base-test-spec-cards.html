@@ -4,7 +4,7 @@
 
 {% block right_column %}
 
-<div class="container-fluid" x-data="{{ x_data }}"">
+<div class="container-fluid" x-data="{{ x_data }}">
     
     <form class="w-100" {% block form_action %}{% endblock %} method="post">
         {% csrf_token %}

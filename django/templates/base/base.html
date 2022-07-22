@@ -35,7 +35,7 @@
                             <ul class="nav flex-column">
                                 <li class="nav-item">
                                     <!-- Plom logo -->
-                                    <a class="navbar-brand nav-link" style="padding-right: 15px; padding-left: 0px; margin: 0px" href="#">
+                                    <a class="navbar-brand nav-link" style="padding-right: 15px; padding-left: 0px; margin: 0px" href="{% url 'home' %}">
                                         <img class="img-fluid" src="{% static 'plomLogo.png' %}" style="max-width: 8rem">
                                     </a>
                                 </li>
@@ -47,6 +47,9 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link link-light is_sidebar_link" href="#">Create test</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link link-light is_sidebar_link" href="{% url 'logout' %}">Log out</a>
                                 </li>
                             </ul>
                         </div>

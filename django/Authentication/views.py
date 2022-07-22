@@ -166,7 +166,6 @@ class RegenerateLinks(View):
         users = User.objects.all()[1:]
 
         # users_profile = Profile.objects.all().values()
-        print(users.values())
         context = {'users': users.values()}
         return render(request, self.template_name, context)
 

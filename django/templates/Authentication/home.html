@@ -1,3 +1,4 @@
+{% extends 'base/base.html' %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,9 @@
     <title>Home</title>
 </head>
 <body>
+    {% block main_content %}
+        <p>hello there</p>
+    {% endblock %}
     {% if user == 'admin' %}
         <a href="{% url 'signup_manager' %}">Sign up Manager</a>
         <a href="">Regenerate Manager Link</a>

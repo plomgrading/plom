@@ -1,7 +1,8 @@
 from django.urls import path
 
 import Authentication.views
-#from . import views
+
+# from . import views
 
 urlpatterns = [
     path('login/', Authentication.views.LoginView.as_view(), name="login"),  # newly added
