@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from .. import forms
+from .. import services
 
 
 class TestSpecPDFSelectFormTests(TestCase):
@@ -53,4 +54,46 @@ class TestSpecQuestionMarksFormTests(TestCase):
         form.is_valid()
 
         with self.assertRaisesMessage(ValidationError, 'Your test is too long!'):
+            form.clean()
+
+
+class TestSpecQuestionFormTests(TestCase):
+    """Test the question detail form"""
+
+    def test_question_clean_valid(self):
+        """Test TestSpecQuestionForm.clean"""
+        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': True}, num_pages=2)
+        
+        services.set_total_marks(2)
+        valid = form.is_valid()
+        self.assertTrue(valid)
+
+    def test_question_too_many_marks(self):
+        """Test that too many marks for the question will raise a ValidationError"""
+        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 5, 'shuffle': 'F', 'page0': True}, num_pages=1)
+
+        services.set_total_marks(2)
+        form.is_valid()
+
+        with self.assertRaisesMessage(ValidationError, 'Question cannot have more marks than the test.'):
+            form.clean()
+
+    def test_question_no_selected_page(self):
+        """Test that selecting no pages for the question raises a ValidationError"""
+        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': False}, num_pages=2)
+
+        services.set_total_marks(2)
+        form.is_valid()
+
+        with self.assertRaisesMessage(ValidationError, 'At least one page must be selected.'):
+            form.clean()
+
+    def test_question_consecutive_pages(self):
+        """Test that page selection with a gap will raise a ValidationError"""
+        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': True, 'page2': False, 'page3': True}, num_pages=4)
+
+        services.set_total_marks(2)
+        form.is_valid()
+
+        with self.assertRaisesMessage(ValidationError, 'Question pages must be consecutive.'):
             form.clean()
