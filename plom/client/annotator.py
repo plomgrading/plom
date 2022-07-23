@@ -1388,7 +1388,7 @@ class Annotator(QWidget):
                 X.setAutoExclusive(True)
 
     def handleRubric(self, dlt_txt):
-        """Pass rubric ID, delta, and text the scene.
+        """Pass rubric ID, delta, text, etc to the scene.
 
         Args:
             dlt_txt (tuple): the delta, string of text, rubric_id, and
@@ -1400,9 +1400,7 @@ class Annotator(QWidget):
         # Set the model to text and change cursor.
         self.setToolMode("rubric", QCursor(Qt.IBeamCursor))
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheRubric(
-                dlt_txt[0], dlt_txt[1], dlt_txt[2], dlt_txt[3], annotatorUpdate=True
-            )
+            self.scene.changeTheRubric(*dlt_txt)
 
     def loadWindowSettings(self):
         """Loads the window settings."""

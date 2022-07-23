@@ -2502,17 +2502,15 @@ class PageScene(QGraphicsScene):
             )
             raise PlomInconsistentRubricsException
 
-    def changeTheRubric(self, delta, text, rubricID, rubricKind, annotatorUpdate=True):
+    def changeTheRubric(self, delta, text, rubricID, rubricKind):
         """
         Changes the new rubric for the paper based on the delta and text.
 
         Args:
             delta (str): a string containing the delta integer.
             text (str): the text in the rubric.
-            rubricID (int): the id of the rubric: TODO surely rest can
-                be retrieved from this?
-            rubricKind (???): ???
-            annotatorUpdate (bool): if this update came from Annotator.
+            rubricID (int): the id of the rubric.
+            rubricKind (str): ``"absolute"``, ``"neutral"``, etc.
 
         Returns:
             None
@@ -2521,16 +2519,14 @@ class PageScene(QGraphicsScene):
         self.rubricText = text
         self.rubricID = rubricID
         self.rubricKind = rubricKind
-        # TODO: not sure I understand the distinction: real Annotator sends true
-        # explicitly sends true and randoMarker sends default (also true).
-        # Suspect legacy stuff that can be removed.
-        if annotatorUpdate:
-            gpt = QCursor.pos()  # global mouse pos
-            vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
-            spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
-            self.ghostItem.setPos(spt)
-            self.setToolMode("rubric")
-            self.exposeGhost()  # unhide the ghostitem
+
+        gpt = QCursor.pos()  # global mouse pos
+        vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
+        spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
+        self.ghostItem.setPos(spt)
+        self.setToolMode("rubric")
+        self.exposeGhost()  # unhide the ghostitem
+
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
         legality = self.isLegalRubric(rubricKind, delta)

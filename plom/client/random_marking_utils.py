@@ -135,10 +135,7 @@ class SceneParent(QWidget):
             rubric = random.choice(negativeRubrics[self.question])
 
         self.scene.changeTheRubric(
-            rubric["delta"],
-            rubric["text"],
-            rubric["id"],
-            rubric["kind"],
+            rubric["delta"], rubric["text"], rubric["id"], rubric["kind"]
         )
 
         # only do rubric if it is legal
