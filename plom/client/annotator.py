@@ -456,10 +456,8 @@ class Annotator(QWidget):
         log.debug("Restore mode info = {}".format(self.modeInformation))
         self.scene.setToolMode(self.modeInformation[0])
         if self.modeInformation[0] == "rubric":
-            # self.modeInformation[1] = [a,b] = [key, tab-index]
-            if self.rubric_widget.setCurrentRubricKeyAndTab(
-                self.modeInformation[1][0], self.modeInformation[1][1]
-            ):
+            extra = self.modeInformation[1]
+            if self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
                 self.rubric_widget.handleClick()
             else:  # if that rubric-mode-set fails (eg - no such rubric)
                 self.scene.setToolMode("move")
