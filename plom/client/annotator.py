@@ -358,9 +358,13 @@ class Annotator(QWidget):
 
         # Attempt at keeping mode information.
         self.modeInformation = [self.scene.mode]
-        if self.scene.mode == "rubric":  # stores as [a,b]
-            # if no rubric selected then key=None - be careful of this.
-            self.modeInformation.append(self.rubric_widget.getCurrentRubricKeyAndTab())
+        if self.scene.mode == "rubric":
+            key, tab = self.rubric_widget.getCurrentRubricKeyAndTab()
+            if key is None:
+                # Maybe row hidden (illegal) but scene knows it in the blue
+                # ghost.  Fixes #1599.  Still None if scene didn't know.
+                key = self.scene.rubricID
+            self.modeInformation.append((key, tab))
 
         # after grabbed mode information, reset rubric_widget
         self.rubric_widget.reset()
