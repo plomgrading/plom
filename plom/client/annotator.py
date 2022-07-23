@@ -1262,33 +1262,6 @@ class Annotator(QWidget):
         """Changes the tool to the zoom button."""
         self.setToolMode("zoom", Qt.SizeFDiagCursor)
 
-    def loadModeFromBefore(self, mode, aux=None):
-        """
-        Loads mode from previous.
-
-        Args:
-            mode (str): String corresponding to the toolMode to be loaded
-            aux (int) : the row of the current rubric if applicable.
-
-        Returns:
-            None
-        """
-        self.loadModes = {
-            "box": lambda: self.ui.boxButton.animateClick(),
-            "rubric": lambda: self.rubricMode(),
-            "cross": lambda: self.ui.crossButton.animateClick(),
-            "line": lambda: self.ui.lineButton.animateClick(),
-            "pen": lambda: self.ui.penButton.animateClick(),
-            "text": lambda: self.ui.textButton.animateClick(),
-            "tick": lambda: self.ui.tickButton.animateClick(),
-        }
-        if mode == "rubric" and aux is not None:  # key and tab set as [a,b]
-            self.rubric_widget.setCurrentRubricKeyAndTab(aux[0], aux[1])
-            # simulate a click on the rubric to get everything set.
-            self.rubric_widget.handleClick()
-        else:
-            self.loadModes.get(mode, lambda *args: None)()
-
     def addImageMode(self):
         """
         Opens a file dialog for images, shows a message box if the image is
@@ -1416,14 +1389,6 @@ class Annotator(QWidget):
         if self.parentMarkerUI.annotatorSettings["rubricWarnings"] is not None:
             self.rubricWarn = self.parentMarkerUI.annotatorSettings["rubricWarnings"]
 
-        # remember the last tool used
-        if self.parentMarkerUI.annotatorSettings["tool"] is not None:
-            if self.parentMarkerUI.annotatorSettings["tool"] == "rubric":
-                rbrc = self.parentMarkerUI.annotatorSettings["rubric"]
-                self.loadModeFromBefore("rubric", rbrc)
-            else:
-                self.loadModeFromBefore(self.parentMarkerUI.annotatorSettings["tool"])
-
         # if zoom-state is none, set it to index 1 (fit page) - but delay.
         if self.parentMarkerUI.annotatorSettings["zoomState"] is None:
             QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
@@ -1467,11 +1432,6 @@ class Annotator(QWidget):
         self.parentMarkerUI.annotatorSettings[
             "zoomState"
         ] = self.ui.zoomCB.currentIndex()
-        self.parentMarkerUI.annotatorSettings["tool"] = self.scene.mode
-        self.parentMarkerUI.annotatorSettings[
-            "rubric"
-        ] = self.rubric_widget.getCurrentRubricKeyAndTab()
-
         if self.ui.hideableBox.isVisible():
             self.parentMarkerUI.annotatorSettings["compact"] = False
         else:
