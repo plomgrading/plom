@@ -2511,32 +2511,29 @@ class PageScene(QGraphicsScene):
             text (str): the text in the rubric.
             rubricID (int): the id of the rubric: TODO surely rest can
                 be retrieved from this?
-            annotatorUpdate (bool): true if annotator should be updated,
-                false otherwise.
+            rubricKind (???): ???
+            annotatorUpdate (bool): if this update came from Annotator.
 
         Returns:
             None
-
         """
-        # if this update comes from the annotator, then we need to store a
-        # copy of the mark-delta for future and also set the mode.
+        self.rubricDelta = delta
+        self.rubricText = text
+        self.rubricID = rubricID
+        self.rubricKind = rubricKind
+        # TODO: not sure I understand the distinction: real Annotator sends true
+        # explicitly sends true and randoMarker sends default (also true).
+        # Suspect legacy stuff that can be removed.
         if annotatorUpdate:
             gpt = QCursor.pos()  # global mouse pos
             vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
             spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
             self.ghostItem.setPos(spt)
-            self.rubricDelta = delta
-            self.rubricKind = rubricKind
             self.setToolMode("rubric")
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
         legality = self.isLegalRubric(rubricKind, delta)
-
-        self.rubricDelta = delta
-        self.rubricText = text
-        self.rubricID = rubricID
-        self.rubricKind = rubricKind
         self.updateGhost(delta, text, legality)
 
     def noAnswer(self, noAnswerCID):
