@@ -177,9 +177,10 @@ class RegenerateLinks(GroupRequiredMixin, View):
     activation_link = 'Authentication/manager_activation_link.html'
     group_required = [u'admin']
     navbar_colour = '#808080'
+    raise_exception = True
 
     def get(self, request):
-        users = User.objects.all()[1:]
+        users = User.objects.all().filter(groups__name='manager')
         # users_profile = Profile.objects.all().values()
         context = {'users': users.values(), 'user_group': RegenerateLinks.group_required[0],
                    'navbar_colour': RegenerateLinks.navbar_colour}
