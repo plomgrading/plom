@@ -82,11 +82,21 @@ class SetPasswordComplete(LoginRequiredMixin, View):
 
 
 # login_required make sure user is log in
-@login_required(login_url='login')
-def home(request):
-    user = request.user.groups.all()[0].name
-    context = {'user': user}
-    return render(request, 'Authentication/home.html', context)
+class Home(LoginRequiredMixin, View):
+    login_url = 'login/'
+    redirect_field_name = 'login'
+    home_page = 'Authentication/home.html'
+    navbar_colour = {'admin': '#808080',
+                     'manager': '#AD9CFF',
+                     'marker': '#FF434B',
+                     'scanner': '#0F984F'}
+
+    def get(self, request):
+        user = request.user.groups.all()[0].name
+        if user in Home.navbar_colour:
+            colour = Home.navbar_colour[user]
+        context = {'navbar_colour': colour, 'user_group': user}
+        return render(request, self.home_page, context)
 
 
 class LoginView(View):
@@ -130,9 +140,11 @@ class SignupManager(GroupRequiredMixin, View):
     home = 'Authentication/home.html'
     form = CreateUserForm()
     group_required = [u"admin"]
+    navbar_colour = '#808080'
 
     def get(self, request):
-        context = {'form': SignupManager.form}
+        context = {'form': SignupManager.form, 'user_group': SignupManager.group_required[0],
+                   'navbar_colour': SignupManager.navbar_colour}
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -146,27 +158,31 @@ class SignupManager(GroupRequiredMixin, View):
             # user can't log in until the link is confirmed
             user.is_active = False
             user.save()
-            current_site = get_current_site(request)
-            activation_link = {
-                'domain': current_site.domain,
+            context = {
+                'domain': get_current_site(request).domain,
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': activation_token.make_token(user),
+                'user_group': SignupManager.group_required[0],
+                'navbar_colour': SignupManager.navbar_colour,
             }
-            return render(request, self.activation_link, activation_link)
+            return render(request, self.activation_link, context)
         else:
-            context = {'form': SignupManager.form, 'error': form.errors}
+            context = {'form': SignupManager.form, 'error': form.errors, 'user_group': SignupManager.group_required[0],
+                       'navbar_colour': SignupManager.navbar_colour}
             return render(request, self.template_name, context)
 
 
-class RegenerateLinks(View):
+class RegenerateLinks(GroupRequiredMixin, View):
     template_name = 'Authentication/regenerative_links.html'
     activation_link = 'Authentication/manager_activation_link.html'
+    group_required = [u'admin']
+    navbar_colour = '#808080'
 
     def get(self, request):
         users = User.objects.all()[1:]
-
         # users_profile = Profile.objects.all().values()
-        context = {'users': users.values()}
+        context = {'users': users.values(), 'user_group': RegenerateLinks.group_required[0],
+                   'navbar_colour': RegenerateLinks.navbar_colour}
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -174,9 +190,11 @@ class RegenerateLinks(View):
         user = User.objects.get(username=username)
 
         current_site = get_current_site(request)
-        activation_link = {
+        context = {
             'domain': current_site.domain,
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
             'token': activation_token.make_token(user),
+            'user_group': RegenerateLinks.group_required[0],
+            'navbar_colour': RegenerateLinks.navbar_colour,
         }
-        return render(request, self.activation_link, activation_link)
+        return render(request, self.activation_link, context)

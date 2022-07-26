@@ -27,9 +27,9 @@
 
         <div class="container-fluid" style="padding: 0px;">
             <div class="row" style="min-height: 100vh; margin: 0px;">
-                <div class="col-auto shadow" style="background-color: #AD9CFF; padding: 0px;">
+                <div class="col-auto shadow" style="background-color: {{ navbar_colour }}; padding: 0px;">
                     <nav class="navbar">
-                        <div class="container-fluid" style="padding: 0px;">
+                        <div class="container-fluid" style="padding: 0px; ">
                             
                             <!-- Navbar links -->
                             <ul class="nav flex-column">
@@ -45,9 +45,18 @@
                                 <li class="nav-item">
                                     <a class="nav-link link-light is_sidebar_link" href="#">Users</a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link link-light is_sidebar_link" href="#">Create test</a>
-                                </li>
+                                {% if user_group == 'admin' %}
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'signup_manager' %}">Sign Up<br>Manager</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'password_reset' %}">Password<br>Reset Link</a>
+                                    </li>
+                                {% elif user_group == 'manager' %}
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'names' %}">Create test</a>
+                                    </li>
+                                {% endif %}
                                 <li class="nav-item">
                                     <a class="nav-link link-light is_sidebar_link" href="{% url 'logout' %}">Log out</a>
                                 </li>

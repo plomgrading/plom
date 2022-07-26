@@ -1,3 +1,4 @@
+{% extends 'base/base.html' %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -7,12 +8,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
+    {% block main_content %}
     <h1>Manager Reset Password Link</h1>
     <h4>Below is the Manager's link to activate account and reset password.</h4>
     <p>- Click on copy to copy link to clipboard</p>
     <p id="link">http://{{ domain }}{% url 'password_reset' uidb64=uid token=token %}</p>
     <button id="copy">Copy</button>
-    <a href="{% url 'home' %}">Home</a>
     <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
+    {% endblock %}
 </body>
 </html>

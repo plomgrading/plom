@@ -8,7 +8,7 @@ urlpatterns = [
     path('login/', Authentication.views.LoginView.as_view(), name="login"),  # newly added
     path('logout/', Authentication.views.LogoutView.as_view(), name="logout"),
     # testing home page
-    path('', Authentication.views.home, name='home'),
+    path('', Authentication.views.Home.as_view(), name='home'),
 
     # signup path
     path('signup/manager/', Authentication.views.SignupManager.as_view(), name="signup_manager"),
@@ -17,5 +17,5 @@ urlpatterns = [
     # path('signup/'),
     # path('signup/marker/'),
     # path('signup/scanner/'),
-    path('regeneratelinks/', Authentication.views.RegenerateLinks.as_view()),
+    path('regeneratelinks/', Authentication.views.RegenerateLinks.as_view(), name='password_reset'),
 ]

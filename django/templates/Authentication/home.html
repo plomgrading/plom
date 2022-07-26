@@ -3,18 +3,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home</title>
+    <title>{% block title %}Web Plom - Home{% endblock %}</title>
 </head>
 <body>
     {% block main_content %}
         <p>hello there</p>
     {% endblock %}
-    {% if user == 'admin' %}
-        <a href="{% url 'signup_manager' %}">Sign up Manager</a>
-        <a href="">Regenerate Manager Link</a>
-        <a href="{% url 'logout' %}">Logout</a>
-        {% else %}
-        <a href="{% url 'logout' %}">Logout</a>
-    {%  endif %}
 </body>
 </html>

@@ -21,7 +21,7 @@ div.is_pdf_thumbnail:hover {
 }
 
 a.is_sidebar_link:hover {
-    background-color: #9687e0;
+    background-color: #282828;
 }
 
 a.list-group-item {
@@ -34,14 +34,18 @@ p.is_test_spec_nav_text {
 }
 
 .btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
-    background-color: #AD9CFF !important;
-    border-color: #9687e0 !important;
+    background-color: #282828 !important;
+    border-color: #282828 !important;
 }
 
 .btn-primary:focus {
-    box-shadow: 0 0 0 .2rem #9687e0 !important;
+    box-shadow: 0 0 0 .2rem #282828 !important;
 }
 
 .form-control:focus {
-    box-shadow: 0 0 0 .2rem #9687e0 !important;
+    box-shadow: 0 0 0 .2rem #282828 !important;
+}
+
+.is_sidebar_link {
+    text-align: center;
 }

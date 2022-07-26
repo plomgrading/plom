@@ -6,6 +6,7 @@ from braces.views import LoginRequiredMixin, GroupRequiredMixin
 from .. import services
 from .. import models
 
+
 class BaseTestSpecFormView(GroupRequiredMixin, FormView):
     login_url = 'login'
     group_required = u"manager"
@@ -19,6 +20,8 @@ class BaseTestSpecFormView(GroupRequiredMixin, FormView):
         context['questions'] = [i for i in range(services.get_num_questions())]
 
         context['completed'] = services.get_progress_dict()
+        context['navbar_colour'] = '#AD9CFF'
+        context['user_group'] = 'manager'
         return context
 
 
@@ -59,7 +62,7 @@ class BaseTestSpecUtilView(GroupRequiredMixin, View):
 class BaseTestSpecTemplateView(GroupRequiredMixin, TemplateView):
     group_required = [u"manager"]
     raise_exception = True
-    
+
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(**kwargs)
         context['long_name'] = services.get_long_name()

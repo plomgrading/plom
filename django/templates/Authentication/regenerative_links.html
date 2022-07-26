@@ -1,3 +1,5 @@
+{% extends 'base/base.html' %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,8 +7,9 @@
     <title>Title</title>
 </head>
 <body>
-    <h2>Regenerative Links</h2>
-    <p>Click on "Generate new links" to set user password.</p>
+    {% block main_content %}
+    <h2>Manager Password Reset Links</h2>
+    <p>Click on "Generate new password reset link" to set user password.</p>
     <br>
     <h4>Manager Status</h4>
     <div class="container">
@@ -25,12 +28,13 @@
                         <tr>
                             <td>{{ user.username }}</td>
                             <td>{{ user.is_active }}</td>
-                            <td><button type="submit" name="new_link" value="{{ user.username }}">Generate new link</button></td>
+                            <td><button type="submit" name="new_link" value="{{ user.username }}">Generate new password reset link</button></td>
                         </tr>
                     </form>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% endblock %}
 </body>
 </html>

@@ -1,25 +1,31 @@
+{% extends 'base/base.html' %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Plom Manager Sign Up</title>
+    <title>{% block title %}Plom Manager Sign Up{% endblock %}</title>
     <link rel="stylesheet" type="text/css" href="{% static '/css/signUpPage.css' %}">
 </head>
 <body>
+    {% block main_content %}
     <h1>Manager SignUp</h1>
     <form method="POST" action="">
         {% csrf_token %}
         {{ form.username.label }}
-        {{ form.username }}<br>
+        {{ form.username }}
+        <div style="font-size: smaller">
+            <p>Click <b>Generate Username</b> to automatically generate username</p>
+        </div>
 
         {{ form.email.label }}
-        {{ form.email }}<br>
+        {{ form.email }}<br><br>
 
         <input type="submit" name="Create User"><br>
     </form>
     <button id="generate-username">Generate Username</button>
     {{ error }}
-    <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
+        <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
+    {% endblock %}
 </body>
 </html>
