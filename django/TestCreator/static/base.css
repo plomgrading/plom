@@ -34,8 +34,12 @@ p.is_test_spec_nav_text {
 }
 
 .btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
-    background-color: #282828 !important;
+    background-color: #AD9CFF !important;
     border-color: #282828 !important;
+}
+
+a.btn.btn-primary.btn-lg {
+    color: black;
 }
 
 .btn-primary:focus {
@@ -43,7 +47,7 @@ p.is_test_spec_nav_text {
 }
 
 .form-control:focus {
-    box-shadow: 0 0 0 .2rem #282828 !important;
+    box-shadow: 0 0 0 .2rem #AD9CFF !important;
 }
 
 .is_sidebar_link {

@@ -17,5 +17,5 @@ urlpatterns = [
     # path('signup/'),
     # path('signup/marker/'),
     # path('signup/scanner/'),
-    path('regeneratelinks/', Authentication.views.RegenerateLinks.as_view(), name='password_reset'),
+    path('regeneratelinks/', Authentication.views.PasswordResetLinks.as_view(), name='password_reset'),
 ]
