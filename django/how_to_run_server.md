@@ -11,6 +11,7 @@ django
 django-braces
 django-utils-six
 pymupdf
+model_bakery (for tests)
 ```
 5. To launch the server: `python3 manage.py runserver`
 6. To run tests: `python3 manage.py tests`
