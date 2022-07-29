@@ -69,6 +69,9 @@ class BaseTestSpecTemplateView(GroupRequiredMixin, TemplateView):
         context['short_name'] = services.get_short_name()
         context['curr_page'] = page_name
         context['questions'] = [i for i in range(services.get_num_questions())]
+        
+        context['navbar_colour'] = '#AD9CFF'
+        context['user_group'] = 'manager'
 
         context['completed'] = services.get_progress_dict()
         return context

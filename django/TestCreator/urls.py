@@ -4,6 +4,7 @@ from . import views
 # TODO: Document the API here? Sphinx best practices?
 
 urlpatterns = [
+    path('', views.TestSpecLaunchView.as_view(), name='creator_launch'),
     path('names/', views.TestSpecCreatorNamesPage.as_view(), name='names'),
     path('upload', views.TestSpecCreatorVersionsRefPDFPage.as_view(), name='upload'),
     path('id_page/', views.TestSpecCreatorIDPage.as_view(), name='id_page'),

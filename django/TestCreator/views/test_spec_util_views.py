@@ -44,3 +44,9 @@ class TestSpecDownloadView(BaseTestSpecTemplateView):
     def get_context_data(self, **kwargs):
         return super().get_context_data('download')
 
+
+class TestSpecLaunchView(BaseTestSpecTemplateView):
+    template_name = 'TestCreator/test-spec-launch-page.html'
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data('launch')
