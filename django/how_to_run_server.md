@@ -33,5 +33,5 @@ model_bakery (for tests)
 ## Create a manager
 1. Still logged in as the admin, go to the homepage `<local_url>/` and click on "sign up manager"
 2. Fill out the form and copy the generated link
-3. Sign out from the admin account and follow the link to the manager password change form
+3. Sign out from the admin account and follow the copied link to the manager password change form
 4. Once it's done, you should be redirected to the manager homepage
