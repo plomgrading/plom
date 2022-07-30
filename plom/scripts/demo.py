@@ -64,7 +64,12 @@ def get_parser():
     parser.add_argument(
         "--no-scans",
         action="store_true",
-        help="Start demo server but without uploading fake-scans. For testing purposes.",
+        help="""
+            Start demo server but without uploading fake-scans. For testing purposes.
+            Some scribbled simulated student data is still created (with names
+            like `fake_scribbled_exams1.pdf`) but these are not automatically
+            uploaded to the server.
+            """,
     )
     parser.add_argument(
         "--prepare-only",
