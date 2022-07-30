@@ -11,8 +11,8 @@ At some point the Plom system needs to know which paper belongs to which student
 
 1. Papers named from the start — Plom can produce papers with student
    names already printed on them.
-   In this case Plom already knows which paper belongs to who and
-   typically no extra work is needed.
+   In this case Plom already knows which paper should belong to who and
+   typically very little extra work is needed.
 2. Automated ID reading — When tests are producing using Plom’s ID
    Template, the system can use `machine learning <https://xkcd.com/1838>`_
    to read the digits from the student-ID boxes and match against the
