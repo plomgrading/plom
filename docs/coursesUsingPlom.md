@@ -92,17 +92,22 @@ Approx: 11500 over 9 course
 | 317     | midterm, exam           | 160        |                             |
 | BMEG220 | midterm, 2 quiz, exam   | 110        |                             |
 | ELEC211 | 2 midterms, exam        | 160        |                             |
+| ???     | Exam                    | ??         | First use outside UBC       |
 
 Approx: 9230 over 7 courses
 
 
-## 2022S1
+## 2022S1/S2
 
 | Course  |  Tasks                  | # students |  Notes                      |
 |---------|-------------------------|:----------:|-----------------------------|
 | 253     | 2 midterms, final exam  | 140        |                             |
+| 101     | midterm, final exam     | 260        |                             |
+| 105     | final exam              | 90         |                             |
+
+Approx: 1030 over 3 courses
 
 
-## Totals up to June 30th 2022
+## Totals up to August 30th 2022
 
-  * Approx 43150 papers in 43 courses.
+  * Approx 43260 papers in 45 courses.
