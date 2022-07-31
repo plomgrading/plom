@@ -14,7 +14,7 @@ from django.views.generic import View
 from braces.views import GroupRequiredMixin
 
 from .services import generate_link
-from .signupForm import CreateUserForm
+from .signupForm import CreateManagerForm
 from .models import Profile
 
 
@@ -134,7 +134,7 @@ class LogoutView(View):
 class SignupManager(GroupRequiredMixin, View):
     template_name = 'Authentication/manager_signup.html'
     activation_link = 'Authentication/manager_activation_link.html'
-    form = CreateUserForm()
+    form = CreateManagerForm()
     group_required = [u"admin"]
     navbar_colour = '#808080'
 
@@ -144,7 +144,7 @@ class SignupManager(GroupRequiredMixin, View):
         return render(request, self.template_name, context)
 
     def post(self, request):
-        form = CreateUserForm(request.POST)
+        form = CreateManagerForm(request.POST)
         if form.is_valid():
             user = form.save()
             user.refresh_from_db()
@@ -168,6 +168,10 @@ class SignupManager(GroupRequiredMixin, View):
             return render(request, self.template_name, context)
 
 
+class SignupScannersAndMarkers(View):
+    pass
+
+
 class PasswordResetLinks(GroupRequiredMixin, View):
     template_name = 'Authentication/regenerative_links.html'
     activation_link = 'Authentication/manager_activation_link.html'
@@ -177,7 +181,6 @@ class PasswordResetLinks(GroupRequiredMixin, View):
 
     def get(self, request):
         users = User.objects.all().filter(groups__name='manager').values()
-
         context = {'users': users, 'user_group': PasswordResetLinks.group_required[0],
                    'navbar_colour': PasswordResetLinks.navbar_colour}
         return render(request, self.template_name, context)
@@ -186,12 +189,8 @@ class PasswordResetLinks(GroupRequiredMixin, View):
         username = request.POST.get('new_link')
         user = User.objects.get(username=username)
         link = generate_link(request, user)
-        current_site = get_current_site(request)
         context = {
             'link': link,
-            'domain': current_site.domain,
-            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-            'token': default_token_generator.make_token(user),
             'user_group': PasswordResetLinks.group_required[0],
             'navbar_colour': PasswordResetLinks.navbar_colour,
         }
