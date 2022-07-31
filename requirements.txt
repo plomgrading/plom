@@ -37,5 +37,5 @@ segno==1.5.2
 stdiomask==0.0.6
 toml==0.10.2
 tqdm==4.64.0
-urllib3==1.26.10
-weasyprint==56.0
+urllib3==1.26.11
+weasyprint==56.1
