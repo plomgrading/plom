@@ -45,10 +45,9 @@
                                 <li class="nav-item">
                                     <a class="nav-link link-light is_sidebar_link" href="#">Account</a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link link-light is_sidebar_link" href="#">Users</a>
-                                </li>
-                                {% if user_group == 'admin' %}
+
+                                {% if 'admin' in user_group %}
+
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link" href="{% url 'signup_manager' %}">Sign Up<br>Manager</a>
                                     </li>
@@ -57,10 +56,11 @@
                                     </li>
                                 {% elif user_group == 'manager' %}
                                     <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'creator_launch' %}">Create test</a>
+                                    <a class="nav-link link-light is_sidebar_link" href="{% url 'listUsers' %}">Users</a>
                                     </li>
+
                                     <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link" href="#">Create<br>Scanners/Markers</a>
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'names' %}">Create test</a>
                                     </li>
                                 {% endif %}
                                 <li class="nav-item">

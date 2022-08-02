@@ -21,5 +21,5 @@ urlpatterns = [
     # contains all the url path from Authentication App
     path('', include('Authentication.urls')),
     path('create/', include('TestCreator.urls')),
-    path('classlist/', include('Classlist.urls')),
+    path('', include('UserManagement.urls')),
 ]
