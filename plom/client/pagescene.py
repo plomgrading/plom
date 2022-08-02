@@ -957,13 +957,14 @@ class PageScene(QGraphicsScene):
             None
 
         """
-
+        # TODO: all this should somehow be an "alternative action" of the tool
+        cursor = self.parent().cursor
         variableCursors = {
-            "cross": [self.parent().cursorTick, self.parent().cursorQMark],
-            "line": [self.parent().cursorArrow, self.parent().cursorDoubleArrow],
-            "tick": [self.parent().cursorCross, self.parent().cursorQMark],
-            "box": [self.parent().cursorEllipse, self.parent().cursorBox],
-            "pen": [self.parent().cursorHighlight, self.parent().cursorDoubleArrow],
+            "cross": (cursor["tick"], cursor["QMark"]),
+            "line": (cursor["arrow"], cursor["DoubleArrow"]),
+            "tick": (cursor["cross"], cursor["QMark"]),
+            "box": (cursor["ellipse"], cursor["box"]),
+            "pen": (cursor["Highlight"], cursor["DoubleArrow"]),
         }
 
         if self.mode in variableCursors:
@@ -994,11 +995,11 @@ class PageScene(QGraphicsScene):
 
         """
         variableCursorRelease = {
-            "cross": self.parent().cursorCross,
-            "line": self.parent().cursorLine,
-            "tick": self.parent().cursorTick,
-            "box": self.parent().cursorBox,
-            "pen": self.parent().cursorPen,
+            "cross": self.parent().cursor["cross"],
+            "line": self.parent().cursor["line"],
+            "tick": self.parent().cursor["tick"],
+            "box": self.parent().cursor["box"],
+            "pen": self.parent().cursor["pen"],
         }
         if self.mode in variableCursorRelease:
             if self.views()[0].cursor() == variableCursorRelease.get(self.mode):
