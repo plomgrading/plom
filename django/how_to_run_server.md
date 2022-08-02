@@ -15,7 +15,7 @@ model_bakery (for tests)
 ```
 5. Switch to the dev branch: `git checkout dev`
 6. To launch the server: `python3 manage.py runserver`
-8. To run tests: `python3 manage.py tests`
+8. To run tests: `python3 manage.py test`
 
 ## Init the database
 1. Run `python3 manage.py migrate` to setup the database
