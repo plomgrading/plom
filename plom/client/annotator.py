@@ -534,7 +534,6 @@ class Annotator(QWidget):
             return pm
 
         # The keys here are magic values that connect to tools
-        # TODO: probably some others to move here
         cursor = {}
         cursor["box"] = QCursor(_pixmap_from("box.png"), 4, 4)
         cursor["ellipse"] = QCursor(_pixmap_from("ellipse.png"), 4, 4)
@@ -548,6 +547,14 @@ class Annotator(QWidget):
         cursor["Highlight"] = QCursor(_pixmap_from("highlighter.png"), 4, 4)
         cursor["arrow"] = QCursor(_pixmap_from("arrow.png"), 4, 4)
         cursor["DoubleArrow"] = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
+        cursor["text"] = Qt.IBeamCursor
+        cursor["rubric"] = Qt.IBeamCursor
+        cursor["image"] = Qt.ClosedHandCursor
+        cursor["zoom"] = Qt.SizeFDiagCursor
+        # note Qt.ClosedHandCursor and Qt.OpenHandCursor also hardcoded in pagescene
+        cursor["pan"] = Qt.OpenHandCursor
+        cursor["move"] = Qt.OpenHandCursor
+
         self.cursor = cursor
 
     def toggleTools(self):
@@ -824,18 +831,19 @@ class Annotator(QWidget):
         # row is one less than key
         self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
 
-    def setToolMode(self, newMode, newCursor=None, *, imagePath=None):
+    def setToolMode(self, newMode, *, cursor=None, imagePath=None):
         """
         Changes the current tool mode and cursor.
 
         Args:
             newMode (str): ``"move"``, ``"rubric"`` etc.
-            newCursor (?): TODO doc, if None take from a dict in a
-               sensible way, but we should just remove this.
 
         Keyword Args:
             imagePath (?): an argument for the "image" tool, used
                 used only by the image tool.
+            cursor (str): if None or omitted default cursors are used
+               for each tool.  If needed you could override this.
+               (currently unused, semi-deprecated).
 
         Notes:
             TODO: this does various other mucking around for legacy
@@ -850,8 +858,8 @@ class Annotator(QWidget):
             # self.sender().setChecked(True)
             pass
 
-        if newCursor is None:
-            newCursor = self.cursor[newMode]
+        if cursor is None:
+            cursor = self.cursor[newMode]
 
         if newMode == "rubric":
             self._uncheck_exclusive_group()
@@ -866,7 +874,7 @@ class Annotator(QWidget):
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
             self.scene.setToolMode(newMode)
-            self.view.setCursor(newCursor)
+            self.view.setCursor(cursor)
         # refresh everything.
         self.repaint()
 
@@ -1232,11 +1240,11 @@ class Annotator(QWidget):
 
     def moveMode(self):
         """Changes the tool to the move button."""
-        self.setToolMode("move", Qt.OpenHandCursor)
+        self.setToolMode("move")
 
     def panMode(self):
         """Changes the tool to the pan button."""
-        self.setToolMode("pan", Qt.OpenHandCursor)
+        self.setToolMode("pan")
         # The pan button also needs to change dragmode in the view
         self.view.setDragMode(1)
 
@@ -1246,7 +1254,7 @@ class Annotator(QWidget):
 
     def textMode(self):
         """Changes the tool to the text button."""
-        self.setToolMode("text", Qt.IBeamCursor)
+        self.setToolMode("text")
 
     def tickMode(self):
         """Changes the tool to the tick button."""
@@ -1257,7 +1265,7 @@ class Annotator(QWidget):
 
     def zoomMode(self):
         """Changes the tool to the zoom button."""
-        self.setToolMode("zoom", Qt.SizeFDiagCursor)
+        self.setToolMode("zoom")
 
     def addImageMode(self):
         """
@@ -1289,7 +1297,7 @@ class Annotator(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
         else:
-            self.setToolMode("image", Qt.ClosedHandCursor, imagePath=fileName)
+            self.setToolMode("image", imagePath=fileName)
 
     def setButtons(self):
         """Connects buttons to their corresponding functions."""
@@ -1306,6 +1314,7 @@ class Annotator(QWidget):
         self.ui.penButton.clicked.connect(self.penMode)
         self.ui.textButton.clicked.connect(self.textMode)
         self.ui.tickButton.clicked.connect(self.tickMode)
+
         self.ui.zoomButton.clicked.connect(self.zoomMode)
 
         # Pass the undo/redo button clicks on to the view
@@ -1367,8 +1376,7 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self.scene and self.toolMode
         """
-        # Set the model to text and change cursor.
-        self.setToolMode("rubric", QCursor(Qt.IBeamCursor))
+        self.setToolMode("rubric")
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
             self.scene.changeTheRubric(*dlt_txt)
 
