@@ -140,14 +140,15 @@ class Annotator(QWidget):
         self.saveName = None
         self.maxMark = None
 
-        # when rubrics are used, we just outline the rubric widget - not
-        # the whole background - so make a style for that.
-        self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
-
         self.ui = Ui_annotator()
 
         # Set up the gui.
         self.ui.setupUi(self)
+
+        # ordered list of minor mode tools, must match the UI order
+        self._list_of_minor_modes = ["box", "tick", "cross", "text", "line", "pen"]
+        # current or last used tool, tracked so we can switch back
+        self._which_tool = self._list_of_minor_modes[0]
 
         # hide the "revealbox" which is revealed when the hideBox is hidden.
         self.ui.revealBox0.setHidden(True)
@@ -610,12 +611,7 @@ class Annotator(QWidget):
                 last-used tool.  Often, but not always, we want to
                 switch back to the last-used tool.  False by default.
         """
-        # list of minor modes in order
-        L = ["box", "tick", "cross", "text", "line", "pen"]
-
-        if not hasattr(self, "_which_tool"):
-            self._which_tool = "box"
-
+        L = self._list_of_minor_modes
         # if always-move then select the next/previous tool according to dir
         # elif in a tool-mode then select next/prev tool according to dir
         # elif - non-tool mode, so keep the last tool
@@ -834,9 +830,17 @@ class Annotator(QWidget):
         # row is one less than key
         self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
 
-    def setToolMode(self, newMode, newCursor, imagePath=None):
+    def setToolMode(self, newMode, newCursor, *, imagePath=None):
         """
         Changes the current tool mode and cursor.
+
+        Args:
+            newMode (str): ``"move"``, ``"rubric"`` etc.
+            newCursor (?): TODO doc
+
+        Keyword Args:
+            imagePath (?): an argument for the "image" tool, used
+                used only by the image tool.
 
         Notes:
             TODO: this does various other mucking around for legacy
@@ -845,14 +849,17 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self
         """
-        # We have to be a little careful since not all widgets get the styling in the same way.
-        # If the mark-handler widget sent us here, it takes care of its own styling - so we update the little tool-tip
-
         if self.sender() in self.ui.frameTools.children():
-            # tool buttons change the mode
-            self.sender().setChecked(True)
-        else:
+            # old unused code from pre-auto-exclusive?
+            # self.sender().setChecked(True)
             pass
+
+        if newMode == "rubric":
+            self._uncheck_exclusive_group()
+
+        # ensure`_which_tool` is updated via mouse click too, see next_minor_tool()
+        if newMode in self._list_of_minor_modes:
+            self._which_tool = newMode
 
         if imagePath is not None:
             self.scene.tempImagePath = imagePath
@@ -1310,7 +1317,7 @@ class Annotator(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
         else:
-            self.setToolMode("image", Qt.ClosedHandCursor, fileName)
+            self.setToolMode("image", Qt.ClosedHandCursor, imagePath=fileName)
 
     def setButtons(self):
         """Connects buttons to their corresponding functions."""
@@ -1354,6 +1361,29 @@ class Annotator(QWidget):
 
         # connect the "wide" button in the narrow-view
         self.ui.wideButton.clicked.connect(self.wideLayout)
+
+    def _uncheck_exclusive_group(self):
+        # Stupid hackery to uncheck an autoexclusive button.
+        # For example, when we switch focus to the rubric_list, we want to
+        # unselect all the tools.  An alternative would be somehow hacking
+        # the autoexclusive property into rubric_list (its normally for
+        # buttons).  Or to revert managing the button state ourselves.
+        for X in (
+            self.ui.boxButton,
+            self.ui.crossButton,
+            self.ui.deleteButton,
+            self.ui.lineButton,
+            self.ui.moveButton,
+            self.ui.panButton,
+            self.ui.penButton,
+            self.ui.textButton,
+            self.ui.tickButton,
+            self.ui.zoomButton,
+        ):
+            if X.isChecked():
+                X.setAutoExclusive(False)
+                X.setChecked(False)
+                X.setAutoExclusive(True)
 
     def handleRubric(self, dlt_txt):
         """Pass rubric ID, delta, and text the scene.
