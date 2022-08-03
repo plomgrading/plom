@@ -4,7 +4,7 @@
 
 import importlib.resources as resources
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QBuffer, QByteArray, QSize
 from PyQt5.QtGui import QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -358,8 +358,17 @@ class ClickDragPage(QWidget):
     def __init__(self):
         super().__init__()
         grid = QVBoxLayout()
-        film_path = resources.path(plom.client.help_img, "click_drag.gif")
-        film = QMovie(str(film_path))
+        # load the gif from resources - needs a little subterfuge
+        # https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif
+
+        film_bytes = QByteArray(
+            resources.read_binary(plom.client.help_img, "click_drag.gif")
+        )
+        film_buffer = QBuffer(film_bytes)
+        film = QMovie()
+        film.setDevice(film_buffer)
+        film.setCacheMode(QMovie.CacheAll)
+
         film_label = QLabel()
         film_label.setStyleSheet("QLabel {border-style: outset; border-width: 2px;}")
         film_label.setMovie(film)
@@ -371,5 +380,8 @@ class ClickDragPage(QWidget):
         )
 
         self.setLayout(grid)
-
+        # as per https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif#comment125714355_71072485
+        # force film to jump to end to force the qmovie to actually load from the buffer before we
+        # return from this function, else buffer closed and will crash qmovie.
+        film.jumpToFrame(film.frameCount() - 1)
         film.start()
