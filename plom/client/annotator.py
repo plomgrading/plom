@@ -549,7 +549,7 @@ class Annotator(QWidget):
         cursor["DoubleArrow"] = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
         cursor["text"] = Qt.IBeamCursor
         cursor["rubric"] = Qt.IBeamCursor
-        cursor["image"] = Qt.ClosedHandCursor
+        cursor["image"] = Qt.CrossCursor
         cursor["zoom"] = Qt.SizeFDiagCursor
         # note Qt.ClosedHandCursor and Qt.OpenHandCursor also hardcoded in pagescene
         cursor["pan"] = Qt.OpenHandCursor
