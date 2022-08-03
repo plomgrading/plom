@@ -1585,7 +1585,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
             self.tempImagePath = None
             # set the mode back to move
-            self.parent().moveMode()
+            self.parent().toMoveMode()
 
             msg = QMessageBox(self.parent())
             msg.setIcon(QMessageBox.Information)

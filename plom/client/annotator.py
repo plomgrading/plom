@@ -877,6 +877,10 @@ class Annotator(QWidget):
             self.view.setCursor(cursor)
         # refresh everything.
         self.repaint()
+        if newMode == "pan":
+            # The pan button also needs to change dragmode in the view
+            # TODO: we already do this in pagescene, is it needed here?
+            self.view.setDragMode(1)
 
     def setModeLabels(self, mode):
         if mode == "rubric":
@@ -1221,16 +1225,6 @@ class Annotator(QWidget):
     def toMoveMode(self):
         self.ui.moveButton.animateClick()
 
-    def moveMode(self):
-        """Changes the tool to the move button."""
-        self.setToolMode("move")
-
-    def panMode(self):
-        """Changes the tool to the pan button."""
-        self.setToolMode("pan")
-        # The pan button also needs to change dragmode in the view
-        self.view.setDragMode(1)
-
     def toZoomMode(self):
         self.ui.zoomButton.animateClick()
 
@@ -1276,8 +1270,8 @@ class Annotator(QWidget):
         self.ui.crossButton.clicked.connect(lambda: self.setToolMode("cross"))
         self.ui.deleteButton.clicked.connect(lambda: self.setToolMode("delete"))
         self.ui.lineButton.clicked.connect(lambda: self.setToolMode("line"))
-        self.ui.moveButton.clicked.connect(self.moveMode)
-        self.ui.panButton.clicked.connect(self.panMode)
+        self.ui.moveButton.clicked.connect(lambda: self.setToolMode("move"))
+        self.ui.panButton.clicked.connect(lambda: self.setToolMode("pan"))
         self.ui.penButton.clicked.connect(lambda: self.setToolMode("pen"))
         self.ui.textButton.clicked.connect(lambda: self.setToolMode("text"))
         self.ui.tickButton.clicked.connect(lambda: self.setToolMode("tick"))
