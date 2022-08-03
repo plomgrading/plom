@@ -139,5 +139,7 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# If the user is logged in and there is no activity for 2 hours, the login status will expire
 SESSION_COOKIE_AGE = 60*60*2
+# Every time user makes request, the session cookie age will be rescheduled to 2 hours
 SESSION_SAVE_EVERY_REQUEST = True
