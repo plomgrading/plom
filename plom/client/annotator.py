@@ -448,7 +448,7 @@ class Annotator(QWidget):
             if self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
                 self.rubric_widget.handleClick()
             else:  # if that rubric-mode-set fails (eg - no such rubric)
-                self.scene.setToolMode("move")
+                self.toMoveMode()
         # redo this after all the other rubric stuff initialised
         self.rubric_widget.changeMark(
             self.getScore(), self.getMarkingState(), self.maxMark
