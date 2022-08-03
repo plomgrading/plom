@@ -117,7 +117,7 @@ def encodeTPV(test, p, v, o, code):
     return tpv
 
 
-def newMagicCode(seed=None):
+def new_magic_code(seed=None):
     """Generate a new random magic code"
 
     Args:

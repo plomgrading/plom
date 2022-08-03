@@ -11,6 +11,7 @@ import random
 import toml
 
 import plom
+from plom.tpv_utils import new_magic_code
 
 
 specdir = Path("specAndDatabase")
@@ -161,7 +162,7 @@ class SpecVerifier:
     ... 'totalMarks': 25,
     ... 'numberToProduce': 20,
     ... 'privateSeed': '1001378822317872',
-    ... 'publicCode': '270385',
+    ... 'publicCode': '27038',
     ... 'idPage': 1,
     ... 'doNotMarkPages': [2],
     ... 'question': {
@@ -460,7 +461,7 @@ class SpecVerifier:
             prnt("WARNING - publicCode is already set. Not replacing this.")
         else:
             prnt("Assigning a publicCode to the spec{}".format(chk))
-            self.spec["publicCode"] = str(random.randrange(0, 10**6)).zfill(6)
+            self.spec["publicCode"] = new_magic_code()
 
     def saveVerifiedSpec(self, verbose=False, basedir=Path(".")):
         """Saves the verified spec to a particular name."""
