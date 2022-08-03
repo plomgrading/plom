@@ -877,10 +877,6 @@ class Annotator(QWidget):
             self.view.setCursor(cursor)
         # refresh everything.
         self.repaint()
-        if newMode == "pan":
-            # The pan button also needs to change dragmode in the view
-            # TODO: we already do this in pagescene, is it needed here?
-            self.view.setDragMode(1)
 
     def setModeLabels(self, mode):
         if mode == "rubric":
