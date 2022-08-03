@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2022 Andrew Rechnitzer
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -29,6 +30,8 @@ include plom/client/backGrid2.png
 
 include plom/client/cursors/*.png
 include plom/client/icons/*.svg
+include plom/client/help_img/nav*.png
+include plom/client/help_img/click_drag.gif
 
 include plom/create/fonts/*.ttf
 
