@@ -12,6 +12,7 @@ django-braces
 pymupdf
 toml
 model_bakery (for tests)
+beautifulsoup4 (HTML parsing)
 ```
 5. Switch to the dev branch: `git checkout dev`
 6. To launch the server: `python3 manage.py runserver`

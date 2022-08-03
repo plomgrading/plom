@@ -13,6 +13,9 @@ from django.views.generic import View
 # pip install django-braces
 from braces.views import GroupRequiredMixin
 
+# pip install beautifulsoup4
+from bs4 import BeautifulSoup
+
 from .services import generate_link
 from .signupForm import CreateManagerForm
 from .models import Profile
@@ -54,9 +57,6 @@ class SetPassword(View):
             user = None
         if user is not None and default_token_generator.check_token(user, token):
             reset_form = SetPasswordForm(user, request.POST)
-            error_text = ""
-            for error in reset_form.error_messages.values():
-                error_text = error
             if reset_form.is_valid():
                 user = reset_form.save()
                 user.is_active = True
@@ -64,7 +64,11 @@ class SetPassword(View):
                 user.save()
                 return render(request, self.set_password_complete)
             else:
-                context = {'form': reset_form, 'help_text': SetPassword.help_text, 'errors': error_text}
+                tri_quote = '"""'
+                error_message = tri_quote + str(reset_form.errors) + tri_quote
+                parsed_error = BeautifulSoup(error_message, 'html.parser')
+                error = parsed_error.li.text[13:]
+                context = {'form': reset_form, 'help_text': SetPassword.help_text, 'error': error}
                 return render(request, self.template_name, context)
         else:
             return render(request, 'Authentication/activation_invalid.html')
