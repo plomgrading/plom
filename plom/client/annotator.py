@@ -1205,11 +1205,6 @@ class Annotator(QWidget):
             return
         self.scene.redo()
 
-    # Simple mode change functions
-    def boxMode(self):
-        """Changes the tool to box."""
-        self.setToolMode("box")
-
     def rubricMode(self):
         """Changes the tool to rubric."""
         if not self.scene:
@@ -1220,20 +1215,8 @@ class Annotator(QWidget):
         else:
             self.rubric_widget.reselectCurrentRubric()
 
-    def crossMode(self):
-        """Changes the tool to crossMode."""
-        self.setToolMode("cross")
-
     def toDeleteMode(self):
         self.ui.deleteButton.animateClick()
-
-    def deleteMode(self):
-        """Changes the tool to delete."""
-        self.setToolMode("delete")
-
-    def lineMode(self):
-        """Changes the tool to the line button."""
-        self.setToolMode("line")
 
     def toMoveMode(self):
         self.ui.moveButton.animateClick()
@@ -1248,24 +1231,8 @@ class Annotator(QWidget):
         # The pan button also needs to change dragmode in the view
         self.view.setDragMode(1)
 
-    def penMode(self):
-        """Changes the tool to the pen button."""
-        self.setToolMode("pen")
-
-    def textMode(self):
-        """Changes the tool to the text button."""
-        self.setToolMode("text")
-
-    def tickMode(self):
-        """Changes the tool to the tick button."""
-        self.setToolMode("tick")
-
     def toZoomMode(self):
         self.ui.zoomButton.animateClick()
-
-    def zoomMode(self):
-        """Changes the tool to the zoom button."""
-        self.setToolMode("zoom")
 
     def addImageMode(self):
         """
@@ -1304,18 +1271,17 @@ class Annotator(QWidget):
         # Connect the key-help button
         self.ui.helpButton.clicked.connect(self.keyPopUp)
 
-        # List of tool buttons, the corresponding modes and cursor shapes
-        self.ui.boxButton.clicked.connect(self.boxMode)
-        self.ui.crossButton.clicked.connect(self.crossMode)
-        self.ui.deleteButton.clicked.connect(self.deleteMode)
-        self.ui.lineButton.clicked.connect(self.lineMode)
+        # tool buttons change the mode
+        self.ui.boxButton.clicked.connect(lambda: self.setToolMode("box"))
+        self.ui.crossButton.clicked.connect(lambda: self.setToolMode("cross"))
+        self.ui.deleteButton.clicked.connect(lambda: self.setToolMode("delete"))
+        self.ui.lineButton.clicked.connect(lambda: self.setToolMode("line"))
         self.ui.moveButton.clicked.connect(self.moveMode)
         self.ui.panButton.clicked.connect(self.panMode)
-        self.ui.penButton.clicked.connect(self.penMode)
-        self.ui.textButton.clicked.connect(self.textMode)
-        self.ui.tickButton.clicked.connect(self.tickMode)
-
-        self.ui.zoomButton.clicked.connect(self.zoomMode)
+        self.ui.penButton.clicked.connect(lambda: self.setToolMode("pen"))
+        self.ui.textButton.clicked.connect(lambda: self.setToolMode("text"))
+        self.ui.tickButton.clicked.connect(lambda: self.setToolMode("tick"))
+        self.ui.zoomButton.clicked.connect(lambda: self.setToolMode("zoom"))
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)
