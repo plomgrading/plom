@@ -6,23 +6,22 @@
 
 A TPV code is a string of 17 digits of the form
 
-  EETTTTPPVVOCCCCCC
+  TTTTTPPPVVVOCCCCC
   01234567890123456
 
 This is as much as can be packed into a QR code without
 increasing its size.
 
 The format consists of:
-  * 01 = API
-  * 2345 = test number
-  * 67 = page number
-  * 89 = version
-  * 0 = position/orientation code
-  * 123456 = magic code
+  * 01234 = test number
+  * 567 = page number
+  * 890 = version
+  * 1 = position/orientation code
+  * 23456 = magic code
 
 A TPV code can be optionally prefixed with "QR-Code:"
 
-  QR-Code:EETTTTPPVVOCCCCCC
+  QR-Code:TTTTTPPPVVVOCCCCC
 
 Orientation code:
   * 0 no position information (reserved, unused)
@@ -39,15 +38,10 @@ e.g., the string `"NE"`
 import random
 
 
-# Changes to this format should bump this.  Possibly changes
-# to the layout of QR codes on the page should too.
-_API = "00"
-
-
 def isValidTPV(tpv):
     """Is this a valid TPV code?"""
     tpv = tpv.lstrip("QR-Code:")
-    if len(tpv) != len("EETTTTPPVVOCCCCCC"):
+    if len(tpv) != len("TTTTTPPPVVVOCCCCC"):
         return False
     return tpv.isnumeric()
 
@@ -55,43 +49,27 @@ def isValidTPV(tpv):
 def parseTPV(tpv):
     """Parse a TPV string (typically from a QR-code)
 
-    Args: tpv (str): a TPV string of the form "EETTTTPPVVOCCCCCC",
+    Args: tpv (str): a TPV string of the form "TTTTTPPPVVVOCCCCC",
        typically from a QR-code, possibly with the prefix "QR-Code:".
 
     Returns:
-       tn (int): test number, up to 4 digits
-       pn (int): page group number, up to 2 digits
-       vn (int): version number, up to 2 digits
-       en (str): the API number, 2 digits zero padded
-       cn (str): the "magic code", 6 digits zero padded
+       tn (int): test number, up to 5 digits
+       pn (int): page group number, up to 3 digits
+       vn (int): version number, up to 3 digits
+       cn (str): the "magic code", 5 digits zero padded
        o (str): the orientation code, TODO
     """
     tpv = tpv.lstrip("QR-Code:")
-    # en = tpv[0:2]
-    tn = int(tpv[2:6])
-    pn = int(tpv[6:8])
-    vn = int(tpv[8:10])
-    o = tpv[10]
-    cn = tpv[11:]
+    tn = int(tpv[0:5])
+    pn = int(tpv[5:8])
+    vn = int(tpv[8:11])
+    o = tpv[11]
+    cn = tpv[12:]
     return tn, pn, vn, cn, o
 
 
 def getPosition(tpv):
     return int(parseTPV(tpv)[4])
-
-
-def getAPI(tpv):
-    tpv = tpv.lstrip("QR-Code:")
-    return tpv[0:2]
-
-
-def hasCurrentAPI(tpv):
-    """does tpv have the current API?
-
-    Args: tpv (str): a TPV string of the form "EETTTTPPVVOCCCCCC",
-       typically from a QR-code.
-    """
-    return getAPI(tpv) == _API
 
 
 def getCode(tpv):
@@ -106,11 +84,11 @@ def encodeTPV(test, p, v, o, code):
     """Encode some values as a TPV code
 
     Args:
-       test (int/str): the test number, 1 ≤ test ≤ 9999
-       p (int/str): page number, 1 ≤ p ≤ 99
-       v (int/str): version number, 1 ≤ v ≤ 99
+       test (int/str): the test number, 1 ≤ test ≤ 99999
+       p (int/str): page number, 1 ≤ p ≤ 990
+       v (int/str): version number, 1 ≤ v ≤ 909
        o (int/str): position code, 0 ≤ code ≤ 4
-       code (int/str): magic code, 0 ≤ code ≤ 999999
+       code (int/str): magic code, 0 ≤ code ≤ 99999
 
     Returns:
        str: the tpv code
@@ -119,27 +97,27 @@ def encodeTPV(test, p, v, o, code):
     assert int(v) >= 1
     assert int(p) >= 1
     assert int(o) >= 0 and int(o) <= 4
-    test = str(test).zfill(4)
-    p = str(p).zfill(2)
-    v = str(v).zfill(2)
+    test = str(test).zfill(5)
+    p = str(p).zfill(3)
+    v = str(v).zfill(3)
     o = str(o)
-    code = str(code).zfill(6)
+    code = str(code).zfill(5)
     assert test.isnumeric()
     assert p.isnumeric()
     assert v.isnumeric()
     assert o.isnumeric()
     assert code.isnumeric()
-    assert len(test) == 4
-    assert len(p) == 2
-    assert len(v) == 2
+    assert len(test) == 5
+    assert len(p) == 3
+    assert len(v) == 3
     assert len(o) == 1
-    assert len(code) == 6
-    tpv = "{}{}{}{}{}{}".format(_API, test, p, v, o, code)
+    assert len(code) == 5
+    tpv = f"{test}{p}{v}{o}{code}"
     assert len(tpv) == 17
     return tpv
 
 
-def newMagicCode(seed=None):
+def new_magic_code(seed=None):
     """Generate a new random magic code"
 
     Args:
@@ -150,6 +128,6 @@ def newMagicCode(seed=None):
        str: the magic code
     """
     random.seed(seed)
-    magic = str(random.randrange(0, 10**6)).zfill(6)
-    assert len(magic) == 6
+    magic = str(random.randrange(0, 10**5)).zfill(5)
+    assert len(magic) == 5
     return magic
