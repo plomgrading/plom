@@ -441,8 +441,8 @@ class Annotator(QWidget):
 
         # TODO: Make handling of rubric less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
-        # TODO: cursor fixed if we use self.setToolMode?  Issue #1857
-        self.scene.setToolMode(self.modeInformation[0])
+        self.setToolMode(self.modeInformation[0])
+        # TODO: refactor, see also self.handleRubric() and self.rubricMode()
         if self.modeInformation[0] == "rubric":
             extra = self.modeInformation[1]
             if self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
@@ -1330,9 +1330,10 @@ class Annotator(QWidget):
                 kind, e.g., `[-2, "missing chain rule", 12345, "relative"]`
 
         Returns:
-            None: Modifies self.scene and self.toolMode
+            None: Modifies self.scene
         """
         self.setToolMode("rubric")
+        # TODO: move to "args"/"extra" kwarg of setToolMode when we add that
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
             self.scene.changeTheRubric(*dlt_txt)
 
