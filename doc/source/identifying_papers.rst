@@ -11,8 +11,8 @@ At some point the Plom system needs to know which paper belongs to which student
 
 1. Papers named from the start — Plom can produce papers with student
    names already printed on them.
-   In this case Plom already knows which paper belongs to who and
-   typically no extra work is needed.
+   In this case Plom already knows which paper should belong to who and
+   typically very little extra work is needed.
 2. Automated ID reading — When tests are producing using Plom’s ID
    Template, the system can use `machine learning <https://xkcd.com/1838>`_
    to read the digits from the student-ID boxes and match against the
@@ -30,20 +30,18 @@ Running the auto-identifier
 
 1. Open the manager tool.  "Progress" -> "ID progress".
 2. Optionally, adjust the top/bottom crop values, either manually or by clicking "Select interactively".
-3. Click "Run predictions".
-4. Wait "a while" (maybe a minute or two) and click
-   "Refresh Prediction list".
+3. Click "Recognize digits in IDs" which starts a background job.
+   Click "Refresh" to update the output window.
+4. Click "Run LAP Solver".  This currently blocks and might take a
+   few seconds (say 3 seconds for 1000 papers).
+5. Click "Refresh Prediction list" to update the table view.
 
 .. caution::
 
-   This tool does not fail gracefully: you may have to muck around in your
-   server file space.  If you've waited more than 5 minutes and its still
-   running, contact your server admin, look at logs and server stdout, etc.
-   See `Issue #878 <https://gitlab.com/plom/plom/-/issues/878>`_,
-   `Issue #862 <https://gitlab.com/plom/plom/-/issues/862>`_,
-   `Issue #869 <https://gitlab.com/plom/plom/-/issues/869>`_,
-   and maybe others!
-
+   You should manually and carefully check the results (the Identifier client
+   will show you these by default) because it does make mistakes, especially
+   when there are additional names available in your classlist who did not
+   write the test.
 
 
 Manually identifying
