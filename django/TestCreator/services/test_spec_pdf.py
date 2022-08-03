@@ -41,17 +41,20 @@ def get_and_save_pdf_images(pdf: models.ReferencePDF) -> None:
     """
     slug = pdf.filename_slug
     pathname = pathlib.Path('TestCreator') / 'media' / f'{slug}.pdf'
-    # TODO: use pathlib
     if pathname.exists():
         pdf_doc = fitz.Document(pathname)
 
-        thumbnail_dir = pathlib.Path('TestCreator') / 'static' / 'thumbnails' / slug
+        thumbnail_dir = pathlib.Path('TestCreator') / 'static' / 'thumbnails'
         if not thumbnail_dir.exists():
             thumbnail_dir.mkdir()
 
+        slug_dir = thumbnail_dir / slug
+        if not slug_dir.exists():
+            slug_dir.mkdir()
+
         for i in range(pdf_doc.page_count):
             page_pixmap = pdf_doc[i].get_pixmap()
-            save_path = thumbnail_dir / f'{slug}-thumbnail{i}.png'
+            save_path = slug_dir / f'{slug}-thumbnail{i}.png'
             page_pixmap.save(save_path)
 
     else:
