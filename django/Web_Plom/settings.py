@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'Base',
     'Authentication',
     'Preparation',
+    'Core',
+    'Papers',
     'TestCreator',
     'Profile',
     'BuildPaperPDF',
