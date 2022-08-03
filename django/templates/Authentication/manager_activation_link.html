@@ -11,8 +11,9 @@
     {% block main_content %}
     <h1>Manager Reset Password Link</h1>
     <h4>Below is the Manager's link to reset password.</h4>
-    <p>- Click on copy to copy link to clipboard</p>
+    <p>- Click on <b>Copy</b> to copy link to clipboard</p>
     <p>Email address: <b>{{ user_email }}</b></p>
+    <p style="display: inline">{{ link }}</p>
     <button id="copy-btn" data-passwordResetLink={{ link }}>Copy</button>
     <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
     {% endblock %}
