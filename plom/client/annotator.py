@@ -121,19 +121,6 @@ class Annotator(QWidget):
         # a solution view / previous annotation pop-up window - initially set to None
         self.solutionView = None
 
-        # declares some instance vars
-        self.cursorBox = None
-        self.cursorCrop = None
-        self.cursorCross = None
-        self.cursorDelete = None
-        self.cursorEllipse = None
-        self.cursorLine = None
-        self.cursorPen = None
-        self.cursorTick = None
-        self.cursorQMark = None
-        self.cursorArrow = None
-        self.cursorHighlight = None
-        self.cursorDoubleArrow = None
         self.testName = None
         self.paperDir = None
         self.src_img_data = None
@@ -454,13 +441,14 @@ class Annotator(QWidget):
 
         # TODO: Make handling of rubric less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
-        self.scene.setToolMode(self.modeInformation[0])
+        self.setToolMode(self.modeInformation[0])
+        # TODO: refactor, see also self.handleRubric() and self.rubricMode()
         if self.modeInformation[0] == "rubric":
             extra = self.modeInformation[1]
             if self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
                 self.rubric_widget.handleClick()
             else:  # if that rubric-mode-set fails (eg - no such rubric)
-                self.scene.setToolMode("move")
+                self.toMoveMode()
         # redo this after all the other rubric stuff initialised
         self.rubric_widget.changeMark(
             self.getScore(), self.getMarkingState(), self.maxMark
@@ -545,18 +533,29 @@ class Annotator(QWidget):
             pm.loadFromData(resources.read_binary(plom.client.cursors, f))
             return pm
 
-        self.cursorBox = QCursor(_pixmap_from("box.png"), 4, 4)
-        self.cursorEllipse = QCursor(_pixmap_from("ellipse.png"), 4, 4)
-        self.cursorCross = QCursor(_pixmap_from("cross.png"), 4, 4)
-        self.cursorCrop = QCursor(_pixmap_from("crop.png"), 4, 4)
-        self.cursorDelete = QCursor(_pixmap_from("delete.png"), 4, 4)
-        self.cursorLine = QCursor(_pixmap_from("line.png"), 4, 4)
-        self.cursorPen = QCursor(_pixmap_from("pen.png"), 4, 4)
-        self.cursorTick = QCursor(_pixmap_from("tick.png"), 4, 4)
-        self.cursorQMark = QCursor(_pixmap_from("question_mark.png"), 4, 4)
-        self.cursorHighlight = QCursor(_pixmap_from("highlighter.png"), 4, 4)
-        self.cursorArrow = QCursor(_pixmap_from("arrow.png"), 4, 4)
-        self.cursorDoubleArrow = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
+        # The keys here are magic values that connect to tools
+        cursor = {}
+        cursor["box"] = QCursor(_pixmap_from("box.png"), 4, 4)
+        cursor["ellipse"] = QCursor(_pixmap_from("ellipse.png"), 4, 4)
+        cursor["cross"] = QCursor(_pixmap_from("cross.png"), 4, 4)
+        cursor["crop"] = QCursor(_pixmap_from("crop.png"), 4, 4)
+        cursor["delete"] = QCursor(_pixmap_from("delete.png"), 4, 4)
+        cursor["line"] = QCursor(_pixmap_from("line.png"), 4, 4)
+        cursor["pen"] = QCursor(_pixmap_from("pen.png"), 4, 4)
+        cursor["tick"] = QCursor(_pixmap_from("tick.png"), 4, 4)
+        cursor["QMark"] = QCursor(_pixmap_from("question_mark.png"), 4, 4)
+        cursor["Highlight"] = QCursor(_pixmap_from("highlighter.png"), 4, 4)
+        cursor["arrow"] = QCursor(_pixmap_from("arrow.png"), 4, 4)
+        cursor["DoubleArrow"] = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
+        cursor["text"] = Qt.IBeamCursor
+        cursor["rubric"] = Qt.IBeamCursor
+        cursor["image"] = Qt.CrossCursor
+        cursor["zoom"] = Qt.SizeFDiagCursor
+        # note Qt.ClosedHandCursor and Qt.OpenHandCursor also hardcoded in pagescene
+        cursor["pan"] = Qt.OpenHandCursor
+        cursor["move"] = Qt.OpenHandCursor
+
+        self.cursor = cursor
 
     def toggleTools(self):
         """
@@ -832,17 +831,19 @@ class Annotator(QWidget):
         # row is one less than key
         self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
 
-    def setToolMode(self, newMode, newCursor, *, imagePath=None):
+    def setToolMode(self, newMode, *, cursor=None, imagePath=None):
         """
         Changes the current tool mode and cursor.
 
         Args:
             newMode (str): ``"move"``, ``"rubric"`` etc.
-            newCursor (?): TODO doc
 
         Keyword Args:
             imagePath (?): an argument for the "image" tool, used
                 used only by the image tool.
+            cursor (str): if None or omitted default cursors are used
+               for each tool.  If needed you could override this.
+               (currently unused, semi-deprecated).
 
         Notes:
             TODO: this does various other mucking around for legacy
@@ -851,10 +852,14 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self
         """
+        # TODO: comment out or delete for efficiency!
         if self.sender() in self.ui.frameTools.children():
             # old unused code from pre-auto-exclusive?
             # self.sender().setChecked(True)
             pass
+
+        if cursor is None:
+            cursor = self.cursor[newMode]
 
         if newMode == "rubric":
             self._uncheck_exclusive_group()
@@ -869,7 +874,7 @@ class Annotator(QWidget):
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
             self.scene.setToolMode(newMode)
-            self.view.setCursor(newCursor)
+            self.view.setCursor(cursor)
         # refresh everything.
         self.repaint()
 
@@ -1167,7 +1172,7 @@ class Annotator(QWidget):
                 info="Unselect 'hold crop' from the menu and then try again.",
             ).exec()
         else:
-            self.setToolMode("crop", self.cursorCrop)
+            self.setToolMode("crop")
 
     def uncrop_region(self):
         if self.held_crop_rectangle_data:
@@ -1200,11 +1205,6 @@ class Annotator(QWidget):
             return
         self.scene.redo()
 
-    # Simple mode change functions
-    def boxMode(self):
-        """Changes the tool to box."""
-        self.setToolMode("box", self.cursorBox)
-
     def rubricMode(self):
         """Changes the tool to rubric."""
         if not self.scene:
@@ -1215,52 +1215,14 @@ class Annotator(QWidget):
         else:
             self.rubric_widget.reselectCurrentRubric()
 
-    def crossMode(self):
-        """Changes the tool to crossMode."""
-        self.setToolMode("cross", self.cursorCross)
-
     def toDeleteMode(self):
         self.ui.deleteButton.animateClick()
-
-    def deleteMode(self):
-        """Changes the tool to delete."""
-        self.setToolMode("delete", self.cursorDelete)
-
-    def lineMode(self):
-        """Changes the tool to the line button."""
-        self.setToolMode("line", self.cursorLine)
 
     def toMoveMode(self):
         self.ui.moveButton.animateClick()
 
-    def moveMode(self):
-        """Changes the tool to the move button."""
-        self.setToolMode("move", Qt.OpenHandCursor)
-
-    def panMode(self):
-        """Changes the tool to the pan button."""
-        self.setToolMode("pan", Qt.OpenHandCursor)
-        # The pan button also needs to change dragmode in the view
-        self.view.setDragMode(1)
-
-    def penMode(self):
-        """Changes the tool to the pen button."""
-        self.setToolMode("pen", self.cursorPen)
-
-    def textMode(self):
-        """Changes the tool to the text button."""
-        self.setToolMode("text", Qt.IBeamCursor)
-
-    def tickMode(self):
-        """Changes the tool to the tick button."""
-        self.setToolMode("tick", self.cursorTick)
-
     def toZoomMode(self):
         self.ui.zoomButton.animateClick()
-
-    def zoomMode(self):
-        """Changes the tool to the zoom button."""
-        self.setToolMode("zoom", Qt.SizeFDiagCursor)
 
     def addImageMode(self):
         """
@@ -1292,24 +1254,24 @@ class Annotator(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
         else:
-            self.setToolMode("image", Qt.ClosedHandCursor, imagePath=fileName)
+            self.setToolMode("image", imagePath=fileName)
 
     def setButtons(self):
         """Connects buttons to their corresponding functions."""
         # Connect the key-help button
         self.ui.helpButton.clicked.connect(self.keyPopUp)
 
-        # List of tool buttons, the corresponding modes and cursor shapes
-        self.ui.boxButton.clicked.connect(self.boxMode)
-        self.ui.crossButton.clicked.connect(self.crossMode)
-        self.ui.deleteButton.clicked.connect(self.deleteMode)
-        self.ui.lineButton.clicked.connect(self.lineMode)
-        self.ui.moveButton.clicked.connect(self.moveMode)
-        self.ui.panButton.clicked.connect(self.panMode)
-        self.ui.penButton.clicked.connect(self.penMode)
-        self.ui.textButton.clicked.connect(self.textMode)
-        self.ui.tickButton.clicked.connect(self.tickMode)
-        self.ui.zoomButton.clicked.connect(self.zoomMode)
+        # tool buttons change the mode
+        self.ui.boxButton.clicked.connect(lambda: self.setToolMode("box"))
+        self.ui.crossButton.clicked.connect(lambda: self.setToolMode("cross"))
+        self.ui.deleteButton.clicked.connect(lambda: self.setToolMode("delete"))
+        self.ui.lineButton.clicked.connect(lambda: self.setToolMode("line"))
+        self.ui.moveButton.clicked.connect(lambda: self.setToolMode("move"))
+        self.ui.panButton.clicked.connect(lambda: self.setToolMode("pan"))
+        self.ui.penButton.clicked.connect(lambda: self.setToolMode("pen"))
+        self.ui.textButton.clicked.connect(lambda: self.setToolMode("text"))
+        self.ui.tickButton.clicked.connect(lambda: self.setToolMode("tick"))
+        self.ui.zoomButton.clicked.connect(lambda: self.setToolMode("zoom"))
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)
@@ -1368,10 +1330,10 @@ class Annotator(QWidget):
                 kind, e.g., `[-2, "missing chain rule", 12345, "relative"]`
 
         Returns:
-            None: Modifies self.scene and self.toolMode
+            None: Modifies self.scene
         """
-        # Set the model to text and change cursor.
-        self.setToolMode("rubric", QCursor(Qt.IBeamCursor))
+        self.setToolMode("rubric")
+        # TODO: move to "args"/"extra" kwarg of setToolMode when we add that
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
             self.scene.changeTheRubric(*dlt_txt)
 
