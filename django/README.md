@@ -4,4 +4,4 @@
 
 ## 2nd pip install list
 pip install django-utils-six<br>
-pip install django-braces 
+pip install django-braces

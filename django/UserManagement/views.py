@@ -4,8 +4,10 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Group
 from django.views import View
 
+from braces.views import GroupRequiredMixin
 
-class UserPage(LoginRequiredMixin, View):
+
+class UserPage(LoginRequiredMixin, GroupRequiredMixin, View):
     user_page = 'UserManagement/users.html'
     group_required = [u"manager"]
     navbar_colour = '#AD9CFF'

@@ -6,7 +6,7 @@ from django.utils.deprecation import MiddlewareMixin
 # Online Threshold: If the user was logged out for 30 minutes after 2 hours inactivity,
 #                   The user will become inactive status
 # Online Max: Maximum markers and scanners in total allowed to be active together
-ONLINE_THRESHOLD = getattr(settings, 'ONLINE_THRESHOLD',60*30 )
+ONLINE_THRESHOLD = getattr(settings, 'ONLINE_THRESHOLD',60*30)
 ONLINE_MAX = getattr(settings, 'ONLINE_MAX', 60)
 
 
