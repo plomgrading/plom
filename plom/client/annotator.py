@@ -358,9 +358,13 @@ class Annotator(QWidget):
 
         # Attempt at keeping mode information.
         self.modeInformation = [self.scene.mode]
-        if self.scene.mode == "rubric":  # stores as [a,b]
-            # if no rubric selected then key=None - be careful of this.
-            self.modeInformation.append(self.rubric_widget.getCurrentRubricKeyAndTab())
+        if self.scene.mode == "rubric":
+            key, tab = self.rubric_widget.getCurrentRubricKeyAndTab()
+            if key is None:
+                # Maybe row hidden (illegal) but scene knows it in the blue
+                # ghost.  Fixes #1599.  Still None if scene didn't know.
+                key = self.scene.rubricID
+            self.modeInformation.append((key, tab))
 
         # after grabbed mode information, reset rubric_widget
         self.rubric_widget.reset()
@@ -452,10 +456,8 @@ class Annotator(QWidget):
         log.debug("Restore mode info = {}".format(self.modeInformation))
         self.scene.setToolMode(self.modeInformation[0])
         if self.modeInformation[0] == "rubric":
-            # self.modeInformation[1] = [a,b] = [key, tab-index]
-            if self.rubric_widget.setCurrentRubricKeyAndTab(
-                self.modeInformation[1][0], self.modeInformation[1][1]
-            ):
+            extra = self.modeInformation[1]
+            if self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
                 self.rubric_widget.handleClick()
             else:  # if that rubric-mode-set fails (eg - no such rubric)
                 self.scene.setToolMode("move")
@@ -1386,7 +1388,7 @@ class Annotator(QWidget):
                 X.setAutoExclusive(True)
 
     def handleRubric(self, dlt_txt):
-        """Pass rubric ID, delta, and text the scene.
+        """Pass rubric ID, delta, text, etc to the scene.
 
         Args:
             dlt_txt (tuple): the delta, string of text, rubric_id, and
@@ -1398,9 +1400,7 @@ class Annotator(QWidget):
         # Set the model to text and change cursor.
         self.setToolMode("rubric", QCursor(Qt.IBeamCursor))
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheRubric(
-                dlt_txt[0], dlt_txt[1], dlt_txt[2], dlt_txt[3], annotatorUpdate=True
-            )
+            self.scene.changeTheRubric(*dlt_txt)
 
     def loadWindowSettings(self):
         """Loads the window settings."""
@@ -1468,10 +1468,9 @@ class Annotator(QWidget):
             "zoomState"
         ] = self.ui.zoomCB.currentIndex()
         self.parentMarkerUI.annotatorSettings["tool"] = self.scene.mode
-        if self.scene.mode == "rubric":
-            self.parentMarkerUI.annotatorSettings[
-                "rubric"
-            ] = self.rubric_widget.getCurrentRubricKeyAndTab()
+        self.parentMarkerUI.annotatorSettings[
+            "rubric"
+        ] = self.rubric_widget.getCurrentRubricKeyAndTab()
 
         if self.ui.hideableBox.isVisible():
             self.parentMarkerUI.annotatorSettings["compact"] = False

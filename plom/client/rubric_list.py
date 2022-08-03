@@ -594,6 +594,7 @@ class RubricTable(QTableWidget):
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
         colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
+        # colour_hide = self.palette().color(QPalette.Disabled, QPalette.Text)
         if legal == 2:
             self.showRow(r)
             self.item(r, 2).setForeground(colour_legal)
@@ -604,6 +605,9 @@ class RubricTable(QTableWidget):
             self.item(r, 3).setForeground(colour_illegal)
         else:
             self.hideRow(r)
+            # self.showRow(r)
+            # self.item(r, 2).setForeground(colour_hide)
+            # self.item(r, 3).setForeground(colour_hide)
 
     def updateLegalityOfDeltas(self, mss):
         """Style items according to their legality based on max,state and score (mss)"""

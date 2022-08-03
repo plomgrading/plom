@@ -2502,41 +2502,34 @@ class PageScene(QGraphicsScene):
             )
             raise PlomInconsistentRubricsException
 
-    def changeTheRubric(self, delta, text, rubricID, rubricKind, annotatorUpdate=True):
+    def changeTheRubric(self, delta, text, rubricID, rubricKind):
         """
         Changes the new rubric for the paper based on the delta and text.
 
         Args:
             delta (str): a string containing the delta integer.
             text (str): the text in the rubric.
-            rubricID (int): the id of the rubric: TODO surely rest can
-                be retrieved from this?
-            annotatorUpdate (bool): true if annotator should be updated,
-                false otherwise.
+            rubricID (int): the id of the rubric.
+            rubricKind (str): ``"absolute"``, ``"neutral"``, etc.
 
         Returns:
             None
-
         """
-        # if this update comes from the annotator, then we need to store a
-        # copy of the mark-delta for future and also set the mode.
-        if annotatorUpdate:
-            gpt = QCursor.pos()  # global mouse pos
-            vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
-            spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
-            self.ghostItem.setPos(spt)
-            self.rubricDelta = delta
-            self.rubricKind = rubricKind
-            self.setToolMode("rubric")
-            self.exposeGhost()  # unhide the ghostitem
-        # if we have passed ".", then we don't need to do any
-        # delta calcs, the ghost item knows how to handle it.
-        legality = self.isLegalRubric(rubricKind, delta)
-
         self.rubricDelta = delta
         self.rubricText = text
         self.rubricID = rubricID
         self.rubricKind = rubricKind
+
+        gpt = QCursor.pos()  # global mouse pos
+        vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
+        spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
+        self.ghostItem.setPos(spt)
+        self.setToolMode("rubric")
+        self.exposeGhost()  # unhide the ghostitem
+
+        # if we have passed ".", then we don't need to do any
+        # delta calcs, the ghost item knows how to handle it.
+        legality = self.isLegalRubric(rubricKind, delta)
         self.updateGhost(delta, text, legality)
 
     def noAnswer(self, noAnswerCID):
