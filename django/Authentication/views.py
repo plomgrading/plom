@@ -5,9 +5,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.sites.shortcuts import get_current_site
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
 from django.views.generic import View
 
 # pip install django-braces
@@ -18,7 +17,6 @@ from bs4 import BeautifulSoup
 
 from .services import generate_link
 from .signupForm import CreateManagerForm
-from .models import Profile
 
 
 # Create your views here.
