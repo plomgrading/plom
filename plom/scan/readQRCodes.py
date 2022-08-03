@@ -13,7 +13,6 @@ from tqdm import tqdm
 from plom.tpv_utils import (
     parseTPV,
     isValidTPV,
-    hasCurrentAPI,
     getCode,
     getPosition,
 )
@@ -165,9 +164,6 @@ def checkQRsValid(bundledir, spec):
             for tpvc in qrs.values():
                 if not isValidTPV(tpvc):
                     msg = "TPV '{}' is not a valid format".format(tpvc)
-                    problemFlag = True
-                elif not hasCurrentAPI(tpvc):
-                    msg = "TPV '{}' does not match API.  Legacy issue?".format(tpvc)
                     problemFlag = True
                 elif str(getCode(tpvc)) != str(spec["publicCode"]):
                     msg = (

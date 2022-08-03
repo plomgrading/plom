@@ -46,7 +46,7 @@ def test_stamp_QRs(tmpdir):
     assert buildDemoSourceFiles(basedir=tmpdir)
     d = fitz.open(tmpdir / "sourceVersions/version1.pdf")
     p = 3
-    qr = create_QR_codes(6, p, 1, "123456", tmpdir)
+    qr = create_QR_codes(6, p, 1, "12345", tmpdir)
     assert len(qr) == 4
     for q in qr:
         assert isinstance(q, Path)
@@ -61,7 +61,7 @@ def test_stamp_QRs(tmpdir):
     pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr, odd=(p % 2))
 
     p = 4
-    qr2 = create_QR_codes(6, p, 1, "123456", tmpdir)
+    qr2 = create_QR_codes(6, p, 1, "12345", tmpdir)
     # QR codes are different for the new page
     for k in range(4):
         assert qr[k] != qr2[k]
@@ -81,15 +81,15 @@ def test_stamp_QRs(tmpdir):
 
     p = QRextract(files[2], write_to_file=False)
     assert not p["NW"]
-    assert p["NE"] == ["00000603011123456"]
-    assert p["SW"] == ["00000603013123456"]
-    assert p["SE"] == ["00000603014123456"]
+    assert p["NE"] == ["00006003001112345"]
+    assert p["SW"] == ["00006003001312345"]
+    assert p["SE"] == ["00006003001412345"]
 
     p = QRextract(files[3], write_to_file=False)
     assert not p["NE"]
-    assert p["NW"] == ["00000604012123456"]
-    assert p["SW"] == ["00000604013123456"]
-    assert p["SE"] == ["00000604014123456"]
+    assert p["NW"] == ["00006004001212345"]
+    assert p["SW"] == ["00006004001312345"]
+    assert p["SE"] == ["00006004001412345"]
 
 
 def test_qr_stamp_all_pages(tmpdir):
