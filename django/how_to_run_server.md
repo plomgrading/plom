@@ -22,7 +22,7 @@ beautifulsoup4 (HTML parsing)
 1. Run `python3 manage.py migrate` to setup the database
 
 ## Setting up users
-1. Run `python3 manage.py creategroup` to automatically create admin, manager, marker, and scanner groups.
+1. Run `python3 manage.py creategroups` to automatically create admin, manager, marker, and scanner groups. Then, superusers will be added to the admin group.
 2. Run `python3 manage.py createsuperuser` to create an admin account (email address is optional)
 4. Before signing in, go to `<local_url>/admin` on the browser and sign in with the admin username/password
 5. Go to Authentication and Authorization > Users and select the admin user (should be the only user in the table)
