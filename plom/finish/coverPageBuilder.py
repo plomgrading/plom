@@ -1,16 +1,30 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2020, 2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 
-from weasyprint import HTML, CSS
 from plom.misc_utils import local_now_to_simple_string
 
-# A simple CSS header to style the cover page nicely.
-css = CSS(
-    string="""
+
+def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
+    """Create html page of name ID etc and table of marks.
+
+    Args:
+        test_num (int): the test number for the test we are making the cover for.
+        sname (str): student name.
+        sid (str): student id.
+        tab (list): information about the test that should be put on the coverpage.
+        pdfname (pathlib.Path): filename to save the pdf into
+        solution (bool): whether or not this is a cover page for solutions
+    """
+    # hide imports until needed Issue #2231.
+    from weasyprint import HTML, CSS
+
+    # A simple CSS header to style the cover page nicely.
+    css = CSS(
+        string="""
 @page {
   size: Letter; /* Change from the default size of A4 */
   margin: 2.5cm; /* Set margin on each page */
@@ -25,20 +39,8 @@ table, th, td {
     text-align: center;
 }
 """
-)
+    )
 
-
-def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
-    """Create html page of name ID etc and table of marks.
-
-    Args:
-        test_num (int): the test number for the test we are making the cover for.
-        sname (str): student name.
-        sid (str): student id.
-        tab (list): information about the test that should be put on the coverpage.
-        pdfname (pathlib.Path): filename to save the pdf into
-        solution (bool): whether or not this is a cover page for solutions
-    """
     htmlText = "<html><body>\n"
     if solution:
         htmlText += "<h3>Solutions</h3>\n"
