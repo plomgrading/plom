@@ -142,7 +142,7 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
                 raise ValidationError('Question pages must be consecutive.')
 
 
-class TestSpecSummaryForm(forms.Form):
+class TestSpecValidateForm(forms.Form):
     def clean(self):
         """
         Things to check:

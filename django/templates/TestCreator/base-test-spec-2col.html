@@ -97,12 +97,16 @@
             {% endif %}
         </div>
     </a>
-    <a class="list-group-item list-group-item-action" href="{% url 'summary' %}">
+    <a class="list-group-item list-group-item-action" href="{% url 'validate' %}">
         <div class="d-flex w-100 justify-content-between">
-            {% if curr_page == 'summary' %}
-            <p class="is_test_spec_nav_text fw-bold">Summary</p>
+            {% if curr_page == 'validate' %}
+            <p class="is_test_spec_nav_text fw-bold">Validate</p>
             {% else %}
-            <p class="is_test_spec_nav_text">Summary</p>
+            <p class="is_test_spec_nav_text">Validate</p>
+            {% endif %}
+
+            {% if completed.validate_page %}
+            <i class="bi bi-check"></i>
             {% endif %}
         </div>
     </a>

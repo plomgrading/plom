@@ -1,14 +1,14 @@
 {% extends "TestCreator/base-test-spec-2col.html" %}
 
-{% block title %} Create Specification - Summary {% endblock %}
+{% block title %} Create Specification - Validate {% endblock %}
 
 {% block right_column %}
 
-<form class="w-100" action="{% url 'summary' %}" method="post" enctype="multipart/form-data">
+<form class="w-100" action="{% url 'validate' %}" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="vstack d-flex h-100">
         <div class="h-100">
-            <h3>Summary</h3>
+            <h3>Validate specification</h3>
 
             {% for e in form.non_field_errors %}
             <p class="text-danger">{{ e }}</p>
@@ -53,7 +53,7 @@
             </dl>
         <div>
             <a type="button" class="btn btn-primary btn-lg" href="{% url 'dnm_page' %}">Back</a>
-            <input type="submit" class="btn btn-primary btn-lg float-end" value="Submit">
+            <input type="submit" class="btn btn-primary btn-lg float-end" value="Validate">
         </div>
     </div>
 </form>
