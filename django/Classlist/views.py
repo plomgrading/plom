@@ -1,5 +1,6 @@
 from braces.views import GroupRequiredMixin
 from django import forms
+from django.http import FileResponse
 from django.shortcuts import render
 from django.views import View
 
@@ -16,12 +17,32 @@ class ClasslistUploadForm(forms.Form):
     )
 
 
+class ClasslistWholeView(View):
+    # group_required = [u"manager"]
+    def get(self, request):
+        cls = ClasslistCSVService()
+        csv_path = cls.get_classlist_csv_filepath()
+        return FileResponse(
+            open(csv_path, 'rb'),
+            as_attachment=True,
+            filename="classlist.csv",
+        )
+
+    def delete(self, request):
+        # delete both the csvfile and the classlist of students
+        cls = ClasslistService()
+        cls.remove_all_students()
+        
+        clcsvs = ClasslistCSVService()
+        clcsvs.delete_classlist_csv()
+        return HttpResponseClientRedirect("/classlist")
+
+
 class ClasslistView(View):
     # group_required = [u"manager"]
 
-    def get(self, request, everyone=None):
+    def get(self, request):
         cls = ClasslistService()
-
         form = ClasslistUploadForm()
 
         context = {
@@ -42,7 +63,13 @@ class ClasslistView(View):
         else:
             return HttpResponseClientRedirect("/classlist")
 
-    def delete(self, request, everyone=None):
+    def delete(self, request):
         clcsvs = ClasslistCSVService()
         clcsvs.delete_classlist_csv()
         return HttpResponseClientRedirect("/classlist")
+
+    def put(self, request):
+        cls = ClasslistService()
+        cls.use_classlist_csv()
+        return HttpResponseClientRedirect("/classlist")
+

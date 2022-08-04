@@ -14,6 +14,9 @@ class Student(models.Model):
 
     student_id (str): The students id-number or id-string. Must be unique.
     student_name (str): The name of the student (as a single text field)
+    paper_number (int): The paper_number assigned to this
+        student. TODO = this will be a foreign key field to the paper
+        table.
 
     """
 
@@ -22,3 +25,4 @@ class Student(models.Model):
 
     student_id = models.TextField(null=True, unique=True)
     student_name = models.TextField(null=False)
+    paper_number = models.PositiveIntegerField(null=True)
