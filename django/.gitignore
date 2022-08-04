@@ -14,3 +14,6 @@ db.sqlite3-journal
 
 # Code coverage:
 .coverage
+
+# emacs backup files
+*.bak
