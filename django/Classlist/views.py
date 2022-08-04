@@ -17,7 +17,7 @@ class ClasslistUploadForm(forms.Form):
     )
 
 
-class ClasslistWholeView(View):
+class ClasslistDownloadView(View):
     # group_required = [u"manager"]
     def get(self, request):
         cls = ClasslistCSVService()
@@ -28,6 +28,9 @@ class ClasslistWholeView(View):
             filename="classlist.csv",
         )
 
+
+class ClasslistDeleteEverythingView(View):
+    # group_required = [u"manager"]
     def delete(self, request):
         # delete both the csvfile and the classlist of students
         cls = ClasslistService()
