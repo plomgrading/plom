@@ -80,11 +80,11 @@ class TestSpecIDPageForm(TestSpecPDFSelectForm):
 class TestSpecQuestionsMarksForm(forms.Form):
     questions = forms.IntegerField(
         label='Number of questions:',
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'id': 'curr_questions'})
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'id': 'curr_questions', 'min': 1, 'max': 50})
     )
     total_marks = forms.IntegerField(
         label='Total marks:',
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1})
     )
 
     def clean(self):
@@ -107,7 +107,7 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
     )
     mark = forms.IntegerField(
         label='Mark:',
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 0})
     )
     shuffle = forms.ChoiceField(
         label='Shuffle:',

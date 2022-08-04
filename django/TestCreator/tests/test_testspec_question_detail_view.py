@@ -43,20 +43,17 @@ class TestSpecCreatorQuestionDetailPageTests(TestCase):
         # TODO: getting this page before completing the questions page should raise an error
         # TODO: what happens when accessing an invalid question index in the URL?
         services.set_num_questions(1)
-        services.set_total_marks(1)
 
         response = self.cli.get(reverse('q_detail', args=(1,)))
         self.assertEqual(response.status_code, 200)
 
         initial = response.context['form'].initial
         self.assertEqual(initial['label'], 'Q1')
-        self.assertEqual(initial['mark'], 1)
         self.assertEqual(initial['shuffle'], 'F')
 
     def test_get_initial_with_question(self):
         """Test the question detail view's get_initial function with an existing question"""
         services.set_num_questions(1)
-        services.set_total_marks(2)
         services.create_question(1, 'Ex.1', 2, True)
 
         response = self.cli.get(reverse('q_detail', args=(1,)))
@@ -64,5 +61,4 @@ class TestSpecCreatorQuestionDetailPageTests(TestCase):
 
         initial = response.context['form'].initial
         self.assertEqual(initial['label'], 'Ex.1')
-        self.assertEqual(initial['mark'], 2)
         self.assertEqual(initial['shuffle'], 'True')  # TODO: what's going on with the choice field?
