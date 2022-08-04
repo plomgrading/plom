@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User, Group
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.tokens import default_token_generator
@@ -77,10 +78,10 @@ class SetPasswordComplete(LoginRequiredMixin, View):
     template_name = 'Authentication/set_password_complete.html'
 
     def get(self, request):
-        return render(request, self.template_name)
+        return render(request, self.template_name, status=200)
 
 
-# login_required make sure user is log in
+# login_required make sure user is log in first
 class Home(LoginRequiredMixin, View):
     login_url = 'login/'
     redirect_field_name = 'login'
@@ -91,11 +92,18 @@ class Home(LoginRequiredMixin, View):
                      'scanner': '#0F984F'}
 
     def get(self, request):
-        user = request.user.groups.all()[0].name
+        try:
+            user = request.user.groups.all()[0].name
+        except IndexError:
+            user = None
         if user in Home.navbar_colour:
             colour = Home.navbar_colour[user]
+        else:
+            colour = '#FFFFFF'
+            context = {'navbar_colour': colour, 'user_group': user}
+            return render(request, self.home_page, context)
         context = {'navbar_colour': colour, 'user_group': user}
-        return render(request, self.home_page, context)
+        return render(request, self.home_page, context, status=200)
 
 
 class LoginView(View):
@@ -197,3 +205,25 @@ class PasswordResetLinks(GroupRequiredMixin, View):
             'navbar_colour': PasswordResetLinks.navbar_colour,
         }
         return render(request, self.activation_link, context)
+
+
+class Maintenance(Home, View):
+    template_name = 'Authentication/maintenance.html'
+    navbar_colour = {'admin': '#808080',
+                     'manager': '#AD9CFF',
+                     'marker': '#FF434B',
+                     'scanner': '#0F984F'}
+
+    def get(self, request):
+        try:
+            user = request.user.groups.all()[0].name
+        except IndexError:
+            user = None
+        if user in Home.navbar_colour:
+            colour = Home.navbar_colour[user]
+        else:
+            colour = '#FFFFFF'
+            context = {'navbar_colour': colour, 'user_group': user}
+            return render(request, self.template_name, context)
+        context = {'navbar_colour': colour, 'user_group': user}
+        return render(request, self.template_name, context, status=200)

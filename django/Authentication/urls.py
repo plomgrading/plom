@@ -7,8 +7,9 @@ import Authentication.views
 urlpatterns = [
     path('login/', Authentication.views.LoginView.as_view(), name="login"),  # newly added
     path('logout/', Authentication.views.LogoutView.as_view(), name="logout"),
-    # testing home page
+
     path('', Authentication.views.Home.as_view(), name='home'),
+    path('maintenance/', Authentication.views.Maintenance.as_view(), name='maintenance'),
 
     # signup path
     path('signup/manager/', Authentication.views.SignupManager.as_view(), name="signup_manager"),
