@@ -26,6 +26,28 @@ import plom.client.help_img
 
 class KeyHelp(QDialog):
     keyTypes = {
+        "Rubrics": [
+            [
+                "Select rubric / Next rubric",
+                ["d"],
+                "Selects the current rubric, or if rubric already selected, then moves to next rubric",
+            ],
+            [
+                "Previous rubric",
+                ["e"],
+                "Select the previous rubric",
+            ],
+            [
+                "Next tab",
+                ["f"],
+                "Select the next tab of rubrics",
+            ],
+            [
+                "Previous tab",
+                ["s"],
+                "Select the previous tab of rubrics",
+            ],
+        ],
         "Annotation": [
             [
                 "Next tool",
@@ -66,7 +88,7 @@ class KeyHelp(QDialog):
             ],
             ["Move", ["a"], "Click and drag on an object to move it."],
         ],
-        "Finishing": [
+        "General": [
             [
                 "Cancel",
                 ["ctrl-c"],
@@ -77,8 +99,6 @@ class KeyHelp(QDialog):
                 ["alt-enter", "alt-return", "ctrl-n", "ctrl-b"],
                 "Save the current annotations and move on to next paper.",
             ],
-        ],
-        "General": [
             ["Show key help", ["?"], "Show this window."],
             ["Main menu", ["F10"], "Open the main menu"],
         ],
@@ -144,30 +164,39 @@ class KeyHelp(QDialog):
     def __init__(self, parent=None):
         super().__init__()
         vb = QVBoxLayout()
-        self.tab = QTabWidget()
-        self.setTabs()
-        self.cb = QPushButton("&close")
-        self.cb.clicked.connect(self.accept)
-        vb.addWidget(self.tab)
-        vb.addWidget(self.cb)
+        tabs = QTabWidget()
+
+        tabs.addTab(ClickDragPage(), "Tips")
+
+        for i, row in enumerate(self.make_ui_tables()):
+            tw, label = row
+            # special case the first 2 with graphics
+            if i == 0:
+                w = QWidget()
+                wb = QVBoxLayout()
+                wb.addWidget(RubricNavPage())
+                wb.addWidget(tw)
+                w.setLayout(wb)
+            elif i == 1:
+                w = QWidget()
+                wb = QVBoxLayout()
+                wb.addWidget(ToolNavPage())
+                wb.addWidget(tw)
+                w.setLayout(wb)
+            else:
+                w = tw
+            tabs.addTab(w, label)
+
+        # TODO: some DialogButtonBar or something here
+        cb = QPushButton("&Close")
+        cb.clicked.connect(self.accept)
+        vb.addWidget(tabs)
+        vb.addWidget(cb)
         self.setLayout(vb)
         self.setMinimumSize(QSize(650, 400))
 
-    def setTabs(self):
-        # put rubric-nav and tool-nav into a tab
-        self.tab.addTab(RubricNavPage(), "Rubric navigation")
-        self.tab.addTab(ClickDragPage(), "Rubric click-drag-click")
-        self.tab.addTab(ToolNavPage(), "Tool navigation")
-
-        # Build a table for key lists
-        tw = QTableWidget()
-        tw.setColumnCount(3)
-        tw.verticalHeader().hide()
-        tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
-        tw.setAlternatingRowColors(True)
-        tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        tw.setSortingEnabled(True)
-
+    def make_ui_tables(self):
+        tables = []
         # build one for each division
         for div in self.keyTypes:
             tw = QTableWidget()
@@ -194,8 +223,17 @@ class KeyHelp(QDialog):
                 k += 1
             # tw.resizeColumnsToContents()
             tw.resizeRowsToContents()
-            self.tab.addTab(tw, div)
+            tables.append((tw, div))
+
+        # now the "all" list
         k = 0
+        tw = QTableWidget()
+        tw.setColumnCount(3)
+        tw.verticalHeader().hide()
+        tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
+        tw.setAlternatingRowColors(True)
+        tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        tw.setSortingEnabled(True)
         for div in self.keyTypes:
             for fun in self.keyTypes[div]:
                 tw.insertRow(k)
@@ -214,7 +252,8 @@ class KeyHelp(QDialog):
         tw.setWordWrap(True)
         # tw.resizeColumnsToContents()
         tw.resizeRowsToContents()
-        self.tab.addTab(tw, "All")
+        tables.append((tw, "All"))
+        return tables
 
 
 class RubricNavPage(QWidget):
