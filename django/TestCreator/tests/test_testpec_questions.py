@@ -1,3 +1,5 @@
+from random import shuffle
+from model_bakery import baker
 from django.test import TestCase
 from .. import services
 from .. import models
@@ -73,3 +75,38 @@ class TestSpecQuestionTests(TestCase):
 
         services.clear_questions()
         self.assertEqual(len(models.TestSpecQuestion.objects.all()), 0)
+
+    def test_total_assigned_marks(self):
+        """Test services.get_total_assigned_marks"""
+        q1 = baker.make(models.TestSpecQuestion, mark=5)
+        q2 = baker.make(models.TestSpecQuestion, mark=5)
+
+        total_so_far = services.get_total_assigned_marks()
+        self.assertEqual(total_so_far, 10)
+
+    def test_get_available_marks(self):
+        """Test services.get_available_marks"""
+        services.set_total_marks(10)
+        q1 = baker.make(models.TestSpecQuestion, mark=4)
+        available = services.get_available_marks()
+        self.assertEqual(available, 6)
+
+    def test_total_exceeds_error(self):
+        """Test that services.get_available_marks raises a RuntimeError if there are more marks assigned to each 
+        question than in the total_marks field"""
+        services.set_total_marks(10)
+        q1 = baker.make(models.TestSpecQuestion, mark=6)
+        q2 = baker.make(models.TestSpecQuestion, mark=7)
+
+        with self.assertRaisesMessage(RuntimeError, "You've assigned more marks to questions than in the total_marks field"):
+            services.get_available_marks()
+
+    def test_other_questions_total(self):
+        """Test services.get_available_marks with perviously assigned values"""
+        services.set_total_marks(10)
+        q1 = baker.make(models.TestSpecQuestion, mark=7)
+        q2 = baker.make(models.TestSpecQuestion, mark=3)
+
+        # let's say we're on the detail page for question 2
+        available = services.get_available_marks(q2.mark)
+        self.assertEqual(available, 3)

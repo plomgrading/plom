@@ -159,3 +159,29 @@ def is_question_completed(index: int):
     """
     return get_question_label(index) and get_question_marks(index) and get_question_fix_or_shuffle(index)
 
+
+def get_total_assigned_marks():
+    """How many marks have been assigned to questions so far?
+    
+    Returns:
+        int: marks assigned so far
+    """
+    list_of_marks = models.TestSpecQuestion.objects.all().values_list('mark', flat=True)
+    total_so_far = sum(list_of_marks)
+    return total_so_far
+
+
+def get_available_marks(current_marks=0):
+    """Given the already filled out questions, how many marks left are there?
+
+    Args:
+        current_marks (int): How many marks were previously assigned to this question?
+    
+    Returns:
+        int: total marks for test - total marks assigned so far
+    """
+    total_marks = get_total_marks()
+    marks_left = total_marks - get_total_assigned_marks() + current_marks
+    if 0 > marks_left:
+        raise RuntimeError("You've assigned more marks to questions than in the total_marks field")
+    return marks_left

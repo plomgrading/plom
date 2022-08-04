@@ -116,27 +116,21 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
     )
 
-    # def clean(self):
-    #     data = self.cleaned_data
-
-    #     # are the selected pages next to each other?
-    #     pages = [int(re.sub('\D', '', key)) for key in data.keys() if 'page' in key]
-        
-    #     seen_first_selected = False
-    #     seen_next_deselected = False
-    #     for i in range(1, len(pages)):  # We don't need to worry about the first page
-    #         if data[f'page{i}'] and seen_next_deselected:
-    #             raise ValidationError('Question pages must be consecutive.')
-    #         elif data[f'page{i}'] and not seen_first_selected:
-    #             seen_first_selected = 
+    def __init__(self, *args, **kwargs):
+        self.question_marks = kwargs.pop('q_marks')
+        super().__init__(*args, **kwargs)
 
     def clean(self):
         data = self.cleaned_data
 
         # Are the marks less than the test's total marks?
-        # TODO: Let them change the total marks
         if data['mark'] > services.get_total_marks():
             raise ValidationError("Question cannot have more marks than the test.")
+
+        # Are the marks less than the total available marks?
+        available = services.get_available_marks(self.question_marks)
+        if data['mark'] > available:
+            raise ValidationError(f"Question cannot have more than {available} marks.")
 
         selected_pages = []
         for key, value in data.items():
@@ -202,3 +196,7 @@ class TestSpecSummaryForm(forms.Form):
             cur_page = pages[i]
             if not cur_page['id_page'] and not cur_page['dnm_page'] and not cur_page['question_page']:
                 raise ValidationError(f'Page {i+1} has not been assigned. Did you mean to make it a do-not-mark page?')
+
+        marks_for_all_questions = services.get_total_assigned_marks
+        if marks_for_all_questions != services.get_total_marks:
+            raise RuntimeError(f'There are {services.get_total_marks} marks assigned to the test, but {marks_for_all_questions} marks in total assigned to the questions.')
