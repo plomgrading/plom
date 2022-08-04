@@ -5,7 +5,10 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <!-- Alpine -->
+	<!-- HTMX -->
+	<script src="https://unpkg.com/htmx.org@1.8.0"></script>
+
+	<!-- Alpine -->
         <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
         <!-- Bootstrap stylesheet -->
@@ -20,7 +23,8 @@
         <!-- Title -->
         <title>{% block title %}Test Specification Creator Mockup{% endblock %}</title>
     </head>
-    <body style="background-color: #F5F6FA; display: flex;">
+    <!-- Need the csrf token to enable htmx -->
+    <body style="background-color: #F5F6FA; display: flex;" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         <!-- Bootsrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
 

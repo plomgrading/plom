@@ -1,6 +1,13 @@
 from django.db import models
 
 
+class ClasslistCSV(models.Model):
+    # TODO - set a better upload path
+    csv_file = models.FileField(upload_to=".")
+    valid = models.BooleanField(default=False, null=False)
+    warnings_errors_list = models.JSONField()
+
+
 class Student(models.Model):
     """Table to store information about students who have taken this
     assessment. Note, name is stored as a single field.

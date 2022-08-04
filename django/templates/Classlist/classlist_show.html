@@ -1,0 +1,34 @@
+{% extends "base/base.html" %}
+
+{% block main_content %}
+
+{% if classlist %}
+<table class="table is-striped is narrow">
+  <thead>
+    <th>Student ID</th>
+    <th>Student Name</th>
+    <th>Paper-number (if assigned)</th>
+  </thead>
+  {% for row in classlist %}
+  <tr>
+    <td>{{ row.sid }}</td>
+    <td>{{ row.name }}</td>
+    <td>{{ row.paper_number }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>
+  No classlist
+</p>
+<div>
+  <form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">upload</button>
+  </form>
+</div>
+{% endif %}
+
+
+{% endblock %}

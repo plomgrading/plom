@@ -1,0 +1,36 @@
+{% extends "base/base.html" %}
+
+{% block main_content %}
+
+{% if success %}
+success
+{% else %}
+<p>Upload failed</p>
+<span>
+  <button class="button is-primary"
+          hx-delete="/classlist"
+          hx-target="body"
+          hx-swap="outerHTML">
+    discard (and upload another)
+  </button>
+</span>
+
+<table>
+  <thead>
+    <th>Warning or Error</th>
+    <th>Line</th>
+    <th>Message</th>
+  </thead>
+  {% for werr in warn_err %}
+  <tr>
+    <td>{{ werr.warn_or_err }}</td>
+    <td>{{ werr.werr_line }}</td>
+    <td>{{ werr.werr_text }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endif %}
+
+
+{% endblock %}
