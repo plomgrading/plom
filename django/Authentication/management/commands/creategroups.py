@@ -3,10 +3,17 @@ from django.contrib.auth.models import Group, User
 
 
 class Command(BaseCommand):
+    """
+    This is the command for "python manage.py creategroups"
+    It creates admin, manager, marker, and scanner groups. Then,
+    any superusers will be added to the admin group.
+    """
     def handle(self, *args, **options):
         group_list = ['admin', 'manager', 'marker', 'scanner']
+        # get all the existing groups in a list
         exist_groups = [str(group) for group in Group.objects.all()]
 
+        # get all the groups
         for group in group_list:
             if group not in exist_groups:
                 Group(name=group).save()
