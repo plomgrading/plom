@@ -29,14 +29,6 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
                 initial['shuffle'] = 'F'
         return initial
 
-    def get_form_kwargs(self):
-        """Add keyword argument for the number of marks this question currently has (for validation)"""
-        kwargs = super().get_form_kwargs()
-        q_id = self.kwargs['q_idx']
-        marks = services.get_question_marks(q_id)
-        kwargs['q_marks'] = marks
-        return kwargs
-
     def get_context_data(self, **kwargs):
         question_id = self.kwargs['q_idx']
         context = super().get_context_data(f'question_{question_id}', **kwargs)
@@ -44,7 +36,7 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
         context['prev_id'] = question_id-1
         context['total_marks'] = services.get_total_marks()
         question_marks = services.get_question_marks(question_id)
-        context['available'] = services.get_available_marks(question_marks)
+        context['assigned_to_others'] = services.get_marks_assigned_to_other_questions(question_marks)
         context['n_versions'] = services.get_num_versions()
 
         context['x_data'] = services.get_question_detail_page_alpine_xdata(question_id)

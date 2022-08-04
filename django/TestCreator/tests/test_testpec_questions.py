@@ -90,6 +90,14 @@ class TestSpecQuestionTests(TestCase):
         q1 = baker.make(models.TestSpecQuestion, mark=4)
         available = services.get_available_marks()
         self.assertEqual(available, 6)
+        
+    def test_get_marks_assigned_to_other_questions(self):
+        """Test services.get_marks_assigned_to_other_questions"""
+        q1 = baker.make(models.TestSpecQuestion, mark=5)
+        q2 = baker.make(models.TestSpecQuestion, mark=3)
+        q3 = baker.make(models.TestSpecQuestion, mark=2)
+        marks_to_others = services.get_marks_assigned_to_other_questions(q3.mark)
+        self.assertEqual(marks_to_others, 8)
 
     def test_total_exceeds_error(self):
         """Test that services.get_available_marks raises a RuntimeError if there are more marks assigned to each 

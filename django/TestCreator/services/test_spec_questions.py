@@ -171,6 +171,23 @@ def get_total_assigned_marks():
     return total_so_far
 
 
+def get_marks_assigned_to_other_questions(current_marks: int):
+    """Get the total marks - current marks (passed down from question detail view)
+
+    Args:
+        current_marks: number of marks assigned to this question previously
+
+    Returns:
+        int: marks assigned to other questions
+    """
+    total_marks = get_total_assigned_marks()
+    if current_marks:
+        other_total = total_marks - current_marks
+        return other_total
+    else:
+        return total_marks
+
+
 def get_available_marks(current_marks=0):
     """Given the already filled out questions, how many marks left are there?
 
