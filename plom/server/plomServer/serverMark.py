@@ -197,6 +197,7 @@ def MreturnMarkedTask(
         mark,
         annotated_filename,
         plom_filename,
+        plomdat,
         rubrics,
         time_spent_marking,
         annotated_image_md5,

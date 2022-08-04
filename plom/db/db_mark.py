@@ -280,6 +280,7 @@ def MtakeTaskFromClient(
     mark,
     annot_fname,
     plom_fname,
+    plomdat,
     rubrics,
     marking_time,
     md5,
@@ -368,6 +369,7 @@ def MtakeTaskFromClient(
         aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
         aref.mark = mark
         aref.plom_file = plom_fname
+        aref.plom_json = plomdat
         aref.marking_time = marking_time
         qref.save()
         aref.save()

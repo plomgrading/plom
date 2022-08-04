@@ -167,6 +167,7 @@ class Annotation(BaseModel):
     #
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
+    plom_json = pw.TextField(null=True)
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=False)
