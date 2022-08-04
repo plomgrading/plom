@@ -8,7 +8,9 @@ class TestSpecCreatorQuestionsPage(BaseTestSpecFormView):
     form_class = forms.TestSpecQuestionsMarksForm
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data('questions', **kwargs)
+        context = super().get_context_data('questions', **kwargs)
+        context['prev_n_questions'] = services.get_num_questions()
+        return context
 
     def get_initial(self):
         initial = super().get_initial()
@@ -22,13 +24,14 @@ class TestSpecCreatorQuestionsPage(BaseTestSpecFormView):
     def form_valid(self, form):
         form_data = form.cleaned_data
 
-        services.clear_questions()
-
-        services.set_num_questions(form_data['questions'])
+        prev_questions = services.get_num_questions()
         services.set_total_marks(form_data['total_marks'])
 
         services.progress_set_question_page(True)
-        services.progress_init_questions()
+        if prev_questions != form_data['questions']:
+            services.clear_questions()
+            services.set_num_questions(form_data['questions'])
+            services.progress_init_questions()
         
         return super().form_valid(form)
 

@@ -80,7 +80,7 @@ class TestSpecIDPageForm(TestSpecPDFSelectForm):
 class TestSpecQuestionsMarksForm(forms.Form):
     questions = forms.IntegerField(
         label='Number of questions:',
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'id': 'curr_questions'})
     )
     total_marks = forms.IntegerField(
         label='Total marks:',

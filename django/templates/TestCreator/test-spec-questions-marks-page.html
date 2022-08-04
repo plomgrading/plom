@@ -5,10 +5,12 @@
 {% block right_column %}
 
 <!-- Extra confirm dialog if we're changing the number of questions -->
-<form class="w-100" action="{% url 'questions' %}" method="post" enctype="multipart/form-data"
-    {% if completed.questions_page %}
-    onsubmit="return confirm('Are you sure? Changing the number of questions will reset the current questions.')" 
-    {% endif %}   
+<form 
+    class="w-100" 
+    action="{% url 'questions' %}" 
+    method="post" 
+    enctype="multipart/form-data"
+    onsubmit="if ({{ prev_n_questions }} !== parseInt(document.getElementById('curr_questions').value)) {return confirm('Are you sure? Changing the number of questions will erase the current questions.');}"
 >
     {% csrf_token %}
 
@@ -28,7 +30,7 @@
                     <p></p>
                 </div>                   
             </div>
-            
+
             {% for e in form.non_field_errors %}
             <p class="text-danger">{{ e }}</p>
             {% endfor %}
