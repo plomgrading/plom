@@ -8,12 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-### Changed
-
 ### Fixed
-
+* Fix various Manager UI paper creation functions when using precompiled binaries.
 
 
 ## [0.9.3] - 2022-07-18
