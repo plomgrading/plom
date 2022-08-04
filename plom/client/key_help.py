@@ -287,13 +287,13 @@ class RubricNavPage(QWidget):
         self.rn.setStyleSheet(sheet)
         self.rn.setToolTip("Select next rubic")
         li = self.scene.addWidget(self.rn)
-        li.setPos(330, 250)
+        li.setPos(340, 250)
 
         self.rp = QPushButton(self.keys["rubric_prev"])
         self.rp.setStyleSheet(sheet)
         self.rp.setToolTip("Select previous rubic")
         li = self.scene.addWidget(self.rp)
-        li.setPos(330, 70)
+        li.setPos(340, 70)
 
         self.tp = QPushButton(self.keys["tab_prev"])
         self.tp.setStyleSheet(sheet)
