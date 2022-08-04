@@ -20,8 +20,9 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
         else:
             initial['label'] = f"Q{question_id}"
 
-            total_marks = services.get_total_marks()
-            initial['mark'] = total_marks // services.get_num_questions()
+            # don't pre-fill the marks field
+            # total_marks = services.get_total_marks()
+            # initial['mark'] = total_marks // services.get_num_questions()
 
             if services.get_num_versions() > 1:
                 initial['shuffle'] = 'S'
