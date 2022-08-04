@@ -409,14 +409,26 @@ class ClickDragPage(QWidget):
         film.setCacheMode(QMovie.CacheAll)
 
         film_label = QLabel()
-        film_label.setStyleSheet("QLabel {border-style: outset; border-width: 2px;}")
         film_label.setMovie(film)
-        grid.addWidget(film_label)
         grid.addWidget(
             QLabel(
                 "Click-drag-release-move-click to highlight a region, and stamp rubric with a connecting line."
             )
         )
+        grid.addWidget(film_label)
+        grid.addSpacing(6)
+        grid.addWidget(
+            QLabel(
+                "Students benefit from spatial feedback (as above) and the use of specific rubrics."
+            )
+        )
+        grid.addSpacing(6)
+        grid.addWidget(QLabel("Rubrics are shared between markers."))
+        grid.addSpacing(6)
+        grid.addWidget(
+            QLabel("Try to keep one hand on the keyboard and one on the mouse.")
+        )
+        grid.addSpacing(6)
 
         self.setLayout(grid)
         # as per https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif#comment125714355_71072485
