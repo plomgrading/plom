@@ -9,8 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Annotator: help dialog shows diagrams for keyboard shortcuts.
+* Annotator: Hhlp dialog shows some "getting started" info for click-drag.
 
 ### Changed
+* QR format changed, future proofing for more papers, versions and pages.
+* "Public Code" shortened from 6 digits to 5.
+* Closing Annotator now resets the current tool.
+
+### Fixed
+* Some slow bottleneck API calls are faster, although more work is needed.
+* Annotator: many small UI fixes.
+* Various documentation fixes.
+
+
+## [Unreleased]
 
 ### Fixed
 * Fix various Manager UI paper creation functions when using precompiled binaries.
