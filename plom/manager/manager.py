@@ -755,7 +755,13 @@ class Manager(QWidget):
                 ycoord=ypos,
                 msgr=self.msgr,
             )
-        except (PlomServerNotReady, PlomConflict, OSError, RuntimeError) as e:
+        except (
+            PlomServerNotReady,
+            PlomConflict,
+            OSError,
+            RuntimeError,
+            ValueError,
+        ) as e:
             # fitz.FileNotFoundError is a subclass of RuntimeError
             self.Qapp.restoreOverrideCursor()
             WarnMsg(self, "Could not build papers.", info=e).exec()
