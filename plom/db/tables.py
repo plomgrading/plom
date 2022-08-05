@@ -15,12 +15,13 @@ class BaseModel(pw.Model):
 
 
 class User(BaseModel):
-    name = pw.CharField(unique=True)  # TODO - should this be short - if so we need to check length elsewhere in code.
+    # TODO - should this be short - if so we need to check length elsewhere in code.
+    name = pw.CharField(unique=True)
     enabled = pw.BooleanField(default=True)
     password = pw.CharField(null=True)  # hash of password for comparison - fixed length
     token = pw.CharField(null=True)  # authentication token - fixed length
     last_activity = pw.DateTimeField(null=False)
-    last_action = pw.CharField(null=False)  # System generated string, not long leave as charfield
+    last_action = pw.CharField(null=False)  # System generated string, not long
 
 
 class Bundle(BaseModel):
@@ -50,7 +51,8 @@ class Test(BaseModel):
 class Group(BaseModel):
     test = pw.ForeignKeyField(Test, backref="groups")
     gid = pw.CharField(unique=True)  # must be unique - is short
-    group_type = pw.CharField()  # to distinguish between ID, DNM, and Mark groups - is shot
+    # short string to distinguish between ID, DNM, and Mark groups
+    group_type = pw.CharField()
     queue_position = pw.IntegerField(unique=True, null=False)
     scanned = pw.BooleanField(default=False)  # should get all its tpages
 
@@ -59,7 +61,7 @@ class Group(BaseModel):
 # and that is should be an arbitrary string.  To be sorted out later.
 class IDPrediction(BaseModel):
     test = pw.ForeignKeyField(Test, backref="idpredictions")
-    student_id = pw.CharField(unique=True, null=True)  # is short - we do not allow arbitrary length ids.
+    student_id = pw.CharField(unique=True, null=True)  # short, no arbitrary length ids
     user = pw.ForeignKeyField(User, backref="idpredictions", null=True)
     predictor = pw.CharField(null=False)  # is short - system generated.
     certainty = pw.DoubleField(null=False, default=0.0)
@@ -68,8 +70,8 @@ class IDPrediction(BaseModel):
 class IDGroup(BaseModel):
     test = pw.ForeignKeyField(Test, backref="idgroups")
     group = pw.ForeignKeyField(Group, backref="idgroups")
-    student_id = pw.CharField(unique=True, null=True)  # is short - we do not allow arbitrary length ids
-    student_name = pw.TextField(null=True)  # might be long so put as textfield. In practice unlikely to be long, but....
+    student_id = pw.CharField(unique=True, null=True)  # short, no arbitrary length ids
+    student_name = pw.TextField(null=True)
     user = pw.ForeignKeyField(User, backref="idgroups", null=True)
     status = pw.CharField(default="")  # system generated - is short
     time = pw.DateTimeField(null=False)
@@ -190,7 +192,7 @@ class Rubric(BaseModel):
     count = pw.IntegerField(null=False, default=0)
     creationTime = pw.DateTimeField(null=False)
     modificationTime = pw.DateTimeField(null=False)
-    tags = pw.TextField(default="")  # can be long 
+    tags = pw.TextField(default="")  # can be long
     meta = pw.TextField(default="")  # can be long
 
 
