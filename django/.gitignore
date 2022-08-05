@@ -17,3 +17,6 @@ db.sqlite3-journal
 
 # emacs backup files
 *.bak
+
+# PyCharm
+.idea/WebPlom.iml
