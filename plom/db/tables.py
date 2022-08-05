@@ -15,26 +15,26 @@ class BaseModel(pw.Model):
 
 
 class User(BaseModel):
-    name = pw.CharField(unique=True)
+    name = pw.CharField(unique=True)  
     enabled = pw.BooleanField(default=True)
-    password = pw.CharField(null=True)  # hash of password for comparison
-    token = pw.CharField(null=True)  # authentication token
+    password = pw.CharField(null=True)  # hash of password for comparison - fixed length
+    token = pw.CharField(null=True)  # authentication token - fixed length
     last_activity = pw.DateTimeField(null=False)
-    last_action = pw.CharField(null=False)
+    last_action = pw.CharField(null=False)  # System generated string, not long leave as charfield
 
 
 class Bundle(BaseModel):
-    name = pw.CharField(unique=True, null=True)  # unique names please
-    md5sum = pw.CharField(null=True)  # to check for duplications
+    name = pw.TextField(unique=True, null=True)  # unique names please - can be long
+    md5sum = pw.CharField(null=True)  # to check for duplications - fixed length
 
 
 class Image(BaseModel):
     bundle = pw.ForeignKeyField(Bundle, backref="images")
-    original_name = pw.CharField(null=True)  # can be empty.
+    original_name = pw.TextField(null=True)  # can be empty - can be long
     # the order of the image within its bundle
     bundle_order = pw.IntegerField(null=True)
-    file_name = pw.CharField(null=True)
-    md5sum = pw.CharField(null=True)  # to check for duplications
+    file_name = pw.TextField(null=True)  # can be long
+    md5sum = pw.CharField(null=True)  # to check for duplications - fixed length
     rotation = pw.IntegerField(null=False, default=0)
 
 
