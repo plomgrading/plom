@@ -49,6 +49,7 @@ def build_papers(
             b/c build_database has not yet been called.
         ValueError: not enough papers for prenamed, indexToMake out of range,
             maybe other cases.
+        fitz.FileNotFoundError/RuntimeError: source PDF files not found.
 
     We try to get a classlist from the server to prename any papers
     where the `paper_number` is specified.  If the server does not yet
