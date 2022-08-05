@@ -9,11 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Annotator: help dialog shows diagrams for keyboard shortcuts.
+* Annotator: Hhlp dialog shows some "getting started" info for click-drag.
 
 ### Changed
+* QR format changed, future proofing for more papers, versions and pages.
+* "Public Code" shortened from 6 digits to 5.
+* Closing Annotator now resets the current tool.
+
+### Fixed
+* Some slow bottleneck API calls are faster, although more work is needed.
+* Annotator: many small UI fixes.
+* Various documentation fixes.
+
+
+## [0.9.4] - 2022-08-04
 
 ### Fixed
 * Fix various Manager UI paper creation functions when using precompiled binaries.
+* Fix several Manager UI crashes.
 
 
 ## [0.9.3] - 2022-07-18
@@ -804,7 +818,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.9.3...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.9.4...main
+[0.9.4]: https://gitlab.com/plom/plom/compare/v0.9.3...v0.9.4
 [0.9.3]: https://gitlab.com/plom/plom/compare/v0.9.2...v0.9.3
 [0.9.2]: https://gitlab.com/plom/plom/compare/v0.9.0...v0.9.2
 [0.9.0]: https://gitlab.com/plom/plom/compare/v0.8.11...v0.9.0
