@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # add newly created app folder below
     'Authentication',
     'Classlist',
+    'Preparation',
     'TestCreator',
 ]
 
