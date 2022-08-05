@@ -116,6 +116,11 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
     )
 
+    def __init__(self, *args, **kwargs):
+        if 'q_idx' in kwargs.keys():
+            self.question_idx = kwargs.pop('q_idx')
+        super().__init__(*args, **kwargs)
+
     def clean(self):
         data = self.cleaned_data
 
@@ -140,6 +145,15 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
 
             if next - curr > 1:
                 raise ValidationError('Question pages must be consecutive.')
+
+        # Is this question assigned to pages after earlier questions?
+        if self.question_idx:
+            page_list = services.get_page_list()
+            for i in range(selected_pages[-1]+1, len(page_list)):  # all pages after this one
+                page_i = page_list[i]
+                other_question = page_i['question_page']
+                if other_question and other_question < self.question_idx:
+                    raise ValidationError(f'Question {self.question_idx} cannot come before question {other_question}.')
 
 
 class TestSpecValidateForm(forms.Form):

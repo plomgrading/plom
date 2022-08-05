@@ -30,6 +30,12 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
                 initial['shuffle'] = 'F'
         return initial
 
+    def get_form_kwargs(self):
+        """Pass the question index down to the form"""
+        kwargs = super().get_form_kwargs()
+        kwargs['q_idx'] = self.kwargs['q_idx']
+        return kwargs
+
     def get_context_data(self, **kwargs):
         question_id = self.kwargs['q_idx']
         context = super().get_context_data(f'question_{question_id}', **kwargs)

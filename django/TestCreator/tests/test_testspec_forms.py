@@ -1,7 +1,9 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from model_bakery import baker
 from .. import forms
 from .. import services
+from .. import models
 
 
 class TestSpecPDFSelectFormTests(TestCase):
@@ -62,7 +64,7 @@ class TestSpecQuestionFormTests(TestCase):
 
     def test_question_clean_valid(self):
         """Test TestSpecQuestionForm.clean"""
-        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': True}, num_pages=2)
+        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': True}, num_pages=2, q_idx=1)
         
         services.set_total_marks(2)
         valid = form.is_valid()
@@ -70,7 +72,7 @@ class TestSpecQuestionFormTests(TestCase):
 
     def test_question_too_many_marks(self):
         """Test that too many marks for the question will raise a ValidationError"""
-        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 5, 'shuffle': 'F', 'page0': True}, num_pages=1)
+        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 5, 'shuffle': 'F', 'page0': True}, num_pages=1, q_idx=1)
 
         services.set_total_marks(2)
         form.is_valid()
@@ -80,7 +82,7 @@ class TestSpecQuestionFormTests(TestCase):
 
     def test_question_no_selected_page(self):
         """Test that selecting no pages for the question raises a ValidationError"""
-        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': False}, num_pages=2)
+        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': False}, num_pages=2, q_idx=1)
 
         services.set_total_marks(2)
         form.is_valid()
@@ -90,10 +92,28 @@ class TestSpecQuestionFormTests(TestCase):
 
     def test_question_consecutive_pages(self):
         """Test that page selection with a gap will raise a ValidationError"""
-        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': True, 'page2': False, 'page3': True}, num_pages=4)
+        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': True, 'page2': False, 'page3': True}, num_pages=4, q_idx=1)
 
         services.set_total_marks(2)
         form.is_valid()
 
         with self.assertRaisesMessage(ValidationError, 'Question pages must be consecutive.'):
             form.clean()
+
+    def test_question_no_earlier_pages(self):
+        """Test that assigning questions to pages before earlier questions will raise a ValidationError"""
+        q1 = baker.make(models.TestSpecQuestion, index=1)
+        q2 = baker.make(models.TestSpecQuestion, index=2)
+        pdf = baker.make(models.ReferencePDF, num_pages=2)
+
+        services.set_pages(pdf)
+        services.set_num_questions(2)
+        services.set_total_marks(2)
+        services.set_question_pages([1], 1)
+
+        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 1, 'shuffle': 'F', 'page0': True, 'page1': False}, num_pages=2, q_idx=2)
+        form.is_valid()
+
+        with self.assertRaisesMessage(ValidationError, 'Question 2 cannot come before question 1.'):
+            form.clean()
+
