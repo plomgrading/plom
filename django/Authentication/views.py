@@ -70,7 +70,7 @@ class SetPassword(View):
                 context = {'form': reset_form, 'help_text': SetPassword.help_text, 'error': error}
                 return render(request, self.template_name, context)
         else:
-            return render(request, 'Authentication/activation_invalid.html')
+            return render(request, self.reset_invalid)
 
 
 # When user enters their password successfully

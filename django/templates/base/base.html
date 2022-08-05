@@ -38,9 +38,15 @@
                             <ul class="nav flex-column">
                                 <li class="nav-item">
                                     <!-- Plom logo -->
-                                    <a class="navbar-brand nav-link" style="padding-right: 15px; padding-left: 0px; margin: 0px" href="{% url 'home' %}">
+                                    <a class="navbar-brand nav-link" style="padding-right: 15px; padding-left: 0px; margin: 0px; text-align: center" href="{% url 'home' %}">
                                         <img class="img-fluid" src="{% static 'plomLogo.png' %}" style="max-width: 8rem">
                                     </a>
+                                </li>
+                                <li class="nav-item">
+                                    <p style="text-align: center; padding: 0px 5px">Welcome, <b>{{ request.user.username }}</b>!</p>
+                                </li>
+                                <li class="nav-item">
+                                    <p style="text-align: center"><b>{{ user_group }}</b> group</p>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link link-light is_sidebar_link" href="{% url 'maintenance' %}">Profile</a>
