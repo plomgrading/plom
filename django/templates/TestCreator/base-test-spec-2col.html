@@ -108,6 +108,20 @@
             {% if completed.validate_page %}
             <i class="bi bi-check"></i>
             {% endif %}
+
+            {% if completed.validate %}
+            <i class="bi bi-check"></i>
+            {% endif %}
+        </div>
+    </a>
+    <div class="list-group-item" id="spacer"></div>
+    <a class="list-group-item list-group-item-action" href="{% url 'download' %}">
+        <div class="d-flex w-100 justify-content-between">
+            {% if curr_page == 'download' %}
+            <p class="is_test_spec_nav_text fw-bold">Save</p>
+            {% else %}
+            <p class="is_test_spec_nav_text">Save</p>
+            {% endif %}
         </div>
     </a>
     <form action="{% url 'reset' %}" method="post"

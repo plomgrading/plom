@@ -87,6 +87,13 @@ def progress_set_dnm_page(complete: bool):
     progress.save()
 
 
+def progress_set_validate_page(complete: bool):
+    """Set the completed status of the validation page"""
+    progress = get_progress()
+    progress.is_validate_page_completed = complete
+    progress.save()
+
+
 def get_progress_dict():
     """Return a dictionary with completion data for the wizard."""
     progress = get_progress()
@@ -98,6 +105,7 @@ def get_progress_dict():
     progress_dict['questions_page'] = progress.is_question_page_completed
     progress_dict['question_list'] = get_question_progress_for_template()
     progress_dict['dnm_page'] = progress.is_dnm_page_completed
+    progress_dict['validate'] = progress.is_validate_page_completed
 
     return progress_dict
 

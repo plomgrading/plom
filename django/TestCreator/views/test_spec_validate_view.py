@@ -4,7 +4,7 @@ from .. import services
 from .. import forms
 
 class TestSpecValidateView(BaseTestSpecFormView):
-    template_name = 'TestCreator/test-spec-summary-page.html'
+    template_name = 'TestCreator/test-spec-validate-page.html'
     form_class = forms.TestSpecValidateForm
 
     def get_context_data(self, **kwargs):
@@ -31,5 +31,9 @@ class TestSpecValidateView(BaseTestSpecFormView):
             context['questions'].append(question)
         return context
 
+    def form_valid(self, form):
+        services.progress_set_validate_page(True)
+        return super().form_valid(form)
+
     def get_success_url(self):
-        return reverse('download')
+        return reverse('submit')

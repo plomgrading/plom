@@ -90,6 +90,12 @@ class TestSpecProgressTests(TestCase):
         prog = services.get_progress()
         self.assertTrue(prog.is_dnm_page_completed)
 
+    def test_progress_set_validate_page(self):
+        """Test services.progress_set_validate_page"""
+        services.progress_set_validate_page(True)
+        prog = services.get_progress()
+        self.assertTrue(prog.is_validate_page_completed)
+
     def test_get_progress_dict(self):
         """Test services.get_progress_dict"""
 
@@ -99,7 +105,8 @@ class TestSpecProgressTests(TestCase):
             'id_page': False,
             'questions_page': False,
             'question_list': [],
-            'dnm_page': False
+            'dnm_page': False,
+            'validate': False
         }
 
         prog_dict = services.get_progress_dict()
@@ -125,5 +132,6 @@ class TestSpecProgressTests(TestCase):
         services.progress_set_question_page(True)
         services.progress_set_question_detail_page(0, True)
         services.progress_set_dnm_page(True)
+        services.progress_set_validate_page(True)
 
         self.assertTrue(services.progress_is_everything_complete())
