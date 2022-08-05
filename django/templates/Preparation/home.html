@@ -21,16 +21,31 @@ Prepare assessment
 <div>
   <div class="card">
     <div class="card-body">
+      {% if valid_spec %}
+
       <h5 class="card-title">
 	Test specification
+	<i class="bi bi-check-circle text-success"></i>
+      </h5>
+      <p class="card-text">
+	Test specification has been created
+      </p>
+      <btn class="btn btn-success">View summary</btn>
+      <btn class="btn btn-secondary">Download</btn>
+      <btn class="btn btn-danger">Delete</btn>
+      
+      {% else %}
+      <h5 class="card-title">
+	Test specification
+	<i class="bi bi-check-circle text-success"></i>
       </h5>
       <p class="card-text">
 	Create a test-specification for your assessment.
       </p>
-      <btn class="btn btn-primary">Create</btn>
-      <btn class="btn btn-danger">Delete</btn>
-      <btn class="btn btn-success">View summary</btn>
-      <btn class="btn btn-secondary">Download</btn>
+      <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+
+      {% endif %}
+
     </div>
   </div>
 </div>
@@ -38,13 +53,30 @@ Prepare assessment
 <div>
   <div class="card">
     <div class="card-body">
+      {% if can_upload_source_tests %}
       <h5 class="card-title">
-	Source versions &mdash; v of V uploaded
+	Source versions &mdash; {{ uploaded_test_versions }} of {{ test_versions }} uploaded
+	{% if all_source_tests_uploaded %}
+	<i class="bi bi-check-circle text-success"></i>
+	{% else %}
+	<i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	{% endif %}
       </h5>
       <p class="card-text">
 	Upload source versions of your assessment
       </p>
       <btn class="btn btn-primary">Manage sources</btn>
+      
+      {% else %}
+
+      <h5 class="card-title">
+	Source versions <i class="bi bi-caret-up-square-fill text-warning"></i>
+      </h5>
+      <p class="card-text">
+	Cannot upload assessment sources until test specification has been created
+      </p>
+      
+      {% endif %}
     </div>
   </div>
 </div>
@@ -52,6 +84,8 @@ Prepare assessment
 <div>
   <div class="card">
     <div class="card-body">
+      {% if can_prename %}
+
       <h5 class="card-title">
 	Prenaming and classlist 
       </h5>
@@ -59,6 +93,17 @@ Prepare assessment
 	Do you want to prename your papers? Optional upload of classlist.
       </p>
       <btn class="btn btn-primary">Prenaming and classlist</btn>
+
+      {% else %}
+
+      <h5 class="card-title">
+	Prenaming and classlist  <i class="bi bi-caret-up-square-fill text-warning"></i>
+      </h5>
+      <p class="card-text">
+	You cannot prename or upload classlist until a test specification has been created
+      </p>
+      
+      {% endif %}
     </div>
   </div>
 </div>
@@ -66,6 +111,8 @@ Prepare assessment
 <div>
   <div class="card">
     <div class="card-body">
+      {% if can_qvmap %}
+
       <h5 class="card-title">
 	Set question version mapping
       </h5>
@@ -73,20 +120,33 @@ Prepare assessment
 	Ask system to choose the versions of the questions for each paper.
       </p>
       <btn class="btn btn-primary">Manage QV-map</btn>
+            
+      {% else %}
+
+      <h5 class="card-title">
+	Question version mapping
+      </h5>
+      <p class="card-text">
+	You cannot set question-version mapping until a test specification has been created
+      </p>
+
+      {% endif %}
+      
     </div>
   </div>
 </div>
+
 
 <div>
   <div class="card">
     <div class="card-body">
       <h5 class="card-title">
-	Send information to server
-      </h5>
+	Send information to server &mdash; NOT IMPLEMENTED <i class="bi bi-x-octagon-fill text-danger"></i>
+      </h5> 
       <p class="card-text">
 	Verify and send all this information to the plom-server
       </p>
-      <btn class="btn btn-primary">SOME WORD HERE</btn>
+      <btn class="btn btn-primary">NOT IMPLEMENTED</btn>
     </div>
   </div>
 </div>
@@ -96,12 +156,12 @@ Prepare assessment
   <div class="card">
     <div class="card-body">
       <h5 class="card-title">
-	Build paper pdfs
+	Build paper pdfs &mdash; NOT IMPLEMENTED <i class="bi bi-x-octagon-fill text-danger"></i>
       </h5>
       <p class="card-text">
 	Build pdfs for each paper
       </p>
-      <btn class="btn btn-primary">Manage PDFs</btn>
+      <btn class="btn btn-primary">NOT IMPLEMENTED</btn>
     </div>
   </div>
 </div>

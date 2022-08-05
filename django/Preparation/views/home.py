@@ -6,10 +6,31 @@ from django.views import View
 
 from django_htmx.http import HttpResponseClientRedirect
 
+from Preparation.temp_functions import (
+    is_there_a_valid_spec,
+    can_I_prename,
+    can_I_upload_source_tests,
+    can_I_qvmap,
+    are_all_source_tests_uploaded,
+    how_many_test_versions,
+    how_many_test_versions_uploaded,
+)
+
 
 # Create your views here.
 class PreparationLandingView(View):
     # group_required = [u"manager"]
+    def build_context(self):
+        return {
+            "valid_spec": is_there_a_valid_spec(),
+            "test_versions": how_many_test_versions(),
+            "uploaded_test_versions": how_many_test_versions_uploaded(),
+            "can_upload_source_tests": can_I_upload_source_tests(),
+            "all_source_tests_uploaded": are_all_source_tests_uploaded(),
+            "can_prename": can_I_prename(),
+            "can_qvmap": can_I_qvmap(),
+        }
+
     def get(self, request):
-        context={}
-        return render(request, "Preparation/home.html")
+        context = self.build_context()
+        return render(request, "Preparation/home.html", context)
