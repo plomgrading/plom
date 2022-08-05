@@ -18,6 +18,7 @@ class BaseTestSpecFormView(GroupRequiredMixin, FormView):
         context['short_name'] = services.get_short_name()
         context['curr_page'] = page_name
         context['questions'] = [i for i in range(services.get_num_questions())]
+        context['n_questions'] = services.get_num_questions()
 
         context['completed'] = services.get_progress_dict()
         context['navbar_colour'] = '#AD9CFF'

@@ -163,31 +163,43 @@ class TestSpecValidateForm(forms.Form):
         """
 
         progress_dict = services.get_progress_dict()
+
+        errors_to_raise = []
         
         if not progress_dict['names']:
-            raise ValidationError('Test needs a long name, short name, and number of versions.')
+            #raise ValidationError('Test needs a long name, short name, and number of versions.')
+            errors_to_raise.append('Test needs a long name, short name, and number of versions.')
 
         if not progress_dict['upload']:
-            raise ValidationError('Test needs a reference PDF.')
+            #raise ValidationError('Test needs a reference PDF.')
+            errors_to_raise.append('Test needs a reference PDF.')
 
         if not progress_dict['id_page']:
-            raise ValidationError('Test needs an ID page.')
+            #raise ValidationError('Test needs an ID page.')
+            errors_to_raise.append('Test needs an ID page.')
 
         if not progress_dict['questions_page']:
-            raise ValidationError('Test needs questions.')
+            #raise ValidationError('Test needs questions.')
+            errors_to_raise.append('Test needs questions.')
 
         questions = progress_dict['question_list']
         print(questions)
         for i in range(len(questions)):
             if not questions[i]:
-                raise ValidationError(f'Question {i+1} is incomplete.')
+                # raise ValidationError(f'Question {i+1} is incomplete.')
+                errors_to_raise.append(f'Question {i+1} is incomplete.')
 
         pages = services.get_page_list()
         for i in range(len(pages)):
             cur_page = pages[i]
             if not cur_page['id_page'] and not cur_page['dnm_page'] and not cur_page['question_page']:
-                raise ValidationError(f'Page {i+1} has not been assigned. Did you mean to make it a do-not-mark page?')
+                #raise ValidationError(f'Page {i+1} has not been assigned. Did you mean to make it a do-not-mark page?')
+                errors_to_raise.append(f'Page {i+1} has not been assigned. Did you mean to make it a do-not-mark page?')
 
         marks_for_all_questions = services.get_total_assigned_marks()
         if marks_for_all_questions != services.get_total_marks():
-            raise ValidationError(f'There are {services.get_total_marks()} marks assigned to the test, but {marks_for_all_questions} marks in total assigned to the questions.')
+            #raise ValidationError(f'There are {services.get_total_marks()} marks assigned to the test, but {marks_for_all_questions} marks in total assigned to the questions. You can change the total marks on the \"Questions\" page, or the marks for a single question on its individual page.')
+            errors_to_raise.append(f'There are {services.get_total_marks()} marks assigned to the test, but {marks_for_all_questions} marks in total assigned to the questions. You can change the total marks on the \"Questions\" page, or the marks for a single question on its individual page.')
+
+        if errors_to_raise:
+            raise ValidationError(errors_to_raise)
