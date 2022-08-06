@@ -5,6 +5,7 @@ from django.db import transaction
 from Preparation.models import PaperSourcePDF
 from .temp_functions import how_many_test_versions
 
+from collections import defaultdict
 import fitz
 import hashlib
 from pathlib import Path
@@ -98,3 +99,14 @@ class TestSourceService:
     @transaction.atomic()
     def delete_test_source(self, source_version):
         PaperSourcePDF.objects.filter(version=source_version).delete()
+
+    @transaction.atomic
+    def check_pdf_duplication(self):
+        hashes = defaultdict(list)
+        for pdf_obj in PaperSourcePDF.objects.all():
+            hashes[pdf_obj.hash].append(pdf_obj.version)
+        duplicates = {}
+        for hash, versions in hashes.items():
+            if len(versions) > 1:
+                duplicates[hash] = versions
+        return duplicates

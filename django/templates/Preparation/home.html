@@ -5,7 +5,9 @@ Prepare assessment
 {% endblock %}
 
 {% block main_content %}
-<div class="card">
+<div class="d-grid gap-2">
+
+  <div class="card">
   <details class="card-body">
     <summary>Help! What do I do?</summary>
     <p>
@@ -87,7 +89,7 @@ Prepare assessment
       {% if can_prename %}
 
       <h5 class="card-title">
-	Prenaming and classlist 
+	Prenaming and classlist  &mdash; NOT IMPLEMENTED <i class="bi bi-x-octagon-fill text-danger"></i>
       </h5>
       <p class="card-text">
 	Do you want to prename your papers? Optional upload of classlist.
@@ -114,7 +116,7 @@ Prepare assessment
       {% if can_qvmap %}
 
       <h5 class="card-title">
-	Set question version mapping
+	Set question version mapping &mdash; NOT IMPLEMENTED <i class="bi bi-x-octagon-fill text-danger"></i>
       </h5>
       <p class="card-text">
 	Ask system to choose the versions of the questions for each paper.
@@ -166,4 +168,5 @@ Prepare assessment
   </div>
 </div>
 
+</div>
 {% endblock %}
