@@ -120,7 +120,7 @@ info = "Moves slowly back through the current view, up and then left."
 
 ["show-whole-paper"]
 human = "Show whole paper"
-keys = [ "F1", "Fn-F1",]
+keys = [ "F1",]
 categories = [ "View",]
 info = "Opens a window to display all the pages of the current test being annotated (except the ID-page)."
 
