@@ -45,13 +45,13 @@ class KeyHelp(QDialog):
             if label == "Rubrics":
                 w = QWidget()
                 wb = QVBoxLayout()
-                wb.addWidget(RubricNavPage())
+                wb.addWidget(RubricNavPage(self.keydata))
                 wb.addWidget(tw)
                 w.setLayout(wb)
             elif label == "Annotation":
                 w = QWidget()
                 wb = QVBoxLayout()
-                wb.addWidget(ToolNavPage())
+                wb.addWidget(ToolNavPage(self.keydata))
                 wb.addWidget(tw)
                 w.setLayout(wb)
             else:
@@ -110,16 +110,14 @@ class KeyHelp(QDialog):
 
 
 class RubricNavPage(QWidget):
-    keys = {"rubric_prev": "e", "rubric_next": "d", "tab_prev": "s", "tab_next": "f"}
-
-    def __init__(self):
+    def __init__(self, keydata):
         super().__init__()
         self.view = QGraphicsView()
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
 
         self.scene = QGraphicsScene()
-        self.put_stuff()
+        self.put_stuff(keydata)
         self.view.setScene(self.scene)
         self.view.fitInView(
             self.scene.sceneRect().adjusted(-40, -40, 40, 40), Qt.KeepAspectRatio
@@ -129,32 +127,32 @@ class RubricNavPage(QWidget):
         grid.addWidget(self.view)
         self.setLayout(grid)
 
-    def put_stuff(self):
+    def put_stuff(self, action):
         pix = QPixmap()
         pix.loadFromData(resources.read_binary(plom.client.help_img, "nav_rubric.png"))
         self.scene.addPixmap(pix)  # is at position (0,0)
 
         sheet = "QPushButton { color : teal; font-size: 24pt;}"
 
-        self.rn = QPushButton(self.keys["rubric_next"])
+        self.rn = QPushButton(action["next-rubric"]["keys"][0])
         self.rn.setStyleSheet(sheet)
         self.rn.setToolTip("Select next rubic")
         li = self.scene.addWidget(self.rn)
         li.setPos(340, 250)
 
-        self.rp = QPushButton(self.keys["rubric_prev"])
+        self.rp = QPushButton(action["prev-rubric"]["keys"][0])
         self.rp.setStyleSheet(sheet)
         self.rp.setToolTip("Select previous rubic")
         li = self.scene.addWidget(self.rp)
         li.setPos(340, 70)
 
-        self.tp = QPushButton(self.keys["tab_prev"])
+        self.tp = QPushButton(action["prev-tab"]["keys"][0])
         self.tp.setStyleSheet(sheet)
         self.tp.setToolTip("Select previous tab of rubrics")
         li = self.scene.addWidget(self.tp)
         li.setPos(-40, -10)
 
-        self.tn = QPushButton(self.keys["tab_next"])
+        self.tn = QPushButton(action["next-tab"]["keys"][0])
         self.tn.setStyleSheet(sheet)
         self.tn.setToolTip("Select next tab of rubrics")
         li = self.scene.addWidget(self.tn)
@@ -162,25 +160,14 @@ class RubricNavPage(QWidget):
 
 
 class ToolNavPage(QWidget):
-    keys = {
-        "tool_prev": "w",
-        "tool_next": "r",
-        "undo": "g",
-        "redo": "t",
-        "help": "?",
-        "delete": "q",
-        "zoom": "z",
-        "move": "a",
-    }
-
-    def __init__(self):
+    def __init__(self, keydata):
         super().__init__()
         self.view = QGraphicsView()
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
 
         self.scene = QGraphicsScene()
-        self.put_stuff()
+        self.put_stuff(keydata)
         self.view.setScene(self.scene)
         self.view.fitInView(
             self.scene.sceneRect().adjusted(-40, -40, 40, 40), Qt.KeepAspectRatio
@@ -190,56 +177,60 @@ class ToolNavPage(QWidget):
         grid.addWidget(self.view)
         self.setLayout(grid)
 
-    def put_stuff(self):
+    def put_stuff(self, keydata):
         pix = QPixmap()
         pix.loadFromData(resources.read_binary(plom.client.help_img, "nav_tools.png"))
         self.scene.addPixmap(pix)  # is at position (0,0)
 
+        # little helper to extract from keydata
+        def key(s):
+            return keydata[s]["keys"][0]
+
         sheet = "QPushButton { color : teal; font-size: 24pt;}"
 
-        self.tn = QPushButton(self.keys["tool_next"])
+        self.tn = QPushButton(key("next-tool"))
         self.tn.setStyleSheet(sheet)
         self.tn.setToolTip("Select next tool")
         li = self.scene.addWidget(self.tn)
         li.setPos(240, 320)
 
-        self.tp = QPushButton(self.keys["tool_prev"])
+        self.tp = QPushButton(key("prev-tool"))
         self.tp.setStyleSheet(sheet)
         self.tp.setToolTip("Select previous tool")
         li = self.scene.addWidget(self.tp)
         li.setPos(40, 320)
 
-        self.mv = QPushButton(self.keys["move"])
+        self.mv = QPushButton(key("move"))
         self.mv.setStyleSheet(sheet)
         self.mv.setToolTip("Select move tool")
         li = self.scene.addWidget(self.mv)
         li.setPos(395, 170)
 
-        self.ud = QPushButton(self.keys["undo"])
+        self.ud = QPushButton(key("undo"))
         self.ud.setStyleSheet(sheet)
         self.ud.setToolTip("Undo last action")
         li = self.scene.addWidget(self.ud)
         li.setPos(120, -40)
 
-        self.rd = QPushButton(self.keys["redo"])
+        self.rd = QPushButton(key("redo"))
         self.rd.setStyleSheet(sheet)
         self.rd.setToolTip("Redo action")
         li = self.scene.addWidget(self.rd)
         li.setPos(210, -40)
 
-        self.hlp = QPushButton(self.keys["help"])
+        self.hlp = QPushButton(key("help"))
         self.hlp.setStyleSheet(sheet)
         self.hlp.setToolTip("Pop up key help")
         li = self.scene.addWidget(self.hlp)
         li.setPos(350, -30)
 
-        self.zm = QPushButton(self.keys["zoom"])
+        self.zm = QPushButton(key("zoom"))
         self.zm.setStyleSheet(sheet)
         self.zm.setToolTip("Select zoom tool")
         li = self.scene.addWidget(self.zm)
         li.setPos(-40, 15)
 
-        self.dlt = QPushButton(self.keys["delete"])
+        self.dlt = QPushButton(key("delete"))
         self.dlt.setStyleSheet(sheet)
         self.dlt.setToolTip("Select delete tool")
         li = self.scene.addWidget(self.dlt)

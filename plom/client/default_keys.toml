@@ -70,7 +70,7 @@ keys = [ "alt-enter", "alt-return", "ctrl-n", "ctrl-b",]
 categories = [ "General",]
 info = "Save the current annotations and move on to next paper."
 
-["show key help"]
+["help"]
 human = "Show key help"
 keys = [ "?",]
 categories = [ "General",]
