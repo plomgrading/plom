@@ -1,0 +1,161 @@
+[next-tool]
+human = "Next tool"
+keys = [ "r",]
+categories = [ "Annotation",]
+info = "Select the next tool"
+
+[prev-tool]
+human = "Previous tool"
+keys = [ "w",]
+categories = [ "Annotation",]
+info = "Select the previous tool"
+
+[next-rubric]
+human = "Select rubric / Next rubric"
+keys = [ "d",]
+categories = [ "Annotation", "Rubrics",]
+info = "Selects the current rubric, or if rubric already selected, then moves to next rubric"
+
+[prev-rubric]
+human = "Previous rubric"
+keys = [ "e",]
+categories = [ "Annotation", "Rubrics",]
+info = "Select the previous rubric"
+
+[next-tab]
+human = "Next tab"
+keys = [ "f",]
+categories = [ "Annotation", "Rubrics",]
+info = "Select the next tab of rubrics"
+
+[prev-tab]
+human = "Previous tab"
+keys = [ "s",]
+categories = [ "Annotation", "Rubrics",]
+info = "Select the previous tab of rubrics"
+
+[redo]
+human = "Redo"
+keys = [ "t", "ctrl-y",]
+categories = [ "Annotation",]
+info = "Redo the last undone-action."
+
+[undo]
+human = "Undo"
+keys = [ "g", "ctrl-z",]
+categories = [ "Annotation",]
+info = "Undo the last action."
+
+[delete]
+human = "Delete"
+keys = [ "q",]
+categories = [ "Annotation",]
+info = "Delete single item on click, or delete items in area on click and drag"
+
+[move]
+human = "Move"
+keys = [ "a",]
+categories = [ "Annotation",]
+info = "Click and drag on an object to move it."
+
+[cancel]
+human = "Cancel"
+keys = [ "ctrl-c",]
+categories = [ "General",]
+info = "Cancel the current annotations and return to the marker-window"
+
+["save and next"]
+human = "Save and next"
+keys = [ "alt-enter", "alt-return", "ctrl-n", "ctrl-b",]
+categories = [ "General",]
+info = "Save the current annotations and move on to next paper."
+
+["show key help"]
+human = "Show key help"
+keys = [ "?",]
+categories = [ "General",]
+info = "Show this window."
+
+["main menu"]
+human = "Main menu"
+keys = [ "F10",]
+categories = [ "General",]
+info = "Open the main menu"
+
+["end text edit"]
+human = "End text edit"
+keys = [ "shift-enter", "shift-return",]
+categories = [ "Text",]
+info = "End the current text-edit and run latex if the text starts with \"TEX:\""
+
+["escape text edit"]
+human = "Escape text edit"
+keys = [ "esc",]
+categories = [ "Text",]
+info = "Escape from the current text edit."
+
+[pan-through]
+human = "Pan-through"
+keys = [ "space",]
+categories = [ "View",]
+info = "Moves through the current view, down and then right."
+
+["pan-through (slowly)"]
+human = "Pan-through (slowly)"
+keys = [ "ctrl-space",]
+categories = [ "View",]
+info = "Moves slowly through the current view, down and then right."
+
+[pan-back]
+human = "Pan-back"
+keys = [ "shift-space",]
+categories = [ "View",]
+info = "Moves back through the current view, up and then left."
+
+["pan-back (slowly)"]
+human = "Pan-back (slowly)"
+keys = [ "ctrl-shift-space",]
+categories = [ "View",]
+info = "Moves slowly back through the current view, up and then left."
+
+["show whole paper"]
+human = "Show whole paper"
+keys = [ "F1", "Fn-F1",]
+categories = [ "View",]
+info = "Opens a window to display all the pages of the current test being annotated (except the ID-page)."
+
+["toggle maximize window"]
+human = "Toggle maximize window"
+keys = [ "\\",]
+categories = [ "View",]
+info = "Toggles the window size to and from maximised."
+
+["toggle wide-narrow"]
+human = "Toggle wide-narrow"
+keys = [ "home",]
+categories = [ "View",]
+info = "Toggles the tool-column between wide and narrow."
+
+[toggle-zoom]
+human = "Toggle-zoom"
+keys = [ "ctrl-=",]
+categories = [ "View",]
+info = "Toggles between the user-set view, fit-height and fit-width."
+
+[zoom]
+human = "Zoom"
+keys = [ "z",]
+categories = [ "View",]
+info = "Selects the zoom-tool. Zoom the view in (out) on click (shift-click)."
+
+[zoom-in]
+human = "Zoom-in"
+keys = [ "+", "=",]
+categories = [ "View",]
+info = "Zooms the view in."
+
+[zoom-out]
+human = "Zoom-out"
+keys = [ "-", "_",]
+categories = [ "View",]
+info = "Zooms the view out."

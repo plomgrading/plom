@@ -4,6 +4,7 @@
 
 import importlib.resources as resources
 
+import toml
 from PyQt5.QtCore import Qt, QBuffer, QByteArray, QSize
 from PyQt5.QtGui import QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
@@ -25,159 +26,29 @@ import plom.client.help_img
 
 
 class KeyHelp(QDialog):
-    keyTypes = {
-        "Rubrics": [
-            [
-                "Select rubric / Next rubric",
-                ["d"],
-                "Selects the current rubric, or if rubric already selected, then moves to next rubric",
-            ],
-            [
-                "Previous rubric",
-                ["e"],
-                "Select the previous rubric",
-            ],
-            [
-                "Next tab",
-                ["f"],
-                "Select the next tab of rubrics",
-            ],
-            [
-                "Previous tab",
-                ["s"],
-                "Select the previous tab of rubrics",
-            ],
-        ],
-        "Annotation": [
-            [
-                "Next tool",
-                ["r"],
-                "Select the next tool",
-            ],
-            [
-                "Previous tool",
-                ["w"],
-                "Select the previous tool",
-            ],
-            [
-                "Select rubric / Next rubric",
-                ["d"],
-                "Selects the current rubric, or if rubric already selected, then moves to next rubric",
-            ],
-            [
-                "Previous rubric",
-                ["e"],
-                "Select the previous rubric",
-            ],
-            [
-                "Next tab",
-                ["f"],
-                "Select the next tab of rubrics",
-            ],
-            [
-                "Previous tab",
-                ["s"],
-                "Select the previous tab of rubrics",
-            ],
-            ["Redo", ["t", "ctrl-y"], "Redo the last undone-action."],
-            ["Undo", ["g", "ctrl-z"], "Undo the last action."],
-            [
-                "Delete",
-                ["q"],
-                "Delete single item on click, or delete items in area on click and drag",
-            ],
-            ["Move", ["a"], "Click and drag on an object to move it."],
-        ],
-        "General": [
-            [
-                "Cancel",
-                ["ctrl-c"],
-                "Cancel the current annotations and return to the marker-window",
-            ],
-            [
-                "Save and next",
-                ["alt-enter", "alt-return", "ctrl-n", "ctrl-b"],
-                "Save the current annotations and move on to next paper.",
-            ],
-            ["Show key help", ["?"], "Show this window."],
-            ["Main menu", ["F10"], "Open the main menu"],
-        ],
-        "Text": [
-            [
-                "End text edit",
-                ["shift-enter", "shift-return"],
-                'End the current text-edit and run latex if the text starts with "TEX:"',
-            ],
-            ["Escape text edit", ["esc"], "Escape from the current text edit."],
-        ],
-        "View": [
-            [
-                "Pan-through",
-                ["space"],
-                "Moves through the current view, down and then right.",
-            ],
-            [
-                "Pan-through (slowly)",
-                ["ctrl-space"],
-                "Moves slowly through the current view, down and then right.",
-            ],
-            [
-                "Pan-back",
-                ["shift-space"],
-                "Moves back through the current view, up and then left.",
-            ],
-            [
-                "Pan-back (slowly)",
-                ["ctrl-shift-space"],
-                "Moves slowly back through the current view, up and then left.",
-            ],
-            [
-                "Show whole paper",
-                ["F1", "Fn-F1"],
-                "Opens a window to display all the pages of the current test being annotated (except the ID-page).",
-            ],
-            [
-                "Toggle maximize window",
-                ["\\"],
-                "Toggles the window size to and from maximised.",
-            ],
-            [
-                "Toggle wide-narrow",
-                ["home"],
-                "Toggles the tool-column between wide and narrow.",
-            ],
-            [
-                "Toggle-zoom",
-                ["ctrl-="],
-                "Toggles between the user-set view, fit-height and fit-width.",
-            ],
-            [
-                "Zoom",
-                ["z"],
-                "Selects the zoom-tool. Zoom the view in (out) on click (shift-click).",
-            ],
-            ["Zoom-in", ["+", "="], "Zooms the view in."],
-            ["Zoom-out", ["-", "_"], "Zooms the view out."],
-        ],
-    }
+    keydata = toml.load("/home/cbm/src/plom/plom.git/plom/client/default_keys.toml")
 
     def __init__(self, parent=None):
         super().__init__()
         vb = QVBoxLayout()
+        vb.addWidget(
+            QLabel(
+                "<b>Caution:</b> For now, this dialog shows only the default keybindings"
+            )
+        )
         tabs = QTabWidget()
 
         tabs.addTab(ClickDragPage(), "Tips")
 
-        for i, row in enumerate(self.make_ui_tables()):
-            tw, label = row
+        for label, tw in self.make_ui_tables().items():
             # special case the first 2 with graphics
-            if i == 0:
+            if label == "Rubrics":
                 w = QWidget()
                 wb = QVBoxLayout()
                 wb.addWidget(RubricNavPage())
                 wb.addWidget(tw)
                 w.setLayout(wb)
-            elif i == 1:
+            elif label == "Annotation":
                 w = QWidget()
                 wb = QVBoxLayout()
                 wb.addWidget(ToolNavPage())
@@ -196,9 +67,14 @@ class KeyHelp(QDialog):
         self.setMinimumSize(QSize(650, 400))
 
     def make_ui_tables(self):
-        tables = []
-        # build one for each division
-        for div in self.keyTypes:
+        """Make some Qt tables with tables of key bindings.
+
+        Returns:
+            dict: keys are `str` for category and values are `QTableWdiget`.
+        """
+        tables = {}
+        # build one table for each division
+        for div in ["Rubrics", "Annotation", "General", "Text", "View", "All"]:
             tw = QTableWidget()
             tw.setColumnCount(3)
             tw.verticalHeader().hide()
@@ -206,53 +82,30 @@ class KeyHelp(QDialog):
             tw.setAlternatingRowColors(True)
             tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
             tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
-            tw.setSortingEnabled(True)
-            k = 0
-            for fun in self.keyTypes[div]:
-                tw.insertRow(k)
-                tw.setItem(k, 0, QTableWidgetItem(fun[0]))
+            # no sorting during insertation please TODO issue number
+            tw.setSortingEnabled(False)
+            tables[div] = tw
+        # loop over all the keys and insert each key to the appropriate table(s)
+        for a, dat in self.keydata.items():
+            for cat in dat["categories"]:
+                try:
+                    tw = tables[cat]
+                except KeyError:
+                    print(f"action {a} is in category {cat} which is not in UI tables")
+                    continue
+                n = tw.rowCount()
+                tw.insertRow(n)
+                tw.setItem(n, 0, QTableWidgetItem(dat["human"]))
                 tw.setItem(
-                    k,
-                    1,
-                    QTableWidgetItem(
-                        ", ".join(list(map(lambda x: "{}".format(x), fun[1])))
-                    ),
+                    n, 1, QTableWidgetItem(", ".join(str(k) for k in dat["keys"]))
                 )
-                if len(fun) == 3:
-                    tw.setItem(k, 2, QTableWidgetItem(fun[2]))
-                k += 1
-            # tw.resizeColumnsToContents()
-            tw.resizeRowsToContents()
-            tables.append((tw, div))
+                tw.setItem(n, 2, QTableWidgetItem(dat["info"]))
 
-        # now the "all" list
-        k = 0
-        tw = QTableWidget()
-        tw.setColumnCount(3)
-        tw.verticalHeader().hide()
-        tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
-        tw.setAlternatingRowColors(True)
-        tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        tw.setSortingEnabled(True)
-        for div in self.keyTypes:
-            for fun in self.keyTypes[div]:
-                tw.insertRow(k)
-                tw.setItem(k, 0, QTableWidgetItem(fun[0]))
-                tw.setItem(
-                    k,
-                    1,
-                    QTableWidgetItem(
-                        ", ".join(list(map(lambda x: "{}".format(x), fun[1])))
-                    ),
-                )
-                if len(fun) == 3:
-                    tw.setItem(k, 2, QTableWidgetItem(fun[2]))
-                k += 1
-        tw.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        tw.setWordWrap(True)
-        # tw.resizeColumnsToContents()
-        tw.resizeRowsToContents()
-        tables.append((tw, "All"))
+        for k, tw in tables.items():
+            tw.setSortingEnabled(True)
+            tw.setWordWrap(True)
+            tw.resizeRowsToContents()
+
         return tables
 
 
