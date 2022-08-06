@@ -22,11 +22,13 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+import plom
 import plom.client.help_img
 
 
 class KeyHelp(QDialog):
-    keydata = toml.load("/home/cbm/src/plom/plom.git/plom/client/default_keys.toml")
+    # TODO: I think plom.client would be better, put can't get it to work
+    keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
 
     def __init__(self, parent=None):
         super().__init__()
