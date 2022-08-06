@@ -76,19 +76,19 @@ keys = [ "?",]
 categories = [ "General",]
 info = "Show this window."
 
-["main menu"]
+["main-menu"]
 human = "Main menu"
 keys = [ "F10",]
 categories = [ "General",]
 info = "Open the main menu"
 
-["end text edit"]
+["end-text-edit"]
 human = "End text edit"
 keys = [ "shift-enter", "shift-return",]
 categories = [ "Text",]
 info = "End the current text-edit and run latex if the text starts with \"TEX:\""
 
-["escape text edit"]
+["escape-text-edit"]
 human = "Escape text edit"
 keys = [ "esc",]
 categories = [ "Text",]
@@ -100,7 +100,7 @@ keys = [ "space",]
 categories = [ "View",]
 info = "Moves through the current view, down and then right."
 
-["pan-through (slowly)"]
+["pan-through-slowly"]
 human = "Pan-through (slowly)"
 keys = [ "ctrl-space",]
 categories = [ "View",]
@@ -112,25 +112,25 @@ keys = [ "shift-space",]
 categories = [ "View",]
 info = "Moves back through the current view, up and then left."
 
-["pan-back (slowly)"]
+["pan-back-slowly"]
 human = "Pan-back (slowly)"
 keys = [ "ctrl-shift-space",]
 categories = [ "View",]
 info = "Moves slowly back through the current view, up and then left."
 
-["show whole paper"]
+["show-whole-paper"]
 human = "Show whole paper"
 keys = [ "F1", "Fn-F1",]
 categories = [ "View",]
 info = "Opens a window to display all the pages of the current test being annotated (except the ID-page)."
 
-["toggle maximize window"]
+["toggle-maximize-window"]
 human = "Toggle maximize window"
 keys = [ "\\",]
 categories = [ "View",]
 info = "Toggles the window size to and from maximised."
 
-["toggle wide-narrow"]
+["toggle-wide-narrow"]
 human = "Toggle wide-narrow"
 keys = [ "home",]
 categories = [ "View",]
