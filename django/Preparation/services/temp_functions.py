@@ -17,6 +17,9 @@ def how_many_test_versions_uploaded():
     return 1
 
 
+def list_of_uploaded_test_sources():
+    return [{'version':1}, {'version':2}, {'version':3}]
+
 # functions to govern which steps are available to the user
 
 

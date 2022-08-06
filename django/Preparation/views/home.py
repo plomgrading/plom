@@ -6,7 +6,7 @@ from django.views import View
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from Preparation.temp_functions import (
+from Preparation.services.temp_functions import (
     is_there_a_valid_spec,
     can_I_prename,
     can_I_upload_source_tests,
