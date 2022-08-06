@@ -10,6 +10,7 @@ from PyQt5.QtGui import QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
+    QDialogButtonBox,
     QGraphicsScene,
     QGraphicsView,
     QHeaderView,
@@ -60,11 +61,10 @@ class KeyHelp(QDialog):
                 w = tw
             tabs.addTab(w, label)
 
-        # TODO: some DialogButtonBar or something here
-        cb = QPushButton("&Close")
-        cb.clicked.connect(self.accept)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons.accepted.connect(self.accept)
         vb.addWidget(tabs)
-        vb.addWidget(cb)
+        vb.addWidget(buttons)
         self.setLayout(vb)
         self.setMinimumSize(QSize(650, 400))
 
