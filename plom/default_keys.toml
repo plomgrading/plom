@@ -60,13 +60,13 @@ info = "Click and drag on an object to move it."
 
 [cancel]
 human = "Cancel"
-keys = [ "ctrl-c",]
+keys = [ "ctrl+c",]
 categories = [ "General",]
 info = "Cancel the current annotations and return to the marker-window"
 
-["save and next"]
-human = "Save and next"
-keys = [ "alt-enter", "alt-return", "ctrl-n", "ctrl-b",]
+["next-paper"]
+human = "Save and next paper"
+keys = [ "ctrl+n", "ctrl+b", "alt+enter", "alt+return",]
 categories = [ "General",]
 info = "Save the current annotations and move on to next paper."
 

@@ -18,6 +18,7 @@ import os
 import re
 from textwrap import dedent
 
+import toml
 from PyQt5.QtCore import (
     Qt,
     QTimer,
@@ -228,11 +229,16 @@ class Annotator(QWidget):
 
     def buildHamburger(self):
         # TODO: use QAction, share with other UI, shortcut keys written once
+        # proof of concept single source of truth for default keys
+        keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
+
         m = QMenu()
-        m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
+        key = keydata["next-paper"]["keys"][0]
+        m.addAction(f"Next paper\t{key}", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
-        m.addAction("Close without saving\tctrl-c", self.close)
+        (key,) = keydata["cancel"]["keys"]
+        m.addAction(f"Close without saving\t{key}", self.close)
         m.addSeparator()
         m.addAction("Show previous paper(s)\tctrl-left", self.show_previous)
         m.addSeparator()
@@ -1103,18 +1109,16 @@ class Annotator(QWidget):
         self.setMainShortCuts()
         self.setMinorShortCuts()
 
-        # Now other misc shortcuts
-        # shortcuts for next paper
-        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
-        self.endShortCut.activated.connect(self.saveAndGetNext)
-        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
-        self.endShortCutb.activated.connect(self.saveAndGetNext)
-        self.endShortCutc = QShortcut(QKeySequence("Ctrl+n"), self)
-        self.endShortCutc.activated.connect(self.saveAndGetNext)
-        self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
-        self.endShortCutd.activated.connect(self.saveAndGetNext)
-        self.cancelShortCut = QShortcut(QKeySequence("Ctrl+c"), self)
-        self.cancelShortCut.activated.connect(self.close)
+        # proof of concept single source of truth for default keys
+        keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
+
+        for key in keydata["next-paper"]["keys"]:
+            sc = QShortcut(QKeySequence(key), self)
+            sc.activated.connect(self.saveAndGetNext)
+        # currently only one key, should we loop for future proofing?
+        (key,) = keydata["cancel"]["keys"]
+        sc = QShortcut(QKeySequence(key), self)
+        sc.activated.connect(self.close)
 
         # shortcuts for zoom-states
         self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
