@@ -3,6 +3,7 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 import importlib.resources as resources
+import logging
 
 import toml
 from PyQt5.QtCore import Qt, QBuffer, QByteArray
@@ -25,6 +26,9 @@ from PyQt5.QtWidgets import (
 
 import plom
 import plom.client.help_img
+
+
+log = logging.getLogger("keybindings")
 
 
 class KeyHelp(QDialog):
@@ -92,7 +96,7 @@ class KeyHelp(QDialog):
                 try:
                     tw = tables[cat]
                 except KeyError:
-                    print(f"action {a} is in category {cat} which is not in UI tables")
+                    log.info(f"action {a} is in category {cat} which is not in UI tables")
                     continue
                 n = tw.rowCount()
                 tw.insertRow(n)
