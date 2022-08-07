@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QDialogButtonBox,
+    QFrame,
     QGraphicsScene,
     QGraphicsView,
     QHeaderView,
@@ -52,13 +53,13 @@ class KeyHelp(QDialog):
             if label == "Rubrics":
                 w = QWidget()
                 wb = QVBoxLayout()
-                wb.addWidget(RubricNavPage(self.keydata))
+                wb.addWidget(RubricNavDiagram(self.keydata))
                 wb.addWidget(tw)
                 w.setLayout(wb)
             elif label == "Annotation":
                 w = QWidget()
                 wb = QVBoxLayout()
-                wb.addWidget(ToolNavPage(self.keydata))
+                wb.addWidget(ToolNavDiagram(self.keydata))
                 wb.addWidget(tw)
                 w.setLayout(wb)
             else:
@@ -114,12 +115,14 @@ class KeyHelp(QDialog):
         return tables
 
 
-class RubricNavPage(QWidget):
+class RubricNavDiagram(QFrame):
     def __init__(self, keydata):
         super().__init__()
+        # self.setFrameShape(QFrame.Panel)
         self.view = QGraphicsView()
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        # self.view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
@@ -129,6 +132,7 @@ class RubricNavPage(QWidget):
         )
 
         grid = QVBoxLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(self.view)
         self.setLayout(grid)
 
@@ -164,12 +168,14 @@ class RubricNavPage(QWidget):
         li.setPos(160, -10)
 
 
-class ToolNavPage(QWidget):
+class ToolNavDiagram(QFrame):
     def __init__(self, keydata):
         super().__init__()
+        # self.setFrameShape(QFrame.Panel)
         self.view = QGraphicsView()
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        # self.view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
@@ -179,6 +185,7 @@ class ToolNavPage(QWidget):
         )
 
         grid = QVBoxLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(self.view)
         self.setLayout(grid)
 
