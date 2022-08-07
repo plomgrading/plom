@@ -76,10 +76,10 @@ class KeyHelp(QDialog):
         else:
             f = self.list_of_keybindings[idx]["file"]
             if f is None:
-                log.error("Don't know what to do with that keymap, ignoring")
-                return
-            log.info("Loading keybindings from %s", f)
-            alt_keydata = toml.loads(resources.read_text(plom, f))
+                alt_keydata = {}
+            else:
+                log.info("Loading keybindings from %s", f)
+                alt_keydata = toml.loads(resources.read_text(plom, f))
             # loop over keys in altmap and push updates into copy of default
             self.keydata = deepcopy(self.default_keydata)
             for action, dat in alt_keydata.items():
