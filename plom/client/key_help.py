@@ -97,7 +97,9 @@ class KeyHelp(QDialog):
                 try:
                     tw = tables[cat]
                 except KeyError:
-                    log.info(f"action {a} is in category {cat} which is not in UI tables")
+                    log.info(
+                        f"action {a} is in category {cat} which is not in UI tables"
+                    )
                     continue
                 n = tw.rowCount()
                 tw.insertRow(n)
