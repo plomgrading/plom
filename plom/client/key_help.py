@@ -119,21 +119,21 @@ class RubricNavDiagram(QFrame):
     def __init__(self, keydata):
         super().__init__()
         # self.setFrameShape(QFrame.Panel)
-        self.view = QGraphicsView()
-        self.view.setRenderHint(QPainter.Antialiasing, True)
-        self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # self.view.setFrameShape(QFrame.NoFrame)
+        view = QGraphicsView()
+        view.setRenderHint(QPainter.Antialiasing, True)
+        view.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        # view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
-        self.view.setScene(self.scene)
-        self.view.fitInView(
+        view.setScene(self.scene)
+        view.fitInView(
             self.scene.sceneRect().adjusted(-40, -40, 40, 40), Qt.KeepAspectRatio
         )
 
         grid = QVBoxLayout()
         grid.setContentsMargins(0, 0, 0, 0)
-        grid.addWidget(self.view)
+        grid.addWidget(view)
         self.setLayout(grid)
 
     def put_stuff(self, action):
@@ -172,21 +172,21 @@ class ToolNavDiagram(QFrame):
     def __init__(self, keydata):
         super().__init__()
         # self.setFrameShape(QFrame.Panel)
-        self.view = QGraphicsView()
-        self.view.setRenderHint(QPainter.Antialiasing, True)
-        self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # self.view.setFrameShape(QFrame.NoFrame)
+        view = QGraphicsView()
+        view.setRenderHint(QPainter.Antialiasing, True)
+        view.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        # view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
-        self.view.setScene(self.scene)
-        self.view.fitInView(
+        view.setScene(self.scene)
+        view.fitInView(
             self.scene.sceneRect().adjusted(-40, -40, 40, 40), Qt.KeepAspectRatio
         )
 
         grid = QVBoxLayout()
         grid.setContentsMargins(0, 0, 0, 0)
-        grid.addWidget(self.view)
+        grid.addWidget(view)
         self.setLayout(grid)
 
     def put_stuff(self, keydata):
