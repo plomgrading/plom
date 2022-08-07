@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
+from copy import deepcopy
 import importlib.resources as resources
 import logging
 
@@ -10,9 +11,10 @@ from PyQt5.QtCore import Qt, QBuffer, QByteArray
 from PyQt5.QtGui import QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QComboBox,
     QDialog,
-    QDialogButtonBox,
     QFrame,
+    QHBoxLayout,
     QGraphicsScene,
     QGraphicsView,
     QHeaderView,
@@ -34,20 +36,57 @@ log = logging.getLogger("keybindings")
 
 class KeyHelp(QDialog):
     # TODO: I think plom.client would be better, put can't get it to work
-    keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
+    default_keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
+    keydata = default_keydata
+
+    list_of_keybindings = [
+        {"human": 'Default ("esdf", touch-typist)', "file": "default_keys.toml"},
+        {"human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
+        {"human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
+        {"human": "Custom", "file": None},
+    ]
 
     def __init__(self, parent):
         super().__init__(parent)
         vb = QVBoxLayout()
-        vb.addWidget(
-            QLabel(
-                "<b>Caution:</b> For now, this dialog shows only the default keybindings"
-            )
-        )
         tabs = QTabWidget()
-
         tabs.addTab(ClickDragPage(), "Tips")
+        self.tabs = tabs
+        self.change_keybindings()
 
+        buttons = QHBoxLayout()
+        b = QPushButton("&Ok")
+        b.clicked.connect(self.accept)
+        keyLayoutCB = QComboBox()
+        keyLayoutCB.addItems([x["human"] for x in self.list_of_keybindings])
+        keyLayoutCB.currentIndexChanged.connect(self.update_keys)
+
+        buttons.addWidget(keyLayoutCB, 1)
+        buttons.addWidget(QLabel("(not yet functional)"))
+        buttons.addSpacing(64)
+        buttons.addStretch(2)
+        buttons.addWidget(b)
+        vb.addWidget(tabs)
+        vb.addLayout(buttons)
+        self.setLayout(vb)
+
+    def update_keys(self, idx):
+        if idx == 0:
+            self.keydata = self.default_keydata
+        else:
+            f = self.list_of_keybindings[idx]["file"]
+            if f is None:
+                log.error("Don't know what to do with that keymap, ignoring")
+                return
+            log.info("Loading keybindings from %s", f)
+            alt_keydata = toml.loads(resources.read_text(plom, f))
+            # loop over keys in altmap and push updates into copy of default
+            self.keydata = deepcopy(self.default_keydata)
+            for action, dat in alt_keydata.items():
+                self.keydata[action].update(dat)
+        self.change_keybindings()
+
+    def change_keybindings(self):
         accel = {
             k: v
             for k, v in zip(
@@ -55,6 +94,14 @@ class KeyHelp(QDialog):
                 ("&Rubrics", "&Annotation", "&General", "&Text", "&View", "A&ll"),
             )
         }
+        # Loop and delete the exists tabs (if any) but not the first "tips" tab
+        # Note: important to removeTab() or setCurrentIndex doesn't work
+        current_tab = self.tabs.currentIndex()
+        while self.tabs.count() > 1:
+            w = self.tabs.widget(1)
+            w.deleteLater()
+            self.tabs.removeTab(1)
+
         for label, tw in self.make_ui_tables().items():
             # special case the first 2 with graphics
             if label == "Rubrics":
@@ -71,13 +118,9 @@ class KeyHelp(QDialog):
                 w.setLayout(wb)
             else:
                 w = tw
-            tabs.addTab(w, accel[label])
-
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
-        buttons.accepted.connect(self.accept)
-        vb.addWidget(tabs)
-        vb.addWidget(buttons)
-        self.setLayout(vb)
+            self.tabs.addTab(w, accel[label])
+        # restore the current tab
+        self.tabs.setCurrentIndex(current_tab)
 
     def make_ui_tables(self):
         """Make some Qt tables with tables of key bindings.
