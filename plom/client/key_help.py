@@ -35,8 +35,8 @@ class KeyHelp(QDialog):
     # TODO: I think plom.client would be better, put can't get it to work
     keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
 
-    def __init__(self, parent=None):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         vb = QVBoxLayout()
         vb.addWidget(
             QLabel(

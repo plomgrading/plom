@@ -785,10 +785,8 @@ class Annotator(QWidget):
         self.scene.whichLineToDraw_next()
 
     def keyPopUp(self):
-        """Sets KeyPress shortcuts."""
-        kp = KeyHelp()
-        # Pop it up.
-        kp.exec()
+        """View help and keyboard shortcuts, eventually edit them."""
+        KeyHelp(self).exec()
 
     def setViewAndScene(self):
         """
