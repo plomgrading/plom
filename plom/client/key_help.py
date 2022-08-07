@@ -5,7 +5,7 @@
 import importlib.resources as resources
 
 import toml
-from PyQt5.QtCore import Qt, QBuffer, QByteArray, QSize
+from PyQt5.QtCore import Qt, QBuffer, QByteArray
 from PyQt5.QtGui import QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -66,7 +66,6 @@ class KeyHelp(QDialog):
         vb.addWidget(tabs)
         vb.addWidget(buttons)
         self.setLayout(vb)
-        self.setMinimumSize(QSize(650, 400))
 
     def make_ui_tables(self):
         """Make some Qt tables with tables of key bindings.
