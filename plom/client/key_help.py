@@ -88,7 +88,7 @@ class KeyHelp(QDialog):
             tables[div] = tw
         # loop over all the keys and insert each key to the appropriate table(s)
         for a, dat in self.keydata.items():
-            for cat in dat["categories"]:
+            for cat in set(dat["categories"]).union(("All",)):
                 try:
                     tw = tables[cat]
                 except KeyError:
