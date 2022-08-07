@@ -48,6 +48,13 @@ class KeyHelp(QDialog):
 
         tabs.addTab(ClickDragPage(), "Tips")
 
+        accel = {
+            k: v
+            for k, v in zip(
+                ("Rubrics", "Annotation", "General", "Text", "View", "All"),
+                ("&Rubrics", "&Annotation", "&General", "&Text", "&View", "A&ll"),
+            )
+        }
         for label, tw in self.make_ui_tables().items():
             # special case the first 2 with graphics
             if label == "Rubrics":
@@ -64,7 +71,7 @@ class KeyHelp(QDialog):
                 w.setLayout(wb)
             else:
                 w = tw
-            tabs.addTab(w, label)
+            tabs.addTab(w, accel[label])
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         buttons.accepted.connect(self.accept)
