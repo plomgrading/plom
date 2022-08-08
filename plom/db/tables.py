@@ -15,26 +15,27 @@ class BaseModel(pw.Model):
 
 
 class User(BaseModel):
+    # TODO - should this be short - if so we need to check length elsewhere in code.
     name = pw.CharField(unique=True)
     enabled = pw.BooleanField(default=True)
-    password = pw.CharField(null=True)  # hash of password for comparison
-    token = pw.CharField(null=True)  # authentication token
+    password = pw.CharField(null=True)  # hash of password for comparison - fixed length
+    token = pw.CharField(null=True)  # authentication token - fixed length
     last_activity = pw.DateTimeField(null=False)
-    last_action = pw.CharField(null=False)
+    last_action = pw.CharField(null=False)  # System generated string, not long
 
 
 class Bundle(BaseModel):
-    name = pw.CharField(unique=True, null=True)  # unique names please
-    md5sum = pw.CharField(null=True)  # to check for duplications
+    name = pw.TextField(unique=True, null=True)  # unique names please - can be long
+    md5sum = pw.CharField(null=True)  # to check for duplications - fixed length
 
 
 class Image(BaseModel):
     bundle = pw.ForeignKeyField(Bundle, backref="images")
-    original_name = pw.CharField(null=True)  # can be empty.
+    original_name = pw.TextField(null=True)  # can be empty - can be long
     # the order of the image within its bundle
     bundle_order = pw.IntegerField(null=True)
-    file_name = pw.CharField(null=True)
-    md5sum = pw.CharField(null=True)  # to check for duplications
+    file_name = pw.TextField(null=True)  # can be long
+    md5sum = pw.CharField(null=True)  # to check for duplications - fixed length
     rotation = pw.IntegerField(null=False, default=0)
 
 
@@ -49,8 +50,9 @@ class Test(BaseModel):
 
 class Group(BaseModel):
     test = pw.ForeignKeyField(Test, backref="groups")
-    gid = pw.CharField(unique=True)  # must be unique
-    group_type = pw.CharField()  # to distinguish between ID, DNM, and Mark groups
+    gid = pw.CharField(unique=True)  # must be unique - is short
+    # short string to distinguish between ID, DNM, and Mark groups
+    group_type = pw.CharField()
     queue_position = pw.IntegerField(unique=True, null=False)
     scanned = pw.BooleanField(default=False)  # should get all its tpages
 
@@ -59,19 +61,19 @@ class Group(BaseModel):
 # and that is should be an arbitrary string.  To be sorted out later.
 class IDPrediction(BaseModel):
     test = pw.ForeignKeyField(Test, backref="idpredictions")
-    student_id = pw.CharField(unique=True, null=True)
+    student_id = pw.CharField(unique=True, null=True)  # short, no arbitrary length ids
     user = pw.ForeignKeyField(User, backref="idpredictions", null=True)
-    predictor = pw.CharField(null=False)
+    predictor = pw.CharField(null=False)  # is short - system generated.
     certainty = pw.DoubleField(null=False, default=0.0)
 
 
 class IDGroup(BaseModel):
     test = pw.ForeignKeyField(Test, backref="idgroups")
     group = pw.ForeignKeyField(Group, backref="idgroups")
-    student_id = pw.CharField(unique=True, null=True)
-    student_name = pw.CharField(null=True)
+    student_id = pw.CharField(unique=True, null=True)  # short, no arbitrary length ids
+    student_name = pw.TextField(null=True)
     user = pw.ForeignKeyField(User, backref="idgroups", null=True)
-    status = pw.CharField(default="")
+    status = pw.CharField(default="")  # system generated - is short
     time = pw.DateTimeField(null=False)
     identified = pw.BooleanField(default=False)
 
@@ -87,7 +89,7 @@ class QGroup(BaseModel):
     question = pw.IntegerField(null=False)
     version = pw.IntegerField(null=False, default=1)
     user = pw.ForeignKeyField(User, backref="qgroups", null=True)
-    status = pw.CharField(default="")
+    status = pw.CharField(default="")  # system generated - is short
     time = pw.DateTimeField(null=False)
     marked = pw.BooleanField(default=False)
     # fullmark = pw.IntegerField(null=False)
@@ -133,7 +135,7 @@ class CollidingPage(BaseModel):
 
 class DiscardedPage(BaseModel):
     image = pw.ForeignKeyField(Image, backref="discards")
-    reason = pw.CharField(null=True)
+    reason = pw.TextField(null=True)  # Might be long
 
 
 class IDPage(BaseModel):
@@ -151,8 +153,8 @@ class DNMPage(BaseModel):
 
 
 class AImage(BaseModel):  # a class for containing annotation-images
-    file_name = pw.CharField(null=True)
-    md5sum = pw.CharField(null=True)  # to check for duplications
+    file_name = pw.TextField(null=True)  # might be long
+    md5sum = pw.CharField(null=True)  # to check for duplications - is fixed length
 
 
 class Annotation(BaseModel):
@@ -160,14 +162,14 @@ class Annotation(BaseModel):
     user = pw.ForeignKeyField(User, backref="annotations", null=True)
     aimage = pw.ForeignKeyField(AImage, backref="annotations", null=True)
     edition = pw.IntegerField(null=True)
-    integrity_check = pw.CharField(null=True)  # random uuid
+    integrity_check = pw.CharField(null=True)  # random uuid - is fixed length
     # add this for when we update underlying pages of
     # a test
     outdated = pw.BooleanField(default=False)
     #
     # we need to order the annotations - want the latest.
-    plom_file = pw.CharField(null=True)
     plom_json = pw.TextField(null=True)
+    plom_file = pw.TextField(null=True)  # might be long
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=False)
@@ -181,18 +183,18 @@ class APage(BaseModel):
 
 class Rubric(BaseModel):
     # unique key - user-generated have 12 digits, HAL uses 1XXX.
-    key = pw.CharField(unique=True, null=False)
-    kind = pw.CharField(null=False)  # abs, neut, delt, relative
-    delta = pw.CharField(null=False)
-    text = pw.CharField(null=False)
+    key = pw.CharField(unique=True, null=False)  # system generated + short
+    kind = pw.CharField(null=False)  # abs, neut, delt, relative - is short
+    delta = pw.CharField(null=False)  # is short
+    text = pw.TextField(null=False)  # can be long
     question = pw.IntegerField(null=False)
     user = pw.ForeignKeyField(User, backref="rubrics", null=False)
     revision = pw.IntegerField(null=False, default=0)
     count = pw.IntegerField(null=False, default=0)
     creationTime = pw.DateTimeField(null=False)
     modificationTime = pw.DateTimeField(null=False)
-    tags = pw.CharField(default="")
-    meta = pw.CharField(default="")
+    tags = pw.TextField(default="")  # can be long
+    meta = pw.TextField(default="")  # can be long
 
 
 class ARLink(BaseModel):
@@ -202,8 +204,8 @@ class ARLink(BaseModel):
 
 class Tag(BaseModel):
     # unique key - user-generated have 10 digits
-    key = pw.CharField(unique=True, null=False)
-    text = pw.CharField(null=False)
+    key = pw.CharField(unique=True, null=False)  # is short
+    text = pw.TextField(null=False)  # can be long
     creationTime = pw.DateTimeField(null=False)
     user = pw.ForeignKeyField(User, backref="tags", null=False)
 

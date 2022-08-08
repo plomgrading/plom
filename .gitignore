@@ -152,5 +152,8 @@ model_cache/
 # Poetry lockfile
 poetry.lock
 
+# editor stuff
+.idea/
+
 # Course testing directories
 plom/canvas/**/
