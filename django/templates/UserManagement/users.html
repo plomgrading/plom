@@ -31,7 +31,9 @@
         {% else %}
         Not Active
         {% endif %}
-            <input type="submit" class="btn btn-info" value="showProgress" name="showProgress">
+            <button type="button" class="btn btn-info" name="showProgress" value="showProgess">
+                <a href="progress/{{user.username}}" class="nav-link" target="_blank">Show Progress</a>
+            </button>
         {% if user.is_active %}
             <input type="submit" class="btn btn-danger" value="Disable" name="changeStatus">
         {% else %}

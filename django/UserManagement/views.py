@@ -61,4 +61,16 @@ class UserPage(LoginRequiredMixin, GroupRequiredMixin, View):
         return redirect('/users')
 
 
+class ProgressPage(LoginRequiredMixin, GroupRequiredMixin, View):
+    progress_page = 'UserManagement/progress.html'
+    group_required = [u"manager"]
+    navbar_colour = '#AD9CFF'
 
+    def get(self, request, username):
+        users = User.objects.all()
+        context = {'navbar_colour': ProgressPage.navbar_colour, 'user_group':ProgressPage.group_required[0], 'username': username}
+        return render(request, self.progress_page, context)
+
+    def post(self, request, username):
+        user_to_change = User.objects.get_by_natural_key(username)
+        return render(request, self.progress_page, username)

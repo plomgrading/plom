@@ -39,6 +39,8 @@ class OnlineNowMiddleware(MiddlewareMixin):
             if uid in online_now_ids:
                 online_now_ids.remove(uid)
             online_now_ids.append(uid)
+            # If the total number of online users is greater than 60,
+            # we will force to logout some users
             if len(online_now_ids) > ONLINE_MAX:
                 del online_now_ids[0]
 
