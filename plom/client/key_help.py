@@ -35,30 +35,30 @@ log = logging.getLogger("keybindings")
 
 
 class KeyHelp(QDialog):
-    # TODO: I think plom.client would be better, put can't get it to work
-    default_keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
-    keydata = default_keydata
+    def __init__(self, parent, *, prev_keymap_idx=0):
+        """Construct the KeyHelp dialog.
 
-    list_of_keybindings = [
-        {"human": 'Default ("esdf", touch-typist)', "file": "default_keys.toml"},
-        {"human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
-        {"human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
-        {"human": "Custom", "file": None},
-    ]
+        Args:
+            parent (QWidget):
 
-    def __init__(self, parent):
+        Keyword args:
+            prev_keymap_idx (int): which keymap to initially display.
+        """
         super().__init__(parent)
         vb = QVBoxLayout()
         tabs = QTabWidget()
         tabs.addTab(ClickDragPage(), "Tips")
+
+        self.default_keydata, self.keybindings = self.load_keymaps()
         self.tabs = tabs
-        self.change_keybindings()
+        self.update_keys(prev_keymap_idx)
 
         buttons = QHBoxLayout()
         b = QPushButton("&Ok")
         b.clicked.connect(self.accept)
         keyLayoutCB = QComboBox()
-        keyLayoutCB.addItems([x["human"] for x in self.list_of_keybindings])
+        keyLayoutCB.addItems([x["human"] for x in self.keybindings])
+        keyLayoutCB.setCurrentIndex(prev_keymap_idx)
         keyLayoutCB.currentIndexChanged.connect(self.update_keys)
 
         buttons.addWidget(keyLayoutCB, 1)
@@ -70,20 +70,35 @@ class KeyHelp(QDialog):
         vb.addLayout(buttons)
         self.setLayout(vb)
 
-    def update_keys(self, idx):
-        if idx == 0:
-            self.keydata = self.default_keydata
-        else:
-            f = self.list_of_keybindings[idx]["file"]
+    def load_keymaps(self):
+        # TODO: I think plom.client would be better, put can't get it to work
+        f = "default_keys.toml"
+        log.info("Loading keybindings from %s", f)
+        default_keydata = toml.loads(resources.read_text(plom, f))
+
+        keybindings = [
+            {"human": 'Default ("esdf", touch-typist)', "file": None},
+            {"human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
+            {"human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
+            {"human": "Custom", "file": None},
+        ]
+
+        for keymap in keybindings:
+            f = keymap["file"]
             if f is None:
-                alt_keydata = {}
+                overlay = {}
             else:
                 log.info("Loading keybindings from %s", f)
-                alt_keydata = toml.loads(resources.read_text(plom, f))
-            # loop over keys in altmap and push updates into copy of default
-            self.keydata = deepcopy(self.default_keydata)
-            for action, dat in alt_keydata.items():
-                self.keydata[action].update(dat)
+                overlay = toml.loads(resources.read_text(plom, f))
+            keymap["overlay"] = overlay
+        return default_keydata, keybindings
+
+    def update_keys(self, idx):
+        overlay = self.keybindings[idx]["overlay"]
+        # loop over keys in overlay map and push updates into copy of default
+        self.keydata = deepcopy(self.default_keydata)
+        for action, dat in overlay.items():
+            self.keydata[action].update(dat)
         self.change_keybindings()
 
     def change_keybindings(self):
