@@ -86,7 +86,6 @@ class Home(LoginRequiredMixin, View):
     login_url = 'login/'
     redirect_field_name = 'login'
     home_page = 'Authentication/home.html'
-    test = 'Profile/profile.html'
     navbar_colour = {'admin': '#808080',
                      'manager': '#AD9CFF',
                      'marker': '#FF434B',
@@ -104,7 +103,7 @@ class Home(LoginRequiredMixin, View):
             context = {'navbar_colour': colour, 'user_group': user}
             return render(request, self.home_page, context)
         context = {'navbar_colour': colour, 'user_group': user}
-        return render(request, self.test, context, status=200)
+        return render(request, self.home_page, context, status=200)
 
 
 class LoginView(View):
