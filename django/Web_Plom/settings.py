@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # 'Classlist', # deprecate this in favour of stuff in preparation
     'Preparation',
     'TestCreator',
+    'Profile',
 ]
 
 MIDDLEWARE = [
