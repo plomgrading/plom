@@ -1,0 +1,57 @@
+{% extends "base/base.html" %}
+{% block page_heading %}Manage prenaming and classlist{% endblock %}
+{% block main_content %}
+  <div class="d-grid gap-2">
+    <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
+    <div class="card">
+      <div class="card-body">
+	{% if prenaming_enabled %}
+        <h4 class="card-title">
+	  Prenaming &mdash;  is enabled
+        </h4>
+        <div class="card-text">
+	  <button class="btn btn-warning"
+		  hx-delete="."
+		  >disable prenaming</button>
+	</div>
+	{% else %}
+
+        <h4 class="card-title">
+	  Prenaming &mdash;  is not enabled
+        </h4>
+        <div class="card-text">
+	  <button class="btn btn-danger"
+		  hx-post="."
+		  >enable prenaming</button> &mdash; requires classlist with <q>paper_number</q> column.
+	</div>
+	{% endif %}
+      </div>      
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">
+	  Classlist &mdash;
+	  {% if prenaming_enabled %}
+	  required  <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	  {% else %}
+	  optional
+	  {% endif %}
+        </h4>
+        <div class="card-text">
+          <form enctype="multipart/form-data"
+                id="form"
+                method="post"
+                action="/preparation/test_source/prename/classlist">
+            {% csrf_token %}
+            <div>
+              <input type="file" accepts=".csv" name="classlistcsv" required/>
+              <button class="btn btn-primary" type="submit">upload</button>
+            </div>
+          </form>
+	</div>
+      </div>
+    </div>
+
+  </div>
+{% endblock %}
