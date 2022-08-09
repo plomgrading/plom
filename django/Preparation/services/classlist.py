@@ -1,7 +1,7 @@
 from django.core.files import File
 from django.db import transaction
 
-from Preparation.models import PrenameClasslistCSV, PrenameStudent
+from Preparation.models import StagingClasslistCSV, StagingStudent
 
 import csv
 import logging
@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 log = logging.getLogger("ClasslistService")
 
 
-class PrenameClasslistCSVService:
+class StagingClasslistCSVService:
     def take_classlist_from_upload(self, in_memory_file):
         from plom.create.classlistValidator import PlomClasslistValidator
 
@@ -30,7 +30,7 @@ class PrenameClasslistCSVService:
 
         with transaction.atomic():
             dj_file = File(in_memory_file, name="classlist.csv")
-            cl_obj = PrenameClasslistCSV(
+            cl_obj = StagingClasslistCSV(
                 valid=success, csv_file=dj_file, warnings_errors_list=werr
             )
             cl_obj.save()
@@ -39,43 +39,55 @@ class PrenameClasslistCSVService:
 
     @transaction.atomic()
     def is_there_a_classlist(self):
-        return PrenameClasslistCSV.objects.exists()
+        return StagingClasslistCSV.objects.exists()
     
     @transaction.atomic()
     def get_classlist_csv_filepath(self):
-        return PrenameClasslistCSV.objects.get().csv_file.path
+        return StagingClasslistCSV.objects.get().csv_file.path
 
     @transaction.atomic()
     def delete_classlist_csv(self):
         # explicitly delete the file, since it is not done automagically by django
         # TODO - make this a bit cleaner.
-        if PrenameClasslistCSV.objects.exists():
-            Path(PrenameClasslistCSV.objects.get() .csv_file.path).unlink()
-            PrenameClasslistCSV.objects.filter().delete()
+        if StagingClasslistCSV.objects.exists():
+            Path(StagingClasslistCSV.objects.get() .csv_file.path).unlink()
+            StagingClasslistCSV.objects.filter().delete()
 
 
-class PrenameStudentService:
+class StagingStudentService:
     @transaction.atomic
     def how_many_students(self):
-        return PrenameStudent.objects.all().count()
+        return StagingStudent.objects.all().count()
 
     @transaction.atomic
     def are_there_students(self):
-        return PrenameStudent.objects.exists()
+        return StagingStudent.objects.exists()
     
     @transaction.atomic()
     def get_students(self):
         return list(
-            PrenameStudent.objects.all().values(
+            StagingStudent.objects.all().values(
                 "student_id", "student_name", "paper_number"
             )
         )
 
+    def get_students_as_csv_string(self, prename=False):
+        # Write the data from the staging-students table into a string in simple CSV format
+        # make sure header and name-column are quoted
+        # and make sure the paper_number column is -1 if not pre-naming.
+        txt = '"id", "name", "paper_number"\n'
+        for row in self.get_students():
+            if prename and row['paper_number']:
+                txt += f"{row['student_id']}, \"{row['student_name']}\", {row['paper_number']}\n"
+            else:
+                txt += f"{row['student_id']}, \"{row['student_name']}\", -1\n"
+        return txt
+            
     @transaction.atomic()
     def add_student(self, student_id, student_name, paper_number=None):
         # will raise an integrity error if id not unique
 
-        s_obj = PrenameStudent(student_id=student_id, student_name=student_name)
+        s_obj = StagingStudent(student_id=student_id, student_name=student_name)
         # set the paper_number if present
         if paper_number:
             s_obj.paper_number = paper_number
@@ -83,11 +95,11 @@ class PrenameStudentService:
 
     @transaction.atomic()
     def remove_all_students(self):
-        PrenameStudent.objects.all().delete()
+        StagingStudent.objects.all().delete()
 
     @transaction.atomic()
     def use_classlist_csv(self):
-        cl_obj = PrenameClasslistCSV.objects.get()
+        cl_obj = StagingClasslistCSV.objects.get()
         classlist_csv = cl_obj.csv_file.path
         with open(classlist_csv) as fh:
             csv_reader = csv.DictReader(fh, skipinitialspace=True)

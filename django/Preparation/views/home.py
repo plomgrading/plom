@@ -19,8 +19,7 @@ from Preparation.services.temp_functions import (
 from Preparation.services import (
     TestSourceService,
     PrenameSettingService,
-    PrenameClasslistCSVService,
-    PrenameStudentService,
+    StagingStudentService,
 )
 
 
@@ -30,7 +29,7 @@ class PreparationLandingView(View):
     def build_context(self):
         tss = TestSourceService()
         pss = PrenameSettingService()
-        pstd = PrenameStudentService()
+        sss = StagingStudentService()
         return {
             "valid_spec": is_there_a_valid_spec(),
             "test_versions": how_many_test_versions(),
@@ -40,7 +39,7 @@ class PreparationLandingView(View):
             "can_prename": can_I_prename(),
             "prename_enabled": pss.get_prenaming_setting(),
             "can_qvmap": can_I_qvmap(),
-            "std_list_present": pstd.are_there_students()
+            "student_list_present": sss.are_there_students()
         }
 
     def get(self, request):

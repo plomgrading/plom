@@ -1,3 +1,3 @@
 from .test_source_service import TestSourceService
 from .prenaming_service import PrenameSettingService
-from .classlist import PrenameClasslistCSVService, PrenameStudentService
+from .classlist import StagingClasslistCSVService, StagingStudentService

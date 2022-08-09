@@ -9,11 +9,11 @@
 
   {% if prenaming %}
   <div class="alert alert-warning">
-    Prenaming is enabled, so classlist is required
+    Prenaming is enabled, so a classlist is required
   </div>
   {% endif %}
   
-{% if std_list_present %}
+{% if student_list_present %}
 <div class="alert alert-primary">
   <span>
     Classlist present
@@ -25,7 +25,13 @@
   <thead>
     <th>Student ID</th>
     <th>Student Name</th>
-    <th>Paper-number (if assigned)</th>
+    <th>Paper-number
+      {% if prenaming %}
+      (used if assigned &mdash; prenaming enabled)
+      {% else %}
+      (ignored &mdash; prenaming disabled)
+      {% endif %}
+    </th>
   </thead>
   {% for row in student_list %}
   <tr>

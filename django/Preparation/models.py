@@ -42,7 +42,8 @@ class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
 
-class PrenameClasslistCSV(SingletonBaseModel):
+class StagingClasslistCSV(SingletonBaseModel):
+    """A temporary holder for the classlist csv for the purposes of preparing things."""
     # TODO - set a better upload path
     csv_file = models.FileField(upload_to="sources/")
     valid = models.BooleanField(default=False, null=False)
@@ -50,12 +51,13 @@ class PrenameClasslistCSV(SingletonBaseModel):
 
 
 # ---------------------------------
-# Make a table for students - this will likely be deprecated later
+# Make a table for students - for the purposes of preparing things. Hence "staging" prefix.
 
 
-class PrenameStudent(models.Model):
-    """Table to store information about students who have taken this
-    assessment. Note, name is stored as a single field.
+class StagingStudent(models.Model):
+    """Table to store information about students for the purposes of
+    preparing things for potential prenaming. Note, name is stored as a
+    single field.
 
     student_id (str): The students id-number or id-string. Must be unique.
     student_name (str): The name of the student (as a single text field)

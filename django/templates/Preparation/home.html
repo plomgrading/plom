@@ -90,14 +90,14 @@
 	  {% if prename_enabled %}
             <h5 class="card-title">
               Classlist  &mdash; required
-	      {% if std_list_present %}
+	      {% if student_list_present %}
 	      &mdash; and present <i class="bi bi-check-circle text-success"></i>
 	      {% else %}
 	      <i class="bi bi-exclamation-diamond-fill text-warning"></i>
 	      {% endif %}
             </h5>
 
-	    {% if not std_list_present %}
+	    {% if not student_list_present %}
           <p class="card-text">Please upload a classlist</p>
 	  {% endif %}
 	  
@@ -105,11 +105,11 @@
           {% else %}
             <h5 class="card-title">
               Classlist  &mdash; optional
-	      {% if csv_present %}
+	      {% if student_list_present %}
 	      &mdash; and present <i class="bi bi-check-circle text-success"></i>
 	      {% endif %}
             </h5>
-	    {% if not csv_present %}
+	    {% if not student_list_present %}
           <p class="card-text">Do you want to upload a classlist? You can do this later since prenaming is not enabled</p>
 	  {% endif %}
             <a class="btn btn-primary" href="classlist/">Classlist management</a>    

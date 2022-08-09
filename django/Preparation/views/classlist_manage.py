@@ -1,36 +1,41 @@
 from braces.views import GroupRequiredMixin
 from django import forms
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import render
 from django.views import View
 
 from django_htmx.http import HttpResponseClientRedirect
 
-
-from Preparation.services import PrenameClasslistCSVService, PrenameStudentService, PrenameSettingService
+from Preparation.services import (
+    StagingClasslistCSVService,
+    StagingStudentService,
+    PrenameSettingService,
+)
 
 
 class ClasslistDownloadView(View):
     # group_required = [u"manager"]
     def get(self, request):
-        pcsv = PrenameClasslistCSVService()
-        csv_path = pcsv.get_classlist_csv_filepath()
-        return FileResponse(
-            open(csv_path, 'rb'),
-            as_attachment=True,
-            filename="classlist.csv",
-        )
+        # Old code for downloading the original file, but this is not so safe if user does weirdness.
+        # so deprecate this in favour of generating csv on the fly
+        # scsv = StagingClasslistCSVService()
+        # csv_path = scsv.get_classlist_csv_filepath()
+        # return FileResponse( open(csv_path, "rb"), as_attachment=True, filename="classlist.csv")
+        pss = PrenameSettingService()
+        sss = StagingStudentService()
+        csv_txt = sss.get_students_as_csv_string(prename=pss.get_prenaming_setting())
+        return HttpResponse(csv_txt, content_type="text/plain")
 
 
 class ClasslistDeleteView(View):
     # group_required = [u"manager"]
     def delete(self, request):
         # delete both the csvfile and the classlist of students
-        pss = PrenameStudentService()
-        pss.remove_all_students()
-        
-        pcsv = PrenameClasslistCSVService()
-        pcsv.delete_classlist_csv()
+        sss = StagingStudentService()
+        sss.remove_all_students()
+
+        scsv = StagingClasslistCSVService()
+        scsv.delete_classlist_csv()
         return HttpResponseClientRedirect(".")
 
 
@@ -38,13 +43,13 @@ class ClasslistView(View):
     # group_required = [u"manager"]
 
     def get(self, request):
-        pstd = PrenameStudentService()
+        sss = StagingStudentService()
         pss = PrenameSettingService()
-        
+
         context = {
-            "std_list_present": pstd.are_there_students(),
-            "student_list": pstd.get_students(),
-            "prenaming": pss.get_prenaming_setting()
+            "student_list_present": sss.are_there_students(),
+            "student_list": sss.get_students(),
+            "prenaming": pss.get_prenaming_setting(),
         }
         return render(request, "Preparation/classlist_manage.html", context)
 
@@ -52,20 +57,19 @@ class ClasslistView(View):
         if not request.FILES["classlist_csv"]:
             return HttpResponseClientRedirect(".")
 
-        pcsv = PrenameClasslistCSVService()
-        success, warn_err = pcsv.take_classlist_from_upload(
+        scsv = StagingClasslistCSVService()
+        success, warn_err = scsv.take_classlist_from_upload(
             request.FILES["classlist_csv"]
         )
         context = {"success": success, "warn_err": warn_err}
         return render(request, "Preparation/classlist_attempt.html", context)
 
     def delete(self, request):
-        pcsv = PrenameClasslistCSVService()
-        pcsv.delete_classlist_csv()
+        scsv = StagingClasslistCSVService()
+        scsv.delete_classlist_csv()
         return HttpResponseClientRedirect(".")
 
     def put(self, request):
-        pss = PrenameStudentService()
-        pss.use_classlist_csv()
+        sss = StagingStudentService()
+        sss.use_classlist_csv()
         return HttpResponseClientRedirect(".")
-
