@@ -61,6 +61,9 @@ class KeyHelp(QDialog):
         keyLayoutCB.setCurrentIndex(prev_keymap_idx)
         keyLayoutCB.currentIndexChanged.connect(self.update_keys)
 
+        # against my will, we have an instance variable so that the wrong
+        # technique can be used (temporarily!) to communicate with parent
+        self._keyLayoutCB = keyLayoutCB
         buttons.addWidget(keyLayoutCB, 1)
         buttons.addWidget(QLabel("(not yet functional)"))
         buttons.addSpacing(64)

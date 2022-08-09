@@ -50,7 +50,7 @@ from plom import __version__
 import plom.client.cursors
 import plom.client.icons
 from .rubric_list import RubricWidget
-from .key_wrangler import KeyWrangler, key_layouts
+from .key_wrangler import key_layouts
 
 # import the key-help popup window class
 from .key_help import KeyHelp
@@ -74,8 +74,6 @@ log = logging.getLogger("annotr")
 tipText = {
     "box": "Box: L = highlighted box, R/Shift = highlighted ellipse.",
     "rubric": "Rubric: L = paste rubric, R/Shift = labelled box",
-    "rubric up": "Rubric up: Select previous rubric in list",
-    "rubric down": "Rubric down: Select next rubric in list",
     "cross": "Cross: L = cross, M/Ctrl = ?-mark, R/Shift = checkmark.",
     "delete": "Delete: L = Delete object, L-drag = delete area.",
     "line": "Line: L = straight line, M/Ctrl = double-arrow, R/Shift = arrow.",
@@ -302,32 +300,6 @@ class Annotator(QWidget):
         m.addSeparator()
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
-        # key-binding submenu stuff
-        km = m.addMenu("Set major keys")
-        # to make these actions checkable, they need to belong to self.
-        kmg = QActionGroup(m)
-        for name in key_layouts:
-            setattr(self, "kb_{}_act".format(name), QAction("Use {} keys".format(name)))
-            getattr(self, "kb_{}_act".format(name)).setCheckable(True)
-            km.addAction(getattr(self, "kb_{}_act".format(name)))
-            kmg.addAction(getattr(self, "kb_{}_act".format(name)))
-        # TODO - get this inside the loop with correct lambda function scope hackery
-        self.kb_sdf_act.triggered.connect(lambda: self.setKeyBindingsToDefault("sdf"))
-        self.kb_sdf_french_act.triggered.connect(
-            lambda: self.setKeyBindingsToDefault("sdf_french")
-        )
-        self.kb_dvorak_act.triggered.connect(
-            lambda: self.setKeyBindingsToDefault("sdf_dvorak")
-        )
-        self.kb_asd_act.triggered.connect(lambda: self.setKeyBindingsToDefault("asd"))
-        self.kb_jkl_act.triggered.connect(lambda: self.setKeyBindingsToDefault("jkl"))
-
-        km.addSeparator()
-        self.kb_custom_act = QAction("Use custom keys")
-        self.kb_custom_act.setCheckable(True)
-        self.kb_custom_act.triggered.connect(self.setKeyBindings)
-        kmg.addAction(self.kb_custom_act)
-        km.addAction(self.kb_custom_act)
         m.addAction("About Plom", self.show_about_dialog)
         return m
 
@@ -786,7 +758,22 @@ class Annotator(QWidget):
 
     def keyPopUp(self):
         """View help and keyboard shortcuts, eventually edit them."""
-        KeyHelp(self).exec()
+        idx = getattr(self, "_keymap_idx", 0)
+        diag = KeyHelp(self, prev_keymap_idx=idx)
+        if diag.exec() == QDialog.Accepted:
+            # TODO: redo with dialog emitting signal, perhaps having apply, close, cancel interface?
+            idx = diag._keyLayoutCB.currentIndex()
+            # TODO: look forward to deleting this but but need to store the active keymap somewhere
+            self._keymap_idx = idx
+            # TODO: stupid hardcoded bullshit, also legacy data from key_wrangler
+            if idx == 0:
+                self.setKeyBindingsToDefault("sdf")
+            elif idx == 1:
+                self.setKeyBindingsToDefault("asd")
+            elif idx == 2:
+                self.setKeyBindingsToDefault("jkl")
+            else:
+                raise NotImplementedError("lazy devs")
 
     def setViewAndScene(self):
         """
@@ -1004,11 +991,6 @@ class Annotator(QWidget):
             # self.nameSC.setKey(keys[name])
             getattr(self, name + "SC").setKey(keys[name])
 
-    def setKeyBindings(self):
-        kw = KeyWrangler(self, self.keyBindings)
-        if kw.exec() == QDialog.Accepted:
-            self.changeMainShortCuts(kw.getKeyBindings())
-
     def setKeyBindingsToDefault(self, name):
         if name not in key_layouts:
             return
@@ -1020,7 +1002,7 @@ class Annotator(QWidget):
         if self.keyBindings is None:
             self.keyBindings = key_layouts["sdf"]
             # set the menu action item
-            self.kb_sdf_act.setChecked(True)
+            # self.kb_sdf_act.setChecked(True)
 
         # use sdf defaults unless saved
         if self.parentMarkerUI.annotatorSettings["tool_keys"] is None:
@@ -1033,7 +1015,7 @@ class Annotator(QWidget):
             ):
                 keys = self.parentMarkerUI.annotatorSettings["tool_keys"]
                 # TODO - this just clicks "custom" - might be better to detect if known binding.
-                self.kb_custom_act.setChecked(True)
+                # self.kb_custom_act.setChecked(True)
             else:  # not all there so use sdf-defaults
                 keys = self.keyBindings
 
