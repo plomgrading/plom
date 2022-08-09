@@ -114,13 +114,16 @@ def main():
                 f'Directory "{args.server_dir/f}" must not exist for this demo'
             )
 
-    init_cmd = f"plom-server init {args.server_dir}"
+    # Note: if you're reading this code, you can use `plom-server ...`
+    # where we use `python3 -m plom.server ...` and similarly for most
+    # other commands.
+    init_cmd = f"python3 -m plom.server init {args.server_dir}"
     if args.port:
         init_cmd += f" --port {args.port}"
     subprocess.check_call(split(init_cmd))
 
     with working_directory(args.server_dir):
-        subprocess.check_call(split("plom-server users --demo"))
+        subprocess.check_call(split("python3 -m plom.server users --demo"))
 
     background_server = PlomServer(basedir=args.server_dir)
 
@@ -141,24 +144,28 @@ def main():
     with working_directory(args.server_dir):
         if args.num_papers:
             subprocess.check_call(
-                split(f"plom-create new --demo --demo-num-papers {args.num_papers}")
+                split(
+                    f"python3 -m plom.create new --demo --demo-num-papers {args.num_papers}"
+                )
             )
         else:
-            subprocess.check_call(split("plom-create new --demo"))
-        subprocess.check_call(split("plom-create uploadspec demoSpec.toml"))
-    subprocess.check_call(split("plom-create class --demo"))
-    subprocess.check_call(split("plom-create rubric --demo"))
+            subprocess.check_call(split("python3 -m plom.create new --demo"))
+        subprocess.check_call(split("python3 -m plom.create uploadspec demoSpec.toml"))
+    subprocess.check_call(split("python3 -m plom.create class --demo"))
+    subprocess.check_call(split("python3 -m plom.create rubric --demo"))
     with working_directory(args.server_dir):
-        subprocess.check_call(split("plom-create make"))
+        subprocess.check_call(split("python3 -m plom.create make"))
     # extract solution images
     print("Extract solution images from pdfs")
     with working_directory(args.server_dir):
-        subprocess.check_call(split("plom-solutions extract solutionSpec.toml"))
+        subprocess.check_call(
+            split("python3 -m plom.solutions extract solutionSpec.toml")
+        )
 
     # upload solution images
     with working_directory(args.server_dir):
         print("Upload solutions to server")
-        subprocess.check_call(split("plom-solutions extract --upload"))
+        subprocess.check_call(split("python3 -m plom.solutions extract --upload"))
 
     print("Creating fake-scan data")
     with working_directory(args.server_dir):
@@ -177,8 +184,10 @@ def main():
                 "fake_scribbled_exams2.pdf",
                 "fake_scribbled_exams3.pdf",
             ):
-                subprocess.check_call(split(f"plom-scan process {opts} --demo {f}"))
-                subprocess.check_call(split(f"plom-scan upload -u {f}"))
+                subprocess.check_call(
+                    split(f"python3 -m plom.scan process {opts} --demo {f}")
+                )
+                subprocess.check_call(split(f"python3 -m plom.scan upload -u {f}"))
 
     assert background_server.process_is_running(), "has the server died?"
     assert background_server.ping_server(), "cannot ping server, something gone wrong?"
