@@ -423,7 +423,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
             which I have forgotten.
 
     Returns:
-        list: `[True, plom_file_data, annotation_image]` on success or
+        list: `[True, plom_file_data, plom_json , annotation_image]` on success or
         on error `[False, error_msg]`.  If the task is not yet
         annotated, the error will be ``"no_such_task"``.
     """
@@ -459,6 +459,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
     plom_data["user"] = aref.user.name
     plom_data["annotation_edition"] = aref.edition
     plom_data["annotation_reference"] = aref.id
+    plom_json = aref.plom_json;
     # Report any duplication in DB and plomfile (and keep DB version!)
     if plom_data["currentMark"] != aref.mark:
         log.warning("Plom file has wrong score, replacing")
@@ -480,7 +481,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
                 plom_data,
             )
             plom_data["base_images"][i]["md5"] = md5
-    return (True, plom_data, img_file)
+    return (True, plom_data, plom_json, img_file)
 
 
 def MgetWholePaper(self, test_number, question):
@@ -645,6 +646,7 @@ def MrevertTask(self, task):
         qref.user = None
         qref.marked = False
         qref.time = datetime.now(timezone.utc)
+
         qref.save()
         # set the test as unmarked.
         tref.marked = False
