@@ -43,13 +43,15 @@
             </div>
             <div class="row d-flex justify-content-left align-items-center h-100">
                 <div id="edit-user" class="col-md-12 col-xl-8" style="visibility: hidden;">
-                    <p>Username</p>
-                    <input type="email">
-                    <p>prefer name</p>
-                    <input type="text">
-                    <p>Email</p>
-                    <input type="email">
-                    <input type="submit">
+                    <form method="post">
+                        {% csrf_token %}
+                        <p>Prefer Name</p>
+                        {{ form.first_name }}
+                        <p>Email</p>
+                        {{ form.email }}
+                        <br>
+                        <button type="submit">Edit</button>
+                    </form>
                 </div>
             </div>
         </div>
