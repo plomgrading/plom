@@ -423,7 +423,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
             which I have forgotten.
 
     Returns:
-        list: `[True, plom_file_data, plom_json , annotation_image]` on success or
+        list: `[True, plom_file_data , annotation_image,  plom_json]` on success or
         on error `[False, error_msg]`.  If the task is not yet
         annotated, the error will be ``"no_such_task"``.
     """
@@ -456,10 +456,15 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
         img_file = aref.aimage.file_name
     with open(plom_file, "r") as f:
         plom_data = json.load(f)
+
+    plom_json = aref.plom_json
+    plom_data_old_shit = plom_data
+    plom_data = json.loads(plom_json)
+    assert plom_data_old_shit == plom_data
     plom_data["user"] = aref.user.name
     plom_data["annotation_edition"] = aref.edition
     plom_data["annotation_reference"] = aref.id
-    plom_json = aref.plom_json;
+
     # Report any duplication in DB and plomfile (and keep DB version!)
     if plom_data["currentMark"] != aref.mark:
         log.warning("Plom file has wrong score, replacing")
@@ -481,7 +486,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
                 plom_data,
             )
             plom_data["base_images"][i]["md5"] = md5
-    return (True, plom_data, plom_json, img_file)
+    return (True, plom_data, img_file, plom_json)
 
 
 def MgetWholePaper(self, test_number, question):
