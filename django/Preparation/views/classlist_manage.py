@@ -16,11 +16,6 @@ from Preparation.services import (
 class ClasslistDownloadView(View):
     # group_required = [u"manager"]
     def get(self, request):
-        # Old code for downloading the original file, but this is not so safe if user does weirdness.
-        # so deprecate this in favour of generating csv on the fly
-        # scsv = StagingClasslistCSVService()
-        # csv_path = scsv.get_classlist_csv_filepath()
-        # return FileResponse( open(csv_path, "rb"), as_attachment=True, filename="classlist.csv")
         pss = PrenameSettingService()
         sss = StagingStudentService()
         csv_txt = sss.get_students_as_csv_string(prename=pss.get_prenaming_setting())

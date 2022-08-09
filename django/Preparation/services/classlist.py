@@ -99,8 +99,8 @@ class StagingStudentService:
 
     @transaction.atomic()
     def use_classlist_csv(self):
-        cl_obj = StagingClasslistCSV.objects.get()
-        classlist_csv = cl_obj.csv_file.path
+        scsv = StagingClasslistCSVService()
+        classlist_csv = scsv.get_classlist_csv_filepath()
         with open(classlist_csv) as fh:
             csv_reader = csv.DictReader(fh, skipinitialspace=True)
             # make sure headers are lowercase
@@ -110,3 +110,6 @@ class StagingStudentService:
             # now we have lower case field names
             for row in csv_reader:
                 self.add_student(row["id"], row["name"], row["paper_number"])
+        # after used make sure the csv is deleted
+        scsv.delete_classlist_csv()
+        
