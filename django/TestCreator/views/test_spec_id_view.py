@@ -29,6 +29,7 @@ class TestSpecCreatorIDPage(BaseTestSpecFormPDFView):
                 services.set_id_page(idx)
 
         services.progress_set_id_page(True)
+        services.progress_set_validate_page(False)
 
         return super().form_valid(form)
 

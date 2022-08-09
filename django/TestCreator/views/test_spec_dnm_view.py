@@ -27,7 +27,7 @@ class TestSpecCreatorDNMPage(BaseTestSpecFormPDFView):
         services.set_do_not_mark_pages(dnm_idx)
 
         services.progress_set_dnm_page(True)
-
+        services.progress_set_validate_page(False)
 
         return super().form_valid(form)
 

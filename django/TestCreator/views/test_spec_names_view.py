@@ -34,6 +34,7 @@ class TestSpecCreatorNamesPage(BaseTestSpecFormView):
         services.set_num_versions(n_versions)
 
         services.progress_set_names(True)
+        services.progress_set_validate_page(False)
 
         return super().form_valid(form)
 

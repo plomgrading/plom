@@ -71,6 +71,7 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
         services.set_question_pages(question_ids, question_id)
 
         services.progress_set_question_detail_page(question_id-1, True)
+        services.progress_set_validate_page(False)
         
         return super().form_valid(form)
 

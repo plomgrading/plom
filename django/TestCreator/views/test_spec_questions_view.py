@@ -32,6 +32,8 @@ class TestSpecCreatorQuestionsPage(BaseTestSpecFormView):
             services.clear_questions()
             services.set_num_questions(form_data['questions'])
             services.progress_init_questions()
+
+        services.progress_set_validate_page(False)
         
         return super().form_valid(form)
 
