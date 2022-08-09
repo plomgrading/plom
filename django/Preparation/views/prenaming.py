@@ -1,19 +1,20 @@
 from braces.views import GroupRequiredMixin
-from django import forms
-from django.http import FileResponse
 from django.shortcuts import render
 from django.views import View
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from Preparation.services import PrenameSettingService
+from Preparation.services import PrenameSettingService, PrenameClasslistCSVService
+
 
 class PrenamingView(View):
     # group_required = [u"manager"]
     def build_context(self):
         pss = PrenameSettingService()
+        pcs = PrenameClasslistCSVService()
         return {
-            'prenaming_enabled': pss.get_prenaming_setting()
+            "prenaming_enabled": pss.get_prenaming_setting(),
+            "csv_exists": pcs.is_there_a_classlist(),
         }
 
     def get(self, request):

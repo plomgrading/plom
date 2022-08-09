@@ -65,19 +65,59 @@
         <div class="card-body">
           {% if can_prename %}
             <h5 class="card-title">
-              Prenaming and classlist 
+              Prenaming &mdash;
+	      {% if prename_enabled %}
+	      enabled <i class="bi bi-check-circle text-warning"></i>
+	      {% else %}
+	      disabled <i class="bi bi-dash-circle text-success"></i>
+	      {% endif %}
             </h5>
-            <p class="card-text">Do you want to prename your papers? Optional upload of classlist.</p>
-            <a class="btn btn-primary" href="prename/">Prenaming and classlist</a>
+            <p class="card-text">Do you want to prename your papers?</p>
+            <a class="btn btn-primary" href="prename/">Manage prenaming</a>
           {% else %}
             <h5 class="card-title">
               Prenaming and classlist  <i class="bi bi-caret-up-square-fill text-warning"></i>
             </h5>
-            <p class="card-text">You cannot prename or upload classlist until a test specification has been created</p>
+            <p class="card-text">You cannot prename a test specification has been created</p>
           {% endif %}
         </div>
       </div>
     </div>
+
+    <div>
+      <div class="card">
+        <div class="card-body">
+	  {% if prename_enabled %}
+            <h5 class="card-title">
+              Classlist  &mdash; required
+	      {% if std_list_present %}
+	      &mdash; and present <i class="bi bi-check-circle text-success"></i>
+	      {% else %}
+	      <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	      {% endif %}
+            </h5>
+
+	    {% if not std_list_present %}
+          <p class="card-text">Please upload a classlist</p>
+	  {% endif %}
+	  
+          <a class="btn btn-primary" href="classlist/">Classlist management</a>
+          {% else %}
+            <h5 class="card-title">
+              Classlist  &mdash; optional
+	      {% if csv_present %}
+	      &mdash; and present <i class="bi bi-check-circle text-success"></i>
+	      {% endif %}
+            </h5>
+	    {% if not csv_present %}
+          <p class="card-text">Do you want to upload a classlist? You can do this later since prenaming is not enabled</p>
+	  {% endif %}
+            <a class="btn btn-primary" href="classlist/">Classlist management</a>    
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
     <div>
       <div class="card">
         <div class="card-body">

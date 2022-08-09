@@ -16,7 +16,12 @@ from Preparation.services.temp_functions import (
     how_many_test_versions_uploaded,
 )
 
-from Preparation.services import TestSourceService
+from Preparation.services import (
+    TestSourceService,
+    PrenameSettingService,
+    PrenameClasslistCSVService,
+    PrenameStudentService,
+)
 
 
 # Create your views here.
@@ -24,6 +29,8 @@ class PreparationLandingView(View):
     # group_required = [u"manager"]
     def build_context(self):
         tss = TestSourceService()
+        pss = PrenameSettingService()
+        pstd = PrenameStudentService()
         return {
             "valid_spec": is_there_a_valid_spec(),
             "test_versions": how_many_test_versions(),
@@ -31,7 +38,9 @@ class PreparationLandingView(View):
             "can_upload_source_tests": can_I_upload_source_tests(),
             "all_source_tests_uploaded": tss.are_all_test_versions_uploaded(),
             "can_prename": can_I_prename(),
+            "prename_enabled": pss.get_prenaming_setting(),
             "can_qvmap": can_I_qvmap(),
+            "std_list_present": pstd.are_there_students()
         }
 
     def get(self, request):

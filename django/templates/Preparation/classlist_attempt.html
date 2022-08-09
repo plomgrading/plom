@@ -1,5 +1,7 @@
 {% extends "base/base.html" %}
 
+{% block page_heading %}Manage classlist{% endblock %}
+
 {% block main_content %}
 
 {% if success %}
@@ -10,14 +12,14 @@
   </span>
   <span>
   <button class="btn btn-primary"
-          hx-delete="/classlist"
+          hx-delete="."
           hx-target="body"
           hx-swap="outerHTML">
     discard (recommended)
   </button>
   
   <button class="btn btn-warning"
-          hx-put="/classlist/"
+          hx-put="."
           hx-confirm="There are warnings; are you sure you wish to proceed?"
           hx-target="body"
           hx-swap="outerHTML">
@@ -53,7 +55,7 @@
   </span>
   <span>
     <button class="btn btn-info"
-            hx-put="/classlist/"
+            hx-put="."
             hx-confirm="Are you sure?"
             hx-target="body"
             hx-swap="outerHTML">
@@ -61,7 +63,7 @@
     </button>
     
     <button class="btn btn-warning"
-            hx-delete="/classlist"
+            hx-delete="."
             hx-target="body"
             hx-swap="outerHTML">
       discard
@@ -74,10 +76,13 @@
 
 
 {% else %}
-<p>Upload failed</p>
+<div class="alert alert-danger">
+  Upload failed due to errors:
+</div>
+
 <span>
   <button class="btn btn-danger"
-          hx-delete="/classlist"
+          hx-delete="."
           hx-target="body"
           hx-swap="outerHTML">
     discard (and upload another)
