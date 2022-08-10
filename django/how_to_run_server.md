@@ -38,18 +38,27 @@ groups and add the super-user into the admin group.
 
 Note that if you accidentally do (2) before (1) then you can just run (2) again and it will skip the create-groups bit and just add the superuser to the admin group.
 
+**TODO** - Brennen update the name of creategroups command when you merge in any changes.
+
 ## Running the server
 
 1. To launch the server: `python3 manage.py runserver`
 
+Take note of the address that it tells you the website is running at.
+
+## Log into website as "super-user" (ie admin user)
+1. Open web-browser to "localhost:8000" or whatever the system reported in the "running the server" step above.
+2. Log in using the "super-user" name and password you generated above.
+3. You should be bounced to a **very** simple landing page with options in the left-hand column.
+
 ## Create a manager
-1. Still logged in as the admin, go to the homepage `<local_url>/` and click on "sign up manager"
+1. Still logged in as the admin (super-user), go to the homepage `<local_url>/` and click on "sign up manager"
 2. Fill out the form and copy the generated link
 3. Sign out from the admin account and follow the copied link to the manager password change form
 4. Once it's done, you should be redirected to the manager homepage
 
 
-# For testing
+# For testing (much to do here)
 
 ## Run inbuilt tests
 
