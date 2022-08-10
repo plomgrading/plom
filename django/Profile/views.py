@@ -26,7 +26,7 @@ class Profile(LoginRequiredMixin, View):
         if user in Profile.navbar_colour:
             colour = Profile.navbar_colour[user]
         else:
-            colour = '#FFFFFF'
+            colour = '#000000'
             context = {'form': form, 'navbar_colour': colour, 'user_group': user,
                        'email': request.user.email}
             return render(request, self.profile_page, context)
@@ -44,6 +44,6 @@ class Profile(LoginRequiredMixin, View):
         form = EditProfileForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-            context = {'form': Profile.form, 'navbar_colour': colour, 'user_group': user,
+            context = {'form': form, 'navbar_colour': colour, 'user_group': user,
                        'email': request.user.email}
             return render(request, self.profile_page, context, status=200)

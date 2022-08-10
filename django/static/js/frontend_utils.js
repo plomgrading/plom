@@ -12,6 +12,7 @@ let newPassword2 = document.getElementById('id_new_password2');
 let editBtn = document.getElementById('edit');
 let profileCard = document.getElementById('profile-card');
 let editUser = document.getElementById('edit-user');
+let cancelBtn = document.getElementById('cancel');
 
 function generateRandomUsername() {
 
@@ -48,11 +49,25 @@ function slideToLeft() {
     });
 }
 
+function slideToRight() {
+    cancelBtn.addEventListener('click', () => {
+       editUser.style.visibility = 'hidden';
+       profileCard.style.transform = 'translateX(55%)'
+       setTimeout(showEditBtn, 2000);
+    });
+}
+
 function fadeIn() {
     editUser.style.visibility = 'visible';
     editBtn.style.display = 'none';
 }
+
+function showEditBtn() {
+    editBtn.style.display = 'inline';
+}
+
 document.addEventListener('DOMContentLoaded', generateRandomUsername);
 document.addEventListener('DOMContentLoaded', copyToClipboard);
 document.addEventListener('DOMContentLoaded', viewPassword);
 document.addEventListener('DOMContentLoaded', slideToLeft);
+document.addEventListener('DOMContentLoaded', slideToRight);

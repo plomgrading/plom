@@ -99,7 +99,7 @@ class Home(LoginRequiredMixin, View):
         if user in Home.navbar_colour:
             colour = Home.navbar_colour[user]
         else:
-            colour = '#FFFFFF'
+            colour = '#000000'
             context = {'navbar_colour': colour, 'user_group': user}
             return render(request, self.home_page, context)
         context = {'navbar_colour': colour, 'user_group': user}
@@ -206,7 +206,10 @@ class PasswordResetLinks(GroupRequiredMixin, View):
         }
         return render(request, self.activation_link, context)
 
-
+# TODO: when user is not in a group do a black backgound white text
+# TODO: change the instruction
+# TODO: plom_command the layout
+# instanceate users and password
 class Maintenance(Home, View):
     template_name = 'Authentication/maintenance.html'
     navbar_colour = {'admin': '#808080',
@@ -222,7 +225,7 @@ class Maintenance(Home, View):
         if user in Home.navbar_colour:
             colour = Home.navbar_colour[user]
         else:
-            colour = '#FFFFFF'
+            colour = '#000000'
             context = {'navbar_colour': colour, 'user_group': user}
             return render(request, self.template_name, context)
         context = {'navbar_colour': colour, 'user_group': user}

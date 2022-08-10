@@ -22,6 +22,7 @@
     />
 </head>
 <body>
+    {% block page_heading %}Profile{% endblock %}
     {% block main_content %}
         <div style="display: grid; grid-template-columns: auto auto;">
             <div class="row d-flex justify-content-center align-items-center h-100">
@@ -32,10 +33,11 @@
                                 <img src="{% static 'defaultUserIcon.png' %}"
                                     class="rounded-circle img-fluid" style="width: 100px;" />
                             </div>
-                            <h4 class="mb-2">{{ request.user.username }}</h4>
+                            <h3 class="mb-2">{{ request.user.first_name }}</h3>
+                            <p class="mb-2">{{ request.user.username }}</p>
                             <p class="text-muted mb-4">@{{ user }} <span class="mx-2">|</span> <a href="">{{ email }}</a></p>
-                            <button id="edit" type="button">
-                                Edit now
+                            <button style="background-color: {{ navbar_colour }}; color: white" id="edit" type="button">
+                                Edit Profile
                             </button>
                         </div>
                     </div>
@@ -43,15 +45,17 @@
             </div>
             <div class="row d-flex justify-content-left align-items-center h-100">
                 <div id="edit-user" class="col-md-12 col-xl-8" style="visibility: hidden;">
-                    <form method="post">
+                    <form class="form" method="post">
                         {% csrf_token %}
-                        <p>Prefer Name</p>
+                        <p id="name-label">Prefer Name</p>
                         {{ form.first_name }}
-                        <p>Email</p>
+                        <br><br>
+                        <p id="email-label">Email</p>
                         {{ form.email }}
-                        <br>
-                        <button type="submit">Edit</button>
+                        <br><br>
+                        <button style="background-color: {{ navbar_colour }}; color: white" type="submit">Save</button>
                     </form>
+                    <button id="cancel" style="background-color: grey; color: white; margin-top: 3px">Cancel</button>
                 </div>
             </div>
         </div>
