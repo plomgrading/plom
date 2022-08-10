@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group, User
 
 class Command(BaseCommand):
     """
-    This is the command for "python manage.py creategroups"
+    This is the command for "python manage.py plom_create_groups"
     It creates admin, manager, marker, and scanner groups. Then,
     any superusers will be added to the admin group.
     """
