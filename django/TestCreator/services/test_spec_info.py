@@ -490,8 +490,8 @@ def read_spec_dict(input_spec, pdf_path):
 
     # question details
     for i in range(get_num_questions()):
-        question = [j-1 for j in input_spec['questions'][i]]
-        q_pages = question['pages']
+        question = input_spec['questions'][i]
+        q_pages = [j-1 for j in question['pages']]
         label = question['label']
         mark = question['mark']
         shuffle = question['select']
@@ -501,7 +501,7 @@ def read_spec_dict(input_spec, pdf_path):
         services.progress_set_question_detail_page(i, True)
 
     # do-not-mark pages
-    dnm_pages = input_spec['doNotMarkPages']
+    dnm_pages = [j-1 for j in input_spec['doNotMarkPages']]
     set_do_not_mark_pages(dnm_pages)
     services.progress_set_dnm_page(True)
 
