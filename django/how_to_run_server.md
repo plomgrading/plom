@@ -22,7 +22,7 @@ django-htmx
 ```
 5. Switch to the dev branch: `git checkout dev`
 
-## Initalise the database
+## Initialise the database
 Django needs you to set up all the database tables.
 
 1. Run `python3 manage.py migrate` to setup the database
@@ -34,11 +34,10 @@ users - admin, manager, marker and scanner. So we need to create those
 groups and add the super-user into the admin group.
 
 1. Run `python3 manage.py createsuperuser` to create an admin account (email address is optional)
-2. Run `python3 manage.py creategroups` to automatically create admin, manager, marker, and scanner groups. Then, any superusers will be added to the admin group.
+2. Run `python3 manage.py plom_create_groups` to automatically create admin, manager, marker, and scanner groups. Then, any superusers will be added to the admin group.
 
 Note that if you accidentally do (2) before (1) then you can just run (2) again and it will skip the create-groups bit and just add the superuser to the admin group.
 
-**TODO** - Brennen update the name of creategroups command when you merge in any changes.
 
 ## Running the server
 
@@ -46,16 +45,27 @@ Note that if you accidentally do (2) before (1) then you can just run (2) again 
 
 Take note of the address that it tells you the website is running at.
 
-## Log into website as "super-user" (ie admin user)
+## Log into website as "super-user" (ie: admin user)
 1. Open web-browser to "localhost:8000" or whatever the system reported in the "running the server" step above.
 2. Log in using the "super-user" name and password you generated above.
 3. You should be bounced to a **very** simple landing page with options in the left-hand column.
 
 ## Create a manager
-1. Still logged in as the admin (super-user), go to the homepage `<local_url>/` and click on "sign up manager"
-2. Fill out the form and copy the generated link
-3. Sign out from the admin account and follow the copied link to the manager password change form
-4. Once it's done, you should be redirected to the manager homepage
+In order to create a manager, you need to log in as a super user.
+- url: `http://localhost:8000/signup/manager/` or `http://127.0.0.1:8000/signup/manager/`
+1. Log in as a super user
+2. Click on "Sign Up Manager" in the left-hand column of the landing page.
+3. Fill out the form and then click submit 
+4. Click on "Copy" to copy the generated link
+5. Click on "Log out" to sign out from the admin account
+6. Ctrl + v or right-click->paste onto the address bar
+7. Follow the copied link to the manager password change form and click "Submit" once password entered
+8. Once it's done, you should be redirected to a page to tell you to log in
+9. Click on "Log in" to log in using "manager-user" name and password you created 
+
+Note:
+If you forgot the manager username you generated in step 3, log in as "super user" and click on "Password Reset Link"
+to find the manager username.  
 
 
 # For testing (much to do here)
@@ -63,6 +73,3 @@ Take note of the address that it tells you the website is running at.
 ## Run inbuilt tests
 
 1. To run tests: `python3 manage.py test`
-
-
-
