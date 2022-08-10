@@ -215,6 +215,11 @@ class SpecVerifier:
         Args:
             d (dict): an exam specification.
         """
+        question = d.get("question", None)
+        if not question:
+            raise ValueError("Specification error - must contain at least one question")
+        if isinstance(question, list):
+            d["question"] = {str(g + 1): v for g, v in enumerate(question)}
         self.spec = d
 
     @classmethod
@@ -554,7 +559,7 @@ class SpecVerifier:
         print(f'    "numberOfQuestions" = {N} is a positive integer{chk}')
         if not N == len(self.spec["question"]):
             raise ValueError(
-                f'Inconsistent: "[question.n]" blocks do not match numberOfQuestions={N}'
+                f'Inconsistent: "[[question]]" blocks do not match numberOfQuestions={N}'
             )
         for k in range(1, N + 1):
             # TODO: why not integers for key k?  See also elsewhere
