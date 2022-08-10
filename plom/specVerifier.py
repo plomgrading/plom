@@ -184,9 +184,9 @@ class SpecVerifier:
       IDpage = 1
       Do not mark pages = [2]
       Number of questions to mark = 3
-        Question.1: pages [3], selected as shuffle, worth 5 marks
-        Question.2: pages [4], selected as fix, worth 10 marks
-        Question.3: pages [5, 6], selected as shuffle, worth 10 marks
+        Question 1: pages [3], selected as shuffle, worth 5 marks
+        Question 2: pages [4], selected as fix, worth 10 marks
+        Question 3: pages [5, 6], selected as shuffle, worth 10 marks
       Exam total = 25 marks
 
 
@@ -359,14 +359,12 @@ class SpecVerifier:
             )
         )
         s += "\n"
-        for g in range(len(self.spec["question"])):
-            # TODO: replace with integers
-            gs = str(g + 1)
-            s += "    Question.{}: pages {}, selected as {}, worth {} marks\n".format(
+        for gs, question in self.spec["question"].items():
+            s += "    Question {}: pages {}, selected as {}, worth {} marks\n".format(
                 gs,
-                self.spec["question"][gs]["pages"],
-                self.spec["question"][gs].get("select", "shuffle*"),
-                self.spec["question"][gs]["mark"],
+                question["pages"],
+                question.get("select", "shuffle*"),
+                question["mark"],
             )
         K = self.spec.get("totalMarks", "TBD*")
         s += f"  Exam total = {K} marks"
@@ -487,13 +485,11 @@ class SpecVerifier:
             "idPage",
         ]:
             if x not in self.spec:
-                raise ValueError('Specification error - must contain "{}"'.format(x))
+                raise ValueError(f'Specification error - must contain "{x}"')
             print(f'  contains "{x}"{chk}')
-        if "1" not in self.spec["question"]:
-            raise ValueError(
-                'Specification error - must contain at least one question (i.e., "question.1")'
-            )
-        print('  contains at least one question (ie "question.1"){}'.format(chk))
+        if len(self.spec["question"]) < 1:
+            raise ValueError("Specification error - must contain at least one question")
+        print("  contains at least one question{}".format(chk))
         print("Checking optional specification keys")
         for x in ["doNotMarkPages", "totalMarks", "numberOfQuestions"]:
             if x in self.spec:
@@ -630,15 +626,16 @@ class SpecVerifier:
     def check_question_group(self, g, lastPage, print=print):
         g = str(g)  # TODO: why?
         print("  Checking question group #{}".format(g))
+        question = self.spec["question"][g]
         required_keys = set(("pages", "mark"))
         optional_keys = set(("label", "select"))
         for k in required_keys:
-            if k not in self.spec["question"][g]:
-                raise ValueError('Question error - could not find "{}" key'.format(k))
-        for k in self.spec["question"][g].keys():
+            if k not in question:
+                raise ValueError(f'Question error - could not find "{k}" key')
+        for k in question.keys():
             if k not in required_keys.union(optional_keys):
-                raise ValueError('Question error - unexpected extra key "{}"'.format(k))
-        pages = self.spec["question"][g]["pages"]
+                raise ValueError(f'Question error - unexpected extra key "{k}"')
+        pages = question["pages"]
         # check each entry is integer 0 < n <= lastPage
         for n in pages:
             if not isPositiveInt(n):
@@ -653,21 +650,15 @@ class SpecVerifier:
             )
         print(f"    pages {pages} is list of contiguous positive integers{chk}")
         # check mark is positive integer
-        if not isPositiveInt(self.spec["question"][g]["mark"]):
+        if not isPositiveInt(question["mark"]):
             raise ValueError(
-                "Question error - mark {} is not a positive integer".format(
-                    self.spec["question"][g]["mark"]
-                )
+                f"Question error - mark {question['mark']} is not a positive integer"
             )
-        print(
-            "    mark {} is positive integer{}".format(
-                self.spec["question"][g]["mark"], chk
-            )
-        )
-        select = self.spec["question"][g].get("select")
+        print("    mark {} is positive integer{}".format(question["mark"], chk))
+        select = question.get("select")
         if not select:
             select = "shuffle"
-            self.spec["question"][g]["select"] = select
+            question["select"] = select
             print(f'    missing select key, add default "{select}"' + chk)
         if select not in ("fix", "shuffle"):
             raise ValueError(
