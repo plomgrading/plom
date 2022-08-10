@@ -1,6 +1,11 @@
 import pathlib
 import json
+import fitz
+import re
+from django.utils.text import slugify
+from django.core.files.uploadedfile import SimpleUploadedFile
 from .. import models
+from .. import services
 
 """
 Service functions for models.TestSpecInfo
@@ -413,3 +418,93 @@ def get_dnm_page_alpine_xdata():
             x_data[f'page{i}selected'] = False
 
     return json.dumps(x_data)
+
+
+def is_there_a_valid_spec():
+    """Returns true if the specification has been completed + validated"""
+    prog = services.get_progress()
+    return prog.is_validate_page_completed
+
+
+def is_there_some_spec_data():
+    """Returns true if at least one page is completed"""
+    return services.progress_is_anything_complete()
+
+
+def read_spec_dict(input_spec, pdf_path):
+    """Load a test specification from a dictionary. Assumes for now that the dictionary is valid and complete.
+    
+    It wants a toml-esque input dictionary:
+    {
+        'name': str,
+        'longName': str,
+        'numberOfPages': int,
+        'numberOfVersions': int,
+        'totalMarks': int,
+        'numberOfQuestions': int,
+        'numberToProduce': int,
+        'idPage': int,
+        'doNotMarkPages': list(int),
+        'questions': list(dict) {
+            'pages: list(int),
+            'mark': int,
+            'label': str,
+            'select': str, "fix" or "shuffle",
+        },
+    }
+
+    And a sample PDF file.
+    """
+
+    # names page
+    set_short_name(input_spec['name'])
+    set_long_name(input_spec['longName'])
+    set_num_versions(input_spec['numberOfVersions'])
+    services.progress_set_names(True)
+
+    # PDF page
+    # validate that file is a PDF
+    pdf_path = pathlib.Path(pdf_path)
+    pdf_doc = fitz.open(stream=pdf_path.open('rb').read())
+    if 'PDF' not in pdf_doc.metadata['format']:
+        raise ValueError('File is not a valid PDF.')
+    if pdf_doc.page_count != input_spec['numberOfPages']:
+        raise ValueError('Specification and PDF document have different number of pages.')
+
+    slug = slugify(re.sub('.pdf$', '', str(pdf_path.name)))
+    pdf = services.create_pdf(slug, input_spec['numberOfPages'], SimpleUploadedFile(slug + '.pdf', pdf_path.open('rb').read()))
+    services.get_and_save_pdf_images(pdf)
+    set_pages(pdf)
+    services.progress_set_versions_pdf(True)
+
+    # ID page
+    set_id_page(input_spec['idPage'] - 1)
+    services.progress_set_id_page(True)
+
+    # Questions and total marks
+    set_num_questions(input_spec['numberOfQuestions'])
+    set_num_to_produce(input_spec['numberToProduce'])
+    set_total_marks(input_spec['totalMarks'])
+    services.progress_set_question_page(True)
+    services.progress_init_questions()
+
+    # question details
+    for i in range(get_num_questions()):
+        question = [j-1 for j in input_spec['questions'][i]]
+        q_pages = question['pages']
+        label = question['label']
+        mark = question['mark']
+        shuffle = question['select']
+
+        services.create_or_replace_question(i+1, label, mark, shuffle)
+        set_question_pages(q_pages, i+1)
+        services.progress_set_question_detail_page(i, True)
+
+    # do-not-mark pages
+    dnm_pages = input_spec['doNotMarkPages']
+    set_do_not_mark_pages(dnm_pages)
+    services.progress_set_dnm_page(True)
+
+    # Again, assume this is a valid spec
+    services.progress_set_validate_page(True)
+

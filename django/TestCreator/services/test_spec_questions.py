@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from .. import models
-from . import *
+from .. import services
+
 
 """
 Service functions for models.TestSpecQuestion
@@ -32,7 +33,7 @@ def remove_question(index: int):
         question.delete()
 
     # remove question data from pages
-    test_spec = load_spec()
+    test_spec = services.load_spec()
     pages = test_spec.pages
     for idx, page in pages.items():
         if page['question_page'] and page['question_page'] == index:
@@ -91,14 +92,14 @@ def create_or_replace_question(index: int, label: str, mark: int, shuffle: bool)
 
 def clear_questions():
     """Remove all the questions"""
-    for i in range(get_num_questions()):
+    for i in range(services.get_num_questions()):
         remove_question(i+1)
-    set_num_questions(0)
+    services.set_num_questions(0)
 
 
 def fix_all_questions():
     """Set all questions to fix (when the user sets the number of test versions to 1)"""
-    for i in range(get_num_questions()):
+    for i in range(services.get_num_questions()):
         q = get_question(i+1)
         q.shuffle = 'F'
 
@@ -197,7 +198,7 @@ def get_available_marks(current_marks=0):
     Returns:
         int: total marks for test - total marks assigned so far
     """
-    total_marks = get_total_marks()
+    total_marks = services.get_total_marks()
     marks_left = total_marks - get_total_assigned_marks() + current_marks
     if 0 > marks_left:
         raise RuntimeError("You've assigned more marks to questions than in the total_marks field")

@@ -1,5 +1,5 @@
 from .. import models
-from .test_spec_info import *
+from .. import services
 
 """
 Service functions for models.TestsSpecProgress
@@ -31,7 +31,7 @@ def progress_init_questions():
     """
     Create a dict of each question in the test: is question i's detail page submitted?
     """
-    question_dict = {i: False for i in range(get_num_questions())}
+    question_dict = {i: False for i in range(services.get_num_questions())}
     progress = get_progress()
     progress.are_questions_completed = question_dict
     progress.save()
@@ -138,3 +138,10 @@ def progress_is_everything_complete():
             return False
 
     return True
+
+
+def progress_is_anything_complete():
+    """Return true if any of the wizard pages are completed, false otherwise"""
+    progress_dict = get_progress_dict()
+    vals = progress_dict.values()
+    return (True in vals)

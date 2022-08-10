@@ -119,8 +119,8 @@ class TestSpecProgressTests(TestCase):
         q_list = services.get_question_progress_for_template()
         self.assertEqual(q_list, [False, False])
 
-    def test_progress_is_everything_completed(self):
-        """Test services.progress_is_everything_completed"""
+    def test_progress_is_everything_complete(self):
+        """Test services.progress_is_everything_complete"""
         self.assertFalse(services.progress_is_everything_complete())
 
         services.set_num_questions(1)
@@ -135,3 +135,13 @@ class TestSpecProgressTests(TestCase):
         services.progress_set_validate_page(True)
 
         self.assertTrue(services.progress_is_everything_complete())
+
+    def test_progress_is_anything_completed(self):
+        """Test services.progress_is_anything_complete"""
+        self.assertFalse(services.progress_is_anything_complete())
+
+        services.set_num_questions(1)
+        services.progress_init_questions()
+
+        services.progress_set_names(True)
+        self.assertTrue(services.progress_is_anything_complete())
