@@ -20,6 +20,7 @@ from Preparation.services import (
     TestSourceService,
     PrenameSettingService,
     StagingStudentService,
+    PQVMappingService,
 )
 
 
@@ -30,7 +31,9 @@ class PreparationLandingView(View):
         tss = TestSourceService()
         pss = PrenameSettingService()
         sss = StagingStudentService()
-        return {
+        pqvs = PQVMappingService()
+
+        context = {
             "valid_spec": is_there_a_valid_spec(),
             "test_versions": how_many_test_versions(),
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
@@ -39,8 +42,30 @@ class PreparationLandingView(View):
             "can_prename": can_I_prename(),
             "prename_enabled": pss.get_prenaming_setting(),
             "can_qvmap": can_I_qvmap(),
-            "student_list_present": sss.are_there_students()
+            "student_list_present": sss.are_there_students(),
         }
+
+        paper_number_list = pqvs.list_of_paper_numbers()
+        if paper_number_list:
+            context.update(
+                {
+                    "pqv_mapping_present": True,
+                    "pqv_number_of_papers": len(paper_number_list),
+                    "pqv_first_paper": paper_number_list[0],
+                    "pqv_last_paper": paper_number_list[-1],
+                }
+            )
+        else:
+            context.update(
+                {
+                    "pqv_mapping_present": False,
+                    "pqv_number_of_papers": 0,
+                    "pqv_first_paper": None,
+                    "pqv_last_paper": None,
+                }
+            )
+
+        return context
 
     def get(self, request):
         context = self.build_context()

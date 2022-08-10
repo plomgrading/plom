@@ -1,0 +1,114 @@
+{% extends "base/base.html" %}
+{% block page_heading %}Manage number of papers and question-version mapping{% endblock %}
+{% block main_content %}
+  <div class="d-grid gap-2">
+    <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
+    {% if student_list_present %}
+      <div class="alert alert-warning">
+        <p>Student list present, contains {{ number_of_students }} entries</p>
+        {% if prenaming %}
+        <p>First, last prenamed papers = {{ first_prenamed_paper }}, {{ last_prenamed_paper }}</p>
+        {% else %}
+        <p>Prenaming disabled</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if pqv_mapping_present %}
+      <div class="alert alert-primary">
+        <span>
+          Question-version mapping present
+          <a href="download" target="_blank" class="btn btn-info">download</a>
+        </span>
+      </div>
+      <table class="table table-striped">
+        <thead>
+          <th>Paper number</th>
+          <th>Question</th>
+        </thead>
+      </table>
+    {% else %}
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">Generate question-version map</h4>
+          <div class="card-text">
+            {% if student_list_present %}
+              <p>
+                <ul>
+                  <li>Student list present, contains {{ number_of_students }} entries</li>
+                  {% if prenaming %}
+                    <li>Last prenamed paper = {{ last_prenamed_paper }}</li>
+                  {% else %}
+                    <li>No prenaming</li>
+                  {% endif %}
+                </ul>
+                <details>
+                  <summary>
+                    Suggested minimum number of papers to produce = {{ min_number_to_produce }}
+                  </summary>
+                  <ul>
+                    <li>
+                      We recommend that you produce the maximum of the following numbers
+                      <ul>
+                        <li>110% of the number of students in your classlist</li>
+                        <li>the number of students in your classlist plus 20</li>
+                        <li>the paper-number of the last prenamed paper plus 10</li>
+                      </ul>
+                    </li>
+                    <li>
+                      You do not have to print all of the resulting
+                      papers. Rather, this ensures that you will have plenty
+                      of spare papers <em>if you need them</em>
+                    </li>
+                  </ul>
+                </details>
+              </p>
+            {% else %}
+              <p>
+                No student list present
+                <details>
+                  <summary>
+                    Suggested minimum number of papers to produce = {{ min_number_to_produce }}
+                  </summary>
+                  <ul>
+                    <li>When you do not supply a classlist, this defaults to 20.</li>
+                    <li>
+                      However, we recommend that you produce the maximum of the following numbers
+                      <ul>
+                        <li>110% of the number of students in your class</li>
+                        <li>the number of students in your class plus 20</li>
+                      </ul>
+                    </li>
+                    <li>
+                      You do not have to print all of the resulting
+                      papers. Rather, this ensures that you will have plenty
+                      of spare papers <em>if you need them</em>
+                    </li>
+                  </ul>
+                </details>
+              </p>
+            {% endif %}
+            <div class="card-text">
+              <form enctype="multipart/form-data"
+                    id="form"
+                    method="post"
+                    action="/preparation/qvmapping/">
+                {% csrf_token %}
+                <label for="inp_ntp">Number to produce</label>
+                <input id="inp_ntp"
+                       class="form-input"
+                       type="number"
+                       min="{{ min_number_to_produce }}"
+                       max="9999"
+		       required
+		       />
+                <button class="btn btn-primary" type="submit">build qv-map</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

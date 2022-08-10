@@ -71,6 +71,16 @@ class StagingStudentService:
             )
         )
 
+    @transaction.atomic()
+    def get_first_last_prenamed_paper(self):
+        query = StagingStudent.objects.filter(paper_number__isnull=False).order_by('paper_number')
+        if query.exists():
+            return (query.first().paper_number, query.last().paper_number)
+        else:
+            return (None, None)
+
+
+
     def get_students_as_csv_string(self, prename=False):
         # Write the data from the staging-students table into a string in simple CSV format
         # make sure header and name-column are quoted

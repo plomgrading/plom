@@ -41,7 +41,7 @@ class SingletonBaseModel(models.Model):
 class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
-
+    
 class StagingClasslistCSV(SingletonBaseModel):
     """A temporary holder for the classlist csv for the purposes of preparing things."""
     # TODO - set a better upload path
@@ -75,3 +75,15 @@ class StagingStudent(models.Model):
     student_name = models.TextField(null=False)
     # optional paper-number for prenaming
     paper_number = models.PositiveIntegerField(null=True)
+
+
+class StagingPQVMapping(models.Model):
+    """Table to store the test-question-version mapping for staging.
+    Store as triples of paper-question-version. This is very loose,
+    but avoids recreating the entire paper-structure.
+
+    """
+    
+    paper_number = models.PositiveIntegerField(null=False)
+    question = models.PositiveIntegerField(null=False)
+    version = models.PositiveIntegerField(null=False)

@@ -127,16 +127,24 @@
         <div class="card-body">
           <h5 class="card-title">
 	    Number of papers
-          </h5>
+	    {% if pqv_mapping_present %}
+	    <i class="bi bi-check-circle text-success"></i>
+	    {% else %}
+	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	    {% endif %}
+	  </h5>
           <div class="card-text">
-	    <p>
+	    <details>
+	    <summary>
 	    Set the number of papers to produce.
-	    </p>
+	    </summary>
 	    <p>
 	      Since your test specification indicates only a single
 	      test version, you do not need to specify any
 	      question-version mapping.
 	    </p>
+	    </details>
+	    <a class="btn btn-primary" href="qvmapping/">Number management</a>
 	  </div>
         </div>
       </div>
@@ -148,17 +156,32 @@
       <div class="card">
         <div class="card-body">
           <h5 class="card-title">
-	    Number of papers
-          </h5>
+	    Number of papers and question-version mapping
+
+	    {% if pqv_mapping_present %}
+	    <i class="bi bi-check-circle text-success"></i>
+	    {% else %}
+	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	    {% endif %}
+
+	  </h5>
           <div class="card-text">
-	    <p>
+	    <details>
+	    <summary>
 	    Set the number of papers to produce, and the question-version mapping
-	    </p>
+	    </summary>
 	    <p>
-	      The question-version mapping tells Plom how to set the
-	      version of each question of each paper. By default, Plom
-	      builds this automatically.
+	      <ul>
+		<li> Since your test has multiple versions, plom needs to fix
+	      the versions of each question of each paper according to
+		  the specification you set.
+		</li>
+		<li> Plom can do this automagically for you, or your can
+	      upload your own mapping (advanced users).
+		</li>
 	    </p>
+	    </details>
+	    <a class="btn btn-primary" href="qvmapping/">Number and question-version management</a>    		
 	  </div>
         </div>
       </div>
