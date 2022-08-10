@@ -18,9 +18,7 @@ Here we assume the Bash shell on a Unix system.  Open two terminals.
 In the first terminal::
 
     plom-server init mysrv
-    cd mysrv
-    plom-server users --demo
-    cd ..
+    plom-server users --demo --server-dir mysrv
     plom-server launch mysrv
 
 Now in the second terminal::
@@ -184,8 +182,9 @@ def main():
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
         print(f'hacking PYTHONPATH: {os.environ["PYTHONPATH"]}')
 
-    with working_directory(args.server_dir):
-        subprocess.check_call(split("python3 -m plom.server users --demo"))
+    subprocess.check_call(
+        split(f"python3 -m plom.server users --demo --server-dir {args.server_dir}")
+    )
 
     background_server = PlomServer(basedir=args.server_dir)
 

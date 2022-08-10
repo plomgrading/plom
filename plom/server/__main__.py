@@ -81,7 +81,7 @@ def processUsers(userFile, demo, auto, numbered, srvdir):
         parse_and_save_user_list(userFile, basedir=srvdir)
         return
 
-    rawfile = Path("userListRaw.csv")
+    rawfile = srvdir / "userListRaw.csv"
     # otherwise we have to make one for the user
     if rawfile.exists():
         raise FileExistsError(f"File {rawfile} already exists: remove and try again.")
