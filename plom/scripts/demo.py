@@ -11,17 +11,9 @@ import plom.demo
 import plom.demo.__main__
 
 
-# def main():
-#     warn(
-#         "Please use `plom-demo` or `python3 -m plom.demo` directly",
-#         category=DeprecationWarning,
-#     )
-#     plom.demo.__main__.main()
-
-
 if __name__ == "__main__":
     warn(
-        "Please use `plom-create` or `python3 -m plom.create` directly",
+        "Please use `plom-demo` or `python3 -m plom.demo` directly",
         category=DeprecationWarning,
     )
     plom.demo.__main__.main()
