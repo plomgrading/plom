@@ -6,5 +6,5 @@
 -------------
 
 .. argparse::
-   :ref: plom.scripts.demo.get_parser
+   :ref: plom.demo.__main__.get_parser
    :prog: plom-demo

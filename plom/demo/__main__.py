@@ -11,6 +11,45 @@
 Instructions:
   * Run this script
   * In a new terminal, run the Plom Client and connect to localhost.
+
+
+You can reproduce the demo using using various command line tools.
+Here we assume the Bash shell on a Unix system.  Open two terminals.
+In the first terminal::
+
+    plom-server init mysrv
+    cd mysrv
+    plom-server users --demo
+    cd ..
+    plom-server launch mysrv
+
+Now in the second terminal::
+
+    export PLOM_NO_SSL_VERIFY=1
+    export PLOM_MANAGER_PASSWORD=1234
+    export PLOM_SCAN_PASSWORD=4567
+
+    cd mysrv
+    plom-create new --demo
+    plom-create uploadspec demoSpec.toml
+    cd ..
+    plom-create class --demo
+    plom-create rubric --demo
+    cd mysrv
+    plom-create make
+    plom-solutions extract solutionSpec.toml
+    plom-solutions extract --upload
+    cd ..
+
+    cd mysrv
+    python3 -m plom.create.exam_scribbler
+    plom-scan process --demo fake_scribbled_exams1.pdf
+    plom-scan upload -u fake_scribbled_exams1
+    plom-scan process --demo fake_scribbled_exams2.pdf
+    plom-scan upload -u fake_scribbled_exams2
+    plom-scan process --demo fake_scribbled_exams3.pdf
+    plom-scan upload -u fake_scribbled_exams3
+    cd ..
 """
 
 __copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
@@ -33,7 +72,8 @@ from plom.server import PlomServer
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description=__doc__,
+        description="\n".join(__doc__.split("\n")[0:6]),
+        epilog="\n".join(__doc__.split("\n")[6:]),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
