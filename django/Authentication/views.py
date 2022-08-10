@@ -74,8 +74,10 @@ class SetPassword(View):
 
 
 # When user enters their password successfully
-class SetPasswordComplete(LoginRequiredMixin, View):
+class SetPasswordComplete(GroupRequiredMixin, View):
     template_name = 'Authentication/set_password_complete.html'
+    group_required = [u"manger", u"marker", u"scanner"]
+    raise_exception = True
 
     def get(self, request):
         return render(request, self.template_name, status=200)
@@ -100,7 +102,9 @@ class Home(LoginRequiredMixin, View):
         if user in Home.navbar_colour:
             colour = Home.navbar_colour[user]
         else:
-            return render(request, self.no_group_page)
+            colour = '#4000FF'
+            context = {'navbar_colour': colour, 'user_group': user}
+            return render(request, self.no_group_page, context)
         context = {'navbar_colour': colour, 'user_group': user}
         return render(request, self.home_page, context, status=200)
 
@@ -146,6 +150,7 @@ class SignupManager(GroupRequiredMixin, View):
     form = CreateManagerForm()
     group_required = [u"admin"]
     navbar_colour = '#808080'
+    raise_exception = True
 
     def get(self, request):
         context = {'form': SignupManager.form, 'user_group': SignupManager.group_required[0],
@@ -211,7 +216,6 @@ class PasswordResetLinks(GroupRequiredMixin, View):
 # instanceate users and password
 class Maintenance(Home, View):
     template_name = 'Authentication/maintenance.html'
-    no_group_page = 'Authentication/no_group.html'
     navbar_colour = {'admin': '#808080',
                      'manager': '#AD9CFF',
                      'marker': '#FF434B',
@@ -225,6 +229,8 @@ class Maintenance(Home, View):
         if user in Home.navbar_colour:
             colour = Home.navbar_colour[user]
         else:
-            return render(request, self.no_group_page)
+            colour = '#4000FF'
+            context = {'navbar_colour': colour, 'user_group': user}
+            return render(request, self.template_name, context)
         context = {'navbar_colour': colour, 'user_group': user}
         return render(request, self.template_name, context, status=200)
