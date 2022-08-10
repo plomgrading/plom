@@ -26,7 +26,7 @@ def generate_spec_dict():
         q_dict['pages'] = services.get_question_pages(i+1)
         q_dict['mark'] = services.get_question_marks(i+1)
         q_dict['label'] = services.get_question_label(i+1)
-        q_dict['select'] = services.get_question_fix_or_shuffle(i+1).lower()
+        q_dict['select'] = services.get_question_fix_or_shuffle(i+1)
         questions.append(q_dict)
 
     spec_dict['questions'] = questions

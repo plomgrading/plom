@@ -494,7 +494,7 @@ def read_spec_dict(input_spec, pdf_path):
         q_pages = [j-1 for j in question['pages']]
         label = question['label']
         mark = question['mark']
-        shuffle = question['select']
+        shuffle = question['select'] == 'shuffle'
 
         services.create_or_replace_question(i+1, label, mark, shuffle)
         set_question_pages(q_pages, i+1)

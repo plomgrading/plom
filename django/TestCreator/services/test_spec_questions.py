@@ -132,21 +132,30 @@ def get_question_marks(index: int):
         return question.mark
 
 
-def get_question_fix_or_shuffle(index: int):
+def get_question_shuffle(index: int):
     """Get the fix or shuffle status
     
     Args:
         index: question number (1-indexed!)
 
     Returns:
-        str: 'Shuffle' or 'Fix'
+        Bool: True if shuffle, False if fix
     """
     question = get_question(index)
-    if question:
-        if question.shuffle == 'S':
-            return 'Shuffle'
-        else:
-            return 'Fix'
+    return question.shuffle
+
+
+def get_question_fix_or_shuffle(index: int):
+    """Get the fix or shufle status (as a string)
+    
+    Args:
+        index: question number (1-indexed!)
+
+    Returns:
+        str: 'shuffle' or 'fix'
+    """
+    question = get_question(index)
+    return 'shuffle' if question.shuffle else 'fix'
 
 
 def is_question_completed(index: int):
@@ -158,7 +167,7 @@ def is_question_completed(index: int):
     Returns:
         bool: are all the fields truthy?
     """
-    return get_question_label(index) and get_question_marks(index) and get_question_fix_or_shuffle(index)
+    return get_question_label(index) and get_question_marks(index) and get_question_shuffle(index) != None
 
 
 def get_total_assigned_marks():

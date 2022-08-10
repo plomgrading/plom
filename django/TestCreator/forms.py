@@ -197,7 +197,6 @@ class TestSpecValidateForm(forms.Form):
             errors_to_raise.append('Test needs questions.')
 
         questions = progress_dict['question_list']
-        print(questions)
         for i in range(len(questions)):
             if not questions[i]:
                 # raise ValidationError(f'Question {i+1} is incomplete.')

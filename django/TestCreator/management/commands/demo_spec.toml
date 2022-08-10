@@ -1,7 +1,7 @@
 name = "mabcm"
 longName = "Math ABC Midterm"
 numberOfPages = 6
-numberOfVersions = 1
+numberOfVersions = 2
 totalMarks = 20
 numberOfQuestions = 3
 numberToProduce = 0
@@ -11,7 +11,7 @@ doNotMarkPages = [ 2, 6,]
 pages = [ 3,]
 mark = 5
 label = "Q1"
-select = "fix"
+select = "shuffle"
 
 [[questions]]
 pages = [ 4,]
@@ -23,5 +23,5 @@ select = "fix"
 pages = [ 5,]
 mark = 10
 label = "Q3"
-select = "fix"
+select = "shuffle"
 

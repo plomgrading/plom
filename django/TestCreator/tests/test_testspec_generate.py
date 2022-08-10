@@ -46,9 +46,9 @@ class TestSpecGenerateTests(TestCase):
 
         spec.save()
 
-        q1 = models.TestSpecQuestion(index=1, label='Q1', mark=1, shuffle='S')
+        q1 = models.TestSpecQuestion(index=1, label='Q1', mark=1, shuffle=True)
         q1.save()
-        q2 = models.TestSpecQuestion(index=2, label='Q2', mark=1, shuffle='F')
+        q2 = models.TestSpecQuestion(index=2, label='Q2', mark=1, shuffle=False)
         q2.save()
 
         spec_dict = services.generate_spec_dict()

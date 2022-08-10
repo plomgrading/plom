@@ -56,7 +56,7 @@ class TestSpecQuestion(models.Model):
     index = models.PositiveIntegerField(default=1)
     label = models.TextField()
     mark = models.PositiveIntegerField(default=0)
-    shuffle = models.CharField(choices=SHUFFLE_CHOICES, max_length=100)
+    shuffle = models.BooleanField(default=None, null=True)
 
 
 class TestSpecProgress(models.Model):

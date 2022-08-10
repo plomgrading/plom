@@ -16,7 +16,7 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
             question = services.get_question(question_id)
             initial['label'] = question.label
             initial['mark'] = question.mark
-            initial['shuffle'] = question.shuffle
+            initial['shuffle'] = 'S' if question.shuffle else 'F'
         else:
             initial['label'] = f"Q{question_id}"
 
@@ -59,6 +59,7 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
         label = form_data['label']
         mark = form_data['mark']
         shuffle = form_data['shuffle']
+        print(shuffle)
 
         services.create_or_replace_question(question_id, label, mark, shuffle)
 

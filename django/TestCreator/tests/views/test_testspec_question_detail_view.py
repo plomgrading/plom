@@ -52,4 +52,4 @@ class TestSpecCreatorQuestionDetailPageTests(BaseTestSpecViewTestCase):
 
         initial = response.context['form'].initial
         self.assertEqual(initial['label'], 'Ex.1')
-        self.assertEqual(initial['shuffle'], 'True')  # TODO: what's going on with the choice field?
+        self.assertEqual(initial['shuffle'], 'S')
