@@ -3,8 +3,7 @@ from django.db import transaction
 
 from Preparation.models import StagingStudent, StagingPQVMapping
 
-from pathlib import Path
-from tempfile import NamedTemporaryFile
+from .temp_functions import get_demo_spec
 
 
 class PQVMappingService:
@@ -21,3 +20,11 @@ class PQVMappingService:
             .distinct()
         ]
         return paper_numbers
+
+    def make_version_map(self, numberToProduce):
+        from plom import make_random_version_map
+        demo_spec = get_demo_spec()
+        # note that this spec does not include numberToProduce so we add it manually.
+        demo_spec['numberToProduce'] = numberToProduce
+        pqvmap = make_random_version_map(demo_spec)
+        print(pqvmap)

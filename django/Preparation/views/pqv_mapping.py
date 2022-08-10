@@ -48,9 +48,18 @@ class PQVMappingView(View):
 
     def get(self, request):
         context = self.build_context()
-        print("there")
         return render(request, "Preparation/pqv_mapping_manage.html", context)
 
     def post(self, request):
+        ntp = request.POST.get('number_to_produce', None)
+        if not ntp:
+            return HttpResponseRedirect(".")
+        try:
+            number_to_produce = int(ntp)
+        except ValueError:
+            return HttpResponseRedirect(".")
         
+        pqvs = PQVMappingService()
+        qv_mapping = pqvs.make_version_map(number_to_produce)
+        print(qv_mapping)
         return HttpResponseRedirect(".")
