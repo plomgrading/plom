@@ -49,7 +49,7 @@ Take note of the address that it tells you the website is running at.
 2. Log in using the "super-user" name and password you generated above.
 3. You should be bounced to a **very** simple landing page with options in the left-hand column.
 
-## Create a manager
+## Make a manager instructions
 In order to create a manager, you need to log in as a super user.
 - url: `http://localhost:8000/signup/manager/` or `http://127.0.0.1:8000/signup/manager/`
 1. Log in as a super user
@@ -57,15 +57,19 @@ In order to create a manager, you need to log in as a super user.
 3. Fill out the form and then click submit 
 4. Click on "Copy" to copy the generated link
 5. Click on "Log out" to sign out from the admin account
-6. Ctrl + v or right-click->paste onto the address bar
-7. Follow the copied link to the manager password change form and click "Submit" once password entered
-8. Once it's done, you should be redirected to a page to tell you to log in
-9. Click on "Log in" to log in using "manager-user" name and password you created 
+6. Open a different browser and paste link there
+7. Ctrl + v or right-click->paste onto the address bar
+8. Follow the copied link to the manager password change form and click "Submit" once password entered
+9. Once it's done, you should be redirected to a page to tell you to log in
+10. Click on "Log in" to log in using "manager-user" name and password you created 
 
 Note:
 If you forgot the manager username you generated in step 3, log in as "super user" and click on "Password Reset Link"
 to find the manager username.  
 
+## Clear existing database
+This is the command for wiping the existing database:
+`python manage.py flush`
 
 # For testing (much to do here)
 
