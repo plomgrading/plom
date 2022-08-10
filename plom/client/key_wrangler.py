@@ -6,11 +6,13 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
     QDialog,
+    QDialogButtonBox,
     QGroupBox,
     QGridLayout,
     QLabel,
     QLineEdit,
     QPushButton,
+    QVBoxLayout,
 )
 from .useful_classes import WarnMsg
 
@@ -101,10 +103,45 @@ key_layouts = {
 }
 
 
+class KeyEditDialog(QDialog):
+    def __init__(self, parent, *, label, currentKey=None, legal=None):
+        """Dialog to edit a single key-binding for an action.
+
+        Very simple; no shift-ctrl etc modifier keys.
+
+        TODO: custom line edit eats enter and esc.
+
+        Args:
+            parent (QWidget)
+
+        Keyword Args:
+            label (str): What action are we changing?
+            currentKey (str): the current key to populate the dialog.
+                Can be blank or omitted.
+            legal (str): keys that can entered.  If omitted/empty, use
+                a default.
+        """
+        super().__init__(parent)
+        vb = QVBoxLayout()
+        vb.addWidget(QLabel(f"Change key for <em>{label}</em>"))
+        if not legal:
+            legal = stringOfLegalKeys
+        legal = [QKeySequence(c)[0] for c in legal]
+        self._keyedit = SingleKeyEdit(self, currentKey, legal)
+        vb.addWidget(self._keyedit)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        vb.addWidget(buttons)
+        self.setLayout(vb)
+
+
 class SingleKeyEdit(QLineEdit):
     def __init__(self, parent, currentKey=None, legal=None):
         super().__init__(parent)
         self.setAlignment(Qt.AlignHCenter)
+        if legal is None:
+            legal = []
         self.legal = legal
         if currentKey:
             self.theKey = currentKey

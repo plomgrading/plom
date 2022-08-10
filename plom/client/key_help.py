@@ -8,6 +8,7 @@ import logging
 
 import toml
 from PyQt5.QtCore import Qt, QBuffer, QByteArray
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -29,6 +30,7 @@ from PyQt5.QtWidgets import (
 
 import plom
 import plom.client.help_img
+from .key_wrangler import KeyEditDialog
 
 
 log = logging.getLogger("keybindings")
@@ -65,13 +67,15 @@ class KeyHelp(QDialog):
         # technique can be used (temporarily!) to communicate with parent
         self._keyLayoutCB = keyLayoutCB
         buttons.addWidget(keyLayoutCB, 1)
-        buttons.addWidget(QLabel("(not yet functional)"))
         buttons.addSpacing(64)
         buttons.addStretch(2)
         buttons.addWidget(b)
         vb.addWidget(tabs)
         vb.addLayout(buttons)
         self.setLayout(vb)
+
+    # TODO: hardcoded position of the custom map
+    CUSTOM_IDX = 3
 
     def load_keymaps(self):
         # TODO: I think plom.client would be better, put can't get it to work
@@ -83,7 +87,7 @@ class KeyHelp(QDialog):
             {"human": 'Default ("esdf", touch-typist)', "file": None},
             {"human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
             {"human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
-            {"human": "Custom", "file": None},
+            {"human": "Custom (not yet functional)", "file": None},
         ]
 
         for keymap in keybindings:
@@ -103,6 +107,47 @@ class KeyHelp(QDialog):
         for action, dat in overlay.items():
             self.keydata[action].update(dat)
         self.change_keybindings()
+
+    def interactively_change_key(self, action):
+        # if custom non-empty and custom not current:
+        #     should we ask if user wants to create a new custom map?
+        #     maybe put it as a note in the popup dialog?
+        #     we should wipe the custom map and start afresh with deepcopy of current
+        dat = self.keydata[action]
+        old_key = dat["keys"][0]
+        diag = KeyEditDialog(self, label=dat["human"], currentKey=old_key)
+        if diag.exec() != QDialog.Accepted:
+            return
+        new_key = diag._keyedit.text()
+        log.info(f"diagram: {action} changing key from {old_key} to {new_key}")
+        self.change_key(action, new_key)
+
+    def change_key(self, action, new_key):
+        idx = self._keyLayoutCB.currentIndex()
+        if idx == self.CUSTOM_IDX:
+            # we're already in the custom map, so just update
+            overlay = self.keybindings[self.CUSTOM_IDX]["overlay"]
+        else:
+            # we were not in the custom map; copy current overlay as new custom
+            overlay = deepcopy(self.keybindings[idx]["overlay"])
+            self.keybindings[self.CUSTOM_IDX]["overlay"] = overlay
+        A = overlay.get(action, None)
+        if A is None:
+            overlay[action] = {"keys": [new_key]}
+        else:
+            log.info("%s updating existing overlay item", action)
+            overlay[action]["keys"][0] = new_key
+        self._keyLayoutCB.setCurrentIndex(self.CUSTOM_IDX)
+        if idx == self.CUSTOM_IDX:
+            # force redraw if the current index did not change
+            self.update_keys(self.CUSTOM_IDX)
+
+    def has_custom_map(self):
+        return bool(self.keybindings[self.CUSTOM_IDX]["overlay"])
+
+    def currently_on_custom_map(self):
+        idx = self._keyLayoutCB.currentIndex()
+        return idx == self.CUSTOM_IDX
 
     def change_keybindings(self):
         accel = {
@@ -125,7 +170,9 @@ class KeyHelp(QDialog):
             if label == "Rubrics":
                 w = QWidget()
                 wb = QVBoxLayout()
-                wb.addWidget(RubricNavDiagram(self.keydata))
+                d = RubricNavDiagram(self.keydata)
+                d.wants_to_change_key.connect(self.interactively_change_key)
+                wb.addWidget(d)
                 wb.addWidget(tw)
                 w.setLayout(wb)
             elif label == "Annotation":
@@ -186,6 +233,8 @@ class KeyHelp(QDialog):
 
 
 class RubricNavDiagram(QFrame):
+    wants_to_change_key = pyqtSignal(str)
+
     def __init__(self, keydata):
         super().__init__()
         # self.setFrameShape(QFrame.Panel)
@@ -206,6 +255,9 @@ class RubricNavDiagram(QFrame):
         grid.addWidget(view)
         self.setLayout(grid)
 
+    def change_key(self, action):
+        self.wants_to_change_key.emit(action)
+
     def put_stuff(self, action):
         pix = QPixmap()
         pix.loadFromData(resources.read_binary(plom.client.help_img, "nav_rubric.png"))
@@ -213,29 +265,21 @@ class RubricNavDiagram(QFrame):
 
         sheet = "QPushButton { color : teal; font-size: 24pt;}"
 
-        self.rn = QPushButton(action["next-rubric"]["keys"][0])
-        self.rn.setStyleSheet(sheet)
-        self.rn.setToolTip("Select next rubic")
-        li = self.scene.addWidget(self.rn)
-        li.setPos(340, 250)
+        def lambda_factory(w):
+            return lambda: self.change_key(w)
 
-        self.rp = QPushButton(action["prev-rubric"]["keys"][0])
-        self.rp.setStyleSheet(sheet)
-        self.rp.setToolTip("Select previous rubic")
-        li = self.scene.addWidget(self.rp)
-        li.setPos(340, 70)
+        def stuff_it(w, x, y):
+            b = QPushButton(action[w]["keys"][0])
+            b.setStyleSheet(sheet)
+            b.setToolTip(f'{action[w]["human"]}\n(click to change)')
+            b.clicked.connect(lambda_factory(w))
+            li = self.scene.addWidget(b)
+            li.setPos(x, y)
 
-        self.tp = QPushButton(action["prev-tab"]["keys"][0])
-        self.tp.setStyleSheet(sheet)
-        self.tp.setToolTip("Select previous tab of rubrics")
-        li = self.scene.addWidget(self.tp)
-        li.setPos(-40, -10)
-
-        self.tn = QPushButton(action["next-tab"]["keys"][0])
-        self.tn.setStyleSheet(sheet)
-        self.tn.setToolTip("Select next tab of rubrics")
-        li = self.scene.addWidget(self.tn)
-        li.setPos(160, -10)
+        stuff_it("next-rubric", 340, 250)
+        stuff_it("prev-rubric", 340, 70)
+        stuff_it("prev-tab", -40, -10)
+        stuff_it("next-tab", 160, -10)
 
 
 class ToolNavDiagram(QFrame):

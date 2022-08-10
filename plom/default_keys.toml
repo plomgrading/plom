@@ -29,13 +29,13 @@ categories = [ "Annotation", "Rubrics",]
 info = "Select the previous rubric"
 
 [next-tab]
-human = "Next tab"
+human = "Next rubrics tab"
 keys = [ "f",]
 categories = [ "Annotation", "Rubrics",]
 info = "Select the next tab of rubrics"
 
 [prev-tab]
-human = "Previous tab"
+human = "Previous rubrics tab"
 keys = [ "s",]
 categories = [ "Annotation", "Rubrics",]
 info = "Select the previous tab of rubrics"
