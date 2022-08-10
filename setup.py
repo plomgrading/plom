@@ -103,7 +103,7 @@ setup(
     entry_points={
         "console_scripts": [
             "plom-client=plom.client.__main__:main",
-            "plom-demo=plom.scripts.demo:main",
+            "plom-demo=plom.demo.__main__:main",
             "plom-hwdemo=plom.scripts.hwdemo:main",
             "plom-init=plom.scripts.plominit:main",
             "plom-build=plom.scripts.build_stub:main",
