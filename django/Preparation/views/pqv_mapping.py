@@ -60,6 +60,5 @@ class PQVMappingView(View):
             return HttpResponseRedirect(".")
         
         pqvs = PQVMappingService()
-        qv_mapping = pqvs.make_version_map(number_to_produce)
-        print(qv_mapping)
+        pqvs.generate_and_set_pqvmap(number_to_produce)
         return HttpResponseRedirect(".")
