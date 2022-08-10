@@ -1,9 +1,10 @@
 from django.core.files import File
 from django.db import transaction
 
-from Preparation.models import StagingStudent, StagingPQVMapping
+from Preparation.models import StagingPQVMapping
+from . import StagingStudentService
 
-from .temp_functions import get_demo_spec
+from .temp_functions import get_demo_spec, how_many_questions
 
 
 class PQVMappingService:
@@ -36,15 +37,56 @@ class PQVMappingService:
                 )
 
     @transaction.atomic()
-    def build_pqv_map_dict(self):
+    def get_pqv_map_dict(self):
         pqvmapping = {}
         for pqv_obj in StagingPQVMapping.objects.all():
             if pqv_obj.paper_number in pqvmapping:
-                pqvmapping[pqv_obj.paper_number][pqv_obj.question] = [pqv_obj.version]
+                pqvmapping[pqv_obj.paper_number][pqv_obj.question] = pqv_obj.version
             else:
                 pqvmapping[pqv_obj.paper_number] = {pqv_obj.question: pqv_obj.version}
+
         return pqvmapping
 
+    def get_pqv_map_as_table(self, prenaming=False):
+        # format the data in a way that makes it easy to display for django-template
+        # in particular, a dict of lists.
+        pqvmapping = self.get_pqv_map_dict()
+        pqv_table = {}
+
+        question_list = [
+            q + 1 for q in range(how_many_questions())
+        ]  # todo - replace with spec lookup
+
+        for paper_number, qvmap in pqvmapping.items():
+            pqv_table[paper_number] = {
+                "prename": None,
+                "qvlist": [qvmap[q] for q in question_list],
+            }
+
+            # if prenaming then we need to put in those student details
+        if prenaming:
+            sss = StagingStudentService()
+            for paper_number, student in sss.get_prenamed_papers().items():
+                pqv_table[paper_number]["prename"] = student
+        return pqv_table
+
+    @transaction.atomic()
+    def get_pqv_map_as_csv(self):
+        pqvmap = self.get_pqv_map_dict()
+        qlist = [q+1 for q in range(how_many_questions())]
+        # TODO - replace this with some python csv module stuff
+        txt = "\"paper_number\""
+        for q in qlist:
+            txt += f", \"q{q}.version\""
+        txt += "\n"
+        for paper_number, qvmap in pqvmap.items():
+            txt += f"{paper_number}"
+            for q,v in qvmap.items():
+                txt += f", {v}"
+            txt += "\n"
+        return txt
+
+    
     def make_version_map(self, numberToProduce):
         from plom import make_random_version_map
 

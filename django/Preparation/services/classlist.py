@@ -40,7 +40,7 @@ class StagingClasslistCSVService:
     @transaction.atomic()
     def is_there_a_classlist(self):
         return StagingClasslistCSV.objects.exists()
-    
+
     @transaction.atomic()
     def get_classlist_csv_filepath(self):
         return StagingClasslistCSV.objects.get().csv_file.path
@@ -50,7 +50,7 @@ class StagingClasslistCSVService:
         # explicitly delete the file, since it is not done automagically by django
         # TODO - make this a bit cleaner.
         if StagingClasslistCSV.objects.exists():
-            Path(StagingClasslistCSV.objects.get() .csv_file.path).unlink()
+            Path(StagingClasslistCSV.objects.get().csv_file.path).unlink()
             StagingClasslistCSV.objects.filter().delete()
 
 
@@ -62,7 +62,7 @@ class StagingStudentService:
     @transaction.atomic
     def are_there_students(self):
         return StagingStudent.objects.exists()
-    
+
     @transaction.atomic()
     def get_students(self):
         return list(
@@ -73,13 +73,21 @@ class StagingStudentService:
 
     @transaction.atomic()
     def get_first_last_prenamed_paper(self):
-        query = StagingStudent.objects.filter(paper_number__isnull=False).order_by('paper_number')
+        query = StagingStudent.objects.filter(paper_number__isnull=False).order_by(
+            "paper_number"
+        )
         if query.exists():
             return (query.first().paper_number, query.last().paper_number)
         else:
             return (None, None)
 
-
+    @transaction.atomic()
+    def get_prenamed_papers(self):
+        """return dict of prenamed papers {paper_number: (student_id, student_name)}"""
+        return {
+            s_obj.paper_number: (s_obj.student_id, s_obj.student_name)
+            for s_obj in StagingStudent.objects.filter(paper_number__isnull=False)
+        }
 
     def get_students_as_csv_string(self, prename=False):
         # Write the data from the staging-students table into a string in simple CSV format
@@ -87,12 +95,12 @@ class StagingStudentService:
         # and make sure the paper_number column is -1 if not pre-naming.
         txt = '"id", "name", "paper_number"\n'
         for row in self.get_students():
-            if prename and row['paper_number']:
+            if prename and row["paper_number"]:
                 txt += f"{row['student_id']}, \"{row['student_name']}\", {row['paper_number']}\n"
             else:
                 txt += f"{row['student_id']}, \"{row['student_name']}\", -1\n"
         return txt
-            
+
     @transaction.atomic()
     def add_student(self, student_id, student_name, paper_number=None):
         # will raise an integrity error if id not unique
@@ -122,4 +130,3 @@ class StagingStudentService:
                 self.add_student(row["id"], row["name"], row["paper_number"])
         # after used make sure the csv is deleted
         scsv.delete_classlist_csv()
-        

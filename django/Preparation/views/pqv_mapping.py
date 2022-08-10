@@ -2,7 +2,8 @@ from braces.views import GroupRequiredMixin
 from django.shortcuts import render
 from django.views import View
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
+from django_htmx.http import HttpResponseClientRedirect
 
 from Preparation.services import (
     PQVMappingService,
@@ -13,7 +14,22 @@ from Preparation.services import (
 
 from Preparation.services.temp_functions import (
     how_many_test_versions,
+    how_many_questions,
 )
+
+class PQVMappingDownloadView(View):
+    # group_required = [u"manager"]
+    def get(self, request):
+        pqvs = PQVMappingService()
+        pqvs_csv_txt = pqvs.get_pqv_map_as_csv()
+        return HttpResponse(pqvs_csv_txt, content_type="text/plain")
+
+class PQVMappingDeleteView(View):
+    # group_required = [u"manager"]
+    def delete(self, request):
+        pqvs = PQVMappingService()
+        pqvs.remove_pqv_map()
+        return HttpResponseClientRedirect(".")
 
 
 class PQVMappingView(View):
@@ -24,7 +40,7 @@ class PQVMappingView(View):
         sss = StagingStudentService()
 
         context = {
-            "test_versions": how_many_test_versions(),
+            "question_list": range(1, 1 + how_many_questions()),
             "prenaming": pss.get_prenaming_setting(),
             "pqv_mapping_present": pqvs.is_there_a_pqv_map(),
             "number_of_students": sss.how_many_students(),
@@ -35,15 +51,18 @@ class PQVMappingView(View):
 
         # TODO - this logic should be put somewhere more central
         min_number_to_produce = max(
-            context['number_of_students']*1.1,
-            context['number_of_students']+20
+            context["number_of_students"] * 1.1, context["number_of_students"] + 20
         )
         if lpp is not None:
             if lpp > min_number_to_produce:
-                min_number_to_produce = lpp+10
+                min_number_to_produce = lpp + 10
         context["min_number_to_produce"] = min_number_to_produce
-        context["slider_max"] = min(10*min_number_to_produce, 9999)
-        
+
+        if context["pqv_mapping_present"]:
+            context["pqv_table"] = pqvs.get_pqv_map_as_table(
+                prenaming=context["prenaming"]
+            )
+
         return context
 
     def get(self, request):
@@ -51,14 +70,14 @@ class PQVMappingView(View):
         return render(request, "Preparation/pqv_mapping_manage.html", context)
 
     def post(self, request):
-        ntp = request.POST.get('number_to_produce', None)
+        ntp = request.POST.get("number_to_produce", None)
         if not ntp:
             return HttpResponseRedirect(".")
         try:
             number_to_produce = int(ntp)
         except ValueError:
             return HttpResponseRedirect(".")
-        
+
         pqvs = PQVMappingService()
         pqvs.generate_and_set_pqvmap(number_to_produce)
         return HttpResponseRedirect(".")

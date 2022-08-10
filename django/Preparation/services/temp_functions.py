@@ -13,6 +13,10 @@ def how_many_test_versions():
     return 3
 
 
+def how_many_questions():
+    return 3
+
+
 def how_many_test_versions_uploaded():
     return 1
 
