@@ -180,7 +180,9 @@ class KeyHelp(QDialog):
             elif label == "Annotation":
                 w = QWidget()
                 wb = QVBoxLayout()
-                wb.addWidget(ToolNavDiagram(self.keydata))
+                d = ToolNavDiagram(self.keydata)
+                d.wants_to_change_key.connect(self.interactively_change_key)
+                wb.addWidget(d)
                 wb.addWidget(tw)
                 w.setLayout(wb)
             else:
@@ -204,6 +206,7 @@ class KeyHelp(QDialog):
             tw.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
             tw.setAlternatingRowColors(True)
             tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
+            # TODO: wire double click to omit wants_to_change_key
             tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
             # no sorting during insertation please TODO issue number
             tw.setSortingEnabled(False)
@@ -285,6 +288,8 @@ class RubricNavDiagram(QFrame):
 
 
 class ToolNavDiagram(QFrame):
+    wants_to_change_key = pyqtSignal(str)
+
     def __init__(self, keydata):
         super().__init__()
         # self.setFrameShape(QFrame.Panel)
@@ -305,6 +310,9 @@ class ToolNavDiagram(QFrame):
         grid.addWidget(view)
         self.setLayout(grid)
 
+    def change_key(self, action):
+        self.wants_to_change_key.emit(action)
+
     def put_stuff(self, keydata):
         pix = QPixmap()
         pix.loadFromData(resources.read_binary(plom.client.help_img, "nav_tools.png"))
@@ -316,53 +324,26 @@ class ToolNavDiagram(QFrame):
 
         sheet = "QPushButton { color : teal; font-size: 24pt;}"
 
-        self.tn = QPushButton(key("next-tool"))
-        self.tn.setStyleSheet(sheet)
-        self.tn.setToolTip("Select next tool")
-        li = self.scene.addWidget(self.tn)
-        li.setPos(240, 320)
+        def lambda_factory(w):
+            return lambda: self.change_key(w)
 
-        self.tp = QPushButton(key("prev-tool"))
-        self.tp.setStyleSheet(sheet)
-        self.tp.setToolTip("Select previous tool")
-        li = self.scene.addWidget(self.tp)
-        li.setPos(40, 320)
+        def stuff_it(w, x, y):
+            b = QPushButton(keydata[w]["keys"][0])
+            b.setStyleSheet(sheet)
+            b.setToolTip(f'{keydata[w]["human"]}\n(click to change)')
+            b.clicked.connect(lambda_factory(w))
+            li = self.scene.addWidget(b)
+            li.setPos(x, y)
 
-        self.mv = QPushButton(key("move"))
-        self.mv.setStyleSheet(sheet)
-        self.mv.setToolTip("Select move tool")
-        li = self.scene.addWidget(self.mv)
-        li.setPos(395, 170)
-
-        self.ud = QPushButton(key("undo"))
-        self.ud.setStyleSheet(sheet)
-        self.ud.setToolTip("Undo last action")
-        li = self.scene.addWidget(self.ud)
-        li.setPos(120, -40)
-
-        self.rd = QPushButton(key("redo"))
-        self.rd.setStyleSheet(sheet)
-        self.rd.setToolTip("Redo action")
-        li = self.scene.addWidget(self.rd)
-        li.setPos(210, -40)
-
-        self.hlp = QPushButton(key("help"))
-        self.hlp.setStyleSheet(sheet)
-        self.hlp.setToolTip("Pop up key help")
-        li = self.scene.addWidget(self.hlp)
-        li.setPos(350, -30)
-
-        self.zm = QPushButton(key("zoom"))
-        self.zm.setStyleSheet(sheet)
-        self.zm.setToolTip("Select zoom tool")
-        li = self.scene.addWidget(self.zm)
-        li.setPos(-40, 15)
-
-        self.dlt = QPushButton(key("delete"))
-        self.dlt.setStyleSheet(sheet)
-        self.dlt.setToolTip("Select delete tool")
-        li = self.scene.addWidget(self.dlt)
-        li.setPos(-40, 220)
+        stuff_it("next-tool", 240, 320)
+        stuff_it("prev-tool", 40, 320)
+        stuff_it("move", 395, 170)
+        stuff_it("undo", 120, -40)
+        stuff_it("redo", 210, -40)
+        # TODO: check whether these are customizable
+        stuff_it("help", 350, -30)
+        stuff_it("zoom", -40, 15)
+        stuff_it("delete", -40, 220)
 
 
 class ClickDragPage(QWidget):
