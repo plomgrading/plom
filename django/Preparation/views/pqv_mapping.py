@@ -17,12 +17,21 @@ from Preparation.services.temp_functions import (
     how_many_questions,
 )
 
+
+class PQVMappingUploadView(View):
+    # group_required = [u"manager"]
+    def post(self, request):        
+        context = {}
+        return render(request, "Preparation/pqv_mapping_attempt.html", context)
+
+
 class PQVMappingDownloadView(View):
     # group_required = [u"manager"]
     def get(self, request):
         pqvs = PQVMappingService()
         pqvs_csv_txt = pqvs.get_pqv_map_as_csv()
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
+
 
 class PQVMappingDeleteView(View):
     # group_required = [u"manager"]
@@ -40,6 +49,7 @@ class PQVMappingView(View):
         sss = StagingStudentService()
 
         context = {
+            "number_of_questions": how_many_questions(),
             "question_list": range(1, 1 + how_many_questions()),
             "prenaming": pss.get_prenaming_setting(),
             "pqv_mapping_present": pqvs.is_there_a_pqv_map(),
