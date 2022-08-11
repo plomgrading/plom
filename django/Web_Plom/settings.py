@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # add newly created app folder below
     'Authentication',
-    # 'Classlist', # deprecate this in favour of stuff in preparation
     'Preparation',
     'TestCreator',
     'Profile',

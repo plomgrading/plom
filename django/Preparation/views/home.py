@@ -6,6 +6,8 @@ from django.views import View
 
 from django_htmx.http import HttpResponseClientRedirect
 
+from Preparation.views import ManagerRequiredBaseView
+
 from Preparation.services.temp_functions import (
     is_there_a_valid_spec,
     can_I_prename,
@@ -25,8 +27,7 @@ from Preparation.services import (
 
 
 # Create your views here.
-class PreparationLandingView(View):
-    # group_required = [u"manager"]
+class PreparationLandingView(ManagerRequiredBaseView):
     def build_context(self):
         tss = TestSourceService()
         pss = PrenameSettingService()
