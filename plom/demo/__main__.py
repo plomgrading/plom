@@ -119,6 +119,17 @@ def get_parser():
             This is primarily for testing and debugging.
         """,
     )
+    parser.add_argument(
+        "--in-tree-dev",
+        action="store_true",
+        help="""
+            Developer option.  "plom-demo" changes the current working directory
+            and then tries to run ``python3 -m plom.create``.  This will fail
+            when running the code in-place.  This option will hack the
+            PYTHONPATH env var, adding "." to it.  Don't use unless you're
+            experimenting with Plom's source code.
+        """,
+    )
     return parser
 
 
@@ -161,6 +172,17 @@ def main():
     if args.port:
         init_cmd += f" --port {args.port}"
     subprocess.check_call(split(init_cmd))
+
+    if args.in_tree_dev:
+        # if running in-place, need python -m to work after changing dir
+        paths = os.environ.get("PYTHONPATH", "")
+        if paths:
+            paths = paths.strip().split(os.pathsep)
+        else:
+            paths = []
+        paths.insert(0, str(Path.cwd().resolve()))
+        os.environ["PYTHONPATH"] = os.pathsep.join(paths)
+        print(f'hacking PYTHONPATH: {os.environ["PYTHONPATH"]}')
 
     with working_directory(args.server_dir):
         subprocess.check_call(split("python3 -m plom.server users --demo"))
