@@ -13,11 +13,11 @@ numberOfQuestions = 3
 # for each question give a non-empty list of pages
 # must be contiguous list of positive integers between 1 and numberOfPages
 # need not be distinct (ie one page can belong to two solutions)
-[[solution]]
+[solution.1]
 pages = [3]
 
-[[solution]]
+[solution.2]
 pages = [4]
 
-[[solution]]
+[solution.3]
 pages = [5]
