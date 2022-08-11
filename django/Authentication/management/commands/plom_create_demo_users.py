@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
+# pip install tabulate
+from tabulate import tabulate
 
 
 class Command(BaseCommand):
@@ -44,3 +46,5 @@ class Command(BaseCommand):
                                          email=marker_username + email,
                                          password=marker_username).groups.add(marker_group)
                 print(f'{marker_username} created and added to {marker_group} group!')
+
+
