@@ -109,13 +109,15 @@ class KeyHelp(QDialog):
         self.change_keybindings()
 
     def interactively_change_key(self, action):
-        # if custom non-empty and custom not current:
-        #     should we ask if user wants to create a new custom map?
-        #     maybe put it as a note in the popup dialog?
-        #     we should wipe the custom map and start afresh with deepcopy of current
+        info = ""
+        if self.has_custom_map() and not self.currently_on_custom_map():
+            info = """<p><b>Note:</b> there is already a custom keymap.
+                Changing this keybinding will replace it; or you can
+                cancel, select the &ldquo;Custom&rdquo; map and edit.</p>
+            """
         dat = self.keydata[action]
         old_key = dat["keys"][0]
-        diag = KeyEditDialog(self, label=dat["human"], currentKey=old_key)
+        diag = KeyEditDialog(self, label=dat["human"], currentKey=old_key, info=info)
         if diag.exec() != QDialog.Accepted:
             return
         new_key = diag._keyedit.text()

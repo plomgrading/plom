@@ -104,7 +104,7 @@ key_layouts = {
 
 
 class KeyEditDialog(QDialog):
-    def __init__(self, parent, *, label, currentKey=None, legal=None):
+    def __init__(self, parent, *, label, info=None, currentKey=None, legal=None):
         """Dialog to edit a single key-binding for an action.
 
         Very simple; no shift-ctrl etc modifier keys.
@@ -118,6 +118,7 @@ class KeyEditDialog(QDialog):
             label (str): What action are we changing?
             currentKey (str): the current key to populate the dialog.
                 Can be blank or omitted.
+            info (str): optional extra information to display.
             legal (str): keys that can entered.  If omitted/empty, use
                 a default.
         """
@@ -129,6 +130,10 @@ class KeyEditDialog(QDialog):
         legal = [QKeySequence(c)[0] for c in legal]
         self._keyedit = SingleKeyEdit(self, currentKey, legal)
         vb.addWidget(self._keyedit)
+        if info:
+            label = QLabel(info)
+            label.setWordWrap(True)
+            vb.addWidget(label)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
