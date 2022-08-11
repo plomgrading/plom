@@ -18,6 +18,8 @@ toml
 model_bakery (for tests)
 beautifulsoup4 (HTML parsing)
 django-session-timeout
+django-htmx
+tabulate (display table for command line)
 ```
 5. Switch to the dev branch: `git checkout dev`
 
