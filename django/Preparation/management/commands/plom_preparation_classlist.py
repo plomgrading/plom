@@ -1,6 +1,10 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from Preparation.services import StagingClasslistCSVService, StagingStudentService, PrenameSettingService
+from Preparation.services import (
+    StagingClasslistCSVService,
+    StagingStudentService,
+    PrenameSettingService,
+)
 
 from pathlib import Path
 
@@ -16,7 +20,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write("There is no classlist on the server.")
 
-    def upload_classlist(self, source_csv):
+    def upload_classlist(self, source_csv, ignore_warnings=False):
         sss = StagingStudentService()
 
         if sss.are_there_students():
@@ -29,28 +33,39 @@ class Command(BaseCommand):
         scsv = StagingClasslistCSVService()
         with open(source_path, "rb") as fh:
             success, warnings = scsv.take_classlist_from_upload(fh)
-        if success:
-            if warnings:
-                self.stderr.write("Upload failed - there are warnings:")
-                for werr in warnings:
-                    self.stdout.write(
-                        f" * {werr['warn_or_err']} on line {werr['werr_line']} = {werr['werr_text']} "
-                    )
-            else:
-                self.stdout.write("Upload has no warnings.")
+        if success and not warnings:
+            self.stdout.write("Upload has no warnings.")
+            sss.use_classlist_csv()
+            self.stdout.write("CSV processed.")
+            return
+        elif success and warnings:
+            self.stderr.write("Upload failed - there are warnings:")
+            for werr in warnings:
+                self.stdout.write(
+                    f" * {werr['warn_or_err']} on line {werr['werr_line']} = {werr['werr_text']} "
+                )
+            if ignore_warnings:
+                self.stdout.write(
+                    "Ignoring these warnings and using this classlist csv."
+                )
                 sss.use_classlist_csv()
                 self.stdout.write("CSV processed.")
+                return
+            else:
+                self.stdout.write("Stopping.")
+                return
         else:
             self.stdout.write("Upload failed - there are warnings and errors")
             for werr in warnings:
                 self.stdout.write(
                     f" * {werr['warn_or_err']} on line {werr['werr_line']} = {werr['werr_text']} "
                 )
+            return
 
     def download_classlist(self):
         sss = StagingStudentService()
         pss = PrenameSettingService()
-        
+
         if not sss.are_there_students():
             self.stderr.write("There is no classlist on the server.")
             return
@@ -59,7 +74,9 @@ class Command(BaseCommand):
         if prename:
             self.stdout.write("\tPrenaming is enabled, so saving 'paper_number' column")
         else:
-            self.stdout.write("\tPrenaming is disabled, so ignoring 'paper_number' column")
+            self.stdout.write(
+                "\tPrenaming is disabled, so ignoring 'paper_number' column"
+            )
 
         save_path = Path(f"classlist.csv")
         if save_path.exists():
@@ -95,12 +112,20 @@ class Command(BaseCommand):
         sp_R = sub.add_parser("remove", help="Remove the classlist from the server")
 
         sp_U.add_argument("source_csv", type=str, help="The classlist csv to upload")
+        sp_U.add_argument(
+            "--ignore-warnings",
+            action="store_true",
+            help="Use classlist csv even if there are warnings (not recommened).",
+        )
 
     def handle(self, *args, **options):
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":
-            self.upload_classlist(source_csv=options["source_csv"])
+            self.upload_classlist(
+                source_csv=options["source_csv"],
+                ignore_warnings=options["ignore_warnings"],
+            )
         elif options["command"] == "download":
             self.download_classlist()
         elif options["command"] == "remove":
