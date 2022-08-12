@@ -69,5 +69,7 @@ class Command(BaseCommand):
                                          password=marker_username).groups.add(marker_group)
                 print(f'{marker_username} created and added to {marker_group} group!')
 
+        print('')
+        print('Table: List of demo usernames and password')
         print(tabulate(info, headers='keys', tablefmt='fancy_grid'))
 
