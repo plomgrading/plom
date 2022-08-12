@@ -98,8 +98,21 @@ class TestSourceService:
 
     @transaction.atomic()
     def delete_test_source(self, source_version):
-        PaperSourcePDF.objects.filter(version=source_version).delete()
+        # delete the DB entry and the file
+        try:
+            pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
+            Path(pdf_obj.source_pdf.path).unlink()
+            pdf_obj.delete()
+        except PaperSourcePDF.DoesNotExist:
+            pass
 
+    @transaction.atomic()
+    def delete_all_test_sources(self):
+        # delete the DB entry and the file
+        for pdf_obj in PaperSourcePDF.objects.all():
+            Path(pdf_obj.source_pdf.path).unlink()
+            pdf_obj.delete()
+        
     @transaction.atomic
     def check_pdf_duplication(self):
         hashes = defaultdict(list)
