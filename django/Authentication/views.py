@@ -76,8 +76,7 @@ class SetPassword(View):
 # When user enters their password successfully
 class SetPasswordComplete(GroupRequiredMixin, View):
     template_name = 'Authentication/set_password_complete.html'
-    group_required = [u"manger", u"marker", u"scanner"]
-    raise_exception = True
+    login_url = 'login'
 
     def get(self, request):
         return render(request, self.template_name, status=200)
@@ -144,9 +143,10 @@ class LogoutView(View):
 
 
 # Signup Manager
-class SignupManager(GroupRequiredMixin, View):
+class SignupManager(LoginRequiredMixin, GroupRequiredMixin, View):
     template_name = 'Authentication/manager_signup.html'
     activation_link = 'Authentication/manager_activation_link.html'
+    login_url = 'login'
     form = CreateManagerForm()
     group_required = [u"admin"]
     navbar_colour = '#808080'
@@ -186,9 +186,10 @@ class SignupScannersAndMarkers(View):
     pass
 
 
-class PasswordResetLinks(GroupRequiredMixin, View):
+class PasswordResetLinks(LoginRequiredMixin, GroupRequiredMixin, View):
     template_name = 'Authentication/regenerative_links.html'
     activation_link = 'Authentication/manager_activation_link.html'
+    login_url = 'login'
     group_required = [u'admin']
     navbar_colour = '#808080'
     raise_exception = True
@@ -210,10 +211,7 @@ class PasswordResetLinks(GroupRequiredMixin, View):
         }
         return render(request, self.activation_link, context)
 
-# TODO: when user is not in a group do a black backgound white text
-# TODO: change the instruction
-# TODO: plom_command the layout
-# instanceate users and password
+
 class Maintenance(Home, View):
     template_name = 'Authentication/maintenance.html'
     navbar_colour = {'admin': '#808080',

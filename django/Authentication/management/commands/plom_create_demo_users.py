@@ -6,18 +6,32 @@ from tabulate import tabulate
 
 
 class Command(BaseCommand):
+    """
+    This is the command for "python manage.py plom_create_demo_users"
+    It creates demo users such as 1 manager, 5 scanners and 5 markers.
+    Then, add the users to their respective group.
+    This command also prints a table with a list of the demo users and
+    passwords.
+    """
     def handle(self, *args, **options):
         range_of_scanners_markers = 5
         manager_group = Group.objects.get(name='manager')
         marker_group = Group.objects.get(name='marker')
         scanner_group = Group.objects.get(name='scanner')
         exist_usernames = [str(username) for username in User.objects.all()]
+        demo_usernames = []
+        demo_user_password = []
+        info = {
+            'Username': demo_usernames,
+            'Password': demo_user_password
+        }
         email = '@plom.ca'
 
-        # Here is to create a single manager user
         manager = 'manager1'
         scanner = 'scanner'
         marker = 'marker'
+
+        # Here is to create a single manager user
         try:
             User.objects.create_user(username=manager,
                                      email=manager + email,
@@ -26,10 +40,18 @@ class Command(BaseCommand):
 
         except IntegrityError:
             print(f'{manager} already exists!')
+        demo_usernames.append(manager)
+        demo_user_password.append(manager)
 
+        # Here is to create 5 scanners and markers
         for number_of_scanner_marker in range(1, range_of_scanners_markers + 1):
             scanner_username = scanner + str(number_of_scanner_marker)
+            demo_usernames.append(scanner_username)
+            demo_user_password.append(scanner_username)
+
             marker_username = marker + str(number_of_scanner_marker)
+            demo_usernames.append(marker_username)
+            demo_user_password.append(marker_username)
 
             if scanner_username in exist_usernames:
                 print(f'{scanner_username} already exists!')
@@ -47,4 +69,5 @@ class Command(BaseCommand):
                                          password=marker_username).groups.add(marker_group)
                 print(f'{marker_username} created and added to {marker_group} group!')
 
+        print(tabulate(info, headers='keys', tablefmt='fancy_grid'))
 
