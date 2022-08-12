@@ -18,6 +18,7 @@ class Command(BaseCommand):
         manager_group = Group.objects.get(name='manager')
         marker_group = Group.objects.get(name='marker')
         scanner_group = Group.objects.get(name='scanner')
+        demo_group = Group.objects.get(name='demo')
         exist_usernames = [str(username) for username in User.objects.all()]
         demo_usernames = []
         demo_user_password = []
@@ -31,11 +32,13 @@ class Command(BaseCommand):
         scanner = 'scanner'
         marker = 'marker'
 
+        print(User.objects.all().filter(groups__name='demo'))
+
         # Here is to create a single manager user
         try:
             User.objects.create_user(username=manager,
                                      email=manager + email,
-                                     password=manager).groups.add(manager_group)
+                                     password=manager).groups.add(manager_group, demo_group)
             print(f'{manager} created and added to {manager_group} group!')
 
         except IntegrityError:
@@ -58,7 +61,7 @@ class Command(BaseCommand):
             else:
                 User.objects.create_user(username=scanner_username,
                                          email=scanner_username + email,
-                                         password=scanner_username).groups.add(scanner_group)
+                                         password=scanner_username).groups.add(scanner_group, demo_group)
                 print(f'{scanner_username} created and added to {scanner_group} group!')
 
             if marker_username in exist_usernames:
@@ -66,7 +69,7 @@ class Command(BaseCommand):
             else:
                 User.objects.create_user(username=marker_username,
                                          email=marker_username + email,
-                                         password=marker_username).groups.add(marker_group)
+                                         password=marker_username).groups.add(marker_group, demo_group)
                 print(f'{marker_username} created and added to {marker_group} group!')
 
         print('')

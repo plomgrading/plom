@@ -9,7 +9,7 @@ class Command(BaseCommand):
     any superusers will be added to the admin group.
     """
     def handle(self, *args, **options):
-        group_list = ['admin', 'manager', 'marker', 'scanner']
+        group_list = ['admin', 'manager', 'marker', 'scanner', 'demo']
         # get all the existing groups in a list
         exist_groups = [str(group) for group in Group.objects.all()]
 
