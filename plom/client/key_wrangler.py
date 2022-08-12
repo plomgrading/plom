@@ -2,6 +2,11 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021-2022 Colin B. Macdonald
 
+from copy import deepcopy
+import importlib.resources as resources
+import logging
+
+import toml
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
@@ -14,7 +19,12 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QVBoxLayout,
 )
+
+import plom
 from .useful_classes import WarnMsg
+
+
+log = logging.getLogger("keybindings")
 
 
 stringOfLegalKeys = "qwertyuiop[]asdfghjkl;'zxcvbnm,./"
@@ -101,6 +111,72 @@ key_layouts = {
         "zoom": "/",
     },
 }
+
+
+# todo: decide on keeping just one of these two
+_keybindings_dict = {
+    "default": {"human": 'Default ("esdf", touch-typist)', "file": None},
+    "wasd": {"human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
+    "ijkl": {"human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
+    "custom": {"human": "Custom (not yet functional)", "file": None},
+}
+_keybindings_list = [
+    {"name": "default", "human": 'Default ("esdf", touch-typist)', "file": None},
+    {"name": "wasd", "human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
+    {"name": "ijkl", "human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
+    {"name": "custom", "human": "Custom (not yet functional)", "file": None},
+]
+
+
+def get_key_bindings(name, custom_overlay={}):
+    """Generate the keybings from a name and or a custom overlay.
+
+    Args:
+        name (str): which keybindings to use.
+
+    Keyword Args:.
+        custom_overlay (dict): if name is ``"custom"`` then take
+            additional shortcut keys from this dict on top of the
+            default bindings.  If name isn't ``"custom"`` then
+            this input is ignored.
+
+    Returns:
+        dict: TODO explain the full keybindings.  The intention is
+        not to store this but instead to store only the "overlay"
+        and recompute this when needed.
+
+    This function is fairly expensive and loads from disc everytime.
+    Could be refactored to cache the base data and non-custom overlays,
+    if it is too slow.
+    """
+    # TODO: I think plom.client would be better, but can't get it to work
+    f = "default_keys.toml"
+    log.info("Loading keybindings from %s", f)
+    default_keydata = toml.loads(resources.read_text(plom, f))
+
+    keymap = _keybindings_dict[name]
+    if name == "custom":
+        overlay = custom_overlay
+    else:
+        f = keymap["file"]
+        if f is None:
+            overlay = {}
+        else:
+            log.info("Loading keybindings from %s", f)
+            overlay = toml.loads(resources.read_text(plom, f))
+        # keymap["overlay"] = overlay
+    keydata = default_keydata
+    # keydata = deepcopy(default_keydata)
+    for action, dat in overlay.items():
+        keydata[action].update(dat)
+    return keydata
+
+
+def compute_keybinding_from_overlay(base, overlay):
+    # loop over keys in overlay map and push updates into copy of default
+    keydata = deepcopy(base)
+    for action, dat in overlay.items():
+        keydata[action].update(dat)
 
 
 class KeyEditDialog(QDialog):

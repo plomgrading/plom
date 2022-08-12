@@ -31,20 +31,22 @@ from PyQt5.QtWidgets import (
 import plom
 import plom.client.help_img
 from .key_wrangler import KeyEditDialog
+from .key_wrangler import get_key_bindings, _keybindings_list
 
 
 log = logging.getLogger("keybindings")
 
 
 class KeyHelp(QDialog):
-    def __init__(self, parent, *, prev_keymap_idx=0):
+    def __init__(self, parent, *, prev_keymap_idx=0, keybinding_name):
         """Construct the KeyHelp dialog.
 
         Args:
             parent (QWidget):
 
         Keyword args:
-            prev_keymap_idx (int): which keymap to initially display.
+            prev_keymap_idx (int): which keymap to initially display.  Deprecated?
+            keybinding_name (str): which keybinding to initially display.
         """
         super().__init__(parent)
         vb = QVBoxLayout()
@@ -53,19 +55,27 @@ class KeyHelp(QDialog):
 
         self.default_keydata, self.keybindings = self.load_keymaps()
         self.tabs = tabs
+        if keybinding_name:
+            # TODO: how about self.update_keybinding_by_name?
+            (prev_keymap_idx,) = [
+                i
+                for i, x in enumerate(_keybindings_list)
+                if x["name"] == keybinding_name
+            ]
         self.update_keys(prev_keymap_idx)
 
         buttons = QHBoxLayout()
         b = QPushButton("&Ok")
         b.clicked.connect(self.accept)
         keyLayoutCB = QComboBox()
-        keyLayoutCB.addItems([x["human"] for x in self.keybindings])
+        keyLayoutCB.addItems([x["human"] for x in _keybindings_list])
         keyLayoutCB.setCurrentIndex(prev_keymap_idx)
         keyLayoutCB.currentIndexChanged.connect(self.update_keys)
-
-        # against my will, we have an instance variable so that the wrong
-        # technique can be used (temporarily!) to communicate with parent
+        # against my will, we sometimes need this instance variable
         self._keyLayoutCB = keyLayoutCB
+        # ... and messy hack to map index back to name of keybinding
+        self._keyLayoutCB_idx_to_name = [x["name"] for x in _keybindings_list]
+
         buttons.addWidget(keyLayoutCB, 1)
         buttons.addSpacing(64)
         buttons.addStretch(2)
@@ -76,6 +86,11 @@ class KeyHelp(QDialog):
 
     # TODO: hardcoded position of the custom map
     CUSTOM_IDX = 3
+
+    def get_selected_keybinding_name(self):
+        """Return the name (str) of the selected keybinding."""
+        idx = self._keyLayoutCB.currentIndex()
+        return self._keyLayoutCB_idx_to_name[idx]
 
     def load_keymaps(self):
         # TODO: I think plom.client would be better, put can't get it to work
@@ -146,6 +161,9 @@ class KeyHelp(QDialog):
 
     def has_custom_map(self):
         return bool(self.keybindings[self.CUSTOM_IDX]["overlay"])
+
+    def get_custom_overlay(self):
+        return self.keybindings[self.CUSTOM_IDX]["overlay"]
 
     def currently_on_custom_map(self):
         idx = self._keyLayoutCB.currentIndex()

@@ -18,7 +18,6 @@ import os
 import re
 from textwrap import dedent
 
-import toml
 from PyQt5.QtCore import (
     Qt,
     QTimer,
@@ -33,8 +32,6 @@ from PyQt5.QtGui import (
     QPixmap,
 )
 from PyQt5.QtWidgets import (
-    QAction,
-    QActionGroup,
     QDialog,
     QWidget,
     QMenu,
@@ -50,9 +47,7 @@ from plom import __version__
 import plom.client.cursors
 import plom.client.icons
 from .rubric_list import RubricWidget
-from .key_wrangler import key_layouts
-
-# import the key-help popup window class
+from .key_wrangler import get_key_bindings
 from .key_help import KeyHelp
 
 from .pagerearranger import RearrangementViewer
@@ -182,11 +177,19 @@ class Annotator(QWidget):
         # Grab window settings from parent
         self.loadWindowSettings()
 
+        # no initial keybindings - get from the marker if non-default
+        self.keybinding_name = self.parentMarkerUI.annotatorSettings["keybinding_name"]
+        if self.keybinding_name is None:
+            self.keybinding_name = "default"
+            log.info('starting with default keybinding "%s"', self.keybinding_name)
+        else:
+            log.info('loaded previous keybinding "%s"', self.keybinding_name)
+        # TODO: store this in annotatorSettings too
+        self.keybinding_custom_overlay = {}
+
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
         self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
-        # no initial keybindings - get from the marker if non-default
-        self.keyBindings = None
         self.setMiscShortCuts()
 
     def show_about_dialog(self):
@@ -228,7 +231,7 @@ class Annotator(QWidget):
     def buildHamburger(self):
         # TODO: use QAction, share with other UI, shortcut keys written once
         # proof of concept single source of truth for default keys
-        keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
+        keydata = self.get_key_bindings()
 
         m = QMenu()
         key = keydata["next-paper"]["keys"][0]
@@ -758,26 +761,19 @@ class Annotator(QWidget):
 
     def keyPopUp(self):
         """View help and keyboard shortcuts, eventually edit them."""
-        idx = getattr(self, "_keymap_idx", 0)
-        diag = KeyHelp(self, prev_keymap_idx=idx)
+        # TODO: pass in custom_overlay
+        diag = KeyHelp(self, keybinding_name=self.keybinding_name)
         if diag.exec() != QDialog.Accepted:
             return
-        # TODO: redo with dialog emitting signal, perhaps having apply, close, cancel interface?
-        idx = diag._keyLayoutCB.currentIndex()
-        if idx == 3:  # TODO: fix hardcoded custom...
-            # TODO: diag.get_selected_overlay()
-            self._custom_overlay = diag.keybindings[idx]["overlay"]
-
-        # TODO: look forward to deleting this but but need to store the active keymap somewhere
-        self._keymap_idx = idx
-        # TODO: instead store store name or metadata
-        # self._keymap_name = ...
-        overlay = diag.keybindings[idx]["overlay"]
-        # loop over keys in overlay map and push updates into copy of default
-        keydata = deepcopy(diag.default_keydata)
-        for action, dat in overlay.items():
-            keydata[action].update(dat)
-        self.changeMainShortCuts(keydata)
+        self.keybinding_name = diag.get_selected_keybinding_name()
+        if self.keybinding_name == "custom":
+            # note: if dialog modified custom, but then selected another
+            # such as "ijkl", then we should *not* overwrite custom.
+            self.keybinding_custom_overlay = diag.get_custom_overlay()
+        self.parentMarkerUI.annotatorSettings["keybinding_name"] = self.keybinding_name
+        # TODO
+        # self.parentMarkerUI.annotatorSettings["keybinding_custom_overlay"] = self.keybinding_custom_overlay
+        self.setToolShortCuts()
 
     def setViewAndScene(self):
         """
@@ -972,70 +968,45 @@ class Annotator(QWidget):
         self._priv_force_close = True
         self.close()
 
-    def changeMainShortCuts(self, keydata):
-        """Change the shortcuts for the basic tool keys."""
-        # self.keyBindings = keys
-        # save to parent-marker TODO
-        # TODO: save only the overlay here!
-        # self.parentMarkerUI.annotatorSettings["tool_keys"] = keys
-        # shortcuts already in place - just need to update the keys
-        mainShortCuts = [
-            ("undo", "undo", "toUndo"),
-            ("undo", "redo", "toRedo"),
-            ("next-rubric", "nextRubric", "rubricMode"),
-            ("prev-rubric", "previousRubric", "prev_rubric"),
-            ("next-tab", "nextTab", "next_tab"),
-            ("prev-tab", "previousTab", "prev_tab"),
-            ("next-tool", "nextTool", "next_minor_tool"),
-            ("prev-tool", "previousTool", "prev_minor_tool"),
-            ("delete", "delete", "toDeleteMode"),
-            ("move", "move", "toMoveMode"),
-            ("zoom", "zoom", "toZoomMode"),
-        ]
-        for (t, name, command) in mainShortCuts:
-            nameSC = getattr(self, name + "SC")
-            nameSC.setKey(keydata[t]["keys"][0])
+    def get_key_bindings(self):
+        return get_key_bindings(self.keybinding_name, self.keybinding_custom_overlay)
 
-    def setMainShortCuts(self):
-        # basic tool keys
-        if self.keyBindings is None:
-            self.keyBindings = key_layouts["sdf"]
-            # set the menu action item
-            # self.kb_sdf_act.setChecked(True)
+    def setToolShortCuts(self):
+        """Set or change the shortcuts for the basic tool keys.
 
-        # use sdf defaults unless saved
-        if self.parentMarkerUI.annotatorSettings["tool_keys"] is None:
-            keys = self.keyBindings
-        else:
-            # check all required present
-            if all(
-                act in self.parentMarkerUI.annotatorSettings["tool_keys"]
-                for act in key_layouts["sdf"]
-            ):
-                keys = self.parentMarkerUI.annotatorSettings["tool_keys"]
-                # TODO - this just clicks "custom" - might be better to detect if known binding.
-                # self.kb_custom_act.setChecked(True)
-            else:  # not all there so use sdf-defaults
-                keys = self.keyBindings
-
-        mainShortCuts = [
+        Implementation note: this creates various QShortCuts.  It needs
+        to store them somewhere so they don't get garbage collected, so
+        it puts them in a instance variable.  If you call the function
+        again, the existing QShortcuts will be updated.
+        """
+        keydata = self.get_key_bindings()
+        actions_and_methods = (
             ("undo", "toUndo"),
             ("redo", "toRedo"),
-            ("nextRubric", "rubricMode"),
-            ("previousRubric", "prev_rubric"),
-            ("nextTab", "next_tab"),
-            ("previousTab", "prev_tab"),
-            ("nextTool", "next_minor_tool"),
-            ("previousTool", "prev_minor_tool"),
+            ("next-rubric", "rubricMode"),
+            ("prev-rubric", "prev_rubric"),
+            ("next-tab", "next_tab"),
+            ("prev-tab", "prev_tab"),
+            ("next-tool", "next_minor_tool"),
+            ("prev-tool", "prev_minor_tool"),
             ("delete", "toDeleteMode"),
             ("move", "toMoveMode"),
             ("zoom", "toZoomMode"),
-        ]
-        for (name, command) in mainShortCuts:
-            # self.nameSC = QShortCut(QKeySequence(keys[name]), self)
-            setattr(self, name + "SC", QShortcut(QKeySequence(keys[name]), self))
-            # self.nameSC.activated.connect(self.command)
-            getattr(self, name + "SC").activated.connect(getattr(self, command))
+        )
+        # TODO: nicer to shove the above table in this dict too?
+        if getattr(self, "_tool_QShortcuts", None):
+            # we've done this all before so update existing QShortcuts
+            for (action, command) in actions_and_methods:
+                key = keydata[action]["keys"][0]
+                self._tool_QShortcuts[action].setKey(key)
+                log.debug('shortcut: updating "%s" to "%s"', action, key)
+            return
+        # store the shortcuts to prevent GC and so we can update later
+        self._tool_QShortcuts = {}
+        for (action, command) in actions_and_methods:
+            x = QShortcut(QKeySequence(keydata[action]["keys"][0]), self)
+            x.activated.connect(getattr(self, command))
+            self._tool_QShortcuts[action] = x
 
     def setMinorShortCuts(self):
         minorShortCuts = [
@@ -1085,11 +1056,11 @@ class Annotator(QWidget):
 
         """
         # set main and minor shortcuts
-        self.setMainShortCuts()
+        self.setToolShortCuts()
         self.setMinorShortCuts()
 
         # proof of concept single source of truth for default keys
-        keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
+        keydata = self.get_key_bindings()
 
         for key in keydata["next-paper"]["keys"]:
             sc = QShortcut(QKeySequence(key), self)
