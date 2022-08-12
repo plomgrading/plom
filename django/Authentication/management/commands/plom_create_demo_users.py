@@ -22,9 +22,17 @@ class Command(BaseCommand):
         exist_usernames = [str(username) for username in User.objects.all()]
         demo_usernames = []
         demo_user_password = []
-        info = {
-            'Username': demo_usernames,
-            'Password': demo_user_password
+        manager_info = {
+            'Username': None,
+            'Password': None
+        }
+        scanner_info = {
+            'Username': None,
+            'Password': None
+        }
+        marker_info = {
+            'Username': None,
+            'Password': None
         }
         email = '@plom.ca'
 
@@ -43,8 +51,7 @@ class Command(BaseCommand):
 
         except IntegrityError:
             print(f'{manager} already exists!')
-        demo_usernames.append(manager)
-        demo_user_password.append(manager)
+        manager_info['Username'], manager_info['Password'] = manager
 
         # Here is to create 5 scanners and markers
         for number_of_scanner_marker in range(1, range_of_scanners_markers + 1):
@@ -73,6 +80,13 @@ class Command(BaseCommand):
                 print(f'{marker_username} created and added to {marker_group} group!')
 
         print('')
-        print('Table: List of demo usernames and password')
-        print(tabulate(info, headers='keys', tablefmt='fancy_grid'))
+        print('Manger')
+        print('Table: List of demo manager usernames and passwords')
+        # here will display Manager
+
+        print('')
+        print('Manger')
+        print('Table: List of demo manager usernames and passwords')
+
+        # print(tabulate(info, headers='keys', tablefmt='fancy_grid'))
 # TODO: report user in better order
