@@ -9,11 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.views.generic import View
-
-# pip install django-braces
 from braces.views import GroupRequiredMixin
-
-# pip install beautifulsoup4
 from bs4 import BeautifulSoup
 
 from .services import generate_link
