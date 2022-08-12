@@ -35,13 +35,6 @@ class ReferencePDFService:
 
     def new_pdf(self, slug, pages, file_bytes):
         """Create and save a new PDF given an opened file"""
-        # print(type(file_bytes))
-        # pdf_doc = fitz.open(stream=file_bytes)
-        # if 'PDF' not in pdf_doc.metadata['format']:
-        #     raise ValueError('File is not a valid PDF.')
-        # if pdf_doc.page_count != pages:
-        #     raise ValueError('Specification and PDF document have different number of pages.')
-        
         self.delete_pdf()
         self.spec.clear_questions()  # clear questions from the test specification
         pdf = self.create_pdf(slug, pages, file_bytes)
