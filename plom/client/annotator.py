@@ -760,20 +760,24 @@ class Annotator(QWidget):
         """View help and keyboard shortcuts, eventually edit them."""
         idx = getattr(self, "_keymap_idx", 0)
         diag = KeyHelp(self, prev_keymap_idx=idx)
-        if diag.exec() == QDialog.Accepted:
-            # TODO: redo with dialog emitting signal, perhaps having apply, close, cancel interface?
-            idx = diag._keyLayoutCB.currentIndex()
-            # TODO: look forward to deleting this but but need to store the active keymap somewhere
-            self._keymap_idx = idx
-            # TODO: stupid hardcoded bullshit, also legacy data from key_wrangler
-            if idx == 0:
-                self.setKeyBindingsToDefault("sdf")
-            elif idx == 1:
-                self.setKeyBindingsToDefault("asd")
-            elif idx == 2:
-                self.setKeyBindingsToDefault("jkl")
-            else:
-                raise NotImplementedError("lazy devs")
+        if diag.exec() != QDialog.Accepted:
+            return
+        # TODO: redo with dialog emitting signal, perhaps having apply, close, cancel interface?
+        idx = diag._keyLayoutCB.currentIndex()
+        if idx == 3:  # TODO: fix hardcoded custom...
+            # TODO: diag.get_selected_overlay()
+            self._custom_overlay = diag.keybindings[idx]["overlay"]
+
+        # TODO: look forward to deleting this but but need to store the active keymap somewhere
+        self._keymap_idx = idx
+        # TODO: instead store store name or metadata
+        # self._keymap_name = ...
+        overlay = diag.keybindings[idx]["overlay"]
+        # loop over keys in overlay map and push updates into copy of default
+        keydata = deepcopy(diag.default_keydata)
+        for action, dat in overlay.items():
+            keydata[action].update(dat)
+        self.changeMainShortCuts(keydata)
 
     def setViewAndScene(self):
         """
@@ -968,34 +972,29 @@ class Annotator(QWidget):
         self._priv_force_close = True
         self.close()
 
-    def changeMainShortCuts(self, keys):
-        # basic tool keys
-        self.keyBindings = keys
-        # save to parent-marker
-        self.parentMarkerUI.annotatorSettings["tool_keys"] = keys
+    def changeMainShortCuts(self, keydata):
+        """Change the shortcuts for the basic tool keys."""
+        # self.keyBindings = keys
+        # save to parent-marker TODO
+        # TODO: save only the overlay here!
+        # self.parentMarkerUI.annotatorSettings["tool_keys"] = keys
         # shortcuts already in place - just need to update the keys
         mainShortCuts = [
-            ("undo", "toUndo"),
-            ("redo", "toRedo"),
-            ("nextRubric", "rubricMode"),
-            ("previousRubric", "prev_rubric"),
-            ("nextTab", "next_tab"),
-            ("previousTab", "prev_tab"),
-            ("nextTool", "next_minor_tool"),
-            ("previousTool", "prev_minor_tool"),
-            ("delete", "toDeleteMode"),
-            ("move", "toMoveMode"),
-            ("zoom", "toZoomMode"),
+            ("undo", "undo", "toUndo"),
+            ("undo", "redo", "toRedo"),
+            ("next-rubric", "nextRubric", "rubricMode"),
+            ("prev-rubric", "previousRubric", "prev_rubric"),
+            ("next-tab", "nextTab", "next_tab"),
+            ("prev-tab", "previousTab", "prev_tab"),
+            ("next-tool", "nextTool", "next_minor_tool"),
+            ("prev-tool", "previousTool", "prev_minor_tool"),
+            ("delete", "delete", "toDeleteMode"),
+            ("move", "move", "toMoveMode"),
+            ("zoom", "zoom", "toZoomMode"),
         ]
-        for (name, command) in mainShortCuts:
-            # self.nameSC.setKey(keys[name])
-            getattr(self, name + "SC").setKey(keys[name])
-
-    def setKeyBindingsToDefault(self, name):
-        if name not in key_layouts:
-            return
-        else:
-            self.changeMainShortCuts(key_layouts[name])
+        for (t, name, command) in mainShortCuts:
+            nameSC = getattr(self, name + "SC")
+            nameSC.setKey(keydata[t]["keys"][0])
 
     def setMainShortCuts(self):
         # basic tool keys
