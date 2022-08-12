@@ -165,18 +165,18 @@ def get_key_bindings(name, custom_overlay={}):
             log.info("Loading keybindings from %s", f)
             overlay = toml.loads(resources.read_text(plom, f))
         # keymap["overlay"] = overlay
-    keydata = default_keydata
-    # keydata = deepcopy(default_keydata)
+    # note copy unnecessary as we have fresh copy from file
+    return compute_keybinding_from_overlay(default_keydata, overlay, copy=False)
+
+
+def compute_keybinding_from_overlay(base, overlay, *, copy=True):
+    # loop over keys in overlay map and push updates into copy of default
+    keydata = base
+    if copy:
+        keydata = deepcopy(keydata)
     for action, dat in overlay.items():
         keydata[action].update(dat)
     return keydata
-
-
-def compute_keybinding_from_overlay(base, overlay):
-    # loop over keys in overlay map and push updates into copy of default
-    keydata = deepcopy(base)
-    for action, dat in overlay.items():
-        keydata[action].update(dat)
 
 
 class KeyEditDialog(QDialog):
