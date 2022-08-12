@@ -12,11 +12,8 @@ from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
     QDialog,
     QDialogButtonBox,
-    QGroupBox,
-    QGridLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
     QVBoxLayout,
 )
 
@@ -246,7 +243,7 @@ class KeyWrangler:
         return True
 
     @classmethod
-    def overlay_warnings(overlay):
+    def overlay_warnings(cls, overlay):
         """No duplicates in the overlay itself, although this allows duplicates in the overall keymap."""
         for k in overlay.keys():
             if k not in the_actions:
