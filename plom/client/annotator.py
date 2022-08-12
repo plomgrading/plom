@@ -1022,24 +1022,36 @@ class Annotator(QWidget):
             self._store_QShortcuts[action] = sc
 
     def setMinorShortCuts(self):
-        minorShortCuts = [
-            ("swapMaxNorm", Qt.Key_Backslash, self.swapMaxNorm),
-            ("zoomIn", "+", self.view.zoomIn),
-            ("zoomIn2", "=", self.view.zoomIn),
-            ("zoomOut", "-", self.view.zoomOut),
-            ("zoomOut2", "_", self.view.zoomOut),
-            ("keyHelp", "?", self.keyPopUp),
-            ("toggle", Qt.Key_Home, self.toggleTools),
-            ("viewWhole", Qt.Key_F1, self.viewWholePaper),
-            ("viewSolutions", Qt.Key_F2, self.viewSolutions),
-            ("tag_paper", Qt.Key_F3, self.tag_paper),
-            ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
-        ]
-        self._store_QShortcuts_minor = {}
-        for (name, key, command) in minorShortCuts:
-            sc = QShortcut(QKeySequence(key), self)
-            sc.activated.connect(command)
-            self._store_QShortcuts_minor[name] = sc
+        """Setup non-editable shortcuts.
+
+        Each of these actions can be associated with multiple shortcut
+        keys.
+        """
+        keydata = self.get_key_bindings()
+        actions_and_methods = (
+            ("toggle-wide-narrow", self.toggleTools),
+            ("help", self.keyPopUp),
+            ("toggle-maximize-window", self.swapMaxNorm),
+            ("show-whole-paper", self.viewWholePaper),
+            ("show-solutions", self.viewSolutions),
+            ("main-menu", self.ui.hamMenuButton.animateClick),
+            ("tag-paper", self.tag_paper),
+            ("zoom-in", self.view.zoomIn),
+            ("zoom-out", self.view.zoomOut),
+            ("next-paper", self.saveAndGetNext),
+            ("cancel", self.close),
+            ("toggle-zoom", self.view.zoomToggle),
+            ("pan-through", self.view.panThrough),
+            ("pan-back", self.view.depanThrough),
+            ("pan-through-slowly", lambda: self.view.panThrough(0.02)),
+            ("pan-back-slowly", lambda: self.view.depanThrough(0.02)),
+        )
+        self._store_QShortcuts_minor = []
+        for (action, command) in actions_and_methods:
+            for key in keydata[action]["keys"]:
+                sc = QShortcut(QKeySequence(key), self)
+                sc.activated.connect(command)
+            self._store_QShortcuts_minor.append(sc)
 
         def lambda_factory(n):
             return lambda: self.keyToChangeRubric(n)
@@ -1068,17 +1080,7 @@ class Annotator(QWidget):
         # proof of concept single source of truth for default keys
         keydata = self.get_key_bindings()
 
-        for key in keydata["next-paper"]["keys"]:
-            sc = QShortcut(QKeySequence(key), self)
-            sc.activated.connect(self.saveAndGetNext)
-        # currently only one key, should we loop for future proofing?
-        (key,) = keydata["cancel"]["keys"]
-        sc = QShortcut(QKeySequence(key), self)
-        sc.activated.connect(self.close)
-
-        # shortcuts for zoom-states
-        self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
-        self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
+        # TODO: perhaps migrate all this to MinorShortCuts?
 
         self.scaleAnnotIncShortCut = QShortcut(QKeySequence("Shift+]"), self)
         self.scaleAnnotIncShortCut.activated.connect(
@@ -1090,6 +1092,7 @@ class Annotator(QWidget):
         )
 
         # shortcuts for undo/redo
+        # TODO: see TODO note in toml files about doubling these
         self.undoShortCut = QShortcut(QKeySequence("Ctrl+z"), self)
         self.undoShortCut.activated.connect(self.undo)
         self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
@@ -1106,16 +1109,6 @@ class Annotator(QWidget):
 
         self.sekritShortCut = QShortcut(QKeySequence("Ctrl+Shift+o"), self)
         self.sekritShortCut.activated.connect(self.experimental_cycle)
-
-        # pan shortcuts
-        self.panShortCut = QShortcut(QKeySequence("space"), self)
-        self.panShortCut.activated.connect(self.view.panThrough)
-        self.depanShortCut = QShortcut(QKeySequence("Shift+space"), self)
-        self.depanShortCut.activated.connect(self.view.depanThrough)
-        self.slowPanShortCut = QShortcut(QKeySequence("Ctrl+space"), self)
-        self.slowPanShortCut.activated.connect(lambda: self.view.panThrough(0.02))
-        self.slowDepanShortCut = QShortcut(QKeySequence("Ctrl+Shift+space"), self)
-        self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
 
         # cropping hackery.
         self.crop_to_focus_ShortCut = QShortcut(QKeySequence("Ctrl+p"), self)

@@ -42,13 +42,13 @@ info = "Select the previous tab of rubrics"
 
 [redo]
 human = "Redo"
-keys = [ "t", "ctrl-y",]
+keys = [ "t", "ctrl+y",]
 categories = [ "Annotation",]
 info = "Redo the last undone-action."
 
 [undo]
 human = "Undo"
-keys = [ "g", "ctrl-z",]
+keys = [ "g", "ctrl+z",]
 categories = [ "Annotation",]
 info = "Undo the last action."
 
@@ -76,6 +76,12 @@ keys = [ "ctrl+n", "ctrl+b", "alt+enter", "alt+return",]
 categories = [ "General",]
 info = "Save the current annotations and move on to next paper."
 
+["tag-paper"]
+human = "Tag the current paper"
+keys = [ "F3",]
+categories = [ "General",]
+info = "Allows you to tag the current question of the current paper, for example to call attention to it."
+
 ["help"]
 human = "Show key help"
 keys = [ "?",]
@@ -90,7 +96,7 @@ info = "Open the main menu"
 
 ["end-text-edit"]
 human = "End text edit"
-keys = [ "shift-enter", "shift-return",]
+keys = [ "shift+enter", "shift+return",]
 categories = [ "Text",]
 info = "End the current text-edit and run latex if the text starts with \"TEX:\""
 
@@ -108,19 +114,19 @@ info = "Moves through the current view, down and then right."
 
 ["pan-through-slowly"]
 human = "Pan-through (slowly)"
-keys = [ "ctrl-space",]
+keys = [ "ctrl+space",]
 categories = [ "View",]
 info = "Moves slowly through the current view, down and then right."
 
 [pan-back]
 human = "Pan-back"
-keys = [ "shift-space",]
+keys = [ "shift+space",]
 categories = [ "View",]
 info = "Moves back through the current view, up and then left."
 
 ["pan-back-slowly"]
 human = "Pan-back (slowly)"
-keys = [ "ctrl-shift-space",]
+keys = [ "ctrl+shift+space",]
 categories = [ "View",]
 info = "Moves slowly back through the current view, up and then left."
 
@@ -129,6 +135,12 @@ human = "Show whole paper"
 keys = [ "F1",]
 categories = [ "View",]
 info = "Opens a window to display all the pages of the current test being annotated (except the ID-page)."
+
+["show-solutions"]
+human = "Show the solutions window"
+keys = [ "F2",]
+categories = [ "View",]
+info = "Opens a window to display solutions, if the server provideds solutions."
 
 ["toggle-maximize-window"]
 human = "Toggle maximize window"
@@ -144,7 +156,7 @@ info = "Toggles the tool-column between wide and narrow."
 
 [toggle-zoom]
 human = "Toggle-zoom"
-keys = [ "ctrl-=",]
+keys = [ "ctrl+=",]
 categories = [ "View",]
 info = "Toggles between the user-set view, fit-height and fit-width."
 
