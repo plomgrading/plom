@@ -118,13 +118,13 @@ _keybindings_dict = {
     "default": {"human": 'Default ("esdf", touch-typist)', "file": None},
     "wasd": {"human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
     "ijkl": {"human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
-    "custom": {"human": "Custom (not yet functional)", "file": None},
+    "custom": {"human": "Custom", "file": None},
 }
 _keybindings_list = [
     {"name": "default", "human": 'Default ("esdf", touch-typist)', "file": None},
     {"name": "wasd", "human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
     {"name": "ijkl", "human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
-    {"name": "custom", "human": "Custom (not yet functional)", "file": None},
+    {"name": "custom", "human": "Custom", "file": None},
 ]
 
 

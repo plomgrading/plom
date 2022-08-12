@@ -185,7 +185,14 @@ class Annotator(QWidget):
         else:
             log.info('loaded previous keybinding "%s"', self.keybinding_name)
         # TODO: store this in annotatorSettings too
-        self.keybinding_custom_overlay = {}
+        self.keybinding_custom_overlay = self.parentMarkerUI.annotatorSettings[
+            "keybinding_custom_overlay"
+        ]
+        if self.keybinding_custom_overlay is None:
+            self.keybinding_custom_overlay = {}
+            log.info("starting new (empty) custom overlay")
+        else:
+            log.info("loaded custom overlay: %s", self.keybinding_custom_overlay)
 
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
@@ -761,8 +768,11 @@ class Annotator(QWidget):
 
     def keyPopUp(self):
         """View help and keyboard shortcuts, eventually edit them."""
-        # TODO: pass in custom_overlay
-        diag = KeyHelp(self, keybinding_name=self.keybinding_name)
+        diag = KeyHelp(
+            self,
+            keybinding_name=self.keybinding_name,
+            custom_overlay=self.keybinding_custom_overlay,
+        )
         if diag.exec() != QDialog.Accepted:
             return
         self.keybinding_name = diag.get_selected_keybinding_name()
@@ -771,8 +781,9 @@ class Annotator(QWidget):
             # such as "ijkl", then we should *not* overwrite custom.
             self.keybinding_custom_overlay = diag.get_custom_overlay()
         self.parentMarkerUI.annotatorSettings["keybinding_name"] = self.keybinding_name
-        # TODO
-        # self.parentMarkerUI.annotatorSettings["keybinding_custom_overlay"] = self.keybinding_custom_overlay
+        self.parentMarkerUI.annotatorSettings[
+            "keybinding_custom_overlay"
+        ] = self.keybinding_custom_overlay
         self.setToolShortCuts()
 
     def setViewAndScene(self):

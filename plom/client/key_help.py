@@ -38,22 +38,24 @@ log = logging.getLogger("keybindings")
 
 
 class KeyHelp(QDialog):
-    def __init__(self, parent, *, prev_keymap_idx=0, keybinding_name):
+    def __init__(self, parent, *, keybinding_name, custom_overlay={}):
         """Construct the KeyHelp dialog.
 
         Args:
             parent (QWidget):
 
         Keyword args:
-            prev_keymap_idx (int): which keymap to initially display.  Deprecated?
             keybinding_name (str): which keybinding to initially display.
+            custom_overlay (dict): if there was already a custom keybinding,
+               pass its overlay here.
         """
         super().__init__(parent)
         vb = QVBoxLayout()
         tabs = QTabWidget()
         tabs.addTab(ClickDragPage(), "Tips")
 
-        self.default_keydata, self.keybindings = self.load_keymaps()
+        self.default_keydata, self.keybindings = self.load_keymaps(_keybindings_list, custom_overlay)
+
         self.tabs = tabs
         if keybinding_name:
             # TODO: how about self.update_keybinding_by_name?
@@ -92,19 +94,13 @@ class KeyHelp(QDialog):
         idx = self._keyLayoutCB.currentIndex()
         return self._keyLayoutCB_idx_to_name[idx]
 
-    def load_keymaps(self):
+    def load_keymaps(self, keybindings, custom_overlay):
         # TODO: I think plom.client would be better, put can't get it to work
         f = "default_keys.toml"
         log.info("Loading keybindings from %s", f)
         default_keydata = toml.loads(resources.read_text(plom, f))
 
-        keybindings = [
-            {"human": 'Default ("esdf", touch-typist)', "file": None},
-            {"human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
-            {"human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
-            {"human": "Custom (not yet functional)", "file": None},
-        ]
-
+        keybindings = deepcopy(keybindings)
         for keymap in keybindings:
             f = keymap["file"]
             if f is None:
@@ -112,6 +108,8 @@ class KeyHelp(QDialog):
             else:
                 log.info("Loading keybindings from %s", f)
                 overlay = toml.loads(resources.read_text(plom, f))
+            if keymap["name"] == "custom":
+                overlay = deepcopy(custom_overlay)
             keymap["overlay"] = overlay
         return default_keydata, keybindings
 
