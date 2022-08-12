@@ -208,6 +208,40 @@ class SpecVerifier:
 
     Write the result for the server to find on disk:
     >>> spec.saveVerifiedSpec()     # doctest: +SKIP
+
+    You can omit some fields such as ``numberOfQuestions`` and
+    ``totalMarks``.  They will be automatically calculated on
+    verification.  Before that, will print as "TBD*":
+    >>> raw = {
+    ... 'name': 'plomdemo',
+    ... 'longName': 'Midterm Demo using Plom',
+    ... 'numberOfVersions': 2,
+    ... 'numberOfPages': 6,
+    ... 'numberToProduce': 20,
+    ... 'idPage': 1,
+    ... 'doNotMarkPages': [2],
+    ... 'question': [
+    ...     {'pages': [3], 'mark': 5, 'select': 'shuffle'},
+    ...     {'pages': [4], 'mark': 10, 'select': 'fix'},
+    ...     {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'}
+    ...   ]
+    ... }
+    >>> spec = SpecVerifier(raw)
+    >>> print(spec)
+    Plom exam specification:
+      Name of exam = plomdemo
+      Long name of exam = Midterm Demo using Plom
+      Number of source versions = 2
+      Number of tests to produce = 20
+      Number of pages = 6
+      IDpage = 1
+      Do not mark pages = [2]
+      Number of questions to mark = TBD*
+        Question 1: pages [3], selected as shuffle, worth 5 marks
+        Question 2: pages [4], selected as fix, worth 10 marks
+        Question 3: pages [5, 6], selected as shuffle, worth 10 marks
+      Exam total = TBD* marks
+      (TBD* fields will be filled in on verification)
     """
 
     def __init__(self, d):
@@ -379,6 +413,8 @@ class SpecVerifier:
             )
         K = self.spec.get("totalMarks", "TBD*")
         s += f"  Exam total = {K} marks"
+        if K == "TBD*" or N == "TBD*":
+            s += "\n  (TBD* fields will be filled in on verification)"
         return s
 
     def get_public_spec_dict(self):
