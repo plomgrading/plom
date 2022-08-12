@@ -100,7 +100,7 @@ class TestSpecProgressService:
 
         return True
 
-    def progress_is_anything_complete(self):
+    def is_anything_complete(self):
         """Return true if any of the wizard pages are completed, false otherwise"""
         progress_dict = self.get_progress_dict()
         vals = progress_dict.values()

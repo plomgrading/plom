@@ -1,7 +1,9 @@
 import pathlib
 import json
+import fitz
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from .. import models
 from .. import services
 
@@ -365,14 +367,20 @@ class TestSpecService:
         # names page
         self.set_short_name(input_spec['name'])
         self.set_long_name(input_spec['longName'])
-        self.set_num_versions(input_spec['numberOfVersions'])
+        self.set_n_versions(input_spec['numberOfVersions'])
 
         # PDF page
-        # validate that file is a PDF
         pdf_path = pathlib.Path(pdf_path)
         pdf_doc = pdf_path.open('rb').read()
         pdf_service = services.ReferencePDFService(self)
-        pdf_service.new_pdf(slugify(pdf_path.stem), pdf_doc)
+
+        # validate that file is a PDF
+        pdf = fitz.open(stream=pdf_doc)
+        if 'PDF' not in pdf.metadata['format']:
+            raise ValidationError('File is not a valid PDF.')
+
+        n_pages = input_spec['numberOfPages']
+        pdf_service.new_pdf(slugify(pdf_path.stem), n_pages, SimpleUploadedFile(pdf_path.name, pdf_doc))
 
         # ID page
         self.set_id_page(input_spec['idPage'] - 1)
@@ -396,8 +404,12 @@ class TestSpecService:
         # do-not-mark pages
         dnm_pages = [j-1 for j in input_spec['doNotMarkPages']]
         self.set_do_not_mark_pages(dnm_pages)
-        self.specification.dnm_page_submitted = True
-        self.specification.save()
+        the_spec = self.specification()
+        the_spec.dnm_page_submitted = True
+        
+        # validate (assume valid for now)
+        the_spec.validate_page_sumbitted = True
+        the_spec.save()
 
     def get_pages_for_id_select_page(self):
         """
