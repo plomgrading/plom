@@ -73,20 +73,19 @@ class PQVMappingService:
     @transaction.atomic()
     def get_pqv_map_as_csv(self):
         pqvmap = self.get_pqv_map_dict()
-        qlist = [q+1 for q in range(how_many_questions())]
+        qlist = [q + 1 for q in range(how_many_questions())]
         # TODO - replace this with some python csv module stuff
-        txt = "\"paper_number\""
+        txt = '"paper_number"'
         for q in qlist:
-            txt += f", \"q{q}.version\""
+            txt += f', "q{q}.version"'
         txt += "\n"
         for paper_number, qvmap in pqvmap.items():
             txt += f"{paper_number}"
-            for q,v in qvmap.items():
+            for q, v in qvmap.items():
                 txt += f", {v}"
             txt += "\n"
         return txt
 
-    
     def make_version_map(self, numberToProduce):
         from plom import make_random_version_map
 
