@@ -2,7 +2,7 @@ from django.core.files import File
 from django.db import transaction
 
 from Preparation.models import StagingPQVMapping
-from . import StagingStudentService
+from Preparation.services import StagingStudentService
 
 from .temp_functions import get_demo_spec, how_many_questions
 
@@ -101,3 +101,7 @@ class PQVMappingService:
         self.remove_pqv_map()
         pqvmap = self.make_version_map(numberToProduce)
         self.use_pqv_map(pqvmap)
+
+    def get_minimum_number_to_produce(self):
+        sss = StagingStudentService()
+        return sss.get_minimum_number_to_produce()

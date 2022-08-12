@@ -52,14 +52,7 @@ class PQVMappingView(ManagerRequiredBaseView):
         fpp, lpp = sss.get_first_last_prenamed_paper()
         context.update({"first_prenamed_paper": fpp, "last_prenamed_paper": lpp})
 
-        # TODO - this logic should be put somewhere more central
-        min_number_to_produce = max(
-            context["number_of_students"] * 1.1, context["number_of_students"] + 20
-        )
-        if lpp is not None:
-            if lpp > min_number_to_produce:
-                min_number_to_produce = lpp + 10
-        context["min_number_to_produce"] = min_number_to_produce
+        context["min_number_to_produce"] = sss.get_minimum_number_to_produce()
 
         if context["pqv_mapping_present"]:
             context["pqv_table"] = pqvs.get_pqv_map_as_table(

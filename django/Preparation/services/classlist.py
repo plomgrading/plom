@@ -2,6 +2,7 @@ from django.core.files import File
 from django.db import transaction
 
 from Preparation.models import StagingClasslistCSV, StagingStudent
+from Preparation.services import PrenameSettingService
 
 import csv
 import logging
@@ -130,3 +131,26 @@ class StagingStudentService:
                 self.add_student(row["id"], row["name"], row["paper_number"])
         # after used make sure the csv is deleted
         scsv.delete_classlist_csv()
+
+    @transaction.atomic()
+    def get_minimum_number_to_produce(self):
+        # if no students then return 20
+        # N = number of students in classlist
+        # L = last prenamed paper in classlist
+        # else compute max of { 1.1*N, N+20, L+10 } - make sure integer.
+        if not self.are_there_students():
+            return 20
+
+        N = self.how_many_students()
+        N1 = -(
+            (-N * 11) // 10
+        )  # simple fiddle to get ceiling of 1.1*N using python floor-div //
+        N2 = N + 20
+
+        pss = PrenameSettingService()
+        if pss.get_prenaming_setting():
+            first_prename, last_prename = self.get_first_last_prenamed_paper()
+            N3 = last_prename + 10
+            return max(N1, N2, N3)
+        else:
+            return max(N1, N2)

@@ -104,7 +104,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
             dest="command",
-            description="Perform tasks related to uploading/downloading/deleting test source pdfs.",
+            description="Perform tasks related to uploading/downloading/deleting of a classlist.",
         )
         sp_S = sub.add_parser("status", help="Show details of uploaded classlist")
         sp_U = sub.add_parser("upload", help="Upload a classlist csv")
