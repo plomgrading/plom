@@ -985,7 +985,7 @@ class Annotator(QWidget):
     def setToolShortCuts(self):
         """Set or change the shortcuts for the basic tool keys.
 
-        Implementation note: this creates various QShortCuts.  It needs
+        Implementation note: this creates various QShortcuts.  It needs
         to store them somewhere so they don't get garbage collected, so
         it puts them in a instance variable.  If you call the function
         again, the existing QShortcuts will be updated.
@@ -1009,15 +1009,15 @@ class Annotator(QWidget):
             # we've done this all before so update existing QShortcuts
             for (action, command) in actions_and_methods:
                 key = keydata[action]["keys"][0]
-                self._tool_QShortcuts[action].setKey(key)
+                self._store_QShortcuts[action].setKey(key)
                 log.debug('shortcut: updating "%s" to "%s"', action, key)
             return
         # store the shortcuts to prevent GC and so we can update later
-        self._tool_QShortcuts = {}
+        self._store_QShortcuts = {}
         for (action, command) in actions_and_methods:
             x = QShortcut(QKeySequence(keydata[action]["keys"][0]), self)
             x.activated.connect(getattr(self, command))
-            self._tool_QShortcuts[action] = x
+            self._store_QShortcuts[action] = x
 
     def setMinorShortCuts(self):
         minorShortCuts = [
@@ -1033,30 +1033,23 @@ class Annotator(QWidget):
             ("tag_paper", Qt.Key_F3, self.tag_paper),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
+        self._store_QShortcuts_minor = {}
         for (name, key, command) in minorShortCuts:
-            # self.nameSC = QShortCut(QKeySequence(key), self)
-            setattr(self, name + "SC", QShortcut(QKeySequence(key), self))
-            # self.nameSC.activated.connect(command)
-            getattr(self, name + "SC").activated.connect(command)
+            sc = QShortcut(QKeySequence(key), self)
+            sc.activated.connect(command)
+            self._store_QShortcuts_minor[name] = sc
+
+        def lambda_factory(n):
+            return lambda: self.keyToChangeRubric(n)
+
         # rubric shortcuts
+        self._store_QShortcuts_rubrics = []
         for n in range(1, 11):
-            setattr(
-                self,
-                "rubricChange{}SC".format(n),
-                QShortcut(QKeySequence("{}".format(n % 10)), self),
-            )
-        # unfortunately couldn't quite get the set command as lambda-function working in the loop
-        self.rubricChange1SC.activated.connect(lambda: self.keyToChangeRubric(1))
-        self.rubricChange2SC.activated.connect(lambda: self.keyToChangeRubric(2))
-        self.rubricChange3SC.activated.connect(lambda: self.keyToChangeRubric(3))
-        self.rubricChange4SC.activated.connect(lambda: self.keyToChangeRubric(4))
-        self.rubricChange5SC.activated.connect(lambda: self.keyToChangeRubric(5))
-        self.rubricChange6SC.activated.connect(lambda: self.keyToChangeRubric(6))
-        self.rubricChange7SC.activated.connect(lambda: self.keyToChangeRubric(7))
-        self.rubricChange8SC.activated.connect(lambda: self.keyToChangeRubric(8))
-        self.rubricChange9SC.activated.connect(lambda: self.keyToChangeRubric(9))
-        self.rubricChange10SC.activated.connect(lambda: self.keyToChangeRubric(10))
-        # not so elegant - but it works
+            # keys 1, 2, 3, 4, 5, 6, 7, 8, 9, 0
+            key = f"{n % 10}"
+            sc = QShortcut(QKeySequence(key), self)
+            sc.activated.connect(lambda_factory(n))
+            self._store_QShortcuts_rubrics.append(sc)
 
     def setMiscShortCuts(self):
         """
