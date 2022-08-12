@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .. import services
+from ..services import TestSpecService, TestSpecGenerateService
 from .. import models
 
 
@@ -8,16 +8,17 @@ class TestSpecGenerateTests(TestCase):
 
     def test_generate_spec_dict(self):
         """Test services.generate_spec_dict"""
-        spec = services.load_spec()
-        spec.long_name = 'long'
-        spec.short_name = 'short'
+        spec = TestSpecService()
+        the_spec = spec.specification()
+        the_spec.long_name = 'long'
+        the_spec.short_name = 'short'
 
-        spec.n_versions = 2
-        spec.n_to_produce = 2
-        spec.n_questions = 2
-        spec.total_marks = 2
+        the_spec.n_versions = 2
+        the_spec.n_to_produce = 2
+        the_spec.n_questions = 2
+        the_spec.total_marks = 2
 
-        spec.pages = {
+        the_spec.pages = {
             "0": {
                 'id_page': True,
                 'dnm_page': False,
@@ -44,14 +45,13 @@ class TestSpecGenerateTests(TestCase):
             }
         }
 
-        spec.save()
+        the_spec.save()
 
-        q1 = models.TestSpecQuestion(index=1, label='Q1', mark=1, shuffle=True)
-        q1.save()
-        q2 = models.TestSpecQuestion(index=2, label='Q2', mark=1, shuffle=False)
-        q2.save()
+        spec.add_question(1, 'Q1', 1, True)
+        spec.add_question(2, 'Q2', 1, False)
 
-        spec_dict = services.generate_spec_dict()
+        gen = TestSpecGenerateService(spec)
+        spec_dict = gen.generate_spec_dict()
 
         self.assertEqual(spec_dict['name'], 'short')
         self.assertEqual(spec_dict['longName'], 'long')

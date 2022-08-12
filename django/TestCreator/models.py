@@ -43,6 +43,8 @@ class TestSpecInfo(models.Model):
     n_questions = models.IntegerField(default=0)
     total_marks = models.IntegerField(default=0)
     pages = models.JSONField(default=dict)
+    dnm_page_submitted = models.BooleanField(default=False)
+    validate_page_sumbitted = models.BooleanField(default=False)
 
 
 SHUFFLE_CHOICES = (

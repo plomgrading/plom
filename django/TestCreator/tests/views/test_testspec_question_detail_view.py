@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from model_bakery import baker
-from ... import services
+from ...services import TestSpecService
 from .base_view_test_case import BaseTestSpecViewTestCase
 
 
@@ -33,7 +33,8 @@ class TestSpecCreatorQuestionDetailPageTests(BaseTestSpecViewTestCase):
 
         # TODO: getting this page before completing the questions page should raise an error
         # TODO: what happens when accessing an invalid question index in the URL?
-        services.set_num_questions(1)
+        spec = TestSpecService()
+        spec.set_n_questions(1)
 
         response = self.cli.get(reverse('q_detail', args=(1,)))
         self.assertEqual(response.status_code, 200)
@@ -44,8 +45,9 @@ class TestSpecCreatorQuestionDetailPageTests(BaseTestSpecViewTestCase):
 
     def test_get_initial_with_question(self):
         """Test the question detail view's get_initial function with an existing question"""
-        services.set_num_questions(1)
-        services.create_question(1, 'Ex.1', 2, True)
+        spec = TestSpecService()
+        spec.set_n_questions(1)
+        spec.add_question(1, 'Ex.1', 2, True)
 
         response = self.cli.get(reverse('q_detail', args=(1,)))
         self.assertEqual(response.status_code, 200)

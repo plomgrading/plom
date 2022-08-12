@@ -1,103 +1,103 @@
 from django.test import TestCase
-
-from .. import services
+from django.core.files.uploadedfile import SimpleUploadedFile
+from pathlib import Path
+from ..services import TestSpecService, TestSpecProgressService, ReferencePDFService
+from .. import models
 
 
 class TestSpecProgressTests(TestCase):
-    """Test service methods for models.TestSpecProgress"""
+    """Test services.TestSpecProgressService"""
+    @classmethod
+    def setUpClass(cls):
+        """Init a dummy pdf file"""
+        cls.dummy_file = SimpleUploadedFile('dummy.pdf', b'Test text', content_type='application/pdf')
+        cls.dummy_pdf = models.ReferencePDF(filename_slug='dummy', num_pages=2, pdf=cls.dummy_file)
+        return super().setUpClass()
 
-    def test_get_progress(self):
-        """Test services.get_progress"""
-        prog = services.get_progress()
-        prog.is_names_completed = True
-        prog.save()
+    @classmethod
+    def tearDownClass(cls):
+        """Remove all saved dummy files from disk"""
 
-        prog2 = services.get_progress()
-        self.assertTrue(prog2.is_names_completed)
-        self.assertFalse(prog2.is_versions_pdf_completed)
-        self.assertEqual(prog2.are_questions_completed, {})
+        # TODO: I guess the on delete signal doesn't get called when running tests?
+        media_path = Path('TestCreator/media')
+        for f in media_path.iterdir():
+            f.unlink()
+        return super().tearDownClass()
 
-    def test_reset_progress(self):
-        """Test services.reset_progress"""
-        prog = services.get_progress()
-        prog.is_names_completed = True
-        prog.is_versions_pdf_completed = True
-        prog.are_questions_completed = {'0': True, '1': True}
+    def test_is_names_complete(self):
+        """Test TestSpecProgressService.is_names_completed"""
+        spec = TestSpecService()
+        prog = TestSpecProgressService(spec)
 
-        prog2 = services.reset_progress()
+        self.assertFalse(prog.is_names_completed())
 
-        self.assertFalse(prog2.is_names_completed)
-        self.assertFalse(prog2.is_versions_pdf_completed)
-        self.assertEqual(prog2.are_questions_completed, {})
+        spec.set_long_name('long')
+        spec.set_short_name('short')
+        spec.set_n_versions(1)
 
-    def test_init_questions(self):
-        """Test services.progress_init_questions"""
-        # TODO: what happens when init_questions is called before the number of questions is set?
-        services.set_num_questions(3)
-        services.progress_init_questions()
+        self.assertTrue(prog.is_names_completed())
 
-        prog = services.get_progress()
-        # TODO: Should probably be 1-indexed
-        self.assertEqual(prog.are_questions_completed, {'0': False, '1': False, '2': False})
+    def test_is_pdf_page_completed(self):
+        """Test TestSpecProgressService.is_pdf_page_completed"""
+        spec = TestSpecService()
+        prog = TestSpecProgressService(spec)
 
-    def test_clear_questions(self):
-        """Test services.progress_clear_questions"""
-        # TODO: need a function that clears question data in both TestSpecInfo and TestSpecProgress!
-        prog = services.get_progress()
-        prog.are_questions_completed = {'0': True, '1': False}
-        prog.save()
+        self.assertFalse(prog.is_pdf_page_completed())
 
-        services.progress_clear_questions()
-        prog2 = services.get_progress()
-        self.assertEqual(prog2.are_questions_completed, {})
+        ref_service = ReferencePDFService(spec)
+        new_pdf = ref_service.create_pdf('dummy', 1, self.dummy_file)
 
-    def test_progress_set_names(self):
-        """Test services.progress_set_names"""
-        services.progress_set_names(True)
-        prog = services.get_progress()
-        self.assertTrue(prog.is_names_completed)
+        self.assertTrue(prog.is_pdf_page_completed())
 
-    def test_progress_set_versions_pdf(self):
-        """Test services.progress_set_versions_pdf"""
-        services.progress_set_versions_pdf(True)
-        prog = services.get_progress()
-        self.assertTrue(prog.is_versions_pdf_completed)
+    def test_is_id_page_completed(self):
+        """Test TestSpecProgressService.is_id_page_completed"""
+        spec = TestSpecService()
+        spec.set_pages(self.dummy_pdf)
+        prog = TestSpecProgressService(spec)
 
-    def test_progress_set_id_page(self):
-        """Test services.progress_set_id_page"""
-        services.progress_set_id_page(True)
-        prog = services.get_progress()
-        self.assertTrue(prog.is_id_page_completed)
+        self.assertFalse(prog.is_id_page_completed())
 
-    def test_progress_set_question_page(self):
-        """Test services.progress_set_question_page"""
-        services.progress_set_question_page(True)
-        prog = services.get_progress()
-        self.assertTrue(prog.is_question_page_completed)
+        spec.set_id_page(0)
+        self.assertTrue(prog.is_id_page_completed())
 
-    def test_progress_set_question_detail_page(self):
-        """Test services.progress_set_question_detail_page"""
-        # TODO: setting a non-existent question should throw an IndexError
-        services.set_num_questions(2)
-        services.progress_init_questions()
-        services.progress_set_question_detail_page(1, True)
-        prog = services.get_progress()
-        self.assertEqual(prog.are_questions_completed, {'0': False, '1': True})
+    def test_is_question_page_completed(self):
+        """Test TestSpecProgressService.is_question_page_completed"""
+        spec = TestSpecService()
+        prog = TestSpecProgressService(spec)
 
-    def test_progress_set_dnm_page(self):
-        """Test services.progress_set_dnm_page"""
-        services.progress_set_dnm_page(True)
-        prog = services.get_progress()
-        self.assertTrue(prog.is_dnm_page_completed)
+        self.assertFalse(prog.is_question_page_completed())
 
-    def test_progress_set_validate_page(self):
-        """Test services.progress_set_validate_page"""
-        services.progress_set_validate_page(True)
-        prog = services.get_progress()
-        self.assertTrue(prog.is_validate_page_completed)
+        spec.set_n_questions(1)
+        spec.set_total_marks(1)
+
+        self.assertTrue(prog.is_question_page_completed())
+
+    def test_is_question_detail_page_completed(self):
+        """Test TestSpecProgressService.is_question_detail_page_completed"""
+        spec = TestSpecService()
+        prog = TestSpecProgressService(spec)
+
+        self.assertFalse(prog.is_question_detail_page_completed(0))
+
+        spec.add_question(0, 'Q1', 1, False)
+
+        self.assertTrue(prog.is_question_detail_page_completed(0))
+
+    def test_is_dnm_page_completed(self):
+        """Test TestSpecProgressService.is_dnm_page_completed"""
+        spec = TestSpecService()
+        prog = TestSpecProgressService(spec)
+
+        the_spec = spec.specification()
+        the_spec.dnm_page_submitted = True
+        the_spec.save()
+
+        self.assertTrue(prog.is_dnm_page_completed())
 
     def test_get_progress_dict(self):
         """Test services.get_progress_dict"""
+        spec = TestSpecService()
+        prog = TestSpecProgressService(spec)
 
         test_incomplete_dict = {
             'names': False,
@@ -109,39 +109,6 @@ class TestSpecProgressTests(TestCase):
             'validate': False
         }
 
-        prog_dict = services.get_progress_dict()
+        prog_dict = prog.get_progress_dict()
         self.assertEqual(prog_dict, test_incomplete_dict)
 
-    def test_progress_question_list(self):
-        """Test services.get_question_progress_for_template"""
-        services.set_num_questions(2)
-        services.progress_init_questions()
-        q_list = services.get_question_progress_for_template()
-        self.assertEqual(q_list, [False, False])
-
-    def test_progress_is_everything_complete(self):
-        """Test services.progress_is_everything_complete"""
-        self.assertFalse(services.progress_is_everything_complete())
-
-        services.set_num_questions(1)
-        services.progress_init_questions()
-        
-        services.progress_set_names(True)
-        services.progress_set_versions_pdf(True)
-        services.progress_set_id_page(True)
-        services.progress_set_question_page(True)
-        services.progress_set_question_detail_page(0, True)
-        services.progress_set_dnm_page(True)
-        services.progress_set_validate_page(True)
-
-        self.assertTrue(services.progress_is_everything_complete())
-
-    def test_progress_is_anything_completed(self):
-        """Test services.progress_is_anything_complete"""
-        self.assertFalse(services.progress_is_anything_complete())
-
-        services.set_num_questions(1)
-        services.progress_init_questions()
-
-        services.progress_set_names(True)
-        self.assertTrue(services.progress_is_anything_complete())

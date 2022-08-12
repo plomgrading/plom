@@ -1,19 +1,20 @@
 import re
 from django.urls import reverse
 from . import BaseTestSpecFormPDFView
+from ..services import TestSpecService
 from .. import forms
-from .. import services
 
 class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
     template_name = 'TestCreator/test-spec-question-detail-page.html'
     form_class = forms.TestSpecQuestionForm
 
     def get_initial(self):
-        # TODO: pre-populate marks field
         initial = super().get_initial()
         question_id = self.kwargs['q_idx']
-        if services.question_exists(question_id):
-            question = services.get_question(question_id)
+        spec = TestSpecService()
+        if spec.has_question(question_id):
+            q_service = spec.questions[question_id]
+            question = q_service.get_question()
             initial['label'] = question.label
             initial['mark'] = question.mark
             initial['shuffle'] = 'S' if question.shuffle else 'F'
@@ -24,7 +25,7 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
             # total_marks = services.get_total_marks()
             # initial['mark'] = total_marks // services.get_num_questions()
 
-            if services.get_num_versions() > 1:
+            if spec.get_n_versions() > 1:
                 initial['shuffle'] = 'S'
             else:
                 initial['shuffle'] = 'F'
@@ -39,15 +40,19 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
     def get_context_data(self, **kwargs):
         question_id = self.kwargs['q_idx']
         context = super().get_context_data(f'question_{question_id}', **kwargs)
+        spec = TestSpecService()
+
         context['question_id'] = question_id
         context['prev_id'] = question_id-1
-        context['total_marks'] = services.get_total_marks()
-        question_marks = services.get_question_marks(question_id)
-        context['assigned_to_others'] = services.get_marks_assigned_to_other_questions(question_marks)
-        context['n_versions'] = services.get_num_versions()
+        context['total_marks'] = spec.get_total_marks()
+        if question_id in spec.questions:
+            context['assigned_to_others'] = spec.questions[question_id].get_marks_assigned_to_other_questions()
+        else:
+            context['assigned_to_others'] = 0
+        context['n_versions'] = spec.get_n_versions()
 
-        context['x_data'] = services.get_question_detail_page_alpine_xdata(question_id)
-        context['pages'] = services.get_pages_for_question_detail_page(question_id)
+        context['x_data'] = spec.get_question_detail_page_alpine_xdata(question_id)
+        context['pages'] = spec.get_pages_for_question_detail_page(question_id)
 
         return context
 
@@ -58,10 +63,10 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
         # save the question to the database
         label = form_data['label']
         mark = form_data['mark']
-        shuffle = form_data['shuffle']
-        print(shuffle)
-
-        services.create_or_replace_question(question_id, label, mark, shuffle)
+        shuffle = form_data['shuffle'] == 'S'
+        
+        spec = TestSpecService()
+        spec.add_question(question_id, label, mark, shuffle)
 
         # save the question pages
         question_ids = []
@@ -69,17 +74,16 @@ class TestSpecCreatorQuestionDetailPage(BaseTestSpecFormPDFView):
             if 'page' in key and value == True:
                 idx = int(re.sub('\D', '', key))
                 question_ids.append(idx)
-        services.set_question_pages(question_ids, question_id)
-
-        services.progress_set_question_detail_page(question_id-1, True)
-        services.progress_set_validate_page(False)
+        spec.set_question_pages(question_ids, question_id)
         
         return super().form_valid(form)
 
     def get_success_url(self):
         question_id = self.kwargs['q_idx']
-        num_questions = services.get_num_questions()
+        print(question_id)
+        spec = TestSpecService()
+        num_questions = spec.get_n_questions()
         if question_id == num_questions:
             return reverse('dnm_page')
         else:
-            return reverse('q_detail', args=(question_id + 1,))
+            return reverse('q_detail', args=(question_id+1,))

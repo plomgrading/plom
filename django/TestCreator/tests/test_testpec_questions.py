@@ -1,7 +1,7 @@
 from random import shuffle
 from model_bakery import baker
 from django.test import TestCase
-from .. import services
+from ..services import TestSpecService, TestSpecQuestionService
 from .. import models
 
 
@@ -26,95 +26,91 @@ class TestSpecQuestionTests(TestCase):
     }
 
     def test_create_question(self):
-        """Test services.create_question"""
-        q1 = services.create_question(1, 'Q1', 1, False)
-        self.assertEqual(q1.index, 1)
+        """Test TestSpecQuestionService.create_question"""
+        spec = TestSpecService()
+        qserv = TestSpecQuestionService(0, spec)
+        q1 = qserv.create_question('Q1', 1, False)
+        self.assertEqual(q1.index, 0)
         self.assertEqual(q1.label, 'Q1')
         self.assertEqual(q1.mark, 1)
         self.assertEqual(q1.shuffle, False)
 
     def test_remove_question(self):
-        """Test services.remove_question"""
+        """Test TestSpecQuestionService.remove_question"""
+        spec = TestSpecService()
+        qserv = TestSpecQuestionService(1, spec)
         q1 = models.TestSpecQuestion(index=1, label='Q1', mark=1, shuffle=False)
         q1.save()
 
-        services.remove_question(1)
+        qserv.remove_question()
         self.assertEqual(len(models.TestSpecQuestion.objects.all()), 0)
 
     def test_remove_question_update_spec(self):
         """Test that calling remove_question will update the pages in models.TestSpecInfo"""
+        spec = TestSpecService()
+        qserv = TestSpecQuestionService(1, spec)
         q1 = models.TestSpecQuestion(index=1, label='Q1', mark=1, shuffle=False)
         q1.save()
 
-        spec = services.load_spec()
-        spec.pages = self.get_default_pages()
-        spec.pages["1"]['question_page'] = 1
-        spec.save()
+        the_spec = spec.specification()
+        the_spec.pages = self.get_default_pages()
+        the_spec.pages["1"]['question_page'] = 1
+        the_spec.save()
 
-        services.remove_question(1)
+        qserv.remove_question()
         
         # You'll have calling load_spec() every time you want to lookup the most recent values
-        spec = services.load_spec()
-        self.assertEqual(spec.pages["1"]['question_page'], False)
+        the_spec = spec.specification()
+        self.assertEqual(the_spec.pages["1"]['question_page'], False)
 
     def test_clear_questions(self):
-        """Test services.clear_questions"""
-        q1 = models.TestSpecQuestion(index=1, label='Q1', mark=1, shuffle=False)
-        q1.save()
+        """Test TestSpecService.clear_questions"""
+        spec = TestSpecService()
+        spec.add_question(1, 'Q1', 1, False)
+        spec.add_question(2, 'Q2', 1, False)
+        spec.add_question(3, 'Q3', 1, False)
+        spec.set_n_questions(3)
 
-        q2 = models.TestSpecQuestion(index=2, label='Q2', mark=1, shuffle=False)
-        q2.save()
-
-        q3 = models.TestSpecQuestion(index=3, label='Q3', mark=1, shuffle=False)
-        q3.save()
-
-        # Have to keep TestSpecInfo updated
-        spec = services.load_spec()
-        spec.n_questions = 3
-        spec.save()
-
-        services.clear_questions()
+        spec.clear_questions()
         self.assertEqual(len(models.TestSpecQuestion.objects.all()), 0)
 
     def test_total_assigned_marks(self):
-        """Test services.get_total_assigned_marks"""
+        """Test TestSpecService.get_total_assigned_marks"""
         q1 = baker.make(models.TestSpecQuestion, mark=5)
         q2 = baker.make(models.TestSpecQuestion, mark=5)
 
-        total_so_far = services.get_total_assigned_marks()
+        spec = TestSpecService()
+        total_so_far = spec.get_total_assigned_marks()
         self.assertEqual(total_so_far, 10)
 
     def test_get_available_marks(self):
-        """Test services.get_available_marks"""
-        services.set_total_marks(10)
-        q1 = baker.make(models.TestSpecQuestion, mark=4)
-        available = services.get_available_marks()
-        self.assertEqual(available, 6)
+        """Test TestSpecService.get_available_marks"""
+        spec = TestSpecService()
+        spec.set_total_marks(10)
+        q1 = baker.make(models.TestSpecQuestion, mark=4, index=0)
+        spec.questions[0] = TestSpecQuestionService(0, spec)
+        available = spec.get_available_marks(0)
+        self.assertEqual(available, 10)
         
     def test_get_marks_assigned_to_other_questions(self):
-        """Test services.get_marks_assigned_to_other_questions"""
-        q1 = baker.make(models.TestSpecQuestion, mark=5)
-        q2 = baker.make(models.TestSpecQuestion, mark=3)
-        q3 = baker.make(models.TestSpecQuestion, mark=2)
-        marks_to_others = services.get_marks_assigned_to_other_questions(q3.mark)
+        """Test TestSpecQuestionService.get_marks_assigned_to_other_questions"""
+        spec = TestSpecService()
+        spec.add_question(0, '', 5, False)
+        spec.add_question(1, '', 3, False)
+        spec.add_question(2, '', 2, False)
+        qserv = spec.questions[2]
+        marks_to_others = qserv.get_marks_assigned_to_other_questions()
         self.assertEqual(marks_to_others, 8)
 
-    def test_total_exceeds_error(self):
-        """Test that services.get_available_marks raises a RuntimeError if there are more marks assigned to each 
-        question than in the total_marks field"""
-        services.set_total_marks(10)
-        q1 = baker.make(models.TestSpecQuestion, mark=6)
-        q2 = baker.make(models.TestSpecQuestion, mark=7)
-
-        with self.assertRaisesMessage(RuntimeError, "You've assigned more marks to questions than in the total_marks field"):
-            services.get_available_marks()
-
     def test_other_questions_total(self):
-        """Test services.get_available_marks with perviously assigned values"""
-        services.set_total_marks(10)
-        q1 = baker.make(models.TestSpecQuestion, mark=7)
-        q2 = baker.make(models.TestSpecQuestion, mark=3)
+        """Test TestSpecService.get_available_marks with perviously assigned values"""
+        spec = TestSpecService()
+        spec.set_total_marks(10)
+        q1 = baker.make(models.TestSpecQuestion, mark=7, index=0)
+        spec.questions[0] = TestSpecQuestionService(0, spec)
+        q2 = baker.make(models.TestSpecQuestion, mark=3, index=1)
+        spec.questions[1] = TestSpecQuestionService(1, spec)
 
         # let's say we're on the detail page for question 2
-        available = services.get_available_marks(q2.mark)
+        available = spec.get_available_marks(q2.index)
         self.assertEqual(available, 3)

@@ -1,8 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
+from ..services import TestSpecService
 from .. import forms
-from .. import services
 from .. import models
 
 
@@ -66,7 +66,8 @@ class TestSpecQuestionFormTests(TestCase):
         """Test TestSpecQuestionForm.clean"""
         form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': True}, num_pages=2, q_idx=1)
         
-        services.set_total_marks(2)
+        spec = TestSpecService()
+        spec.set_total_marks(2)
         valid = form.is_valid()
         self.assertTrue(valid)
 
@@ -74,7 +75,8 @@ class TestSpecQuestionFormTests(TestCase):
         """Test that too many marks for the question will raise a ValidationError"""
         form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 5, 'shuffle': 'F', 'page0': True}, num_pages=1, q_idx=1)
 
-        services.set_total_marks(2)
+        spec = TestSpecService()
+        spec.set_total_marks(2)
         form.is_valid()
 
         with self.assertRaisesMessage(ValidationError, 'Question cannot have more marks than the test.'):
@@ -84,7 +86,8 @@ class TestSpecQuestionFormTests(TestCase):
         """Test that selecting no pages for the question raises a ValidationError"""
         form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': False}, num_pages=2, q_idx=1)
 
-        services.set_total_marks(2)
+        spec = TestSpecService()
+        spec.set_total_marks(2)
         form.is_valid()
 
         with self.assertRaisesMessage(ValidationError, 'At least one page must be selected.'):
@@ -94,7 +97,8 @@ class TestSpecQuestionFormTests(TestCase):
         """Test that page selection with a gap will raise a ValidationError"""
         form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 2, 'shuffle': 'F', 'page0': False, 'page1': True, 'page2': False, 'page3': True}, num_pages=4, q_idx=1)
 
-        services.set_total_marks(2)
+        spec = TestSpecService()
+        spec.set_total_marks(2)
         form.is_valid()
 
         with self.assertRaisesMessage(ValidationError, 'Question pages must be consecutive.'):
@@ -106,12 +110,13 @@ class TestSpecQuestionFormTests(TestCase):
         q2 = baker.make(models.TestSpecQuestion, index=2)
         pdf = baker.make(models.ReferencePDF, num_pages=2)
 
-        services.set_pages(pdf)
-        services.set_num_questions(2)
-        services.set_total_marks(2)
-        services.set_question_pages([1], 1)
+        spec = TestSpecService()
+        spec.set_pages(pdf)
+        spec.set_n_questions(2)
+        spec.set_total_marks(2)
+        spec.set_question_pages([1], 1)
 
-        form = forms.TestSpecQuestionForm(data={'label': 'Q1', 'mark': 1, 'shuffle': 'F', 'page0': True, 'page1': False}, num_pages=2, q_idx=2)
+        form = forms.TestSpecQuestionForm(data={'label': 'Q2', 'mark': 1, 'shuffle': 'F', 'page0': True, 'page1': False}, num_pages=2, q_idx=2)
         form.is_valid()
 
         with self.assertRaisesMessage(ValidationError, 'Question 2 cannot come before question 1.'):

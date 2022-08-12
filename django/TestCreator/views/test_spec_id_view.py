@@ -1,7 +1,7 @@
 import re
 from django.urls import reverse
 from . import BaseTestSpecFormPDFView
-from .. import services
+from ..services import TestSpecService
 from .. import forms
 
 class TestSpecCreatorIDPage(BaseTestSpecFormPDFView):
@@ -11,8 +11,9 @@ class TestSpecCreatorIDPage(BaseTestSpecFormPDFView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data('id_page', **kwargs)
         
-        context['x_data'] = services.get_id_page_alpine_xdata()
-        context['pages'] = services.get_pages_for_id_select_page()
+        spec = TestSpecService()
+        context['x_data'] = spec.get_id_page_alpine_xdata()
+        context['pages'] = spec.get_pages_for_id_select_page()
 
         return context
 
@@ -22,14 +23,12 @@ class TestSpecCreatorIDPage(BaseTestSpecFormPDFView):
             print(f'{field}: {form_data[field]}')
 
         # save ID page
-        services.clear_id_page()
+        spec = TestSpecService()
+        spec.clear_id_page()
         for key, value in form_data.items():
             if 'page' in key and value == True:
                 idx = int(re.sub('\D', '', key))
-                services.set_id_page(idx)
-
-        services.progress_set_id_page(True)
-        services.progress_set_validate_page(False)
+                spec.set_id_page(idx)
 
         return super().form_valid(form)
 

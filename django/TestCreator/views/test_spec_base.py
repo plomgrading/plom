@@ -3,7 +3,7 @@ from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
-from .. import services
+from ..services import TestSpecService, TestSpecProgressService, ReferencePDFService
 from .. import models
 
 
@@ -14,16 +14,27 @@ class BaseTestSpecFormView(GroupRequiredMixin, FormView):
 
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['long_name'] = services.get_long_name()
-        context['short_name'] = services.get_short_name()
-        context['curr_page'] = page_name
-        context['questions'] = [i for i in range(services.get_num_questions())]
-        context['n_questions'] = services.get_num_questions()
+        spec = TestSpecService()
 
-        context['completed'] = services.get_progress_dict()
+        context['long_name'] = spec.get_long_name()
+        context['short_name'] = spec.get_short_name()
+        context['curr_page'] = page_name
+        context['questions'] = [i for i in range(spec.get_n_questions())]
+        context['n_questions'] = spec.get_n_questions()
+
+        progress = TestSpecProgressService(spec)
+        context['completed'] = progress.get_progress_dict()
         context['navbar_colour'] = '#AD9CFF'
         context['user_group'] = 'manager'
         return context
+
+    def form_valid(self, form, on_validate_page=False):
+        """Set the validation page to unsubmitted"""
+        if not on_validate_page:
+            spec = TestSpecService()
+            spec.unvalidate()
+
+        return super().form_valid(form)
 
 
 class BaseTestSpecFormPDFView(BaseTestSpecFormView):
@@ -32,25 +43,27 @@ class BaseTestSpecFormPDFView(BaseTestSpecFormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
 
-        # we're going to have to load the PDF in this method for now
-        saved_pdfs = models.ReferencePDF.objects.all()
-        if len(saved_pdfs) > 1:
-            raise RuntimeError('Multiple PDFs saved in database!')
-        elif len(saved_pdfs) == 1:
-            self.pdf = saved_pdfs[0]
+        spec = TestSpecService()
+        ref_service = ReferencePDFService(spec)
+
+        try:
+            self.pdf = ref_service.get_pdf()
             kwargs['num_pages'] = self.pdf.num_pages
-        else:
+        except RuntimeError:
             kwargs['num_pages'] = 0
+
         return kwargs
 
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(page_name, **kwargs)
 
         if self.pdf:
-            pages = services.create_page_thumbnail_list(self.pdf)
+            spec = TestSpecService()
+            ref_service = ReferencePDFService(spec)
+            pages = ref_service.create_page_thumbnail_list()
             context['thumbnails'] = pages
-            context['pages'] = services.get_page_list()
-            context['num_pages'] = len(services.get_page_list())
+            context['pages'] = spec.get_page_list()
+            context['num_pages'] = len(spec.get_page_list())
 
         return context
 
@@ -66,13 +79,16 @@ class BaseTestSpecTemplateView(GroupRequiredMixin, TemplateView):
 
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['long_name'] = services.get_long_name()
-        context['short_name'] = services.get_short_name()
+        spec = TestSpecService()
+
+        context['long_name'] = spec.get_long_name()
+        context['short_name'] = spec.get_short_name()
         context['curr_page'] = page_name
-        context['questions'] = [i for i in range(services.get_num_questions())]
+        context['questions'] = [i for i in range(spec.get_n_questions())]
         
         context['navbar_colour'] = '#AD9CFF'
         context['user_group'] = 'manager'
 
-        context['completed'] = services.get_progress_dict()
+        progress = TestSpecProgressService(spec)
+        context['completed'] = progress.get_progress_dict()
         return context

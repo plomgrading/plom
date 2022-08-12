@@ -1,7 +1,7 @@
 from re import TEMPLATE
 from django.urls import reverse
 from . import BaseTestSpecFormView
-from .. import services
+from ..services import TestSpecService
 from .. import forms
 
 class TestSpecCreatorNamesPage(BaseTestSpecFormView):
@@ -13,28 +13,29 @@ class TestSpecCreatorNamesPage(BaseTestSpecFormView):
 
     def get_initial(self):
         initial = super().get_initial()
-        initial['long_name'] = services.get_long_name()
-        initial['short_name'] = services.get_short_name()
+        spec = TestSpecService()
+        initial['long_name'] = spec.get_long_name()
+        initial['short_name'] = spec.get_short_name()
 
-        versions = services.get_num_versions()
+        versions = spec.get_n_versions()
         if versions:
             initial['versions'] = versions
         return initial
 
     def form_valid(self, form):
         form_data = form.cleaned_data
+        spec = TestSpecService()
 
         long_name = form_data['long_name']
-        services.set_long_name(long_name)
+        spec.set_long_name(long_name)
 
         short_name = form_data['short_name']
-        services.set_short_name(short_name)
+        spec.set_short_name(short_name)
 
         n_versions = form_data['versions']
-        services.set_num_versions(n_versions)
-
-        services.progress_set_names(True)
-        services.progress_set_validate_page(False)
+        spec.set_n_versions(n_versions)
+        if n_versions == 1:
+            spec.fix_all_questions()
 
         return super().form_valid(form)
 

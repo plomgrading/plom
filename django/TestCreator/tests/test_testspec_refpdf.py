@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from pathlib import Path
-from .. import services
+from ..services import TestSpecService, ReferencePDFService
 from .. import models
 
 
@@ -26,16 +26,20 @@ class TestSpecRefPDFTests(TestCase):
 
     def test_create_refpdf(self):
         """Test services.create_pdf"""
-        new_pdf = services.create_pdf('dummy', 1, self.dummy_file)
+        spec = TestSpecService()
+        ref_service = ReferencePDFService(spec)
+        new_pdf = ref_service.create_pdf('dummy', 1, self.dummy_file)
         self.assertEqual(new_pdf.filename_slug, 'dummy')
         self.assertEqual(new_pdf.num_pages, 1)
 
     def test_delete_refpdf(self):
         """Test services.delete_pdf"""
-        new_pdf = services.create_pdf('dummy', 1, self.dummy_file)
+        spec = TestSpecService()
+        ref_service = ReferencePDFService(spec)
+        new_pdf = ref_service.create_pdf('dummy', 1, self.dummy_file)
         num_pdfs = len(models.ReferencePDF.objects.all())
         self.assertEqual(num_pdfs, 1)
-        services.delete_pdf()
+        ref_service.delete_pdf()
         num_pdfs = len(models.ReferencePDF.objects.all())
         self.assertEqual(num_pdfs, 0)
 
