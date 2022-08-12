@@ -1,14 +1,11 @@
-from braces.views import GroupRequiredMixin
 from django.shortcuts import render
-from django.views import View
-
 from django_htmx.http import HttpResponseClientRedirect
 
 from Preparation.services import PrenameSettingService
+from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 
 
-class PrenamingView(View):
-    # group_required = [u"manager"]
+class PrenamingView(ManagerRequiredBaseView):
     def build_context(self):
         pss = PrenameSettingService()
         return {

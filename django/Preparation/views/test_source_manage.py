@@ -1,10 +1,7 @@
-from braces.views import GroupRequiredMixin
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse, Http404
 from django.shortcuts import render
-from django.views import View
-
 from django_htmx.http import HttpResponseClientRedirect
 
 # TODO - replace these functions with real ones
@@ -14,6 +11,7 @@ from Preparation.services.temp_functions import (
     how_many_test_pages,
 )
 from Preparation.services import TestSourceService
+from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 
 
 class TestSourceUploadForm(forms.Form):
@@ -23,10 +21,7 @@ class TestSourceUploadForm(forms.Form):
     )
 
 
-# Create your views here.
-class TestSourceManageView(View):
-    # group_required = [u"manager"]
-
+class TestSourceManageView(ManagerRequiredBaseView):
     def build_context(self):
         tss = TestSourceService()
 

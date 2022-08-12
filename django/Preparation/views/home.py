@@ -6,7 +6,7 @@ from django.views import View
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from Preparation.views import ManagerRequiredBaseView
+from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 
 from Preparation.services.temp_functions import (
     is_there_a_valid_spec,

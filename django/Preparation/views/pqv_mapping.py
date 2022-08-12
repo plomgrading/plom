@@ -1,6 +1,4 @@
-from braces.views import GroupRequiredMixin
 from django.shortcuts import render
-from django.views import View
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django_htmx.http import HttpResponseClientRedirect
@@ -11,38 +9,33 @@ from Preparation.services import (
     StagingStudentService,
 )
 
+from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 
-from Preparation.services.temp_functions import (
-    how_many_test_versions,
-    how_many_questions,
-)
+from Preparation.services.temp_functions import how_many_questions
 
 
-class PQVMappingUploadView(View):
-    # group_required = [u"manager"]
-    def post(self, request):        
+class PQVMappingUploadView(ManagerRequiredBaseView):
+    # NOT CURRENTLY BEING USED
+    def post(self, request):
         context = {}
         return render(request, "Preparation/pqv_mapping_attempt.html", context)
 
 
-class PQVMappingDownloadView(View):
-    # group_required = [u"manager"]
+class PQVMappingDownloadView(ManagerRequiredBaseView):
     def get(self, request):
         pqvs = PQVMappingService()
         pqvs_csv_txt = pqvs.get_pqv_map_as_csv()
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
 
 
-class PQVMappingDeleteView(View):
-    # group_required = [u"manager"]
+class PQVMappingDeleteView(ManagerRequiredBaseView):
     def delete(self, request):
         pqvs = PQVMappingService()
         pqvs.remove_pqv_map()
         return HttpResponseClientRedirect(".")
 
 
-class PQVMappingView(View):
-    # group_required = [u"manager"]
+class PQVMappingView(ManagerRequiredBaseView):
     def build_context(self):
         pqvs = PQVMappingService()
         pss = PrenameSettingService()

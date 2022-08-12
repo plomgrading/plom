@@ -12,9 +12,10 @@ from Preparation.services import (
     PrenameSettingService,
 )
 
+from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 
-class ClasslistDownloadView(View):
-    # group_required = [u"manager"]
+
+class ClasslistDownloadView(ManagerRequiredBaseView):
     def get(self, request):
         pss = PrenameSettingService()
         sss = StagingStudentService()
@@ -22,8 +23,7 @@ class ClasslistDownloadView(View):
         return HttpResponse(csv_txt, content_type="text/plain")
 
 
-class ClasslistDeleteView(View):
-    # group_required = [u"manager"]
+class ClasslistDeleteView(ManagerRequiredBaseView):
     def delete(self, request):
         # delete both the csvfile and the classlist of students
         sss = StagingStudentService()
@@ -34,9 +34,7 @@ class ClasslistDeleteView(View):
         return HttpResponseClientRedirect(".")
 
 
-class ClasslistView(View):
-    # group_required = [u"manager"]
-
+class ClasslistView(ManagerRequiredBaseView):
     def get(self, request):
         sss = StagingStudentService()
         pss = PrenameSettingService()
