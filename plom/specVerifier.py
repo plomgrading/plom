@@ -166,11 +166,11 @@ class SpecVerifier:
     ... 'publicCode': '27038',
     ... 'idPage': 1,
     ... 'doNotMarkPages': [2],
-    ... 'question': {
-    ...     '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'},
-    ...     '2': {'pages': [4], 'mark': 10, 'select': 'fix'},
-    ...     '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'}
-    ...    }
+    ... 'question': [
+    ...     {'pages': [3], 'mark': 5, 'select': 'shuffle'},
+    ...     {'pages': [4], 'mark': 10, 'select': 'fix'},
+    ...     {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'}
+    ...   ]
     ... }
     >>> spec = SpecVerifier(raw)
 
