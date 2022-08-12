@@ -30,12 +30,12 @@ log = logging.getLogger("keybindings")
 stringOfLegalKeys = "qwertyuiop[]asdfghjkl;'zxcvbnm,./"
 
 the_actions = [
-    "previousRubric",
-    "nextRubric",
-    "previousTab",
-    "nextTab",
-    "previousTool",
-    "nextTool",
+    "prev-rubric",
+    "next-rubric",
+    "prev-tab",
+    "next-tab",
+    "prev-tool",
+    "next-tool",
     "redo",
     "undo",
     "delete",
@@ -44,20 +44,7 @@ the_actions = [
 ]
 
 
-key_layouts = {
-    "sdf": {
-        "redo": "T",
-        "undo": "G",
-        "nextRubric": "D",
-        "previousRubric": "E",
-        "nextTab": "F",
-        "previousTab": "S",
-        "nextTool": "R",
-        "previousTool": "W",
-        "delete": "Q",
-        "move": "A",
-        "zoom": "Z",
-    },
+TODO_other_key_layouts = {
     "sdf_french": {
         "redo": "T",
         "undo": "G",
@@ -83,32 +70,6 @@ key_layouts = {
         "delete": "'",
         "move": "A",
         "zoom": ";",
-    },
-    "asd": {
-        "redo": "R",
-        "undo": "F",
-        "nextRubric": "S",
-        "previousRubric": "W",
-        "nextTab": "D",
-        "previousTab": "A",
-        "nextTool": "E",
-        "previousTool": "Q",
-        "delete": "C",
-        "move": "X",
-        "zoom": "Z",
-    },
-    "jkl": {
-        "redo": "Y",
-        "undo": "H",
-        "nextRubric": "K",
-        "previousRubric": "I",
-        "nextTab": "L",
-        "previousTab": "J",
-        "nextTool": "O",
-        "previousTool": "U",
-        "delete": "P",
-        "move": ";",
-        "zoom": "/",
     },
 }
 
@@ -256,85 +217,11 @@ class SingleKeyEdit(QLineEdit):
         super().setText(omega)
 
 
-class KeyWrangler(QDialog):
-    def __init__(self, parent, currentKeys=None):
-        super().__init__(parent)
-        if currentKeys is None:
-            currentKeys = key_layouts["sdf"]
-        self.currentKeys = currentKeys
+class KeyWrangler:
+    def __init__(self):
+        super().__init__()
         self.legalKeyCodes = [QKeySequence(c)[0] for c in stringOfLegalKeys]
         self.actions = the_actions
-
-        for act in self.actions:
-            setattr(self, act + "Label", QLabel(act))
-            getattr(self, act + "Label").setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            setattr(
-                self,
-                act + "Key",
-                SingleKeyEdit(self, self.currentKeys[act], legal=self.legalKeyCodes),
-            )
-
-        self.sdfB = QPushButton("Set SDF")
-        self.sdfB.clicked.connect(lambda: self.setKeyLayout("sdf"))
-        self.asdB = QPushButton("Set ASD")
-        self.asdB.clicked.connect(lambda: self.setKeyLayout("asd"))
-        self.jklB = QPushButton("Set JKL")
-        self.jklB.clicked.connect(lambda: self.setKeyLayout("jkl"))
-        self.frenchB = QPushButton("Set SDF (French)")
-        self.frenchB.clicked.connect(lambda: self.setKeyLayout("sdf_french"))
-        self.dvkB = QPushButton("Set Dvorak")
-        self.dvkB.clicked.connect(lambda: self.setKeyLayout("dvorak"))
-        self.vB = QPushButton("Validate")
-        self.vB.clicked.connect(self.validate)
-        self.aB = QPushButton("Accept layout")
-        self.aB.clicked.connect(self.acceptLayout)
-        self.cB = QPushButton("Reject layout")
-        self.cB.clicked.connect(self.reject)
-        self.GB = QGroupBox("Actions and Keys")
-
-        grid = QGridLayout()
-        mgrid = QGridLayout()
-        mgrid.addWidget(self.sdfB, 5, 6)
-        mgrid.addWidget(self.asdB, 5, 7)
-        mgrid.addWidget(self.jklB, 6, 6)
-        mgrid.addWidget(self.dvkB, 6, 7)
-        mgrid.addWidget(self.frenchB, 5, 8)
-        mgrid.addWidget(self.vB, 5, 3)
-        mgrid.addWidget(self.cB, 6, 1)
-        mgrid.addWidget(self.aB, 6, 3)
-        mgrid.addWidget(self.GB, 1, 1, 3, 8)
-        ##
-        grid.addWidget(self.deleteLabel, 1, 1)
-        grid.addWidget(self.moveLabel, 2, 1)
-        grid.addWidget(self.zoomLabel, 3, 1)
-        grid.addWidget(self.deleteKey, 1, 2)
-        grid.addWidget(self.moveKey, 2, 2)
-        grid.addWidget(self.zoomKey, 3, 2)
-        ##
-        grid.addWidget(self.previousToolLabel, 1, 3)
-        grid.addWidget(self.previousToolKey, 1, 4)
-        grid.addWidget(self.nextToolLabel, 1, 7)
-        grid.addWidget(self.nextToolKey, 1, 8)
-        ##
-        grid.addWidget(self.previousTabLabel, 4, 3)
-        grid.addWidget(self.previousTabKey, 4, 4)
-        grid.addWidget(self.nextTabLabel, 4, 7)
-        grid.addWidget(self.nextTabKey, 4, 8)
-        ##
-        grid.addWidget(self.previousRubricLabel, 2, 5)
-        grid.addWidget(self.previousRubricKey, 2, 6)
-        grid.addWidget(self.nextRubricLabel, 3, 5)
-        grid.addWidget(self.nextRubricKey, 3, 6)
-        ##
-        self.GB.setLayout(grid)
-        self.setLayout(mgrid)
-
-    def setKeyLayout(self, name):
-        if name not in key_layouts:
-            return
-        else:
-            for act in self.actions:
-                getattr(self, act + "Key").setText(key_layouts[name][act])
 
     def validate(self):
         actToCode = {}
@@ -358,13 +245,14 @@ class KeyWrangler(QDialog):
                     return False
         return True
 
-    def getKeyBindings(self):
-        newKeyDict = {}
-        for act in self.actions:
-            newKeyDict[act] = getattr(self, act + "Key").theKey
-        return newKeyDict
-
-    def acceptLayout(self):
-        if self.validate() is False:
-            return
-        self.accept()
+    @classmethod
+    def overlay_warnings(overlay):
+        """No duplicates in the overlay itself, although this allows duplicates in the overall keymap."""
+        for k in overlay.keys():
+            if k not in the_actions:
+                return f'overlay has invalid action "{k}"'
+        # argh, keys like keyboard, not like dict indexing
+        all_keys = [v["keys"][0] for v in overlay.values()]
+        if len(set(all_keys)) != len(all_keys):
+            return "Two actions have the same key"
+        return None
