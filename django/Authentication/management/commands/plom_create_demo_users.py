@@ -72,4 +72,4 @@ class Command(BaseCommand):
         print('')
         print('Table: List of demo usernames and password')
         print(tabulate(info, headers='keys', tablefmt='fancy_grid'))
-
+# TODO: report user in better order
