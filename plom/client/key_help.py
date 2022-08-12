@@ -60,7 +60,9 @@ class KeyHelp(QDialog):
         tabs = QTabWidget()
         tabs.addTab(ClickDragPage(), "Tips")
 
-        self.default_keydata, self.keybindings = self.load_keymaps(_keybindings_list, custom_overlay)
+        self.default_keydata, self.keybindings = self.load_keymaps(
+            _keybindings_list, custom_overlay
+        )
 
         self.tabs = tabs
         if keybinding_name:
