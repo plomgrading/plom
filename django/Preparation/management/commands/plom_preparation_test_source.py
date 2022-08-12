@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class Command(BaseCommand):
-    help = "Displays the current status of prenaming, and allows user to enable or disable it."
+    help = "Displays the uploaded test source pdfs and allows users to upload/download/remove test source pdfs."
 
     def check_duplicates(self):
         tss = TestSourceService()
