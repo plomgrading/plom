@@ -106,7 +106,7 @@ def get_key_bindings(name, custom_overlay={}):
         not to store this but instead to store only the "overlay"
         and recompute this when needed.
 
-    This function is fairly expensive and loads from disc everytime.
+    This function is fairly expensive and loads from disc every time.
     Could be refactored to cache the base data and non-custom overlays,
     if it is too slow.
     """
