@@ -37,7 +37,7 @@ class TestSourceService:
         return PaperSourcePDF.objects.count() == how_many_test_versions()
 
     @transaction.atomic
-    def get_list_of_uploaded_test_sources(self):
+    def get_list_of_uploaded_sources(self):
         """Return a dict of uploaded source versions and their urls"""
         status = {}
         for pdf_obj in PaperSourcePDF.objects.all():
@@ -110,3 +110,13 @@ class TestSourceService:
             if len(versions) > 1:
                 duplicates[hash] = versions
         return duplicates
+
+    @transaction.atomic
+    def get_source_as_bytes(self, source_version):
+        try:
+            pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
+            with pdf_obj.source_pdf.open("rb") as fh:
+                return fh.read()
+        except PaperSourcePDF.DoesNotExist:
+            raise ValueError("Version does not exist")
+
