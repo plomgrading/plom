@@ -59,13 +59,3 @@ class TestSpecQuestion(models.Model):
     label = models.TextField()
     mark = models.PositiveIntegerField(default=0)
     shuffle = models.BooleanField(default=None, null=True)
-
-
-class TestSpecProgress(models.Model):
-    is_names_completed = models.BooleanField(default=False)
-    is_versions_pdf_completed = models.BooleanField(default=False)
-    is_id_page_completed = models.BooleanField(default=False)
-    is_question_page_completed = models.BooleanField(default=False)
-    are_questions_completed = models.JSONField(default=dict)
-    is_dnm_page_completed = models.BooleanField(default=False)
-    is_validate_page_completed = models.BooleanField(default=False)

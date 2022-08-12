@@ -5,4 +5,3 @@ from . import models
 admin.site.register(models.ReferencePDF)
 admin.site.register(models.TestSpecInfo)
 admin.site.register(models.TestSpecQuestion)
-admin.site.register(models.TestSpecProgress)
