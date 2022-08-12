@@ -139,6 +139,8 @@ class KeyHelp(QDialog):
         if diag.exec() != QDialog.Accepted:
             return
         new_key = diag._keyedit.text()
+        if new_key == old_key:
+            return
         log.info(f"diagram: {action} changing key from {old_key} to {new_key}")
         # TODO: check validity (no dupe keys etc, maybe use KeyWrangler code)
         self.change_key(action, new_key)
