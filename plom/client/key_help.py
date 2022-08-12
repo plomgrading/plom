@@ -37,6 +37,12 @@ from .key_wrangler import get_key_bindings, _keybindings_list
 log = logging.getLogger("keybindings")
 
 
+# TODO:
+# * duplicates a lot of code from key_wrangler:
+#   - replace self.keybindings with some calls from there?
+#   - use get_key_bindings
+# * no validity checking done
+#   - use code from old KeyWrangler
 class KeyHelp(QDialog):
     def __init__(self, parent, *, keybinding_name, custom_overlay={}):
         """Construct the KeyHelp dialog.
@@ -47,7 +53,7 @@ class KeyHelp(QDialog):
         Keyword args:
             keybinding_name (str): which keybinding to initially display.
             custom_overlay (dict): if there was already a custom keybinding,
-               pass its overlay here.
+               pass its overlay here.  We will copy it not change it.
         """
         super().__init__(parent)
         vb = QVBoxLayout()
@@ -73,9 +79,8 @@ class KeyHelp(QDialog):
         keyLayoutCB.addItems([x["human"] for x in _keybindings_list])
         keyLayoutCB.setCurrentIndex(prev_keymap_idx)
         keyLayoutCB.currentIndexChanged.connect(self.update_keys)
-        # against my will, we sometimes need this instance variable
         self._keyLayoutCB = keyLayoutCB
-        # ... and messy hack to map index back to name of keybinding
+        # messy hack to map index back to name of keybinding
         self._keyLayoutCB_idx_to_name = [x["name"] for x in _keybindings_list]
 
         buttons.addWidget(keyLayoutCB, 1)
@@ -135,6 +140,7 @@ class KeyHelp(QDialog):
             return
         new_key = diag._keyedit.text()
         log.info(f"diagram: {action} changing key from {old_key} to {new_key}")
+        # TODO: check validity (no dupe keys etc, maybe use KeyWrangler code)
         self.change_key(action, new_key)
 
     def change_key(self, action, new_key):
