@@ -29,8 +29,7 @@ idPage = 1  # must be exactly 1 page
 # pages that are not marked (like instructions, formula sheets, examination rules etc) - always taken from Version1
 doNotMarkPages = [2] # can be an empty list or omitted
 
-# Now the actual questions (groups of pages) to be marked
-# [question.n] with n a positive integer [1, 2, 3, ... etc] - contiguous please.
+# Now the actual questions (groups of pages).  Each starts with [[question]].
 # label = string such as "1", "Q2", or "Exercise 7.3".  Defaults to "Qn" if omitted.
 # pages = [4, 5, 6] - contiguous ordered list of positive integers.
 # mark = positive integer, the marks for this question.
@@ -38,17 +37,17 @@ doNotMarkPages = [2] # can be an empty list or omitted
 # --> "fix" = question will always be drawn from source-version 1.
 # --> "shuffle" = question will be drawn randomly from one of the source versions.
 
-[question.1]
+[[question]]
 pages = [3]
 mark = 5
 
-[question.2]
+[[question]]
 label = "Q(2)"
 pages = [4]
 mark = 5
 select = "fix"
 
-[question.3]
+[[question]]
 label = "Ex.3"
 pages = [5, 6]
 mark = 10

@@ -5,6 +5,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from pytest import raises
+import toml
 from toml import TomlDecodeError
 
 from plom import SpecVerifier, get_question_label
@@ -271,21 +272,6 @@ def test_spec_zero_question_issue617():
         s.verify()
 
 
-def test_spec_dupe_question_fails_to_load(tmpdir):
-    tmpdir = Path(tmpdir)
-    sv = SpecVerifier.demo()
-    loc = tmpdir / "specAndDatabase"
-    loc.mkdir()
-    sv.saveVerifiedSpec(basedir=tmpdir)
-    with open(loc / "verifiedSpec.toml", "r") as f:
-        lines = f.readlines()
-    lines = ["[question.1]\n" if x == "[question.2]\n" else x for x in lines]
-    with open(tmpdir / "Fawlty.toml", "w") as f:
-        f.writelines(lines)
-    with raises(TomlDecodeError):
-        SpecVerifier.from_toml_file(tmpdir / "Fawlty.toml")
-
-
 def test_spec_page_to_group_label():
     s = SpecVerifier.demo()
     s.group_label_from_page(1) == "ID"
@@ -298,3 +284,55 @@ def test_spec_page_to_group_label():
         s.group_label_from_page(100)
     with raises(KeyError):
         s.group_label_from_page("3")
+
+
+def test_spec_not_legacy_format():
+    old = """
+        name = "oldtemplate"
+        longName = "An old pre-v10 template, deprecated but not yet an error"
+        numberOfVersions = 2
+        numberOfPages = 4
+        totalMarks = 10
+
+        numberToProduce = 20
+        idPage = 1
+        doNotMarkPages = [2]
+
+        [question.1]
+        pages = [3]
+        mark = 5
+
+        [question.2]
+        pages = [4]
+        mark = 5
+    """
+    A = toml.loads(old)
+    sv = SpecVerifier(A)
+    sv.verify()
+
+
+def test_spec_legacy_dupe_question_fails_to_load(tmpdir):
+    tmpdir = Path(tmpdir)
+    old = """
+        name = "oldtemplate"
+        longName = "old pre-v10 template, with erroneously repeated question"
+        numberOfVersions = 2
+        numberOfPages = 4
+        totalMarks = 10
+
+        numberToProduce = 20
+        idPage = 1
+        doNotMarkPages = [2]
+
+        [question.1]
+        pages = [3]
+        mark = 5
+
+        [question.1]
+        pages = [4]
+        mark = 5
+    """
+    with open(tmpdir / "Fawlty.toml", "w") as f:
+        f.write(old)
+    with raises(TomlDecodeError):
+        SpecVerifier.from_toml_file(tmpdir / "Fawlty.toml")
