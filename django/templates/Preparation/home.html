@@ -204,6 +204,34 @@
 
     
     {% endif %}
+
+    <div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+            Set information for plom-classic sever &mdash;
+	    {% if server_valid %}
+            <i class="bi bi-check-circle text-success"></i>
+	    {% else %}
+	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	    {% endif %}
+	    {% if password_valid %}
+            <i class="bi bi-check-circle text-success"></i>
+	    {% else %}
+	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	    {% endif %}
+	  </h5>
+            <h6 class="card-title">
+	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	    Plom-classic support
+	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+          </h6>
+          <p class="card-text">Enter server name, port and the manager password</p>
+          <btn class="btn btn-primary">NOT IMPLEMENTED</btn>
+        </div>
+      </div>
+    </div>
+    <div>
     
     <div>
       <div class="card">

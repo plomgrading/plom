@@ -23,6 +23,7 @@ from Preparation.services import (
     PrenameSettingService,
     StagingStudentService,
     PQVMappingService,
+    ClassicPlomServerInformationService,
 )
 
 
@@ -33,6 +34,7 @@ class PreparationLandingView(ManagerRequiredBaseView):
         pss = PrenameSettingService()
         sss = StagingStudentService()
         pqvs = PQVMappingService()
+        cpsi = ClassicPlomServerInformationService()
 
         context = {
             "valid_spec": is_there_a_valid_spec(),
@@ -44,6 +46,8 @@ class PreparationLandingView(ManagerRequiredBaseView):
             "prename_enabled": pss.get_prenaming_setting(),
             "can_qvmap": can_I_qvmap(),
             "student_list_present": sss.are_there_students(),
+            "server_valid": cpsi.is_server_info_valid(),
+            "password_valid": cpsi.is_password_valid(),
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()

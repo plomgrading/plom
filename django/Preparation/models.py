@@ -87,3 +87,16 @@ class StagingPQVMapping(models.Model):
     paper_number = models.PositiveIntegerField(null=False)
     question = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
+
+
+# ---------------------------------
+# Make a table for info to help connect to the plom-classic server
+
+class ClassicPlomServerInformation(SingletonBaseModel):
+    server_name = models.TextField(default="localhost")
+    server_port = models.PositiveIntegerField(default="41984")
+    classic_server_manager_password = models.TextField(default="CHANGEME")
+    # use these to show that we've pinged the server and checked the password
+    server_validated = models.BooleanField(default=False, null=False)
+    password_validated = models.BooleanField(default=False, null=False)
+    
