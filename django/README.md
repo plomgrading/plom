@@ -39,6 +39,7 @@ groups and add the super-user into the admin group.
 
 1. Run `python3 manage.py createsuperuser` to create an admin account (email address is optional)
 2. Run `python3 manage.py plom_create_groups` to automatically create admin, manager, marker, and scanner groups. Then, any superusers will be added to the admin group.
+3. (Optional) Run `python3 manage.py plom_create_demo_users` to automatically create demo users such as manager, scanners, and markers
 
 Note that if you accidentally do (2) before (1) then you can just run (2) again and it will skip the create-groups bit and just add the superuser to the admin group.
 
