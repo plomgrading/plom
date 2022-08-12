@@ -1,0 +1,9 @@
+django==4.1
+django-braces
+pymupdf
+toml
+model_bakery # for tests
+beautifulsoup4 # HTML parsing
+django-session-timeout
+django-htmx
+tabulate # display table in command line
