@@ -8,7 +8,7 @@
 # This keybinding is intended for left-hand mousers were
 # the right-hand predominantly stays on the keyboard.
 #
-# Actions not overriden here will come from the default.
+# Actions not overridden here will come from the default.
 
 [next-tool]
 keys = [ "o",]
