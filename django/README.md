@@ -12,18 +12,9 @@ We need to install any required python packages and get the actual webplom repo.
 1. Clone the WebPlom repo
 2. [Set up a virtual environment](https://docs.python.org/3/library/venv.html) 
 3. `source env/bin/activate`
-4. Install libraries with pip: 
-```
-django
-django-braces
-pymupdf
-toml
-model_bakery (for tests)
-beautifulsoup4 (HTML parsing)
-django-session-timeout
-django-htmx
-tabulate (display table for command line)
-```
+4. Install all necessary libraries using the command below:<br>
+`pip install -r requirements.txt`
+
 5. Switch to the dev branch: `git checkout dev`
 
 ## Initialise the database
