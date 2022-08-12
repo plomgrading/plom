@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2022 Andrew Rechnitzer
+# Copyright (C) 2021-2022 Colin B. Macdonald
+
+# Plom Client "IJKL" alternative keybindings
+# ------------------------------------------
+#
+# This keybinding is intended for left-hand mousers were
+# the right-hand predominantly stays on the keyboard.
+#
+# Actions not overriden here will come from the default.
+
+[next-tool]
+keys = [ "o",]
+
+[prev-tool]
+keys = [ "u",]
+
+[next-rubric]
+keys = [ "k",]
+
+[prev-rubric]
+keys = [ "i",]
+
+[next-tab]
+keys = [ "l",]
+
+[prev-tab]
+keys = [ "j",]
+
+# TODO: how to deal with alt for changeable keys?
+# TODO: perhaps we want: keys and alt-keys?  Or just make two actions
+[redo]
+keys = [ "y", "ctrl-y",]
+
+[undo]
+keys = [ "h", "ctrl-z",]
+
+[delete]
+keys = [ "p",]
+
+[move]
+keys = [ ";",]
+
+[zoom]
+keys = [ "/",]
