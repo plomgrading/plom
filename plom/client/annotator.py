@@ -1045,6 +1045,8 @@ class Annotator(QWidget):
             ("pan-back", self.view.depanThrough),
             ("pan-through-slowly", lambda: self.view.panThrough(0.02)),
             ("pan-back-slowly", lambda: self.view.depanThrough(0.02)),
+            ("undo-2", self.toUndo),
+            ("redo-2", self.toRedo),
         )
         self._store_QShortcuts_minor = []
         for (action, command) in actions_and_methods:
@@ -1091,12 +1093,6 @@ class Annotator(QWidget):
             lambda: self.change_annot_scale(1 / 1.1)
         )
 
-        # shortcuts for undo/redo
-        # TODO: see TODO note in toml files about doubling these
-        self.undoShortCut = QShortcut(QKeySequence("Ctrl+z"), self)
-        self.undoShortCut.activated.connect(self.undo)
-        self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
-        self.redoShortCut.activated.connect(self.redo)
         # TODO: this is one of our left/right keybindings
         self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
         self.redoShortCut2.activated.connect(self.ui.redoButton.animateClick)

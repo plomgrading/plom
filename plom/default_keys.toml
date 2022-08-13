@@ -40,18 +40,6 @@ keys = [ "s",]
 categories = [ "Annotation", "Rubrics",]
 info = "Select the previous tab of rubrics"
 
-[redo]
-human = "Redo"
-keys = [ "t", "ctrl+y",]
-categories = [ "Annotation",]
-info = "Redo the last undone-action."
-
-[undo]
-human = "Undo"
-keys = [ "g", "ctrl+z",]
-categories = [ "Annotation",]
-info = "Undo the last action."
-
 [delete]
 human = "Delete"
 keys = [ "q",]
@@ -63,6 +51,30 @@ human = "Move"
 keys = [ "a",]
 categories = [ "Annotation",]
 info = "Click and drag on an object to move it."
+
+[undo]
+human = "Undo"
+keys = [ "g",]
+categories = [ "Annotation",]
+info = "Undo the last action."
+
+[redo]
+human = "Redo"
+keys = [ "t",]
+categories = [ "Annotation",]
+info = "Redo the last undone-action."
+
+[undo-2]
+human = "Undo"
+keys = [ "ctrl+z",]
+categories = [ "Annotation",]
+info = "Undo the last action.\n[Unchangeable duplicate of undo action.]"
+
+[redo-2]
+human = "Redo"
+keys = [ "ctrl+y",]
+categories = [ "Annotation",]
+info = "Redo the last undone-action.\n[Unchangeable duplicate of redo action.]"
 
 [cancel]
 human = "Cancel"
