@@ -1047,6 +1047,7 @@ class Annotator(QWidget):
             ("pan-back-slowly", lambda: self.view.depanThrough(0.02)),
             ("undo-2", self.toUndo),
             ("redo-2", self.toRedo),
+            ("rearrange-pages", self.rearrangePages),
         )
         self._store_QShortcuts_minor = []
         for (action, command) in actions_and_methods:
@@ -1079,9 +1080,6 @@ class Annotator(QWidget):
         self.setToolShortCuts()
         self.setMinorShortCuts()
 
-        # proof of concept single source of truth for default keys
-        keydata = self.get_key_bindings()
-
         # TODO: perhaps migrate all this to MinorShortCuts?
 
         self.scaleAnnotIncShortCut = QShortcut(QKeySequence("Shift+]"), self)
@@ -1099,9 +1097,6 @@ class Annotator(QWidget):
 
         self.showPrevShortCut = QShortcut(QKeySequence("Ctrl+left"), self)
         self.showPrevShortCut.activated.connect(self.show_previous)
-
-        self.twisterShortCut = QShortcut(QKeySequence("Ctrl+r"), self)
-        self.twisterShortCut.activated.connect(self.rearrangePages)
 
         self.sekritShortCut = QShortcut(QKeySequence("Ctrl+Shift+o"), self)
         self.sekritShortCut.activated.connect(self.experimental_cycle)

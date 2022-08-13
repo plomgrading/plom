@@ -88,6 +88,12 @@ keys = [ "ctrl+n", "ctrl+b", "alt+enter", "alt+return",]
 categories = [ "General",]
 info = "Save the current annotations and move on to next paper."
 
+["rearrange-pages"]
+human = "Rearrange and rotates pages or find missing answer"
+keys = [ "ctrl+r",]
+categories = [ "General",]
+info = "Sometimes an answer may be written on the wrong page, or perhaps the pages are in the wrong order.  This dialog lets you add/remove/rearrange pages."
+
 ["tag-paper"]
 human = "Tag the current paper"
 keys = [ "F3",]
