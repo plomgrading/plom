@@ -253,10 +253,13 @@ class Annotator(QWidget):
         m.addAction("View cat", self.viewCat)
         m.addAction("View dog", self.viewNotCat)
         m.addSeparator()
-        m.addAction("View solutions\tF2", self.viewSolutions)
-        m.addAction("Tag paper...\tF3", self.tag_paper)
+        (key,) = keydata["show-solutions"]["keys"]
+        m.addAction(f"View solutions\t{key}", self.viewSolutions)
+        (key,) = keydata["tag-paper"]["keys"]
+        m.addAction(f"Tag paper...\t{key}", self.tag_paper)
         m.addSeparator()
-        m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
+        (key,) = keydata["rearrange-pages"]["keys"]
+        m.addAction(f"Adjust pages\t{key}", self.rearrangePages)
         m.addAction("Crop to region\tCtrl-p", self.to_crop_mode)
         m.addAction("Uncrop\tCtrl-shift-p", self.uncrop_region)
         hold_crop = m.addAction("(advanced option) Hold crop")
@@ -304,12 +307,14 @@ class Annotator(QWidget):
         )
         m.addSeparator()
         m.addAction("Synchronise rubrics", self.refreshRubrics)
-        m.addAction("Compact UI\thome", self.narrowLayout)
+        (key,) = keydata["toggle-wide-narrow"]["keys"]
+        m.addAction(f"Compact UI\t{key}", self.narrowLayout)
         # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
         # m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
         m.addAction("Help", lambda: None).setEnabled(False)
-        m.addAction("Show shortcut keys...\t?", self.keyPopUp)
+        (key,) = keydata["help"]["keys"]
+        m.addAction(f"Show shortcut keys...\t{key}", self.keyPopUp)
         m.addAction("About Plom", self.show_about_dialog)
         return m
 
