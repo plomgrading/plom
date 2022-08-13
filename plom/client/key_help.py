@@ -88,7 +88,7 @@ class KeyHelp(QDialog):
         self.tabs.setCurrentIndex(initial_tab)
 
     # TODO: hardcoded position of the custom map
-    CUSTOM_IDX = 3
+    CUSTOM_IDX = 4
 
     def get_selected_keybinding_name(self):
         """Return the name (str) of the selected keybinding."""

@@ -42,19 +42,6 @@ actions_with_changeable_keys = [
 
 
 TODO_other_key_layouts = {
-    "sdf_french": {
-        "redo": "T",
-        "undo": "G",
-        "nextRubric": "D",
-        "previousRubric": "E",
-        "nextTab": "F",
-        "previousTab": "S",
-        "nextTool": "R",
-        "previousTool": "Z",
-        "delete": "A",
-        "move": "Q",
-        "zoom": "W",
-    },
     "dvorak": {
         "redo": "Y",
         "undo": "I",
@@ -76,12 +63,21 @@ _keybindings_dict = {
     "default": {"human": 'Default ("esdf", touch-typist)', "file": None},
     "wasd": {"human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
     "ijkl": {"human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
+    "esdf_french": {
+        "human": '"esdf" (French keyboard)',
+        "file": "esdf_french_keys.toml",
+    },
     "custom": {"human": "Custom", "file": None},
 }
 _keybindings_list = [
     {"name": "default", "human": 'Default ("esdf", touch-typist)', "file": None},
     {"name": "wasd", "human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
     {"name": "ijkl", "human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
+    {
+        "name": "esdf_french",
+        "human": '"esdf" (French keyboard)',
+        "file": "esdf_french_keys.toml",
+    },
     {"name": "custom", "human": "Custom", "file": None},
 ]
 

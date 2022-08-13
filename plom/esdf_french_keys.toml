@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2021-2022 Andrew Rechnitzer
+# Copyright (C) 2022 Colin B. Macdonald
+
+# Plom Client "ESDF French" alternative keybindings
+# -------------------------------------------------
+#
+# French default keyboard.
+#
+# Actions not overridden here will come from the default.
+
+[prev-tool]
+keys = [ "z",]
+
+[delete]
+keys = [ "a",]
+
+[move]
+keys = [ "q",]
+
+[zoom]
+keys = [ "w",]
