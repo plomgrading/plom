@@ -240,6 +240,7 @@ class Annotator(QWidget):
         # proof of concept single source of truth for default keys
         keydata = self.get_key_bindings()
 
+        # TODO: use QKeySequence to get strings, maybe DTRT on macOS?  Issue #224
         m = QMenu()
         key = keydata["next-paper"]["keys"][0]
         m.addAction(f"Next paper\t{key}", self.saveAndGetNext)
@@ -248,7 +249,8 @@ class Annotator(QWidget):
         (key,) = keydata["cancel"]["keys"]
         m.addAction(f"Close without saving\t{key}", self.close)
         m.addSeparator()
-        m.addAction("Show previous paper(s)\tctrl-left", self.show_previous)
+        (key,) = keydata["quick-show-prev-paper"]["keys"]
+        m.addAction(f"Show previous paper(s)\t{key}", self.show_previous)
         m.addSeparator()
         m.addAction("View cat", self.viewCat)
         m.addAction("View dog", self.viewNotCat)
@@ -1053,6 +1055,7 @@ class Annotator(QWidget):
             ("undo-2", self.toUndo),
             ("redo-2", self.toRedo),
             ("rearrange-pages", self.rearrangePages),
+            ("quick-show-prev-paper", self.show_previous),
         )
         self._store_QShortcuts_minor = []
         for (action, command) in actions_and_methods:
@@ -1099,9 +1102,6 @@ class Annotator(QWidget):
         # TODO: this is one of our left/right keybindings
         self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
         self.redoShortCut2.activated.connect(self.ui.redoButton.animateClick)
-
-        self.showPrevShortCut = QShortcut(QKeySequence("Ctrl+left"), self)
-        self.showPrevShortCut.activated.connect(self.show_previous)
 
         self.sekritShortCut = QShortcut(QKeySequence("Ctrl+Shift+o"), self)
         self.sekritShortCut.activated.connect(self.experimental_cycle)
@@ -1871,7 +1871,8 @@ class Annotator(QWidget):
                 "The client cannot determine the previous paper. Please cancel this annotation and select from the list.",
             ).exec()
             return
-        PreviousPaperViewer(self, self.parentMarkerUI.marking_history).exec()
+        keydata = self.get_key_bindings()
+        PreviousPaperViewer(self, self.parentMarkerUI.marking_history, keydata).exec()
 
     def _get_annotation_by_task(self, task):
         return self.parentMarkerUI.get_file_for_previous_viewer(task)

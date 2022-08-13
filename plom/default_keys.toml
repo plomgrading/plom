@@ -88,6 +88,18 @@ keys = [ "ctrl+n", "ctrl+b", "alt+enter", "alt+return",]
 categories = [ "General",]
 info = "Save the current annotations and move on to next paper."
 
+["quick-show-prev-paper"]
+human = "Show the previously annotated paper in a pop-up"
+keys = [ "ctrl+left",]
+categories = [ "General",]
+info = "Without surrending your current edits, take a look a previously annotated papers."
+
+["quick-show-next-paper"]
+human = "Show the next annotated paper in a pop-up"
+keys = [ "ctrl+right",]
+categories = [ "General",]
+info = "Without surrending your current edits, we can cycle back and forth in the timeline of previously annotated papers."
+
 ["rearrange-pages"]
 human = "Rearrange and rotates pages or find missing answer"
 keys = [ "ctrl+r",]
