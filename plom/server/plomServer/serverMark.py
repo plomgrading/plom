@@ -172,7 +172,7 @@ def MreturnMarkedTask(
         return [False, errstr]
 
     annotated_filename = f"markedQuestions/G{task_code[1:]}.{imgtype}"
-    plom_filename = f"markedQuestions/plomFiles/G{task_code[1:]}.plom"
+    # plom_filename = f"markedQuestions/plomFiles/G{task_code[1:]}.plom"
 
     # Sanity check the plomfile
     # TODO: ok to read plomdat twice?  Maybe save the json later
@@ -196,7 +196,6 @@ def MreturnMarkedTask(
         username,
         mark,
         annotated_filename,
-        plom_filename,
         plomdat,
         rubrics,
         time_spent_marking,
@@ -210,7 +209,7 @@ def MreturnMarkedTask(
 
     # db successfully updated
     #  check if those files exist already - back up if so
-    for filename in (annotated_filename, plom_filename):
+    for filename in (annotated_filename, plomdat):
         if os.path.isfile(filename):
             # start with suffix 0 and keep incrementing until get a safe suffix.
             suffix = 0
@@ -225,8 +224,8 @@ def MreturnMarkedTask(
     # now write in the files
     with open(annotated_filename, "wb") as file_header:
         file_header.write(annotated_image)
-    with open(plom_filename, "wb") as file_header:
-        file_header.write(plomdat)
+    # with open(plom_filename, "wb") as file_header:
+        # file_header.write(plomdat)
 
     # return ack with current counts.
     return [

@@ -279,7 +279,7 @@ def MtakeTaskFromClient(
     user_name,
     mark,
     annot_fname,
-    plom_fname,
+    # plom_fname,
     plomdat,
     rubrics,
     marking_time,
@@ -368,7 +368,7 @@ def MtakeTaskFromClient(
         # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
         aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
         aref.mark = mark
-        aref.plom_file = plom_fname
+        # aref.plom_file = plom_fname
         aref.plom_json = plomdat
         aref.marking_time = marking_time
         qref.save()
@@ -423,7 +423,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
             which I have forgotten.
 
     Returns:
-        list: `[True, plom_file_data , annotation_image,  plom_json]` on success or
+        list: `[True, plom_json_data , annotation_image]` on success or
         on error `[False, error_msg]`.  If the task is not yet
         annotated, the error will be ``"no_such_task"``.
     """
@@ -452,15 +452,16 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
             metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
         if aref.aimage is None:
             return [False, "no_such_task"]
-        plom_file = aref.plom_file
+        # plom_data = aref.plom_file
         img_file = aref.aimage.file_name
-    with open(plom_file, "r") as f:
-        plom_data = json.load(f)
+    # with open(plom_json, "r") as f:
+    #     plom_data = json.load(f)
 
-    plom_json = aref.plom_json
-    plom_data_old_shit = plom_data
-    plom_data = json.loads(plom_json)
-    assert plom_data_old_shit == plom_data
+    # plom_json = aref.plom_json
+    # plom_data_old_shit = plom_data
+    plom_data = json.loads(aref.plom_json)
+    # assert plom_data_old_shit == plom_data
+
     plom_data["user"] = aref.user.name
     plom_data["annotation_edition"] = aref.edition
     plom_data["annotation_reference"] = aref.id
@@ -486,7 +487,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
                 plom_data,
             )
             plom_data["base_images"][i]["md5"] = md5
-    return (True, plom_data, img_file, plom_json)
+    return (True, plom_data, img_file)
 
 
 def MgetWholePaper(self, test_number, question):
