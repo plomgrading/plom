@@ -320,7 +320,7 @@ class Annotator(QWidget):
         # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
         # m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
-        m.addAction("Help", lambda: None).setEnabled(False)
+        m.addAction("Help", lambda: self.keyPopUp(tab_idx=0))
         (key,) = keydata["help"]["keys"]
         m.addAction(f"Show shortcut keys...\t{key}", self.keyPopUp)
         m.addAction("About Plom", self.show_about_dialog)
@@ -779,12 +779,22 @@ class Annotator(QWidget):
     def experimental_cycle(self):
         self.scene.whichLineToDraw_next()
 
-    def keyPopUp(self):
-        """View help and keyboard shortcuts, eventually edit them."""
+    def keyPopUp(self, *, tab_idx=None):
+        """View help and keyboard shortcuts, eventually edit them.
+
+        Keyword Arg:
+            tab_idx (int/None): which tab to open in the help.  If None
+                then we try to re-open on the same tab from last run.
+        """
+        if tab_idx is None:
+            _tab_idx = getattr(self, "_keyhelp_tab_idx", 0)
+        else:
+            _tab_idx = tab_idx
         diag = KeyHelp(
             self,
             keybinding_name=self.keybinding_name,
             custom_overlay=self.keybinding_custom_overlay,
+            initial_tab=_tab_idx,
         )
         if diag.exec() != QDialog.Accepted:
             return
@@ -793,6 +803,9 @@ class Annotator(QWidget):
             # note: if dialog modified custom, but then selected another
             # such as "ijkl", then we should *not* overwrite custom.
             self.keybinding_custom_overlay = diag.get_custom_overlay()
+        if tab_idx is None:
+            # keep the open tab for next time we re-open KeyHelp
+            self._keyhelp_tab_idx = diag.tabs.currentIndex()
         self.parentMarkerUI.annotatorSettings["keybinding_name"] = self.keybinding_name
         self.parentMarkerUI.annotatorSettings[
             "keybinding_custom_overlay"
