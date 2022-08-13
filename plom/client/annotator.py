@@ -197,7 +197,8 @@ class Annotator(QWidget):
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
         self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
-        self.setMiscShortCuts()
+        self.setToolShortCuts()
+        self.setMinorShortCuts()
 
     def show_about_dialog(self):
         QMessageBox.about(
@@ -1085,22 +1086,7 @@ class Annotator(QWidget):
             sc.activated.connect(lambda_factory(n))
             self._store_QShortcuts_rubrics.append(sc)
 
-    def setMiscShortCuts(self):
-        """
-        Sets miscellaneous shortcuts.
-
-        Returns:
-            None: adds shortcuts.
-
-        """
-        # set main and minor shortcuts
-        self.setToolShortCuts()
-        self.setMinorShortCuts()
-
-        # TODO: perhaps migrate all this to MinorShortCuts?
-
-        # TODO: this is one of our left/right keybindings
-        # TODO: do we want shift-undo to be redo?  Issue #2246
+        # TODO: hardcoded, do we want shift-undo to be redo? Issue #2246
         self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
         self.redoShortCut2.activated.connect(self.ui.redoButton.animateClick)
 
