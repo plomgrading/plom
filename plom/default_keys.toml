@@ -76,6 +76,18 @@ keys = [ "ctrl+y",]
 categories = [ "Annotation",]
 info = "Redo the last undone-action.\n[Unchangeable duplicate of redo action.]"
 
+[increase-annotation-scale]
+human = "Increase annotation scale"
+keys = [ "shift+]",]
+categories = [ "Annotation",]
+info = "Increase the relative size of annotations on the page."
+
+[decrease-annotation-scale]
+human = "Decrease annotation scale"
+keys = [ "shift+[",]
+categories = [ "Annotation",]
+info = "Decreae the relative size of annotations on the page."
+
 [cancel]
 human = "Cancel"
 keys = [ "ctrl+c",]

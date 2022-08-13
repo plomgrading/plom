@@ -288,8 +288,10 @@ class Annotator(QWidget):
         subm.addAction("Delete", self.ui.deleteButton.animateClick)
         subm.addAction("Zoom", self.ui.zoomButton.animateClick)
         m.addSeparator()
+        (key,) = keydata["increase-annotation-scale"]["keys"]
         m.addAction(
-            "Increase annotation scale\tshift-]", lambda: self.change_annot_scale(1.1)
+            f"Increase annotation scale\t{key}",
+            lambda: self.change_annot_scale(1.1),
         )
         # Keep a reference to this one so we can update the text
         self._reset_scale_menu_text = "Reset annotation scale"
@@ -298,8 +300,9 @@ class Annotator(QWidget):
         )
         self.update_annot_scale_menu_label()
 
+        (key,) = keydata["decrease-annotation-scale"]["keys"]
         m.addAction(
-            "Decrease annotation scale\tshift-[",
+            f"Decrease annotation scale\t{key}",
             lambda: self.change_annot_scale(1.0 / 1.1),
         )
         # Issue #1350: temporarily?
@@ -1056,6 +1059,8 @@ class Annotator(QWidget):
             ("redo-2", self.toRedo),
             ("rearrange-pages", self.rearrangePages),
             ("quick-show-prev-paper", self.show_previous),
+            ("increase-annotation-scale", lambda: self.change_annot_scale(1.1)),
+            ("decrease-annotation-scale", lambda: self.change_annot_scale(1 / 1.1)),
         )
         self._store_QShortcuts_minor = []
         for (action, command) in actions_and_methods:
@@ -1089,15 +1094,6 @@ class Annotator(QWidget):
         self.setMinorShortCuts()
 
         # TODO: perhaps migrate all this to MinorShortCuts?
-
-        self.scaleAnnotIncShortCut = QShortcut(QKeySequence("Shift+]"), self)
-        self.scaleAnnotIncShortCut.activated.connect(
-            lambda: self.change_annot_scale(1.1)
-        )
-        self.scaleAnnotDecShortCut = QShortcut(QKeySequence("Shift+["), self)
-        self.scaleAnnotDecShortCut.activated.connect(
-            lambda: self.change_annot_scale(1 / 1.1)
-        )
 
         # TODO: this is one of our left/right keybindings
         self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
