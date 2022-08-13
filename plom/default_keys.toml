@@ -219,3 +219,15 @@ human = "Zoom-out"
 keys = [ "-", "_",]
 categories = [ "View",]
 info = "Zooms the view out."
+
+[crop-in]
+human = "Crop to focus"
+keys = [ "ctrl+p",]
+categories = [ "View",]
+info = ""
+
+[crop-out]
+human = "Uncrop to focus on entire paper"
+keys = [ "ctrl+shift+p", ]
+categories = [ "View",]
+info = ""

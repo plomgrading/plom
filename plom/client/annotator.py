@@ -262,8 +262,10 @@ class Annotator(QWidget):
         m.addSeparator()
         (key,) = keydata["rearrange-pages"]["keys"]
         m.addAction(f"Adjust pages\t{key}", self.rearrangePages)
-        m.addAction("Crop to region\tCtrl-p", self.to_crop_mode)
-        m.addAction("Uncrop\tCtrl-shift-p", self.uncrop_region)
+        (key,) = keydata["crop-in"]["keys"]
+        m.addAction(f"Crop to region\t{key}", self.to_crop_mode)
+        (key,) = keydata["crop-out"]["keys"]
+        m.addAction(f"Uncrop\t{key}", self.uncrop_region)
         hold_crop = m.addAction("(advanced option) Hold crop")
         hold_crop.setCheckable(True)
         hold_crop.triggered.connect(self.toggle_hold_crop)
@@ -1061,6 +1063,8 @@ class Annotator(QWidget):
             ("quick-show-prev-paper", self.show_previous),
             ("increase-annotation-scale", lambda: self.change_annot_scale(1.1)),
             ("decrease-annotation-scale", lambda: self.change_annot_scale(1 / 1.1)),
+            ("crop-in", self.to_crop_mode),
+            ("crop-out", self.uncrop_region),
         )
         self._store_QShortcuts_minor = []
         for (action, command) in actions_and_methods:
@@ -1096,17 +1100,12 @@ class Annotator(QWidget):
         # TODO: perhaps migrate all this to MinorShortCuts?
 
         # TODO: this is one of our left/right keybindings
+        # TODO: do we want shift-undo to be redo?  Issue #2246
         self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
         self.redoShortCut2.activated.connect(self.ui.redoButton.animateClick)
 
         self.sekritShortCut = QShortcut(QKeySequence("Ctrl+Shift+o"), self)
         self.sekritShortCut.activated.connect(self.experimental_cycle)
-
-        # cropping hackery.
-        self.crop_to_focus_ShortCut = QShortcut(QKeySequence("Ctrl+p"), self)
-        self.crop_to_focus_ShortCut.activated.connect(self.to_crop_mode)
-        self.uncropShortCut = QShortcut(QKeySequence("Ctrl+Shift+p"), self)
-        self.uncropShortCut.activated.connect(self.uncrop_region)
 
     def to_crop_mode(self):
         # can't re-crop if the crop is being held
