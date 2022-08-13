@@ -998,41 +998,35 @@ class Annotator(QWidget):
     def setToolShortCuts(self):
         """Set or change the shortcuts for the basic tool keys.
 
-        Implementation note: this creates various QShortcuts.  It needs
-        to store them somewhere so they don't get garbage collected, so
-        it puts them in a instance variable.  If you call the function
-        again, the existing QShortcuts will be updated.
+        These are the shortcuts that are user-editable.
         """
         keydata = self.get_key_bindings()
         actions_and_methods = (
-            ("undo", "toUndo"),
-            ("redo", "toRedo"),
-            ("next-rubric", "rubricMode"),
-            ("prev-rubric", "prev_rubric"),
-            ("next-tab", "next_tab"),
-            ("prev-tab", "prev_tab"),
-            ("next-tool", "next_minor_tool"),
-            ("prev-tool", "prev_minor_tool"),
-            ("delete", "toDeleteMode"),
-            ("move", "toMoveMode"),
-            ("zoom", "toZoomMode"),
+            ("undo", self.toUndo),
+            ("redo", self.toRedo),
+            ("next-rubric", self.rubricMode),
+            ("prev-rubric", self.prev_rubric),
+            ("next-tab", self.next_tab),
+            ("prev-tab", self.prev_tab),
+            ("next-tool", self.next_minor_tool),
+            ("prev-tool", self.prev_minor_tool),
+            ("delete", self.toDeleteMode),
+            ("move", self.toMoveMode),
+            ("zoom", self.toZoomMode),
         )
-        # TODO: nicer to shove the above table in this dict too?
-        # store the shortcuts to prevent GC and so we can update later
-        if getattr(self, "_store_QShortcuts", None) is None:
-            self._store_QShortcuts = {}
+        # wipe any existing shortcuts
+        shortcuts = getattr(self, "_store_QShortcuts", [])
+        for sc in shortcuts:
+            sc.deleteLater()
+            del sc
 
-        if self._store_QShortcuts:
-            # we've done this all before so update existing QShortcuts
-            for (action, command) in actions_and_methods:
-                key = keydata[action]["keys"][0]
-                self._store_QShortcuts[action].setKey(key)
-                log.debug('shortcut: updating "%s" to "%s"', action, key)
-            return
+        # store the shortcuts to prevent GC
+        self._store_QShortcuts = []
         for (action, command) in actions_and_methods:
-            sc = QShortcut(QKeySequence(keydata[action]["keys"][0]), self)
-            sc.activated.connect(getattr(self, command))
-            self._store_QShortcuts[action] = sc
+            (key,) = keydata[action]["keys"]  # enforce single item
+            sc = QShortcut(QKeySequence(key), self)
+            sc.activated.connect(command)
+            self._store_QShortcuts.append(sc)
 
     def setMinorShortCuts(self):
         """Setup non-editable shortcuts.
