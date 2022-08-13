@@ -1006,14 +1006,16 @@ class Annotator(QWidget):
         )
         # TODO: nicer to shove the above table in this dict too?
         # store the shortcuts to prevent GC and so we can update later
-        if getattr(self, "_store_QShortcuts", None):
+        if getattr(self, "_store_QShortcuts", None) is None:
+            self._store_QShortcuts = {}
+
+        if self._store_QShortcuts:
             # we've done this all before so update existing QShortcuts
             for (action, command) in actions_and_methods:
                 key = keydata[action]["keys"][0]
                 self._store_QShortcuts[action].setKey(key)
                 log.debug('shortcut: updating "%s" to "%s"', action, key)
             return
-        self._store_QShortcuts = {}
         for (action, command) in actions_and_methods:
             sc = QShortcut(QKeySequence(keydata[action]["keys"][0]), self)
             sc.activated.connect(getattr(self, command))
