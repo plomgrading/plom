@@ -29,13 +29,11 @@ keys = [ "d",]
 [prev-tab]
 keys = [ "a",]
 
-# TODO: how to deal with alt for changeable keys?
-# TODO: perhaps we want: keys and alt-keys?  Or just make two actions
 [redo]
-keys = [ "r", "ctrl-y",]
+keys = [ "r",]
 
 [undo]
-keys = [ "f", "ctrl-z",]
+keys = [ "f",]
 
 [delete]
 keys = [ "c",]
