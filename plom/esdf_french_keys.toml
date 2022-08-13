@@ -3,11 +3,15 @@
 # Copyright (C) 2022 Colin B. Macdonald
 
 # Plom Client "ESDF French" alternative keybindings
-# -------------------------------------------------
-#
-# French default keyboard.
-#
 # Actions not overridden here will come from the default.
+
+[__metadata__]
+name = "esdf_french"
+long_name = '"esdf" (French keyboard)'
+about_html = """
+  <p>This keylayout is designed to work the same as the default layout
+  but on a French "AZERTY" keyboard.</p>
+"""
 
 [prev-tool]
 keys = [ "z",]
