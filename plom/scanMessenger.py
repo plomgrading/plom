@@ -162,7 +162,8 @@ class ScanMessenger(BaseMessenger):
                 PDF page number).
 
         Returns:
-            tuple/list: `(bool, reason, message)`, the bool indicates success.
+            tuple: `(bool, reason, message)`, the bool indicates success.
+            Sometimes `message` is actually a list, in the collision case.
         """
         with self.SRmutex:
             try:
