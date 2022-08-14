@@ -776,7 +776,12 @@ class Manager(QWidget):
         ) as e:
             # fitz.FileNotFoundError is a subclass of RuntimeError
             self.Qapp.restoreOverrideCursor()
-            WarnMsg(self, "Could not build papers.", info=e).exec()
+            WarnMsg(
+                self,
+                "<p>Could not build papers. The following error message was given:</p>",
+                info=e,
+                details=f"Working directory: {where}\nError type: {type(e)}",
+            ).exec()
         self.Qapp.restoreOverrideCursor()
         self.setEnabled(True)
 
