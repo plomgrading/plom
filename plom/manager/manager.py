@@ -433,6 +433,7 @@ class Manager(QWidget):
         self.ui.viewSpecButton.clicked.connect(self.viewSpec)
         self.ui.uploadClasslistButton.clicked.connect(self.uploadClasslist)
         self.ui.makeDatabaseButton.clicked.connect(self.makeDataBase)
+        self.ui.makePapersFolderButton.clicked.connect(self.buildPapersChooseFolder)
         self.ui.makePapersButton.clicked.connect(self.buildPapers)
 
         self.ui.refreshReviewMarkingButton.clicked.connect(self.refreshMRev)
@@ -730,6 +731,16 @@ class Manager(QWidget):
             self.Qapp.restoreOverrideCursor()
             self.setEnabled(True)
         self.refreshConfig()
+
+    def buildPapersChooseFolder(self):
+        dur = QFileDialog.getExistingDirectory(
+            self, "Choose a directory for building PDFs", None, QFileDialog.ShowDirsOnly
+        )
+        if dur == "":
+            return
+        dur = Path(dur)
+        log.info("User explicitly chose %s for building papers", dur)
+        self.ui.makePapersFolderLineEdit.setText(str(dur))
 
     def buildPapers(self):
         from plom.create import build_papers
