@@ -28,7 +28,7 @@ pandas==1.4.3
 passlib==1.7.4
 peewee==3.15.1
 Pillow==9.2.0
-pymupdf==1.20.1
+pymupdf==1.20.2
 pyzbar==0.1.9
 requests==2.28.1
 requests-toolbelt==0.9.1
