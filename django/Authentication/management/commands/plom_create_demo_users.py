@@ -26,13 +26,15 @@ class Command(BaseCommand):
             'Username': [],
             'Password': []
         }
+        demo_scanners = [str(demo_scanner) for demo_scanner in User.objects.all().filter(username='scanner')]
         scanner_info = {
-            'Username': None,
-            'Password': None
+            'Username': demo_scanners,
+            'Password': demo_scanners
         }
+        demo_markers = [str(demo_marker) for demo_marker in User.objects.all().filter(username='marker')]
         marker_info = {
-            'Username': None,
-            'Password': None
+            'Username': demo_markers,
+            'Password': demo_markers
         }
         email = '@plom.ca'
 
@@ -86,8 +88,14 @@ class Command(BaseCommand):
         print(tabulate(manager_info, headers='keys', tablefmt='fancy_grid'))
 
         print('')
-        print('Scanner')
+        print('Scanners')
         print('Table: List of demo scanner usernames and passwords')
+        print(tabulate(scanner_info, headers='keys', tablefmt='fancy_grid'))
+
+        print('')
+        print('Markers')
+        print('Table: List of demo scanner usernames and passwords')
+        print(tabulate(marker_info, headers='keys', tablefmt='fancy_grid'))
 
         # print(tabulate(info, headers='keys', tablefmt='fancy_grid'))
 # TODO: report user in better order
