@@ -1,6 +1,6 @@
-from django.core.files import File
 from django.db import transaction
 
+from plom import SpecVerifier
 from Preparation.models import StagingPQVMapping
 from Preparation.services import StagingStudentService
 from TestCreator.services import TestSpecService, TestSpecGenerateService
@@ -88,15 +88,19 @@ class PQVMappingService:
 
     def make_version_map(self, numberToProduce):
         from plom import make_random_version_map
+
         # grab the spec as dict from ther test creator services
-        spec = TestSpecService()
-        gen = TestSpecGenerateService(spec)
+        speck = TestSpecService()
+        gen = TestSpecGenerateService(speck)
         spec_dict = gen.generate_spec_dict()
-        # this spec does not include numberToProduce so we add in by hand
+        # this spec_dict does not include numberToProduce so we add in by hand
         spec_dict["numberToProduce"] = numberToProduce
 
-        print(spec_dict)
-        return make_random_version_map(spec_dict)
+        # now pass it through spec verifier and feed the **verifier** to the
+        # qv-map creator
+        speck = SpecVerifier(spec_dict)
+
+        return make_random_version_map(speck)
 
     def generate_and_set_pqvmap(self, numberToProduce):
         # delete old map, build a new one, and then use it.

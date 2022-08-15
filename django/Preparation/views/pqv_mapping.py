@@ -57,7 +57,8 @@ class PQVMappingView(ManagerRequiredBaseView):
             context["pqv_table"] = pqvs.get_pqv_map_as_table(
                 prenaming=context["prenaming"]
             )
-
+            context["pqv_number_rows"] = len(context["pqv_table"])
+            
         return context
 
     def get(self, request):
