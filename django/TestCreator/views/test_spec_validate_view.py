@@ -41,4 +41,4 @@ class TestSpecValidateView(BaseTestSpecFormView):
         return super().form_valid(form, on_validate_page=True)
 
     def get_success_url(self):
-        return reverse('submit')
+        return reverse('spec_submit')

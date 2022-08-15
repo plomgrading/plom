@@ -124,7 +124,7 @@
             {% endif %}
         </div>
     </a>
-    <form action="{% url 'reset' %}" method="post"
+    <form action="{% url 'reset_spec' %}" method="post"
         onsubmit="return confirm('Are you sure? All changes to the test specification will be lost.');"
     >
         {% csrf_token %}

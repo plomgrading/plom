@@ -146,7 +146,6 @@ class TestSpecService:
             if i in self.questions:
                 self.questions[i].remove_question()
                 del self.questions[i]
-        self.set_n_questions(0)
 
     def fix_all_questions(self):
         """Set all questions to 'fix'"""
@@ -408,7 +407,7 @@ class TestSpecService:
         the_spec.dnm_page_submitted = True
         
         # validate (assume valid for now)
-        the_spec.validate_page_sumbitted = True
+        the_spec.validate_page_submitted = True
         the_spec.save()
 
     def get_pages_for_id_select_page(self):
@@ -569,7 +568,7 @@ class TestSpecService:
             raise ValidationError(errors_to_raise)
 
         the_spec = self.specification()
-        the_spec.validate_page_sumbitted = True
+        the_spec.validate_page_submitted = True
         the_spec.save()
 
     def is_specification_valid(self):

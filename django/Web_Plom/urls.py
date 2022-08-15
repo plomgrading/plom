@@ -22,7 +22,6 @@ urlpatterns = [
     path('', include('Authentication.urls')),
     path('', include('UserManagement.urls')),
     path('', include('Profile.urls')),
-    path('classlist/', include('Classlist.urls')),
-    path('create/', include('TestCreator.urls')),
-    path('preparation/', include('Preparation.urls')),
+    path('create/', include('Preparation.urls')),
+    path('create/spec/', include('TestCreator.urls')),
 ]

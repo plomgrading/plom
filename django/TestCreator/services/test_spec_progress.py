@@ -71,7 +71,7 @@ class TestSpecProgressService:
     def is_validate_page_completed(self):
         """placeholder"""
         the_spec = self.spec.specification()
-        return the_spec.validate_page_sumbitted
+        return the_spec.validate_page_submitted
 
     def get_progress_dict(self):
         """Return a dictionary with completion data for the wizard."""

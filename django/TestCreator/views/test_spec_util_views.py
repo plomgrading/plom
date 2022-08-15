@@ -16,6 +16,17 @@ class TestSpecResetView(BaseTestSpecUtilView):
         return HttpResponseRedirect(reverse('names'))
 
 
+class TestSpecPrepLandingResetView(BaseTestSpecUtilView):
+    """Clear the test specification from the preparation landing page"""
+    def post(self, request):
+        spec = TestSpecService()
+        ref_service = ReferencePDFService(spec)
+        spec.clear_questions()
+        ref_service.delete_pdf()
+        spec.reset_specification()
+        return HttpResponseRedirect(reverse('prep_landing'))
+
+
 class TestSpecGenTomlView(BaseTestSpecUtilView):
     def dispatch(self, request, **kwargs):
         spec = TestSpecService()
@@ -92,6 +103,11 @@ class TestSpecSubmitView(BaseTestSpecTemplateView):
                 question['shuffle'] = ''
             context['questions'].append(question)
         return context
+
+
+class TestSpecSummaryView(TestSpecSubmitView):
+    """View the test spec summary and return to the creator page"""
+    template_name = 'TestCreator/test-spec-summary-page.html'
 
 
 class TestSpecLaunchView(BaseTestSpecTemplateView):

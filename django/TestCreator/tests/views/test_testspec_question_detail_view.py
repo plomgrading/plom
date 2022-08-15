@@ -12,7 +12,7 @@ class TestSpecCreatorQuestionDetailPageTests(BaseTestSpecViewTestCase):
     def test_reverses(self):
         """Test that the question detail view reverses with the right name"""
         view_url = reverse('q_detail', args=(1,))
-        self.assertEqual(view_url, '/create/questions/1')
+        self.assertEqual(view_url, '/create/spec/questions/1')
 
     def test_get_not_logged_in(self):
         """Test accessing the view when not logged in, should return a 403"""

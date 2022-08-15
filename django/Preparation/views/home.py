@@ -1,3 +1,4 @@
+from turtle import update
 from braces.views import GroupRequiredMixin
 from django import forms
 from django.http import FileResponse
@@ -5,6 +6,8 @@ from django.shortcuts import render
 from django.views import View
 
 from django_htmx.http import HttpResponseClientRedirect
+
+from TestCreator.services import TestSpecService
 
 from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 
@@ -37,8 +40,6 @@ class PreparationLandingView(ManagerRequiredBaseView):
         cpsi = ClassicPlomServerInformationService()
 
         context = {
-            "valid_spec": is_there_a_valid_spec(),
-            "test_versions": how_many_test_versions(),
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
             "can_upload_source_tests": can_I_upload_source_tests(),
             "all_source_tests_uploaded": tss.are_all_test_versions_uploaded(),
@@ -48,6 +49,8 @@ class PreparationLandingView(ManagerRequiredBaseView):
             "student_list_present": sss.are_there_students(),
             "server_valid": cpsi.is_server_info_valid(),
             "password_valid": cpsi.is_password_valid(),
+            "navbar_colour": '#AD9CFF',
+            "user_group": 'manager',
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
@@ -69,6 +72,25 @@ class PreparationLandingView(ManagerRequiredBaseView):
                     "pqv_last_paper": None,
                 }
             )
+
+        spec = TestSpecService()
+        if spec.is_specification_valid():
+            context.update(
+                {
+                    "valid_spec": True,
+                    "spec_longname": spec.get_long_name(),
+                    "spec_shortname": spec.get_short_name(),
+                    "test_versions": how_many_test_versions(),
+                }
+            )
+        else:
+            context.update(
+                {
+                    "valid_spec": False,
+                    "test_versions": how_many_test_versions(),
+                }
+            )
+
 
         return context
 

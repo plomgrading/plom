@@ -15,7 +15,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path("", PreparationLandingView.as_view()),
+    path("", PreparationLandingView.as_view(), name="prep_landing"),
     path("test_source/", TestSourceManageView.as_view()),
     path("test_source/<int:version>", TestSourceManageView.as_view()),
     path("prename/", PrenamingView.as_view()),

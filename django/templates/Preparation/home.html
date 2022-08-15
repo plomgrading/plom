@@ -21,19 +21,39 @@
             <h5 class="card-title">
               Test specification
               <i class="bi bi-check-circle text-success"></i>
-	      &mdash; HARD CODED FOR TESTING PURPOSES <i class="bi bi-x-octagon-fill text-danger"></i>
-	    </h5>
+	          </h5>
             <p class="card-text">Test specification has been created</p>
-            <btn class="btn btn-success" disabled>View summary</btn>
-            <btn class="btn btn-secondary" disabled>Download</btn>
-            <btn class="btn btn-danger" disabled>Delete</btn>
+            <strong>{{ spec_longname }}</strong>
+            <p>{{ spec_shortname }}</p>
+            <a class="btn btn-success" href="{% url 'spec_summary' %}">View summary</a>
+            <a class="btn btn-secondary" href="{% url 'generate_spec' %}" download="{{ spec_shortname }}.toml">Download</a>
+            <btn class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</btn>
+
+            <div class="modal fade" id="deleteModal">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Confirmation</h5>
+                  </div>
+                  <div class="modal-body">
+                    <p>This will clear the test specification.</p>
+                  </div>
+                  <div class="modal-footer">
+                    <form action="{% url 'reset_spec_landing' %}" method="post">
+                      {% csrf_token %}
+                      <input type="submit" class="btn btn-danger" value="Delete">
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
           {% else %}
             <h5 class="card-title">
               Test specification
-              <i class="bi bi-check-circle text-success"></i>
+              <i class="bi bi-exclamation-diamond-fill text-primary"></i>
             </h5>
             <p class="card-text">Create a test-specification for your assessment.</p>
-            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            <a class="btn btn-primary" href="{% url 'creator_launch' %}">Create specification</a>
           {% endif %}
         </div>
       </div>
