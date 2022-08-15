@@ -40,9 +40,9 @@ class Command(BaseCommand):
         email = '@plom.ca'
 
         admin = 'demo-admin'
-        manager = 'manager1'
-        scanner = 'scanner'
-        marker = 'marker'
+        manager = 'demo-manager1'
+        scanner = 'demo-scanner'
+        marker = 'demo-marker'
 
         # Here is to create a single demo admin user
         try:
