@@ -10,6 +10,8 @@ from .views import (
     PQVMappingDownloadView,
     PQVMappingDeleteView,
     PQVMappingUploadView,
+    ClassicServerInfoView,
+    ClassicServerURLView
 )
 
 urlpatterns = [
@@ -24,4 +26,6 @@ urlpatterns = [
     path("qvmapping/download", PQVMappingDownloadView.as_view()),
     path("qvmapping/delete", PQVMappingDeleteView.as_view()),
     path("qvmapping/upload", PQVMappingUploadView.as_view()),
+    path("classic/", ClassicServerInfoView.as_view()),
+    path("classic/server", ClassicServerURLView.as_view()),
 ]

@@ -8,3 +8,4 @@ from .pqv_mapping import (
     PQVMappingDeleteView,
     PQVMappingUploadView,
 )
+from .classic_server import ClassicServerInfoView, ClassicServerURLView
