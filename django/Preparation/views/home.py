@@ -41,7 +41,6 @@ class PreparationLandingView(ManagerRequiredBaseView):
 
         context = {
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
-            "can_upload_source_tests": can_I_upload_source_tests(),
             "all_source_tests_uploaded": tss.are_all_test_versions_uploaded(),
             "can_prename": can_I_prename(),
             "prename_enabled": pss.get_prenaming_setting(),
@@ -78,16 +77,18 @@ class PreparationLandingView(ManagerRequiredBaseView):
             context.update(
                 {
                     "valid_spec": True,
+                    "can_upload_source_tests": True,
                     "spec_longname": spec.get_long_name(),
                     "spec_shortname": spec.get_short_name(),
-                    "test_versions": how_many_test_versions(),
+                    "test_versions": spec.get_n_versions(),
                 }
             )
         else:
             context.update(
                 {
                     "valid_spec": False,
-                    "test_versions": how_many_test_versions(),
+                    "can_upload_source_tests": False,
+                    "test_versions": spec.get_n_versions(),
                 }
             )
 

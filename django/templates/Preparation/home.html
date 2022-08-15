@@ -39,6 +39,7 @@
                     <p>This will clear the test specification.</p>
                   </div>
                   <div class="modal-footer">
+                    <button type="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <form action="{% url 'reset_spec_landing' %}" method="post">
                       {% csrf_token %}
                       <input type="submit" class="btn btn-danger" value="Delete">
