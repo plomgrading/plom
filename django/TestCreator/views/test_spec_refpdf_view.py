@@ -35,7 +35,7 @@ class TestSpecCreatorVersionsRefPDFPage(BaseTestSpecFormView):
 
         # set do not mark page
         the_spec = spec.specification()
-        the_spec.dnm_page_submitted = True
+        the_spec.dnm_page_submitted = False
         the_spec.save()
 
         return super().form_valid(form)
