@@ -11,16 +11,6 @@ from TestCreator.services import TestSpecService
 
 from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 
-from Preparation.services.temp_functions import (
-    is_there_a_valid_spec,
-    can_I_prename,
-    can_I_upload_source_tests,
-    can_I_qvmap,
-    are_all_source_tests_uploaded,
-    how_many_test_versions,
-    how_many_test_versions_uploaded,
-)
-
 from Preparation.services import (
     TestSourceService,
     PrenameSettingService,
@@ -42,14 +32,13 @@ class PreparationLandingView(ManagerRequiredBaseView):
         context = {
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
             "all_source_tests_uploaded": tss.are_all_test_versions_uploaded(),
-            "can_prename": can_I_prename(),
             "prename_enabled": pss.get_prenaming_setting(),
-            "can_qvmap": can_I_qvmap(),
+            "can_qvmap": False,
             "student_list_present": sss.are_there_students(),
             "server_valid": cpsi.is_server_info_valid(),
             "password_valid": cpsi.is_password_valid(),
-            "navbar_colour": '#AD9CFF',
-            "user_group": 'manager',
+            "navbar_colour": "#AD9CFF",
+            "user_group": "manager",
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
@@ -78,6 +67,7 @@ class PreparationLandingView(ManagerRequiredBaseView):
                 {
                     "valid_spec": True,
                     "can_upload_source_tests": True,
+                    "can_qvmap": True,
                     "spec_longname": spec.get_long_name(),
                     "spec_shortname": spec.get_short_name(),
                     "test_versions": spec.get_n_versions(),
@@ -89,9 +79,9 @@ class PreparationLandingView(ManagerRequiredBaseView):
                     "valid_spec": False,
                     "can_upload_source_tests": False,
                     "test_versions": spec.get_n_versions(),
+                    "can_qvmap": False,
                 }
             )
-
 
         return context
 

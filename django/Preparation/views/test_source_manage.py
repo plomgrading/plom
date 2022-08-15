@@ -5,13 +5,10 @@ from django.urls import reverse
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 
-# TODO - replace these functions with real ones
 
-from Preparation.services.temp_functions import (
-    how_many_test_versions,
-    how_many_test_pages,
-)
 from Preparation.services import TestSourceService
+from TestCreator.services import TestSpecService
+
 from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 
 
@@ -25,12 +22,13 @@ class TestSourceUploadForm(forms.Form):
 class TestSourceManageView(ManagerRequiredBaseView):
     def build_context(self):
         tss = TestSourceService()
+        speck = TestSpecService()
 
         return {
             "form": TestSourceUploadForm(),
-            "test_versions": how_many_test_versions(),
+            "test_versions": speck.get_n_versions(),
             "number_test_sources_uploaded": tss.how_many_test_versions_uploaded(),
-            "number_of_pages": how_many_test_pages(),
+            "number_of_pages": speck.get_n_pages(),
             "uploaded_test_sources": tss.get_list_of_sources(),
             "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
             "duplicates": tss.check_pdf_duplication(),
@@ -58,8 +56,9 @@ class TestSourceManageView(ManagerRequiredBaseView):
             context = {"success": False, "message": "Form invalid", "version": version}
         else:
             tss = TestSourceService()
+            speck = TestSpecService()
             success, message = tss.take_source_from_upload(
-                version, how_many_test_pages(), request.FILES["source_pdf"]
+                version, speck.get_n_pages(), request.FILES["source_pdf"]
             )
             context = {"version": version, "success": success, "message": message}
 

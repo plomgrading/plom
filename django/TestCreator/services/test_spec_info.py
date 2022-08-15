@@ -219,6 +219,16 @@ class TestSpecService:
             }
         test_spec.save()
 
+    def get_n_pages(self):
+        """
+        Get the number of pages set in the spec
+
+        Returns:
+            int: The number of pages
+        """
+        return len(self.specification().pages)
+
+        
     def get_page_list(self):
         """
         Convert page dict into a list of dicts for looping over in a template

@@ -85,7 +85,6 @@
     <div>
       <div class="card">
         <div class="card-body">
-          {% if can_prename %}
             <h5 class="card-title">
               Prenaming &mdash;
 	      {% if prename_enabled %}
@@ -96,12 +95,6 @@
             </h5>
             <p class="card-text">Do you want to prename your papers?</p>
             <a class="btn btn-primary" href="{% url 'prep_prename' %}">Manage prenaming</a>
-          {% else %}
-            <h5 class="card-title">
-              Prenaming and classlist  <i class="bi bi-caret-up-square-fill text-warning"></i>
-            </h5>
-            <p class="card-text">You cannot prename a test specification has been created</p>
-          {% endif %}
         </div>
       </div>
     </div>
@@ -217,6 +210,8 @@
         <div class="card-body">
           <h5 class="card-title">
 	    Number of papers and question-version mapping
+
+	    <i class="bi bi-caret-up-square-fill text-warning"></i>
           </h5>
             <p class="card-text">You cannot set these until a test specification has been created</p>
         </div>

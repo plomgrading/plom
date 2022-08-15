@@ -3,7 +3,7 @@ from django.core.files import File
 from django.db import transaction
 
 from Preparation.models import PaperSourcePDF
-from .temp_functions import how_many_test_versions
+from TestCreator.services import TestSpecService
 
 from collections import defaultdict
 import fitz
@@ -34,7 +34,8 @@ class TestSourceService:
 
     @transaction.atomic
     def are_all_test_versions_uploaded(self):
-        return PaperSourcePDF.objects.count() == how_many_test_versions()
+        speck = TestSpecService()
+        return PaperSourcePDF.objects.count() == speck.get_n_versions()
 
     @transaction.atomic
     def get_list_of_uploaded_sources(self):
@@ -46,8 +47,9 @@ class TestSourceService:
 
     def get_list_of_sources(self):
         """Return a dict of all versions, uploaded or not"""
+        speck = TestSpecService()
 
-        status = {(v + 1): None for v in range(how_many_test_versions())}
+        status = {(v + 1): None for v in range(speck.get_n_versions())}
         for pdf_obj in PaperSourcePDF.objects.all():
             status[pdf_obj.version] = (pdf_obj.source_pdf.url, pdf_obj.hash)
         return status
@@ -112,7 +114,7 @@ class TestSourceService:
         for pdf_obj in PaperSourcePDF.objects.all():
             Path(pdf_obj.source_pdf.path).unlink()
             pdf_obj.delete()
-        
+
     @transaction.atomic
     def check_pdf_duplication(self):
         hashes = defaultdict(list)
@@ -132,4 +134,3 @@ class TestSourceService:
                 return fh.read()
         except PaperSourcePDF.DoesNotExist:
             raise ValueError("Version does not exist")
-

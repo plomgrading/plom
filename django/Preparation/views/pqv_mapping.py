@@ -10,9 +10,7 @@ from Preparation.services import (
 )
 
 from Preparation.views.needs_manager_view import ManagerRequiredBaseView
-
-from Preparation.services.temp_functions import how_many_questions
-
+from TestCreator.services import TestSpecService
 
 class PQVMappingUploadView(ManagerRequiredBaseView):
     # NOT CURRENTLY BEING USED
@@ -40,10 +38,11 @@ class PQVMappingView(ManagerRequiredBaseView):
         pqvs = PQVMappingService()
         pss = PrenameSettingService()
         sss = StagingStudentService()
+        speck = TestSpecService()
 
         context = {
-            "number_of_questions": how_many_questions(),
-            "question_list": range(1, 1 + how_many_questions()),
+            "number_of_questions": speck.get_n_questions(),
+            "question_list": range(1, 1 + speck.get_n_questions()),
             "prenaming": pss.get_prenaming_setting(),
             "pqv_mapping_present": pqvs.is_there_a_pqv_map(),
             "number_of_students": sss.how_many_students(),

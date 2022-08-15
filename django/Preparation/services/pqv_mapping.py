@@ -3,8 +3,7 @@ from django.db import transaction
 
 from Preparation.models import StagingPQVMapping
 from Preparation.services import StagingStudentService
-
-from .temp_functions import get_demo_spec, how_many_questions
+from TestCreator.services import TestSpecService, TestSpecGenerateService
 
 
 class PQVMappingService:
@@ -52,9 +51,9 @@ class PQVMappingService:
         # in particular, a dict of lists.
         pqvmapping = self.get_pqv_map_dict()
         pqv_table = {}
-
+        speck = TestSpecService()
         question_list = [
-            q + 1 for q in range(how_many_questions())
+            q + 1 for q in range(speck.get_n_questions())
         ]  # todo - replace with spec lookup
 
         for paper_number, qvmap in pqvmapping.items():
@@ -73,7 +72,8 @@ class PQVMappingService:
     @transaction.atomic()
     def get_pqv_map_as_csv(self):
         pqvmap = self.get_pqv_map_dict()
-        qlist = [q + 1 for q in range(how_many_questions())]
+        speck = TestSpecService()
+        qlist = [q + 1 for q in range(speck.get_n_questions())]
         # TODO - replace this with some python csv module stuff
         txt = '"paper_number"'
         for q in qlist:
@@ -88,13 +88,15 @@ class PQVMappingService:
 
     def make_version_map(self, numberToProduce):
         from plom import make_random_version_map
-
-        demo_spec = get_demo_spec()
+        # grab the spec as dict from ther test creator services
+        spec = TestSpecService()
+        gen = TestSpecGenerateService(spec)
+        spec_dict = gen.generate_spec_dict()
         # this spec does not include numberToProduce so we add in by hand
-        demo_spec["numberToProduce"] = numberToProduce
-        make_random_version_map(demo_spec)
+        spec_dict["numberToProduce"] = numberToProduce
 
-        return make_random_version_map(demo_spec)
+        print(spec_dict)
+        return make_random_version_map(spec_dict)
 
     def generate_and_set_pqvmap(self, numberToProduce):
         # delete old map, build a new one, and then use it.
