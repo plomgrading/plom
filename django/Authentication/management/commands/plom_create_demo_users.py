@@ -13,6 +13,7 @@ class Command(BaseCommand):
     This command also prints a table with a list of the demo users and
     passwords.
     """
+    # TODo: add a fail safe
     def handle(self, *args, **options):
         range_of_scanners_markers = 5
         admin_group = Group.objects.get(name='admin')
