@@ -91,7 +91,7 @@ into papers complete with simple cover-pages::
     $ plom-finish reassemble
     Please enter the "manager" password:
     Reassembling 20 papers...
-    100%|█████████████████████████| 20/20 [00:04<00:00,  4.16it/s]
+    100%|--------------------| 20/20 [00:04<00:00,  4.16it/s]
 
 Note that for a long paper and a large class this could take some time.
 The resulting papers now reside in ``reassembled/``.
