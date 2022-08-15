@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from Preparation.services import PQVMappingService, temp_functions
+from Preparation.services import PQVMappingService
+from TestCreator.services import TestSpecService
+
 
 from pathlib import Path
 from plom.misc_utils import format_int_list_with_runs
@@ -10,7 +12,8 @@ class Command(BaseCommand):
     help = "Displays the current status of the question-version map and allows user generate/download/remove it."
 
     def show_status(self):
-        if not temp_functions.is_there_a_valid_spec():
+        speck = TestSpecService()
+        if not speck.is_specification_valid():
             self.stdout.write("There no valid test specification. Stopping.")
 
         pqvms = PQVMappingService()
@@ -24,7 +27,8 @@ class Command(BaseCommand):
             )
 
     def generate_pqv_map(self, number_to_produce=None):
-        if not temp_functions.is_there_a_valid_spec():
+        speck = TestSpecService()
+        if not speck.is_specification_valid():
             self.stdout.write("There no valid test specification. Stopping.")
             return
         pqvms = PQVMappingService()

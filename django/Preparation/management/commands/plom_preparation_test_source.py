@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from Preparation.services import TestSourceService, temp_functions
+from Preparation.services import TestSourceService
+from TestCreator.services import TestSpecService
 
 from pathlib import Path
 
@@ -95,7 +96,8 @@ class Command(BaseCommand):
             )
 
     def upload_source(self, version=None, source_pdf=None):
-        if not temp_functions.is_there_a_valid_spec():
+        speck = TestSpecService()
+        if not speck.is_specification_valid():
             self.stderr.write(
                 f"There is not a valid test specification on the server. Cannot upload."
             )
@@ -126,7 +128,7 @@ class Command(BaseCommand):
         # we should not be able to upload unless we have a spec
         with open(source_path, "rb") as fh:
             success, msg = tss.take_source_from_upload(
-                version, temp_functions.how_many_test_pages(), fh
+                version, speck.get_n_pages(), fh
             )
             if success:
                 self.stdout.write(
