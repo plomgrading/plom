@@ -15,11 +15,16 @@ class Command(BaseCommand):
     """
     def handle(self, *args, **options):
         range_of_scanners_markers = 5
+        admin_group = Group.objects.get(name='admin')
         manager_group = Group.objects.get(name='manager')
         marker_group = Group.objects.get(name='marker')
         scanner_group = Group.objects.get(name='scanner')
         demo_group = Group.objects.get(name='demo')
         exist_usernames = [str(username) for username in User.objects.all()]
+        admin_info = {
+            'Username': [],
+            'Password': []
+        }
         manager_info = {
             'Username': [],
             'Password': []
@@ -34,11 +39,26 @@ class Command(BaseCommand):
         }
         email = '@plom.ca'
 
+        admin = 'demo-admin'
         manager = 'manager1'
         scanner = 'scanner'
         marker = 'marker'
 
-        # Here is to create a single manager user
+        # Here is to create a single demo admin user
+        try:
+            User.objects.create_superuser(username=admin,
+                                          email=admin + email,
+                                          password='password',
+                                          is_staff=True,
+                                          is_superuser=True).groups.add(admin_group, demo_group)
+            print(f'{admin} created and added to {admin_group} group!')
+
+        except IntegrityError:
+            print(f'{admin} already exists!')
+        admin_info['Username'].append(admin)
+        admin_info['Password'].append('password')
+
+        # Here is to create a single demo manager user
         try:
             User.objects.create_user(username=manager,
                                      email=manager + email,
@@ -77,6 +97,11 @@ class Command(BaseCommand):
                 print(f'{marker_username} created and added to {marker_group} group!')
 
         # Here is print the table of demo users
+        print('')
+        print('Admin')
+        print('Table: List of demo admin username and password')
+        print(tabulate(admin_info, headers='keys', tablefmt='fancy_grid'))
+
         print('')
         print('Manger')
         print('Table: List of demo manager usernames and passwords')
