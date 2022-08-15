@@ -6,7 +6,6 @@ from copy import deepcopy
 import importlib.resources as resources
 import logging
 
-import toml
 from PyQt5.QtCore import Qt, QBuffer, QByteArray
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QPainter, QPixmap, QMovie
@@ -31,57 +30,49 @@ from PyQt5.QtWidgets import (
 import plom
 import plom.client.help_img
 from .key_wrangler import KeyEditDialog
-from .key_wrangler import get_key_bindings, _keybindings_list
+from .key_wrangler import get_keybinding_overlay, get_key_bindings, _keybindings_list
 
 
 log = logging.getLogger("keybindings")
 
 
 # TODO:
-# * duplicates a lot of code from key_wrangler:
-#   - replace self.keybindings with some calls from there?
-#   - use get_key_bindings
 # * no validity checking done
 #   - use code from old KeyWrangler
 class KeyHelp(QDialog):
-    def __init__(self, parent, *, keybinding_name, custom_overlay={}, initial_tab=0):
+    def __init__(self, parent, keybinding_name, *, custom_overlay={}, initial_tab=0):
         """Construct the KeyHelp dialog.
 
         Args:
             parent (QWidget):
+            keybinding_name (str): which keybinding to initially display.
 
         Keyword args:
-            keybinding_name (str): which keybinding to initially display.
             custom_overlay (dict): if there was already a custom keybinding,
-               pass its overlay here.  We will copy it not change it.
+               pass its overlay here.  We will copy it, not change it.  This
+               is because the user may make local changes and then cancel.
             initial_tab (int): index of the tab we'd like to open on.
         """
         super().__init__(parent)
+        self._custom_overlay = deepcopy(custom_overlay)
         vb = QVBoxLayout()
         tabs = QTabWidget()
         tabs.addTab(ClickDragPage(), "Tips")
-
-        self.default_keydata, self.keybindings = self.load_keymaps(
-            _keybindings_list, custom_overlay
-        )
-
         self.tabs = tabs
-        if keybinding_name:
-            # TODO: how about self.update_keybinding_by_name?
-            (prev_keymap_idx,) = [
-                i
-                for i, x in enumerate(_keybindings_list)
-                if x["name"] == keybinding_name
-            ]
-        self.update_keys(prev_keymap_idx)
+
+        (_initial_idx,) = [
+            i for i, x in enumerate(_keybindings_list) if x["name"] == keybinding_name
+        ]
+        # trigger this to draw the diagrams (which depend on keybinding)
+        self.update_keys_by_name(keybinding_name)
 
         buttons = QHBoxLayout()
         b = QPushButton("&Ok")
         b.clicked.connect(self.accept)
         keyLayoutCB = QComboBox()
         keyLayoutCB.addItems([x["human"] for x in _keybindings_list])
-        keyLayoutCB.setCurrentIndex(prev_keymap_idx)
-        keyLayoutCB.currentIndexChanged.connect(self.update_keys)
+        keyLayoutCB.setCurrentIndex(_initial_idx)
+        keyLayoutCB.currentIndexChanged.connect(self.update_keys_by_idx)
         self._keyLayoutCB = keyLayoutCB
         # messy hack to map index back to name of keybinding
         self._keyLayoutCB_idx_to_name = [x["name"] for x in _keybindings_list]
@@ -103,32 +94,15 @@ class KeyHelp(QDialog):
         idx = self._keyLayoutCB.currentIndex()
         return self._keyLayoutCB_idx_to_name[idx]
 
-    def load_keymaps(self, keybindings, custom_overlay):
-        # TODO: I think plom.client would be better, put can't get it to work
-        f = "default_keys.toml"
-        log.info("Loading keybindings from %s", f)
-        default_keydata = toml.loads(resources.read_text(plom, f))
+    def update_keys_by_name(self, name):
+        keydata = get_key_bindings(name, custom_overlay=self._custom_overlay)
+        self.redraw_tables_and_diagrams(keydata)
+        # keep a memo of the keydata until we next change it
+        self.keydata = keydata
 
-        keybindings = deepcopy(keybindings)
-        for keymap in keybindings:
-            f = keymap["file"]
-            if f is None:
-                overlay = {}
-            else:
-                log.info("Loading keybindings from %s", f)
-                overlay = toml.loads(resources.read_text(plom, f))
-            if keymap["name"] == "custom":
-                overlay = deepcopy(custom_overlay)
-            keymap["overlay"] = overlay
-        return default_keydata, keybindings
-
-    def update_keys(self, idx):
-        overlay = self.keybindings[idx]["overlay"]
-        # loop over keys in overlay map and push updates into copy of default
-        self.keydata = deepcopy(self.default_keydata)
-        for action, dat in overlay.items():
-            self.keydata[action].update(dat)
-        self.change_keybindings()
+    def update_keys_by_idx(self, idx):
+        name = self._keyLayoutCB_idx_to_name[idx]
+        self.update_keys_by_name(name)
 
     def interactively_change_key(self, action):
         info = ""
@@ -151,13 +125,11 @@ class KeyHelp(QDialog):
 
     def change_key(self, action, new_key):
         idx = self._keyLayoutCB.currentIndex()
-        if idx == self.CUSTOM_IDX:
-            # we're already in the custom map, so just update
-            overlay = self.keybindings[self.CUSTOM_IDX]["overlay"]
-        else:
+        name = self._keyLayoutCB_idx_to_name[idx]
+        if name != "custom":
             # we were not in the custom map; copy current overlay as new custom
-            overlay = deepcopy(self.keybindings[idx]["overlay"])
-            self.keybindings[self.CUSTOM_IDX]["overlay"] = overlay
+            self._custom_overlay = get_keybinding_overlay(name)
+        overlay = self._custom_overlay
         A = overlay.get(action, None)
         if A is None:
             overlay[action] = {"keys": [new_key]}
@@ -165,21 +137,22 @@ class KeyHelp(QDialog):
             log.info("%s updating existing overlay item", action)
             overlay[action]["keys"][0] = new_key
         self._keyLayoutCB.setCurrentIndex(self.CUSTOM_IDX)
-        if idx == self.CUSTOM_IDX:
+        if name == "custom":
             # force redraw if the current index did not change
-            self.update_keys(self.CUSTOM_IDX)
+            self.update_keys_by_name("custom")
 
     def has_custom_map(self):
-        return bool(self.keybindings[self.CUSTOM_IDX]["overlay"])
+        # i.e., is the custom overlay nonempty?
+        return bool(self._custom_overlay)
 
     def get_custom_overlay(self):
-        return self.keybindings[self.CUSTOM_IDX]["overlay"]
+        return self._custom_overlay
 
     def currently_on_custom_map(self):
         idx = self._keyLayoutCB.currentIndex()
         return idx == self.CUSTOM_IDX
 
-    def change_keybindings(self):
+    def redraw_tables_and_diagrams(self, keydata):
         accel = {
             k: v
             for k, v in zip(
@@ -195,12 +168,12 @@ class KeyHelp(QDialog):
             w.deleteLater()
             self.tabs.removeTab(1)
 
-        for label, tw in self.make_ui_tables().items():
+        for label, tw in self.make_ui_tables(keydata).items():
             # special case the first 2 with graphics
             if label == "Rubrics":
                 w = QWidget()
                 wb = QVBoxLayout()
-                d = RubricNavDiagram(self.keydata)
+                d = RubricNavDiagram(keydata)
                 d.wants_to_change_key.connect(self.interactively_change_key)
                 wb.addWidget(d)
                 wb.addWidget(tw)
@@ -208,7 +181,7 @@ class KeyHelp(QDialog):
             elif label == "Annotation":
                 w = QWidget()
                 wb = QVBoxLayout()
-                d = ToolNavDiagram(self.keydata)
+                d = ToolNavDiagram(keydata)
                 d.wants_to_change_key.connect(self.interactively_change_key)
                 wb.addWidget(d)
                 wb.addWidget(tw)
@@ -219,7 +192,7 @@ class KeyHelp(QDialog):
         # restore the current tab
         self.tabs.setCurrentIndex(current_tab)
 
-    def make_ui_tables(self):
+    def make_ui_tables(self, keydata):
         """Make some Qt tables with tables of key bindings.
 
         Returns:
@@ -240,7 +213,7 @@ class KeyHelp(QDialog):
             tw.setSortingEnabled(False)
             tables[div] = tw
         # loop over all the keys and insert each key to the appropriate table(s)
-        for a, dat in self.keydata.items():
+        for a, dat in keydata.items():
             for cat in set(dat["categories"]).union(("All",)):
                 try:
                     tw = tables[cat]

@@ -86,6 +86,18 @@ _keybindings_list = [
 ]
 
 
+def get_keybinding_overlay(name):
+    keymap = _keybindings_dict[name]
+    f = keymap["file"]
+    if f is None:
+        overlay = {}
+    else:
+        log.info("Loading keybindings from %s", f)
+        overlay = toml.loads(resources.read_text(plom, f))
+    # note copy unnecessary as we have fresh copy from file
+    return overlay
+
+
 def get_key_bindings(name, custom_overlay={}):
     """Generate the keybings from a name and or a custom overlay.
 
