@@ -55,7 +55,7 @@
                         <form enctype="multipart/form-data"
                               id="form"
                               method="post"
-                              action="/preparation/classlist/">
+                              action="{% url 'prep_classlist' %}">
                             {% csrf_token %}
                             <div>
                                 <input type="file" accepts=".csv" name="classlist_csv" required/>

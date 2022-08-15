@@ -128,7 +128,7 @@
               <form enctype="multipart/form-data"
                     id="form"
                     method="post"
-                    action="/preparation/qvmapping/">
+                    action="{% url 'prep_qvmapping' %}">
                 {% csrf_token %}
                 <label for="inp_ntp">Number to produce</label>
                 <input id="inp_ntp"
@@ -174,7 +174,7 @@
         <form enctype="multipart/form-data"
               id="form"
               method="post"
-              action="/preparation/qvmapping/upload"
+              action="{% url 'prep_qvmapping_upload' %}"
 	      >
           {% csrf_token %}
           <div>
