@@ -9,7 +9,7 @@
         <h4 class="card-title">Source PDF version {{ version }} upload failed</h4>
         <p class="card-text">{{ message }}</p>
       {% endif %}
-      <a href="/preparation/test_source" class="btn btn-primary card-link">return</a>
+      <a href="{% url 'prep_sources' %}" class="btn btn-primary card-link">return</a>
     </div>
   </div>
 {% endblock %}

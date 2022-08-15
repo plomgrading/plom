@@ -16,9 +16,9 @@ from .views import (
 
 urlpatterns = [
     path("", PreparationLandingView.as_view(), name="prep_landing"),
-    path("test_source/", TestSourceManageView.as_view()),
-    path("test_source/<int:version>", TestSourceManageView.as_view()),
-    path("prename/", PrenamingView.as_view()),
+    path("test_source/", TestSourceManageView.as_view(), name="prep_sources"),
+    path("test_source/<int:version>", TestSourceManageView.as_view(), name="prep_source_upload"),
+    path("prename/", PrenamingView.as_view(), name='prep_prename'),
     path("classlist/", ClasslistView.as_view()),
     path("classlist/download", ClasslistDownloadView.as_view()),
     path("classlist/delete", ClasslistDeleteView.as_view()),

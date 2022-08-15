@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse, Http404
+from django.urls import reverse
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 
@@ -68,4 +69,4 @@ class TestSourceManageView(ManagerRequiredBaseView):
         if version:
             tss = TestSourceService()
             tss.delete_test_source(version)
-        return HttpResponseClientRedirect("/preparation/test_source")
+        return HttpResponseClientRedirect(reverse('prep_sources'))

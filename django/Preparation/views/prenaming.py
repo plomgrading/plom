@@ -1,3 +1,5 @@
+from django.urls import reverse
+
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 
@@ -19,9 +21,9 @@ class PrenamingView(ManagerRequiredBaseView):
     def post(self, request):
         pss = PrenameSettingService()
         pss.set_prenaming_setting(True)
-        return HttpResponseClientRedirect("/preparation/prename")
+        return HttpResponseClientRedirect(reverse('prep_prename'))
 
     def delete(self, request):
         pss = PrenameSettingService()
         pss.set_prenaming_setting(False)
-        return HttpResponseClientRedirect("/preparation/prename")
+        return HttpResponseClientRedirect(reverse('prep_prename'))

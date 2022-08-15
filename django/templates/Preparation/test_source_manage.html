@@ -60,7 +60,7 @@
                 <form enctype="multipart/form-data"
                       id="form"
                       method="post"
-                      action="/preparation/test_source/{{ version }}">
+                      action="{% url 'prep_source_upload' version %}">
                   {% csrf_token %}
                   <div>
                     <input type="file" accepts=".pdf" name="source_pdf" required/>

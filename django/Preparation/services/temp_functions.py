@@ -1,4 +1,5 @@
 # TODO - get rid of this file and replace these functions by proper services.
+from TestCreator.services import TestSpecService
 
 
 def is_there_a_valid_spec():
@@ -10,7 +11,8 @@ def how_many_test_pages():
 
 
 def how_many_test_versions():
-    return 3
+    spec = TestSpecService()
+    return spec.get_n_versions()
 
 
 def how_many_questions():
