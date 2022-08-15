@@ -20,29 +20,23 @@ class Command(BaseCommand):
         scanner_group = Group.objects.get(name='scanner')
         demo_group = Group.objects.get(name='demo')
         exist_usernames = [str(username) for username in User.objects.all()]
-        demo_usernames = []
-        demo_user_password = []
         manager_info = {
             'Username': [],
             'Password': []
         }
-        demo_scanners = [str(demo_scanner) for demo_scanner in User.objects.all().filter(username='scanner')]
         scanner_info = {
-            'Username': demo_scanners,
-            'Password': demo_scanners
+            'Username': [],
+            'Password': []
         }
-        demo_markers = [str(demo_marker) for demo_marker in User.objects.all().filter(username='marker')]
         marker_info = {
-            'Username': demo_markers,
-            'Password': demo_markers
+            'Username': [],
+            'Password': []
         }
         email = '@plom.ca'
 
         manager = 'manager1'
         scanner = 'scanner'
         marker = 'marker'
-
-        print(User.objects.all().filter(groups__name='demo'))
 
         # Here is to create a single manager user
         try:
@@ -59,12 +53,12 @@ class Command(BaseCommand):
         # Here is to create 5 scanners and markers
         for number_of_scanner_marker in range(1, range_of_scanners_markers + 1):
             scanner_username = scanner + str(number_of_scanner_marker)
-            demo_usernames.append(scanner_username)
-            demo_user_password.append(scanner_username)
+            scanner_info['Username'].append(scanner_username)
+            scanner_info['Password'].append(scanner_username)
 
             marker_username = marker + str(number_of_scanner_marker)
-            demo_usernames.append(marker_username)
-            demo_user_password.append(marker_username)
+            marker_info['Username'].append(marker_username)
+            marker_info['Password'].append(marker_username)
 
             if scanner_username in exist_usernames:
                 print(f'{scanner_username} already exists!')
@@ -82,6 +76,7 @@ class Command(BaseCommand):
                                          password=marker_username).groups.add(marker_group, demo_group)
                 print(f'{marker_username} created and added to {marker_group} group!')
 
+        # Here is print the table of demo users
         print('')
         print('Manger')
         print('Table: List of demo manager usernames and passwords')
@@ -96,6 +91,3 @@ class Command(BaseCommand):
         print('Markers')
         print('Table: List of demo scanner usernames and passwords')
         print(tabulate(marker_info, headers='keys', tablefmt='fancy_grid'))
-
-        # print(tabulate(info, headers='keys', tablefmt='fancy_grid'))
-# TODO: report user in better order
