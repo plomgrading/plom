@@ -3,6 +3,8 @@ from requests.exceptions import ConnectionError
 import json
 import re
 
+from plom.plom_exceptions import PlomConnectionError
+
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
@@ -10,7 +12,9 @@ from django.views import View
 from django.views.generic.base import TemplateView
 from braces.views import GroupRequiredMixin, LoginRequiredMixin
 
+from Connect.services import CoreConnectionService
 from Connect.forms import CoreConnectionForm
+from .models import CoreServerConnection
 
 
 class ManagerRequiredUtilView(GroupRequiredMixin, LoginRequiredMixin, View):
@@ -45,22 +49,20 @@ class AttemptCoreConnectionView(ManagerRequiredUtilView):
         """If the connection is valid, save core server details"""
         form_data = request.POST
         url = form_data['server_url']
+        port_number = form_data['port_number']
+
+        core = CoreConnectionService()
 
         try:
-            response = requests.get(
-                f"{url}/Version",
-                verify=False
-            )
+            version_string = core.validate_url(url, port_number)
 
-            if response.status_code == 200:
-                version = response.text
-                print(version)
-                server_version = re.search(r'\d\.\d\.\d\.(dev)?', version).group(0)
-                api = re.search(r'\d+$', version).group(0)
-                
-                return HttpResponse(f'<p>Connection successful! Server version: {server_version}, API: {api}</p>')
+            if version_string:
+                core.save_connection_info(url, port_number, version_string)
+                version = core.get_client_version()
+                api = core.get_api()
+                return HttpResponse(f'<p id="result">Connection successful! Server version: {version}, API: {api}</p>')
 
-            else:
-                return HttpResponse('<p>Connection not successful</p>')
-        except ConnectionError:
-            return HttpResponse('<p>Failed to establish a connection. Is the server running?</p>')
+        except PlomConnectionError as e:
+            print(e)
+            return HttpResponse(f'<p id="result" style="color: red;">Unable to connect to Plom Classic. Is the server running?</p>')
+        

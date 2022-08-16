@@ -9,10 +9,10 @@
 <div class="d-grid gap-2">
     <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
 
-    <div class="card w-50">
+    <div class="card w-50" x-data="{server_url: '{{ form.server_url.initial }}', port_number: '{{ form.port_number.initial }}'}">
         <div class="card-body">
             <h5 class="card-title">Connection details</h5>
-            <form hx-post="{% url 'attempt_core_connection' %}" hx-target="#init_connection_response">
+            <form hx-post="{% url 'attempt_core_connection' %}" hx-target="#init_connection_response" hx-indixator="#connection_indicator">
                 {% csrf_token %}
             
                 <div class="row">
@@ -21,11 +21,24 @@
                         {{ form.server_url }}
                     </div>
 
+                    <label for="{{ form.port_number.id_for_label }}" class="col-sm-3 col-form-label fs-7">{{ form.port_number.label }}</label>
+                    <div class="col-sm-9">
+                        {{ form.port_number }}
+                    </div>
+
+                    <p x-text="'Will connect to https://' + server_url + ':' + port_number" style="margin-top: 25px;"></p>
+
+                </div>
+
                 <div id="init_connection_response">
                     <p></p>
                 </div>
-        
-                <input type="submit" class="btn btn-primary" value="Connect">
+
+                <div class="row">
+                    <div class="col-sm-2">
+                        <input type="submit" class="btn btn-primary" value="Connect" onclick="document.getElementById('result').style.opacity = '0';">
+                    </div>
+                </div>
             </form>
         </div>
     </div>
