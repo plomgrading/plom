@@ -20,3 +20,8 @@ db.sqlite3-journal
 
 # PyCharm
 .idea/WebPlom.iml
+
+# Migrations (ignores all files within migrations except __init__.py)
+**/migrations/**
+!**/migrations
+!**/migrations/__init__.py
