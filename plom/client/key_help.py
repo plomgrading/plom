@@ -30,7 +30,8 @@ from PyQt5.QtWidgets import (
 import plom
 import plom.client.help_img
 from .key_wrangler import KeyEditDialog
-from .key_wrangler import get_keybinding_overlay, get_key_bindings, _keybindings_list
+from .key_wrangler import get_keybinding_overlay, get_key_bindings
+from .key_wrangler import _keybindings_list, actions_with_changeable_keys
 
 
 log = logging.getLogger("keybindings")
@@ -264,7 +265,7 @@ class RubricNavDiagram(QFrame):
     def change_key(self, action):
         self.wants_to_change_key.emit(action)
 
-    def put_stuff(self, action):
+    def put_stuff(self, keydata):
         pix = QPixmap()
         pix.loadFromData(resources.read_binary(plom.client.help_img, "nav_rubric.png"))
         self.scene.addPixmap(pix)  # is at position (0,0)
@@ -275,10 +276,15 @@ class RubricNavDiagram(QFrame):
             return lambda: self.change_key(w)
 
         def stuff_it(w, x, y):
-            b = QPushButton(action[w]["keys"][0])
+            b = QPushButton(keydata[w]["keys"][0])
             b.setStyleSheet(sheet)
-            b.setToolTip(f'{action[w]["human"]}\n(click to change)')
-            b.clicked.connect(lambda_factory(w))
+            b.setToolTip(keydata[w]["human"])
+            if w in actions_with_changeable_keys:
+                b.setToolTip(b.toolTip() + "\n(click to change)")
+                b.clicked.connect(lambda_factory(w))
+            else:
+                # TODO: a downside is the tooltip does not show
+                b.setEnabled(False)
             li = self.scene.addWidget(b)
             li.setPos(x, y)
 
@@ -331,8 +337,13 @@ class ToolNavDiagram(QFrame):
         def stuff_it(w, x, y):
             b = QPushButton(keydata[w]["keys"][0])
             b.setStyleSheet(sheet)
-            b.setToolTip(f'{keydata[w]["human"]}\n(click to change)')
-            b.clicked.connect(lambda_factory(w))
+            b.setToolTip(keydata[w]["human"])
+            if w in actions_with_changeable_keys:
+                b.setToolTip(b.toolTip() + "\n(click to change)")
+                b.clicked.connect(lambda_factory(w))
+            else:
+                # TODO: a downside is the tooltip does not show
+                b.setEnabled(False)
             li = self.scene.addWidget(b)
             li.setPos(x, y)
 
@@ -341,7 +352,6 @@ class ToolNavDiagram(QFrame):
         stuff_it("move", 395, 170)
         stuff_it("undo", 120, -40)
         stuff_it("redo", 210, -40)
-        # TODO: check whether these are customizable
         stuff_it("help", 350, -30)
         stuff_it("zoom", -40, 15)
         stuff_it("delete", -40, 220)
