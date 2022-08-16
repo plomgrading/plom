@@ -14,6 +14,11 @@ let profileCard = document.getElementById('profile-card');
 let editUser = document.getElementById('edit-user');
 let cancelBtn = document.getElementById('cancel');
 
+// login.html
+// let showPassword = document.getElementById('check-password');
+// let loginPasswordInput = document.getElementsByClassName('login-password');
+
+
 function generateRandomUsername() {
 
     generateUsernameBtn.addEventListener('click', () => {
@@ -66,8 +71,20 @@ function showEditBtn() {
     editBtn.style.display = 'inline';
 }
 
+// login.html
+let showPassword = document.getElementById('check-password');
+
+function showLoginPassword() {
+    let loginPasswordInput = document.getElementById('typePasswordX');
+    showPassword.addEventListener('click', () => {
+        const passwordType = loginPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        loginPasswordInput.setAttribute('type', passwordType);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', generateRandomUsername);
 document.addEventListener('DOMContentLoaded', copyToClipboard);
 document.addEventListener('DOMContentLoaded', viewPassword);
 document.addEventListener('DOMContentLoaded', slideToLeft);
 document.addEventListener('DOMContentLoaded', slideToRight);
+document.addEventListener('DOMContentLoaded', showLoginPassword);
