@@ -44,7 +44,7 @@ log = logging.getLogger("keybindings")
 # * no validity checking done
 #   - use code from old KeyWrangler
 class KeyHelp(QDialog):
-    def __init__(self, parent, *, keybinding_name, custom_overlay={}):
+    def __init__(self, parent, *, keybinding_name, custom_overlay={}, initial_tab=0):
         """Construct the KeyHelp dialog.
 
         Args:
@@ -54,6 +54,7 @@ class KeyHelp(QDialog):
             keybinding_name (str): which keybinding to initially display.
             custom_overlay (dict): if there was already a custom keybinding,
                pass its overlay here.  We will copy it not change it.
+            initial_tab (int): index of the tab we'd like to open on.
         """
         super().__init__(parent)
         vb = QVBoxLayout()
@@ -92,6 +93,7 @@ class KeyHelp(QDialog):
         vb.addWidget(tabs)
         vb.addLayout(buttons)
         self.setLayout(vb)
+        self.tabs.setCurrentIndex(initial_tab)
 
     # TODO: hardcoded position of the custom map
     CUSTOM_IDX = 3
