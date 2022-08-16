@@ -4,6 +4,7 @@ from django.db import IntegrityError
 from tabulate import tabulate
 
 
+# -m to get number of scanners and markers
 class Command(BaseCommand):
     """
     This is the command for "python manage.py plom_create_demo_users"
