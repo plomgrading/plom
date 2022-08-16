@@ -433,6 +433,7 @@ class Manager(QWidget):
         self.ui.viewSpecButton.clicked.connect(self.viewSpec)
         self.ui.uploadClasslistButton.clicked.connect(self.uploadClasslist)
         self.ui.makeDatabaseButton.clicked.connect(self.makeDataBase)
+        self.ui.makePapersFolderButton.clicked.connect(self.buildPapersChooseFolder)
         self.ui.makePapersButton.clicked.connect(self.buildPapers)
 
         self.ui.refreshReviewMarkingButton.clicked.connect(self.refreshMRev)
@@ -731,6 +732,16 @@ class Manager(QWidget):
             self.setEnabled(True)
         self.refreshConfig()
 
+    def buildPapersChooseFolder(self):
+        dur = QFileDialog.getExistingDirectory(
+            self, "Choose a directory for building PDFs", None, QFileDialog.ShowDirsOnly
+        )
+        if dur == "":
+            return
+        dur = Path(dur)
+        log.info("User explicitly chose %s for building papers", dur)
+        self.ui.makePapersFolderLineEdit.setText(str(dur))
+
     def buildPapers(self):
         from plom.create import build_papers
 
@@ -765,7 +776,12 @@ class Manager(QWidget):
         ) as e:
             # fitz.FileNotFoundError is a subclass of RuntimeError
             self.Qapp.restoreOverrideCursor()
-            WarnMsg(self, "Could not build papers.", info=e).exec()
+            WarnMsg(
+                self,
+                "<p>Could not build papers. The following error message was given:</p>",
+                info=e,
+                details=f"Working directory: {where}\nError type: {type(e)}",
+            ).exec()
         self.Qapp.restoreOverrideCursor()
         self.setEnabled(True)
 
