@@ -15,8 +15,7 @@ let editUser = document.getElementById('edit-user');
 let cancelBtn = document.getElementById('cancel');
 
 // login.html
-// let showPassword = document.getElementById('check-password');
-// let loginPasswordInput = document.getElementsByClassName('login-password');
+let showPassword = document.getElementById('check-password');
 
 
 function generateRandomUsername() {
@@ -72,8 +71,6 @@ function showEditBtn() {
 }
 
 // login.html
-let showPassword = document.getElementById('check-password');
-
 function showLoginPassword() {
     let loginPasswordInput = document.getElementById('typePasswordX');
     showPassword.addEventListener('click', () => {
