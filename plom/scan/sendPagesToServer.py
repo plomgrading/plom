@@ -86,6 +86,9 @@ def fileFailedUpload(reason, message, bundle, f):
      so move into 'uploads/discardedPages'
      * 'collision' - the image collides with another test-page already uploaded (eg - there is already a scan of test 7 page 2 in the database). Move the image to 'uploads/collidingPages'
 
+    In the case of 'collision', message is actually a 4-list of stuff that we
+    write into a file.
+
     Bad reasons - these should not happen - means you are trying to upload to tests/pages which the system does not know about.
      * testError - the database has no record of the test which you were trying to upload to.
      * pageError - the database has no record of the tpage (of that test) which you were trying to upload to.
@@ -101,7 +104,7 @@ def fileFailedUpload(reason, message, bundle, f):
         to = bundle / "uploads/collidingPages"
         shutil.move(f, to / f.name)
         shutil.move(Path(str(f) + ".qr"), to / f"{f.name}.qr")
-        # write stuff into a file: [collidingFile, test, page, version]
+        # write stuff into a file: here message is [collidingFile, test, page, version]
         with open(to / f"{f.name}.collide", "w") as fh:
             json.dump(message, fh)
     else:
@@ -137,7 +140,7 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
         with open(f, "rb") as fh:
             md5 = hashlib.md5(fh.read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
-        rmsg = msgr.uploadTestPage(
+        ok, reason, message_or_tuple = msgr.uploadTestPage(
             code,
             int(ts),
             int(ps),
@@ -147,12 +150,11 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
             bundle_name,
             bundle_order,
         )
-        # rmsg = [True] or [False, reason, message]
-        if rmsg[0]:  # was successful upload
+        if ok:
             move_files_post_upload(Path("bundles") / bundle_name, f)
             TUP[ts].append(ps)
-        else:  # was failed upload - reason, message in rmsg[1], rmsg[2]
-            fileFailedUpload(rmsg[1], rmsg[2], Path("bundles") / bundle_name, f)
+        else:
+            fileFailedUpload(reason, message_or_tuple, Path("bundles") / bundle_name, f)
     return TUP
 
 

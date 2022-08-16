@@ -732,10 +732,10 @@ class SpecVerifier:
             for p in self.spec["question"][str(g + 1)]["pages"]:
                 pageUse[p] += 1
         for p in range(1, self.spec["numberOfPages"] + 1):
-            if pageUse[p] != 1:
-                raise ValueError(
-                    f"Page under/overused - page {p} used {pageUse[p]} times"
-                )
+            if pageUse[p] == 0:
+                raise ValueError(f"Page {p} unused, perhaps it should be DNM?")
+            elif pageUse[p] != 1:
+                raise ValueError(f"Page {p} overused - {pageUse[p]} times")
             print("  Page {} used once{}".format(p, chk))
 
 

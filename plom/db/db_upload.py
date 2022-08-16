@@ -70,53 +70,59 @@ def uploadTestPage(
     bundle_name,
     bundle_order,
 ):
-    # return value is either [True, <success message>] or
-    # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
+    """Upload an image of a Test Page and link it to the right places.
+
+    Return:
+        tuple: ``(bool, reason, message_or_tuple)``, ``bool`` is true on
+        success, false on failure.
+    """
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return [False, "testError", f"Cannot find test {test_number}"]
+        return (False, "testError", f"Cannot find test {test_number}")
     pref = TPage.get_or_none(test=tref, page_number=page_number, version=version)
     if pref is None:
-        return [
+        return (
             False,
             "pageError",
             f"Cannot find TPage {page_number} ver{version} for test {test_number}",
-        ]
+        )
     if pref.scanned:
         # have already loaded an image for this page - so this is actually a duplicate
         log.debug("This appears to be a duplicate. Checking md5sums")
         if md5 == pref.image.md5sum:
             # Exact duplicate - md5sum of this image is sames as the one already in database
-            return [
+            return (
                 False,
                 "duplicate",
                 "Exact duplicate of page already in database",
-            ]
+            )
         # Deal with duplicate pages separately. return to sender (as it were)
-        return [
+        return (
             False,
             "collision",
-            ["{}".format(pref.image.original_name), test_number, page_number, version],
-        ]
+            [
+                "{}".format(pref.image.original_name),
+                test_number,
+                page_number,
+                version,
+            ],
+        )
     else:  # this is a new testpage. create an image and link it to the testpage
         # we need the bundle-ref now.
         bref = Bundle.get_or_none(name=bundle_name)
         if bref is None:
-            return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
+            return (False, "bundleError", f'Cannot find bundle "{bundle_name}"')
 
         try:
             image_ref = self.createNewImage(
                 original_name, file_name, md5, bref, bundle_order
             )
         except PlomBundleImageDuplicationException:
-            return [
+            return (
                 False,
                 "bundle image duplication error",
-                "Image number {} from bundle {} uploaded previously".format(
-                    bundle_order,
-                    bundle_name,
-                ),
-            ]
+                f"Image number {bundle_order} from bundle {bundle_name} uploaded previously",
+            )
 
         self.attachImageToTPage(tref, pref, image_ref)
         log.info(
@@ -131,11 +137,11 @@ def uploadTestPage(
         groups_to_update.add(pref.group)
         # update the test.
         self.updateTestAfterChange(tref, group_refs=groups_to_update)
-        return [
+        return (
             True,
             "success",
             "Page saved as tpv = {}.{}.{}".format(test_number, page_number, version),
-        ]
+        )
 
 
 def replaceMissingTestPage(
