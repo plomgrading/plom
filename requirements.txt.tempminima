@@ -20,6 +20,7 @@ arrow==1.1.1
 canvasapi==2.0.0
 exif==1.2.2
 Pillow==7.0.0
+opencv-python-headless==4.4.0.40
 pandas==1.0.0
 peewee==3.13.3
 pymupdf==1.18.15
