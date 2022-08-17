@@ -1,8 +1,10 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.utils.text import slugify
 
 from TestCreator.services import TestSpecService, TestSpecGenerateService
 from Preparation.services import PQVMappingService
 
+from pathlib import Path
 import toml
 
 
@@ -27,13 +29,21 @@ class Command(BaseCommand):
         speck = TestSpecService()
         gen = TestSpecGenerateService(speck)
         spec_dict = gen.generate_spec_dict()
-        toml_text = toml.dumps(spec_dict)
 
-        if speck.is_specification_valid():
-            self.stdout.write("A valid test spec is present")
-            self.stdout.write(f"{toml_text}")
-        else:
+        if not speck.is_specification_valid():
             self.stderr.write("No valid test spec present")
+            return
+
+        self.stdout.write("A valid test spec is present - shortname = {spec_dict['name']}")
+        fname = Path(slugify(spec_dict['name'])+"_spec.toml")
+        self.stdout.write(f"Writing test spec toml to {fname}")
+        if fname.exists():
+            self.stderr.write(f"File {fname} already present - cannot overwrite.")
+            return
+        with open(fname,"w") as fh:
+            toml.dump(spec_dict,fh)
+
+
 
     def upload_spec(self, spec_toml):
         self.stdout.write(
