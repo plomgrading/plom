@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from TestCreator.services import TestSpecService, TestSpecGenerateService
+from Preparation.services import PQVMappingService
 
 import toml
 
@@ -35,10 +36,21 @@ class Command(BaseCommand):
             self.stderr.write("No valid test spec present")
 
     def upload_spec(self, spec_toml):
-        self.stdout.write("Not yet implemented - need to hook in plom spec validation things")
+        self.stdout.write(
+            "Not yet implemented - need to hook in plom spec validation things"
+        )
 
     def remove_spec(self):
-        self.stdout.write("Not yet implemented - need to hook in qvmap removal and possibly source pdf removal")
+        pqvs = PQVMappingService()
+        if pqvs.is_there_a_pqv_map():
+            self.stderr.write("Warning - there is question-version mapping present.")
+            self.stderr.write(
+                "The test-spec cannot be deleted until that is removed; use the plom_preparation_qvmap command to remove the qv-mapping."
+            )
+            return
+        speck = TestSpecService()
+        self.stdout.write("Removing the test specification.")
+        speck.reset_specification()
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
