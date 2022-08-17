@@ -35,10 +35,10 @@ class Command(BaseCommand):
             self.stderr.write("No valid test spec present")
 
     def upload_spec(self, spec_toml):
-        self.stdout.write("Not yet implemented")
+        self.stdout.write("Not yet implemented - need to hook in plom spec validation things")
 
     def remove_spec(self):
-        self.stdout.write("Not yet implemented")
+        self.stdout.write("Not yet implemented - need to hook in qvmap removal and possibly source pdf removal")
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
