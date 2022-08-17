@@ -66,14 +66,8 @@ class TestSpecDownloadView(BaseTestSpecTemplateView):
         return super().dispatch(request, **kwargs)
 
     def get_context_data(self, **kwargs):
-        from django.utils.text import slugify
-
-        # intercept the context data here
-        # add a slug of the short name for filename creation
-        context = super().get_context_data("download")
-        # sanitise this for filename creation
-        context["slugged_short_name"] = slugify(context["short_name"])
-        return context
+        print("ARGH", super().get_context_data("download"))
+        return super().get_context_data("download")
 
 
 class TestSpecSubmitView(BaseTestSpecTemplateView):

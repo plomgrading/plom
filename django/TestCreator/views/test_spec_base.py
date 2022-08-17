@@ -83,6 +83,7 @@ class BaseTestSpecTemplateView(GroupRequiredMixin, TemplateView):
 
         context["long_name"] = spec.get_long_name()
         context["short_name"] = spec.get_short_name()
+        context["slugged_short_name"] = spec.get_short_name_slug()
         context["curr_page"] = page_name
         context["questions"] = [i for i in range(spec.get_n_questions())]
 

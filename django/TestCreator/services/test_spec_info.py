@@ -60,6 +60,16 @@ class TestSpecService:
         """
         return self.specification().short_name
 
+    def get_short_name_slug(self):
+        """Return django-sluggified TestSpecInfo short_name
+        field. This makes sure that it is sanitised for use, say, in
+        filenames.
+
+        Returns:
+            str: slug of the test's short name
+        """
+        return slugify(self.specification().short_name)
+    
     def set_short_name(self, short_name: str):
         """Set the short name of the test
         

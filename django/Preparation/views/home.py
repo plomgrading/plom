@@ -71,7 +71,7 @@ class PreparationLandingView(ManagerRequiredBaseView):
                     "can_qvmap": True,
                     "spec_longname": spec.get_long_name(),
                     "spec_shortname": spec.get_short_name(),
-                    "slugged_spec_shortname": slugify(spec.get_short_name()),
+                    "slugged_spec_shortname": spec.get_short_name_slug(),
                     "test_versions": spec.get_n_versions(),
                 }
             )
