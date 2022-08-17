@@ -539,5 +539,8 @@ class Chooser(QDialog):
             return
         # note `stuff` is list of options - used to contain more... may contain more in future
         self.lastTime["SidebarOnRight"] = stuff[0]
-        self.lastTime["KeyBinding"] = stuff[1]
-        self.lastTime["CustomKeys"] = stuff[2]
+        # TODO: don't save custom until Issue #2254
+        if stuff[1] != "custom":
+            self.lastTime["KeyBinding"] = stuff[1]
+        # TODO: not writing to disc until Issue #2254
+        # self.lastTime["CustomKeys"] = stuff[2]
