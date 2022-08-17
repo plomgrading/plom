@@ -9,6 +9,7 @@ from django.utils.text import slugify
 from django_htmx.http import HttpResponseClientRedirect
 
 from TestCreator.services import TestSpecService
+from Connect.services import CoreConnectionService
 
 from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 
@@ -28,7 +29,7 @@ class PreparationLandingView(ManagerRequiredBaseView):
         pss = PrenameSettingService()
         sss = StagingStudentService()
         pqvs = PQVMappingService()
-        cpsi = ClassicPlomServerInformationService()
+        ccs = CoreConnectionService()
 
         context = {
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
@@ -36,8 +37,8 @@ class PreparationLandingView(ManagerRequiredBaseView):
             "prename_enabled": pss.get_prenaming_setting(),
             "can_qvmap": False,
             "student_list_present": sss.are_there_students(),
-            "server_valid": cpsi.is_server_info_valid(),
-            "password_valid": cpsi.is_password_valid(),
+            "server_valid": ccs.is_there_a_valid_connection(),
+            "password_valid": ccs.is_manager_authenticated(),
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
         }

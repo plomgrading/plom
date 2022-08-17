@@ -1,5 +1,6 @@
 import re
 from django.db import transaction
+from django.contrib.auth.hashers import make_password, check_password
 from plom.messenger import Messenger
 
 from Connect.models import CoreServerConnection, CoreManagerLogin
@@ -42,6 +43,17 @@ class CoreConnectionService:
         messenger.stop()
         return version_string
 
+    def is_there_a_valid_connection(self):
+        """Return True if the messenger has successfully connected to a core server - if so,
+        the server version and API are stored in the database
+        """
+        return self.get_port_number() and self.get_api()
+
+    def is_manager_authenticated(self):
+        """Return True if there is valid manager login information stored in the database"""
+        manager_details = self.get_manager()
+        return manager_details.manager_username and manager_details.manager_password
+
     def get_messenger(self):
         """Get a messenger connected to the core server"""
         url = self.get_server_url()
@@ -67,6 +79,14 @@ class CoreConnectionService:
         connection_obj.save()
 
     @transaction.atomic
+    def forget_connection_info(self):
+        """Wipe connection info from the database"""
+        connection_obj = self.get_connection()
+        connection_obj.server_url = ""
+        connection_obj.port_number = 0
+        connection_obj.save()
+
+    @transaction.atomic
     def authenticate_manager(self, username: str, password: str):
         """Login as the manager, and if successful, store details"""
         messenger = self.get_messenger()
@@ -84,3 +104,11 @@ class CoreConnectionService:
         messenger.stop()
 
         return manager
+
+    @transaction.atomic
+    def forget_manager(self):
+        """Wipe manager login info from the database"""
+        manager = self.get_manager()
+        manager.manager_username = ""
+        manager.manager_password = ""
+        manager.save()

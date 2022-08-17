@@ -40,6 +40,10 @@ class ConnectServerManagerView(ManagerRequiredTemplateView):
         context = super().get_context_data(**kwargs)
         context['form'] = CoreConnectionForm
         context['manager_form'] = CoreManagerLoginForm
+
+        core = CoreConnectionService()
+        context['is_valid'] = core.is_there_a_valid_connection()
+        context['manager_logged_in'] = core.is_manager_authenticated()
         return context
 
 
@@ -66,6 +70,14 @@ class AttemptCoreConnectionView(ManagerRequiredUtilView):
         except PlomConnectionError as e:
             print(e)
             return HttpResponse(f'<p id="result" style="color: red;">Unable to connect to Plom Classic. Is the server running?</p>')
+
+
+class ForgetCoreConnectionView(ManagerRequiredUtilView):
+    """Remove the current core server info from the database"""
+    def post(self, request):
+        core = CoreConnectionService()
+        core.forget_connection_info()
+        return HttpResponse('<p id="result">Connection details cleared.</p>')
         
 
 class AttemptCoreManagerLoginView(ManagerRequiredUtilView):
@@ -84,4 +96,13 @@ class AttemptCoreManagerLoginView(ManagerRequiredUtilView):
         except Exception as e:
             print(e)
             return HttpResponse(f'<p id="manager_result" style="color: red;">{e}</p>')
+
+
+class ForgetCoreManagerLoginView(ManagerRequiredUtilView):
+    """Remove the manager login details from the database"""
+
+    def post(self, request):
+        core = CoreConnectionService()
+        core.forget_manager()
+        return HttpResponse('<p id="manager_result">Manager details cleared.</p>')
 

@@ -225,42 +225,42 @@
       <div class="card">
         <div class="card-body">
           <h5 class="card-title">
-	NOT IMPLEMENTED <i class="bi bi-x-octagon-fill text-danger"></i>
-            Set information for connection to plom-classic sever &mdash;
-	    {% if server_valid %}
+            Set information for connection to plom-classic sever
+	          {% if server_valid %}
             <i class="bi bi-check-circle text-success"></i>
-	    {% else %}
-	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-	    {% endif %}
-	    {% if password_valid %}
+	          {% else %}
+	          <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	          {% endif %}
+	          {% if password_valid %}
             <i class="bi bi-check-circle text-success"></i>
-	    {% else %}
-	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-	    {% endif %}
-	  </h5>
-            <h6 class="card-title">
-	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-	    Plom-classic support
-	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	          {% else %}
+	          <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	          {% endif %}
+	        </h5>
+          <h6 class="card-title">
+            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            Plom-classic support
+            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
           </h6>
           <p class="card-text">Enter server name, port and the manager password</p>
-	    <a class="btn btn-primary" href="{% url 'connect_manager' %}">Classic server connection</a>    		
+	        <a class="btn btn-primary" href="{% url 'connect_manager' %}">Classic server connection</a>    		
         </div>
       </div>
     </div>
-    <div>
     
     <div>
       <div class="card">
         <div class="card-body">
           <h5 class="card-title">
-            Send information to server &mdash; NOT IMPLEMENTED <i class="bi bi-x-octagon-fill text-danger"></i>
+            Send information to server
+            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
           </h5>
           <p class="card-text">Verify and send all this information to the plom-server</p>
-          <btn class="btn btn-primary">NOT IMPLEMENTED</btn>
+          <btn class="btn btn-primary">Send information</btn>
         </div>
       </div>
     </div>
+
     <div>
       <div class="card">
         <div class="card-body">
