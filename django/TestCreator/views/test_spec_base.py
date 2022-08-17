@@ -8,24 +8,24 @@ from .. import models
 
 
 class BaseTestSpecFormView(GroupRequiredMixin, FormView):
-    login_url = 'login'
-    group_required = u"manager"
+    login_url = "login"
+    group_required = "manager"
     raise_exception = True
 
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(**kwargs)
         spec = TestSpecService()
 
-        context['long_name'] = spec.get_long_name()
-        context['short_name'] = spec.get_short_name()
-        context['curr_page'] = page_name
-        context['questions'] = [i for i in range(spec.get_n_questions())]
-        context['n_questions'] = spec.get_n_questions()
+        context["long_name"] = spec.get_long_name()
+        context["short_name"] = spec.get_short_name()
+        context["curr_page"] = page_name
+        context["questions"] = [i for i in range(spec.get_n_questions())]
+        context["n_questions"] = spec.get_n_questions()
 
         progress = TestSpecProgressService(spec)
-        context['completed'] = progress.get_progress_dict()
-        context['navbar_colour'] = '#AD9CFF'
-        context['user_group'] = 'manager'
+        context["completed"] = progress.get_progress_dict()
+        context["navbar_colour"] = "#AD9CFF"
+        context["user_group"] = "manager"
         return context
 
     def form_valid(self, form, on_validate_page=False):
@@ -48,9 +48,9 @@ class BaseTestSpecFormPDFView(BaseTestSpecFormView):
 
         try:
             self.pdf = ref_service.get_pdf()
-            kwargs['num_pages'] = self.pdf.num_pages
+            kwargs["num_pages"] = self.pdf.num_pages
         except RuntimeError:
-            kwargs['num_pages'] = 0
+            kwargs["num_pages"] = 0
 
         return kwargs
 
@@ -61,34 +61,34 @@ class BaseTestSpecFormPDFView(BaseTestSpecFormView):
             spec = TestSpecService()
             ref_service = ReferencePDFService(spec)
             pages = ref_service.create_page_thumbnail_list()
-            context['thumbnails'] = pages
-            context['pages'] = spec.get_page_list()
-            context['num_pages'] = len(spec.get_page_list())
+            context["thumbnails"] = pages
+            context["pages"] = spec.get_page_list()
+            context["num_pages"] = len(spec.get_page_list())
 
         return context
 
 
 class BaseTestSpecUtilView(GroupRequiredMixin, View):
-    group_required = [u"manager"]
+    group_required = ["manager"]
     raise_exception = True
 
 
 class BaseTestSpecTemplateView(GroupRequiredMixin, TemplateView):
-    group_required = [u"manager"]
+    group_required = ["manager"]
     raise_exception = True
 
     def get_context_data(self, page_name, **kwargs):
         context = super().get_context_data(**kwargs)
         spec = TestSpecService()
 
-        context['long_name'] = spec.get_long_name()
-        context['short_name'] = spec.get_short_name()
-        context['curr_page'] = page_name
-        context['questions'] = [i for i in range(spec.get_n_questions())]
-        
-        context['navbar_colour'] = '#AD9CFF'
-        context['user_group'] = 'manager'
+        context["long_name"] = spec.get_long_name()
+        context["short_name"] = spec.get_short_name()
+        context["curr_page"] = page_name
+        context["questions"] = [i for i in range(spec.get_n_questions())]
+
+        context["navbar_colour"] = "#AD9CFF"
+        context["user_group"] = "manager"
 
         progress = TestSpecProgressService(spec)
-        context['completed'] = progress.get_progress_dict()
+        context["completed"] = progress.get_progress_dict()
         return context
