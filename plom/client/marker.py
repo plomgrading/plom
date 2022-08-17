@@ -1028,7 +1028,8 @@ class MarkerClient(QWidget):
         m.addSection("Options")
         a = QAction("Prefer tasks tagged for me", self)
         a.setCheckable(True)
-        a.setChecked(True)
+        # TODO: would like on-by-default: Issue #2253
+        a.setChecked(False)
         a.triggered.connect(self.toggle_prefer_tagged)
         self._prefer_tags_action = a
         m.addAction(a)
