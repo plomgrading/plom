@@ -792,7 +792,7 @@ class Annotator(QWidget):
             _tab_idx = tab_idx
         diag = KeyHelp(
             self,
-            keybinding_name=self.keybinding_name,
+            self.keybinding_name,
             custom_overlay=self.keybinding_custom_overlay,
             initial_tab=_tab_idx,
         )

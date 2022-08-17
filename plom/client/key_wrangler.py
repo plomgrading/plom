@@ -26,7 +26,7 @@ log = logging.getLogger("keybindings")
 
 stringOfLegalKeys = "qwertyuiop[]asdfghjkl;'zxcvbnm,./"
 
-the_actions = [
+actions_with_changeable_keys = [
     "prev-rubric",
     "next-rubric",
     "prev-tab",
@@ -84,6 +84,18 @@ _keybindings_list = [
     {"name": "ijkl", "human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
     {"name": "custom", "human": "Custom", "file": None},
 ]
+
+
+def get_keybinding_overlay(name):
+    keymap = _keybindings_dict[name]
+    f = keymap["file"]
+    if f is None:
+        overlay = {}
+    else:
+        log.info("Loading keybindings from %s", f)
+        overlay = toml.loads(resources.read_text(plom, f))
+    # note copy unnecessary as we have fresh copy from file
+    return overlay
 
 
 def get_key_bindings(name, custom_overlay={}):
@@ -218,7 +230,7 @@ class KeyWrangler:
     def __init__(self):
         super().__init__()
         self.legalKeyCodes = [QKeySequence(c)[0] for c in stringOfLegalKeys]
-        self.actions = the_actions
+        self.actions = actions_with_changeable_keys
 
     def validate(self):
         actToCode = {}
@@ -246,7 +258,7 @@ class KeyWrangler:
     def overlay_warnings(cls, overlay):
         """No duplicates in the overlay itself, although this allows duplicates in the overall keymap."""
         for k in overlay.keys():
-            if k not in the_actions:
+            if k not in actions_with_changeable_keys:
                 return f'overlay has invalid action "{k}"'
         # argh, keys like keyboard, not like dict indexing
         all_keys = [v["keys"][0] for v in overlay.values()]
