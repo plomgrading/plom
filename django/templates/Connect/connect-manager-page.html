@@ -9,6 +9,21 @@
 <div class="d-grid gap-2">
     <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
 
+    <div class="card w-50">
+        <details class="card-body">
+            <summary>Setting up a Plom-classic server</summary>
+            <p>
+                <ul>
+                    <li>Placeholder docs</li>
+                    <li>First, download and install Plom</li>
+                    <li>Pull up a terminal window and initialize a server, calling <code>plom-server init</code> and <code>plom-server users</code></li>
+                    <li>Run the server with <code>plom-server launch</code></li>
+                    <li>Web Plom is now ready to connect to the classic server!</li>
+                </ul>
+            </p>
+        </details>
+    </div>
+
     <div class="card w-50" x-data="{server_url: '{{ form.server_url.initial }}', port_number: '{{ form.port_number.initial }}'}">
         <div class="card-body">
             <h5 class="card-title">Connection details</h5>
