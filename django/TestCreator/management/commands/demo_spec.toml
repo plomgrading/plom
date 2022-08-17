@@ -4,7 +4,7 @@ numberOfPages = 6
 numberOfVersions = 2
 totalMarks = 20
 numberOfQuestions = 3
-numberToProduce = 0
+numberToProduce = -1
 idPage = 1
 doNotMarkPages = [ 2, 6,]
 [[question]]

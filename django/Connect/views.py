@@ -12,9 +12,10 @@ from django.views import View
 from django.views.generic.base import TemplateView
 from braces.views import GroupRequiredMixin, LoginRequiredMixin
 
+from TestCreator.services import TestSpecService, TestSpecGenerateService
+
 from Connect.services import CoreConnectionService
 from Connect.forms import CoreConnectionForm, CoreManagerLoginForm
-from .models import CoreServerConnection
 
 
 class ManagerRequiredUtilView(GroupRequiredMixin, LoginRequiredMixin, View):
@@ -56,6 +57,14 @@ class ConnectServerManagerView(ManagerRequiredTemplateView):
 
         context['is_valid'] = core.is_there_a_valid_connection()
         context['manager_logged_in'] = core.is_manager_authenticated()
+        return context
+
+
+class ConnectSendInfoToCoreView(ManagerRequiredTemplateView):
+    template_name = 'Connect/connect-send-info-page.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         return context
 
 
@@ -118,3 +127,17 @@ class ForgetCoreManagerLoginView(ManagerRequiredUtilView):
         core.forget_manager()
         return HttpResponse('<p id="manager_result">Manager details cleared.</p>')
 
+
+class SendTestSpecToCoreView(ManagerRequiredUtilView):
+    def put(self, request):
+        """Send test specification data to the core server"""
+        core = CoreConnectionService()
+        spec = TestSpecService()
+        spec_dict = TestSpecGenerateService(spec).generate_spec_dict()
+
+        try:
+            core.send_test_spec(spec_dict)
+            return HttpResponse('<p class="card-text text-success" id="spec_result">Specification uploaded successfully.</p>')
+        except Exception as e:
+            print(e)
+            return HttpResponse(f'<p class="card-text text-danger" id="spec_result">{e}</p>')

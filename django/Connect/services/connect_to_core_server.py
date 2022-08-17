@@ -1,7 +1,7 @@
 import re
 from django.db import transaction
 from django.contrib.auth.hashers import make_password, check_password
-from plom.messenger import Messenger
+from plom.messenger import Messenger, ManagerMessenger
 
 from Connect.models import CoreServerConnection, CoreManagerLogin
 
@@ -64,6 +64,16 @@ class CoreConnectionService:
 
         return Messenger(s=url, port=port, verify_ssl=False)
 
+    def get_manager_messenger(self):
+        """Get a manager messenger connected to the core server"""
+        url = self.get_server_url()
+        port = self.get_port_number()
+
+        if not url or not port:
+            raise RuntimeError('Core server not validated yet.')
+
+        return ManagerMessenger(s=url, port=port, verify_ssl=False)
+
     @transaction.atomic
     def save_connection_info(self, s: str, port: int, version_string: str):
         """Save valid connection info to the database"""
@@ -112,3 +122,21 @@ class CoreConnectionService:
         manager.manager_username = ""
         manager.manager_password = ""
         manager.save()
+
+    def send_test_spec(self, spec: dict):
+        """Send a test specification to the core server"""
+        messenger = self.get_manager_messenger()
+        messenger.start()
+
+        manager = self.get_manager()
+        username = manager.manager_username
+        password = manager.manager_password
+
+        messenger.requestAndSaveToken(username, password)
+        if not messenger.token:
+            raise RuntimeError("Unable to authenticate manager.")
+
+        messenger.upload_spec(spec)
+
+        messenger.clearAuthorisation(username, password)
+        messenger.stop()

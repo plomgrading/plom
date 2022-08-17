@@ -4,7 +4,9 @@ from Connect.views import (
     AttemptCoreConnectionView, 
     ForgetCoreConnectionView,
     AttemptCoreManagerLoginView,
-    ForgetCoreManagerLoginView
+    ForgetCoreManagerLoginView,
+    ConnectSendInfoToCoreView,
+    SendTestSpecToCoreView,
     )
 
 urlpatterns = [
@@ -13,4 +15,6 @@ urlpatterns = [
     path('signup_manager/', AttemptCoreManagerLoginView.as_view(), name='attempt_manager_signup'),
     path('forget/initial/', ForgetCoreConnectionView.as_view(), name="forget_core_connection"),
     path('forget/manager/', ForgetCoreManagerLoginView.as_view(), name="forget_manager_connection"),
+    path('send_info/', ConnectSendInfoToCoreView.as_view(), name='connect_send_info'),
+    path('send_info/test_spec/', SendTestSpecToCoreView.as_view(), name='connect_send_spec')
 ]

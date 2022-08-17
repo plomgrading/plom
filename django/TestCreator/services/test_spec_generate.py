@@ -28,7 +28,7 @@ class TestSpecGenerateService:
         spec_dict["doNotMarkPages"] = self.spec.get_dnm_page_numbers()
 
         # notice that plom wants a spec with "question"(singular) not "questions" (plural)
-        question = []
+        question = {}
         for i in range(self.spec.get_n_questions()):
             q_dict = {}
             q_service = self.spec.questions[i + 1]
@@ -36,7 +36,7 @@ class TestSpecGenerateService:
             q_dict["mark"] = q_service.get_question_marks()
             q_dict["label"] = q_service.get_question_label()
             q_dict["select"] = q_service.get_question_fix_or_shuffle()
-            question.append(q_dict)
+            question[i+1] = q_dict
 
         spec_dict["question"] = question
 
