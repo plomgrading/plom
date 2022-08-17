@@ -42,19 +42,6 @@ actions_with_changeable_keys = [
 
 
 TODO_other_key_layouts = {
-    "sdf_french": {
-        "redo": "T",
-        "undo": "G",
-        "nextRubric": "D",
-        "previousRubric": "E",
-        "nextTab": "F",
-        "previousTab": "S",
-        "nextTool": "R",
-        "previousTool": "Z",
-        "delete": "A",
-        "move": "Q",
-        "zoom": "W",
-    },
     "dvorak": {
         "redo": "Y",
         "undo": "I",
@@ -71,35 +58,48 @@ TODO_other_key_layouts = {
 }
 
 
-# todo: decide on keeping just one of these two
-_keybindings_dict = {
-    "default": {"human": 'Default ("esdf", touch-typist)', "file": None},
-    "wasd": {"human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
-    "ijkl": {"human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
-    "custom": {"human": "Custom", "file": None},
-}
 _keybindings_list = [
-    {"name": "default", "human": 'Default ("esdf", touch-typist)', "file": None},
-    {"name": "wasd", "human": '"wasd" (gamer)', "file": "wasd_keys.toml"},
-    {"name": "ijkl", "human": '"ijkl" (left-hand mouse)', "file": "ijkl_keys.toml"},
-    {"name": "custom", "human": "Custom", "file": None},
+    {"name": "default", "file": "default_keys.toml"},
+    {"name": "wasd", "file": "wasd_keys.toml"},
+    {"name": "ijkl", "file": "ijkl_keys.toml"},
+    {"name": "esdf_french", "file": "esdf_french_keys.toml"},
+    {"name": "custom", "long_name": "Custom", "file": None},
 ]
 
 
+def get_keybindings_list():
+    it = deepcopy(_keybindings_list)
+    for kb in it:
+        f = kb["file"]
+        if f is None:
+            overlay = {}
+        else:
+            log.info("Loading keybindings from %s", f)
+            overlay = toml.loads(resources.read_text(plom, f))
+        metadata = overlay.pop("__metadata__", {})
+        for k, v in metadata.items():
+            kb[k] = v
+        if kb["name"] != "default":
+            kb["overlay"] = overlay
+    return it
+
+
 def get_keybinding_overlay(name):
+    _keybindings_dict = {x["name"]: x for x in _keybindings_list}
     keymap = _keybindings_dict[name]
     f = keymap["file"]
-    if f is None:
+    if name == "default" or f is None:
         overlay = {}
     else:
         log.info("Loading keybindings from %s", f)
         overlay = toml.loads(resources.read_text(plom, f))
     # note copy unnecessary as we have fresh copy from file
+    overlay.pop("__metadata__", None)
     return overlay
 
 
 def get_key_bindings(name, custom_overlay={}):
-    """Generate the keybings from a name and or a custom overlay.
+    """Generate the keybindings from a name and or a custom overlay.
 
     Args:
         name (str): which keybindings to use.
@@ -123,17 +123,20 @@ def get_key_bindings(name, custom_overlay={}):
     f = "default_keys.toml"
     log.info("Loading keybindings from %s", f)
     default_keydata = toml.loads(resources.read_text(plom, f))
+    default_keydata.pop("__metadata__")
 
+    _keybindings_dict = {x["name"]: x for x in _keybindings_list}
     keymap = _keybindings_dict[name]
     if name == "custom":
         overlay = custom_overlay
     else:
         f = keymap["file"]
-        if f is None:
+        if name == "default" or f is None:
             overlay = {}
         else:
             log.info("Loading keybindings from %s", f)
             overlay = toml.loads(resources.read_text(plom, f))
+            overlay.pop("__metadata__", None)
         # keymap["overlay"] = overlay
     # note copy unnecessary as we have fresh copy from file
     return compute_keybinding_from_overlay(default_keydata, overlay, copy=False)

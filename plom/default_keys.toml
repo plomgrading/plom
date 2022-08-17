@@ -4,6 +4,14 @@
 
 # The default keybindings for Plom Client.
 
+[__metadata__]
+name = "default"
+long_name = 'Default ("esdf", touch-typist)'
+about_html = """
+  <p>Plom's default keyboard layout is for touch-typists (and wannabes)
+  who use their mouse with their right hand.</p>
+"""
+
 [next-tool]
 human = "Next tool"
 keys = [ "r",]

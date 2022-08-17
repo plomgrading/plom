@@ -29,9 +29,10 @@ from PyQt5.QtWidgets import (
 
 import plom
 import plom.client.help_img
+from .useful_classes import InfoMsg
 from .key_wrangler import KeyEditDialog
 from .key_wrangler import get_keybinding_overlay, get_key_bindings
-from .key_wrangler import _keybindings_list, actions_with_changeable_keys
+from .key_wrangler import get_keybindings_list, actions_with_changeable_keys
 
 
 log = logging.getLogger("keybindings")
@@ -61,34 +62,42 @@ class KeyHelp(QDialog):
         tabs.addTab(ClickDragPage(), "Tips")
         self.tabs = tabs
 
+        keybindings = get_keybindings_list()
         (_initial_idx,) = [
-            i for i, x in enumerate(_keybindings_list) if x["name"] == keybinding_name
+            i for i, x in enumerate(keybindings) if x["name"] == keybinding_name
         ]
+        # position of the custom map
+        (self.CUSTOM_IDX,) = [
+            i for i, x in enumerate(keybindings) if x["name"] == "custom"
+        ]
+
         # trigger this to draw the diagrams (which depend on keybinding)
         self.update_keys_by_name(keybinding_name)
 
         buttons = QHBoxLayout()
-        b = QPushButton("&Ok")
-        b.clicked.connect(self.accept)
         keyLayoutCB = QComboBox()
-        keyLayoutCB.addItems([x["human"] for x in _keybindings_list])
+        keyLayoutCB.addItems([x["long_name"] for x in keybindings])
         keyLayoutCB.setCurrentIndex(_initial_idx)
         keyLayoutCB.currentIndexChanged.connect(self.update_keys_by_idx)
         self._keyLayoutCB = keyLayoutCB
         # messy hack to map index back to name of keybinding
-        self._keyLayoutCB_idx_to_name = [x["name"] for x in _keybindings_list]
+        self._keyLayoutCB_idx_to_name = [x["name"] for x in keybindings]
 
         buttons.addWidget(keyLayoutCB, 1)
+        b = QPushButton("About")
+        b.clicked.connect(self.about)
+        # not sure why I need this:
+        b.setAutoDefault(False)
+        buttons.addWidget(b)
         buttons.addSpacing(64)
         buttons.addStretch(2)
+        b = QPushButton("&Ok")
+        b.clicked.connect(self.accept)
         buttons.addWidget(b)
         vb.addWidget(tabs)
         vb.addLayout(buttons)
         self.setLayout(vb)
         self.tabs.setCurrentIndex(initial_tab)
-
-    # TODO: hardcoded position of the custom map
-    CUSTOM_IDX = 3
 
     def get_selected_keybinding_name(self):
         """Return the name (str) of the selected keybinding."""
@@ -237,6 +246,17 @@ class KeyHelp(QDialog):
             tw.resizeRowsToContents()
 
         return tables
+
+    def about(self):
+        txt = """
+            <p>Plom uses spatial keyboard shortcuts with a one hand on
+            keyboard, one hand on mouse approach.</p>
+        """
+        keybindings = get_keybindings_list()
+        idx = self._keyLayoutCB.currentIndex()
+        kb_specific = keybindings[idx].get("about_html", "")
+        txt += kb_specific
+        InfoMsg(self, txt).exec()
 
 
 class RubricNavDiagram(QFrame):

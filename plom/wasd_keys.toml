@@ -3,13 +3,17 @@
 # Copyright (C) 2021-2022 Colin B. Macdonald
 
 # Plom Client "WASD" alternative keybindings
-# ------------------------------------------
-#
-# Many video games use "wasd" for movement of the character,
-# so gamers may find this more natural than our default "esdf".
-# The website http://www.use-esdf.org argues gamers should switch!
-#
 # Actions not overridden here will come from the default.
+
+[__metadata__]
+name = "wasd"
+long_name = '"wasd" (gamer)'
+about_html = """
+  <p>Many video games use "wasd" for movement of the character,
+  so gamers may find this more natural than our default "esdf".</p>
+  <p>(The website <a href="http://www.use-esdf.org">www.use-esdf.org</a>
+  argues gamers should switch!</p>
+"""
 
 [next-tool]
 keys = [ "e",]
