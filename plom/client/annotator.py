@@ -1436,9 +1436,6 @@ class Annotator(QWidget):
         aname, plomfile = self.pickleIt()
         rubrics = self.scene.get_rubrics_from_page()
 
-        # Save the current window settings for next time annotator is launched
-        self.saveWindowSettings()
-
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
 
@@ -1568,6 +1565,9 @@ class Annotator(QWidget):
             self.solutionView = None
 
         self.saveTabStateToServer(self.rubric_widget.get_tab_rubric_lists())
+
+        # Save the current window settings for next time annotator is launched
+        self.saveWindowSettings()
 
         # weird hacking to force close if we came from saving.
         # Appropriate signals have already been sent so just close
