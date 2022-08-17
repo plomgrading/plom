@@ -1,0 +1,241 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2022 Andrew Rechnitzer
+# Copyright (C) 2021-2022 Colin B. Macdonald
+
+# The default keybindings for Plom Client.
+
+[__metadata__]
+name = "default"
+long_name = 'Default ("esdf", touch-typist)'
+about_html = """
+  <p>Plom's default keyboard layout is for touch-typists (and wannabes)
+  who use their mouse with their right hand.</p>
+"""
+
+[next-tool]
+human = "Next tool"
+keys = [ "r",]
+categories = [ "Annotation",]
+info = "Select the next tool"
+
+[prev-tool]
+human = "Previous tool"
+keys = [ "w",]
+categories = [ "Annotation",]
+info = "Select the previous tool"
+
+[next-rubric]
+human = "Select rubric / Next rubric"
+keys = [ "d",]
+categories = [ "Annotation", "Rubrics",]
+info = "Selects the current rubric, or if rubric already selected, then moves to next rubric"
+
+[prev-rubric]
+human = "Previous rubric"
+keys = [ "e",]
+categories = [ "Annotation", "Rubrics",]
+info = "Select the previous rubric"
+
+[next-tab]
+human = "Next rubrics tab"
+keys = [ "f",]
+categories = [ "Annotation", "Rubrics",]
+info = "Select the next tab of rubrics"
+
+[prev-tab]
+human = "Previous rubrics tab"
+keys = [ "s",]
+categories = [ "Annotation", "Rubrics",]
+info = "Select the previous tab of rubrics"
+
+[delete]
+human = "Delete"
+keys = [ "q",]
+categories = [ "Annotation",]
+info = "Delete single item on click, or delete items in area on click and drag"
+
+[move]
+human = "Move"
+keys = [ "a",]
+categories = [ "Annotation",]
+info = "Click and drag on an object to move it."
+
+[undo]
+human = "Undo"
+keys = [ "g",]
+categories = [ "Annotation",]
+info = "Undo the last action."
+
+[redo]
+human = "Redo"
+keys = [ "t",]
+categories = [ "Annotation",]
+info = "Redo the last undone-action."
+
+[undo-2]
+human = "Undo"
+keys = [ "ctrl+z",]
+categories = [ "Annotation",]
+info = "Undo the last action.\n[Unchangeable duplicate of undo action.]"
+
+[redo-2]
+human = "Redo"
+keys = [ "ctrl+y",]
+categories = [ "Annotation",]
+info = "Redo the last undone-action.\n[Unchangeable duplicate of redo action.]"
+
+[increase-annotation-scale]
+human = "Increase annotation scale"
+keys = [ "shift+]",]
+categories = [ "Annotation",]
+info = "Increase the relative size of annotations on the page."
+
+[decrease-annotation-scale]
+human = "Decrease annotation scale"
+keys = [ "shift+[",]
+categories = [ "Annotation",]
+info = "Decreae the relative size of annotations on the page."
+
+[cancel]
+human = "Cancel"
+keys = [ "ctrl+c",]
+categories = [ "General",]
+info = "Cancel the current annotations and return to the marker-window"
+
+["next-paper"]
+human = "Save and next paper"
+keys = [ "ctrl+n", "ctrl+b", "alt+enter", "alt+return",]
+categories = [ "General",]
+info = "Save the current annotations and move on to next paper."
+
+["quick-show-prev-paper"]
+human = "Show the previously annotated paper in a pop-up"
+keys = [ "ctrl+left",]
+categories = [ "General",]
+info = "Without surrending your current edits, take a look a previously annotated papers."
+
+["quick-show-next-paper"]
+human = "Show the next annotated paper in a pop-up"
+keys = [ "ctrl+right",]
+categories = [ "General",]
+info = "Without surrending your current edits, we can cycle back and forth in the timeline of previously annotated papers."
+
+["rearrange-pages"]
+human = "Rearrange and rotates pages or find missing answer"
+keys = [ "ctrl+r",]
+categories = [ "General",]
+info = "Sometimes an answer may be written on the wrong page, or perhaps the pages are in the wrong order.  This dialog lets you add/remove/rearrange pages."
+
+["tag-paper"]
+human = "Tag the current paper"
+keys = [ "F3",]
+categories = [ "General",]
+info = "Allows you to tag the current question of the current paper, for example to call attention to it."
+
+["help"]
+human = "Show key help"
+keys = [ "?",]
+categories = [ "General",]
+info = "Show this window."
+
+["main-menu"]
+human = "Main menu"
+keys = [ "F10",]
+categories = [ "General",]
+info = "Open the main menu"
+
+["end-text-edit"]
+human = "End text edit"
+keys = [ "shift+enter", "shift+return",]
+categories = [ "Text",]
+info = "End the current text-edit and run latex if the text starts with \"TEX:\""
+
+["escape-text-edit"]
+human = "Escape text edit"
+keys = [ "esc",]
+categories = [ "Text",]
+info = "Escape from the current text edit."
+
+[pan-through]
+human = "Pan-through"
+keys = [ "space",]
+categories = [ "View",]
+info = "Moves through the current view, down and then right."
+
+["pan-through-slowly"]
+human = "Pan-through (slowly)"
+keys = [ "ctrl+space",]
+categories = [ "View",]
+info = "Moves slowly through the current view, down and then right."
+
+[pan-back]
+human = "Pan-back"
+keys = [ "shift+space",]
+categories = [ "View",]
+info = "Moves back through the current view, up and then left."
+
+["pan-back-slowly"]
+human = "Pan-back (slowly)"
+keys = [ "ctrl+shift+space",]
+categories = [ "View",]
+info = "Moves slowly back through the current view, up and then left."
+
+["show-whole-paper"]
+human = "Show whole paper"
+keys = [ "F1",]
+categories = [ "View",]
+info = "Opens a window to display all the pages of the current test being annotated (except the ID-page)."
+
+["show-solutions"]
+human = "Show the solutions window"
+keys = [ "F2",]
+categories = [ "View",]
+info = "Opens a window to display solutions, if the server provideds solutions."
+
+["toggle-maximize-window"]
+human = "Toggle maximize window"
+keys = [ "\\",]
+categories = [ "View",]
+info = "Toggles the window size to and from maximised."
+
+["toggle-wide-narrow"]
+human = "Toggle wide-narrow"
+keys = [ "home",]
+categories = [ "View",]
+info = "Toggles the tool-column between wide and narrow."
+
+[toggle-zoom]
+human = "Toggle-zoom"
+keys = [ "ctrl+=",]
+categories = [ "View",]
+info = "Toggles between the user-set view, fit-height and fit-width."
+
+[zoom]
+human = "Zoom"
+keys = [ "z",]
+categories = [ "View",]
+info = "Selects the zoom-tool. Zoom the view in (out) on click (shift-click)."
+
+[zoom-in]
+human = "Zoom-in"
+keys = [ "+", "=",]
+categories = [ "View",]
+info = "Zooms the view in."
+
+[zoom-out]
+human = "Zoom-out"
+keys = [ "-", "_",]
+categories = [ "View",]
+info = "Zooms the view out."
+
+[crop-in]
+human = "Crop to focus"
+keys = [ "ctrl+p",]
+categories = [ "View",]
+info = ""
+
+[crop-out]
+human = "Uncrop to focus on entire paper"
+keys = [ "ctrl+shift+p", ]
+categories = [ "View",]
+info = ""

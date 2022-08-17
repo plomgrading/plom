@@ -32,8 +32,6 @@ from PyQt5.QtGui import (
     QPixmap,
 )
 from PyQt5.QtWidgets import (
-    QAction,
-    QActionGroup,
     QDialog,
     QWidget,
     QMenu,
@@ -49,9 +47,7 @@ from plom import __version__
 import plom.client.cursors
 import plom.client.icons
 from .rubric_list import RubricWidget
-from .key_wrangler import KeyWrangler, key_layouts
-
-# import the key-help popup window class
+from .key_wrangler import get_key_bindings
 from .key_help import KeyHelp
 
 from .pagerearranger import RearrangementViewer
@@ -73,8 +69,6 @@ log = logging.getLogger("annotr")
 tipText = {
     "box": "Box: L = highlighted box, R/Shift = highlighted ellipse.",
     "rubric": "Rubric: L = paste rubric, R/Shift = labelled box",
-    "rubric up": "Rubric up: Select previous rubric in list",
-    "rubric down": "Rubric down: Select next rubric in list",
     "cross": "Cross: L = cross, M/Ctrl = ?-mark, R/Shift = checkmark.",
     "delete": "Delete: L = Delete object, L-drag = delete area.",
     "line": "Line: L = straight line, M/Ctrl = double-arrow, R/Shift = arrow.",
@@ -183,12 +177,28 @@ class Annotator(QWidget):
         # Grab window settings from parent
         self.loadWindowSettings()
 
+        # no initial keybindings - get from the marker if non-default
+        self.keybinding_name = self.parentMarkerUI.annotatorSettings["keybinding_name"]
+        if self.keybinding_name is None:
+            self.keybinding_name = "default"
+            log.info('starting with default keybinding "%s"', self.keybinding_name)
+        else:
+            log.info('loaded previous keybinding "%s"', self.keybinding_name)
+        # TODO: store this in annotatorSettings too
+        self.keybinding_custom_overlay = self.parentMarkerUI.annotatorSettings[
+            "keybinding_custom_overlay"
+        ]
+        if self.keybinding_custom_overlay is None:
+            self.keybinding_custom_overlay = {}
+            log.info("starting new (empty) custom overlay")
+        else:
+            log.info("loaded custom overlay: %s", self.keybinding_custom_overlay)
+
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
         self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
-        # no initial keybindings - get from the marker if non-default
-        self.keyBindings = None
-        self.setMiscShortCuts()
+        self.setToolShortCuts()
+        self.setMinorShortCuts()
 
     def show_about_dialog(self):
         QMessageBox.about(
@@ -228,23 +238,35 @@ class Annotator(QWidget):
 
     def buildHamburger(self):
         # TODO: use QAction, share with other UI, shortcut keys written once
+        # proof of concept single source of truth for default keys
+        keydata = self.get_key_bindings()
+
+        # TODO: use QKeySequence to get strings, maybe DTRT on macOS?  Issue #224
         m = QMenu()
-        m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
+        key = keydata["next-paper"]["keys"][0]
+        m.addAction(f"Next paper\t{key}", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
-        m.addAction("Close without saving\tctrl-c", self.close)
+        (key,) = keydata["cancel"]["keys"]
+        m.addAction(f"Close without saving\t{key}", self.close)
         m.addSeparator()
-        m.addAction("Show previous paper(s)\tctrl-left", self.show_previous)
+        (key,) = keydata["quick-show-prev-paper"]["keys"]
+        m.addAction(f"Show previous paper(s)\t{key}", self.show_previous)
         m.addSeparator()
         m.addAction("View cat", self.viewCat)
         m.addAction("View dog", self.viewNotCat)
         m.addSeparator()
-        m.addAction("View solutions\tF2", self.viewSolutions)
-        m.addAction("Tag paper...\tF3", self.tag_paper)
+        (key,) = keydata["show-solutions"]["keys"]
+        m.addAction(f"View solutions\t{key}", self.viewSolutions)
+        (key,) = keydata["tag-paper"]["keys"]
+        m.addAction(f"Tag paper...\t{key}", self.tag_paper)
         m.addSeparator()
-        m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
-        m.addAction("Crop to region\tCtrl-p", self.to_crop_mode)
-        m.addAction("Uncrop\tCtrl-shift-p", self.uncrop_region)
+        (key,) = keydata["rearrange-pages"]["keys"]
+        m.addAction(f"Adjust pages\t{key}", self.rearrangePages)
+        (key,) = keydata["crop-in"]["keys"]
+        m.addAction(f"Crop to region\t{key}", self.to_crop_mode)
+        (key,) = keydata["crop-out"]["keys"]
+        m.addAction(f"Uncrop\t{key}", self.uncrop_region)
         hold_crop = m.addAction("(advanced option) Hold crop")
         hold_crop.setCheckable(True)
         hold_crop.triggered.connect(self.toggle_hold_crop)
@@ -269,8 +291,10 @@ class Annotator(QWidget):
         subm.addAction("Delete", self.ui.deleteButton.animateClick)
         subm.addAction("Zoom", self.ui.zoomButton.animateClick)
         m.addSeparator()
+        (key,) = keydata["increase-annotation-scale"]["keys"]
         m.addAction(
-            "Increase annotation scale\tshift-]", lambda: self.change_annot_scale(1.1)
+            f"Increase annotation scale\t{key}",
+            lambda: self.change_annot_scale(1.1),
         )
         # Keep a reference to this one so we can update the text
         self._reset_scale_menu_text = "Reset annotation scale"
@@ -279,8 +303,9 @@ class Annotator(QWidget):
         )
         self.update_annot_scale_menu_label()
 
+        (key,) = keydata["decrease-annotation-scale"]["keys"]
         m.addAction(
-            "Decrease annotation scale\tshift-[",
+            f"Decrease annotation scale\t{key}",
             lambda: self.change_annot_scale(1.0 / 1.1),
         )
         # Issue #1350: temporarily?
@@ -290,38 +315,14 @@ class Annotator(QWidget):
         )
         m.addSeparator()
         m.addAction("Synchronise rubrics", self.refreshRubrics)
-        m.addAction("Compact UI\thome", self.narrowLayout)
+        (key,) = keydata["toggle-wide-narrow"]["keys"]
+        m.addAction(f"Compact UI\t{key}", self.narrowLayout)
         # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
         # m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
-        m.addAction("Help", lambda: None).setEnabled(False)
-        m.addAction("Show shortcut keys...\t?", self.keyPopUp)
-        # key-binding submenu stuff
-        km = m.addMenu("Set major keys")
-        # to make these actions checkable, they need to belong to self.
-        kmg = QActionGroup(m)
-        for name in key_layouts:
-            setattr(self, "kb_{}_act".format(name), QAction("Use {} keys".format(name)))
-            getattr(self, "kb_{}_act".format(name)).setCheckable(True)
-            km.addAction(getattr(self, "kb_{}_act".format(name)))
-            kmg.addAction(getattr(self, "kb_{}_act".format(name)))
-        # TODO - get this inside the loop with correct lambda function scope hackery
-        self.kb_sdf_act.triggered.connect(lambda: self.setKeyBindingsToDefault("sdf"))
-        self.kb_sdf_french_act.triggered.connect(
-            lambda: self.setKeyBindingsToDefault("sdf_french")
-        )
-        self.kb_dvorak_act.triggered.connect(
-            lambda: self.setKeyBindingsToDefault("sdf_dvorak")
-        )
-        self.kb_asd_act.triggered.connect(lambda: self.setKeyBindingsToDefault("asd"))
-        self.kb_jkl_act.triggered.connect(lambda: self.setKeyBindingsToDefault("jkl"))
-
-        km.addSeparator()
-        self.kb_custom_act = QAction("Use custom keys")
-        self.kb_custom_act.setCheckable(True)
-        self.kb_custom_act.triggered.connect(self.setKeyBindings)
-        kmg.addAction(self.kb_custom_act)
-        km.addAction(self.kb_custom_act)
+        m.addAction("Help", lambda: self.keyPopUp(tab_idx=0))
+        (key,) = keydata["help"]["keys"]
+        m.addAction(f"Show shortcut keys...\t{key}", self.keyPopUp)
         m.addAction("About Plom", self.show_about_dialog)
         return m
 
@@ -778,11 +779,38 @@ class Annotator(QWidget):
     def experimental_cycle(self):
         self.scene.whichLineToDraw_next()
 
-    def keyPopUp(self):
-        """Sets KeyPress shortcuts."""
-        kp = KeyHelp()
-        # Pop it up.
-        kp.exec()
+    def keyPopUp(self, *, tab_idx=None):
+        """View help and keyboard shortcuts, eventually edit them.
+
+        Keyword Arg:
+            tab_idx (int/None): which tab to open in the help.  If None
+                then we try to re-open on the same tab from last run.
+        """
+        if tab_idx is None:
+            _tab_idx = getattr(self, "_keyhelp_tab_idx", 0)
+        else:
+            _tab_idx = tab_idx
+        diag = KeyHelp(
+            self,
+            self.keybinding_name,
+            custom_overlay=self.keybinding_custom_overlay,
+            initial_tab=_tab_idx,
+        )
+        if diag.exec() != QDialog.Accepted:
+            return
+        self.keybinding_name = diag.get_selected_keybinding_name()
+        if self.keybinding_name == "custom":
+            # note: if dialog modified custom, but then selected another
+            # such as "ijkl", then we should *not* overwrite custom.
+            self.keybinding_custom_overlay = diag.get_custom_overlay()
+        if tab_idx is None:
+            # keep the open tab for next time we re-open KeyHelp
+            self._keyhelp_tab_idx = diag.tabs.currentIndex()
+        self.parentMarkerUI.annotatorSettings["keybinding_name"] = self.keybinding_name
+        self.parentMarkerUI.annotatorSettings[
+            "keybinding_custom_overlay"
+        ] = self.keybinding_custom_overlay
+        self.setToolShortCuts()
 
     def setViewAndScene(self):
         """
@@ -977,191 +1005,100 @@ class Annotator(QWidget):
         self._priv_force_close = True
         self.close()
 
-    def changeMainShortCuts(self, keys):
-        # basic tool keys
-        self.keyBindings = keys
-        # save to parent-marker
-        self.parentMarkerUI.annotatorSettings["tool_keys"] = keys
-        # shortcuts already in place - just need to update the keys
-        mainShortCuts = [
-            ("undo", "toUndo"),
-            ("redo", "toRedo"),
-            ("nextRubric", "rubricMode"),
-            ("previousRubric", "prev_rubric"),
-            ("nextTab", "next_tab"),
-            ("previousTab", "prev_tab"),
-            ("nextTool", "next_minor_tool"),
-            ("previousTool", "prev_minor_tool"),
-            ("delete", "toDeleteMode"),
-            ("move", "toMoveMode"),
-            ("zoom", "toZoomMode"),
-        ]
-        for (name, command) in mainShortCuts:
-            # self.nameSC.setKey(keys[name])
-            getattr(self, name + "SC").setKey(keys[name])
+    def get_key_bindings(self):
+        return get_key_bindings(self.keybinding_name, self.keybinding_custom_overlay)
 
-    def setKeyBindings(self):
-        kw = KeyWrangler(self, self.keyBindings)
-        if kw.exec() == QDialog.Accepted:
-            self.changeMainShortCuts(kw.getKeyBindings())
+    def setToolShortCuts(self):
+        """Set or change the shortcuts for the basic tool keys.
 
-    def setKeyBindingsToDefault(self, name):
-        if name not in key_layouts:
-            return
-        else:
-            self.changeMainShortCuts(key_layouts[name])
+        These are the shortcuts that are user-editable.
+        """
+        keydata = self.get_key_bindings()
+        actions_and_methods = (
+            ("undo", self.toUndo),
+            ("redo", self.toRedo),
+            ("next-rubric", self.rubricMode),
+            ("prev-rubric", self.prev_rubric),
+            ("next-tab", self.next_tab),
+            ("prev-tab", self.prev_tab),
+            ("next-tool", self.next_minor_tool),
+            ("prev-tool", self.prev_minor_tool),
+            ("delete", self.toDeleteMode),
+            ("move", self.toMoveMode),
+            ("zoom", self.toZoomMode),
+        )
+        # wipe any existing shortcuts
+        shortcuts = getattr(self, "_store_QShortcuts", [])
+        for sc in shortcuts:
+            sc.deleteLater()
+            del sc
 
-    def setMainShortCuts(self):
-        # basic tool keys
-        if self.keyBindings is None:
-            self.keyBindings = key_layouts["sdf"]
-            # set the menu action item
-            self.kb_sdf_act.setChecked(True)
-
-        # use sdf defaults unless saved
-        if self.parentMarkerUI.annotatorSettings["tool_keys"] is None:
-            keys = self.keyBindings
-        else:
-            # check all required present
-            if all(
-                act in self.parentMarkerUI.annotatorSettings["tool_keys"]
-                for act in key_layouts["sdf"]
-            ):
-                keys = self.parentMarkerUI.annotatorSettings["tool_keys"]
-                # TODO - this just clicks "custom" - might be better to detect if known binding.
-                self.kb_custom_act.setChecked(True)
-            else:  # not all there so use sdf-defaults
-                keys = self.keyBindings
-
-        mainShortCuts = [
-            ("undo", "toUndo"),
-            ("redo", "toRedo"),
-            ("nextRubric", "rubricMode"),
-            ("previousRubric", "prev_rubric"),
-            ("nextTab", "next_tab"),
-            ("previousTab", "prev_tab"),
-            ("nextTool", "next_minor_tool"),
-            ("previousTool", "prev_minor_tool"),
-            ("delete", "toDeleteMode"),
-            ("move", "toMoveMode"),
-            ("zoom", "toZoomMode"),
-        ]
-        for (name, command) in mainShortCuts:
-            # self.nameSC = QShortCut(QKeySequence(keys[name]), self)
-            setattr(self, name + "SC", QShortcut(QKeySequence(keys[name]), self))
-            # self.nameSC.activated.connect(self.command)
-            getattr(self, name + "SC").activated.connect(getattr(self, command))
+        # store the shortcuts to prevent GC
+        self._store_QShortcuts = []
+        for (action, command) in actions_and_methods:
+            (key,) = keydata[action]["keys"]  # enforce single item
+            sc = QShortcut(QKeySequence(key), self)
+            sc.activated.connect(command)
+            self._store_QShortcuts.append(sc)
 
     def setMinorShortCuts(self):
-        minorShortCuts = [
-            ("swapMaxNorm", Qt.Key_Backslash, self.swapMaxNorm),
-            ("zoomIn", "+", self.view.zoomIn),
-            ("zoomIn2", "=", self.view.zoomIn),
-            ("zoomOut", "-", self.view.zoomOut),
-            ("zoomOut2", "_", self.view.zoomOut),
-            ("keyHelp", "?", self.keyPopUp),
-            ("toggle", Qt.Key_Home, self.toggleTools),
-            ("viewWhole", Qt.Key_F1, self.viewWholePaper),
-            ("viewSolutions", Qt.Key_F2, self.viewSolutions),
-            ("tag_paper", Qt.Key_F3, self.tag_paper),
-            ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
-        ]
-        for (name, key, command) in minorShortCuts:
-            # self.nameSC = QShortCut(QKeySequence(key), self)
-            setattr(self, name + "SC", QShortcut(QKeySequence(key), self))
-            # self.nameSC.activated.connect(command)
-            getattr(self, name + "SC").activated.connect(command)
+        """Setup non-editable shortcuts.
+
+        Each of these actions can be associated with multiple shortcut
+        keys.
+        """
+        keydata = self.get_key_bindings()
+        actions_and_methods = (
+            ("toggle-wide-narrow", self.toggleTools),
+            ("help", self.keyPopUp),
+            ("toggle-maximize-window", self.swapMaxNorm),
+            ("show-whole-paper", self.viewWholePaper),
+            ("show-solutions", self.viewSolutions),
+            ("main-menu", self.ui.hamMenuButton.animateClick),
+            ("tag-paper", self.tag_paper),
+            ("zoom-in", self.view.zoomIn),
+            ("zoom-out", self.view.zoomOut),
+            ("next-paper", self.saveAndGetNext),
+            ("cancel", self.close),
+            ("toggle-zoom", self.view.zoomToggle),
+            ("pan-through", self.view.panThrough),
+            ("pan-back", self.view.depanThrough),
+            ("pan-through-slowly", lambda: self.view.panThrough(0.02)),
+            ("pan-back-slowly", lambda: self.view.depanThrough(0.02)),
+            ("undo-2", self.toUndo),
+            ("redo-2", self.toRedo),
+            ("rearrange-pages", self.rearrangePages),
+            ("quick-show-prev-paper", self.show_previous),
+            ("increase-annotation-scale", lambda: self.change_annot_scale(1.1)),
+            ("decrease-annotation-scale", lambda: self.change_annot_scale(1 / 1.1)),
+            ("crop-in", self.to_crop_mode),
+            ("crop-out", self.uncrop_region),
+        )
+        self._store_QShortcuts_minor = []
+        for (action, command) in actions_and_methods:
+            for key in keydata[action]["keys"]:
+                sc = QShortcut(QKeySequence(key), self)
+                sc.activated.connect(command)
+            self._store_QShortcuts_minor.append(sc)
+
+        def lambda_factory(n):
+            return lambda: self.keyToChangeRubric(n)
+
         # rubric shortcuts
+        self._store_QShortcuts_rubrics = []
         for n in range(1, 11):
-            setattr(
-                self,
-                "rubricChange{}SC".format(n),
-                QShortcut(QKeySequence("{}".format(n % 10)), self),
-            )
-        # unfortunately couldn't quite get the set command as lambda-function working in the loop
-        self.rubricChange1SC.activated.connect(lambda: self.keyToChangeRubric(1))
-        self.rubricChange2SC.activated.connect(lambda: self.keyToChangeRubric(2))
-        self.rubricChange3SC.activated.connect(lambda: self.keyToChangeRubric(3))
-        self.rubricChange4SC.activated.connect(lambda: self.keyToChangeRubric(4))
-        self.rubricChange5SC.activated.connect(lambda: self.keyToChangeRubric(5))
-        self.rubricChange6SC.activated.connect(lambda: self.keyToChangeRubric(6))
-        self.rubricChange7SC.activated.connect(lambda: self.keyToChangeRubric(7))
-        self.rubricChange8SC.activated.connect(lambda: self.keyToChangeRubric(8))
-        self.rubricChange9SC.activated.connect(lambda: self.keyToChangeRubric(9))
-        self.rubricChange10SC.activated.connect(lambda: self.keyToChangeRubric(10))
-        # not so elegant - but it works
+            # keys 1, 2, 3, 4, 5, 6, 7, 8, 9, 0
+            key = f"{n % 10}"
+            sc = QShortcut(QKeySequence(key), self)
+            sc.activated.connect(lambda_factory(n))
+            self._store_QShortcuts_rubrics.append(sc)
 
-    def setMiscShortCuts(self):
-        """
-        Sets miscellaneous shortcuts.
-
-        Returns:
-            None: adds shortcuts.
-
-        """
-        # set main and minor shortcuts
-        self.setMainShortCuts()
-        self.setMinorShortCuts()
-
-        # Now other misc shortcuts
-        # shortcuts for next paper
-        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
-        self.endShortCut.activated.connect(self.saveAndGetNext)
-        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
-        self.endShortCutb.activated.connect(self.saveAndGetNext)
-        self.endShortCutc = QShortcut(QKeySequence("Ctrl+n"), self)
-        self.endShortCutc.activated.connect(self.saveAndGetNext)
-        self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
-        self.endShortCutd.activated.connect(self.saveAndGetNext)
-        self.cancelShortCut = QShortcut(QKeySequence("Ctrl+c"), self)
-        self.cancelShortCut.activated.connect(self.close)
-
-        # shortcuts for zoom-states
-        self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
-        self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
-
-        self.scaleAnnotIncShortCut = QShortcut(QKeySequence("Shift+]"), self)
-        self.scaleAnnotIncShortCut.activated.connect(
-            lambda: self.change_annot_scale(1.1)
-        )
-        self.scaleAnnotDecShortCut = QShortcut(QKeySequence("Shift+["), self)
-        self.scaleAnnotDecShortCut.activated.connect(
-            lambda: self.change_annot_scale(1 / 1.1)
-        )
-
-        # shortcuts for undo/redo
-        self.undoShortCut = QShortcut(QKeySequence("Ctrl+z"), self)
-        self.undoShortCut.activated.connect(self.undo)
-        self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
-        self.redoShortCut.activated.connect(self.redo)
-        # TODO: this is one of our left/right keybindings
+        # TODO: hardcoded, do we want shift-undo to be redo? Issue #2246
         self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
         self.redoShortCut2.activated.connect(self.ui.redoButton.animateClick)
 
-        self.showPrevShortCut = QShortcut(QKeySequence("Ctrl+left"), self)
-        self.showPrevShortCut.activated.connect(self.show_previous)
-
-        self.twisterShortCut = QShortcut(QKeySequence("Ctrl+r"), self)
-        self.twisterShortCut.activated.connect(self.rearrangePages)
-
         self.sekritShortCut = QShortcut(QKeySequence("Ctrl+Shift+o"), self)
         self.sekritShortCut.activated.connect(self.experimental_cycle)
-
-        # pan shortcuts
-        self.panShortCut = QShortcut(QKeySequence("space"), self)
-        self.panShortCut.activated.connect(self.view.panThrough)
-        self.depanShortCut = QShortcut(QKeySequence("Shift+space"), self)
-        self.depanShortCut.activated.connect(self.view.depanThrough)
-        self.slowPanShortCut = QShortcut(QKeySequence("Ctrl+space"), self)
-        self.slowPanShortCut.activated.connect(lambda: self.view.panThrough(0.02))
-        self.slowDepanShortCut = QShortcut(QKeySequence("Ctrl+Shift+space"), self)
-        self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
-
-        # cropping hackery.
-        self.crop_to_focus_ShortCut = QShortcut(QKeySequence("Ctrl+p"), self)
-        self.crop_to_focus_ShortCut.activated.connect(self.to_crop_mode)
-        self.uncropShortCut = QShortcut(QKeySequence("Ctrl+Shift+p"), self)
-        self.uncropShortCut.activated.connect(self.uncrop_region)
 
     def to_crop_mode(self):
         # can't re-crop if the crop is being held
@@ -1922,7 +1859,8 @@ class Annotator(QWidget):
                 "The client cannot determine the previous paper. Please cancel this annotation and select from the list.",
             ).exec()
             return
-        PreviousPaperViewer(self, self.parentMarkerUI.marking_history).exec()
+        keydata = self.get_key_bindings()
+        PreviousPaperViewer(self, self.parentMarkerUI.marking_history, keydata).exec()
 
     def _get_annotation_by_task(self, task):
         return self.parentMarkerUI.get_file_for_previous_viewer(task)

@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2022 Andrew Rechnitzer
+# Copyright (C) 2021-2022 Colin B. Macdonald
+
+# Plom Client "IJKL" alternative keybindings
+# Actions not overridden here will come from the default.
+
+[__metadata__]
+name = "ijkl"
+long_name = '"ijkl" (left-hand mouse)'
+about_html = """
+  <p>This keybinding is intended for left-hand mousers were
+  the right-hand predominantly stays on the keyboard.</p>
+"""
+
+[next-tool]
+keys = [ "o",]
+
+[prev-tool]
+keys = [ "u",]
+
+[next-rubric]
+keys = [ "k",]
+
+[prev-rubric]
+keys = [ "i",]
+
+[next-tab]
+keys = [ "l",]
+
+[prev-tab]
+keys = [ "j",]
+
+[redo]
+keys = [ "y",]
+
+[undo]
+keys = [ "h",]
+
+[delete]
+keys = [ "p",]
+
+[move]
+keys = [ ";",]
+
+[zoom]
+keys = [ "/",]

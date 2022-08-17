@@ -889,6 +889,7 @@ class MarkerClient(QWidget):
                      "FOREGROUND"
                      "CommentsWarnings"
                      "MarkWarnings"
+                     "KeyBinding"
                      "SidebarOnRight"
                    }
 
@@ -957,14 +958,17 @@ class MarkerClient(QWidget):
         Applies all settings from previous client.
 
         Args:
-            lastTime (dict): a dictionary containing information
-                            for prev client. See setup for more info.
+            lastTime (dict): information about settings, often from a
+            config file such as from the last time the client was run.
 
         Returns:
             None
         """
         self.annotatorSettings["commentWarnings"] = lastTime.get("CommentWarnings")
         self.annotatorSettings["markWarnings"] = lastTime.get("MarkWarnings")
+        # TODO: some error handling here for users who hack their config?
+        self.annotatorSettings["keybinding_name"] = lastTime.get("KeyBinding")
+        self.annotatorSettings["keybinding_custom_overlay"] = lastTime.get("CustomKeys")
 
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
@@ -2188,7 +2192,14 @@ class MarkerClient(QWidget):
             pass
         sidebarRight = self.ui.sidebarRightCB.isChecked()
         log.debug("Emitting Marker shutdown signal")
-        self.my_shutdown_signal.emit(2, [sidebarRight])
+        self.my_shutdown_signal.emit(
+            2,
+            [
+                sidebarRight,
+                self.annotatorSettings["keybinding_name"],
+                self.annotatorSettings["keybinding_custom_overlay"],
+            ],
+        )
         event.accept()
         log.debug("Marker: goodbye!")
 
