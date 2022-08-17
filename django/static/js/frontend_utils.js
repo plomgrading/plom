@@ -49,7 +49,7 @@ function viewPassword() {
 function slideToLeft() {
     editBtn.addEventListener('click', () => {
         profileCard.style.transform = 'translateX(0%)';
-        setTimeout(fadeIn, 2000);
+        setTimeout(fadeIn, 1000);
     });
 }
 
@@ -57,7 +57,7 @@ function slideToRight() {
     cancelBtn.addEventListener('click', () => {
        editUser.style.visibility = 'hidden';
        profileCard.style.transform = 'translateX(55%)'
-       setTimeout(showEditBtn, 2000);
+       setTimeout(showEditBtn, 1000);
     });
 }
 
