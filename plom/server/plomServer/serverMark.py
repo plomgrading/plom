@@ -172,8 +172,6 @@ def MreturnMarkedTask(
         return [False, errstr]
 
     annotated_filename = f"markedQuestions/G{task_code[1:]}.{imgtype}"
-    # plom_filename = f"markedQuestions/plomFiles/G{task_code[1:]}.plom"
-
     # Sanity check the plomfile
     # TODO: ok to read plomdat twice?  Maybe save the json later
     try:

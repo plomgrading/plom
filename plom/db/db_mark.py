@@ -279,7 +279,6 @@ def MtakeTaskFromClient(
     user_name,
     mark,
     annot_fname,
-    # plom_fname,
     plomdat,
     rubrics,
     marking_time,
@@ -368,7 +367,6 @@ def MtakeTaskFromClient(
         # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
         aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
         aref.mark = mark
-        # aref.plom_file = plom_fname
         aref.plom_json = plomdat
         aref.marking_time = marking_time
         qref.save()
@@ -452,15 +450,10 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
             metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
         if aref.aimage is None:
             return [False, "no_such_task"]
-        # plom_data = aref.plom_file
-        img_file = aref.aimage.file_name
-    # with open(plom_json, "r") as f:
-    #     plom_data = json.load(f)
 
-    # plom_json = aref.plom_json
-    # plom_data_old_shit = plom_data
+        img_file = aref.aimage.file_name
+
     plom_data = json.loads(aref.plom_json)
-    # assert plom_data_old_shit == plom_data
 
     plom_data["user"] = aref.user.name
     plom_data["annotation_edition"] = aref.edition
