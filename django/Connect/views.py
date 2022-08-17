@@ -38,10 +38,22 @@ class ConnectServerManagerView(ManagerRequiredTemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = CoreConnectionForm
-        context['manager_form'] = CoreManagerLoginForm
-
         core = CoreConnectionService()
+
+        connection = core.get_connection()
+        url = connection.server_url
+        port = connection.port_number
+        context['form'] = CoreConnectionForm(initial={
+            'server_url': url if url else 'localhost', 
+            'port_number': port if port else 41984
+            })
+
+        manager = core.get_manager()
+        context['manager_form'] = CoreManagerLoginForm(initial={
+            'username': manager.manager_username, 
+            'password': manager.manager_password
+        })
+
         context['is_valid'] = core.is_there_a_valid_connection()
         context['manager_logged_in'] = core.is_manager_authenticated()
         return context
@@ -65,7 +77,7 @@ class AttemptCoreConnectionView(ManagerRequiredUtilView):
                 core.save_connection_info(url, port_number, version_string)
                 version = core.get_client_version()
                 api = core.get_api()
-                return HttpResponse(f'<p id="result">Connection successful! Server version: {version}, API: {api}</p>')
+                return HttpResponse(f'<p id="result" class="text-success">Connection successful! Server version: {version}, API: {api}</p>')
 
         except PlomConnectionError as e:
             print(e)
@@ -92,7 +104,7 @@ class AttemptCoreManagerLoginView(ManagerRequiredUtilView):
 
         try:
             manager = core.authenticate_manager(username, password)
-            return HttpResponse(f'<p id="manager_result">Manager login successful!</p>')
+            return HttpResponse(f'<p id="manager_result" class="text-success">Manager login successful!</p>')
         except Exception as e:
             print(e)
             return HttpResponse(f'<p id="manager_result" style="color: red;">{e}</p>')

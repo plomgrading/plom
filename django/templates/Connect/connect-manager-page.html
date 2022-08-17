@@ -46,7 +46,11 @@
                 </div>
 
                 <div id="init_connection_response">
+                    {% if is_valid %}
+                    <p class="text-success">Connection established to Classic server.</p>
+                    {% else %}
                     <p></p>
+                    {% endif %}
                 </div>
 
                 <input type="submit" class="btn btn-primary" value="Connect" onclick="document.getElementById('result').style.opacity = '0';">
@@ -76,7 +80,11 @@
                 </div>
 
                 <div id="init_manager_response">
+                    {% if manager_logged_in %}
+                    <p class="text-success">Manager logged in.</p>
+                    {% else %}
                     <p></p>
+                    {% endif %}
                 </div>
 
                 <input type="submit" class="btn btn-primary" value="Login" onclick="document.getElementById('manager_result').style.opacity = '0';">
