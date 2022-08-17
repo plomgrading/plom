@@ -67,6 +67,7 @@ def readLastTime():
     lastTime["upDown"] = "up"
     lastTime["CommentsWarnings"] = True
     lastTime["MarkWarnings"] = True
+    lastTime["KeyBinding"] = "default"
     # update default from config file
     if cfgfile.exists():
         # too early to log: log.info("Loading config file %s", cfgfile)
@@ -538,3 +539,5 @@ class Chooser(QDialog):
             return
         # note `stuff` is list of options - used to contain more... may contain more in future
         self.lastTime["SidebarOnRight"] = stuff[0]
+        self.lastTime["KeyBinding"] = stuff[1]
+        self.lastTime["CustomKeys"] = stuff[2]
