@@ -353,7 +353,7 @@ class CatViewer(QDialog):
 class PreviousPaperViewer(QDialog):
     """A modal dialog for displaying annotations of the previous paper."""
 
-    def __init__(self, parent, task_history):
+    def __init__(self, parent, task_history, keydata):
         super().__init__(parent)
         self._annotr = parent
         self.task_history = task_history
@@ -367,10 +367,16 @@ class PreviousPaperViewer(QDialog):
 
         grid.addSpacing(6)
         buttons = QHBoxLayout()
-        self.prevTaskB = QPushButton("&Previous (ctrl+left)")
+        (key,) = keydata["quick-show-prev-paper"]["keys"]
+        self.prevTaskB = QPushButton(f"&Previous ({key})")
         self.prevTaskB.clicked.connect(self.previous_task)
-        self.nextTaskB = QPushButton("&Next (ctrl+right)")
+        self.prevShortCut = QShortcut(QKeySequence(key), self)
+        self.prevShortCut.activated.connect(self.previous_task)
+        (key,) = keydata["quick-show-next-paper"]["keys"]
+        self.nextTaskB = QPushButton(f"&Next ({key})")
         self.nextTaskB.clicked.connect(self.next_task)
+        self.nextShortCut = QShortcut(QKeySequence(key), self)
+        self.nextShortCut.activated.connect(self.next_task)
         buttons.addWidget(self.prevTaskB, 1)
         buttons.addWidget(self.nextTaskB, 1)
         buttons.addSpacing(64)
@@ -384,11 +390,6 @@ class PreviousPaperViewer(QDialog):
         grid.addLayout(buttons)
         self.setLayout(grid)
         self.setWindowTitle(f"Previous annotations - {task}")
-
-        self.prevShortCut = QShortcut(QKeySequence("Ctrl+left"), self)
-        self.prevShortCut.activated.connect(self.previous_task)
-        self.nextShortCut = QShortcut(QKeySequence("Ctrl+right"), self)
-        self.nextShortCut.activated.connect(self.next_task)
 
     def previous_task(self):
         self.nextTaskB.setEnabled(True)

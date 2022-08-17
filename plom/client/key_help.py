@@ -1,18 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
+from copy import deepcopy
 import importlib.resources as resources
 import logging
 
-import toml
 from PyQt5.QtCore import Qt, QBuffer, QByteArray
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QComboBox,
     QDialog,
-    QDialogButtonBox,
     QFrame,
+    QHBoxLayout,
     QGraphicsScene,
     QGraphicsView,
     QHeaderView,
@@ -27,27 +29,140 @@ from PyQt5.QtWidgets import (
 
 import plom
 import plom.client.help_img
+from .useful_classes import InfoMsg
+from .key_wrangler import KeyEditDialog
+from .key_wrangler import get_keybinding_overlay, get_key_bindings
+from .key_wrangler import get_keybindings_list, actions_with_changeable_keys
 
 
 log = logging.getLogger("keybindings")
 
 
+# TODO:
+# * no validity checking done
+#   - use code from old KeyWrangler
 class KeyHelp(QDialog):
-    # TODO: I think plom.client would be better, put can't get it to work
-    keydata = toml.loads(resources.read_text(plom, "default_keys.toml"))
+    def __init__(self, parent, keybinding_name, *, custom_overlay={}, initial_tab=0):
+        """Construct the KeyHelp dialog.
 
-    def __init__(self, parent):
+        Args:
+            parent (QWidget):
+            keybinding_name (str): which keybinding to initially display.
+
+        Keyword args:
+            custom_overlay (dict): if there was already a custom keybinding,
+               pass its overlay here.  We will copy it, not change it.  This
+               is because the user may make local changes and then cancel.
+            initial_tab (int): index of the tab we'd like to open on.
+        """
         super().__init__(parent)
+        self._custom_overlay = deepcopy(custom_overlay)
         vb = QVBoxLayout()
-        vb.addWidget(
-            QLabel(
-                "<b>Caution:</b> For now, this dialog shows only the default keybindings"
-            )
-        )
         tabs = QTabWidget()
-
         tabs.addTab(ClickDragPage(), "Tips")
+        self.tabs = tabs
 
+        keybindings = get_keybindings_list()
+        (_initial_idx,) = [
+            i for i, x in enumerate(keybindings) if x["name"] == keybinding_name
+        ]
+        # position of the custom map
+        (self.CUSTOM_IDX,) = [
+            i for i, x in enumerate(keybindings) if x["name"] == "custom"
+        ]
+
+        # trigger this to draw the diagrams (which depend on keybinding)
+        self.update_keys_by_name(keybinding_name)
+
+        buttons = QHBoxLayout()
+        keyLayoutCB = QComboBox()
+        keyLayoutCB.addItems([x["long_name"] for x in keybindings])
+        keyLayoutCB.setCurrentIndex(_initial_idx)
+        keyLayoutCB.currentIndexChanged.connect(self.update_keys_by_idx)
+        self._keyLayoutCB = keyLayoutCB
+        # messy hack to map index back to name of keybinding
+        self._keyLayoutCB_idx_to_name = [x["name"] for x in keybindings]
+
+        buttons.addWidget(keyLayoutCB, 1)
+        b = QPushButton("About")
+        b.clicked.connect(self.about)
+        # not sure why I need this:
+        b.setAutoDefault(False)
+        buttons.addWidget(b)
+        buttons.addSpacing(64)
+        buttons.addStretch(2)
+        b = QPushButton("&Ok")
+        b.clicked.connect(self.accept)
+        buttons.addWidget(b)
+        vb.addWidget(tabs)
+        vb.addLayout(buttons)
+        self.setLayout(vb)
+        self.tabs.setCurrentIndex(initial_tab)
+
+    def get_selected_keybinding_name(self):
+        """Return the name (str) of the selected keybinding."""
+        idx = self._keyLayoutCB.currentIndex()
+        return self._keyLayoutCB_idx_to_name[idx]
+
+    def update_keys_by_name(self, name):
+        keydata = get_key_bindings(name, custom_overlay=self._custom_overlay)
+        self.redraw_tables_and_diagrams(keydata)
+        # keep a memo of the keydata until we next change it
+        self.keydata = keydata
+
+    def update_keys_by_idx(self, idx):
+        name = self._keyLayoutCB_idx_to_name[idx]
+        self.update_keys_by_name(name)
+
+    def interactively_change_key(self, action):
+        info = ""
+        if self.has_custom_map() and not self.currently_on_custom_map():
+            info = """<p><b>Note:</b> there is already a custom keymap.
+                Changing this keybinding will replace it; or you can
+                cancel, select the &ldquo;Custom&rdquo; map and edit.</p>
+            """
+        dat = self.keydata[action]
+        old_key = dat["keys"][0]
+        diag = KeyEditDialog(self, label=dat["human"], currentKey=old_key, info=info)
+        if diag.exec() != QDialog.Accepted:
+            return
+        new_key = diag._keyedit.text()
+        if new_key == old_key:
+            return
+        log.info(f"diagram: {action} changing key from {old_key} to {new_key}")
+        # TODO: check validity (no dupe keys etc, maybe use KeyWrangler code)
+        self.change_key(action, new_key)
+
+    def change_key(self, action, new_key):
+        idx = self._keyLayoutCB.currentIndex()
+        name = self._keyLayoutCB_idx_to_name[idx]
+        if name != "custom":
+            # we were not in the custom map; copy current overlay as new custom
+            self._custom_overlay = get_keybinding_overlay(name)
+        overlay = self._custom_overlay
+        A = overlay.get(action, None)
+        if A is None:
+            overlay[action] = {"keys": [new_key]}
+        else:
+            log.info("%s updating existing overlay item", action)
+            overlay[action]["keys"][0] = new_key
+        self._keyLayoutCB.setCurrentIndex(self.CUSTOM_IDX)
+        if name == "custom":
+            # force redraw if the current index did not change
+            self.update_keys_by_name("custom")
+
+    def has_custom_map(self):
+        # i.e., is the custom overlay nonempty?
+        return bool(self._custom_overlay)
+
+    def get_custom_overlay(self):
+        return self._custom_overlay
+
+    def currently_on_custom_map(self):
+        idx = self._keyLayoutCB.currentIndex()
+        return idx == self.CUSTOM_IDX
+
+    def redraw_tables_and_diagrams(self, keydata):
         accel = {
             k: v
             for k, v in zip(
@@ -55,31 +170,39 @@ class KeyHelp(QDialog):
                 ("&Rubrics", "&Annotation", "&General", "&Text", "&View", "A&ll"),
             )
         }
-        for label, tw in self.make_ui_tables().items():
+        # Loop and delete the exists tabs (if any) but not the first "tips" tab
+        # Note: important to removeTab() or setCurrentIndex doesn't work
+        current_tab = self.tabs.currentIndex()
+        while self.tabs.count() > 1:
+            w = self.tabs.widget(1)
+            w.deleteLater()
+            self.tabs.removeTab(1)
+
+        for label, tw in self.make_ui_tables(keydata).items():
             # special case the first 2 with graphics
             if label == "Rubrics":
                 w = QWidget()
                 wb = QVBoxLayout()
-                wb.addWidget(RubricNavDiagram(self.keydata))
+                d = RubricNavDiagram(keydata)
+                d.wants_to_change_key.connect(self.interactively_change_key)
+                wb.addWidget(d)
                 wb.addWidget(tw)
                 w.setLayout(wb)
             elif label == "Annotation":
                 w = QWidget()
                 wb = QVBoxLayout()
-                wb.addWidget(ToolNavDiagram(self.keydata))
+                d = ToolNavDiagram(keydata)
+                d.wants_to_change_key.connect(self.interactively_change_key)
+                wb.addWidget(d)
                 wb.addWidget(tw)
                 w.setLayout(wb)
             else:
                 w = tw
-            tabs.addTab(w, accel[label])
+            self.tabs.addTab(w, accel[label])
+        # restore the current tab
+        self.tabs.setCurrentIndex(current_tab)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
-        buttons.accepted.connect(self.accept)
-        vb.addWidget(tabs)
-        vb.addWidget(buttons)
-        self.setLayout(vb)
-
-    def make_ui_tables(self):
+    def make_ui_tables(self, keydata):
         """Make some Qt tables with tables of key bindings.
 
         Returns:
@@ -94,12 +217,13 @@ class KeyHelp(QDialog):
             tw.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
             tw.setAlternatingRowColors(True)
             tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
+            # TODO: wire double click to omit wants_to_change_key
             tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
             # no sorting during insertation please TODO issue number
             tw.setSortingEnabled(False)
             tables[div] = tw
         # loop over all the keys and insert each key to the appropriate table(s)
-        for a, dat in self.keydata.items():
+        for a, dat in keydata.items():
             for cat in set(dat["categories"]).union(("All",)):
                 try:
                     tw = tables[cat]
@@ -123,8 +247,21 @@ class KeyHelp(QDialog):
 
         return tables
 
+    def about(self):
+        txt = """
+            <p>Plom uses spatial keyboard shortcuts with a one hand on
+            keyboard, one hand on mouse approach.</p>
+        """
+        keybindings = get_keybindings_list()
+        idx = self._keyLayoutCB.currentIndex()
+        kb_specific = keybindings[idx].get("about_html", "")
+        txt += kb_specific
+        InfoMsg(self, txt).exec()
+
 
 class RubricNavDiagram(QFrame):
+    wants_to_change_key = pyqtSignal(str)
+
     def __init__(self, keydata):
         super().__init__()
         # self.setFrameShape(QFrame.Panel)
@@ -145,39 +282,41 @@ class RubricNavDiagram(QFrame):
         grid.addWidget(view)
         self.setLayout(grid)
 
-    def put_stuff(self, action):
+    def change_key(self, action):
+        self.wants_to_change_key.emit(action)
+
+    def put_stuff(self, keydata):
         pix = QPixmap()
         pix.loadFromData(resources.read_binary(plom.client.help_img, "nav_rubric.png"))
         self.scene.addPixmap(pix)  # is at position (0,0)
 
         sheet = "QPushButton { color : teal; font-size: 24pt;}"
 
-        self.rn = QPushButton(action["next-rubric"]["keys"][0])
-        self.rn.setStyleSheet(sheet)
-        self.rn.setToolTip("Select next rubic")
-        li = self.scene.addWidget(self.rn)
-        li.setPos(340, 250)
+        def lambda_factory(w):
+            return lambda: self.change_key(w)
 
-        self.rp = QPushButton(action["prev-rubric"]["keys"][0])
-        self.rp.setStyleSheet(sheet)
-        self.rp.setToolTip("Select previous rubic")
-        li = self.scene.addWidget(self.rp)
-        li.setPos(340, 70)
+        def stuff_it(w, x, y):
+            b = QPushButton(keydata[w]["keys"][0])
+            b.setStyleSheet(sheet)
+            b.setToolTip(keydata[w]["human"])
+            if w in actions_with_changeable_keys:
+                b.setToolTip(b.toolTip() + "\n(click to change)")
+                b.clicked.connect(lambda_factory(w))
+            else:
+                # TODO: a downside is the tooltip does not show
+                b.setEnabled(False)
+            li = self.scene.addWidget(b)
+            li.setPos(x, y)
 
-        self.tp = QPushButton(action["prev-tab"]["keys"][0])
-        self.tp.setStyleSheet(sheet)
-        self.tp.setToolTip("Select previous tab of rubrics")
-        li = self.scene.addWidget(self.tp)
-        li.setPos(-40, -10)
-
-        self.tn = QPushButton(action["next-tab"]["keys"][0])
-        self.tn.setStyleSheet(sheet)
-        self.tn.setToolTip("Select next tab of rubrics")
-        li = self.scene.addWidget(self.tn)
-        li.setPos(160, -10)
+        stuff_it("next-rubric", 340, 250)
+        stuff_it("prev-rubric", 340, 70)
+        stuff_it("prev-tab", -40, -10)
+        stuff_it("next-tab", 160, -10)
 
 
 class ToolNavDiagram(QFrame):
+    wants_to_change_key = pyqtSignal(str)
+
     def __init__(self, keydata):
         super().__init__()
         # self.setFrameShape(QFrame.Panel)
@@ -197,6 +336,9 @@ class ToolNavDiagram(QFrame):
         grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(view)
         self.setLayout(grid)
+
+    def change_key(self, action):
+        self.wants_to_change_key.emit(action)
 
     def put_stuff(self, keydata):
         pix = QPixmap()
@@ -209,53 +351,30 @@ class ToolNavDiagram(QFrame):
 
         sheet = "QPushButton { color : teal; font-size: 24pt;}"
 
-        self.tn = QPushButton(key("next-tool"))
-        self.tn.setStyleSheet(sheet)
-        self.tn.setToolTip("Select next tool")
-        li = self.scene.addWidget(self.tn)
-        li.setPos(240, 320)
+        def lambda_factory(w):
+            return lambda: self.change_key(w)
 
-        self.tp = QPushButton(key("prev-tool"))
-        self.tp.setStyleSheet(sheet)
-        self.tp.setToolTip("Select previous tool")
-        li = self.scene.addWidget(self.tp)
-        li.setPos(40, 320)
+        def stuff_it(w, x, y):
+            b = QPushButton(keydata[w]["keys"][0])
+            b.setStyleSheet(sheet)
+            b.setToolTip(keydata[w]["human"])
+            if w in actions_with_changeable_keys:
+                b.setToolTip(b.toolTip() + "\n(click to change)")
+                b.clicked.connect(lambda_factory(w))
+            else:
+                # TODO: a downside is the tooltip does not show
+                b.setEnabled(False)
+            li = self.scene.addWidget(b)
+            li.setPos(x, y)
 
-        self.mv = QPushButton(key("move"))
-        self.mv.setStyleSheet(sheet)
-        self.mv.setToolTip("Select move tool")
-        li = self.scene.addWidget(self.mv)
-        li.setPos(395, 170)
-
-        self.ud = QPushButton(key("undo"))
-        self.ud.setStyleSheet(sheet)
-        self.ud.setToolTip("Undo last action")
-        li = self.scene.addWidget(self.ud)
-        li.setPos(120, -40)
-
-        self.rd = QPushButton(key("redo"))
-        self.rd.setStyleSheet(sheet)
-        self.rd.setToolTip("Redo action")
-        li = self.scene.addWidget(self.rd)
-        li.setPos(210, -40)
-
-        self.hlp = QPushButton(key("help"))
-        self.hlp.setStyleSheet(sheet)
-        self.hlp.setToolTip("Pop up key help")
-        li = self.scene.addWidget(self.hlp)
-        li.setPos(350, -30)
-
-        self.zm = QPushButton(key("zoom"))
-        self.zm.setStyleSheet(sheet)
-        self.zm.setToolTip("Select zoom tool")
-        li = self.scene.addWidget(self.zm)
-        li.setPos(-40, 15)
-
-        self.dlt = QPushButton(key("delete"))
-        self.dlt.setStyleSheet(sheet)
-        self.dlt.setToolTip("Select delete tool")
-        li = self.scene.addWidget(self.dlt)
-        li.setPos(-40, 220)
+        stuff_it("next-tool", 240, 320)
+        stuff_it("prev-tool", 40, 320)
+        stuff_it("move", 395, 170)
+        stuff_it("undo", 120, -40)
+        stuff_it("redo", 210, -40)
+        stuff_it("help", 350, -30)
+        stuff_it("zoom", -40, 15)
+        stuff_it("delete", -40, 220)
 
 
 class ClickDragPage(QWidget):
