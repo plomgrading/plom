@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'Preparation',
     'TestCreator',
     'Profile',
+    'BuildTestPDF',
 ]
 
 MIDDLEWARE = [

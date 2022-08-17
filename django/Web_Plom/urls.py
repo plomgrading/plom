@@ -24,4 +24,5 @@ urlpatterns = [
     path('', include('Profile.urls')),
     path('create/', include('Preparation.urls')),
     path('create/spec/', include('TestCreator.urls')),
+    path('', include('BuildTestPDF.urls')),
 ]
