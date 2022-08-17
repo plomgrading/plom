@@ -39,6 +39,7 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
+    QAction,
     QDialog,
     QInputDialog,
     QMessageBox,
@@ -983,7 +984,7 @@ class MarkerClient(QWidget):
         self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         # Paste the username, question and version into GUI.
-        self.ui.userLabel.setText(self.msgr.whoami())
+        self.ui.userLabel.setText(self.msgr.username)
         try:
             question_label = get_question_label(self.exam_spec, self.question)
         except (ValueError, KeyError):
@@ -1024,6 +1025,23 @@ class MarkerClient(QWidget):
         self.ui.closeButton.clicked.connect(self.close)
         m = QMenu()
         m.addAction("Get nth...", self.requestInteractive)
+        m.addSection("Options")
+        a = QAction("Prefer tasks tagged for me", self)
+        a.setCheckable(True)
+        # TODO: would like on-by-default: Issue #2253
+        a.setChecked(False)
+        a.triggered.connect(self.toggle_prefer_tagged)
+        self._prefer_tags_action = a
+        m.addAction(a)
+        a = QAction("placeholder", self)
+        a.setCheckable(True)
+        a.setChecked(False)
+        a.triggered.connect(self.toggle_prefer_above)
+        # TODO: probably we should write a subclass, or a use an embedded lineEdit
+        a.stored_value = 0
+        a.setText(f"Prefer paper number \N{Greater-than Or Equal To} {a.stored_value}")
+        self._prefer_above_action = a
+        m.addAction(a)
         self.ui.getNextButton.setMenu(m)
         # self.ui.getNextButton.setPopupMode(QToolButton.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
@@ -1054,6 +1072,42 @@ class MarkerClient(QWidget):
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)
+
+    def toggle_prefer_tagged(self):
+        pass
+        # m = self.ui.getNextButton.menu()
+        # print(self._prefer_tags_action.isChecked())
+
+    @property
+    def prefer_tagged(self):
+        return self._prefer_tags_action.isChecked()
+
+    def toggle_prefer_above(self):
+        a = self._prefer_above_action
+        if not a.isChecked():
+            return
+        max_papernum = self.exam_spec["numberToProduce"]
+        n, ok = QInputDialog.getInt(
+            self,
+            "Prefer paper numbers above...",
+            "<p>Perhaps you want to start marking at a particular paper number.</p>"
+            "<p>Preference for paper numbers at or above this value.</p>",
+            0,
+            a.stored_value,
+            max_papernum,
+        )
+        if not ok:
+            a.setChecked(False)
+            return
+        a.stored_value = n
+        a.setText(f"Prefer paper number \N{Greater-than Or Equal To} {a.stored_value}")
+
+    @property
+    def prefer_above(self):
+        """User prefers to mark papers above this value, or None if no preference."""
+        if not self._prefer_above_action.isChecked():
+            return None
+        return self._prefer_above_action.stored_value
 
     def loadMarkedList(self):
         """
@@ -1282,6 +1336,16 @@ class MarkerClient(QWidget):
             None
         """
         attempts = 0
+        tag = None
+        if self.prefer_tagged:
+            tag = "@" + self.msgr.username
+        above = self.prefer_above
+        if tag and above:
+            log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)
+        elif tag:
+            log.info('Next available?  Prefer tagged with "%s"', tag)
+        elif above:
+            log.info("Next available?  Prefer above %s", above)
         while True:
             attempts += 1
             # little sanity check - shouldn't be needed.
@@ -1289,7 +1353,9 @@ class MarkerClient(QWidget):
             if attempts > 5:
                 return
             try:
-                task = self.msgr.MaskNextTask(self.question, self.version)
+                task = self.msgr.MaskNextTask(
+                    self.question, self.version, tag=tag, above=above
+                )
                 if not task:
                     return
             except PlomSeriousException as err:
@@ -1381,9 +1447,24 @@ class MarkerClient(QWidget):
             )
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
+        tag = None
+        if self.prefer_tagged:
+            tag = "@" + self.msgr.username
+        above = self.prefer_above
+        if tag and above:
+            log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)
+        elif tag:
+            log.info('Next available?  Prefer tagged with "%s"', tag)
+        elif above:
+            log.info("Next available?  Prefer above %s", above)
         # New downloader but reuse the existing Messenger clone
         self.backgroundDownloader = BackgroundDownloader(
-            self.question, self.version, self._bgdownloader_msgr, self.workingDirectory
+            self.question,
+            self.version,
+            self._bgdownloader_msgr,
+            workdir=self.workingDirectory,
+            tag=tag,
+            above=above,
         )
         self.backgroundDownloader.downloadSuccess.connect(
             self._requestNextInBackgroundFinished

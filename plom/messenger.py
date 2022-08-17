@@ -258,18 +258,42 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MaskNextTask(self, q, v):
+    def MaskNextTask(self, q, v, tag=None, above=None):
         """Ask server for a new marking task, return tgv or None.
 
-        None indicated no more tasks available.
+        Args:
+            q (int): question.
+            v (int): version.
+
+        Keyword Args:
+            tag (str/None): if any tasks are available with this tag,
+                we have a preference for those.  (But we will still
+                accept tasks without the tag).
+            above (int/None): start asking for tasks with paper
+                number at least this large, but wrapping around if
+                necessary.
+
+        If you specify both ``tag`` and ``above``, the logic is
+        currently "or" but this could change without notice!
+
+        Return:
+            str/None: either the task string or `None` indicated no
+            more tasks available.
+
         TODO: why are we using json for a string return?
         """
-
         self.SRmutex.acquire()
         try:
             response = self.get(
                 "/MK/tasks/available",
-                json={"user": self.user, "token": self.token, "q": q, "v": v},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "q": q,
+                    "v": v,
+                    "above": above,
+                    "tag": tag,
+                },
             )
             # throw errors when response code != 200.
             if response.status_code == 204:

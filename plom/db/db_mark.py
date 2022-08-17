@@ -6,6 +6,7 @@
 from datetime import datetime, timezone
 import json
 import logging
+from time import time
 import uuid
 
 import peewee as pw
@@ -102,11 +103,12 @@ def MgetDoneTasks(self, user_name, q, v):
     return mark_list
 
 
-def MgetNextTask(self, q, v):
+def MgetNextTask(self, q, v, *, tag, above):
     """Find unmarked (but scanned) q/v-group and send the group-id back to client."""
     with plomdb.atomic():
         try:
-            qref = (
+            t0 = time()
+            query = (
                 QGroup.select()
                 .join(Group)
                 .where(
@@ -114,9 +116,29 @@ def MgetNextTask(self, q, v):
                     QGroup.question == q,
                     QGroup.version == v,
                     Group.scanned == True,  # noqa: E712
+                    # QGroup.tag == tag,  # HELP!!
+                    # QGroup.questiontaglink == tag,  # HELP!!
                 )
-                .get()
             )
+            t1 = time()
+            if tag or above:
+                if tag:
+                    log.info('We are looking for tag "%s"', tag)
+                # TODO: can't we SQL query it above without looping?
+                for qref in query:
+                    if tag:
+                        tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
+                        if tag in tag_list:
+                            log.debug(f"we got tag match for '{tag}' in {tag_list}")
+                            break
+                    if above and qref.test.test_number >= above:
+                        log.debug(f"we got match with paper_num >= {above}")
+                        break
+                else:
+                    qref = query.get()
+            else:
+                qref = query.get()
+            t2 = time()
             # as per #1811 - the user should be none here - assert here.
             assert (
                 qref.user is None
@@ -125,8 +147,13 @@ def MgetNextTask(self, q, v):
             log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
             return None
 
-        log.debug("Next Q{}v{} task = {}".format(q, v, qref.group.gid))
-        return qref.group.gid
+        task = qref.group.gid
+        if tag or above:
+            tstr = "%.3gs initial query + %.3gs tag filter" % (t1 - t0, t2 - t1)
+        else:
+            tstr = "%.3gs initial query + %.3gs get" % (t1 - t0, t2 - t1)
+        log.info(f"Next Q{q}v{v} task = {task}, time = {tstr}")
+        return task
 
 
 def MgiveTaskToClient(self, user_name, group_id, version):
