@@ -26,7 +26,7 @@
             <strong>{{ spec_longname }}</strong>
             <p>{{ spec_shortname }}</p>
             <a class="btn btn-success" href="{% url 'spec_summary' %}">View summary</a>
-            <a class="btn btn-secondary" href="{% url 'generate_spec' %}" download="{{ spec_shortname }}.toml">Download</a>
+            <a class="btn btn-secondary" href="{% url 'generate_spec' %}" download="{{ slugged_spec_shortname }}.toml">Download</a>
             <btn class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</btn>
 
             <div class="modal fade" id="deleteModal">

@@ -4,6 +4,7 @@ from django import forms
 from django.http import FileResponse
 from django.shortcuts import render
 from django.views import View
+from django.utils.text import slugify
 
 from django_htmx.http import HttpResponseClientRedirect
 
@@ -70,6 +71,7 @@ class PreparationLandingView(ManagerRequiredBaseView):
                     "can_qvmap": True,
                     "spec_longname": spec.get_long_name(),
                     "spec_shortname": spec.get_short_name(),
+                    "slugged_spec_shortname": slugify(spec.get_short_name()),
                     "test_versions": spec.get_n_versions(),
                 }
             )
