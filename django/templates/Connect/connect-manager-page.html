@@ -42,6 +42,39 @@
             </form>
         </div>
     </div>
+
+    <div class="card w-50">
+        <div class="card-body">
+            <h5 class="card-title">Manager details</h5>
+            <p class="card-text">Set the login details for the Plom-classic manager account.</p>
+
+            <form hx-post="{% url 'attempt_manager_signup' %}" hx-target="#init_manager_response">
+                {% csrf_token %}
+
+                <div class="row">
+                    <label for="{{ manager_form.username.id_for_label }}" class="col-sm-3 col-form-label fs-7">{{ manager_form.username.label }}</label>
+                    <div class="col-sm-9">
+                        {{ manager_form.username }}
+                    </div>
+
+                    <label for="{{ manager_form.password.id_for_label }}" class="col-sm-3 col-form-label fs-7">{{ manager_form.password.label }}</label>
+                    <div class="col-sm-9">
+                        {{ manager_form.password }}
+                    </div>
+                </div>
+
+                <div id="init_manager_response">
+                    <p></p>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-2">
+                        <input type="submit" class="btn btn-primary" value="Login" onclick="document.getElementById('manager_result').style.opacity = '0';">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

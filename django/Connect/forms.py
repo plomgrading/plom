@@ -15,3 +15,15 @@ class CoreConnectionForm(forms.Form):
         widget=forms.NumberInput(attrs={'min': 0, 'class': 'form-control', 'x-bind:value': 'port_number', 'x-model': 'port_number'}),
         initial=41984
     )
+
+
+class CoreManagerLoginForm(forms.Form):
+    """Handle login details for the classic manager account"""
+    username = forms.CharField(
+        label='Username:',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    password = forms.CharField(
+        label='Password:',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )

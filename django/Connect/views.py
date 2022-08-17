@@ -3,7 +3,7 @@ from requests.exceptions import ConnectionError
 import json
 import re
 
-from plom.plom_exceptions import PlomConnectionError
+from plom.plom_exceptions import PlomConnectionError, PlomAuthenticationException, PlomExistingLoginException
 
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
@@ -13,7 +13,7 @@ from django.views.generic.base import TemplateView
 from braces.views import GroupRequiredMixin, LoginRequiredMixin
 
 from Connect.services import CoreConnectionService
-from Connect.forms import CoreConnectionForm
+from Connect.forms import CoreConnectionForm, CoreManagerLoginForm
 from .models import CoreServerConnection
 
 
@@ -39,6 +39,7 @@ class ConnectServerManagerView(ManagerRequiredTemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = CoreConnectionForm
+        context['manager_form'] = CoreManagerLoginForm
         return context
 
 
@@ -66,3 +67,21 @@ class AttemptCoreConnectionView(ManagerRequiredUtilView):
             print(e)
             return HttpResponse(f'<p id="result" style="color: red;">Unable to connect to Plom Classic. Is the server running?</p>')
         
+
+class AttemptCoreManagerLoginView(ManagerRequiredUtilView):
+    """Log in as the core server manager account"""
+
+    def post(self, request):
+        form_data = request.POST
+        username = form_data['username']
+        password = form_data['password']
+
+        core = CoreConnectionService()
+
+        try:
+            manager = core.authenticate_manager(username, password)
+            return HttpResponse(f'<p id="manager_result">Manager login successful!</p>')
+        except Exception as e:
+            print(e)
+            return HttpResponse(f'<p id="manager_result" style="color: red;">{e}</p>')
+
