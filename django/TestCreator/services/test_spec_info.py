@@ -414,15 +414,25 @@ class TestSpecService:
         self.set_total_marks(input_spec["totalMarks"])
 
         # question details
-        for i in range(self.get_n_questions()):
-            question = input_spec["question"][i]
-            q_pages = [j - 1 for j in question["pages"]]
-            label = question["label"]
-            mark = question["mark"]
-            shuffle = question["select"] == "shuffle"
+        # check if question = list-of-dict, or dict-of-dict
+        if isinstance(input_spec["question"], dict):
+            for q_str,question in input_spec["question"].items():
+                q_pages = [j - 1 for j in question["pages"]]
+                label = question.get("label", f"Q{q_str}")
+                mark = question["mark"]
+                shuffle = question["select"] == "shuffle"
+                self.add_question(int(q_str), label, mark, shuffle)
+                self.set_question_pages(q_pages, int(q_str))
+        else:
+            for i in range(self.get_n_questions()):
+                question = input_spec["question"][i]
+                q_pages = [j - 1 for j in question["pages"]]
+                label = question.get("label", f"Q{i+1}")
+                mark = question["mark"]
+                shuffle = question["select"] == "shuffle"
 
-            self.add_question(i + 1, label, mark, shuffle)
-            self.set_question_pages(q_pages, i + 1)
+                self.add_question(i + 1, label, mark, shuffle)
+                self.set_question_pages(q_pages, i + 1)
 
         # do-not-mark pages
         dnm_pages = [j - 1 for j in input_spec["doNotMarkPages"]]

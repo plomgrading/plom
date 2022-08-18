@@ -78,6 +78,7 @@ class Command(BaseCommand):
 
         try:
             vlad.verifySpec()
+            validated_spec = vlad.spec
         except ValueError as err:
             self.stderr.write(f"There was an error validating the spec: {err}")
             return
@@ -92,7 +93,10 @@ class Command(BaseCommand):
         if pdf_doc.page_count != spec_dict['numberOfPages']:
             self.stderr.write(f"Sample pdf does not match the test specification. PDF has {pdf_doc.page_count}, but spec indicates {spec_dict['numberOfPages']}.")
         self.stdout.write("Sample pdf has correct page count - matches specification.")
-        speck.read_spec_dict(spec_dict, pdf_path)
+
+        # Load in the validated spec from vlad - not the original toml. This will be correctly populated
+        # with any optional keys etc. See issue #88 
+        speck.read_spec_dict(validated_spec, pdf_path)
         self.stdout.write("Test specification and sample pdf uploaded to server.")
 
 
