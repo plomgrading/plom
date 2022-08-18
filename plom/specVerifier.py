@@ -251,14 +251,16 @@ class SpecVerifier:
         """Initialize a SpecVerifier from a dict.
 
         Args:
-            d (dict): an exam specification.
+            d (dict): an exam specification - it will not be modified by the specVerifier, rather
+                specVerifier makes a copy of that dict.
         """
-        question = d.get("question", None)
+        local_d = deepcopy(d)  # see issue 2258
+        question = local_d.get("question", None)
         if not question:
             raise ValueError("Specification error - must contain at least one question")
         if isinstance(question, list):
-            d["question"] = {str(g + 1): v for g, v in enumerate(question)}
-        self.spec = d
+            local_d["question"] = {str(g + 1): v for g, v in enumerate(question)}
+        self.spec = local_d
 
     @classmethod
     def _template_as_bytes(cls):
