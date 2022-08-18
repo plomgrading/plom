@@ -64,17 +64,17 @@ class TestSpecGenerateTests(TestCase):
 
         self.assertEqual(spec_dict['idPage'], 1)
         self.assertEqual(spec_dict['doNotMarkPages'], [2])
-        self.assertEqual(spec_dict['question'], [
-            {
+        self.assertEqual(spec_dict['question'], {
+            1: {
                 'pages': [3],
                 'mark': 1,
                 'label': 'Q1',
                 'select': 'shuffle'
             },
-            {
+            2: {
                 'pages': [4],
                 'mark': 1,
                 'label': 'Q2',
                 'select': 'fix'
             }
-        ])
+        })
