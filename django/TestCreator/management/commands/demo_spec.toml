@@ -7,19 +7,19 @@ numberOfQuestions = 3
 numberToProduce = 0
 idPage = 1
 doNotMarkPages = [ 2, 6,]
-[[questions]]
+[[question]]
 pages = [ 3,]
 mark = 5
 label = "Q1"
 select = "shuffle"
 
-[[questions]]
+[[question]]
 pages = [ 4,]
 mark = 5
 label = "Q2"
 select = "fix"
 
-[[questions]]
+[[question]]
 pages = [ 5,]
 mark = 10
 label = "Q3"
