@@ -2,7 +2,7 @@ import re
 from django.db import transaction
 from django.contrib.auth.hashers import make_password, check_password
 from plom.messenger import Messenger, ManagerMessenger
-from plom.plom_exceptions import PlomConnectionError
+from plom.plom_exceptions import PlomConnectionError, PlomConflict, PlomSeriousException
 
 from Connect.models import CoreServerConnection, CoreManagerLogin
 
@@ -136,7 +136,11 @@ class CoreConnectionService:
         if not messenger.token:
             raise RuntimeError("Unable to authenticate manager.")
 
-        messenger.upload_spec(spec)
+        try:
+            messenger.upload_spec(spec)
+        except ValueError or PlomConflict as e:
+            messenger.clearAuthorisation(self.manager_username, password)
+            raise e
 
         messenger.clearAuthorisation(self.manager_username, password)
         messenger.stop()
