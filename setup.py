@@ -47,7 +47,7 @@ server_install_requires = [
     "exif>=1.2.2",
     "toml>=0.10.0",
     "tqdm",
-    "numpy",
+    "numpy>=1.17.0",
     "pandas>=1.0.0",
     "passlib",
     "pymupdf>=1.18.15",
