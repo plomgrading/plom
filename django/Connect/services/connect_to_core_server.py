@@ -16,6 +16,7 @@ class CoreConnectionService:
     def __init__(self):
         self.client_version = self.get_connection().client_version
         self.api = self.get_connection().api_number
+        self.manager_username = 'manager'
 
     def get_connection(self):
         """Return the server connection object"""
@@ -59,7 +60,7 @@ class CoreConnectionService:
     def is_manager_authenticated(self):
         """Return True if there is valid manager login information stored in the database"""
         manager_details = self.get_manager()
-        return manager_details.manager_username and manager_details.manager_password
+        return manager_details.password != ""
 
     def get_messenger(self):
         """Get a messenger connected to the core server"""
@@ -99,20 +100,19 @@ class CoreConnectionService:
         connection_obj.save()
 
     @transaction.atomic
-    def authenticate_manager(self, username: str, password: str):
+    def authenticate_manager(self, manager_password: str):
         """Login as the manager, and if successful, store details"""
         messenger = self.get_messenger()
         messenger.start()
-        messenger.requestAndSaveToken(username, password)
+        messenger.requestAndSaveToken(self.manager_username, manager_password)
 
         manager = None
         if messenger.token:
             manager = self.get_manager()
-            manager.manager_username = username
-            manager.manager_password = password
+            manager.password = manager_password
             manager.save()
 
-        messenger.clearAuthorisation(username, password)
+        messenger.clearAuthorisation(self.manager_username, manager_password)
         messenger.stop()
 
         return manager
@@ -121,8 +121,7 @@ class CoreConnectionService:
     def forget_manager(self):
         """Wipe manager login info from the database"""
         manager = self.get_manager()
-        manager.manager_username = ""
-        manager.manager_password = ""
+        manager.password = ""
         manager.save()
 
     def send_test_spec(self, spec: dict):
@@ -131,14 +130,13 @@ class CoreConnectionService:
         messenger.start()
 
         manager = self.get_manager()
-        username = manager.manager_username
-        password = manager.manager_password
+        password = manager.password
 
-        messenger.requestAndSaveToken(username, password)
+        messenger.requestAndSaveToken(self.manager_username, password)
         if not messenger.token:
             raise RuntimeError("Unable to authenticate manager.")
 
         messenger.upload_spec(spec)
 
-        messenger.clearAuthorisation(username, password)
+        messenger.clearAuthorisation(self.manager_username, password)
         messenger.stop()

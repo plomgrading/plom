@@ -50,8 +50,7 @@ class ConnectServerManagerView(ManagerRequiredTemplateView):
 
         manager = core.get_manager()
         context['manager_form'] = CoreManagerLoginForm(initial={
-            'username': manager.manager_username, 
-            'password': manager.manager_password
+            'password': manager.password
         })
 
         context['is_valid'] = core.is_there_a_valid_connection()
@@ -112,13 +111,12 @@ class AttemptCoreManagerLoginView(ManagerRequiredUtilView):
 
     def post(self, request):
         form_data = request.POST
-        username = form_data['username']
         password = form_data['password']
 
         core = CoreConnectionService()
 
         try:
-            manager = core.authenticate_manager(username, password)
+            manager = core.authenticate_manager(password)
             return HttpResponse(f'<p id="manager_result" class="text-success">Manager login successful!</p>')
         except Exception as e:
             print(e)

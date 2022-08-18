@@ -14,8 +14,7 @@ class CoreServerConnection(SingletonBaseModel):
 
 class CoreManagerLogin(SingletonBaseModel):
     """Login details for the core manager account"""
-    manager_username = models.CharField(max_length=100)
-    manager_password = models.CharField(max_length=100)
+    password = models.CharField(max_length=100)
 
 
 class CoreScannerLogin(SingletonBaseModel):
