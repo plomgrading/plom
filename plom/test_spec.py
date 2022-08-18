@@ -125,7 +125,7 @@ def test_spec_question_missing_key():
 
 def test_spec_question_select_key_takes_default():
     r = deepcopy(raw)
-    r["question"]["1"].pop("select")
+    # the demo spec does not have a select key for Q1.
     s = SpecVerifier(r)
     s.verify()
     assert s["question"]["1"]["select"] == "shuffle"
