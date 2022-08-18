@@ -68,6 +68,11 @@
                 {% csrf_token %}
 
                 <div class="row">
+                    <label for="manager_username" class="col-sm-3 col-form-label fs-7">Username: </label>
+                    <div class="col-sm-9">
+                        <input id="manager_username" class="form-control" type="text" value="manager" readonly>
+                    </div>
+
                     <label for="{{ manager_form.password.id_for_label }}" class="col-sm-3 col-form-label fs-7">{{ manager_form.password.label }}</label>
                     <div class="col-sm-9">
                         {{ manager_form.password }}
