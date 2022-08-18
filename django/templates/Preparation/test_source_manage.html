@@ -43,15 +43,26 @@
               <p class="card-text">
                 sha256: <span class="badge bg-info">{{ test_source.1 }}</span>
               </p>
-              <a class="btn btn-success" target="_blank" href="{{ version }}">View</a>
-              <a class="btn btn-primary" hx-post="{% url 'prep_mock' version %}">Mock</a>
-              <button class="btn btn-danger"
-                      hx-delete="{{ version }}"
-                      hx-confirm="Are you sure?"
-                      hx-target="body"
-                      hx-swap="outerHTML">
-                Delete
-              </button>
+              <div class="row row-cols-auto">
+                <div class="p-1 col">
+                  <a class="btn btn-success" target="_blank" href="{{ version }}">View</a>
+                </div>
+                <div class="p-1 col">
+                  <form action="{% url 'prep_mock' version %}" target="_blank" method="post">
+                    {% csrf_token %}
+                    <input class="btn btn-primary" type="submit" value="Mock">
+                  </form>
+                </div>
+                <div class="p-1 col">
+                  <button class="btn btn-danger"
+                  hx-delete="{{ version }}"
+                  hx-confirm="Are you sure?"
+                  hx-target="body"
+                  hx-swap="outerHTML">
+                    Delete
+                  </button>
+                </div>
+              </div>
             {% else %}
               <h5 class="card-title">
                 Upload PDF for version {{ version }}
