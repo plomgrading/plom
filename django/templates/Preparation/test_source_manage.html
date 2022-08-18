@@ -44,6 +44,7 @@
                 sha256: <span class="badge bg-info">{{ test_source.1 }}</span>
               </p>
               <a class="btn btn-success" target="_blank" href="{{ version }}">View</a>
+              <a class="btn btn-primary" hx-post="{% url 'prep_mock' version %}">Mock</a>
               <button class="btn btn-danger"
                       hx-delete="{{ version }}"
                       hx-confirm="Are you sure?"

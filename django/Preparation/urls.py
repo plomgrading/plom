@@ -11,13 +11,15 @@ from .views import (
     PQVMappingDeleteView,
     PQVMappingUploadView,
     ClassicServerInfoView,
-    ClassicServerURLView
+    ClassicServerURLView,
+    MockExamView,
 )
 
 urlpatterns = [
     path("", PreparationLandingView.as_view(), name="prep_landing"),
     path("test_source/", TestSourceManageView.as_view(), name="prep_sources"),
     path("test_source/<int:version>", TestSourceManageView.as_view(), name="prep_source_upload"),
+    path("test_source/mock/<int:version>", MockExamView.as_view(), name='prep_mock'),
     path("prename/", PrenamingView.as_view(), name='prep_prename'),
     path("classlist/", ClasslistView.as_view(), name='prep_classlist'),
     path("classlist/download", ClasslistDownloadView.as_view(), name='prep_classlist_download'),
