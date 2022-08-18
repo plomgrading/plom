@@ -5,10 +5,11 @@ from Preparation.models import SingletonBaseModel
 
 class CoreServerConnection(SingletonBaseModel):
     """Connect to core server"""
-    server_url = models.TextField(default="")
+    server_name = models.TextField(default="")
     port_number = models.IntegerField(default=0)
-    api = models.TextField(default="")
-    client_version = models.TextField(default="")
+    server_details = models.TextField(default="")
+    client_version = models.TextField(default="0.9.3.dev")
+    api_number = models.TextField(default="50")
 
 
 class CoreManagerLogin(SingletonBaseModel):

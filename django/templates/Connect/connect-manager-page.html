@@ -47,13 +47,13 @@
 
                 <div id="init_connection_response">
                     {% if is_valid %}
-                    <p class="text-success">Connection established to Classic server.</p>
+                    <p class="text-success">Core server successfully pinged.</p>
                     {% else %}
                     <p></p>
                     {% endif %}
                 </div>
 
-                <input type="submit" class="btn btn-primary" value="Connect" onclick="document.getElementById('result').style.opacity = '0';">
+                <input type="submit" class="btn btn-primary" value="Test connection" onclick="document.getElementById('result').style.opacity = '0';">
                 <button class="btn btn-danger" hx-post="{% url 'forget_core_connection' %}" hx-target="#init_connection_response">Forget</button>
             </form>
         </div>
@@ -81,13 +81,13 @@
 
                 <div id="init_manager_response">
                     {% if manager_logged_in %}
-                    <p class="text-success">Manager logged in.</p>
+                    <p class="text-success">Manager login details validated.</p>
                     {% else %}
                     <p></p>
                     {% endif %}
                 </div>
 
-                <input type="submit" class="btn btn-primary" value="Login" onclick="document.getElementById('manager_result').style.opacity = '0';">
+                <input type="submit" class="btn btn-primary" value="Test manager login" onclick="document.getElementById('manager_result').style.opacity = '0';">
                 <button class="btn btn-danger" hx-post="{% url 'forget_manager_connection' %}" hx-target="#init_manager_response">Forget</button>
             </form>
         </div>

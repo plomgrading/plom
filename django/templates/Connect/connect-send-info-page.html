@@ -9,10 +9,11 @@
 <div class="d-grid gap-2">
     <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
 
+    {% if is_valid and manager_details_available %}
     <div class="card w-50">
         <div class="card-body">
             <h5 class="card-title">Test specification</h5>
-            <p class="card-text" id="spec_result">Status</p>
+            <p class="card-text" id="spec_result">Ready to send to Plom-classic</p>
             <a class="btn btn-primary" hx-put="{% url 'connect_send_spec' %}" hx-target="#spec_result">Send</a>
         </div>
     </div>
@@ -32,6 +33,14 @@
             <a class="btn btn-primary">Send</a>
         </div>
     </div>
+    {% else %}
+    <div class="card w-50">
+        <div class="card-body">
+            <h5 class="card-title">Connection not established</h5>
+            <p class="card-text">Please test your Plom-classic connection details.</p>
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 

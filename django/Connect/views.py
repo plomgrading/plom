@@ -1,4 +1,4 @@
-import requests
+import traceback
 from requests.exceptions import ConnectionError
 import json
 import re
@@ -41,9 +41,8 @@ class ConnectServerManagerView(ManagerRequiredTemplateView):
         context = super().get_context_data(**kwargs)
         core = CoreConnectionService()
 
-        connection = core.get_connection()
-        url = connection.server_url
-        port = connection.port_number
+        url = core.get_server_name()
+        port = core.get_port_number()
         context['form'] = CoreConnectionForm(initial={
             'server_url': url if url else 'localhost', 
             'port_number': port if port else 41984
@@ -65,6 +64,10 @@ class ConnectSendInfoToCoreView(ManagerRequiredTemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        core = CoreConnectionService()
+
+        context['is_valid'] = core.is_there_a_valid_connection()
+        context['manager_details_available'] = core.is_manager_authenticated()
         return context
 
 
@@ -84,13 +87,16 @@ class AttemptCoreConnectionView(ManagerRequiredUtilView):
 
             if version_string:
                 core.save_connection_info(url, port_number, version_string)
-                version = core.get_client_version()
-                api = core.get_api()
-                return HttpResponse(f'<p id="result" class="text-success">Connection successful! Server version: {version}, API: {api}</p>')
+                return HttpResponse(f'<p id="result" class="text-success">Connection successful! {version_string}</p>')
 
         except PlomConnectionError as e:
             print(e)
             return HttpResponse(f'<p id="result" style="color: red;">Unable to connect to Plom Classic. Is the server running?</p>')
+        except Exception as e:
+            exception_string = traceback.format_exc(chain=False)
+            print(exception_string)
+            print(type(exception_string))
+            return HttpResponse(f'<p id="result" style="color: red;">{exception_string}</p>') 
 
 
 class ForgetCoreConnectionView(ManagerRequiredUtilView):
