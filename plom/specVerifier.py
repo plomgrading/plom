@@ -37,9 +37,8 @@ def get_question_label(spec, n):
     """Print question label for the nth question from spec dict
 
     args:
-        spec (dict): a spec dict, not necessarily a SpecVerifier
-            object.  TODO: currently will not work on a SpecVerifier,
-            you will need to call `get_question_label(sv.spec, n)`.
+        spec (dict/SpecVerifier): a spec dict or a SpecVerifier
+            object.
         n (int): which question, current indexed from 1.
 
     TODO: change spec question keys to int.
@@ -48,7 +47,10 @@ def get_question_label(spec, n):
         ValueError: `n` is out of range.
     """
     n = int(n)
-    N = spec.get("numberOfQuestions", None)
+    try:
+        N = spec["numberOfQuestions"]
+    except KeyError:
+        N = None
     if N:
         if n < 1 or n > N:
             raise ValueError(f"question={n} out of range [1, {N}]")
