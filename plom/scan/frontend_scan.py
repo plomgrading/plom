@@ -10,7 +10,7 @@ This module deals with Test Pages: these are usually bundles of pages
 with a particular student.  In theory these mostly map onto expected blank
 pages that the server is aware of (from exam creation time).
 
-In contrast, Homework pages are associated with a paricular student, for
+In contrast, Homework pages are associated with a particular student, for
 example, each student has uploaded a self-scanned bundle (pdf file) of
 their work.  But the precise relationship between this work and questions
 in the exam is less clear.  For these, see :py:module:`frontend_hwscan`.
