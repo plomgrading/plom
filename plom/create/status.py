@@ -43,7 +43,7 @@ def status(*, msgr):
     if msgr.verify_ssl:
         print(check_mark + " secure connection verified with SSL")
     else:
-        print(warn_mark + " unsecure connection (self-signed or invalid SSL cert)")
+        print(warn_mark + " insecure connection (self-signed or invalid SSL cert)")
 
     print("\nSpecification")
     print("-------------\n")
