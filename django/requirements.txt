@@ -1,5 +1,6 @@
 django==4.1
 django-braces
+django-reset-migrations
 pymupdf
 toml
 model_bakery # for tests

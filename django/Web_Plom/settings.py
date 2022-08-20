@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # for 'fun' with migrations - see #77
+    'reset_migrations',
     # add newly created app folder below
     'Authentication',
     'Preparation',

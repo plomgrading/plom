@@ -17,6 +17,14 @@ We need to install any required python packages and get the actual webplom repo.
 
 5. Switch to the dev branch: `git checkout dev`
 
+## Clean up any old migrations
+In case they cause you any headaches, you can clean up any old migrations using the
+pip package 'django-reset-migrations'.
+1. Run `python3 manage.py reset_migrations Authentication Preparation TestCreator`
+
+**Note** The above needs to be run on any django app that has any db-models in it. Make sure the above
+command is updated when more apps are added.
+
 ## Initialise the database
 Django needs you to set up all the database tables.
 
