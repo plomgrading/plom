@@ -37,7 +37,9 @@ def get_question_label(spec, n):
     """Print question label for the nth question from spec dict
 
     args:
-        spec (dict): a spec dict.
+        spec (dict): a spec dict, not necessarily a SpecVerifier
+            object.  TODO: currently will not work on a SpecVerifier,
+            you will need to call `get_question_label(sv.spec, n)`.
         n (int): which question, current indexed from 1.
 
     TODO: change spec question keys to int.
@@ -46,8 +48,13 @@ def get_question_label(spec, n):
         ValueError: `n` is out of range.
     """
     n = int(n)
-    if n < 1 or n > spec["numberOfQuestions"]:
-        raise ValueError(f'question={n} out of range [1, {spec["numberOfQuestions"]}]')
+    N = spec.get("numberOfQuestions", None)
+    if N:
+        if n < 1 or n > N:
+            raise ValueError(f"question={n} out of range [1, {N}]")
+    else:
+        if n < 1:
+            raise ValueError(f"question={n} out of range [1, ...]")
     label = spec["question"][str(n)].get("label", None)
     if label:
         return label
@@ -185,9 +192,9 @@ class SpecVerifier:
       IDpage = 1
       Do not mark pages = [2]
       Number of questions to mark = 3
-        Question 1: pages 3, selected as shuffle, worth 5 marks
-        Question 2: pages [4], selected as fix, worth 10 marks
-        Question 3: pages [5, 6], selected as shuffle, worth 10 marks
+        Q1: pages 3, selected as shuffle, worth 5 marks
+        Q2: pages [4], selected as fix, worth 10 marks
+        Q3: pages [5, 6], selected as shuffle, worth 10 marks
       Exam total = 25 marks
 
 
@@ -236,8 +243,8 @@ class SpecVerifier:
       IDpage = 1
       Do not mark pages = [2]
       Number of questions to mark = TBD*
-        Question 1: pages 3, selected as shuffle*, worth 5 marks
-        Question 2: pages 4, selected as shuffle*, worth 10 marks
+        Q1: pages 3, selected as shuffle*, worth 5 marks
+        Q2: pages 4, selected as shuffle*, worth 10 marks
       Exam total = TBD* marks
       (TBD* fields will be filled in on verification)
 
@@ -252,8 +259,8 @@ class SpecVerifier:
       IDpage = 1
       Do not mark pages = [2]
       Number of questions to mark = 2
-        Question 1: pages [3], selected as shuffle, worth 5 marks
-        Question 2: pages [4], selected as shuffle, worth 10 marks
+        Q1: pages [3], selected as shuffle, worth 5 marks
+        Q2: pages [4], selected as shuffle, worth 10 marks
       Exam total = 15 marks
 
     We also saw that omitting the ``select`` field defaults to
@@ -425,8 +432,8 @@ class SpecVerifier:
         )
         s += "\n"
         for gs, question in self.spec["question"].items():
-            s += "    Question {}: pages {}, selected as {}, worth {} marks\n".format(
-                gs,
+            s += "    {}: pages {}, selected as {}, worth {} marks\n".format(
+                get_question_label(self, gs),
                 question["pages"],
                 question.get("select", "shuffle*"),
                 question["mark"],
