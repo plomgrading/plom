@@ -1612,7 +1612,7 @@ class Annotator(QWidget):
 
         1. Renders the current scene as a static bitmap.
         2. Retrieves current annotations in reverse chronological order.
-        3. Adds varous other metadata.
+        3. Adds various other metadata.
         4. Writes JSON into the ``.plom`` file.
 
         Note: called "pickle" for historical reasons: it is neither a
