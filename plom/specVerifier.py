@@ -78,7 +78,7 @@ def isListPosInt(l, lastPage):
 
     """
     # check it is a list
-    if type(l) is not list:
+    if not isinstance(l, list):
         return False
     # check each entry is 0<n<=lastPage
     for n in l:
@@ -99,7 +99,7 @@ def isContiguous(l):
     returns:
         bool:
     """
-    if type(l) is not list:
+    if not isinstance(l, list):
         return False
     sl = set(l)
     for n in range(min(sl), max(sl) + 1):
@@ -676,7 +676,7 @@ class SpecVerifier:
             print("    DoNotMark pages is missing: defaulting to empty" + chk)
             self.spec["doNotMarkPages"] = []
         pages = self.spec["doNotMarkPages"]
-        if type(pages) is not list:
+        if not isinstance(pages, list):
             raise ValueError(
                 f'DoNotMark pages "{pages}" is not a list of positive integers'
             )
