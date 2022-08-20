@@ -161,6 +161,15 @@ def test_spec_question_label_printer():
     assert get_question_label(s, 1) == "Track 1"
     assert get_question_label(s, 2) == "Q2"
     assert get_question_label(s, 3) == get_question_label(sd, 3)
+    # OO works too
+    assert s.get_question_label(1) == "Track 1"
+    assert s.get_question_label(2) == "Q2"
+    assert s.get_question_label(3) == get_question_label(sd, 3)
+
+
+def test_spec_question_label_str_index():
+    s = SpecVerifier.demo()
+    assert s.get_question_label("1") == s.get_question_label(1)
 
 
 def test_spec_question_label_printer_errors():

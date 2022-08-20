@@ -39,8 +39,10 @@ def get_question_label(spec, n):
     args:
         spec (dict/SpecVerifier): a spec dict or a SpecVerifier
             object.
-        n (int): which question, current indexed from 1.
+        n (int/str): which question, current indexed from 1.
 
+    returns:
+        str: the custom label of a question or "Qn" if one is not set.
     TODO: change spec question keys to int.
 
     raises:
@@ -386,6 +388,20 @@ class SpecVerifier:
     # aliases to match the toml file
     numberToProduce = number_to_produce
 
+    def get_question_label(self, n):
+        """Get the question label of the nth question, indexed from 1.
+
+        Args:
+            spec (dict/SpecVerifier): a spec dict or a SpecVerifier
+                object.
+             n (int/str): which question, current indexed from 1.
+
+
+        Returns:
+            str: the custom label of a question or "Qn" if one is not set.
+        """
+        return get_question_label(self.spec, n)
+
     def set_number_papers_add_spares(
         self, n, spare_percent=10, min_extra=5, max_extra=100
     ):
@@ -435,7 +451,7 @@ class SpecVerifier:
         s += "\n"
         for gs, question in self.spec["question"].items():
             s += "    {}: pages {}, selected as {}, worth {} marks\n".format(
-                get_question_label(self, gs),
+                self.get_question_label(gs),
                 question["pages"],
                 question.get("select", "shuffle*"),
                 question["mark"],
