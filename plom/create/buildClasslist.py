@@ -81,7 +81,7 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     # clean up the column - strip whitespace
     df["name"].apply(lambda X: str(X).strip())  # avoid errors with blanks
 
-    find_paper_number_column(df, make=False)
+    find_paper_number_column(df)
 
     # everything clean - now either return just the necessary columns or all cols.
     if minimalist:
