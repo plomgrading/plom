@@ -81,6 +81,25 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     # clean up the column - strip whitespace
     df["name"].apply(lambda X: str(X).strip())  # avoid errors with blanks
 
+    find_paper_number_column(df)
+
+    # everything clean - now either return just the necessary columns or all cols.
+    if minimalist:
+        return df[["id", "name", "paper_number"]]
+    return df
+
+
+def find_paper_number_column(df):
+    """Find or make a paper_number column.
+
+    Args:
+        df (Pandas):
+
+    Returns:
+        None: modifies the input `df`.
+    """
+    import pandas
+
     # find the paper-number column and clean it up.
     papernumber_column = None
     for c in df.columns:
@@ -96,11 +115,6 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     )
     print(f"Renaming column {papernumber_column} to 'paper_number'")
     df.rename(columns={papernumber_column: "paper_number"}, inplace=True)
-
-    # everything clean - now either return just the necessary columns or all cols.
-    if minimalist:
-        return df[["id", "name", "paper_number"]]
-    return df
 
 
 def clean_canvas_csv(csv_file_name):
