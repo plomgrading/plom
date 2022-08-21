@@ -8,7 +8,7 @@ import logging
 
 from PyQt5.QtCore import Qt, QBuffer, QByteArray
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QPainter, QPixmap, QMovie
+from PyQt5.QtGui import QKeySequence, QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -20,10 +20,10 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QLabel,
     QPushButton,
-    QTabWidget,
-    QVBoxLayout,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -236,7 +236,14 @@ class KeyHelp(QDialog):
                 tw.insertRow(n)
                 tw.setItem(n, 0, QTableWidgetItem(dat["human"]))
                 tw.setItem(
-                    n, 1, QTableWidgetItem(", ".join(str(k) for k in dat["keys"]))
+                    n,
+                    1,
+                    QTableWidgetItem(
+                        ", ".join(
+                            QKeySequence(k).toString(QKeySequence.NativeText)
+                            for k in dat["keys"]
+                        )
+                    ),
                 )
                 tw.setItem(n, 2, QTableWidgetItem(dat["info"]))
 
@@ -296,7 +303,8 @@ class RubricNavDiagram(QFrame):
             return lambda: self.change_key(w)
 
         def stuff_it(w, x, y):
-            b = QPushButton(keydata[w]["keys"][0])
+            key = QKeySequence(keydata[w]["keys"][0])
+            b = QPushButton(key.toString(QKeySequence.NativeText))
             b.setStyleSheet(sheet)
             b.setToolTip(keydata[w]["human"])
             if w in actions_with_changeable_keys:
@@ -355,7 +363,8 @@ class ToolNavDiagram(QFrame):
             return lambda: self.change_key(w)
 
         def stuff_it(w, x, y):
-            b = QPushButton(keydata[w]["keys"][0])
+            key = QKeySequence(keydata[w]["keys"][0])
+            b = QPushButton(key.toString(QKeySequence.NativeText))
             b.setStyleSheet(sheet)
             b.setToolTip(keydata[w]["human"])
             if w in actions_with_changeable_keys:
