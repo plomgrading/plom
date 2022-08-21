@@ -61,8 +61,8 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
             break
     if id_column is None:
         raise ValueError('no "id" column is present')
-    # make sure id column named 'id' - lowercase
-    print(f"Renaming column {id_column} to 'id'")
+    if id_column != "id":
+        print(f'Renaming column "{id_column}" to "id"')
     df.rename(columns={id_column: "id"}, inplace=True)
     # clean up the column - strip whitespace
     df["id"] = df["id"].apply(lambda X: str(X).strip())  # avoid issues with non-string
@@ -75,8 +75,8 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
             break
     if fullname_column is None:
         raise ValueError('no "name" column is present')
-    # make sure fullname column named 'name' - lowercase
-    print(f"Renaming column {fullname_column} to 'name'")
+    if fullname_column != "name":
+        print(f'Renaming column "{fullname_column}" to "name"')
     df.rename(columns={fullname_column: "name"}, inplace=True)
     # clean up the column - strip whitespace
     df["name"].apply(lambda X: str(X).strip())  # avoid errors with blanks
@@ -119,7 +119,8 @@ def find_paper_number_column(df, make=True):
     df[papernumber_column] = df[papernumber_column].apply(
         lambda x: -1 if pandas.isna(x) else int(x)
     )
-    print(f"Renaming column {papernumber_column} to 'paper_number'")
+    if papernumber_column != "paper_number":
+        print(f'Renaming column "{papernumber_column}" to "paper_number"')
     df.rename(columns={papernumber_column: "paper_number"}, inplace=True)
 
 
