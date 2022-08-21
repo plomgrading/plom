@@ -4,16 +4,16 @@
 
 import functools
 
-from plom.messenger import FinishMessenger, ManagerMessenger
+from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
 def start_messenger(server=None, pwd=None):
     if server and ":" in server:
         s, p = server.split(":")
-        msgr = FinishMessenger(s, port=p)
+        msgr = ManagerMessenger(s, port=p)
     else:
-        msgr = FinishMessenger(server)
+        msgr = ManagerMessenger(server)
     msgr.start()
 
     try:
@@ -43,9 +43,8 @@ def with_finish_messenger(f):
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
         # if we have a messenger, nothing special, just call function
-        # Note: hacking to allow a ManagerMessenger too, Issue #2152
         msgr = kwargs.get("msgr")
-        if isinstance(msgr, (FinishMessenger, ManagerMessenger)):
+        if isinstance(msgr, ManagerMessenger):
             return f(*args, **kwargs)
 
         # if not, we assume its appropriate args to make a messenger

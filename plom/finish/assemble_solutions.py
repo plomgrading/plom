@@ -28,7 +28,7 @@ def _assemble_one_soln(
     """Assemble a solution for one particular paper.
 
     Args:
-        msgr (FinishMessenger): Messenger object that talks to the server.
+        msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir (pathlib.Path/str): The directory where we downloaded solns
             images.  We will also build cover pages there.
         outdir (pathlib.Path/str): where to build the solution pdf.
