@@ -122,33 +122,6 @@ def test_two_name_column_fails(tmpdir):
             assert X in warn_err
 
 
-def test_no_papernumber_column_fails(tmpdir):
-    tmpdir = Path(tmpdir)
-    vlad = PlomClasslistValidator()
-    with working_directory(tmpdir):
-        foo = tmpdir / "foo.csv"
-        with open(foo, "w") as f:
-            f.write('"id","name","paperNOz"\n')
-            f.write('12345678,"Doe",7\n')
-        assert not vlad.check_is_non_canvas_csv(foo)
-        with raises(ValueError):
-            _ = clean_non_canvas_csv(foo)
-
-        success, warn_err = vlad.validate_csv(foo, spec=None)
-        expected = [
-            {
-                "warn_or_err": "error",
-                "werr_line": 0,
-                "werr_text": "Missing paper number column",
-            }
-        ]
-        assert not success
-        # check these lists against each other - order not important
-        assert len(warn_err) == len(expected)
-        for X in expected:
-            assert X in warn_err
-
-
 def test_two_papernumber_column_fails(tmpdir):
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
