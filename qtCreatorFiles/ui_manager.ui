@@ -2430,19 +2430,198 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
        <string>Finishing</string>
       </attribute>
       <layout class="QFormLayout" name="formLayout_3">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_27">
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_29">
          <property name="text">
-          <string>Reassemble</string>
+          <string>Reassemble in directory</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="reassembleButton">
+       <item row="2" column="1">
+        <widget class="QFrame" name="frame_13">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_33">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLineEdit" name="reassembleFolderLineEdit">
+            <property name="text">
+             <string>&lt;hardcoded to current working directory for now&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="reassembleFolderButton">
+            <property name="text">
+             <string>Change output folder...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_30">
          <property name="text">
-          <string>Reassemble papers</string>
+          <string>Reassembly</string>
          </property>
         </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QFrame" name="frame_14">
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_6">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QRadioButton" name="radioButtonReassembleAll">
+            <property name="text">
+             <string>Reassemble all papers</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QRadioButton" name="radioButtonReassembleOne">
+            <property name="text">
+             <string>Reassemble only paper number</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="reassembleWhichSpinBox">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>9999</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <spacer name="horizontalSpacer_26">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>484</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QFrame" name="frame_15">
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_34">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="reassembleButton">
+            <property name="text">
+             <string>Reassemble papers</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="reassembleSolutionsButton">
+            <property name="text">
+             <string>Reassemble solutions</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_27">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QLabel" name="label_27">
+         <property name="text">
+          <string>&lt;p&gt;Papers and solutions will be reassembed as PDF files in a subfolders
+  &lt;tt&gt;reassembled/&lt;/tt&gt; and
+  &lt;tt&gt;solutions/&lt;/tt&gt;
+ of whatever folder is chosen above.&lt;/p&gt;
+
+&lt;p&gt;Any existing papers will be &lt;em&gt;skipped&lt;/em&gt;.  Delete any PDF files for which you want to force  reassembly.&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;Warning:&lt;/b&gt; currently the UI will block during reassembly.  Your should be able to see a progress bar on the command-line console (if visible).&lt;/p&gt;
+
+</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <spacer name="verticalSpacer_18">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
