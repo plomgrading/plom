@@ -1,3 +1,6 @@
 from django.contrib import admin
+from Connect.models import CoreServerConnection, CoreManagerLogin
 
-# Register your models here.
+
+admin.site.register(CoreServerConnection)
+admin.site.register(CoreManagerLogin)
