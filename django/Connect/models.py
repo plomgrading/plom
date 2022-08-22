@@ -8,8 +8,8 @@ class CoreServerConnection(SingletonBaseModel):
     server_name = models.TextField(default="")
     port_number = models.IntegerField(default=0)
     server_details = models.TextField(default="")
-    client_version = models.TextField(default="0.9.3.dev")
-    api_number = models.TextField(default="50")
+    client_version = models.TextField(default="0.10.0.dev")
+    api_number = models.TextField(default="52")
 
 
 class CoreManagerLogin(SingletonBaseModel):

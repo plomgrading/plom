@@ -86,7 +86,7 @@ class CoreConnectionService:
     def save_connection_info(self, s: str, port: int, version_string: str):
         """Save valid connection info to the database"""
         connection_obj = self.get_connection()
-        connection_obj.server_url = s
+        connection_obj.server_name = s
         connection_obj.port_number = port
         connection_obj.server_details = version_string
         connection_obj.save()
@@ -95,7 +95,7 @@ class CoreConnectionService:
     def forget_connection_info(self):
         """Wipe connection info from the database"""
         connection_obj = self.get_connection()
-        connection_obj.server_url = ""
+        connection_obj.server_name = ""
         connection_obj.port_number = 0
         connection_obj.save()
 
@@ -104,6 +104,7 @@ class CoreConnectionService:
         """Login as the manager, and if successful, store details"""
         messenger = self.get_messenger()
         messenger.start()
+        messenger.clearAuthorisation(self.manager_username, manager_password)
         messenger.requestAndSaveToken(self.manager_username, manager_password)
 
         manager = None
