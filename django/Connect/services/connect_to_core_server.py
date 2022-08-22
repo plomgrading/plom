@@ -135,11 +135,10 @@ class CoreConnectionService:
         manager = self.get_manager()
         password = manager.password
 
-        messenger.requestAndSaveToken(self.manager_username, password)
-        if not messenger.token:
-            raise RuntimeError("Unable to authenticate manager.")
-
         try:
+            messenger.requestAndSaveToken(self.manager_username, password)
+            if not messenger.token:
+                raise RuntimeError("Unable to authenticate manager.")
             messenger.upload_spec(spec)
         finally:
             messenger.clearAuthorisation(self.manager_username, password)
