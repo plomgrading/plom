@@ -6,7 +6,7 @@ rm -f db.sqlite3
 
 #python3 manage.py makemigrations TestCreator Preparation
 #python3 manage.py makemigrations Connect
-#python3 manage.py makemigrations
+python3 manage.py makemigrations
 python3 manage.py migrate
 
 # new thing to try #90
