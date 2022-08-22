@@ -10,15 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Annotator: help dialog shows diagrams for keyboard shortcuts.
-* Annotator: Hhlp dialog shows some "getting started" info for click-drag.
+* Annotator: help dialog shows some "getting started" info for click-drag.
+* Marker: can prefer papers tagged `@user`.
+* Marker: can start marking at a particular paper number.
 
 ### Changed
+* Spec format has changed: `[[question]]` is now preferred to `[question.1]` (for now both are supported).
 * QR format changed, future proofing for more papers, versions and pages.
 * "Public Code" shortened from 6 digits to 5.
 * Closing Annotator now resets the current tool.
+* Annotator: some shortcut keys are now changeable in the help dialog, but this feature is still "beta".
 
 ### Fixed
 * Some slow bottleneck API calls are faster, although more work is needed.
+* Annotator: shortcut keys should display correctly on macOS.
+* Annotator: keybindings are now saved between sessions (except for Custom mappings)
 * Annotator: many small UI fixes.
 * Various documentation fixes.
 
