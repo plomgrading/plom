@@ -104,17 +104,19 @@ class CoreConnectionService:
         """Login as the manager, and if successful, store details"""
         messenger = self.get_messenger()
         messenger.start()
-        messenger.clearAuthorisation(self.manager_username, manager_password)
-        messenger.requestAndSaveToken(self.manager_username, manager_password)
 
-        manager = None
-        if messenger.token:
-            manager = self.get_manager()
-            manager.password = manager_password
-            manager.save()
+        try:
+            messenger.requestAndSaveToken(self.manager_username, manager_password)
 
-        messenger.clearAuthorisation(self.manager_username, manager_password)
-        messenger.stop()
+            manager = None
+            if messenger.token:
+                manager = self.get_manager()
+                manager.password = manager_password
+                manager.save()
+
+        finally:
+            messenger.clearAuthorisation(self.manager_username, manager_password)
+            messenger.stop()
 
         return manager
 
@@ -139,9 +141,6 @@ class CoreConnectionService:
 
         try:
             messenger.upload_spec(spec)
-        except ValueError or PlomConflict as e:
+        finally:
             messenger.clearAuthorisation(self.manager_username, password)
-            raise e
-
-        messenger.clearAuthorisation(self.manager_username, password)
-        messenger.stop()
+            messenger.stop()
