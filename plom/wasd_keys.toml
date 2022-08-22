@@ -12,7 +12,7 @@ about_html = """
   <p>Many video games use "wasd" for movement of the character,
   so gamers may find this more natural than our default "esdf".</p>
   <p>(The website <a href="http://www.use-esdf.org">www.use-esdf.org</a>
-  argues gamers should switch!</p>
+  argues gamers should switch!)</p>
 """
 
 [next-tool]
