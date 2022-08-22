@@ -441,6 +441,8 @@ class Manager(QWidget):
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
         self.ui.flagReviewButton.clicked.connect(self.reviewFlagTableRowsForReview)
+        # Disabled access to "review" feature: Issue #2262
+        self.ui.flagReviewButton.setEnabled(False)
         self.ui.removeAnnotationsButton.clicked.connect(self.removeAnnotationsFromRange)
 
         self.ui.rubricsDownloadButton.clicked.connect(self.rubricsDownload)
