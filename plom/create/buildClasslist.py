@@ -142,7 +142,6 @@ def clean_canvas_csv(csv_file_name):
     find_paper_number_column(df)
     df = df[[STUDENT_NUM_COL, "Student", "paper_number"]]
     df.columns = ["id", "name", "paper_number"]
-    print(df)
     return df
 
 
