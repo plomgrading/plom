@@ -61,8 +61,8 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
             break
     if id_column is None:
         raise ValueError('no "id" column is present')
-    # make sure id column named 'id' - lowercase
-    print(f"Renaming column {id_column} to 'id'")
+    if id_column != "id":
+        print(f'Renaming column "{id_column}" to "id"')
     df.rename(columns={id_column: "id"}, inplace=True)
     # clean up the column - strip whitespace
     df["id"] = df["id"].apply(lambda X: str(X).strip())  # avoid issues with non-string
@@ -75,11 +75,34 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
             break
     if fullname_column is None:
         raise ValueError('no "name" column is present')
-    # make sure fullname column named 'name' - lowercase
-    print(f"Renaming column {fullname_column} to 'name'")
+    if fullname_column != "name":
+        print(f'Renaming column "{fullname_column}" to "name"')
     df.rename(columns={fullname_column: "name"}, inplace=True)
     # clean up the column - strip whitespace
     df["name"].apply(lambda X: str(X).strip())  # avoid errors with blanks
+
+    find_paper_number_column(df)
+
+    # everything clean - now either return just the necessary columns or all cols.
+    if minimalist:
+        return df[["id", "name", "paper_number"]]
+    return df
+
+
+def find_paper_number_column(df, make=True):
+    """Find or make a paper_number column.
+
+    Args:
+        df (Pandas):
+
+    Keyword Args:
+        make (bool): make an placeholder `paper_number` column if one
+            is not found.  True by default.
+
+    Returns:
+        None: modifies the input `df`.
+    """
+    import pandas
 
     # find the paper-number column and clean it up.
     papernumber_column = None
@@ -88,19 +111,17 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
             papernumber_column = c
             break
     if not papernumber_column:
-        # TODO - decide whether we should make one and populate it with sentinel -1s.
-        raise ValueError('no "paper_number" column is present.')
+        if not make:
+            raise ValueError('no "paper_number" column is present.')
+        papernumber_column = "paper_number"
+        df[[papernumber_column]] = None
     # clean it up.
     df[papernumber_column] = df[papernumber_column].apply(
         lambda x: -1 if pandas.isna(x) else int(x)
     )
-    print(f"Renaming column {papernumber_column} to 'paper_number'")
+    if papernumber_column != "paper_number":
+        print(f'Renaming column "{papernumber_column}" to "paper_number"')
     df.rename(columns={papernumber_column: "paper_number"}, inplace=True)
-
-    # everything clean - now either return just the necessary columns or all cols.
-    if minimalist:
-        return df[["id", "name", "paper_number"]]
-    return df
 
 
 def clean_canvas_csv(csv_file_name):
@@ -115,10 +136,13 @@ def clean_canvas_csv(csv_file_name):
     Returns:
         pandas.DataFrame: data with columns `id` and `name`
     """
-    student_info_df = import_canvas_csv(csv_file_name)
-    student_info_df = student_info_df[["Student Number", "Student"]]
-    student_info_df.columns = ["id", "name"]
-    return student_info_df
+    STUDENT_NUM_COL = "Student Number"
+    # STUDENT_NUM_COL = "SIS User ID"
+    df = import_canvas_csv(csv_file_name)
+    find_paper_number_column(df)
+    df = df[[STUDENT_NUM_COL, "Student", "paper_number"]]
+    df.columns = ["id", "name", "paper_number"]
+    return df
 
 
 def process_classlist_backend(student_csv_file_name):
@@ -231,20 +255,21 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
         raise FileNotFoundError(f'Cannot find file "{student_csv_file_name}"')
 
     vlad = PlomClasslistValidator()
-    success, warn_err = vlad.validate_csv(student_csv_file_name, spec=spec)
 
-    if success is False:
-        # validation failed, return warning, error list
-        PlomClasslistValidator.print_classlist_warnings_errors(warn_err)
-        return (False, warn_err)
+    if not vlad.check_is_canvas_csv(student_csv_file_name):
+        success, warn_err = vlad.validate_csv(student_csv_file_name, spec=spec)
 
-    # validation passed but there are warnings
-    if warn_err:
-        PlomClasslistValidator.print_classlist_warnings_errors(warn_err)
-        if ignore_warnings:
-            print("Continuing despite warnings")
-        else:
+        if success is False:
+            # validation failed, return warning, error list
+            PlomClasslistValidator.print_classlist_warnings_errors(warn_err)
             return (False, warn_err)
+
+        # validation passed but there are warnings
+        if warn_err:
+            PlomClasslistValidator.print_classlist_warnings_errors(warn_err)
+            if not ignore_warnings:
+                return (False, warn_err)
+            print("Continuing despite warnings")
 
     df = process_classlist_backend(student_csv_file_name)
     # "records" makes it output a list-of-dicts, one per row
