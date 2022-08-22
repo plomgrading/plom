@@ -63,7 +63,17 @@ _keybindings_list = [
     {"name": "wasd", "file": "wasd_keys.toml"},
     {"name": "ijkl", "file": "ijkl_keys.toml"},
     {"name": "esdf_french", "file": "esdf_french_keys.toml"},
-    {"name": "custom", "long_name": "Custom", "file": None},
+    {
+        "name": "custom",
+        "long_name": "Custom",
+        "file": None,
+        "about_html": """
+          <p>Changing any key starts a custom overlay.</p>
+          <p><b>Warning:</b> this is a beta feature; these customizations
+            are <em>not saved</em> when you restart Plom.  Issue #2254.
+          </p>
+        """,
+    },
 ]
 
 
