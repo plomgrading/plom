@@ -1236,7 +1236,7 @@ class Ui_Manager(object):
         self.label_26.setText(_translate("Manager", "Work-in-progress: more to follow..."))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.rubricsTab), _translate("Manager", "Rubrics"))
         self.label_29.setText(_translate("Manager", "Reassemble in directory"))
-        self.reassembleFolderLineEdit.setText(_translate("Manager", "<hardcoded to current working directory for now>"))
+        self.reassembleFolderLineEdit.setText(_translate("Manager", "."))
         self.reassembleFolderButton.setText(_translate("Manager", "Change output folder..."))
         self.label_30.setText(_translate("Manager", "Reassembly"))
         self.radioButtonReassembleAll.setText(_translate("Manager", "Reassemble all papers"))

@@ -447,9 +447,7 @@ class Manager(QWidget):
         self.ui.rubricsUploadButton.clicked.connect(self.rubricsUpload)
         self.ui.rubricsRefreshButton.clicked.connect(self.rubricsRefresh)
 
-        # TODO
-        # self.ui.reassembleFolderButton.clicked.connect(...)
-        self.ui.reassembleFolderButton.setEnabled(False)
+        self.ui.reassembleFolderButton.clicked.connect(self.reassembleChooseFolder)
         self.ui.reassembleButton.clicked.connect(self.reassemblePapers)
         self.ui.reassembleSolutionsButton.clicked.connect(self.reassembleSolutions)
 
@@ -2003,7 +2001,20 @@ class Manager(QWidget):
     rubricsUpload = rubricsDownload
 
     ##################
-    # rubrics tab stuff
+    # reassemble tab stuff
+
+    def reassembleChooseFolder(self):
+        dur = QFileDialog.getExistingDirectory(
+            self,
+            "Choose a directory for reassembling PDFs",
+            None,
+            QFileDialog.ShowDirsOnly,
+        )
+        if dur == "":
+            return
+        dur = Path(dur)
+        log.info("User explicitly chose %s for reassembling papers", dur)
+        self.ui.reassembleFolderLineEdit.setText(str(dur))
 
     def reassemblePapers(self):
         from plom.finish import reassemble_paper, reassemble_all_papers
@@ -2014,17 +2025,20 @@ class Manager(QWidget):
         self.setEnabled(False)
         self.Qapp.processEvents()
 
-        # where = Path(self.ui.reassembleFolderLineEdit.text())
-        where = Path(".")
+        where = Path(self.ui.reassembleFolderLineEdit.text())
+        where.mkdir(exist_ok=True)
+        where = where / "reassembled"
         testnum = self.ui.reassembleWhichSpinBox.value()
         if self.ui.radioButtonReassembleAll.isChecked():
             testnum = None
         skip_existing = True
         try:
             if testnum:
-                reassemble_paper(testnum, msgr=self.msgr, skip=skip_existing)
+                reassemble_paper(
+                    testnum, msgr=self.msgr, outdir=where, skip=skip_existing
+                )
             else:
-                reassemble_all_papers(msgr=self.msgr, skip=skip_existing)
+                reassemble_all_papers(msgr=self.msgr, outdir=where, skip=skip_existing)
         except Exception as e:
             # TODO: more specific!
             self.Qapp.restoreOverrideCursor()
@@ -2046,14 +2060,19 @@ class Manager(QWidget):
         self.setEnabled(False)
         self.Qapp.processEvents()
 
-        # where = Path(self.ui.reassembleFolderLineEdit.text())
-        where = Path(".")
+        where = Path(self.ui.reassembleFolderLineEdit.text())
+        where.mkdir(exist_ok=True)
+        where = where / "solutions"
         testnum = self.ui.reassembleWhichSpinBox.value()
         if self.ui.radioButtonReassembleAll.isChecked():
             testnum = None
         try:
             assemble_solutions(
-                testnum=testnum, msgr=self.msgr, watermark=False, verbose=True
+                testnum=testnum,
+                msgr=self.msgr,
+                outdir=where,
+                watermark=False,
+                verbose=True,
             )
         except Exception as e:
             # TODO: more specific!

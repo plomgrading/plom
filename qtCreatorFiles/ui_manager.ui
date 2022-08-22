@@ -2461,7 +2461,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
           <item>
            <widget class="QLineEdit" name="reassembleFolderLineEdit">
             <property name="text">
-             <string>&lt;hardcoded to current working directory for now&gt;</string>
+             <string>.</string>
             </property>
            </widget>
           </item>
