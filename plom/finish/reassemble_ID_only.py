@@ -29,7 +29,7 @@ def download_page_images(msgr, tmpdir, outdir, short_name, t, sid):
     """Reassembles a test with a filename that includes the directory and student id.
 
     Args:
-        msgr (FinishMessenger): the messenger to the plom server.
+        msgr (ManagerMessenger): the messenger to the plom server.
         tmpdir (pathlib.Path): where to store the temporary files.
         outdir (pathlib.Path): where to put the reassembled test.
         short_name (str): the name of the test.

@@ -21,7 +21,6 @@ from requests_toolbelt import MultipartEncoder, MultipartDecoder
 
 from plom.baseMessenger import BaseMessenger
 from plom.scanMessenger import ScanMessenger
-from plom.finishMessenger import FinishMessenger
 from plom.managerMessenger import ManagerMessenger
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (

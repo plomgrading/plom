@@ -22,7 +22,7 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     """Download information and create a cover page.
 
     Args:
-        msgr (FinishMessenger): Messenger object that talks to the server.
+        msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir (pathlib.Path.str): where to save the coverpage.
         t (int): Test number.
         maxMarks (dict): Maxmarks per question str -> int.
@@ -53,7 +53,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     """Download the images for reassembling a particular paper.
 
     Args:
-        msgr (FinishMessenger): Messenger object that talks to the server.
+        msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir (pathlib.Path): directory to save the temp images.
         num_questions (int): number of questions.
         t (str/int): Test number.
@@ -104,7 +104,7 @@ def _reassemble_one_paper(
     """Reassemble a test paper.
 
     Args:
-        msgr (FinishMessenger): Messenger object that talks to the server.
+        msgr (ManagerMessenger): Messenger object that talks to the server.
         tmpdir (pathlib.Path/str): The directory where we will download
             the annotated images for each question.
             We will also build cover pages there.
