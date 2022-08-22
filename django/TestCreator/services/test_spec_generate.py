@@ -36,7 +36,7 @@ class TestSpecGenerateService:
             q_dict["mark"] = q_service.get_question_marks()
             q_dict["label"] = q_service.get_question_label()
             q_dict["select"] = q_service.get_question_fix_or_shuffle()
-            question[i+1] = q_dict
+            question[str(i+1)] = q_dict
 
         spec_dict["question"] = question
 
