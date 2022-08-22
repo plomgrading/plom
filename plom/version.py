@@ -2,5 +2,5 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-__version__ = "0.10.0"
+__version__ = "0.10.1.dev"
 # Also hardcoded in AppImageBuilder.yml
