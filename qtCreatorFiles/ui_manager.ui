@@ -631,13 +631,6 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_23">
-            <property name="text">
-             <string>This button might crash standalone binaries: &lt;a href=&quot;https://gitlab.com/plom/plom/-/issues/2154&quot;&gt;Issue #2154&lt;/a&gt;, consider using the command-line tools for now.</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <spacer name="horizontalSpacer_23">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
