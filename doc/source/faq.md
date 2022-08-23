@@ -99,6 +99,37 @@ Apparently "people" know this but we were just as "thrilled" as you probably
 are to discover it on a production server.
 
 
+### How can I get past SSL certificate errors?
+
+E.g.,
+```
+SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:997)'))
+```
+Or `plom-create status` might be showing you:
+```
+[!] insecure connection (self-signed or invalid SSL cert)
+```
+SSL is used to securely verify the identity of the server you are
+connecting too.
+If you're only experimenting, you can bypass the checks by setting a
+special environment variable, e.g., in bash:
+```
+export PLOM_NO_SSL_VERIFY=1
+```
+The graphical client offers a mechanism to ignore SSL errors (at you
+and your users' own risks).
+
+**For production servers, you'll need to investigate how to setup SSL
+certificates.**
+
+
+### Ok, how do I setup SSL certificates?
+
+We are not experts on this topic, but
+[LetsEncrypt](https://letsencrypt.org) is a good place to start.
+
+
+
 ### How can I clone a server?
 
 For example, how can I make another copy of a running server?  One way
