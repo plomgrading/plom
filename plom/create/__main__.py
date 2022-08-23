@@ -157,7 +157,10 @@ def get_parser():
     sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
     spC = sub.add_parser(
-        "new", help="Create new spec file", description="Create new spec file."
+        "newspec",
+        aliases=["new"],
+        help="Create new spec file",
+        description="Create new spec file.",
     )
     group = spC.add_mutually_exclusive_group(required=False)
     group.add_argument(
