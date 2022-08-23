@@ -13,12 +13,19 @@
     <div class="card w-50">
         <div class="card-body">
             <h5 class="card-title">Test specification</h5>
-            {% if is_spec_sent %}
-            <p class="card-text text-success" id="spec_result">Specification sent.</p>
+            {% if spec_valid %}
+                {% if is_spec_sent %}
+                <p class="card-text text-success">Test specification uploaded.</p>
+                {% else %}
+                <p class="card-text">Ready to send to Plom-classic.</p>
+                {% endif %}
+                <form action="{% url 'connect_send_spec' %}" method="post">
+                    {% csrf_token %}
+                    <input type="submit" class="btn btn-primary" value="Send">
+                </form>
             {% else %}
-            <p class="card-text" id="spec_result">Ready to send to Plom-classic</p>
+            <p class="card-text">Valid specification not detected.</p>
             {% endif %}
-            <a class="btn btn-primary" hx-put="{% url 'connect_send_spec' %}" hx-target="#spec_result">Send</a>
         </div>
     </div>
 
@@ -39,8 +46,15 @@
                 <b>Please make sure all information is correct before proceeding. Once you do this, there is no going back without wiping the Plom-classic server.</b>
             </p>
             {% if is_spec_sent %}
-            <a class="btn btn-primary">Send</a>
-            {% else %}
+                {% if pqvmap_exists %}
+                <form action="{% url 'connect_init_db' %}" method="post">
+                    {% csrf_token %}
+                    <input type="submit" class="btn btn-primary" value="Send">
+                </form>
+                {% else %}
+                <p class="card-text">No QV map detected.</p>
+                {% endif %}
+            {% else %}            
             <p class="card-text">Test specification not uploaded.</p>
             {% endif %}
         </div>
@@ -48,8 +62,13 @@
     {% else %}
     <div class="card w-50">
         <div class="card-body">
-            <h5 class="card-title">Connection not established</h5>
-            <p class="card-text">Please test your Plom-classic connection details.</p>
+            <div class="d-flex">
+                <i class="bi bi-exclamation-triangle-fill text-warning fs-2 pe-3"></i>
+                <div>
+                    <h5 class="card-title">Connection not established</h5>
+                    <p class="card-text">Please test your Plom-classic connection details.</p>
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}

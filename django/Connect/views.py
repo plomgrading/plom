@@ -1,18 +1,16 @@
 import traceback
-from requests.exceptions import ConnectionError
-import json
-import re
-
 from plom.plom_exceptions import PlomConnectionError, PlomAuthenticationException, PlomExistingLoginException
 
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.views import View
 from django.views.generic.base import TemplateView
 from braces.views import GroupRequiredMixin, LoginRequiredMixin
 
 from TestCreator.services import TestSpecService, TestSpecGenerateService
+from Preparation.services import PQVMappingService
 
 from Connect.services import CoreConnectionService
 from Connect.forms import CoreConnectionForm, CoreManagerLoginForm
@@ -21,6 +19,14 @@ from Connect.forms import CoreConnectionForm, CoreManagerLoginForm
 class ManagerRequiredUtilView(GroupRequiredMixin, LoginRequiredMixin, View):
     login_url = "login"
     group_required = [u"manager"]
+
+    def build_context(self):
+        """Get context dict with navbar colour and user group"""
+        context = {
+            "navbar_colour": "#AD9CFF",
+            "user_group": "manager",
+        }
+        return context
 
 
 class ManagerRequiredTemplateView(GroupRequiredMixin, LoginRequiredMixin, TemplateView):
@@ -63,11 +69,15 @@ class ConnectSendInfoToCoreView(ManagerRequiredTemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        spec = TestSpecService()
         core = CoreConnectionService()
+        qvs = PQVMappingService()
 
         context['is_valid'] = core.is_there_a_valid_connection()
         context['manager_details_available'] = core.is_manager_authenticated()
+        context['spec_valid'] = spec.is_specification_valid()
         context['is_spec_sent'] = core.has_test_spec_been_sent()
+        context['pqvmap_exists'] = qvs.is_there_a_pqv_map()
 
         return context
 
@@ -135,7 +145,7 @@ class ForgetCoreManagerLoginView(ManagerRequiredUtilView):
 
 
 class SendTestSpecToCoreView(ManagerRequiredUtilView):
-    def put(self, request):
+    def post(self, request):
         """Send test specification data to the core server"""
         core = CoreConnectionService()
         spec = TestSpecService()
@@ -143,7 +153,53 @@ class SendTestSpecToCoreView(ManagerRequiredUtilView):
 
         try:
             core.send_test_spec(spec_dict)
-            return HttpResponse('<p class="card-text text-success" id="spec_result">Specification uploaded successfully.</p>')
+            context = self.build_context()
+            context.update({'attempt': True})
+            return render(request, 'Connect/connect-test-spec-attempt.html', context)
+        except PlomConnectionError as e:
+            print(e)
+            context = self.build_context()
+            context.update({
+                'attempt': False,
+                'exception': "Unable to connect to Plom-classic. Is the server running?",
+            })
+            return render(request, 'Connect/connect-test-spec-attempt.html', context)
         except Exception as e:
             print(e)
-            return HttpResponse(f'<p class="card-text text-danger" id="spec_result">{e}</p>')
+            context = self.build_context()
+            context.update({
+                'attempt': False,
+                'exception': e
+            })
+            return render(request, 'Connect/connect-test-spec-attempt.html', context)
+
+
+class SendPQVInitializeDB(ManagerRequiredUtilView):
+    def post(self, request):
+        """Send PQV map to core and initialize the database"""
+        core = CoreConnectionService()
+        qvs = PQVMappingService()
+
+        try:
+            ver_map = qvs.get_pqv_map_dict()
+            core.initialize_core_db(ver_map)
+            context = self.build_context()
+            context.update({'attempt': True})
+            return render(request, 'Connect/connect-vermap-attempt.html', context)
+        except PlomConnectionError as e:
+            print(e)
+            context = self.build_context()
+            context.update({
+                'attempt': False,
+                'exception': "Unable to connect to Plom-classic. Is the server running?",
+            })
+            return render(request, 'Connect/connect-vermap-attempt.html', context)
+        except Exception as e:
+            print(e)
+            context = self.build_context()
+            context.update({
+                'attempt': False,
+                'exception': e
+            })
+            return render(request, 'Connect/connect-vermap-attempt.html', context)
+

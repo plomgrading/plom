@@ -7,6 +7,7 @@ from Connect.views import (
     ForgetCoreManagerLoginView,
     ConnectSendInfoToCoreView,
     SendTestSpecToCoreView,
+    SendPQVInitializeDB,
     )
 
 urlpatterns = [
@@ -16,5 +17,6 @@ urlpatterns = [
     path('forget/initial/', ForgetCoreConnectionView.as_view(), name="forget_core_connection"),
     path('forget/manager/', ForgetCoreManagerLoginView.as_view(), name="forget_manager_connection"),
     path('send_info/', ConnectSendInfoToCoreView.as_view(), name='connect_send_info'),
-    path('send_info/test_spec/', SendTestSpecToCoreView.as_view(), name='connect_send_spec')
+    path('send_info/test_spec/', SendTestSpecToCoreView.as_view(), name='connect_send_spec'),
+    path('send_info/init_db/', SendPQVInitializeDB.as_view(), name='connect_init_db'),
 ]

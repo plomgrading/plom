@@ -83,15 +83,14 @@ class CoreConnectionService:
         return ManagerMessenger(s=url, port=port, verify_ssl=False)
 
     def has_test_spec_been_sent(self):
-        """Return True if the core server is reachable and has an uploaded test spec"""
-        messenger = self.get_messenger()
+        """Return True if the core server is reachable and has an uploaded test spec"""    
         try:
+            messenger = self.get_messenger()
             messenger.start()
             spec = messenger.get_spec()
             messenger.stop()
             return True
-        except (PlomServerNotReady, PlomConnectionError):
-            messenger.stop()
+        except (PlomServerNotReady, PlomConnectionError, RuntimeError):
             return False
 
     @transaction.atomic
