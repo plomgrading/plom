@@ -9,7 +9,9 @@
 <div class="d-grid gap-2">
     <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
 
-    {% if is_valid and manager_details_available %}
+    {% if is_valid and manager_details_available and db_initialized %}
+    <p>db is complete!!</p>
+    {% elif is_valid and manager_details_available %}
     <div class="card w-50">
         <div class="card-body">
             <h5 class="card-title">Test specification</h5>
@@ -31,9 +33,24 @@
 
     <div class="card w-50">
         <div class="card-body">
-            <h5 class="card-title">Classlist</h5>
-            <p class="card-text">Not implemented!</p>
-            <a class="btn btn-primary">Send</a>
+            {% if classlist_required %}
+            <h5 class="card-title">Classlist (required)</h5>
+            {% else %}
+            <h5 class="card-title">Classlist (optional)</h5>
+            {% endif %}
+            {% if is_classlist_sent %}
+            <p class="card-text text-success">Classlist uploaded.</p>
+            {% else %}
+            <p class="card-text">Ready to send to Plom-classic</p>
+            {% endif %}
+            {% if classlist_exists %}
+            <form action="{% url 'connect_send_classlist' %}" method="post">
+                {% csrf_token %}
+                <input type="submit" class="btn btn-primary" value="Send">
+            </form>
+            {% else %}
+            <p class="card-text">Valid classlist not detected.</p>
+            {% endif %}
         </div>
     </div>
 

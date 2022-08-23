@@ -1,8 +1,15 @@
 import re
+from typing import final
 from django.db import transaction
 from django.contrib.auth.hashers import make_password, check_password
 from plom.messenger import Messenger, ManagerMessenger
-from plom.plom_exceptions import PlomConnectionError, PlomConflict, PlomSeriousException, PlomServerNotReady
+from plom.plom_exceptions import (
+    PlomConnectionError, 
+    PlomConflict, 
+    PlomSeriousException, 
+    PlomServerNotReady, 
+    PlomAuthenticationException,
+)
 
 from Connect.models import CoreServerConnection, CoreManagerLogin
 
@@ -25,6 +32,10 @@ class CoreConnectionService:
     def get_manager(self):
         """Return the manager login details object"""
         return CoreManagerLogin.load()
+
+    def get_manager_password(self):
+        """Return the password of the manager account"""
+        return self.get_manager().password
 
     def get_server_version(self):
         """Return the server/client version of Core Plom and the API number of the server"""
@@ -84,6 +95,7 @@ class CoreConnectionService:
 
     def has_test_spec_been_sent(self):
         """Return True if the core server is reachable and has an uploaded test spec"""    
+        messenger = None
         try:
             messenger = self.get_messenger()
             messenger.start()
@@ -92,6 +104,52 @@ class CoreConnectionService:
             return True
         except (PlomServerNotReady, PlomConnectionError, RuntimeError):
             return False
+        finally:
+            if messenger:
+                messenger.stop()
+
+    def has_classlist_been_sent(self):
+        """Return True if core server is reachable and has an uploaded classlist"""
+        messenger = None
+        try:
+            messenger = self.get_messenger()
+            messenger.start()
+            
+            messenger.requestAndSaveToken(self.manager_username, self.get_manager_password())
+            if not messenger.token:
+                return False
+
+            classlist = messenger.IDrequestClasslist()
+            return True
+        except (PlomServerNotReady, PlomConnectionError, RuntimeError):
+            return False
+        finally:
+            if messenger:
+                if messenger.token:
+                    messenger.clearAuthorisation(self.manager_username, self.get_manager_password())
+                messenger.stop()
+
+    def has_db_been_initialized(self):
+        """Return True if a classlist is present in the core server, and therefore the database has been initialized"""
+        messenger = None
+        try:
+            messenger = self.get_messenger()
+            messenger.start()
+
+            messenger.requestAndSaveToken(self.manager_username, self.get_manager_password())
+            if not messenger.token:
+                return False
+
+            qvmap = messenger.getGlobalQuestionVersionMap()
+            print('QVMAP:', qvmap)
+            return qvmap != {}
+        except (PlomAuthenticationException, PlomConnectionError, RuntimeError):
+            return False
+        finally:
+            if messenger:
+                if messenger.token:
+                    messenger.clearAuthorisation(self.manager_username, self.get_manager_password())
+                messenger.stop()
 
     @transaction.atomic
     def save_connection_info(self, s: str, port: int, version_string: str):
@@ -155,6 +213,23 @@ class CoreConnectionService:
             messenger.clearAuthorisation(self.manager_username, password)
             messenger.stop()
 
+    def send_classlist(self, classdict: list):
+        """Send a classlist to the core server"""
+        messenger = self.get_manager_messenger()
+        messenger.start()
+
+        manager = self.get_manager()
+        password = manager.password
+
+        try:
+            messenger.requestAndSaveToken(self.manager_username, password)
+            if not messenger.token:
+                raise RuntimeError("Unable to authenticate manager.")
+            messenger.upload_classlist(classdict)
+        finally:
+            messenger.clearAuthorisation(self.manager_username, password)
+            messenger.stop()
+
     def initialize_core_db(self, version_map: dict):
         """Initialize the core server database and send a PQV map"""
         messenger = self.get_manager_messenger()
@@ -167,7 +242,8 @@ class CoreConnectionService:
             messenger.requestAndSaveToken(self.manager_username, password)
             if not messenger.token:
                 raise RuntimeError("Unable to authenticate manager.")
-            messenger.InitialiseDB(version_map=version_map)
+            vmap = messenger.InitialiseDB(version_map=version_map)
+            print(vmap)
         finally:
             messenger.clearAuthorisation(self.manager_username, password)
             messenger.stop()

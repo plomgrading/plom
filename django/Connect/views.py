@@ -1,4 +1,5 @@
 import traceback
+from plom.create.classlistValidator import PlomClasslistValidator
 from plom.plom_exceptions import PlomConnectionError, PlomAuthenticationException, PlomExistingLoginException
 
 from django.shortcuts import render
@@ -10,7 +11,7 @@ from django.views.generic.base import TemplateView
 from braces.views import GroupRequiredMixin, LoginRequiredMixin
 
 from TestCreator.services import TestSpecService, TestSpecGenerateService
-from Preparation.services import PQVMappingService
+from Preparation.services import PQVMappingService, StagingClasslistCSVService, PrenameSettingService
 
 from Connect.services import CoreConnectionService
 from Connect.forms import CoreConnectionForm, CoreManagerLoginForm
@@ -71,13 +72,19 @@ class ConnectSendInfoToCoreView(ManagerRequiredTemplateView):
         context = super().get_context_data(**kwargs)
         spec = TestSpecService()
         core = CoreConnectionService()
+        ccsv = StagingClasslistCSVService()
+        pre = PrenameSettingService()
         qvs = PQVMappingService()
 
         context['is_valid'] = core.is_there_a_valid_connection()
         context['manager_details_available'] = core.is_manager_authenticated()
         context['spec_valid'] = spec.is_specification_valid()
         context['is_spec_sent'] = core.has_test_spec_been_sent()
+        context['classlist_required'] = pre.get_prenaming_setting()
+        context['classlist_exists'] = ccsv.is_there_a_classlist()
+        context['is_classlist_sent'] = core.has_classlist_been_sent()
         context['pqvmap_exists'] = qvs.is_there_a_pqv_map()
+        context['db_initialized'] = core.has_db_been_initialized()
 
         return context
 
@@ -172,6 +179,39 @@ class SendTestSpecToCoreView(ManagerRequiredUtilView):
                 'exception': e
             })
             return render(request, 'Connect/connect-test-spec-attempt.html', context)
+
+
+class SendClasslistToCoreView(ManagerRequiredUtilView):
+    def post(self, request):
+        """Send classlist to core server"""
+        core = CoreConnectionService()
+        ccsv = StagingClasslistCSVService()
+
+        try:
+            vlad = PlomClasslistValidator()
+            classlist_path = ccsv.get_classlist_csv_filepath()
+            classdict = vlad.readClassList(classlist_path)
+            core.send_classlist(classdict)
+
+            context = self.build_context()
+            context.update({'attempt': True})
+            return render(request, 'Connect/connect-classlist-attempt.html', context)
+        except PlomConnectionError as e:
+            print(e)
+            context = self.build_context()
+            context.update({
+                'attempt': False,
+                'exception': "Unable to connect to Plom-classic. Is the server running?",
+            })
+            return render(request, 'Connect/connect-classlist-attempt.html', context)
+        except Exception as e:
+            print(e)
+            context = self.build_context()
+            context.update({
+                'attempt': False,
+                'exception': e
+            })
+            return render(request, 'Connect/connect-classlist-attempt.html', context)
 
 
 class SendPQVInitializeDB(ManagerRequiredUtilView):
