@@ -560,7 +560,7 @@ class SpecVerifier:
             verbose (bool)
             basedir (pathlib.Path): save to `basedir/specdir/verifiedSpec.toml`.
             outfile (pathlib.Path): or specify the path and filename instead.
-                If both specified, `outfile` takes precidence.
+                If both specified, `outfile` takes precedence.
         """
         # TODO bit yuck, we hack questions back to a list before saving
         s = deepcopy(self.spec)
