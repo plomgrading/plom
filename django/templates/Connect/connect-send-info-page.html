@@ -13,7 +13,11 @@
     <div class="card w-50">
         <div class="card-body">
             <h5 class="card-title">Test specification</h5>
+            {% if is_spec_sent %}
+            <p class="card-text text-success" id="spec_result">Specification sent.</p>
+            {% else %}
             <p class="card-text" id="spec_result">Ready to send to Plom-classic</p>
+            {% endif %}
             <a class="btn btn-primary" hx-put="{% url 'connect_send_spec' %}" hx-target="#spec_result">Send</a>
         </div>
     </div>
@@ -28,9 +32,17 @@
 
     <div class="card w-50">
         <div class="card-body">
-            <h5 class="card-title">QV map</h5>
-            <p class="card-text">Not implemented!</p>
+            <h5 class="card-title">QV Map and initialize database</h5>
+            <p class="card-text">Create Plom-classic database using the test specification, classlist, and QV map</p>
+            <p class="card-text d-flex">
+                <i class="bi bi-exclamation-triangle-fill text-warning fs-2 pe-3"></i>
+                <b>Please make sure all information is correct before proceeding. Once you do this, there is no going back without wiping the Plom-classic server.</b>
+            </p>
+            {% if is_spec_sent %}
             <a class="btn btn-primary">Send</a>
+            {% else %}
+            <p class="card-text">Test specification not uploaded.</p>
+            {% endif %}
         </div>
     </div>
     {% else %}

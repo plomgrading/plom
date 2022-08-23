@@ -2,7 +2,7 @@ import re
 from django.db import transaction
 from django.contrib.auth.hashers import make_password, check_password
 from plom.messenger import Messenger, ManagerMessenger
-from plom.plom_exceptions import PlomConnectionError, PlomConflict, PlomSeriousException
+from plom.plom_exceptions import PlomConnectionError, PlomConflict, PlomSeriousException, PlomServerNotReady
 
 from Connect.models import CoreServerConnection, CoreManagerLogin
 
@@ -82,6 +82,18 @@ class CoreConnectionService:
 
         return ManagerMessenger(s=url, port=port, verify_ssl=False)
 
+    def has_test_spec_been_sent(self):
+        """Return True if the core server is reachable and has an uploaded test spec"""
+        messenger = self.get_messenger()
+        try:
+            messenger.start()
+            spec = messenger.get_spec()
+            messenger.stop()
+            return True
+        except (PlomServerNotReady, PlomConnectionError):
+            messenger.stop()
+            return False
+
     @transaction.atomic
     def save_connection_info(self, s: str, port: int, version_string: str):
         """Save valid connection info to the database"""
@@ -140,6 +152,23 @@ class CoreConnectionService:
             if not messenger.token:
                 raise RuntimeError("Unable to authenticate manager.")
             messenger.upload_spec(spec)
+        finally:
+            messenger.clearAuthorisation(self.manager_username, password)
+            messenger.stop()
+
+    def initialize_core_db(self, version_map: dict):
+        """Initialize the core server database and send a PQV map"""
+        messenger = self.get_manager_messenger()
+        messenger.start()
+
+        manager = self.get_manager()
+        password = manager.password
+
+        try:
+            messenger.requestAndSaveToken(self.manager_username, password)
+            if not messenger.token:
+                raise RuntimeError("Unable to authenticate manager.")
+            messenger.InitialiseDB(version_map=version_map)
         finally:
             messenger.clearAuthorisation(self.manager_username, password)
             messenger.stop()

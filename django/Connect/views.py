@@ -67,6 +67,8 @@ class ConnectSendInfoToCoreView(ManagerRequiredTemplateView):
 
         context['is_valid'] = core.is_there_a_valid_connection()
         context['manager_details_available'] = core.is_manager_authenticated()
+        context['is_spec_sent'] = core.has_test_spec_been_sent()
+
         return context
 
 
