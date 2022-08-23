@@ -73,7 +73,7 @@ def parse_verify_save_spec(fname, save=True):
     fname = Path(fname)
     print(f'Parsing and verifying the specification "{fname}"')
     if not fname.exists():
-        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-create new"?')
+        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-create newspec"?')
 
     sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
