@@ -75,5 +75,7 @@ class PQVMappingView(ManagerRequiredBaseView):
             return HttpResponseRedirect(".")
 
         pqvs = PQVMappingService()
+        speck = TestSpecService()
         pqvs.generate_and_set_pqvmap(number_to_produce)
+        speck.set_n_to_produce(ntp)
         return HttpResponseRedirect(".")
