@@ -521,7 +521,7 @@ def main():
     if args.command == "status":
         plom.create.status(msgr=(args.server, args.password))
 
-    elif args.command == "new":
+    elif args.command == "newspec" or args.command == "new":
         if args.demo:
             fname = "demoSpec.toml"
         else:
