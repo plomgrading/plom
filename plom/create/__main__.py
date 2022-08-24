@@ -254,6 +254,21 @@ def get_parser():
         action="store_true",
         help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
     )
+    spL.add_argument(
+        "--force",
+        action="store_true",
+        help="""
+            By default, it is an error to upload a new classlist.
+            This overrides that check; for which you accept responsibility.
+            If you are using "numberToProduce = -1" then the first classlist
+            will have chosen a value; you may want to reupload your spec
+            before pushing a second classlist.
+            This is a non-exaustive list of what could go wrong.
+            If you've already produced and printed papers, you should be
+            careful with this option, although we are not aware of any
+            specific problems it would cause.
+        """,
+    )
 
     spDB = sub.add_parser(
         "make-db",
@@ -594,7 +609,7 @@ def main():
                 )
                 if success:
                     try:
-                        upload_classlist(classlist, msgr=msgr)
+                        upload_classlist(classlist, msgr=msgr, force=args.force)
                     except Exception as err:  # TODO - make a better error handler here
                         print(
                             "An error occurred when uploading the valid classlist: ",

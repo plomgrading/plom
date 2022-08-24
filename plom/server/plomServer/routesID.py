@@ -64,8 +64,7 @@ class IDHandler:
         return web.json_response(classlist)
 
     # @routes.put("/ID/classlist")
-    # TODO: add "force" here?  or can it default to false if missing?
-    @authenticate_by_token_required_fields(["user", "classlist"])
+    @authenticate_by_token_required_fields(["user", "classlist", "force"])
     @write_admin
     def IDputClasslist(self, data, request):
         """Accept classlist upload.
