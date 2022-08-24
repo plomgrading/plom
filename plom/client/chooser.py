@@ -64,7 +64,6 @@ def readLastTime():
     lastTime["question"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
-    lastTime["upDown"] = "up"
     lastTime["CommentsWarnings"] = True
     lastTime["MarkWarnings"] = True
     lastTime["KeyBinding"] = "default"
