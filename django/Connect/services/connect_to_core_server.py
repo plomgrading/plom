@@ -141,7 +141,6 @@ class CoreConnectionService:
                 return False
 
             qvmap = messenger.getGlobalQuestionVersionMap()
-            print('QVMAP:', qvmap)
             return qvmap != {}
         except (PlomAuthenticationException, PlomConnectionError, RuntimeError):
             return False
@@ -242,8 +241,10 @@ class CoreConnectionService:
             messenger.requestAndSaveToken(self.manager_username, password)
             if not messenger.token:
                 raise RuntimeError("Unable to authenticate manager.")
-            vmap = messenger.InitialiseDB(version_map=version_map)
-            print(vmap)
+            vmap = messenger.InitialiseDB()
+            for i in range(1,len(vmap)+1):
+                status = messenger.appendTestToDB(i, vmap[i])
+                print(status)
         finally:
             messenger.clearAuthorisation(self.manager_username, password)
             messenger.stop()

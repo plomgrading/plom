@@ -10,7 +10,20 @@
     <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
 
     {% if is_valid and manager_details_available and db_initialized %}
-    <p>db is complete!!</p>
+    <div class="card w-50">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-auto">
+                    <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                </div>
+                <div class="p-0 col-sm-11 pt-1">
+                    <h4 class="card-title">Information sent to Plom-classic!</h4>
+                    <p class="card-text">You can now build test-papers.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
     {% elif is_valid and manager_details_available %}
     <div class="card w-50">
         <div class="card-body">

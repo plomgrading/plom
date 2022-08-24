@@ -39,6 +39,7 @@ class PreparationLandingView(ManagerRequiredBaseView):
             "student_list_present": sss.are_there_students(),
             "server_valid": ccs.is_there_a_valid_connection(),
             "password_valid": ccs.is_manager_authenticated(),
+            "db_initialised": ccs.has_db_been_initialized(),
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
         }
