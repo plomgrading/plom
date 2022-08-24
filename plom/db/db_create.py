@@ -114,10 +114,26 @@ def is_paper_database_populated(self):
     """True if any papers have been created in the DB.
 
     The database is initially created with empty tables.  Users get added.
-    This function still returns False.  Eventually Tests (i.e., "papers")
-    get created.  Then this function returns True.
+    This function still returns False.  A spec is added; still False.
+    The paper database is initialised but has no papers; this function still
+    returns False (so perhaps you are looking for our cousin
+    :func:`is_paper_database_initialised`).  Rows are added to the paper
+    table; finally this function returns True.
     """
     return self.how_many_papers_in_database() > 0
+
+
+def is_paper_database_initialised(self):
+    """True if its too late to change the structure of your papers.
+
+    You can change spec up until the paper database is initialised.
+    """
+    if self.is_paper_database_populated():
+        return True
+    # TODO: something about special rubrics
+    # if ...
+    #    return True
+    return False
 
 
 def nextqueue_position(self):

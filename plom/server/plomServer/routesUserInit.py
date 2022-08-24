@@ -168,12 +168,13 @@ class UserInitHandler:
 
             - 403: only manager can upload a spec.
             - 400: the provided spec is not valid.
-            - 409: Conflict: server has already populated the database.
+            - 409: Conflict: server has already initialised or populated
+              the database.
             - 200: new spec file accepted.  TODO: would be polite to inform
               caller if we already had one or not.
         """
-        if self.server.DB.is_paper_database_populated():
-            raise web.HTTPConflict(reason="Server has populated DB: cannot accept spec")
+        if self.server.DB.is_paper_database_initialised():
+            raise web.HTTPConflict(reason="Server has initialied DB: cannot accept spec")
         sv = SpecVerifier(data["spec"])
         try:
             sv.verifySpec(verbose="log")

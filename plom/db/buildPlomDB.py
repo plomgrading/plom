@@ -90,8 +90,7 @@ def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
             build paper n without paper n-1.
         KeyError: invalid question selection scheme in spec.
     """
-    # Note will report false if this function is called again before rows added
-    if db.is_paper_database_populated():
+    if db.is_paper_database_initialised():
         raise ValueError("Database already populated")
 
     buildSpecialRubrics(spec, db)
