@@ -1,8 +1,13 @@
+from wsgiref.util import FileWrapper
+
 from django.shortcuts import render
 from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
 from BuildTestPDF.forms import BuildNumberOfPDFsForm
 from django.http import FileResponse
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files import File
+from io import BytesIO
 
 from .services import generate_pdf
 from .models import Task
@@ -15,12 +20,15 @@ from django.http import HttpResponse
 
 class BuildTestPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
     template_name = 'BuildTestPDF/build_test_pdfs.html'
+    test = 'BuildTestPDF/test.html'
     login_url = "login"
     group_required = ["manager"]
     navbar_colour = "#AD9CFF"
     form = BuildNumberOfPDFsForm()
 
     def get(self, request):
+        test_pdf_file = Task.objects.all()[0].pdf_file
+        pdf = SimpleUploadedFile('test.pdf', test_pdf_file, content_type='application/pdf')
         context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
                    'form': self.form}
         return render(request, self.template_name, context)
@@ -34,7 +42,22 @@ class BuildTestPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
             buffer = generate_pdf(number_of_pdfs)
             buffer.seek(0)
 
+            Task(paper_number=1,
+                 pdf_file=buffer.read(),
+                 status='success').save()
+
+            buffer.seek(0)
+            print(Task.objects.all()[0].pdf_file)
             return FileResponse(buffer, filename='test.pdf')
         # context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
         #            'form': self.form}
         # return render(request, self.template_name, context)
+
+
+class GetPDFFile(View):
+
+    def get(self, request):
+        test_pdf_file = Task.objects.all()[0].pdf_file
+        pdf = SimpleUploadedFile('test.pdf', test_pdf_file, content_type='application/pdf')
+
+        return FileResponse(pdf)
