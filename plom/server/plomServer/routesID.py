@@ -94,7 +94,7 @@ class IDHandler:
             - HTTPBadRequest (400): malformed request such as missing
               required fields or server has no spec.
             - HTTPConflict: we already have a classlist.
-              TODO: would be nice to be able to "try again".
+              TODO: would be nice to be able to "try again", Issue #848
             - HTTPNotAcceptable: classlist too short (see above).
         """
         spec = self.server.testSpec
@@ -103,6 +103,7 @@ class IDHandler:
                 reason="Server has no spec; cannot accept classlist"
             )
         if (specdir / "classlist.csv").exists():
+            # TODO: Issue #848
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]
 
