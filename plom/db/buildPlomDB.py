@@ -16,10 +16,19 @@ log = logging.getLogger("DB")
 
 
 def buildSpecialRubrics(spec, db):
+    """Add special rubrics such as deltas and per-question specific.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: if a rubric already exists (likely b/c you've called
+            this twice)
+    """
     # create no-answer-given rubrics
     for q in range(1, 1 + spec["numberOfQuestions"]):
         if not db.createNoAnswerRubric(q, spec["question"]["{}".format(q)]["mark"]):
-            raise ValueError("No answer rubric for q.{} already exists".format(q))
+            raise ValueError(f"No answer rubric for q.{q} already exists")
     # create standard manager delta-rubrics - but no 0, nor +/- max-mark
     for q in range(1, 1 + spec["numberOfQuestions"]):
         mx = spec["question"]["{}".format(q)]["mark"]
@@ -31,9 +40,7 @@ def buildSpecialRubrics(spec, db):
             "question": q,
         }
         if not db.McreateRubric("manager", rubric):
-            raise ValueError(
-                "Manager no-marks-rubric for q.{} already exists".format(q)
-            )
+            raise ValueError(f"Manager no-marks-rubric for q.{q} already exists")
         rubric = {
             "kind": "absolute",
             "delta": "{}".format(mx),
@@ -41,10 +48,7 @@ def buildSpecialRubrics(spec, db):
             "question": q,
         }
         if not db.McreateRubric("manager", rubric):
-            raise ValueError(
-                "Manager full-marks-rubric for q.{} already exists".format(q)
-            )
-
+            raise ValueError(f"Manager full-marks-rubric for q.{q} already exists")
         # now make delta-rubrics
         for m in range(1, mx + 1):
             # make positive delta
@@ -55,9 +59,7 @@ def buildSpecialRubrics(spec, db):
                 "question": q,
             }
             if not db.McreateRubric("manager", rubric):
-                raise ValueError(
-                    "Manager delta-rubric +{} for q.{} already exists".format(m, q)
-                )
+                raise ValueError(f"Manager delta-rubric +{m} for q.{q} already exists")
             # make negative delta
             rubric = {
                 "delta": "-{}".format(m),
@@ -66,9 +68,7 @@ def buildSpecialRubrics(spec, db):
                 "question": q,
             }
             if not db.McreateRubric("manager", rubric):
-                raise ValueError(
-                    "Manager delta-rubric -{} for q.{} already exists".format(m, q)
-                )
+                raise ValueError(f"Manager delta-rubric -{m} for q.{q} already exists")
 
 
 def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
@@ -83,13 +83,14 @@ def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
             see :func:`plom.finish.make_random_version_map`.
 
     Returns:
-        (dict): the question-version map
+        dict: the question-version map.
 
     Raises:
         ValueError: if database already populated, or attempt to
             build paper n without paper n-1.
         KeyError: invalid question selection scheme in spec.
     """
+    # Note will report false if this function is called again before rows added
     if db.is_paper_database_populated():
         raise ValueError("Database already populated")
 

@@ -536,27 +536,22 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
     Returns:
         Bool: True if successful, False if rubric already exists.
     """
-    rID = 1000 + questionNumber
+    key = 1000 + questionNumber
     uref = User.get(name="HAL")
 
-    if Rubric.get_or_none(rID) is None:
-        Rubric.create(
-            key=rID,
-            delta="0",
-            text="No answer given",
-            kind="absolute",
-            question=questionNumber,
-            user=uref,
-            creationTime=datetime.now(timezone.utc),
-            modificationTime=datetime.now(timezone.utc),
-        )
-        log.info("Created no-answer-rubric for question {}".format(questionNumber))
-    else:
-        log.info(
-            "No-answer-rubric (up) for question {} already exists".format(
-                questionNumber
-            )
-        )
+    if Rubric.get_or_none(key=key):
+        log.info("No-answer-rubric (up) for question %d already exists", questionNumber)
         return False
 
+    Rubric.create(
+        key=key,
+        delta="0",
+        text="No answer given",
+        kind="absolute",
+        question=questionNumber,
+        user=uref,
+        creationTime=datetime.now(timezone.utc),
+        modificationTime=datetime.now(timezone.utc),
+    )
+    log.info("Created no-answer-rubric for question %d", questionNumber)
     return True
