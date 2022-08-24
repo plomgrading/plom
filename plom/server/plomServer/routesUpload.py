@@ -792,10 +792,8 @@ class UploadHandler:
 
         try:
             new_vmap = self.server.initialiseExamDatabase(spec, vmap)
-        except ValueError:
-            raise web.HTTPConflict(
-                reason="Database already present: not overwriting"
-            ) from None
+        except ValueError as e:
+            raise web.HTTPConflict(reason=e) from None
 
         return web.json_response(new_vmap, status=200)
 
