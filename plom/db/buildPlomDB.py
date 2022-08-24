@@ -91,7 +91,7 @@ def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
         KeyError: invalid question selection scheme in spec.
     """
     if db.is_paper_database_initialised():
-        raise ValueError("Database already populated")
+        raise ValueError("Database already initialised")
 
     buildSpecialRubrics(spec, db)
     if not db.createReplacementBundle():

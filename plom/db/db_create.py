@@ -130,9 +130,9 @@ def is_paper_database_initialised(self):
     """
     if self.is_paper_database_populated():
         return True
-    # TODO: something about special rubrics
-    # if ...
-    #    return True
+    if self.hasNoAnswerRubric(1):
+        # if we have the No-Answer rubric for Q1, then we must be initialised
+        return True
     return False
 
 
@@ -539,7 +539,21 @@ def remove_id_from_paper(self, paper_num):
     return True
 
 
-# Create some default rubrics
+def hasNoAnswerRubric(self, questionNumber):
+    """Do we have rubrics for when no answer given for question.
+
+    Args:
+        questionNumber (int)
+
+    Returns:
+        Bool: True if we have such a thing, else False.
+    """
+    key = 1000 + questionNumber
+    if Rubric.get_or_none(key=key):
+        return True
+    return False
+
+
 def createNoAnswerRubric(self, questionNumber, maxMark):
     """Create rubrics for when no answer given for question
 

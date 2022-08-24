@@ -109,6 +109,7 @@ class PlomDB:
         add_or_change_id_prediction,
         remove_id_prediction,
         remove_id_from_paper,
+        hasNoAnswerRubric,
         createNoAnswerRubric,
     )
 
