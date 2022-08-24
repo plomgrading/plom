@@ -234,7 +234,7 @@ class UploadHandler:
         # TODO - move classlist stuff into database.
         student_name = None
         try:
-            with open(specdir / "classlist.csv") as f:
+            with open(specdir / "classlist.csv", "r") as f:
                 reader = csv.DictReader(f)
                 # extract the student-name based on the ID.
                 for row in reader:

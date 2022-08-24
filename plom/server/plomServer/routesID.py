@@ -56,7 +56,7 @@ class IDHandler:
             aiohttp.json_response: list of dicts as above.
         """
         try:
-            with open(specdir / "classlist.csv") as f:
+            with open(specdir / "classlist.csv", "r") as f:
                 reader = csv.DictReader(f)
                 classlist = list(reader)
         except FileNotFoundError:
@@ -520,7 +520,7 @@ class IDHandler:
         """
         # this classlist reading should probably happen in the serverID not here
         try:
-            with open(specdir / "classlist.csv") as f:
+            with open(specdir / "classlist.csv", "r") as f:
                 reader = csv.DictReader(f)
                 classlist = list(reader)
         except FileNotFoundError:
