@@ -9,3 +9,4 @@ django-htmx
 tabulate # display table in command line
 plom
 tk
+reportlab

@@ -1,0 +1,29 @@
+{% extends 'base/base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    {% block page_heading %}Build Paper PDFs{% endblock %}
+    {% block main_content %}
+        <div class="d-grid gap-2">
+            <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
+        </div>
+        <div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="col-sm-2">
+                    <label class="col-form-label fs-6" style="padding-top: 0px;">{{ form.pdfs.label }}</label>
+                    {{ form.pdfs }}<br>
+                    <input type="submit">
+                </div>
+            </form>
+        </div>
+        <div>
+
+        </div>
+    {% endblock %}
+</body>
+</html>
