@@ -292,10 +292,10 @@ class UnknownViewWindow(QDialog):
         t3 = HWTab(self, self.questionLabels, self.iDict)
         t4 = DiscardTab(self)
         self.optionTW.addTab(t0, "Actions")
-        self.optionTW.addTab(t1, "Extra Page")
-        self.optionTW.addTab(t2, "Test Page")
-        self.optionTW.addTab(t3, "Homework Page")
-        self.optionTW.addTab(t4, "Discard")
+        self.optionTW.addTab(t1, "&Extra Page")
+        self.optionTW.addTab(t2, "&Test Page")
+        self.optionTW.addTab(t3, "&Homework Page")
+        self.optionTW.addTab(t4, "&Discard")
 
     def get_orientation(self):
         return self.img.get_orientation()
