@@ -3,7 +3,7 @@ from wsgiref.util import FileWrapper
 from django.shortcuts import render
 from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
-from BuildTestPDF.forms import BuildNumberOfPDFsForm
+from BuildPaperPDF.forms import BuildNumberOfPDFsForm
 from django.http import FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files import File
@@ -19,7 +19,7 @@ from django.http import HttpResponse
 
 
 class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
-    template_name = 'BuildTestPDF/build_paper_pdfs.html'
+    template_name = 'BuildPaperPDF/build_paper_pdfs.html'
     login_url = "login"
     group_required = ["manager"]
     navbar_colour = "#AD9CFF"

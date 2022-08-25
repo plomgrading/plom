@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'Preparation',
     'TestCreator',
     'Profile',
-    'BuildTestPDF',
+    'BuildPaperPDF',
     'Connect',
 ]
 
