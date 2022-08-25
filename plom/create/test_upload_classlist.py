@@ -20,6 +20,6 @@ def test_produce_upload_classlist():
 
     _raw_upload_classlist(classlist=classlist, msgr=msgr)
 
-    msgr.upload_classlist.assert_called_with(expected_call_cl)
+    msgr.upload_classlist.assert_called_with(expected_call_cl, False)
     msgr.closeUser.assert_called()
     msgr.stop.assert_called()
