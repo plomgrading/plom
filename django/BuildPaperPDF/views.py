@@ -3,13 +3,16 @@ from wsgiref.util import FileWrapper
 from django.shortcuts import render
 from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
+
 from BuildPaperPDF.forms import BuildNumberOfPDFsForm
 from django.http import FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files import File
 from io import BytesIO
 
-from .services import generate_pdf
+from Connect.services import CoreConnectionService
+
+from .services import (generate_pdf, BuildPapersService)
 from .models import Task
 
 from django.http import HttpResponse
@@ -26,6 +29,10 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
     form = BuildNumberOfPDFsForm()
 
     def get(self, request):
+        ccs = CoreConnectionService()
+        messenger = ccs.get_manager_messenger()
+        BuildPapersService.build_single_paper(messenger)
+
         context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
                    'form': self.form}
         return render(request, self.template_name, context)
