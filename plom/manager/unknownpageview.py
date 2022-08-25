@@ -90,8 +90,7 @@ class ExtraTab(QWidget):
         self.tsb = QSpinBox()
         self.tsb.setMinimum(1)
         self.tsb.setMaximum(maxT)
-        # a group of checkboxes for questions
-        qgb = QGroupBox()
+        qgb = QGroupBox("&Assign to questions:")
         self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
         vb2 = QVBoxLayout()
         for x in self.questionCheckBoxes:
@@ -101,7 +100,7 @@ class ExtraTab(QWidget):
         cb = QPushButton("Click to confirm")
         vwb = QPushButton("View whole test")
         fl.addRow(QLabel("Test number:"), self.tsb)
-        fl.addRow(QLabel("Question numbers:"), qgb)
+        fl.addRow(qgb)
         fl.addRow(vwb)
         fl.addRow(cb)
         frm.setLayout(fl)
@@ -150,8 +149,7 @@ class HWTab(QWidget):
         self.sidcompleter.setFilterMode(Qt.MatchContains)
         self.sidcompleter.setModel(self.sidlist)
         self.sidle.setCompleter(self.sidcompleter)
-        # a group of checkboxes for questions
-        qgb = QGroupBox()
+        qgb = QGroupBox("&Assign to questions:")
         self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
         vb2 = QVBoxLayout()
         for x in self.questionCheckBoxes:
@@ -164,7 +162,7 @@ class HWTab(QWidget):
         fl.addRow(QLabel("Student ID / Name:"))
         fl.addRow(self.sidle)
         fl.addRow(QLabel("Test number:"), self.testl)
-        fl.addRow(QLabel("Question numbers:"), qgb)
+        fl.addRow(qgb)
         fl.addRow(vwb)
         fl.addRow(cb)
         frm.setLayout(fl)
