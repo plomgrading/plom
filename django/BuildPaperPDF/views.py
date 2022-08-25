@@ -30,8 +30,7 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
 
     def get(self, request):
         ccs = CoreConnectionService()
-        messenger = ccs.get_manager_messenger()
-        BuildPapersService.build_single_paper(messenger)
+        BuildPapersService.build_single_paper(1, ccs)
 
         context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
                    'form': self.form}
