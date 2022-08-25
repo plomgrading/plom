@@ -83,6 +83,7 @@ from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 from plom.misc_utils import arrowtime_to_simple_string
+from plom.specVerifier import get_question_label
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -177,9 +178,9 @@ class QVHistogram(QDialog):
     Compare to `SolutionViewer` which is unparented so not on top.
     """
 
-    def __init__(self, parent, q, v, hist):
+    def __init__(self, parent, qlabel, qidx, v, hist):
         super().__init__(parent)
-        self.setWindowTitle("Histograms for question {} version {}".format(q, v))
+        self.setWindowTitle(f"{qlabel} version {v} histograms")
         tot = 0
         mx = 0
         dist = {}
@@ -302,10 +303,10 @@ class TestStatus(QDialog):
 
 
 class ProgressBox(QGroupBox):
-    def __init__(self, manager, question, version):
+    def __init__(self, manager, qlabel, qidx, version):
         # This widget will be re-parented when its added to a layout
         super().__init__()
-        self.setTitle(f"Q-{question} V-{version}")
+        self.setTitle(f"{qlabel} ver {version}")
         grid = QVBoxLayout()
         self.lhL = QLabel()
         grid.addWidget(self.lhL)
@@ -320,7 +321,7 @@ class ProgressBox(QGroupBox):
         self.pb.setFormat("%v / %m")
         grid.addWidget(self.pb)
         vhB = QPushButton("View histograms")
-        vhB.clicked.connect(lambda: manager.viewMarkHistogram(question, version))
+        vhB.clicked.connect(lambda: manager.viewMarkHistogram(qlabel, qidx, version))
         grid.addWidget(vhB)
 
         self.setLayout(grid)
@@ -593,6 +594,10 @@ class Manager(QWidget):
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]
+        # Issue #2260
+        self.qlabels = [
+            get_question_label(info, n) for n in range(1, self.numberOfQuestions + 1)
+        ]
         # which test pages are which type "id", "dnm", or "qN"
         self.testPageTypes = {info["idPage"]: "id"}
         for pg in info["doNotMarkPages"]:
@@ -1927,10 +1932,13 @@ class Manager(QWidget):
         # initialise the widgets without the actual stats
         grid = QGridLayout()
         self.pd = {}
-        for q in range(1, self.numberOfQuestions + 1):
+        for qidx in range(1, self.numberOfQuestions + 1):
+            qlabel = self.qlabels[qidx - 1]
             for v in range(1, self.numberOfVersions + 1):
-                self.pd[(q, v)] = ProgressBox(self, q, v)
-                grid.addWidget(self.pd[(q, v)], q, v)
+                _ = ProgressBox(self, qlabel, qidx, v)
+                grid.addWidget(_, qidx, v)
+                # keep ref so we can update it later in similar loop
+                self.pd[(qidx, v)] = _
         self.ui.markBucket.setLayout(grid)
         self.refreshMarkTab()
 
@@ -1940,9 +1948,9 @@ class Manager(QWidget):
                 stats = self.msgr.getProgress(q, v)
                 self.pd[(q, v)].refresh(stats)
 
-    def viewMarkHistogram(self, question, version):
-        mhist = self.msgr.getMarkHistogram(question, version)
-        QVHistogram(self, question, version, mhist).exec()
+    def viewMarkHistogram(self, qlabel, qidx, version):
+        mhist = self.msgr.getMarkHistogram(qidx, version)
+        QVHistogram(self, qlabel, qidx, version, mhist).exec()
 
     def initOutTab(self):
         self.ui.tasksOutTW.setColumnCount(3)
