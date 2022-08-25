@@ -9,8 +9,8 @@ from PyQt5.QtWidgets import (
     QDialog,
     QFrame,
     QFormLayout,
-    QGridLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
@@ -29,19 +29,19 @@ class ActionTab(QWidget):
         super().__init__(parent)
         self._parent = parent
         vb = QVBoxLayout()
-        self.db = QPushButton("Discard Page")
-        self.eb = QPushButton("Extra Page")
-        self.tb = QPushButton("Test Page")
-        self.hb = QPushButton("Homework Page")
-        vb.addWidget(self.eb)
-        vb.addWidget(self.tb)
-        vb.addWidget(self.hb)
-        vb.addWidget(self.db)
+        db = QPushButton("Discard Page")
+        eb = QPushButton("Extra Page")
+        tb = QPushButton("Test Page")
+        hb = QPushButton("Homework Page")
+        vb.addWidget(eb)
+        vb.addWidget(tb)
+        vb.addWidget(hb)
+        vb.addWidget(db)
         self.setLayout(vb)
-        self.db.clicked.connect(self.discard)
-        self.hb.clicked.connect(self.homework)
-        self.eb.clicked.connect(self.extra)
-        self.tb.clicked.connect(self.test)
+        db.clicked.connect(self.discard)
+        hb.clicked.connect(self.homework)
+        eb.clicked.connect(self.extra)
+        tb.clicked.connect(self.test)
 
     def discard(self):
         self._parent.optionTW.setCurrentIndex(4)
@@ -61,15 +61,15 @@ class DiscardTab(QWidget):
         super().__init__(parent)
         self._parent = parent
         vb = QVBoxLayout()
-        self.db = QPushButton("Click to confirm discard")
-        self.ob = QPushButton("Return to other options")
+        db = QPushButton("Click to confirm discard")
+        ob = QPushButton("Return to other options")
         vb.addStretch(0)
-        vb.addWidget(self.db)
+        vb.addWidget(db)
         vb.addStretch(0)
-        vb.addWidget(self.ob)
+        vb.addWidget(ob)
         self.setLayout(vb)
-        self.db.clicked.connect(self.discard)
-        self.ob.clicked.connect(self.other)
+        db.clicked.connect(self.discard)
+        ob.clicked.connect(self.other)
 
     def discard(self):
         self._parent.action = "discard"
@@ -85,8 +85,8 @@ class ExtraTab(QWidget):
         self._parent = parent
         vb = QVBoxLayout()
         fl = QFormLayout()
-        self.frm = QFrame()
-        self.ob = QPushButton("Return to other options")
+        frm = QFrame()
+        ob = QPushButton("Return to other options")
         self.tsb = QSpinBox()
         self.tsb.setMinimum(1)
         self.tsb.setMaximum(maxT)
@@ -98,21 +98,21 @@ class ExtraTab(QWidget):
             vb2.addWidget(x)
         qgb.setLayout(vb2)
         # put in other widgets
-        self.cb = QPushButton("Click to confirm")
-        self.vwb = QPushButton("View whole test")
+        cb = QPushButton("Click to confirm")
+        vwb = QPushButton("View whole test")
         fl.addRow(QLabel("Test number:"), self.tsb)
         fl.addRow(QLabel("Question numbers:"), qgb)
-        fl.addRow(self.vwb)
-        fl.addRow(self.cb)
-        self.frm.setLayout(fl)
-        vb.addWidget(self.frm)
+        fl.addRow(vwb)
+        fl.addRow(cb)
+        frm.setLayout(fl)
+        vb.addWidget(frm)
         vb.addStretch(1)
-        vb.addWidget(self.ob)
+        vb.addWidget(ob)
         self.setLayout(vb)
 
-        self.vwb.clicked.connect(self.viewWholeTest)
-        self.cb.clicked.connect(self.confirm)
-        self.ob.clicked.connect(self.other)
+        vwb.clicked.connect(self.viewWholeTest)
+        cb.clicked.connect(self.confirm)
+        ob.clicked.connect(self.other)
 
     def confirm(self):
         checked = [i for i, x in enumerate(self.questionCheckBoxes) if x.isChecked()]
@@ -138,8 +138,8 @@ class HWTab(QWidget):
         self._parent = parent
         vb = QVBoxLayout()
         fl = QFormLayout()
-        self.frm = QFrame()
-        self.ob = QPushButton("Return to other options")
+        frm = QFrame()
+        ob = QPushButton("Return to other options")
         self.sidle = QLineEdit()
         # set up sid completion
         self.sidTestDict = {"{}: {}".format(iDict[x][0], iDict[x][1]): x for x in iDict}
@@ -159,22 +159,22 @@ class HWTab(QWidget):
         qgb.setLayout(vb2)
         # now set up other gui elements
         self.testl = QLabel("")
-        self.cb = QPushButton("Click to confirm")
-        self.vwb = QPushButton("View whole test")
+        cb = QPushButton("Click to confirm")
+        vwb = QPushButton("View whole test")
         fl.addRow(QLabel("Student ID / Name:"))
         fl.addRow(self.sidle)
         fl.addRow(QLabel("Test number:"), self.testl)
         fl.addRow(QLabel("Question numbers:"), qgb)
-        fl.addRow(self.vwb)
-        fl.addRow(self.cb)
-        self.frm.setLayout(fl)
-        vb.addWidget(self.frm)
+        fl.addRow(vwb)
+        fl.addRow(cb)
+        frm.setLayout(fl)
+        vb.addWidget(frm)
         vb.addStretch(1)
-        vb.addWidget(self.ob)
+        vb.addWidget(ob)
         self.setLayout(vb)
-        self.vwb.clicked.connect(self.viewWholeTest)
-        self.cb.clicked.connect(self.confirm)
-        self.ob.clicked.connect(self.other)
+        vwb.clicked.connect(self.viewWholeTest)
+        cb.clicked.connect(self.confirm)
+        ob.clicked.connect(self.other)
         self.sidle.returnPressed.connect(self.checkID)
         # check ID when user clicks on entry in completer pop-up - not just when return pressed
         self.sidcompleter.activated.connect(self.checkID)
@@ -216,31 +216,31 @@ class TestTab(QWidget):
         self._parent = parent
         vb = QVBoxLayout()
         fl = QFormLayout()
-        self.frm = QFrame()
-        self.ob = QPushButton("Return to other options")
+        frm = QFrame()
+        ob = QPushButton("Return to other options")
         self.tsb = QSpinBox()
         self.psb = QSpinBox()
         self.tsb.setMinimum(1)
         self.tsb.setMaximum(maxT)
         self.psb.setMinimum(1)
         self.psb.setMaximum(maxP)
-        self.cb = QPushButton("Click to confirm")
-        self.cpb = QPushButton("Check that page")
-        self.vwb = QPushButton("View whole test")
+        cb = QPushButton("Click to confirm")
+        cpb = QPushButton("Check that page")
+        vwb = QPushButton("View whole test")
         fl.addRow(QLabel("Test number:"), self.tsb)
         fl.addRow(QLabel("Page number:"), self.psb)
-        fl.addRow(self.cpb)
-        fl.addRow(self.vwb)
-        fl.addRow(self.cb)
-        self.frm.setLayout(fl)
-        vb.addWidget(self.frm)
+        fl.addRow(cpb)
+        fl.addRow(vwb)
+        fl.addRow(cb)
+        frm.setLayout(fl)
+        vb.addWidget(frm)
         vb.addStretch(1)
-        vb.addWidget(self.ob)
+        vb.addWidget(ob)
         self.setLayout(vb)
-        self.cpb.clicked.connect(self.checkTPage)
-        self.vwb.clicked.connect(self.viewWholeTest)
-        self.cb.clicked.connect(self.confirm)
-        self.ob.clicked.connect(self.other)
+        cpb.clicked.connect(self.checkTPage)
+        vwb.clicked.connect(self.viewWholeTest)
+        cb.clicked.connect(self.confirm)
+        ob.clicked.connect(self.other)
 
     def confirm(self):
         self._parent.action = "test"
@@ -283,14 +283,18 @@ class UnknownViewWindow(QDialog):
         self.img = ImageViewWidget(self, fnames, dark_background=True)
         self.optionTW = QTabWidget()
 
-        cancelB = QPushButton("&cancel")
+        cancelB = QPushButton("&Cancel")
         cancelB.clicked.connect(self.reject)
 
-        # Layout simply
-        grid = QGridLayout()
-        grid.addWidget(self.img, 1, 1, 10, 10)
-        grid.addWidget(self.optionTW, 1, 11, 10, -1)
-        grid.addWidget(cancelB, 11, 20)
+        grid = QHBoxLayout()
+        grid.addWidget(self.img)
+        vb = QVBoxLayout()
+        vb.addWidget(self.optionTW)
+        hb = QHBoxLayout()
+        hb.addStretch(1)
+        hb.addWidget(cancelB)
+        vb.addLayout(hb)
+        grid.addLayout(vb)
         self.setLayout(grid)
         self.initTabs()
 
