@@ -708,6 +708,7 @@ class Manager(QWidget):
             ).exec()
             return
         try:
+            # TODO: add "force" and "ignore warnings" checkboxes
             upload_classlist(classlist, msgr=self.msgr)
         except (PlomConflict, PlomRangeException, PlomServerNotReady) as e:
             WarnMsg(self, "Problem uploading classlist?", info=e).exec()
