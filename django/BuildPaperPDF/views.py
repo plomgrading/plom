@@ -29,27 +29,27 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
     form = BuildNumberOfPDFsForm()
 
     def get(self, request):
-        ccs = CoreConnectionService()
-        BuildPapersService.build_single_paper(1, ccs)
-
         context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
-                   'form': self.form}
+                   'form': self.form, 'message': ''}
         return render(request, self.template_name, context)
 
     def post(self, request):
         form = BuildNumberOfPDFsForm(request.POST)
         if form.is_valid():
             number_of_pdfs = int(request.POST.get('pdfs'))
-            for num in range(1, number_of_pdfs + 1):
-                buffer = generate_pdf(number_of_pdfs)
-                buffer.seek(0)
-
-                Task(paper_number=num,
-                     pdf_file=buffer.read(),
-                     status='success').save()
+            ccs = CoreConnectionService()
+            BuildPapersService.build_single_paper(number_of_pdfs, ccs)
+            message = 'Your pdf is building!'
+            # for num in range(1, number_of_pdfs + 1):
+            #     buffer = generate_pdf(number_of_pdfs)
+            #     buffer.seek(0)
+            #
+            #     Task(paper_number=num,
+            #          pdf_file=buffer.read(),
+            #          status='success').save()
 
             context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
-                       'form': self.form}
+                       'form': self.form, 'message': message}
             return render(request, self.template_name, context)
 
 
