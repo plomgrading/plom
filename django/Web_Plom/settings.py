@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # for 'fun' with migrations - see #77
     'reset_migrations',
+    # Huey
+    'django_huey',
     # add newly created app folder below
     'Authentication',
     'Preparation',
@@ -148,3 +150,31 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_COOKIE_AGE = 60*60*2
 # Every time user makes request, the session cookie age will be rescheduled to 2 hours
 SESSION_SAVE_EVERY_REQUEST = True
+
+
+# Django huey configuration
+HUEY = {"immediate": False}
+DJANGO_HUEY = {
+    "default": "tasks",
+    "queues": {
+        "tasks": {
+            "huey_class": "huey.SqliteHuey",
+            "filename": "huey/huey_db.sqlite3",
+            "results": True,
+            "store_none": False,
+            "immediate": False,
+            "utc": True,
+            "consumer": {
+                "workers": 1,
+                "worker_type": "thread",
+                "initial_delay": 0.1,
+                "backoff": 1.15,
+                "max_delay": 10.0,
+                "scheduler_interval": 60,
+                "periodic": False,
+                "check_worker_health": True,
+                "health_check_interval": 300,
+            }
+        }
+    }
+}

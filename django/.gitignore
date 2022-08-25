@@ -31,3 +31,6 @@ produced_papers.csv
 papersToPrint/*
 sourceVersions/*
 TestCreator/media/*
+
+# huey stuff
+huey/*

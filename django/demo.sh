@@ -3,9 +3,11 @@
 set -e
 
 rm -f db.sqlite3
+rm -rf huey
+mkdir huey
 
-rm -r sourceVersions
-rm -r papersToPrint
+rm -rf sourceVersions
+rm -rf papersToPrint
 
 #python3 manage.py makemigrations TestCreator Preparation
 #python3 manage.py makemigrations Connect
@@ -24,5 +26,7 @@ python3 manage.py plom_create_groups
 python3 manage.py plom_create_demo_users
 
 python3 manage.py plom_demo_spec
+python3 manage.py plom_preparation_test_source upload -v 1 useful_files_for_testing/test_version1.pdf
+python3 manage.py plom_preparation_test_source upload -v 2 useful_files_for_testing/test_version2.pdf
 
 python3 manage.py runserver
