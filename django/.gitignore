@@ -25,3 +25,9 @@ db.sqlite3-journal
 **/migrations/**
 !**/migrations
 !**/migrations/__init__.py
+
+# Ignore PDF folders
+produced_papers.csv
+papersToPrint/*
+sourceVersions/*
+TestCreator/media/*
