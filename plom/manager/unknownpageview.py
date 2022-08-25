@@ -63,8 +63,8 @@ class DiscardTab(QWidget):
         super().__init__(parent)
         self._parent = parent
         vb = QVBoxLayout()
-        db = QPushButton("Click to confirm discard")
-        ob = QPushButton("Return to other options")
+        db = QPushButton("Click to co&nfirm discard")
+        ob = QPushButton("&Return to other options")
         vb.addStretch(0)
         vb.addWidget(db)
         vb.addStretch(0)
@@ -86,7 +86,7 @@ class ExtraTab(QWidget):
         super().__init__(parent)
         self._parent = parent
         fl = QFormLayout()
-        ob = QPushButton("Return to other options")
+        ob = QPushButton("&Return to other options")
         self.tsb = QSpinBox()
         self.tsb.setMinimum(1)
         self.tsb.setMaximum(maxT)
@@ -97,8 +97,8 @@ class ExtraTab(QWidget):
             vb.addWidget(x)
         qgb.setLayout(vb)
         # put in other widgets
-        cb = QPushButton("Click to confirm")
-        vwb = QPushButton("View whole test")
+        cb = QPushButton("Click to co&nfirm")
+        vwb = QPushButton("&View whole test")
         fl.addRow(QLabel("Test number:"), self.tsb)
         fl.addRow(qgb)
         fl.addRow(vwb)
@@ -133,7 +133,7 @@ class HWTab(QWidget):
         super().__init__(parent)
         self._parent = parent
         fl = QFormLayout()
-        ob = QPushButton("Return to other options")
+        ob = QPushButton("&Return to other options")
         self.sidle = QLineEdit()
         # set up sid completion
         self.sidTestDict = {"{}: {}".format(iDict[x][0], iDict[x][1]): x for x in iDict}
@@ -152,8 +152,8 @@ class HWTab(QWidget):
         qgb.setLayout(vb)
         # now set up other gui elements
         self.testl = QLabel("")
-        cb = QPushButton("Click to confirm")
-        vwb = QPushButton("View whole test")
+        cb = QPushButton("Click to co&nfirm")
+        vwb = QPushButton("&View whole test")
         fl.addRow(QLabel("Student ID / Name:"))
         fl.addRow(self.sidle)
         fl.addRow(QLabel("Test number:"), self.testl)
@@ -206,16 +206,16 @@ class TestTab(QWidget):
         super().__init__(parent)
         self._parent = parent
         fl = QFormLayout()
-        ob = QPushButton("Return to other options")
+        ob = QPushButton("&Return to other options")
         self.tsb = QSpinBox()
         self.psb = QSpinBox()
         self.tsb.setMinimum(1)
         self.tsb.setMaximum(maxT)
         self.psb.setMinimum(1)
         self.psb.setMaximum(maxP)
-        cb = QPushButton("Click to confirm")
+        cb = QPushButton("Click to co&nfirm")
         cpb = QPushButton("Check that page")
-        vwb = QPushButton("View whole test")
+        vwb = QPushButton("&View whole test")
         fl.addRow(QLabel("Test number:"), self.tsb)
         fl.addRow(QLabel("Page number:"), self.psb)
         fl.addRow(cpb)
