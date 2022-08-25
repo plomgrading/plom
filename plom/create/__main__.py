@@ -602,7 +602,7 @@ def main():
 
             if args.demo:
                 classlist = get_demo_classlist(spec)
-                upload_classlist(classlist, msgr=msgr)
+                upload_classlist(classlist, msgr=msgr, force=args.force)
             else:
                 success, classlist = process_classlist_file(
                     args.classlist, spec, ignore_warnings=args.ignore_warnings

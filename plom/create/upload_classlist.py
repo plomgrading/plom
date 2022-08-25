@@ -23,7 +23,7 @@ def upload_classlist(classlist, *, msgr, force=False):
         force (bool): Force uploading if a classlist already exists,
             default `False`.
     """
-    _ultra_raw_upload_classlist(classlist, msgr, force)
+    _ultra_raw_upload_classlist(classlist, msgr, force=force)
 
 
 def _raw_upload_classlist(classlist, msgr):
@@ -35,7 +35,7 @@ def _raw_upload_classlist(classlist, msgr):
         msgr.stop()
 
 
-def _ultra_raw_upload_classlist(classlist, msgr, force):
+def _ultra_raw_upload_classlist(classlist, msgr, *, force=False):
     # TODO: clean up this chain viz the mock test
     try:
         msgr.upload_classlist(classlist, force)
@@ -65,14 +65,16 @@ def _ultra_raw_upload_classlist(classlist, msgr, force):
 
 
 @with_manager_messenger
-def upload_demo_classlist(spec, *, msgr):
+def upload_demo_classlist(spec, *, msgr, force=False):
     """Uploads the demo classlist file to the server.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
+        force (bool): Force uploading if a classlist already exists,
+            default `False`.
     """
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
     classlist = get_demo_classlist(spec)
 
-    _ultra_raw_upload_classlist(classlist, msgr)
+    _ultra_raw_upload_classlist(classlist, msgr, force=force)
