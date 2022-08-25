@@ -29,6 +29,8 @@ def generate_pdf(number_of_pdfs):
     # Finish
     pdf.drawText(text_obj)
     pdf.showPage()
+    pdf.drawText(text_obj)
+    pdf.showPage()
     pdf.save()
 
     return buffer

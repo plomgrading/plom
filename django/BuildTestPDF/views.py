@@ -27,8 +27,6 @@ class BuildTestPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
     form = BuildNumberOfPDFsForm()
 
     def get(self, request):
-        test_pdf_file = Task.objects.all()[0].pdf_file
-        pdf = SimpleUploadedFile('test.pdf', test_pdf_file, content_type='application/pdf')
         context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
                    'form': self.form}
         return render(request, self.template_name, context)
@@ -37,21 +35,18 @@ class BuildTestPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
         form = BuildNumberOfPDFsForm(request.POST)
         if form.is_valid():
             number_of_pdfs = int(request.POST.get('pdfs'))
-            user = request.user.username
+            for num in range(1, number_of_pdfs + 1):
+                buffer = generate_pdf(number_of_pdfs)
+                buffer.seek(0)
 
-            buffer = generate_pdf(number_of_pdfs)
-            buffer.seek(0)
+                Task(paper_number=num,
+                     pdf_file=buffer.read(),
+                     status='success').save()
 
-            Task(paper_number=1,
-                 pdf_file=buffer.read(),
-                 status='success').save()
-
-            buffer.seek(0)
             print(Task.objects.all()[0].pdf_file)
-            return FileResponse(buffer, filename='test.pdf')
-        # context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
-        #            'form': self.form}
-        # return render(request, self.template_name, context)
+            context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
+                       'form': self.form}
+            return render(request, self.template_name, context)
 
 
 class GetPDFFile(View):
