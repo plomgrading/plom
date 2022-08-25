@@ -80,7 +80,7 @@ class DiscardTab(QWidget):
 
 
 class ExtraTab(QWidget):
-    def __init__(self, parent, maxT, maxQ):
+    def __init__(self, parent, maxT, questionLabels):
         super().__init__(parent)
         self._parent = parent
         vb = QVBoxLayout()
@@ -91,19 +91,20 @@ class ExtraTab(QWidget):
         self.tsb.setMinimum(1)
         self.tsb.setMaximum(maxT)
         # a group of checkboxes for questions
-        # TODO these labels should be from spec
-        self.qgb = QGroupBox()
+        qgb = QGroupBox()
         self.qcbd = {}
         vb2 = QVBoxLayout()
-        for q in range(1, maxQ + 1):
-            self.qcbd[q] = QCheckBox(f"Q{q}")
-            vb2.addWidget(self.qcbd[q])
-        self.qgb.setLayout(vb2)
+        for i, qlabel in enumerate(questionLabels):
+            _ = QCheckBox(qlabel)
+            vb2.addWidget(_)
+            # stored to compute an one-based list later, consider refactoring
+            self.qcbd[i + 1] = _
+        qgb.setLayout(vb2)
         # put in other widgets
         self.cb = QPushButton("Click to confirm")
         self.vwb = QPushButton("View whole test")
         fl.addRow(QLabel("Test number:"), self.tsb)
-        fl.addRow(QLabel("Question numbers:"), self.qgb)
+        fl.addRow(QLabel("Question numbers:"), qgb)
         fl.addRow(self.vwb)
         fl.addRow(self.cb)
         self.frm.setLayout(fl)
@@ -136,7 +137,7 @@ class ExtraTab(QWidget):
 
 
 class HWTab(QWidget):
-    def __init__(self, parent, maxQ, iDict):
+    def __init__(self, parent, questionLabels, iDict):
         super().__init__(parent)
         self._parent = parent
         vb = QVBoxLayout()
@@ -154,14 +155,15 @@ class HWTab(QWidget):
         self.sidcompleter.setModel(self.sidlist)
         self.sidle.setCompleter(self.sidcompleter)
         # a group of checkboxes for questions
-        # TODO these labels should be from spec
-        self.qgb = QGroupBox()
+        qgb = QGroupBox()
         self.qcbd = {}
         vb2 = QVBoxLayout()
-        for q in range(1, maxQ + 1):
-            self.qcbd[q] = QCheckBox(f"Q{q}")
-            vb2.addWidget(self.qcbd[q])
-        self.qgb.setLayout(vb2)
+        for i, qlabel in enumerate(questionLabels):
+            _ = QCheckBox(qlabel)
+            vb2.addWidget(_)
+            # stored to compute an one-based list later, consider refactoring
+            self.qcbd[i + 1] = _
+        qgb.setLayout(vb2)
         # now set up other gui elements
         self.testl = QLabel("")
         self.cb = QPushButton("Click to confirm")
@@ -169,7 +171,7 @@ class HWTab(QWidget):
         fl.addRow(QLabel("Student ID / Name:"))
         fl.addRow(self.sidle)
         fl.addRow(QLabel("Test number:"), self.testl)
-        fl.addRow(QLabel("Question numbers:"), self.qgb)
+        fl.addRow(QLabel("Question numbers:"), qgb)
         fl.addRow(self.vwb)
         fl.addRow(self.cb)
         self.frm.setLayout(fl)
@@ -267,11 +269,11 @@ class TestTab(QWidget):
 class UnknownViewWindow(QDialog):
     """Simple view window for pageimages"""
 
-    def __init__(self, parent, fnames, tpq, iDict):
+    def __init__(self, parent, fnames, stuff, iDict):
         super().__init__(parent)
-        self.numberOfTests = tpq[0]
-        self.numberOfPages = tpq[1]
-        self.numberOfQuestions = tpq[2]
+        self.numberOfTests = stuff[0]
+        self.numberOfPages = stuff[1]
+        self.questionLabels = stuff[2]
         self.iDict = iDict
 
         if len(fnames) > 1:
@@ -302,9 +304,9 @@ class UnknownViewWindow(QDialog):
 
     def initTabs(self):
         t0 = ActionTab(self)
-        t1 = ExtraTab(self, self.numberOfTests, self.numberOfQuestions)
+        t1 = ExtraTab(self, self.numberOfTests, self.questionLabels)
         t2 = TestTab(self, self.numberOfTests, self.numberOfPages)
-        t3 = HWTab(self, self.numberOfQuestions, self.iDict)
+        t3 = HWTab(self, self.questionLabels, self.iDict)
         t4 = DiscardTab(self)
         self.optionTW.addTab(t0, "Actions")
         self.optionTW.addTab(t1, "Extra Page")

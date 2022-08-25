@@ -1184,7 +1184,7 @@ class Manager(QWidget):
         uvw = UnknownViewWindow(
             self,
             [pagedata],
-            [self.max_papers, self.numberOfPages, self.numberOfQuestions],
+            [self.max_papers, self.numberOfPages, self.qlabels],
             iDict,
         )
         if uvw.exec() == QDialog.Accepted:
