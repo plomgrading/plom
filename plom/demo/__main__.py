@@ -17,10 +17,7 @@ You can reproduce the demo using using various command line tools.
 Here we assume the Bash shell on a Unix system.  Open two terminals.
 In the first terminal::
 
-    plom-server init mysrv
-    cd mysrv
-    plom-server users --demo
-    cd ..
+    plom-server init mysrv --manager-pw 1234
     plom-server launch mysrv
 
 Now in the second terminal::
@@ -32,6 +29,7 @@ Now in the second terminal::
     cd mysrv
     plom-create newspec --demo
     plom-create uploadspec demoSpec.toml
+    plom-create users --demo
     cd ..
     plom-create class --demo
     plom-create rubric --demo
@@ -168,7 +166,7 @@ def main():
     # Note: if you're reading this code, you can use `plom-server ...`
     # where we use `python3 -m plom.server ...` and similarly for most
     # other commands.
-    init_cmd = f"python3 -m plom.server init {args.server_dir}"
+    init_cmd = f"python3 -m plom.server init {args.server_dir} --manager-pw 1234"
     if args.port:
         init_cmd += f" --port {args.port}"
     subprocess.check_call(split(init_cmd))
@@ -183,9 +181,6 @@ def main():
         paths.insert(0, str(Path.cwd().resolve()))
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
         print(f'hacking PYTHONPATH: {os.environ["PYTHONPATH"]}')
-
-    with working_directory(args.server_dir):
-        subprocess.check_call(split("python3 -m plom.server users --demo"))
 
     background_server = PlomServer(basedir=args.server_dir)
 
@@ -213,6 +208,7 @@ def main():
         else:
             subprocess.check_call(split("python3 -m plom.create newspec --demo"))
         subprocess.check_call(split("python3 -m plom.create uploadspec demoSpec.toml"))
+        subprocess.check_call(split("python3 -m plom.create users --demo"))
     subprocess.check_call(split("python3 -m plom.create class --demo"))
     subprocess.check_call(split("python3 -m plom.create rubric --demo"))
     with working_directory(args.server_dir):
