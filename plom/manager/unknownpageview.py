@@ -92,13 +92,10 @@ class ExtraTab(QWidget):
         self.tsb.setMaximum(maxT)
         # a group of checkboxes for questions
         qgb = QGroupBox()
-        self.qcbd = {}
+        self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
         vb2 = QVBoxLayout()
-        for i, qlabel in enumerate(questionLabels):
-            _ = QCheckBox(qlabel)
-            vb2.addWidget(_)
-            # stored to compute an one-based list later, consider refactoring
-            self.qcbd[i + 1] = _
+        for x in self.questionCheckBoxes:
+            vb2.addWidget(x)
         qgb.setLayout(vb2)
         # put in other widgets
         self.cb = QPushButton("Click to confirm")
@@ -118,15 +115,14 @@ class ExtraTab(QWidget):
         self.ob.clicked.connect(self.other)
 
     def confirm(self):
-        # make sure at least one question is checked
-        checked = [q for q in self.qcbd if self.qcbd[q].isChecked()]
+        checked = [i for i, x in enumerate(self.questionCheckBoxes) if x.isChecked()]
         if not checked:
             WarnMsg(self, "You must select at least one question.").exec()
             return
         self._parent.action = "extra"
         self._parent.test = self.tsb.value()
-        # store list of questions as comma-delimited string
-        self._parent.pq = ",".join([str(q) for q in checked])
+        # store list of questions as comma-delimited string, 1-based indexing
+        self._parent.pq = ",".join([str(i + 1) for i in checked])
         self._parent.accept()
 
     def viewWholeTest(self):
@@ -156,13 +152,10 @@ class HWTab(QWidget):
         self.sidle.setCompleter(self.sidcompleter)
         # a group of checkboxes for questions
         qgb = QGroupBox()
-        self.qcbd = {}
+        self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
         vb2 = QVBoxLayout()
-        for i, qlabel in enumerate(questionLabels):
-            _ = QCheckBox(qlabel)
-            vb2.addWidget(_)
-            # stored to compute an one-based list later, consider refactoring
-            self.qcbd[i + 1] = _
+        for x in self.questionCheckBoxes:
+            vb2.addWidget(x)
         qgb.setLayout(vb2)
         # now set up other gui elements
         self.testl = QLabel("")
@@ -196,15 +189,14 @@ class HWTab(QWidget):
     def confirm(self):
         if self.testl.text() == "":
             return
-        # make sure at least one question is checked
-        checked = [q for q in self.qcbd if self.qcbd[q].isChecked()]
+        checked = [i for i, x in enumerate(self.questionCheckBoxes) if x.isChecked()]
         if not checked:
             WarnMsg(self, "You must select at least one question.").exec()
             return
         self._parent.action = "homework"
         self._parent.sid = self.sidle.text()
-        # store list of questions as comma-delimited string
-        self._parent.pq = ",".join([str(q) for q in checked])
+        # store list of questions as comma-delimited string, 1-based indexing
+        self._parent.pq = ",".join([str(i + 1) for i in checked])
         self._parent.test = int(self.testl.text())
         self._parent.accept()
 
