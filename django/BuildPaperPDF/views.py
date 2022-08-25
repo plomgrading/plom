@@ -40,7 +40,7 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
 
             for num in range(1, number_of_pdfs + 1):
                 ccs = CoreConnectionService()
-                BuildPapersService.build_single_paper(number_of_pdfs, ccs)
+                BuildPapersService.build_single_paper(num, ccs)
 
             message = 'Your pdf is building!'
             # for num in range(1, number_of_pdfs + 1):
