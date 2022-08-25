@@ -18,9 +18,8 @@ from django.http import HttpResponse
 # Create your views here.
 
 
-class BuildTestPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
-    template_name = 'BuildTestPDF/build_test_pdfs.html'
-    test = 'BuildTestPDF/test.html'
+class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
+    template_name = 'BuildTestPDF/build_paper_pdfs.html'
     login_url = "login"
     group_required = ["manager"]
     navbar_colour = "#AD9CFF"
@@ -43,7 +42,6 @@ class BuildTestPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
                      pdf_file=buffer.read(),
                      status='success').save()
 
-            print(Task.objects.all()[0].pdf_file)
             context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
                        'form': self.form}
             return render(request, self.template_name, context)
@@ -53,6 +51,6 @@ class GetPDFFile(View):
 
     def get(self, request):
         test_pdf_file = Task.objects.all()[0].pdf_file
-        pdf = SimpleUploadedFile('test.pdf', test_pdf_file, content_type='application/pdf')
+        pdf = SimpleUploadedFile('paper.pdf', test_pdf_file, content_type='application/pdf')
 
         return FileResponse(pdf)

@@ -1,7 +1,7 @@
 from django.urls import path, include
-from .views import (BuildTestPDFs, GetPDFFile)
+from .views import (BuildPaperPDFs, GetPDFFile)
 
 urlpatterns = [
-    path("create/testpdfs/", BuildTestPDFs.as_view(), name="create_testPDFs"),
-    path("create/testpdfs/get/", GetPDFFile.as_view(), name="get_testPDFs"),
+    path("create/paperpdfs/", BuildPaperPDFs.as_view(), name="create_paperPDFs"),
+    path("create/paperpdfs/get/", GetPDFFile.as_view(), name="get_paperPDFs"),
 ]
