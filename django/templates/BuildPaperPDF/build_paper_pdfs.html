@@ -23,7 +23,10 @@
         </div>
         <div>
 {#            <a target="_blank" href="{% url 'get_paperPDFs' %}">pdf file</a>#}
-            {{ message }}
+            {{ message }}<br>
+            {% for paper_pdf in paper_pdfs %}
+                <a href="#">{{ paper_pdf }}</a><br>
+            {% endfor %}
         </div>
     {% endblock %}
 </body>

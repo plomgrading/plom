@@ -1,3 +1,6 @@
+import glob
+import os
+from pathlib import Path
 from wsgiref.util import FileWrapper
 
 from django.shortcuts import render
@@ -7,6 +10,7 @@ from braces.views import LoginRequiredMixin, GroupRequiredMixin
 from BuildPaperPDF.forms import BuildNumberOfPDFsForm
 from django.http import FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.conf import settings
 from django.core.files import File
 from io import BytesIO
 
@@ -14,8 +18,6 @@ from Connect.services import CoreConnectionService
 
 from .services import (generate_pdf, BuildPapersService)
 from .models import Task
-
-from django.http import HttpResponse
 
 
 # Create your views here.
@@ -36,23 +38,22 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
     def post(self, request):
         form = BuildNumberOfPDFsForm(request.POST)
         if form.is_valid():
-            number_of_pdfs = int(request.POST.get('pdfs'))
-            bps = BuildPapersService()
-            ccs = CoreConnectionService()
-            credentials = (ccs.get_server_name(), ccs.get_manager_password())
-            bps.build_n_papers(number_of_pdfs, credentials)
+            # number_of_pdfs = int(request.POST.get('pdfs'))
+            paper_PDFs = []
 
-            message = 'Your pdf is building!'
             # for num in range(1, number_of_pdfs + 1):
-            #     buffer = generate_pdf(number_of_pdfs)
-            #     buffer.seek(0)
-            #
-            #     Task(paper_number=num,
-            #          pdf_file=buffer.read(),
-            #          status='success').save()
+            #     ccs = CoreConnectionService()
+            #     BuildPapersService.build_single_paper(num, ccs)
+
+            path = settings.BASE_DIR / 'papersToPrint'
+            path_list = sorted(Path(path).glob('*.pdf'))
+            for pdf in path_list:
+                paper_PDFs.append(str(pdf.name))
+
+            message = 'Your pdf finished building! See below.'
 
             context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
-                       'form': self.form, 'message': message}
+                       'form': self.form, 'message': message, 'paper_pdfs': paper_PDFs}
             return render(request, self.template_name, context)
 
 
