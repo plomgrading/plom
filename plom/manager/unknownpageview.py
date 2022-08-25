@@ -14,6 +14,8 @@ from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QSizePolicy,
+    QSpacerItem,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -83,19 +85,17 @@ class ExtraTab(QWidget):
     def __init__(self, parent, maxT, questionLabels):
         super().__init__(parent)
         self._parent = parent
-        vb = QVBoxLayout()
         fl = QFormLayout()
-        frm = QFrame()
         ob = QPushButton("Return to other options")
         self.tsb = QSpinBox()
         self.tsb.setMinimum(1)
         self.tsb.setMaximum(maxT)
         qgb = QGroupBox("&Assign to questions:")
         self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
-        vb2 = QVBoxLayout()
+        vb = QVBoxLayout()
         for x in self.questionCheckBoxes:
-            vb2.addWidget(x)
-        qgb.setLayout(vb2)
+            vb.addWidget(x)
+        qgb.setLayout(vb)
         # put in other widgets
         cb = QPushButton("Click to confirm")
         vwb = QPushButton("View whole test")
@@ -103,12 +103,9 @@ class ExtraTab(QWidget):
         fl.addRow(qgb)
         fl.addRow(vwb)
         fl.addRow(cb)
-        frm.setLayout(fl)
-        vb.addWidget(frm)
-        vb.addStretch(1)
-        vb.addWidget(ob)
-        self.setLayout(vb)
-
+        fl.addItem(QSpacerItem(16, 32, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        fl.addRow(ob)
+        self.setLayout(fl)
         vwb.clicked.connect(self.viewWholeTest)
         cb.clicked.connect(self.confirm)
         ob.clicked.connect(self.other)
@@ -135,9 +132,7 @@ class HWTab(QWidget):
     def __init__(self, parent, questionLabels, iDict):
         super().__init__(parent)
         self._parent = parent
-        vb = QVBoxLayout()
         fl = QFormLayout()
-        frm = QFrame()
         ob = QPushButton("Return to other options")
         self.sidle = QLineEdit()
         # set up sid completion
@@ -151,10 +146,10 @@ class HWTab(QWidget):
         self.sidle.setCompleter(self.sidcompleter)
         qgb = QGroupBox("&Assign to questions:")
         self.questionCheckBoxes = [QCheckBox(x) for x in questionLabels]
-        vb2 = QVBoxLayout()
+        vb = QVBoxLayout()
         for x in self.questionCheckBoxes:
-            vb2.addWidget(x)
-        qgb.setLayout(vb2)
+            vb.addWidget(x)
+        qgb.setLayout(vb)
         # now set up other gui elements
         self.testl = QLabel("")
         cb = QPushButton("Click to confirm")
@@ -165,11 +160,9 @@ class HWTab(QWidget):
         fl.addRow(qgb)
         fl.addRow(vwb)
         fl.addRow(cb)
-        frm.setLayout(fl)
-        vb.addWidget(frm)
-        vb.addStretch(1)
-        vb.addWidget(ob)
-        self.setLayout(vb)
+        fl.addItem(QSpacerItem(16, 32, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        fl.addRow(ob)
+        self.setLayout(fl)
         vwb.clicked.connect(self.viewWholeTest)
         cb.clicked.connect(self.confirm)
         ob.clicked.connect(self.other)
@@ -212,9 +205,7 @@ class TestTab(QWidget):
     def __init__(self, parent, maxT, maxP):
         super().__init__(parent)
         self._parent = parent
-        vb = QVBoxLayout()
         fl = QFormLayout()
-        frm = QFrame()
         ob = QPushButton("Return to other options")
         self.tsb = QSpinBox()
         self.psb = QSpinBox()
@@ -230,11 +221,9 @@ class TestTab(QWidget):
         fl.addRow(cpb)
         fl.addRow(vwb)
         fl.addRow(cb)
-        frm.setLayout(fl)
-        vb.addWidget(frm)
-        vb.addStretch(1)
-        vb.addWidget(ob)
-        self.setLayout(vb)
+        fl.addItem(QSpacerItem(16, 32, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        fl.addRow(ob)
+        self.setLayout(fl)
         cpb.clicked.connect(self.checkTPage)
         vwb.clicked.connect(self.viewWholeTest)
         cb.clicked.connect(self.confirm)
