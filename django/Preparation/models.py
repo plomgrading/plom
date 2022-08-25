@@ -5,7 +5,7 @@ from django.db import models
 
 class PaperSourcePDF(models.Model):
     version = models.PositiveIntegerField(unique=True)
-    source_pdf = models.FileField(upload_to="sources/")
+    source_pdf = models.FileField(upload_to="sourceVersions/")
     hash = models.CharField(null=False, max_length=64)
 
 
@@ -45,7 +45,7 @@ class PrenamingSetting(SingletonBaseModel):
 class StagingClasslistCSV(SingletonBaseModel):
     """A temporary holder for the classlist csv for the purposes of preparing things."""
     # TODO - set a better upload path
-    csv_file = models.FileField(upload_to="sources/")
+    csv_file = models.FileField(upload_to="sourceVersions/")
     valid = models.BooleanField(default=False, null=False)
     warnings_errors_list = models.JSONField()
 

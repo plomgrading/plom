@@ -21,4 +21,6 @@ python3 manage.py plom_create_groups
 
 python3 manage.py plom_create_demo_users
 
+python3 manage.py plom_demo_spec
+
 python3 manage.py runserver
