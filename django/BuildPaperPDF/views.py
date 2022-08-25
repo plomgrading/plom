@@ -37,8 +37,11 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
         form = BuildNumberOfPDFsForm(request.POST)
         if form.is_valid():
             number_of_pdfs = int(request.POST.get('pdfs'))
-            ccs = CoreConnectionService()
-            BuildPapersService.build_single_paper(number_of_pdfs, ccs)
+
+            for num in range(1, number_of_pdfs + 1):
+                ccs = CoreConnectionService()
+                BuildPapersService.build_single_paper(number_of_pdfs, ccs)
+
             message = 'Your pdf is building!'
             # for num in range(1, number_of_pdfs + 1):
             #     buffer = generate_pdf(number_of_pdfs)
