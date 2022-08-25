@@ -30,7 +30,7 @@ Now in the second terminal::
     export PLOM_SCAN_PASSWORD=4567
 
     cd mysrv
-    plom-create new --demo
+    plom-create newspec --demo
     plom-create uploadspec demoSpec.toml
     cd ..
     plom-create class --demo
@@ -207,11 +207,11 @@ def main():
         if args.num_papers:
             subprocess.check_call(
                 split(
-                    f"python3 -m plom.create new --demo --demo-num-papers {args.num_papers}"
+                    f"python3 -m plom.create newspec --demo --demo-num-papers {args.num_papers}"
                 )
             )
         else:
-            subprocess.check_call(split("python3 -m plom.create new --demo"))
+            subprocess.check_call(split("python3 -m plom.create newspec --demo"))
         subprocess.check_call(split("python3 -m plom.create uploadspec demoSpec.toml"))
     subprocess.check_call(split("python3 -m plom.create class --demo"))
     subprocess.check_call(split("python3 -m plom.create rubric --demo"))

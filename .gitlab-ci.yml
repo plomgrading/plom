@@ -290,7 +290,7 @@ demoserver:
     - pushd demo
     - plom-server init
     - plom-server users --demo
-    - plom-create new --demo
+    - plom-create newspec --demo
     - plom-create parse demoSpec.toml
     # Start server
     - ip addr
@@ -336,7 +336,7 @@ hwdemoserver:
     - pushd demo
     - plom-server init
     - plom-server users --demo
-    - plom-create new --demo
+    - plom-create newspec --demo
     - plom-create parse demoSpec.toml
     # Start server
     - ip addr
@@ -402,7 +402,7 @@ fullworkflow:
     - pushd play
     - plom-server init
     - plom-server users --demo
-    - plom-create new
+    - plom-create newspec
     - plom-create parse
     - python3 -m plom.create.demotools solutions # to get soln pdf copied
     # TODO: override the private seed

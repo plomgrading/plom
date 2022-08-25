@@ -73,7 +73,7 @@ def parse_verify_save_spec(fname, save=True):
     fname = Path(fname)
     print(f'Parsing and verifying the specification "{fname}"')
     if not fname.exists():
-        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-create new"?')
+        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-create newspec"?')
 
     sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
@@ -157,7 +157,10 @@ def get_parser():
     sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
     spC = sub.add_parser(
-        "new", help="Create new spec file", description="Create new spec file."
+        "newspec",
+        aliases=["new"],
+        help="Create new spec file",
+        description="Create new spec file.",
     )
     group = spC.add_mutually_exclusive_group(required=False)
     group.add_argument(
@@ -518,7 +521,7 @@ def main():
     if args.command == "status":
         plom.create.status(msgr=(args.server, args.password))
 
-    elif args.command == "new":
+    elif args.command == "newspec" or args.command == "new":
         if args.demo:
             fname = "demoSpec.toml"
         else:

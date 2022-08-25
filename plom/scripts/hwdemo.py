@@ -113,7 +113,7 @@ def main():
     os.environ["PLOM_SCAN_PASSWORD"] = "4567"
 
     with working_directory(args.server_dir):
-        subprocess.check_call(split("plom-create new --demo"))
+        subprocess.check_call(split("plom-create newspec --demo"))
         subprocess.check_call(split("plom-create uploadspec demoSpec.toml"))
 
     subprocess.check_call(split("plom-create class --demo"))
