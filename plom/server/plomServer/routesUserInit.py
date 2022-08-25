@@ -174,7 +174,9 @@ class UserInitHandler:
               caller if we already had one or not.
         """
         if self.server.DB.is_paper_database_initialised():
-            raise web.HTTPConflict(reason="Server has initialied DB: cannot accept spec")
+            raise web.HTTPConflict(
+                reason="Server has initialised DB: cannot accept spec"
+            )
         sv = SpecVerifier(data["spec"])
         try:
             sv.verifySpec(verbose="log")
