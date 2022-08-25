@@ -207,7 +207,7 @@ def MreturnMarkedTask(
 
     # db successfully updated
     #  check if those files exist already - back up if so
-    for filename in (annotated_filename, plomdat):
+    for filename in annotated_filename:
         if os.path.isfile(filename):
             # start with suffix 0 and keep incrementing until get a safe suffix.
             suffix = 0
@@ -222,8 +222,6 @@ def MreturnMarkedTask(
     # now write in the files
     with open(annotated_filename, "wb") as file_header:
         file_header.write(annotated_image)
-    # with open(plom_filename, "wb") as file_header:
-        # file_header.write(plomdat)
 
     # return ack with current counts.
     return [
