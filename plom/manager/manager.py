@@ -2154,8 +2154,8 @@ class Manager(QWidget):
         self.ui.reviewPaperNumSpinBox.setRange(0, self.max_papers)
 
         self.ui.questionCB.addItem("*")
-        for q in range(self.numberOfQuestions):
-            self.ui.questionCB.addItem(str(q + 1))
+        for q in self.qlabels:
+            self.ui.questionCB.addItem(q)
         self.ui.versionCB.addItem("*")
         for v in range(self.numberOfVersions):
             self.ui.versionCB.addItem(str(v + 1))
@@ -2182,9 +2182,13 @@ class Manager(QWidget):
     def filterReview(self):
         t0 = time()
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
+        # 1-based question indexing but 0th element is the any match
+        qidx = self.ui.questionCB.currentIndex()
+        if qidx == 0:
+            qidx = "*"
         mrList = self.msgr.getMarkReview(
             filterPaperNumber=self.ui.reviewPaperNumSpinBox.text(),
-            filterQ=self.ui.questionCB.currentText(),
+            filterQ=qidx,
             filterV=self.ui.versionCB.currentText(),
             filterUser=self.ui.userCB.currentText(),
             filterMarked=markedOnly,
