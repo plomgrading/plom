@@ -2243,7 +2243,8 @@ class Manager(QWidget):
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
             fh.write(img)
-        ReviewViewWindow(self, [f], stuff=(test, question, owner)).exec()
+        qlabel = self.qlabels[question - 1]
+        ReviewViewWindow(self, [f], stuff=(test, question, qlabel, owner)).exec()
         f.unlink()
 
     def reviewFlagTableRowsForReview(self):
