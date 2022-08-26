@@ -1115,8 +1115,8 @@ class Manager(QWidget):
                 "Bundle position",
                 "Action to be taken",
                 "Rotation-angle",
-                "Test",
-                "Page or Question",
+                "Paper number",
+                "Page or Question indices",
             ]
         )
         self.ui.unknownTV.setIconSize(QSize(32, 32))
