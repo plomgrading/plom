@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QCompleter,
     QDialog,
-    QFrame,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
