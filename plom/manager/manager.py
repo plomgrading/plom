@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QDialog,
+    QDialogButtonBox,
     QFileDialog,
     QGroupBox,
     QGridLayout,
@@ -251,55 +252,56 @@ class QVHistogram(QDialog):
 
 
 class TestStatus(QDialog):
-    def __init__(self, parent, nq, status):
+    def __init__(self, parent, qlabels, status):
         super().__init__(parent)
-        self.status = status
-        self.setWindowTitle("Status of test {}".format(self.status["number"]))
+        self.setWindowTitle(f'Status of Paper {status["number"]:04}')
 
-        grid = QGridLayout()
-        self.idCB = QCheckBox("Identified: ")
-        self.idCB.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.idCB.setFocusPolicy(Qt.NoFocus)
+        idCB = QCheckBox("Identified")
+        idCB.setAttribute(Qt.WA_TransparentForMouseEvents)
+        idCB.setFocusPolicy(Qt.NoFocus)
         if status["identified"]:
-            self.idCB.setCheckState(Qt.Checked)
-        self.mkCB = QCheckBox("Marked: ")
-        self.mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.mkCB.setFocusPolicy(Qt.NoFocus)
+            idCB.setCheckState(Qt.Checked)
+        mkCB = QCheckBox("Fully marked")
+        mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
+        mkCB.setFocusPolicy(Qt.NoFocus)
         if status["marked"]:
-            self.mkCB.setCheckState(Qt.Checked)
+            mkCB.setCheckState(Qt.Checked)
 
-        self.clB = QPushButton("&close")
-        self.clB.clicked.connect(self.accept)
-
-        grid.addWidget(self.idCB, 1, 1)
-        grid.addWidget(self.mkCB, 1, 3)
+        hb = QHBoxLayout()
+        vb1 = QVBoxLayout()
+        vb2 = QVBoxLayout()
+        hb.addLayout(vb1)
+        hb.addLayout(vb2)
+        vb1.addWidget(idCB)
+        vb2.addWidget(mkCB)
 
         if status["identified"]:
-            self.iG = QGroupBox("Identification")
+            G = QGroupBox("Identification")
             gg = QVBoxLayout()
             gg.addWidget(QLabel("ID: {}".format(status["sid"])))
             gg.addWidget(QLabel("Name: {}".format(status["sname"])))
-            gg.addWidget(QLabel("Username: {}".format(status["iwho"])))
-            self.iG.setLayout(gg)
-            grid.addWidget(self.iG, 2, 1, 3, 3)
+            gg.addWidget(QLabel("Who ID'd: {}".format(status["iwho"])))
+            G.setLayout(gg)
+            vb1.addWidget(G)
+        vb1.addStretch(1)
 
-        self.qG = {}
-        for q in range(1, nq + 1):
-            sq = str(q)
-            self.qG[q] = QGroupBox("Question {}.{}:".format(q, status[sq]["version"]))
+        for i, qlabel in enumerate(qlabels):
+            sq = str(i + 1)
+            G = QGroupBox(f'{qlabel} version {status[sq]["version"]}')
             gg = QVBoxLayout()
             if status[sq]["marked"]:
-                gg.addWidget(QLabel("Marked"))
                 gg.addWidget(QLabel("Mark: {}".format(status[sq]["mark"])))
                 gg.addWidget(QLabel("Username: {}".format(status[sq]["who"])))
             else:
                 gg.addWidget(QLabel("Unmarked"))
+            G.setLayout(gg)
+            vb2.addWidget(G)
+        vb2.addStretch(2)
 
-            self.qG[q].setLayout(gg)
-            grid.addWidget(self.qG[q], 10 * q + 1, 1, 3, 3)
-
-        grid.addWidget(self.clB, 100, 10)
-        self.setLayout(grid)
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.rejected.connect(self.reject)
+        vb2.addWidget(buttons)
+        self.setLayout(hb)
 
 
 class ProgressBox(QGroupBox):
@@ -1626,7 +1628,7 @@ class Manager(QWidget):
         r = pvi[0].row()
         testNumber = int(self.ui.overallTW.item(r, 0).text())
         stats = self.msgr.RgetStatus(testNumber)
-        TestStatus(self, self.numberOfQuestions, stats).exec()
+        TestStatus(self, self.qlabels, stats).exec()
 
     def refreshOverallTab(self):
         self.ui.overallTW.clearContents()
