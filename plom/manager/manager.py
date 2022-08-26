@@ -2100,7 +2100,7 @@ class Manager(QWidget):
         self.ui.reviewTW.setHorizontalHeaderLabels(
             [
                 "Test",
-                "Question",
+                "Question index",
                 "Version",
                 "Mark",
                 "Username",
@@ -2137,6 +2137,9 @@ class Manager(QWidget):
                     # flatten the tag list to a string
                     # TODO: possible to keep the list too, in some other Role?
                     x = ", ".join(x)
+                # TODO: display question label, but other code expects qidx here
+                # elif k == 1:
+                #     x = self.qlabels[x - 1]
                 item.setData(Qt.DisplayRole, x)
                 tw.setItem(i, k, item)
             if row[4] == "reviewer":
