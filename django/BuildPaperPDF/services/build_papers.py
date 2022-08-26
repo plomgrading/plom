@@ -43,21 +43,3 @@ class BuildPapersService:
             indexToMake=index,
             msgr=credentials
         )
-
-    def build_all_papers(self, ccs):
-        """Build all the test-papers."""
-        msgr = None
-        try:
-            msgr = ccs.get_manager_messenger()
-            msgr.start()
-            msgr.requestAndSaveToken(ccs.manager_username, ccs.get_manager_password())
-
-            build_papers(
-                basedir=settings.BASE_DIR,
-                msgr=msgr
-            )
-        finally:
-            if msgr:
-                if msgr.token:
-                    msgr.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
-                msgr.stop()

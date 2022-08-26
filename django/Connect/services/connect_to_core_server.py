@@ -6,7 +6,7 @@ from plom.messenger import Messenger, ManagerMessenger
 from plom.plom_exceptions import (
     PlomConnectionError, 
     PlomConflict, 
-    PlomSeriousException, 
+    PlomExistingLoginException, 
     PlomServerNotReady, 
     PlomAuthenticationException,
 )
@@ -102,7 +102,7 @@ class CoreConnectionService:
             spec = messenger.get_spec()
             messenger.stop()
             return True
-        except (PlomServerNotReady, PlomConnectionError, RuntimeError):
+        except (PlomServerNotReady, PlomConnectionError, PlomExistingLoginException, RuntimeError):
             return False
         finally:
             if messenger:
@@ -121,7 +121,7 @@ class CoreConnectionService:
 
             classlist = messenger.IDrequestClasslist()
             return True
-        except (PlomServerNotReady, PlomConnectionError, RuntimeError):
+        except (PlomServerNotReady, PlomConnectionError, PlomExistingLoginException, RuntimeError):
             return False
         finally:
             if messenger:
@@ -142,7 +142,7 @@ class CoreConnectionService:
 
             qvmap = messenger.getGlobalQuestionVersionMap()
             return qvmap != {}
-        except (PlomAuthenticationException, PlomConnectionError, RuntimeError):
+        except (PlomAuthenticationException, PlomConnectionError, PlomExistingLoginException, RuntimeError):
             return False
         finally:
             if messenger:
