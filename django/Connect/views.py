@@ -222,7 +222,7 @@ class SendPQVInitializeDB(ManagerRequiredUtilView):
 
         try:
             ver_map = qvs.get_pqv_map_dict()
-            core.initialize_core_db(ver_map)
+            core.initialise_core_db(ver_map)
             context = self.build_context()
             context.update({'attempt': True})
             return render(request, 'Connect/connect-vermap-attempt.html', context)

@@ -1,7 +1,7 @@
-import re
-from typing import final
+import queue
 from django.db import transaction
 from django.contrib.auth.hashers import make_password, check_password
+from django_huey import db_task
 from plom.messenger import Messenger, ManagerMessenger
 from plom.plom_exceptions import (
     PlomConnectionError, 
@@ -11,7 +11,11 @@ from plom.plom_exceptions import (
     PlomAuthenticationException,
 )
 
-from Connect.models import CoreServerConnection, CoreManagerLogin
+from Connect.models import (
+    CoreServerConnection, 
+    CoreManagerLogin,
+    CoreDBinitialiseTask,
+)
 
 
 class CoreConnectionService:
@@ -229,16 +233,30 @@ class CoreConnectionService:
             messenger.clearAuthorisation(self.manager_username, password)
             messenger.stop()
 
-    def initialize_core_db(self, version_map: dict):
-        """Initialize the core server database and send a PQV map"""
-        messenger = self.get_manager_messenger()
+    def create_core_db_task(self, huey_id):
+        """Save a huey task to the database"""
+        task = CoreDBinitialiseTask(
+            status = 'todo',
+            huey_id = huey_id
+        )
+        task.save()
+        return task
+
+    def initialise_core_db(self, version_map: dict):
+        db_task = self._initialise_core_db(self, version_map)
+        task_obj = self.create_core_db_task(db_task.id)
+        task_obj.status = 'queued'
+        task_obj.save()
+        return task_obj
+
+    @db_task(queue='tasks')
+    def _initialise_core_db(ccs, version_map: dict):
+        """Initialise the core server database and send a PQV map"""
+        messenger = ccs.get_manager_messenger()
         messenger.start()
 
-        manager = self.get_manager()
-        password = manager.password
-
         try:
-            messenger.requestAndSaveToken(self.manager_username, password)
+            messenger.requestAndSaveToken(ccs.manager_username, ccs.get_manager_password())
             if not messenger.token:
                 raise RuntimeError("Unable to authenticate manager.")
             vmap = messenger.InitialiseDB()
@@ -246,5 +264,5 @@ class CoreConnectionService:
                 status = messenger.appendTestToDB(i, vmap[i])
                 print(status)
         finally:
-            messenger.clearAuthorisation(self.manager_username, password)
+            messenger.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
             messenger.stop()

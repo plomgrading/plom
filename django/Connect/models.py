@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 
 from Preparation.models import SingletonBaseModel
@@ -21,3 +22,10 @@ class CoreScannerLogin(SingletonBaseModel):
     """Login details for the core scanner accont"""
     scanner_username = models.CharField(max_length=100)
     scanner_password = models.CharField(max_length=100)
+
+
+class CoreDBinitialiseTask(models.Model):
+    """Build the database in the background"""
+    status = models.CharField(max_length=20)
+    huey_id = models.UUIDField(null=True)
+    created = models.DateTimeField(default=datetime.now, blank=True)
