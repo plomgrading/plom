@@ -2202,7 +2202,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
             <item>
              <widget class="QLabel" name="label_5">
               <property name="text">
-               <string>Question</string>
+               <string>Question index</string>
               </property>
              </widget>
             </item>

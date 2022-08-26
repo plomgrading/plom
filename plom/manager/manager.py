@@ -2571,7 +2571,7 @@ class Manager(QWidget):
             SimpleQuestion(
                 self,
                 "Are you sure that you want to delete solution to"
-                f" question {self.ui.solnQSB.value()}"
+                f" question index {self.ui.solnQSB.value()}"
                 f" version {self.ui.solnVSB.value()}.",
             ).exec()
             == QMessageBox.Yes
@@ -2619,7 +2619,7 @@ class Manager(QWidget):
         self.ui.QPUserTW.setColumnCount(5)
         self.ui.QPUserTW.setHeaderLabels(
             [
-                "Question",
+                "Question index",
                 "Version",
                 "User",
                 "Number Marked",
@@ -2635,7 +2635,7 @@ class Manager(QWidget):
         self.ui.PUQTW.setHeaderLabels(
             [
                 "User",
-                "Question",
+                "Question index",
                 "Version",
                 "Number Marked",
                 "Avg time per task",
