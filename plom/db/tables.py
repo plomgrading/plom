@@ -3,6 +3,7 @@
 # Copyright (C) 2021 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2022 Chris Jin
 
 import peewee as pw
 
@@ -168,7 +169,7 @@ class Annotation(BaseModel):
     outdated = pw.BooleanField(default=False)
     #
     # we need to order the annotations - want the latest.
-    plom_file = pw.TextField(null=True)  # might be long
+    plom_json = pw.TextField(null=True)
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=False)

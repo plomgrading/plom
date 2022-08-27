@@ -6,7 +6,6 @@
 
 import hashlib
 import imghdr
-from io import BytesIO
 import json
 import os
 import logging
@@ -157,14 +156,18 @@ def MreturnMarkedTask(
         return [False, errstr]
 
     annotated_filename = f"markedQuestions/G{task_code[1:]}.{imgtype}"
-    plom_filename = f"markedQuestions/plomFiles/G{task_code[1:]}.plom"
 
     # Sanity check the plomfile
+    # currently it comes as bytes, although we should refactor this
+    try:
+        plomdat = plomdat.decode()
+    except UnicodeDecodeError as e:
+        return [False, f"Invalid JSON in plom json data: {str(e)}"]
     # TODO: ok to read plomdat twice?  Maybe save the json later
     try:
-        plom_data = json.load(BytesIO(plomdat))
-    except (UnicodeDecodeError, json.JSONDecodeError) as e:
-        return [False, f"Invalid JSON in plom file data: {str(e)}"]
+        plom_data = json.loads(plomdat)
+    except json.JSONDecodeError as e:
+        return [False, f"Invalid JSON in plom json data: {str(e)}"]
     if plom_data.get("currentMark") != mark:
         return [False, f"Mark mismatch: {mark} does not match plomfile content"]
     for x, y in zip(images_used, plom_data["base_images"]):
@@ -181,7 +184,7 @@ def MreturnMarkedTask(
         username,
         mark,
         annotated_filename,
-        plom_filename,
+        plomdat,
         rubrics,
         time_spent_marking,
         annotated_image_md5,
@@ -194,7 +197,7 @@ def MreturnMarkedTask(
 
     # db successfully updated
     #  check if those files exist already - back up if so
-    for filename in (annotated_filename, plom_filename):
+    for filename in annotated_filename:
         if os.path.isfile(filename):
             # start with suffix 0 and keep incrementing until get a safe suffix.
             suffix = 0
@@ -209,8 +212,6 @@ def MreturnMarkedTask(
     # now write in the files
     with open(annotated_filename, "wb") as file_header:
         file_header.write(annotated_image)
-    with open(plom_filename, "wb") as file_header:
-        file_header.write(plomdat)
 
     # return ack with current counts.
     return [
