@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2022 Chris Jin
 
 from datetime import datetime, timezone
 import json
