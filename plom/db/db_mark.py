@@ -280,7 +280,7 @@ def MtakeTaskFromClient(
     user_name,
     mark,
     annot_fname,
-    plomdat,
+    plom_json,
     rubrics,
     marking_time,
     md5,
@@ -368,7 +368,7 @@ def MtakeTaskFromClient(
         # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
         aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
         aref.mark = mark
-        aref.plom_json = plomdat.decode()
+        aref.plom_json = plom_json
         aref.marking_time = marking_time
         qref.save()
         aref.save()
