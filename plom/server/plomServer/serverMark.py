@@ -180,7 +180,7 @@ def MreturnMarkedTask(
         return [False, f"Invalid JSON in plom json data: {str(e)}"]
     # TODO: ok to read plomdat twice?  Maybe save the json later
     try:
-        plom_data = json.load(plomdat)
+        plom_data = json.loads(plomdat)
     except json.JSONDecodeError as e:
         return [False, f"Invalid JSON in plom json data: {str(e)}"]
     if plom_data.get("currentMark") != mark:
