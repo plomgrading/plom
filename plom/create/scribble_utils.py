@@ -57,6 +57,9 @@ possible_answers = [
     "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
     "Mathematics: the only province of the literary world"
     " where peace reigns.  -- Maria Gaetana Agnesi",  # doi:10.1086/385354
+    "Cupcake ipsum dolor sit amet pastry. Apple pie I love marzipan souffle"
+    " jelly tart I love jelly. Chocolate lemon drops chupa chups I love pie"
+    " cookie candy donut pudding.  -- www.cupcakeipsum.com",
 ]
 
 # some simple translations of the word "extra" into other languages courtesy of google-translate
