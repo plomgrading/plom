@@ -48,10 +48,15 @@ possible_answers = [
     "I knew that it, it was illegal  -- Arlo Guthrie",
     "But there will always be science, engineering, and technology.  "
     "And there will always, always be mathematics.  -- Katherine Johnson",
+    "I like to learn. That's an art and a science.  -- Katherine Johnson",
+    "You tell me when you want it and where you want it to land, and I'll"
+    " do it backwards and tell you when to take off.  -- Katherine Johnson",
     "Is 5 = 1?  Let's see... multiply both sides by 0.  "
     "Now 0 = 0 so therefore 5 = 1.",
     "I mean, you could claim that anything's real if the only basis for "
     "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
+    "Mathematics: the only province of the literary world"
+    " where peace reigns.  -- Maria Gaetana Agnesi",  # doi:10.1086/385354
 ]
 
 # some simple translations of the word "extra" into other languages courtesy of google-translate
