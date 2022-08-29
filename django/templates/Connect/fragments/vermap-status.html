@@ -1,0 +1,19 @@
+<div class="card-body">
+    {% if task.status == 'complete' %}
+    <h5 class="card-title">QV map sent to Plom-classic and database initialised.</h5>
+    {% elif task.status == 'error' %}
+    <h5 class="card-title">Exception encountered</h5>
+    <p class="card-text text-danger">{{ task.message }}</p>
+    {% else %}
+    <h5 class="card-title">Database initialisation in progress</h5>
+    <p class="card-text">Status: {{ task.status }}</p>
+    {% endif %}
+    <a class="btn btn-primary" href="{% url 'connect_send_info' %}">Back</a>
+    <a 
+        class="btn btn-primary" 
+        hx-get="{% url 'connect_db_update' task.huey_id %}" 
+        hx-target="#task-status"
+    >
+        Refresh
+    </a>
+</div>

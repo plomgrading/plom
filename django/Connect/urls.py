@@ -9,6 +9,8 @@ from Connect.views import (
     SendTestSpecToCoreView,
     SendClasslistToCoreView,
     SendPQVInitializeDB,
+    CoreDBStatusView,
+    CoreDBRefreshStatus,
     )
 
 urlpatterns = [
@@ -21,4 +23,6 @@ urlpatterns = [
     path('send_info/test_spec/', SendTestSpecToCoreView.as_view(), name='connect_send_spec'),
     path('send_info/classlist/', SendClasslistToCoreView.as_view(), name='connect_send_classlist'),
     path('send_info/init_db/', SendPQVInitializeDB.as_view(), name='connect_init_db'),
+    path('send_info/init_db/<str:huey_id>', CoreDBStatusView.as_view(), name='connect_db_status'),
+    path('send_info/init_db/<str:huey_id>/update/', CoreDBRefreshStatus.as_view(), name='connect_db_update')
 ]

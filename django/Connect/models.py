@@ -29,3 +29,4 @@ class CoreDBinitialiseTask(models.Model):
     status = models.CharField(max_length=20)
     huey_id = models.UUIDField(null=True)
     created = models.DateTimeField(default=datetime.now, blank=True)
+    message = models.TextField(default="")

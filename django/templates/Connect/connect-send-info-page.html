@@ -77,10 +77,7 @@
             </p>
             {% if is_spec_sent %}
                 {% if pqvmap_exists %}
-                <form action="{% url 'connect_init_db' %}" method="post">
-                    {% csrf_token %}
-                    <input type="submit" class="btn btn-primary" value="Send">
-                </form>
+                <a class="btn btn-primary" href="{% url 'connect_init_db' %}">Send</a>
                 {% else %}
                 <p class="card-text">No QV map detected.</p>
                 {% endif %}

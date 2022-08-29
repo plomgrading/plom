@@ -1,7 +1,7 @@
-import queue
 from django.db import transaction
 from django.contrib.auth.hashers import make_password, check_password
-from django_huey import db_task
+from django_huey import db_task, get_queue
+from huey.signals import SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_COMPLETE
 from plom.messenger import Messenger, ManagerMessenger
 from plom.plom_exceptions import (
     PlomConnectionError, 
@@ -23,6 +23,8 @@ class CoreConnectionService:
     
     TODO: Does not verify SSL yet!
     """
+
+    queue = get_queue('tasks')
 
     def __init__(self):
         self.client_version = self.get_connection().client_version
@@ -163,6 +165,9 @@ class CoreConnectionService:
         connection_obj.server_details = version_string
         connection_obj.save()
 
+        old_db_tasks = CoreDBinitialiseTask.objects.all()
+        old_db_tasks.delete()
+
     @transaction.atomic
     def forget_connection_info(self):
         """Wipe connection info from the database"""
@@ -266,3 +271,42 @@ class CoreConnectionService:
         finally:
             messenger.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
             messenger.stop()
+
+    def get_latest_init_db_task(self, sense_core_db=True):
+        """Get the latest Init DB task
+        
+        TODO: for now, if the database hasn't been initialised, just return None
+        """
+        tasks = CoreDBinitialiseTask.objects.all().order_by('created')
+        if len(tasks) > 0:
+            if sense_core_db and not self.has_db_been_initialized():
+                return None
+            return tasks[0]
+
+    @queue.signal(SIGNAL_EXECUTING)
+    def start_task(signal, task):
+        try:
+            task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
+            task_obj.status = 'started'
+            task_obj.save()
+        except CoreDBinitialiseTask.DoesNotExist:
+            print('A non-DB task was started.')
+        
+    @queue.signal(SIGNAL_ERROR)
+    def error_task(signal, task, exc):
+        try:
+            task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
+            task_obj.status = 'error'
+            task_obj.message = exc
+            task_obj.save()
+        except CoreDBinitialiseTask.DoesNotExist:
+            print('A non-DB task encountered an error.')
+
+    @queue.signal(SIGNAL_COMPLETE)
+    def end_task(signal, task):
+        try:
+            task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
+            task_obj.status = 'complete'
+            task_obj.save()
+        except CoreDBinitialiseTask.DoesNotExist:
+            print('A non-DB task has finished.')

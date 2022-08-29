@@ -2,7 +2,7 @@ import traceback
 from plom.create.classlistValidator import PlomClasslistValidator
 from plom.plom_exceptions import PlomConnectionError, PlomAuthenticationException, PlomExistingLoginException
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -15,6 +15,7 @@ from Preparation.services import PQVMappingService, StagingClasslistCSVService, 
 
 from Connect.services import CoreConnectionService
 from Connect.forms import CoreConnectionForm, CoreManagerLoginForm
+from Connect.models import CoreDBinitialiseTask
 
 
 class ManagerRequiredUtilView(GroupRequiredMixin, LoginRequiredMixin, View):
@@ -216,30 +217,40 @@ class SendClasslistToCoreView(ManagerRequiredUtilView):
 
 class SendPQVInitializeDB(ManagerRequiredUtilView):
     def post(self, request):
-        """Send PQV map to core and initialize the database"""
         core = CoreConnectionService()
         qvs = PQVMappingService()
 
-        try:
-            ver_map = qvs.get_pqv_map_dict()
-            core.initialise_core_db(ver_map)
-            context = self.build_context()
-            context.update({'attempt': True})
-            return render(request, 'Connect/connect-vermap-attempt.html', context)
-        except PlomConnectionError as e:
-            print(e)
-            context = self.build_context()
-            context.update({
-                'attempt': False,
-                'exception': "Unable to connect to Plom-classic. Is the server running?",
-            })
-            return render(request, 'Connect/connect-vermap-attempt.html', context)
-        except Exception as e:
-            print(e)
-            context = self.build_context()
-            context.update({
-                'attempt': False,
-                'exception': e
-            })
-            return render(request, 'Connect/connect-vermap-attempt.html', context)
+        ver_map = qvs.get_pqv_map_dict()
+        task = core.initialise_core_db(ver_map)
+        return HttpResponseRedirect(reverse('connect_db_status', args=(task.huey_id,)))
 
+    def get(self, request):
+        context = self.build_context()
+        qvs = PQVMappingService()
+        core = CoreConnectionService()
+
+        n_to_produce = len(qvs.list_of_paper_numbers())
+        latest = core.get_latest_init_db_task()
+        context.update({
+            'n_to_produce': n_to_produce,
+            'task': latest
+        })
+        return render(request, 'Connect/connect-vermap-attempt.html', context)
+
+
+class CoreDBStatusView(ManagerRequiredUtilView):
+    """View progress/status of the Core DB initialisation"""
+    def get(self, request, huey_id):
+        context = self.build_context()
+        task = get_object_or_404(CoreDBinitialiseTask, huey_id=huey_id)
+        context.update({'task': task})
+        return render(request, 'Connect/connect-vermap-attempt.html', context)
+
+
+class CoreDBRefreshStatus(ManagerRequiredUtilView):
+    """Refresh progress of the Core DB initialisation"""
+    def get(self, request, huey_id):
+        context = self.build_context()
+        task = get_object_or_404(CoreDBinitialiseTask, huey_id=huey_id)
+        context.update({'task': task})
+        return render(request, 'Connect/fragments/vermap-status.html', context)
