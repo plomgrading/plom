@@ -25,8 +25,7 @@ class BuildPapersService:
     def build_n_papers(self, n, credentials):
         """Build multiple papers without having to sign in/out each time"""
         for i in range(n):
-            self.build_single_paper(i+1, credentials)
-
+            self.build_single_paper(i + 1, credentials)
 
     def build_single_paper(self, index: int, credentials):
         """Build a single test-paper (with huey!)"""

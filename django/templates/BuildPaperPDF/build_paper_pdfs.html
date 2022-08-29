@@ -1,4 +1,5 @@
 {% extends 'base/base.html' %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,12 +23,18 @@
             </form>
         </div>
         <div>
-{#            <a target="_blank" href="{% url 'get_paperPDFs' %}">pdf file</a>#}
             {{ message }}<br>
-            {% for paper_pdf in paper_pdfs %}
-                <a href="#">{{ paper_pdf }}</a><br>
-            {% endfor %}
+            <table>
+                {% for paper_number, pdf_file, status in tasks %}
+                    <tr>
+                        <td>{{ paper_number }}</td>
+                        <td><a target="_blank" href="{% url 'get_paperPDFs' paper_number %}">{{ pdf_file }}</a></td>
+                        <td>{{ status }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
         </div>
+
     {% endblock %}
 </body>
 </html>
