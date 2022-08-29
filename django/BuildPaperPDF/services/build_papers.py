@@ -22,6 +22,10 @@ class BuildPapersService:
         task.save()
         return task
 
+    def clear_tasks(self):
+        """Clear all of the build paper tasks"""
+        Task.objects.all().delete()
+
     def build_n_papers(self, n, credentials):
         """Build multiple papers without having to sign in/out each time"""
         for i in range(n):

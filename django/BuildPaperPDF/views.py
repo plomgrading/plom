@@ -42,19 +42,20 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
         form = BuildNumberOfPDFsForm(request.POST)
         if form.is_valid():
             number_of_pdfs = int(request.POST.get('pdfs'))
-            # bps = BuildPapersService()
-            # ccs = CoreConnectionService()
-            # credentials = (ccs.get_server_name(), ccs.get_manager_password())
-            # bps.build_n_papers(number_of_pdfs, credentials)
+            bps = BuildPapersService()
+            ccs = CoreConnectionService()
+            credentials = (ccs.get_server_name(), ccs.get_manager_password())
+            bps.clear_tasks()
+            bps.build_n_papers(number_of_pdfs, credentials)
 
             # this is to get the general path up to /papersToPrint/
-            # path = settings.BASE_DIR / 'papersToPrint'
+            path = settings.BASE_DIR / 'papersToPrint'
             # get this list of PDF files
-            # pdf_list = sorted(Path(path).glob('*.pdf'))
-            # pdf_file_list = []
-            # for pdf in pdf_list:
-            #     pdf_file_list.append(str(pdf.name))
-            # print(pdf_file_list)
+            pdf_list = sorted(Path(path).glob('*.pdf'))
+            pdf_file_list = []
+            for pdf in pdf_list:
+                pdf_file_list.append(str(pdf.name))
+            print(pdf_file_list)
             # for num in range(1, 4):
             #     index = f'{num:04n}'
             #     Task(
@@ -90,6 +91,6 @@ class GetPDFFile(View):
             return HttpResponse(status=500)
 
         file = pdf_path.open('rb')
-        # pdf = SimpleUploadedFile('paper.pdf', pdf_file, content_type='application/pdf')
+        pdf = SimpleUploadedFile('paper.pdf', file.read(), content_type='application/pdf')
 
-        return FileResponse(file)
+        return FileResponse(pdf)
