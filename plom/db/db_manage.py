@@ -524,19 +524,21 @@ def checkTPage(self, test_number, page_number):
         return [True, "unscanned", pref.version]
 
 
-def removeUnknownImage(self, file_name):
+def removeUnknownImage(self, file_name, reason):
     iref = Image.get_or_none(file_name=file_name)
-    if iref is None:  # should not happen
-        return [False, "Cannot find image"]
+    if iref is None:
+        return (False, f"Cannot find image {file_name}")
     uref = iref.upages[0]
-    if uref is None:  # should not happen
-        return [False, "Cannot find unknown page for that image."]
+    if uref is None:
+        return (False, f"Cannot find unknown page for image {file_name}")
 
+    if not reason:
+        reason = "User discarded unknown page"
     with plomdb.atomic():
-        DiscardedPage.create(image=iref, reason="User discarded unknown page")
+        DiscardedPage.create(image=iref, reason=reason)
         uref.delete_instance()
-    log.info("Discarding unknown image {}".format(file_name))
-    return [True]
+    log.info('Discarding unknown image %s with reason "%s"', file_name, reason)
+    return (True, None)
 
 
 def moveDiscardToUnknown(self, file_name):

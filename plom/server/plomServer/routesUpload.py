@@ -604,20 +604,32 @@ class UploadHandler:
                 mpwriter.append(b)
             return web.Response(body=mpwriter, status=200)
 
-    async def removeUnknownImage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "fileName"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+    # DELETE: /admin/unknownImage
+    @authenticate_by_token_required_fields(["fileName", "reason"])
+    @write_admin
+    def removeUnknownImage(self, data, request):
+        """The unknown page is to be discarded.
 
-        rval = self.server.removeUnknownImage(data["fileName"])
-        if rval[0]:
-            return web.Response(status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        args:
+            request (aiohttp.web_request.Request): This has the usual "user"
+                and "token" fields but also:
+
+                - fileName (str): identifies the UnknownPage.
+                - reason (str): a short reason why which could be canned or
+                  free-form from the user.  If the empty string, then a default
+                  message may be substituted.
+
+        returns:
+            web.Response: 200 if all went well.
+            400 for incorrect fields,
+            401 for authentication, or 403 is not manager.
+            404 if there isn't any such image, or it is not a UnknownImage,
+            with details given in the reason.
+        """
+        ok, msg = self.server.removeUnknownImage(data["fileName"], data["reason"])
+        if not ok:
+            raise web.HTTPNotFound(reason=msg)
+        return web.Response(status=200)
 
     async def removeCollidingImage(self, request):
         data = await request.json()

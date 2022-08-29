@@ -17,6 +17,7 @@ from plom.plom_exceptions import (
     PlomDatabaseCreationError,
     PlomExistingDatabase,
     PlomNoMoreException,
+    PlomNoPaper,
     PlomOwnersLoggedInException,
     PlomServerNotReady,
     PlomRangeException,
@@ -815,26 +816,39 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
     def removeUnknownImage(self, fname):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                "/admin/unknownImage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "fileName": fname,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                return False
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-        return True
+        """Discard an UnknownPage.
+
+        args:
+            fname (str): a filename/code that the server should have
+                associated with an UnknownPage.
+
+        returns:
+            None
+
+        raises:
+            PlomAuthenticationException: login troubles.
+            PlomNoPaper: could not find an UnknownPage associated with
+                that filename.
+            PlomSeriousException: somethung unexpected.
+        """
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    "/admin/unknownImage",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "fileName": fname,
+                        "reason": "",
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason)
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def removeCollidingImage(self, fname):
         self.SRmutex.acquire()
