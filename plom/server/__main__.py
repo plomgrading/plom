@@ -182,6 +182,11 @@ def get_parser():
             server will autogenerate a password.
         """,
     )
+    spI.add_argument(
+        "--db-name",
+        type=str,
+        help="The name for the database, omit for a default autogen choice.",
+    )
 
     spU = sub.add_parser(
         "users",

@@ -105,7 +105,13 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
 
 
 def initialise_server(
-    basedir, *, port=None, name=None, make_selfsigned_keys=True, manager_pw=None
+    basedir,
+    *,
+    port=None,
+    name=None,
+    make_selfsigned_keys=True,
+    manager_pw=None,
+    db_name=None,
 ):
     """Setup various files needed before a Plom server can be started.
 
@@ -119,6 +125,8 @@ def initialise_server(
         make_selfsigned_keys (bool): Defaults to True.
         manager_pw (str/None): the initial manager password.  Can be
             omitted; other ways to set this later.
+        db_name (str/None): the name of the database, with a default
+            randomly generated if `None`.
     """
     if not basedir:
         basedir = Path(".")
@@ -131,6 +139,9 @@ def initialise_server(
             build_self_signed_SSL_keys(basedir / confdir)
         except FileExistsError as err:
             print(f"Skipped SSL keygen - {err}")
+
+    if db_name:
+        raise NotImplementedError("we'll get there... someday")
 
     print("Copy server networking configuration template into place.")
     try:
