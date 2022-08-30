@@ -4,7 +4,7 @@ from huey.signals import SIGNAL_EXECUTING, SIGNAL_COMPLETE, SIGNAL_ERROR
 from django.conf import settings
 from django_huey import get_queue, db_task
 
-from BuildPaperPDF.models import Task
+from BuildPaperPDF.models import PDFTask
 
 
 class BuildPapersService:
@@ -13,7 +13,7 @@ class BuildPapersService:
     def create_task(self, index: int, huey_id: id):
         """Create and save a PDF-building task to the database"""
         paper_path = settings.BASE_DIR / 'papersToPrint' / f"exam_{index:04}.pdf"
-        task = Task(
+        task = PDFTask(
             paper_number=index,
             huey_id=huey_id,
             pdf_file_path=str(paper_path),
@@ -24,7 +24,7 @@ class BuildPapersService:
 
     def clear_tasks(self):
         """Clear all of the build paper tasks"""
-        Task.objects.all().delete()
+        PDFTask.objects.all().delete()
 
     def build_n_papers(self, n, credentials):
         """Build multiple papers without having to sign in/out each time"""

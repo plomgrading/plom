@@ -2,6 +2,7 @@ from datetime import datetime
 from django.db import models
 
 from Preparation.models import SingletonBaseModel
+from BuildPaperPDF.models import HueyTask
 
 
 class CoreServerConnection(SingletonBaseModel):
@@ -24,9 +25,6 @@ class CoreScannerLogin(SingletonBaseModel):
     scanner_password = models.CharField(max_length=100)
 
 
-class CoreDBinitialiseTask(models.Model):
+class CoreDBinitialiseTask(HueyTask):
     """Build the database in the background"""
-    status = models.CharField(max_length=20)
-    huey_id = models.UUIDField(null=True)
-    created = models.DateTimeField(default=datetime.now, blank=True)
-    message = models.TextField(default="")
+    pass

@@ -283,30 +283,30 @@ class CoreConnectionService:
                 return None
             return tasks[0]
 
-    @queue.signal(SIGNAL_EXECUTING)
-    def start_task(signal, task):
-        try:
-            task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
-            task_obj.status = 'started'
-            task_obj.save()
-        except CoreDBinitialiseTask.DoesNotExist:
-            print('A non-DB task was started.')
+    # @queue.signal(SIGNAL_EXECUTING)
+    # def start_task(signal, task):
+    #     try:
+    #         task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
+    #         task_obj.status = 'started'
+    #         task_obj.save()
+    #     except CoreDBinitialiseTask.DoesNotExist:
+    #         print('A non-DB task was started.')
         
-    @queue.signal(SIGNAL_ERROR)
-    def error_task(signal, task, exc):
-        try:
-            task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
-            task_obj.status = 'error'
-            task_obj.message = exc
-            task_obj.save()
-        except CoreDBinitialiseTask.DoesNotExist:
-            print('A non-DB task encountered an error.')
+    # @queue.signal(SIGNAL_ERROR)
+    # def error_task(signal, task, exc):
+    #     try:
+    #         task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
+    #         task_obj.status = 'error'
+    #         task_obj.message = exc
+    #         task_obj.save()
+    #     except CoreDBinitialiseTask.DoesNotExist:
+    #         print('A non-DB task encountered an error.')
 
-    @queue.signal(SIGNAL_COMPLETE)
-    def end_task(signal, task):
-        try:
-            task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
-            task_obj.status = 'complete'
-            task_obj.save()
-        except CoreDBinitialiseTask.DoesNotExist:
-            print('A non-DB task has finished.')
+    # @queue.signal(SIGNAL_COMPLETE)
+    # def end_task(signal, task):
+    #     try:
+    #         task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
+    #         task_obj.status = 'complete'
+    #         task_obj.save()
+    #     except CoreDBinitialiseTask.DoesNotExist:
+    #         print('A non-DB task has finished.')

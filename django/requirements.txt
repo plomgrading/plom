@@ -12,3 +12,4 @@ plom
 tk
 reportlab
 django-huey
+djngo-polymorphic

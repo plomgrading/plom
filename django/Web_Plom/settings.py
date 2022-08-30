@@ -40,8 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # for 'fun' with migrations - see #77
     'reset_migrations',
-    # Huey
+    # Huey + polymorphism
     'django_huey',
+    'polymorphic',
     # add newly created app folder below
     'Authentication',
     'Preparation',

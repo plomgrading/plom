@@ -19,7 +19,7 @@ from io import BytesIO
 from Connect.services import CoreConnectionService
 
 from .services import (generate_pdf, BuildPapersService, RenamePDFFile)
-from .models import Task
+from .models import PDFTask
 
 
 # Create your views here.
@@ -57,7 +57,7 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
             #         status='todo'
             #     ).save()
 
-            task_objects = Task.objects.all()
+            task_objects = PDFTask.objects.all()
             Rename = RenamePDFFile()
 
             tasks_paper_number = []
@@ -78,7 +78,7 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
 class GetPDFFile(View):
     # TODO: modify pdf file name
     def get(self, request, paper_number):
-        pdf_file = Task.objects.get(paper_number=paper_number).pdf_file_path
+        pdf_file = PDFTask.objects.get(paper_number=paper_number).pdf_file_path
         pdf_path = pathlib.Path(pdf_file)
         if not pdf_path.exists() or not pdf_path.is_file():
             return HttpResponse(status=500)

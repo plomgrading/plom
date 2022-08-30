@@ -2,7 +2,7 @@ import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
-from ..models import Task
+from ..models import PDFTask
 
 from django.contrib.auth.models import User
 
