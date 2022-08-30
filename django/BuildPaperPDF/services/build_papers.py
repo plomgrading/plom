@@ -40,7 +40,8 @@ class BuildPapersService:
     def clear_tasks(self):
         """Clear all of the build paper tasks"""
         PDFTask.objects.all().delete()
-        shutil.rmtree(self.papers_to_print)
+        if self.papers_to_print.exists():
+            shutil.rmtree(self.papers_to_print)
         self.papers_to_print.mkdir()
 
     def build_n_papers(self, n, credentials):

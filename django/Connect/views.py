@@ -253,4 +253,8 @@ class CoreDBRefreshStatus(ManagerRequiredUtilView):
         context = self.build_context()
         task = get_object_or_404(CoreDBinitialiseTask, huey_id=huey_id)
         context.update({'task': task})
-        return render(request, 'Connect/fragments/vermap-status.html', context)
+
+        status = 200
+        if task.status == 'complete':
+            status = 286
+        return render(request, 'Connect/fragments/vermap-status.html', context, status=status)

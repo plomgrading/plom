@@ -1,4 +1,4 @@
-<div class="card-body">
+<div class="card-body" hx-get="{% url 'connect_db_update' task.huey_id %}" hx-target="#task-status" hx-trigger="every 1s">
     {% if task.status == 'complete' %}
     <h5 class="card-title">QV map sent to Plom-classic and database initialised.</h5>
     {% elif task.status == 'error' %}
@@ -9,11 +9,11 @@
     <p class="card-text">Status: {{ task.status }}</p>
     {% endif %}
     <a class="btn btn-primary" href="{% url 'connect_send_info' %}">Back</a>
-    <a 
+    <!-- <a 
         class="btn btn-primary" 
         hx-get="{% url 'connect_db_update' task.huey_id %}" 
         hx-target="#task-status"
     >
         Refresh
-    </a>
+    </a> -->
 </div>

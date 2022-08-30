@@ -68,7 +68,7 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
                 tasks_paper_number.append(task.paper_number)
                 tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
                 tasks_status.append(task.status)
-            message = f'Progress: 0 papers of {number_of_pdfs} built.'
+            message = f'Progress: 0 papers of {number_of_pdfs} built. (0%)'
             context = {
                 'navbar_colour': self.navbar_colour, 
                 'user_group': self.group_required[0],
@@ -92,6 +92,7 @@ class UpdatePDFTable(View):
 
         n_complete = bps.get_n_complete_tasks()
         n_total = len(task_objects)
+        percent_complete = n_complete / n_total * 100
 
         zip_disabled = True
         status = 200
@@ -101,7 +102,7 @@ class UpdatePDFTable(View):
 
         context = {
             'tasks': zip(task_objects, tasks_pdf_file_path),
-            'message': f'Progress: {n_complete} papers of {n_total} built',
+            'message': f'Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)',
             'zip_disabled': zip_disabled,
         }
 

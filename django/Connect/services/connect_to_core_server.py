@@ -275,38 +275,12 @@ class CoreConnectionService:
     def get_latest_init_db_task(self, sense_core_db=True):
         """Get the latest Init DB task
         
-        TODO: for now, if the database hasn't been initialised, just return None
+        TODO: for now, there's a crude way to tell the difference between the latest task for the current
+        server, and one from a previous server
         """
         tasks = CoreDBinitialiseTask.objects.all().order_by('created')
         if len(tasks) > 0:
-            if sense_core_db and not self.has_db_been_initialized():
+            latest_task = tasks[0]
+            if sense_core_db and latest_task.status == 'complete' and not self.has_db_been_initialized():
                 return None
             return tasks[0]
-
-    # @queue.signal(SIGNAL_EXECUTING)
-    # def start_task(signal, task):
-    #     try:
-    #         task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
-    #         task_obj.status = 'started'
-    #         task_obj.save()
-    #     except CoreDBinitialiseTask.DoesNotExist:
-    #         print('A non-DB task was started.')
-        
-    # @queue.signal(SIGNAL_ERROR)
-    # def error_task(signal, task, exc):
-    #     try:
-    #         task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
-    #         task_obj.status = 'error'
-    #         task_obj.message = exc
-    #         task_obj.save()
-    #     except CoreDBinitialiseTask.DoesNotExist:
-    #         print('A non-DB task encountered an error.')
-
-    # @queue.signal(SIGNAL_COMPLETE)
-    # def end_task(signal, task):
-    #     try:
-    #         task_obj = CoreDBinitialiseTask.objects.get(huey_id=task.id)
-    #         task_obj.status = 'complete'
-    #         task_obj.save()
-    #     except CoreDBinitialiseTask.DoesNotExist:
-    #         print('A non-DB task has finished.')
