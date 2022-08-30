@@ -75,6 +75,9 @@ def create_server_config(dur=confdir, *, port=None, name=None):
 
     raises:
         FileExistsError: file is already there.
+
+    TODO: note the toml file is manipulated here with find-and-replace
+    so as to preserve comments in the template.
     """
     sd = Path(dur) / "serverDetails.toml"
     if sd.exists():

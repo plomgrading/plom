@@ -1,4 +1,5 @@
 # Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2022 Colin B. Macdonald
 # SPDX-License-Identifier: FSFAP
 #
 # Copying and distribution of this file, with or without modification,
@@ -14,3 +15,8 @@ port = 41984
 # In order of severity; less serious messages will not be logged
 # Debug, Info, Warning, Error, Critical
 LogLevel = "Info"
+
+# database info: change as needed if working with an external DB
+#db_name =
+#db_username =
+#db_password =
