@@ -1,3 +1,6 @@
+import pathlib
+import zipfile
+import shutil
 from plom.create.buildDatabaseAndPapers import build_papers
 from huey.signals import SIGNAL_EXECUTING, SIGNAL_COMPLETE, SIGNAL_ERROR
 
@@ -9,6 +12,8 @@ from BuildPaperPDF.models import PDFTask
 
 class BuildPapersService:
     """Use Core Plom to build test-papers."""
+    base_dir = settings.BASE_DIR
+    papers_to_print = base_dir / 'papersToPrint'
 
     def get_n_complete_tasks(self):
         """Get the number of PDFTasks that have completed"""
@@ -22,7 +27,7 @@ class BuildPapersService:
 
     def create_task(self, index: int, huey_id: id):
         """Create and save a PDF-building task to the database"""
-        paper_path = settings.BASE_DIR / 'papersToPrint' / f"exam_{index:04}.pdf"
+        paper_path = self.papers_to_print / f"exam_{index:04}.pdf"
         task = PDFTask(
             paper_number=index,
             huey_id=huey_id,
@@ -35,6 +40,7 @@ class BuildPapersService:
     def clear_tasks(self):
         """Clear all of the build paper tasks"""
         PDFTask.objects.all().delete()
+        shutil.rmtree(self.papers_to_print)
 
     def build_n_papers(self, n, credentials):
         """Build multiple papers without having to sign in/out each time"""
@@ -57,3 +63,32 @@ class BuildPapersService:
             indexToMake=index,
             msgr=credentials
         )
+
+    def get_pdf_zipfile(self):
+        """compress + save a zip file of all the completed PDFs"""
+        completed = PDFTask.objects.filter(status='complete')
+        temp_filename = self.papers_to_print / 'pdf_zipfile.zip'
+        with zipfile.ZipFile(temp_filename, 'w') as zf:
+            for pdf in completed:
+                pdf_path = pathlib.Path(pdf.pdf_file_path)
+                zf.write(pdf_path, pdf_path.name)
+
+        return temp_filename
+
+    # def build_all_papers(self, ccs):
+    #     """Build all the test-papers."""
+    #     msgr = None
+    #     try:
+    #         msgr = ccs.get_manager_messenger()
+    #         msgr.start()
+    #         msgr.requestAndSaveToken(ccs.manager_username, ccs.get_manager_password())
+    #
+    #         build_papers(
+    #             basedir=settings.BASE_DIR,
+    #             msgr=msgr
+    #         )
+    #     finally:
+    #         if msgr:
+    #             if msgr.token:
+    #                 msgr.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
+    #             msgr.stop()

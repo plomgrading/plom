@@ -85,5 +85,18 @@ class GetPDFFile(View):
 
         file = pdf_path.open('rb')
         pdf = SimpleUploadedFile('paper.pdf', file.read(), content_type='application/pdf')
+        file.close()
 
         return FileResponse(pdf)
+
+
+class GetCompressedPDFs(View):
+    """Get the completed test paper PDFs in one zip file"""
+    def post(self, request):
+        bps = BuildPapersService()
+        save_path = bps.get_pdf_zipfile()
+        zip_file = save_path.open('rb')
+        zf = SimpleUploadedFile(save_path.name, zip_file.read(), content_type='application/zip')
+        zip_file.close()
+        save_path.unlink()
+        return FileResponse(zf)
