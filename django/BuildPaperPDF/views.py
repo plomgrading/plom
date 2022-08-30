@@ -35,7 +35,7 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
     def get(self, request):
 
         context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
-                   'form': self.form, 'message': ''}
+                   'form': self.form, 'message': '', 'zip_disabled': True}
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -68,11 +68,41 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
                 tasks_paper_number.append(task.paper_number)
                 tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
                 tasks_status.append(task.status)
-            message = 'Your pdf finished building! See below.'
-            context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
-                       'form': self.form, 'message': message,
-                       'tasks': zip(tasks_paper_number, tasks_pdf_file_path, tasks_status)}
+            message = f'Progress: 0 papers of {number_of_pdfs} built.'
+            context = {
+                'navbar_colour': self.navbar_colour, 
+                'user_group': self.group_required[0],
+                'form': self.form, 'message': message,
+                'tasks': zip(task_objects, tasks_pdf_file_path),
+                'zip_disabled': True,
+            }
             return render(request, self.template_name, context)
+
+
+class UpdatePDFTable(View):
+    """Get an updated pdf-building-progress table"""
+    def get(self, request):
+        task_objects = PDFTask.objects.all()
+        bps = BuildPapersService()
+        Rename = RenamePDFFile()
+        tasks_pdf_file_path = []
+
+        for task in task_objects:
+            tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
+
+        n_complete = bps.get_n_complete_tasks()
+        n_total = len(task_objects)
+
+        zip_disabled = True
+        if n_complete == n_total:
+            zip_disabled = False
+
+        context = {
+            'tasks': zip(task_objects, tasks_pdf_file_path),
+            'message': f'Progress: {n_complete} papers of {n_total} built',
+            'zip_disabled': zip_disabled,
+        }
+        return render(request, 'BuildPaperPDF/fragments/pdf_table.html', context)
 
 
 class GetPDFFile(View):

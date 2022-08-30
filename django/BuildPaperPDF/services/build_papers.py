@@ -41,6 +41,7 @@ class BuildPapersService:
         """Clear all of the build paper tasks"""
         PDFTask.objects.all().delete()
         shutil.rmtree(self.papers_to_print)
+        self.papers_to_print.mkdir()
 
     def build_n_papers(self, n, credentials):
         """Build multiple papers without having to sign in/out each time"""

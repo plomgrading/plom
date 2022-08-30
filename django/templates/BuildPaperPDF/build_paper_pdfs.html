@@ -22,21 +22,33 @@
                 </div>
             </form>
         </div>
-        <form method="post" action="{% url 'zip_paperPDFs' %}">
-            {% csrf_token %}
-            <input type="submit" class="btn btn-primary" value="Save as zip file">
-        </form>
-        <div>
+        <div id="pdf_table">
             {{ message }}<br>
-            <table>
-                {% for paper_number, pdf_file, status in tasks %}
+            <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a>
+            <table class="table table-striped">
+                <thead>
                     <tr>
-                        <td>{{ paper_number }}</td>
-                        <td><a target="_blank" href="{% url 'get_paperPDFs' paper_number %}">{{ pdf_file }}</a></td>
-                        <td>{{ status }}</td>
+                        <th scope="col">#</th>
+                        <th scope="col">Filename</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                {% for task, pdf_file in tasks %}
+                    <tr>
+                        <td>{{ task.paper_number }}</td>
+                        {% if task.status == 'complete' %}
+                        <td><a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ pdf_file }}</a></td>
+                        {% else %}
+                        <td>{{ pdf_file }}</td>
+                        {% endif %}
+                        <td>{{ task.status }}</td>
                     </tr>
                 {% endfor %}
             </table>
+            <form method="post" action="{% url 'zip_paperPDFs' %}">
+                {% csrf_token %}
+                <input type="submit" class="btn btn-primary" value="Save as zip file" {% if zip_disabled %}disabled{% endif %}>
+            </form>
         </div>
 
     {% endblock %}
