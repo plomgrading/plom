@@ -304,8 +304,8 @@ def checkTPage(self, testNumber, pageNumber):
     return self.DB.checkTPage(testNumber, pageNumber)
 
 
-def removeUnknownImage(self, file_name):
-    return self.DB.removeUnknownImage(file_name)
+def removeUnknownImage(self, *args, **kwargs):
+    return self.DB.removeUnknownImage(*args, **kwargs)
 
 
 def discardToUnknown(self, file_name):
