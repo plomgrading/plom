@@ -48,14 +48,7 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
             bps.clear_tasks()
             bps.build_n_papers(number_of_pdfs, credentials)
 
-            # this is to get the general path up to /papersToPrint/
-            path = settings.BASE_DIR / 'papersToPrint'
-            # get this list of PDF files
-            pdf_list = sorted(Path(path).glob('*.pdf'))
-            pdf_file_list = []
-            for pdf in pdf_list:
-                pdf_file_list.append(str(pdf.name))
-            print(pdf_file_list)
+            # code below is to write dummy pdf file to model, can be deleted later
             # for num in range(1, 4):
             #     index = f'{num:04n}'
             #     Task(
@@ -83,7 +76,7 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
 
 
 class GetPDFFile(View):
-
+    # TODO: modify pdf file name
     def get(self, request, paper_number):
         pdf_file = Task.objects.get(paper_number=paper_number).pdf_file_path
         pdf_path = pathlib.Path(pdf_file)
