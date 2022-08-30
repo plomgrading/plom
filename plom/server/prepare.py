@@ -140,12 +140,9 @@ def initialise_server(
         except FileExistsError as err:
             print(f"Skipped SSL keygen - {err}")
 
-    if db_name:
-        raise NotImplementedError("we'll get there... someday")
-
     print("Copy server networking configuration template into place.")
     try:
-        create_server_config(basedir / confdir, port=port, name=name)
+        create_server_config(basedir / confdir, port=port, name=name, db_name=db_name)
     except FileExistsError as err:
         print(f"Skipping server config - {err}")
     else:

@@ -20,9 +20,14 @@ log = logging.getLogger("DB")
 class PlomDB:
     """The main Plom database."""
 
-    def __init__(self, dbfile_name="plom.db"):
+    def __init__(self, dbfile_name="plom.db", *, db_name):
         # can't handle pathlib?
         plomdb.init(str(dbfile_name))
+
+        if db_name:
+            raise NotImplementedError(
+                f'We were given a DB Name of "{db_name}", what to do with it?'
+            )
 
         with plomdb:
             plomdb.create_tables(

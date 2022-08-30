@@ -282,6 +282,7 @@ def main():
             name=args.server_name,
             make_selfsigned_keys=args.selfsigned,
             manager_pw=args.manager_pw,
+            db_name=args.db_name,
         )
 
     elif args.command == "users":

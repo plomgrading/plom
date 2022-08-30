@@ -294,7 +294,8 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
         log.info("Using existing database.")
     else:
         log.info("Database is not yet present: creating...")
-    examDB = PlomDB(basedir / specdir / "plom.db")
+    db_name = server_info.get("db_name", None)
+    examDB = PlomDB(basedir / specdir / "plom.db", db_name=db_name)
     if (basedir / specdir / "classlist.csv").exists():
         log.info("Classlist is present.")
     else:
