@@ -22,9 +22,9 @@
                 </div>
             </form>
         </div>
-        <div id="pdf_table">
+        <div id="pdf_table" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 1s">
             {{ message }}<br>
-            <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a>
+            <!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
             <table class="table table-striped">
                 <thead>
                     <tr>

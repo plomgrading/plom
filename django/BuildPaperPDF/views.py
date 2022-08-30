@@ -94,7 +94,9 @@ class UpdatePDFTable(View):
         n_total = len(task_objects)
 
         zip_disabled = True
+        status = 200
         if n_complete == n_total:
+            status = 286
             zip_disabled = False
 
         context = {
@@ -102,7 +104,8 @@ class UpdatePDFTable(View):
             'message': f'Progress: {n_complete} papers of {n_total} built',
             'zip_disabled': zip_disabled,
         }
-        return render(request, 'BuildPaperPDF/fragments/pdf_table.html', context)
+
+        return render(request, 'BuildPaperPDF/fragments/pdf_table.html', context, status=status)
 
 
 class GetPDFFile(View):
