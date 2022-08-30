@@ -25,8 +25,8 @@ class PlomDB:
         plomdb.init(str(dbfile_name))
 
         if db_name:
-            raise NotImplementedError(
-                f'We were given a DB Name of "{db_name}", what to do with it?'
+            print(
+                f'We were given a DB Name of "{db_name}", ignoring for now!'
             )
 
         with plomdb:

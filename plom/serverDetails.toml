@@ -18,5 +18,6 @@ LogLevel = "Info"
 
 # database info: change as needed if working with an external DB
 #db_name =
+#db_host =
 #db_username =
 #db_password =
