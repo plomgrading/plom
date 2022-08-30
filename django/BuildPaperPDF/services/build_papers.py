@@ -10,6 +10,16 @@ from BuildPaperPDF.models import PDFTask
 class BuildPapersService:
     """Use Core Plom to build test-papers."""
 
+    def get_n_complete_tasks(self):
+        """Get the number of PDFTasks that have completed"""
+        completed = PDFTask.objects.filter(status='complete')
+        return len(completed)
+
+    def get_n_pending_tasks(self):
+        """Get the number of PDFTasks with the status 'todo,' 'queued,' 'started,' or 'error'"""
+        pending = PDFTask.objects.exclude(status='complete')
+        return len(pending)
+
     def create_task(self, index: int, huey_id: id):
         """Create and save a PDF-building task to the database"""
         paper_path = settings.BASE_DIR / 'papersToPrint' / f"exam_{index:04}.pdf"
