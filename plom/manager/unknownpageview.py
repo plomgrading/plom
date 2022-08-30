@@ -282,9 +282,7 @@ class UnknownViewWindow(QDialog):
         vb.addLayout(hb)
         grid.addLayout(vb)
         self.setLayout(grid)
-        self.initTabs()
 
-    def initTabs(self):
         t0 = ActionTab(self)
         t1 = ExtraTab(self, self.numberOfTests, self.questionLabels)
         t2 = TestTab(self, self.numberOfTests, self.numberOfPages)
@@ -295,6 +293,9 @@ class UnknownViewWindow(QDialog):
         self.optionTW.addTab(t2, "&Test Page")
         self.optionTW.addTab(t3, "&Homework Page")
         self.optionTW.addTab(t4, "&Discard")
+
+        # hack/workaround: keep focus away from left-hand panel: Issue #2271
+        t0.setFocus()
 
     def get_orientation(self):
         return self.img.get_orientation()
