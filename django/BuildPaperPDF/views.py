@@ -33,38 +33,36 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
         return render(request, self.template_name, context)
 
     def post(self, request):
-        form = BuildNumberOfPDFsForm(request.POST)
-        if form.is_valid():
-            number_of_pdfs = int(request.POST.get('pdfs'))
-            bps = BuildPapersService()
-            core = CoreConnectionService()
-            spec = core.get_core_spec()
-            pqvs = PQVMappingService()
-            qvmap = pqvs.get_pqv_map_dict()
+        bps = BuildPapersService()
+        core = CoreConnectionService()
+        spec = core.get_core_spec()
+        pqvs = PQVMappingService()
+        qvmap = pqvs.get_pqv_map_dict()
+        num_pdfs = len(qvmap)
 
-            bps.clear_tasks()
-            bps.build_n_papers(number_of_pdfs, spec, qvmap)
+        bps.clear_tasks()
+        bps.build_n_papers(num_pdfs, spec, qvmap)
 
-            task_objects = PDFTask.objects.all()
-            Rename = RenamePDFFile()
+        task_objects = PDFTask.objects.all()
+        Rename = RenamePDFFile()
 
-            tasks_paper_number = []
-            tasks_pdf_file_path = []
-            tasks_status = []
+        tasks_paper_number = []
+        tasks_pdf_file_path = []
+        tasks_status = []
 
-            for task in task_objects:
-                tasks_paper_number.append(task.paper_number)
-                tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
-                tasks_status.append(task.status)
-            message = f'Progress: 0 papers of {number_of_pdfs} built. (0%)'
-            context = {
-                'navbar_colour': self.navbar_colour, 
-                'user_group': self.group_required[0],
-                'form': self.form, 'message': message,
-                'tasks': zip(task_objects, tasks_pdf_file_path),
-                'zip_disabled': True,
-            }
-            return render(request, self.template_name, context)
+        for task in task_objects:
+            tasks_paper_number.append(task.paper_number)
+            tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
+            tasks_status.append(task.status)
+        message = f'Progress: 0 papers of {num_pdfs} built. (0%)'
+        context = {
+            'navbar_colour': self.navbar_colour,
+            'user_group': self.group_required[0],
+            'form': self.form, 'message': message,
+            'tasks': zip(task_objects, tasks_pdf_file_path),
+            'zip_disabled': True,
+        }
+        return render(request, self.template_name, context)
 
 
 class UpdatePDFTable(View):

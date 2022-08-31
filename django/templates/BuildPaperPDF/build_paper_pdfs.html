@@ -16,8 +16,6 @@
             <form method="post">
                 {% csrf_token %}
                 <div class="col-sm-2">
-                    <label class="col-form-label fs-6" style="padding-top: 0px;">{{ form.pdfs.label }}</label>
-                    {{ form.pdfs }}<br>
                     <input type="submit">
                 </div>
             </form>
