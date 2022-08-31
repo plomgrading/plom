@@ -11,5 +11,4 @@ urlpatterns = [
     path("update/", UpdatePDFTable.as_view(), name="update_paperPDFs"),
     path("get/<int:paper_number>", GetPDFFile.as_view(), name="get_paperPDFs"),
     path("get_zip/", GetCompressedPDFs.as_view(), name="zip_paperPDFs"),
-    # TODO: remeber to add <int: paper_number> back before get/
 ]

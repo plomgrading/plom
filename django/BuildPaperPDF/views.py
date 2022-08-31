@@ -52,15 +52,6 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
             bps.clear_tasks()
             bps.build_n_papers(number_of_pdfs, spec, qvmap)
 
-            # code below is to write dummy pdf file to model, can be deleted later
-            # for num in range(1, 4):
-            #     index = f'{num:04n}'
-            #     Task(
-            #         paper_number=index,
-            #         pdf_file_path=str(path) + '/' + str(pdf_file_list[num-1]),
-            #         status='todo'
-            #     ).save()
-
             task_objects = PDFTask.objects.all()
             Rename = RenamePDFFile()
 
