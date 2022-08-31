@@ -16,7 +16,7 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="col-sm-2">
-                        <input type="submit">
+                        <input type="submit" class="btn btn-primary" value="Start All" style="display: inline">
                     </div>
                 </form>
             </div>
@@ -29,6 +29,7 @@
                             <th scope="col">#</th>
                             <th scope="col">Filename</th>
                             <th scope="col">Status</th>
+                            <th scope="col">Action</th>
                         </tr>
                     </thead>
                     {% for task, pdf_file in tasks %}
@@ -36,10 +37,21 @@
                             <td>{{ task.paper_number }}</td>
                             {% if task.status == 'complete' %}
                             <td><a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ pdf_file }}</a></td>
-                            {% else %}
-                            <td>{{ pdf_file }}</td>
-                            {% endif %}
                             <td>{{ task.status }}</td>
+                            <td></td>
+                            {% elif task.status == 'error' %}
+                            <td>{{ pdf_file }}</td>
+                            <td>{{ task.status }}</td>
+                            <td><a>Retry</a></td>
+                            {% elif task.status == 'todo' %}
+                            <td>{{ pdf_file }}</td>
+                            <td>{{ task.status }}</td>
+                            <td><a>Start</a></td>
+                            {% elif task.status == 'queued'%}
+                            <td>{{ pdf_file }}</td>
+                            <td>{{ task.status }}</td>
+                            <td><a>Cancel</a></td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </table>

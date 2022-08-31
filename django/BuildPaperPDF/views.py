@@ -27,12 +27,14 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
     form = BuildNumberOfPDFsForm()
 
     def get(self, request):
-        bps = BuildPapersService()
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-        num_pdfs = len(qvmap)
+        # bps = BuildPapersService()
+        # pqvs = PQVMappingService()
+        # qvmap = pqvs.get_pqv_map_dict()
+        # num_pdfs = len(qvmap)
+        num_pdfs = 1
 
-        n_tasks = bps.get_n_tasks()
+        # n_tasks = bps.get_n_tasks()
+        n_tasks = 1
         if n_tasks > 0:
             pdfs_staged = True
         else:
