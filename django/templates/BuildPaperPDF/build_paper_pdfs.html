@@ -65,7 +65,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Build test papers</h5>
                     <p class="card-text">Will build {{ num_pdfs }} tests.</p>
-                    <form>
+                    <form action="{% url 'create_paperPDFs' %}" method="post">
                         {% csrf_token %}
                         <input type="submit" class="btn btn-primary" value="Submit">
                     </form>

@@ -85,3 +85,12 @@ class BuildPapersService:
         """Create n PDFTasks, and save to the database without sending them to Huey."""
         for i in range(n):
             pdf_job = self.create_task(i+1, None)
+
+    def send_all_tasks(self, spec, qvmap):
+        """Send all marked as todo PDF tasks to huey"""
+        todo_tasks = PDFTask.objects.filter(status='todo')
+        for task in todo_tasks:
+            pdf_build = self._build_single_paper(spec, qvmap)
+            task.huey_id = pdf_build.id
+            task.status = 'queued'
+            task.save()

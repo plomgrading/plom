@@ -54,7 +54,7 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
         num_pdfs = len(qvmap)
 
         bps.clear_tasks()
-        bps.build_n_papers(num_pdfs, spec, qvmap)
+        bps.stage_pdf_jobs(num_pdfs)
 
         task_objects = PDFTask.objects.all()
         Rename = RenamePDFFile()
@@ -67,13 +67,14 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
             tasks_paper_number.append(task.paper_number)
             tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
             tasks_status.append(task.status)
-        message = f'Progress: 0 papers of {num_pdfs} built. (0%)'
+        message = f''
         context = {
             'navbar_colour': self.navbar_colour,
             'user_group': self.group_required[0],
             'form': self.form, 'message': message,
             'tasks': zip(task_objects, tasks_pdf_file_path),
             'zip_disabled': True,
+            'pdfs_staged': True,
         }
         return render(request, self.template_name, context)
 
