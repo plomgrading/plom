@@ -1,7 +1,7 @@
 import pathlib
 import zipfile
 import shutil
-from plom.create.buildDatabaseAndPapers import build_papers
+from plom.create.mergeAndCodePages import make_PDF
 from huey.signals import SIGNAL_EXECUTING, SIGNAL_COMPLETE, SIGNAL_ERROR
 
 from django.conf import settings
@@ -44,26 +44,26 @@ class BuildPapersService:
             shutil.rmtree(self.papers_to_print)
         self.papers_to_print.mkdir()
 
-    def build_n_papers(self, n, credentials):
+    def build_n_papers(self, n, spec, qvmap):
         """Build multiple papers without having to sign in/out each time"""
         for i in range(n):
-            self.build_single_paper(i + 1, credentials)
+            self.build_single_paper(i + 1, spec, qvmap[i+1])
 
-    def build_single_paper(self, index: int, credentials):
+    def build_single_paper(self, index: int, spec: dict, question_versions: dict):
         """Build a single test-paper (with huey!)"""
-        pdf_build = self._build_single_paper(index, credentials)
+        pdf_build = self._build_single_paper(index, spec, question_versions)
         task_obj = self.create_task(index, pdf_build.id)
         task_obj.status = 'queued'
         task_obj.save()
         return task_obj
 
     @db_task(queue="tasks")
-    def _build_single_paper(index: int, credentials):
+    def _build_single_paper(index: int, spec: dict, question_versions: dict):
         """Build a single test-paper"""
-        build_papers(
-            basedir=settings.BASE_DIR,
-            indexToMake=index,
-            msgr=credentials
+        make_PDF(
+            spec=spec,
+            papernum=index,
+            question_versions=question_versions
         )
 
     def get_pdf_zipfile(self):

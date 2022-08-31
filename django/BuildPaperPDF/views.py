@@ -17,6 +17,7 @@ from django.core.files import File
 from io import BytesIO
 
 from Connect.services import CoreConnectionService
+from Preparation.services import PQVMappingService
 
 from .services import (generate_pdf, BuildPapersService, RenamePDFFile)
 from .models import PDFTask
@@ -43,10 +44,13 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
         if form.is_valid():
             number_of_pdfs = int(request.POST.get('pdfs'))
             bps = BuildPapersService()
-            ccs = CoreConnectionService()
-            credentials = (ccs.get_server_name(), ccs.get_manager_password())
+            core = CoreConnectionService()
+            spec = core.get_core_spec()
+            pqvs = PQVMappingService()
+            qvmap = pqvs.get_pqv_map_dict()
+
             bps.clear_tasks()
-            bps.build_n_papers(number_of_pdfs, credentials)
+            bps.build_n_papers(number_of_pdfs, spec, qvmap)
 
             # code below is to write dummy pdf file to model, can be deleted later
             # for num in range(1, 4):

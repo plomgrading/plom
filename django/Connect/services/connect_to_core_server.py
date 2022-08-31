@@ -156,6 +156,17 @@ class CoreConnectionService:
                     messenger.clearAuthorisation(self.manager_username, self.get_manager_password())
                 messenger.stop()
 
+    def get_core_spec(self):
+        """Get the test specification from the core server, including a public code"""
+        messenger = None
+        try:
+            messenger = self.get_messenger()
+            messenger.start()
+            return messenger.get_spec()
+        finally:
+            if messenger:
+                messenger.stop()
+
     @transaction.atomic
     def save_connection_info(self, s: str, port: int, version_string: str):
         """Save valid connection info to the database"""
