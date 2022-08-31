@@ -125,8 +125,9 @@ class GetPDFFile(View):
         if not pdf_path.exists() or not pdf_path.is_file():
             return HttpResponse(status=500)
 
+        pdf_file_name = RenamePDFFile.get_PDF_name(pdf_file)
         file = pdf_path.open('rb')
-        pdf = SimpleUploadedFile('paper.pdf', file.read(), content_type='application/pdf')
+        pdf = SimpleUploadedFile(str(pdf_file_name), file.read(), content_type='application/pdf')
         file.close()
 
         return FileResponse(pdf)
