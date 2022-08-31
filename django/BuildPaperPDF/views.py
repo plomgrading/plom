@@ -1,8 +1,4 @@
-import glob
-import os
 import pathlib
-from pathlib import Path
-from wsgiref.util import FileWrapper
 
 from django.shortcuts import render
 from django.views.generic import View
@@ -12,14 +8,11 @@ from BuildPaperPDF.forms import BuildNumberOfPDFsForm
 from django.http import FileResponse
 from django.http import HttpResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.conf import settings
-from django.core.files import File
-from io import BytesIO
 
 from Connect.services import CoreConnectionService
 from Preparation.services import PQVMappingService
 
-from .services import (generate_pdf, BuildPapersService, RenamePDFFile)
+from .services import (BuildPapersService, RenamePDFFile)
 from .models import PDFTask
 
 
