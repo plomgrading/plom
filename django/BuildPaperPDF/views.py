@@ -76,9 +76,11 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
         return render(request, self.template_name, context)
 
 
-class UpdatePDFTable(View):
-    """Get an updated pdf-building-progress table"""
-    def get(self, request):
+class PDFTableView(LoginRequiredMixin, GroupRequiredMixin, View):
+    login_url = "login"
+    group_required = ["manager"]
+
+    def render_pdf_table(self, request):
         task_objects = PDFTask.objects.all()
         bps = BuildPapersService()
         Rename = RenamePDFFile()
@@ -109,6 +111,12 @@ class UpdatePDFTable(View):
         return render(request, 'BuildPaperPDF/fragments/pdf_table.html', context, status=status)
 
 
+class UpdatePDFTable(PDFTableView):
+    """Get an updated pdf-building-progress table"""
+    def get(self, request):
+        return self.render_pdf_table(request)
+
+
 class GetPDFFile(View):
     # TODO: modify pdf file name
     def get(self, request, paper_number):
@@ -136,7 +144,7 @@ class GetCompressedPDFs(View):
         return FileResponse(zf)
 
 
-class StartAllPDFs(View):
+class StartAllPDFs(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
         core = CoreConnectionService()
@@ -146,4 +154,4 @@ class StartAllPDFs(View):
 
         bps.send_all_tasks(spec, qvmap)
 
-        return HttpResponse(status=200)
+        return self.render_pdf_table(request)

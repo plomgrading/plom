@@ -13,12 +13,7 @@
             <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
             {% if pdfs_staged %}
             <div>
-                <form method="post" action="{% url 'start_all_PDFs' %}">
-                    {% csrf_token %}
-                    <div class="col-sm-2">
-                        <input type="submit" class="btn btn-primary" value="Start All" style="display: inline">
-                    </div>
-                </form>
+                <a class="btn btn-primary" hx-post="{% url 'start_all_PDFs' %}" hx-target="#pdf_table">Start All</a>
             </div>
             <div id="pdf_table" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 1s">
                 {{ message }}<br>

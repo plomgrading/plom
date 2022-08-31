@@ -20,10 +20,18 @@
             <td>{{ pdf_file }}</td>
             <td>{{ task.status }}</td>
             <td><a>Retry</a></td>
-            {% elif task.status == 'queued'%}
+            {% elif task.status == 'queued' %}
             <td>{{ pdf_file }}</td>
             <td>{{ task.status }}</td>
             <td><a>Cancel</a></td>
+            {% elif task.status == 'started' %}
+            <td>{{ pdf_file }}</td>
+            <td>{{ task.status }}</td>
+            <td></td>
+            {% else %}
+            <td>{{ pdf_file }}</td>
+            <td>{{ task.status }}</td>
+            <td><a>Start</a></td>
             {% endif %}
         </tr>
     {% endfor %}
