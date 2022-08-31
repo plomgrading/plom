@@ -81,20 +81,7 @@ class BuildPapersService:
 
         return temp_filename
 
-    # def build_all_papers(self, ccs):
-    #     """Build all the test-papers."""
-    #     msgr = None
-    #     try:
-    #         msgr = ccs.get_manager_messenger()
-    #         msgr.start()
-    #         msgr.requestAndSaveToken(ccs.manager_username, ccs.get_manager_password())
-    #
-    #         build_papers(
-    #             basedir=settings.BASE_DIR,
-    #             msgr=msgr
-    #         )
-    #     finally:
-    #         if msgr:
-    #             if msgr.token:
-    #                 msgr.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
-    #             msgr.stop()
+    def stage_pdf_jobs(self, n):
+        """Create n PDFTasks, and save to the database without sending them to Huey."""
+        for i in range(n):
+            pdf_job = self.create_task(i+1, None)

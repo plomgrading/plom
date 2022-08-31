@@ -11,42 +11,55 @@
     {% block main_content %}
         <div class="d-grid gap-2">
             <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
-        </div>
-        <div>
-            <form method="post">
-                {% csrf_token %}
-                <div class="col-sm-2">
-                    <input type="submit">
+            {% if pdfs_staged %}
+            <div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="col-sm-2">
+                        <input type="submit">
+                    </div>
+                </form>
+            </div>
+            <div id="pdf_table" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 1s">
+                {{ message }}<br>
+                <!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Filename</th>
+                            <th scope="col">Status</th>
+                        </tr>
+                    </thead>
+                    {% for task, pdf_file in tasks %}
+                        <tr>
+                            <td>{{ task.paper_number }}</td>
+                            {% if task.status == 'complete' %}
+                            <td><a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ pdf_file }}</a></td>
+                            {% else %}
+                            <td>{{ pdf_file }}</td>
+                            {% endif %}
+                            <td>{{ task.status }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+                <form method="post" action="{% url 'zip_paperPDFs' %}">
+                    {% csrf_token %}
+                    <input type="submit" class="btn btn-primary" value="Save as zip file" {% if zip_disabled %}disabled{% endif %}>
+                </form>
+            </div>
+            {% else %}
+            <div class="card w-50">
+                <div class="card-body">
+                    <h5 class="card-title">Build test papers</h5>
+                    <p class="card-text">Will build {{ num_pdfs }} tests.</p>
+                    <form>
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-primary" value="Submit">
+                    </form>
                 </div>
-            </form>
-        </div>
-        <div id="pdf_table" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 1s">
-            {{ message }}<br>
-            <!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Filename</th>
-                        <th scope="col">Status</th>
-                    </tr>
-                </thead>
-                {% for task, pdf_file in tasks %}
-                    <tr>
-                        <td>{{ task.paper_number }}</td>
-                        {% if task.status == 'complete' %}
-                        <td><a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ pdf_file }}</a></td>
-                        {% else %}
-                        <td>{{ pdf_file }}</td>
-                        {% endif %}
-                        <td>{{ task.status }}</td>
-                    </tr>
-                {% endfor %}
-            </table>
-            <form method="post" action="{% url 'zip_paperPDFs' %}">
-                {% csrf_token %}
-                <input type="submit" class="btn btn-primary" value="Save as zip file" {% if zip_disabled %}disabled{% endif %}>
-            </form>
+            </div>
+            {% endif %}
         </div>
 
     {% endblock %}
