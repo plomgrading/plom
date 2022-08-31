@@ -27,9 +27,20 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
     form = BuildNumberOfPDFsForm()
 
     def get(self, request):
+        bps = BuildPapersService()
+        pqvs = PQVMappingService()
+        qvmap = pqvs.get_pqv_map_dict()
+        num_pdfs = len(qvmap)
+
+        n_tasks = bps.get_n_tasks()
+        if n_tasks > 0:
+            pdfs_staged = True
+        else:
+            pdfs_staged = False
 
         context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
-                   'form': self.form, 'message': '', 'zip_disabled': True}
+                   'form': self.form, 'message': '', 'zip_disabled': True, 'num_pdfs': num_pdfs,
+                   'pdfs_staged': pdfs_staged}
         return render(request, self.template_name, context)
 
     def post(self, request):

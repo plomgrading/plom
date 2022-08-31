@@ -25,6 +25,10 @@ class BuildPapersService:
         pending = PDFTask.objects.exclude(status='complete')
         return len(pending)
 
+    def get_n_tasks(self):
+        """Get the total number of PDFTasks"""
+        return len(PDFTask.objects.all())
+
     def create_task(self, index: int, huey_id: id):
         """Create and save a PDF-building task to the database"""
         paper_path = self.papers_to_print / f"exam_{index:04}.pdf"
