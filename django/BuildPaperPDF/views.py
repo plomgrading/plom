@@ -27,14 +27,13 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
     form = BuildNumberOfPDFsForm()
 
     def get(self, request):
-        # bps = BuildPapersService()
-        # pqvs = PQVMappingService()
-        # qvmap = pqvs.get_pqv_map_dict()
-        # num_pdfs = len(qvmap)
-        num_pdfs = 1
+        bps = BuildPapersService()
+        pqvs = PQVMappingService()
+        qvmap = pqvs.get_pqv_map_dict()
+        num_pdfs = len(qvmap)
 
-        # n_tasks = bps.get_n_tasks()
-        n_tasks = 1
+        n_tasks = bps.get_n_tasks()
+        # n_tasks = 1
         if n_tasks > 0:
             pdfs_staged = True
         else:
@@ -47,8 +46,6 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
 
     def post(self, request):
         bps = BuildPapersService()
-        core = CoreConnectionService()
-        spec = core.get_core_spec()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
         num_pdfs = len(qvmap)
@@ -92,7 +89,10 @@ class UpdatePDFTable(View):
 
         n_complete = bps.get_n_complete_tasks()
         n_total = len(task_objects)
-        percent_complete = n_complete / n_total * 100
+        if n_total > 0:
+            percent_complete = n_complete / n_total * 100
+        else:
+            percent_complete = 0
 
         zip_disabled = True
         status = 200
@@ -134,3 +134,16 @@ class GetCompressedPDFs(View):
         zip_file.close()
         save_path.unlink()
         return FileResponse(zf)
+
+
+class StartAllPDFs(View):
+    def post(self, request):
+        bps = BuildPapersService()
+        core = CoreConnectionService()
+        spec = core.get_core_spec()
+        pqvs = PQVMappingService()
+        qvmap = pqvs.get_pqv_map_dict()
+
+        bps.send_all_tasks(spec, qvmap)
+
+        return HttpResponse(status=200)

@@ -4,6 +4,7 @@ from .views import (
     GetPDFFile, 
     GetCompressedPDFs,
     UpdatePDFTable,
+    StartAllPDFs,
 )
 
 urlpatterns = [
@@ -11,4 +12,5 @@ urlpatterns = [
     path("update/", UpdatePDFTable.as_view(), name="update_paperPDFs"),
     path("get/<int:paper_number>", GetPDFFile.as_view(), name="get_paperPDFs"),
     path("get_zip/", GetCompressedPDFs.as_view(), name="zip_paperPDFs"),
+    path("start/all/", StartAllPDFs.as_view(), name='start_all_PDFs'),
 ]

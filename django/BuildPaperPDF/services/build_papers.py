@@ -90,7 +90,8 @@ class BuildPapersService:
         """Send all marked as todo PDF tasks to huey"""
         todo_tasks = PDFTask.objects.filter(status='todo')
         for task in todo_tasks:
-            pdf_build = self._build_single_paper(spec, qvmap)
+            paper_number = task.paper_number
+            pdf_build = self._build_single_paper(paper_number, spec, qvmap[paper_number])
             task.huey_id = pdf_build.id
             task.status = 'queued'
             task.save()
