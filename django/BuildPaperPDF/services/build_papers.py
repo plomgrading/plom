@@ -1,6 +1,7 @@
 import pathlib
 import zipfile
 import shutil
+import random
 from plom.create.mergeAndCodePages import make_PDF
 
 from django.conf import settings
@@ -70,6 +71,19 @@ class BuildPapersService:
     @db_task(queue="tasks")
     def _build_single_paper(index: int, spec: dict, question_versions: dict):
         """Build a single test-paper"""
+        make_PDF(
+            spec=spec,
+            papernum=index,
+            question_versions=question_versions
+        )
+
+    @db_task(queue="tasks")
+    def _build_flaky_single_paper(index: int, spec: dict, question_versions: dict):
+        """DEBUG ONLY: build a test-paper with a random chance of throwing an error"""
+        roll = random.randint(1, 10)
+        if roll % 5 == 0:
+            raise ValueError("Error! This didn't work.")
+        
         make_PDF(
             spec=spec,
             papernum=index,

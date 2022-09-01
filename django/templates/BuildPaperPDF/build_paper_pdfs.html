@@ -15,7 +15,7 @@
             <div>
                 <a class="btn btn-primary" hx-post="{% url 'start_all_PDFs' %}" hx-target="#pdf_table">Start All</a>
             </div>
-            <div id="pdf_table" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 0.5s">
+            <div id="pdf_table">
                 {{ pdf_table |safe }}
 
                 <form method="post" action="{% url 'zip_paperPDFs' %}">

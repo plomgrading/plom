@@ -1,6 +1,10 @@
 {{ message }}<br>
 <!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
-<table class="table table-striped">
+<table class="table table-striped"
+    {% if poll %}
+    hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 0.5s"
+    {% endif %}
+>
     <thead>
         <tr>
             <th scope="col">#</th>
@@ -18,8 +22,16 @@
             <td></td>
             {% elif task.status == 'error' %}
             <td>{{ pdf_file }}</td>
-            <td>{{ task.status }}</td>
-            <td><a>Retry</a></td>
+            <td><p class="text-danger">{{ task.message }}</p></td>
+            <td>
+                <a 
+                class="btn btn-warning" 
+                hx-post="{% url 'start_one_PDF' task.paper_number %}"
+                hx-target="#pdf_table"
+                >
+                    Retry
+                </a>
+            </td>
             {% elif task.status == 'queued' %}
             <td>{{ pdf_file }}</td>
             <td>{{ task.status }}</td>

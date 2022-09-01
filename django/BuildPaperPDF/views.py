@@ -38,15 +38,25 @@ class BuildPaperPDFs(ManagerRequiredView):
 
     def table_fragment(self, request):
         """Get the current state of the tasks, render it as an HTML table, and return"""
+        bps = BuildPapersService()
         rename = RenamePDFFile()
 
         tasks = PDFTask.objects.all()
         names = [rename.get_PDF_name(t.pdf_file_path) for t in tasks]
         task_context = zip(tasks, names)
 
+        running_tasks = bps.get_n_running_tasks()
+        if running_tasks > 0:
+            poll = True
+        else:
+            poll = False
+
         table_fragment = render_to_string(
             'BuildPaperPDF/fragments/pdf_table.html', 
-            {'tasks': task_context},
+            {
+                'tasks': task_context,
+                'poll': poll
+            },
             request=request
         )
 
@@ -140,11 +150,15 @@ class PDFTableView(ManagerRequiredView):
             status = 286
             zip_disabled = False
 
+        n_running = bps.get_n_running_tasks()
+        poll = (n_running > 0)
+
         context = self.build_context()
         context.update({
             'tasks': zip(task_objects, tasks_pdf_file_path),
             'message': f'Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)',
             'zip_disabled': zip_disabled,
+            'poll': poll,
         })
 
         return render(request, 'BuildPaperPDF/fragments/pdf_table.html', context, status=status)
@@ -206,3 +220,5 @@ class StartOnePDF(PDFTableView):
         qvmap = pqvs.get_pqv_map_dict()
 
         bps.send_single_task(paper_number, spec, qvmap[paper_number])
+
+        return self.render_pdf_table(request)
