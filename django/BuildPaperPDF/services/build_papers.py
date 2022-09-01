@@ -1,4 +1,5 @@
 import pathlib
+import queue
 import zipfile
 import shutil
 import random
@@ -36,14 +37,20 @@ class BuildPapersService:
         """Get the total number of PDFTasks"""
         return len(PDFTask.objects.all())
 
-    def create_task(self, index: int, huey_id: id):
+    def create_task(self, index: int, huey_id: id, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database"""
-        paper_path = self.papers_to_print / f"exam_{index:04}.pdf"
+        if student_id:
+            paper_path = self.papers_to_print / f"exam_{index:04}_{student_id}.pdf"
+        else:
+            paper_path = self.papers_to_print / f"exam_{index:04}.pdf"
+            
         task = PDFTask(
             paper_number=index,
             huey_id=huey_id,
             pdf_file_path=str(paper_path),
             status='todo',
+            student_name=student_name,
+            student_id=student_id,
         )
         task.save()
         return task
@@ -78,6 +85,16 @@ class BuildPapersService:
         )
 
     @db_task(queue="tasks")
+    def _build_prenamed_paper(index: int, spec: dict, question_versions: dict, student_info: dict):
+        """Build a single test-paper and prename it"""
+        make_PDF(
+            spec=spec,
+            papernum=index,
+            question_versions=question_versions,
+            extra=student_info
+        )
+
+    @db_task(queue="tasks")
     def _build_flaky_single_paper(index: int, spec: dict, question_versions: dict):
         """DEBUG ONLY: build a test-paper with a random chance of throwing an error"""
         roll = random.randint(1, 10)
@@ -101,17 +118,37 @@ class BuildPapersService:
 
         return temp_filename
 
-    def stage_pdf_jobs(self, n):
-        """Create n PDFTasks, and save to the database without sending them to Huey."""
+    def stage_pdf_jobs(self, n, classdict=None):
+        """Create n PDFTasks, and save to the database without sending them to Huey.
+        
+        If there are prenamed test-papers, save that info too.
+        """
         for i in range(n):
-            pdf_job = self.create_task(i+1, None)
+            index = i + 1
+            if classdict and i < len(classdict):
+                student = classdict[i]
+                student_id = student['id']
+                student_name = student['studentName']
+                pdf_job = self.create_task(index, None, student_id=student_id, student_name=student_name)
+            else:
+                pdf_job = self.create_task(index, None)
 
     def send_all_tasks(self, spec, qvmap):
         """Send all marked as todo PDF tasks to huey"""
         todo_tasks = PDFTask.objects.filter(status='todo')
         for task in todo_tasks:
             paper_number = task.paper_number
-            pdf_build = self._build_single_paper(paper_number, spec, qvmap[paper_number])
+            if task.student_name and task.student_id:
+                info_dict = {'id': task.student_id, 'name': task.student_name}
+                pdf_build = self._build_prenamed_paper(
+                    paper_number, 
+                    spec, 
+                    qvmap[paper_number], 
+                    info_dict
+                )
+            else:
+                pdf_build = self._build_single_paper(paper_number, spec, qvmap[paper_number])
+
             task.huey_id = pdf_build.id
             task.status = 'queued'
             task.save()
@@ -119,7 +156,18 @@ class BuildPapersService:
     def send_single_task(self, paper_num, spec, qv_row):
         """Send a single todo task to Huey"""
         task = get_object_or_404(PDFTask, paper_number=paper_num)
-        pdf_build = self._build_single_paper(paper_num, spec, qv_row)
+
+        if task.student_name and task.student_id:
+            info_dict = {'id': task.student_id, 'name': task.student_name}
+            pdf_build = self._build_prenamed_paper(
+                paper_num, 
+                spec, 
+                qv_row, 
+                info_dict
+            )
+        else:
+            pdf_build = self._build_single_paper(paper_num, spec, qv_row)
+
         task.huey_id = pdf_build.id
         task.status = 'queued'
         task.save()

@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Connect.services import CoreConnectionService
-from Preparation.services import PQVMappingService
+from Preparation.services import PQVMappingService, StagingStudentService
 
 from .services import (BuildPapersService, RenamePDFFile)
 from .models import PDFTask
@@ -94,9 +94,12 @@ class BuildPaperPDFs(ManagerRequiredView):
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
         num_pdfs = len(qvmap)
+        sstu = StagingStudentService()
+        classdict = sstu.get_classdict()
 
         bps.clear_tasks()
-        bps.stage_pdf_jobs(num_pdfs)
+        print(classdict)
+        bps.stage_pdf_jobs(num_pdfs, classdict=classdict)
 
         task_objects = PDFTask.objects.all()
         Rename = RenamePDFFile()
