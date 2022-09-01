@@ -11,7 +11,7 @@ from django.views.generic.base import TemplateView
 from braces.views import GroupRequiredMixin, LoginRequiredMixin
 
 from TestCreator.services import TestSpecService, TestSpecGenerateService
-from Preparation.services import PQVMappingService, StagingClasslistCSVService, PrenameSettingService
+from Preparation.services import PQVMappingService, StagingStudentService, PrenameSettingService
 
 from Connect.services import CoreConnectionService
 from Connect.forms import CoreConnectionForm, CoreManagerLoginForm
@@ -73,7 +73,7 @@ class ConnectSendInfoToCoreView(ManagerRequiredTemplateView):
         context = super().get_context_data(**kwargs)
         spec = TestSpecService()
         core = CoreConnectionService()
-        ccsv = StagingClasslistCSVService()
+        sstu = StagingStudentService()
         pre = PrenameSettingService()
         qvs = PQVMappingService()
 
@@ -82,7 +82,7 @@ class ConnectSendInfoToCoreView(ManagerRequiredTemplateView):
         context['spec_valid'] = spec.is_specification_valid()
         context['is_spec_sent'] = core.has_test_spec_been_sent()
         context['classlist_required'] = pre.get_prenaming_setting()
-        context['classlist_exists'] = ccsv.is_there_a_classlist()
+        context['classlist_exists'] = sstu.are_there_students()
         context['is_classlist_sent'] = core.has_classlist_been_sent()
         context['pqvmap_exists'] = qvs.is_there_a_pqv_map()
         context['db_initialized'] = core.has_db_been_initialized()
@@ -186,12 +186,10 @@ class SendClasslistToCoreView(ManagerRequiredUtilView):
     def post(self, request):
         """Send classlist to core server"""
         core = CoreConnectionService()
-        ccsv = StagingClasslistCSVService()
+        sstu = StagingStudentService()
 
         try:
-            vlad = PlomClasslistValidator()
-            classlist_path = ccsv.get_classlist_csv_filepath()
-            classdict = vlad.readClassList(classlist_path)
+            classdict = sstu.get_classdict()
             core.send_classlist(classdict)
 
             context = self.build_context()

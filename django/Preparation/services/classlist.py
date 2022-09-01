@@ -72,6 +72,13 @@ class StagingStudentService:
             )
         )
 
+    def get_classdict(self):
+        students = self.get_students()
+        for s in students:
+            s['id'] = s.pop("student_id")
+            s['studentName'] = s.pop("student_name")
+        return students
+
     @transaction.atomic()
     def get_first_last_prenamed_paper(self):
         query = StagingStudent.objects.filter(paper_number__isnull=False).order_by(
