@@ -177,8 +177,7 @@ class BuildPapersService:
         """Cancel a single queued task from Huey"""
         task = get_object_or_404(PDFTask, paper_number=paper_num)
         queue = get_queue('tasks')
-        result = queue.get(task.huey_id)
-        result.revoke()
+        queue.revoke_by_id(task.huey_id)
         task.status = 'todo'
         task.save()
 
