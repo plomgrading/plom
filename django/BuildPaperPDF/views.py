@@ -19,12 +19,22 @@ from .models import PDFTask
 # Create your views here.
 
 
-class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
-    template_name = 'BuildPaperPDF/build_paper_pdfs.html'
-    login_url = "login"
+class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     group_required = ["manager"]
+    login_url = "login"
     navbar_colour = "#AD9CFF"
-    form = BuildNumberOfPDFsForm()
+
+    def build_context(self):
+        context = {
+            'navbar_colour': self.navbar_colour,
+            'user_group': self.group_required[0],
+        }
+
+        return context
+
+
+class BuildPaperPDFs(ManagerRequiredView):
+    template_name = 'BuildPaperPDF/build_paper_pdfs.html'
 
     def get(self, request):
         bps = BuildPapersService()
@@ -39,9 +49,14 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
         else:
             pdfs_staged = False
 
-        context = {'navbar_colour': self.navbar_colour, 'user_group': self.group_required[0],
-                   'form': self.form, 'message': '', 'zip_disabled': True, 'num_pdfs': num_pdfs,
-                   'pdfs_staged': pdfs_staged}
+        context = self.build_context()
+        context.update({
+            'message': "",
+            'zip_disabled': True,
+            'num_pdfs': num_pdfs,
+            'pdfs_staged': pdfs_staged,
+        })
+
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -64,19 +79,19 @@ class BuildPaperPDFs(LoginRequiredMixin, GroupRequiredMixin, View):
             tasks_paper_number.append(task.paper_number)
             tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
             tasks_status.append(task.status)
-        message = f''
-        context = {
-            'navbar_colour': self.navbar_colour,
-            'user_group': self.group_required[0],
-            'form': self.form, 'message': message,
+
+        context = self.build_context()
+        context.update({
+            'message': "",
             'tasks': zip(task_objects, tasks_pdf_file_path),
             'zip_disabled': True,
             'pdfs_staged': True,
-        }
+        })
+
         return render(request, self.template_name, context)
 
 
-class PDFTableView(LoginRequiredMixin, GroupRequiredMixin, View):
+class PDFTableView(ManagerRequiredView):
     login_url = "login"
     group_required = ["manager"]
 
@@ -102,11 +117,12 @@ class PDFTableView(LoginRequiredMixin, GroupRequiredMixin, View):
             status = 286
             zip_disabled = False
 
-        context = {
+        context = self.build_context()
+        context.update({
             'tasks': zip(task_objects, tasks_pdf_file_path),
             'message': f'Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)',
             'zip_disabled': zip_disabled,
-        }
+        })
 
         return render(request, 'BuildPaperPDF/fragments/pdf_table.html', context, status=status)
 
@@ -117,7 +133,7 @@ class UpdatePDFTable(PDFTableView):
         return self.render_pdf_table(request)
 
 
-class GetPDFFile(View):
+class GetPDFFile(ManagerRequiredView):
     # TODO: modify pdf file name
     def get(self, request, paper_number):
         pdf_file = PDFTask.objects.get(paper_number=paper_number).pdf_file_path
@@ -125,7 +141,7 @@ class GetPDFFile(View):
         if not pdf_path.exists() or not pdf_path.is_file():
             return HttpResponse(status=500)
 
-        pdf_file_name = RenamePDFFile.get_PDF_name(pdf_file)
+        pdf_file_name = RenamePDFFile().get_PDF_name(pdf_file)
         file = pdf_path.open('rb')
         pdf = SimpleUploadedFile(str(pdf_file_name), file.read(), content_type='application/pdf')
         file.close()
@@ -133,7 +149,7 @@ class GetPDFFile(View):
         return FileResponse(pdf)
 
 
-class GetCompressedPDFs(View):
+class GetCompressedPDFs(ManagerRequiredView):
     """Get the completed test paper PDFs in one zip file"""
     def post(self, request):
         bps = BuildPapersService()
