@@ -4,6 +4,7 @@ import shutil
 from plom.create.mergeAndCodePages import make_PDF
 
 from django.conf import settings
+from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django_huey import db_task
 
@@ -100,3 +101,11 @@ class BuildPapersService:
             task.huey_id = pdf_build.id
             task.status = 'queued'
             task.save()
+
+    def send_single_task(self, paper_num, spec, qv_row):
+        """Send a single todo task to Huey"""
+        task = get_object_or_404(PDFTask, paper_number=paper_num)
+        pdf_build = self._build_single_paper(paper_num, spec, qv_row)
+        task.huey_id = pdf_build.id
+        task.status = 'queued'
+        task.save()

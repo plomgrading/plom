@@ -2,9 +2,9 @@ import pathlib
 
 from django.shortcuts import render
 from django.views.generic import View
+from django.template.loader import render_to_string
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
 
-from BuildPaperPDF.forms import BuildNumberOfPDFsForm
 from django.http import FileResponse
 from django.http import HttpResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -36,8 +36,25 @@ class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 class BuildPaperPDFs(ManagerRequiredView):
     template_name = 'BuildPaperPDF/build_paper_pdfs.html'
 
+    def table_fragment(self, request):
+        """Get the current state of the tasks, render it as an HTML table, and return"""
+        rename = RenamePDFFile()
+
+        tasks = PDFTask.objects.all()
+        names = [rename.get_PDF_name(t.pdf_file_path) for t in tasks]
+        task_context = zip(tasks, names)
+
+        table_fragment = render_to_string(
+            'BuildPaperPDF/fragments/pdf_table.html', 
+            {'tasks': task_context},
+            request=request
+        )
+
+        return table_fragment
+
     def get(self, request):
         bps = BuildPapersService()
+        rename = RenamePDFFile()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
         num_pdfs = len(qvmap)
@@ -49,12 +66,15 @@ class BuildPaperPDFs(ManagerRequiredView):
         else:
             pdfs_staged = False
 
+        table_fragment = self.table_fragment(request)
+
         context = self.build_context()
         context.update({
             'message': "",
             'zip_disabled': True,
             'num_pdfs': num_pdfs,
             'pdfs_staged': pdfs_staged,
+            'pdf_table': table_fragment,
         })
 
         return render(request, self.template_name, context)
@@ -80,12 +100,15 @@ class BuildPaperPDFs(ManagerRequiredView):
             tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
             tasks_status.append(task.status)
 
+        table_fragment = self.table_fragment(request)
+
         context = self.build_context()
         context.update({
             'message': "",
             'tasks': zip(task_objects, tasks_pdf_file_path),
             'zip_disabled': True,
             'pdfs_staged': True,
+            'pdf_table': table_fragment
         })
 
         return render(request, self.template_name, context)
@@ -172,3 +195,14 @@ class StartAllPDFs(PDFTableView):
         bps.send_all_tasks(spec, qvmap)
 
         return self.render_pdf_table(request)
+
+
+class StartOnePDF(PDFTableView):
+    def post(self, request, paper_number):
+        bps = BuildPapersService()
+        core = CoreConnectionService()
+        spec = core.get_core_spec()
+        pqvs = PQVMappingService()
+        qvmap = pqvs.get_pqv_map_dict()
+
+        bps.send_single_task(paper_number, spec, qvmap[paper_number])
