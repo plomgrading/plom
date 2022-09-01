@@ -3,15 +3,36 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import logging
 
-from plom.db.tables import *
-
-from peewee import *
-
-from plom.rules import censorStudentNumber as censorID
-from plom.rules import censorStudentName as censorName
+from plom.db.tables import plomdb
+from plom.db.tables import (
+    User,
+    Bundle,
+    Image,
+    Test,
+    Group,
+    IDPrediction,
+    IDGroup,
+    DNMGroup,
+    QGroup,
+    TPage,
+    HWPage,
+    EXPage,
+    UnknownPage,
+    CollidingPage,
+    DiscardedPage,
+    IDPage,
+    DNMPage,
+    AImage,
+    Annotation,
+    APage,
+    Rubric,
+    ARLink,
+    Tag,
+    QuestionTagLink,
+)
 
 
 log = logging.getLogger("DB")
@@ -25,9 +46,7 @@ class PlomDB:
         plomdb.init(str(dbfile_name))
 
         if db_name:
-            print(
-                f'We were given a DB Name of "{db_name}", ignoring for now!'
-            )
+            print(f'We were given a DB Name of "{db_name}", ignoring for now!')
 
         with plomdb:
             plomdb.create_tables(
