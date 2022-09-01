@@ -9,6 +9,7 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django_huey import db_task
+from django_huey import db_task, get_queue
 
 from BuildPaperPDF.models import PDFTask
 
@@ -171,3 +172,13 @@ class BuildPapersService:
         task.huey_id = pdf_build.id
         task.status = 'queued'
         task.save()
+
+    def cancel_single_task(self, paper_num):
+        """Cancel a single queued task from Huey"""
+        task = get_object_or_404(PDFTask, paper_number=paper_num)
+        queue = get_queue('tasks')
+        result = queue.get(task.huey_id)
+        result.revoke()
+        task.status = 'todo'
+        task.save()
+

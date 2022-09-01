@@ -225,3 +225,11 @@ class StartOnePDF(PDFTableView):
         bps.send_single_task(paper_number, spec, qvmap[paper_number])
 
         return self.render_pdf_table(request)
+
+
+class CancelOnePDF(PDFTableView):
+    def post(self, request, paper_number):
+        bps = BuildPapersService()
+        bps.cancel_single_task(paper_number)
+
+        return self.render_pdf_table(request)
