@@ -37,7 +37,7 @@
             <td>{{ task.status }}</td>
             <td>
                 <a
-                    class="btn btn-primary"
+                    class="btn btn-danger"
                     hx-post="{% url 'cancel_one_PDF' task.paper_number %}"
                     hx-target="#pdf_table"
                 >
