@@ -2,10 +2,10 @@ import pathlib
 import zipfile
 import shutil
 from plom.create.mergeAndCodePages import make_PDF
-from huey.signals import SIGNAL_EXECUTING, SIGNAL_COMPLETE, SIGNAL_ERROR
 
 from django.conf import settings
-from django_huey import get_queue, db_task
+from django.db.models import Q
+from django_huey import db_task
 
 from BuildPaperPDF.models import PDFTask
 
@@ -24,6 +24,11 @@ class BuildPapersService:
         """Get the number of PDFTasks with the status 'todo,' 'queued,' 'started,' or 'error'"""
         pending = PDFTask.objects.exclude(status='complete')
         return len(pending)
+
+    def get_n_running_tasks(self):
+        """Get the number of PDFTasks with the status 'queued' or 'started"""
+        running = PDFTask.objects.filter(Q(status='queued') | Q(status='started'))
+        return len(running)
 
     def get_n_tasks(self):
         """Get the total number of PDFTasks"""
