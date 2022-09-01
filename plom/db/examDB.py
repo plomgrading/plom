@@ -44,16 +44,22 @@ class PlomDB:
     """The main Plom database."""
 
     def __init__(self, dbfile_name="plom.db", *, db_name):
-        # can't handle pathlib?
-        self._db = pw.SqliteDatabase(None)
-        # plomdb = pw.MySQLDatabase(
-        #     "Plom", host="127.0.0.1", port=3306, user="root", password="my-secret-password"
-        # )
-        self._db.init(str(dbfile_name))
-        database_proxy.initialize(self._db)
-
         if db_name:
-            print(f'We were given a DB Name of "{db_name}", ignoring for now!')
+            db = pw.MySQLDatabase(
+                db_name,
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password="my-secret-password",
+            )
+            # TODO?  db.init?  maybe stuff in other file?
+        else:
+            db = pw.SqliteDatabase(None)
+            # can't handle pathlib?
+            db.init(str(dbfile_name))
+
+        self._db = db
+        database_proxy.initialize(self._db)
 
         with self._db:
             self._db.create_tables(
