@@ -201,23 +201,25 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
         shape.draw_line(rDNW.top_right, rDNW.bottom_right)
     shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
     shape.commit()
-    # offset by trial-and-error
-    diaglabel_rect = rDNW + (-10, 26, 10, -33)
-    mat = fitz.Matrix(45 if odd else -45)
-    pivot = rDNW.tr / 2 + rDNW.bl / 2
-    morph = (pivot, mat)
-    excess = page.insert_textbox(
-        diaglabel_rect,
-        shortname,
-        fontsize=8,
-        fontname="Helvetica",
-        fontfile=None,
-        align=1,
-        morph=morph,
-    )
-    assert excess > 0, "Text didn't fit: shortname too long? font issue?"
-    # debugging
-    # page.draw_rect(diaglabel_rect, color=[1, 0, 0], morph=morph)
+
+    tw = fitz.TextWriter(page.rect)
+    # we want a smaller font so pad string if its short
+    if len(shortname) < 20:
+        shortname = shortname.center(20)
+    # location does not matter
+    tw.append(fitz.Point(100, 20), shortname, fontsize=8, font=fitz.Font("helv"))
+    # a smaller rect in the top-left/top-right of the DNW area: 85% of it.
+    # write the text in on angle, shrinking if necessary to fit.
+    r = rDNW
+    g = 0.85
+    if odd:
+        r = fitz.Rect(r.tl, r.tl.x + g * r.width, r.tl.y + g * r.height)
+    else:
+        r = fitz.Rect(r.tr.x - g * r.width, r.tl.y, r.tr.x, r.tr.y + g * r.height)
+    page.write_text(rect=r, writers=tw, rotate=(45 if odd else -45))
+    # Debugging
+    # page.write_text(writers=tw, color=(1, 0, 0))
+    # page.draw_rect(r, color=(1, 0, 0))
 
     if not qr_code:
         # no more processing of this page if QR codes unwanted
