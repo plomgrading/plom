@@ -24,7 +24,7 @@ from plom.db.tables import (
     TPage,
     User,
 )
-from plom.db.tables import plomdb
+
 
 log = logging.getLogger("DB")
 
@@ -121,7 +121,7 @@ def is_paper_database_populated(self):
 
 
 def nextqueue_position(self):
-    lastPos = Group.select(fn.MAX(Group.queue_position)).scalar(plomdb)
+    lastPos = Group.select(fn.MAX(Group.queue_position)).scalar(self._db)
     if lastPos is None:
         return 0
     return lastPos + 1
@@ -190,7 +190,7 @@ def addSingleTestToDB(self, spec, t, vmap_for_test):
 
 
 def createTest(self, t):
-    with plomdb.atomic():
+    with self._db.atomic():
         try:
             Test.create(test_number=t)  # must be unique
         except pw.IntegrityError as e:
@@ -204,7 +204,7 @@ def addTPages(self, tref, gref, t, pages, v):
     For initial construction of test-pages for a test. We use these so we know what structured pages we should have.
     """
     flag = True
-    with plomdb.atomic():
+    with self._db.atomic():
         for p in pages:
             try:
                 TPage.create(
@@ -225,7 +225,7 @@ def createIDGroup(self, t, pages):
     if tref is None:
         log.warning("Create IDGroup - No test with number {}".format(t))
         return False
-    with plomdb.atomic():
+    with self._db.atomic():
         # make the Group
         gid = "i{}".format(str(t).zfill(4))
         try:
@@ -262,7 +262,7 @@ def createDNMGroup(self, t, pages):
         return False
 
     gid = "d{}".format(str(t).zfill(4))
-    with plomdb.atomic():
+    with self._db.atomic():
         # make the dnmgroup
         try:
             # A DNM group may have 0 pages, in that case mark it as scanned and set status = "complete"
@@ -294,7 +294,7 @@ def createQGroup(self, t, q, v, pages):
 
     gid = "q{}g{}".format(str(t).zfill(4), q)
 
-    with plomdb.atomic():
+    with self._db.atomic():
         # make the qgroup
         try:
             gref = Group.create(
@@ -417,7 +417,7 @@ def add_or_change_id_prediction(
     # Manager calls this function, but since these are build by
     # by the plom system, we put user = HAL.
 
-    with plomdb.atomic():
+    with self._db.atomic():
         # find the test-ref
         tref = Test.get_or_none(Test.test_number == paper_number)
         if tref is None:
@@ -468,7 +468,7 @@ def remove_id_prediction(self, paper_number):
         tuple: `(True, None, None)` if successful, or `(False, 404, msg)`
         if `paper_number` does not exist.
     """
-    with plomdb.atomic():
+    with self._db.atomic():
         tref = Test.get_or_none(Test.test_number == paper_number)
         if tref is None:
             msg = f"denied b/c paper {paper_number} not found"
@@ -495,7 +495,7 @@ def remove_id_from_paper(self, paper_num):
     Returns:
         bool
     """
-    with plomdb.atomic():
+    with self._db.atomic():
         tref = Test.get_or_none(Test.test_number == paper_num)
         if tref is None:
             log.error("Could not unID paper %s b/c paper not found", paper_num)

@@ -6,7 +6,8 @@
 from datetime import datetime, timezone
 import logging
 
-from plom.db.tables import plomdb
+import peewee as pw
+
 from plom.db.tables import (
     User,
     Bundle,
@@ -33,6 +34,7 @@ from plom.db.tables import (
     Tag,
     QuestionTagLink,
 )
+from plom.db.tables import database_proxy
 
 
 log = logging.getLogger("DB")
@@ -43,13 +45,18 @@ class PlomDB:
 
     def __init__(self, dbfile_name="plom.db", *, db_name):
         # can't handle pathlib?
-        plomdb.init(str(dbfile_name))
+        self._db = pw.SqliteDatabase(None)
+        # plomdb = pw.MySQLDatabase(
+        #     "Plom", host="127.0.0.1", port=3306, user="root", password="my-secret-password"
+        # )
+        self._db.init(str(dbfile_name))
+        database_proxy.initialize(self._db)
 
         if db_name:
             print(f'We were given a DB Name of "{db_name}", ignoring for now!')
 
-        with plomdb:
-            plomdb.create_tables(
+        with self._db:
+            self._db.create_tables(
                 [
                     User,
                     Image,

@@ -6,7 +6,6 @@
 from pathlib import Path
 import logging
 
-from plom.db.tables import plomdb
 from plom.db.tables import UnknownPage, DiscardedPage, CollidingPage
 from plom.db.tables import EXPage, HWPage, Image, QGroup, Test, TPage
 
@@ -364,7 +363,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
         msg += "(or at least one HW Page) before adding extra pages."
         return (False, "unscanned", msg)
 
-    with plomdb.atomic():
+    with self._db.atomic():
         groups_to_update = self.get_groups_using_image(iref)
         for question, qref in zip(questions, qref_list):
             version = qref.version
@@ -437,7 +436,7 @@ def moveUnknownToHWPage(self, file_name, test_number, questions):
         failed_questions = ", ".join(str(q) for q in fails)
         return (False, "notfound", f"Cannot find question(s) {failed_questions}")
 
-    with plomdb.atomic():
+    with self._db.atomic():
         groups_to_update = self.get_groups_using_image(iref)
         for question, qref in zip(questions, qref_list):
             # find the last expage in that group - if there are expages
@@ -534,7 +533,7 @@ def removeUnknownImage(self, file_name, reason):
 
     if not reason:
         reason = "User discarded unknown page"
-    with plomdb.atomic():
+    with self._db.atomic():
         DiscardedPage.create(image=iref, reason=reason)
         uref.delete_instance()
     log.info('Discarding unknown image %s with reason "%s"', file_name, reason)
@@ -551,7 +550,7 @@ def moveDiscardToUnknown(self, file_name):
         log.warning("Tried to rescue non-existent discarded image %s", file_name)
         return (False, "Cannot find discard page for that image.")
 
-    with plomdb.atomic():
+    with self._db.atomic():
         # we have lost order information.
         UnknownPage.create(image=iref, order=1)
         dref.delete_instance()
@@ -575,7 +574,7 @@ def moveUnknownToCollision(self, file_name, test_number, page_number):
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
     if pref is None:
         return (False, "notfound", f"Cannot find p.{page_number} of test {test_number}")
-    with plomdb.atomic():
+    with self._db.atomic():
         CollidingPage.create(image=iref, tpage=pref)
         uref.delete_instance()
     log.info(
@@ -609,7 +608,7 @@ def removeCollidingImage(self, file_name):
 
     pref = cref.tpage
 
-    with plomdb.atomic():
+    with self._db.atomic():
         DiscardedPage.create(
             image=iref,
             reason="Removed collision with {}.{}".format(
@@ -652,7 +651,7 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
     oref = pref.image  # the original page image for this tpage.
 
     # now create a discardpage with oref, and put iref into the tpage, delete the collision.
-    with plomdb.atomic():
+    with self._db.atomic():
         DiscardedPage.create(
             image=oref,
             reason="Replaced original image {} of {}.{} with new {}".format(

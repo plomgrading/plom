@@ -9,7 +9,6 @@ import uuid
 
 from peewee import fn
 
-from plom.db.tables import plomdb
 from plom.db.tables import Bundle, IDGroup, IDPrediction, Image, QGroup, Test, User
 from plom.db.tables import Annotation, APage, DNMPage, EXPage, HWPage, IDPage, TPage
 from plom.db.tables import CollidingPage, DiscardedPage, UnknownPage
@@ -51,7 +50,7 @@ def createNewImage(self, original_name, file_name, md5, bundle_ref, bundle_order
 
 def attachImageToTPage(self, test_ref, page_ref, image_ref):
     # can be called by an upload, but also by move-misc-to-tpage
-    with plomdb.atomic():
+    with self._db.atomic():
         page_ref.image = image_ref
         page_ref.scanned = True
         page_ref.save()
@@ -185,7 +184,7 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
     # can be called by an upload, but also by move-misc-to-tpage
     # create a HW page and return a ref to it
     gref = qdata_ref.group
-    with plomdb.atomic():
+    with self._db.atomic():
         # get the first non-outdated annotation for the group
         aref = (
             gref.qgroups[0]
@@ -426,7 +425,7 @@ def uploadUnknownPage(
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
-    with plomdb.atomic():
+    with self._db.atomic():
         try:
             iref = Image.create(
                 original_name=original_name,
@@ -500,7 +499,7 @@ def uploadCollidingPage(
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
-    with plomdb.atomic():
+    with self._db.atomic():
         try:
             iref = Image.create(
                 original_name=original_name,
@@ -568,12 +567,12 @@ def updateDNMGroup(self, dref):
 
     if False in scan_list:  # some scanned, but not all.
         # set group to "unscanned"
-        with plomdb.atomic():
+        with self._db.atomic():
             gref.scanned = False
             gref.save()
         return False
     # all test pages scanned (or all unscanned), so set things ready to go.
-    with plomdb.atomic():
+    with self._db.atomic():
         gref.scanned = True
         gref.save()
         log.info(f"DNMGroup of test {gref.test.test_number} is all scanned.")
@@ -606,13 +605,13 @@ def updateIDGroup(self, idref):
     if pref.scanned:
         IDPage.create(idgroup=idref, image=pref.image, order=pref.page_number)
     else:
-        with plomdb.atomic():
+        with self._db.atomic():
             gref.scanned = False
             gref.save()
         return False  # not yet completely present - no updated needed.
 
     # all test ID pages present, and group cleaned, so set things ready to go.
-    with plomdb.atomic():
+    with self._db.atomic():
         # the group is now scanned
         gref.scanned = True
         gref.save()
@@ -661,7 +660,7 @@ def buildUpToDateAnnotation(self, qref):
     # and then create a new annotation or
     # recycle if only zeroth annotation present - question untouched.
     # and - of course, be careful if there are no annotations yet (eg on build)
-    with plomdb.atomic():
+    with self._db.atomic():
         if len(qref.annotations) > 1:
             for aref in qref.annotations:
                 aref.outdated = True
@@ -744,7 +743,7 @@ def updateQGroup(self, qref):
         # some tpages unscanned - definitely not ready to go.
         if False in scan_list:
             log.info("Group {} is only half-scanned - not ready".format(gref.gid))
-            with plomdb.atomic():
+            with self._db.atomic():
                 gref.scanned = False
                 gref.save()
             return False
@@ -757,7 +756,7 @@ def updateQGroup(self, qref):
                     gref.gid
                 )
             )
-            with plomdb.atomic():
+            with self._db.atomic():
                 gref.scanned = False
                 gref.save()
             return False
@@ -765,7 +764,7 @@ def updateQGroup(self, qref):
             pass  # no unscanned tpages, but not hw pages - so ready to go.
 
     # If we get here - we are ready to go.
-    with plomdb.atomic():
+    with self._db.atomic():
         gref.scanned = True
         gref.save()
         qref.status = "todo"
@@ -890,13 +889,13 @@ def updateTestAfterChange(self, tref, group_refs=None):
     # now make sure the whole thing is scanned.
     if self.checkTestScanned(tref):
         # set the test as scanned
-        with plomdb.atomic():
+        with self._db.atomic():
             tref.scanned = True
             log.info("Test {} is scanned".format(tref.test_number))
             tref.save()
     else:
         # set the test as unscanned
-        with plomdb.atomic():
+        with self._db.atomic():
             tref.scanned = False
             log.info("Test {} is not completely scanned".format(tref.test_number))
             tref.save()
@@ -927,7 +926,7 @@ def removeScannedTestPage(self, test_number, page_number):
 
     iref = pref.image
     gref = pref.group
-    with plomdb.atomic():
+    with self._db.atomic():
         DiscardedPage.create(
             image=iref,
             reason=f"Discarded test-page scan from test {test_number} page {page_number}",
@@ -971,7 +970,7 @@ def removeScannedHWPage(self, test_number, question, order):
     # create the discard page
     iref = pref.image
     gref = pref.group
-    with plomdb.atomic():
+    with self._db.atomic():
         DiscardedPage.create(
             image=iref,
             reason=f"Discarded hw-page {question}.{order} scan from test {test_number}",
@@ -1014,7 +1013,7 @@ def removeScannedEXPage(self, test_number, question, order):
     # create the discard page
     iref = pref.image
     gref = pref.group
-    with plomdb.atomic():
+    with self._db.atomic():
         DiscardedPage.create(
             image=iref,
             reason=f"Discarded ex-page {question}.{order} scan from test {test_number}",
@@ -1037,7 +1036,7 @@ def removeAllScannedPages(self, test_number):
     if tref is None:
         return [False, "testError", f"Cannot find test {test_number}"]
 
-    with plomdb.atomic():
+    with self._db.atomic():
         # move all tpages to discards
         for pref in tref.tpages:
             if pref.scanned:  # move the tpage to a discard
@@ -1151,7 +1150,7 @@ def updateImageRotation(self, file_name, rotation):
     if iref is None:
         return [False, "No image with that file name"]
     else:
-        with plomdb.atomic():
+        with self._db.atomic():
             iref.rotation = rotation
             iref.save()
             return [True, None]

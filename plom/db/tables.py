@@ -7,14 +7,13 @@
 
 import peewee as pw
 
-plomdb = pw.MySQLDatabase(
-    "Plom", host="127.0.0.1", port=3306, user="root", password="my-secret-password"
-)
+
+database_proxy = pw.Proxy()
 
 
 class BaseModel(pw.Model):
     class Meta:
-        database = plomdb
+        database = database_proxy
 
 
 class User(BaseModel):
