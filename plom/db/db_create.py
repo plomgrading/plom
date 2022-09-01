@@ -114,10 +114,26 @@ def is_paper_database_populated(self):
     """True if any papers have been created in the DB.
 
     The database is initially created with empty tables.  Users get added.
-    This function still returns False.  Eventually Tests (i.e., "papers")
-    get created.  Then this function returns True.
+    This function still returns False.  A spec is added; still False.
+    The paper database is initialised but has no papers; this function still
+    returns False (so perhaps you are looking for our cousin
+    :func:`is_paper_database_initialised`).  Rows are added to the paper
+    table; finally this function returns True.
     """
     return self.how_many_papers_in_database() > 0
+
+
+def is_paper_database_initialised(self):
+    """True if its too late to change the structure of your papers.
+
+    You can change spec up until the paper database is initialised.
+    """
+    if self.is_paper_database_populated():
+        return True
+    if self.hasNoAnswerRubric(1):
+        # if we have the No-Answer rubric for Q1, then we must be initialised
+        return True
+    return False
 
 
 def nextqueue_position(self):
@@ -523,7 +539,21 @@ def remove_id_from_paper(self, paper_num):
     return True
 
 
-# Create some default rubrics
+def hasNoAnswerRubric(self, questionNumber):
+    """Do we have rubrics for when no answer given for question.
+
+    Args:
+        questionNumber (int)
+
+    Returns:
+        Bool: True if we have such a thing, else False.
+    """
+    key = 1000 + questionNumber
+    if Rubric.get_or_none(key=key):
+        return True
+    return False
+
+
 def createNoAnswerRubric(self, questionNumber, maxMark):
     """Create rubrics for when no answer given for question
 
