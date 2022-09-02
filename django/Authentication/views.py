@@ -183,16 +183,16 @@ class PasswordResetLinks(AdminRequiredView):
 
     def get(self, request):
         users = User.objects.all().filter(groups__name='manager').values()
-        context = {'users': users}
+        context = self.build_context()
+        context.update({'users': users})
         return render(request, self.template_name, context)
 
     def post(self, request):
         username = request.POST.get('new_link')
         user = User.objects.get(username=username)
         link = generate_link(request, user)
-        context = {
-            'link': link
-        }
+        context = self.build_context()
+        context.update({'link': link})
         return render(request, self.activation_link, context)
 
 

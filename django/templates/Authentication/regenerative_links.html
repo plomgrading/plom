@@ -26,9 +26,19 @@
                     <form method="Post" action="">
                         {% csrf_token %}
                         <tr>
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.is_active }}</td>
-                            <td><button type="submit" name="new_link" value="{{ user.username }}">Generate new password reset link</button></td>
+                            <td style="padding-top: 14px">{{ user.username }}</td>
+                            <td style="padding-top: 14px">{{ user.is_active }}</td>
+                            <td>
+                                <button
+                                    class="btn"
+                                    type="submit"
+                                    name="new_link"
+                                    value="{{ user.username }}"
+                                    style="background-color: {{ navbar_colour }}; color: white"
+                                >
+                                    Generate new password reset link
+                                </button>
+                            </td>
                         </tr>
                     </form>
                 {% endfor %}
