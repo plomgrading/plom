@@ -8,6 +8,7 @@ class AdminRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     group_required = ["admin"]
     login_url = "login"
     navbar_colour = "#808080"
+    raise_exception = True
 
     def build_context(self):
         context = {
@@ -23,6 +24,38 @@ class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     group_required = ["manager"]
     login_url = "login"
     navbar_colour = "#AD9CFF"
+    raise_exception = True
+
+    def build_context(self):
+        context = {
+            'navbar_colour': self.navbar_colour,
+            'user_group': self.group_required[0],
+        }
+
+        return context
+
+
+class ScannerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
+    """A base class view for scanners"""
+    group_required = ["scanner"]
+    login_url = "login"
+    navbar_colour = "#0F984F"
+    raise_exception = True
+
+    def build_context(self):
+        context = {
+            'navbar_colour': self.navbar_colour,
+            'user_group': self.group_required[0],
+        }
+
+        return context
+
+
+class MarkerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
+    """A base class view for markers"""
+    group_required = ["marker"]
+    login_url = "login"
+    navbar_colour = "#0F984F"
     raise_exception = True
 
     def build_context(self):
