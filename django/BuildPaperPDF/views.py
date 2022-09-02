@@ -71,7 +71,6 @@ class BuildPaperPDFs(ManagerRequiredView):
         num_pdfs = len(qvmap)
 
         n_tasks = bps.get_n_tasks()
-        # n_tasks = 1
         if n_tasks > 0:
             pdfs_staged = True
         else:
