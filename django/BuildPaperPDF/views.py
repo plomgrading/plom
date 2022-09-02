@@ -15,23 +15,7 @@ from TestCreator.services import TestSpecService
 
 from .services import (BuildPapersService, RenamePDFFile)
 from .models import PDFTask
-
-
-# Create your views here.
-
-
-class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    group_required = ["manager"]
-    login_url = "login"
-    navbar_colour = "#AD9CFF"
-
-    def build_context(self):
-        context = {
-            'navbar_colour': self.navbar_colour,
-            'user_group': self.group_required[0],
-        }
-
-        return context
+from Base import ManagerRequiredView
 
 
 class BuildPaperPDFs(ManagerRequiredView):
@@ -133,8 +117,6 @@ class BuildPaperPDFs(ManagerRequiredView):
 
 
 class PDFTableView(ManagerRequiredView):
-    login_url = "login"
-    group_required = ["manager"]
 
     def render_pdf_table(self, request):
         task_objects = PDFTask.objects.all()
