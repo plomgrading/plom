@@ -10,7 +10,8 @@ from django.http import HttpResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Connect.services import CoreConnectionService
-from Preparation.services import PQVMappingService, StagingStudentService
+from Preparation.services import PQVMappingService
+from TestCreator.services import TestSpecService
 
 from .services import (BuildPapersService, RenamePDFFile)
 from .models import PDFTask
@@ -78,10 +79,15 @@ class BuildPaperPDFs(ManagerRequiredView):
 
         table_fragment = self.table_fragment(request)
 
+        zip_disabled = True
+        n_completed_tasks = bps.get_n_complete_tasks()
+        if n_completed_tasks == n_tasks:
+            zip_disabled = False
+
         context = self.build_context()
         context.update({
             'message': "",
-            'zip_disabled': True,
+            'zip_disabled': zip_disabled,
             'num_pdfs': num_pdfs,
             'pdfs_staged': pdfs_staged,
             'pdf_table': table_fragment,
@@ -193,7 +199,8 @@ class GetCompressedPDFs(ManagerRequiredView):
     """Get the completed test paper PDFs in one zip file"""
     def post(self, request):
         bps = BuildPapersService()
-        save_path = bps.get_pdf_zipfile()
+        shortname = TestSpecService().get_short_name_slug()
+        save_path = bps.get_pdf_zipfile(filename=f'{shortname}.zip')
         zip_file = save_path.open('rb')
         zf = SimpleUploadedFile(save_path.name, zip_file.read(), content_type='application/zip')
         zip_file.close()

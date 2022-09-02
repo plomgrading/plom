@@ -108,10 +108,10 @@ class BuildPapersService:
             question_versions=question_versions
         )
 
-    def get_pdf_zipfile(self):
+    def get_pdf_zipfile(self, filename='pdf_zipfile.zip'):
         """compress + save a zip file of all the completed PDFs"""
         completed = PDFTask.objects.filter(status='complete')
-        temp_filename = self.papers_to_print / 'pdf_zipfile.zip'
+        temp_filename = self.papers_to_print / filename
         with zipfile.ZipFile(temp_filename, 'w') as zf:
             for pdf in completed:
                 pdf_path = pathlib.Path(pdf.pdf_file_path)
