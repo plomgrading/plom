@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django_huey',
     'polymorphic',
     # add newly created app folder below
+    'Base',
     'Authentication',
     'Preparation',
     'TestCreator',
