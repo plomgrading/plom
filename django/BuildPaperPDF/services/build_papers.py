@@ -126,13 +126,15 @@ class BuildPapersService:
         """
         for i in range(n):
             index = i + 1
+            student_name = None
+            student_id = None
             if classdict and i < len(classdict):
                 student = classdict[i]
-                student_id = student['id']
-                student_name = student['studentName']
-                pdf_job = self.create_task(index, None, student_id=student_id, student_name=student_name)
-            else:
-                pdf_job = self.create_task(index, None)
+                if student['paper_number'] > 0:
+                    student_id = student['id']
+                    student_name = student['studentName']
+            
+            pdf_job = self.create_task(index, None, student_id=student_id, student_name=student_name)
 
     def send_all_tasks(self, spec, qvmap):
         """Send all marked as todo PDF tasks to huey"""
