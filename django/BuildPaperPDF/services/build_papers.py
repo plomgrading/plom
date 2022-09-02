@@ -173,6 +173,15 @@ class BuildPapersService:
         task.status = 'queued'
         task.save()
 
+    def cancel_all_task(self):
+        """Cancel all queued task from Huey"""
+        queue_tasks = PDFTask.objects.filter(status='queued')
+        for task in queue_tasks:
+            queue = get_queue('tasks')
+            queue.revoke_by_id(task.huey_id)
+            task.status = 'todo'
+            task.save()
+
     def cancel_single_task(self, paper_num):
         """Cancel a single queued task from Huey"""
         task = get_object_or_404(PDFTask, paper_number=paper_num)

@@ -14,6 +14,7 @@
             {% if pdfs_staged %}
             <div>
                 <a class="btn btn-primary" hx-post="{% url 'start_all_PDFs' %}" hx-target="#pdf_table">Start All</a>
+                <a class="btn btn-danger" hx-post="{% url 'cancel_all_PDFs' %}" hx-target="#pdf_table">Cancel All</a>
             </div>
             <div id="pdf_table">
                 {{ pdf_table |safe }}
