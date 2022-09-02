@@ -6,91 +6,80 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.views import View
-from django.views.generic.base import TemplateView
-from braces.views import GroupRequiredMixin, LoginRequiredMixin
 
 from TestCreator.services import TestSpecService, TestSpecGenerateService
-from Preparation.services import PQVMappingService, StagingStudentService, PrenameSettingService
+from Preparation.services import PQVMappingService, StagingClasslistCSVService, PrenameSettingService
+from Base.base_group_views import ManagerRequiredView
 
 from Connect.services import CoreConnectionService
 from Connect.forms import CoreConnectionForm, CoreManagerLoginForm
 from Connect.models import CoreDBinitialiseTask
 
 
-class ManagerRequiredUtilView(GroupRequiredMixin, LoginRequiredMixin, View):
-    login_url = "login"
-    group_required = [u"manager"]
+class ConnectServerManagerView(ManagerRequiredView):
+    """Verify the Plom-classic connection details and the manager login."""
 
     def build_context(self):
-        """Get context dict with navbar colour and user group"""
-        context = {
-            "navbar_colour": "#AD9CFF",
-            "user_group": "manager",
-        }
-        return context
-
-
-class ManagerRequiredTemplateView(GroupRequiredMixin, LoginRequiredMixin, TemplateView):
-    login_url = "login"
-    group_required = [u"manager"]
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["navbar_colour"] = "#AD9CFF"
-        context["user_group"] = "manager"
-        return context
-
-
-class ConnectServerManagerView(ManagerRequiredTemplateView):
-    template_name = 'Connect/connect-manager-page.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super().build_context()
         core = CoreConnectionService()
 
         url = core.get_server_name()
         port = core.get_port_number()
-        context['form'] = CoreConnectionForm(initial={
-            'server_url': url if url else 'localhost', 
+        form = CoreConnectionForm(initial={
+            'server_url': url if url else 'localhost',
             'port_number': port if port else 41984
-            })
-
-        manager = core.get_manager()
-        context['manager_form'] = CoreManagerLoginForm(initial={
-            'password': manager.password
         })
 
-        context['is_valid'] = core.is_there_a_valid_connection()
-        context['manager_logged_in'] = core.is_manager_authenticated()
+        manager_form = CoreManagerLoginForm(initial={
+            'password': core.get_manager_password()
+        })
+
+        context.update({
+            'form': form,
+            'manager_form': manager_form,
+            'is_valid': core.is_there_a_valid_connection(),
+            'manager_logged_in': core.is_manager_authenticated(),
+        })
+
         return context
+        
+    def get(self, request):
+        context = self.build_context()
+        return render(request, 'Connect/connect-manager-page.html', context)
 
 
-class ConnectSendInfoToCoreView(ManagerRequiredTemplateView):
+class ConnectSendInfoToCoreView(ManagerRequiredView):
+    """Send the test specification, classlist, and PQV map to Plom-classic"""
     template_name = 'Connect/connect-send-info-page.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def build_context(self):
+        context = super().build_context()
         spec = TestSpecService()
         core = CoreConnectionService()
         sstu = StagingStudentService()
         pre = PrenameSettingService()
         qvs = PQVMappingService()
 
-        context['is_valid'] = core.is_there_a_valid_connection()
-        context['manager_details_available'] = core.is_manager_authenticated()
-        context['spec_valid'] = spec.is_specification_valid()
-        context['is_spec_sent'] = core.has_test_spec_been_sent()
-        context['classlist_required'] = pre.get_prenaming_setting()
-        context['classlist_exists'] = sstu.are_there_students()
-        context['is_classlist_sent'] = core.has_classlist_been_sent()
-        context['pqvmap_exists'] = qvs.is_there_a_pqv_map()
-        context['db_initialized'] = core.has_db_been_initialized()
+        context.update({
+            'is_valid': core.is_there_a_valid_connection(),
+            'manager_details_available': core.is_manager_authenticated(),
+            'spec_valid': spec.is_specification_valid(),
+            'is_spec_sent': core.has_test_spec_been_sent(),
+            'classlist_required': pre.get_prenaming_setting(),
+            'classlist_exists': ccsv.is_there_a_classlist(),
+            'is_classlist_sent': core.has_classlist_been_sent(),
+            'pqvmap_exists': qvs.is_there_a_pqv_map(),
+            'db_initialized': core.has_db_been_initialized(),
+        })
 
         return context
 
+    def get(self, request):
+        context = self.build_context()
+        return render(request, 'Connect/connect-send-info-page.html', context)
 
-class AttemptCoreConnectionView(ManagerRequiredUtilView):
+
+class AttemptCoreConnectionView(ManagerRequiredView):
     """Ping the core server with the URL, api version, and client version"""
 
     def post(self, request):
@@ -118,7 +107,7 @@ class AttemptCoreConnectionView(ManagerRequiredUtilView):
             return HttpResponse(f'<p id="result" style="color: red;">{exception_string}</p>') 
 
 
-class ForgetCoreConnectionView(ManagerRequiredUtilView):
+class ForgetCoreConnectionView(ManagerRequiredView):
     """Remove the current core server info from the database"""
     def post(self, request):
         core = CoreConnectionService()
@@ -126,7 +115,7 @@ class ForgetCoreConnectionView(ManagerRequiredUtilView):
         return HttpResponse('<p id="result">Connection details cleared.</p>')
         
 
-class AttemptCoreManagerLoginView(ManagerRequiredUtilView):
+class AttemptCoreManagerLoginView(ManagerRequiredView):
     """Log in as the core server manager account"""
 
     def post(self, request):
@@ -143,7 +132,7 @@ class AttemptCoreManagerLoginView(ManagerRequiredUtilView):
             return HttpResponse(f'<p id="manager_result" style="color: red;">{e}</p>')
 
 
-class ForgetCoreManagerLoginView(ManagerRequiredUtilView):
+class ForgetCoreManagerLoginView(ManagerRequiredView):
     """Remove the manager login details from the database"""
 
     def post(self, request):
@@ -152,7 +141,7 @@ class ForgetCoreManagerLoginView(ManagerRequiredUtilView):
         return HttpResponse('<p id="manager_result">Manager details cleared.</p>')
 
 
-class SendTestSpecToCoreView(ManagerRequiredUtilView):
+class SendTestSpecToCoreView(ManagerRequiredView):
     def post(self, request):
         """Send test specification data to the core server"""
         core = CoreConnectionService()
@@ -182,7 +171,7 @@ class SendTestSpecToCoreView(ManagerRequiredUtilView):
             return render(request, 'Connect/connect-test-spec-attempt.html', context)
 
 
-class SendClasslistToCoreView(ManagerRequiredUtilView):
+class SendClasslistToCoreView(ManagerRequiredView):
     def post(self, request):
         """Send classlist to core server"""
         core = CoreConnectionService()
@@ -213,7 +202,7 @@ class SendClasslistToCoreView(ManagerRequiredUtilView):
             return render(request, 'Connect/connect-classlist-attempt.html', context)
 
 
-class SendPQVInitializeDB(ManagerRequiredUtilView):
+class SendPQVInitializeDB(ManagerRequiredView):
     def post(self, request):
         core = CoreConnectionService()
         qvs = PQVMappingService()
@@ -236,7 +225,7 @@ class SendPQVInitializeDB(ManagerRequiredUtilView):
         return render(request, 'Connect/connect-vermap-attempt.html', context)
 
 
-class CoreDBStatusView(ManagerRequiredUtilView):
+class CoreDBStatusView(ManagerRequiredView):
     """View progress/status of the Core DB initialisation"""
     def get(self, request, huey_id):
         context = self.build_context()
@@ -245,7 +234,7 @@ class CoreDBStatusView(ManagerRequiredUtilView):
         return render(request, 'Connect/connect-vermap-attempt.html', context)
 
 
-class CoreDBRefreshStatus(ManagerRequiredUtilView):
+class CoreDBRefreshStatus(ManagerRequiredView):
     """Refresh progress of the Core DB initialisation"""
     def get(self, request, huey_id):
         context = self.build_context()
