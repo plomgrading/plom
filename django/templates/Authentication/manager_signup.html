@@ -20,9 +20,9 @@
         {{ form.email.label }}
         {{ form.email }}<br><br>
 
-        <input type="submit" name="Create User"><br>
+        <input class="btn" type="submit" name="Create User" style="background-color: {{ navbar_colour }}; color: white"><br>
     </form>
-    <button id="generate-username">Generate Username</button>
+    <button class="btn" id="generate-username" style="background-color: {{ navbar_colour }}; color: white; margin-top: 3px">Generate Username</button>
     {{ error }}
         <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
     {% endblock %}

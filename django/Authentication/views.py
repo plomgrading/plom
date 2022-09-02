@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 
 from .services import generate_link
 from .signupForm import CreateManagerForm
+from Base.base_group_views import (AdminRequiredView, ManagerRequiredView)
 
 
 # Create your views here.
@@ -138,18 +139,14 @@ class LogoutView(View):
 
 
 # Signup Manager
-class SignupManager(LoginRequiredMixin, GroupRequiredMixin, View):
+class SignupManager(AdminRequiredView):
     template_name = 'Authentication/manager_signup.html'
     activation_link = 'Authentication/manager_activation_link.html'
-    login_url = 'login'
     form = CreateManagerForm()
-    group_required = [u"admin"]
-    navbar_colour = '#808080'
-    raise_exception = True
 
     def get(self, request):
-        context = {'form': SignupManager.form, 'user_group': SignupManager.group_required[0],
-                   'navbar_colour': SignupManager.navbar_colour}
+        context = self.build_context()
+        context.update({'form': SignupManager.form})
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -164,16 +161,15 @@ class SignupManager(LoginRequiredMixin, GroupRequiredMixin, View):
             user.is_active = False
             user.save()
             link = generate_link(request, user)
-            context = {
+            context = self.build_context()
+            context.update({
                 'user_email': user.profile.email,
                 'link': link,
-                'user_group': SignupManager.group_required[0],
-                'navbar_colour': SignupManager.navbar_colour,
-            }
+            })
             return render(request, self.activation_link, context)
         else:
-            context = {'form': SignupManager.form, 'error': form.errors, 'user_group': SignupManager.group_required[0],
-                       'navbar_colour': SignupManager.navbar_colour}
+            context = self.build_context()
+            context.update({'form': SignupManager.form, 'error': form.errors})
             return render(request, self.template_name, context)
 
 
@@ -181,18 +177,13 @@ class SignupScannersAndMarkers(View):
     pass
 
 
-class PasswordResetLinks(LoginRequiredMixin, GroupRequiredMixin, View):
+class PasswordResetLinks(AdminRequiredView):
     template_name = 'Authentication/regenerative_links.html'
     activation_link = 'Authentication/manager_activation_link.html'
-    login_url = 'login'
-    group_required = [u'admin']
-    navbar_colour = '#808080'
-    raise_exception = True
 
     def get(self, request):
         users = User.objects.all().filter(groups__name='manager').values()
-        context = {'users': users, 'user_group': PasswordResetLinks.group_required[0],
-                   'navbar_colour': PasswordResetLinks.navbar_colour}
+        context = {'users': users}
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -200,9 +191,7 @@ class PasswordResetLinks(LoginRequiredMixin, GroupRequiredMixin, View):
         user = User.objects.get(username=username)
         link = generate_link(request, user)
         context = {
-            'link': link,
-            'user_group': PasswordResetLinks.group_required[0],
-            'navbar_colour': PasswordResetLinks.navbar_colour,
+            'link': link
         }
         return render(request, self.activation_link, context)
 
