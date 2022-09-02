@@ -190,3 +190,13 @@ class BuildPapersService:
         task.status = 'todo'
         task.save()
 
+    def retry_all_task(self, spec, qvmap):
+        """Retry all tasks that have error status"""
+        retry_tasks = PDFTask.objects.filter(status='error')
+        for task in retry_tasks:
+            paper_number = task.paper_number
+            pdf_build = self._build_single_paper(paper_number, spec, qvmap[paper_number])
+            task.huey_id = pdf_build.id
+            task.status = 'queued'
+            task.save()
+
