@@ -1,21 +1,20 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.views import View
 
 from braces.views import GroupRequiredMixin
+from Base.base_group_views import ManagerRequiredView
 
 
-class UserPage(LoginRequiredMixin, GroupRequiredMixin, View):
+class UserPage(ManagerRequiredView):
     user_page = 'UserManagement/users.html'
-    group_required = [u"manager"]
-    navbar_colour = '#AD9CFF'
 
     def get(self, request):
-        user = request.user.groups.all()[0].name
         users = User.objects.all()
-        context = {'navbar_colour': UserPage.navbar_colour, 'user_group':UserPage.group_required[0], 'users':users}
+        context = self.build_context()
+        context.update({'users': users})
         return render(request, self.user_page, context)
 
     def post(self, request, username):
@@ -61,16 +60,13 @@ class UserPage(LoginRequiredMixin, GroupRequiredMixin, View):
         return redirect('/users')
 
 
-class ProgressPage(LoginRequiredMixin, GroupRequiredMixin, View):
+class ProgressPage(ManagerRequiredView):
     progress_page = 'UserManagement/progress.html'
-    group_required = [u"manager"]
-    navbar_colour = '#AD9CFF'
 
     def get(self, request, username):
-        users = User.objects.all()
-        context = {'navbar_colour': ProgressPage.navbar_colour, 'user_group':ProgressPage.group_required[0], 'username': username}
+        context = self.build_context()
+        context.update({'username': username})
         return render(request, self.progress_page, context)
 
     def post(self, request, username):
-        user_to_change = User.objects.get_by_natural_key(username)
         return render(request, self.progress_page, username)
