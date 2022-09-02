@@ -1,9 +1,7 @@
 import pathlib
 
 from django.shortcuts import render
-from django.views.generic import View
 from django.template.loader import render_to_string
-from braces.views import LoginRequiredMixin, GroupRequiredMixin
 
 from django.http import FileResponse
 from django.http import HttpResponse
@@ -15,7 +13,7 @@ from TestCreator.services import TestSpecService
 
 from .services import (BuildPapersService, RenamePDFFile)
 from .models import PDFTask
-from Base.views import ManagerRequiredView
+from Base.base_group_views import ManagerRequiredView
 
 
 class BuildPaperPDFs(ManagerRequiredView):
