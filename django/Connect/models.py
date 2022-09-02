@@ -1,8 +1,7 @@
 from datetime import datetime
 from django.db import models
 
-from Preparation.models import SingletonBaseModel
-from BuildPaperPDF.models import HueyTask
+from Base.models import SingletonBaseModel, HueyTask
 
 
 class CoreServerConnection(SingletonBaseModel):
