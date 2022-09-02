@@ -1213,7 +1213,7 @@ class Ui_Manager(object):
         self.refreshReviewIDButton.setText(_translate("Manager", "Refresh"))
         self.tabWidget_4.setTabText(self.tabWidget_4.indexOf(self.ReviewITab), _translate("Manager", "Review &ID"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.reviewAllTab), _translate("Manager", "&Review"))
-        self.label_5.setText(_translate("Manager", "Question"))
+        self.label_5.setText(_translate("Manager", "Question index"))
         self.label_10.setText(_translate("Manager", "Version"))
         self.solnViewB.setText(_translate("Manager", "View Solution"))
         self.solnRefreshB.setText(_translate("Manager", "Refresh view"))

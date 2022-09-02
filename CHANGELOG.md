@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* manager: faster keyboard navigation of the Unknown Pages dialog.
 
 ### Changed
+* `plom-create newspec` replaces `plom-create new` (although both work).
+* manager: respects question labels in most places.
 
 ### Fixed
-
+* Fix errors about non-unique rubric keys during server init.
+* Various other fixes around server init.
 
 
 ## [0.10.0] - 2022-08-22

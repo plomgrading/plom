@@ -28,7 +28,7 @@ def buildSpecialRubrics(spec, db):
     # create no-answer-given rubrics
     for q in range(1, 1 + spec["numberOfQuestions"]):
         if not db.createNoAnswerRubric(q, spec["question"]["{}".format(q)]["mark"]):
-            raise ValueError(f"No answer rubric for q.{q} already exists")
+            raise ValueError(f"No-answer rubric for q.{q} already exists")
     # create standard manager delta-rubrics - but no 0, nor +/- max-mark
     for q in range(1, 1 + spec["numberOfQuestions"]):
         mx = spec["question"]["{}".format(q)]["mark"]
@@ -90,9 +90,8 @@ def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
             build paper n without paper n-1.
         KeyError: invalid question selection scheme in spec.
     """
-    # Note will report false if this function is called again before rows added
-    if db.is_paper_database_populated():
-        raise ValueError("Database already populated")
+    if db.is_paper_database_initialised():
+        raise ValueError("Database already initialised")
 
     buildSpecialRubrics(spec, db)
     if not db.createReplacementBundle():

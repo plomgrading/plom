@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Edith Coates
 
 """Plom tools related to producing papers, and setting up servers."""
 
@@ -19,6 +20,7 @@ from .start_messenger import start_messenger, with_manager_messenger
 from .start_messenger import clear_manager_login
 
 from .buildDatabaseAndPapers import build_database, build_papers
+from .mergeAndCodePages import make_PDF
 
 from .classlistValidator import sid_field, fullname_field, papernumber_field
 from .buildClasslist import process_classlist_file, get_demo_classlist
@@ -45,6 +47,7 @@ __all__ = [
     "process_classlist_file",
     "upload_classlist",
     "upload_demo_classlist",
+    "make_PDF",
     "make_scribbles",
     "make_hw_scribbles",
     "upload_rubrics",
