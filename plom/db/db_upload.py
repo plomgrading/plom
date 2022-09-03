@@ -342,8 +342,7 @@ def sidToTest(self, student_id):
     if iref is not None:
         return (True, iref.test.test_number)
     # TODO: Issue #2248, could be more than one response here
-    # (esp as more than one predictor..., add predictor="prename"?
-    preidref = IDPrediction.get_or_none(student_id=student_id)
+    preidref = IDPrediction.get_or_none(student_id=student_id, predictor="prename")
     if preidref is not None:
         return (True, preidref.test.test_number)
     return (False, "Cannot find test with sid {}".format(student_id))
