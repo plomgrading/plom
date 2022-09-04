@@ -338,6 +338,15 @@ def getSIDFromTest(self, test_number):
 
 
 def sidToTest(self, student_id):
+    """Find the test number associated with a student ID.
+
+    Args:
+        student_id (int):
+
+    Returns:
+        tuple: ``(True, int)`` on success with an integer test number.
+        Or ``(False, str)`` with an error message.
+    """
     iref = IDGroup.get_or_none(student_id=student_id)
     if iref is not None:
         return (True, iref.test.test_number)
@@ -345,6 +354,7 @@ def sidToTest(self, student_id):
     preidref = IDPrediction.get_or_none(student_id=student_id, predictor="prename")
     if preidref is not None:
         return (True, preidref.test.test_number)
+    # Consider refactoring to throw exception
     return (False, "Cannot find test with sid {}".format(student_id))
 
 
