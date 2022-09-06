@@ -48,6 +48,8 @@ class TestSpecCreatorIDPage(TestSpecPDFView):
                     idx = int(re.sub('\D', '', key))
                     spec.set_id_page(idx)
 
+            spec.unvalidate()
+
             return HttpResponseRedirect(reverse('questions'))
         else:
             context = self.build_context()

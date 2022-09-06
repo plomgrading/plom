@@ -1,39 +1,63 @@
 import re
 from django.urls import reverse
-from . import BaseTestSpecFormPDFView
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+
+from TestCreator.views import TestSpecPDFView
+
 from ..services import TestSpecService
 from .. import forms
 
-class TestSpecCreatorDNMPage(BaseTestSpecFormPDFView):
-    template_name = 'TestCreator/test-spec-do-not-mark-page.html'
-    form_class = forms.TestSpecPDFSelectForm
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data('dnm_page', **kwargs)
+class TestSpecCreatorDNMPage(TestSpecPDFView):
+    """Select do-not-mark pages."""
+
+    def build_form(self):
         spec = TestSpecService()
-        context['num_questions'] = spec.get_n_questions()
-        context['x_data'] = spec.get_dnm_page_alpine_xdata()
-        context['pages'] = spec.get_pages_for_dnm_select_page()
+        n_pages = spec.get_n_pages()
+        form = forms.TestSpecPDFSelectForm(n_pages)
+        return form
+
+    def build_context(self):
+        context = super().build_context("dnm_page")
+        spec = TestSpecService()
+        context.update({
+            "num_questions": spec.get_n_questions(),
+            "x_data": spec.get_dnm_page_alpine_xdata(),
+            "pages": spec.get_pages_for_dnm_select_page(),
+        })
         return context
 
-    def form_valid(self, form):
-        form_data = form.cleaned_data
+    def get(self, request):
+        context = self.build_context()
+        context.update({
+            "form": self.build_form(),
+        })
+        return render(request, "TestCreator/test-spec-do-not-mark-page.html", context)
 
-        # save do not mark pages
+    def post(self, request):
         spec = TestSpecService()
-        dnm_idx = []
-        for key, value in form_data.items():
-            if 'page' in key and value == True:
-                idx = int(re.sub('\D', '', key))
-                dnm_idx.append(idx)
-        spec.set_do_not_mark_pages(dnm_idx)
-        
-        # set do not mark page
-        the_spec = spec.specification()
-        the_spec.dnm_page_submitted = True
-        the_spec.save()
+        n_pages = spec.get_n_pages()
+        form = forms.TestSpecPDFSelectForm(n_pages, request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
 
-        return super().form_valid(form)
+            dnm_idx = []
+            for key, value in data.items():
+                if 'page' in key and value == True:
+                    idx = int(re.sub('\D', '', key))
+                    dnm_idx.append(idx)
+            spec.set_do_not_mark_pages(dnm_idx)
 
-    def get_success_url(self):
-        return reverse('validate')
+            # set the do not mark page's completion status
+            the_spec = spec.specification()
+            the_spec.dnm_page_submitted = True
+            the_spec.save()
+
+            spec.unvalidate()
+
+            return HttpResponseRedirect(reverse('validate'))
+        else:
+            context = self.build_context()
+            context.update({"form": form})
+            return render(request, "TestCreator/test-spec-do-not-mark-page.html", context)

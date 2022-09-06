@@ -137,7 +137,7 @@ class TestSpecSummaryView(TestSpecSubmitView):
 
         context = self.build_context()
 
-        return render(request, "TestCreator/test-spec-summary-page.html")
+        return render(request, "TestCreator/test-spec-summary-page.html", context)
 
 
 class TestSpecLaunchView(TestSpecPageView):

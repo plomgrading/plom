@@ -56,6 +56,8 @@ class TestSpecCreatorNamesPage(TestSpecPageView):
             if n_versions == 1:
                 spec.fix_all_questions()
 
+            spec.unvalidate()
+
             return HttpResponseRedirect(reverse('upload'))
         else:
             context.update({'form': form})

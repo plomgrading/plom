@@ -1,5 +1,6 @@
 from django.urls import reverse
 from django.shortcuts import render
+from django.http import HttpResponseRedirect
 
 from TestCreator.views import TestSpecPageView
 
@@ -12,9 +13,11 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
 
     def build_form(self):
         spec = TestSpecService()
+        n_questions = spec.get_n_questions()
+        marks = spec.get_total_marks()
         initial = {
-            "questions": spec.get_n_questions(),
-            "total_marks": spec.get_total_marks(),
+            "questions": n_questions if n_questions > 0 else None,
+            "total_marks": marks if marks > 0 else None,
         }
 
         form = forms.TestSpecQuestionsMarksForm(initial=initial)
@@ -31,44 +34,27 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
     def get(self, request):
         context = self.build_context()
         context.update({'form': self.build_form()})
-        return render(request, "TestCreator/test-spec-questions-marks-page.html")
+        return render(request, "TestCreator/test-spec-questions-marks-page.html", context)
 
     def post(self, request):
-        return reverse('q_detail', args=(1,))
+        form = forms.TestSpecQuestionsMarksForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            spec = TestSpecService()
 
+            prev_questions = spec.get_n_questions()
+            n_questions = data['questions']
 
-# class TestSpecCreatorQuestionsPage(BaseTestSpecFormView):
-#     template_name = 'TestCreator/test-spec-questions-marks-page.html'
-#     form_class = forms.TestSpecQuestionsMarksForm
+            marks = data['total_marks']
+            spec.set_total_marks(marks)
+            if prev_questions != n_questions:
+                spec.clear_questions()
+                spec.set_n_questions(n_questions)
 
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data('questions', **kwargs)
-#         spec = TestSpecService()
-#         context['prev_n_questions'] = spec.get_n_questions()
-#         return context
+            spec.unvalidate()
 
-#     def get_initial(self):
-#         initial = super().get_initial()
-#         spec = TestSpecService()
-#         if spec.get_n_questions() > 0:
-#             initial['questions'] = spec.get_n_questions()
-#         if spec.get_total_marks() > 0:
-#             initial['total_marks'] = spec.get_total_marks()
-
-#         return initial
-
-#     def form_valid(self, form):
-#         form_data = form.cleaned_data
-#         spec = TestSpecService()
-
-#         prev_questions = spec.get_n_questions()
-#         spec.set_total_marks(form_data['total_marks'])
-
-#         if prev_questions != form_data['questions']:
-#             spec.clear_questions()
-#             spec.set_n_questions(form_data['questions'])
-        
-#         return super().form_valid(form)
-
-#     def get_success_url(self):
-#         return reverse('q_detail', args=(1,))
+            return HttpResponseRedirect(reverse('q_detail', args=(1,)))
+        else:
+            context = self.build_context()
+            context.update({'form': form})
+            return render(request, "TestCreator/test-spec-questions-marks-page.html", context)
