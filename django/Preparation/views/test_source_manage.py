@@ -32,6 +32,8 @@ class TestSourceManageView(ManagerRequiredBaseView):
             "uploaded_test_sources": tss.get_list_of_sources(),
             "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
             "duplicates": tss.check_pdf_duplication(),
+            "navbar_colour": "#AD9CFF",
+            "user_group": "manager"
         }
 
     def get(self, request, version=None):
@@ -52,15 +54,16 @@ class TestSourceManageView(ManagerRequiredBaseView):
             return render(request, "Preparation/test_source_manage.html", context)
 
     def post(self, request, version=None):
+        context = self.build_context()
         if not request.FILES["source_pdf"]:
-            context = {"success": False, "message": "Form invalid", "version": version}
+            context.update({"success": False, "message": "Form invalid", "version": version})
         else:
             tss = TestSourceService()
             speck = TestSpecService()
             success, message = tss.take_source_from_upload(
                 version, speck.get_n_pages(), request.FILES["source_pdf"]
             )
-            context = {"version": version, "success": success, "message": message}
+            context.update({"version": version, "success": success, "message": message})
 
         return render(request, "Preparation/test_source_attempt.html", context)
 
