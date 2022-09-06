@@ -30,7 +30,7 @@ db.sqlite3-journal
 produced_papers.csv
 papersToPrint/*
 sourceVersions/*
-TestCreator/media/*
+media/*
 
 # huey stuff
 huey/*
