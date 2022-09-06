@@ -9,7 +9,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from Preparation.services import TestSourceService
 from TestCreator.services import TestSpecService
 
-from Preparation.views.needs_manager_view import ManagerRequiredBaseView
+from Base.base_group_views import ManagerRequiredView
 
 
 class TestSourceUploadForm(forms.Form):
@@ -19,7 +19,7 @@ class TestSourceUploadForm(forms.Form):
     )
 
 
-class TestSourceManageView(ManagerRequiredBaseView):
+class TestSourceManageView(ManagerRequiredView):
     def build_context(self):
         tss = TestSourceService()
         speck = TestSpecService()
@@ -33,7 +33,7 @@ class TestSourceManageView(ManagerRequiredBaseView):
             "all_test_sources_uploaded": tss.are_all_test_versions_uploaded(),
             "duplicates": tss.check_pdf_duplication(),
             "navbar_colour": "#AD9CFF",
-            "user_group": "manager"
+            "user_group": "manager",
         }
 
     def get(self, request, version=None):

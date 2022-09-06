@@ -4,18 +4,15 @@ from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 
 from Preparation.services import PrenameSettingService
-from Preparation.views.needs_manager_view import ManagerRequiredBaseView
+from Base.base_group_views import ManagerRequiredView
 
 
-class PrenamingView(ManagerRequiredBaseView):
-    def build_context(self):
-        pss = PrenameSettingService()
-        return {
-            "prenaming_enabled": pss.get_prenaming_setting(),
-        }
+class PrenamingView(ManagerRequiredView):
 
     def get(self, request):
+        pss = PrenameSettingService()
         context = self.build_context()
+        context.update({"prenaming_enabled": pss.get_prenaming_setting()})
         return render(request, "Preparation/prenaming_manage.html", context)
 
     def post(self, request):
