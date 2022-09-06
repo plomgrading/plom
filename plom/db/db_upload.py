@@ -339,14 +339,13 @@ def getSIDFromTest(self, test_number):
 
 def sidToTest(self, student_id):
     iref = IDGroup.get_or_none(student_id=student_id)
-    if iref is None:
-        preidref = IDPrediction.get_or_none(student_id=student_id)
-        if preidref is None:
-            return [False, "Cannot find test with sid {}".format(student_id)]
-        else:
-            return [True, preidref.test.test_number]
-    else:
-        return [True, iref.test.test_number]
+    if iref is not None:
+        return (True, iref.test.test_number)
+    # TODO: Issue #2248, could be more than one response here
+    preidref = IDPrediction.get_or_none(student_id=student_id, predictor="prename")
+    if preidref is not None:
+        return (True, preidref.test.test_number)
+    return (False, "Cannot find test with sid {}".format(student_id))
 
 
 def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5):

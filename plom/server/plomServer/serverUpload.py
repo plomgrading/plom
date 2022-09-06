@@ -29,8 +29,8 @@ def listBundles(self):
     return self.DB.listBundles()
 
 
-def sidToTest(self, student_id):
-    return self.DB.sidToTest(student_id)
+def sidToTest(self, *args, **kwargs):
+    return self.DB.sidToTest(*args, **kwargs)
 
 
 def addTestPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
