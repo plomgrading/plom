@@ -11,7 +11,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from TestCreator.services import TestSpecService
 from Connect.services import CoreConnectionService
 
-from Preparation.views.needs_manager_view import ManagerRequiredBaseView
+from Base.base_group_views import ManagerRequiredView
 
 from Preparation.services import (
     TestSourceService,
@@ -23,7 +23,7 @@ from Preparation.services import (
 
 
 # Create your views here.
-class PreparationLandingView(ManagerRequiredBaseView):
+class PreparationLandingView(ManagerRequiredView):
     def build_context(self):
         tss = TestSourceService()
         pss = PrenameSettingService()

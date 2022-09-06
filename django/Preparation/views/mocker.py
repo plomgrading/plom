@@ -4,9 +4,10 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from Preparation.services import ExamMockerService, TestSourceService
 from TestCreator.services import TestSpecService
 
-from Preparation.views.needs_manager_view import ManagerRequiredBaseView
+from Base.base_group_views import ManagerRequiredView
 
-class MockExamView(ManagerRequiredBaseView):
+
+class MockExamView(ManagerRequiredView):
     """Create a mock test PDF"""
     def post(self, request, version):
         mocker = ExamMockerService()
