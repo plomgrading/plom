@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 
 from Preparation.services import ClassicPlomServerInformationService
-from Preparation.views.needs_manager_view import ManagerRequiredBaseView
+from Base.base_group_views import ManagerRequiredView
 
 
 class ServerURLForm(forms.Form):
@@ -11,7 +11,7 @@ class ServerURLForm(forms.Form):
     server_port = forms.IntegerField()
 
 
-class ClassicServerURLView(ManagerRequiredBaseView):
+class ClassicServerURLView(ManagerRequiredView):
     def build_context(self):
         cpsis = ClassicPlomServerInformationService()
         info = cpsis.get_server_info()
@@ -34,6 +34,8 @@ class ClassicServerURLView(ManagerRequiredBaseView):
             "server_name": info["server_name"],
             "server_port": info["server_port"],
             "form": form,
+            "navbar_colour": "#AD9CFF",
+            "user_group": "manager",
         }
     
     def get(self, request):
@@ -50,7 +52,7 @@ class ClassicServerURLView(ManagerRequiredBaseView):
         # return render(request, "Preparation/classic_server_url.html", context)
     
 
-class ClassicServerInfoView(ManagerRequiredBaseView):
+class ClassicServerInfoView(ManagerRequiredView):
     def build_context(self):
         cpsis = ClassicPlomServerInformationService()
         info = cpsis.get_server_info()
@@ -59,6 +61,8 @@ class ClassicServerInfoView(ManagerRequiredBaseView):
             "server_name": info["server_name"],
             "server_port": info["server_port"],
             "manager_password": info["server_manager_password"],
+            "navbar_colour": "#AD9CFF",
+            "user_group": "manager",
         }
 
     def get(self, request):

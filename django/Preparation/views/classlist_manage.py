@@ -13,9 +13,10 @@ from Preparation.services import (
 )
 
 from Preparation.views.needs_manager_view import ManagerRequiredBaseView
+from Base.base_group_views import ManagerRequiredView
 
 
-class ClasslistDownloadView(ManagerRequiredBaseView):
+class ClasslistDownloadView(ManagerRequiredView):
     def get(self, request):
         pss = PrenameSettingService()
         sss = StagingStudentService()
@@ -23,7 +24,7 @@ class ClasslistDownloadView(ManagerRequiredBaseView):
         return HttpResponse(csv_txt, content_type="text/plain")
 
 
-class ClasslistDeleteView(ManagerRequiredBaseView):
+class ClasslistDeleteView(ManagerRequiredView):
     def delete(self, request):
         # delete both the csvfile and the classlist of students
         sss = StagingStudentService()
@@ -34,19 +35,21 @@ class ClasslistDeleteView(ManagerRequiredBaseView):
         return HttpResponseClientRedirect(".")
 
 
-class ClasslistView(ManagerRequiredBaseView):
+class ClasslistView(ManagerRequiredView):
     def get(self, request):
         sss = StagingStudentService()
         pss = PrenameSettingService()
 
-        context = {
+        context = self.build_context()
+        context.update({
             "student_list_present": sss.are_there_students(),
             "student_list": sss.get_students(),
             "prenaming": pss.get_prenaming_setting(),
-        }
+        })
         return render(request, "Preparation/classlist_manage.html", context)
 
     def post(self, request):
+        context = self.build_context()
         if not request.FILES["classlist_csv"]:
             return HttpResponseClientRedirect(".")
 
@@ -54,7 +57,7 @@ class ClasslistView(ManagerRequiredBaseView):
         success, warn_err = scsv.take_classlist_from_upload(
             request.FILES["classlist_csv"]
         )
-        context = {"success": success, "warn_err": warn_err}
+        context.update({"success": success, "warn_err": warn_err})
         return render(request, "Preparation/classlist_attempt.html", context)
 
     def delete(self, request):
