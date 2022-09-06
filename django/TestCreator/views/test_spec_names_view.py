@@ -1,43 +1,62 @@
-from re import TEMPLATE
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
 from django.urls import reverse
-from . import BaseTestSpecFormView
+
+from TestCreator.views import TestSpecPageView
 from ..services import TestSpecService
 from .. import forms
 
-class TestSpecCreatorNamesPage(BaseTestSpecFormView):
-    template_name = 'TestCreator/test-spec-names-page.html'
-    form_class = forms.TestSpecNamesForm
 
-    def get_context_data(self, **kwargs):
-        return super().get_context_data('names', **kwargs)
+class TestSpecCreatorNamesPage(TestSpecPageView):
+    """Set the test's long name, short name, and number of versions."""
 
-    def get_initial(self):
-        initial = super().get_initial()
+    def build_form(self):
         spec = TestSpecService()
-        initial['long_name'] = spec.get_long_name()
-        initial['short_name'] = spec.get_short_name()
+        initial = {
+            'long_name': spec.get_long_name(),
+            'short_name': spec.get_short_name(),
+        }
 
         versions = spec.get_n_versions()
         if versions:
-            initial['versions'] = versions
-        return initial
+            initial.update({'versions': versions})
 
-    def form_valid(self, form):
-        form_data = form.cleaned_data
-        spec = TestSpecService()
+        form = forms.TestSpecNamesForm(initial=initial)
+        return form
 
-        long_name = form_data['long_name']
-        spec.set_long_name(long_name)
+    def build_context(self):
+        context = super().build_context("names")
+        context.update({
+            'form': self.build_form()
+        })
+        return context
 
-        short_name = form_data['short_name']
-        spec.set_short_name(short_name)
+    def get(self, request):
+        context = self.build_context()
+        context.update({
+            'form': self.build_form()
+        })
+        return render(request, "TestCreator/test-spec-names-page.html", context)
 
-        n_versions = form_data['versions']
-        spec.set_n_versions(n_versions)
-        if n_versions == 1:
-            spec.fix_all_questions()
+    def post(self, request):
+        context = self.build_context()
+        form = forms.TestSpecNamesForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            spec = TestSpecService()
 
-        return super().form_valid(form)
+            long_name = data['long_name']
+            spec.set_long_name(long_name)
 
-    def get_success_url(self):
-        return reverse('upload')
+            short_name = data['short_name']
+            spec.set_short_name(short_name)
+
+            n_versions = data['versions']
+            spec.set_n_versions(n_versions)
+            if n_versions == 1:
+                spec.fix_all_questions()
+
+            return HttpResponseRedirect(reverse('upload'))
+        else:
+            context.update({'form': form})
+            return render(request, "TestCreator/test-spec-names-page.html", context)

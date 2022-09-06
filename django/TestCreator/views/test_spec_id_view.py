@@ -1,36 +1,55 @@
 import re
 from django.urls import reverse
-from . import BaseTestSpecFormPDFView
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+
+from TestCreator.views import TestSpecPDFView
+
 from ..services import TestSpecService
 from .. import forms
 
-class TestSpecCreatorIDPage(BaseTestSpecFormPDFView):
-    template_name = 'TestCreator/test-spec-id-page.html'
-    form_class = forms.TestSpecIDPageForm
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data('id_page', **kwargs)
-        
+class TestSpecCreatorIDPage(TestSpecPDFView):
+    """Select the ID page of the test."""
+    
+    def build_form(self):
         spec = TestSpecService()
-        context['x_data'] = spec.get_id_page_alpine_xdata()
-        context['pages'] = spec.get_pages_for_id_select_page()
+        n_pages = spec.get_n_pages()
+        form = forms.TestSpecIDPageForm(n_pages)
+        return form
+
+    def build_context(self):
+        context = super().build_context('id_page')
+        spec = TestSpecService()
+
+        context.update({
+            "x_data": spec.get_id_page_alpine_xdata(),
+            "pages": spec.get_pages_for_id_select_page(),
+        })
 
         return context
 
-    def form_valid(self, form):
-        form_data = form.cleaned_data
-        for field in form_data:
-            print(f'{field}: {form_data[field]}')
+    def get(self, request):
+        context = self.build_context()
+        context.update({
+            "form": self.build_form()
+        })
+        return render(request, "TestCreator/test-spec-id-page.html", context)
 
-        # save ID page
+    def post(self, request):
         spec = TestSpecService()
-        spec.clear_id_page()
-        for key, value in form_data.items():
-            if 'page' in key and value == True:
-                idx = int(re.sub('\D', '', key))
-                spec.set_id_page(idx)
+        n_pages = spec.get_n_pages()
+        form = forms.TestSpecIDPageForm(n_pages, request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            spec.clear_id_page()
+            for key, value in data.items():
+                if 'page' in key and value == True:
+                    idx = int(re.sub('\D', '', key))
+                    spec.set_id_page(idx)
 
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse('questions')
+            return HttpResponseRedirect(reverse('questions'))
+        else:
+            context = self.build_context()
+            context.update({'form': form})
+            return render(request, "TestCreator/test-spec-id-page.html", context)

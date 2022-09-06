@@ -54,11 +54,10 @@ class TestSpecVersionsRefPDFForm(forms.Form):
 
 
 class TestSpecPDFSelectForm(forms.Form):
-    def __init__(self, *args, **kwargs):
-        num_pages = kwargs.pop('num_pages')
+    def __init__(self, n_pages, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        for i in range(num_pages):
+        for i in range(n_pages):
             self.fields.update({
                 f'page{i}': forms.BooleanField(
                     required=False,
