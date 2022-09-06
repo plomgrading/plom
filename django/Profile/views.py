@@ -20,6 +20,7 @@ class Profile(LoginRequiredMixin, View):
         form = EditProfileForm(instance=request.user)
         try:
             user = request.user.groups.all()[0].name
+            print(user)
         except IndexError:
             user = None
         if user in Profile.navbar_colour:
