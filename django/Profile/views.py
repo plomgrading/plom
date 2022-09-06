@@ -8,6 +8,9 @@ from .edit_profile_form import EditProfileForm
 
 
 class Profile(LoginRequiredMixin, View):
+    """
+    Class-based view of Profile page.
+    """
     login_url = 'login'
     profile_page = 'Profile/profile.html'
     navbar_colour = {'admin': '#808080',
@@ -17,6 +20,11 @@ class Profile(LoginRequiredMixin, View):
     form = EditProfileForm()
 
     def get(self, request):
+        """
+        Get the current user profile page.
+        :param request: request
+        :return: Profile HTML page
+        """
         form = EditProfileForm(instance=request.user)
         try:
             user = request.user.groups.all()[0].name
@@ -35,6 +43,11 @@ class Profile(LoginRequiredMixin, View):
         return render(request, self.profile_page, context, status=200)
 
     def post(self, request):
+        """
+        Edit the current user profile page.
+        :param request: request
+        :return: Profile HTML page
+        """
         try:
             user = request.user.groups.all()[0].name
         except IndexError:
