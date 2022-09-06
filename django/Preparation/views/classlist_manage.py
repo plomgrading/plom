@@ -12,7 +12,6 @@ from Preparation.services import (
     PrenameSettingService,
 )
 
-from Preparation.views.needs_manager_view import ManagerRequiredBaseView
 from Base.base_group_views import ManagerRequiredView
 
 

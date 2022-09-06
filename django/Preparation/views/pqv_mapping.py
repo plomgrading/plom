@@ -9,31 +9,31 @@ from Preparation.services import (
     StagingStudentService,
 )
 
-from Preparation.views.needs_manager_view import ManagerRequiredBaseView
+from Base.base_group_views import ManagerRequiredView
 from TestCreator.services import TestSpecService
 
-class PQVMappingUploadView(ManagerRequiredBaseView):
+class PQVMappingUploadView(ManagerRequiredView):
     # NOT CURRENTLY BEING USED
     def post(self, request):
         context = {}
         return render(request, "Preparation/pqv_mapping_attempt.html", context)
 
 
-class PQVMappingDownloadView(ManagerRequiredBaseView):
+class PQVMappingDownloadView(ManagerRequiredView):
     def get(self, request):
         pqvs = PQVMappingService()
         pqvs_csv_txt = pqvs.get_pqv_map_as_csv()
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
 
 
-class PQVMappingDeleteView(ManagerRequiredBaseView):
+class PQVMappingDeleteView(ManagerRequiredView):
     def delete(self, request):
         pqvs = PQVMappingService()
         pqvs.remove_pqv_map()
         return HttpResponseClientRedirect(".")
 
 
-class PQVMappingView(ManagerRequiredBaseView):
+class PQVMappingView(ManagerRequiredView):
     def build_context(self):
         pqvs = PQVMappingService()
         pss = PrenameSettingService()
@@ -47,6 +47,8 @@ class PQVMappingView(ManagerRequiredBaseView):
             "pqv_mapping_present": pqvs.is_there_a_pqv_map(),
             "number_of_students": sss.how_many_students(),
             "student_list_present": sss.are_there_students(),
+            "navbar_colour": "#AD9CFF",
+            "user_group": "manager",
         }
         fpp, lpp = sss.get_first_last_prenamed_paper()
         context.update({"first_prenamed_paper": fpp, "last_prenamed_paper": lpp})
