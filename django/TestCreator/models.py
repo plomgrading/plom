@@ -11,8 +11,7 @@ TODO: move util functions outside models file, clean up old functions
 
 # just a simple folder for media for now
 def temp_filename_path(instance, filename):
-    slug = slugify(re.sub('.pdf$', '', filename))
-    return pathlib.Path('TestCreator') / 'media' / f'{slug}.pdf'
+    return pathlib.Path('media') / 'spec_reference.pdf'
 
 class ReferencePDF(models.Model):
     # TODO: use TextField instead of CharField, don't hardcode field lengths!
@@ -22,12 +21,12 @@ class ReferencePDF(models.Model):
 
 def pre_delete_reference_pdf(sender, instance, **kwargs):
     # delete thumbnails
-    thumbnail_folder = pathlib.Path('TestCreator') / 'static' / 'thumbnails' / instance.filename_slug
+    thumbnail_folder = pathlib.Path('static') / 'TestCreator' / 'thumbnails' / 'spec_reference'
     if thumbnail_folder.exists():
         shutil.rmtree(thumbnail_folder)
 
     # delete pdf from disk
-    pdf_path = pathlib.Path('TestCreator') / 'media' / f'{instance.filename_slug}.pdf'
+    pdf_path = pathlib.Path('media') / f'spec_reference.pdf'
     pdf_path.unlink(missing_ok=True)
 
 pre_delete.connect(

@@ -220,10 +220,10 @@ class TestSpecService:
         """
         test_spec = self.specification()
 
-        thumbnail_folder = pathlib.Path("thumbnails") / pdf.filename_slug
+        thumbnail_folder = pathlib.Path("TestCreator") / 'thumbnails' / 'spec_reference'
 
         for i in range(pdf.num_pages):
-            thumbnail_path = thumbnail_folder / f"{pdf.filename_slug}-thumbnail{i}.png"
+            thumbnail_path = thumbnail_folder / f"thumbnail{i}.png"
             test_spec.pages[i] = {
                 "id_page": False,
                 "dnm_page": False,
