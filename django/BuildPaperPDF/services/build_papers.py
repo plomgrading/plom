@@ -1,5 +1,4 @@
 import pathlib
-import queue
 import zipfile
 import shutil
 import random
@@ -8,6 +7,7 @@ from plom.create.mergeAndCodePages import make_PDF
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.db import transaction
 from django_huey import db_task
 from django_huey import db_task, get_queue
 
@@ -19,24 +19,35 @@ class BuildPapersService:
     base_dir = settings.BASE_DIR
     papers_to_print = base_dir / 'papersToPrint'
 
+    @transaction.atomic
     def get_n_complete_tasks(self):
         """Get the number of PDFTasks that have completed"""
         completed = PDFTask.objects.filter(status='complete')
         return len(completed)
 
+    @transaction.atomic
     def get_n_pending_tasks(self):
         """Get the number of PDFTasks with the status 'todo,' 'queued,' 'started,' or 'error'"""
         pending = PDFTask.objects.exclude(status='complete')
         return len(pending)
 
+    @transaction.atomic
     def get_n_running_tasks(self):
         """Get the number of PDFTasks with the status 'queued' or 'started"""
         running = PDFTask.objects.filter(Q(status='queued') | Q(status='started'))
         return len(running)
 
+    @transaction.atomic
     def get_n_tasks(self):
         """Get the total number of PDFTasks"""
         return len(PDFTask.objects.all())
+
+    @transaction.atomic
+    def are_all_papers_built(self):
+        """Return True if all of the test-papers have been successfully built"""
+        total_tasks = self.get_n_tasks()
+        complete_tasks = self.get_n_complete_tasks()
+        return total_tasks > 0 and total_tasks == complete_tasks
 
     def create_task(self, index: int, huey_id: id, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database"""

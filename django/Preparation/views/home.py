@@ -10,6 +10,7 @@ from django_htmx.http import HttpResponseClientRedirect
 
 from TestCreator.services import TestSpecService
 from Connect.services import CoreConnectionService
+from BuildPaperPDF.services import BuildPapersService
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -30,6 +31,7 @@ class PreparationLandingView(ManagerRequiredView):
         sss = StagingStudentService()
         pqvs = PQVMappingService()
         ccs = CoreConnectionService()
+        bps = BuildPapersService()
 
         context = {
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
@@ -40,6 +42,7 @@ class PreparationLandingView(ManagerRequiredView):
             "server_valid": ccs.is_there_a_valid_connection(),
             "password_valid": ccs.is_manager_authenticated(),
             "db_initialised": ccs.has_db_been_initialized(),
+            "papers_built": bps.are_all_papers_built(),
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
         }

@@ -269,10 +269,15 @@
       <div class="card">
         <div class="card-body">
           <h5 class="card-title">
-            Build paper pdfs &mdash; Working In Progress <i class="bi bi-x-octagon-fill text-danger"></i>
+            Build test paper PDFs
+            {% if papers_built %}
+            <i class="bi bi-check-circle text-success"></i>
+            {% else %}
+            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            {% endif %}
           </h5>
-          <p class="card-text">Build pdfs for each paper</p>
-          <a class="btn btn-primary" href="{% url 'create_paperPDFs' %}">NOT IMPLEMENTED</a>
+          <p class="card-text">Once all of the required information is loaded into Plom-classic, build exams and save to disk</p>
+          <a class="btn btn-primary" href="{% url 'create_paperPDFs' %}">Build papers</a>
         </div>
       </div>
     </div>

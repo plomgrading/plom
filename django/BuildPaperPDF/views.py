@@ -47,7 +47,7 @@ class BuildPaperPDFs(ManagerRequiredView):
 
     def get(self, request):
         bps = BuildPapersService()
-        rename = RenamePDFFile()
+        ccs = CoreConnectionService()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
         num_pdfs = len(qvmap)
@@ -72,6 +72,7 @@ class BuildPaperPDFs(ManagerRequiredView):
             'num_pdfs': num_pdfs,
             'pdfs_staged': pdfs_staged,
             'pdf_table': table_fragment,
+            'db_initialised': ccs.has_db_been_initialized(),
         })
 
         return render(request, self.template_name, context)

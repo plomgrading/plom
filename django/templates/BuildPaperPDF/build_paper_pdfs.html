@@ -23,22 +23,28 @@
             <div id="pdf_table">
                 {{ pdf_table |safe }}
             </div>
-            <form method="post" action="{% url 'zip_paperPDFs' %}" id="bottom">
+            <!-- <form method="post" action="{% url 'zip_paperPDFs' %}" id="bottom">
                 {% csrf_token %}
                 <input type="submit" class="btn btn-primary" value="Save as zip file" {% if zip_disabled %}disabled{% endif %}>
                 <a class="btn btn-secondary" onclick="document.getElementById('top').scrollIntoView()">
                     <i class="bi bi-arrow-up-circle"></i>
                 </a>
-            </form>
+            </form> -->
             {% else %}
             <div class="card w-50">
                 <div class="card-body">
+                    {% if db_initialised %}
                     <h5 class="card-title">Build test papers</h5>
                     <p class="card-text">Will build {{ num_pdfs }} tests.</p>
                     <form action="{% url 'create_paperPDFs' %}" method="post">
                         {% csrf_token %}
                         <input type="submit" class="btn btn-primary" value="Submit">
                     </form>
+                    {% else %}
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-1"></i>
+                    <h5 class="card-title">Database not initialised</h5>
+                    <p class="card-text">Please send all the required information to Plom-classic before building test-papers.</p>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
