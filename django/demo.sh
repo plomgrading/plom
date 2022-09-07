@@ -21,12 +21,14 @@ python3 manage.py migrate
 #python3 manage.py createsuperuser --username cbm  --email foo@bar.com
 
 python3 manage.py plom_create_groups
-#python3 manage.py creategroups
 
 python3 manage.py plom_create_demo_users
 
 python3 manage.py plom_demo_spec
 python3 manage.py plom_preparation_test_source upload -v 1 useful_files_for_testing/test_version1.pdf
 python3 manage.py plom_preparation_test_source upload -v 2 useful_files_for_testing/test_version2.pdf
+
+# This is for production use, when Debug = False
+# python3 manage.py collectstatic
 
 python3 manage.py runserver
