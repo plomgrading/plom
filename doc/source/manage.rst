@@ -9,6 +9,11 @@ Managing a server
 Plom Manager is a tool to monitor the marking team's progress as well
 as perform various server oversight actions.
 
+.. warning::
+
+   This tool is not particularly well-tested, and is still under development.
+   Proceed with caution.
+
 
 Starting Plom Manager
 ----------------------
@@ -17,6 +22,13 @@ You can use the regular :doc:`Plom Client <install-client>`
 but login as ``manager`` instead of your regular user.
 
 Alternatively, you can run :doc:`plom-manager` from the command line.
+
+
+User management
+---------------
+
+You can add users, change passwords, and disable/enable accounts in
+the "Users" tab.
 
 
 Progress
