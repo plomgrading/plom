@@ -258,16 +258,37 @@ class CoreConnectionService:
         task.save()
         return task
 
-    def initialise_core_db(self, version_map: dict):
-        db_task = self._initialise_core_db(self, version_map)
+    def initialise_core_db(self, version_map: dict, students: list):
+        db_task = self._initialise_core_db(self, version_map, students)
         task_obj = self.create_core_db_task(db_task.id)
         task_obj.status = 'queued'
         task_obj.save()
         return task_obj
 
+    def preID_papers(self, students: list):
+        """Pre-ID test-papers for students with prenamed tests."""
+        msgr = None
+        try:
+            msgr = self.get_manager_messenger()
+            msgr.start()
+            msgr.requestAndSaveToken(self.manager_username, self.get_manager_password())
+
+            for student in students:
+                paper = student['paper_number']
+                if paper:
+                    sid = student['student_id']
+                    msgr.pre_id_paper(paper, sid)
+
+        finally:
+            if msgr:
+                if msgr.token:
+                    msgr.clearAuthorisation(self.manager_username, self.get_manager_password())
+                msgr.stop()
+
+
     @db_task(queue='tasks')
-    def _initialise_core_db(ccs, version_map: dict):
-        """Initialise the core server database and send a PQV map"""
+    def _initialise_core_db(ccs, version_map: dict, students: list):
+        """Initialise the core server database, send a PQV map, and pre-ID papers"""
         messenger = ccs.get_manager_messenger()
         messenger.start()
 
@@ -279,9 +300,13 @@ class CoreConnectionService:
             for i in range(1,len(vmap)+1):
                 status = messenger.appendTestToDB(i, vmap[i])
                 print(status)
+
         finally:
             messenger.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
             messenger.stop()
+
+        # pre-ID papers
+        ccs.preID_papers(students)
 
     def get_latest_init_db_task(self, sense_core_db=True):
         """Get the latest Init DB task

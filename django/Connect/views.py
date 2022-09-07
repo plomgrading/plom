@@ -203,12 +203,15 @@ class SendClasslistToCoreView(ManagerRequiredView):
 
 
 class SendPQVInitializeDB(ManagerRequiredView):
+    """Initialize the database: send over the PQV map, create database rows, pre-id papers."""
     def post(self, request):
         core = CoreConnectionService()
         qvs = PQVMappingService()
+        sstu = StagingStudentService()
 
         ver_map = qvs.get_pqv_map_dict()
-        task = core.initialise_core_db(ver_map)
+        students = sstu.get_students()
+        task = core.initialise_core_db(ver_map, students)
         return HttpResponseRedirect(reverse('connect_db_status', args=(task.huey_id,)))
 
     def get(self, request):
