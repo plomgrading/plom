@@ -24,6 +24,8 @@ Welcome to Plom's documentation!
 
    solutions.rst
 
+   manage.rst
+
    returning.rst
 
    cmdline.rst
