@@ -361,6 +361,8 @@ class ProgressBox(QGroupBox):
 
 
 class Manager(QWidget):
+    """Plom server management and marking progress UI tool."""
+
     def __init__(
         self, Qapp, *, server=None, user=None, password=None, manager_msgr=None
     ):

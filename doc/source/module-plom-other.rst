@@ -5,13 +5,6 @@
 Other supporting code
 =====================
 
-``plom.manager`` module
------------------------
-
-TODO: where do we want to document this?
-
-.. automodule:: plom.manager
-
 
 Tools for demos and semi-automated testing
 ------------------------------------------

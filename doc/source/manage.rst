@@ -56,10 +56,5 @@ client and look through the tasks, possibly revising the marking.
 Technical docs
 --------------
 
-TODO: likely both links broken...
-
 * The command-line tool :doc:`plom-manager` is the current front-end
   for most tasks related to returning work.
-
-* For scripting or other advanced usage, you can ``import plom.manager``
-  in your own Python code.  See :doc:`module-plom-manager`.
