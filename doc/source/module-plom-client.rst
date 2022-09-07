@@ -14,7 +14,10 @@ Plom Client
     :members:
 
 
-Plom Manager
-^^^^^^^^^^^^
+.. _module-plom-manager:
+
+``plom.manager`` module
+^^^^^^^^^^^^^^^^^^^^^^^
+
 .. automodule:: plom.manager
     :members:

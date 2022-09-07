@@ -56,5 +56,9 @@ client and look through the tasks, possibly revising the marking.
 Technical docs
 --------------
 
-* The command-line tool :doc:`plom-manager` is the current front-end
-  for most tasks related to returning work.
+* The command-line tool :doc:`plom-manager` directly launches the Plom
+  Manager.  It can also be launched by logging into :doc:`plom-client`
+  using the ``manager`` account.
+
+* For scripting or other advanced usage, you can ``import plom.manager``
+  in your own Python code.  See :ref:`module-plom-manager`.
