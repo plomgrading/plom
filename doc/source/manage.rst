@@ -3,11 +3,24 @@
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
-Managing the marking process
-============================
+Managing a server
+=================
 
 Plom Manager is a tool to monitor the marking team's progress as well
-as perform various oversight actions.
+as perform various server oversight actions.
+
+
+Starting Plom Manager
+----------------------
+
+You can use the regular :doc:`Plom Client <install-client>`
+but login as ``manager`` instead of your regular user.
+
+Alternatively, you can run :doc:`plom-manager` from the command line.
+
+
+Progress
+--------
 
 Some basic statistics and other information can be found in the
 "Progress" tab.
@@ -49,8 +62,8 @@ client and look through the tasks, possibly revising the marking.
 
 .. caution::
 
-   As far as we know this has not been used; some caution is
-   warranted.
+   As far as we know, the "review" feature has not been used in
+   practice; some caution is warranted.
 
 
 Technical docs

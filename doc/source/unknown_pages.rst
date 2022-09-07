@@ -10,7 +10,7 @@ After scanning, you likely have some "Unknown Pages", such as pages
 without QR codes due to printing/scanning troubles, extra pages using
 our template or even adhoc pages such as looseleaf.
 
-1. open the Manager tool and go to the "Scanning" tab.
+1. open the :doc:`Manager tool <manage>` and go to the "Scanning" tab.
 
 2. In the "Unknown Pages" tab you'll find a list of unknown pages.
 
@@ -52,6 +52,6 @@ Collisions
 ----------
 
 "Good collisions" are caused for example by re-scanning a page.
-These can be dealt with similarly to Unknown Pages in the Manager tool.
+These can be dealt with similarly to Unknown Pages in the :doc:`Manager tool <manage>`.
 "Bad collisions" come from accidental reuse of papers e.g., from double-printing.
 This is a much more serious problem, see :doc:`scanning` and :doc:`faq`.
