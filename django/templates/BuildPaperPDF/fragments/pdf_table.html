@@ -1,4 +1,6 @@
-{{ message }}<br>
+<div>
+    {{ message }}
+</div>
 <!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
 <table class="table table-striped"
     {% if poll %}
@@ -34,7 +36,10 @@
             </td>
             {% elif task.status == 'queued' %}
             <td>{{ pdf_file }}</td>
-            <td>{{ task.status }}</td>
+            <td>
+                {{ task.status }}
+                <div class="spinner-grow spinner-grow-sm text-secondary"></div>
+            </td>
             <td>
                 <a
                     class="btn btn-danger"
@@ -46,7 +51,10 @@
             </td>
             {% elif task.status == 'started' %}
             <td>{{ pdf_file }}</td>
-            <td>{{ task.status }}</td>
+            <td>
+                {{ task.status }}
+                <div class="spinner-grow spinner-grow-sm text-secondary"></div>
+            </td>
             <td></td>
             {% else %}
             <td>{{ pdf_file }}</td>
