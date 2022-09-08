@@ -27,3 +27,13 @@ class CoreScannerLogin(SingletonBaseModel):
 class CoreDBinitialiseTask(HueyTask):
     """Build the database in the background"""
     pass
+
+
+class CoreDBRowTask(HueyTask):
+    """Initialize a Core-DB row in the background"""
+    paper_number = models.PositiveIntegerField(null=True)
+
+
+class PreIDPapersTask(HueyTask):
+    """Pre-ID papers in the background"""
+    pass

@@ -15,6 +15,8 @@ from Connect.models import (
     CoreServerConnection, 
     CoreManagerLogin,
     CoreDBinitialiseTask,
+    CoreDBRowTask,
+    PreIDPapersTask,
 )
 
 
@@ -249,29 +251,73 @@ class CoreConnectionService:
             messenger.clearAuthorisation(self.manager_username, password)
             messenger.stop()
 
+    @transaction.atomic
     def create_core_db_task(self, huey_id):
         """Save a huey task to the database"""
         task = CoreDBinitialiseTask(
             status = 'todo',
-            huey_id = huey_id
+            huey_id = huey_id,
+        )
+        task.save()
+        return task
+
+    @transaction.atomic
+    def create_core_db_row_task(self, huey_id, paper_number):
+        """Save a huey task for adding a core DB row"""
+        task = CoreDBRowTask(
+            status='todo',
+            huey_id=huey_id,
+            paper_number=paper_number,
+        )
+        task.save()
+        return task
+
+    @transaction.atomic
+    def create_preID_papers_task(self, huey_id):
+        """Save a huey task for pre-IDing papers in the background.
+        
+        Note: this is done in the background as a simple way to guarantee that pre-IDing happens
+        right after the database has been initialised
+        """
+        task = PreIDPapersTask(
+            status='todo',
+            huey_id=huey_id,
         )
         task.save()
         return task
 
     def initialise_core_db(self, version_map: dict, students: list):
-        db_task = self._initialise_core_db(self, version_map, students)
-        task_obj = self.create_core_db_task(db_task.id)
-        task_obj.status = 'queued'
-        task_obj.save()
-        return task_obj
+        # init DB
+        db_task = self._initialise_core_db(self, version_map)
+        init_db_obj = self.create_core_db_task(db_task.id)
+        init_db_obj.status = 'queued'
+        init_db_obj.save()
 
-    def preID_papers(self, students: list):
+        # add papers
+        for i in range(len(version_map)):
+            paper_number = i+1
+            vermap_row = version_map[paper_number]
+            addrow_task = self._add_db_row(self, paper_number, vermap_row)
+            addrow_obj = self.create_core_db_row_task(addrow_task.id, paper_number)
+            addrow_obj.status = 'queued'
+            addrow_obj.save()
+
+        # pre-ID papers
+        pre_id_task = self._preID_papers(self, students)
+        pre_id_obj = self.create_preID_papers_task(pre_id_task.id)
+        pre_id_obj.status = 'queued'
+        pre_id_obj.save()
+
+        return init_db_obj
+
+    @db_task(queue='tasks')
+    def _preID_papers(ccs, students: list):
         """Pre-ID test-papers for students with prenamed tests."""
         msgr = None
         try:
-            msgr = self.get_manager_messenger()
+            msgr = ccs.get_manager_messenger()
             msgr.start()
-            msgr.requestAndSaveToken(self.manager_username, self.get_manager_password())
+            msgr.requestAndSaveToken(ccs.manager_username, ccs.get_manager_password())
 
             for student in students:
                 paper = student['paper_number']
@@ -282,12 +328,12 @@ class CoreConnectionService:
         finally:
             if msgr:
                 if msgr.token:
-                    msgr.clearAuthorisation(self.manager_username, self.get_manager_password())
+                    msgr.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
                 msgr.stop()
 
 
     @db_task(queue='tasks')
-    def _initialise_core_db(ccs, version_map: dict, students: list):
+    def _initialise_core_db(ccs, version_map: dict):
         """Initialise the core server database, send a PQV map, and pre-ID papers"""
         messenger = ccs.get_manager_messenger()
         messenger.start()
@@ -296,17 +342,25 @@ class CoreConnectionService:
             messenger.requestAndSaveToken(ccs.manager_username, ccs.get_manager_password())
             if not messenger.token:
                 raise RuntimeError("Unable to authenticate manager.")
-            vmap = messenger.InitialiseDB()
-            for i in range(1,len(vmap)+1):
-                status = messenger.appendTestToDB(i, vmap[i])
-                print(status)
+            messenger.InitialiseDB(version_map)
 
         finally:
             messenger.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
             messenger.stop()
 
-        # pre-ID papers
-        ccs.preID_papers(students)
+    @db_task(queue='tasks')
+    def _add_db_row(ccs, paper_number: int, version_row: dict):
+        """Add a test-paper to the Core database"""
+        msgr = ccs.get_manager_messenger()
+        msgr.start()
+
+        try:
+            msgr.requestAndSaveToken(ccs.manager_username, ccs.get_manager_password())
+            status = msgr.appendTestToDB(paper_number, version_row)
+            print(status)
+        finally:
+            msgr.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
+            msgr.stop()
 
     def get_latest_init_db_task(self, sense_core_db=True):
         """Get the latest Init DB task
