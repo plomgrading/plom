@@ -28,6 +28,10 @@ python3 manage.py plom_demo_spec
 python3 manage.py plom_preparation_test_source upload -v 1 useful_files_for_testing/test_version1.pdf
 python3 manage.py plom_preparation_test_source upload -v 2 useful_files_for_testing/test_version2.pdf
 
+python3 manage.py plom_preparation_prenaming --enable
+python3 manage.py plom_preparation_classlist upload useful_files_for_testing/cl_good.csv
+python3 manage.py plom_preparation_qvmap generate
+
 # This is for production use, when Debug = False
 # python3 manage.py collectstatic
 

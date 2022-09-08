@@ -7,26 +7,8 @@
 {% block main_content %}
 <div class="d-grid gap-2">
     <div class="card w-50" id="task-status">
-        {% if task %}
-        <div class="card-body" hx-get="{% url 'connect_db_update' task.huey_id %}" hx-target="#task-status" hx-trigger="every 1s">
-            {% if task.status == 'complete' %}
-            <h5 class="card-title">QV map sent to Plom-classic and database initialised.</h5>
-            {% elif task.status == 'error' %}
-            <h5 class="card-title">Exception encountered</h5>
-            <p class="card-text text-danger">{{ task.message }}</p>
-            {% else %}
-            <h5 class="card-title">Database initialisation in progress</h5>
-            <p class="card-text">Status: {{ task.status }}</p>
-            {% endif %}
-            <a class="btn btn-primary" href="{% url 'connect_send_info' %}">Back</a>
-            <!-- <a 
-                class="btn btn-primary" 
-                hx-get="{% url 'connect_db_update' task.huey_id %}" 
-                hx-target="#task-status"
-            >
-                Refresh
-            </a> -->
-        </div>
+        {% if db_init_task %}
+        {{ fragment |safe }}
         {% else %}
         <div class="card-body">
             <h5 class="card-title">Send question-version map to Plom-classic</h5>
@@ -34,6 +16,7 @@
             <form action="{% url 'connect_init_db' %}" method="post">
                 {% csrf_token %}
                 <input type="submit" class="btn btn-primary" value="Send">
+                <a class="btn btn-primary" href="{% url 'connect_send_info' %}">Back</a>
             </form>
         </div>
         {% endif %}

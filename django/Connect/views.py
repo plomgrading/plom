@@ -1,11 +1,12 @@
+from os import stat
 import traceback
 from plom.create.classlistValidator import PlomClasslistValidator
 from plom.plom_exceptions import PlomConnectionError, PlomAuthenticationException, PlomExistingLoginException
 
-from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.template.loader import render_to_string
 
 from TestCreator.services import TestSpecService, TestSpecGenerateService
 from Preparation.services import PQVMappingService, StagingClasslistCSVService, PrenameSettingService
@@ -212,7 +213,7 @@ class SendPQVInitializeDB(ManagerRequiredView):
         ver_map = qvs.get_pqv_map_dict()
         students = sstu.get_students()
         task = core.initialise_core_db(ver_map, students)
-        return HttpResponseRedirect(reverse('connect_db_status', args=(task.huey_id,)))
+        return HttpResponseRedirect(reverse('connect_db_status'))
 
     def get(self, request):
         context = self.build_context()
@@ -229,22 +230,68 @@ class SendPQVInitializeDB(ManagerRequiredView):
 
 
 class CoreDBStatusView(ManagerRequiredView):
-    """View progress/status of the Core DB initialisation"""
-    def get(self, request, huey_id):
+    """View the progress/status of the Core DB initialisation"""
+    def build_context(self):
+        context = super().build_context()
+        core = CoreConnectionService()
+
+        db_init_task = core.get_latest_init_db_task()
+        db_row_tasks = core.get_db_row_status()
+        pre_id_task = core.get_latest_preID_task()
+
+        n_complete = db_row_tasks['n_complete']
+        if db_init_task.status == 'complete':
+            n_complete += 1
+        if pre_id_task.status == 'complete':
+            n_complete += 1
+        n_total = db_row_tasks['n_total'] + 2
+        percent_complete = n_complete / n_total * 100
+
+        context.update({
+            'db_init_task': db_init_task,
+            'db_row_tasks': db_row_tasks,
+            'pre_id_task': pre_id_task,
+            'percent_complete': f"{percent_complete:.0f}%"
+        })
+        return context
+
+    def get(self, request):
         context = self.build_context()
-        task = get_object_or_404(CoreDBinitialiseTask, huey_id=huey_id)
-        context.update({'task': task})
+        fragment = render_to_string('Connect/fragments/vermap-status.html', context, request=request)
+        context.update({'fragment': fragment})
         return render(request, 'Connect/connect-vermap-attempt.html', context)
 
 
-class CoreDBRefreshStatus(ManagerRequiredView):
+class CoreDBRefreshStatus(CoreDBStatusView):
     """Refresh progress of the Core DB initialisation"""
-    def get(self, request, huey_id):
+    def get(self, request):
         context = self.build_context()
-        task = get_object_or_404(CoreDBinitialiseTask, huey_id=huey_id)
-        context.update({'task': task})
+        complete = context['pre_id_task'].status == "complete"
 
         status = 200
-        if task.status == 'complete':
+        if complete:
             status = 286
+
         return render(request, 'Connect/fragments/vermap-status.html', context, status=status)
+
+
+# class CoreDBStatusView(ManagerRequiredView):
+#     """View progress/status of the Core DB initialisation"""
+#     def get(self, request, huey_id):
+#         context = self.build_context()
+#         task = get_object_or_404(CoreDBinitialiseTask, huey_id=huey_id)
+#         context.update({'task': task})
+#         return render(request, 'Connect/connect-vermap-attempt.html', context)
+
+
+# class CoreDBRefreshStatus(ManagerRequiredView):
+#     """Refresh progress of the Core DB initialisation"""
+#     def get(self, request, huey_id):
+#         context = self.build_context()
+#         task = get_object_or_404(CoreDBinitialiseTask, huey_id=huey_id)
+#         context.update({'task': task})
+
+#         status = 200
+#         if task.status == 'complete':
+#             status = 286
+#         return render(request, 'Connect/fragments/vermap-status.html', context, status=status)

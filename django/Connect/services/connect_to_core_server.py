@@ -286,7 +286,16 @@ class CoreConnectionService:
         task.save()
         return task
 
+    @transaction.atomic
+    def clear_core_db_tasks(self):
+        """Clear the database of all core-DB related background tasks"""
+        CoreDBinitialiseTask.objects.all().delete()
+        CoreDBRowTask.objects.all().delete()
+        PreIDPapersTask.objects.all().delete()
+
     def initialise_core_db(self, version_map: dict, students: list):
+        self.clear_core_db_tasks()
+
         # init DB
         db_task = self._initialise_core_db(self, version_map)
         init_db_obj = self.create_core_db_task(db_task.id)
@@ -362,15 +371,25 @@ class CoreConnectionService:
             msgr.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
             msgr.stop()
 
-    def get_latest_init_db_task(self, sense_core_db=True):
-        """Get the latest Init DB task
-        
-        TODO: for now, there's a crude way to tell the difference between the latest task for the current
-        server, and one from a previous server
-        """
+    def get_latest_init_db_task(self):
+        """Get the latest Init DB task"""
         tasks = CoreDBinitialiseTask.objects.all().order_by('created')
         if len(tasks) > 0:
-            latest_task = tasks[0]
-            if sense_core_db and latest_task.status == 'complete' and not self.has_db_been_initialized():
-                return None
+            return tasks[0]
+
+    def get_db_row_status(self):
+        """Get the status of the DB rows. Returns a dict of {n_total, n_complete, errors: []}"""
+        total_dbrow_tasks = len(CoreDBRowTask.objects.all())
+        complete_dbrow_tasks = len(CoreDBRowTask.objects.filter(status='complete'))
+        error_dbrows = list(CoreDBRowTask.objects.filter(status='error'))
+        return {
+            'n_total': total_dbrow_tasks,
+            'n_complete': complete_dbrow_tasks,
+            'errors': error_dbrows,
+        }
+
+    def get_latest_preID_task(self):
+        """Get the latest preID task"""
+        tasks = PreIDPapersTask.objects.all().order_by('created')
+        if len(tasks) > 0:
             return tasks[0]
