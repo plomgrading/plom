@@ -300,9 +300,9 @@ def insert_extra_info(extra, exam, x=None, y=None):
 
     box_width = (
         max(
-            fitz.get_text_length(extra["id"], fontsize=36, fontname="Helvetica"),
-            fitz.get_text_length(extra["name"], fontsize=36, fontname="Helvetica"),
-            fitz.get_text_length(sign_here, fontsize=48, fontname="Helvetica"),
+            fitz.get_text_length(extra["id"], fontsize=36, fontname="Helv"),
+            fitz.get_text_length(extra["name"], fontsize=36, fontname="Helv"),
+            fitz.get_text_length(sign_here, fontsize=48, fontname="Helv"),
         )
         * 1.11  # magic: just til it covers IDbox2
     )
@@ -326,7 +326,7 @@ def insert_extra_info(extra, exam, x=None, y=None):
 
     # TODO: This could be put into one function
     if is_possible_to_encode_as(txt, "Latin-1"):
-        fontname = "Helvetica"
+        fontname = "Helv"
     elif is_possible_to_encode_as(txt, "gb2312"):
         # TODO: Double-check encoding name.  Add other CJK (how does Big5
         # vs GB work?).  Check printers can handle these or do we need to
@@ -353,7 +353,7 @@ def insert_extra_info(extra, exam, x=None, y=None):
         sign_here,
         fontsize=48,
         color=[0.9, 0.9, 0.9],
-        fontname="Helvetica",
+        fontname="Helv",
         fontfile=None,
         align=1,
     )
