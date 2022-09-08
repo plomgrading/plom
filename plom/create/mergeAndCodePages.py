@@ -161,26 +161,29 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     returns:
         None: but modifies page as a side-effect.
     """
-    page_width = page.bound().width
-    page_height = page.bound().height
+    w = 70  # box width
+    mx, my = (15, 20)  # margins
+
+    pg_width = page.bound().width
+    pg_height = page.bound().height
 
     # create two "do not write" (DNW) rectangles accordingly with TL (top left) and TR (top right)
-    rDNW_TL = fitz.Rect(15, 15, 90, 90)
-    rDNW_TR = fitz.Rect(page_width - 90, 15, page_width - 15, 90)
+    rDNW_TL = fitz.Rect(mx, my, mx + w, my + w)
+    rDNW_TR = fitz.Rect(pg_width - mx - w, my, pg_width - mx, my + w)
 
-    # 70x70 page-corner boxes for the QR codes
+    # page-corner boxes for the QR codes
     # TL: Top Left, TR: Top Right, BL: Bottom Left, BR: Bottom Right
-    TL = fitz.Rect(15, 20, 85, 90)
-    TR = fitz.Rect(page_width - 85, 20, page_width - 15, 90)
-    BL = fitz.Rect(15, page_height - 90, 85, page_height - 20)
-    BR = fitz.Rect(page_width - 85, page_height - 90, page_width - 15, page_height - 20)
+    TL = fitz.Rect(mx, my, mx + w, my + w)
+    TR = fitz.Rect(pg_width - w - mx, my, pg_width - mx, my + w)
+    BL = fitz.Rect(mx, pg_height - my - w, mx + w, pg_height - my)
+    BR = fitz.Rect(pg_width - mx - w, pg_height - my - w, pg_width - mx, pg_height - my)
 
     tw = fitz.TextWriter(page.rect)
-    # x position does not matter: we will centre it ourselves based on width
+    # location does not matter: we will centre it ourselves
     tw.append(fitz.Point(0, 40), stamp, fontsize=18, font=fitz.Font("helv"))
     r = tw.text_rect
     r = fitz.Rect(
-        page_width // 2 - r.width / 2, r.tl.y, page_width // 2 + r.width / 2, r.br.y
+        pg_width // 2 - r.width / 2, my, pg_width // 2 + r.width / 2, my + r.height
     )
     # + minor tweak here to adjust drawn box
     page.draw_rect(r + (-3, 0, -3, 1))
