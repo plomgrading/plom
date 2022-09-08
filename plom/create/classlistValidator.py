@@ -81,7 +81,9 @@ class PlomClasslistValidator:
 
         Returns:
             dict: If errors then return ``{'success': False, 'errors': error-list}``,
-            else return ``{'success': True, 'id': id_key, 'fullname': fullname_key, 'papernumber': papernumber_key}``
+            else return ``{'success': True, 'id': id_key, 'fullname': fullname_key, 'papernumber': papernumber_key}``.
+            If there is no ``"paper_number"`` column, then the
+            ``paper_number_key`` will be `None`.
         """
         id_keys = []
         fullname_keys = []
@@ -109,7 +111,9 @@ class PlomClasslistValidator:
         if not fullname_keys:
             err.append("Missing name column")
         if not papernumber_keys:
-            err.append("Missing paper number column")
+            # Issue #2273
+            # err.append("Missing paper number column")
+            papernumber_keys = [None]
 
         if err:
             return {"success": False, "errors": err}
@@ -262,15 +266,16 @@ class PlomClasslistValidator:
                 )
 
         # check the paperNumber column - again, potentially errors here (not just warnings)
-        success, errors = self.check_papernumber_column(
-            cl_header_info["papernumber"], cl_as_dicts
-        )
-        if not success:  # format errors and set invalid
-            validity = False
-            for e in errors:
-                werr.append(
-                    {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
-                )
+        if cl_header_info["papernumber"] is not None:
+            success, errors = self.check_papernumber_column(
+                cl_header_info["papernumber"], cl_as_dicts
+            )
+            if not success:  # format errors and set invalid
+                validity = False
+                for e in errors:
+                    werr.append(
+                        {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
+                    )
 
         # check against spec - only warnings returned
         for w in self.check_classlist_against_spec(spec, len(cl_as_dicts)):
@@ -349,9 +354,11 @@ class PlomClasslistValidator:
             return False
 
         if not papernumber_cols:
-            print(f"Cannot find a paper number column - {papernumber_cols}")
-            print(f"Columns present = {column_names}")
-            return False
+            # Issue #2273
+            # print(f"Cannot find a paper number column - {papernumber_cols}")
+            # print(f"Columns present = {column_names}")
+            # return False
+            pass
         elif len(papernumber_cols) > 1:
             print("Multiple paper number columns - {papernumber_cols}")
             print(f"Columns present = {column_names}")
