@@ -189,7 +189,7 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     r = fitz.Rect(
         pg_width // 2 - r.width / 2, my, pg_width // 2 + r.width / 2, my + r.height
     )
-    page.draw_rect(r)
+    page.draw_rect(r, color=(0, 0, 0), width=0.5)
     tw.write_text(page)
 
     # special code to skip staple mark and QR codes
@@ -205,7 +205,7 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
         shape.draw_line(rDNW.top_right, rDNW.bottom_left)
     else:
         shape.draw_line(rDNW.top_right, rDNW.bottom_right)
-    shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
+    shape.finish(width=0.5, color=(0, 0, 0), fill=(0.75, 0.75, 0.75))
     shape.commit()
 
     tw = fitz.TextWriter(page.rect)
