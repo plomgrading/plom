@@ -12,6 +12,7 @@ class Command(BaseCommand):
     def try_server_connection(self, server_name, port_number):
         core = CoreConnectionService()
 
+        version_string = None
         try:
             version_string = core.validate_url(server_name, port_number)
         except PlomConnectionError:
