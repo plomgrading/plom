@@ -179,15 +179,18 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     BR = fitz.Rect(pg_width - mx - w, pg_height - my - w, pg_width - mx, pg_height - my)
 
     tw = fitz.TextWriter(page.rect)
-    # location does not matter: we will centre it ourselves
-    tw.append(fitz.Point(0, 40), stamp, fontsize=18, font=fitz.Font("helv"))
+    maxbox = fitz.Rect(mx + w + 10, my, pg_width - mx - w - 10, my + 30)
+    # page.draw_rect(maxbox, color=(1, 0, 0))
+    extra = tw.fill_textbox(
+        maxbox, stamp, align=fitz.TEXT_ALIGN_CENTER, fontsize=14, font=fitz.Font("helv")
+    )
+    assert not extra, "Text didn't fit: is paper number label too long?"
     r = tw.text_rect
     r = fitz.Rect(
         pg_width // 2 - r.width / 2, my, pg_width // 2 + r.width / 2, my + r.height
     )
-    # + minor tweak here to adjust drawn box
-    page.draw_rect(r + (-3, 0, -3, 1))
-    page.write_text(rect=r, writers=tw)
+    page.draw_rect(r)
+    tw.write_text(page)
 
     # special code to skip staple mark and QR codes
     if odd is None:

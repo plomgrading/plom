@@ -30,13 +30,13 @@ def test_staple_marker_diagname_very_long(tmpdir):
 
 
 # TODO: faster to use a Class with setup and teardown to build the PDF
-def test_stamp_very_long(tmpdir):
+def test_stamp_too_long(tmpdir):
     tmpdir = Path(tmpdir)
     assert buildDemoSourceFiles(basedir=tmpdir)
     d = fitz.open(tmpdir / "sourceVersions/version1.pdf")
     pdf_page_add_labels_QRs(d[0], "foo", "1234 Q33 p. 38", [])
-    # even long ones are not errors, after Issue #1902
-    pdf_page_add_labels_QRs(d[0], "foo", "MMMM " * 6, [])
+    with raises(AssertionError):
+        pdf_page_add_labels_QRs(d[0], "foo", "12345 " * 20, [])
     d.close()
 
 
