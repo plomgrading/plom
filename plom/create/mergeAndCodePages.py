@@ -6,6 +6,7 @@
 # Copyright (C) 2021 Peter Lee
 
 import tempfile
+import math
 from pathlib import Path
 
 # import pyqrcode
@@ -280,8 +281,8 @@ def insert_extra_info(extra, exam, x=None, y=None):
             unexpectedly long.
         y (float): specifies the y-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 is the top
-            and 100 is the bottom of the page.  If None, defaults to 42.5
-            for historical reasons.
+            and 100 is the bottom of the page.  If None, defaults to 42
+            for historical reasons (to match the position in our demo).
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable.
@@ -293,24 +294,18 @@ def insert_extra_info(extra, exam, x=None, y=None):
     if x is None:
         x = 50
     if y is None:
-        y = 42.5
+        y = 42
 
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height
 
-    txt = f'{extra["name"]}\n{extra["id"]}'
+    name = extra["name"]
+    sid = extra["id"]
     sign_here = "Please sign here"
 
-    box_width = (
-        max(
-            fitz.get_text_length(extra["id"], fontsize=36, fontname="Helv"),
-            fitz.get_text_length(extra["name"], fontsize=36, fontname="Helv"),
-            fitz.get_text_length(sign_here, fontsize=48, fontname="Helv"),
-        )
-        * 1.11  # magic: just til it covers IDbox2
-    )
-    box1_height = 2 * 36 * 1.5  # two lines of 36 pt and baseline
-    box2_height = 48 * 1.6
+    box_width = 410
+    box1_height = 108  # two lines of 36 pt and 1.5 baseline
+    box2_height = 90
 
     name_id_rect = fitz.Rect(
         page_width * (x / 100.0) - box_width / 2,
@@ -324,43 +319,41 @@ def insert_extra_info(extra, exam, x=None, y=None):
         name_id_rect.x1,
         name_id_rect.y1 + box2_height,
     )
-    exam[0].draw_rect(name_id_rect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
-    exam[0].draw_rect(signature_rect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+    exam[0].draw_rect(name_id_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
+    exam[0].draw_rect(signature_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
 
-    # TODO: This could be put into one function
-    if is_possible_to_encode_as(txt, "Latin-1"):
-        fontname = "Helv"
-    elif is_possible_to_encode_as(txt, "gb2312"):
-        # TODO: Double-check encoding name.  Add other CJK (how does Big5
-        # vs GB work?).  Check printers can handle these or do we need to
-        # embed a font?  (Adobe Acrobat users need to download something)
-        fontname = "china-ss"
-    else:
-        # TODO: instead we could warn, use Helvetica, and get "?????" chars
-        raise ValueError("Don't know how to write name {} into PDF".format(txt))
-
-    # We insert the student name and id text box
-    excess = exam[0].insert_textbox(
-        name_id_rect,
-        txt,
-        fontsize=36,
-        color=[0, 0, 0],
-        fontname=fontname,
-        fontfile=None,
-        align=1,
+    fontsize = 37
+    w = math.inf
+    font = fitz.Font("helv")
+    while w > name_id_rect.width:
+        if fontsize < 6:
+            raise RuntimeError(f'Overly long name? fontsize={fontsize} for name="{name}"')
+        fontsize -= 1
+        w = font.text_length(name, fontsize=fontsize)
+    tw = fitz.TextWriter(exam[0].rect)
+    tw.append(
+        fitz.Point(page_width / 2 - w / 2, name_id_rect.y0 + 38),
+        name,
+        fontsize=fontsize,
     )
-    assert excess > 0, "Text didn't fit: student name too long?"
+    fontsize = 36
+    w = font.text_length(sid, fontsize=fontsize)
+    tw.append(
+        fitz.Point(page_width / 2 - w / 2, name_id_rect.y0 + 90),
+        sid,
+        fontsize=fontsize,
+    )
+    tw.write_text(exam[0])
 
-    excess = exam[0].insert_textbox(
-        signature_rect,
+    fontsize = 48
+    w = font.text_length(sign_here, fontsize=fontsize)
+    tw = fitz.TextWriter(exam[0].rect, color=(0.9, 0.9, 0.9))
+    tw.append(
+        fitz.Point(page_width / 2 - w / 2, signature_rect.y0 + 52),
         sign_here,
-        fontsize=48,
-        color=[0.9, 0.9, 0.9],
-        fontname="Helv",
-        fontfile=None,
-        align=1,
+        fontsize=fontsize,
     )
-    assert excess > 0
+    tw.write_text(exam[0])
 
     return exam
 
