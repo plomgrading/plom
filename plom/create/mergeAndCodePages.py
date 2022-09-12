@@ -164,10 +164,10 @@ def pdf_page_add_stamp(page, stamp):
     tw = fitz.TextWriter(page.rect)
     maxbox = fitz.Rect(mx + w + 10, my, pg_width - mx - w - 10, my + 30)
     # page.draw_rect(maxbox, color=(1, 0, 0))
-    extra = tw.fill_textbox(
+    excess = tw.fill_textbox(
         maxbox, stamp, align=fitz.TEXT_ALIGN_CENTER, fontsize=14, font=fitz.Font("helv")
     )
-    assert not extra, "Text didn't fit: is paper number label too long?"
+    assert not excess, "Text didn't fit: is paper number label too long?"
     r = tw.text_rect
     r = fitz.Rect(
         pg_width // 2 - r.width / 2, my, pg_width // 2 + r.width / 2, my + r.height
@@ -227,23 +227,14 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     shape.finish(width=0.5, color=(0, 0, 0), fill=(0.75, 0.75, 0.75))
     shape.commit()
 
+    pivot = (rDNW.tl + rDNW.br) / 2
+    r = fitz.Rect(rDNW.tl.x - 30, pivot.y - 12, rDNW.tr.x + 30, pivot.y + 12)
     tw = fitz.TextWriter(page.rect)
-    # we want a smaller font so pad string if its short
-    if len(shortname) < 20:
-        shortname = shortname.center(20)
-    # location does not matter
-    tw.append(fitz.Point(100, 20), shortname, fontsize=8, font=fitz.Font("helv"))
-    # a smaller rect in the top-left/top-right of the DNW area: 85% of it.
-    # write the text in on angle, shrinking if necessary to fit.
-    r = rDNW
-    g = 0.85
-    if odd:
-        r = fitz.Rect(r.tl, r.tl.x + g * r.width, r.tl.y + g * r.height)
-    else:
-        r = fitz.Rect(r.tr.x - g * r.width, r.tl.y, r.tr.x, r.tr.y + g * r.height)
-    page.write_text(rect=r, writers=tw, rotate=(45 if odd else -45))
-    # Debugging
-    # page.write_text(writers=tw, color=(1, 0, 0))
+    excess = tw.fill_textbox(r, shortname, fontsize=8, align=fitz.TEXT_ALIGN_CENTER)
+    assert not excess, "Text didn't fit: is shortname too long?"
+
+    mat = fitz.Matrix(45 if odd else -45)
+    tw.write_text(page, color=(0, 0, 0), morph=(pivot, mat))
     # page.draw_rect(r, color=(1, 0, 0))
 
     if not qr_code:

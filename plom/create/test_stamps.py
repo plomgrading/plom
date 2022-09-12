@@ -21,11 +21,10 @@ def test_staple_marker_diagname_very_long(tmpdir):
     d = fitz.open(tmpdir / "sourceVersions/version1.pdf")
     pdf_page_add_labels_QRs(d[0], "Mg " * 7, "bar", [])
     # d.save("debug_staple_position.pdf")  # uncomment for debugging
-    # these used to be errors, fixed by Issue #1902
-    pdf_page_add_labels_QRs(d[0], "Mg " * 8, "bar", [], odd=True)
-    pdf_page_add_labels_QRs(d[0], "Mg " * 16, "bar", [], odd=False)
+    with raises(AssertionError):
+        pdf_page_add_labels_QRs(d[0], "Mg " * 32, "bar", [], odd=False)
     # but no error if we're not drawing staple corners
-    pdf_page_add_labels_QRs(d[0], "Mg " * 8, "bar", [], odd=None)
+    pdf_page_add_labels_QRs(d[0], "Mg " * 32, "bar", [], odd=None)
     d.close()
 
 
