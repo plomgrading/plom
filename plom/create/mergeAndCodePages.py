@@ -146,6 +146,36 @@ def create_exam_and_insert_QR(
     return exam
 
 
+def pdf_page_add_stamp(page, stamp):
+    """Add top-middle stamp to a PDF page.
+
+    args:
+        page (fitz.Page): a particular page of a PDF file.
+        stamp (str): text for the top-middle
+
+    returns:
+        None: but modifies page as a side-effect.
+    """
+    w = 70  # box width
+    mx, my = (15, 20)  # margins
+
+    pg_width = page.bound().width
+
+    tw = fitz.TextWriter(page.rect)
+    maxbox = fitz.Rect(mx + w + 10, my, pg_width - mx - w - 10, my + 30)
+    # page.draw_rect(maxbox, color=(1, 0, 0))
+    extra = tw.fill_textbox(
+        maxbox, stamp, align=fitz.TEXT_ALIGN_CENTER, fontsize=14, font=fitz.Font("helv")
+    )
+    assert not extra, "Text didn't fit: is paper number label too long?"
+    r = tw.text_rect
+    r = fitz.Rect(
+        pg_width // 2 - r.width / 2, my, pg_width // 2 + r.width / 2, my + r.height
+    )
+    page.draw_rect(r, color=(0, 0, 0), width=0.5)
+    tw.write_text(page)
+
+
 def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
@@ -179,19 +209,7 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     BL = fitz.Rect(mx, pg_height - my - w, mx + w, pg_height - my)
     BR = fitz.Rect(pg_width - mx - w, pg_height - my - w, pg_width - mx, pg_height - my)
 
-    tw = fitz.TextWriter(page.rect)
-    maxbox = fitz.Rect(mx + w + 10, my, pg_width - mx - w - 10, my + 30)
-    # page.draw_rect(maxbox, color=(1, 0, 0))
-    extra = tw.fill_textbox(
-        maxbox, stamp, align=fitz.TEXT_ALIGN_CENTER, fontsize=14, font=fitz.Font("helv")
-    )
-    assert not extra, "Text didn't fit: is paper number label too long?"
-    r = tw.text_rect
-    r = fitz.Rect(
-        pg_width // 2 - r.width / 2, my, pg_width // 2 + r.width / 2, my + r.height
-    )
-    page.draw_rect(r, color=(0, 0, 0), width=0.5)
-    tw.write_text(page)
+    pdf_page_add_stamp(page, stamp)
 
     # special code to skip staple mark and QR codes
     if odd is None:
@@ -265,12 +283,14 @@ def is_possible_to_encode_as(s, encoding):
         return False
 
 
-def insert_extra_info(extra, exam, x=None, y=None):
+def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
-        extra (dict): dictionary with keys ``id`` and ``name``.
-        exam (fitz.Document): PDF document.
+        page (fitz.Page): Page of a PDF document, will be modified as a side
+            effect.
+        name (str): student name.
+        sid (str): student id.
         x (float): specifies the x-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 has the centre
             of the box at left of the page and 100 has the centre at the right
@@ -284,23 +304,23 @@ def insert_extra_info(extra, exam, x=None, y=None):
             and 100 is the bottom of the page.  If None, defaults to 42
             for historical reasons (to match the position in our demo).
 
+    Keyword args:
+        signherebox (bool): add a "sign here" box, default True.
+
     Raises:
         ValueError: Raise error if the student name and number is not encodable.
 
     Returns:
-        fitz.Document: the exam object from the input, but with the extra
-            info added into the first page.
+        None: modifies the first input as a side effect.
     """
     if x is None:
         x = 50
     if y is None:
         y = 42
 
-    page_width = exam[0].bound().width
-    page_height = exam[0].bound().height
+    page_width = page.bound().width
+    page_height = page.bound().height
 
-    name = extra["name"]
-    sid = extra["id"]
     sign_here = "Please sign here"
 
     box_width = 410
@@ -319,8 +339,9 @@ def insert_extra_info(extra, exam, x=None, y=None):
         name_id_rect.x1,
         name_id_rect.y1 + box2_height,
     )
-    exam[0].draw_rect(name_id_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
-    exam[0].draw_rect(signature_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
+    page.draw_rect(name_id_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
+    if signherebox:
+        page.draw_rect(signature_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
 
     fontsize = 37
     w = math.inf
@@ -330,7 +351,7 @@ def insert_extra_info(extra, exam, x=None, y=None):
             raise RuntimeError(f'Overly long name? fontsize={fontsize} for name="{name}"')
         fontsize -= 1
         w = font.text_length(name, fontsize=fontsize)
-    tw = fitz.TextWriter(exam[0].rect)
+    tw = fitz.TextWriter(page.rect)
     tw.append(
         fitz.Point(page_width / 2 - w / 2, name_id_rect.y0 + 38),
         name,
@@ -343,19 +364,19 @@ def insert_extra_info(extra, exam, x=None, y=None):
         sid,
         fontsize=fontsize,
     )
-    tw.write_text(exam[0])
+    tw.write_text(page)
 
+    if not signherebox:
+        return
     fontsize = 48
     w = font.text_length(sign_here, fontsize=fontsize)
-    tw = fitz.TextWriter(exam[0].rect, color=(0.9, 0.9, 0.9))
+    tw = fitz.TextWriter(page.rect, color=(0.9, 0.9, 0.9))
     tw.append(
         fitz.Point(page_width / 2 - w / 2, signature_rect.y0 + 52),
         sign_here,
         fontsize=fontsize,
     )
-    tw.write_text(exam[0])
-
-    return exam
+    tw.write_text(page)
 
 
 def make_PDF(
@@ -416,7 +437,7 @@ def make_PDF(
 
     # If provided with student name and id, preprint on cover
     if extra:
-        exam = insert_extra_info(extra, exam, xcoord, ycoord)
+        pdf_page_add_name_id_box(exam[0], extra["name"], extra["id"], xcoord, ycoord)
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
