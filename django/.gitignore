@@ -19,7 +19,7 @@ db.sqlite3-journal
 *.bak
 
 # PyCharm
-.idea/WebPlom.iml
+.idea/*
 
 # Migrations (ignores all files within migrations except __init__.py)
 **/migrations/**
