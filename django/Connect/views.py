@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 
 from TestCreator.services import TestSpecService, TestSpecGenerateService
-from Preparation.services import PQVMappingService, StagingClasslistCSVService, PrenameSettingService
+from Preparation.services import PQVMappingService, StagingStudentService, PrenameSettingService
 from Base.base_group_views import ManagerRequiredView
 
 from Connect.services import CoreConnectionService
@@ -67,7 +67,7 @@ class ConnectSendInfoToCoreView(ManagerRequiredView):
             'spec_valid': spec.is_specification_valid(),
             'is_spec_sent': core.has_test_spec_been_sent(),
             'classlist_required': pre.get_prenaming_setting(),
-            'classlist_exists': ccsv.is_there_a_classlist(),
+            'classlist_exists': sstu.are_there_students(),
             'is_classlist_sent': core.has_classlist_been_sent(),
             'pqvmap_exists': qvs.is_there_a_pqv_map(),
             'db_initialized': core.has_db_been_initialized(),

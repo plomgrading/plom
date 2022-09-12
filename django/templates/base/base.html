@@ -67,14 +67,13 @@
                                     </li>
                                 {% elif user_group == 'manager' %}
                                     <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link" href="#">Users</a>
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'listUsers' %}">Users</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link" href="{% url 'prep_landing' %}">Create test</a>
                                     </li>
-
                                     <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'names' %}">Create test</a>
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'maintenance' %}">Create<br>Scanners/Markers</a>
                                     </li>
                                 {% endif %}
                                 <li class="nav-item">

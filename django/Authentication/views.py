@@ -70,9 +70,11 @@ class SetPassword(View):
 
 
 # When user enters their password successfully
-class SetPasswordComplete(GroupRequiredMixin, View):
+class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
     template_name = 'Authentication/set_password_complete.html'
     login_url = 'login'
+    group_required = [u"manger", u"marker", u"scanner"]
+    raise_exception = True
 
     def get(self, request):
         return render(request, self.template_name, status=200)
