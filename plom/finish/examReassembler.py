@@ -104,9 +104,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
             fitz.Rect(margin, margin, w - margin, header_bottom),
             text,
             fontsize=12,
-            color=[0, 0, 0],
-            fontname="Helvetica",
-            fontfile=None,
+            color=(0, 0, 0),
             align="left",
         )
         assert r > 0
