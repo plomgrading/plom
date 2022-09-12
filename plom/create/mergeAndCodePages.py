@@ -339,7 +339,9 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     font = fitz.Font("helv")
     while w > name_id_rect.width:
         if fontsize < 6:
-            raise RuntimeError(f'Overly long name? fontsize={fontsize} for name="{name}"')
+            raise RuntimeError(
+                f'Overly long name? fontsize={fontsize} for name="{name}"'
+            )
         fontsize -= 1
         w = font.text_length(name, fontsize=fontsize)
     tw = fitz.TextWriter(page.rect)
