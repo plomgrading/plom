@@ -28,7 +28,7 @@ These last two cases require human-intervention, which is where “identifier”
 Running the auto-identifier
 ---------------------------
 
-1. Open the manager tool.  "Progress" -> "ID progress".
+1. Open the :doc:`Manager tool <manage>`, then "Progress" → "ID progress".
 2. Optionally, adjust the top/bottom crop values, either manually or by clicking "Select interactively".
 3. Click "Recognize digits in IDs" which starts a background job.
    Click "Refresh" to update the output window.

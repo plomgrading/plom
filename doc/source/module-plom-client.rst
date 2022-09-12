@@ -12,3 +12,12 @@ Plom Client
     :members:
 .. automodule:: plom.client.annotator
     :members:
+
+
+.. _module-plom-manager:
+
+``plom.manager`` module
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: plom.manager
+    :members:

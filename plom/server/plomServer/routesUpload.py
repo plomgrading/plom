@@ -99,6 +99,9 @@ class UploadHandler:
 
             * ``[True, test_number]``
             * ``[False, "Cannot find test with that student id"]``
+
+        The test number could be b/c the paper is IDed.  Or it could be a
+        prediction (a confident one, currently "prename").
         """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "sid"]):
