@@ -26,4 +26,4 @@ omit = ["*/test_*", "/usr/*", "*/config*"]
 
 [tool.pytest.ini_options]
 # always ignore the django folder
-addopts = --ignore plom/django
+addopts = "--ignore plom/django"
