@@ -20,6 +20,7 @@ aiohttp==3.7.2
 arrow==1.1.1
 canvasapi==2.0.0
 exif==1.2.2
+fonttools==4.37.1
 importlib_resources==5.0.0
 Pillow==7.0.0
 opencv-python-headless==4.4.0.40

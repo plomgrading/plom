@@ -432,6 +432,11 @@ def make_PDF(
     if extra:
         pdf_page_add_name_id_box(exam[0], extra["name"], extra["id"], xcoord, ycoord)
 
+    # We embed fonts for names and other overlay.  But if there are non-latin
+    # characters (e.g., CJK) in names, then the embedded font is quite large.
+    # Subsetting requires https://pypi.org/project/fonttools
+    exam.subset_fonts()
+
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
     # also do garbage collection to remove duplications within pdf
