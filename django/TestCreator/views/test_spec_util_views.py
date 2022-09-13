@@ -1,6 +1,7 @@
 import toml
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.exceptions import PermissionDenied
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.shortcuts import render
 from django.urls import reverse
 
@@ -36,6 +37,16 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
         ref_service.delete_pdf()
         spec.reset_specification()
         return HttpResponseRedirect(reverse("prep_landing"))
+
+
+class TestSpecViewRefPDF(ManagerRequiredView):
+    """Return the reference PDF in a file response"""
+    def get(self, request):
+        spec = TestSpecService()
+        ref = ReferencePDFService(spec)
+        pdf_file = ref.get_pdf().pdf
+        pdf_doc = SimpleUploadedFile('spec_reference.pdf', pdf_file.open('rb').read(), content_type="application/pdf")
+        return FileResponse(pdf_doc)
 
 
 class TestSpecGenTomlView(ManagerRequiredView):

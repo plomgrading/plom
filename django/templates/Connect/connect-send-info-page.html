@@ -76,12 +76,16 @@
                 <b>Please make sure all information is correct before proceeding. Once you do this, there is no going back without wiping the Plom-classic server.</b>
             </p>
             {% if is_spec_sent %}
-                {% if pqvmap_exists %}
-                <a class="btn btn-primary" href="{% url 'connect_init_db' %}">Send</a>
+                {% if classlist_required and not is_classlist_sent %}
+                    <p class="card-text">Classlist not uploaded &mdash; required since prenaming is enabled.</p>
                 {% else %}
-                <p class="card-text">No QV map detected.</p>
+                    {% if pqvmap_exists %}
+                    <a class="btn btn-primary" href="{% url 'connect_init_db' %}">Send</a>
+                    {% else %}
+                    <p class="card-text">No QV map detected.</p>
+                    {% endif %}
                 {% endif %}
-            {% else %}            
+            {% else %}
             <p class="card-text">Test specification not uploaded.</p>
             {% endif %}
         </div>

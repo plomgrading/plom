@@ -34,17 +34,18 @@ class TestSpecValidateView(TestSpecPageView):
             })
             if i+1 in spec.questions:
                 q_obj = spec.questions[i+1].get_question()
-                question.update({
-                    "label": q_obj.label,
-                    "mark": q_obj.mark,
-                    "shuffle": spec.questions[i+1].get_question_fix_or_shuffle(),
-                })
-            else:
-                question.update({
-                    "label": "",
-                    "mark": "",
-                    "shuffle": "",
-                })
+                if q_obj:
+                    question.update({
+                        "label": q_obj.label,
+                        "mark": q_obj.mark,
+                        "shuffle": spec.questions[i+1].get_question_fix_or_shuffle(),
+                    })
+                else:
+                    question.update({
+                        "label": "",
+                        "mark": "",
+                        "shuffle": "",
+                    })
             questions.append(question)
         context.update({"questions": questions})
         return context

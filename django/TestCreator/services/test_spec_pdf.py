@@ -10,6 +10,10 @@ class ReferencePDFService:
     def __init__(self, spec_service: TestSpecService):
         self.spec = spec_service
 
+    def is_there_a_reference_pdf(self):
+        """Return True if the user has uploaded a reference PDF already"""
+        return models.ReferencePDF.objects.exists()
+
     def create_pdf(self, slug: str, pages: int, pdf) -> models.ReferencePDF:
         """
         Create a PDF in the database and save the file on disk
