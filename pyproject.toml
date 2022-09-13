@@ -23,3 +23,7 @@ ignored-modules = ["tensorflow", "api_secrets"]
 # our CI runs /usr/local stuff for some reason
 # python*.py errors need -i or config match here
 omit = ["*/test_*", "/usr/*", "*/config*"]
+
+[tool.pytest.ini_options]
+# always ignore the django folder
+addopts = --ignore plom/django
