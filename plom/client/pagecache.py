@@ -31,7 +31,7 @@ class PageCache:
     def page_image_path(self, img_id):
         """
 
-        TODO: document what happens if it doens't exist?  Exception or None?
+        TODO: document what happens if it doesn't exist?  Exception or None?
         """
         print(self._image_paths)
         return self._image_paths[img_id]
