@@ -45,11 +45,13 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
             prev_questions = spec.get_n_questions()
             n_questions = data['questions']
 
-            marks = data['total_marks']
-            spec.set_total_marks(marks)
             if prev_questions != n_questions:
                 spec.clear_questions()
                 spec.set_n_questions(n_questions)
+
+            marks = data['total_marks']
+            print(marks)
+            spec.set_total_marks(marks)
 
             spec.unvalidate()
 

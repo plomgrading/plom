@@ -33,10 +33,9 @@ python3 manage.py plom_preparation_classlist upload useful_files_for_testing/cl_
 python3 manage.py plom_preparation_qvmap generate
 
 # Plom-classic commands. Will fail gracefully if there is no core server connection
-python3 manage.py plom_connect_test server --name localhost --port 41984
-python3 manage.py plom_connect_test manager
-
-python3 manage.py plom_connect_send all
+python3 manage.py plom_connect server --name localhost --port 41984
+python3 manage.py plom_connect manager
+python3 manage.py plom_connect send all
 
 # This is for production use, when Debug = False
 # python3 manage.py collectstatic

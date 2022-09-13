@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.TestSpecLaunchView.as_view(), name='creator_launch'),
     path('names/', views.TestSpecCreatorNamesPage.as_view(), name='names'),
     path('upload', views.TestSpecCreatorVersionsRefPDFPage.as_view(), name='upload'),
+    path('upload/view/', views.TestSpecViewRefPDF.as_view(), name='ref_pdf_view'),
     path('id_page/', views.TestSpecCreatorIDPage.as_view(), name='id_page'),
     path('questions/', views.TestSpecCreatorQuestionsPage.as_view(), name='questions'),
     path('questions/<int:q_idx>', views.TestSpecCreatorQuestionDetailPage.as_view(), name='q_detail'),
