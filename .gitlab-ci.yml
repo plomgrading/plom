@@ -230,7 +230,7 @@ coverage:
   image: $IM
   script:
     - pip install pytest pytest-cov coverage[toml]
-    - coverage run -m pytest
+    - coverage run -m pytest --ignore django
     - coverage report
     - coverage xml
   artifacts:
