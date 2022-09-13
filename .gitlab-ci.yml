@@ -280,12 +280,12 @@ flake8:
   allow_failure: true
 
 
-  django:
-    stage: test
-    needs: ["docker-image"]
-    image: $IM
-    script:
-      - python3 -m pip install -r django/requirements.txt
+django:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - python3 -m pip install -r django/requirements.txt
 
 
 demoserver:
