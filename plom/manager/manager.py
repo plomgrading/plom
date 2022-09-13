@@ -695,20 +695,25 @@ class Manager(QWidget):
         if not fname.is_file():
             return
 
+        ignore_warnings = self.ui.classlistIgnoreWarningsCB.isChecked()
+        force_upload = self.ui.classlistForceUploadCB.isChecked()
+
         # A copy-paste job from plom.create.__main__:
         try:
             spec = self.msgr.get_spec()
         except PlomServerNotReady as e:
             WarnMsg(self, "Server not ready.", info=e).exec()
             return
-        success, classlist = process_classlist_file(fname, spec, ignore_warnings=False)
+        success, classlist = process_classlist_file(
+            fname, spec, ignore_warnings=ignore_warnings
+        )
         if not success:
             WarnMsg(
                 self, "Problems parsing classlist?", info="TODO: for now, check stdout?"
             ).exec()
             return
         try:
-            upload_classlist(classlist, msgr=self.msgr)
+            upload_classlist(classlist, msgr=self.msgr, force=force_upload)
         except (PlomConflict, PlomRangeException, PlomServerNotReady) as e:
             WarnMsg(self, "Problem uploading classlist?", info=e).exec()
             return
