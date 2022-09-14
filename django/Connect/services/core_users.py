@@ -63,7 +63,7 @@ class CoreUsersService(CoreConnectionService):
         Get details about all of the plom-classic users
 
         Returns:
-            a dict of lists of the form `username: [enabled?, logged in?, date created, last action, papers IDd, questions marked]`
+            a dict of lists of the form `username: [enabled?, logged in?, time last logged in, last action, papers IDd, questions marked]`
         
         """
         if not self.is_there_a_valid_connection():

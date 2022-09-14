@@ -10,6 +10,7 @@
     <title>{% block title %}Web Plom - User Management {% endblock %}</title>
 </head>
 <body>
+    {% block page_heading %}User management{% endblock %}
     {% block main_content %}
     {% if manager_status == 'no_connection' %}
     <div class="alert alert-danger d-flex align-items-center">
@@ -56,7 +57,7 @@
         Not Active
         {% endif %}
             <button type="button" class="btn btn-info" name="showProgress" value="showProgess">
-                <a href="progress/{{user.username}}" class="nav-link" target="_blank">Show Progress</a>
+                <a href="progress/{{user.username}}" class="nav-link">Show Progress</a>
             </button>
         {% if user.details.0 %}
             <input 

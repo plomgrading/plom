@@ -1,3 +1,4 @@
+import arrow
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
@@ -126,9 +127,22 @@ class UserPage(ManagerRequiredView):
 class ProgressPage(ManagerRequiredView):
     progress_page = 'UserManagement/progress.html'
 
+    def build_context(self, username):
+        core = CoreUsersService()
+        context = super().build_context()
+        user_details = core.get_user_details()[username]
+        login_time = arrow.get(user_details[2])
+        context.update({
+            'username': username,
+            'last_login': login_time.humanize(),
+            'last_action': user_details[3],
+            'n_papers_id': user_details[4],
+            'n_papers_marked': user_details[5],
+        })
+        return context
+
     def get(self, request, username):
-        context = self.build_context()
-        context.update({'username': username})
+        context = self.build_context(username)
         return render(request, self.progress_page, context)
 
     def post(self, request, username):
