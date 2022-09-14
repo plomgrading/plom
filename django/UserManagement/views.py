@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.views import View
 from braces.views import GroupRequiredMixin
+from django_htmx.http import HttpResponseClientRefresh
 
 from Connect.services import CoreUsersService
 from Base.base_group_views import ManagerRequiredView
@@ -16,21 +17,31 @@ class UserPage(ManagerRequiredView):
         context = super().build_context()
         core = CoreUsersService()
         users = User.objects.all()
-        user_details = core.get_user_details()
+
+        login_valid = core.manager_login_status()
+        if login_valid == 'valid':
+            user_details = core.get_user_details()
+        else:
+            user_details = []
+        context.update({
+            'manager_status': login_valid
+        })
 
         user_list = []
         for user in users:
             user_info = {}
             if user.username in user_details:
                 user_core_details = user_details[user.username]
-                user_group = user.groups.all()[0].name
-                user_info.update({
-                    'details': user_core_details,
-                    'obj': user,
-                    'group': user_group,
-                    'username': user.username,
-                })
-                user_list.append(user_info)
+            else:
+                user_core_details = []
+            user_group = user.groups.all()[0].name
+            user_info.update({
+                'details': user_core_details,
+                'obj': user,
+                'group': user_group,
+                'username': user.username,
+            })
+            user_list.append(user_info)
 
         context.update({'users': user_list})
         return context
@@ -41,6 +52,9 @@ class UserPage(ManagerRequiredView):
 
     def post(self, request, username):
         core = CoreUsersService()
+        if core.manager_login_status() != 'valid':
+            return redirect('/users')
+
         user_to_change = User.objects.get_by_natural_key(username)
         if 'changeStatus' in request.POST:
             if user_to_change.is_active:
@@ -55,6 +69,9 @@ class UserPage(ManagerRequiredView):
     @login_required
     def enableScanners(self):
         core = CoreUsersService()
+        if core.manager_login_status() != 'valid':
+            return redirect('/users')
+
         users_in_group = Group.objects.get(name="scanner").user_set.all()
         for user in users_in_group:
             user.is_active = True
@@ -65,6 +82,9 @@ class UserPage(ManagerRequiredView):
     @login_required
     def disableScanners(self):
         core = CoreUsersService()
+        if core.manager_login_status() != 'valid':
+            return redirect('/users')
+
         users_in_group = Group.objects.get(name="scanner").user_set.all()
         for user in users_in_group:
             user.is_active = False
@@ -75,6 +95,9 @@ class UserPage(ManagerRequiredView):
     @login_required
     def enableMarkers(self):
         core = CoreUsersService()
+        if core.manager_login_status() != 'valid':
+            return redirect('/users')
+
         users_in_group = Group.objects.get(name="marker").user_set.all()
         for user in users_in_group:
             user.is_active = True
@@ -85,12 +108,19 @@ class UserPage(ManagerRequiredView):
     @login_required
     def disableMarkers(self):
         core = CoreUsersService()
+        if core.manager_login_status() != 'valid':
+            return redirect('/users')
+
         users_in_group = Group.objects.get(name="marker").user_set.all()
         for user in users_in_group:
             user.is_active = False
             user.save()
             core.disable_core_user(user.username)
         return redirect('/users')
+
+    def retryConnection(self):
+        """Refresh the client and check manager account status."""
+        return HttpResponseClientRefresh()
 
 
 class ProgressPage(ManagerRequiredView):
