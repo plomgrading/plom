@@ -12,10 +12,31 @@ from Base.base_group_views import ManagerRequiredView
 class UserPage(ManagerRequiredView):
     user_page = 'UserManagement/users.html'
 
-    def get(self, request):
+    def build_context(self):
+        context = super().build_context()
+        core = CoreUsersService()
         users = User.objects.all()
+        user_details = core.get_user_details()
+
+        user_list = []
+        for user in users:
+            user_info = {}
+            if user.username in user_details:
+                user_core_details = user_details[user.username]
+                user_group = user.groups.all()[0].name
+                user_info.update({
+                    'details': user_core_details,
+                    'obj': user,
+                    'group': user_group,
+                    'username': user.username,
+                })
+                user_list.append(user_info)
+
+        context.update({'users': user_list})
+        return context
+
+    def get(self, request):
         context = self.build_context()
-        context.update({'users': users})
         return render(request, self.user_page, context)
 
     def post(self, request, username):

@@ -12,29 +12,31 @@
 <body>
     {% block main_content %}
     {% for user in users %}
-    {%  if 'marker' in user.groups.all.0.name or 'scanner' in user.groups.all.0.name %}
+    {%  if 'marker' in user.group or 'scanner' in user.group %}
     <form method="POST" action="users/{{user.username}}">
         {% csrf_token %}
     <div class="card mt-2">
     <div class="card-body d-flex flex-row justify-content-between">
         <div>
             <h5 class="card-title">{{user.username}}</h5>
-            {% if 'marker' in user.groups.all.0.name %}
+            {% if 'marker' in user.group %}
              Marker
             {% endif %}
-            {% if 'scanner' in user.groups.all.0.name %}
+            {% if 'scanner' in user.group %}
              Scanner
             {% endif %}
         </div>
-        {% if user in request.online_now %}
+        {% if user.username in request.online_now %}
         Active
+        {% elif user.details.1 %}
+        Active on Plom-classic
         {% else %}
         Not Active
         {% endif %}
             <button type="button" class="btn btn-info" name="showProgress" value="showProgess">
                 <a href="progress/{{user.username}}" class="nav-link" target="_blank">Show Progress</a>
             </button>
-        {% if user.is_active %}
+        {% if user.details.0 %}
             <input type="submit" class="btn btn-danger" value="Disable" name="changeStatus">
         {% else %}
             <input type="submit" class="btn btn-success" value="Enable" name="changeStatus">
