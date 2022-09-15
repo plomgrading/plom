@@ -5,6 +5,8 @@ from django.db import models
 from django.db.models.signals import pre_delete
 from django.utils.text import slugify
 
+from Base.models import SingletonBaseModel
+
 """
 TODO: move util functions outside models file, clean up old functions
 """
@@ -58,3 +60,21 @@ class TestSpecQuestion(models.Model):
     label = models.TextField()
     mark = models.PositiveIntegerField(default=0)
     shuffle = models.BooleanField(default=None, null=True)
+
+
+class StagingSpecification(SingletonBaseModel):
+    """
+    Store the current state of the test specification as the
+    user creates it. Not necessarily a valid spec - at the end of
+    the specification creator wizard, the information stored here
+    will be validated + converted to a JSON object
+    """
+    name = models.TextField(default="")
+    longName = models.TextField(default="")
+    numberOfPages = models.PositiveIntegerField(default=0)
+    numberOfVersions = models.PositiveIntegerField(default=0)
+    totalMarks = models.PositiveIntegerField(default=0)
+    numberOfQuestions = models.PositiveIntegerField(default=0)
+    numberToProduce = models.IntegerField(default=-1)
+    pages = models.JSONField(default=dict)
+    questions = models.JSONField(default=dict)

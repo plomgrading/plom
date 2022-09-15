@@ -1,3 +1,4 @@
+from .spec_staging import StagingSpecificationService
 from .test_spec_info import TestSpecService
 from .test_spec_pdf import ReferencePDFService
 from .test_spec_progress import TestSpecProgressService

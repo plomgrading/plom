@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 from TestCreator.views import TestSpecPageView
-from ..services import TestSpecService
+from TestCreator.services import StagingSpecificationService
 from .. import forms
 
 
@@ -11,7 +11,7 @@ class TestSpecCreatorNamesPage(TestSpecPageView):
     """Set the test's long name, short name, and number of versions."""
 
     def build_form(self):
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         initial = {
             'long_name': spec.get_long_name(),
             'short_name': spec.get_short_name(),
@@ -43,7 +43,7 @@ class TestSpecCreatorNamesPage(TestSpecPageView):
         form = forms.TestSpecNamesForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            spec = TestSpecService()
+            spec = StagingSpecificationService()
 
             long_name = data['long_name']
             spec.set_long_name(long_name)
@@ -55,8 +55,6 @@ class TestSpecCreatorNamesPage(TestSpecPageView):
             spec.set_n_versions(n_versions)
             if n_versions == 1:
                 spec.fix_all_questions()
-
-            spec.unvalidate()
 
             return HttpResponseRedirect(reverse('upload'))
         else:
