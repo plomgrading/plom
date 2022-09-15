@@ -3,6 +3,8 @@ from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
 from tabulate import tabulate
 
+from Connect.services import CoreUsersService
+
 
 # -m to get number of scanners and markers
 class Command(BaseCommand):
@@ -46,10 +48,10 @@ class Command(BaseCommand):
             }
             email = '@plom.ca'
 
-            admin = 'demo-admin'
-            manager = 'demo-manager1'
-            scanner = 'demo-scanner'
-            marker = 'demo-marker'
+            admin = 'demoAdmin'
+            manager = 'demoManager1'
+            scanner = 'demoScanner'
+            marker = 'demoMarker'
 
             # Here is to create a single demo admin user
             try:
@@ -77,13 +79,18 @@ class Command(BaseCommand):
             manager_info['Username'].append(manager)
             manager_info['Password'].append(manager)
 
+            # for updating a connected core server
+            core = CoreUsersService()
+
             # Here is to create 5 scanners and markers
             for number_of_scanner_marker in range(1, range_of_scanners_markers + 1):
                 scanner_username = scanner + str(number_of_scanner_marker)
+                scanner_password = scanner_username + '_'
                 scanner_info['Username'].append(scanner_username)
-                scanner_info['Password'].append(scanner_username)
+                scanner_info['Password'].append(scanner_password)
 
                 marker_username = marker + str(number_of_scanner_marker)
+                marker_password = marker_username + '_'
                 marker_info['Username'].append(marker_username)
                 marker_info['Password'].append(marker_username)
 
@@ -92,16 +99,22 @@ class Command(BaseCommand):
                 else:
                     User.objects.create_user(username=scanner_username,
                                              email=scanner_username + email,
-                                             password=scanner_username).groups.add(scanner_group, demo_group)
+                                             password=scanner_password).groups.add(scanner_group, demo_group)
                     print(f'{scanner_username} created and added to {scanner_group} group!')
+
+                    # add to core server (if a valid connection exists)
+                    core.create_core_user(scanner_username, scanner_password)
 
                 if marker_username in exist_usernames:
                     print(f'{marker_username} already exists!')
                 else:
                     User.objects.create_user(username=marker_username,
                                              email=marker_username + email,
-                                             password=marker_username).groups.add(marker_group, demo_group)
+                                             password=marker_password).groups.add(marker_group, demo_group)
                     print(f'{marker_username} created and added to {marker_group} group!')
+
+                    # add to core server (if there is a valid connection)
+                    core.create_core_user(marker_username, marker_password)
 
             # Here is print the table of demo users
             print('')

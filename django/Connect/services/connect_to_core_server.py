@@ -81,6 +81,30 @@ class CoreConnectionService:
         manager_details = self.get_manager()
         return manager_details.password != ""
 
+    def manager_login_status(self):
+        """Test if the manager is able to log in to a core server
+        
+        Returns:
+            string: the status of the connection. Either 'valid,' 'no_connection,' or 'existing_login'
+        """
+        msgr = None
+
+        try:
+            msgr = self.get_manager_messenger()
+            msgr.start()
+
+            msgr.requestAndSaveToken(self.manager_username, self.get_manager_password())
+            return 'valid'
+        except PlomConnectionError:
+            return 'no_connection'
+        except PlomExistingLoginException:
+            return 'existing_login'
+        finally:
+            if msgr:
+                if msgr.token:
+                    msgr.clearAuthorisation(self.manager_username, self.get_manager_password())
+                msgr.stop()
+
     def get_messenger(self):
         """Get a messenger connected to the core server"""
         url = self.get_server_name()
