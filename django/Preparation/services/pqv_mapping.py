@@ -89,7 +89,7 @@ class PQVMappingService:
     def make_version_map(self, numberToProduce):
         from plom import make_random_version_map
 
-        # grab the spec as dict from ther test creator services
+        # grab the spec as dict from the test creator services
         speck = TestSpecService()
         gen = TestSpecGenerateService(speck)
         spec_dict = gen.generate_spec_dict()

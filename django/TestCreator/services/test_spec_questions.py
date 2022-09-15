@@ -106,7 +106,7 @@ class TestSpecQuestionService:
         return question.shuffle
 
     def get_question_fix_or_shuffle(self):
-        """Get the fix or shufle status (as a string)
+        """Get the fix or shuffle status (as a string)
 
         Returns:
             str: 'shuffle' or 'fix'

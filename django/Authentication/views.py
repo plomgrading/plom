@@ -73,7 +73,7 @@ class SetPassword(View):
 class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
     template_name = 'Authentication/set_password_complete.html'
     login_url = 'login'
-    group_required = [u"manger", u"marker", u"scanner"]
+    group_required = [u"manager", u"marker", u"scanner"]
     raise_exception = True
 
     def get(self, request):

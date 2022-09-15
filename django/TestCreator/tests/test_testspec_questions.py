@@ -103,7 +103,7 @@ class TestSpecQuestionTests(TestCase):
         self.assertEqual(marks_to_others, 8)
 
     def test_other_questions_total(self):
-        """Test TestSpecService.get_available_marks with perviously assigned values"""
+        """Test TestSpecService.get_available_marks with previously assigned values"""
         spec = services.TestSpecService()
         spec.set_total_marks(10)
         q1 = baker.make(models.TestSpecQuestion, mark=7, index=0)
