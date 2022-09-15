@@ -115,7 +115,7 @@ class Command(BaseCommand):
         sp_U.add_argument(
             "--ignore-warnings",
             action="store_true",
-            help="Use classlist csv even if there are warnings (not recommened).",
+            help="Use classlist csv even if there are warnings (not recommended).",
         )
 
     def handle(self, *args, **options):

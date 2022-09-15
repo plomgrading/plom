@@ -32,10 +32,8 @@ class TestSpecPDFView(TestSpecPageView):
     def build_context(self, page_name):
         context = super().build_context(page_name)
         spec = TestSpecService()
-        n_pages = spec.get_n_pages()
-        if n_pages > 0:
-            spec = TestSpecService()
-            ref = ReferencePDFService(spec)
+        ref = ReferencePDFService(spec)
+        if ref.is_there_a_reference_pdf():
             thumbnails = ref.create_page_thumbnail_list()
             context.update({
                 "thumbnails": thumbnails,

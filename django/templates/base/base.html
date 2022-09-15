@@ -22,11 +22,11 @@
         <link rel="stylesheet" type="text/css" href="{% static '/css/profile.css'%}">
 
         <!-- Title -->
-        <title>{% block title %}Test Specification Creator Mockup{% endblock %}</title>
+        <title>{% block title %}Web Plom{% endblock %}</title>
     </head>
     <!-- Need the csrf token to enable htmx -->
     <body style="background-color: #F5F6FA; display: flex;" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-        <!-- Bootsrap JS -->
+        <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
 
         <div class="container-fluid" style="padding: 0px;">

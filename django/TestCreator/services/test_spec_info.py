@@ -1,9 +1,13 @@
 import pathlib
 import json
 import fitz
+import copy
+from plom.specVerifier import SpecVerifier
+
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+
 from .. import models
 from .. import services
 
@@ -155,7 +159,9 @@ class TestSpecService:
         for i in range(1, self.get_n_questions() + 1):
             if i in self.questions:
                 self.questions[i].remove_question()
-                del self.questions[i]
+                self.questions.pop(i)
+        self.set_n_questions(0)
+        self.set_total_marks(0)
 
     def fix_all_questions(self):
         """Set all questions to 'fix'"""
@@ -611,9 +617,20 @@ class TestSpecService:
         if errors_to_raise:
             raise ValidationError(errors_to_raise)
 
-        the_spec = self.specification()
-        the_spec.validate_page_submitted = True
-        the_spec.save()
+        # As a final step, send through the plom-classic spec verifier
+        valid_spec = None
+        try:
+            spec_dict = services.TestSpecGenerateService(self).generate_spec_dict()
+            vlad = SpecVerifier(copy.deepcopy(spec_dict))
+            vlad.verifySpec()
+            valid_spec = vlad.spec
+            if valid_spec:
+                the_spec = self.specification()
+                the_spec.validate_page_submitted = True
+                the_spec.save()
+        except ValueError as e:
+            raise ValidationError(e)
+
 
     def is_specification_valid(self):
         """Validates specification, and return a boolean instead of raising ValidationErrors"""

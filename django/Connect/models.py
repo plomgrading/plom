@@ -19,7 +19,7 @@ class CoreManagerLogin(SingletonBaseModel):
 
 
 class CoreScannerLogin(SingletonBaseModel):
-    """Login details for the core scanner accont"""
+    """Login details for the core scanner account"""
     scanner_username = models.CharField(max_length=100)
     scanner_password = models.CharField(max_length=100)
 

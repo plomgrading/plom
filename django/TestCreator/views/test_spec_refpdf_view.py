@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
 from django.utils.text import slugify
+from django_htmx.http import HttpResponseClientRefresh
 
 from TestCreator.views import TestSpecPageView
 from ..services import TestSpecService, ReferencePDFService
@@ -25,15 +26,40 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
 
         return forms.TestSpecVersionsRefPDFForm(files=files)
 
+    def build_context(self):
+        spec = TestSpecService()
+        ref = ReferencePDFService(spec)
+        context = super().build_context("upload")
+        context.update({
+            'refpdf_uploaded': ref.is_there_a_reference_pdf()
+        })
+        if ref.is_there_a_reference_pdf():
+            context.update({
+                'n_pages': spec.get_n_pages()
+            })
+        return context
+
     def get(self, request):
-        context = self.build_context("upload")
+        context = self.build_context()
         context.update({
             "form": self.build_form()
         })
         return render(request, 'TestCreator/test-spec-upload-pdf.html', context)
 
+    def delete(self, request):
+        spec = TestSpecService()
+        ref = ReferencePDFService(spec)
+        ref.delete_pdf()
+        spec.clear_questions()
+        
+        the_spec = spec.specification()
+        the_spec.pages = {}
+        the_spec.save()
+        
+        return HttpResponseClientRefresh()
+
     def post(self, request):
-        context = self.build_context("upload")
+        context = self.build_context()
         form = forms.TestSpecVersionsRefPDFForm(request.POST, request.FILES)
         print(form.files)
         if form.is_valid():

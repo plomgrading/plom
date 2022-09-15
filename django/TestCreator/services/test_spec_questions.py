@@ -106,13 +106,14 @@ class TestSpecQuestionService:
         return question.shuffle
 
     def get_question_fix_or_shuffle(self):
-        """Get the fix or shufle status (as a string)
+        """Get the fix or shuffle status (as a string)
 
         Returns:
             str: 'shuffle' or 'fix'
         """
         question = self.get_question()
-        return 'shuffle' if question.shuffle else 'fix'
+        if question:
+            return 'shuffle' if question.shuffle else 'fix'
 
     def is_question_completed(self):
         """Are all the necessary fields completed for the question?

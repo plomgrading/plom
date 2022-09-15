@@ -3,11 +3,40 @@
 {% block right_column %}
 
 <form class="w-100" action="{% url 'upload' %}" method="post" enctype="multipart/form-data"
-    {% if completed.upload %}
+    {% if refpdf_uploaded %}
     onsubmit="return confirm('Are you sure? This will reset all pages and questions.')"
     {% endif %}
 >
     {% csrf_token %}
+
+    {% if refpdf_uploaded %}
+    <div class="vstack d-flex h-100">
+        <div class="h-100">
+            <div class="card w-75">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        Reference PDF uploaded
+                        <i class="bi bi-check-circle text-success"></i>
+                    </h5>
+                    <p class="card-text">Note that this just for rendering thumbnails &mdash; you can upload test sources after the specification is completed.</p>
+                    <p class="card-text">Number of pages: {{ n_pages }}</p>
+                    <a class="btn btn-success" href="{% url 'ref_pdf_view' %}" target="_blank">View</a>
+                    <a 
+                        class="btn btn-danger" 
+                        hx-delete="{% url 'upload' %}" 
+                        hx-confirm="Are you sure? This will reset all pages and questions."
+                    >
+                        Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div>
+            <a class="btn btn-primary btn-lg" href="{% url 'names' %}">Back</a>
+            <a class="btn btn-primary btn-lg float-end" href="{% url 'id_page' %}">Next</a>
+        </div>
+    </div>
+    {% else %}
     <div class="vstack d-flex h-100">
         <div class="h-100">
             <div class="row">
@@ -23,6 +52,7 @@
             <input type="submit" class="btn btn-primary btn-lg float-end" value="Next">
         </div>
     </div>
+    {% endif %}
 </form>
 
 {% endblock %}
