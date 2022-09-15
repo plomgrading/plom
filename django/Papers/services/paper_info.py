@@ -1,5 +1,5 @@
 from django.db import transaction
-from core.models import Paper
+from Papers.models import Paper
 
 import logging
 
