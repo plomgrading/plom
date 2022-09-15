@@ -221,7 +221,7 @@ class Command(BaseCommand):
                 port = options['port']
             else:
                 self.stdout.write(
-                    "No port numer provided, defaulting to 41984."
+                    "No port number provided, defaulting to 41984."
                 )
 
             self.connect_to_server(name, port)
