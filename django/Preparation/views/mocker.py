@@ -2,7 +2,7 @@ import shutil
 from django.http import FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from Preparation.services import ExamMockerService, TestSourceService
-from TestCreator.services import TestSpecService
+from SpecCreator.services import TestSpecService
 
 from Base.base_group_views import ManagerRequiredView
 

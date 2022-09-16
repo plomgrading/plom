@@ -3,7 +3,7 @@ import getpass
 from django.core.management.base import BaseCommand
 from plom.plom_exceptions import PlomConnectionError
 
-from TestCreator.services import TestSpecService, TestSpecGenerateService
+from SpecCreator.services import TestSpecService, TestSpecGenerateService
 from Preparation.services import StagingStudentService, PQVMappingService, PrenameSettingService
 from Connect.services import CoreConnectionService
 

@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'Authentication',
     'Preparation',
     'Papers',
-    'TestCreator',
+    'SpecCreator',
     'Profile',
     'BuildPaperPDF',
     'Connect',

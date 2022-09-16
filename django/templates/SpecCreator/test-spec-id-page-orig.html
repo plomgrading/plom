@@ -1,0 +1,55 @@
+{% extends 'SpecCreator/base-test-spec-2col.html' %}
+
+{% load static %}
+
+{% block title %} Create Specification - ID page {% endblock %}
+
+{% block right_column %}
+
+<div class="container-fluid" x-data="{ {% for page in pages %} page{{ forloop.counter }}selected: false, {% endfor %} }">
+    <p>Select an ID page:</p>
+
+    <!-- Container of card elements -->
+    {% if pages %}
+    <div class="row row-cols-auto">
+        {% for page in pages %}
+
+        <!-- Card element -->
+        <div class="col" style="margin-bottom: 24px;">
+            <div class="card shadow-sm is_pdf_thumbnail" @click="page{{ forloop.counter }}selected = !page{{ forloop.counter }}selected">
+                <img src="{% static page %}" class="img-fluid card-img">
+                <div class="card-img-overlay d-flex">
+                    <div class="flex-column d-flex">
+                        <div style="height: 100%;"></div>
+                        <span class="p-2 badge text-bg-primary" x-cloak x-show="page{{ forloop.counter }}selected">ID</span> 
+                    </div>
+                    <div class="flex-grow-1"></div>              
+                </div>
+            </div>
+        </div>
+
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No reference PDF uploaded yet.</p>
+    {% endif %}
+    
+    <form class="w-100" action="{% url 'id_page' %}" method="post">
+        {% csrf_token %}
+
+        {% for e in form.non_field_errors %}
+        <p class="text-danger">{{ e }}</p>
+        {% endfor %}
+        
+        <div style="display:none">
+            {{ form.as_p }}
+        </div>
+        
+        <div>
+            <a type="button" class="btn btn-primary btn-lg" href="{% url 'upload' %}">Back</a>
+            <input type="submit" class="btn btn-primary btn-lg float-end" value="Next">
+        </div>
+    </form>
+</div>
+
+{% endblock %}

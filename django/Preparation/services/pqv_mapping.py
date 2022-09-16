@@ -3,7 +3,7 @@ from django.db import transaction
 from plom import SpecVerifier
 from Preparation.models import StagingPQVMapping
 from Preparation.services import StagingStudentService
-from TestCreator.services import TestSpecService, TestSpecGenerateService
+from SpecCreator.services import TestSpecService, TestSpecGenerateService
 
 
 class PQVMappingService:

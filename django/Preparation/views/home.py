@@ -8,7 +8,7 @@ from django.utils.text import slugify
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from TestCreator.services import TestSpecService
+from SpecCreator.services import TestSpecService
 from Connect.services import CoreConnectionService
 from BuildPaperPDF.services import BuildPapersService
 

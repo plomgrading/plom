@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from Preparation.services import TestSourceService
-from TestCreator.services import TestSpecService
+from SpecCreator.services import TestSpecService
 
 from pathlib import Path
 

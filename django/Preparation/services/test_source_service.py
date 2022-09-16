@@ -3,7 +3,7 @@ from django.core.files import File
 from django.db import transaction
 
 from Preparation.models import PaperSourcePDF
-from TestCreator.services import TestSpecService
+from SpecCreator.services import TestSpecService
 
 from collections import defaultdict
 import fitz

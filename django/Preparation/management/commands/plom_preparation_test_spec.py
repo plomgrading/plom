@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
 
-from TestCreator.services import TestSpecService, TestSpecGenerateService
+from SpecCreator.services import TestSpecService, TestSpecGenerateService
 from Preparation.services import PQVMappingService
 from plom import SpecVerifier
 

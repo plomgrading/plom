@@ -10,7 +10,7 @@ from Preparation.services import (
 )
 
 from Base.base_group_views import ManagerRequiredView
-from TestCreator.services import TestSpecService
+from SpecCreator.services import TestSpecService
 
 class PQVMappingUploadView(ManagerRequiredView):
     # NOT CURRENTLY BEING USED

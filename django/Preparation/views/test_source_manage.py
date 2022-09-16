@@ -7,7 +7,7 @@ from django_htmx.http import HttpResponseClientRedirect
 
 
 from Preparation.services import TestSourceService
-from TestCreator.services import TestSpecService
+from SpecCreator.services import TestSpecService
 
 from Base.base_group_views import ManagerRequiredView
 

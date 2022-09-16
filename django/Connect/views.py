@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.template.loader import render_to_string
 
-from TestCreator.services import TestSpecService, TestSpecGenerateService
+from SpecCreator.services import TestSpecService, TestSpecGenerateService
 from Preparation.services import PQVMappingService, StagingStudentService, PrenameSettingService
 from Base.base_group_views import ManagerRequiredView
 
