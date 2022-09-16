@@ -4,9 +4,11 @@
 # Copyright (C) 2022 Joey Shi
 
 from datetime import datetime, timezone
+from distutils.log import info
 import logging
 
 import peewee as pw
+import pymysql
 
 from plom.db.tables import (
     User,
@@ -45,12 +47,22 @@ class PlomDB:
 
     def __init__(self, dbfile_name="plom.db", *, db_name):
         if db_name:
+            MySQL = pymysql.connect(
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password="my-secret-pw"
+            )
+
+            MySQL.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {db_name};")
+            MySQL.close()
+            
             db = pw.MySQLDatabase(
                 db_name,
                 host="127.0.0.1",
                 port=3306,
                 user="root",
-                password="my-secret-password",
+                password="my-secret-pw",
             )
             # TODO?  db.init?  maybe stuff in other file?
         else:
