@@ -1,0 +1,8 @@
+{
+  "manager": "$pbkdf2-sha256$29000$spZyjnEupVSq9Z4Twtg7hw$mVSBA4PiL9iG/ydhZdxRULdc1cuBLaY62oePGNX2/gY",
+  "scanner": "$pbkdf2-sha256$29000$mLMW4hxjbI2x9p7T2ptTSg$TO49g7KOZHx2MfpQvVIsCSjRiwYlLiDZ8Ve3Ck6lFzU",
+  "reviewer": "$pbkdf2-sha256$29000$fk8JgbAWgrA2hrBWao0RAg$UU5ty1SHgpPQnQL75CMF4qgTkMxVVGjs1lUuMY2CjO8",
+  "user0": "$pbkdf2-sha256$29000$3Bsj5Nx7j5ES4pzz3vs/5w$rAoLBWLFwzAeBi32eCwGF9gUmwjyqCKSuIP2q7Msp3w",
+  "user1": "$pbkdf2-sha256$29000$KwVgbC0lZIzxvjcGoBSi9A$d03Pt6bZWtmTTEZcEJly0ZZD6a59EowO38juNzO.cU0",
+  "user2": "$pbkdf2-sha256$29000$Yeydk9K6F8IYA6BUyhmDsA$pMT2bjJbmPJFieNfAlS8.zxggXRx1Y6h84E1xdt7gOM"
+}
