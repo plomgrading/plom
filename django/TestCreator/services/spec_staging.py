@@ -179,6 +179,22 @@ class StagingSpecificationService:
             }
         test_spec.save()
 
+    def get_page_list(self):
+        """
+        Convert page dict into a list of dicts for looping over in a template
+
+        Returns:
+            list: List of page dictionaries in order
+        """
+        test_spec = self.specification()
+        return [test_spec.pages[str(i)] for i in range(len(test_spec.pages))]
+
+    def clear_pages(self):
+        """
+        Clear the page dictionary
+        """
+        self.set_pages(0)
+
     def get_n_pages(self):
         """Get the number of pages in the test specification."""
         return len(self.specification().pages)
@@ -307,6 +323,12 @@ class StagingSpecificationService:
             }
         the_spec.questions = questions
         the_spec.save()
+
+    def clear_questions(self):
+        """
+        Clear the questions dictionary
+        """
+        self.set_questions(0)
 
     def create_or_replace_question(self, one_index: int, label: str, mark: int, shuffle: bool, pages=[]):
         """

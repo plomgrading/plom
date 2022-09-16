@@ -42,8 +42,7 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
 class TestSpecViewRefPDF(ManagerRequiredView):
     """Return the reference PDF in a file response"""
     def get(self, request):
-        spec = TestSpecService()
-        ref = ReferencePDFService(spec)
+        ref = ReferencePDFService()
         pdf_file = ref.get_pdf().pdf
         pdf_doc = SimpleUploadedFile('spec_reference.pdf', pdf_file.open('rb').read(), content_type="application/pdf")
         return FileResponse(pdf_doc)

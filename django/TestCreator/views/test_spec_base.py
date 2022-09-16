@@ -6,15 +6,14 @@ from braces.views import LoginRequiredMixin, GroupRequiredMixin
 
 from Base.base_group_views import ManagerRequiredView
 
-from ..services import TestSpecService, TestSpecProgressService, ReferencePDFService
+from TestCreator.services import StagingSpecificationService, ReferencePDFService
 from .. import models
 
 
 class TestSpecPageView(ManagerRequiredView):
     def build_context(self, page_name):
         context = super().build_context()
-        spec = TestSpecService()
-        progress = TestSpecProgressService(spec)
+        spec = StagingSpecificationService()
 
         context.update({
             "long_name": spec.get_long_name(),
@@ -22,7 +21,7 @@ class TestSpecPageView(ManagerRequiredView):
             "slugged_short_name": spec.get_short_name_slug(),
             "curr_page": page_name,
             "questions": [i for i in range(spec.get_n_questions())],
-            "completed": progress.get_progress_dict()
+            "completed": {}
         })
 
         return context
@@ -31,13 +30,12 @@ class TestSpecPageView(ManagerRequiredView):
 class TestSpecPDFView(TestSpecPageView):
     def build_context(self, page_name):
         context = super().build_context(page_name)
-        spec = TestSpecService()
-        ref = ReferencePDFService(spec)
+        spec = StagingSpecificationService()
+        ref = ReferencePDFService()
         if ref.is_there_a_reference_pdf():
             thumbnails = ref.create_page_thumbnail_list()
             context.update({
                 "thumbnails": thumbnails,
-                "pages": spec.get_page_list(),
                 "num_pages": spec.get_n_pages(),
             })
 

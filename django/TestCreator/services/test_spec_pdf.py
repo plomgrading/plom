@@ -2,13 +2,10 @@ import pathlib
 import fitz
 from django.core.exceptions import MultipleObjectsReturned
 from .. import models
-from ..services import TestSpecService
 
 
 class ReferencePDFService:
     """Keep track of the reference PDF"""
-    def __init__(self, spec_service: TestSpecService):
-        self.spec = spec_service
 
     def is_there_a_reference_pdf(self):
         """Return True if the user has uploaded a reference PDF already"""
@@ -41,13 +38,13 @@ class ReferencePDFService:
         pdfs = models.ReferencePDF.objects.all()
         pdfs.delete()
 
-    def new_pdf(self, slug, pages, file_bytes):
+    def new_pdf(self, spec_service, slug, pages, file_bytes):
         """Create and save a new PDF given an opened file"""
         self.delete_pdf()
-        self.spec.clear_questions()  # clear questions from the test specification
+        spec_service.clear_questions()  # clear questions from the test specification
         pdf = self.create_pdf(slug, pages, file_bytes)
         self.get_and_save_pdf_images()
-        self.spec.set_pages(pdf)
+        spec_service.set_pages(pdf.num_pages)
 
         return pdf
 

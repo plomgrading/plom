@@ -27,7 +27,7 @@ class TestSpecProgressService:
 
     def is_pdf_page_completed(self):
         """Return True if the second page of the wizard has been completed"""
-        ref_service = ReferencePDFService(self.spec)
+        ref_service = ReferencePDFService()
 
         try:
             pdf = ref_service.get_pdf()

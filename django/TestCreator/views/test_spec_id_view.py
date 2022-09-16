@@ -4,8 +4,11 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
 from TestCreator.views import TestSpecPDFView
+from TestCreator.services import (
+    StagingSpecificationService,
+    SpecCreatorFrontendService
+)
 
-from ..services import TestSpecService
 from .. import forms
 
 
@@ -13,18 +16,20 @@ class TestSpecCreatorIDPage(TestSpecPDFView):
     """Select the ID page of the test."""
     
     def build_form(self):
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         n_pages = spec.get_n_pages()
         form = forms.TestSpecIDPageForm(n_pages)
         return form
 
     def build_context(self):
         context = super().build_context('id_page')
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
+        page_list = spec.get_page_list()
+        frontend = SpecCreatorFrontendService()
 
         context.update({
-            "x_data": spec.get_id_page_alpine_xdata(),
-            "pages": spec.get_pages_for_id_select_page(),
+            "x_data": frontend.get_id_page_alpine_xdata(page_list),
+            "pages": frontend.get_pages_for_id_select_page(page_list),
         })
 
         return context
@@ -37,7 +42,7 @@ class TestSpecCreatorIDPage(TestSpecPDFView):
         return render(request, "TestCreator/test-spec-id-page.html", context)
 
     def post(self, request):
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         n_pages = spec.get_n_pages()
         form = forms.TestSpecIDPageForm(n_pages, request.POST)
         if form.is_valid():
@@ -47,8 +52,6 @@ class TestSpecCreatorIDPage(TestSpecPDFView):
                 if 'page' in key and value == True:
                     idx = int(re.sub('\D', '', key))
                     spec.set_id_page(idx)
-
-            spec.unvalidate()
 
             return HttpResponseRedirect(reverse('questions'))
         else:
