@@ -18,7 +18,7 @@ class BaseModel(pw.Model):
 
 class User(BaseModel):
     # TODO - should this be short - if so we need to check length elsewhere in code.
-    name = pw.CharField(unique=True)
+    name = pw.CharField(unique=True, max_length=1000)
     enabled = pw.BooleanField(default=True)
     password = pw.CharField(null=True)  # hash of password for comparison - fixed length
     token = pw.CharField(null=True)  # authentication token - fixed length
