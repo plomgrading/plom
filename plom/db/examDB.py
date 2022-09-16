@@ -45,13 +45,13 @@ log = logging.getLogger("DB")
 class PlomDB:
     """The main Plom database."""
 
-    def __init__(self, dbfile_name="plom.db", *, db_name):
+    def __init__(self, dbfile_name="plom.db", *, db_name, db_host, db_port, db_username, db_password):
         if db_name:
             MySQL = pymysql.connect(
-                host="127.0.0.1",
-                port=3306,
-                user="root",
-                password="my-secret-pw"
+                host=db_host,
+                port=db_port,
+                user=db_username,
+                password=db_password
             )
 
             MySQL.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {db_name};")
@@ -59,10 +59,10 @@ class PlomDB:
             
             db = pw.MySQLDatabase(
                 db_name,
-                host="127.0.0.1",
-                port=3306,
-                user="root",
-                password="my-secret-pw",
+                host=db_host,
+                port=db_port,
+                user=db_username,
+                password=db_password,
             )
             # TODO?  db.init?  maybe stuff in other file?
         else:

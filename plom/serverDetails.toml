@@ -19,5 +19,6 @@ LogLevel = "Info"
 # database info: change as needed if working with an external DB
 db_name = "Plom"
 db_host = "127.0.0.1"
+db_port = 3306
 db_username = "root"
 db_password = "my-secret-pw"
