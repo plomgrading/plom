@@ -169,6 +169,7 @@ class StagingSpecificationService:
             n_pages: number of pages in the reference PDF
         """
         test_spec = self.specification()
+        test_spec.pages = {}
 
         thumbnail_folder = pathlib.Path("SpecCreator") / 'thumbnails' / 'spec_reference'
 
@@ -326,6 +327,7 @@ class StagingSpecificationService:
                 "select": "fix",
             }
         the_spec.questions = questions
+        the_spec.numberOfQuestions = n_questions
         the_spec.save()
 
     def clear_questions(self):
@@ -333,6 +335,14 @@ class StagingSpecificationService:
         Clear the questions dictionary
         """
         self.set_questions(0)
+        self.set_total_marks(0)
+
+        # clear questions from pages
+        the_spec = self.specification()
+        for i in range(self.get_n_pages()):
+            page = the_spec.pages[str(i)]
+            page['question_page'] = False
+        the_spec.save()
 
     def create_or_replace_question(self, one_index: int, label: str, mark: int, shuffle: bool, pages=[]):
         """
@@ -481,15 +491,74 @@ class StagingSpecificationService:
         self.set_n_to_produce(spec_dict['numberToProduce'])
 
         self.set_pages(spec_dict['numberOfPages'])
-        self.set_id_page(spec_dict['idPage'])
-        self.set_do_not_mark_pages(spec_dict['doNotMarkPages'])
+        self.set_id_page(spec_dict['idPage'] - 1)
+        self.set_do_not_mark_pages([p-1 for p in spec_dict['doNotMarkPages']])
 
         questions = spec_dict['question']
         for i in range(len(questions)):
-            question = questions[i]
             one_index = i + 1
+            question = questions[str(one_index)]
             label = question['label']
             mark = question['mark']
             select = (question['select'] == 'shuffle')
             pages = question['pages']
             self.create_or_replace_question(one_index, label, mark, select, pages)
+
+    def are_all_pages_selected(self):
+        """
+        Return True if all of the pages in the specification are selected, otherwise return false. If there
+        are no pages, return None
+        """
+        if self.get_n_pages() == 0:
+            return
+
+        for page_key, page in self.specification().pages.items():
+            if (
+                not page['id_page'] and
+                not page['dnm_page'] and
+                not page['question_page']
+            ):
+                return False
+        return True
+
+    def get_progress_dict(self):
+        """
+        Get a dict representing the completion state of the specification
+        """
+        progress_dict = {
+            "has_names": len(self.get_short_name()) > 0 and len(self.get_long_name()) > 0,
+            "has_versions": self.get_n_versions() > 0,
+            "has_n_pages": self.get_n_pages() > 0,
+            "has_id_page": self.get_id_page_number() is not None,
+            "has_questions": self.get_n_questions() > 0,
+            "has_total_marks": self.get_total_marks() > 0,
+            "all_pages_selected": self.are_all_pages_selected()
+        }
+
+        complete_questions = []
+        for i in range(self.get_n_questions()):
+            one_index = i + 1
+            question = self.get_question(one_index)
+            if (
+                question and
+                question['label'] and 
+                question['mark'] and 
+                question['select'] and
+                question['pages']
+            ):
+                complete_questions.append(one_index)
+        
+        progress_dict.update({
+            "complete_questions": complete_questions
+        })
+        return progress_dict
+
+    def not_empty(self):
+        """
+        Return True if the staging specification isn't empty.
+        """
+        prog_dict = self.get_progress_dict()
+        for key, item in prog_dict.items():
+            if item:
+                return True
+        return False

@@ -21,8 +21,10 @@ class TestSpecPageView(ManagerRequiredView):
             "slugged_short_name": spec.get_short_name_slug(),
             "curr_page": page_name,
             "questions": [i for i in range(spec.get_n_questions())],
-            "completed": {}
+            "completed": spec.get_progress_dict()
         })
+
+        print(spec.get_progress_dict())
 
         return context
 

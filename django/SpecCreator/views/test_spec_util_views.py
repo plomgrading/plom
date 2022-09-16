@@ -12,10 +12,7 @@ from SpecCreator.views import TestSpecPageView
 
 from ..services import (
     StagingSpecificationService,
-    TestSpecService,
     ReferencePDFService,
-    TestSpecProgressService,
-    TestSpecGenerateService,
 )
 
 
@@ -38,6 +35,9 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
         spec.clear_questions()
         ref_service.delete_pdf()
         spec.reset_specification()
+        
+        valid_spec = SpecificationService()
+        valid_spec.remove_spec()
         return HttpResponseRedirect(reverse("prep_landing"))
 
 
@@ -51,19 +51,12 @@ class TestSpecViewRefPDF(ManagerRequiredView):
 
 
 class TestSpecGenTomlView(ManagerRequiredView):
-    def dispatch(self, request, **kwargs):
-        spec = TestSpecService()
-        prog = TestSpecProgressService(spec)
-        if not prog.is_everything_complete():
+    def get(self, request):
+        valid_spec = SpecificationService()
+        if not valid_spec.is_there_a_spec():
             raise PermissionDenied("Specification not completed yet.")
 
-        return super().dispatch(request, **kwargs)
-
-    def get(self, request):
-        spec = TestSpecService()
-        gen = TestSpecGenerateService(spec)
-        spec_dict = gen.generate_spec_dict()
-        toml_file = toml.dumps(spec_dict)
+        toml_file = valid_spec.get_the_spec_as_toml()
 
         response = HttpResponse(toml_file)
         response["mimetype"] = "text/plain"

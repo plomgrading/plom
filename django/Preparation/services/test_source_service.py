@@ -35,7 +35,10 @@ class TestSourceService:
     @transaction.atomic
     def are_all_test_versions_uploaded(self):
         speck = SpecificationService()
-        return PaperSourcePDF.objects.count() == speck.get_n_versions()
+        if speck.is_there_a_spec():
+            return PaperSourcePDF.objects.count() == speck.get_n_versions()
+        else:
+            return False
 
     @transaction.atomic
     def get_list_of_uploaded_sources(self):

@@ -50,7 +50,6 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
         ref = ReferencePDFService()
         ref.delete_pdf()
         spec.clear_questions()
-        
         spec.clear_pages()
         
         return HttpResponseClientRefresh()

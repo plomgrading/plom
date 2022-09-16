@@ -20,7 +20,7 @@
             <p class="is_test_spec_nav_text">Test names and numbers</p>
             {% endif %}
 
-            {% if completed.names %}
+            {% if completed.has_names and completed.has_versions %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>
@@ -33,7 +33,7 @@
             <p class="is_test_spec_nav_text">Reference PDF</p>
             {% endif %}
             
-            {% if completed.upload %}
+            {% if completed.has_n_pages %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>
@@ -46,7 +46,7 @@
             <p class="is_test_spec_nav_text">ID page</p>
             {% endif %}
 
-            {% if completed.id_page %}
+            {% if completed.has_id_page %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>
@@ -59,7 +59,7 @@
             <p class="is_test_spec_nav_text">Questions</p>
             {% endif %}
 
-            {% if completed.questions_page %}
+            {% if completed.has_questions and completed.has_total_marks %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>
@@ -75,10 +75,10 @@
                     {% else %}
                     <p class="is_test_spec_nav_text">Question {{ forloop.counter }}</p>
                     {% endif %}
-<!-- 
-                    {% if q %}
+
+                    {% if forloop.counter in completed.complete_questions %}
                     <i class="bi bi-check"></i>
-                    {% endif %} -->
+                    {% endif %}
                 </div>
             </a>
             {% endfor %}
@@ -92,7 +92,7 @@
             <p class="is_test_spec_nav_text">Do-not-mark pages</p>
             {% endif %}
 
-            {% if completed.dnm_page %}
+            {% if completed.all_pages_selected %}
             <i class="bi bi-check"></i>
             {% endif %}
         </div>

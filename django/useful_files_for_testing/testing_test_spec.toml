@@ -9,6 +9,7 @@ idPage = 1
 doNotMarkPages = [2]
 
 [[question]]
+label = "Q(1)"
 pages = [3]
 mark = 5
 

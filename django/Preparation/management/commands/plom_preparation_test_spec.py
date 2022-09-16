@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from SpecCreator.services import StagingSpecificationService, ReferencePDFService
 from Papers.services import SpecificationService
@@ -19,7 +20,7 @@ class Command(BaseCommand):
         spec_dict = speck.get_the_spec()
         toml_text = toml.dumps(spec_dict)
 
-        if speck.is_specification_valid():
+        if speck.is_there_a_spec():
             self.stdout.write("A valid test spec is present:")
             self.stdout.write("#" * 40)
             self.stdout.write(f"{toml_text}")
@@ -31,7 +32,7 @@ class Command(BaseCommand):
         speck = SpecificationService()
         spec_dict = speck.get_the_spec()
 
-        if not speck.is_specification_valid():
+        if not speck.is_there_a_spec():
             self.stderr.write("No valid test spec present")
             return
 
@@ -91,17 +92,20 @@ class Command(BaseCommand):
         pdf_doc = fitz.Document(pdf_path)
         if pdf_doc.page_count != spec_dict['numberOfPages']:
             self.stderr.write(f"Sample pdf does not match the test specification. PDF has {pdf_doc.page_count}, but spec indicates {spec_dict['numberOfPages']}.")
+        with open(pdf_path, "rb") as f:
+            pdf_doc_file = SimpleUploadedFile('spec_reference.pdf', f.read())
         self.stdout.write("Sample pdf has correct page count - matches specification.")
 
         # Load in the validated spec from vlad - not the original toml. This will be correctly populated
         # with any optional keys etc. See issue #88
         staging_spec = StagingSpecificationService()
-        staging_spec.create_from_dict(validated_spec)
 
         reference = ReferencePDFService()
-        reference.new_pdf(staging_spec, staging_spec.get_short_name_slug(), staging_spec.get_n_pages(), pdf_doc)
+        reference.new_pdf(staging_spec, 'spec_reference.pdf', pdf_doc.page_count, pdf_doc_file)
 
-        speck.store_validated_spec(validated_spec, pdf_path)
+        staging_spec.create_from_dict(validated_spec)
+
+        speck.store_validated_spec(validated_spec)
         self.stdout.write("Test specification and sample pdf uploaded to server.")
 
     def remove_spec(self):

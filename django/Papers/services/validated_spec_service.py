@@ -50,7 +50,7 @@ class SpecificationService:
         """Removes the test specification from the db. This can only be done
         if no tests have been created.
         """
-        if not self.is_there_a_test_spec():
+        if not self.is_there_a_spec():
             raise ObjectDoesNotExist(
                 "The database does not contain a test specification."
             )
