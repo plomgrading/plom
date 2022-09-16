@@ -8,7 +8,8 @@ from django.utils.text import slugify
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from SpecCreator.services import TestSpecService
+from SpecCreator.services import StagingSpecificationService
+from Papers.services import SpecificationService
 from Connect.services import CoreConnectionService
 from BuildPaperPDF.services import BuildPapersService
 
@@ -67,8 +68,9 @@ class PreparationLandingView(ManagerRequiredView):
                 }
             )
 
-        spec = TestSpecService()
-        if spec.is_specification_valid():
+        spec = StagingSpecificationService()
+        valid_spec = SpecificationService()
+        if valid_spec.is_there_a_spec():
             context.update(
                 {
                     "valid_spec": True,

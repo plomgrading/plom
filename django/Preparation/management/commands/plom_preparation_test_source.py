@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from Preparation.services import TestSourceService
-from SpecCreator.services import TestSpecService
+from Papers.services import SpecificationService
 
 from pathlib import Path
 
@@ -96,8 +96,8 @@ class Command(BaseCommand):
             )
 
     def upload_source(self, version=None, source_pdf=None):
-        speck = TestSpecService()
-        if not speck.is_specification_valid():
+        speck = SpecificationService()
+        if not speck.is_there_a_spec():
             self.stderr.write(
                 f"There is not a valid test specification on the server. Cannot upload."
             )

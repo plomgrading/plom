@@ -1,5 +1,7 @@
 from django.db import models
 
+from Base.models import SingletonBaseModel
+
 # ---------------------------------
 # Define a singleton model as per
 # https://steelkiwi.com/blog/practical-application-singleton-design-pattern/
@@ -9,30 +11,30 @@ from django.db import models
 # ---------------------------------
 
 
-class SingletonBaseModel(models.Model):
-    """We define a singleton models for the test-specification. This
-    abstract model ensures that any derived models have at most a single
-    row."""
+# class SingletonBaseModel(models.Model):
+#     """We define a singleton models for the test-specification. This
+#     abstract model ensures that any derived models have at most a single
+#     row."""
 
-    class Meta:
-        abstract = True
+#     class Meta:
+#         abstract = True
 
-    def save(self, *args, **kwargs):
-        self.pk = 1
-        super().save(*args, **kwargs)
+#     def save(self, *args, **kwargs):
+#         self.pk = 1
+#         super().save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        pass
+#     def delete(self, *args, **kwargs):
+#         pass
 
-    @classmethod
-    def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
-        return obj
+#     @classmethod
+#     def load(cls):
+#         obj, created = cls.objects.get_or_create(pk=1)
+#         return obj
 
 
-class TestSpecification(SingletonBaseModel):
+class Specification(SingletonBaseModel):
     """Store the json of the test specification dictionary.
-    There can be at most one TestSpecification entry
+    There can be at most one Specification entry
 
     spec_dict (json): The json'd test specification dictionary.
     """

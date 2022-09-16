@@ -1,7 +1,8 @@
 import toml
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from ...services import TestSpecService, ReferencePDFService
+
+from SpecCreator.services import StagingSpecificationService, ReferencePDFService
 
 
 class Command(BaseCommand):
@@ -19,8 +20,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        spec = TestSpecService()
-        ref_service = ReferencePDFService(spec)
+        spec = StagingSpecificationService()
+        ref_service = ReferencePDFService()
         if options['clear']:
             if spec.is_there_some_spec_data():
                 self.stdout.write('Clearing test specification...')
@@ -39,5 +40,7 @@ class Command(BaseCommand):
                 toml_path = curr_path / 'demo_spec.toml'
                 data = toml.load(toml_path)
                 pdf_path = curr_path / 'demo_version1.pdf'
-                spec.read_spec_dict(data, pdf_path)
+                spec.create_from_dict(data)
+                with open(pdf_path, 'rb') as f:
+                    ref_service.new_pdf(spec, spec.get_short_name_slug(), spec.get_n_pages(), f.read())
                 self.stdout.write('Demo test specification uploaded!')

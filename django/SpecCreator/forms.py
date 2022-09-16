@@ -6,7 +6,6 @@ import re
 from django.core.exceptions import ValidationError
 
 from SpecCreator.services import StagingSpecificationService
-from .services import TestSpecService, TestSpecProgressService
 from . import models
 
 

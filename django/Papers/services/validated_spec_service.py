@@ -3,7 +3,7 @@ from django.db import transaction
 
 import toml
 
-from Papers.models import TestSpecification
+from Papers.models import Specification
 from Papers.services import PaperInfoService
 
 # TODO - build similar for solution specs
@@ -14,18 +14,18 @@ import logging
 log = logging.getLogger("ValidatedSpecService")
 
 
-class TestSpecificationService:
+class SpecificationService:
     @transaction.atomic
     def is_there_a_spec(self):
         """Has a test-specification been uploaded to the database."""
-        return TestSpecification.objects.count() == 1
+        return Specification.objects.count() == 1
 
     @transaction.atomic
     def get_the_spec(self):
         """Return the test-specification from the database."""
         try:
-            return TestSpecification.objects.get().spec_dict
-        except TestSpecification.DoesNotExist:
+            return Specification.objects.get().spec_dict
+        except Specification.DoesNotExist:
             raise ObjectDoesNotExist(
                 "The database does not contain a test specification."
             )
@@ -33,7 +33,7 @@ class TestSpecificationService:
     @transaction.atomic
     def get_the_spec_as_toml(self):
         """Return the test-specification from the database."""
-        return toml.dumps(TestSpecification.objects.get().spec_dict)
+        return toml.dumps(Specification.objects.get().spec_dict)
 
     @transaction.atomic
     def store_validated_spec(self, validated_spec):
@@ -42,7 +42,7 @@ class TestSpecificationService:
         validated_spec (dict): A dictionary containing a validated test
             specification.
         """
-        spec_obj = TestSpecification(spec_dict=validated_spec)
+        spec_obj = Specification(spec_dict=validated_spec)
         spec_obj.save()
 
     @transaction.atomic
@@ -61,4 +61,29 @@ class TestSpecificationService:
                 "Database is already populated with test-papers."
             )
 
-        TestSpecification.objects.filter().delete()
+        Specification.objects.filter().delete()
+
+    @transaction.atomic
+    def get_n_questions(self):
+        """
+        Get the number of questions in the test.
+        """
+        spec_obj = self.get_the_spec()
+        return spec_obj['numberOfQuestions']
+
+    @transaction.atomic
+    def get_n_versions(self):
+        """
+        Get the number of test versions.
+        """
+        spec_obj = self.get_the_spec()
+        return spec_obj['numberOfVersions']
+
+    @transaction.atomic
+    def get_n_pages(self):
+        """
+        Get the number of pages in the test.
+        """
+        spec_obj = self.get_the_spec()
+        return spec_obj['numberOfPages']
+

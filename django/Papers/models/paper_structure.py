@@ -82,7 +82,7 @@ class AbstractPage(models.Model):
     paper (ref to Paper): the test-paper to which this page image belongs
     image (ref to Image): the image
     page_number (int): the position of this page **within** the group of
-        pages. For example, if the Q3 containts (actual on paper) pages
+        pages. For example, if the Q3 contains (actual on paper) pages
         7,8,9, then these will have page-numbers 1,2,3. Then any extra
         pages that a student might use will have numbers 4,5,...
 
@@ -139,7 +139,7 @@ class QuestionGroup(AbstractGroup):
 
     Notice that a question group will typically contain the
     expected_number_pages, however there are circumstances in which it
-    can contain more (eg student submits serveral extra pages for this
+    can contain more (eg student submits several extra pages for this
     question), or fewer (eg student-submitted homework).
 
 

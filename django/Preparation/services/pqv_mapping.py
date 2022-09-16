@@ -3,7 +3,7 @@ from django.db import transaction
 from plom import SpecVerifier
 from Preparation.models import StagingPQVMapping
 from Preparation.services import StagingStudentService
-from SpecCreator.services import TestSpecService, TestSpecGenerateService
+from Papers.services import SpecificationService
 
 
 class PQVMappingService:
@@ -51,7 +51,7 @@ class PQVMappingService:
         # in particular, a dict of lists.
         pqvmapping = self.get_pqv_map_dict()
         pqv_table = {}
-        speck = TestSpecService()
+        speck = SpecificationService()
         question_list = [
             q + 1 for q in range(speck.get_n_questions())
         ]  # todo - replace with spec lookup
@@ -72,7 +72,7 @@ class PQVMappingService:
     @transaction.atomic()
     def get_pqv_map_as_csv(self):
         pqvmap = self.get_pqv_map_dict()
-        speck = TestSpecService()
+        speck = SpecificationService()
         qlist = [q + 1 for q in range(speck.get_n_questions())]
         # TODO - replace this with some python csv module stuff
         txt = '"paper_number"'
@@ -90,9 +90,8 @@ class PQVMappingService:
         from plom import make_random_version_map
 
         # grab the spec as dict from the test creator services
-        speck = TestSpecService()
-        gen = TestSpecGenerateService(speck)
-        spec_dict = gen.generate_spec_dict()
+        speck = SpecificationService()
+        spec_dict = speck.get_the_spec()
         # this spec_dict does not include numberToProduce so we add in by hand
         spec_dict["numberToProduce"] = numberToProduce
 

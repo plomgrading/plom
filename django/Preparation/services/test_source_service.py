@@ -3,7 +3,7 @@ from django.core.files import File
 from django.db import transaction
 
 from Preparation.models import PaperSourcePDF
-from SpecCreator.services import TestSpecService
+from Papers.services import SpecificationService
 
 from collections import defaultdict
 import fitz
@@ -34,7 +34,7 @@ class TestSourceService:
 
     @transaction.atomic
     def are_all_test_versions_uploaded(self):
-        speck = TestSpecService()
+        speck = SpecificationService()
         return PaperSourcePDF.objects.count() == speck.get_n_versions()
 
     @transaction.atomic
@@ -47,7 +47,7 @@ class TestSourceService:
 
     def get_list_of_sources(self):
         """Return a dict of all versions, uploaded or not"""
-        speck = TestSpecService()
+        speck = SpecificationService()
 
         status = {(v + 1): None for v in range(speck.get_n_versions())}
         for pdf_obj in PaperSourcePDF.objects.all():

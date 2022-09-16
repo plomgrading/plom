@@ -435,6 +435,13 @@ class StagingSpecificationService:
         spec_dict['question'] = questions
         return spec_dict
 
+    def get_valid_spec_dict(self):
+        """
+        Validate specification and get public code/private seed, return as dict
+        """
+        valid_dict = self.validate_specification()
+        return valid_dict
+
     def validate_specification(self):
         """
         Verify the specification using Vlad (Plom-classic's validator). If it passes, return the validated spec.
@@ -461,3 +468,28 @@ class StagingSpecificationService:
         """
         spec_dict = self.get_staging_spec_dict()
         return json.dumps(spec_dict)
+
+    def create_from_dict(self, spec_dict: dict):
+        """
+        Take a dictionary (which has previously been validated by Vlad) and stage a test specification from it.
+        """
+        self.set_long_name(spec_dict['longName'])
+        self.set_short_name(spec_dict['name'])
+        self.set_n_versions(spec_dict['numberOfVersions'])
+        self.set_total_marks(spec_dict['totalMarks'])
+        self.set_n_questions(spec_dict['numberOfQuestions'])
+        self.set_n_to_produce(spec_dict['numberToProduce'])
+
+        self.set_pages(spec_dict['numberOfPages'])
+        self.set_id_page(spec_dict['idPage'])
+        self.set_do_not_mark_pages(spec_dict['doNotMarkPages'])
+
+        questions = spec_dict['question']
+        for i in range(len(questions)):
+            question = questions[i]
+            one_index = i + 1
+            label = question['label']
+            mark = question['mark']
+            select = (question['select'] == 'shuffle')
+            pages = question['pages']
+            self.create_or_replace_question(one_index, label, mark, select, pages)

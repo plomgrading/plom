@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.urls import reverse
 
 from Base.base_group_views import ManagerRequiredView
-from Papers.services import TestSpecificationService
+from Papers.services import SpecificationService
 
 from SpecCreator.views import TestSpecPageView
 
@@ -140,7 +140,7 @@ class TestSpecSubmitView(TestSpecPageView):
         staging_spec = StagingSpecificationService()
         spec_dict = staging_spec.get_staging_spec_dict()
 
-        spec = TestSpecificationService()
+        spec = SpecificationService()
         spec.store_validated_spec(spec_dict)
 
         return HttpResponseRedirect(reverse('download'))

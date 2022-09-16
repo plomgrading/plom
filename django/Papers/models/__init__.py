@@ -8,4 +8,4 @@ from .paper_structure import (
     IDPage,
     QuestionPage,
 )
-from .specifications import TestSpecification, SolutionSpecification
+from .specifications import Specification, SolutionSpecification

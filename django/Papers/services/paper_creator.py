@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 
-from Papers.models import TestSpecification, Paper, IDGroup, DNMGroup, QuestionGroup
+from Papers.models import Specification, Paper, IDGroup, DNMGroup, QuestionGroup
 
 import logging
 
@@ -16,8 +16,8 @@ class PaperCreatorService:
 
     def __init__(self):
         try:
-            self.spec = TestSpecification.load().spec_dict
-        except TestSpecification.DoesNotExist:
+            self.spec = Specification.load().spec_dict
+        except Specification.DoesNotExist:
             raise ObjectDoesNotExist(
                 "The database does not contain a test specification."
             )

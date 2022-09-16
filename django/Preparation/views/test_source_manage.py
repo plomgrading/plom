@@ -7,7 +7,7 @@ from django_htmx.http import HttpResponseClientRedirect
 
 
 from Preparation.services import TestSourceService
-from SpecCreator.services import TestSpecService
+from Papers.services import SpecificationService
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -22,7 +22,7 @@ class TestSourceUploadForm(forms.Form):
 class TestSourceManageView(ManagerRequiredView):
     def build_context(self):
         tss = TestSourceService()
-        speck = TestSpecService()
+        speck = SpecificationService()
 
         return {
             "form": TestSourceUploadForm(),
@@ -59,7 +59,7 @@ class TestSourceManageView(ManagerRequiredView):
             context.update({"success": False, "message": "Form invalid", "version": version})
         else:
             tss = TestSourceService()
-            speck = TestSpecService()
+            speck = SpecificationService()
             success, message = tss.take_source_from_upload(
                 version, speck.get_n_pages(), request.FILES["source_pdf"]
             )
