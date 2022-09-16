@@ -44,9 +44,10 @@
         <dt class="col-sm-2" style="margin-top: 25px;">Do-not-mark pages</dt>
         <dd class="col-sm-10" style="margin-top: 25px;">{{ dnm_pages }}</dd>
     </dl>
-    <div>
+    <form action="{% url 'spec_submit' %}" method="post">
+        {% csrf_token %}
         <a type="button" class="btn btn-primary btn-lg" href="{% url 'validate' %}">Back</a>
-        <a type="button" class="btn btn-primary btn-lg float-end" href="{% url 'download' %}">Submit</a>
+        <input type="submit" class="btn btn-primary btn-lg float-end" value="Submit">
     </div>
 </div>
 

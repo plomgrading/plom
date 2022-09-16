@@ -67,7 +67,7 @@
 
     {% if questions %}
         <div class="list-group-item list-group-flush" style="padding-right: 0;">
-            {% for q in completed.question_list %}
+            {% for q in questions %}
             <a class="list-group-item list-group-item-action" href="{% url 'q_detail' forloop.counter %}">
                 <div class="d-flex w-100 justify-content-between">
                     {% if question_id == forloop.counter %}
@@ -75,10 +75,10 @@
                     {% else %}
                     <p class="is_test_spec_nav_text">Question {{ forloop.counter }}</p>
                     {% endif %}
-
+<!-- 
                     {% if q %}
                     <i class="bi bi-check"></i>
-                    {% endif %}
+                    {% endif %} -->
                 </div>
             </a>
             {% endfor %}

@@ -4,6 +4,8 @@ from django.forms import ModelForm
 import fitz
 import re
 from django.core.exceptions import ValidationError
+
+from TestCreator.services import StagingSpecificationService
 from .services import TestSpecService, TestSpecProgressService
 from . import models
 
@@ -97,7 +99,7 @@ class TestSpecQuestionsMarksForm(forms.Form):
             raise ValidationError('Your test is too long!')
 
 
-class TestSpecQuestionForm(TestSpecPDFSelectForm):
+class SpecQuestionDetailsForm(TestSpecPDFSelectForm):
     label = forms.CharField(
         max_length=15,
         label='Label:',
@@ -124,7 +126,7 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
         data = self.cleaned_data
 
         # Are the marks less than the test's total marks?
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         if data['mark'] > spec.get_total_marks():
             raise ValidationError("Question cannot have more marks than the test.")
 
@@ -156,7 +158,7 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
                     raise ValidationError(f'Question {self.question_idx} cannot come before question {other_question}.')
 
 
-class TestSpecValidateForm(forms.Form):
+class SpecValidateForm(forms.Form):
     def clean(self):
         """
         Things to check:
@@ -175,5 +177,8 @@ class TestSpecValidateForm(forms.Form):
 
         Are all the pages selected by something?
         """
-        spec = TestSpecService()
-        spec.validate_specification()
+        spec = StagingSpecificationService()
+        try:
+            spec.validate_specification()
+        except ValueError as e:
+            raise ValidationError(e)

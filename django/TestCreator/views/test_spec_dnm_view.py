@@ -4,8 +4,11 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
 from TestCreator.views import TestSpecPDFView
+from TestCreator.services import (
+    StagingSpecificationService,
+    SpecCreatorFrontendService
+)
 
-from ..services import TestSpecService
 from .. import forms
 
 
@@ -13,18 +16,21 @@ class TestSpecCreatorDNMPage(TestSpecPDFView):
     """Select do-not-mark pages."""
 
     def build_form(self):
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         n_pages = spec.get_n_pages()
         form = forms.TestSpecPDFSelectForm(n_pages)
         return form
 
     def build_context(self):
         context = super().build_context("dnm_page")
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
+        page_list = spec.get_page_list()
+        frontend = SpecCreatorFrontendService()
+
         context.update({
             "num_questions": spec.get_n_questions(),
-            "x_data": spec.get_dnm_page_alpine_xdata(),
-            "pages": spec.get_pages_for_dnm_select_page(),
+            "x_data": frontend.get_dnm_page_alpine_xdata(page_list),
+            "pages": frontend.get_pages_for_dnm_select_page(page_list),
         })
         return context
 
@@ -36,7 +42,7 @@ class TestSpecCreatorDNMPage(TestSpecPDFView):
         return render(request, "TestCreator/test-spec-do-not-mark-page.html", context)
 
     def post(self, request):
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         n_pages = spec.get_n_pages()
         form = forms.TestSpecPDFSelectForm(n_pages, request.POST)
         if form.is_valid():
@@ -48,13 +54,6 @@ class TestSpecCreatorDNMPage(TestSpecPDFView):
                     idx = int(re.sub('\D', '', key))
                     dnm_idx.append(idx)
             spec.set_do_not_mark_pages(dnm_idx)
-
-            # set the do not mark page's completion status
-            the_spec = spec.specification()
-            the_spec.dnm_page_submitted = True
-            the_spec.save()
-
-            spec.unvalidate()
 
             return HttpResponseRedirect(reverse('validate'))
         else:

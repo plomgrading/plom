@@ -6,10 +6,12 @@ from django.shortcuts import render
 from django.urls import reverse
 
 from Base.base_group_views import ManagerRequiredView
+from Papers.services import TestSpecificationService
 
 from TestCreator.views import TestSpecPageView
 
 from ..services import (
+    StagingSpecificationService,
     TestSpecService,
     ReferencePDFService,
     TestSpecProgressService,
@@ -19,8 +21,8 @@ from ..services import (
 
 class TestSpecResetView(ManagerRequiredView):
     def post(self, request):
-        spec = TestSpecService()
-        ref_service = ReferencePDFService(spec)
+        spec = StagingSpecificationService()
+        ref_service = ReferencePDFService()
         spec.clear_questions()
         ref_service.delete_pdf()
         spec.reset_specification()
@@ -31,8 +33,8 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
     """Clear the test specification from the preparation landing page"""
 
     def post(self, request):
-        spec = TestSpecService()
-        ref_service = ReferencePDFService(spec)
+        spec = StagingSpecificationService()
+        ref_service = ReferencePDFService()
         spec.clear_questions()
         ref_service.delete_pdf()
         spec.reset_specification()
@@ -73,9 +75,8 @@ class TestSpecDownloadView(TestSpecPageView):
     """A page for downloading the test specification as a toml file."""
 
     def get(self, request):
-        spec = TestSpecService()
-        prog = TestSpecProgressService(spec)
-        if not prog.is_everything_complete():
+        spec = StagingSpecificationService()
+        if not spec.is_valid():
             return HttpResponseRedirect(reverse("validate"))
 
         context = self.build_context("download")
@@ -84,11 +85,11 @@ class TestSpecDownloadView(TestSpecPageView):
 
 
 class TestSpecSubmitView(TestSpecPageView):
-    """Let the user confirm the test specification before returning to the preparation page."""
+    """Prompt the user to confirm the test specification before submitting it to the database"""
 
     def build_context(self):
         context = super().build_context("submit")
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         pages = spec.get_page_list()
         n_questions = spec.get_n_questions()
 
@@ -103,16 +104,17 @@ class TestSpecSubmitView(TestSpecPageView):
 
         questions = []
         for i in range(n_questions):
+            one_index = i + 1
             question = {}
             question.update({
-                "pages": ", ".join(f"p. {j}" for j in spec.get_question_pages(i+1)),
+                "pages": ", ".join(f"p. {j}" for j in spec.get_question_pages(one_index)),
             })
-            if i+1 in spec.questions:
-                q_obj = spec.questions[i+1].get_question()
+            if spec.has_question(one_index):
+                q_dict = spec.get_question(one_index)
                 question.update({
-                    "label": q_obj.label,
-                    "mark": q_obj.mark,
-                    "shuffle": spec.questions[i+1].get_question_fix_or_shuffle(),
+                    "label": q_dict['label'],
+                    "mark": q_dict['mark'],
+                    "shuffle": q_dict['select'],
                 })
             else:
                 question.update({
@@ -126,23 +128,30 @@ class TestSpecSubmitView(TestSpecPageView):
         return context
 
     def get(self, request):
-        spec = TestSpecService()
-        prog = TestSpecProgressService(spec)
-        if not prog.is_everything_complete():
+        spec = StagingSpecificationService()
+        if not spec.is_valid():
             raise PermissionDenied("Specification not completed yet.")
 
         context = self.build_context()
 
         return render(request, "TestCreator/test-spec-submit-page.html", context)
 
+    def post(self, request):
+        staging_spec = StagingSpecificationService()
+        spec_dict = staging_spec.get_staging_spec_dict()
+
+        spec = TestSpecificationService()
+        spec.store_validated_spec(spec_dict)
+
+        return HttpResponseRedirect(reverse('download'))
+
 
 class TestSpecSummaryView(TestSpecSubmitView):
     """View the test spec summary and return to the creator page"""
 
     def get(self, request):
-        spec = TestSpecService()
-        prog = TestSpecProgressService(spec)
-        if not prog.is_everything_complete():
+        spec = StagingSpecificationService()
+        if not spec.is_valid():
             raise PermissionDenied("Specification not completed yet.")
 
         context = self.build_context()

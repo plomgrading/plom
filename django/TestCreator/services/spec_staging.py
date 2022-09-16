@@ -1,5 +1,8 @@
 import pathlib
+import copy
+import json
 from django.utils.text import slugify
+from plom.specVerifier import SpecVerifier
 
 from TestCreator.models import StagingSpecification
 
@@ -177,6 +180,7 @@ class StagingSpecificationService:
                 "question_page": False,
                 "thumbnail": str(thumbnail_path),
             }
+        test_spec.numberOfPages = n_pages
         test_spec.save()
 
     def get_page_list(self):
@@ -197,7 +201,7 @@ class StagingSpecificationService:
 
     def get_n_pages(self):
         """Get the number of pages in the test specification."""
-        return len(self.specification().pages)
+        return self.specification().numberOfPages
 
     def set_id_page(self, page_idx: int):
         """
@@ -357,6 +361,9 @@ class StagingSpecificationService:
         the_spec.questions[one_index] = question_dict
         the_spec.save()
 
+        if pages:
+            self.set_question_pages([p-1 for p in pages], one_index)  # warning: page list is zero-indexed and pages in the spec are one-indexed
+
     def set_question_select(self, one_index: int, set_as_shuffle: bool):
         """
         Change the status of a question's 'select' property
@@ -383,3 +390,74 @@ class StagingSpecificationService:
         for i in range(self.get_n_questions()):
             one_index = i + 1
             self.set_question_select(one_index, False)
+
+    def has_question(self, one_index: int):
+        """
+        Return True if the staging spec has question 'one_index'
+        """
+        return str(one_index) in self.specification().questions  # JSON field!
+
+    def get_question(self, one_index: int):
+        """
+        Return a quetion dictionary given its one-index. If it doesn't exist, return None
+        """
+        if self.has_question(one_index):
+            return self.specification().questions[str(one_index)]  # JSON field!
+
+    def get_marks_assigned_to_other_questions(self, one_index: int):
+        """
+        Return the total number of marks assigned to questions other than the one at one_index
+        """
+        the_spec = self.specification()
+        total_so_far = sum([self.get_question(q)['mark'] for q in the_spec.questions])
+
+        if self.has_question(one_index):
+            assigned_to_this_q = self.get_question(one_index)['mark']
+            return total_so_far - assigned_to_this_q
+        else:
+            return total_so_far
+
+    def get_staging_spec_dict(self):
+        """
+        Generate a dictionary from the current state of the specification.
+        """
+        spec_dict = self.specification().__dict__
+
+        # remove django model-related fields
+        spec_dict.pop('_state')
+        spec_dict.pop('id')
+
+        pages = spec_dict.pop('pages')
+        spec_dict['idPage'] = self.get_id_page_number()
+        spec_dict['doNotMarkPages'] = self.get_dnm_page_numbers()
+
+        questions = spec_dict.pop('questions')
+        spec_dict['question'] = questions
+        return spec_dict
+
+    def validate_specification(self):
+        """
+        Verify the specification using Vlad (Plom-classic's validator). If it passes, return the validated spec.
+        """
+        spec_dict = self.get_staging_spec_dict()
+        vlad = SpecVerifier(copy.deepcopy(spec_dict))
+        vlad.verifySpec()
+        return vlad.spec
+
+    def is_valid(self):
+        """
+        Return True if the current state of the specification is valid.
+        """
+        try:
+            valid_spec = self.validate_specification()
+            if valid_spec:
+                return True
+        except ValueError:
+            return False
+
+    def dump_json(self):
+        """
+        Convert the specification to a JSON object and dump into a string
+        """
+        spec_dict = self.get_staging_spec_dict()
+        return json.dumps(spec_dict)

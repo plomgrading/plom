@@ -3,8 +3,7 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
 from TestCreator.views import TestSpecPageView
-
-from ..services import TestSpecService
+from TestCreator.services import StagingSpecificationService
 from .. import forms
 
 
@@ -12,7 +11,7 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
     """Set the number of questions and total marks"""
 
     def build_form(self):
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         n_questions = spec.get_n_questions()
         marks = spec.get_total_marks()
         initial = {
@@ -25,7 +24,7 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
 
     def build_context(self):
         context = super().build_context('questions')
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         context.update({
             "prev_n_questions": spec.get_n_questions(),
         })
@@ -40,7 +39,7 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
         form = forms.TestSpecQuestionsMarksForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            spec = TestSpecService()
+            spec = StagingSpecificationService()
 
             prev_questions = spec.get_n_questions()
             n_questions = data['questions']
@@ -52,8 +51,6 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
             marks = data['total_marks']
             print(marks)
             spec.set_total_marks(marks)
-
-            spec.unvalidate()
 
             return HttpResponseRedirect(reverse('q_detail', args=(1,)))
         else:

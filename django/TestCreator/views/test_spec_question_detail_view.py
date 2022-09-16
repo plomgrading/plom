@@ -4,24 +4,25 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
 from TestCreator.views import TestSpecPDFView
-
-from ..services import TestSpecService
-from .. import forms
+from TestCreator.services import (
+    StagingSpecificationService,
+    SpecCreatorFrontendService
+)
+from TestCreator.forms import SpecQuestionDetailsForm
 
 
 class TestSpecCreatorQuestionDetailPage(TestSpecPDFView):
     """Select pages, max mark, and shuffle status for a question."""
 
     def build_form(self, question_id):
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         initial = {}
         if spec.has_question(question_id):
-            q_service = spec.questions[question_id]
-            question = q_service.get_question()
+            question = spec.get_question(question_id)
             initial.update({
-                "label": question.label,
-                "mark": question.mark,
-                "shuffle": 'S' if question.shuffle else 'F',
+                "label": question['label'],
+                "mark": question['mark'],
+                "shuffle": 'S' if question['select'] == 'shuffle' else 'F',
             })
         else:
             initial.update({'label': f"Q{question_id}"})
@@ -31,12 +32,14 @@ class TestSpecCreatorQuestionDetailPage(TestSpecPDFView):
                 initial.update({'shuffle': 'F'})
 
         n_pages = spec.get_n_pages()
-        form = forms.TestSpecQuestionForm(n_pages, initial=initial, q_idx=question_id)
+        form = SpecQuestionDetailsForm(n_pages, initial=initial, q_idx=question_id)
         return form
 
     def build_context(self, question_id):
         context = super().build_context(f"question_{question_id}")
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
+        page_list = spec.get_page_list()
+        frontend = SpecCreatorFrontendService()
 
         context.update({
             "question_id": question_id,
@@ -44,13 +47,13 @@ class TestSpecCreatorQuestionDetailPage(TestSpecPDFView):
             "total_marks": spec.get_total_marks(),
             "n_versions": spec.get_n_versions(),
             "n_questions": spec.get_n_questions(),
-            "x_data": spec.get_question_detail_page_alpine_xdata(question_id),
-            "pages": spec.get_pages_for_question_detail_page(question_id),
+            "x_data": frontend.get_question_detail_page_alpine_xdata(page_list, question_id),
+            "pages": frontend.get_pages_for_question_detail_page(page_list, question_id),
         })
 
-        if question_id in spec.questions:
+        if spec.has_question(question_id):
             context.update({
-                "assigned_to_others": spec.questions[question_id].get_marks_assigned_to_other_questions()
+                "assigned_to_others": spec.get_marks_assigned_to_other_questions(question_id)
             })
         else:
             context.update({"assigned_to_others": 0})
@@ -65,25 +68,22 @@ class TestSpecCreatorQuestionDetailPage(TestSpecPDFView):
         return render(request, "TestCreator/test-spec-question-detail-page.html", context)
 
     def post(self, request, q_idx):
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         n_pages = spec.get_n_pages()
-        form = forms.TestSpecQuestionForm(n_pages, request.POST, q_idx=q_idx)
+        form = SpecQuestionDetailsForm(n_pages, request.POST, q_idx=q_idx)
 
         if form.is_valid():
             data = form.cleaned_data
             label = data['label']
             mark = data['mark']
             shuffle = (data['shuffle'] == 'S')
-            spec.add_question(q_idx, label, mark, shuffle)
 
             question_ids = []
             for key, value in data.items():
                 if 'page' in key and value == True:
                     idx = int(re.sub('\D', '', key))
-                    question_ids.append(idx)
-            spec.set_question_pages(question_ids, q_idx)
-
-            spec.unvalidate()
+                    question_ids.append(idx+1)
+            spec.create_or_replace_question(q_idx, label, mark, shuffle, question_ids)
 
             return HttpResponseRedirect(self.get_success_url(q_idx))
         else:
@@ -92,7 +92,7 @@ class TestSpecCreatorQuestionDetailPage(TestSpecPDFView):
             return render(request, "TestCreator/test-spec-question-detail-page.html", context)
 
     def get_success_url(self, q_idx):
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         n_questions = spec.get_n_questions()
         if q_idx == n_questions:
             return reverse('dnm_page')

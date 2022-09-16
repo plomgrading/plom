@@ -3,9 +3,8 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
 from TestCreator.views import TestSpecPageView
-
-from ..services import TestSpecService
-from .. import forms
+from TestCreator.services import StagingSpecificationService
+from TestCreator.forms import SpecValidateForm
 
 
 class TestSpecValidateView(TestSpecPageView):
@@ -13,8 +12,7 @@ class TestSpecValidateView(TestSpecPageView):
 
     def build_context(self):
         context = super().build_context("validate")
-        spec = TestSpecService()
-        pages = spec.get_page_list()
+        spec = StagingSpecificationService()
         n_questions = spec.get_n_questions()
         n_pages = spec.get_n_pages()
 
@@ -28,24 +26,24 @@ class TestSpecValidateView(TestSpecPageView):
 
         questions = []
         for i in range(n_questions):
+            one_index = i + 1
             question = {}
             question.update({
-                "pages": ', '.join(f"p. {j}" for j in spec.get_question_pages(i+1)),
+                "pages": ', '.join(f"p. {j}" for j in spec.get_question_pages(one_index)),
             })
-            if i+1 in spec.questions:
-                q_obj = spec.questions[i+1].get_question()
-                if q_obj:
-                    question.update({
-                        "label": q_obj.label,
-                        "mark": q_obj.mark,
-                        "shuffle": spec.questions[i+1].get_question_fix_or_shuffle(),
-                    })
-                else:
-                    question.update({
-                        "label": "",
-                        "mark": "",
-                        "shuffle": "",
-                    })
+            if spec.has_question(one_index):
+                q_dict = spec.get_question(one_index)
+                question.update({
+                    "label": q_dict['label'],
+                    "mark": q_dict['mark'],
+                    "shuffle": q_dict['select'],
+                })
+            else:
+                question.update({
+                    "label": "",
+                    "mark": "",
+                    "shuffle": "",
+                })
             questions.append(question)
         context.update({"questions": questions})
         return context
@@ -53,14 +51,13 @@ class TestSpecValidateView(TestSpecPageView):
     def get(self, request):
         context = self.build_context()
         context.update({
-            "form": forms.TestSpecValidateForm()
+            "form": SpecValidateForm()
         })
         return render(request, "TestCreator/test-spec-validate-page.html", context)
 
     def post(self, request):
-        form = forms.TestSpecValidateForm(request.POST)
+        form = SpecValidateForm(request.POST)
         if form.is_valid():
-            spec = TestSpecService()
             return HttpResponseRedirect(reverse('spec_submit'))
         else:
             context = self.build_context()
