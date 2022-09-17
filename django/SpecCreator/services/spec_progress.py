@@ -1,6 +1,6 @@
 from .. import models
-from ..services import TestSpecService
-from ..services import ReferencePDFService
+from . import TestSpecService
+from . import ReferencePDFService
 
 
 class TestSpecProgressService:

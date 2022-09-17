@@ -39,7 +39,7 @@ class TestSpecCreatorDNMPage(TestSpecPDFView):
         context.update({
             "form": self.build_form(),
         })
-        return render(request, "SpecCreator/test-spec-do-not-mark-page.html", context)
+        return render(request, "SpecCreator/do-not-mark-page.html", context)
 
     def post(self, request):
         spec = StagingSpecificationService()
@@ -59,4 +59,4 @@ class TestSpecCreatorDNMPage(TestSpecPDFView):
         else:
             context = self.build_context()
             context.update({"form": form})
-            return render(request, "SpecCreator/test-spec-do-not-mark-page.html", context)
+            return render(request, "SpecCreator/do-not-mark-page.html", context)

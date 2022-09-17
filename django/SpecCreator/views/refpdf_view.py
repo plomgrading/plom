@@ -43,7 +43,7 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
         context.update({
             "form": self.build_form()
         })
-        return render(request, 'SpecCreator/test-spec-upload-pdf.html', context)
+        return render(request, 'SpecCreator/upload-pdf.html', context)
 
     def delete(self, request):
         spec = StagingSpecificationService()
@@ -71,4 +71,4 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
             return HttpResponseRedirect(reverse('id_page'))
         else:
             context.update({'form': form})
-            return render(request, 'SpecCreator/test-spec-upload-pdf.html', context)
+            return render(request, 'SpecCreator/upload-pdf.html', context)

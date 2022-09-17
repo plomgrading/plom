@@ -39,7 +39,7 @@ class TestSpecCreatorIDPage(TestSpecPDFView):
         context.update({
             "form": self.build_form()
         })
-        return render(request, "SpecCreator/test-spec-id-page.html", context)
+        return render(request, "SpecCreator/id-page.html", context)
 
     def post(self, request):
         spec = StagingSpecificationService()
@@ -57,4 +57,4 @@ class TestSpecCreatorIDPage(TestSpecPDFView):
         else:
             context = self.build_context()
             context.update({'form': form})
-            return render(request, "SpecCreator/test-spec-id-page.html", context)
+            return render(request, "SpecCreator/id-page.html", context)

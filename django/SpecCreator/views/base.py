@@ -1,13 +1,6 @@
-import pathlib
-from django.views import View
-from django.views.generic.base import TemplateView
-from django.views.generic.edit import FormView
-from braces.views import LoginRequiredMixin, GroupRequiredMixin
-
 from Base.base_group_views import ManagerRequiredView
 
 from SpecCreator.services import StagingSpecificationService, ReferencePDFService
-from .. import models
 
 
 class TestSpecPageView(ManagerRequiredView):

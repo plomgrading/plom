@@ -53,7 +53,7 @@ class TestSpecValidateView(TestSpecPageView):
         context.update({
             "form": SpecValidateForm()
         })
-        return render(request, "SpecCreator/test-spec-validate-page.html", context)
+        return render(request, "SpecCreator/validate-page.html", context)
 
     def post(self, request):
         form = SpecValidateForm(request.POST)
@@ -64,4 +64,4 @@ class TestSpecValidateView(TestSpecPageView):
             context.update({
                 "form": form,
             })
-            return render(request, "SpecCreator/test-spec-validate-page.html", context)
+            return render(request, "SpecCreator/validate-page.html", context)

@@ -36,7 +36,7 @@ class TestSpecCreatorNamesPage(TestSpecPageView):
         context.update({
             'form': self.build_form()
         })
-        return render(request, "SpecCreator/test-spec-names-page.html", context)
+        return render(request, "SpecCreator/names-page.html", context)
 
     def post(self, request):
         context = self.build_context()
@@ -59,4 +59,4 @@ class TestSpecCreatorNamesPage(TestSpecPageView):
             return HttpResponseRedirect(reverse('upload'))
         else:
             context.update({'form': form})
-            return render(request, "SpecCreator/test-spec-names-page.html", context)
+            return render(request, "SpecCreator/names-page.html", context)

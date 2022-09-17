@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from .. import models
-from ..services import TestSpecService
+from . import TestSpecService
 
 
 class TestSpecQuestionService:

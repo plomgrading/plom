@@ -33,7 +33,7 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
     def get(self, request):
         context = self.build_context()
         context.update({'form': self.build_form()})
-        return render(request, "SpecCreator/test-spec-questions-marks-page.html", context)
+        return render(request, "SpecCreator/questions-marks-page.html", context)
 
     def post(self, request):
         form = forms.TestSpecQuestionsMarksForm(request.POST)
@@ -56,4 +56,4 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
         else:
             context = self.build_context()
             context.update({'form': form})
-            return render(request, "SpecCreator/test-spec-questions-marks-page.html", context)
+            return render(request, "SpecCreator/questions-marks-page.html", context)

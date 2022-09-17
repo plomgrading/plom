@@ -74,7 +74,7 @@ class TestSpecDownloadView(TestSpecPageView):
 
         context = self.build_context("download")
 
-        return render(request, "SpecCreator/test-spec-download-page.html", context)
+        return render(request, "SpecCreator/download-page.html", context)
 
 
 class TestSpecSubmitView(TestSpecPageView):
@@ -127,7 +127,7 @@ class TestSpecSubmitView(TestSpecPageView):
 
         context = self.build_context()
 
-        return render(request, "SpecCreator/test-spec-submit-page.html", context)
+        return render(request, "SpecCreator/submit-page.html", context)
 
     def post(self, request):
         staging_spec = StagingSpecificationService()
@@ -149,7 +149,7 @@ class TestSpecSummaryView(TestSpecSubmitView):
 
         context = self.build_context()
 
-        return render(request, "SpecCreator/test-spec-summary-page.html", context)
+        return render(request, "SpecCreator/summary-page.html", context)
 
 
 class TestSpecLaunchView(TestSpecPageView):
@@ -157,4 +157,4 @@ class TestSpecLaunchView(TestSpecPageView):
 
     def get(self, request):
         context = self.build_context("launch")
-        return render(request, "SpecCreator/test-spec-launch-page.html", context)
+        return render(request, "SpecCreator/launch-page.html", context)

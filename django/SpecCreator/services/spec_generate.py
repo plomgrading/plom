@@ -1,4 +1,4 @@
-from ..services import TestSpecService
+from . import TestSpecService
 
 
 class TestSpecGenerateService:

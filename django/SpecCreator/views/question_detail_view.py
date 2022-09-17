@@ -65,7 +65,7 @@ class TestSpecCreatorQuestionDetailPage(TestSpecPDFView):
         context.update({
             'form': self.build_form(q_idx),
         })
-        return render(request, "SpecCreator/test-spec-question-detail-page.html", context)
+        return render(request, "SpecCreator/question-detail-page.html", context)
 
     def post(self, request, q_idx):
         spec = StagingSpecificationService()
@@ -89,7 +89,7 @@ class TestSpecCreatorQuestionDetailPage(TestSpecPDFView):
         else:
             context = self.build_context(q_idx)
             context.update({"form": form})
-            return render(request, "SpecCreator/test-spec-question-detail-page.html", context)
+            return render(request, "SpecCreator/question-detail-page.html", context)
 
     def get_success_url(self, q_idx):
         spec = StagingSpecificationService()
