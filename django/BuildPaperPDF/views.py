@@ -160,7 +160,6 @@ class UpdatePDFTable(PDFTableView):
 
 
 class GetPDFFile(ManagerRequiredView):
-    # TODO: modify pdf file name
     def get(self, request, paper_number):
         pdf_file = PDFTask.objects.get(paper_number=paper_number).pdf_file_path
         pdf_path = pathlib.Path(pdf_file)
