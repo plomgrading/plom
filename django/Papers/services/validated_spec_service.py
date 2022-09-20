@@ -87,3 +87,10 @@ class SpecificationService:
         spec_obj = self.get_the_spec()
         return spec_obj['numberOfPages']
 
+    @transaction.atomic
+    def get_n_to_produce(self):
+        """
+        Get the number of papers to produce.
+        """
+        spec_obj = self.get_the_spec()
+        return spec_obj['numberToProduce']

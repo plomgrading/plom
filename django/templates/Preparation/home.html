@@ -225,42 +225,11 @@
       <div class="card">
         <div class="card-body">
           <h5 class="card-title">
-            Set information for connection to plom-classic sever
-	          {% if server_valid %}
-            <i class="bi bi-check-circle text-success"></i>
-	          {% else %}
-	          <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-	          {% endif %}
-	          {% if password_valid %}
-            <i class="bi bi-check-circle text-success"></i>
-	          {% else %}
-	          <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-	          {% endif %}
-	        </h5>
-          <h6 class="card-title">
+            Create test papers
             <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-            Plom-classic support
-            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-          </h6>
-          <p class="card-text">Enter server name, port and the manager password</p>
-	        <a class="btn btn-primary" href="{% url 'connect_manager' %}">Classic server connection</a>    		
-        </div>
-      </div>
-    </div>
-    
-    <div>
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-            Send information to server
-            {% if db_initialised %}
-            <i class="bi bi-check-circle text-success"></i>
-            {% else %}
-            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-            {% endif %}
           </h5>
-          <p class="card-text">Verify and send all this information to the plom-server</p>
-          <a class="btn btn-primary" href="{% url 'connect_send_info' %}">Send information</a>
+          <p class="card-test">Use the test specification, classlist, and question-version map to create test-papers.</p>
+          <a class="btn btn-primary" href="{% url 'prep_test_papers' %}">Create papers</a>
         </div>
       </div>
     </div>

@@ -79,9 +79,8 @@ class PaperCreatorService:
             )
 
         # build its QuestionGroups
-        for qprev, question in enumerate(self.spec["questions"]):
-            # off by one indexing - zeroth item in list is question 1
-            q = qprev + 1
+        for q_idx, question in self.spec["question"].items():
+            q = int(q_idx)
             gid = "{}q{}".format(str(paper_number).zfill(4), q)
             v = qv_mapping[q]
             qgroup_obj = QuestionGroup(
@@ -115,9 +114,9 @@ class PaperCreatorService:
         """
 
         errors = []
-        for paper_number, qv_mapping in self.question_version_map.items():
+        for paper_number, qv_mapping in qv_map.items():
             try:
-                self.add_specific_paper_to_db(paper_number, qv_mapping)
+                self.create_paper_with_qvmapping(paper_number, qv_mapping)
             except ValueError as err:
                 errors.append((paper_number, err))
         if errors:
