@@ -124,7 +124,7 @@ class Command(BaseCommand):
             print(tabulate(admin_info, headers="keys", tablefmt="fancy_grid"))
 
             print("")
-            print("Manger")
+            print("Manager")
             print("Table: List of demo manager usernames and passwords")
             print(tabulate(manager_info, headers="keys", tablefmt="fancy_grid"))
 
