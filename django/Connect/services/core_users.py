@@ -21,7 +21,9 @@ class CoreUsersService(CoreConnectionService):
             msgr.createModifyUser(someuser, password)
         finally:
             if msgr.token:
-                msgr.clearAuthorisation(self.manager_username, self.get_manager_password())
+                msgr.clearAuthorisation(
+                    self.manager_username, self.get_manager_password()
+                )
             msgr.stop()
 
     def enable_core_user(self, someuser):
@@ -38,7 +40,9 @@ class CoreUsersService(CoreConnectionService):
             msgr.enableUser(someuser)
         finally:
             if msgr.token:
-                msgr.clearAuthorisation(self.manager_username, self.get_manager_password())
+                msgr.clearAuthorisation(
+                    self.manager_username, self.get_manager_password()
+                )
             msgr.stop()
 
     def disable_core_user(self, someuser):
@@ -55,7 +59,9 @@ class CoreUsersService(CoreConnectionService):
             msgr.disableUser(someuser)
         finally:
             if msgr.token:
-                msgr.clearAuthorisation(self.manager_username, self.get_manager_password())
+                msgr.clearAuthorisation(
+                    self.manager_username, self.get_manager_password()
+                )
             msgr.stop()
 
     def get_user_details(self):
@@ -64,7 +70,7 @@ class CoreUsersService(CoreConnectionService):
 
         Returns:
             a dict of lists of the form `username: [enabled?, logged in?, time last logged in, last action, papers IDd, questions marked]`
-        
+
         """
         if not self.is_there_a_valid_connection():
             print("Cannot get user details from Plom-classic - no connection found.")
@@ -79,5 +85,7 @@ class CoreUsersService(CoreConnectionService):
             return user_details
         finally:
             if msgr.token:
-                msgr.clearAuthorisation(self.manager_username, self.get_manager_password())
+                msgr.clearAuthorisation(
+                    self.manager_username, self.get_manager_password()
+                )
             msgr.stop()

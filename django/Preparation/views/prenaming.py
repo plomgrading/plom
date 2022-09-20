@@ -8,7 +8,6 @@ from Base.base_group_views import ManagerRequiredView
 
 
 class PrenamingView(ManagerRequiredView):
-
     def get(self, request):
         pss = PrenameSettingService()
         context = self.build_context()
@@ -18,9 +17,9 @@ class PrenamingView(ManagerRequiredView):
     def post(self, request):
         pss = PrenameSettingService()
         pss.set_prenaming_setting(True)
-        return HttpResponseClientRedirect(reverse('prep_prename'))
+        return HttpResponseClientRedirect(reverse("prep_prename"))
 
     def delete(self, request):
         pss = PrenameSettingService()
         pss.set_prenaming_setting(False)
-        return HttpResponseClientRedirect(reverse('prep_prename'))
+        return HttpResponseClientRedirect(reverse("prep_prename"))

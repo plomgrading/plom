@@ -5,6 +5,7 @@ from braces.views import LoginRequiredMixin, GroupRequiredMixin
 # Create your views here.
 class AdminRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     """A base class view for admins"""
+
     group_required = ["admin"]
     login_url = "login"
     navbar_colour = "#808080"
@@ -12,8 +13,8 @@ class AdminRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
     def build_context(self):
         context = {
-            'navbar_colour': self.navbar_colour,
-            'user_group': self.group_required[0],
+            "navbar_colour": self.navbar_colour,
+            "user_group": self.group_required[0],
         }
 
         return context
@@ -21,6 +22,7 @@ class AdminRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
 class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     """A base class view for managers"""
+
     group_required = ["manager"]
     login_url = "login"
     navbar_colour = "#AD9CFF"
@@ -28,8 +30,8 @@ class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
     def build_context(self):
         context = {
-            'navbar_colour': self.navbar_colour,
-            'user_group': self.group_required[0],
+            "navbar_colour": self.navbar_colour,
+            "user_group": self.group_required[0],
         }
 
         return context
@@ -37,6 +39,7 @@ class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
 class ScannerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     """A base class view for scanners"""
+
     group_required = ["scanner"]
     login_url = "login"
     navbar_colour = "#0F984F"
@@ -44,8 +47,8 @@ class ScannerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
     def build_context(self):
         context = {
-            'navbar_colour': self.navbar_colour,
-            'user_group': self.group_required[0],
+            "navbar_colour": self.navbar_colour,
+            "user_group": self.group_required[0],
         }
 
         return context
@@ -53,6 +56,7 @@ class ScannerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
 class MarkerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     """A base class view for markers"""
+
     group_required = ["marker"]
     login_url = "login"
     navbar_colour = "#0F984F"
@@ -60,8 +64,8 @@ class MarkerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
     def build_context(self):
         context = {
-            'navbar_colour': self.navbar_colour,
-            'user_group': self.group_required[0],
+            "navbar_colour": self.navbar_colour,
+            "user_group": self.group_required[0],
         }
 
         return context

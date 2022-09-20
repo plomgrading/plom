@@ -9,12 +9,12 @@ class ExamMockerService:
 
     def mock_exam(self, version: int, source_path: str, n_pages: int, short_name: str):
         """Create the mock exam
-        
+
         Returns: path to the exam on disk
         Side effect: saves a temp directory that needs to be removed later
         """
-        sources_dir = settings.BASE_DIR / 'sourceVersions'
-        qr_code_temp_dir = sources_dir / 'qr_temp'
+        sources_dir = settings.BASE_DIR / "sourceVersions"
+        qr_code_temp_dir = sources_dir / "qr_temp"
         if qr_code_temp_dir.exists():
             shutil.rmtree(qr_code_temp_dir)
         qr_code_temp_dir.mkdir()
@@ -23,9 +23,11 @@ class ExamMockerService:
         pdf_doc = fitz.open(source_path)
         for i in range(n_pages):
             page = pdf_doc[i]
-            odd = (i % 2 == 0)
-            pdf_page_add_labels_QRs(page, short_name, f'Mock exam version {version}', qr_codes, odd=odd)
-        pdf_doc.save(qr_code_temp_dir / 'mocked.pdf')
+            odd = i % 2 == 0
+            pdf_page_add_labels_QRs(
+                page, short_name, f"Mock exam version {version}", qr_codes, odd=odd
+            )
+        pdf_doc.save(qr_code_temp_dir / "mocked.pdf")
         pdf_doc.close()
 
-        return qr_code_temp_dir / 'mocked.pdf'
+        return qr_code_temp_dir / "mocked.pdf"

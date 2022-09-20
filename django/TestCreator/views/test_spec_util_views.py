@@ -41,11 +41,16 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
 
 class TestSpecViewRefPDF(ManagerRequiredView):
     """Return the reference PDF in a file response"""
+
     def get(self, request):
         spec = TestSpecService()
         ref = ReferencePDFService(spec)
         pdf_file = ref.get_pdf().pdf
-        pdf_doc = SimpleUploadedFile('spec_reference.pdf', pdf_file.open('rb').read(), content_type="application/pdf")
+        pdf_doc = SimpleUploadedFile(
+            "spec_reference.pdf",
+            pdf_file.open("rb").read(),
+            content_type="application/pdf",
+        )
         return FileResponse(pdf_doc)
 
 
@@ -93,34 +98,44 @@ class TestSpecSubmitView(TestSpecPageView):
         pages = spec.get_page_list()
         n_questions = spec.get_n_questions()
 
-        context.update({
-            "num_pages": len(pages),
-            "num_versions": spec.get_n_versions(),
-            "num_questions": n_questions,
-            "id_page": spec.get_id_page_number(),
-            "dnm_pages": ", ".join(f"p. {i}" for i in spec.get_dnm_page_numbers()),
-            "total_marks": spec.get_total_marks()
-        })
+        context.update(
+            {
+                "num_pages": len(pages),
+                "num_versions": spec.get_n_versions(),
+                "num_questions": n_questions,
+                "id_page": spec.get_id_page_number(),
+                "dnm_pages": ", ".join(f"p. {i}" for i in spec.get_dnm_page_numbers()),
+                "total_marks": spec.get_total_marks(),
+            }
+        )
 
         questions = []
         for i in range(n_questions):
             question = {}
-            question.update({
-                "pages": ", ".join(f"p. {j}" for j in spec.get_question_pages(i+1)),
-            })
-            if i+1 in spec.questions:
-                q_obj = spec.questions[i+1].get_question()
-                question.update({
-                    "label": q_obj.label,
-                    "mark": q_obj.mark,
-                    "shuffle": spec.questions[i+1].get_question_fix_or_shuffle(),
-                })
+            question.update(
+                {
+                    "pages": ", ".join(
+                        f"p. {j}" for j in spec.get_question_pages(i + 1)
+                    ),
+                }
+            )
+            if i + 1 in spec.questions:
+                q_obj = spec.questions[i + 1].get_question()
+                question.update(
+                    {
+                        "label": q_obj.label,
+                        "mark": q_obj.mark,
+                        "shuffle": spec.questions[i + 1].get_question_fix_or_shuffle(),
+                    }
+                )
             else:
-                question.update({
-                    "label": "",
-                    "mark": "",
-                    "shuffle": "",
-                })
+                question.update(
+                    {
+                        "label": "",
+                        "mark": "",
+                        "shuffle": "",
+                    }
+                )
             questions.append(question)
         context.update({"questions": questions})
 

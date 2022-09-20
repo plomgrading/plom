@@ -11,13 +11,13 @@ from Connect.services import CoreConnectionService
 from Preparation.services import PQVMappingService, StagingStudentService
 from TestCreator.services import TestSpecService
 
-from .services import (BuildPapersService, RenamePDFFile)
+from .services import BuildPapersService, RenamePDFFile
 from .models import PDFTask
 from Base.base_group_views import ManagerRequiredView
 
 
 class BuildPaperPDFs(ManagerRequiredView):
-    template_name = 'BuildPaperPDF/build_paper_pdfs.html'
+    template_name = "BuildPaperPDF/build_paper_pdfs.html"
 
     def table_fragment(self, request):
         """Get the current state of the tasks, render it as an HTML table, and return"""
@@ -35,12 +35,9 @@ class BuildPaperPDFs(ManagerRequiredView):
             poll = False
 
         table_fragment = render_to_string(
-            'BuildPaperPDF/fragments/pdf_table.html', 
-            {
-                'tasks': task_context,
-                'poll': poll
-            },
-            request=request
+            "BuildPaperPDF/fragments/pdf_table.html",
+            {"tasks": task_context, "poll": poll},
+            request=request,
         )
 
         return table_fragment
@@ -66,14 +63,16 @@ class BuildPaperPDFs(ManagerRequiredView):
             zip_disabled = False
 
         context = self.build_context()
-        context.update({
-            'message': "",
-            'zip_disabled': zip_disabled,
-            'num_pdfs': num_pdfs,
-            'pdfs_staged': pdfs_staged,
-            'pdf_table': table_fragment,
-            'db_initialised': ccs.has_db_been_initialized(),
-        })
+        context.update(
+            {
+                "message": "",
+                "zip_disabled": zip_disabled,
+                "num_pdfs": num_pdfs,
+                "pdfs_staged": pdfs_staged,
+                "pdf_table": table_fragment,
+                "db_initialised": ccs.has_db_been_initialized(),
+            }
+        )
 
         return render(request, self.template_name, context)
 
@@ -104,19 +103,20 @@ class BuildPaperPDFs(ManagerRequiredView):
         table_fragment = self.table_fragment(request)
 
         context = self.build_context()
-        context.update({
-            'message': "",
-            'tasks': zip(task_objects, tasks_pdf_file_path),
-            'zip_disabled': True,
-            'pdfs_staged': True,
-            'pdf_table': table_fragment
-        })
+        context.update(
+            {
+                "message": "",
+                "tasks": zip(task_objects, tasks_pdf_file_path),
+                "zip_disabled": True,
+                "pdfs_staged": True,
+                "pdf_table": table_fragment,
+            }
+        )
 
         return render(request, self.template_name, context)
 
 
 class PDFTableView(ManagerRequiredView):
-
     def render_pdf_table(self, request):
         task_objects = PDFTask.objects.all()
         bps = BuildPapersService()
@@ -140,21 +140,26 @@ class PDFTableView(ManagerRequiredView):
             zip_disabled = False
 
         n_running = bps.get_n_running_tasks()
-        poll = (n_running > 0)
+        poll = n_running > 0
 
         context = self.build_context()
-        context.update({
-            'tasks': zip(task_objects, tasks_pdf_file_path),
-            'message': f'Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)',
-            'zip_disabled': zip_disabled,
-            'poll': poll,
-        })
+        context.update(
+            {
+                "tasks": zip(task_objects, tasks_pdf_file_path),
+                "message": f"Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)",
+                "zip_disabled": zip_disabled,
+                "poll": poll,
+            }
+        )
 
-        return render(request, 'BuildPaperPDF/fragments/pdf_table.html', context, status=status)
+        return render(
+            request, "BuildPaperPDF/fragments/pdf_table.html", context, status=status
+        )
 
 
 class UpdatePDFTable(PDFTableView):
     """Get an updated pdf-building-progress table"""
+
     def get(self, request):
         return self.render_pdf_table(request)
 
@@ -167,8 +172,10 @@ class GetPDFFile(ManagerRequiredView):
             return HttpResponse(status=500)
 
         pdf_file_name = RenamePDFFile().get_PDF_name(pdf_file)
-        file = pdf_path.open('rb')
-        pdf = SimpleUploadedFile(str(pdf_file_name), file.read(), content_type='application/pdf')
+        file = pdf_path.open("rb")
+        pdf = SimpleUploadedFile(
+            str(pdf_file_name), file.read(), content_type="application/pdf"
+        )
         file.close()
 
         return FileResponse(pdf)
@@ -176,12 +183,15 @@ class GetPDFFile(ManagerRequiredView):
 
 class GetCompressedPDFs(ManagerRequiredView):
     """Get the completed test paper PDFs in one zip file"""
+
     def post(self, request):
         bps = BuildPapersService()
         shortname = TestSpecService().get_short_name_slug()
-        save_path = bps.get_pdf_zipfile(filename=f'{shortname}.zip')
-        zip_file = save_path.open('rb')
-        zf = SimpleUploadedFile(save_path.name, zip_file.read(), content_type='application/zip')
+        save_path = bps.get_pdf_zipfile(filename=f"{shortname}.zip")
+        zip_file = save_path.open("rb")
+        zf = SimpleUploadedFile(
+            save_path.name, zip_file.read(), content_type="application/zip"
+        )
         zip_file.close()
         save_path.unlink()
         return FileResponse(zf)

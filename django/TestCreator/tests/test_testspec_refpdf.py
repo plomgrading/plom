@@ -6,12 +6,14 @@ from .. import models
 
 
 class TestSpecRefPDFTests(TestCase):
-    """Tests services code for models.ReferencePDF """
+    """Tests services code for models.ReferencePDF"""
 
     @classmethod
     def setUpClass(cls):
         """Init a dummy pdf file"""
-        cls.dummy_file = SimpleUploadedFile('dummy.pdf', b'Test text', content_type='application/pdf')
+        cls.dummy_file = SimpleUploadedFile(
+            "dummy.pdf", b"Test text", content_type="application/pdf"
+        )
         return super().setUpClass()
 
     @classmethod
@@ -19,7 +21,7 @@ class TestSpecRefPDFTests(TestCase):
         """Remove all saved dummy files from disk"""
 
         # TODO: I guess the on delete signal doesn't get called when running tests?
-        media_path = Path('TestCreator/media')
+        media_path = Path("TestCreator/media")
         for f in media_path.iterdir():
             f.unlink()
         return super().tearDownClass()
@@ -28,19 +30,17 @@ class TestSpecRefPDFTests(TestCase):
         """Test services.create_pdf"""
         spec = TestSpecService()
         ref_service = ReferencePDFService(spec)
-        new_pdf = ref_service.create_pdf('dummy', 1, self.dummy_file)
-        self.assertEqual(new_pdf.filename_slug, 'dummy')
+        new_pdf = ref_service.create_pdf("dummy", 1, self.dummy_file)
+        self.assertEqual(new_pdf.filename_slug, "dummy")
         self.assertEqual(new_pdf.num_pages, 1)
 
     def test_delete_refpdf(self):
         """Test services.delete_pdf"""
         spec = TestSpecService()
         ref_service = ReferencePDFService(spec)
-        new_pdf = ref_service.create_pdf('dummy', 1, self.dummy_file)
+        new_pdf = ref_service.create_pdf("dummy", 1, self.dummy_file)
         num_pdfs = len(models.ReferencePDF.objects.all())
         self.assertEqual(num_pdfs, 1)
         ref_service.delete_pdf()
         num_pdfs = len(models.ReferencePDF.objects.all())
         self.assertEqual(num_pdfs, 0)
-
-

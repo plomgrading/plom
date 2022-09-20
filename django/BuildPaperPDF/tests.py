@@ -10,13 +10,13 @@ class BuildPaperPDFTests(TestCase):
     """Test BuildPaperPDF.services.BuildPapersService"""
 
     def make_tasks(self):
-        with catch_warnings():   # Don't worry about timezone naivete
+        with catch_warnings():  # Don't worry about timezone naivete
             simplefilter("ignore")
-            baker.make(PDFTask, status='todo')
-            baker.make(PDFTask, status='started')
-            baker.make(PDFTask, status='queued')
-            baker.make(PDFTask, status='complete')
-            baker.make(PDFTask, status='error')
+            baker.make(PDFTask, status="todo")
+            baker.make(PDFTask, status="started")
+            baker.make(PDFTask, status="queued")
+            baker.make(PDFTask, status="complete")
+            baker.make(PDFTask, status="error")
             baker.make(PDFTask, status="complete")
 
     def test_get_n_complete_tasks(self):
@@ -26,7 +26,7 @@ class BuildPaperPDFTests(TestCase):
         self.assertEqual(n_complete, 0)
 
         self.make_tasks()
-        
+
         n_complete = bps.get_n_complete_tasks()
         self.assertEqual(n_complete, 2)
 
@@ -37,7 +37,7 @@ class BuildPaperPDFTests(TestCase):
         self.assertEqual(n_pending, 0)
 
         self.make_tasks()
-        
+
         n_pending = bps.get_n_pending_tasks()
         self.assertEqual(n_pending, 4)
 
