@@ -16,20 +16,13 @@
                 <a class="btn btn-primary" hx-post="{% url 'start_all_PDFs' %}" hx-target="#pdf_table">Start All</a>
                 <a class="btn btn-warning" hx-post="{% url 'retry_all_PDFs' %}" hx-target="#pdf_table">Retry All</a>
                 <a class="btn btn-danger" hx-post="{% url 'cancel_all_PDFs' %}" hx-target="#pdf_table">Cancel All</a>
-                <a class="btn btn-secondary" onclick="document.getElementById('bottom').scrollIntoView()">
+                <a class="btn btn-danger" hx-post="{% url 'delete_all_PDFs' %}" hx-target="#pdf_table">Delete All</a>
                     <i class="bi bi-arrow-down-circle"></i>
                 </a>
             </div>
             <div id="pdf_table">
                 {{ pdf_table |safe }}
             </div>
-            <!-- <form method="post" action="{% url 'zip_paperPDFs' %}" id="bottom">
-                {% csrf_token %}
-                <input type="submit" class="btn btn-primary" value="Save as zip file" {% if zip_disabled %}disabled{% endif %}>
-                <a class="btn btn-secondary" onclick="document.getElementById('top').scrollIntoView()">
-                    <i class="bi bi-arrow-up-circle"></i>
-                </a>
-            </form> -->
             {% else %}
             <div class="card w-50">
                 <div class="card-body">

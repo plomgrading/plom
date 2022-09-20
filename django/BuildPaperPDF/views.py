@@ -240,3 +240,12 @@ class RetryAllPDF(PDFTableView):
         bps.retry_all_task(spec, qvmap)
 
         return self.render_pdf_table(request)
+
+
+class DeleteAllPDF(PDFTableView):
+    def post(self, request):
+        bps = BuildPapersService()
+        bps.delete_all_task()
+
+        return self.render_pdf_table(request)
+        
