@@ -159,6 +159,12 @@ class Downloader(QObject):
         y = self._total_tries.get(row["id"], 0)
         self._tries[row["id"]] = x + 1 if _is_retry else 1
         self._total_tries[row["id"]] = y + 1
+        log.info(
+            "image id %d: starting try %d (lifetime try %d)",
+            row["id"],
+            self._tries[row["id"]],
+            self._total_tries[row["id"]],
+        )
 
     def worker_delivers(self, img_id, md5, tmpfile, local_filename):
         log.debug(f"Worker delivery: {img_id}, {local_filename}")
@@ -192,7 +198,7 @@ class Downloader(QObject):
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
         self.download_failed.emit(img_id)
         x = self._tries[img_id]
-        if x > 3:
+        if x >= 3:
             log.warning(
                 "We've tried image %d too many times (try %d/3 and %d lifetime failures): giving up",
                 img_id,
