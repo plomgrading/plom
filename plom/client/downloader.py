@@ -50,8 +50,13 @@ class Downloader(QObject):
 
         Downloader maintains a queue of downloads and emits signals
         whenever downloads succeed or fail.
-        TODO: Failed downloads will be automatically restarted?  Should
-        we do that, could be a disaster depending on the reason for failures.
+
+        One enqueued a download will be automatically retried several
+        times, but to prevent endless data usage, it will give up after
+        three tries.  That is, clients cannot assume that something
+        enqueued will inevitably be downloaded.  Clients can check by
+        TODO: document how to check if something is in the queue or/and
+        or currently downloading.
 
         TODO: document how to query the queue size, etc.
 
@@ -70,6 +75,8 @@ class Downloader(QObject):
         # TODO: may want this in the QApp: only have one
         # TODO: just use QThreadPool.globalInstance()?
         self.threadpool = QThreadPool()
+        self._tries = {}
+        self._total_tries = {}
 
     def temp_attach_messenger(self, msgr):
         self.msgr = Messenger.clone(msgr)
@@ -88,8 +95,8 @@ class Downloader(QObject):
 
         return str(resources.path(plom.client.icons, "manager_unknown.svg"))
 
-    def download_in_background_thread(self, row, callback=None, priority=False):
-        """
+    def download_in_background_thread(self, row, priority=False, _is_retry=False):
+        """Enqueue the downloading of particular row of the image database.
 
         Args:
             row (dict): TODO
@@ -97,8 +104,11 @@ class Downloader(QObject):
         Keyword Args:
             priority (bool): high priority if user requested this (not a
                 background download.
+            _is_retry (bool): default False.  If True, this signifies an
+                automatic retry.  Clients should probably not touch this.
 
         Does not start a new download if the Page Cache already has that image.
+        It also tries to avoid enquing another request for the same image.
         """
         log.debug(
             "activeThreadCount = %d, maxThreadCount = %d",
@@ -134,6 +144,12 @@ class Downloader(QObject):
         # bg.finished.connect(thread.quit)
         # bg.finished.connect(bg.deleteLater)
 
+        # keep track of retries
+        x = self._tries.get(row["id"], 0)
+        y = self._total_tries.get(row["id"], 0)
+        self._tries[row["id"]] = x + 1 if _is_retry else 1
+        self._total_tries[row["id"]] = y + 1
+
     def worker_delivers(self, img_id, md5, tmpfile, local_filename):
         log.debug(f"Worker delivery: {img_id}, {local_filename}")
         # TODO: maybe pagecache should have the desired filename?
@@ -165,9 +181,14 @@ class Downloader(QObject):
     def worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
         self.download_failed.emit(img_id)
-        # try again, TODO: probably we want to keep track of repeated failures!
+        x = self._tries[img_id]
+        if x > 3:
+            log.warning("We've tried %d too many times: giving up!", img_id)
+            return
+        # TODO: does not respect the original priority: high priority failure becomes ordinary
         self.download_in_background_thread(
-            {"id": img_id, "md5": md5, "local_filename": local_filename}
+            {"id": img_id, "md5": md5, "local_filename": local_filename},
+            _is_retry=True,
         )
 
     def sync_downloads(self, pagedata):
@@ -272,8 +293,8 @@ class DownloadWorker(QRunnable):
     def run(self):
         debug = True
         if debug:
-            fail = random.random() < 0.2
-            debug_wait2 = random.randint(3, 7)
+            fail = random.random() < 0.9
+            debug_wait2 = random.randint(1, 2)
             debug_wait1 = random.random() * debug_wait2
             debug_wait2 -= debug_wait1
             sleep(debug_wait1)
