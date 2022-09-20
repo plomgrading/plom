@@ -105,7 +105,7 @@ class Command(BaseCommand):
 
         staging_spec.create_from_dict(validated_spec)
 
-        speck.store_validated_spec(validated_spec)
+        speck.store_validated_spec(staging_spec.get_valid_spec_dict(verbose=False))
         self.stdout.write("Test specification and sample pdf uploaded to server.")
 
     def remove_spec(self):

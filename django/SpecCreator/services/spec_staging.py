@@ -445,21 +445,44 @@ class StagingSpecificationService:
         spec_dict['question'] = questions
         return spec_dict
 
-    def get_valid_spec_dict(self):
+    def get_valid_spec_dict(self, verbose=True):
         """
         Validate specification and get public code/private seed, return as dict
         """
-        valid_dict = self.validate_specification()
+        valid_dict = self.validate_specification(verbose=verbose)
         return valid_dict
 
-    def validate_specification(self):
+    def validate_specification(self, verbose=True):
         """
-        Verify the specification using Vlad (Plom-classic's validator). If it passes, return the validated spec.
+        Verify the specification using Plom-classic's specVerifier. If it passes, return the validated spec.
         """
         spec_dict = self.get_staging_spec_dict()
-        vlad = SpecVerifier(copy.deepcopy(spec_dict))
-        vlad.verifySpec()
-        return vlad.spec
+        spec_w_default_quest_labels = self.insert_default_question_labels(copy.deepcopy(spec_dict))
+        verifier = SpecVerifier(copy.deepcopy(spec_w_default_quest_labels))
+        verifier.verifySpec(verbose=verbose)
+        return verifier.spec
+
+    def insert_default_question_labels(self, spec_dict: dict):
+        """
+        If any question labels are missing (might happen if the staging spec is from a 
+        user-uploaded toml file), insert default question labels.
+        """
+        verifier = SpecVerifier(copy.deepcopy(spec_dict))
+        for i in range(spec_dict['numberOfQuestions']):
+            one_index = i + 1
+            question = spec_dict['question'][str(one_index)]
+            if question["label"] == "":
+                default_label = verifier.get_question_label(one_index)
+                question["label"] = default_label
+                self.create_or_replace_question(
+                    one_index,
+                    default_label,
+                    question['mark'],
+                    (question['select'] == 'shuffle'),
+                    question['pages']
+                )
+        return spec_dict
+
 
     def is_valid(self):
         """
@@ -481,7 +504,7 @@ class StagingSpecificationService:
 
     def create_from_dict(self, spec_dict: dict):
         """
-        Take a dictionary (which has previously been validated by Vlad) and stage a test specification from it.
+        Take a dictionary (which has previously been validated) and stage a test specification from it.
         """
         self.set_long_name(spec_dict['longName'])
         self.set_short_name(spec_dict['name'])
@@ -495,10 +518,23 @@ class StagingSpecificationService:
         self.set_do_not_mark_pages([p-1 for p in spec_dict['doNotMarkPages']])
 
         questions = spec_dict['question']
+        # make sure the questions are a dict-of-dicts
+        if type(questions) != dict:
+            questions_dict = {}
+            for i in range(len(questions)):
+                questions_dict[str(i+1)] = questions[i]
+            spec_dict['question'] = questions_dict
+            questions = questions_dict
+
         for i in range(len(questions)):
             one_index = i + 1
             question = questions[str(one_index)]
-            label = question['label']
+
+            # we can create a default label later
+            if 'label' in question:
+                label = question['label']
+            else:
+                label = ''
             mark = question['mark']
             select = (question['select'] == 'shuffle')
             pages = question['pages']

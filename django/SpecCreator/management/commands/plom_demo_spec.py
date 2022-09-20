@@ -25,24 +25,26 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        staged_spec = StagingSpecificationService()
-        valid_spec = SpecificationService()
+        staged_spec_service = StagingSpecificationService()
+        valid_spec_service = SpecificationService()
         ref_service = ReferencePDFService()
         if options['clear']:
-            if staged_spec.not_empty():
+            if staged_spec_service.not_empty():
                 self.stdout.write('Clearing test specification...')
-                staged_spec.clear_questions()
+                staged_spec_service.clear_questions()
                 ref_service.delete_pdf()
-                staged_spec.reset_specification()
+                staged_spec_service.reset_specification()
 
-                if valid_spec.is_there_a_spec():
-                    valid_spec.remove_spec()
+                if valid_spec_service.is_there_a_spec():
+                    valid_spec_service.remove_spec()
                 self.stdout.write('Test specification cleared.')
             else:
                 self.stdout.write('No specification uploaded.')
         else:
-            if valid_spec.is_there_a_spec() or staged_spec.not_empty():
-                self.stderr.write('Test specification data already present. Run manage.py plom_demo_spec --clear to clear the current specification.')
+            if valid_spec_service.is_there_a_spec() or staged_spec_service.not_empty():
+                self.stderr.write(
+                    'Test specification data already present. Run manage.py plom_demo_spec --clear to clear the current specification.'
+                )
             else:
                 self.stdout.write('Writing test specification...')
                 curr_path = settings.BASE_DIR / 'SpecCreator' / 'management' / 'commands'
@@ -56,12 +58,13 @@ class Command(BaseCommand):
                     n_pdf_pages = fitzed_doc.page_count
                     pdf_doc = SimpleUploadedFile('spec_reference.pdf', f.read())
 
-                ref_service.new_pdf(staged_spec, 'spec_reference.pdf', n_pdf_pages, pdf_doc)
+                ref_service.new_pdf(staged_spec_service, 'spec_reference.pdf', n_pdf_pages, pdf_doc)
 
                 # verify spec, stage + save to DB
-                vlad = SpecVerifier(copy.deepcopy(data))
-                vlad.verifySpec()
-                validated_spec = vlad.spec
-                staged_spec.create_from_dict(validated_spec)
-                valid_spec.store_validated_spec(validated_spec)
-                self.stdout.write('Demo test specification uploaded!')
+                try:
+                    staged_spec_service.create_from_dict(data)
+                    valid_spec = staged_spec_service.get_valid_spec_dict()
+                    valid_spec_service.store_validated_spec(valid_spec)
+                    self.stdout.write('Demo test specification uploaded!')
+                except ValueError as e:
+                    self.stderr.write(e)
