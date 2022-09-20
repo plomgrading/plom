@@ -2062,7 +2062,10 @@ class MarkerClient(QWidget):
         placeholder = Downloader.get_placeholder_path()
         for row in img_src_data:
             if row["filename"] == placeholder:
-                log.info("image id %d still has placeholder, re-triggering download", row["id"])
+                log.info(
+                    "image id %d still has placeholder, re-triggering download",
+                    row["id"],
+                )
             self.downloader.download_in_background_thread(row)
 
     def get_upload_queue_length(self):

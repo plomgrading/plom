@@ -193,7 +193,12 @@ class Downloader(QObject):
         self.download_failed.emit(img_id)
         x = self._tries[img_id]
         if x > 3:
-            log.warning("We've tried %d too many times: giving up!", img_id)
+            log.warning(
+                "We've tried image %d too many times (try %d/3 and %d lifetime failures): giving up",
+                img_id,
+                self._tries[img_id],
+                self._total_tries[img_id],
+            )
             self._in_progress[img_id] = False
             return
         # TODO: does not respect the original priority: high priority failure becomes ordinary
