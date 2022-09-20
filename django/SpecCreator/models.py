@@ -13,27 +13,30 @@ TODO: move util functions outside models file, clean up old functions
 
 # just a simple folder for media for now
 def temp_filename_path(instance, filename):
-    return pathlib.Path('media') / 'spec_reference.pdf'
+    return pathlib.Path("media") / "spec_reference.pdf"
+
 
 class ReferencePDF(models.Model):
     # TODO: use TextField instead of CharField, don't hardcode field lengths!
-    filename_slug = models.TextField(default='')
+    filename_slug = models.TextField(default="")
     pdf = models.FileField(upload_to=temp_filename_path)
     num_pages = models.IntegerField(default=0)
 
+
 def pre_delete_reference_pdf(sender, instance, **kwargs):
     # delete thumbnails
-    thumbnail_folder = pathlib.Path('static') / 'SpecCreator' / 'thumbnails' / 'spec_reference'
+    thumbnail_folder = (
+        pathlib.Path("static") / "SpecCreator" / "thumbnails" / "spec_reference"
+    )
     if thumbnail_folder.exists():
         shutil.rmtree(thumbnail_folder)
 
     # delete pdf from disk
-    pdf_path = pathlib.Path('media') / f'spec_reference.pdf'
+    pdf_path = pathlib.Path("media") / f"spec_reference.pdf"
     pdf_path.unlink(missing_ok=True)
 
-pre_delete.connect(
-    pre_delete_reference_pdf, sender=ReferencePDF
-)
+
+pre_delete.connect(pre_delete_reference_pdf, sender=ReferencePDF)
 
 
 class TestSpecInfo(models.Model):
@@ -48,10 +51,7 @@ class TestSpecInfo(models.Model):
     validate_page_submitted = models.BooleanField(default=False)
 
 
-SHUFFLE_CHOICES = (
-    ('S', "Shuffle"),
-    ('F', "Fix")
-)
+SHUFFLE_CHOICES = (("S", "Shuffle"), ("F", "Fix"))
 
 
 # TODO: enforce field lengths in the form, not the database?
@@ -69,6 +69,7 @@ class StagingSpecification(SingletonBaseModel):
     the specification creator wizard, the information stored here
     will be validated + converted to a JSON object
     """
+
     name = models.TextField(default="")
     longName = models.TextField(default="")
     numberOfPages = models.PositiveIntegerField(default=0)

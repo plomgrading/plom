@@ -171,7 +171,7 @@ class StagingSpecificationService:
         test_spec = self.specification()
         test_spec.pages = {}
 
-        thumbnail_folder = pathlib.Path("SpecCreator") / 'thumbnails' / 'spec_reference'
+        thumbnail_folder = pathlib.Path("SpecCreator") / "thumbnails" / "spec_reference"
 
         for i in range(n_pages):
             thumbnail_path = thumbnail_folder / f"thumbnail{i}.png"
@@ -341,38 +341,37 @@ class StagingSpecificationService:
         the_spec = self.specification()
         for i in range(self.get_n_pages()):
             page = the_spec.pages[str(i)]
-            page['question_page'] = False
+            page["question_page"] = False
         the_spec.save()
 
-    def create_or_replace_question(self, one_index: int, label: str, mark: int, shuffle: bool, pages=[]):
+    def create_or_replace_question(
+        self, one_index: int, label: str, mark: int, shuffle: bool, pages=[]
+    ):
         """
-        Create a question for the specification. If a question with the same 
+        Create a question for the specification. If a question with the same
         index exists, overwrite it
-        
+
         Args:
             one_index: question number
             label: question label
             mark: max marks for the question
             shuffle: Randomize question across test versions?
-            pages (optional): list of 1-indexed page numbers: on what pages does this 
+            pages (optional): list of 1-indexed page numbers: on what pages does this
                 question appear?
         """
-        select = 'fix'
+        select = "fix"
         if shuffle:
-            select = 'shuffle'
+            select = "shuffle"
 
-        question_dict = {
-            "pages": pages,
-            "mark": mark,
-            "label": label,
-            "select": select
-        }
+        question_dict = {"pages": pages, "mark": mark, "label": label, "select": select}
         the_spec = self.specification()
         the_spec.questions[one_index] = question_dict
         the_spec.save()
 
         if pages:
-            self.set_question_pages([p-1 for p in pages], one_index)  # warning: page list is zero-indexed and pages in the spec are one-indexed
+            self.set_question_pages(
+                [p - 1 for p in pages], one_index
+            )  # warning: page list is zero-indexed and pages in the spec are one-indexed
 
     def set_question_select(self, one_index: int, set_as_shuffle: bool):
         """
@@ -384,13 +383,9 @@ class StagingSpecificationService:
         """
         the_spec = self.specification()
         if set_as_shuffle:
-            the_spec.questions[one_index].update({
-                "select": "shuffle"
-            })
+            the_spec.questions[one_index].update({"select": "shuffle"})
         else:
-            the_spec.questions[one_index].update({
-                "select": "fix"
-            })
+            the_spec.questions[one_index].update({"select": "fix"})
         the_spec.save()
 
     def fix_all_questions(self):
@@ -419,10 +414,10 @@ class StagingSpecificationService:
         Return the total number of marks assigned to questions other than the one at one_index
         """
         the_spec = self.specification()
-        total_so_far = sum([self.get_question(q)['mark'] for q in the_spec.questions])
+        total_so_far = sum([self.get_question(q)["mark"] for q in the_spec.questions])
 
         if self.has_question(one_index):
-            assigned_to_this_q = self.get_question(one_index)['mark']
+            assigned_to_this_q = self.get_question(one_index)["mark"]
             return total_so_far - assigned_to_this_q
         else:
             return total_so_far
@@ -434,15 +429,15 @@ class StagingSpecificationService:
         spec_dict = self.specification().__dict__
 
         # remove django model-related fields
-        spec_dict.pop('_state')
-        spec_dict.pop('id')
+        spec_dict.pop("_state")
+        spec_dict.pop("id")
 
-        pages = spec_dict.pop('pages')
-        spec_dict['idPage'] = self.get_id_page_number()
-        spec_dict['doNotMarkPages'] = self.get_dnm_page_numbers()
+        pages = spec_dict.pop("pages")
+        spec_dict["idPage"] = self.get_id_page_number()
+        spec_dict["doNotMarkPages"] = self.get_dnm_page_numbers()
 
-        questions = spec_dict.pop('questions')
-        spec_dict['question'] = questions
+        questions = spec_dict.pop("questions")
+        spec_dict["question"] = questions
         return spec_dict
 
     def get_valid_spec_dict(self, verbose=True):
@@ -457,32 +452,33 @@ class StagingSpecificationService:
         Verify the specification using Plom-classic's specVerifier. If it passes, return the validated spec.
         """
         spec_dict = self.get_staging_spec_dict()
-        spec_w_default_quest_labels = self.insert_default_question_labels(copy.deepcopy(spec_dict))
+        spec_w_default_quest_labels = self.insert_default_question_labels(
+            copy.deepcopy(spec_dict)
+        )
         verifier = SpecVerifier(copy.deepcopy(spec_w_default_quest_labels))
         verifier.verifySpec(verbose=verbose)
         return verifier.spec
 
     def insert_default_question_labels(self, spec_dict: dict):
         """
-        If any question labels are missing (might happen if the staging spec is from a 
+        If any question labels are missing (might happen if the staging spec is from a
         user-uploaded toml file), insert default question labels.
         """
         verifier = SpecVerifier(copy.deepcopy(spec_dict))
-        for i in range(spec_dict['numberOfQuestions']):
+        for i in range(spec_dict["numberOfQuestions"]):
             one_index = i + 1
-            question = spec_dict['question'][str(one_index)]
+            question = spec_dict["question"][str(one_index)]
             if question["label"] == "":
                 default_label = verifier.get_question_label(one_index)
                 question["label"] = default_label
                 self.create_or_replace_question(
                     one_index,
                     default_label,
-                    question['mark'],
-                    (question['select'] == 'shuffle'),
-                    question['pages']
+                    question["mark"],
+                    (question["select"] == "shuffle"),
+                    question["pages"],
                 )
         return spec_dict
-
 
     def is_valid(self):
         """
@@ -506,24 +502,24 @@ class StagingSpecificationService:
         """
         Take a dictionary (which has previously been validated) and stage a test specification from it.
         """
-        self.set_long_name(spec_dict['longName'])
-        self.set_short_name(spec_dict['name'])
-        self.set_n_versions(spec_dict['numberOfVersions'])
-        self.set_total_marks(spec_dict['totalMarks'])
-        self.set_n_questions(spec_dict['numberOfQuestions'])
-        self.set_n_to_produce(spec_dict['numberToProduce'])
+        self.set_long_name(spec_dict["longName"])
+        self.set_short_name(spec_dict["name"])
+        self.set_n_versions(spec_dict["numberOfVersions"])
+        self.set_total_marks(spec_dict["totalMarks"])
+        self.set_n_questions(spec_dict["numberOfQuestions"])
+        self.set_n_to_produce(spec_dict["numberToProduce"])
 
-        self.set_pages(spec_dict['numberOfPages'])
-        self.set_id_page(spec_dict['idPage'] - 1)
-        self.set_do_not_mark_pages([p-1 for p in spec_dict['doNotMarkPages']])
+        self.set_pages(spec_dict["numberOfPages"])
+        self.set_id_page(spec_dict["idPage"] - 1)
+        self.set_do_not_mark_pages([p - 1 for p in spec_dict["doNotMarkPages"]])
 
-        questions = spec_dict['question']
+        questions = spec_dict["question"]
         # make sure the questions are a dict-of-dicts
         if type(questions) != dict:
             questions_dict = {}
             for i in range(len(questions)):
-                questions_dict[str(i+1)] = questions[i]
-            spec_dict['question'] = questions_dict
+                questions_dict[str(i + 1)] = questions[i]
+            spec_dict["question"] = questions_dict
             questions = questions_dict
 
         for i in range(len(questions)):
@@ -531,13 +527,13 @@ class StagingSpecificationService:
             question = questions[str(one_index)]
 
             # we can create a default label later
-            if 'label' in question:
-                label = question['label']
+            if "label" in question:
+                label = question["label"]
             else:
-                label = ''
-            mark = question['mark']
-            select = (question['select'] == 'shuffle')
-            pages = question['pages']
+                label = ""
+            mark = question["mark"]
+            select = question["select"] == "shuffle"
+            pages = question["pages"]
             self.create_or_replace_question(one_index, label, mark, select, pages)
 
     def are_all_pages_selected(self):
@@ -550,9 +546,9 @@ class StagingSpecificationService:
 
         for page_key, page in self.specification().pages.items():
             if (
-                not page['id_page'] and
-                not page['dnm_page'] and
-                not page['question_page']
+                not page["id_page"]
+                and not page["dnm_page"]
+                and not page["question_page"]
             ):
                 return False
         return True
@@ -562,13 +558,14 @@ class StagingSpecificationService:
         Get a dict representing the completion state of the specification
         """
         progress_dict = {
-            "has_names": len(self.get_short_name()) > 0 and len(self.get_long_name()) > 0,
+            "has_names": len(self.get_short_name()) > 0
+            and len(self.get_long_name()) > 0,
             "has_versions": self.get_n_versions() > 0,
             "has_n_pages": self.get_n_pages() > 0,
             "has_id_page": self.get_id_page_number() is not None,
             "has_questions": self.get_n_questions() > 0,
             "has_total_marks": self.get_total_marks() > 0,
-            "all_pages_selected": self.are_all_pages_selected()
+            "all_pages_selected": self.are_all_pages_selected(),
         }
 
         complete_questions = []
@@ -576,17 +573,15 @@ class StagingSpecificationService:
             one_index = i + 1
             question = self.get_question(one_index)
             if (
-                question and
-                question['label'] and 
-                question['mark'] and 
-                question['select'] and
-                question['pages']
+                question
+                and question["label"]
+                and question["mark"]
+                and question["select"]
+                and question["pages"]
             ):
                 complete_questions.append(one_index)
-        
-        progress_dict.update({
-            "complete_questions": complete_questions
-        })
+
+        progress_dict.update({"complete_questions": complete_questions})
         return progress_dict
 
     def not_empty(self):

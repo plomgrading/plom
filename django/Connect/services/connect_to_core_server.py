@@ -4,15 +4,15 @@ from django_huey import db_task, get_queue
 from huey.signals import SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_COMPLETE
 from plom.messenger import Messenger, ManagerMessenger
 from plom.plom_exceptions import (
-    PlomConnectionError, 
-    PlomConflict, 
-    PlomExistingLoginException, 
-    PlomServerNotReady, 
+    PlomConnectionError,
+    PlomConflict,
+    PlomExistingLoginException,
+    PlomServerNotReady,
     PlomAuthenticationException,
 )
 
 from Connect.models import (
-    CoreServerConnection, 
+    CoreServerConnection,
     CoreManagerLogin,
     CoreDBinitialiseTask,
     CoreDBRowTask,
@@ -22,16 +22,16 @@ from Connect.models import (
 
 class CoreConnectionService:
     """Handle connecting and communicating with a core Plom server
-    
+
     TODO: Does not verify SSL yet!
     """
 
-    queue = get_queue('tasks')
+    queue = get_queue("tasks")
 
     def __init__(self):
         self.client_version = self.get_connection().client_version
         self.api = self.get_connection().api_number
-        self.manager_username = 'manager'
+        self.manager_username = "manager"
 
     def get_connection(self):
         """Return the server connection object"""
@@ -83,7 +83,7 @@ class CoreConnectionService:
 
     def manager_login_status(self):
         """Test if the manager is able to log in to a core server
-        
+
         Returns:
             string: the status of the connection. Either 'valid,' 'no_connection,' or 'existing_login'
         """
@@ -94,15 +94,17 @@ class CoreConnectionService:
             msgr.start()
 
             msgr.requestAndSaveToken(self.manager_username, self.get_manager_password())
-            return 'valid'
+            return "valid"
         except PlomConnectionError:
-            return 'no_connection'
+            return "no_connection"
         except PlomExistingLoginException:
-            return 'existing_login'
+            return "existing_login"
         finally:
             if msgr:
                 if msgr.token:
-                    msgr.clearAuthorisation(self.manager_username, self.get_manager_password())
+                    msgr.clearAuthorisation(
+                        self.manager_username, self.get_manager_password()
+                    )
                 msgr.stop()
 
     def get_messenger(self):
@@ -111,7 +113,9 @@ class CoreConnectionService:
         port = self.get_port_number()
 
         if not url or not port:
-            raise RuntimeError('Unable to find classic server details. Please test the server connection first.')
+            raise RuntimeError(
+                "Unable to find classic server details. Please test the server connection first."
+            )
 
         return Messenger(s=url, port=port, verify_ssl=False)
 
@@ -121,12 +125,14 @@ class CoreConnectionService:
         port = self.get_port_number()
 
         if not url or not port:
-            raise RuntimeError('Unable to find classic server details. Please test the server connection first.')
+            raise RuntimeError(
+                "Unable to find classic server details. Please test the server connection first."
+            )
 
         return ManagerMessenger(s=url, port=port, verify_ssl=False)
 
     def has_test_spec_been_sent(self):
-        """Return True if the core server is reachable and has an uploaded test spec"""    
+        """Return True if the core server is reachable and has an uploaded test spec"""
         messenger = None
         try:
             messenger = self.get_messenger()
@@ -134,7 +140,12 @@ class CoreConnectionService:
             spec = messenger.get_spec()
             messenger.stop()
             return True
-        except (PlomServerNotReady, PlomConnectionError, PlomExistingLoginException, RuntimeError):
+        except (
+            PlomServerNotReady,
+            PlomConnectionError,
+            PlomExistingLoginException,
+            RuntimeError,
+        ):
             return False
         finally:
             if messenger:
@@ -146,19 +157,28 @@ class CoreConnectionService:
         try:
             messenger = self.get_messenger()
             messenger.start()
-            
-            messenger.requestAndSaveToken(self.manager_username, self.get_manager_password())
+
+            messenger.requestAndSaveToken(
+                self.manager_username, self.get_manager_password()
+            )
             if not messenger.token:
                 return False
 
             classlist = messenger.IDrequestClasslist()
             return True
-        except (PlomServerNotReady, PlomConnectionError, PlomExistingLoginException, RuntimeError):
+        except (
+            PlomServerNotReady,
+            PlomConnectionError,
+            PlomExistingLoginException,
+            RuntimeError,
+        ):
             return False
         finally:
             if messenger:
                 if messenger.token:
-                    messenger.clearAuthorisation(self.manager_username, self.get_manager_password())
+                    messenger.clearAuthorisation(
+                        self.manager_username, self.get_manager_password()
+                    )
                 messenger.stop()
 
     def has_db_been_initialized(self):
@@ -168,18 +188,27 @@ class CoreConnectionService:
             messenger = self.get_messenger()
             messenger.start()
 
-            messenger.requestAndSaveToken(self.manager_username, self.get_manager_password())
+            messenger.requestAndSaveToken(
+                self.manager_username, self.get_manager_password()
+            )
             if not messenger.token:
                 return False
 
             qvmap = messenger.getGlobalQuestionVersionMap()
             return qvmap != {}
-        except (PlomAuthenticationException, PlomConnectionError, PlomExistingLoginException, RuntimeError):
+        except (
+            PlomAuthenticationException,
+            PlomConnectionError,
+            PlomExistingLoginException,
+            RuntimeError,
+        ):
             return False
         finally:
             if messenger:
                 if messenger.token:
-                    messenger.clearAuthorisation(self.manager_username, self.get_manager_password())
+                    messenger.clearAuthorisation(
+                        self.manager_username, self.get_manager_password()
+                    )
                 messenger.stop()
 
     def get_core_spec(self):
@@ -279,8 +308,8 @@ class CoreConnectionService:
     def create_core_db_task(self, huey_id):
         """Save a huey task to the database"""
         task = CoreDBinitialiseTask(
-            status = 'todo',
-            huey_id = huey_id,
+            status="todo",
+            huey_id=huey_id,
         )
         task.save()
         return task
@@ -289,7 +318,7 @@ class CoreConnectionService:
     def create_core_db_row_task(self, huey_id, paper_number):
         """Save a huey task for adding a core DB row"""
         task = CoreDBRowTask(
-            status='todo',
+            status="todo",
             huey_id=huey_id,
             paper_number=paper_number,
         )
@@ -299,12 +328,12 @@ class CoreConnectionService:
     @transaction.atomic
     def create_preID_papers_task(self, huey_id):
         """Save a huey task for pre-IDing papers in the background.
-        
+
         Note: this is done in the background as a simple way to guarantee that pre-IDing happens
         right after the database has been initialised
         """
         task = PreIDPapersTask(
-            status='todo',
+            status="todo",
             huey_id=huey_id,
         )
         task.save()
@@ -323,27 +352,27 @@ class CoreConnectionService:
         # init DB
         db_task = self._initialise_core_db(self, version_map)
         init_db_obj = self.create_core_db_task(db_task.id)
-        init_db_obj.status = 'queued'
+        init_db_obj.status = "queued"
         init_db_obj.save()
 
         # add papers
         for i in range(len(version_map)):
-            paper_number = i+1
+            paper_number = i + 1
             vermap_row = version_map[paper_number]
             addrow_task = self._add_db_row(self, paper_number, vermap_row)
             addrow_obj = self.create_core_db_row_task(addrow_task.id, paper_number)
-            addrow_obj.status = 'queued'
+            addrow_obj.status = "queued"
             addrow_obj.save()
 
         # pre-ID papers
         pre_id_task = self._preID_papers(self, students)
         pre_id_obj = self.create_preID_papers_task(pre_id_task.id)
-        pre_id_obj.status = 'queued'
+        pre_id_obj.status = "queued"
         pre_id_obj.save()
 
         return init_db_obj
 
-    @db_task(queue='tasks')
+    @db_task(queue="tasks")
     def _preID_papers(ccs, students: list):
         """Pre-ID test-papers for students with prenamed tests."""
         msgr = None
@@ -353,35 +382,40 @@ class CoreConnectionService:
             msgr.requestAndSaveToken(ccs.manager_username, ccs.get_manager_password())
 
             for student in students:
-                paper = student['paper_number']
+                paper = student["paper_number"]
                 if paper:
-                    sid = student['student_id']
+                    sid = student["student_id"]
                     msgr.pre_id_paper(paper, sid)
 
         finally:
             if msgr:
                 if msgr.token:
-                    msgr.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
+                    msgr.clearAuthorisation(
+                        ccs.manager_username, ccs.get_manager_password()
+                    )
                 msgr.stop()
 
-
-    @db_task(queue='tasks')
+    @db_task(queue="tasks")
     def _initialise_core_db(ccs, version_map: dict):
         """Initialise the core server database, send a PQV map, and pre-ID papers"""
         messenger = ccs.get_manager_messenger()
         messenger.start()
 
         try:
-            messenger.requestAndSaveToken(ccs.manager_username, ccs.get_manager_password())
+            messenger.requestAndSaveToken(
+                ccs.manager_username, ccs.get_manager_password()
+            )
             if not messenger.token:
                 raise RuntimeError("Unable to authenticate manager.")
             messenger.InitialiseDB(version_map)
 
         finally:
-            messenger.clearAuthorisation(ccs.manager_username, ccs.get_manager_password())
+            messenger.clearAuthorisation(
+                ccs.manager_username, ccs.get_manager_password()
+            )
             messenger.stop()
 
-    @db_task(queue='tasks')
+    @db_task(queue="tasks")
     def _add_db_row(ccs, paper_number: int, version_row: dict):
         """Add a test-paper to the Core database"""
         msgr = ccs.get_manager_messenger()
@@ -397,23 +431,23 @@ class CoreConnectionService:
 
     def get_latest_init_db_task(self):
         """Get the latest Init DB task"""
-        tasks = CoreDBinitialiseTask.objects.all().order_by('created')
+        tasks = CoreDBinitialiseTask.objects.all().order_by("created")
         if len(tasks) > 0:
             return tasks[0]
 
     def get_db_row_status(self):
         """Get the status of the DB rows. Returns a dict of {n_total, n_complete, errors: []}"""
         total_dbrow_tasks = len(CoreDBRowTask.objects.all())
-        complete_dbrow_tasks = len(CoreDBRowTask.objects.filter(status='complete'))
-        error_dbrows = list(CoreDBRowTask.objects.filter(status='error'))
+        complete_dbrow_tasks = len(CoreDBRowTask.objects.filter(status="complete"))
+        error_dbrows = list(CoreDBRowTask.objects.filter(status="error"))
         return {
-            'n_total': total_dbrow_tasks,
-            'n_complete': complete_dbrow_tasks,
-            'errors': error_dbrows,
+            "n_total": total_dbrow_tasks,
+            "n_complete": complete_dbrow_tasks,
+            "errors": error_dbrows,
         }
 
     def get_latest_preID_task(self):
         """Get the latest preID task"""
-        tasks = PreIDPapersTask.objects.all().order_by('created')
+        tasks = PreIDPapersTask.objects.all().order_by("created")
         if len(tasks) > 0:
             return tasks[0]

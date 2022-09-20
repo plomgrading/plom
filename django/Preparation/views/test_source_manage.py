@@ -56,7 +56,9 @@ class TestSourceManageView(ManagerRequiredView):
     def post(self, request, version=None):
         context = self.build_context()
         if not request.FILES["source_pdf"]:
-            context.update({"success": False, "message": "Form invalid", "version": version})
+            context.update(
+                {"success": False, "message": "Form invalid", "version": version}
+            )
         else:
             tss = TestSourceService()
             speck = SpecificationService()
@@ -71,4 +73,4 @@ class TestSourceManageView(ManagerRequiredView):
         if version:
             tss = TestSourceService()
             tss.delete_test_source(version)
-        return HttpResponseClientRedirect(reverse('prep_sources'))
+        return HttpResponseClientRedirect(reverse("prep_sources"))

@@ -54,12 +54,8 @@ class PaperCreatorService:
         try:
             idgroup_obj.save()
         except IDGroup.IntegrityError as err:
-            log.error(
-                f"Cannot create IDGroup {gid} for paper {paper_number}: {err}"
-            )
-            raise ValueError(
-                f"Failed to create idgroup for paper {paper_number}"
-            )
+            log.error(f"Cannot create IDGroup {gid} for paper {paper_number}: {err}")
+            raise ValueError(f"Failed to create idgroup for paper {paper_number}")
 
         gid = "{}d".format(str(paper_number).zfill(4))
         dnmgroup_obj = DNMGroup(
@@ -71,12 +67,8 @@ class PaperCreatorService:
         try:
             dnmgroup_obj.save()
         except DNMGroup.IntegrityError as err:
-            log.error(
-                f"Cannot create DNMGroup {gid} for paper {paper_number}: {err}"
-            )
-            raise ValueError(
-                f"Failed to create dnmgroup for paper {paper_number}"
-            )
+            log.error(f"Cannot create DNMGroup {gid} for paper {paper_number}: {err}")
+            raise ValueError(f"Failed to create dnmgroup for paper {paper_number}")
 
         # build its QuestionGroups
         for q_idx, question in self.spec["question"].items():

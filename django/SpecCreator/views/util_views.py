@@ -35,7 +35,7 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
         spec.clear_questions()
         ref_service.delete_pdf()
         spec.reset_specification()
-        
+
         valid_spec = SpecificationService()
         valid_spec.remove_spec()
         return HttpResponseRedirect(reverse("prep_landing"))
@@ -43,10 +43,15 @@ class TestSpecPrepLandingResetView(ManagerRequiredView):
 
 class TestSpecViewRefPDF(ManagerRequiredView):
     """Return the reference PDF in a file response"""
+
     def get(self, request):
         ref = ReferencePDFService()
         pdf_file = ref.get_pdf().pdf
-        pdf_doc = SimpleUploadedFile('spec_reference.pdf', pdf_file.open('rb').read(), content_type="application/pdf")
+        pdf_doc = SimpleUploadedFile(
+            "spec_reference.pdf",
+            pdf_file.open("rb").read(),
+            content_type="application/pdf",
+        )
         return FileResponse(pdf_doc)
 
 
@@ -86,35 +91,45 @@ class TestSpecSubmitView(TestSpecPageView):
         pages = spec.get_page_list()
         n_questions = spec.get_n_questions()
 
-        context.update({
-            "num_pages": len(pages),
-            "num_versions": spec.get_n_versions(),
-            "num_questions": n_questions,
-            "id_page": spec.get_id_page_number(),
-            "dnm_pages": ", ".join(f"p. {i}" for i in spec.get_dnm_page_numbers()),
-            "total_marks": spec.get_total_marks()
-        })
+        context.update(
+            {
+                "num_pages": len(pages),
+                "num_versions": spec.get_n_versions(),
+                "num_questions": n_questions,
+                "id_page": spec.get_id_page_number(),
+                "dnm_pages": ", ".join(f"p. {i}" for i in spec.get_dnm_page_numbers()),
+                "total_marks": spec.get_total_marks(),
+            }
+        )
 
         questions = []
         for i in range(n_questions):
             one_index = i + 1
             question = {}
-            question.update({
-                "pages": ", ".join(f"p. {j}" for j in spec.get_question_pages(one_index)),
-            })
+            question.update(
+                {
+                    "pages": ", ".join(
+                        f"p. {j}" for j in spec.get_question_pages(one_index)
+                    ),
+                }
+            )
             if spec.has_question(one_index):
                 q_dict = spec.get_question(one_index)
-                question.update({
-                    "label": q_dict['label'],
-                    "mark": q_dict['mark'],
-                    "shuffle": q_dict['select'],
-                })
+                question.update(
+                    {
+                        "label": q_dict["label"],
+                        "mark": q_dict["mark"],
+                        "shuffle": q_dict["select"],
+                    }
+                )
             else:
-                question.update({
-                    "label": "",
-                    "mark": "",
-                    "shuffle": "",
-                })
+                question.update(
+                    {
+                        "label": "",
+                        "mark": "",
+                        "shuffle": "",
+                    }
+                )
             questions.append(question)
         context.update({"questions": questions})
 
@@ -136,7 +151,7 @@ class TestSpecSubmitView(TestSpecPageView):
         spec = SpecificationService()
         spec.store_validated_spec(spec_dict)
 
-        return HttpResponseRedirect(reverse('download'))
+        return HttpResponseRedirect(reverse("download"))
 
 
 class TestSpecSummaryView(TestSpecSubmitView):

@@ -40,11 +40,13 @@ class ClasslistView(ManagerRequiredView):
         pss = PrenameSettingService()
 
         context = self.build_context()
-        context.update({
-            "student_list_present": sss.are_there_students(),
-            "student_list": sss.get_students(),
-            "prenaming": pss.get_prenaming_setting(),
-        })
+        context.update(
+            {
+                "student_list_present": sss.are_there_students(),
+                "student_list": sss.get_students(),
+                "prenaming": pss.get_prenaming_setting(),
+            }
+        )
         return render(request, "Preparation/classlist_manage.html", context)
 
     def post(self, request):

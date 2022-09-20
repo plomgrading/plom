@@ -8,14 +8,16 @@ class TestSpecPageView(ManagerRequiredView):
         context = super().build_context()
         spec = StagingSpecificationService()
 
-        context.update({
-            "long_name": spec.get_long_name(),
-            "short_name": spec.get_short_name(),
-            "slugged_short_name": spec.get_short_name_slug(),
-            "curr_page": page_name,
-            "questions": [i for i in range(spec.get_n_questions())],
-            "completed": spec.get_progress_dict()
-        })
+        context.update(
+            {
+                "long_name": spec.get_long_name(),
+                "short_name": spec.get_short_name(),
+                "slugged_short_name": spec.get_short_name_slug(),
+                "curr_page": page_name,
+                "questions": [i for i in range(spec.get_n_questions())],
+                "completed": spec.get_progress_dict(),
+            }
+        )
 
         print(spec.get_progress_dict())
 
@@ -29,9 +31,11 @@ class TestSpecPDFView(TestSpecPageView):
         ref = ReferencePDFService()
         if ref.is_there_a_reference_pdf():
             thumbnails = ref.create_page_thumbnail_list()
-            context.update({
-                "thumbnails": thumbnails,
-                "num_pages": spec.get_n_pages(),
-            })
+            context.update(
+                {
+                    "thumbnails": thumbnails,
+                    "num_pages": spec.get_n_pages(),
+                }
+            )
 
         return context

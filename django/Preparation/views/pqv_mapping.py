@@ -13,6 +13,7 @@ from Base.base_group_views import ManagerRequiredView
 from SpecCreator.services import StagingSpecificationService
 from Papers.services import SpecificationService
 
+
 class PQVMappingUploadView(ManagerRequiredView):
     # NOT CURRENTLY BEING USED
     def post(self, request):
@@ -61,7 +62,7 @@ class PQVMappingView(ManagerRequiredView):
                 prenaming=context["prenaming"]
             )
             context["pqv_number_rows"] = len(context["pqv_table"])
-            
+
         return context
 
     def get(self, request):
@@ -82,7 +83,7 @@ class PQVMappingView(ManagerRequiredView):
         pqvs.generate_and_set_pqvmap(number_to_produce)
         staged_spec.set_n_to_produce(number_to_produce)
         spec_dict = staged_spec.get_valid_spec_dict()
-        
+
         speck = SpecificationService()
         speck.store_validated_spec(spec_dict)
         return HttpResponseRedirect(".")

@@ -11,6 +11,7 @@ class CreateTestPapers(ManagerRequiredView):
     Create test-papers in the database, using the test specification, classlist,
     and question-version map.
     """
+
     def post(self, request):
         pcs = PaperCreatorService()
         qvs = PQVMappingService()

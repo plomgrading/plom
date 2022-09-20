@@ -73,7 +73,7 @@ class TestSpecService:
             str: slug of the test's short name
         """
         return slugify(self.specification().short_name)
-    
+
     def set_short_name(self, short_name: str):
         """Set the short name of the test
 
@@ -226,7 +226,7 @@ class TestSpecService:
         """
         test_spec = self.specification()
 
-        thumbnail_folder = pathlib.Path("SpecCreator") / 'thumbnails' / 'spec_reference'
+        thumbnail_folder = pathlib.Path("SpecCreator") / "thumbnails" / "spec_reference"
 
         for i in range(pdf.num_pages):
             thumbnail_path = thumbnail_folder / f"thumbnail{i}.png"
@@ -422,7 +422,7 @@ class TestSpecService:
         # question details
         # check if question = list-of-dict, or dict-of-dict
         if isinstance(input_spec["question"], dict):
-            for q_str,question in input_spec["question"].items():
+            for q_str, question in input_spec["question"].items():
                 q_pages = [j - 1 for j in question["pages"]]
                 label = question.get("label", f"Q{q_str}")
                 mark = question["mark"]
@@ -630,7 +630,6 @@ class TestSpecService:
                 the_spec.save()
         except ValueError as e:
             raise ValidationError(e)
-
 
     def is_specification_valid(self):
         """Validates specification, and return a boolean instead of raising ValidationErrors"""

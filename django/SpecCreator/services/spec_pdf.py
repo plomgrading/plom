@@ -24,7 +24,7 @@ class ReferencePDFService:
             models.ReferencePDF: the reference PDF object
         """
 
-        pdf_path = pathlib.Path('media') / 'spec_reference.pdf'
+        pdf_path = pathlib.Path("media") / "spec_reference.pdf"
         pdf_path.unlink(missing_ok=True)
 
         pdf = models.ReferencePDF(filename_slug=slug, num_pages=pages, pdf=pdf)
@@ -61,9 +61,9 @@ class ReferencePDFService:
         """
         pdfs = models.ReferencePDF.objects.all()
         if len(pdfs) == 0:
-            raise RuntimeError('No Reference PDF found.')
+            raise RuntimeError("No Reference PDF found.")
         if len(pdfs) > 1:
-            raise MultipleObjectsReturned('More than one Reference PDF saved.')
+            raise MultipleObjectsReturned("More than one Reference PDF saved.")
 
         return pdfs[0]
 
@@ -76,25 +76,25 @@ class ReferencePDFService:
         """
         pdf = self.get_pdf()
         slug = pdf.filename_slug
-        pathname = pathlib.Path('media') / f'spec_reference.pdf'
+        pathname = pathlib.Path("media") / f"spec_reference.pdf"
         if pathname.exists():
             pdf_doc = fitz.Document(pathname)
 
-            thumbnail_dir = pathlib.Path('static') / 'SpecCreator' / 'thumbnails'
+            thumbnail_dir = pathlib.Path("static") / "SpecCreator" / "thumbnails"
             if not thumbnail_dir.exists():
                 thumbnail_dir.mkdir()
 
-            slug_dir = thumbnail_dir / 'spec_reference'
+            slug_dir = thumbnail_dir / "spec_reference"
             if not slug_dir.exists():
                 slug_dir.mkdir()
 
             for i in range(pdf_doc.page_count):
                 page_pixmap = pdf_doc[i].get_pixmap()
-                save_path = slug_dir / f'thumbnail{i}.png'
+                save_path = slug_dir / f"thumbnail{i}.png"
                 page_pixmap.save(save_path)
 
         else:
-            raise RuntimeError(f'Document at {pathname} does not exist.')
+            raise RuntimeError(f"Document at {pathname} does not exist.")
 
     def create_page_thumbnail_list(self):
         """
@@ -105,9 +105,9 @@ class ReferencePDFService:
         """
         pdf = self.get_pdf()
         pages = []
-        thumbnail_folder = pathlib.Path('SpecCreator') / 'thumbnails' / 'spec_reference'
+        thumbnail_folder = pathlib.Path("SpecCreator") / "thumbnails" / "spec_reference"
         for i in range(pdf.num_pages):
-            thumbnail = thumbnail_folder / f'thumbnail{i}.png'
+            thumbnail = thumbnail_folder / f"thumbnail{i}.png"
             pages.append(thumbnail)
 
         return pages

@@ -5,25 +5,27 @@ from . import TestSpecService
 
 class TestSpecQuestionService:
     """Keep track of a question in a test specification"""
+
     def __init__(self, one_index: int, spec_service: TestSpecService):
         self.spec = spec_service
         self.one_index = one_index
 
     def create_question(self, label: str, mark: int, shuffle: bool):
-        """ Create a question object
-        
+        """Create a question object
+
         Args:
             label: question label
             mark: max marks for the question
             shuffle: Randomize question across test versions?
         """
-        question = models.TestSpecQuestion(index=self.one_index, label=label, mark=mark, shuffle=shuffle)
+        question = models.TestSpecQuestion(
+            index=self.one_index, label=label, mark=mark, shuffle=shuffle
+        )
         question.save()
         return question
 
     def remove_question(self):
-        """ Remove a question from the database, clear any selected pages in TestSpecInfo        
-        """
+        """Remove a question from the database, clear any selected pages in TestSpecInfo"""
         question_exists = models.TestSpecQuestion.objects.filter(index=self.one_index)
         if question_exists:
             question = models.TestSpecQuestion.objects.get(index=self.one_index)
@@ -33,12 +35,12 @@ class TestSpecQuestionService:
         test_spec = self.spec.specification()
         pages = test_spec.pages
         for idx, page in pages.items():
-            if page['question_page'] == self.one_index:
-                page['question_page'] = False
+            if page["question_page"] == self.one_index:
+                page["question_page"] = False
         test_spec.save()
 
     def get_question(self):
-        """ Get a question from the database
+        """Get a question from the database
 
         Returns:
             models.TestSpecQuestion or None: the question object
@@ -49,7 +51,7 @@ class TestSpecQuestionService:
             return None
 
     def question_exists(self):
-        """ Check if a question exists in the database
+        """Check if a question exists in the database
 
         Returns:
             bool: True if it exists, otherwise false
@@ -62,7 +64,7 @@ class TestSpecQuestionService:
 
     def create_or_replace_question(self, label: str, mark: int, shuffle: bool):
         """Create question in the database. If a question with the same index exists, overwrite it
-        
+
         Args:
             label: question label
             mark: max marks for the question
@@ -88,7 +90,7 @@ class TestSpecQuestionService:
 
     def get_question_marks(self):
         """Get the number of marks for the question
-        
+
         Returns:
             int: question max mark
         """
@@ -113,7 +115,7 @@ class TestSpecQuestionService:
         """
         question = self.get_question()
         if question:
-            return 'shuffle' if question.shuffle else 'fix'
+            return "shuffle" if question.shuffle else "fix"
 
     def is_question_completed(self):
         """Are all the necessary fields completed for the question?
@@ -121,7 +123,11 @@ class TestSpecQuestionService:
         Returns:
             bool: are all the fields truthy?
         """
-        return self.get_question_label() and self.get_question_marks() and self.get_question_shuffle() != None
+        return (
+            self.get_question_label()
+            and self.get_question_marks()
+            and self.get_question_shuffle() != None
+        )
 
     def get_marks_assigned_to_other_questions(self):
         """Get the total marks - current marks (passed down from question detail view)

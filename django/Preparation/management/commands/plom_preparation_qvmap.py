@@ -19,7 +19,9 @@ class Command(BaseCommand):
         pqvms = PQVMappingService()
         if pqvms.is_there_a_pqv_map():
             paper_list = pqvms.list_of_paper_numbers()
-            self.stdout.write(f"There is a question-version mapping on the server with {len(paper_list)} rows = {format_int_list_with_runs(paper_list)}")
+            self.stdout.write(
+                f"There is a question-version mapping on the server with {len(paper_list)} rows = {format_int_list_with_runs(paper_list)}"
+            )
         else:
             self.stdout.write("There no is a question-version mapping.")
             self.stdout.write(

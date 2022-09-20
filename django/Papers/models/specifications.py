@@ -50,4 +50,3 @@ class SolutionSpecification(SingletonBaseModel):
     """
 
     spec_dict = models.JSONField()
-

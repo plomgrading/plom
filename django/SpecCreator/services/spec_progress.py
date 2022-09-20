@@ -5,6 +5,7 @@ from . import ReferencePDFService
 
 class TestSpecProgressService:
     """Keep track of which parts of the test specification wizard have been completed"""
+
     def __init__(self, spec_service: TestSpecService):
         self.spec = spec_service
 
@@ -14,10 +15,10 @@ class TestSpecProgressService:
         has_short_name = False
         has_n_versions = False
 
-        if self.spec.get_long_name() != '':
+        if self.spec.get_long_name() != "":
             has_long_name = True
 
-        if self.spec.get_short_name() != '':
+        if self.spec.get_short_name() != "":
             has_short_name = True
 
         if self.spec.get_n_versions() > 0:
@@ -76,13 +77,16 @@ class TestSpecProgressService:
     def get_progress_dict(self):
         """Return a dictionary with completion data for the wizard."""
         progress_dict = {}
-        progress_dict['names'] = self.is_names_completed()
-        progress_dict['upload'] = self.is_pdf_page_completed()
-        progress_dict['id_page'] = self.is_id_page_completed()
-        progress_dict['questions_page'] = self.is_question_page_completed()
-        progress_dict['question_list'] = [self.is_question_detail_page_completed(i+1) for i in range(self.spec.get_n_questions())]
-        progress_dict['dnm_page'] = self.is_dnm_page_completed()
-        progress_dict['validate'] = self.is_validate_page_completed()
+        progress_dict["names"] = self.is_names_completed()
+        progress_dict["upload"] = self.is_pdf_page_completed()
+        progress_dict["id_page"] = self.is_id_page_completed()
+        progress_dict["questions_page"] = self.is_question_page_completed()
+        progress_dict["question_list"] = [
+            self.is_question_detail_page_completed(i + 1)
+            for i in range(self.spec.get_n_questions())
+        ]
+        progress_dict["dnm_page"] = self.is_dnm_page_completed()
+        progress_dict["validate"] = self.is_validate_page_completed()
 
         return progress_dict
 
@@ -91,7 +95,7 @@ class TestSpecProgressService:
         progress_dict = self.get_progress_dict()
 
         for key, value in progress_dict.items():
-            if key == 'question_list':
+            if key == "question_list":
                 for q in value:
                     if not q:
                         return False
@@ -104,4 +108,4 @@ class TestSpecProgressService:
         """Return true if any of the wizard pages are completed, false otherwise"""
         progress_dict = self.get_progress_dict()
         vals = progress_dict.values()
-        return (True in vals)
+        return True in vals

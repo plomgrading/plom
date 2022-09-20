@@ -69,7 +69,7 @@ class SpecificationService:
         Get the number of questions in the test.
         """
         spec_obj = self.get_the_spec()
-        return spec_obj['numberOfQuestions']
+        return spec_obj["numberOfQuestions"]
 
     @transaction.atomic
     def get_n_versions(self):
@@ -77,7 +77,7 @@ class SpecificationService:
         Get the number of test versions.
         """
         spec_obj = self.get_the_spec()
-        return spec_obj['numberOfVersions']
+        return spec_obj["numberOfVersions"]
 
     @transaction.atomic
     def get_n_pages(self):
@@ -85,7 +85,7 @@ class SpecificationService:
         Get the number of pages in the test.
         """
         spec_obj = self.get_the_spec()
-        return spec_obj['numberOfPages']
+        return spec_obj["numberOfPages"]
 
     @transaction.atomic
     def get_n_to_produce(self):
@@ -93,4 +93,4 @@ class SpecificationService:
         Get the number of papers to produce.
         """
         spec_obj = self.get_the_spec()
-        return spec_obj['numberToProduce']
+        return spec_obj["numberToProduce"]

@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class SpecCreatorConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'SpecCreator'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "SpecCreator"

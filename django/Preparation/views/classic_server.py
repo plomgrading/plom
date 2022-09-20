@@ -29,7 +29,7 @@ class ClassicServerURLView(ManagerRequiredView):
                     "server_port": 49184,
                 }
             )
-            
+
         return {
             "server_name": info["server_name"],
             "server_port": info["server_port"],
@@ -37,7 +37,7 @@ class ClassicServerURLView(ManagerRequiredView):
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
         }
-    
+
     def get(self, request):
         context = self.build_context()
         return render(request, "Preparation/classic_server_url.html", context)
@@ -45,12 +45,12 @@ class ClassicServerURLView(ManagerRequiredView):
     def post(self, request):
         dat = request.POST.dict()
         context = self.build_context()
-        context['form'] = ServerURLForm(dat)
+        context["form"] = ServerURLForm(dat)
         return """
         meh
         """
         # return render(request, "Preparation/classic_server_url.html", context)
-    
+
 
 class ClassicServerInfoView(ManagerRequiredView):
     def build_context(self):

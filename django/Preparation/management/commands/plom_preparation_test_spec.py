@@ -12,6 +12,7 @@ import fitz
 from pathlib import Path
 import toml
 
+
 class Command(BaseCommand):
     help = "Displays the current status of the spec, and allows user to upload/download/remove."
 
@@ -50,7 +51,9 @@ class Command(BaseCommand):
     def upload_spec(self, spec_file, pdf_file):
         speck = SpecificationService()
         if speck.is_there_a_spec():
-            self.stderr.write("There is already a spec present. Cannot proceed with upload.")
+            self.stderr.write(
+                "There is already a spec present. Cannot proceed with upload."
+            )
             return
 
         spec_path = Path(spec_file)
@@ -68,11 +71,11 @@ class Command(BaseCommand):
         # plom wants numberToProduce to be set - so we set a dummy value here by hand
         # also make sure it is not set to zero
         # TODO - make a more elegant solution here.
-        if 'numberToProduce' not in spec_dict:
-            spec_dict['numberToProduce'] = 1
-        elif spec_dict['numberToProduce'] == 0:
-            spec_dict['numberToProduce'] = 1
-            
+        if "numberToProduce" not in spec_dict:
+            spec_dict["numberToProduce"] = 1
+        elif spec_dict["numberToProduce"] == 0:
+            spec_dict["numberToProduce"] = 1
+
         # CAREFUL - vlad will change the underly dict, so pass it a copy
         vlad = SpecVerifier(copy.deepcopy(spec_dict))
 
@@ -82,7 +85,7 @@ class Command(BaseCommand):
         except ValueError as err:
             self.stderr.write(f"There was an error validating the spec: {err}")
             return
-        
+
         self.stdout.write("Test specification validated.")
 
         pdf_path = Path(pdf_file)
@@ -90,10 +93,12 @@ class Command(BaseCommand):
             self.stderr.write(f"Cannot open {pdf_path}.")
             return
         pdf_doc = fitz.Document(pdf_path)
-        if pdf_doc.page_count != spec_dict['numberOfPages']:
-            self.stderr.write(f"Sample pdf does not match the test specification. PDF has {pdf_doc.page_count}, but spec indicates {spec_dict['numberOfPages']}.")
+        if pdf_doc.page_count != spec_dict["numberOfPages"]:
+            self.stderr.write(
+                f"Sample pdf does not match the test specification. PDF has {pdf_doc.page_count}, but spec indicates {spec_dict['numberOfPages']}."
+            )
         with open(pdf_path, "rb") as f:
-            pdf_doc_file = SimpleUploadedFile('spec_reference.pdf', f.read())
+            pdf_doc_file = SimpleUploadedFile("spec_reference.pdf", f.read())
         self.stdout.write("Sample pdf has correct page count - matches specification.")
 
         # Load in the validated spec from vlad - not the original toml. This will be correctly populated
@@ -101,7 +106,9 @@ class Command(BaseCommand):
         staging_spec = StagingSpecificationService()
 
         reference = ReferencePDFService()
-        reference.new_pdf(staging_spec, 'spec_reference.pdf', pdf_doc.page_count, pdf_doc_file)
+        reference.new_pdf(
+            staging_spec, "spec_reference.pdf", pdf_doc.page_count, pdf_doc_file
+        )
 
         staging_spec.create_from_dict(validated_spec)
 
@@ -138,9 +145,7 @@ class Command(BaseCommand):
         sp_U.add_argument(
             "test_spec_toml", type=str, help="The test spec toml to upload"
         )
-        sp_U.add_argument(
-            "source_pdf", type=str, help="A source PDF of the test."
-        )
+        sp_U.add_argument("source_pdf", type=str, help="A source PDF of the test.")
 
     def handle(self, *args, **options):
         if options["command"] == "status":

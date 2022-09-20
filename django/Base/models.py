@@ -6,7 +6,7 @@ from django_huey import get_queue
 from polymorphic.models import PolymorphicModel
 
 
-queue = get_queue('tasks')
+queue = get_queue("tasks")
 
 
 class HueyTask(PolymorphicModel):
@@ -14,7 +14,7 @@ class HueyTask(PolymorphicModel):
     the time created, and the status. Also, this is where we define the functions for handling
     signals sent from the huey consumer.
     """
-    
+
     huey_id = models.UUIDField(null=True)
     status = models.CharField(max_length=20)
     created = models.DateTimeField(default=datetime.now, blank=True)
@@ -24,21 +24,21 @@ class HueyTask(PolymorphicModel):
     @queue.signal(SIGNAL_EXECUTING)
     def start_task(signal, task):
         task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = 'started'
+        task_obj.status = "started"
         task_obj.save()
 
     @classmethod
     @queue.signal(SIGNAL_COMPLETE)
     def end_task(signal, task):
         task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = 'complete'
+        task_obj.status = "complete"
         task_obj.save()
 
     @classmethod
     @queue.signal(SIGNAL_ERROR)
     def error_task(signal, task, exc):
         task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = 'error'
+        task_obj.status = "error"
         task_obj.message = exc
         task_obj.save()
 

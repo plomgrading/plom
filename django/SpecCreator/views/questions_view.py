@@ -23,16 +23,18 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
         return form
 
     def build_context(self):
-        context = super().build_context('questions')
+        context = super().build_context("questions")
         spec = StagingSpecificationService()
-        context.update({
-            "prev_n_questions": spec.get_n_questions(),
-        })
+        context.update(
+            {
+                "prev_n_questions": spec.get_n_questions(),
+            }
+        )
         return context
 
     def get(self, request):
         context = self.build_context()
-        context.update({'form': self.build_form()})
+        context.update({"form": self.build_form()})
         return render(request, "SpecCreator/questions-marks-page.html", context)
 
     def post(self, request):
@@ -42,18 +44,18 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
             spec = StagingSpecificationService()
 
             prev_questions = spec.get_n_questions()
-            n_questions = data['questions']
+            n_questions = data["questions"]
 
             if prev_questions != n_questions:
                 spec.clear_questions()
                 spec.set_n_questions(n_questions)
 
-            marks = data['total_marks']
+            marks = data["total_marks"]
             print(marks)
             spec.set_total_marks(marks)
 
-            return HttpResponseRedirect(reverse('q_detail', args=(1,)))
+            return HttpResponseRedirect(reverse("q_detail", args=(1,)))
         else:
             context = self.build_context()
-            context.update({'form': form})
+            context.update({"form": form})
             return render(request, "SpecCreator/questions-marks-page.html", context)

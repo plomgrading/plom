@@ -17,14 +17,14 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
     # contains all the url path from Authentication App
-    path('', include('Authentication.urls')),
-    path('', include('UserManagement.urls')),
-    path('', include('Profile.urls')),
-    path('create/', include('Preparation.urls')),
-    path('create/spec/', include('SpecCreator.urls')),
-    path('create/paperpdfs/', include('BuildPaperPDF.urls')),
-    path('connect/', include('Connect.urls')),
-    path('papers/', include('Papers.urls')),
+    path("", include("Authentication.urls")),
+    path("", include("UserManagement.urls")),
+    path("", include("Profile.urls")),
+    path("create/", include("Preparation.urls")),
+    path("create/spec/", include("SpecCreator.urls")),
+    path("create/paperpdfs/", include("BuildPaperPDF.urls")),
+    path("connect/", include("Connect.urls")),
+    path("papers/", include("Papers.urls")),
 ]

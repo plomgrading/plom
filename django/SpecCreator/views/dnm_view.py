@@ -4,10 +4,7 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
 from SpecCreator.views import TestSpecPDFView
-from SpecCreator.services import (
-    StagingSpecificationService,
-    SpecCreatorFrontendService
-)
+from SpecCreator.services import StagingSpecificationService, SpecCreatorFrontendService
 
 from .. import forms
 
@@ -27,18 +24,22 @@ class TestSpecCreatorDNMPage(TestSpecPDFView):
         page_list = spec.get_page_list()
         frontend = SpecCreatorFrontendService()
 
-        context.update({
-            "num_questions": spec.get_n_questions(),
-            "x_data": frontend.get_dnm_page_alpine_xdata(page_list),
-            "pages": frontend.get_pages_for_dnm_select_page(page_list),
-        })
+        context.update(
+            {
+                "num_questions": spec.get_n_questions(),
+                "x_data": frontend.get_dnm_page_alpine_xdata(page_list),
+                "pages": frontend.get_pages_for_dnm_select_page(page_list),
+            }
+        )
         return context
 
     def get(self, request):
         context = self.build_context()
-        context.update({
-            "form": self.build_form(),
-        })
+        context.update(
+            {
+                "form": self.build_form(),
+            }
+        )
         return render(request, "SpecCreator/do-not-mark-page.html", context)
 
     def post(self, request):
@@ -50,12 +51,12 @@ class TestSpecCreatorDNMPage(TestSpecPDFView):
 
             dnm_idx = []
             for key, value in data.items():
-                if 'page' in key and value == True:
-                    idx = int(re.sub('\D', '', key))
+                if "page" in key and value == True:
+                    idx = int(re.sub("\D", "", key))
                     dnm_idx.append(idx)
             spec.set_do_not_mark_pages(dnm_idx)
 
-            return HttpResponseRedirect(reverse('validate'))
+            return HttpResponseRedirect(reverse("validate"))
         else:
             context = self.build_context()
             context.update({"form": form})
