@@ -17,6 +17,7 @@
                 <a class="btn btn-warning" hx-post="{% url 'retry_all_PDFs' %}" hx-target="#pdf_table">Retry All</a>
                 <a class="btn btn-danger" hx-post="{% url 'cancel_all_PDFs' %}" hx-target="#pdf_table">Cancel All</a>
                 <a class="btn btn-danger" hx-post="{% url 'delete_all_PDFs' %}" hx-target="#pdf_table">Delete All</a>
+                <a class="btn btn-secondary" onclick="document.getElementById('bottom').scrollIntoView()">
                     <i class="bi bi-arrow-down-circle"></i>
                 </a>
             </div>
