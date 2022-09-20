@@ -937,9 +937,12 @@ class MarkerClient(QWidget):
         self.updateProgress()  # Update counts
 
         # Connect the view **after** list updated.
-        # Connect the table-model's selection change to appropriate function
+        # Connect the table-model's selection change to Marker functions
         self.ui.tableView.selectionModel().selectionChanged.connect(
             self.updatePreviewImage
+        )
+        self.ui.tableView.selectionModel().selectionChanged.connect(
+            self.ensureAllDownloaded
         )
 
         self.requestNext()  # Get a question to mark from the server
@@ -2015,14 +2018,52 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
+        print("updatePreviewImage")
         idx = new.indexes()
         if len(idx) == 0:
             # Remove preview when user unselects row (e.g., ctrl-click)
             log.debug("User managed to unselect current row")
             self.testImg.updateImage(None)
             return
-        # Note: a single selection should have length 11: could assert
+        # Note: a single selection should have length 11 all with same row: could assert
         self._updateImage(idx[0].row())
+
+    def ensureAllDownloaded(self, new, old):
+        """Whenever the selection changes, ensure downloaders are either finished or running for each image.
+
+        We might need to restart downloaders if they have repeatedly failed.
+        Even if we are still waiting, we can signal to the download the we
+        have renewed interest in this particular download.
+        TODO: for example. maybe we should send a higher priority?
+
+        Args:
+            new (QItemSelection): the newly selected cells.
+            old (QItemSelection): the previously selected cells.
+
+        Returns:
+            None
+        """
+        idx = new.indexes()
+        if len(idx) == 0:
+            return
+        # Note: a single selection should have length 11 all with same row: could assert
+        pr = idx[0].row()
+        task = self.prxM.getPrefix(pr)
+        self.trigger_downloads_for_task(task)
+
+    def trigger_downloads_for_task(self, task):
+        """Make sure the images for a task are downloaded or trigger downloads.
+
+        TODO: this routine must've already done the initial download: maybe
+        a more general routine would be written that does not depend on the
+        `examModel` having a row for the task already.
+        """
+        img_src_data = self.examModel.get_source_image_data(task)
+        placeholder = Downloader.get_placeholder_path()
+        for row in img_src_data:
+            if row["filename"] == placeholder:
+                log.info("image id %d still has placeholder, re-triggering download", row["id"])
+            self.downloader.download_in_background_thread(row)
 
     def get_upload_queue_length(self):
         """How long is the upload queue?

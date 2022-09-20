@@ -77,6 +77,7 @@ class Downloader(QObject):
         self.threadpool = QThreadPool()
         self._tries = {}
         self._total_tries = {}
+        self._in_progress = {}
 
     def temp_attach_messenger(self, msgr):
         self.msgr = Messenger.clone(msgr)
@@ -118,6 +119,10 @@ class Downloader(QObject):
 
         if self.pagecache.has_page_image(row["id"]):
             return
+        if not _is_retry and self._in_progress.get(row["id"]):
+            # return early if this image id is already in queue
+            # TODO but we should reset retries?
+            return
         # try some things to get a reasonable local filename
         target_name = row.get("server_path", None)
         if target_name is None:
@@ -141,6 +146,9 @@ class Downloader(QObject):
             self.threadpool.start(worker, priority=QThread.Priority.HighPriority)
         else:
             self.threadpool.start(worker, priority=QThread.Priority.LowPriority)
+        # keep track of which img_ids are in progress
+        # todo: semaphore around this and .start?
+        self._in_progress[row["id"]] = True
         # bg.finished.connect(thread.quit)
         # bg.finished.connect(bg.deleteLater)
 
@@ -153,8 +161,8 @@ class Downloader(QObject):
     def worker_delivers(self, img_id, md5, tmpfile, local_filename):
         log.debug(f"Worker delivery: {img_id}, {local_filename}")
         # TODO: maybe pagecache should have the desired filename?
-        # TODO: and keep a list of downloads in-progress
         # TODO: revisit once PageCache decides None/Exception...
+        self._in_progress[img_id] = False
         if self.pagecache.has_page_image(img_id):
             cur = self.pagecache.page_image_path(img_id)
         else:
@@ -184,6 +192,7 @@ class Downloader(QObject):
         x = self._tries[img_id]
         if x > 3:
             log.warning("We've tried %d too many times: giving up!", img_id)
+            self._in_progress[img_id] = False
             return
         # TODO: does not respect the original priority: high priority failure becomes ordinary
         self.download_in_background_thread(
