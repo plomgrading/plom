@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
-    BuildPaperPDFs, 
-    GetPDFFile, 
+    BuildPaperPDFs,
+    GetPDFFile,
     GetCompressedPDFs,
     UpdatePDFTable,
     StartAllPDFs,
@@ -16,9 +16,9 @@ urlpatterns = [
     path("update/", UpdatePDFTable.as_view(), name="update_paperPDFs"),
     path("get/<int:paper_number>", GetPDFFile.as_view(), name="get_paperPDFs"),
     path("get_zip/", GetCompressedPDFs.as_view(), name="zip_paperPDFs"),
-    path("start/all/", StartAllPDFs.as_view(), name='start_all_PDFs'),
-    path("start/<int:paper_number>", StartOnePDF.as_view(), name='start_one_PDF'),
-    path("cancel/all", CancelAllPDf.as_view(), name='cancel_all_PDFs'),
-    path("cancel/<int:paper_number>", CancelOnePDF.as_view(), name='cancel_one_PDF'),
-    path("retry/all", RetryAllPDF.as_view(), name='retry_all_PDFs'),
+    path("start/all/", StartAllPDFs.as_view(), name="start_all_PDFs"),
+    path("start/<int:paper_number>", StartOnePDF.as_view(), name="start_one_PDF"),
+    path("cancel/all", CancelAllPDf.as_view(), name="cancel_all_PDFs"),
+    path("cancel/<int:paper_number>", CancelOnePDF.as_view(), name="cancel_one_PDF"),
+    path("retry/all", RetryAllPDF.as_view(), name="retry_all_PDFs"),
 ]

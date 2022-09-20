@@ -8,8 +8,9 @@ class Command(BaseCommand):
     It creates admin, manager, marker, and scanner groups. Then,
     any superusers will be added to the admin group.
     """
+
     def handle(self, *args, **options):
-        group_list = ['admin', 'manager', 'marker', 'scanner', 'demo']
+        group_list = ["admin", "manager", "marker", "scanner", "demo"]
         # get all the existing groups in a list
         exist_groups = [str(group) for group in Group.objects.all()]
 
@@ -17,9 +18,9 @@ class Command(BaseCommand):
         for group in group_list:
             if group not in exist_groups:
                 Group(name=group).save()
-                print(f'{group} has been added!')
+                print(f"{group} has been added!")
             else:
-                print(f'{group} exist already!')
+                print(f"{group} exist already!")
 
         # now get the admin group
         admin_group = Group.objects.get(name="admin")
@@ -31,4 +32,3 @@ class Command(BaseCommand):
                 user.groups.add(admin_group)
                 user.save()
                 print(f"Added superuser {user.username} to the 'admin' group")
-

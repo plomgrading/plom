@@ -6,8 +6,8 @@ from django.utils.deprecation import MiddlewareMixin
 # Online Threshold: If the user was logged out for 30 minutes after 2 hours inactivity,
 #                   The user will become inactive status
 # Online Max: Maximum markers and scanners in total allowed to be active together
-ONLINE_THRESHOLD = getattr(settings, 'ONLINE_THRESHOLD', 60 * 30)
-ONLINE_MAX = getattr(settings, 'ONLINE_MAX', 60)
+ONLINE_THRESHOLD = getattr(settings, "ONLINE_THRESHOLD", 60 * 30)
+ONLINE_MAX = getattr(settings, "ONLINE_MAX", 60)
 
 
 def get_online_now(self):
@@ -24,12 +24,12 @@ class OnlineNowMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         # First get the index
-        uids = cache.get('online-now', [])
+        uids = cache.get("online-now", [])
 
         # Perform the multiget on the individual online uid keys
-        online_keys = ['online-%s' % (u,) for u in uids]
+        online_keys = ["online-%s" % (u,) for u in uids]
         fresh = cache.get_many(online_keys).keys()
-        online_now_ids = [int(k.replace('online-', '')) for k in fresh]
+        online_now_ids = [int(k.replace("online-", "")) for k in fresh]
 
         # If the user is authenticated, add their id to the list
         if request.user.is_authenticated:
@@ -49,5 +49,5 @@ class OnlineNowMiddleware(MiddlewareMixin):
         request.__class__.online_now = property(get_online_now)
 
         # Set the new cache
-        cache.set('online-%s' % (request.user.pk,), True, ONLINE_THRESHOLD)
-        cache.set('online-now', online_now_ids, ONLINE_THRESHOLD)
+        cache.set("online-%s" % (request.user.pk,), True, ONLINE_THRESHOLD)
+        cache.set("online-now", online_now_ids, ONLINE_THRESHOLD)

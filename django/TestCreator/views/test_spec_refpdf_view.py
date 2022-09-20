@@ -30,32 +30,26 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
         spec = TestSpecService()
         ref = ReferencePDFService(spec)
         context = super().build_context("upload")
-        context.update({
-            'refpdf_uploaded': ref.is_there_a_reference_pdf()
-        })
+        context.update({"refpdf_uploaded": ref.is_there_a_reference_pdf()})
         if ref.is_there_a_reference_pdf():
-            context.update({
-                'n_pages': spec.get_n_pages()
-            })
+            context.update({"n_pages": spec.get_n_pages()})
         return context
 
     def get(self, request):
         context = self.build_context()
-        context.update({
-            "form": self.build_form()
-        })
-        return render(request, 'TestCreator/test-spec-upload-pdf.html', context)
+        context.update({"form": self.build_form()})
+        return render(request, "TestCreator/test-spec-upload-pdf.html", context)
 
     def delete(self, request):
         spec = TestSpecService()
         ref = ReferencePDFService(spec)
         ref.delete_pdf()
         spec.clear_questions()
-        
+
         the_spec = spec.specification()
         the_spec.pages = {}
         the_spec.save()
-        
+
         return HttpResponseClientRefresh()
 
     def post(self, request):
@@ -66,11 +60,11 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
             data = form.cleaned_data
 
             n_pages = data["num_pages"]
-            slug = slugify(re.sub('.pdf$', '', str(data['pdf'])))
+            slug = slugify(re.sub(".pdf$", "", str(data["pdf"])))
 
             spec = TestSpecService()
             ref = ReferencePDFService(spec)
-            ref.new_pdf(slug, n_pages, request.FILES['pdf'])
+            ref.new_pdf(slug, n_pages, request.FILES["pdf"])
 
             # set do not mark page as incomplete
             the_spec = spec.specification()
@@ -79,7 +73,7 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
 
             spec.unvalidate()
 
-            return HttpResponseRedirect(reverse('id_page'))
+            return HttpResponseRedirect(reverse("id_page"))
         else:
-            context.update({'form': form})
-            return render(request, 'TestCreator/test-spec-upload-pdf.html', context)
+            context.update({"form": form})
+            return render(request, "TestCreator/test-spec-upload-pdf.html", context)
