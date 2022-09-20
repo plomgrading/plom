@@ -75,6 +75,8 @@ class Downloader(QObject):
         # TODO: may want this in the QApp: only have one
         # TODO: just use QThreadPool.globalInstance()?
         self.threadpool = QThreadPool()
+        # TODO: will this stop Marker from getting one?  It doesn't seem to...
+        self.threadpool.setMaxThreadCount(2)
         self._tries = {}
         self._total_tries = {}
         self._in_progress = {}
