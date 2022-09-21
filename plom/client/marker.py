@@ -1331,19 +1331,26 @@ class MarkerClient(QWidget):
         if not ok:
             return
         log.info("getting paper num %s", n)
+        task = f"q{n:04}g{self.question}"
         try:
-            self.requestParticularPaper(n)
+            self.claim_task_and_trigger_downloads(task)
         except (
             PlomTakenException,
             PlomRangeException,
             PlomVersionMismatchException,
         ) as err:
             WarnMsg(self, f"Cannot get paper {n}.", info=err).exec()
+            return
+        self.moveSelectionToTask(task)
 
-    def requestNext(self):
+    def requestNext(self, *, update_select=True):
         """Ask server for an unmarked paper, get file, add to list, update view.
 
         Retry a few times in case two clients are asking for same.
+
+        Keyword Args:
+            update_select (bool): default True, send False if you don't
+                want to adjust the visual selection.
 
         Returns:
             None
@@ -1381,16 +1388,17 @@ class MarkerClient(QWidget):
                 ).exec()
                 raise
 
-            num = int(task[1:5])
             try:
-                self.requestParticularPaper(num)
+                self.claim_task_and_trigger_downloads(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
+        if update_select:
+            self.moveSelectionToTask(task)
 
-    def requestParticularPaper(self, papernum):
-        """Try to get a given paper number from the server.
+    def claim_task_and_trigger_downloads(self, task):
+        """Claim a particular task for the current user and start image downloads.
 
         Notes:
             Side effects: on success, updates the table of tasks
@@ -1402,13 +1410,18 @@ class MarkerClient(QWidget):
             PlomTakenException
             PlomVersionMismatchException
         """
-        task = f"q{papernum:04}g{self.question}"
         page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(
             task, version=self.version
         )
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
 
+        # TODO: I dislike this packed-string: overdue for refactor
+        assert task[0] == "q"
+        assert task[5] == "g"
+        question_idx = int(task[6:])
+        assert question_idx == self.question
+        papernum = task[1:5]
         # TODO: just put orientation, server_path in the MclaimThisTask call!
         pagedata = self.msgr.get_pagedata_context_question(papernum, self.question)
         # Populate the orientation keys and server_path from the pagedata
@@ -1440,6 +1453,8 @@ class MarkerClient(QWidget):
             if row["filename"] == Downloader.get_placeholder_path():
                 self.downloader.download_in_background_thread(row)
 
+    def moveSelectionToTask(self, task):
+        """Update the selection in the list of papers."""
         pr = self.prxM.rowFromTask(task)
         if pr is not None:
             # if newly-added row is visible, select it and redraw
@@ -1468,7 +1483,7 @@ class MarkerClient(QWidget):
             None
 
         """
-        self.requestNext()
+        self.requestNext(update_select=False)
 
     def moveToNextUnmarkedTest(self, task=None):
         """
@@ -1871,7 +1886,7 @@ class MarkerClient(QWidget):
         """
         log.debug("Annotator wants more (w/o closing)")
         if not self.allowBackgroundOps:
-            self.requestNext()
+            self.requestNext(update_select=False)
         if not self.moveToNextUnmarkedTest("q" + oldtgvID if oldtgvID else None):
             return False
         # TODO: copy paste of annotateTest()
