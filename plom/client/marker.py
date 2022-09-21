@@ -1456,14 +1456,14 @@ class MarkerClient(QWidget):
     def moveSelectionToTask(self, task):
         """Update the selection in the list of papers."""
         pr = self.prxM.rowFromTask(task)
-        if pr is not None:
-            # if newly-added row is visible, select it and redraw
-            self.ui.tableView.selectRow(pr)
-            # this might redraw it twice: oh well this is not common operation
-            self._updateCurrentlySelectedRow()
-            # Clean up the table
-            self.ui.tableView.resizeColumnsToContents()
-            self.ui.tableView.resizeRowsToContents()
+        if pr is None:
+            return
+        self.ui.tableView.selectRow(pr)
+        # this might redraw it twice: oh well this is not common operation
+        self._updateCurrentlySelectedRow()
+        # Clean up the table
+        self.ui.tableView.resizeColumnsToContents()
+        self.ui.tableView.resizeRowsToContents()
 
     def background_download_finished(self, img_id, md5, local_filename):
         log.debug(f"PageCache has finished downloading {img_id} {local_filename}")
