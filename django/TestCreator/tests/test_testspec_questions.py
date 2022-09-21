@@ -11,27 +11,27 @@ class TestSpecQuestionTests(TestCase):
     @classmethod
     def get_default_pages(self):
         return {
-        "0": {
-            'id_page': False,
-            'dnm_page': False,
-            'question_page': False,
-            'thumbnail': 'thumbnails/dummy/dummy-thumbnail0.png'
-        },
-        "1": {
-            'id_page': False,
-            'dnm_page': False,
-            'question_page': False,
-            'thumbnail': 'thumbnails/dummy/dummy-thumbnail1.png'
+            "0": {
+                "id_page": False,
+                "dnm_page": False,
+                "question_page": False,
+                "thumbnail": "thumbnails/dummy/dummy-thumbnail0.png",
+            },
+            "1": {
+                "id_page": False,
+                "dnm_page": False,
+                "question_page": False,
+                "thumbnail": "thumbnails/dummy/dummy-thumbnail1.png",
+            },
         }
-    }
 
     def test_create_question(self):
         """Test TestSpecQuestionService.create_question"""
         spec = services.TestSpecService()
         qserv = services.TestSpecQuestionService(0, spec)
-        q1 = qserv.create_question('Q1', 1, False)
+        q1 = qserv.create_question("Q1", 1, False)
         self.assertEqual(q1.index, 0)
-        self.assertEqual(q1.label, 'Q1')
+        self.assertEqual(q1.label, "Q1")
         self.assertEqual(q1.mark, 1)
         self.assertEqual(q1.shuffle, False)
 
@@ -39,7 +39,7 @@ class TestSpecQuestionTests(TestCase):
         """Test TestSpecQuestionService.remove_question"""
         spec = services.TestSpecService()
         qserv = services.TestSpecQuestionService(1, spec)
-        q1 = models.TestSpecQuestion(index=1, label='Q1', mark=1, shuffle=False)
+        q1 = models.TestSpecQuestion(index=1, label="Q1", mark=1, shuffle=False)
         q1.save()
 
         qserv.remove_question()
@@ -49,26 +49,26 @@ class TestSpecQuestionTests(TestCase):
         """Test that calling remove_question will update the pages in models.TestSpecInfo"""
         spec = services.TestSpecService()
         qserv = services.TestSpecQuestionService(1, spec)
-        q1 = models.TestSpecQuestion(index=1, label='Q1', mark=1, shuffle=False)
+        q1 = models.TestSpecQuestion(index=1, label="Q1", mark=1, shuffle=False)
         q1.save()
 
         the_spec = spec.specification()
         the_spec.pages = self.get_default_pages()
-        the_spec.pages["1"]['question_page'] = 1
+        the_spec.pages["1"]["question_page"] = 1
         the_spec.save()
 
         qserv.remove_question()
-        
+
         # You'll have calling load_spec() every time you want to lookup the most recent values
         the_spec = spec.specification()
-        self.assertEqual(the_spec.pages["1"]['question_page'], False)
+        self.assertEqual(the_spec.pages["1"]["question_page"], False)
 
     def test_clear_questions(self):
         """Test TestSpecService.clear_questions"""
         spec = services.TestSpecService()
-        spec.add_question(1, 'Q1', 1, False)
-        spec.add_question(2, 'Q2', 1, False)
-        spec.add_question(3, 'Q3', 1, False)
+        spec.add_question(1, "Q1", 1, False)
+        spec.add_question(2, "Q2", 1, False)
+        spec.add_question(3, "Q3", 1, False)
         spec.set_n_questions(3)
 
         spec.clear_questions()
@@ -91,13 +91,13 @@ class TestSpecQuestionTests(TestCase):
         spec.questions[0] = services.TestSpecQuestionService(0, spec)
         available = spec.get_available_marks(0)
         self.assertEqual(available, 10)
-        
+
     def test_get_marks_assigned_to_other_questions(self):
         """Test TestSpecQuestionService.get_marks_assigned_to_other_questions"""
         spec = services.TestSpecService()
-        spec.add_question(0, '', 5, False)
-        spec.add_question(1, '', 3, False)
-        spec.add_question(2, '', 2, False)
+        spec.add_question(0, "", 5, False)
+        spec.add_question(1, "", 3, False)
+        spec.add_question(2, "", 2, False)
         qserv = spec.questions[2]
         marks_to_others = qserv.get_marks_assigned_to_other_questions()
         self.assertEqual(marks_to_others, 8)

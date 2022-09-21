@@ -12,9 +12,10 @@ class PaperSourcePDF(models.Model):
 class PrenamingSetting(SingletonBaseModel):
     enabled = models.BooleanField(default=False, null=False)
 
-    
+
 class StagingClasslistCSV(SingletonBaseModel):
     """A temporary holder for the classlist csv for the purposes of preparing things."""
+
     # TODO - set a better upload path
     csv_file = models.FileField(upload_to="sourceVersions/")
     valid = models.BooleanField(default=False, null=False)
@@ -54,7 +55,7 @@ class StagingPQVMapping(models.Model):
     but avoids recreating the entire paper-structure.
 
     """
-    
+
     paper_number = models.PositiveIntegerField(null=False)
     question = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
@@ -62,6 +63,7 @@ class StagingPQVMapping(models.Model):
 
 # ---------------------------------
 # Make a table for info to help connect to the plom-classic server
+
 
 class ClassicPlomServerInformation(SingletonBaseModel):
     server_name = models.TextField(null=True)

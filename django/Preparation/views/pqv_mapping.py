@@ -12,6 +12,7 @@ from Preparation.services import (
 from Base.base_group_views import ManagerRequiredView
 from TestCreator.services import TestSpecService
 
+
 class PQVMappingUploadView(ManagerRequiredView):
     # NOT CURRENTLY BEING USED
     def post(self, request):
@@ -60,7 +61,7 @@ class PQVMappingView(ManagerRequiredView):
                 prenaming=context["prenaming"]
             )
             context["pqv_number_rows"] = len(context["pqv_table"])
-            
+
         return context
 
     def get(self, request):

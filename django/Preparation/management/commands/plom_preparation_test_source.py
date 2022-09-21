@@ -127,9 +127,7 @@ class Command(BaseCommand):
         # TODO - fix 6 to get the required number of pages from the spec.
         # we should not be able to upload unless we have a spec
         with open(source_path, "rb") as fh:
-            success, msg = tss.take_source_from_upload(
-                version, speck.get_n_pages(), fh
-            )
+            success, msg = tss.take_source_from_upload(version, speck.get_n_pages(), fh)
             if success:
                 self.stdout.write(
                     f"Upload of source pdf for version {version} succeeded."

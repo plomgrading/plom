@@ -11,12 +11,15 @@ class Profile(LoginRequiredMixin, View):
     """
     Class-based view of Profile page.
     """
-    login_url = 'login'
-    profile_page = 'Profile/profile.html'
-    navbar_colour = {'admin': '#808080',
-                     'manager': '#AD9CFF',
-                     'marker': '#FF434B',
-                     'scanner': '#0F984F'}
+
+    login_url = "login"
+    profile_page = "Profile/profile.html"
+    navbar_colour = {
+        "admin": "#808080",
+        "manager": "#AD9CFF",
+        "marker": "#FF434B",
+        "scanner": "#0F984F",
+    }
     form = EditProfileForm()
 
     def get(self, request):
@@ -34,12 +37,20 @@ class Profile(LoginRequiredMixin, View):
         if user in Profile.navbar_colour:
             colour = Profile.navbar_colour[user]
         else:
-            colour = '#000000'
-            context = {'form': form, 'navbar_colour': colour, 'user_group': user,
-                       'email': request.user.email}
+            colour = "#000000"
+            context = {
+                "form": form,
+                "navbar_colour": colour,
+                "user_group": user,
+                "email": request.user.email,
+            }
             return render(request, self.profile_page, context)
-        context = {'form': form, 'navbar_colour': colour, 'user_group': user,
-                   'email': request.user.email}
+        context = {
+            "form": form,
+            "navbar_colour": colour,
+            "user_group": user,
+            "email": request.user.email,
+        }
         return render(request, self.profile_page, context, status=200)
 
     def post(self, request):
@@ -57,6 +68,10 @@ class Profile(LoginRequiredMixin, View):
         form = EditProfileForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-            context = {'form': form, 'navbar_colour': colour, 'user_group': user,
-                       'email': request.user.email}
+            context = {
+                "form": form,
+                "navbar_colour": colour,
+                "user_group": user,
+                "email": request.user.email,
+            }
             return render(request, self.profile_page, context, status=200)

@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
-    BuildPaperPDFs, 
-    GetPDFFile, 
+    BuildPaperPDFs,
+    GetPDFFile,
     GetCompressedPDFs,
     UpdatePDFTable,
     StartAllPDFs,

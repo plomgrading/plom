@@ -75,10 +75,10 @@ class StagingStudentService:
     def get_classdict(self):
         students = self.get_students()
         for s in students:
-            s['id'] = s.pop("student_id")
-            s['studentName'] = s.pop("student_name")
-            if s['paper_number'] is None:
-                s['paper_number'] = -1
+            s["id"] = s.pop("student_id")
+            s["studentName"] = s.pop("student_name")
+            if s["paper_number"] is None:
+                s["paper_number"] = -1
         return students
 
     @transaction.atomic()

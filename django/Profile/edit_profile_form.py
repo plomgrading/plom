@@ -5,4 +5,4 @@ from django.contrib.auth.models import User
 class EditProfileForm(UserChangeForm):
     class Meta:
         model = User
-        fields = ['first_name', 'email']
+        fields = ["first_name", "email"]

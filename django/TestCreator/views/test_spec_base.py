@@ -16,14 +16,16 @@ class TestSpecPageView(ManagerRequiredView):
         spec = TestSpecService()
         progress = TestSpecProgressService(spec)
 
-        context.update({
-            "long_name": spec.get_long_name(),
-            "short_name": spec.get_short_name(),
-            "slugged_short_name": spec.get_short_name_slug(),
-            "curr_page": page_name,
-            "questions": [i for i in range(spec.get_n_questions())],
-            "completed": progress.get_progress_dict()
-        })
+        context.update(
+            {
+                "long_name": spec.get_long_name(),
+                "short_name": spec.get_short_name(),
+                "slugged_short_name": spec.get_short_name_slug(),
+                "curr_page": page_name,
+                "questions": [i for i in range(spec.get_n_questions())],
+                "completed": progress.get_progress_dict(),
+            }
+        )
 
         return context
 
@@ -35,10 +37,12 @@ class TestSpecPDFView(TestSpecPageView):
         ref = ReferencePDFService(spec)
         if ref.is_there_a_reference_pdf():
             thumbnails = ref.create_page_thumbnail_list()
-            context.update({
-                "thumbnails": thumbnails,
-                "pages": spec.get_page_list(),
-                "num_pages": spec.get_n_pages(),
-            })
+            context.update(
+                {
+                    "thumbnails": thumbnails,
+                    "pages": spec.get_page_list(),
+                    "num_pages": spec.get_n_pages(),
+                }
+            )
 
         return context
