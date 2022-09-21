@@ -1,0 +1,27 @@
+name = "mabcm"
+longName = "Math ABC Midterm"
+numberOfPages = 6
+numberOfVersions = 2
+totalMarks = 20
+numberOfQuestions = 3
+numberToProduce = -1
+idPage = 1
+doNotMarkPages = [ 2, 6,]
+[[question]]
+pages = [ 3,]
+mark = 5
+label = "Q1"
+select = "shuffle"
+
+[[question]]
+pages = [ 4,]
+mark = 5
+label = "Q2"
+select = "fix"
+
+[[question]]
+pages = [ 5,]
+mark = 10
+label = "Q3"
+select = "shuffle"
+

@@ -1,0 +1,21 @@
+{% extends "TestCreator/base-test-spec-cards.html"%}
+
+{% block title %}Create Specification - ID page{% endblock %}
+
+{% block pre_cards %}
+<p>Select an ID page:</p>
+{% endblock %}
+
+{% block card_badge %}
+{% if page.dnm_page %}
+<span class="p-2 badge text-bg-secondary">DNM</span>
+{% elif page.question_page %}
+<span class="p-2 badge text-bg-info" >Q{{ page.question_page }}</span>
+{% else %}
+<span class="p-2 badge text-bg-light" x-cloak x-show="page{{ forloop.counter0 }}selected">ID</span>
+{% endif %}
+{% endblock %}
+
+{% block form_action %}action="{% url 'id_page' %}"{% endblock %}
+
+{% block back_href %}href="{% url 'upload' %}"{% endblock %}

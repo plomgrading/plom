@@ -1,0 +1,109 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Connect to classic - Send information{% endblock %}
+
+{% block page_heading %}Send information to Plom-classic server{% endblock %}
+
+{% block main_content %}
+
+<div class="d-grid gap-2">
+    <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+
+    {% if is_valid and manager_details_available and db_initialized %}
+    <div class="card w-50">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-auto">
+                    <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                </div>
+                <div class="p-0 col-sm-11 pt-1">
+                    <h4 class="card-title">Information sent to Plom-classic!</h4>
+                    <p class="card-text">You can now build test-papers.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% elif is_valid and manager_details_available %}
+    <div class="card w-50">
+        <div class="card-body">
+            <h5 class="card-title">Test specification</h5>
+            {% if spec_valid %}
+                {% if is_spec_sent %}
+                <p class="card-text text-success">Test specification uploaded.</p>
+                {% else %}
+                <p class="card-text">Ready to send to Plom-classic.</p>
+                {% endif %}
+                <form action="{% url 'connect_send_spec' %}" method="post">
+                    {% csrf_token %}
+                    <input type="submit" class="btn btn-primary" value="Send">
+                </form>
+            {% else %}
+            <p class="card-text">Valid specification not detected.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card w-50">
+        <div class="card-body">
+            {% if classlist_required %}
+            <h5 class="card-title">Classlist (required)</h5>
+            {% else %}
+            <h5 class="card-title">Classlist (optional)</h5>
+            {% endif %}
+            {% if is_classlist_sent %}
+            <p class="card-text text-success">Classlist uploaded.</p>
+            {% else %}
+            <p class="card-text">Ready to send to Plom-classic</p>
+            {% endif %}
+            {% if classlist_exists %}
+            <form action="{% url 'connect_send_classlist' %}" method="post">
+                {% csrf_token %}
+                <input type="submit" class="btn btn-primary" value="Send">
+            </form>
+            {% else %}
+            <p class="card-text">Valid classlist not detected.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card w-50">
+        <div class="card-body">
+            <h5 class="card-title">QV Map and initialize database</h5>
+            <p class="card-text">Create Plom-classic database using the test specification, classlist, and QV map</p>
+            <p class="card-text d-flex">
+                <i class="bi bi-exclamation-triangle-fill text-warning fs-2 pe-3"></i>
+                <b>Please make sure all information is correct before proceeding. Once you do this, there is no going back without wiping the Plom-classic server.</b>
+            </p>
+            {% if is_spec_sent %}
+                {% if classlist_required and not is_classlist_sent %}
+                    <p class="card-text">Classlist not uploaded &mdash; required since prenaming is enabled.</p>
+                {% else %}
+                    {% if pqvmap_exists %}
+                    <a class="btn btn-primary" href="{% url 'connect_init_db' %}">Send</a>
+                    {% else %}
+                    <p class="card-text">No QV map detected.</p>
+                    {% endif %}
+                {% endif %}
+            {% else %}
+            <p class="card-text">Test specification not uploaded.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card w-50">
+        <div class="card-body">
+            <div class="d-flex">
+                <i class="bi bi-exclamation-triangle-fill text-warning fs-2 pe-3"></i>
+                <div>
+                    <h5 class="card-title">Connection not established</h5>
+                    <p class="card-text">Please test your Plom-classic connection details.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

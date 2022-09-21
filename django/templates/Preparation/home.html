@@ -1,0 +1,285 @@
+{% extends "base/base.html" %}
+{% block page_heading %}Prepare assessment{% endblock %}
+{% block main_content %}
+  <div class="d-grid gap-2">
+    <div class="card">
+      <details class="card-body">
+        <summary>
+          Help! What do I do?
+        </summary>
+        <p>
+          <ul>
+            <li>Some minimal doc stubs here.</li>
+          </ul>
+        </p>
+      </details>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-body">
+          {% if valid_spec %}
+            <h5 class="card-title">
+              Test specification
+              <i class="bi bi-check-circle text-success"></i>
+	          </h5>
+            <p class="card-text">Test specification has been created</p>
+            <strong>{{ spec_longname }}</strong>
+            <p>{{ spec_shortname }}</p>
+            <a class="btn btn-success" href="{% url 'spec_summary' %}">View summary</a>
+            <a class="btn btn-secondary" href="{% url 'generate_spec' %}" download="{{ slugged_spec_shortname }}.toml">Download</a>
+            <btn class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</btn>
+
+            <div class="modal fade" id="deleteModal">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Confirmation</h5>
+                  </div>
+                  <div class="modal-body">
+                    <p>This will clear the test specification.</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form action="{% url 'reset_spec_landing' %}" method="post">
+                      {% csrf_token %}
+                      <input type="submit" class="btn btn-danger" value="Delete">
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <h5 class="card-title">
+              Test specification
+              <i class="bi bi-exclamation-diamond-fill text-primary"></i>
+            </h5>
+            <p class="card-text">Create a test-specification for your assessment.</p>
+            <a class="btn btn-primary" href="{% url 'creator_launch' %}">Create specification</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-body">
+          {% if can_upload_source_tests %}
+            <h5 class="card-title">
+              Source versions &mdash; {{ uploaded_test_versions }} of {{ test_versions }} uploaded
+              {% if all_source_tests_uploaded %}
+                <i class="bi bi-check-circle text-success"></i>
+              {% else %}
+                <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+              {% endif %}
+            </h5>
+            <p class="card-text">Upload source versions of your assessment</p>
+            <a class="btn btn-primary" href="test_source/">Manage sources</a>
+          {% else %}
+            <h5 class="card-title">
+              Source versions <i class="bi bi-caret-up-square-fill text-warning"></i>
+            </h5>
+            <p class="card-text">Cannot upload assessment sources until test specification has been created</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">
+              Prenaming &mdash;
+	      {% if prename_enabled %}
+	      enabled <i class="bi bi-check-circle text-warning"></i>
+	      {% else %}
+	      disabled <i class="bi bi-dash-circle text-success"></i>
+	      {% endif %}
+            </h5>
+            <p class="card-text">Do you want to prename your papers?</p>
+            <a class="btn btn-primary" href="{% url 'prep_prename' %}">Manage prenaming</a>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-body">
+	  {% if prename_enabled %}
+            <h5 class="card-title">
+              Classlist  &mdash; required
+	      {% if student_list_present %}
+	      &mdash; and present <i class="bi bi-check-circle text-success"></i>
+	      {% else %}
+	      <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	      {% endif %}
+            </h5>
+
+	    {% if not student_list_present %}
+          <p class="card-text">Please upload a classlist</p>
+	  {% endif %}
+	  
+          <a class="btn btn-primary" href="classlist/">Classlist management</a>
+          {% else %}
+            <h5 class="card-title">
+              Classlist  &mdash; optional
+	      {% if student_list_present %}
+	      &mdash; and present <i class="bi bi-check-circle text-success"></i>
+	      {% endif %}
+            </h5>
+	    {% if not student_list_present %}
+          <p class="card-text">Do you want to upload a classlist? You can do this later since prenaming is not enabled</p>
+	  {% endif %}
+            <a class="btn btn-primary" href="classlist/">Classlist management</a>    
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if can_qvmap %}
+
+    {% if test_versions == 1 %}
+
+    <div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+	    Number of papers
+	    {% if pqv_mapping_present %}
+	    <i class="bi bi-check-circle text-success"></i>
+	    {% else %}
+	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	    {% endif %}
+	  </h5>
+          <div class="card-text">
+	    <details>
+	    <summary>
+	    Set the number of papers to produce.
+	    </summary>
+	    <p>
+	      Since your test specification indicates only a single
+	      test version, you do not need to specify any
+	      question-version mapping.
+	    </p>
+	    </details>
+	    <a class="btn btn-primary" href="qvmapping/">Number management</a>
+	  </div>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    
+    <div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+	    Number of papers and question-version mapping
+
+	    {% if pqv_mapping_present %}
+	    <i class="bi bi-check-circle text-success"></i>
+	    {% else %}
+	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	    {% endif %}
+
+	  </h5>
+          <div class="card-text">
+	    <details>
+	    <summary>
+	    Set the number of papers to produce, and the question-version mapping
+	    </summary>
+	    <p>
+	      <ul>
+		<li> Since your test has multiple versions, plom needs to fix
+	      the versions of each question of each paper according to
+		  the specification you set.
+		</li>
+		<li> Plom can do this automagically for you, or your can
+	      upload your own mapping (advanced users).
+		</li>
+	    </p>
+	    </details>
+	    <a class="btn btn-primary" href="qvmapping/">Number and question-version management</a>    		
+	  </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+
+    <div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+	    Number of papers and question-version mapping
+
+	    <i class="bi bi-caret-up-square-fill text-warning"></i>
+          </h5>
+            <p class="card-text">You cannot set these until a test specification has been created</p>
+        </div>
+      </div>
+    </div>
+
+    
+    {% endif %}
+
+    <div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+            Set information for connection to plom-classic sever
+	          {% if server_valid %}
+            <i class="bi bi-check-circle text-success"></i>
+	          {% else %}
+	          <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	          {% endif %}
+	          {% if password_valid %}
+            <i class="bi bi-check-circle text-success"></i>
+	          {% else %}
+	          <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+	          {% endif %}
+	        </h5>
+          <h6 class="card-title">
+            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            Plom-classic support
+            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+          </h6>
+          <p class="card-text">Enter server name, port and the manager password</p>
+	        <a class="btn btn-primary" href="{% url 'connect_manager' %}">Classic server connection</a>    		
+        </div>
+      </div>
+    </div>
+    
+    <div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+            Send information to server
+            {% if db_initialised %}
+            <i class="bi bi-check-circle text-success"></i>
+            {% else %}
+            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            {% endif %}
+          </h5>
+          <p class="card-text">Verify and send all this information to the plom-server</p>
+          <a class="btn btn-primary" href="{% url 'connect_send_info' %}">Send information</a>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+            Build test paper PDFs
+            {% if papers_built %}
+            <i class="bi bi-check-circle text-success"></i>
+            {% else %}
+            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            {% endif %}
+          </h5>
+          <p class="card-text">Once all of the required information is loaded into Plom-classic, build exams and save to disk</p>
+          <a class="btn btn-primary" href="{% url 'create_paperPDFs' %}">Build papers</a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,81 @@
+<div>
+    {{ message }}
+</div>
+<!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
+<table class="table table-striped"
+    {% if poll %}
+    hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table" hx-trigger="every 0.5s"
+    {% endif %}
+>
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Filename</th>
+            <th scope="col">Status</th>
+            <th scope="col">Action</th>
+        </tr>
+    </thead>
+    {% for task, pdf_file in tasks %}
+        <tr>
+            <td>{{ task.paper_number }}</td>
+            {% if task.status == 'complete' %}
+            <td><a target="_blank" href="{% url 'get_paperPDFs' task.paper_number %}">{{ pdf_file }}</a></td>
+            <td>{{ task.status }}</td>
+            <td></td>
+            {% elif task.status == 'error' %}
+            <td>{{ pdf_file }}</td>
+            <td><p class="text-danger">{{ task.message }}</p></td>
+            <td>
+                <a 
+                class="btn btn-warning" 
+                hx-post="{% url 'start_one_PDF' task.paper_number %}"
+                hx-target="#pdf_table"
+                >
+                    Retry
+                </a>
+            </td>
+            {% elif task.status == 'queued' %}
+            <td>{{ pdf_file }}</td>
+            <td>
+                {{ task.status }}
+                <div class="spinner-grow spinner-grow-sm text-secondary"></div>
+            </td>
+            <td>
+                <a
+                    class="btn btn-danger"
+                    hx-post="{% url 'cancel_one_PDF' task.paper_number %}"
+                    hx-target="#pdf_table"
+                >
+                    Cancel
+                </a>
+            </td>
+            {% elif task.status == 'started' %}
+            <td>{{ pdf_file }}</td>
+            <td>
+                {{ task.status }}
+                <div class="spinner-grow spinner-grow-sm text-secondary"></div>
+            </td>
+            <td></td>
+            {% else %}
+            <td>{{ pdf_file }}</td>
+            <td>{{ task.status }}</td>
+            <td>
+                <a 
+                    class="btn btn-primary" 
+                    hx-post="{% url 'start_one_PDF' task.paper_number %}"
+                    hx-target="#pdf_table"
+                >
+                    Start
+                </a>
+            </td>
+            {% endif %}
+        </tr>
+    {% endfor %}
+</table>
+<form method="post" action="{% url 'zip_paperPDFs' %}" id="bottom">
+    {% csrf_token %}
+    <input type="submit" class="btn btn-primary" value="Save as zip file" {% if zip_disabled %}disabled{% endif %}>
+    <a class="btn btn-secondary" onclick="document.getElementById('top').scrollIntoView()">
+        <i class="bi bi-arrow-up-circle"></i>
+    </a>
+</form>

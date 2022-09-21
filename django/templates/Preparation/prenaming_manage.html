@@ -1,0 +1,33 @@
+{% extends "base/base.html" %}
+{% block page_heading %}Manage prenaming{% endblock %}
+{% block main_content %}
+  <div class="d-grid gap-2">
+    <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
+    <div class="card">
+      <div class="card-body">
+	{% if prenaming_enabled %}
+        <h4 class="card-title">
+	  Prenaming &mdash;  is enabled (classlist required)
+        </h4>
+        <div class="card-text">
+	  <button class="btn btn-warning"
+		  hx-delete="."
+		  >disable prenaming</button>
+	</div>
+	{% else %}
+
+        <h4 class="card-title">
+	  Prenaming &mdash;  is not enabled (classlist optional)
+        </h4>
+        <div class="card-text">
+	  <button class="btn btn-danger"
+		  hx-post="."
+		  >enable prenaming</button> 
+	</div>
+	{% endif %}
+      </div>      
+    </div>
+
+
+  </div>
+{% endblock %}
