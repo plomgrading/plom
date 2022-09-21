@@ -13,7 +13,7 @@
 PyQt5
 PyQt5-sip
 
-aiohttp==3.8.1
+aiohttp==3.8.3
 appdirs==1.4.4
 arrow==1.2.3
 canvasapi==2.2.0
