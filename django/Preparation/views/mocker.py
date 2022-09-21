@@ -2,7 +2,7 @@ import shutil
 from django.http import FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from Preparation.services import ExamMockerService, TestSourceService
-from TestCreator.services import TestSpecService
+from SpecCreator.services import StagingSpecificationService
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -13,7 +13,7 @@ class MockExamView(ManagerRequiredView):
     def post(self, request, version):
         mocker = ExamMockerService()
         tss = TestSourceService()
-        spec = TestSpecService()
+        spec = StagingSpecificationService()
         source_path = tss.get_source_pdf_path(version)
 
         n_pages = spec.get_n_pages()

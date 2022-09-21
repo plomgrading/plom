@@ -11,7 +11,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Connect.services import CoreConnectionService
 from Preparation.services import PQVMappingService, StagingStudentService
-from TestCreator.services import TestSpecService
+from SpecCreator.services import TestSpecService
 
 from .services import BuildPapersService, RenamePDFFile
 from .models import PDFTask

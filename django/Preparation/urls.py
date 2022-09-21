@@ -13,6 +13,7 @@ from .views import (
     ClassicServerInfoView,
     ClassicServerURLView,
     MockExamView,
+    PaperCreationView,
 )
 
 urlpatterns = [
@@ -48,4 +49,5 @@ urlpatterns = [
     ),
     path("classic/", ClassicServerInfoView.as_view(), name="prep_server_info"),
     path("classic/server", ClassicServerURLView.as_view(), name="prep_server"),
+    path("test_papers/", PaperCreationView.as_view(), name="prep_test_papers"),
 ]

@@ -3,7 +3,7 @@ import getpass
 from django.core.management.base import BaseCommand
 from plom.plom_exceptions import PlomConnectionError
 
-from TestCreator.services import TestSpecService, TestSpecGenerateService
+from Papers.services import SpecificationService
 from Preparation.services import (
     StagingStudentService,
     PQVMappingService,
@@ -22,13 +22,20 @@ class Command(BaseCommand):
             attempt to sign in to the plom-classic manager account
 
         After connection + authentication:
-        `python3 manage.py plom_connect send test_spec` sends a test specification to a connected server
-        `python3 manage.py plom_connect send classlist` sends a classlist to a connected server
-        `python3 manage.py plom_connect send init_db` sends a qv-map and initialises the classic database
-        `python3 manage.py plom_connect send all` performs the above three steps in one go
+        `python3 manage.py plom_connect send test_spec`
+            sends a test specification to a connected server
+        `python3 manage.py plom_connect send classlist`
+            sends a classlist to a connected server
+        `python3 manage.py plom_connect send init_db`
+            sends a qv-map and initialises the classic database
+        `python3 manage.py plom_connect send all`
+            performs the above three steps in one go
     """
 
-    help = "Tools for connecting to a Plom-classic server, logging in to the manager account, and sending information from WebPlom."
+    help = (
+        "Tools for connecting to a Plom-classic server, logging in to the"
+        "manager account, and sending information from WebPlom."
+    )
 
     def connect_to_server(self, server_name, port_number):
         core = CoreConnectionService()
@@ -50,26 +57,29 @@ class Command(BaseCommand):
 
         if not core.is_there_a_valid_connection():
             self.stderr.write(
-                "Unable to validate manager login - valid Plom-classic connection not found."
+                "Unable to validate manager login - valid Plom-classic"
+                "connection not found."
             )
         else:
-            manager = core.authenticate_manager(password)
+            core.authenticate_manager(password)
             self.stdout.write("Manager login successful.")
 
     def send_test_spec(self):
-        spec = TestSpecService()
-        if not spec.is_specification_valid():
+        spec = SpecificationService()
+        if not spec.is_there_a_spec():
             self.stderr.write(
-                "Valid test specification not found. Please upload one using plom_preparation_test_spec."
+                "Valid test specification not found. Please upload"
+                "one using plom_preparation_test_spec."
             )
             return
 
-        spec_dict = TestSpecGenerateService(spec).generate_spec_dict()
+        spec_dict = spec.get_the_spec()
 
         core = CoreConnectionService()
         if not core.is_there_a_valid_connection():
             self.stderr.write(
-                "Valid Plom-classic connection not found. Please test with plom_connect_test."
+                "Valid Plom-classic connection not found."
+                "Please test with plom_connect_test."
             )
             return
 
@@ -80,7 +90,8 @@ class Command(BaseCommand):
         sstu = StagingStudentService()
         if not sstu.are_there_students():
             self.stderr.write(
-                "No students found. Please upload a classlist using plom_preparation_classlist."
+                "No students found. Please upload a classlist using"
+                "plom_preparation_classlist."
             )
             return
 
@@ -89,7 +100,8 @@ class Command(BaseCommand):
         core = CoreConnectionService()
         if not core.is_there_a_valid_connection():
             self.stderr.write(
-                "Valid Plom-classic connection not found. Please test with plom_connect_test."
+                "Valid Plom-classic connection not found. Please test with"
+                "plom_connect_test."
             )
             return
 
@@ -100,7 +112,8 @@ class Command(BaseCommand):
         qvs = PQVMappingService()
         if not qvs.is_there_a_pqv_map():
             self.stderr.write(
-                "No question-version map found. Please upload one using plom_preparation_qvmap."
+                "No question-version map found. Please upload one using"
+                "plom_preparation_qvmap."
             )
             return
 
@@ -109,14 +122,17 @@ class Command(BaseCommand):
         core = CoreConnectionService()
         if not core.is_there_a_valid_connection():
             self.stderr.write(
-                "Valid Plom-classic connection not found. Please test with plom_connect_test."
+                "Valid Plom-classic connection not found. Please test with"
+                "plom_connect_test."
             )
             return
 
         pre = PrenameSettingService()
         if pre.get_prenaming_setting() and not core.has_classlist_been_sent():
             self.stderr.write(
-                "Prenaming is enabled, but a classlist has not been detected in Plom-classic. Please upload one using plom_preparation_classlist."
+                "Prenaming is enabled, but a classlist has not been detected"
+                "in Plom-classic. Please upload one using"
+                "plom_preparation_classlist."
             )
             return
 
@@ -139,10 +155,11 @@ class Command(BaseCommand):
 
     def send_all(self):
         self.stdout.write("Checking if all information is present...")
-        spec = TestSpecService()
-        if not spec.is_specification_valid():
+        spec = SpecificationService()
+        if not spec.is_there_a_spec():
             self.stderr.write(
-                "Valid test specification not found. Please upload one using plom_preparation_test_spec."
+                "Valid test specification not found. Please upload one using"
+                "plom_preparation_test_spec."
             )
             return
 
@@ -150,14 +167,16 @@ class Command(BaseCommand):
         sstu = StagingStudentService()
         if pre.get_prenaming_setting() and not sstu.are_there_students():
             self.stderr.write(
-                "Prenaming enabled, but classlist not found. Please upload one using plom_preparation_classlist."
+                "Prenaming enabled, but classlist not found. Please upload one"
+                "using plom_preparation_classlist."
             )
             return
 
         qvs = PQVMappingService()
         if not qvs.is_there_a_pqv_map():
             self.stderr.write(
-                "No question-version map found. Please upload one using plom_preparation_qvmap."
+                "No question-version map found. Please upload one using"
+                "plom_preparation_qvmap."
             )
             return
 
@@ -184,7 +203,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
             dest="command",
-            description="Connect to a server, authenticate manager, and send information..",
+            description=(
+                "Connect to a server, authenticate manager, and send" "information.."
+            ),
         )
 
         sp_server = sub.add_parser("server", help="Connect to a Plom-classic server.")
@@ -199,9 +220,7 @@ class Command(BaseCommand):
             help="Server port - if not present, defaults to 41984.",
         )
 
-        sp_manager = sub.add_parser(
-            "manager", help="Log in to the Plom-classic manager account."
-        )
+        sub.add_parser("manager", help="Log in to the Plom-classic manager account.")
 
         sp_send = sub.add_parser(
             "send", help="Send information to a connected Plom-classic server."
@@ -209,7 +228,9 @@ class Command(BaseCommand):
         sp_send.add_argument(
             "info_to_send",
             choices=["test_spec", "classlist", "init_db", "all"],
-            help="Information to send: test specification, classlist, qv-map/database initialization, or everything at once.",
+            help=(
+                "Information to send: test specification, classlist, qv-map/database initialization, or everything at once."
+            ),
         )
 
     def handle(self, *args, **options):

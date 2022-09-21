@@ -4,7 +4,7 @@
 hist
 # TE commonly used for QTextEdit
 te
-# unvalidate() function used in the django/TestCreator directory
+# unvalidate() function used in the django/SpecCreator directory
 unvalidate
 # valid words in django/static/js/frontend_utils.js
 crate

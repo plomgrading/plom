@@ -1,11 +1,8 @@
 from django.db import transaction
-from django.contrib.auth.hashers import make_password, check_password
 from django_huey import db_task, get_queue
-from huey.signals import SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_COMPLETE
 from plom.messenger import Messenger, ManagerMessenger
 from plom.plom_exceptions import (
     PlomConnectionError,
-    PlomConflict,
     PlomExistingLoginException,
     PlomServerNotReady,
     PlomAuthenticationException,
@@ -73,7 +70,7 @@ class CoreConnectionService:
             port = self.get_port_number()
             version_string = self.validate_url(name, port)
             return version_string != ""
-        except PlomConnectionError as e:
+        except PlomConnectionError:
             return False
 
     def is_manager_authenticated(self):
@@ -137,7 +134,7 @@ class CoreConnectionService:
         try:
             messenger = self.get_messenger()
             messenger.start()
-            spec = messenger.get_spec()
+            messenger.get_spec()
             messenger.stop()
             return True
         except (
@@ -164,7 +161,7 @@ class CoreConnectionService:
             if not messenger.token:
                 return False
 
-            classlist = messenger.IDrequestClasslist()
+            messenger.IDrequestClasslist()
             return True
         except (
             PlomServerNotReady,

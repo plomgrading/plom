@@ -1,7 +1,9 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
+from django.core.files.uploadedfile import SimpleUploadedFile
 
-from TestCreator.services import TestSpecService, TestSpecGenerateService
+from SpecCreator.services import StagingSpecificationService, ReferencePDFService
+from Papers.services import SpecificationService
 from Preparation.services import PQVMappingService
 from plom import SpecVerifier
 
@@ -15,12 +17,11 @@ class Command(BaseCommand):
     help = "Displays the current status of the spec, and allows user to upload/download/remove."
 
     def show_status(self):
-        speck = TestSpecService()
-        gen = TestSpecGenerateService(speck)
-        spec_dict = gen.generate_spec_dict()
+        speck = SpecificationService()
+        spec_dict = speck.get_the_spec()
         toml_text = toml.dumps(spec_dict)
 
-        if speck.is_specification_valid():
+        if speck.is_there_a_spec():
             self.stdout.write("A valid test spec is present:")
             self.stdout.write("#" * 40)
             self.stdout.write(f"{toml_text}")
@@ -29,11 +30,10 @@ class Command(BaseCommand):
             self.stdout.write("No valid test spec present")
 
     def download_spec(self):
-        speck = TestSpecService()
-        gen = TestSpecGenerateService(speck)
-        spec_dict = gen.generate_spec_dict()
+        speck = SpecificationService()
+        spec_dict = speck.get_the_spec()
 
-        if not speck.is_specification_valid():
+        if not speck.is_there_a_spec():
             self.stderr.write("No valid test spec present")
             return
 
@@ -49,8 +49,8 @@ class Command(BaseCommand):
             toml.dump(spec_dict, fh)
 
     def upload_spec(self, spec_file, pdf_file):
-        speck = TestSpecService()
-        if speck.is_specification_valid():
+        speck = SpecificationService()
+        if speck.is_there_a_spec():
             self.stderr.write(
                 "There is already a spec present. Cannot proceed with upload."
             )
@@ -97,11 +97,22 @@ class Command(BaseCommand):
             self.stderr.write(
                 f"Sample pdf does not match the test specification. PDF has {pdf_doc.page_count}, but spec indicates {spec_dict['numberOfPages']}."
             )
+        with open(pdf_path, "rb") as f:
+            pdf_doc_file = SimpleUploadedFile("spec_reference.pdf", f.read())
         self.stdout.write("Sample pdf has correct page count - matches specification.")
 
         # Load in the validated spec from vlad - not the original toml. This will be correctly populated
         # with any optional keys etc. See issue #88
-        speck.read_spec_dict(validated_spec, pdf_path)
+        staging_spec = StagingSpecificationService()
+
+        reference = ReferencePDFService()
+        reference.new_pdf(
+            staging_spec, "spec_reference.pdf", pdf_doc.page_count, pdf_doc_file
+        )
+
+        staging_spec.create_from_dict(validated_spec)
+
+        speck.store_validated_spec(staging_spec.get_valid_spec_dict(verbose=False))
         self.stdout.write("Test specification and sample pdf uploaded to server.")
 
     def remove_spec(self):
@@ -112,9 +123,12 @@ class Command(BaseCommand):
                 "The test-spec cannot be deleted until that is removed; use the plom_preparation_qvmap command to remove the qv-mapping."
             )
             return
-        speck = TestSpecService()
+        staging_spec = StagingSpecificationService()
+        speck = SpecificationService()
         self.stdout.write("Removing the test specification.")
-        speck.reset_specification()
+        staging_spec.reset_specification()
+        if speck.is_there_a_spec():
+            speck.remove_spec()
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(

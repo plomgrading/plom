@@ -10,7 +10,8 @@ from Preparation.services import (
 )
 
 from Base.base_group_views import ManagerRequiredView
-from TestCreator.services import TestSpecService
+from SpecCreator.services import StagingSpecificationService
+from Papers.services import SpecificationService
 
 
 class PQVMappingUploadView(ManagerRequiredView):
@@ -39,7 +40,7 @@ class PQVMappingView(ManagerRequiredView):
         pqvs = PQVMappingService()
         pss = PrenameSettingService()
         sss = StagingStudentService()
-        speck = TestSpecService()
+        speck = SpecificationService()
 
         context = {
             "number_of_questions": speck.get_n_questions(),
@@ -78,7 +79,11 @@ class PQVMappingView(ManagerRequiredView):
             return HttpResponseRedirect(".")
 
         pqvs = PQVMappingService()
-        speck = TestSpecService()
+        staged_spec = StagingSpecificationService()
         pqvs.generate_and_set_pqvmap(number_to_produce)
-        speck.set_n_to_produce(ntp)
+        staged_spec.set_n_to_produce(number_to_produce)
+        spec_dict = staged_spec.get_valid_spec_dict()
+
+        speck = SpecificationService()
+        speck.store_validated_spec(spec_dict)
         return HttpResponseRedirect(".")
