@@ -9,3 +9,4 @@ from .paper_structure import (
     QuestionPage,
 )
 from .specifications import Specification, SolutionSpecification
+from .background_tasks import CreatePaperTask

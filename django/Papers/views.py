@@ -4,6 +4,7 @@ from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import PaperCreatorService
+from Papers.models import CreatePaperTask
 from Preparation.services import PQVMappingService
 
 
@@ -30,4 +31,5 @@ class CreateTestPapers(ManagerRequiredView):
         """
         pcs = PaperCreatorService()
         pcs.remove_all_papers_from_db()
+        CreatePaperTask.objects.all().delete()
         return HttpResponseClientRefresh()

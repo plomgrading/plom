@@ -226,7 +226,11 @@
         <div class="card-body">
           <h5 class="card-title">
             Create test papers
+            {% if papers_staged %}
+            <i class="bi bi-check-circle text-success"></i>
+            {% else %}
             <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            {% endif %}
           </h5>
           <p class="card-test">Use the test specification, classlist, and question-version map to create test-papers.</p>
           <a class="btn btn-primary" href="{% url 'prep_test_papers' %}">Create papers</a>

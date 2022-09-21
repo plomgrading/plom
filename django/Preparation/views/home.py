@@ -9,8 +9,10 @@ from django.utils.text import slugify
 from django_htmx.http import HttpResponseClientRedirect
 
 from SpecCreator.services import StagingSpecificationService
-from Papers.services import SpecificationService
-from Connect.services import CoreConnectionService
+from Papers.services import (
+    SpecificationService,
+    PaperInfoService,
+)
 from BuildPaperPDF.services import BuildPapersService
 
 from Base.base_group_views import ManagerRequiredView
@@ -31,8 +33,8 @@ class PreparationLandingView(ManagerRequiredView):
         pss = PrenameSettingService()
         sss = StagingStudentService()
         pqvs = PQVMappingService()
-        ccs = CoreConnectionService()
         bps = BuildPapersService()
+        pinfo = PaperInfoService()
 
         context = {
             "uploaded_test_versions": tss.how_many_test_versions_uploaded(),
@@ -40,9 +42,7 @@ class PreparationLandingView(ManagerRequiredView):
             "prename_enabled": pss.get_prenaming_setting(),
             "can_qvmap": False,
             "student_list_present": sss.are_there_students(),
-            "server_valid": ccs.is_there_a_valid_connection(),
-            "password_valid": ccs.is_manager_authenticated(),
-            "db_initialised": ccs.has_db_been_initialized(),
+            "papers_staged": pinfo.is_paper_database_populated(),
             "papers_built": bps.are_all_papers_built(),
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",

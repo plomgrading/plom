@@ -1,7 +1,15 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
+from django_huey import db_task, get_queue
 
-from Papers.models import Specification, Paper, IDGroup, DNMGroup, QuestionGroup
+from Papers.models import (
+    Specification,
+    Paper,
+    IDGroup,
+    DNMGroup,
+    QuestionGroup,
+    CreatePaperTask,
+)
 
 import logging
 
@@ -24,9 +32,22 @@ class PaperCreatorService:
 
     @transaction.atomic
     def create_paper_with_qvmapping(self, paper_number, qv_mapping):
+        paper_task = self._create_paper_with_qvmapping(
+            self.spec, paper_number, qv_mapping
+        )
+        paper_task_obj = CreatePaperTask(
+            huey_id=paper_task.id, paper_number=paper_number
+        )
+        paper_task_obj.status = "queued"
+        paper_task_obj.save()
+
+    @db_task(queue="tasks")
+    @transaction.atomic
+    def _create_paper_with_qvmapping(spec, paper_number, qv_mapping):
         """Creates a paper with the given paper number and the given
         question-version mapping.
 
+        spec (dict): The test specification
         paper_number (int): The number of the paper being created
         qv_mapping (dict): Mapping from each question-number to
             version for this particular paper. Of the form {q: v}
@@ -61,7 +82,7 @@ class PaperCreatorService:
         dnmgroup_obj = DNMGroup(
             paper=paper_obj,
             gid=gid,
-            expected_number_pages=len(self.spec["doNotMarkPages"]),
+            expected_number_pages=len(spec["doNotMarkPages"]),
             complete=False,
         )
         try:
@@ -71,7 +92,7 @@ class PaperCreatorService:
             raise ValueError(f"Failed to create dnmgroup for paper {paper_number}")
 
         # build its QuestionGroups
-        for q_idx, question in self.spec["question"].items():
+        for q_idx, question in spec["question"].items():
             q = int(q_idx)
             gid = "{}q{}".format(str(paper_number).zfill(4), q)
             v = qv_mapping[q]
