@@ -41,7 +41,7 @@ class TestSpecProgressService:
     def is_id_page_completed(self):
         """Return True if the third page of the wizard has been completed"""
         id_page = self.spec.get_id_page_number()
-        return not id_page == None
+        return id_page is not None
 
     def is_question_page_completed(self):
         """Return True if the fourth page of the wizard has been completed"""

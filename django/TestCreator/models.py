@@ -5,9 +5,6 @@ from django.db import models
 from django.db.models.signals import pre_delete
 from django.utils.text import slugify
 
-"""
-TODO: move util functions outside models file, clean up old functions
-"""
 
 # just a simple folder for media for now
 def temp_filename_path(instance, filename):

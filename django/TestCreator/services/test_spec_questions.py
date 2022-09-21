@@ -126,7 +126,7 @@ class TestSpecQuestionService:
         return (
             self.get_question_label()
             and self.get_question_marks()
-            and self.get_question_shuffle() != None
+            and self.get_question_shuffle() is not None
         )
 
     def get_marks_assigned_to_other_questions(self):

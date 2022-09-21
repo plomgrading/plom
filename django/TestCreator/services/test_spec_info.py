@@ -140,7 +140,7 @@ class TestSpecService:
 
     def has_question(self, index):
         """Return True if there is a TestSpecQuestionService object for a question with the given index"""
-        return self.questions[index].get_question() != None
+        return self.questions[index].get_question() is not None
 
     def add_question(self, index: int, label: str, mark: int, shuffle: bool):
         """Add or replace a TestSpecQuestion instance
