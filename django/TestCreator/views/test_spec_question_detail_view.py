@@ -90,8 +90,8 @@ class TestSpecCreatorQuestionDetailPage(TestSpecPDFView):
 
             question_ids = []
             for key, value in data.items():
-                if "page" in key and value == True:
-                    idx = int(re.sub("\D", "", key))
+                if "page" in key and value is True:
+                    idx = int(re.sub(r"\D", "", key))
                     question_ids.append(idx)
             spec.set_question_pages(question_ids, q_idx)
 

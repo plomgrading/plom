@@ -141,7 +141,7 @@ class TestSpecQuestionForm(TestSpecPDFSelectForm):
         selected_pages = []
         for key, value in data.items():
             if "page" in key and value:
-                selected_pages.append(int(re.sub("\D", "", key)))
+                selected_pages.append(int(re.sub(r"\D", "", key)))
         selected_pages = sorted(selected_pages)
 
         # Was at least one page selected?

@@ -7,9 +7,6 @@ import pathlib
 from django.db import models
 from django.db.models.signals import pre_delete
 
-"""
-TODO: move util functions outside models file, clean up old functions
-"""
 
 
 # just a simple folder for media for now
