@@ -1,15 +1,14 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Colin B. Macdonald
+
 import shutil
-import re
 import pathlib
 from django.db import models
 from django.db.models.signals import pre_delete
-from django.utils.text import slugify
 
 from Base.models import SingletonBaseModel
 
-"""
-TODO: move util functions outside models file, clean up old functions
-"""
 
 # just a simple folder for media for now
 def temp_filename_path(instance, filename):
@@ -32,7 +31,7 @@ def pre_delete_reference_pdf(sender, instance, **kwargs):
         shutil.rmtree(thumbnail_folder)
 
     # delete pdf from disk
-    pdf_path = pathlib.Path("media") / f"spec_reference.pdf"
+    pdf_path = pathlib.Path("media") / "spec_reference.pdf"
     pdf_path.unlink(missing_ok=True)
 
 

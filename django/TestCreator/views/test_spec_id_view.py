@@ -44,8 +44,8 @@ class TestSpecCreatorIDPage(TestSpecPDFView):
             data = form.cleaned_data
             spec.clear_id_page()
             for key, value in data.items():
-                if "page" in key and value == True:
-                    idx = int(re.sub("\D", "", key))
+                if "page" in key and value is True:
+                    idx = int(re.sub(r"\D", "", key))
                     spec.set_id_page(idx)
 
             spec.unvalidate()
