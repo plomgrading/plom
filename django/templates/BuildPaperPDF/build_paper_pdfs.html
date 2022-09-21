@@ -49,11 +49,21 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <h5 class="modal-title" id="ModalLabel">Detele All PDFs</h5>
+                    <h5 class="modal-title" id="ModalLabel">Are you sure you want to delete all PDF files?</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
                   <div class="modal-body">
-                    <p>I see here that you made a boo boo in one of your questions. Do you want to delete all the current PDF files?</p>
+                    <p><b>Steps after PDFs deletion:</b></p>
+                    <ol>
+                        <li>Click on <b>Return to assessment preparation page.</b></li>
+                        <li>Go to <b>Source versions</b>, then click on <b>Manage sources</b>.</li>
+                        <li>Delete the version with the mistakes.</li>
+                        <li>Upload a new version.</li>
+                        <li>Click on <b>Return to assessment preparation page.</b></li>
+                        <li>Go to <b>Build test paper PDFs</b>, then click on <b>Build papers</b>.</li>   
+                        <li>Click <b>Submit</b>.</li>
+                    </ol>  
+                    {% comment %} <p><b>Note:</b> If you forget the steps, take a picture or copy the instructions.</p> {% endcomment %}
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
