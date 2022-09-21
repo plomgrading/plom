@@ -255,12 +255,12 @@ class RetryAllPDF(PDFTableView):
 
 
 class DeleteAllPDF(BuildPaperPDFs):
-    template_name = 'BuildPaperPDF/delete_paper_pdfs.html'
+    template_name = "BuildPaperPDF/delete_paper_pdfs.html"
 
     def post(self, request):
         bps = BuildPapersService()
         bps.delete_all_task()
-        
+
         ccs = CoreConnectionService()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
@@ -280,14 +280,15 @@ class DeleteAllPDF(BuildPaperPDFs):
             zip_disabled = False
 
         context = self.build_context()
-        context.update({
-            'message': "",
-            'zip_disabled': zip_disabled,
-            'num_pdfs': num_pdfs,
-            'pdfs_staged': pdfs_staged,
-            'pdf_table': table_fragment,
-            'db_initialised': ccs.has_db_been_initialized(),
-        })
+        context.update(
+            {
+                "message": "",
+                "zip_disabled": zip_disabled,
+                "num_pdfs": num_pdfs,
+                "pdfs_staged": pdfs_staged,
+                "pdf_table": table_fragment,
+                "db_initialised": ccs.has_db_been_initialized(),
+            }
+        )
 
         return render(request, self.template_name, context)
-        
