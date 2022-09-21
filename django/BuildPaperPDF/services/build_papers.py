@@ -1,4 +1,5 @@
 import pathlib
+import queue
 import zipfile
 import shutil
 import random
@@ -205,3 +206,7 @@ class BuildPapersService:
             task.huey_id = pdf_build.id
             task.status = "queued"
             task.save()
+
+    def delete_all_task(self):
+        self.cancel_all_task()
+        PDFTask.objects.all().delete()
