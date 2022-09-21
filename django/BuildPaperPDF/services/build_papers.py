@@ -208,4 +208,5 @@ class BuildPapersService:
             task.save()
 
     def delete_all_task(self):
+        self.cancel_all_task()
         PDFTask.objects.all().delete()
