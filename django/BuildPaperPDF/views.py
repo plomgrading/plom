@@ -1,6 +1,8 @@
+from audioop import reverse
+from multiprocessing import context
 import pathlib
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 
 from django.http import FileResponse
@@ -242,10 +244,40 @@ class RetryAllPDF(PDFTableView):
         return self.render_pdf_table(request)
 
 
-class DeleteAllPDF(PDFTableView):
+class DeleteAllPDF(BuildPaperPDFs):
+    template_name = 'BuildPaperPDF/delete_paper_pdfs.html'
+
     def post(self, request):
         bps = BuildPapersService()
         bps.delete_all_task()
+        
+        ccs = CoreConnectionService()
+        pqvs = PQVMappingService()
+        qvmap = pqvs.get_pqv_map_dict()
+        num_pdfs = len(qvmap)
 
-        return self.render_pdf_table(request)
+        n_tasks = bps.get_n_tasks()
+        if n_tasks > 0:
+            pdfs_staged = True
+        else:
+            pdfs_staged = False
+
+        table_fragment = self.table_fragment(request)
+
+        zip_disabled = True
+        n_completed_tasks = bps.get_n_complete_tasks()
+        if n_completed_tasks == n_tasks:
+            zip_disabled = False
+
+        context = self.build_context()
+        context.update({
+            'message': "",
+            'zip_disabled': zip_disabled,
+            'num_pdfs': num_pdfs,
+            'pdfs_staged': pdfs_staged,
+            'pdf_table': table_fragment,
+            'db_initialised': ccs.has_db_been_initialized(),
+        })
+
+        return render(request, self.template_name, context)
         

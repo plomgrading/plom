@@ -22,5 +22,5 @@ urlpatterns = [
     path("cancel/all", CancelAllPDf.as_view(), name='cancel_all_PDFs'),
     path("cancel/<int:paper_number>", CancelOnePDF.as_view(), name='cancel_one_PDF'),
     path("retry/all", RetryAllPDF.as_view(), name='retry_all_PDFs'),
-    path("delete/all/", DeleteAllPDF.as_view(), name="delete_all_PDFs"),
+    path("delete/all/", DeleteAllPDF.as_view(), name='delete_all_PDFs'),
 ]
