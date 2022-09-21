@@ -87,7 +87,7 @@ class BuildPaperPDFs(ManagerRequiredView):
         classdict = sstu.get_classdict()
 
         bps.clear_tasks()
-        print(classdict)
+        # print(classdict)
         bps.stage_pdf_jobs(num_pdfs, classdict=classdict)
 
         task_objects = PDFTask.objects.all()
