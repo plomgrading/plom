@@ -51,8 +51,8 @@ class TestSpecCreatorDNMPage(TestSpecPDFView):
 
             dnm_idx = []
             for key, value in data.items():
-                if "page" in key and value == True:
-                    idx = int(re.sub("\D", "", key))
+                if "page" in key and value is True:
+                    idx = int(re.sub(r"\D", "", key))
                     dnm_idx.append(idx)
             spec.set_do_not_mark_pages(dnm_idx)
 

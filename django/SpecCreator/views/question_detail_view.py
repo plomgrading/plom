@@ -91,8 +91,8 @@ class TestSpecCreatorQuestionDetailPage(TestSpecPDFView):
 
             question_ids = []
             for key, value in data.items():
-                if "page" in key and value == True:
-                    idx = int(re.sub("\D", "", key))
+                if "page" in key and value is True:
+                    idx = int(re.sub(r"\D", "", key))
                     question_ids.append(idx + 1)
             spec.create_or_replace_question(q_idx, label, mark, shuffle, question_ids)
 
