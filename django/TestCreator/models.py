@@ -8,7 +8,6 @@ from django.db import models
 from django.db.models.signals import pre_delete
 
 
-
 # just a simple folder for media for now
 def temp_filename_path(instance, filename):
     return pathlib.Path("media") / "spec_reference.pdf"
