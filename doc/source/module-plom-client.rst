@@ -12,6 +12,8 @@ Plom Client
     :members:
 .. automodule:: plom.client.annotator
     :members:
+.. automodule:: plom.client.downloader
+    :members:
 
 
 .. _module-plom-manager:

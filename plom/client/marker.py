@@ -401,7 +401,8 @@ class MarkerExamModel(QStandardItemModel):
     def _expensive_search_and_update(self, img_id, md5, local_filename):
         """Yuck, just yuck.
 
-        TODO: need to time this to see how bad it is for couple 100 papers...
+        Tested with a few hundred papers, is not noticeably slow.  So the code
+        is aethetically unpleasant but perhaps good enough.
         TODO: we could also just refresh/check the src_img_data on later read
         """
         for i in range(self.rowCount()):
@@ -2396,7 +2397,7 @@ class MarkerClient(QWidget):
         pagedata = self.msgr.get_pagedata_question(tn, gn)
         # don't cache this pagedata: "gn" might not be our question number
         # (but the images are cacheable)
-        pagedata = self.downloader.download_page_images(pagedata, get_all=True)
+        pagedata = self.downloader.sync_downloads(pagedata)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         d = QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self)

@@ -51,7 +51,7 @@ class Downloader(QObject):
         Downloader maintains a queue of downloads and emits signals
         whenever downloads succeed or fail.
 
-        One enqueued a download will be automatically retried several
+        Once enqueued, a download will be automatically retried several
         times, but to prevent endless data usage, it will give up after
         three tries.  That is, clients cannot assume that something
         enqueued will inevitably be downloaded.  Clients can check by
@@ -102,7 +102,9 @@ class Downloader(QObject):
         """Enqueue the downloading of particular row of the image database.
 
         Args:
-            row (dict): TODO
+            row (dict): One image entry in the "page data", has fields
+                `id`, `md5` and some others that are used to try to
+                choose a reasonable local file name.
 
         Keyword Args:
             priority (bool): high priority if user requested this (not a
@@ -167,6 +169,13 @@ class Downloader(QObject):
         )
 
     def worker_delivers(self, img_id, md5, tmpfile, local_filename):
+        """A worker has succeed and delivered a temp file to us.
+
+        This will emit a signal that others can listen for.
+        In some cases, the worker will deliver something that somone else
+        has downloaded in the meantime.  In that case we do not emit a
+        signal.
+        """
         log.debug(f"Worker delivery: {img_id}, {local_filename}")
         # TODO: maybe pagecache should have the desired filename?
         # TODO: revisit once PageCache decides None/Exception...
@@ -182,12 +191,11 @@ class Downloader(QObject):
                     img_id,
                     local_filename,
                 )
-                # TODO emit or not?
+                # no emit in this case
                 return
             raise RuntimeError(
                 f"downloaded wrong thing? {cur}, {local_filename}, {md5}"
             )
-        # Path(tmpfile).rename(target_name)
         Path(local_filename).parent.mkdir(exist_ok=True, parents=True)
         with self.write_lock:
             Path(tmpfile).rename(local_filename)
@@ -195,6 +203,7 @@ class Downloader(QObject):
         self.download_finished.emit(img_id, md5, local_filename)
 
     def worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
+        """A worker has failed and called us: retry 3 times."""
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
         self.download_failed.emit(img_id)
         x = self._tries[img_id]
@@ -214,21 +223,35 @@ class Downloader(QObject):
         )
 
     def sync_downloads(self, pagedata):
+        """Given a block of "pagedata" download all images synchronously and return updated data.
+
+        Args:
+            pagedata (list): a list of dicts, each dict described in
+                `sync_download`.  Warning: we don't make a copy: it
+                will be modified (and returned).
+
+        Return:
+            list: a list of dicts which consists of the updated input with
+            filenames added/updated for each image.
+        """
         for row in pagedata:
             row = self.sync_download(row)
         return pagedata
 
     def sync_download(self, row):
-        """Give the pagedata in row, download, cache and return edited row.
+        """Given a row of "pagedata", download synchronously and return edited row.
 
         Args:
             row (dict): one row of the metadata for the set of all pages
                 involved in a question.  A list of dicts where each dict must
                 have (at least) keys  ``id``, ``md5``, ``server_path``.
-                TODO: cleanup docs.
+                TODO: sometimes we seem to accept ``md5sum`` instead: should
+                fix that.
 
-        If the file is already downloaded, put its name into "local_filename"
-        in ``row``.
+        Return:
+            dict: the modified row.  If the file was already downloaded, put
+            its name into the ``local_filename`` key.  If we had to download
+            it we also put the filename into ``local_filename``.
         """
         # TODO: revisit once PageCache decides None/Exception...
         if self.pagecache.has_page_image(row["id"]):
@@ -261,34 +284,21 @@ class Downloader(QObject):
         self.pagecache.set_page_image_path(row["id"], row["local_filename"])
         return row
 
-    def download_page_images(self, pagedata, *, alt_get=None, get_all=False):
-        """Download and cache images
-
-        TODO: make it idempotent
-        TODO: make it robust-ish if someone deletes files under us
-
-        Returns:
-            list: updated list of pagedata input (which was also changed: no
-            copy is made).
-        """
-        for r in pagedata:
-            r = self.sync_download(r)
-        return pagedata
-
 
 class WorkerSignals(QObject):
     """Defines the signals available from a running worker thread.
 
     Supported signals are:
 
-    finished
+    finished:
         No data
 
-    error
-        TODO: tuple (exctype, value, traceback.format_exc() )
+    download_success:
+        `(img_id (int), md5 (str), tempfile (str), local_filename (str)`
 
-    heres_the_goods
-        int, str, str, str: id, TODO
+    download_fail:
+        `(img_id (int), md5 (str), local_filename (str), err_stuff_tuple (tuple)`
+        where the tuple is `(exctype, value, traceback.format_exc()`.
     """
 
     finished = pyqtSignal()
@@ -315,7 +325,7 @@ class DownloadWorker(QRunnable):
     def run(self):
         debug = True
         if debug:
-            fail = random.random() < 0.9
+            fail = random.random() < 0.5
             debug_wait2 = random.randint(1, 2)
             debug_wait1 = random.random() * debug_wait2
             debug_wait2 -= debug_wait1
