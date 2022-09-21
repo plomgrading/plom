@@ -2052,7 +2052,8 @@ class MarkerClient(QWidget):
         We might need to restart downloaders if they have repeatedly failed.
         Even if we are still waiting, we can signal to the download the we
         have renewed interest in this particular download.
-        TODO: for example. maybe we should send a higher priority?
+        TODO: for example. maybe we should send a higher priority?  No: currently
+        this also happens "in the background" b/c Marker selects the new row.
 
         Args:
             new (QItemSelection): the newly selected cells.
