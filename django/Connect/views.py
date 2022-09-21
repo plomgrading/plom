@@ -1,10 +1,6 @@
-from os import stat
 import traceback
-from plom.create.classlistValidator import PlomClasslistValidator
 from plom.plom_exceptions import (
     PlomConnectionError,
-    PlomAuthenticationException,
-    PlomExistingLoginException,
 )
 
 from django.http import HttpResponse, HttpResponseRedirect
@@ -12,7 +8,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.template.loader import render_to_string
 
-from SpecCreator.services import TestSpecService, TestSpecGenerateService
+from Papers.services import SpecificationService
 from Preparation.services import (
     PQVMappingService,
     StagingStudentService,
@@ -22,7 +18,6 @@ from Base.base_group_views import ManagerRequiredView
 
 from Connect.services import CoreConnectionService
 from Connect.forms import CoreConnectionForm, CoreManagerLoginForm
-from Connect.models import CoreDBinitialiseTask
 
 
 class ConnectServerManagerView(ManagerRequiredView):
@@ -68,7 +63,7 @@ class ConnectSendInfoToCoreView(ManagerRequiredView):
 
     def build_context(self):
         context = super().build_context()
-        spec = TestSpecService()
+        spec = SpecificationService()
         core = CoreConnectionService()
         sstu = StagingStudentService()
         pre = PrenameSettingService()
@@ -78,7 +73,7 @@ class ConnectSendInfoToCoreView(ManagerRequiredView):
             {
                 "is_valid": core.is_there_a_valid_connection(),
                 "manager_details_available": core.is_manager_authenticated(),
-                "spec_valid": spec.is_specification_valid(),
+                "spec_valid": spec.is_there_a_spec(),
                 "is_spec_sent": core.has_test_spec_been_sent(),
                 "classlist_required": pre.get_prenaming_setting(),
                 "classlist_exists": sstu.are_there_students(),
@@ -120,7 +115,7 @@ class AttemptCoreConnectionView(ManagerRequiredView):
             return HttpResponse(
                 f'<p id="result" style="color: red;">Unable to connect to Plom Classic. Is the server running?</p>'
             )
-        except Exception as e:
+        except Exception:
             exception_string = traceback.format_exc(chain=False)
             print(exception_string)
             print(type(exception_string))
@@ -148,7 +143,7 @@ class AttemptCoreManagerLoginView(ManagerRequiredView):
         core = CoreConnectionService()
 
         try:
-            manager = core.authenticate_manager(password)
+            core.authenticate_manager(password)
             return HttpResponse(
                 f'<p id="manager_result" class="text-success">Manager login successful!</p>'
             )
@@ -170,8 +165,8 @@ class SendTestSpecToCoreView(ManagerRequiredView):
     def post(self, request):
         """Send test specification data to the core server"""
         core = CoreConnectionService()
-        spec = TestSpecService()
-        spec_dict = TestSpecGenerateService(spec).generate_spec_dict()
+        spec = SpecificationService()
+        spec_dict = spec.get_the_spec()
 
         try:
             core.send_test_spec(spec_dict)
@@ -235,7 +230,7 @@ class SendPQVInitializeDB(ManagerRequiredView):
 
         ver_map = qvs.get_pqv_map_dict()
         students = sstu.get_students()
-        task = core.initialise_core_db(ver_map, students)
+        core.initialise_core_db(ver_map, students)
         return HttpResponseRedirect(reverse("connect_db_status"))
 
     def get(self, request):
