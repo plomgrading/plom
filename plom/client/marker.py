@@ -1397,11 +1397,29 @@ class MarkerClient(QWidget):
         if update_select:
             self.moveSelectionToTask(task)
 
+    def trigger_downloads_for_task(self, task):
+        """Make sure the images for a task are downloaded or trigger downloads.
+
+        TODO: this routine must've already done the initial download: maybe
+        a more general routine would be written that does not depend on the
+        `examModel` having a row for the task already.
+        """
+        img_src_data = self.examModel.get_source_image_data(task)
+        placeholder = Downloader.get_placeholder_path()
+        for row in img_src_data:
+            if row["filename"] == placeholder:
+                log.info(
+                    "image id %d still has placeholder, re-triggering download",
+                    row["id"],
+                )
+            self.downloader.download_in_background_thread(row)
+
     def claim_task_and_trigger_downloads(self, task):
         """Claim a particular task for the current user and start image downloads.
 
         Notes:
-            Side effects: on success, updates the table of tasks
+            Side effects: on success, updates the table of tasks by adding
+            a new row.  The new row is *not* automatically selected.
 
         Returns:
             None
@@ -2069,23 +2087,6 @@ class MarkerClient(QWidget):
         pr = idx[0].row()
         task = self.prxM.getPrefix(pr)
         self.trigger_downloads_for_task(task)
-
-    def trigger_downloads_for_task(self, task):
-        """Make sure the images for a task are downloaded or trigger downloads.
-
-        TODO: this routine must've already done the initial download: maybe
-        a more general routine would be written that does not depend on the
-        `examModel` having a row for the task already.
-        """
-        img_src_data = self.examModel.get_source_image_data(task)
-        placeholder = Downloader.get_placeholder_path()
-        for row in img_src_data:
-            if row["filename"] == placeholder:
-                log.info(
-                    "image id %d still has placeholder, re-triggering download",
-                    row["id"],
-                )
-            self.downloader.download_in_background_thread(row)
 
     def get_upload_queue_length(self):
         """How long is the upload queue?
