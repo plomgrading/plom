@@ -1423,12 +1423,10 @@ class MarkerClient(QWidget):
         for row in src_img_data:
             if PC.has_page_image(row["id"]):
                 row["filename"] = PC.page_image_path(row["id"])
-                continue
-            self.downloader.download_in_background_thread(row)
-            # TODO:
-            # row["filename"] = None
-            row["filename"] = Downloader.get_placeholder_path()
+            else:
+                row["filename"] = Downloader.get_placeholder_path()
 
+        # potential race with the downloader so trigger downloads after table insert
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -1437,6 +1435,11 @@ class MarkerClient(QWidget):
                 integrity_check=integrity_check,
             )
         )
+
+        for row in src_img_data:
+            if row["filename"] == Downloader.get_placeholder_path():
+                self.downloader.download_in_background_thread(row)
+
         pr = self.prxM.rowFromTask(task)
         if pr is not None:
             # if newly-added row is visible, select it and redraw
