@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Natalie Balashov
+# Copyright (C) 2022 Colin B. Macdonald
+
 from django.core.exceptions import ObjectDoesNotExist
 from .. import models
 from ..services import TestSpecService
@@ -126,7 +131,7 @@ class TestSpecQuestionService:
         return (
             self.get_question_label()
             and self.get_question_marks()
-            and self.get_question_shuffle() != None
+            and self.get_question_shuffle() is not None
         )
 
     def get_marks_assigned_to_other_questions(self):
