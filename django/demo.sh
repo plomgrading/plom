@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+
 set -e
 
 rm -f db.sqlite3
@@ -9,19 +14,17 @@ mkdir huey
 rm -rf sourceVersions
 rm -rf papersToPrint
 
-#python3 manage.py makemigrations SpecCreator Preparation
-#python3 manage.py makemigrations Connect
 python3 manage.py makemigrations
 python3 manage.py migrate
 
-# new thing to try #90
-#python3 manage.py reset_migrations Authentication Preparation SpecCreator
-
-# old way, have to type password every time
-#python3 manage.py createsuperuser --username cbm  --email foo@bar.com
-
 # Plom-classic commands. Will fail gracefully if there is no core server connection
-python3 manage.py plom_connect server --name localhost --port 41984
+# TODO: needs to have PYTHON_PATH hacked or Plom classic installed
+PLOMDIR=webplom_classic_server
+PLOMPORT=41984
+rm -rf $PLOMDIR
+python3 -m plom.server init $PLOMDIR --manager-pw 1234
+python3 -m plom.server launch $PLOMDIR &
+python3 manage.py plom_connect server --name localhost --port $PLOMPORT
 python3 manage.py plom_connect manager
 
 python3 manage.py plom_create_groups
