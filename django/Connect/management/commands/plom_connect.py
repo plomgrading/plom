@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Natalie Balashov
+# Copyright (C) 2022 Colin B. Macdonald
+
 import getpass
 
 from django.core.management.base import BaseCommand
@@ -33,7 +38,7 @@ class Command(BaseCommand):
     """
 
     help = (
-        "Tools for connecting to a Plom-classic server, logging in to the"
+        "Tools for connecting to a Plom-classic server, logging in to the "
         "manager account, and sending information from WebPlom."
     )
 
