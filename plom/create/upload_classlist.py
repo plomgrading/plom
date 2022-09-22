@@ -12,7 +12,7 @@ from .buildClasslist import get_demo_classlist
 
 
 @with_manager_messenger
-def upload_classlist(classlist, *, msgr):
+def upload_classlist(classlist, *, msgr, force=False):
     """Uploads a classlist file to the server.
 
     Arguments:
@@ -20,8 +20,10 @@ def upload_classlist(classlist, *, msgr):
             `"name"`, optionally other fields too.
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
+        force (bool): Force uploading if a classlist already exists,
+            default `False`.
     """
-    _ultra_raw_upload_classlist(classlist, msgr)
+    _ultra_raw_upload_classlist(classlist, msgr, force=force)
 
 
 def _raw_upload_classlist(classlist, msgr):
@@ -33,10 +35,10 @@ def _raw_upload_classlist(classlist, msgr):
         msgr.stop()
 
 
-def _ultra_raw_upload_classlist(classlist, msgr):
+def _ultra_raw_upload_classlist(classlist, msgr, *, force=False):
     # TODO: clean up this chain viz the mock test
     try:
-        msgr.upload_classlist(classlist)
+        msgr.upload_classlist(classlist, force)
         print(f"Uploaded classlist of length {len(classlist)}.")
         print(
             "  First student:  {} - {}".format(
@@ -58,19 +60,21 @@ def _ultra_raw_upload_classlist(classlist, msgr):
         )
         raise
     except PlomConflict:
-        print("Error: Server already has a classlist, see help (TODO: add force?).")
+        print("Error: Server already has a classlist, see help.")
         raise
 
 
 @with_manager_messenger
-def upload_demo_classlist(spec, *, msgr):
+def upload_demo_classlist(spec, *, msgr, force=False):
     """Uploads the demo classlist file to the server.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
+        force (bool): Force uploading if a classlist already exists,
+            default `False`.
     """
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
     classlist = get_demo_classlist(spec)
 
-    _ultra_raw_upload_classlist(classlist, msgr)
+    _ultra_raw_upload_classlist(classlist, msgr, force=force)

@@ -236,7 +236,7 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def upload_classlist(self, classdict):
+    def upload_classlist(self, classdict, force):
         """Give the server a classlist.
 
         Args:
@@ -244,6 +244,7 @@ class ManagerMessenger(BaseMessenger):
                 It MUST have keys `"id"` and `"studentNumber"` (case
                 matters).  There may be other keys included as well.
                 Keys should probably be homogeneous between rows (TODO?).
+            force (bool): Force uploading if a classlist already exists.
 
         Exceptions:
             PlomConflict: server already has one.
@@ -262,6 +263,7 @@ class ManagerMessenger(BaseMessenger):
                     "user": self.user,
                     "token": self.token,
                     "classlist": classdict,
+                    "force": force,
                 },
             )
             response.raise_for_status()
