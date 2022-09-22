@@ -14,16 +14,8 @@ mkdir huey
 rm -rf sourceVersions
 rm -rf papersToPrint
 
-#python3 manage.py makemigrations SpecCreator Preparation
-#python3 manage.py makemigrations Connect
 python3 manage.py makemigrations
 python3 manage.py migrate
-
-# new thing to try #90
-#python3 manage.py reset_migrations Authentication Preparation SpecCreator
-
-# old way, have to type password every time
-#python3 manage.py createsuperuser --username cbm  --email foo@bar.com
 
 # Plom-classic commands. Will fail gracefully if there is no core server connection
 # TODO: needs to have PYTHON_PATH hacked or Plom classic installed
