@@ -21,7 +21,13 @@ python3 manage.py migrate
 #python3 manage.py createsuperuser --username cbm  --email foo@bar.com
 
 # Plom-classic commands. Will fail gracefully if there is no core server connection
-python3 manage.py plom_connect server --name localhost --port 41984
+# TODO: needs to have PYTHON_PATH hacked or Plom classic installed
+PLOMDIR=webplom_classic_server
+PLOMPORT=41984
+rm -rf $PLOMDIR
+python3 -m plom.server init $PLOMDIR --manager-pw 1234
+python3 -m plom.server launch $PLOMDIR &
+python3 manage.py plom_connect server --name localhost --port $PLOMPORT
 python3 manage.py plom_connect manager
 
 python3 manage.py plom_create_groups
