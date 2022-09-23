@@ -224,6 +224,7 @@ unittests:
 
 
 # TODO: may consider merging with unittests job above
+# Issue #2291: fix coverage calculations for django/
 coverage:
   stage: test
   needs: ["docker-image"]
@@ -231,8 +232,9 @@ coverage:
   script:
     - pip install pytest pytest-cov coverage[toml]
     - coverage run -m pytest --ignore django
-    - coverage report
+    - coverage report --precision=2
     - coverage xml
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
   artifacts:
     reports:
       coverage_report:
