@@ -224,13 +224,13 @@ unittests:
 
 
 # TODO: may consider merging with unittests job above
+# Issue #2291: fix coverage calculations for django/
 coverage:
   stage: test
   needs: ["docker-image"]
   image: $IM
   script:
     - pip install pytest pytest-cov coverage[toml]
-    # TODO: fix coverage calc for django/
     - coverage run -m pytest --ignore django
     - coverage report --precision=2
     - coverage xml
