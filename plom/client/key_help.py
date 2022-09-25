@@ -219,7 +219,7 @@ class KeyHelp(QDialog):
             tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
             # TODO: wire double click to omit wants_to_change_key
             tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
-            # no sorting during insertation please TODO issue number
+            # no sorting during insertation, Issue #2065
             tw.setSortingEnabled(False)
             tables[div] = tw
         # loop over all the keys and insert each key to the appropriate table(s)
