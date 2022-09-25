@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * classlist upload can be forced, allowing one to overwrite the server's classlist.
 
 ### Fixed
-
+* Various other fixes.
 
 
 ## [0.10.1] - 2022-09-08
