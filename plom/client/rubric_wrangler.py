@@ -179,11 +179,15 @@ class ShowTable(QTableWidget):
                 rind = rindices[0]
                 # now insert into the table
                 rc = self.rowCount()
+                # Careful about sorting during setItem calls: Issue #2065
+                _sorting_enabled = self.isSortingEnabled()
+                self.setSortingEnabled(False)
                 self.insertRow(rc)
                 self.setItem(rc, 0, QTableWidgetItem(rubrics[rind]["id"]))
                 self.setItem(rc, 1, QTableWidgetItem(rubrics[rind]["username"]))
                 self.setItem(rc, 2, QTableWidgetItem(rubrics[rind]["delta"]))
                 self.setItem(rc, 3, QTableWidgetItem(rubrics[rind]["text"]))
+                self.setSortingEnabled(_sorting_enabled)
 
     def getCurrentKeys(self):
         current_keys = []
@@ -205,6 +209,9 @@ class ShowTable(QTableWidget):
     def dropEvent(self, event):
         # fixed drop event using
         # https://stackoverflow.com/questions/26227885/drag-and-drop-rows-within-qtablewidget
+        # Careful about sorting during setItem calls: Issue #2065
+        _sorting_enabled = self.isSortingEnabled()
+        self.setSortingEnabled(False)
         if event.source() == self:
             event.setDropAction(Qt.CopyAction)
             rows = set([mi.row() for mi in self.selectedIndexes()])
@@ -272,6 +279,7 @@ class ShowTable(QTableWidget):
                     for col in range(4):
                         self.setItem(targetRow, col, QTableWidgetItem(rdat[col]))
                     targetRow += 1
+        self.setSortingEnabled(_sorting_enabled)
 
 
 class ShowTabW(QTabWidget):
