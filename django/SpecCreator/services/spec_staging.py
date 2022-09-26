@@ -437,7 +437,8 @@ class StagingSpecificationService:
         spec_dict["doNotMarkPages"] = self.get_dnm_page_numbers()
 
         questions = spec_dict.pop("questions")
-        spec_dict["question"] = questions
+        questions_list = [questions[str(i+1)] for i in range(self.get_n_questions())]
+        spec_dict["question"] = questions_list
         return spec_dict
 
     def get_valid_spec_dict(self, verbose=True):
@@ -467,7 +468,7 @@ class StagingSpecificationService:
         verifier = SpecVerifier(copy.deepcopy(spec_dict))
         for i in range(spec_dict["numberOfQuestions"]):
             one_index = i + 1
-            question = spec_dict["question"][str(one_index)]
+            question = spec_dict["question"][i]
             if question["label"] == "":
                 default_label = verifier.get_question_label(one_index)
                 question["label"] = default_label
