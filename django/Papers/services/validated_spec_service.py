@@ -32,8 +32,13 @@ class SpecificationService:
 
     @transaction.atomic
     def get_the_spec_as_toml(self):
-        """Return the test-specification from the database."""
-        return toml.dumps(Specification.objects.get().spec_dict)
+        """Return the test-specification from the database.
+        If present, remove the private seed and public code.
+        """
+        spec = self.get_the_spec()
+        spec.pop("publicCode", None)
+        spec.pop("privateSeed", None)
+        return toml.dumps(spec)
 
     @transaction.atomic
     def store_validated_spec(self, validated_spec):

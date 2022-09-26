@@ -437,7 +437,7 @@ class StagingSpecificationService:
         spec_dict["doNotMarkPages"] = self.get_dnm_page_numbers()
 
         questions = spec_dict.pop("questions")
-        questions_list = [questions[str(i+1)] for i in range(self.get_n_questions())]
+        questions_list = [questions[str(i + 1)] for i in range(self.get_n_questions())]
         spec_dict["question"] = questions_list
         return spec_dict
 
@@ -451,6 +451,7 @@ class StagingSpecificationService:
     def validate_specification(self, verbose=True):
         """
         Verify the specification using Plom-classic's specVerifier. If it passes, return the validated spec.
+        Also, assign private seed and public code.
         """
         spec_dict = self.get_staging_spec_dict()
         spec_w_default_quest_labels = self.insert_default_question_labels(
@@ -458,6 +459,7 @@ class StagingSpecificationService:
         )
         verifier = SpecVerifier(copy.deepcopy(spec_w_default_quest_labels))
         verifier.verifySpec(verbose=verbose)
+        verifier.checkCodes(verbose=verbose)
         return verifier.spec
 
     def insert_default_question_labels(self, spec_dict: dict):

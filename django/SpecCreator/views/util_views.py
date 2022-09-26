@@ -146,7 +146,7 @@ class TestSpecSubmitView(TestSpecPageView):
 
     def post(self, request):
         staging_spec = StagingSpecificationService()
-        spec_dict = staging_spec.get_staging_spec_dict()
+        spec_dict = staging_spec.get_valid_spec_dict()
 
         spec = SpecificationService()
         spec.store_validated_spec(spec_dict)
