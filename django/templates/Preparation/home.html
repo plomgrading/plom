@@ -232,8 +232,12 @@
             <i class="bi bi-exclamation-diamond-fill text-warning"></i>
             {% endif %}
           </h5>
-          <p class="card-test">Use the test specification, classlist, and question-version map to create test-papers.</p>
+          {% if pqv_mapping_present %}
+          <p class="card-text">Use the test specification, classlist, and question-version map to create test-papers.</p>
           <a class="btn btn-primary" href="{% url 'prep_test_papers' %}">Create papers</a>
+          {% else %}
+          <p class="card-text">Cannot create test-papers until question-version map has been created</p>
+          {% endif %}
         </div>
       </div>
     </div>

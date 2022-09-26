@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from Preparation.services import PQVMappingService
+from SpecCreator.services import StagingSpecificationService
 from Papers.services import SpecificationService
 
 
@@ -46,6 +47,11 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"Number-to-produce not supplied, using recommended number = {number_to_produce}."
             )
+
+            # modify test specification
+            staging_spec = StagingSpecificationService()
+            staging_spec.set_n_to_produce(number_to_produce)
+            speck.store_validated_spec(staging_spec.get_valid_spec_dict(verbose=False))
 
         elif number_to_produce < pqvms.get_minimum_number_to_produce():
             self.stdout.write(
