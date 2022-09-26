@@ -486,14 +486,13 @@ appstreamValid:
 
 
 # TODO: perhaps all deps should be in the docker image?
-# TODO: remove temporary sphinx pin Issue #2293
 docs_sphinx:
   stage: test
   needs: ["docker-image"]
   image: $IM
   before_script:
     - apt-get --no-install-recommends --yes install tex-gyre
-    - pip install myst-parser sphinx==5.1.1 sphinx_rtd_theme sphinx-argparse
+    - pip install myst-parser sphinx sphinx_rtd_theme sphinx-argparse
   script:
     - pushd doc
     - ls
