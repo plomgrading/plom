@@ -1,5 +1,4 @@
 import pathlib
-import queue
 import zipfile
 import shutil
 import random
@@ -16,7 +15,7 @@ from BuildPaperPDF.models import PDFTask
 
 
 class BuildPapersService:
-    """Use Core Plom to build test-papers."""
+    """Generate and stamp test-paper PDFs."""
 
     base_dir = settings.BASE_DIR
     papers_to_print = base_dir / "papersToPrint"
