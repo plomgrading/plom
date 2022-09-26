@@ -11,10 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-* classlist upload can be forced, allowing one to overwrite the server's classlist.
 
 ### Fixed
 
+
+
+## [0.11.0] - 2022-09-24
+
+### Changed
+* classlist upload can be forced, allowing one to overwrite the server's classlist.
+
+### Fixed
+* Various other fixes.
 
 
 ## [0.10.1] - 2022-09-08
@@ -852,7 +860,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.10.1...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.11.0...main
+[0.11.0]: https://gitlab.com/plom/plom/compare/v0.10.1...v0.11.0
 [0.10.1]: https://gitlab.com/plom/plom/compare/v0.10.0...v0.10.1
 [0.10.0]: https://gitlab.com/plom/plom/compare/v0.9.4...v0.10.0
 [0.9.4]: https://gitlab.com/plom/plom/compare/v0.9.3...v0.9.4
