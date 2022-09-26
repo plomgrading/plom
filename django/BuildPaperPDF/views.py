@@ -9,10 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Preparation.services import PQVMappingService, StagingStudentService
 from SpecCreator.services import TestSpecService
-from Papers.services import (
-    SpecificationService,
-    PaperInfoService
-)
+from Papers.services import SpecificationService, PaperInfoService
 
 from .services import BuildPapersService, RenamePDFFile
 from .models import PDFTask
