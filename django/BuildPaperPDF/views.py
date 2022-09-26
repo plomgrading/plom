@@ -1,17 +1,15 @@
-from audioop import reverse
-from multiprocessing import context
 import pathlib
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.template.loader import render_to_string
 
 from django.http import FileResponse
 from django.http import HttpResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from Connect.services import CoreConnectionService
 from Preparation.services import PQVMappingService, StagingStudentService
 from SpecCreator.services import TestSpecService
+from Papers.services import SpecificationService, PaperInfoService
 
 from .services import BuildPapersService, RenamePDFFile
 from .models import PDFTask
@@ -46,8 +44,8 @@ class BuildPaperPDFs(ManagerRequiredView):
 
     def get(self, request):
         bps = BuildPapersService()
-        ccs = CoreConnectionService()
         pqvs = PQVMappingService()
+        pinfo = PaperInfoService()
         qvmap = pqvs.get_pqv_map_dict()
         num_pdfs = len(qvmap)
 
@@ -72,7 +70,7 @@ class BuildPaperPDFs(ManagerRequiredView):
                 "num_pdfs": num_pdfs,
                 "pdfs_staged": pdfs_staged,
                 "pdf_table": table_fragment,
-                "db_initialised": ccs.has_db_been_initialized(),
+                "db_initialised": pinfo.is_paper_database_populated(),
             }
         )
 
@@ -202,8 +200,7 @@ class GetCompressedPDFs(ManagerRequiredView):
 class StartAllPDFs(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        core = CoreConnectionService()
-        spec = core.get_core_spec()
+        spec = SpecificationService().get_the_spec()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
 
@@ -215,8 +212,7 @@ class StartAllPDFs(PDFTableView):
 class StartOnePDF(PDFTableView):
     def post(self, request, paper_number):
         bps = BuildPapersService()
-        core = CoreConnectionService()
-        spec = core.get_core_spec()
+        spec = SpecificationService().get_the_spec()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
 
@@ -244,8 +240,7 @@ class CancelOnePDF(PDFTableView):
 class RetryAllPDF(PDFTableView):
     def post(self, request):
         bps = BuildPapersService()
-        core = CoreConnectionService()
-        spec = core.get_core_spec()
+        spec = SpecificationService().get_the_spec()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
 
@@ -260,8 +255,7 @@ class DeleteAllPDF(BuildPaperPDFs):
     def post(self, request):
         bps = BuildPapersService()
         bps.delete_all_task()
-
-        ccs = CoreConnectionService()
+        pinfo = PaperInfoService()
         pqvs = PQVMappingService()
         qvmap = pqvs.get_pqv_map_dict()
         num_pdfs = len(qvmap)
@@ -287,7 +281,7 @@ class DeleteAllPDF(BuildPaperPDFs):
                 "num_pdfs": num_pdfs,
                 "pdfs_staged": pdfs_staged,
                 "pdf_table": table_fragment,
-                "db_initialised": ccs.has_db_been_initialized(),
+                "db_initialised": pinfo.is_paper_database_populated(),
             }
         )
 

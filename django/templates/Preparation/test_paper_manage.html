@@ -24,10 +24,9 @@
                 <li>{{ n_versions }} versions</li>
                 <li>{{ n_pages }} pages</li>
             </ul>
-            <form action="{% url 'create_papers' %}" method="post">
-                {% csrf_token %}
-                <input type="submit" class="btn btn-primary" value="Create">
-            </form>
+            <div id="progress_container">
+                <a class="btn btn-primary" hx-post="{% url 'create_papers' %}" hx-target="#progress_container">Create</a>
+            </div>
         </div>
         {% endif %}
     </div>

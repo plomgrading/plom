@@ -17,16 +17,6 @@ rm -rf papersToPrint
 python3 manage.py makemigrations
 python3 manage.py migrate
 
-# Plom-classic commands. Will fail gracefully if there is no core server connection
-# TODO: needs to have PYTHON_PATH hacked or Plom classic installed
-PLOMDIR=webplom_classic_server
-PLOMPORT=41984
-rm -rf $PLOMDIR
-python3 -m plom.server init $PLOMDIR --manager-pw 1234
-python3 -m plom.server launch $PLOMDIR &
-python3 manage.py plom_connect server --name localhost --port $PLOMPORT
-python3 manage.py plom_connect manager
-
 python3 manage.py plom_create_groups
 
 python3 manage.py plom_create_demo_users
@@ -39,8 +29,9 @@ python3 manage.py plom_preparation_prenaming --enable
 python3 manage.py plom_preparation_classlist upload useful_files_for_testing/cl_good.csv
 python3 manage.py plom_preparation_qvmap generate
 
-# will fail gracefully if a core server isn't connected
-python3 manage.py plom_connect send all
+# WebPlom needs a Huey consumer running in order to complete some background tasks.
+# In a separate terminal window, call:
+# `python3 manage.py djangohuey`
 
 # This is for production use, when Debug = False
 # python3 manage.py collectstatic
