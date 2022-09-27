@@ -14,3 +14,4 @@ reportlab
 django-huey
 django-polymorphic
 whitenoise
+djangorestframework
