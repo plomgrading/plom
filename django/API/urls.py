@@ -5,10 +5,11 @@
 from urllib.parse import urlparse
 from django.urls import path
 
-from API.views import InfoSpec, NumberIncrement
+from API.views import InfoSpec, NumberIncrement, ServerVersion
 
 
 urlpatterns = [
     path("info/spec/", InfoSpec.as_view(), name="api_info_spec"),
     path("number/", NumberIncrement.as_view(), name="api_number_increment"),
+    path("Version/", ServerVersion.as_view(), name="api_server_version"),
 ]

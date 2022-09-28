@@ -56,3 +56,13 @@ class NumberIncrement(APIView):
         user_number.save()
         response_dict = {"number": user_number.number, "created": created}
         return Response(response_dict)
+
+
+class ServerVersion(APIView):
+    """
+    Get the server version. (Debug: hardcoded for now)
+    """
+
+    def get(self, request):
+        version = "Plom server version 0.12.0.dev with API 53"
+        return Response(version)
