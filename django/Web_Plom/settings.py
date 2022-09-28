@@ -184,3 +184,6 @@ DJANGO_HUEY = {
         }
     },
 }
+
+# Media and user-uploaded files
+MEDIA_ROOT = BASE_DIR / "media"

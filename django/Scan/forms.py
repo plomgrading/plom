@@ -26,11 +26,9 @@ class BundleUploadForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
-        pdf = data['pdf']
+        pdf = data["pdf"]
 
-        # size less than 5 MB?
-        if pdf.size >= 5e+6:
-            raise ValidationError("File size must be less than 5 MB.")
+        # TODO: compare against pdf.size if we want to specify a max file size in future
 
         # correct format, readable by fitz, not a duplicate?
         try:
@@ -46,12 +44,14 @@ class BundleUploadForm(forms.Form):
             filename_stem = pathlib.Path(str(pdf)).stem
             slug = slugify(filename_stem)
 
-            data.update({
-                "pdf_doc": pdf_doc,
-                "slug": slug,
-                "time_uploaded": datetime.now(),
-                "sha256": hashed,
-            })
+            data.update(
+                {
+                    "pdf_doc": pdf_doc,
+                    "slug": slug,
+                    "time_uploaded": datetime.now(),
+                    "sha256": hashed,
+                }
+            )
             return data
         except (FileDataError, KeyError):
             raise ValidationError("Unable to open file.")
