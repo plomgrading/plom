@@ -10,5 +10,6 @@ class ScannerHomeView(ScannerRequiredView):
     """
     Hello, world!
     """
+
     def get(self, request):
         return HttpResponse("Scan")
