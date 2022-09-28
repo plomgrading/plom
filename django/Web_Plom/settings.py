@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "Profile",
     "BuildPaperPDF",
     "Connect",
+    "Scan",
 ]
 
 MIDDLEWARE = [

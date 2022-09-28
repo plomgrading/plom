@@ -75,6 +75,10 @@
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link" href="{% url 'maintenance' %}">Create<br>Scanners/Markers</a>
                                     </li>
+                                {% elif user_group == 'scanner' %}
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'scan_home' %}">Scan</a>
+                                    </li>
                                 {% endif %}
                                 <li class="nav-item">
                                     <a class="nav-link link-light is_sidebar_link" href="{% url 'logout' %}">Log out</a>
