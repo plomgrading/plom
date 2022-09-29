@@ -1,3 +1,4 @@
+import pathlib
 from datetime import datetime
 from django.db import transaction
 from django.conf import settings
@@ -18,7 +19,7 @@ class ScanService:
         timestamp = datetime.timestamp(time_uploaded)
         file_name = f"{slug}_{timestamp}.pdf"
 
-        user_dir = settings.MEDIA_ROOT / user.username
+        user_dir = pathlib.Path("media") / user.username
         user_dir.mkdir(exist_ok=True)
         bundle_dir = user_dir / "bundles"
         bundle_dir.mkdir(exist_ok=True)
@@ -35,11 +36,25 @@ class ScanService:
         bundle_db.save()
 
     @transaction.atomic
-    def remove_bundle(self, slug):
+    def remove_bundle(self, slug, timestamp, user):
         """
         Remove a bundle PDF from the filesystem + database
         """
-        bundle = StagingBundle.objects.get(slug=slug)
+        bundle = self.get_bundle(slug, timestamp, user)
         file_path = bundle.file_path
         file_path.unlink()
         bundle.delete()
+
+    @transaction.atomic
+    def get_bundle(self, slug, timestamp, user):
+        """
+        Get a bundle from the database. To uniquely identify a bundle, we need
+        its slug, timestamp, and user
+        """
+        time_uploaded = datetime.fromtimestamp(timestamp)
+        bundle = StagingBundle.objects.get(
+            slug=slug,
+            user=user,
+            time_uploaded=time_uploaded,
+        )
+        return bundle

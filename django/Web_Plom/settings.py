@@ -186,7 +186,7 @@ DJANGO_HUEY = {
 }
 
 # Media and user-uploaded files
-MEDIA_ROOT = BASE_DIR / "media"
+# MEDIA_ROOT = BASE_DIR / "media"
 
 # Configurable variables for Web Plom
 # ----------------------------------------------
