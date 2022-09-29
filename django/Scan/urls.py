@@ -12,6 +12,10 @@ from Scan.views import (
 
 urlpatterns = [
     path("", ScannerHomeView.as_view(), name="scan_home"),
-    path("<str:slug>/<timestamp>", ManageBundleView.as_view(), name="scan_manage_bundle"),
-    path("bundle/<str:slug>/<timestamp>", GetBundleView.as_view(), name="scan_get_bundle"),
+    path(
+        "<str:slug>/<timestamp>", ManageBundleView.as_view(), name="scan_manage_bundle"
+    ),
+    path(
+        "bundle/<str:slug>/<timestamp>", GetBundleView.as_view(), name="scan_get_bundle"
+    ),
 ]

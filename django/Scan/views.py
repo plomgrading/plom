@@ -46,10 +46,7 @@ class ScannerHomeView(ScannerRequiredView):
             scanner.upload_bundle(bundle_doc, slug, user, time_uploaded, pdf_hash)
             timestamp = datetime.timestamp(time_uploaded)
             return HttpResponseRedirect(
-                reverse(
-                    "scan_manage_bundle",
-                    args=(slug, timestamp)
-                )
+                reverse("scan_manage_bundle", args=(slug, timestamp))
             )
         else:
             context.update({"form": form})
@@ -68,12 +65,7 @@ class ManageBundleView(ScannerRequiredView):
             raise Http404()
 
         context = self.build_context()
-        context.update(
-            {
-                "slug": slug,
-                "timestamp": timestamp
-            }
-        )
+        context.update({"slug": slug, "timestamp": timestamp})
         return render(request, "Scan/manage_bundle.html", context)
 
 
