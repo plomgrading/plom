@@ -1,5 +1,6 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django import forms
 
 """
@@ -22,3 +23,24 @@ class CreateManagerForm(UserCreationForm):
     class Meta:
         model = User
         fields = ["username", "email"]
+
+
+class CreateScannersAndMarkersForm(forms.Form):
+    num_users = forms.IntegerField(
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "min": 1,
+                "max": 100,
+                "style": "width: 10%",
+                "name": "num_users",
+            }
+        ),
+    )
+
+    def clean(self):
+        data = self.cleaned_data
+        min_users = 1
+
+        if data["num_users"] < min_users:
+            raise ValidationError("Cannot create less than 1 users!")
