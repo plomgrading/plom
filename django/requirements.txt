@@ -14,3 +14,6 @@ reportlab
 django-huey
 django-polymorphic
 whitenoise
+# https://pypi.org/project/random-username/
+# https://github.com/williexu/random_username
+random-username
