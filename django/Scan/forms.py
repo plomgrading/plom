@@ -10,6 +10,7 @@ from datetime import datetime
 from django import forms
 from django.forms import ValidationError
 from django.utils.text import slugify
+from django.conf import settings
 
 
 class BundleUploadForm(forms.Form):
@@ -28,7 +29,10 @@ class BundleUploadForm(forms.Form):
         data = self.cleaned_data
         pdf = data["pdf"]
 
-        # TODO: compare against pdf.size if we want to specify a max file size in future
+        # TODO: set a request size limit in production
+        if pdf.size > settings.MAX_BUNDLE_SIZE:
+            readable_file_size = settings.MAX_BUNDLE_SIZE / 1e9
+            raise ValidationError(f"Bundle size limit is {readable_file_size} GB.")
 
         # correct format, readable by fitz, not a duplicate?
         try:

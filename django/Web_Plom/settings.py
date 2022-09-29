@@ -187,3 +187,9 @@ DJANGO_HUEY = {
 
 # Media and user-uploaded files
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Configurable variables for Web Plom
+# ----------------------------------------------
+
+# Max file size for bundle uploads (1 GB for now)
+MAX_BUNDLE_SIZE = 1e9
