@@ -13,6 +13,8 @@ mkdir huey
 
 rm -rf sourceVersions
 rm -rf papersToPrint
+rm -rf media
+mkdir media
 
 python3 manage.py makemigrations
 python3 manage.py migrate
