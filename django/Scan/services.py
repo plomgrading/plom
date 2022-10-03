@@ -60,7 +60,7 @@ class ScanService:
             pixmap = pdf_doc.get_page_pixmap(i)
             pixmap.save(save_path / filename)
 
-            with open(save_path / filename, 'rb') as f:
+            with open(save_path / filename, "rb") as f:
                 image_hash = hashlib.sha256(f.read()).hexdigest()
 
             image_db = StagingImage(
@@ -95,3 +95,25 @@ class ScanService:
             time_uploaded=time_uploaded,
         )
         return bundle
+
+    @transaction.atomic
+    def get_image(self, slug, timestamp, user, index):
+        """
+        Get an image from the database. To uniquely identify an image, we need a bundle
+        (and a slug, timestamp, and user) and a page index
+        """
+        bundle = self.get_bundle(slug, timestamp, user)
+        image = StagingImage.objects.get(
+            bundle=bundle,
+            bundle_order=index,
+        )
+        return image
+
+    @transaction.atomic
+    def get_n_images(self, bundle):
+        """
+        Get the number of page images in a bundle by counting the number of
+        StagingImages saved to the database
+        """
+        images = StagingImage.objects.filter(bundle=bundle)
+        return len(images)
