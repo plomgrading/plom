@@ -367,6 +367,9 @@ class Chooser(QDialog):
 
     def closeEvent(self, event):
         self.saveDetails()
+        dl = getattr(self.Qapp, "downloader", None)
+        if dl:
+            dl.stop(1)
         if self.messenger:
             self.messenger.stop()
 

@@ -2157,6 +2157,7 @@ class MarkerClient(QWidget):
 
     def closeEvent(self, event):
         log.debug("Something has triggered a shutdown event")
+        self.Qapp.downloader.stop(1)
         N = self.get_upload_queue_length()
         if N > 0:
             msg = QMessageBox()

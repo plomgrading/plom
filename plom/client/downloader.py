@@ -105,6 +105,23 @@ class Downloader(QObject):
 
         return str(resources.path(plom.client.icons, "manager_unknown.svg"))
 
+    def stop(self, timeout=0):
+        """Try to stop the downloader, after waiting for threads to clear.
+
+        Args:
+            timeout (float): seconds to wait before giving up.
+
+        Returns:
+            bool: True if all threads finished or False if we waited
+            long.
+        """
+        # TODO: more important is the queue length: can we release
+        # items not yet started?
+        print("enumerating all jobs to check for in progress...")
+        for k, v in self._in_progress.items():
+            print((k, v))
+        self.threadpool.waitForDone(-1)
+
     def download_in_background_thread(self, row, priority=False, _is_retry=False):
         """Enqueue the downloading of particular row of the image database.
 
