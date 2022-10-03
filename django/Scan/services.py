@@ -3,6 +3,7 @@ import hashlib
 from datetime import datetime
 from django.db import transaction
 from django.conf import settings
+from plom.scan import QRextract
 
 from Scan.models import StagingBundle, StagingImage
 
@@ -117,3 +118,16 @@ class ScanService:
         """
         images = StagingImage.objects.filter(bundle=bundle)
         return len(images)
+
+    @transaction.atomic
+    def read_qr_codes(self, bundle):
+        """
+        Read QR codes of scanned pages in a bundle, save results on disk.
+        """
+        images = StagingImage.objects.filter(bundle=bundle).order_by("bundle_order")
+        qr_codes = []
+        for img in images:
+            file_path = img.file_path
+            code_dict = QRextract(file_path, write_to_file=False)
+            qr_codes.append(code_dict)
+        return qr_codes

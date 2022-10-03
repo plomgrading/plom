@@ -8,6 +8,7 @@ from Scan.views import (
     ManageBundleView,
     GetBundleView,
     GetBundleImageView,
+    ReadQRcodesView,
 )
 
 
@@ -25,5 +26,10 @@ urlpatterns = [
         "bundle/<str:slug>/<timestamp>/<int:index>/",
         GetBundleImageView.as_view(),
         name="scan_get_image",
+    ),
+    path(
+        "read/<str:slug>/<timestamp>",
+        ReadQRcodesView.as_view(),
+        name="scan_read_qr",
     ),
 ]

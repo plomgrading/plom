@@ -126,3 +126,22 @@ class GetBundleImageView(ScannerRequiredView):
                 content_type="image/png",
             )
         return FileResponse(uploaded_file)
+
+
+class ReadQRcodesView(ScannerRequiredView):
+    """
+    Read QR codes of all pages in a bundle
+    """
+
+    def post(self, request, slug, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            return Http404()
+
+        scanner = ScanService()
+        bundle = scanner.get_bundle(slug, timestamp, request.user)
+        result = scanner.read_qr_codes(bundle)
+        print(result)
+
+        return HttpResponseRedirect(reverse("scan_manage_bundle", args=(slug, str(timestamp))))
