@@ -65,7 +65,16 @@ class ManageBundleView(ScannerRequiredView):
             raise Http404()
 
         context = self.build_context()
-        context.update({"slug": slug, "timestamp": timestamp})
+        scanner = ScanService()
+        bundle = scanner.get_bundle(slug, timestamp, request.user)
+        n_images = scanner.get_n_images(bundle)
+        context.update(
+            {
+                "slug": slug,
+                "timestamp": timestamp,
+                "images": [i for i in range(n_images)],
+            }
+        )
         return render(request, "Scan/manage_bundle.html", context)
 
 
@@ -92,5 +101,28 @@ class GetBundleView(ScannerRequiredView):
                 f"{slug}.pdf",
                 f.read(),
                 content_type="application/pdf",
+            )
+        return FileResponse(uploaded_file)
+
+
+class GetBundleImageView(ScannerRequiredView):
+    """
+    Return an image from a user-uploaded bundle
+    """
+
+    def get(self, request, slug, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+        image = scanner.get_image(slug, timestamp, request.user, index)
+        file_path = image.file_path
+        with open(file_path, "rb") as f:
+            uploaded_file = SimpleUploadedFile(
+                f"{slug}_{index}.png",
+                f.read(),
+                content_type="image/png",
             )
         return FileResponse(uploaded_file)

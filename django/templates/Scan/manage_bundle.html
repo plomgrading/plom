@@ -5,5 +5,14 @@
 {% block page_heading %}Scan bundles{% endblock %}
 
 {% block main_content %}
-<a class="btn btn-primary" href="{% url 'scan_get_bundle' slug timestamp %}" target="_blank">View bundle</a>
+<div class="d-grid gap-2">
+    {% for idx in images %}
+    <div class="card w-50">
+        <img 
+            src="{% url 'scan_get_image' slug timestamp idx %}"
+            class="card-img"
+        >
+    </div>
+    {% endfor %}
+</div>
 {% endblock %}
