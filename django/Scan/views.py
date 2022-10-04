@@ -3,10 +3,12 @@
 
 import pathlib
 from datetime import datetime
+import arrow
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, FileResponse, Http404
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
 from Scan.forms import BundleUploadForm
@@ -29,6 +31,18 @@ class ScannerHomeView(ScannerRequiredView):
 
     def get(self, request):
         context = self.build_context()
+        scanner = ScanService()
+        user_bundles = scanner.get_user_bundles(request.user)
+        bundles = []
+        for bundle in user_bundles:
+            bundles.append(
+                {
+                    "slug": bundle.slug,
+                    "timestamp": datetime.timestamp(bundle.time_uploaded),
+                    "time_uploaded": arrow.get(bundle.time_uploaded).humanize(),
+                }
+            )
+        context.update({"bundles": bundles})
         return render(request, "Scan/home.html", context)
 
     def post(self, request):
@@ -76,6 +90,22 @@ class ManageBundleView(ScannerRequiredView):
             }
         )
         return render(request, "Scan/manage_bundle.html", context)
+
+
+class RemoveBundleView(ScannerRequiredView):
+    """
+    Delete an uploaded bundle
+    """
+
+    def delete(self, request, slug, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+        scanner.remove_bundle(slug, timestamp, request.user)
+        return HttpResponseClientRefresh()
 
 
 class GetBundleView(ScannerRequiredView):

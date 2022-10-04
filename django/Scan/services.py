@@ -79,7 +79,7 @@ class ScanService:
         Remove a bundle PDF from the filesystem + database
         """
         bundle = self.get_bundle(slug, timestamp, user)
-        file_path = bundle.file_path
+        file_path = pathlib.Path(bundle.file_path)
         file_path.unlink()
         bundle.delete()
 
@@ -118,6 +118,14 @@ class ScanService:
         """
         images = StagingImage.objects.filter(bundle=bundle)
         return len(images)
+
+    @transaction.atomic
+    def get_user_bundles(self, user):
+        """
+        Return all of the staging bundles that a user uploaded
+        """
+        bundles = StagingBundle.objects.filter(user=user)
+        return list(bundles)
 
     @transaction.atomic
     def read_qr_codes(self, bundle):
