@@ -12,7 +12,7 @@
 <body>
     {% block page_heading %}User management{% endblock %}
     {% block main_content %}
-    {% if manager_status == 'no_connection' %}
+    {% comment %} {% if manager_status == 'no_connection' %}
     <div class="alert alert-danger d-flex align-items-center">
         <i class="bi bi-exclamation-triangle-fill text-danger fs-2 pe-3"></i>
         <div class="pe-3">
@@ -32,7 +32,7 @@
             <a class="btn btn-light float-end" hx-get="{% url 'retry_user_page' %}">Refresh</a>
         </div>
     </div>
-    {% endif %}
+    {% endif %} {% endcomment %}
     
     {% for user in users %}
     {%  if 'marker' in user.group or 'scanner' in user.group %}
