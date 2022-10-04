@@ -24,6 +24,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Clear an existing test specification.",
         )
+        parser.add_argument(
+            "--publicCode",
+            type=int,
+            help="Force the spec to use a pre-determined public code."
+        )
 
     def handle(self, *args, **options):
         staged_spec_service = StagingSpecificationService()
@@ -69,7 +74,13 @@ class Command(BaseCommand):
                 try:
                     staged_spec_service.create_from_dict(data)
                     valid_spec = staged_spec_service.get_valid_spec_dict()
+
+                    if options["publicCode"]:
+                        code = options["publicCode"]
+                        valid_spec["publicCode"] = code
+
                     valid_spec_service.store_validated_spec(valid_spec)
                     self.stdout.write("Demo test specification uploaded!")
+                    self.stdout.write(str(valid_spec_service.get_the_spec()))
                 except ValueError as e:
                     self.stderr.write(e)

@@ -99,3 +99,12 @@ class SpecificationService:
         """
         spec_obj = self.get_the_spec()
         return spec_obj["numberToProduce"]
+
+    @transaction.atomic
+    def modify_n_to_produce(self, n):
+        """
+        Modify the number of papers to produce - assumes it's a valid value.
+        """
+        spec_obj = Specification.objects.get()
+        spec_obj.spec_dict["numberToProduce"] = n
+        spec_obj.save()
