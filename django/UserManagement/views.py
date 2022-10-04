@@ -16,7 +16,7 @@ class UserPage(ManagerRequiredView):
 
     def build_context(self):
         context = super().build_context()
-        core = CoreUsersService()
+        
         users = User.objects.all()
 
         login_valid = core.manager_login_status()
