@@ -108,6 +108,21 @@ Approx: 9230 over 7 courses
 Approx: 1030 over 3 courses
 
 
+## 2022W1
+
+| Course  |  Tasks                  | # students |  Notes                      |
+|---------|-------------------------|:----------:|-----------------------------|
+| Math100 | 2 mock exams, exam      | ~4000      |                             |
+| Math110 | Midterm                 |            |                             |
+| Math220 |                         |            |                             |
+| Math221 |                         |            |                             |
+| Math300 | Quiz1, Quiz2            |            |                             |
+| Math319 |                         |            |                             |
+| Math341 | MT2                     |            |                             |
+| Phys117 |                         |            |                             |
+
+
+
 ## Totals up to August 30th 2022
 
   * Approx 43260 papers in 45 courses.
