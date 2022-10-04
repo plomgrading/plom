@@ -15,3 +15,6 @@ django-huey
 django-polymorphic
 whitenoise
 djangorestframework
+# https://pypi.org/project/random-username/
+# https://github.com/williexu/random_username
+random-username
