@@ -8,6 +8,7 @@ from Scan.views import (
     ManageBundleView,
     GetBundleView,
     GetBundleImageView,
+    RemoveBundleView,
 )
 
 
@@ -25,5 +26,10 @@ urlpatterns = [
         "bundle/<str:slug>/<timestamp>/<int:index>/",
         GetBundleImageView.as_view(),
         name="scan_get_image",
+    ),
+    path(
+        "delete/<str:slug>/<timestamp>/",
+        RemoveBundleView.as_view(),
+        name="scan_remove_bundle",
     ),
 ]
