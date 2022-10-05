@@ -18,6 +18,7 @@ from .signupForm import CreateManagerForm, CreateScannersAndMarkersForm
 from Base.base_group_views import AdminRequiredView, ManagerRequiredView
 from Connect.services import CoreUsersService
 
+
 # Create your views here.
 # Set User Password
 class SetPassword(View):
