@@ -1,5 +1,6 @@
 import pathlib
 import hashlib
+import fitz
 from datetime import datetime
 from django.db import transaction
 from django.conf import settings
@@ -60,7 +61,8 @@ class ScanService:
         n_pages = pdf_doc.page_count
         for i in range(n_pages):
             filename = f"page{i}.png"
-            pixmap = pdf_doc.get_page_pixmap(i)
+            transform = fitz.Matrix(4, 4)  # scale for high resolution
+            pixmap = pdf_doc[i].get_pixmap(matrix=transform)
             pixmap.save(save_path / filename)
 
             with open(save_path / filename, "rb") as f:
