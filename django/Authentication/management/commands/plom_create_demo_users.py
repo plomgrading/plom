@@ -95,6 +95,10 @@ class Command(BaseCommand):
                         email=scanner_username + email,
                         password=scanner_password,
                     ).groups.add(scanner_group, demo_group)
+                    user = User.objects.get(username=scanner_username)
+                    user.is_active = True
+                    user.save()
+                    
                     print(
                         f"{scanner_username} created and added to {scanner_group} group!"
                     )
@@ -110,6 +114,10 @@ class Command(BaseCommand):
                         email=marker_username + email,
                         password=marker_password,
                     ).groups.add(marker_group, demo_group)
+                    user = User.objects.get(username=marker_username)
+                    user.is_active = True
+                    user.save()
+
                     print(
                         f"{marker_username} created and added to {marker_group} group!"
                     )

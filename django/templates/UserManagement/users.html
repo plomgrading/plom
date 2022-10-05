@@ -1,80 +1,40 @@
 {% extends 'base/base.html' %}
-
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>User Management</title>
     <title>{% block title %}Web Plom - User Management {% endblock %}</title>
 </head>
 <body>
-    {% block page_heading %}User management{% endblock %}
     {% block main_content %}
-    {% comment %} {% if manager_status == 'no_connection' %}
-    <div class="alert alert-danger d-flex align-items-center">
-        <i class="bi bi-exclamation-triangle-fill text-danger fs-2 pe-3"></i>
-        <div class="pe-3">
-            Unable to connect to Plom-classic server &mdash; please review your connection details.
-        </div>
-        <div>
-            <a class="btn btn-light float-end" hx-get="{% url 'retry_user_page' %}">Refresh</a>
-        </div>
-    </div>
-    {% elif manager_status == 'existing_login' %}
-    <div class="alert alert-danger d-flex align-items-center">
-        <i class="bi bi-exclamation-triangle-fill text-danger fs-2 pe-3"></i>
-        <div class="pe-3">
-            Plom-classic manager already signed in &mdash; please close any running Plom-manager clients.
-        </div>
-        <div>
-            <a class="btn btn-light float-end" hx-get="{% url 'retry_user_page' %}">Refresh</a>
-        </div>
-    </div>
-    {% endif %} {% endcomment %}
-    
     {% for user in users %}
-    {%  if 'marker' in user.group or 'scanner' in user.group %}
+    {%  if 'marker' in user.groups.all.0.name or 'scanner' in user.groups.all.0.name %}
     <form method="POST" action="users/{{user.username}}">
         {% csrf_token %}
     <div class="card mt-2">
     <div class="card-body d-flex flex-row justify-content-between">
         <div>
             <h5 class="card-title">{{user.username}}</h5>
-            {% if 'marker' in user.group %}
+            {% if 'marker' in user.groups.all.0.name %}
              Marker
             {% endif %}
-            {% if 'scanner' in user.group %}
+            {% if 'scanner' in user.groups.all.0.name %}
              Scanner
             {% endif %}
         </div>
-        {% if user.username in request.online_now %}
-        Active
-        {% elif user.details.1 %}
-        Active on Plom-classic
+        {% if user in request.online_now %}
+        Online
         {% else %}
-        Not Active
+        Offline
         {% endif %}
             <button type="button" class="btn btn-info" name="showProgress" value="showProgess">
-                <a href="progress/{{user.username}}" class="nav-link">Show Progress</a>
+                <a href="progress/{{user.username}}" class="nav-link" target="_blank">Show Progress</a>
             </button>
-        {% if user.details.0 %}
-            <input 
-                type="submit" 
-                class="btn btn-danger" 
-                value="Disable" 
-                name="changeStatus"
-                {% if manager_status != 'valid' %}disabled{% endif %}
-            >
+        {% if user.is_active %}
+            <input type="submit" class="btn btn-danger" value="Disable" name="changeStatus">
         {% else %}
-            <input 
-                type="submit" 
-                class="btn btn-success" 
-                value="Enable" 
-                name="changeStatus"
-                {% if manager_status != 'valid' %}disabled{% endif %}
-            >
+            <input type="submit" class="btn btn-success" value="Enable" name="changeStatus">
         {% endif %}
 
     </div>
@@ -84,23 +44,14 @@
     {% endfor %}
     <br>
     <p>
-        <button type="button" class="btn btn-success" {% if manager_status != 'valid' %}disabled{% endif %}>
-            <a href="{% url 'enableMarkers' %}" class="nav-link">Enable Markers &nbsp;</a>
-        </button>
-        <button type="button" class="btn btn-danger" {% if manager_status != 'valid' %}disabled{% endif %}>
-            <a href="{% url 'disableMarkers' %}" class="nav-link">Disable Markers &nbsp;</a>
-        </button>
+    <button type="button" class="btn btn-success"><a href="{% url 'enableMarkers' %}" class="nav-link">Enable Markers &nbsp;</a></button>
+    <button type="button" class="btn btn-danger"><a href="{% url 'disableMarkers' %}" class="nav-link">Disable Markers &nbsp;</a></button>
     </p>
     <br>
     <p>
-        <button type="button" class="btn btn-primary" {% if manager_status != 'valid' %}disabled{% endif %}>
-            <a href="{% url 'enableScanners' %}" class="nav-link">Enable Scanners</a>
-        </button>
-        <button type="button" class="btn btn-warning" {% if manager_status != 'valid' %}disabled{% endif %}>
-            <a href="{% url 'disableScanners' %}" class="nav-link">Disable Scanners</a>
-        </button>
+    <button type="button" class="btn btn-primary"><a href="{% url 'enableScanners' %}" class="nav-link">Enable Scanners</a></button>
+    <button type="button" class="btn btn-warning"><a href="{% url 'disableScanners' %}" class="nav-link">Disable Scanners</a></button>
     </p>
     {% endblock %}
 </body>
 </html>
-
