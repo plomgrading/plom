@@ -287,7 +287,13 @@ django:
   needs: ["docker-image"]
   image: $IM
   script:
-    - python3 -m pip install -r django/requirements.txt
+    - apt install -y python3-tk
+    - pushd django
+    - python3 -m pip install -r requirements.txt
+    - python3 manage.py makemigrations
+    - python3 manage.py migrate
+    - python3 manage.py test
+    - popd
 
 
 demoserver:
