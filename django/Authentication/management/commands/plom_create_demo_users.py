@@ -98,7 +98,7 @@ class Command(BaseCommand):
                     user = User.objects.get(username=scanner_username)
                     user.is_active = True
                     user.save()
-                    
+
                     print(
                         f"{scanner_username} created and added to {scanner_group} group!"
                     )
