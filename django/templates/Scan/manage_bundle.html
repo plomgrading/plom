@@ -36,7 +36,10 @@
     </div>
     <div class="right_navbar">
         <div class="sticky" height="200px" width="100%">
-            <a class="btn" href="#" style="background-color: green; color: white;">Check QR code</a>
+            <form method="post" action="{% url 'scan_read_qr' slug timestamp %}">
+                {% csrf_token %}
+                <input type="submit" value="Read QR" class="btn btn-primary">
+            </form>
             <br>
             <br>
             <a class="btn" href="{% url 'scan_home' %}" style="background-color: grey; color: white;">Return to upload</a>

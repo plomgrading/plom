@@ -1,8 +1,11 @@
 import pathlib
 import hashlib
+import fitz
 from datetime import datetime
 from django.db import transaction
 from django.conf import settings
+from plom.scan import QRextract
+from plom.scan.readQRCodes import checkQRsValid
 
 from Scan.models import StagingBundle, StagingImage
 
@@ -23,7 +26,9 @@ class ScanService:
 
         user_dir = pathlib.Path("media") / user.username
         user_dir.mkdir(exist_ok=True)
-        bundle_dir = user_dir / "bundles"
+        bundles_dir = user_dir / "bundles"
+        bundles_dir.mkdir(exist_ok=True)
+        bundle_dir = bundles_dir / f"{slug}_{timestamp}"
         bundle_dir.mkdir(exist_ok=True)
         with open(bundle_dir / file_name, "w") as f:
             pdf_doc.save(f)
@@ -37,11 +42,11 @@ class ScanService:
         )
         bundle_db.save()
 
-        image_dir = user_dir / "images"
+        image_dir = bundle_dir / "pageImages"
         image_dir.mkdir(exist_ok=True)
-        slug_dir = image_dir / f"{slug}_{timestamp}"
-        slug_dir.mkdir(exist_ok=True)
-        self.split_and_save_bundle_images(pdf_doc, bundle_db, slug_dir)
+        unknown_dir = bundle_dir / "unknownPages"
+        unknown_dir.mkdir(exist_ok=True)
+        self.split_and_save_bundle_images(pdf_doc, bundle_db, image_dir)
 
     @transaction.atomic
     def split_and_save_bundle_images(self, pdf_doc, bundle, save_path):
@@ -54,10 +59,10 @@ class ScanService:
             save_path: pathlib.Path object of path to save image files
         """
         n_pages = pdf_doc.page_count
-        timestamp = datetime.timestamp(bundle.time_uploaded)
         for i in range(n_pages):
-            filename = f"{bundle.slug}_{timestamp}_{i}.png"
-            pixmap = pdf_doc.get_page_pixmap(i)
+            filename = f"page{i}.png"
+            transform = fitz.Matrix(4, 4)  # scale for high resolution
+            pixmap = pdf_doc[i].get_pixmap(matrix=transform)
             pixmap.save(save_path / filename)
 
             with open(save_path / filename, "rb") as f:
@@ -125,3 +130,25 @@ class ScanService:
         """
         bundles = StagingBundle.objects.filter(user=user)
         return list(bundles)
+
+    @transaction.atomic
+    def read_qr_codes(self, bundle):
+        """
+        Read QR codes of scanned pages in a bundle, save results on disk.
+        """
+        images = StagingImage.objects.filter(bundle=bundle).order_by("bundle_order")
+        qr_codes = []
+        for img in images:
+            file_path = img.file_path
+            code_dict = QRextract(file_path, write_to_file=False)
+            qr_codes.append(code_dict)
+        return qr_codes
+
+    def validate_qr_codes(self, bundle, spec):
+        """
+        Validate qr codes in bundle images (saved to disk) against the spec.
+        """
+        base_path = pathlib.Path(bundle.file_path).parent
+        print('SPEC PUBLIC CODE:', spec["publicCode"])
+        qrs = checkQRsValid(base_path, spec)
+        return qrs

@@ -4,6 +4,8 @@
 import pathlib
 from datetime import datetime
 import arrow
+import json
+import shutil
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, FileResponse, Http404
 from django.urls import reverse
@@ -11,6 +13,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
+from Papers.services import SpecificationService
 from Scan.forms import BundleUploadForm
 from Scan.services import ScanService
 
@@ -156,3 +159,36 @@ class GetBundleImageView(ScannerRequiredView):
                 content_type="image/png",
             )
         return FileResponse(uploaded_file)
+
+
+class ReadQRcodesView(ScannerRequiredView):
+    """
+    Read QR codes of all pages in a bundle
+    """
+
+    def post(self, request, slug, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            return Http404()
+
+        scanner = ScanService()
+        bundle = scanner.get_bundle(slug, timestamp, request.user)
+        result = scanner.read_qr_codes(bundle)
+
+        # Save qr codes to disk
+        bundle_dir_path = pathlib.Path(bundle.file_path).parent
+        bundle_image_path = bundle_dir_path / "pageImages"
+
+        for i in range(len(result)):
+            with open(bundle_image_path / f"page{i}.png.qr", "w") as f:
+                json.dump(result[i], f)
+
+        # validate QRs
+        spec = SpecificationService().get_the_spec()
+        qrs = scanner.validate_qr_codes(bundle, spec)
+        print(qrs)
+
+        return HttpResponseRedirect(
+            reverse("scan_manage_bundle", args=(slug, str(timestamp)))
+        )

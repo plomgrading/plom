@@ -9,6 +9,7 @@ from Scan.views import (
     GetBundleView,
     GetBundleImageView,
     RemoveBundleView,
+    ReadQRcodesView,
 )
 
 
@@ -31,5 +32,10 @@ urlpatterns = [
         "delete/<str:slug>/<timestamp>/",
         RemoveBundleView.as_view(),
         name="scan_remove_bundle",
+    ),
+    path(
+        "read/<str:slug>/<timestamp>",
+        ReadQRcodesView.as_view(),
+        name="scan_read_qr",
     ),
 ]
