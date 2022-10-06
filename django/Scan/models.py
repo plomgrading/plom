@@ -4,6 +4,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from Base.models import HueyTask
+
 
 class StagingBundle(models.Model):
     """
@@ -27,3 +29,11 @@ class StagingImage(models.Model):
     file_name = models.TextField(default="")
     file_path = models.TextField(default="")
     image_hash = models.CharField(max_length=64)
+
+
+class PageToImage(HueyTask):
+    """
+    Convert a PDF page into an image in the background.
+    """
+
+    pass

@@ -23,19 +23,15 @@ class ScannerHomeView(ScannerRequiredView):
     Hello, world!
     """
 
-    def build_context(self):
+    def build_context(self, user):
         context = super().build_context()
         context.update(
             {
                 "form": BundleUploadForm(),
             }
         )
-        return context
-
-    def get(self, request):
-        context = self.build_context()
         scanner = ScanService()
-        user_bundles = scanner.get_user_bundles(request.user)
+        user_bundles = scanner.get_user_bundles(user)
         bundles = []
         for bundle in user_bundles:
             date_time = datetime.fromtimestamp(bundle.timestamp)
@@ -47,10 +43,14 @@ class ScannerHomeView(ScannerRequiredView):
                 }
             )
         context.update({"bundles": bundles})
+        return context
+
+    def get(self, request):
+        context = self.build_context(request.user)
         return render(request, "Scan/home.html", context)
 
     def post(self, request):
-        context = self.build_context()
+        context = self.build_context(request.user)
         form = BundleUploadForm(request.POST, request.FILES)
         if form.is_valid():
             data = form.cleaned_data

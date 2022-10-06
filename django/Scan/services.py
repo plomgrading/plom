@@ -1,11 +1,17 @@
 import pathlib
 import hashlib
 import fitz
+from datetime import datetime
 from django.db import transaction
+from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
 
-from Scan.models import StagingBundle, StagingImage
+from Scan.models import (
+    StagingBundle,
+    StagingImage,
+    PageToImage,
+)
 
 
 class ScanService:
@@ -46,33 +52,52 @@ class ScanService:
         self.split_and_save_bundle_images(pdf_doc, bundle_db, image_dir)
 
     @transaction.atomic
-    def split_and_save_bundle_images(self, pdf_doc, bundle, save_path):
+    def split_and_save_bundle_images(self, pdf_doc, bundle, base_dir):
         """
         Read a PDF document and save page images to filesystem/database
 
         Args:
             pdf_doc: fitz.document object of a bundle
             bundle: StagingBundle object
-            save_path: pathlib.Path object of path to save image files
+            base_dir: pathlib.Path object of path to save image files
         """
         n_pages = pdf_doc.page_count
         for i in range(n_pages):
-            filename = f"page{i}.png"
-            transform = fitz.Matrix(4, 4)  # scale for high resolution
-            pixmap = pdf_doc[i].get_pixmap(matrix=transform)
-            pixmap.save(save_path / filename)
-
-            with open(save_path / filename, "rb") as f:
-                image_hash = hashlib.sha256(f.read()).hexdigest()
-
-            image_db = StagingImage(
-                bundle=bundle,
-                bundle_order=i,
-                file_name=filename,
-                file_path=str(save_path / filename),
-                image_hash=image_hash,
+            save_path = base_dir / f"page{i}.png"
+            page = pdf_doc[i]
+            page_task = self._get_page_image(bundle, i, save_path)
+            page_task_db = PageToImage(
+                huey_id=page_task.id,
+                status="queued",
+                created=datetime.now(),
             )
-            image_db.save()
+            page_task_db.save()
+
+    @db_task(queue="tasks")
+    def _get_page_image(bundle, index, save_path):
+        """
+        Render a page image and save to disk in the background
+
+        Args:
+            bundle: bundle DB object
+            index: bundle order of page
+            pdf_page: fitz.Page object of a bundle page
+            save_path: str or pathlib.Path object of image disk location
+        """
+        pdf_doc = fitz.Document(bundle.file_path)
+        transform = fitz.Matrix(4, 4)
+        pixmap = pdf_doc[index].get_pixmap(matrix=transform)
+        pixmap.save(save_path)
+
+        image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
+        image_db = StagingImage(
+            bundle=bundle,
+            bundle_order=index,
+            file_name=f"page{index}.png",
+            file_path=str(save_path),
+            image_hash=image_hash,
+        )
+        image_db.save()
 
     @transaction.atomic
     def remove_bundle(self, timestamp, user):
