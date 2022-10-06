@@ -11,7 +11,6 @@ from Scan.services import ScanService
 
 
 class ScanServiceTests(TestCase):
-
     def test_read_qr_codes(self):
         codes = QRextract("Scan/tests/test_zbar_fails.png", write_to_file=False)
         self.assertEqual(codes["NE"], [])  # staple
@@ -25,7 +24,7 @@ class ScanServiceTests(TestCase):
         # self.assertEqual(codes["NE"], ["00000101011247218"])
         # self.assertEqual(codes["SW"], ["00000101013247218"])
         # self.assertEqual(codes["SE"], ["00000101014247218"])
-    
+
         img = Image.open("Scan/tests/page0.png")
         codes = decode(img, symbols=[ZBarSymbol.QRCODE])
         print(codes)

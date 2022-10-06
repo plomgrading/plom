@@ -1,9 +1,7 @@
 import pathlib
 import hashlib
 import fitz
-from datetime import datetime
 from django.db import transaction
-from django.conf import settings
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
 
@@ -16,19 +14,18 @@ class ScanService:
     """
 
     @transaction.atomic
-    def upload_bundle(self, pdf_doc, slug, user, time_uploaded, pdf_hash):
+    def upload_bundle(self, pdf_doc, slug, user, timestamp, pdf_hash):
         """
         Upload a bundle PDF and store it in the filesystem + database.
         Also, split PDF into page images + store in filesystem and database.
         """
-        timestamp = datetime.timestamp(time_uploaded)
-        file_name = f"{slug}_{timestamp}.pdf"
+        file_name = f"{timestamp}.pdf"
 
         user_dir = pathlib.Path("media") / user.username
         user_dir.mkdir(exist_ok=True)
         bundles_dir = user_dir / "bundles"
         bundles_dir.mkdir(exist_ok=True)
-        bundle_dir = bundles_dir / f"{slug}_{timestamp}"
+        bundle_dir = bundles_dir / f"{timestamp}"
         bundle_dir.mkdir(exist_ok=True)
         with open(bundle_dir / file_name, "w") as f:
             pdf_doc.save(f)
@@ -37,7 +34,7 @@ class ScanService:
             slug=slug,
             file_path=bundle_dir / file_name,
             user=user,
-            time_uploaded=time_uploaded,
+            timestamp=timestamp,
             pdf_hash=pdf_hash,
         )
         bundle_db.save()
@@ -78,36 +75,34 @@ class ScanService:
             image_db.save()
 
     @transaction.atomic
-    def remove_bundle(self, slug, timestamp, user):
+    def remove_bundle(self, timestamp, user):
         """
         Remove a bundle PDF from the filesystem + database
         """
-        bundle = self.get_bundle(slug, timestamp, user)
+        bundle = self.get_bundle(timestamp, user)
         file_path = pathlib.Path(bundle.file_path)
         file_path.unlink()
         bundle.delete()
 
     @transaction.atomic
-    def get_bundle(self, slug, timestamp, user):
+    def get_bundle(self, timestamp, user):
         """
         Get a bundle from the database. To uniquely identify a bundle, we need
-        its slug, timestamp, and user
+        its timestamp and user
         """
-        time_uploaded = datetime.fromtimestamp(timestamp)
         bundle = StagingBundle.objects.get(
-            slug=slug,
             user=user,
-            time_uploaded=time_uploaded,
+            timestamp=timestamp,
         )
         return bundle
 
     @transaction.atomic
-    def get_image(self, slug, timestamp, user, index):
+    def get_image(self, timestamp, user, index):
         """
         Get an image from the database. To uniquely identify an image, we need a bundle
-        (and a slug, timestamp, and user) and a page index
+        (and a timestamp, and user) and a page index
         """
-        bundle = self.get_bundle(slug, timestamp, user)
+        bundle = self.get_bundle(timestamp, user)
         image = StagingImage.objects.get(
             bundle=bundle,
             bundle_order=index,
@@ -149,6 +144,6 @@ class ScanService:
         Validate qr codes in bundle images (saved to disk) against the spec.
         """
         base_path = pathlib.Path(bundle.file_path).parent
-        print('SPEC PUBLIC CODE:', spec["publicCode"])
+        print("SPEC PUBLIC CODE:", spec["publicCode"])
         qrs = checkQRsValid(base_path, spec)
         return qrs

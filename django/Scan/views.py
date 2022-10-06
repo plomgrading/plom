@@ -38,11 +38,12 @@ class ScannerHomeView(ScannerRequiredView):
         user_bundles = scanner.get_user_bundles(request.user)
         bundles = []
         for bundle in user_bundles:
+            date_time = datetime.fromtimestamp(bundle.timestamp)
             bundles.append(
                 {
                     "slug": bundle.slug,
-                    "timestamp": datetime.timestamp(bundle.time_uploaded),
-                    "time_uploaded": arrow.get(bundle.time_uploaded).humanize(),
+                    "timestamp": bundle.timestamp,
+                    "time_uploaded": arrow.get(date_time).humanize(),
                 }
             )
         context.update({"bundles": bundles})
@@ -60,10 +61,10 @@ class ScannerHomeView(ScannerRequiredView):
             pdf_hash = data["sha256"]
 
             scanner = ScanService()
-            scanner.upload_bundle(bundle_doc, slug, user, time_uploaded, pdf_hash)
             timestamp = datetime.timestamp(time_uploaded)
+            scanner.upload_bundle(bundle_doc, slug, user, timestamp, pdf_hash)
             return HttpResponseRedirect(
-                reverse("scan_manage_bundle", args=(slug, timestamp))
+                reverse("scan_manage_bundle", args=(timestamp,))
             )
         else:
             context.update({"form": form})
@@ -75,7 +76,7 @@ class ManageBundleView(ScannerRequiredView):
     Let a user view an uploaded bundle and read its QR codes.
     """
 
-    def get(self, request, slug, timestamp):
+    def get(self, request, timestamp):
         try:
             timestamp = float(timestamp)
         except ValueError:
@@ -83,11 +84,11 @@ class ManageBundleView(ScannerRequiredView):
 
         context = self.build_context()
         scanner = ScanService()
-        bundle = scanner.get_bundle(slug, timestamp, request.user)
+        bundle = scanner.get_bundle(timestamp, request.user)
         n_images = scanner.get_n_images(bundle)
         context.update(
             {
-                "slug": slug,
+                "slug": bundle.slug,
                 "timestamp": timestamp,
                 "images": [i for i in range(n_images)],
             }
@@ -100,14 +101,14 @@ class RemoveBundleView(ScannerRequiredView):
     Delete an uploaded bundle
     """
 
-    def delete(self, request, slug, timestamp):
+    def delete(self, request, timestamp):
         try:
             timestamp = float(timestamp)
         except ValueError:
             raise Http404()
 
         scanner = ScanService()
-        scanner.remove_bundle(slug, timestamp, request.user)
+        scanner.remove_bundle(timestamp, request.user)
         return HttpResponseClientRefresh()
 
 
@@ -116,7 +117,7 @@ class GetBundleView(ScannerRequiredView):
     Return a user-uploaded bundle PDF
     """
 
-    def get(self, request, slug, timestamp):
+    def get(self, request, timestamp):
         try:
             timestamp = float(timestamp)
         except ValueError:
@@ -126,12 +127,12 @@ class GetBundleView(ScannerRequiredView):
 
         # TODO: scanner users can only access their own bundles.
         # The manager should be able to access all the scanner users' bundles?
-        bundle = scanner.get_bundle(slug, timestamp, request.user)
-        file_name = f"{slug}_{timestamp}.pdf"
+        bundle = scanner.get_bundle(timestamp, request.user)
+        file_name = f"{timestamp}.pdf"
         file_path = pathlib.Path("media") / bundle.user.username / "bundles" / file_name
         with open(file_path, "rb") as f:
             uploaded_file = SimpleUploadedFile(
-                f"{slug}.pdf",
+                f"{bundle.slug}.pdf",
                 f.read(),
                 content_type="application/pdf",
             )
@@ -143,18 +144,18 @@ class GetBundleImageView(ScannerRequiredView):
     Return an image from a user-uploaded bundle
     """
 
-    def get(self, request, slug, timestamp, index):
+    def get(self, request, timestamp, index):
         try:
             timestamp = float(timestamp)
         except ValueError:
             raise Http404()
 
         scanner = ScanService()
-        image = scanner.get_image(slug, timestamp, request.user, index)
+        image = scanner.get_image(timestamp, request.user, index)
         file_path = image.file_path
         with open(file_path, "rb") as f:
             uploaded_file = SimpleUploadedFile(
-                f"{slug}_{index}.png",
+                f"page_{index}.png",
                 f.read(),
                 content_type="image/png",
             )
@@ -166,14 +167,14 @@ class ReadQRcodesView(ScannerRequiredView):
     Read QR codes of all pages in a bundle
     """
 
-    def post(self, request, slug, timestamp):
+    def post(self, request, timestamp):
         try:
             timestamp = float(timestamp)
         except ValueError:
             return Http404()
 
         scanner = ScanService()
-        bundle = scanner.get_bundle(slug, timestamp, request.user)
+        bundle = scanner.get_bundle(timestamp, request.user)
         result = scanner.read_qr_codes(bundle)
 
         # Save qr codes to disk
@@ -190,5 +191,5 @@ class ReadQRcodesView(ScannerRequiredView):
         print(qrs)
 
         return HttpResponseRedirect(
-            reverse("scan_manage_bundle", args=(slug, str(timestamp)))
+            reverse("scan_manage_bundle", args=(str(timestamp)))
         )

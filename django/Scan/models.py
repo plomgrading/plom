@@ -3,7 +3,6 @@
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
 
 
 class StagingBundle(models.Model):
@@ -14,7 +13,7 @@ class StagingBundle(models.Model):
     slug = models.TextField(default="", unique=True)
     file_path = models.TextField(default="")
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    time_uploaded = models.DateTimeField(default=timezone.now, blank=True)
+    timestamp = models.FloatField(default=0)
     pdf_hash = models.CharField(null=False, max_length=64)
 
 

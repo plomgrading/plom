@@ -28,7 +28,7 @@
         {% for idx in images %}
         <div class="card w-100">
             <img 
-                src="{% url 'scan_get_image' slug timestamp idx %}"
+                src="{% url 'scan_get_image' timestamp idx %}"
                 class="card-img"
             >
         </div>
@@ -36,7 +36,7 @@
     </div>
     <div class="right_navbar">
         <div class="sticky" height="200px" width="100%">
-            <form method="post" action="{% url 'scan_read_qr' slug timestamp %}">
+            <form method="post" action="{% url 'scan_read_qr' timestamp %}">
                 {% csrf_token %}
                 <input type="submit" value="Read QR" class="btn btn-primary">
             </form>

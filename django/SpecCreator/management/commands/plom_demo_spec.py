@@ -27,7 +27,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--publicCode",
             type=int,
-            help="Force the spec to use a pre-determined public code."
+            help="Force the spec to use a pre-determined public code.",
         )
 
     def handle(self, *args, **options):
