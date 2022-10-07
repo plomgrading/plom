@@ -51,7 +51,7 @@
                             <p class="card-text">Uploaded {{ bundle.time_uploaded }}</p>
                             <a 
                                 class="btn btn-primary" 
-                                href="{% url 'scan_manage_bundle' bundle.timestamp %}"
+                                href="{% url 'scan_manage_bundle' bundle.timestamp 0 %}"
                             >
                                 View
                             </a>

@@ -84,14 +84,17 @@ class BundleSplittingProgressView(ScannerRequiredView):
         context = self.build_context()
         context.update({"timestamp": timestamp})
 
-        # if the splitting is already complete, redirect to the manage view
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
+        if not bundle:
+            raise Http404()
+
+        # if the splitting is already complete, redirect to the manage view
         n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
         n_total = scanner.get_n_page_rendering_tasks(bundle)
         if n_completed == n_total:
             return HttpResponseRedirect(
-                reverse("scan_manage_bundle", args=(timestamp,))
+                reverse("scan_manage_bundle", args=(timestamp, 0))
             )
 
         return render(request, "Scan/to_image_progress.html", context)
@@ -134,7 +137,7 @@ class ManageBundleView(ScannerRequiredView):
     Let a user view an uploaded bundle and read its QR codes.
     """
 
-    def get(self, request, timestamp):
+    def get(self, request, timestamp, index):
         try:
             timestamp = float(timestamp)
         except ValueError:
@@ -143,12 +146,20 @@ class ManageBundleView(ScannerRequiredView):
         context = self.build_context()
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
-        n_images = scanner.get_n_images(bundle)
+        n_pages = scanner.get_n_images(bundle)
+
+        if index >= n_pages:
+            raise Http404("Bundle page does not exist.")
+
         context.update(
             {
                 "slug": bundle.slug,
                 "timestamp": timestamp,
-                "images": [i for i in range(n_images)],
+                "index": index,
+                "one_index": index + 1,
+                "total_pages": n_pages,
+                "prev_idx": index - 1,
+                "next_idx": index + 1,
             }
         )
         return render(request, "Scan/manage_bundle.html", context)
