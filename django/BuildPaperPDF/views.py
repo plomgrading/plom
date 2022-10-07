@@ -186,8 +186,7 @@ class GetCompressedPDFs(ManagerRequiredView):
 
     def post(self, request):
         bps = BuildPapersService()
-        shortname = StagingSpecificationService.get_short_name_slug()
-
+        shortname = StagingSpecificationService().get_short_name_slug()
         save_path = bps.get_pdf_zipfile(filename=f"{shortname}.zip")
         zip_file = save_path.open("rb")
         zf = SimpleUploadedFile(
