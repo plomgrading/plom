@@ -1,0 +1,15 @@
+<div 
+    class="card text-center w-50" 
+    style="min-width: fit-content;"
+    hx-get="{% url 'scan_image_update' timestamp %}"
+    hx-trigger="every 1s"
+>
+    <div class="card-body">
+        <h2 class="card-title m-4 mt-2">Uploading bundle</h2>
+        <div class="spinner-border mb-3"></div>
+        <p class="card-text">Rendering page {{ n_completed }} of {{ n_total }}...</p>
+        <div class="progress">
+            <div class="progress-bar" style="width: {{ progress_percent }}"></div>
+        </div>
+    </div>
+</div>

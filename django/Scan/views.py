@@ -5,7 +5,6 @@ import pathlib
 from datetime import datetime
 import arrow
 import json
-import shutil
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, FileResponse, Http404
 from django.urls import reverse
@@ -64,11 +63,70 @@ class ScannerHomeView(ScannerRequiredView):
             timestamp = datetime.timestamp(time_uploaded)
             scanner.upload_bundle(bundle_doc, slug, user, timestamp, pdf_hash)
             return HttpResponseRedirect(
-                reverse("scan_manage_bundle", args=(timestamp,))
+                reverse("scan_image_progress", args=(timestamp,))
             )
         else:
             context.update({"form": form})
             return render(request, "Scan/home.html", context)
+
+
+class BundleSplittingProgressView(ScannerRequiredView):
+    """
+    Display a spinner and progress bar while image rendering happens in the background.
+    """
+
+    def get(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        context = self.build_context()
+        context.update({"timestamp": timestamp})
+
+        # if the splitting is already complete, redirect to the manage view
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, request.user)
+        n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
+        n_total = scanner.get_n_page_rendering_tasks(bundle)
+        if n_completed == n_total:
+            return HttpResponseRedirect(
+                reverse("scan_manage_bundle", args=(timestamp,))
+            )
+
+        return render(request, "Scan/to_image_progress.html", context)
+
+
+class BundleSplittingUpdateView(ScannerRequiredView):
+    """
+    Return an updated progress card to be displayed on the bundle splitting progress view.
+    """
+
+    def get(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        context = self.build_context()
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, request.user)
+        n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
+        n_total = scanner.get_n_page_rendering_tasks(bundle)
+
+        if n_completed == n_total:
+            return HttpResponseClientRefresh()
+
+        context.update(
+            {
+                "n_completed": n_completed,
+                "n_total": n_total,
+                "progress_percent": f"{int(n_completed / n_total * 100)}%",
+                "timestamp": timestamp,
+            }
+        )
+
+        return render(request, "Scan/fragments/to_image_card.html", context)
 
 
 class ManageBundleView(ScannerRequiredView):

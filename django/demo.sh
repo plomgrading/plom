@@ -8,8 +8,7 @@
 set -e
 
 rm -f db.sqlite3
-rm -rf huey
-mkdir huey
+rm -f huey/huey_db.*
 
 rm -rf sourceVersions
 rm -rf papersToPrint

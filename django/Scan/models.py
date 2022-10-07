@@ -12,7 +12,7 @@ class StagingBundle(models.Model):
     A user-uploaded bundle that isn't validated.
     """
 
-    slug = models.TextField(default="", unique=True)
+    slug = models.TextField(default="")
     file_path = models.TextField(default="")
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     timestamp = models.FloatField(default=0)
@@ -36,4 +36,4 @@ class PageToImage(HueyTask):
     Convert a PDF page into an image in the background.
     """
 
-    pass
+    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)

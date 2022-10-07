@@ -64,9 +64,9 @@ class ScanService:
         n_pages = pdf_doc.page_count
         for i in range(n_pages):
             save_path = base_dir / f"page{i}.png"
-            page = pdf_doc[i]
             page_task = self._get_page_image(bundle, i, save_path)
             page_task_db = PageToImage(
+                bundle=bundle,
                 huey_id=page_task.id,
                 status="queued",
                 created=datetime.now(),
@@ -152,9 +152,25 @@ class ScanService:
         return list(bundles)
 
     @transaction.atomic
+    def get_n_page_rendering_tasks(self, bundle):
+        """
+        Return the total number of PageToImage tasks for a bundle
+        """
+        tasks = PageToImage.objects.filter(bundle=bundle)
+        return len(tasks)
+
+    @transaction.atomic
+    def get_n_completed_page_rendering_tasks(self, bundle):
+        """
+        Return the number of completed PageToImage tasks for a bundle
+        """
+        completed = PageToImage.objects.filter(bundle=bundle, status="complete")
+        return len(completed)
+
+    @transaction.atomic
     def read_qr_codes(self, bundle):
         """
-        Read QR codes of scanned pages in a bundle, save results on disk.
+        Read QR codes of scanned pages in a bundle, save results to disk.
         """
         images = StagingImage.objects.filter(bundle=bundle).order_by("bundle_order")
         qr_codes = []
