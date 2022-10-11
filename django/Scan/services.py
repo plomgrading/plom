@@ -154,7 +154,7 @@ class ScanService:
     @transaction.atomic
     def user_has_running_image_tasks(self, user):
         """
-        Return True if user has a bundle with assoicated PageToImage tasks
+        Return True if user has a bundle with associated PageToImage tasks
         that aren't all completed
         """
         running_bundles = StagingBundle.objects.filter(user=user, has_page_images=False)
