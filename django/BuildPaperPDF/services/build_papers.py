@@ -50,6 +50,12 @@ class BuildPapersService:
         complete_tasks = self.get_n_complete_tasks()
         return total_tasks > 0 and total_tasks == complete_tasks
 
+    @transaction.atomic
+    def are_there_errors(self):
+        """Return True if there are any PDFTasks with an 'error' status"""
+        error_tasks = PDFTask.objects.filter(status="error")
+        return len(error_tasks) > 0
+
     def create_task(self, index: int, huey_id: id, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database"""
         if student_id:
