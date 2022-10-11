@@ -3,7 +3,8 @@
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
+
+from Base.models import HueyTask
 
 
 class StagingBundle(models.Model):
@@ -11,11 +12,12 @@ class StagingBundle(models.Model):
     A user-uploaded bundle that isn't validated.
     """
 
-    slug = models.TextField(default="", unique=True)
+    slug = models.TextField(default="")
     file_path = models.TextField(default="")
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    time_uploaded = models.DateTimeField(default=timezone.now, blank=True)
+    timestamp = models.FloatField(default=0)
     pdf_hash = models.CharField(null=False, max_length=64)
+    has_page_images = models.BooleanField(default=False)
 
 
 class StagingImage(models.Model):
@@ -28,3 +30,11 @@ class StagingImage(models.Model):
     file_name = models.TextField(default="")
     file_path = models.TextField(default="")
     image_hash = models.CharField(max_length=64)
+
+
+class PageToImage(HueyTask):
+    """
+    Convert a PDF page into an image in the background.
+    """
+
+    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)

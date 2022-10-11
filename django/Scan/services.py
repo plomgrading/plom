@@ -3,11 +3,15 @@ import hashlib
 import fitz
 from datetime import datetime
 from django.db import transaction
-from django.conf import settings
+from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
 
-from Scan.models import StagingBundle, StagingImage
+from Scan.models import (
+    StagingBundle,
+    StagingImage,
+    PageToImage,
+)
 
 
 class ScanService:
@@ -16,19 +20,18 @@ class ScanService:
     """
 
     @transaction.atomic
-    def upload_bundle(self, pdf_doc, slug, user, time_uploaded, pdf_hash):
+    def upload_bundle(self, pdf_doc, slug, user, timestamp, pdf_hash):
         """
         Upload a bundle PDF and store it in the filesystem + database.
         Also, split PDF into page images + store in filesystem and database.
         """
-        timestamp = datetime.timestamp(time_uploaded)
-        file_name = f"{slug}_{timestamp}.pdf"
+        file_name = f"{timestamp}.pdf"
 
         user_dir = pathlib.Path("media") / user.username
         user_dir.mkdir(exist_ok=True)
         bundles_dir = user_dir / "bundles"
         bundles_dir.mkdir(exist_ok=True)
-        bundle_dir = bundles_dir / f"{slug}_{timestamp}"
+        bundle_dir = bundles_dir / f"{timestamp}"
         bundle_dir.mkdir(exist_ok=True)
         with open(bundle_dir / file_name, "w") as f:
             pdf_doc.save(f)
@@ -37,7 +40,7 @@ class ScanService:
             slug=slug,
             file_path=bundle_dir / file_name,
             user=user,
-            time_uploaded=time_uploaded,
+            timestamp=timestamp,
             pdf_hash=pdf_hash,
         )
         bundle_db.save()
@@ -49,65 +52,82 @@ class ScanService:
         self.split_and_save_bundle_images(pdf_doc, bundle_db, image_dir)
 
     @transaction.atomic
-    def split_and_save_bundle_images(self, pdf_doc, bundle, save_path):
+    def split_and_save_bundle_images(self, pdf_doc, bundle, base_dir):
         """
         Read a PDF document and save page images to filesystem/database
 
         Args:
             pdf_doc: fitz.document object of a bundle
             bundle: StagingBundle object
-            save_path: pathlib.Path object of path to save image files
+            base_dir: pathlib.Path object of path to save image files
         """
         n_pages = pdf_doc.page_count
         for i in range(n_pages):
-            filename = f"page{i}.png"
-            transform = fitz.Matrix(4, 4)  # scale for high resolution
-            pixmap = pdf_doc[i].get_pixmap(matrix=transform)
-            pixmap.save(save_path / filename)
-
-            with open(save_path / filename, "rb") as f:
-                image_hash = hashlib.sha256(f.read()).hexdigest()
-
-            image_db = StagingImage(
+            save_path = base_dir / f"page{i}.png"
+            page_task = self._get_page_image(bundle, i, save_path)
+            page_task_db = PageToImage(
                 bundle=bundle,
-                bundle_order=i,
-                file_name=filename,
-                file_path=str(save_path / filename),
-                image_hash=image_hash,
+                huey_id=page_task.id,
+                status="queued",
+                created=datetime.now(),
             )
-            image_db.save()
+            page_task_db.save()
+
+    @db_task(queue="tasks")
+    def _get_page_image(bundle, index, save_path):
+        """
+        Render a page image and save to disk in the background
+
+        Args:
+            bundle: bundle DB object
+            index: bundle order of page
+            pdf_page: fitz.Page object of a bundle page
+            save_path: str or pathlib.Path object of image disk location
+        """
+        pdf_doc = fitz.Document(bundle.file_path)
+        transform = fitz.Matrix(4, 4)
+        pixmap = pdf_doc[index].get_pixmap(matrix=transform)
+        pixmap.save(save_path)
+
+        image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
+        image_db = StagingImage(
+            bundle=bundle,
+            bundle_order=index,
+            file_name=f"page{index}.png",
+            file_path=str(save_path),
+            image_hash=image_hash,
+        )
+        image_db.save()
 
     @transaction.atomic
-    def remove_bundle(self, slug, timestamp, user):
+    def remove_bundle(self, timestamp, user):
         """
         Remove a bundle PDF from the filesystem + database
         """
-        bundle = self.get_bundle(slug, timestamp, user)
+        bundle = self.get_bundle(timestamp, user)
         file_path = pathlib.Path(bundle.file_path)
         file_path.unlink()
         bundle.delete()
 
     @transaction.atomic
-    def get_bundle(self, slug, timestamp, user):
+    def get_bundle(self, timestamp, user):
         """
         Get a bundle from the database. To uniquely identify a bundle, we need
-        its slug, timestamp, and user
+        its timestamp and user
         """
-        time_uploaded = datetime.fromtimestamp(timestamp)
         bundle = StagingBundle.objects.get(
-            slug=slug,
             user=user,
-            time_uploaded=time_uploaded,
+            timestamp=timestamp,
         )
         return bundle
 
     @transaction.atomic
-    def get_image(self, slug, timestamp, user, index):
+    def get_image(self, timestamp, user, index):
         """
         Get an image from the database. To uniquely identify an image, we need a bundle
-        (and a slug, timestamp, and user) and a page index
+        (and a timestamp, and user) and a page index
         """
-        bundle = self.get_bundle(slug, timestamp, user)
+        bundle = self.get_bundle(timestamp, user)
         image = StagingImage.objects.get(
             bundle=bundle,
             bundle_order=index,
@@ -128,13 +148,57 @@ class ScanService:
         """
         Return all of the staging bundles that a user uploaded
         """
-        bundles = StagingBundle.objects.filter(user=user)
+        bundles = StagingBundle.objects.filter(user=user, has_page_images=True)
         return list(bundles)
+
+    @transaction.atomic
+    def user_has_running_image_tasks(self, user):
+        """
+        Return True if user has a bundle with associated PageToImage tasks
+        that aren't all completed
+        """
+        running_bundles = StagingBundle.objects.filter(user=user, has_page_images=False)
+        return len(running_bundles) != 0
+
+    @transaction.atomic
+    def get_bundle_being_split(self, user):
+        """
+        Return the bundle that is currently being split into page images.
+        If no bundles are being split in the background for a user, raise an ObjectNotFound
+        error.
+        """
+        running_bundle = StagingBundle.objects.get(user=user, has_page_images=False)
+        return running_bundle
+
+    @transaction.atomic
+    def page_splitting_cleanup(self, bundle):
+        """
+        After all of the page images have been successfully rendered, mark
+        bundle as 'has_page_images'
+        """
+        bundle.has_page_images = True
+        bundle.save()
+
+    @transaction.atomic
+    def get_n_page_rendering_tasks(self, bundle):
+        """
+        Return the total number of PageToImage tasks for a bundle
+        """
+        tasks = PageToImage.objects.filter(bundle=bundle)
+        return len(tasks)
+
+    @transaction.atomic
+    def get_n_completed_page_rendering_tasks(self, bundle):
+        """
+        Return the number of completed PageToImage tasks for a bundle
+        """
+        completed = PageToImage.objects.filter(bundle=bundle, status="complete")
+        return len(completed)
 
     @transaction.atomic
     def read_qr_codes(self, bundle):
         """
-        Read QR codes of scanned pages in a bundle, save results on disk.
+        Read QR codes of scanned pages in a bundle, save results to disk.
         """
         images = StagingImage.objects.filter(bundle=bundle).order_by("bundle_order")
         qr_codes = []
@@ -149,6 +213,6 @@ class ScanService:
         Validate qr codes in bundle images (saved to disk) against the spec.
         """
         base_path = pathlib.Path(bundle.file_path).parent
-        print('SPEC PUBLIC CODE:', spec["publicCode"])
+        print("SPEC PUBLIC CODE:", spec["publicCode"])
         qrs = checkQRsValid(base_path, spec)
         return qrs

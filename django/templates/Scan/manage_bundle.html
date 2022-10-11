@@ -1,13 +1,12 @@
 {% extends "base/base.html" %}
 {% block title %}Web Plom - Scan{% endblock %}
-{% block page_heading %}Scan bundles{% endblock %}
+{% block page_heading %}Manage bundle &mdash; {{ slug }}.pdf{% endblock %}
 
 {% block main_content %}
 <style>
     .pdfs { grid-area: left;}
     .right_navbar { 
         grid-area: right;
-        margin-left: 80px;
     }
     .grid-container {
         display: grid;
@@ -23,26 +22,51 @@
         padding: 15px 0px;
     }
 </style>
-<div class="grid-container">
-    <div class="d-grid gap-2 pdfs">
-        {% for idx in images %}
-        <div class="card w-100">
-            <img 
-                src="{% url 'scan_get_image' slug timestamp idx %}"
-                class="card-img"
-            >
+<div class="container">
+    <div class="row">
+        <div class="col-sm-10">
+            <div class="d-flex justify-content-center">
+                <img 
+                    src="{% url 'scan_get_image' timestamp index %}"
+                    class="w-75"
+                >
+            </div>
         </div>
-        {% endfor %}
-    </div>
-    <div class="right_navbar">
-        <div class="sticky" height="200px" width="100%">
-            <form method="post" action="{% url 'scan_read_qr' slug timestamp %}">
-                {% csrf_token %}
-                <input type="submit" value="Read QR" class="btn btn-primary">
-            </form>
-            <br>
-            <br>
-            <a class="btn" href="{% url 'scan_home' %}" style="background-color: grey; color: white;">Return to upload</a>
+        <div class="col right_navbar">
+            <div class="sticky vstack gap-3" height="200px" width="100%">
+                <p>Page {{ one_index }} of {{total_pages }}</p>
+                <form method="post" action="{% url 'scan_read_qr' timestamp %}">
+                    {% csrf_token %}
+                    <input type="submit" value="Read QR" class="btn btn-primary">
+                </form>
+                <a class="btn" href="{% url 'scan_home' %}" style="background-color: grey; color: white;">Return to upload</a>
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if prev_idx >= 0 %}
+                        <li class="page-item">
+                            <a 
+                                class="page-link" 
+                                href="{% url 'scan_manage_bundle' timestamp prev_idx %}" 
+                                id="scan_page_prev"
+                            >
+                                Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if next_idx < total_pages %}
+                        <li class="page-item">
+                            <a 
+                                class="page-link" 
+                                href="{% url 'scan_manage_bundle' timestamp next_idx %}" 
+                                id="scan_page_next"
+                            >
+                                Next
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
 </div>

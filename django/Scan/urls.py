@@ -5,6 +5,8 @@ from django.urls import path
 
 from Scan.views import (
     ScannerHomeView,
+    BundleSplittingProgressView,
+    BundleSplittingUpdateView,
     ManageBundleView,
     GetBundleView,
     GetBundleImageView,
@@ -16,25 +18,37 @@ from Scan.views import (
 urlpatterns = [
     path("", ScannerHomeView.as_view(), name="scan_home"),
     path(
-        "<str:slug>/<timestamp>/", ManageBundleView.as_view(), name="scan_manage_bundle"
+        "<timestamp>/<int:index>/",
+        ManageBundleView.as_view(),
+        name="scan_manage_bundle",
     ),
     path(
-        "bundle/<str:slug>/<timestamp>/",
+        "split/<timestamp>/",
+        BundleSplittingProgressView.as_view(),
+        name="scan_image_progress",
+    ),
+    path(
+        "split/<timestamp>/update/",
+        BundleSplittingUpdateView.as_view(),
+        name="scan_image_update",
+    ),
+    path(
+        "bundle/<timestamp>/",
         GetBundleView.as_view(),
         name="scan_get_bundle",
     ),
     path(
-        "bundle/<str:slug>/<timestamp>/<int:index>/",
+        "bundle/<timestamp>/<int:index>/",
         GetBundleImageView.as_view(),
         name="scan_get_image",
     ),
     path(
-        "delete/<str:slug>/<timestamp>/",
+        "delete/<timestamp>/",
         RemoveBundleView.as_view(),
         name="scan_remove_bundle",
     ),
     path(
-        "read/<str:slug>/<timestamp>",
+        "read/<timestamp>",
         ReadQRcodesView.as_view(),
         name="scan_read_qr",
     ),
