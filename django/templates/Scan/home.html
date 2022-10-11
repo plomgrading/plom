@@ -5,6 +5,11 @@
 {% block page_heading %}Scan bundles{% endblock %}
 
 {% block main_content %}
+{% if bundle_splitting %}
+<div class="d-flex justify-content-center">
+    <div hx-get="{% url 'scan_image_update' timestamp %}" hx-trigger="load"></div>
+</div>
+{% else %}
 <div class="d-grid gap-2">
     <div class="card w-50">
         <details class="card-body">
@@ -71,4 +76,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

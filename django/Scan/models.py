@@ -17,6 +17,7 @@ class StagingBundle(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     timestamp = models.FloatField(default=0)
     pdf_hash = models.CharField(null=False, max_length=64)
+    has_page_images = models.BooleanField(default=False)
 
 
 class StagingImage(models.Model):

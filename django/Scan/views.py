@@ -24,12 +24,22 @@ class ScannerHomeView(ScannerRequiredView):
 
     def build_context(self, user):
         context = super().build_context()
-        context.update(
-            {
-                "form": BundleUploadForm(),
-            }
-        )
         scanner = ScanService()
+        if not scanner.user_has_running_image_tasks(user):
+            context.update(
+                {
+                    "form": BundleUploadForm(),
+                    "bundle_splitting": False,
+                }
+            )
+        else:
+            splitting_bundle = scanner.get_bundle_being_split(user)
+            context.update(
+                {
+                    "bundle_splitting": True,
+                    "timestamp": splitting_bundle.timestamp,
+                }
+            )
         user_bundles = scanner.get_user_bundles(user)
         bundles = []
         for bundle in user_bundles:
@@ -46,6 +56,16 @@ class ScannerHomeView(ScannerRequiredView):
 
     def get(self, request):
         context = self.build_context(request.user)
+
+        # if a pdf-to-image task is fully complete, perform some cleanup
+        if context["bundle_splitting"]:
+            scanner = ScanService()
+            bundle = scanner.get_bundle(context["timestamp"], request.user)
+            n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
+            n_total = scanner.get_n_page_rendering_tasks(bundle)
+            if n_completed == n_total:
+                scanner.page_splitting_cleanup(bundle)
+
         return render(request, "Scan/home.html", context)
 
     def post(self, request):
@@ -62,9 +82,7 @@ class ScannerHomeView(ScannerRequiredView):
             scanner = ScanService()
             timestamp = datetime.timestamp(time_uploaded)
             scanner.upload_bundle(bundle_doc, slug, user, timestamp, pdf_hash)
-            return HttpResponseRedirect(
-                reverse("scan_image_progress", args=(timestamp,))
-            )
+            return HttpResponseRedirect(reverse("scan_home"))
         else:
             context.update({"form": form})
             return render(request, "Scan/home.html", context)
@@ -93,6 +111,7 @@ class BundleSplittingProgressView(ScannerRequiredView):
         n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
         n_total = scanner.get_n_page_rendering_tasks(bundle)
         if n_completed == n_total:
+            scanner.page_splitting_cleanup(bundle)
             return HttpResponseRedirect(
                 reverse("scan_manage_bundle", args=(timestamp, 0))
             )

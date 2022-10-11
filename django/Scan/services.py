@@ -148,8 +148,36 @@ class ScanService:
         """
         Return all of the staging bundles that a user uploaded
         """
-        bundles = StagingBundle.objects.filter(user=user)
+        bundles = StagingBundle.objects.filter(user=user, has_page_images=True)
         return list(bundles)
+
+    @transaction.atomic
+    def user_has_running_image_tasks(self, user):
+        """
+        Return True if user has a bundle with assoicated PageToImage tasks
+        that aren't all completed
+        """
+        running_bundles = StagingBundle.objects.filter(user=user, has_page_images=False)
+        return len(running_bundles) != 0
+
+    @transaction.atomic
+    def get_bundle_being_split(self, user):
+        """
+        Return the bundle that is currently being split into page images.
+        If no bundles are being split in the background for a user, raise an ObjectNotFound
+        error.
+        """
+        running_bundle = StagingBundle.objects.get(user=user, has_page_images=False)
+        return running_bundle
+
+    @transaction.atomic
+    def page_splitting_cleanup(self, bundle):
+        """
+        After all of the page images have been successfully rendered, mark
+        bundle as 'has_page_images'
+        """
+        bundle.has_page_images = True
+        bundle.save()
 
     @transaction.atomic
     def get_n_page_rendering_tasks(self, bundle):

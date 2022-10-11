@@ -18,9 +18,9 @@ from Scan.views import (
 urlpatterns = [
     path("", ScannerHomeView.as_view(), name="scan_home"),
     path(
-        "<timestamp>/<int:index>/", 
-        ManageBundleView.as_view(), 
-        name="scan_manage_bundle"
+        "<timestamp>/<int:index>/",
+        ManageBundleView.as_view(),
+        name="scan_manage_bundle",
     ),
     path(
         "split/<timestamp>/",
