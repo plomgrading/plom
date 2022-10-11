@@ -199,6 +199,15 @@ class ScanService:
     def read_qr_codes(self, bundle):
         """
         Read QR codes of scanned pages in a bundle, save results to disk.
+        QR Code: 
+        -         Test ID:  00001
+        -        Page Num:  00#
+        -     Version Num:  00#
+        -              NW:  2
+        -              NE:  1
+        -              SW:  3
+        -              SE:  4
+        - Last five digit:  93849   
         """
         images = StagingImage.objects.filter(bundle=bundle).order_by("bundle_order")
         qr_codes = []
@@ -207,6 +216,10 @@ class ScanService:
             code_dict = QRextract(file_path, write_to_file=False)
             qr_codes.append(code_dict)
         return qr_codes
+
+    def parse_qr_code(self, list_qr_codes):
+        for i in list_qr_codes:
+            return i
 
     def validate_qr_codes(self, bundle, spec):
         """
