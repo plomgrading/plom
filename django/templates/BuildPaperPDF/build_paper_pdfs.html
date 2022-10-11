@@ -10,7 +10,9 @@
     {% block page_heading %}Build Paper PDFs{% endblock %}
     {% block main_content %}
         <div class="d-grid gap-2" id="top">
-            <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
+            <div>
+                <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+            </div>
             {% if pdfs_staged %}
             <div>
                 <a class="btn btn-primary" hx-post="{% url 'start_all_PDFs' %}" hx-target="#pdf_table">Start All</a>
