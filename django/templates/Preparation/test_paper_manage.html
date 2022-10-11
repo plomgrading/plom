@@ -6,7 +6,9 @@
 
 {% block main_content %}
 <div class="d-grid gap-2">
-    <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to test creator</a>
+    <div>
+        <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+    </div>
     <div class="card w-50">
         {% if is_populated %}
         <div class="card-body">

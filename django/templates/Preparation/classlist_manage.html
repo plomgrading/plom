@@ -2,7 +2,9 @@
 {% block page_heading %}Manage classlist{% endblock %}
 {% block main_content %}
     <div class="d-grid gap-2">
-        <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
+        <div>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+        </div>
         {% if prenaming %}<div class="alert alert-warning">Prenaming is enabled, so a classlist is required</div>{% endif %}
         {% if student_list_present %}
             <div class="alert alert-primary">
@@ -16,7 +18,7 @@
                     delete whole classlist
                 </button>
             </div>
-            <div class="border p-2" style="overflow: auto; max-height=50%">
+            <div class="border p-2" style="overflow: auto; max-height: 50%">
                 <table class="table table-striped">
                     <thead>
                         <th>Student ID</th>
