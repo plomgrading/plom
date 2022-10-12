@@ -1,6 +1,15 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+
 from django.urls import path
 from .views import (
     PreparationLandingView,
+    LandingResetSpec,
+    LandingResetSources,
+    LandingPrenameToggle,
+    LandingResetClasslist,
+    LandingResetQVmap,
     TestSourceManageView,
     PrenamingView,
     ClasslistView,
@@ -18,6 +27,15 @@ from .views import (
 
 urlpatterns = [
     path("", PreparationLandingView.as_view(), name="prep_landing"),
+    path("reset/spec/", LandingResetSpec.as_view(), name="prep_reset_spec"),
+    path("reset/sources/", LandingResetSources.as_view(), name="prep_reset_sources"),
+    path(
+        "reset/prenaming/", LandingPrenameToggle.as_view(), name="prep_prename_toggle"
+    ),
+    path(
+        "reset/classlist/", LandingResetClasslist.as_view(), name="prep_reset_classlist"
+    ),
+    path("reset/qvmap/", LandingResetQVmap.as_view(), name="prep_reset_qvmap"),
     path("test_source/", TestSourceManageView.as_view(), name="prep_sources"),
     path(
         "test_source/<int:version>",

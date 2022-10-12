@@ -1,4 +1,15 @@
-from .home import PreparationLandingView
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+
+from .home import (
+    PreparationLandingView,
+    LandingResetSpec,
+    LandingResetSources,
+    LandingPrenameToggle,
+    LandingResetClasslist,
+    LandingResetQVmap,
+)
 from .test_source_manage import TestSourceManageView
 from .prenaming import PrenamingView
 from .classlist_manage import ClasslistView, ClasslistDownloadView, ClasslistDeleteView
