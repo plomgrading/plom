@@ -4,33 +4,29 @@
 <ul class="list-group ms-3">
   <li class="list-group-item list-group-item-action">
     <div class="d-flex align-items-center gap-1">
-      {% if valid_spec %}
       <div class="flex-fill">
         <p class="fs-4 mb-0">
           1. Test specification
+          {% if valid_spec %}
           <i class="bi bi-check-circle text-success"></i>
+          {% endif %}
         </p>
-        <p class="fs-7">&emsp;&ensp; <b>{{ spec_longname }}</b></p>    
-      </div>
-      <a class="btn btn-success float-end" href="{% url 'spec_summary' %}">View</a>
-      <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_spec' %}" hx-confirm="Are you sure?">Reset</a>
-      {% if uploaded_test_versions %}
-        <a class="btn btn-primary float-end" href="{% url 'creator_launch' %}">
-          <!-- Some sort of modal here -->
-          Modify
-          <i class="bi bi-chevron-right"></i>
-        </a>
-      {% else %}
-        <a class="btn btn-primary float-end" href="{% url 'creator_launch' %}">
-          Modify
-          <i class="bi bi-chevron-right"></i>
-        </a>
-      {% endif %}
-      {% else %}
-      <div class="flex-fill">
-        <p class="fs-4 mb-0">1. Test specification</p>
         <p class="fs-7">&emsp;&ensp; Create a specification for your assessment.</p>    
       </div>
+      {% if valid_spec and not papers_staged %}
+      <a class="btn btn-success float-end" href="{% url 'spec_summary' %}">View</a>
+      <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_spec' %}" hx-confirm="Are you sure?">Reset</a>
+      <a class="btn btn-primary float-end" href="{% url 'creator_launch' %}">
+        Modify
+        <i class="bi bi-chevron-right"></i>
+      </a>
+      {% elif papers_staged %}
+      <a class="btn btn-success float-end" href="{% url 'spec_summary' %}">View</a>
+      <a disabled>
+        Test-papers in database
+        <i class="bi bi-chevron-down"></i>
+      </a>
+      {% else %}
       <a class="btn btn-primary float-end" href="{% url 'creator_launch' %}">
         Create
         <i class="bi bi-chevron-right"></i>
@@ -113,13 +109,20 @@
           {% endif %}
         </p>
       </div>
-      {% if student_list_present %}
-      <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_classlist' %}" hx-confirm="Are you sure?">Reset</a>
+      {% if not papers_staged %}
+        {% if student_list_present %}
+        <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_classlist' %}" hx-confirm="Are you sure?">Reset</a>
+        {% endif %}
+        <a class="btn btn-primary float-end" href="{% url 'prep_classlist' %}">
+          Manage
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      {% else %}
+        <a disabled>
+          Test-papers in database
+          <i class="bi bi-chevron-down"></i>
+        </a>
       {% endif %}
-      <a class="btn btn-primary float-end" href="{% url 'prep_classlist' %}">
-        Manage
-        <i class="bi bi-chevron-right"></i>
-      </a>
     </div>
   </li>
 
@@ -134,7 +137,12 @@
         </p>
         <p class="fs-7">&emsp;&ensp; Create map for test versions.</p>    
       </div>
-      {% if can_qvmap %}
+      {% if papers_staged %}
+      <a disabled>
+        Test-papers in database
+        <i class="bi bi-chevron-down"></i>
+      </a>
+      {% elif can_qvmap %}
         {% if pqv_mapping_present %}
         <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_qvmap' %}" hx-confirm="Are you sure?">Reset</a>
         {% endif %}
