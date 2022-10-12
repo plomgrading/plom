@@ -18,6 +18,7 @@ from .pqv_mapping import (
     PQVMappingDownloadView,
     PQVMappingDeleteView,
     PQVMappingUploadView,
+    PQVMappingReadOnlyView,
 )
 from .classic_server import ClassicServerInfoView, ClassicServerURLView
 from .mocker import MockExamView

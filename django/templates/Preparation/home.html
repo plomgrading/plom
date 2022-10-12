@@ -71,7 +71,7 @@
     <div class="d-flex align-items-center gap-1">
       {% if prename_enabled %}
       <div class="flex-fill">
-        <p class="fs-4 mb-0">3. Manage prenaming</p>
+        <p class="fs-4 mb-0">3. Manage prenaming (optional)</p>
         <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
       </div>
       <a disabled>Prenaming enabled</a>
@@ -80,13 +80,15 @@
       </a>
       {% else %}
       <div class="flex-fill">
-        <p class="fs-4 mb-0">3. Manage prenaming</p>
+        <p class="fs-4 mb-0">3. Manage prenaming (optional)</p>
         <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
       </div>
       <a disabled>Prenaming disabled</a>
-      <a class="btn btn-success" hx-post="{% url 'prep_prename_toggle' %}">
-        Enable
-      </a>
+      {% if not papers_staged %}
+        <a class="btn btn-success" hx-post="{% url 'prep_prename_toggle' %}">
+          Enable
+        </a>
+      {% endif %}
       {% endif %}
     </div>
   </li>
@@ -138,6 +140,7 @@
         <p class="fs-7">&emsp;&ensp; Create map for test versions.</p>    
       </div>
       {% if papers_staged %}
+      <a class="btn btn-success float-end" href="{% url 'prep_qvmapping_view' %}">View</a>
       <a disabled>
         Test-papers in database
         <i class="bi bi-chevron-down"></i>

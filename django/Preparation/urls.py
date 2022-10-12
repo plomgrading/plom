@@ -19,6 +19,7 @@ from .views import (
     PQVMappingDownloadView,
     PQVMappingDeleteView,
     PQVMappingUploadView,
+    PQVMappingReadOnlyView,
     ClassicServerInfoView,
     ClassicServerURLView,
     MockExamView,
@@ -65,6 +66,7 @@ urlpatterns = [
     path(
         "qvmapping/upload", PQVMappingUploadView.as_view(), name="prep_qvmapping_upload"
     ),
+    path("qvmapping/view/", PQVMappingReadOnlyView.as_view(), name="prep_qvmapping_view"),
     path("classic/", ClassicServerInfoView.as_view(), name="prep_server_info"),
     path("classic/server", ClassicServerURLView.as_view(), name="prep_server"),
     path("test_papers/", PaperCreationView.as_view(), name="prep_test_papers"),
