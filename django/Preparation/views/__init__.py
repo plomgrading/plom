@@ -12,7 +12,12 @@ from .home import (
 )
 from .test_source_manage import TestSourceManageView
 from .prenaming import PrenamingView
-from .classlist_manage import ClasslistView, ClasslistDownloadView, ClasslistDeleteView
+from .classlist_manage import (
+    ClasslistView,
+    ClasslistDownloadView,
+    ClasslistDeleteView,
+    ClasslistReadOnlyView,
+)
 from .pqv_mapping import (
     PQVMappingView,
     PQVMappingDownloadView,

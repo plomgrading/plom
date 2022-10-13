@@ -15,6 +15,7 @@ from .views import (
     ClasslistView,
     ClasslistDownloadView,
     ClasslistDeleteView,
+    ClasslistReadOnlyView,
     PQVMappingView,
     PQVMappingDownloadView,
     PQVMappingDeleteView,
@@ -53,6 +54,9 @@ urlpatterns = [
     ),
     path(
         "classlist/delete", ClasslistDeleteView.as_view(), name="prep_classlist_delete"
+    ),
+    path(
+        "classlist/view/", ClasslistReadOnlyView.as_view(), name="prep_classlist_view"
     ),
     path("qvmapping/", PQVMappingView.as_view(), name="prep_qvmapping"),
     path(
