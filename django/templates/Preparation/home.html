@@ -7,7 +7,7 @@
       <div class="flex-fill">
         <p class="fs-4 mb-0">
           1. Test specification
-          {% if valid_spec %}
+          {% if valid_spec and is_spec_the_same %}
           <i class="bi bi-check-circle text-success"></i>
           {% endif %}
         </p>
@@ -206,15 +206,20 @@
         </p>
         <p class="fs-7">&emsp;&ensp; Create test-papers and save to disk.</p>    
       </div>
-      {% if papers_staged %}
-      <a class="btn btn-primary float-end" href="{% url 'create_paperPDFs' %}">
-        Manage
-        <i class="bi bi-chevron-right"></i>
+      {% if not all_source_tests_uploaded %}
+      <a>
+        Needs test sources
+        <i class="bi bi-chevron-up"></i>
       </a>
-      {% else %}
+      {% elif not papers_staged %}
       <a>
         Needs database
         <i class="bi bi-chevron-up"></i>
+      </a>
+      {% else %}
+      <a class="btn btn-primary float-end" href="{% url 'create_paperPDFs' %}">
+        Manage
+        <i class="bi bi-chevron-right"></i>
       </a>
       {% endif %}
     </div>

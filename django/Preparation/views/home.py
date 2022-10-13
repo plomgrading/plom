@@ -2,14 +2,7 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 
-from turtle import update
-from braces.views import GroupRequiredMixin
-from django import forms
-from django.http import FileResponse
 from django.shortcuts import render
-from django.views import View
-from django.utils.text import slugify
-
 from django_htmx.http import HttpResponseClientRefresh
 
 from SpecCreator.services import StagingSpecificationService
@@ -27,7 +20,6 @@ from Preparation.services import (
     StagingStudentService,
     StagingClasslistCSVService,
     PQVMappingService,
-    ClassicPlomServerInformationService,
 )
 
 
@@ -85,6 +77,7 @@ class PreparationLandingView(ManagerRequiredView):
                     "spec_shortname": spec.get_short_name(),
                     "slugged_spec_shortname": spec.get_short_name_slug(),
                     "test_versions": spec.get_n_versions(),
+                    "is_spec_the_same": spec.compare_spec(valid_spec.get_the_spec()),
                 }
             )
         else:
