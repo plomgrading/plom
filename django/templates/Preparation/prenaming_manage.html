@@ -2,7 +2,9 @@
 {% block page_heading %}Manage prenaming{% endblock %}
 {% block main_content %}
   <div class="d-grid gap-2">
-    <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
+    <div>
+      <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+    </div>
     <div class="card">
       <div class="card-body">
 	{% if prenaming_enabled %}
@@ -27,7 +29,5 @@
 	{% endif %}
       </div>      
     </div>
-
-
   </div>
 {% endblock %}

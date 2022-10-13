@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+
 import pathlib
 
 from django.shortcuts import render
@@ -8,7 +12,7 @@ from django.http import HttpResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Preparation.services import PQVMappingService, StagingStudentService
-from SpecCreator.services import TestSpecService
+from SpecCreator.services import StagingSpecificationService
 from Papers.services import SpecificationService, PaperInfoService
 
 from .services import BuildPapersService, RenamePDFFile
@@ -146,6 +150,7 @@ class PDFTableView(ManagerRequiredView):
         context.update(
             {
                 "tasks": zip(task_objects, tasks_pdf_file_path),
+                "pdf_errors": bps.are_there_errors(),
                 "message": f"Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)",
                 "zip_disabled": zip_disabled,
                 "poll": poll,
@@ -186,7 +191,7 @@ class GetCompressedPDFs(ManagerRequiredView):
 
     def post(self, request):
         bps = BuildPapersService()
-        shortname = TestSpecService().get_short_name_slug()
+        shortname = StagingSpecificationService().get_short_name_slug()
         save_path = bps.get_pdf_zipfile(filename=f"{shortname}.zip")
         zip_file = save_path.open("rb")
         zf = SimpleUploadedFile(
