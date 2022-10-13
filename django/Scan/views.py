@@ -265,8 +265,30 @@ class ReadQRcodesView(ScannerRequiredView):
         bundle = scanner.get_bundle(timestamp, request.user)
         result = scanner.read_qr_codes(bundle)
 
-        test = scanner.parse_qr_code(result)
-        print(test)
+        bundle_paper_dict = {}
+        for i in range(len(result)):
+            for j in result[i]:
+                if result[i][j]:
+                    bundle_paper_dict[''.join(result[i][j])[:5]] = {
+                        "page_num": ''.join(result[i][j])[5:8], 
+                        "version_num": ''.join(result[i][j])[8:11]
+                    }
+                    
+
+            # result[i] gives me dictionary of all QR code in a single page
+
+            # bundle_paper_dict[''.join(result[i]["NW"])[:5]] = {
+            #     'paper_num': ''.join(result[i]['NW'])[5:8], }
+            # NW_id = ''.join(i['NW'])[:5]
+            # NE_id = ''.join(i['NE'])[:5]
+            # SW_id = ''.join(i['SW'])[:5]
+            # SE_id = ''.join(i['SE'])[:5]
+
+            # print(NW_id)
+            # print(NE_id)
+            # print(SW_id)
+            # print(SE_id)
+        print(bundle_paper_dict)
 
         # Save qr codes to disk
         # bundle_dir_path = pathlib.Path(bundle.file_path).parent
