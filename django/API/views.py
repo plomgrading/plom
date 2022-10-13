@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 from Papers.services import SpecificationService
+from Preparation.services import StagingStudentService
 from API.models import NumberToIncrement
 
 
@@ -34,6 +35,20 @@ class InfoSpec(APIView):
         the_spec.pop("publicCode", None)
 
         return Response(the_spec)
+
+
+class QuestionMaxMark(APIView):
+    """
+    Return the max mark for a given question.
+    """
+
+    def get(self, request):
+        data = request.query_params
+        question = int(data["q"])
+        version = int(data["v"])
+
+        spec = SpecificationService()
+        return Response(spec.get_question_mark(question))
 
 
 class NumberIncrement(APIView):
@@ -64,5 +79,44 @@ class ServerVersion(APIView):
     """
 
     def get(self, request):
-        version = "Plom server version 0.12.0.dev with API 53"
+        version = "Plom server version 0.12.0.dev with API 55"
         return Response(version)
+
+
+class GetClasslist(APIView):
+    """
+    Get the classlist.
+    """
+
+    def get(self, request):
+        sstu = StagingStudentService()
+        if sstu.are_there_students():
+            students = sstu.get_students()
+            
+            # TODO: new StudentService or ClasslistService that implements
+            # the loop below?
+            for s in students:
+                s["id"] = s.pop("student_id")
+                s["name"] = s.pop("student_name")
+
+            return Response(students)
+
+
+class GetIDPredictions(APIView):
+    """
+    Get predictions for test-paper identification. TODO: not implemented in Django
+    For now, just return all the pre-named papers
+    """
+
+    def get(self, request):
+        sstu = StagingStudentService()
+        if sstu.are_there_students():
+            predictions = {}
+            for s in sstu.get_students():
+                if s["paper_number"]:
+                    predictions[s["paper_number"]] = {
+                        "student_id": s["student_id"],
+                        "certainty": 100,
+                        "predictor": "preID",
+                    }
+            return Response(predictions)

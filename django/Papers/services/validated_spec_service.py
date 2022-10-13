@@ -99,3 +99,11 @@ class SpecificationService:
         """
         spec_obj = self.get_the_spec()
         return spec_obj["numberToProduce"]
+
+    @transaction.atomic
+    def get_question_mark(self, question_one_index):
+        """
+        Get the max mark of a given question
+        """
+        spec_obj = self.get_the_spec()
+        return spec_obj["question"][str(question_one_index)]["mark"]
