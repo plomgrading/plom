@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
 import pathlib
 from datetime import datetime
+from sys import prefix
 import arrow
 import json
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, FileResponse, Http404
+from django.http import HttpResponseRedirect, FileResponse, Http404, HttpResponse
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django_htmx.http import HttpResponseClientRefresh
@@ -264,20 +266,23 @@ class ReadQRcodesView(ScannerRequiredView):
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         result = scanner.read_qr_codes(bundle)
+        parsed_QR = scanner.parse_qr_code(result)
 
         # Save qr codes to disk
-        bundle_dir_path = pathlib.Path(bundle.file_path).parent
-        bundle_image_path = bundle_dir_path / "pageImages"
+        # bundle_dir_path = pathlib.Path(bundle.file_path).parent
+        # bundle_image_path = bundle_dir_path / "pageImages"
 
-        for i in range(len(result)):
-            with open(bundle_image_path / f"page{i}.png.qr", "w") as f:
-                json.dump(result[i], f)
+        # for i in range(len(result)):
+        #     with open(bundle_image_path / f"page{i}.png.qr", "w") as f:
+        #         json.dump(result[i], f)
 
         # validate QRs
-        spec = SpecificationService().get_the_spec()
-        qrs = scanner.validate_qr_codes(bundle, spec)
-        print(qrs)
+        # spec = SpecificationService().get_the_spec()
+        # qrs = scanner.validate_qr_codes(bundle, spec)
+        # print(qrs)
 
-        return HttpResponseRedirect(
-            reverse("scan_manage_bundle", args=(str(timestamp)))
-        )
+        # return HttpResponseRedirect(
+        #     reverse("scan_manage_bundle", args=(str(timestamp)))
+        # )
+
+        return HttpResponse(str(parsed_QR))
