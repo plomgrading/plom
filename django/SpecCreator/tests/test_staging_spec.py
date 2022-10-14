@@ -205,7 +205,9 @@ class StagingSpecificationTests(TestCase):
 
     def test_from_dict(self):
         """Test StagingSpecService.create_from_dict()"""
-        upload_path = settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml"
+        upload_path = (
+            settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml"
+        )
         toml_dict = toml.load(upload_path)
 
         spec = StagingSpecificationService()
