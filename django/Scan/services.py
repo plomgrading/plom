@@ -7,6 +7,7 @@ from django.db import transaction
 from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
+from collections import defaultdict
 
 from Scan.models import (
     StagingBundle,
@@ -219,20 +220,28 @@ class ScanService:
         return qr_codes
 
     def parse_qr_code(self, list_qr_codes):
-        all_parsed_qr = []
+        """
+        Parsing QR codes into list of dictionaries
+        """
+        groupings = defaultdict(list)
         for indx in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[indx]:
                 if list_qr_codes[indx][quadrant]:
+                    paper_id = ''.join(list_qr_codes[indx][quadrant])[0:5]
+                    page_num = ''.join(list_qr_codes[indx][quadrant])[5:8]
+                    version_num = ''.join(list_qr_codes[indx][quadrant])[8:11]
+
+                    grouping_key = '-'.join([paper_id, page_num, version_num])
                     qr_code_dict = {
-                        "paper_id": ''.join(list_qr_codes[indx][quadrant])[0:5],
-                        "page_num": ''.join(list_qr_codes[indx][quadrant])[5:8],
-                        "version_num": ''.join(list_qr_codes[indx][quadrant])[8:11],
+                        "paper_id": paper_id,
+                        "page_num": page_num,
+                        "version_num": version_num,
                         "quadrant": ''.join(list_qr_codes[indx][quadrant])[11],
                         "public_code": ''.join(list_qr_codes[indx][quadrant])[12:]
                     }
-                    all_parsed_qr.append(qr_code_dict)
-        return all_parsed_qr
+                    groupings[grouping_key].append(qr_code_dict)
 
+        return [qr_code_dict for qr_code_dict in groupings.values()]
 
     def validate_qr_codes(self, bundle, spec):
         """
