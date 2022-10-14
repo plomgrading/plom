@@ -1,3 +1,4 @@
+from operator import index
 import pathlib
 import hashlib
 import fitz
@@ -218,8 +219,20 @@ class ScanService:
         return qr_codes
 
     def parse_qr_code(self, list_qr_codes):
-        for i in list_qr_codes:
-            return i
+        all_parsed_qr = []
+        for indx in range(len(list_qr_codes)):
+            for quadrant in list_qr_codes[indx]:
+                if list_qr_codes[indx][quadrant]:
+                    qr_code_dict = {
+                        "paper_id": ''.join(list_qr_codes[indx][quadrant])[0:5],
+                        "page_num": ''.join(list_qr_codes[indx][quadrant])[5:8],
+                        "version_num": ''.join(list_qr_codes[indx][quadrant])[8:11],
+                        "quadrant": ''.join(list_qr_codes[indx][quadrant])[11],
+                        "public_code": ''.join(list_qr_codes[indx][quadrant])[12:]
+                    }
+                    all_parsed_qr.append(qr_code_dict)
+        return all_parsed_qr
+
 
     def validate_qr_codes(self, bundle, spec):
         """
