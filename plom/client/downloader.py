@@ -105,6 +105,23 @@ class Downloader(QObject):
 
         return str(resources.path(plom.client.icons, "manager_unknown.svg"))
 
+    def print_queue(self):
+        print("enumerating all jobs to check for in progress...")
+        for k, v in self._in_progress.items():
+            print((k, v))
+
+    def clear_queue(self):
+        """Cancel any enqueued (but not yet started) downloads
+
+        TODO: not implemented yet.
+        """
+        print("-=~" * 33)
+        print(self.threadpool.children())
+        self.print_queue()
+        # self.threadpool.cancel()
+        self.threadpool.clear()
+        print(self.threadpool.children())
+
     def stop(self, timeout=0):
         """Try to stop the downloader, after waiting for threads to clear.
 
@@ -117,9 +134,7 @@ class Downloader(QObject):
         """
         # TODO: more important is the queue length: can we release
         # items not yet started?
-        print("enumerating all jobs to check for in progress...")
-        for k, v in self._in_progress.items():
-            print((k, v))
+        self.print_queue()
         self.threadpool.waitForDone(-1)
 
     def download_in_background_thread(self, row, priority=False, _is_retry=False):
@@ -352,8 +367,8 @@ class DownloadWorker(QRunnable):
     def run(self):
         debug = True
         if debug:
-            fail = random.random() < 0.5
-            debug_wait2 = random.randint(1, 2)
+            fail = random.random() < 0.1
+            debug_wait2 = random.randint(5, 10)
             debug_wait1 = random.random() * debug_wait2
             debug_wait2 -= debug_wait1
             sleep(debug_wait1)
