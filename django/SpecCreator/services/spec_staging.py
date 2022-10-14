@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+
 import pathlib
 import copy
 import json
@@ -510,7 +513,9 @@ class StagingSpecificationService:
         self.set_n_versions(spec_dict["numberOfVersions"])
         self.set_total_marks(spec_dict["totalMarks"])
         self.set_n_questions(spec_dict["numberOfQuestions"])
-        self.set_n_to_produce(spec_dict["numberToProduce"])
+
+        if "numberToProduce" in spec_dict:
+            self.set_n_to_produce(spec_dict["numberToProduce"])
 
         self.set_pages(spec_dict["numberOfPages"])
         self.set_id_page(spec_dict["idPage"] - 1)
@@ -535,7 +540,12 @@ class StagingSpecificationService:
             else:
                 label = ""
             mark = question["mark"]
-            select = question["select"] == "shuffle"
+
+            if "select" in question:
+                select = question["select"] == "shuffle"
+            else:
+                select = "fix"
+
             pages = question["pages"]
             self.create_or_replace_question(one_index, label, mark, select, pages)
 
