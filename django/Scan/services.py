@@ -201,7 +201,7 @@ class ScanService:
     def read_qr_codes(self, bundle):
         """
         Read QR codes of scanned pages in a bundle, save results to disk.
-        QR Code: 
+        QR Code:
         -         Test ID:  00001
         -        Page Num:  00#
         -     Version Num:  00#
@@ -209,7 +209,7 @@ class ScanService:
         -              NE:  1
         -              SW:  3
         -              SE:  4
-        - Last five digit:  93849   
+        - Last five digit:  93849
         """
         images = StagingImage.objects.filter(bundle=bundle).order_by("bundle_order")
         qr_codes = []
@@ -227,17 +227,17 @@ class ScanService:
         for indx in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[indx]:
                 if list_qr_codes[indx][quadrant]:
-                    paper_id = ''.join(list_qr_codes[indx][quadrant])[0:5]
-                    page_num = ''.join(list_qr_codes[indx][quadrant])[5:8]
-                    version_num = ''.join(list_qr_codes[indx][quadrant])[8:11]
+                    paper_id = "".join(list_qr_codes[indx][quadrant])[0:5]
+                    page_num = "".join(list_qr_codes[indx][quadrant])[5:8]
+                    version_num = "".join(list_qr_codes[indx][quadrant])[8:11]
 
-                    grouping_key = '-'.join([paper_id, page_num, version_num])
+                    grouping_key = "-".join([paper_id, page_num, version_num])
                     qr_code_dict = {
                         "paper_id": paper_id,
                         "page_num": page_num,
                         "version_num": version_num,
-                        "quadrant": ''.join(list_qr_codes[indx][quadrant])[11],
-                        "public_code": ''.join(list_qr_codes[indx][quadrant])[12:]
+                        "quadrant": "".join(list_qr_codes[indx][quadrant])[11],
+                        "public_code": "".join(list_qr_codes[indx][quadrant])[12:],
                     }
                     groupings[grouping_key].append(qr_code_dict)
 
