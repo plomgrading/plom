@@ -288,12 +288,21 @@ django:
   image: $IM
   script:
     - pushd django
+    - python3 -m pip install coverage
     - python3 -m pip install -r requirements.txt
     - python3 manage.py makemigrations
     - python3 manage.py migrate
-    - python3 manage.py test
+    - coverage run --source='.' manage.py test
+    - coverage report --precision=2
+    - coverage xml -o django_coverage.xml
     - popd
-
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: django/django_coverage.xml
+        
 
 demoserver:
   stage: test
