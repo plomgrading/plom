@@ -1,4 +1,3 @@
-from turtle import update
 from braces.views import GroupRequiredMixin
 from django import forms
 from django.http import FileResponse
