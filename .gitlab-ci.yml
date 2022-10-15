@@ -302,6 +302,17 @@ django:
       coverage_report:
         coverage_format: cobertura
         path: django/django_coverage.xml
+
+
+webplom_demo:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - pushd django
+    - python3 -m pip install -r requirements.txt
+    - ./demo_test.sh
+    - popd
         
 
 demoserver:
