@@ -223,7 +223,8 @@ class ScanService:
             qr_codes.append(code_dict)
         return qr_codes
 
-    def parse_qr_code(self, list_qr_codes):
+    @db_task(queue="tasks")
+    def _parse_qr_code(self, list_qr_codes):
         """
         Parsing QR codes into list of dictionaries
         """
