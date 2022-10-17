@@ -55,7 +55,7 @@ class PreparationLandingTests(TestCase):
         self.assertEqual(context["uploaded_test_versions"], 0)
 
         self.assertFalse(context["prename_enabled"])
-        
+
         self.assertFalse(context["student_list_present"])
 
         self.assertFalse(context["pqv_mapping_present"])
@@ -65,10 +65,12 @@ class PreparationLandingTests(TestCase):
 
     def test_after_spec_made(self):
         """
-        Test the seatbelts after a specification is saved - it should reveal 
+        Test the seatbelts after a specification is saved - it should reveal
         source versions and QV map.
         """
-        demo_spec = toml.load(settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml")
+        demo_spec = toml.load(
+            settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml"
+        )
         baker.make(Specification, spec_dict=demo_spec)
 
         landing = PreparationLandingView()
