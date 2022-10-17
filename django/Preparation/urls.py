@@ -1,15 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+
 from django.urls import path
 from .views import (
     PreparationLandingView,
+    LandingResetSpec,
+    LandingResetSources,
+    LandingPrenameToggle,
+    LandingResetClasslist,
+    LandingResetQVmap,
     TestSourceManageView,
     PrenamingView,
     ClasslistView,
     ClasslistDownloadView,
     ClasslistDeleteView,
+    ClasslistReadOnlyView,
     PQVMappingView,
     PQVMappingDownloadView,
     PQVMappingDeleteView,
     PQVMappingUploadView,
+    PQVMappingReadOnlyView,
     ClassicServerInfoView,
     ClassicServerURLView,
     MockExamView,
@@ -18,6 +29,15 @@ from .views import (
 
 urlpatterns = [
     path("", PreparationLandingView.as_view(), name="prep_landing"),
+    path("reset/spec/", LandingResetSpec.as_view(), name="prep_reset_spec"),
+    path("reset/sources/", LandingResetSources.as_view(), name="prep_reset_sources"),
+    path(
+        "reset/prenaming/", LandingPrenameToggle.as_view(), name="prep_prename_toggle"
+    ),
+    path(
+        "reset/classlist/", LandingResetClasslist.as_view(), name="prep_reset_classlist"
+    ),
+    path("reset/qvmap/", LandingResetQVmap.as_view(), name="prep_reset_qvmap"),
     path("test_source/", TestSourceManageView.as_view(), name="prep_sources"),
     path(
         "test_source/<int:version>",
@@ -35,6 +55,9 @@ urlpatterns = [
     path(
         "classlist/delete", ClasslistDeleteView.as_view(), name="prep_classlist_delete"
     ),
+    path(
+        "classlist/view/", ClasslistReadOnlyView.as_view(), name="prep_classlist_view"
+    ),
     path("qvmapping/", PQVMappingView.as_view(), name="prep_qvmapping"),
     path(
         "qvmapping/download",
@@ -46,6 +69,9 @@ urlpatterns = [
     ),
     path(
         "qvmapping/upload", PQVMappingUploadView.as_view(), name="prep_qvmapping_upload"
+    ),
+    path(
+        "qvmapping/view/", PQVMappingReadOnlyView.as_view(), name="prep_qvmapping_view"
     ),
     path("classic/", ClassicServerInfoView.as_view(), name="prep_server_info"),
     path("classic/server", ClassicServerURLView.as_view(), name="prep_server"),

@@ -606,3 +606,27 @@ class StagingSpecificationService:
             if item:
                 return True
         return False
+
+    def compare_spec(self, spec):
+        """
+        Return True if the input specification is the same as the one saved to
+        the StagingSpecification table
+        """
+        staged_spec_dict = self.get_staging_spec_dict()
+        # if questions is a list-of-dicts, convert to dict
+        if type(staged_spec_dict["question"]) == list:
+            questions = staged_spec_dict.pop("question")
+            question_dict = {}
+            for i in range(len(questions)):
+                one_index = str(i + 1)
+                question_dict[one_index] = questions[i]
+            staged_spec_dict["question"] = question_dict
+
+        spec_copy = copy.deepcopy(spec)
+        spec_copy.pop("publicCode", None)
+        spec_copy.pop("privateSeed", None)
+
+        print(staged_spec_dict)
+        print(spec_copy)
+
+        return staged_spec_dict == spec_copy

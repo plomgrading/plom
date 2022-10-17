@@ -155,7 +155,11 @@ class TestSpecSubmitView(TestSpecPageView):
 
 
 class TestSpecSummaryView(TestSpecSubmitView):
-    """View the test spec summary and return to the creator page"""
+    """View the test spec summary from the preparation landing page."""
+
+    def dispatch(self, request):
+        """Don't redirect if the Papers database is populated."""
+        return ManagerRequiredView.dispatch(self, request)
 
     def get(self, request):
         spec = StagingSpecificationService()

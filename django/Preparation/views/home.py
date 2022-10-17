@@ -1,11 +1,10 @@
-from braces.views import GroupRequiredMixin
-from django import forms
-from django.http import FileResponse
-from django.shortcuts import render
-from django.views import View
-from django.utils.text import slugify
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
 
-from django_htmx.http import HttpResponseClientRedirect
+
+from django.shortcuts import render
+from django_htmx.http import HttpResponseClientRefresh
 
 from SpecCreator.services import StagingSpecificationService
 from Papers.services import (
@@ -20,8 +19,8 @@ from Preparation.services import (
     TestSourceService,
     PrenameSettingService,
     StagingStudentService,
+    StagingClasslistCSVService,
     PQVMappingService,
-    ClassicPlomServerInformationService,
 )
 
 
@@ -79,6 +78,7 @@ class PreparationLandingView(ManagerRequiredView):
                     "spec_shortname": spec.get_short_name(),
                     "slugged_spec_shortname": spec.get_short_name_slug(),
                     "test_versions": spec.get_n_versions(),
+                    "is_spec_the_same": spec.compare_spec(valid_spec.get_the_spec()),
                 }
             )
         else:
@@ -91,8 +91,63 @@ class PreparationLandingView(ManagerRequiredView):
                 }
             )
 
+        if pss.get_prenaming_setting() and not sss.are_there_students():
+            context.update({"can_build_papers": False})
+        elif not pqvs.is_there_a_pqv_map():
+            context.update({"can_build_papers": False})
+        else:
+            context.update({"can_build_papers": True})
+
         return context
 
     def get(self, request):
         context = self.build_context()
         return render(request, "Preparation/home.html", context)
+
+
+class LandingResetSpec(ManagerRequiredView):
+    def delete(self, request):
+        spec_service = SpecificationService()
+        spec_service.remove_spec()
+
+        staging_spec = StagingSpecificationService()
+        staging_spec.reset_specification()
+
+        sources_service = TestSourceService()
+        sources_service.delete_all_test_sources()
+
+        qv_service = PQVMappingService()
+        qv_service.remove_pqv_map()
+
+        return HttpResponseClientRefresh()
+
+
+class LandingResetSources(ManagerRequiredView):
+    def delete(self, request):
+        sources_service = TestSourceService()
+        sources_service.delete_all_test_sources()
+        return HttpResponseClientRefresh()
+
+
+class LandingPrenameToggle(ManagerRequiredView):
+    def post(self, request):
+        prename_service = PrenameSettingService()
+        curr_state = prename_service.get_prenaming_setting()
+        prename_service.set_prenaming_setting(not curr_state)
+        return HttpResponseClientRefresh()
+
+
+class LandingResetClasslist(ManagerRequiredView):
+    def delete(self, request):
+        students = StagingStudentService()
+        students.remove_all_students()
+        scsv = StagingClasslistCSVService()
+        scsv.delete_classlist_csv()
+        return HttpResponseClientRefresh()
+
+
+class LandingResetQVmap(ManagerRequiredView):
+    def delete(self, request):
+        qv_service = PQVMappingService()
+        qv_service.remove_pqv_map()
+        return HttpResponseClientRefresh()

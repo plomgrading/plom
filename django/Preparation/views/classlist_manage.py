@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+
 from braces.views import GroupRequiredMixin
 from django import forms
 from django.http import FileResponse, HttpResponse
@@ -70,3 +74,19 @@ class ClasslistView(ManagerRequiredView):
         sss = StagingStudentService()
         sss.use_classlist_csv()
         return HttpResponseClientRedirect(".")
+
+
+class ClasslistReadOnlyView(ManagerRequiredView):
+    def get(self, request):
+        context = self.build_context()
+        sss = StagingStudentService()
+        pss = PrenameSettingService()
+
+        context.update(
+            {
+                "prenaming": pss.get_prenaming_setting(),
+                "student_list": sss.get_students(),
+            }
+        )
+
+        return render(request, "Preparation/classlist_view.html", context)
