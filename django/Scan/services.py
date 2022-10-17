@@ -223,30 +223,33 @@ class ScanService:
             qr_codes.append(code_dict)
         return qr_codes
 
-    @db_task(queue="tasks")
-    def _parse_qr_code(self, list_qr_codes):
+    def parse_qr_code(self, list_qr_codes):
         """
         Parsing QR codes into list of dictionaries
         """
         groupings = defaultdict(list)
-        for indx in range(len(list_qr_codes)):
-            for quadrant in list_qr_codes[indx]:
-                if list_qr_codes[indx][quadrant]:
-                    paper_id = "".join(list_qr_codes[indx][quadrant])[0:5]
-                    page_num = "".join(list_qr_codes[indx][quadrant])[5:8]
-                    version_num = "".join(list_qr_codes[indx][quadrant])[8:11]
+        for page in range(len(list_qr_codes)):
+            for quadrant in list_qr_codes[page]:
+                if list_qr_codes[page][quadrant]:
+                    paper_id = "".join(list_qr_codes[page][quadrant])[0:5]
+                    page_num = "".join(list_qr_codes[page][quadrant])[5:8]
+                    version_num = "".join(list_qr_codes[page][quadrant])[8:11]
 
                     grouping_key = "-".join([paper_id, page_num, version_num])
                     qr_code_dict = {
                         "paper_id": paper_id,
                         "page_num": page_num,
                         "version_num": version_num,
-                        "quadrant": "".join(list_qr_codes[indx][quadrant])[11],
-                        "public_code": "".join(list_qr_codes[indx][quadrant])[12:],
+                        "quadrant": "".join(list_qr_codes[page][quadrant])[11],
+                        "public_code": "".join(list_qr_codes[page][quadrant])[12:],
                     }
                     groupings[grouping_key].append(qr_code_dict)
 
         return [qr_code_dict for qr_code_dict in groupings.values()]
+
+    # @db_task(queue="tasks")
+    # def _huey_parse_qr_code(self):
+    #     pass
 
     def validate_qr_codes(self, bundle, spec):
         """
