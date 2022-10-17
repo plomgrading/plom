@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 
+
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRefresh
 
