@@ -47,7 +47,16 @@ class PlomDB:
 
     MySQL = None
 
-    def __init__(self, dbfile_name="plom.db", *, db_name, db_host, db_port, db_username, db_password):
+    def __init__(
+        self,
+        dbfile_name="plom.db",
+        *,
+        db_name,
+        db_host,
+        db_port,
+        db_username,
+        db_password,
+    ):
 
         db = None
         try:
@@ -63,7 +72,7 @@ class PlomDB:
             db = self.connect_sqlite(dbfile_name)
             log.info("Connected to SQLite.")
 
-        self._db = db # different db
+        self._db = db  # different db
         database_proxy.initialize(self._db)
 
         with self._db:
@@ -111,7 +120,7 @@ class PlomDB:
                 last_action="Created",
             )
             log.info("User 'HAL' created to do all our automated tasks.")
-    
+
     def connect_mysql(self, db_name, db_host, db_port, db_username, db_password):
         if not db_name:
             # log.error("MySQL database name not found! Check serverDetails.toml.")
@@ -126,9 +135,9 @@ class PlomDB:
 
         mysql_connection.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {db_name};")
         mysql_connection.close()
-        
+
         self.MySQL = mysql_connection
-        
+
         return pw.MySQLDatabase(
             db_name,
             host=db_host,
@@ -140,7 +149,7 @@ class PlomDB:
 
     def connect_sqlite(self, dbfile_name):
         db = pw.SqliteDatabase(None)
-            # can't handle pathlib?
+        # can't handle pathlib?
         db.init(str(dbfile_name))
 
         return db
