@@ -24,6 +24,7 @@ opencv-python-headless==4.4.0.40
 pandas==1.0.0
 peewee==3.13.3
 pymupdf==1.18.15
+PyMySQL==1.0.2
 scikit-learn==0.23.1
 stdiomask==0.0.6
 toml==0.10.0
