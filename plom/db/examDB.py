@@ -45,32 +45,25 @@ log = logging.getLogger("DB")
 class PlomDB:
     """The main Plom database."""
 
+    MySQL = None
+
     def __init__(self, dbfile_name="plom.db", *, db_name, db_host, db_port, db_username, db_password):
-        if db_name:
-            MySQL = pymysql.connect(
-                host=db_host,
-                port=db_port,
-                user=db_username,
-                password=db_password
-            )
 
-            MySQL.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {db_name};")
-            MySQL.close()
-            
-            db = pw.MySQLDatabase(
-                db_name,
-                host=db_host,
-                port=db_port,
-                user=db_username,
-                password=db_password,
-            )
-            # TODO?  db.init?  maybe stuff in other file?
-        else:
-            db = pw.SqliteDatabase(None)
-            # can't handle pathlib?
-            db.init(str(dbfile_name))
+        db = None
+        try:
+            db = self.connect_mysql(db_name, db_host, db_port, db_username, db_password)
+            # add db_name optional later on
+            log.info("Connected to MySQL database.")
+            # db = pw.SqliteDatabase(None)
+            # # can't handle pathlib?
+            # db.init(str(dbfile_name))
+        except (pymysql.err.OperationalError, ValueError):
+            log.exception("Unable to connect to MySQL server.")
+            log.info("Connecting to SQLite...")
+            db = self.connect_sqlite(dbfile_name)
+            log.info("Connected to SQLite.")
 
-        self._db = db
+        self._db = db # different db
         database_proxy.initialize(self._db)
 
         with self._db:
@@ -118,6 +111,39 @@ class PlomDB:
                 last_action="Created",
             )
             log.info("User 'HAL' created to do all our automated tasks.")
+    
+    def connect_mysql(self, db_name, db_host, db_port, db_username, db_password):
+        if not db_name:
+            # log.error("MySQL database name not found! Check serverDetails.toml.")
+            raise ValueError("MySQL database name not found! Check serverDetails.toml.")
+
+        mysql_connection = pymysql.connect(
+            host=db_host,
+            port=db_port,
+            user=db_username,
+            password=db_password,
+        )
+
+        mysql_connection.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {db_name};")
+        mysql_connection.close()
+        
+        self.MySQL = mysql_connection
+        
+        return pw.MySQLDatabase(
+            db_name,
+            host=db_host,
+            port=db_port,
+            user=db_username,
+            password=db_password,
+        )
+        # TODO?  db.init?  maybe stuff in other file?
+
+    def connect_sqlite(self, dbfile_name):
+        db = pw.SqliteDatabase(None)
+            # can't handle pathlib?
+        db.init(str(dbfile_name))
+
+        return db
 
     # User stuff
     from plom.db.db_user import (
