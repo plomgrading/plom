@@ -268,9 +268,6 @@ class ReadQRcodesView(ScannerRequiredView):
         scanner.read_qr_codes(bundle)
         # parsed_QR = scanner.parse_qr_code(result)
 
-
-
-
         # Save qr codes to disk
         # bundle_dir_path = pathlib.Path(bundle.file_path).parent
         # bundle_image_path = bundle_dir_path / "pageImages"

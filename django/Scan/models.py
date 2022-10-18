@@ -44,8 +44,7 @@ class PageToImage(HueyTask):
 
 class ParseQR(HueyTask):
     """
-    
+    Parse a page of QR codes in the background.
     """
+
     file_path = models.TextField(default="")
-
-
