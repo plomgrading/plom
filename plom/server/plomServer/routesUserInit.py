@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Edith Coates
 
 from aiohttp import web
 
@@ -76,12 +77,12 @@ class UserInitHandler:
         return web.Response(status=200)
 
     # @routes.post("/authorisation/{user}")
-    @authenticate_by_token_required_fields(["password"])
+    @authenticate_by_token_required_fields(["password", "justInit"])
     @write_admin
     def createModifyUser(self, data, request):
         """Update password of existing user, or create new user."""
         theuser = request.match_info["user"]
-        ok, val = self.server.createModifyUser(theuser, data["password"])
+        ok, val = self.server.createModifyUser(theuser, data["password"], justInitUser=data["justInit"])
         if not ok:
             log.info('Manager failed to create/modify user "%s"', theuser)
             return web.HTTPNotAcceptable(reason=val)

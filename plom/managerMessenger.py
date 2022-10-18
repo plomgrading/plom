@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Edith Coates
 
 import hashlib
 from io import BytesIO
@@ -1386,12 +1387,19 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def createModifyUser(self, someuser, password):
+    def createModifyUser(self, someuser, password, justInitUser=False):
+        # justInitUser kwarg: if true, fail on username already existing, don't
+        # change password
         self.SRmutex.acquire()
         try:
             response = self.post(
                 f"/authorisation/{someuser}",
-                json={"user": self.user, "token": self.token, "password": password},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "password": password,
+                    "justInit": justInitUser,
+                    },
             )
             response.raise_for_status()
         except requests.HTTPError as e:
