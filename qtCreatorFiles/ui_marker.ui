@@ -257,22 +257,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="OptionsBox">
-         <property name="title">
-          <string>Options</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <item>
-           <widget class="QCheckBox" name="sidebarRightCB">
-            <property name="text">
-             <string>&amp;Sidebar on right</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
         <widget class="QFrame" name="frameProgress">
          <layout class="QHBoxLayout" name="layoutProgress">
           <property name="leftMargin">

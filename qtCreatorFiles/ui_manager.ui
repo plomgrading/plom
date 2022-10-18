@@ -269,21 +269,21 @@
          </property>
         </spacer>
        </item>
-       <item row="11" column="0">
+       <item row="13" column="0">
         <widget class="QLabel" name="label_21">
          <property name="text">
           <string>Status</string>
          </property>
         </widget>
        </item>
-       <item row="11" column="1">
+       <item row="13" column="1">
         <widget class="QLabel" name="statusClasslistLabel">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="14" column="1">
+       <item row="16" column="1">
         <spacer name="verticalSpacer_13">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -296,14 +296,14 @@
          </property>
         </spacer>
        </item>
-       <item row="15" column="0">
+       <item row="17" column="0">
         <widget class="QLabel" name="label_15">
          <property name="text">
           <string>Database</string>
          </property>
         </widget>
        </item>
-       <item row="15" column="1">
+       <item row="17" column="1">
         <widget class="QFrame" name="frame_9">
          <layout class="QHBoxLayout" name="horizontalLayout_29">
           <property name="leftMargin">
@@ -341,21 +341,21 @@
          </layout>
         </widget>
        </item>
-       <item row="17" column="0">
+       <item row="19" column="0">
         <widget class="QLabel" name="label_18">
          <property name="text">
           <string>Status</string>
          </property>
         </widget>
        </item>
-       <item row="17" column="1">
+       <item row="19" column="1">
         <widget class="QLabel" name="statusDatabaseLabel">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="18" column="1">
+       <item row="20" column="1">
         <spacer name="verticalSpacer_14">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -368,14 +368,14 @@
          </property>
         </spacer>
        </item>
-       <item row="20" column="0">
+       <item row="22" column="0">
         <widget class="QLabel" name="label_16">
          <property name="text">
           <string>Make papers in directory</string>
          </property>
         </widget>
        </item>
-       <item row="20" column="1">
+       <item row="22" column="1">
         <widget class="QFrame" name="frame_5">
          <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="1,0">
           <property name="leftMargin">
@@ -407,7 +407,7 @@
          </layout>
         </widget>
        </item>
-       <item row="21" column="1">
+       <item row="23" column="1">
         <widget class="QLabel" name="label_17">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -421,7 +421,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </property>
         </widget>
        </item>
-       <item row="22" column="1">
+       <item row="24" column="1">
         <widget class="QFrame" name="frame_6">
          <layout class="QHBoxLayout" name="horizontalLayout_27">
           <property name="leftMargin">
@@ -492,7 +492,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </layout>
         </widget>
        </item>
-       <item row="24" column="1">
+       <item row="26" column="1">
         <widget class="QFrame" name="frame_7">
          <layout class="QGridLayout" name="gridLayout_5">
           <property name="leftMargin">
@@ -550,7 +550,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </layout>
         </widget>
        </item>
-       <item row="25" column="1">
+       <item row="27" column="1">
         <widget class="QFrame" name="frame_8">
          <layout class="QHBoxLayout" name="horizontalLayout_28">
           <property name="leftMargin">
@@ -588,7 +588,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </layout>
         </widget>
        </item>
-       <item row="27" column="1">
+       <item row="29" column="1">
         <spacer name="verticalSpacer_15">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -601,7 +601,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </property>
         </spacer>
        </item>
-       <item row="28" column="0">
+       <item row="30" column="0">
         <widget class="QPushButton" name="configRefreshButton">
          <property name="text">
           <string>Refresh</string>
@@ -702,6 +702,20 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
         <widget class="QLabel" name="label_13">
          <property name="text">
           <string>Specfile</string>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="1">
+        <widget class="QCheckBox" name="classlistForceUploadCB">
+         <property name="text">
+          <string>Force upload (if server already has a classlist)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="1">
+        <widget class="QCheckBox" name="classlistIgnoreWarningsCB">
+         <property name="text">
+          <string>Ignore warnings</string>
          </property>
         </widget>
        </item>
@@ -2202,7 +2216,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
             <item>
              <widget class="QLabel" name="label_5">
               <property name="text">
-               <string>Question</string>
+               <string>Question index</string>
               </property>
              </widget>
             </item>

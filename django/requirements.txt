@@ -1,0 +1,19 @@
+django==4.1
+django-braces
+django-reset-migrations
+pymupdf
+toml
+model_bakery # for tests
+beautifulsoup4 # HTML parsing
+django-session-timeout
+django-htmx
+tabulate # display table in command line
+plom
+reportlab
+django-huey
+django-polymorphic
+whitenoise
+djangorestframework
+# https://pypi.org/project/random-username/
+# https://github.com/williexu/random_username
+random-username

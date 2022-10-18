@@ -1,0 +1,80 @@
+{% extends "base/base.html" %}
+{% block page_heading %}Manage classlist{% endblock %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+        </div>
+        {% if prenaming %}<div class="alert alert-warning">Prenaming is enabled, so a classlist is required</div>{% endif %}
+        {% if student_list_present %}
+            <div class="alert alert-primary">
+                <span>Classlist present</span>
+                <a href="download" target="_blank" class="btn btn-info">download</a>
+                <button class="btn btn-danger"
+                        hx-delete="delete"
+                        hx-confirm="Are you sure you want to delete the classlist?"
+                        hx-target="body"
+                        hx-swap="outerHTML">
+                    delete whole classlist
+                </button>
+            </div>
+            <div class="border p-2" style="overflow: auto; max-height: 50%">
+                <table class="table table-striped">
+                    <thead>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>
+                            Paper-number
+                            {% if prenaming %}
+                                (used if assigned &mdash; prenaming enabled)
+                            {% else %}
+                                (ignored &mdash; prenaming disabled)
+                            {% endif %}
+                        </th>
+                    </thead>
+                    {% for row in student_list %}
+                        <tr>
+                            <td>{{ row.student_id }}</td>
+                            <td>{{ row.student_name }}</td>
+                            <td>
+                                {% if row.paper_number %}
+                                    {{ row.paper_number }}
+                                {% else %}
+                                    ●
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% else %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-title">
+                        <h4>No classlist present &mdash; upload classlist</h4>
+                    </div>
+                    <div class="card-text">
+                        <form enctype="multipart/form-data"
+                              id="form"
+                              method="post"
+                              action="{% url 'prep_classlist' %}">
+                            {% csrf_token %}
+                            <div>
+                                <input type="file" accepts=".csv" name="classlist_csv" required/>
+                                <button class="btn btn-primary" type="submit">upload</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    Plom needs a classlist as a csv file with three columns
+                    <ul>
+                        <li>"id" &mdash; the student id</li>
+                        <li>"name" &mdash; the student name as a single field</li>
+                        <li>"paper_number" &mdash; an optional field for prenaming papers</li>
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

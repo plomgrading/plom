@@ -29,7 +29,6 @@ from stdiomask import getpass
 import plom
 from plom import __version__
 from plom import SpecVerifier
-from plom import specdir
 from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
@@ -69,7 +68,7 @@ def ensure_toml_extension(fname):
     raise ValueError('Your specification file should have a ".toml" extension.')
 
 
-def parse_verify_save_spec(fname, save=True):
+def parse_verify_save_spec(fname, *, save=False):
     fname = Path(fname)
     print(f'Parsing and verifying the specification "{fname}"')
     if not fname.exists():
@@ -77,16 +76,12 @@ def parse_verify_save_spec(fname, save=True):
 
     sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
-    sv.checkCodes()
+    # TODO: this will create private codes: likely unwanted?
+    # sv.checkCodes()
     if not save:
         return
-    specdir.mkdir(exist_ok=True)
-    sv.saveVerifiedSpec(verbose=True)
-    print(
-        ">>> Note <<<\n"
-        "Before proceeding further, you will need to start the server."
-        '\nSee "plom-server --help" for more information on how to get the server up and running.\n'
-    )
+    outfile = Path(".") / "verifiedSpec.toml"
+    sv.saveVerifiedSpec(verbose=True, outfile=outfile)
 
 
 def autogen_users_file(demo, auto, numbered, rawfile=Path("userListRaw.csv")):
@@ -183,16 +178,14 @@ def get_parser():
         help="How many fake exam papers for the demo (defaults to 20 if omitted)",
     )
 
+    # seems like this should hide it but it does not
+    # spP = sub.add_parser("parse", help=argparse.SUPPRESS)
+    spP = sub.add_parser("parse", help="Parse spec file (REMOVED)")
+
     spP = sub.add_parser(
-        "parse",
-        help="Parse spec file (DEPRECATED)",
-        description="""
-            Parse, verify and save the test-specification toml file.
-            This is (probably) DEPRECATED: consider using
-            "plom-create uploadspec" to push spec to an already-running
-            server instead.  However, the old workflow still works for
-            the time being.
-        """,
+        "validatespec",
+        help="Check a spec file for validity.",
+        description="""Parse and verify a test-specification toml file.""",
     )
     spP.add_argument(
         "specFile",
@@ -201,12 +194,11 @@ def get_parser():
         help="defaults to '%(default)s'.",
     )
     spP.add_argument(
-        "--no-save",
+        "--save",
         action="store_true",
         help="""
-            By default the verified spec file is written to
-            'specAndDatabase/verifiedSpec.toml'.
-            Pass this to only check 'specFile' and not save it.
+            By default the verified spec file is not saved.
+            Pass this to write it to 'verifiedSpec.toml'.
         """,
     )
 
@@ -261,6 +253,21 @@ def get_parser():
         "--demo",
         action="store_true",
         help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
+    )
+    spL.add_argument(
+        "--force",
+        action="store_true",
+        help="""
+            By default, it is an error to upload a new classlist.
+            This overrides that check; for which you accept responsibility.
+            If you are using "numberToProduce = -1" then the first classlist
+            will have chosen a value; you may want to reupload your spec
+            before pushing a second classlist.
+            This is a non-exaustive list of what could go wrong.
+            If you've already produced and printed papers, you should be
+            careful with this option, although we are not aware of any
+            specific problems it would cause.
+        """,
     )
 
     spDB = sub.add_parser(
@@ -561,8 +568,13 @@ def main():
             )
 
     elif args.command == "parse":
+        raise NotImplementedError(
+            'The "parse" command has been removed, see "validatespec" and/or "uploadspec"'
+        )
+
+    elif args.command == "validatespec":
         fname = ensure_toml_extension(args.specFile)
-        parse_verify_save_spec(fname, not args.no_save)
+        parse_verify_save_spec(fname, save=args.save)
 
     elif args.command == "uploadspec":
         fname = ensure_toml_extension(args.specFile)
@@ -590,14 +602,14 @@ def main():
 
             if args.demo:
                 classlist = get_demo_classlist(spec)
-                upload_classlist(classlist, msgr=msgr)
+                upload_classlist(classlist, msgr=msgr, force=args.force)
             else:
                 success, classlist = process_classlist_file(
                     args.classlist, spec, ignore_warnings=args.ignore_warnings
                 )
                 if success:
                     try:
-                        upload_classlist(classlist, msgr=msgr)
+                        upload_classlist(classlist, msgr=msgr, force=args.force)
                     except Exception as err:  # TODO - make a better error handler here
                         print(
                             "An error occurred when uploading the valid classlist: ",
