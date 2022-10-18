@@ -4,7 +4,9 @@
 
 {% block main_content %}
   <div class="d-grid gap-2">
-    <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
+    <div>
+      <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+    </div>
     {% if student_list_present %}
       <div class="alert alert-warning">
         <p>Student list present, contains {{ number_of_students }} entries</p>

@@ -1,4 +1,16 @@
 <div>
+    <a class="btn btn-primary" hx-post="{% url 'start_all_PDFs' %}" hx-target="#pdf_table">Start All</a>
+    {% if pdf_errors %}
+    <a class="btn btn-warning" hx-post="{% url 'retry_all_PDFs' %}" hx-target="#pdf_table">Retry All</a>
+    {% endif %}
+    <a class="btn btn-danger" hx-post="{% url 'cancel_all_PDFs' %}" hx-target="#pdf_table">Cancel All</a>
+    <a class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteBtnModal">Delete All</a>
+    <a class="btn btn-secondary" onclick="document.getElementById('bottom').scrollIntoView()">
+        Scroll to bottom
+        <i class="bi bi-chevron-down"></i>
+    </a>
+</div>
+<div>
     {{ message }}
 </div>
 <!-- <a class="btn btn-primary" hx-get="{% url 'update_paperPDFs' %}" hx-target="#pdf_table">Refresh status</a> -->
@@ -76,6 +88,7 @@
     {% csrf_token %}
     <input type="submit" class="btn btn-primary" value="Save as zip file" {% if zip_disabled %}disabled{% endif %}>
     <a class="btn btn-secondary" onclick="document.getElementById('top').scrollIntoView()">
-        <i class="bi bi-arrow-up-circle"></i>
+        Scroll to top
+        <i class="bi bi-chevron-up"></i>
     </a>
 </form>

@@ -1,6 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+
 from django.urls import reverse
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
+
+from Preparation.services import TestSourceService, PQVMappingService
 
 from SpecCreator.views import TestSpecPageView
 from SpecCreator.services import StagingSpecificationService
@@ -49,6 +54,13 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
             if prev_questions != n_questions:
                 spec.clear_questions()
                 spec.set_n_questions(n_questions)
+
+                # If there are test sources or a QV map present,
+                # clear them
+                tss = TestSourceService()
+                tss.delete_all_test_sources()
+                pqv = PQVMappingService()
+                pqv.remove_pqv_map()
 
             marks = data["total_marks"]
             print(marks)

@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+
 import pathlib
 
 from django.shortcuts import render
@@ -146,6 +150,7 @@ class PDFTableView(ManagerRequiredView):
         context.update(
             {
                 "tasks": zip(task_objects, tasks_pdf_file_path),
+                "pdf_errors": bps.are_there_errors(),
                 "message": f"Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)",
                 "zip_disabled": zip_disabled,
                 "poll": poll,

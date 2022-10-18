@@ -1,6 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+
+from Preparation.services import TestSourceService, PQVMappingService
 
 from SpecCreator.views import TestSpecPageView
 from SpecCreator.services import StagingSpecificationService
@@ -48,6 +53,15 @@ class TestSpecCreatorNamesPage(TestSpecPageView):
             spec.set_short_name(short_name)
 
             n_versions = data["versions"]
+
+            # if the number of versions has changed, and there are
+            # test sources or a QV map uploaded, delete them
+            if n_versions != spec.get_n_versions():
+                tss = TestSourceService()
+                tss.delete_all_test_sources()
+                pqv = PQVMappingService()
+                pqv.remove_pqv_map()
+
             spec.set_n_versions(n_versions)
             if n_versions == 1:
                 spec.fix_all_questions()
