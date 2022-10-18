@@ -26,7 +26,7 @@ from plom.client.__main__ import add_popup_to_toplevel_exception_handler
 from plom.client.__main__ import sigint_handler
 
 
-def main():
+def get_parser():
     parser = argparse.ArgumentParser(description="Plom management tasks.")
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
@@ -39,7 +39,11 @@ def main():
         action="store",
         help="Which server to contact, port defaults to {}.".format(Default_Port),
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main():
+    args = get_parser().parse_args()
 
     args.server = args.server or os.environ.get("PLOM_SERVER")
     args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")

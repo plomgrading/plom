@@ -159,7 +159,6 @@ class Chooser(QDialog):
         self.lastTime["LogToFile"] = stuff[2]
         self.lastTime["CommentsWarnings"] = stuff[3]
         self.lastTime["MarkWarnings"] = stuff[4]
-        self.lastTime["SidebarOnRight"] = stuff[5]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def validate(self, which_subapp):
@@ -537,9 +536,8 @@ class Chooser(QDialog):
         if not stuff:
             return
         # note `stuff` is list of options - used to contain more... may contain more in future
-        self.lastTime["SidebarOnRight"] = stuff[0]
         # TODO: don't save custom until Issue #2254
-        if stuff[1] != "custom":
-            self.lastTime["KeyBinding"] = stuff[1]
+        if stuff[0] != "custom":
+            self.lastTime["KeyBinding"] = stuff[0]
         # TODO: not writing to disc until Issue #2254
-        # self.lastTime["CustomKeys"] = stuff[2]
+        # self.lastTime["CustomKeys"] = stuff[1]

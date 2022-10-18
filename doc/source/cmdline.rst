@@ -23,3 +23,4 @@ There are also commands to launch the server and client themselves:
 
    plom-client
    plom-server
+   plom-manager

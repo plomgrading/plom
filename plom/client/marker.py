@@ -890,7 +890,6 @@ class MarkerClient(QWidget):
                      "CommentsWarnings"
                      "MarkWarnings"
                      "KeyBinding"
-                     "SidebarOnRight"
                    }
 
                 and potentially others
@@ -972,8 +971,6 @@ class MarkerClient(QWidget):
 
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
-
-        self.ui.sidebarRightCB.setChecked(lastTime.get("SidebarOnRight", False))
 
     def UIInitialization(self):
         """
@@ -2190,12 +2187,10 @@ class MarkerClient(QWidget):
         except PlomAuthenticationException:
             log.warning("User tried to logout but was already logged out.")
             pass
-        sidebarRight = self.ui.sidebarRightCB.isChecked()
         log.debug("Emitting Marker shutdown signal")
         self.my_shutdown_signal.emit(
             2,
             [
-                sidebarRight,
                 self.annotatorSettings["keybinding_name"],
                 self.annotatorSettings["keybinding_custom_overlay"],
             ],

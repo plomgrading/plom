@@ -99,6 +99,9 @@ class UploadHandler:
 
             * ``[True, test_number]``
             * ``[False, "Cannot find test with that student id"]``
+
+        The test number could be b/c the paper is IDed.  Or it could be a
+        prediction (a confident one, currently "prename").
         """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "sid"]):
@@ -795,7 +798,14 @@ class UploadHandler:
         """Instruct the server to generate paper data in the database."""
         spec = self.server.testSpec
         if not spec:
-            raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
+            raise web.HTTPBadRequest(reason="Server has no spec; cannot initialise DB")
+
+        # this is not strictly-speaking true from an API point of view, Issue #2270.
+        if spec["numberToProduce"] < 0:
+            raise web.HTTPBadRequest(
+                reason=f'Server spec has numberToProduce = {spec["numberToProduce"]};'
+                + " in this case you cannot initialise DB without a classlist"
+            )
 
         if len(data["version_map"]) == 0:
             vmap = None
@@ -804,10 +814,8 @@ class UploadHandler:
 
         try:
             new_vmap = self.server.initialiseExamDatabase(spec, vmap)
-        except ValueError:
-            raise web.HTTPConflict(
-                reason="Database already present: not overwriting"
-            ) from None
+        except ValueError as e:
+            raise web.HTTPConflict(reason=e) from None
 
         return web.json_response(new_vmap, status=200)
 

@@ -1,0 +1,17 @@
+#name-label,
+#email-label {
+    margin-bottom: 0;
+}
+
+.card-body button,
+.form button,
+#cancel{
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+#id_first_name,
+#id_email {
+    border-radius: 5px;
+    border-width: 1px;
+}

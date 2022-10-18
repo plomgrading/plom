@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Morgan Arnold
+# Copyright (C) 2022 Edith Coates
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -223,15 +224,17 @@ unittests:
 
 
 # TODO: may consider merging with unittests job above
+# Issue #2291: fix coverage calculations for django/
 coverage:
   stage: test
   needs: ["docker-image"]
   image: $IM
   script:
     - pip install pytest pytest-cov coverage[toml]
-    - coverage run -m pytest
-    - coverage report
+    - coverage run -m pytest --ignore django
+    - coverage report --precision=2
     - coverage xml
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
   artifacts:
     reports:
       coverage_report:
@@ -279,6 +282,39 @@ flake8:
   allow_failure: true
 
 
+webplom_test:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - pushd django
+    - python3 -m pip install coverage
+    - python3 -m pip install -r requirements.txt
+    - python3 manage.py makemigrations
+    - python3 manage.py migrate
+    - coverage run --source='.' manage.py test
+    - coverage report --precision=2
+    - coverage xml -o django_coverage.xml
+    - popd
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: django/django_coverage.xml
+
+
+webplom_demo:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - pushd django
+    - python3 -m pip install -r requirements.txt
+    - ./demo_test.sh
+    - popd
+        
+
 demoserver:
   stage: test
   needs: ["docker-image"]
@@ -291,7 +327,6 @@ demoserver:
     - plom-server init
     - plom-server users --demo
     - plom-create newspec --demo
-    - plom-create parse demoSpec.toml
     # Start server
     - ip addr
     - plom-server launch &
@@ -301,6 +336,7 @@ demoserver:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
+    - plom-create uploadspec demoSpec.toml -w 1234
     - plom-create class --demo -w 1234
     - plom-create make -w 1234
     - plom-solutions extract solutionSpec.toml -w 1234
@@ -337,7 +373,6 @@ hwdemoserver:
     - plom-server init
     - plom-server users --demo
     - plom-create newspec --demo
-    - plom-create parse demoSpec.toml
     # Start server
     - ip addr
     - plom-server launch &
@@ -351,6 +386,7 @@ hwdemoserver:
     - export PLOM_PASSWORD=0123
     - export PLOM_MANAGER_PASSWORD=1234
     - export PLOM_SCAN_PASSWORD=4567
+    - plom-create uploadspec demoSpec.toml
     - plom-create class --demo
     - plom-create make
     - plom-solutions extract solutionSpec.toml
@@ -403,7 +439,6 @@ fullworkflow:
     - plom-server init
     - plom-server users --demo
     - plom-create newspec
-    - plom-create parse
     - python3 -m plom.create.demotools solutions # to get soln pdf copied
     # TODO: override the private seed
     # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
@@ -421,6 +456,7 @@ fullworkflow:
     - export PLOM_PASSWORD=0123
     - export PLOM_MANAGER_PASSWORD=1234
     - export PLOM_SCAN_PASSWORD=4567
+    - plom-create uploadspec
     - plom-create class --demo
     - plom-create make
     - plom-solutions extract solutionSpec.toml
@@ -485,13 +521,14 @@ appstreamValid:
 
 
 # TODO: perhaps all deps should be in the docker image?
+# TODO: remove temporary sphinx pin Issue #2293
 docs_sphinx:
   stage: test
   needs: ["docker-image"]
   image: $IM
   before_script:
     - apt-get --no-install-recommends --yes install tex-gyre
-    - pip install myst-parser sphinx sphinx_rtd_theme sphinx-argparse
+    - pip install myst-parser sphinx==5.1.1 sphinx_rtd_theme sphinx-argparse
   script:
     - pushd doc
     - ls

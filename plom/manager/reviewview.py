@@ -40,12 +40,11 @@ class ReviewViewWindow(QDialog):
         super().__init__(parent)
         img = ImageViewWidget(self, fnames, dark_background=True)
 
-        self.papernum, self.question, self.who = stuff
-        # TODO: need the display question label TODO: Look up issue #
-        self.setWindowTitle(f"Paper {self.papernum} question {self.question}")
+        self.papernum, self.question, question_label, self.who = stuff
+        self.setWindowTitle(f"Paper {self.papernum:04} {question_label}")
         explanation = QLabel(
             f"""
-            <p>Paper {self.papernum} question {self.question}.
+            <p>Paper {self.papernum:04} {question_label}.
             Graded by: {self.who}</p>
             """
         )

@@ -64,7 +64,7 @@ class IDHandler:
         return web.json_response(classlist)
 
     # @routes.put("/ID/classlist")
-    @authenticate_by_token_required_fields(["user", "classlist"])
+    @authenticate_by_token_required_fields(["user", "classlist", "force"])
     @write_admin
     def IDputClasslist(self, data, request):
         """Accept classlist upload.
@@ -85,6 +85,17 @@ class IDHandler:
         * If numberToProduce is -1, value is set based on
           this classlist (spec is permanently altered).
 
+        If data["force"] is True, then you can push a new classlist.
+        This is not supported.  Somethings to be aware of:
+
+        * if you previously used numberToProduce of -1 and then
+          pushed a classlist of length 100, then numberToProduce
+          is now 100.  If you force push a classlist of a different
+          size, you may not have enough papers.
+        * If you have produced prenamed papers then those predictions
+          may not appear in the new classlist; nothing good will come
+          from this.
+
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
 
@@ -93,8 +104,8 @@ class IDHandler:
             - 403: not manager.
             - HTTPBadRequest (400): malformed request such as missing
               required fields or server has no spec.
-            - HTTPConflict: we already have a classlist.
-              TODO: would be nice to be able to "try again", Issue #848
+            - HTTPConflict: we already have a classlist, and `force`
+              was False (the default).
             - HTTPNotAcceptable: classlist too short (see above).
         """
         spec = self.server.testSpec
@@ -102,8 +113,8 @@ class IDHandler:
             raise web.HTTPBadRequest(
                 reason="Server has no spec; cannot accept classlist"
             )
-        if (specdir / "classlist.csv").exists():
-            # TODO: Issue #848
+        force = data.get("force", False)
+        if (specdir / "classlist.csv").exists() and not force:
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]
 

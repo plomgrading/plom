@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QDialog,
+    QDialogButtonBox,
     QFileDialog,
     QGroupBox,
     QGridLayout,
@@ -83,6 +84,7 @@ from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 from plom.misc_utils import arrowtime_to_simple_string
+from plom.specVerifier import get_question_label
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -177,11 +179,9 @@ class QVHistogram(QDialog):
     Compare to `SolutionViewer` which is unparented so not on top.
     """
 
-    def __init__(self, parent, q, v, hist):
+    def __init__(self, parent, qlabel, qidx, v, hist):
         super().__init__(parent)
-        self.question = q
-        self.version = v
-        self.setWindowTitle("Histograms for question {} version {}".format(q, v))
+        self.setWindowTitle(f"{qlabel} version {v} histograms")
         tot = 0
         mx = 0
         dist = {}
@@ -252,67 +252,63 @@ class QVHistogram(QDialog):
 
 
 class TestStatus(QDialog):
-    def __init__(self, parent, nq, status):
+    def __init__(self, parent, qlabels, status):
         super().__init__(parent)
-        self.status = status
-        self.setWindowTitle("Status of test {}".format(self.status["number"]))
+        self.setWindowTitle(f'Status of Paper {status["number"]:04}')
 
-        grid = QGridLayout()
-        self.idCB = QCheckBox("Identified: ")
-        self.idCB.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.idCB.setFocusPolicy(Qt.NoFocus)
+        idCB = QCheckBox("Identified")
+        idCB.setAttribute(Qt.WA_TransparentForMouseEvents)
+        idCB.setFocusPolicy(Qt.NoFocus)
         if status["identified"]:
-            self.idCB.setCheckState(Qt.Checked)
-        self.mkCB = QCheckBox("Marked: ")
-        self.mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.mkCB.setFocusPolicy(Qt.NoFocus)
+            idCB.setCheckState(Qt.Checked)
+        mkCB = QCheckBox("Fully marked")
+        mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
+        mkCB.setFocusPolicy(Qt.NoFocus)
         if status["marked"]:
-            self.mkCB.setCheckState(Qt.Checked)
+            mkCB.setCheckState(Qt.Checked)
 
-        self.clB = QPushButton("&close")
-        self.clB.clicked.connect(self.accept)
-
-        grid.addWidget(self.idCB, 1, 1)
-        grid.addWidget(self.mkCB, 1, 3)
+        hb = QHBoxLayout()
+        vb1 = QVBoxLayout()
+        vb2 = QVBoxLayout()
+        hb.addLayout(vb1)
+        hb.addLayout(vb2)
+        vb1.addWidget(idCB)
+        vb2.addWidget(mkCB)
 
         if status["identified"]:
-            self.iG = QGroupBox("Identification")
+            G = QGroupBox("Identification")
             gg = QVBoxLayout()
             gg.addWidget(QLabel("ID: {}".format(status["sid"])))
             gg.addWidget(QLabel("Name: {}".format(status["sname"])))
-            gg.addWidget(QLabel("Username: {}".format(status["iwho"])))
-            self.iG.setLayout(gg)
-            grid.addWidget(self.iG, 2, 1, 3, 3)
+            gg.addWidget(QLabel("Who ID'd: {}".format(status["iwho"])))
+            G.setLayout(gg)
+            vb1.addWidget(G)
+        vb1.addStretch(1)
 
-        self.qG = {}
-        for q in range(1, nq + 1):
-            sq = str(q)
-            self.qG[q] = QGroupBox("Question {}.{}:".format(q, status[sq]["version"]))
+        for i, qlabel in enumerate(qlabels):
+            sq = str(i + 1)
+            G = QGroupBox(f'{qlabel} version {status[sq]["version"]}')
             gg = QVBoxLayout()
             if status[sq]["marked"]:
-                gg.addWidget(QLabel("Marked"))
                 gg.addWidget(QLabel("Mark: {}".format(status[sq]["mark"])))
                 gg.addWidget(QLabel("Username: {}".format(status[sq]["who"])))
             else:
                 gg.addWidget(QLabel("Unmarked"))
+            G.setLayout(gg)
+            vb2.addWidget(G)
+        vb2.addStretch(2)
 
-            self.qG[q].setLayout(gg)
-            grid.addWidget(self.qG[q], 10 * q + 1, 1, 3, 3)
-
-        grid.addWidget(self.clB, 100, 10)
-        self.setLayout(grid)
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.rejected.connect(self.reject)
+        vb2.addWidget(buttons)
+        self.setLayout(hb)
 
 
 class ProgressBox(QGroupBox):
-    def __init__(self, manager, question, version):
+    def __init__(self, manager, qlabel, qidx, version):
         # This widget will be re-parented when its added to a layout
         super().__init__()
-        # TODO: used to call a method of manager, instead use signal/slots?
-        self._manager = manager
-        self.question = question
-        self.version = version
-        self.setTitle(f"Q-{question} V-{version}")
-
+        self.setTitle(f"{qlabel} ver {version}")
         grid = QVBoxLayout()
         self.lhL = QLabel()
         grid.addWidget(self.lhL)
@@ -327,7 +323,7 @@ class ProgressBox(QGroupBox):
         self.pb.setFormat("%v / %m")
         grid.addWidget(self.pb)
         vhB = QPushButton("View histograms")
-        vhB.clicked.connect(self.viewHist)
+        vhB.clicked.connect(lambda: manager.viewMarkHistogram(qlabel, qidx, version))
         grid.addWidget(vhB)
 
         self.setLayout(grid)
@@ -363,11 +359,10 @@ class ProgressBox(QGroupBox):
             self.mtL.setText("Avg marking time = N/A")
             self.lhL.setText("None have been marked")
 
-    def viewHist(self):
-        self._manager.viewMarkHistogram(self.question, self.version)
-
 
 class Manager(QWidget):
+    """Plom server management and marking progress UI tool."""
+
     def __init__(
         self, Qapp, *, server=None, user=None, password=None, manager_msgr=None
     ):
@@ -441,8 +436,6 @@ class Manager(QWidget):
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
         self.ui.flagReviewButton.clicked.connect(self.reviewFlagTableRowsForReview)
-        # Disabled access to "review" feature: Issue #2262
-        self.ui.flagReviewButton.setEnabled(False)
         self.ui.removeAnnotationsButton.clicked.connect(self.removeAnnotationsFromRange)
 
         self.ui.rubricsDownloadButton.clicked.connect(self.rubricsDownload)
@@ -603,6 +596,10 @@ class Manager(QWidget):
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]
+        # Issue #2260
+        self.qlabels = [
+            get_question_label(info, n) for n in range(1, self.numberOfQuestions + 1)
+        ]
         # which test pages are which type "id", "dnm", or "qN"
         self.testPageTypes = {info["idPage"]: "id"}
         for pg in info["doNotMarkPages"]:
@@ -698,20 +695,25 @@ class Manager(QWidget):
         if not fname.is_file():
             return
 
+        ignore_warnings = self.ui.classlistIgnoreWarningsCB.isChecked()
+        force_upload = self.ui.classlistForceUploadCB.isChecked()
+
         # A copy-paste job from plom.create.__main__:
         try:
             spec = self.msgr.get_spec()
         except PlomServerNotReady as e:
             WarnMsg(self, "Server not ready.", info=e).exec()
             return
-        success, classlist = process_classlist_file(fname, spec, ignore_warnings=False)
+        success, classlist = process_classlist_file(
+            fname, spec, ignore_warnings=ignore_warnings
+        )
         if not success:
             WarnMsg(
                 self, "Problems parsing classlist?", info="TODO: for now, check stdout?"
             ).exec()
             return
         try:
-            upload_classlist(classlist, msgr=self.msgr)
+            upload_classlist(classlist, msgr=self.msgr, force=force_upload)
         except (PlomConflict, PlomRangeException, PlomServerNotReady) as e:
             WarnMsg(self, "Problem uploading classlist?", info=e).exec()
             return
@@ -1118,8 +1120,8 @@ class Manager(QWidget):
                 "Bundle position",
                 "Action to be taken",
                 "Rotation-angle",
-                "Test",
-                "Page or Question",
+                "Paper number",
+                "Page or Question indices",
             ]
         )
         self.ui.unknownTV.setIconSize(QSize(32, 32))
@@ -1189,7 +1191,7 @@ class Manager(QWidget):
         uvw = UnknownViewWindow(
             self,
             [pagedata],
-            [self.max_papers, self.numberOfPages, self.numberOfQuestions],
+            [self.max_papers, self.numberOfPages, self.qlabels],
             iDict,
         )
         if uvw.exec() == QDialog.Accepted:
@@ -1631,7 +1633,7 @@ class Manager(QWidget):
         r = pvi[0].row()
         testNumber = int(self.ui.overallTW.item(r, 0).text())
         stats = self.msgr.RgetStatus(testNumber)
-        TestStatus(self, self.numberOfQuestions, stats).exec()
+        TestStatus(self, self.qlabels, stats).exec()
 
     def refreshOverallTab(self):
         self.ui.overallTW.clearContents()
@@ -1937,10 +1939,13 @@ class Manager(QWidget):
         # initialise the widgets without the actual stats
         grid = QGridLayout()
         self.pd = {}
-        for q in range(1, self.numberOfQuestions + 1):
+        for qidx in range(1, self.numberOfQuestions + 1):
+            qlabel = self.qlabels[qidx - 1]
             for v in range(1, self.numberOfVersions + 1):
-                self.pd[(q, v)] = ProgressBox(self, q, v)
-                grid.addWidget(self.pd[(q, v)], q, v)
+                _ = ProgressBox(self, qlabel, qidx, v)
+                grid.addWidget(_, qidx, v)
+                # keep ref so we can update it later in similar loop
+                self.pd[(qidx, v)] = _
         self.ui.markBucket.setLayout(grid)
         self.refreshMarkTab()
 
@@ -1950,9 +1955,9 @@ class Manager(QWidget):
                 stats = self.msgr.getProgress(q, v)
                 self.pd[(q, v)].refresh(stats)
 
-    def viewMarkHistogram(self, question, version):
-        mhist = self.msgr.getMarkHistogram(question, version)
-        QVHistogram(self, question, version, mhist).exec()
+    def viewMarkHistogram(self, qlabel, qidx, version):
+        mhist = self.msgr.getMarkHistogram(qidx, version)
+        QVHistogram(self, qlabel, qidx, version, mhist).exec()
 
     def initOutTab(self):
         self.ui.tasksOutTW.setColumnCount(3)
@@ -2100,7 +2105,7 @@ class Manager(QWidget):
         self.ui.reviewTW.setHorizontalHeaderLabels(
             [
                 "Test",
-                "Question",
+                "Question index",
                 "Version",
                 "Mark",
                 "Username",
@@ -2137,6 +2142,9 @@ class Manager(QWidget):
                     # flatten the tag list to a string
                     # TODO: possible to keep the list too, in some other Role?
                     x = ", ".join(x)
+                # TODO: display question label, but other code expects qidx here
+                # elif k == 1:
+                #     x = self.qlabels[x - 1]
                 item.setData(Qt.DisplayRole, x)
                 tw.setItem(i, k, item)
             if row[4] == "reviewer":
@@ -2156,8 +2164,8 @@ class Manager(QWidget):
         self.ui.reviewPaperNumSpinBox.setRange(0, self.max_papers)
 
         self.ui.questionCB.addItem("*")
-        for q in range(self.numberOfQuestions):
-            self.ui.questionCB.addItem(str(q + 1))
+        for q in self.qlabels:
+            self.ui.questionCB.addItem(q)
         self.ui.versionCB.addItem("*")
         for v in range(self.numberOfVersions):
             self.ui.versionCB.addItem(str(v + 1))
@@ -2184,9 +2192,13 @@ class Manager(QWidget):
     def filterReview(self):
         t0 = time()
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
+        # 1-based question indexing but 0th element is the any match
+        qidx = self.ui.questionCB.currentIndex()
+        if qidx == 0:
+            qidx = "*"
         mrList = self.msgr.getMarkReview(
             filterPaperNumber=self.ui.reviewPaperNumSpinBox.text(),
-            filterQ=self.ui.questionCB.currentText(),
+            filterQ=qidx,
             filterV=self.ui.versionCB.currentText(),
             filterUser=self.ui.userCB.currentText(),
             filterMarked=markedOnly,
@@ -2236,7 +2248,8 @@ class Manager(QWidget):
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
             fh.write(img)
-        ReviewViewWindow(self, [f], stuff=(test, question, owner)).exec()
+        qlabel = self.qlabels[question - 1]
+        ReviewViewWindow(self, [f], stuff=(test, question, qlabel, owner)).exec()
         f.unlink()
 
     def reviewFlagTableRowsForReview(self):
@@ -2567,7 +2580,7 @@ class Manager(QWidget):
             SimpleQuestion(
                 self,
                 "Are you sure that you want to delete solution to"
-                f" question {self.ui.solnQSB.value()}"
+                f" question index {self.ui.solnQSB.value()}"
                 f" version {self.ui.solnVSB.value()}.",
             ).exec()
             == QMessageBox.Yes
@@ -2615,7 +2628,7 @@ class Manager(QWidget):
         self.ui.QPUserTW.setColumnCount(5)
         self.ui.QPUserTW.setHeaderLabels(
             [
-                "Question",
+                "Question index",
                 "Version",
                 "User",
                 "Number Marked",
@@ -2631,7 +2644,7 @@ class Manager(QWidget):
         self.ui.PUQTW.setHeaderLabels(
             [
                 "User",
-                "Question",
+                "Question index",
                 "Version",
                 "Number Marked",
                 "Avg time per task",
