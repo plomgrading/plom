@@ -82,7 +82,9 @@ class UserInitHandler:
     def createModifyUser(self, data, request):
         """Update password of existing user, or create new user."""
         theuser = request.match_info["user"]
-        ok, val = self.server.createModifyUser(theuser, data["password"], justInitUser=data["justInit"])
+        ok, val = self.server.createModifyUser(
+            theuser, data["password"], justInitUser=data["justInit"]
+        )
         if not ok:
             log.info('Manager failed to create/modify user "%s"', theuser)
             return web.HTTPNotAcceptable(reason=val)

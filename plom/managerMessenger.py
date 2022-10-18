@@ -1399,7 +1399,7 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "password": password,
                     "justInit": justInitUser,
-                    },
+                },
             )
             response.raise_for_status()
         except requests.HTTPError as e:

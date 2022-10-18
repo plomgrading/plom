@@ -2723,7 +2723,9 @@ class Manager(QWidget):
     def createUser(self):
         cpwd = UserDialog(self, "Create new user", name=None)
         if cpwd.exec() == QDialog.Accepted:
-            rval = self.msgr.createModifyUser(cpwd.name, cpwd.password, justInitUser=True)
+            rval = self.msgr.createModifyUser(
+                cpwd.name, cpwd.password, justInitUser=True
+            )
             InfoMsg(self, rval[1]).exec()
             self.refreshUserList()
         return
