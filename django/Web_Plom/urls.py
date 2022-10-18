@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+
 """Web_Plom URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -22,6 +26,7 @@ urlpatterns = [
     path("", include("Authentication.urls")),
     path("", include("UserManagement.urls")),
     path("", include("Profile.urls")),
+    path("", include("API.urls")),
     path("create/", include("Preparation.urls")),
     path("create/spec/", include("SpecCreator.urls")),
     path("create/paperpdfs/", include("BuildPaperPDF.urls")),

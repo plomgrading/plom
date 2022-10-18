@@ -1,9 +1,14 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+
 import re
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
 from django.utils.text import slugify
 from django_htmx.http import HttpResponseClientRefresh
+
+from Preparation.services import TestSourceService, PQVMappingService
 
 from SpecCreator.views import TestSpecPageView
 from SpecCreator.services import StagingSpecificationService, ReferencePDFService
@@ -60,6 +65,15 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
 
             spec = StagingSpecificationService()
             ref = ReferencePDFService()
+
+            # if the number of pages has changed, and there are
+            # test sources or a QV map present, delete them
+            if n_pages != spec.get_n_pages():
+                tss = TestSourceService()
+                tss.delete_all_test_sources()
+                pqv = PQVMappingService()
+                pqv.remove_pqv_map()
+
             ref.new_pdf(spec, slug, n_pages, request.FILES["pdf"])
 
             return HttpResponseRedirect(reverse("id_page"))
