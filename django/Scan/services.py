@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 
+from asyncore import write
 from operator import index
 import pathlib
 import hashlib
@@ -17,6 +18,7 @@ from Scan.models import (
     StagingBundle,
     StagingImage,
     PageToImage,
+    ParseQR,
 )
 
 
@@ -201,33 +203,11 @@ class ScanService:
         completed = PageToImage.objects.filter(bundle=bundle, status="complete")
         return len(completed)
 
-    @transaction.atomic
-    def read_qr_codes(self, bundle):
-        """
-        Read QR codes of scanned pages in a bundle, save results to disk.
-        QR Code:
-        -         Test ID:  00001
-        -        Page Num:  00#
-        -     Version Num:  00#
-        -              NW:  2
-        -              NE:  1
-        -              SW:  3
-        -              SE:  4
-        - Last five digit:  93849
-        """
-        images = StagingImage.objects.filter(bundle=bundle).order_by("bundle_order")
-        qr_codes = []
-        for img in images:
-            file_path = img.file_path
-            code_dict = QRextract(file_path, write_to_file=False)
-            qr_codes.append(code_dict)
-        return qr_codes
-
     def parse_qr_code(self, list_qr_codes):
         """
         Parsing QR codes into list of dictionaries
         """
-        groupings = defaultdict(list)
+        groupings = {}
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
                 if list_qr_codes[page][quadrant]:
@@ -243,13 +223,44 @@ class ScanService:
                         "quadrant": "".join(list_qr_codes[page][quadrant])[11],
                         "public_code": "".join(list_qr_codes[page][quadrant])[12:],
                     }
-                    groupings[grouping_key].append(qr_code_dict)
+                    groupings[quadrant] = qr_code_dict
 
-        return [qr_code_dict for qr_code_dict in groupings.values()]
+        return groupings
 
-    # @db_task(queue="tasks")
-    # def _huey_parse_qr_code(self):
-    #     pass
+    @db_task(queue="tasks")
+    def _huey_parse_qr_code(image_path):
+        scanner = ScanService()
+        code_dict = QRextract(image_path, write_to_file=False)
+        page_data = scanner.parse_qr_code([code_dict])
+        img = StagingImage.objects.get(file_path=image_path)
+        img.parsed_qr = page_data
+        img.save()
+
+    def read_qr_codes(self, bundle):
+        """
+        Read QR codes of scanned pages in a bundle.
+        QR Code:
+        -         Test ID:  00001
+        -        Page Num:  00#
+        -     Version Num:  00#
+        -              NW:  2
+        -              NE:  1
+        -              SW:  3
+        -              SE:  4
+        - Last five digit:  93849
+        """
+        imgs = StagingImage.objects.filter(bundle=bundle)
+        for page in imgs:
+            self.qr_codes_tasks(page.file_path)
+
+    def qr_codes_tasks(self, image_path):
+        qr_task = self._huey_parse_qr_code(image_path)
+        qr_task_obj = ParseQR(
+            file_path=image_path,
+            huey_id=qr_task.id,
+            status="queued",
+        )
+        qr_task_obj.save()
 
     def validate_qr_codes(self, bundle, spec):
         """

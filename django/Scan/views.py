@@ -265,8 +265,11 @@ class ReadQRcodesView(ScannerRequiredView):
 
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
-        result = scanner.read_qr_codes(bundle)
-        parsed_QR = scanner.parse_qr_code(result)
+        scanner.read_qr_codes(bundle)
+        # parsed_QR = scanner.parse_qr_code(result)
+
+
+
 
         # Save qr codes to disk
         # bundle_dir_path = pathlib.Path(bundle.file_path).parent
@@ -285,4 +288,4 @@ class ReadQRcodesView(ScannerRequiredView):
         #     reverse("scan_manage_bundle", args=(str(timestamp)))
         # )
 
-        return HttpResponse(str(parsed_QR))
+        return HttpResponse("Done")
