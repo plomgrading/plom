@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2022 Brennen Chiu
 
 from datetime import datetime, timezone
 from distutils.log import info
@@ -61,18 +62,14 @@ class PlomDB:
         db = None
         try:
             db = self.connect_mysql(db_name, db_host, db_port, db_username, db_password)
-            # add db_name optional later on
-            log.info("Connected to MySQL database.")
-            # db = pw.SqliteDatabase(None)
-            # # can't handle pathlib?
-            # db.init(str(dbfile_name))
+            log.info(f"Connected to MySQL database: {db_name}")
         except (pymysql.err.OperationalError, ValueError):
             log.exception("Unable to connect to MySQL server.")
             log.info("Connecting to SQLite...")
             db = self.connect_sqlite(dbfile_name)
             log.info("Connected to SQLite.")
 
-        self._db = db  # different db
+        self._db = db
         database_proxy.initialize(self._db)
 
         with self._db:
@@ -123,7 +120,6 @@ class PlomDB:
 
     def connect_mysql(self, db_name, db_host, db_port, db_username, db_password):
         if not db_name:
-            # log.error("MySQL database name not found! Check serverDetails.toml.")
             raise ValueError("MySQL database name not found! Check serverDetails.toml.")
 
         mysql_connection = pymysql.connect(
