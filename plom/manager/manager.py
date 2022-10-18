@@ -5,6 +5,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021-2022 Elizabeth Xiao
+# Copyright (C) 2022 Edith Coates
 
 from collections import defaultdict
 import imghdr
@@ -98,8 +99,7 @@ class UserDialog(QDialog):
     def __init__(self, parent, title, *, name=None, extant=[]):
         super().__init__(parent)
         self.name = name
-        # put everything in lowercase to simplify checking.
-        self.extant = [x.lower() for x in extant]
+        self.extant = extant
 
         self.setWindowTitle(title)
         self.userL = QLabel("Username:")
@@ -154,8 +154,7 @@ class UserDialog(QDialog):
         # username not already in list
         # be careful, because pwd-change users same interface
         # make sure that we only do this check if the LE is enabled.
-        # put username into lowercase to check against extant which is in lowercase.
-        if self.userLE.isEnabled() and self.userLE.text().lower() in self.extant:
+        if self.userLE.isEnabled() and self.userLE.text() in self.extant:
             WarnMsg(
                 self, f'Username "{self.userLE.text()}" already in user list'
             ).exec()
