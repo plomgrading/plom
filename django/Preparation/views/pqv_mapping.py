@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+
 from django.shortcuts import render
 
 from django.http import HttpResponseRedirect, HttpResponse
@@ -87,3 +91,24 @@ class PQVMappingView(ManagerRequiredView):
         speck = SpecificationService()
         speck.store_validated_spec(spec_dict)
         return HttpResponseRedirect(".")
+
+
+class PQVMappingReadOnlyView(ManagerRequiredView):
+    def build_context(self):
+        context = super().build_context()
+        pqvs = PQVMappingService()
+        speck = SpecificationService()
+        pss = PrenameSettingService()
+
+        context.update(
+            {
+                "prenaming": pss.get_prenaming_setting(),
+                "question_list": range(1, 1 + speck.get_n_questions()),
+                "pqv_table": pqvs.get_pqv_map_as_table(pss.get_prenaming_setting()),
+            }
+        )
+        return context
+
+    def get(self, request):
+        context = self.build_context()
+        return render(request, "Preparation/pqv_mapping_view.html", context)
