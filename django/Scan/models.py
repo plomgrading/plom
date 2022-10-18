@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -30,6 +31,7 @@ class StagingImage(models.Model):
     file_name = models.TextField(default="")
     file_path = models.TextField(default="")
     image_hash = models.CharField(max_length=64)
+    parsed_qr = models.JSONField(default=dict, null=True)
 
 
 class PageToImage(HueyTask):
@@ -38,3 +40,11 @@ class PageToImage(HueyTask):
     """
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
+
+
+class ParseQR(HueyTask):
+    """
+    Parse a page of QR codes in the background.
+    """
+
+    file_path = models.TextField(default="")

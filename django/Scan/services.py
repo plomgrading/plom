@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 
+from asyncore import write
 from operator import index
 import pathlib
 import hashlib
@@ -17,6 +18,7 @@ from Scan.models import (
     StagingBundle,
     StagingImage,
     PageToImage,
+    ParseQR,
 )
 
 
@@ -201,10 +203,42 @@ class ScanService:
         completed = PageToImage.objects.filter(bundle=bundle, status="complete")
         return len(completed)
 
-    @transaction.atomic
+    def parse_qr_code(self, list_qr_codes):
+        """
+        Parsing QR codes into list of dictionaries
+        """
+        groupings = {}
+        for page in range(len(list_qr_codes)):
+            for quadrant in list_qr_codes[page]:
+                if list_qr_codes[page][quadrant]:
+                    paper_id = "".join(list_qr_codes[page][quadrant])[0:5]
+                    page_num = "".join(list_qr_codes[page][quadrant])[5:8]
+                    version_num = "".join(list_qr_codes[page][quadrant])[8:11]
+
+                    grouping_key = "-".join([paper_id, page_num, version_num])
+                    qr_code_dict = {
+                        "paper_id": paper_id,
+                        "page_num": page_num,
+                        "version_num": version_num,
+                        "quadrant": "".join(list_qr_codes[page][quadrant])[11],
+                        "public_code": "".join(list_qr_codes[page][quadrant])[12:],
+                    }
+                    groupings[quadrant] = qr_code_dict
+
+        return groupings
+
+    @db_task(queue="tasks")
+    def _huey_parse_qr_code(image_path):
+        scanner = ScanService()
+        code_dict = QRextract(image_path, write_to_file=False)
+        page_data = scanner.parse_qr_code([code_dict])
+        img = StagingImage.objects.get(file_path=image_path)
+        img.parsed_qr = page_data
+        img.save()
+
     def read_qr_codes(self, bundle):
         """
-        Read QR codes of scanned pages in a bundle, save results to disk.
+        Read QR codes of scanned pages in a bundle.
         QR Code:
         -         Test ID:  00001
         -        Page Num:  00#
@@ -215,37 +249,18 @@ class ScanService:
         -              SE:  4
         - Last five digit:  93849
         """
-        images = StagingImage.objects.filter(bundle=bundle).order_by("bundle_order")
-        qr_codes = []
-        for img in images:
-            file_path = img.file_path
-            code_dict = QRextract(file_path, write_to_file=False)
-            qr_codes.append(code_dict)
-        return qr_codes
+        imgs = StagingImage.objects.filter(bundle=bundle)
+        for page in imgs:
+            self.qr_codes_tasks(page.file_path)
 
-    def parse_qr_code(self, list_qr_codes):
-        """
-        Parsing QR codes into list of dictionaries
-        """
-        groupings = defaultdict(list)
-        for indx in range(len(list_qr_codes)):
-            for quadrant in list_qr_codes[indx]:
-                if list_qr_codes[indx][quadrant]:
-                    paper_id = "".join(list_qr_codes[indx][quadrant])[0:5]
-                    page_num = "".join(list_qr_codes[indx][quadrant])[5:8]
-                    version_num = "".join(list_qr_codes[indx][quadrant])[8:11]
-
-                    grouping_key = "-".join([paper_id, page_num, version_num])
-                    qr_code_dict = {
-                        "paper_id": paper_id,
-                        "page_num": page_num,
-                        "version_num": version_num,
-                        "quadrant": "".join(list_qr_codes[indx][quadrant])[11],
-                        "public_code": "".join(list_qr_codes[indx][quadrant])[12:],
-                    }
-                    groupings[grouping_key].append(qr_code_dict)
-
-        return [qr_code_dict for qr_code_dict in groupings.values()]
+    def qr_codes_tasks(self, image_path):
+        qr_task = self._huey_parse_qr_code(image_path)
+        qr_task_obj = ParseQR(
+            file_path=image_path,
+            huey_id=qr_task.id,
+            status="queued",
+        )
+        qr_task_obj.save()
 
     def validate_qr_codes(self, bundle, spec):
         """
