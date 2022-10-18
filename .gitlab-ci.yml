@@ -572,6 +572,7 @@ fedora_build:
     - pip --version
   script:
     - pip install .
+    - pip install -r requirements.txt
     # First, run the unit tests
     - pytest-3 -l --pyargs plom
     # Build tests
