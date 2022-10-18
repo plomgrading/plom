@@ -262,6 +262,15 @@ class ScanService:
         )
         qr_task_obj.save()
 
+    @transaction.atomic
+    def get_qr_code_results(self, bundle, page_index):
+        """
+        Check the results of a QR code scanning task. If done, return
+        the QR code data. Otherwise, return None.
+        """
+        image = StagingImage.objects.get(bundle=bundle, bundle_order=page_index)
+        return image.parsed_qr
+
     def validate_qr_codes(self, bundle, spec):
         """
         Validate qr codes in bundle images (saved to disk) against the spec.

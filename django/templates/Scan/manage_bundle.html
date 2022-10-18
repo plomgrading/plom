@@ -35,11 +35,15 @@
         <div class="col right_navbar">
             <div class="sticky vstack gap-3" height="200px" width="100%">
                 <p>Page {{ one_index }} of {{total_pages }}</p>
-                <form method="post" action="{% url 'scan_read_qr' timestamp %}">
-                    {% csrf_token %}
-                    <input type="submit" value="Read QR" class="btn btn-primary">
-                </form>
+                <a class="btn btn-primary" hx-post="{% url 'scan_read_qr' timestamp %}">Read QR</a>
                 <a class="btn" href="{% url 'scan_home' %}" style="background-color: grey; color: white;">Return to upload</a>
+                {% if qr_results %}
+                <ul>
+                    <li>Test-paper {{ qr_results.paper_id }}</li>
+                    <li>Page {{ qr_results.page_num }}</li>
+                    <li>Version {{ qr_results.version_num }}</li>
+                </ul>
+                {% endif %}
                 <nav>
                     <ul class="pagination justify-content-center">
                         {% if prev_idx >= 0 %}
