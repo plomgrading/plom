@@ -18,6 +18,7 @@ pandas==1.4.4
 passlib==1.7.4
 Pillow==9.2.0
 pymupdf==1.20.2
+PyMySQL==1.0.2
 requests==2.28.1
 requests-toolbelt==0.9.1
 segno==1.5.2
