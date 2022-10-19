@@ -56,6 +56,6 @@ urlpatterns = [
     path(
         "read/<timestamp>/<int:index>/",
         UpdateQRProgressView.as_view(),
-        name="scan_qr_progress"
+        name="scan_qr_progress",
     ),
 ]

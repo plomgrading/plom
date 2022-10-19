@@ -216,10 +216,12 @@ class UpdateQRProgressView(ScannerRequiredView):
         bundle = scanner.get_bundle(timestamp, user)
         task_status = scanner.get_qr_code_reading_status(bundle, index)
 
-        context.update({
-            "timestamp": timestamp,
-            "index": index,
-        })
+        context.update(
+            {
+                "timestamp": timestamp,
+                "index": index,
+            }
+        )
 
         if task_status:
             context.update({"in_progress": True})
@@ -233,7 +235,9 @@ class UpdateQRProgressView(ScannerRequiredView):
                 }
                 context.update({"qr_results": qr_results})
             if task_status == "error":
-                context.update({"error": scanner.get_qr_code_error_message(bundle, index)})
+                context.update(
+                    {"error": scanner.get_qr_code_error_message(bundle, index)}
+                )
         return context
 
     def get(self, request, timestamp, index):
