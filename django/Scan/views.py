@@ -172,17 +172,24 @@ class ManageBundleView(ScannerRequiredView):
         if index >= n_pages:
             raise Http404("Bundle page does not exist.")
 
+        pages = [scanner.get_qr_code_reading_status(bundle, i) for i in range(n_pages)]
+        qr_finished = scanner.is_bundle_reading_started(bundle)
+
         # create a template-readable dict from QR code results
         task_status = scanner.get_qr_code_reading_status(bundle, index)
 
         if task_status == "complete":
             qr_data = scanner.get_qr_code_results(bundle, index)
-            code = list(qr_data.values())[0]  # get the first sub-dict
-            qr_results = {
-                "paper_id": code["paper_id"],
-                "page_num": code["page_num"],
-                "version_num": code["version_num"],
-            }
+            print(qr_data)
+            if qr_data:
+                code = list(qr_data.values())[0]  # get the first sub-dict
+                qr_results = {
+                    "paper_id": code["paper_id"],
+                    "page_num": code["page_num"],
+                    "version_num": code["version_num"],
+                }
+            else:
+                qr_results = None
         elif task_status == "error":
             context.update({"error": scanner.get_qr_code_error_message(bundle, index)})
             qr_results = None
@@ -193,6 +200,8 @@ class ManageBundleView(ScannerRequiredView):
             {
                 "slug": bundle.slug,
                 "timestamp": timestamp,
+                "pages": pages,
+                "qr_finished": qr_finished,
                 "index": index,
                 "one_index": index + 1,
                 "total_pages": n_pages,

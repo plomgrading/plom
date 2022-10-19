@@ -1,0 +1,73 @@
+{% extends "base/base.html" %}
+{% block title %}Web Plom - Scan{% endblock %}
+{% block page_heading %}Manage bundle &mdash; {{ slug }}.pdf{% endblock %}
+
+{% block main_content %}
+<style>
+    .pdfs { grid-area: left;}
+    .right_navbar { 
+        grid-area: right;
+        min-height: 50vh;
+    }
+    .grid-container {
+        display: grid;
+        grid-template-areas:
+        "left left left left right right"
+    }
+    div.sticky {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        background-color: {{ navbar_colour }};
+        text-align: center;
+        padding: 15px 0px;
+        min-height: 50vh;
+    }
+</style>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-10">
+            <div class="d-flex justify-content-center">
+                <img 
+                    src="{% url 'scan_get_image' timestamp index %}"
+                    class="w-75"
+                >
+            </div>
+        </div>
+        <div class="col right_navbar">
+            <div class="sticky d-flex vstack gap-3" height="200px" width="100%">
+                <p>Page {{ one_index }} of {{total_pages }}</p>
+                <a class="btn btn-primary" hx-post="{% url 'scan_read_qr' timestamp %}">Read bundle QR codes</a>
+                <a class="btn" href="{% url 'scan_home' %}" style="background-color: grey; color: white;">Return to upload</a>
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if prev_idx >= 0 %}
+                        <li class="page-item">
+                            <a 
+                                class="page-link" 
+                                href="{% url 'scan_manage_bundle' timestamp prev_idx %}" 
+                                id="scan_page_prev"
+                            >
+                                Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if next_idx < total_pages %}
+                        <li class="page-item">
+                            <a 
+                                class="page-link" 
+                                href="{% url 'scan_manage_bundle' timestamp next_idx %}" 
+                                id="scan_page_next"
+                            >
+                                Next
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="load"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
