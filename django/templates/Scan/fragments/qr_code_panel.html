@@ -1,0 +1,21 @@
+{% if in_progress %}
+<div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s">
+    {% if qr_results %}
+    <ul>
+        <li>Test-paper {{ qr_results.paper_id }}</li>
+        <li>Page {{ qr_results.page_num }}</li>
+        <li>Version {{ qr_results.version_num }}</li>
+    </ul>
+    {% elif task_status == 'error' %}
+    <p class="text-danger">{{ error }}</p>
+    {% else %}
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border"></div>
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="d-flex justify-content-center">
+    <p>Ready to read QR codes.</p>
+</div>
+{% endif %}

@@ -8,6 +8,7 @@ from Scan.views import (
     BundleSplittingProgressView,
     BundleSplittingUpdateView,
     ManageBundleView,
+    UpdateQRProgressView,
     GetBundleView,
     GetBundleImageView,
     RemoveBundleView,
@@ -51,5 +52,10 @@ urlpatterns = [
         "read/<timestamp>",
         ReadQRcodesView.as_view(),
         name="scan_read_qr",
+    ),
+    path(
+        "read/<timestamp>/<int:index>/",
+        UpdateQRProgressView.as_view(),
+        name="scan_qr_progress"
     ),
 ]

@@ -7,6 +7,7 @@
     .pdfs { grid-area: left;}
     .right_navbar { 
         grid-area: right;
+        min-height: 50vh;
     }
     .grid-container {
         display: grid;
@@ -20,6 +21,7 @@
         background-color: {{ navbar_colour }};
         text-align: center;
         padding: 15px 0px;
+        min-height: 50vh;
     }
 </style>
 <div class="container">
@@ -33,23 +35,10 @@
             </div>
         </div>
         <div class="col right_navbar">
-            <div class="sticky vstack gap-3" height="200px" width="100%">
+            <div class="sticky d-flex vstack gap-3" height="200px" width="100%">
                 <p>Page {{ one_index }} of {{total_pages }}</p>
-                <a class="btn btn-primary" hx-post="{% url 'scan_read_qr' timestamp %}">Read QR</a>
+                <a class="btn btn-primary" hx-post="{% url 'scan_read_qr' timestamp %}">Read bundle QR codes</a>
                 <a class="btn" href="{% url 'scan_home' %}" style="background-color: grey; color: white;">Return to upload</a>
-                {% if qr_results %}
-                <ul>
-                    <li>Test-paper {{ qr_results.paper_id }}</li>
-                    <li>Page {{ qr_results.page_num }}</li>
-                    <li>Version {{ qr_results.version_num }}</li>
-                </ul>
-                {% elif task_status == 'error' %}
-                <p class="text-danger">{{ error }}</p>
-                {% elif task_status %}
-                <div class="d-flex justify-content-center">
-                    <div class="spinner-border"></div>
-                </div>
-                {% endif %}
                 <nav>
                     <ul class="pagination justify-content-center">
                         {% if prev_idx >= 0 %}
@@ -76,6 +65,7 @@
                         {% endif %}
                     </ul>
                 </nav>
+                <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="load"></div>
             </div>
         </div>
     </div>
