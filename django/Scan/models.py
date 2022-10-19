@@ -48,3 +48,5 @@ class ParseQR(HueyTask):
     """
 
     file_path = models.TextField(default="")
+    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
+    page_index = models.PositiveIntegerField(null=True)

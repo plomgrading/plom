@@ -172,6 +172,23 @@ class ManageBundleView(ScannerRequiredView):
         if index >= n_pages:
             raise Http404("Bundle page does not exist.")
 
+        # create a template-readable dict from QR code results
+        task_status = scanner.get_qr_code_reading_status(bundle, index)
+
+        if task_status == "complete":
+            qr_data = scanner.get_qr_code_results(bundle, index)
+            code = list(qr_data.values())[0]  # get the first sub-dict
+            qr_results = {
+                "paper_id": code["paper_id"],
+                "page_num": code["page_num"],
+                "version_num": code["version_num"],
+            }
+        elif task_status == "error":
+            context.update({"error": scanner.get_qr_code_error_message(bundle, index)})
+            qr_results = None
+        else:
+            qr_results = None
+
         context.update(
             {
                 "slug": bundle.slug,
@@ -181,9 +198,56 @@ class ManageBundleView(ScannerRequiredView):
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
+                "task_status": task_status,
+                "qr_results": qr_results,
             }
         )
         return render(request, "Scan/manage_bundle.html", context)
+
+
+class UpdateQRProgressView(ScannerRequiredView):
+    """
+    Get the progress of a background QR code reading task.
+    """
+
+    def build_context(self, timestamp, user, index):
+        context = super().build_context()
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, user)
+        task_status = scanner.get_qr_code_reading_status(bundle, index)
+
+        context.update(
+            {
+                "timestamp": timestamp,
+                "index": index,
+            }
+        )
+
+        if task_status:
+            context.update({"in_progress": True})
+            qr_data = scanner.get_qr_code_results(bundle, index)
+            if qr_data:
+                code = list(qr_data.values())[0]  # get the first sub-dict
+                qr_results = {
+                    "paper_id": code["paper_id"],
+                    "page_num": code["page_num"],
+                    "version_num": code["version_num"],
+                }
+                context.update({"qr_results": qr_results})
+            if task_status == "error":
+                context.update(
+                    {"error": scanner.get_qr_code_error_message(bundle, index)}
+                )
+        return context
+
+    def get(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        context = self.build_context(timestamp, request.user, index)
+        return render(request, "Scan/fragments/qr_code_panel.html", context)
 
 
 class RemoveBundleView(ScannerRequiredView):
@@ -285,4 +349,4 @@ class ReadQRcodesView(ScannerRequiredView):
         #     reverse("scan_manage_bundle", args=(str(timestamp)))
         # )
 
-        return HttpResponse("Done")
+        return HttpResponseClientRefresh()

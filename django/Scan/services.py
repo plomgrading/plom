@@ -251,16 +251,46 @@ class ScanService:
         """
         imgs = StagingImage.objects.filter(bundle=bundle)
         for page in imgs:
-            self.qr_codes_tasks(page.file_path)
+            self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
 
-    def qr_codes_tasks(self, image_path):
+    def qr_codes_tasks(self, bundle, page_index, image_path):
         qr_task = self._huey_parse_qr_code(image_path)
         qr_task_obj = ParseQR(
+            bundle=bundle,
+            page_index=page_index,
             file_path=image_path,
             huey_id=qr_task.id,
             status="queued",
         )
         qr_task_obj.save()
+
+    @transaction.atomic
+    def get_qr_code_results(self, bundle, page_index):
+        """
+        Check the results of a QR code scanning task. If done, return
+        the QR code data. Otherwise, return None.
+        """
+        image = StagingImage.objects.get(bundle=bundle, bundle_order=page_index)
+        return image.parsed_qr
+
+    @transaction.atomic
+    def get_qr_code_reading_status(self, bundle, page_index):
+        """
+        Get the status of a QR code reading task. If it doesn't exist, return None.
+        """
+        try:
+            task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
+            return task.status
+        except ParseQR.DoesNotExist:
+            return None
+
+    @transaction.atomic
+    def get_qr_code_error_message(self, bundle, page_index):
+        """
+        Get the error message of a QR code reading task.
+        """
+        task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
+        return task.message
 
     def validate_qr_codes(self, bundle, spec):
         """
