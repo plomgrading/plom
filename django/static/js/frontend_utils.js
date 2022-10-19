@@ -16,7 +16,6 @@ let cancelBtn = document.getElementById('cancel');
 // login.html
 let showPassword = document.getElementById('check-password');
 
-
 function generateRandomUsername() {
 
     generateUsernameBtn.addEventListener('click', () => {

@@ -166,8 +166,12 @@ class LoginView(View):
             return redirect("home")
         else:
             username = request.POST.get("username")
+            temp_username = User.objects.filter(username__iexact=username).values()
+            if not temp_username.exists():
+                messages.info(request, "User does not exist!")
+                return render(request, self.template_name)
             password = request.POST.get("password")
-            user = authenticate(request, username=username, password=password)
+            user = authenticate(request, username=temp_username[0]['username'], password=password)
             if user is not None:
                 login(request, user)
                 return redirect("home")
