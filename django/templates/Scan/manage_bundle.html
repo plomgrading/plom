@@ -43,6 +43,12 @@
                     <li>Page {{ qr_results.page_num }}</li>
                     <li>Version {{ qr_results.version_num }}</li>
                 </ul>
+                {% elif task_status == 'error' %}
+                <p class="text-danger">{{ error }}</p>
+                {% elif task_status %}
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border"></div>
+                </div>
                 {% endif %}
                 <nav>
                     <ul class="pagination justify-content-center">
