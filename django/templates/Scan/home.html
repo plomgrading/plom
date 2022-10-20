@@ -49,11 +49,16 @@
                         <img 
                             src="{% url 'scan_get_image' bundle.timestamp 0 %}"
                             class="border rounded-start"
-                            style="max-height: 10em;"
+                            style="max-height: 12em;"
                         >
                         <div class="p-2">
                             <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
-                            <p class="card-text">Uploaded {{ bundle.time_uploaded }}</p>
+                            <p class="card-subtitle">Uploaded {{ bundle.time_uploaded }}</p>
+                            <ul class="list-unstyled">
+                                <li>Total pages: {{ bundle.pages }}</li>
+                                <li>Processed pages: {{ bundle.n_read }}</li>
+                                <li>Pushed pages: 0</li>
+                            </ul>
                             <a 
                                 class="btn btn-primary" 
                                 href="{% url 'scan_manage_bundle' bundle.timestamp 0 %}"

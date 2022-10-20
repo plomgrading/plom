@@ -1,19 +1,27 @@
 {% if in_progress %}
-<div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s">
     {% if qr_results %}
-    <ul>
-        <li>Test-paper {{ qr_results.paper_id }}</li>
-        <li>Page {{ qr_results.page_num }}</li>
-        <li>Version {{ qr_results.version_num }}</li>
-    </ul>
+    <div>
+        <h5 class="text-center">
+            <i class="bi bi-check-circle text-success"></i>
+            Page QR codes parsed
+        </h5>
+        <ul>
+            <li>Test-paper {{ qr_results.paper_id }}</li>
+            <li>Page {{ qr_results.page_num }}</li>
+            <li>Version {{ qr_results.version_num }}</li>
+        </ul>
+    </div>
     {% elif task_status == 'error' %}
-    <p class="text-danger">{{ error }}</p>
+    <div>
+        <p class="text-danger">{{ error }}</p>
+    </div>
     {% else %}
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border"></div>
+    <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s">
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border"></div>
+        </div>
     </div>
     {% endif %}
-</div>
 {% else %}
 <div class="d-flex justify-content-center">
 </div>

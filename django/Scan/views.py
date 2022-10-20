@@ -21,7 +21,8 @@ from Scan.services import ScanService
 
 class ScannerHomeView(ScannerRequiredView):
     """
-    Hello, world!
+    Display an upload form for bundle PDFs, and a dashboard of previously uploaded/staged
+    bundles.
     """
 
     def build_context(self, user):
@@ -51,6 +52,8 @@ class ScannerHomeView(ScannerRequiredView):
                     "slug": bundle.slug,
                     "timestamp": bundle.timestamp,
                     "time_uploaded": arrow.get(date_time).humanize(),
+                    "pages": scanner.get_n_images(bundle),
+                    "n_read": scanner.get_n_complete_reading_tasks(bundle),
                 }
             )
         context.update({"bundles": bundles})
@@ -175,27 +178,6 @@ class ManageBundleView(ScannerRequiredView):
         pages = [scanner.get_qr_code_reading_status(bundle, i) for i in range(n_pages)]
         qr_finished = scanner.is_bundle_reading_started(bundle)
 
-        # create a template-readable dict from QR code results
-        task_status = scanner.get_qr_code_reading_status(bundle, index)
-
-        if task_status == "complete":
-            qr_data = scanner.get_qr_code_results(bundle, index)
-            print(qr_data)
-            if qr_data:
-                code = list(qr_data.values())[0]  # get the first sub-dict
-                qr_results = {
-                    "paper_id": code["paper_id"],
-                    "page_num": code["page_num"],
-                    "version_num": code["version_num"],
-                }
-            else:
-                qr_results = None
-        elif task_status == "error":
-            context.update({"error": scanner.get_qr_code_error_message(bundle, index)})
-            qr_results = None
-        else:
-            qr_results = None
-
         context.update(
             {
                 "slug": bundle.slug,
@@ -207,8 +189,6 @@ class ManageBundleView(ScannerRequiredView):
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
-                "task_status": task_status,
-                "qr_results": qr_results,
             }
         )
         return render(request, "Scan/manage_bundle.html", context)

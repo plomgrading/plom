@@ -301,6 +301,14 @@ class ScanService:
 
         return len(bundle_tasks) > 0 and len(non_todo_bundle_tasks) > 0
 
+    @transaction.atomic
+    def get_n_complete_reading_tasks(self, bundle):
+        """
+        Return the number of ParseQR tasks with the status 'complete'
+        """
+        complete_tasks = ParseQR.objects.filter(bundle=bundle, status="complete")
+        return len(complete_tasks)
+
     def validate_qr_codes(self, bundle, spec):
         """
         Validate qr codes in bundle images (saved to disk) against the spec.
