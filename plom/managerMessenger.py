@@ -1387,9 +1387,7 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def createModifyUser(self, someuser, password, justInitUser=False):
-        # justInitUser kwarg: if true, fail on username already existing, don't
-        # change password
+    def createUser(self, someuser, password):
         self.SRmutex.acquire()
         try:
             response = self.post(
@@ -1398,7 +1396,6 @@ class ManagerMessenger(BaseMessenger):
                     "user": self.user,
                     "token": self.token,
                     "password": password,
-                    "justInit": justInitUser,
                 },
             )
             response.raise_for_status()
@@ -1410,10 +1407,32 @@ class ManagerMessenger(BaseMessenger):
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-        if response.status_code == 201:
+        if response.status_code == 200:
             return [True, "User created."]
-        if response.status_code == 202:
-            return [True, "User password updated"]
+        raise PlomSeriousException(f"Unexpected {response.status_code}") from None
+
+    def changeUserPassword(self, someuser, password):
+        self.SRmutex.acquire()
+        try:
+            response = self.post(
+                f"/authorisation/{someuser}/update",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "password": password,
+                },
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 406:
+                return [False, response.text]
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        if response.status_code == 200:
+            return [True, "User password updated."]
         raise PlomSeriousException(f"Unexpected {response.status_code}") from None
 
     def MrevertTask(self, code):

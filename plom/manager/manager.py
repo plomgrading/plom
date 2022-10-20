@@ -2716,16 +2716,14 @@ class Manager(QWidget):
         user = self.ui.userListTW.item(r, 0).text()
         cpwd = UserDialog(self, f'Change password for "{user}"', name=user)
         if cpwd.exec() == QDialog.Accepted:
-            rval = self.msgr.createModifyUser(user, cpwd.password)
+            rval = self.msgr.changeUserPassword(user, cpwd.password)
             InfoMsg(self, rval[1]).exec()
         return
 
     def createUser(self):
         cpwd = UserDialog(self, "Create new user", name=None)
         if cpwd.exec() == QDialog.Accepted:
-            rval = self.msgr.createModifyUser(
-                cpwd.name, cpwd.password, justInitUser=True
-            )
+            rval = self.msgr.createUser(cpwd.name, cpwd.password)
             InfoMsg(self, rval[1]).exec()
             self.refreshUserList()
         return

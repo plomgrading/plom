@@ -77,23 +77,32 @@ class UserInitHandler:
         return web.Response(status=200)
 
     # @routes.post("/authorisation/{user}")
-    @authenticate_by_token_required_fields(["password", "justInit"])
+    @authenticate_by_token_required_fields(["password"])
     @write_admin
-    def createModifyUser(self, data, request):
-        """Update password of existing user, or create new user."""
+    def createUser(self, data, request):
+        """Create a new user."""
         theuser = request.match_info["user"]
-        ok, val = self.server.createModifyUser(
-            theuser, data["password"], justInitUser=data["justInit"]
-        )
+        ok, val = self.server.createUser(theuser, data["password"])
         if not ok:
-            log.info('Manager failed to create/modify user "%s"', theuser)
+            log.info('Manager failed to create user "%s"', theuser)
             return web.HTTPNotAcceptable(reason=val)
-        if val:
-            log.info('Manager created new user "%s"', theuser)
-            return web.Response(status=201)
         else:
-            log.info('Manager updated password of user "%s"', theuser)
-            return web.Response(status=202)
+            log.info('Manager created new user "%s"', theuser)
+            return web.Response(status=200)
+
+    # @routes.post("/authorisation/{user}/update")
+    @authenticate_by_token_required_fields(["password"])
+    @write_admin
+    def changeUserPassword(self, data, request):
+        """Change an existing user's password."""
+        theuser = request.match_info["user"]
+        ok, val = self.server.changeUserPassword(theuser, data["password"])
+        if not ok:
+            log.info('Manager failed to change the password of user "%s"', theuser)
+            return web.HTTPNotAcceptable(reason=val)
+        else:
+            log.info('Manager changed password of user "%s"', theuser)
+            return web.Response(status=200)
 
     # @routes.put("/enable/{user}")
     @authenticate_by_token_required_fields([])
@@ -214,6 +223,7 @@ class UserInitHandler:
         router.add_put("/info/spec", self.put_spec)
         router.add_delete("/authorisation", self.clearAuthorisation)
         router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
-        router.add_post("/authorisation/{user}", self.createModifyUser)
+        router.add_post("/authorisation/{user}", self.createUser)
+        router.add_post("/authorisation/{user}/update", self.changeUserPassword)
         router.add_put("/enable/{user}", self.enableUser)
         router.add_put("/disable/{user}", self.disableUser)

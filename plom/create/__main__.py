@@ -7,6 +7,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2022 Edith Coates
 
 """Plom tools related to producing papers, and setting up servers.
 
@@ -363,6 +364,11 @@ def get_parser():
         """,
     )
     sp.add_argument(
+        "--update",
+        action="store_true",
+        help="Update an existing user's password."
+    )
+    sp.add_argument(
         "username",
         nargs="?",
         help="The username",
@@ -656,7 +662,11 @@ def main():
             else:
                 pwd = simple_password()
                 print(f'Creating/updating user with password "{pwd}"')
-            ok, msg = msgr.createModifyUser(args.username, pwd)
+
+            if args.update:
+                ok, msg = msgr.changeUserPassword(args.username, pwd)
+            else:
+                ok, msg = msgr.createUser(args.username, pwd)
         finally:
             msgr.closeUser()
             msgr.stop()
@@ -699,7 +709,7 @@ def main():
             all_ok = True
             try:
                 for user, pw in users.items():
-                    ok, msg = msgr.createModifyUser(user, pw)
+                    ok, msg = msgr.createUser(user, pw)
                     if ok:
                         print(f'  user "{user}" success:\t{msg}')
                     else:
