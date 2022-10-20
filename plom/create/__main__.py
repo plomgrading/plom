@@ -364,9 +364,7 @@ def get_parser():
         """,
     )
     sp.add_argument(
-        "--update",
-        action="store_true",
-        help="Update an existing user's password."
+        "--update", action="store_true", help="Update an existing user's password."
     )
     sp.add_argument(
         "username",
