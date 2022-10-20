@@ -302,6 +302,18 @@ class ScanService:
         return len(bundle_tasks) > 0 and len(non_todo_bundle_tasks) > 0
 
     @transaction.atomic
+    def is_bundle_reading_ongoig(self, bundle):
+        """
+        Return True if there are at least one ParseQR tasks without the status 'todo',
+        'complete', or 'error'.
+        """
+        bundle_tasks = ParseQR.objects.filter(bundle=bundle)
+        ongoing_tasks = bundle_tasks.filter(status="queued") | bundle_tasks.filter(
+            status="started"
+        )
+        return len(bundle_tasks) > 0 and len(ongoing_tasks) > 0
+
+    @transaction.atomic
     def get_n_complete_reading_tasks(self, bundle):
         """
         Return the number of ParseQR tasks with the status 'complete'

@@ -16,7 +16,7 @@
         <p class="text-danger">{{ error }}</p>
     </div>
     {% else %}
-    <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s">
+    <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s" hx-swap="outerHTML">
         <div class="d-flex justify-content-center">
             <div class="spinner-border"></div>
         </div>

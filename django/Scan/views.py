@@ -239,6 +239,32 @@ class UpdateQRProgressView(ScannerRequiredView):
         return render(request, "Scan/fragments/qr_code_panel.html", context)
 
 
+class QRParsingProgressAlert(ScannerRequiredView):
+    """
+    Display and update an alert while QR code reading is in progress.
+    """
+
+    def get(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        context = self.build_context()
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, request.user)
+        context.update(
+            {
+                "reading_ongoing": scanner.is_bundle_reading_ongoig(bundle),
+                "total_pages": scanner.get_n_images(bundle),
+                "total_complete": scanner.get_n_complete_reading_tasks(bundle),
+                "timestamp": timestamp,
+            }
+        )
+
+        return render(request, "Scan/fragments/qr_code_alert.html", context)
+
+
 class RemoveBundleView(ScannerRequiredView):
     """
     Delete an uploaded bundle

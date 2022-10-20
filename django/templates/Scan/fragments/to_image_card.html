@@ -3,6 +3,7 @@
     style="min-width: fit-content;"
     hx-get="{% url 'scan_image_update' timestamp %}"
     hx-trigger="every 1s"
+    hx-swap="outerHTML"
 >
     <div class="card-body">
         <h2 class="card-title m-4 mt-2">Uploading bundle</h2>
