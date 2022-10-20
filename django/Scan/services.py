@@ -3,7 +3,6 @@
 # Copyright (C) 2022 Brennen Chiu
 
 from asyncore import write
-from operator import index
 import pathlib
 import hashlib
 import fitz
@@ -291,6 +290,36 @@ class ScanService:
         """
         task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
         return task.message
+
+    @transaction.atomic
+    def is_bundle_reading_started(self, bundle):
+        """
+        Return True if there are at least one ParseQR tasks without the status 'todo'
+        """
+        bundle_tasks = ParseQR.objects.filter(bundle=bundle)
+        non_todo_bundle_tasks = bundle_tasks.exclude(status="todo")
+
+        return len(bundle_tasks) > 0 and len(non_todo_bundle_tasks) > 0
+
+    @transaction.atomic
+    def is_bundle_reading_ongoig(self, bundle):
+        """
+        Return True if there are at least one ParseQR tasks without the status 'todo',
+        'complete', or 'error'.
+        """
+        bundle_tasks = ParseQR.objects.filter(bundle=bundle)
+        ongoing_tasks = bundle_tasks.filter(status="queued") | bundle_tasks.filter(
+            status="started"
+        )
+        return len(bundle_tasks) > 0 and len(ongoing_tasks) > 0
+
+    @transaction.atomic
+    def get_n_complete_reading_tasks(self, bundle):
+        """
+        Return the number of ParseQR tasks with the status 'complete'
+        """
+        complete_tasks = ParseQR.objects.filter(bundle=bundle, status="complete")
+        return len(complete_tasks)
 
     def validate_qr_codes(self, bundle, spec):
         """
