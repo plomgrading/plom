@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Chris Jin
+# Copyright (C) 2022 Brennen Chiu
 
 import json
 import logging
@@ -291,10 +292,23 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     server_info = get_server_info(basedir)
     log.info(f'Working from directory "{basedir}"')
     if (basedir / specdir / "plom.db").exists():
-        log.info("Using existing database.")
+        log.info("Using existing Sqlite database.")
     else:
         log.info("Database is not yet present: creating...")
-    examDB = PlomDB(basedir / specdir / "plom.db")
+    db_name = server_info.get("db_name", None)
+    db_host = server_info.get("db_host", None)
+    db_port = server_info.get("db_port", None)
+    db_username = server_info.get("db_username", None)
+    db_password = server_info.get("db_password", None)
+    examDB = PlomDB(
+        basedir / specdir / "plom.db",
+        db_name=db_name,
+        db_host=db_host,
+        db_port=db_port,
+        db_username=db_username,
+        db_password=db_password,
+    )
+
     if (basedir / specdir / "classlist.csv").exists():
         log.info("Classlist is present.")
     else:
