@@ -8,9 +8,9 @@ import logging
 
 import peewee as pw
 
-from plom.db.tables import plomdb
 from plom.db.tables import IDGroup, QGroup, User
 from plom.misc_utils import datetime_to_json
+
 
 log = logging.getLogger("DB")
 
@@ -44,7 +44,7 @@ def setUserPasswordHash(self, uname, passwordHash):
     uref = User.get_or_none(name=uname)
     if uref is None:
         return False
-    with plomdb.atomic():
+    with self._db.atomic():
         uref.password = passwordHash
         uref.last_activity = datetime.now(timezone.utc)
         uref.last_action = "Password set"
@@ -72,7 +72,7 @@ def enableUser(self, uname):
     uref = User.get_or_none(name=uname)
     if uref is None:
         return False
-    with plomdb.atomic():
+    with self._db.atomic():
         uref.enabled = True
         uref.save()
     return True
@@ -84,7 +84,7 @@ def disableUser(self, uname):
     if uref is None:
         return False
     # set enabled flag to false and remove their token
-    with plomdb.atomic():
+    with self._db.atomic():
         uref.enabled = False
         uref.token = None
         uref.save()
@@ -98,7 +98,7 @@ def setUserToken(self, uname, token, msg="Log on"):
     uref = User.get_or_none(name=uname)
     if uref is None:
         return False
-    with plomdb.atomic():
+    with self._db.atomic():
         uref.token = token
         uref.last_activity = datetime.now(timezone.utc)
         uref.last_action = msg
@@ -186,7 +186,7 @@ def resetUsersToDo(self, uname):
     uref = User.get_or_none(name=uname)
     if uref is None:
         return
-    with plomdb.atomic():
+    with self._db.atomic():
         query = IDGroup.select().where(IDGroup.user == uref, IDGroup.status == "out")
         for x in query:
             x.status = "todo"
@@ -194,7 +194,7 @@ def resetUsersToDo(self, uname):
             x.time = datetime.now(timezone.utc)
             x.save()
             log.info("Reset user {} ID task {}".format(uname, x.group.gid))
-    with plomdb.atomic():
+    with self._db.atomic():
         query = QGroup.select().where(
             QGroup.user == uref,
             QGroup.status == "out",

@@ -9,7 +9,6 @@ import logging
 from plom.comment_utils import generate_new_comment_ID
 from plom.misc_utils import datetime_to_json
 from plom.db.tables import Rubric, User, Test, QGroup
-from plom.db.tables import plomdb
 
 
 log = logging.getLogger("DB")
@@ -45,7 +44,7 @@ def McreateRubric(self, user_name, rubric):
             rubric = rubric.copy()  # in case caller uses reference
             rubric[f] = ""
     uref = User.get(name=user_name)  # authenticated, so not-None
-    with plomdb.atomic():
+    with self._db.atomic():
         # build unique key while holding atomic access
         key = generate_new_comment_ID()
         while Rubric.get_or_none(key=key) is not None:
@@ -134,7 +133,7 @@ def MmodifyRubric(self, user_name, key, change):
     if rref is None:
         return (False, "noSuchRubric")
 
-    with plomdb.atomic():
+    with self._db.atomic():
         rref.kind = change["kind"]
         rref.delta = change["delta"]
         rref.text = change["text"]
