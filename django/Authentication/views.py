@@ -153,6 +153,7 @@ class Home(LoginRequiredMixin, View):
         return render(request, self.home_page, context, status=200)
 
 
+# Login the user
 class LoginView(View):
     template_name = "Authentication/login.html"
 
@@ -209,7 +210,10 @@ class SignupManager(AdminRequiredView):
 
     def post(self, request):
         form = CreateManagerForm(request.POST)
-        if form.is_valid():
+        username = request.POST.get("username")
+        exist_username = User.objects.filter(username__iexact=username)
+        context = self.build_context()
+        if form.is_valid() and not exist_username.exists():
             user = form.save()
             user.refresh_from_db()
             user.profile.email = form.cleaned_data.get("email")
@@ -219,7 +223,6 @@ class SignupManager(AdminRequiredView):
             user.is_active = False
             user.save()
             link = generate_link(request, user)
-            context = self.build_context()
             context.update(
                 {
                     "user_email": user.profile.email,
@@ -228,7 +231,9 @@ class SignupManager(AdminRequiredView):
             )
             return render(request, self.activation_link, context)
         else:
-            context = self.build_context()
+            if exist_username.exists():
+                context.update({"form": self.form, "error": "A user with that username already exists."})
+                return render(request, self.template_name, context)
             context.update({"form": self.form, "error": form.errors})
             return render(request, self.template_name, context)
 
