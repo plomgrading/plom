@@ -172,7 +172,9 @@ class LoginView(View):
                 messages.info(request, "User does not exist!")
                 return render(request, self.template_name)
             password = request.POST.get("password")
-            user = authenticate(request, username=temp_username[0]['username'], password=password)
+            user = authenticate(
+                request, username=temp_username[0]["username"], password=password
+            )
             if user is not None:
                 login(request, user)
                 return redirect("home")
@@ -232,7 +234,12 @@ class SignupManager(AdminRequiredView):
             return render(request, self.activation_link, context)
         else:
             if exist_username.exists():
-                context.update({"form": self.form, "error": "A user with that username already exists."})
+                context.update(
+                    {
+                        "form": self.form,
+                        "error": "A user with that username already exists.",
+                    }
+                )
                 return render(request, self.template_name, context)
             context.update({"form": self.form, "error": form.errors})
             return render(request, self.template_name, context)
