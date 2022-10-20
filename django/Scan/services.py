@@ -228,9 +228,13 @@ class ScanService:
 
     @db_task(queue="tasks")
     def _huey_parse_qr_code(image_path):
+        """
+        Parse QR codes and save to database in the background 
+        """
         scanner = ScanService()
         code_dict = QRextract(image_path, write_to_file=False)
         page_data = scanner.parse_qr_code([code_dict])
+        # error handling here
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data
         img.save()
@@ -253,6 +257,9 @@ class ScanService:
             self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
 
     def qr_codes_tasks(self, bundle, page_index, image_path):
+        """
+        Task of parsing QR codes.
+        """
         qr_task = self._huey_parse_qr_code(image_path)
         qr_task_obj = ParseQR(
             bundle=bundle,
