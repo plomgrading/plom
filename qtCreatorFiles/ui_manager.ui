@@ -1660,6 +1660,16 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
                       </property>
                      </widget>
                     </item>
+                    <item>
+                     <widget class="QLabel" name="label_23">
+                      <property name="text">
+                       <string>Note: you may see many lines like &amp;ldquo;&lt;tt&gt;UserWarning: X does not have valid feature names...&lt;/tt&gt;&amp;rdquo;  These are probably harmless, see &lt;a href=&quot;https://gitlab.com/plom/plom/-/issues/1840&quot;&gt;Issue #1840&lt;/a&gt;.</string>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
                    </layout>
                   </widget>
                  </item>
