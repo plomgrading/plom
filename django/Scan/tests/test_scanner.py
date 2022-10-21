@@ -22,6 +22,8 @@ class ScanServiceTests(TestCase):
         self.pdf = fitz.Document(
             settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
         )
+        media_folder = settings.BASE_DIR / "media"
+        media_folder.mkdir(exist_ok=True)
         return super().setUp()
 
     def tearDown(self):
