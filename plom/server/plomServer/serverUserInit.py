@@ -147,12 +147,12 @@ def createUser(self, username, password):
 
     if self.DB.doesUserExist(username):
         return [False, "User already exists."]
-    else:
-        passwordHash = self.authority.create_password_hash(password)
-        if self.DB.createUser(username.lower(), passwordHash):
-            return [True, True]
-        else:
-            return [False, "User creation error."]
+
+    passwordHash = self.authority.create_password_hash(password)
+    if self.DB.createUser(username.lower(), passwordHash):
+        return [True, True]
+
+    return [False, "User creation error."]
 
 
 def changeUserPassword(self, username, password):

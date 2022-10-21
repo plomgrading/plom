@@ -90,7 +90,7 @@ class UserInitHandler:
             log.info('Manager created new user "%s"', theuser)
             return web.Response(status=200)
 
-    # @routes.post("/authorisation/{user}/update")
+    # @routes.patch("/authorisation/{user}")
     @authenticate_by_token_required_fields(["password"])
     @write_admin
     def changeUserPassword(self, data, request):
@@ -224,6 +224,6 @@ class UserInitHandler:
         router.add_delete("/authorisation", self.clearAuthorisation)
         router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
         router.add_post("/authorisation/{user}", self.createUser)
-        router.add_post("/authorisation/{user}/update", self.changeUserPassword)
+        router.add_patch("/authorisation/{user}", self.changeUserPassword)
         router.add_put("/enable/{user}", self.enableUser)
         router.add_put("/disable/{user}", self.disableUser)

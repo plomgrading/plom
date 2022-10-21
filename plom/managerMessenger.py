@@ -1414,8 +1414,8 @@ class ManagerMessenger(BaseMessenger):
     def changeUserPassword(self, someuser, password):
         self.SRmutex.acquire()
         try:
-            response = self.post(
-                f"/authorisation/{someuser}/update",
+            response = self.patch(
+                f"/authorisation/{someuser}",
                 json={
                     "user": self.user,
                     "token": self.token,
