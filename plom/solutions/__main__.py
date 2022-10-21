@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom tools for pushing/pulling solution page images to/from a server
@@ -18,7 +18,7 @@ on returning solutions to students please run
 `plom-solutions info`
 """
 
-__copyright__ = "Copyright (C) 2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2021-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -29,6 +29,7 @@ import sys
 from stdiomask import getpass
 
 from plom import __version__
+from plom import Default_Port
 from plom.solutions import clear_manager_login
 from plom.solutions import deleteSolutionImage, putSolutionImage
 from plom.solutions import getSolutionImage
@@ -216,8 +217,25 @@ def get_parser():
     )
 
     for x in (spU, spG, spD, spS, spE, spC):
-        x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-        x.add_argument("-w", "--password", type=str, help='for the "manager" user')
+        x.add_argument(
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help=f"""
+                Which server to contact, port defaults to {Default_Port}.
+                Also checks the environment variable PLOM_SERVER if omitted.
+            """,
+        )
+        x.add_argument(
+            "-w",
+            "--password",
+            type=str,
+            help="""
+                for the "manager" user, also checks the
+                environment variable PLOM_MANAGER_PASSWORD.
+            """,
+        )
 
     return parser
 
