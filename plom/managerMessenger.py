@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Edith Coates
 
 import hashlib
 from io import BytesIO
@@ -1386,12 +1387,16 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def createModifyUser(self, someuser, password):
+    def createUser(self, someuser, password):
         self.SRmutex.acquire()
         try:
             response = self.post(
                 f"/authorisation/{someuser}",
-                json={"user": self.user, "token": self.token, "password": password},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "password": password,
+                },
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1402,10 +1407,32 @@ class ManagerMessenger(BaseMessenger):
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-        if response.status_code == 201:
+        if response.status_code == 200:
             return [True, "User created."]
-        if response.status_code == 202:
-            return [True, "User password updated"]
+        raise PlomSeriousException(f"Unexpected {response.status_code}") from None
+
+    def changeUserPassword(self, someuser, password):
+        self.SRmutex.acquire()
+        try:
+            response = self.patch(
+                f"/authorisation/{someuser}",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "password": password,
+                },
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 406:
+                return [False, response.text]
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        if response.status_code == 200:
+            return [True, "User password updated."]
         raise PlomSeriousException(f"Unexpected {response.status_code}") from None
 
     def MrevertTask(self, code):

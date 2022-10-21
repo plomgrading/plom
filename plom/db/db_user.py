@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Edith Coates
 
 from datetime import datetime, timezone
 import logging
@@ -29,11 +30,10 @@ def createUser(self, uname, passwordHash):
 
 
 def doesUserExist(self, uname):
-    uref = User.get_or_none(name=uname)
-    if uref is None:
-        return False
-    else:
-        return True
+    for uref in User.select():
+        if uname.lower() == uref.name.lower():
+            return True
+    return False
 
 
 def setUserPasswordHash(self, uname, passwordHash):
