@@ -117,6 +117,15 @@ class ScanService:
         bundle.delete()
 
     @transaction.atomic
+    def check_for_duplicate_hash(self, hash):
+        """
+        Check if a PDF has already been uploaded: return True if the hash
+        already exists in the database.
+        """
+        duplicate_hashes = StagingBundle.objects.filter(pdf_hash=hash)
+        return len(duplicate_hashes) > 0
+
+    @transaction.atomic
     def get_bundle(self, timestamp, user):
         """
         Get a bundle from the database. To uniquely identify a bundle, we need
