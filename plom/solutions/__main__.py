@@ -56,6 +56,8 @@ longerHelp = """
     ie solutions for Q3 are on exactly the pages you specified in
     your test spec for Q3, then you can simply run
         `plom-solutions extract --upload`
+    or perhaps
+        `plom-solutions extract --upload --server ...`
   * This will then take pages from your `solutionX.pdf` files and
     combine them into a solution png file for each question/version
     and place the results in the `solutionImages` directory
