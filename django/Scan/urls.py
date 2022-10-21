@@ -14,6 +14,7 @@ from Scan.views import (
     RemoveBundleView,
     ReadQRcodesView,
     QRParsingProgressAlert,
+    PushPageImage,
 )
 
 
@@ -63,5 +64,10 @@ urlpatterns = [
         "read/<timestamp>/alert/",
         QRParsingProgressAlert.as_view(),
         name="scan_qr_alert",
+    ),
+    path(
+        "push/<timestamp>/<int:index>/",
+        PushPageImage.as_view(),
+        name="scan_push_img",
     ),
 ]
