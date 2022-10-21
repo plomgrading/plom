@@ -49,7 +49,7 @@
                                 </li>
                                 {% else %}
                                 <li class="nav-item">
-                                    <p style="text-align: center; padding: 0px 5px; color: white">Welcome <br><b>{{ request.user.username }}</b>!</p>
+                                    <p style="text-align: center; padding: 0px 5px; color: white">Welcome <br><b>{{ request.user.username.lower }}</b>!</p>
                                 </li>
                                 {% endif %}
                                 <li class="nav-item">
