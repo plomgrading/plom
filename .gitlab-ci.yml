@@ -550,7 +550,7 @@ docs_sphinx:
 fedora_build:
   stage: alt_build
   needs: []
-  image: fedora:36
+  image: fedora:37
   when: manual
   allow_failure: true
   before_script:
@@ -566,7 +566,7 @@ fedora_build:
           python3-pip python3-wheel python3-setuptools
           python3-toml python3-weasyprint python3-pillow python3-tqdm python3-appdirs
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn
+          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
           file python3-file-magic
           iproute
     - pip --version
