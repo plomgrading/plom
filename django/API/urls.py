@@ -6,8 +6,7 @@ from django.urls import path
 from rest_framework.authtoken.views import obtain_auth_token
 
 from API.views import (
-    InfoSpec,
-    NumberIncrement,
+    GetSpecification,
     ServerVersion,
     QuestionMaxMark,
     GetClasslist,
@@ -16,8 +15,7 @@ from API.views import (
 
 
 urlpatterns = [
-    path("info/spec/", InfoSpec.as_view(), name="api_info_spec"),
-    path("number/", NumberIncrement.as_view(), name="api_number_increment"),
+    path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
     path("Version/", ServerVersion.as_view(), name="api_server_version"),
     path("MK/maxMark/", QuestionMaxMark.as_view(), name="api_question_mark"),
     path("ID/classlist/", GetClasslist.as_view(), name="api_get_classlist"),
