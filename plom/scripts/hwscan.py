@@ -16,6 +16,7 @@ import os
 from stdiomask import getpass
 
 from plom import __version__
+from plom import Default_Port
 from plom.scan import clear_login
 from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status
@@ -187,8 +188,25 @@ def get_parser():
     )
 
     for x in (spW, spP, spA, spS, spC, spM):
-        x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-        x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
+        x.add_argument(
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help=f"""
+                Which server to contact, port defaults to {Default_Port}.
+                Also checks the environment variable PLOM_SERVER if omitted.
+            """,
+        )
+        x.add_argument(
+            "-w",
+            "--password",
+            type=str,
+            help="""
+                for the "scanner" user', also checks the
+                environment variable PLOM_SCAN_PASSWORD.
+            """,
+        )
 
     return parser
 
