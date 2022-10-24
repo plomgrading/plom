@@ -206,12 +206,7 @@ class Messenger(BaseMessenger):
         try:
             response = self.get(
                 "/MK/maxMark",
-                params={
-                    "user": self.user,
-                    "token": self.token,
-                    "q": question,
-                    "v": ver,
-                },
+                json={"user": self.user, "token": self.token, "q": question, "v": ver},
             )
             # throw errors when response code != 200.
             response.raise_for_status()

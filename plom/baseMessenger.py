@@ -71,7 +71,7 @@ class BaseMessenger:
             server = "127.0.0.1"
         self.server = "{}:{}".format(server, port)
         self.SRmutex = threading.Lock()
-        # base = "http://{}:{}/".format(s, mp)
+        # base = "https://{}:{}/".format(s, mp)
         self.verify_ssl = verify_ssl
         if not self.verify_ssl:
             self._shutup_urllib3()
@@ -116,27 +116,27 @@ class BaseMessenger:
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.get(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.get(f"https://{self.server}" + url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.post(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.post(f"https://{self.server}" + url, *args, **kwargs)
 
     def put(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.put(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.put(f"https://{self.server}" + url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.delete(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.delete(f"https://{self.server}" + url, *args, **kwargs)
 
     def patch(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.patch(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.patch(f"https://{self.server}" + url, *args, **kwargs)
 
     def start(self):
         """Start the messenger session.
@@ -151,7 +151,7 @@ class BaseMessenger:
             self.session = requests.Session()
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
-            self.session.mount("http://", requests.adapters.HTTPAdapter(max_retries=2))
+            self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=2))
             self.session.verify = self.verify_ssl
 
         try:
@@ -208,38 +208,6 @@ class BaseMessenger:
     # Authentication stuff
 
     def requestAndSaveToken(self, user, pw):
-        """
-        Get an authorisation token from WebPlom.
-        """
-        self.SRmutex.acquire()
-        response = self.post(
-            "/get_token/",
-            json={
-                "username": user,
-                "password": pw,
-            },
-            timeout=5,
-        )
-        try:
-            response.raise_for_status()
-            self.token = response.json()
-            self.user = user
-        except requests.HTTPError as e:
-            if response.status_code == 400:
-                raise PlomAuthenticationException(response.json()) from None
-            elif response.status_code == 401:
-                raise PlomAPIException(response.json()) from None
-            elif response.status_code == 409:
-                raise PlomExistingLoginException(response.json()) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        except requests.ConnectionError as err:
-            raise PlomSeriousException(
-                f"Cannot connect to server {self.server}\n{err}\n\nPlease check details and try again."
-            ) from None
-        finally:
-            self.SRmutex.release()
-
-    def _requestAndSaveToken(self, user, pw):
         """Get a authorisation token from the server.
 
         The token is then used to authenticate future transactions with the server.
