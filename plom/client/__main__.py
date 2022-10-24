@@ -100,12 +100,10 @@ def get_parser():
         "--server",
         metavar="SERVER[:PORT]",
         action="store",
-        help="""
-            Which server to contact, port defaults to {}.
-            Also checks the environment variable {} if omitted.
-            """.format(
-            Default_Port, "PLOM_SERVER"
-        ),
+        help=f"""
+            Which server to contact, port defaults to {Default_Port}.
+            Also checks the environment variable PLOM_SERVER if omitted.
+        """,
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
