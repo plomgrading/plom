@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2022 Edith Coates
 
 """Chooser dialog"""
 
@@ -45,6 +46,7 @@ from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQ
 from .useful_classes import ClientSettingsDialog
 
 from plom.messenger import ManagerMessenger
+from plom.webPlomMessenger import WebPlomMessenger
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -76,11 +78,12 @@ def readLastTime():
 
 
 class Chooser(QDialog):
-    def __init__(self, Qapp):
+    def __init__(self, Qapp, webplom=False):
         self.APIVersion = Plom_API_Version
         super().__init__()
         self.Qapp = Qapp
         self.messenger = None
+        self.webplom = webplom
 
         self.lastTime = readLastTime()
 
@@ -194,6 +197,8 @@ class Chooser(QDialog):
         if not self.messenger:
             if which_subapp == "Manager":
                 self.messenger = ManagerMessenger(server, mport)
+            elif self.webplom:
+                self.messenger = WebPlomMessenger(server, mport)
             else:
                 self.messenger = Messenger(server, mport)
         try:
@@ -428,7 +433,10 @@ class Chooser(QDialog):
         # self.ui.infoLabel.repaint()
 
         if not self.messenger:
-            self.messenger = Messenger(server, mport)
+            if self.webplom:
+                self.messenger = WebPlomMessenger(server, mport)
+            else:
+                self.messenger = Messenger(server, mport)
 
         try:
             try:

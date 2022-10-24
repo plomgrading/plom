@@ -4,6 +4,7 @@ import logging
 import requests
 import os
 
+from plom import __version__
 from plom.plom_exceptions import (
     PlomSSLError,
     PlomConnectionError,
@@ -11,11 +12,11 @@ from plom.plom_exceptions import (
     PlomAPIException,
     PlomExistingLoginException,
     PlomAuthenticationException,
+    PlomServerNotReady,
+    PlomRangeException,
 )
 
 log = logging.getLogger("messenger")
-
-__version__ = "Plom server version 0.12.0.dev with API 55"
 
 
 class WebPlomMessenger:
@@ -36,6 +37,7 @@ class WebPlomMessenger:
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
         """
+
         self.session = None
         self.user = None
         self.token = None
@@ -125,7 +127,7 @@ class WebPlomMessenger:
             self.session = requests.Session()
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
-            self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=2))
+            self.session.mount("http://", requests.adapters.HTTPAdapter(max_retries=2))
             self.session.verify = self.verify_ssl
 
         try:
@@ -219,6 +221,54 @@ class WebPlomMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def get_spec(self):
+        """Get the specification of the exam from the server.
+
+        Returns:
+            dict: the server's spec file, as in :func:`plom.SpecVerifier`.
+
+        Exceptions:
+            PlomServerNotReady: server does not yet have a spec.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get("/info/spec")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomServerNotReady(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def MgetMaxMark(self, question, ver):
+        """Get the maximum mark for this question and version.
+
+        Raises:
+            PlomRangeExeception: `question` or `ver` is out of range or
+                non-integer.
+            PlomAuthenticationException:
+            PlomSeriousException: something unexpected happened.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/MK/maxMark",
+                json={"user": self.user, "token": self.token, "q": question, "v": ver},
+            )
+            # throw errors when response code != 200.
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 400:
+                raise PlomRangeException(response.text) from None
+            if response.status_code == 416:
+                raise PlomRangeException(response.text) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
