@@ -92,7 +92,7 @@ class GetClasslist(APIView):
         sstu = StagingStudentService()
         if sstu.are_there_students():
             students = sstu.get_students()
-            
+
             # TODO: new StudentService or ClasslistService that implements
             # the loop below?
             for s in students:
