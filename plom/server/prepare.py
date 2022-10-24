@@ -105,7 +105,13 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
 
 
 def initialise_server(
-    basedir, *, port=None, name=None, make_selfsigned_keys=True, manager_pw=None
+    basedir,
+    *,
+    port=None,
+    name=None,
+    make_selfsigned_keys=True,
+    manager_pw=None,
+    db_name=None,
 ):
     """Setup various files needed before a Plom server can be started.
 
@@ -119,6 +125,8 @@ def initialise_server(
         make_selfsigned_keys (bool): Defaults to True.
         manager_pw (str/None): the initial manager password.  Can be
             omitted; other ways to set this later.
+        db_name (str/None): the name of the database, with a default
+            randomly generated if `None`.
     """
     if not basedir:
         basedir = Path(".")
@@ -134,7 +142,7 @@ def initialise_server(
 
     print("Copy server networking configuration template into place.")
     try:
-        create_server_config(basedir / confdir, port=port, name=name)
+        create_server_config(basedir / confdir, port=port, name=name, db_name=db_name)
     except FileExistsError as err:
         print(f"Skipping server config - {err}")
     else:

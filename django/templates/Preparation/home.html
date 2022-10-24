@@ -1,262 +1,228 @@
 {% extends "base/base.html" %}
 {% block page_heading %}Prepare assessment{% endblock %}
 {% block main_content %}
-  <div class="d-grid gap-2">
-    <div class="card">
-      <details class="card-body">
-        <summary>
-          Help! What do I do?
-        </summary>
-        <p>
-          <ul>
-            <li>Some minimal doc stubs here.</li>
-          </ul>
+<ul class="list-group ms-3">
+  <li class="list-group-item list-group-item-action">
+    <div class="d-flex align-items-center gap-1">
+      <div class="flex-fill">
+        <p class="fs-4 mb-0">
+          1. Test specification
+          {% if valid_spec and is_spec_the_same %}
+          <i class="bi bi-check-circle text-success"></i>
+          {% endif %}
         </p>
-      </details>
+        <p class="fs-7">&emsp;&ensp; Create a specification for your assessment.</p>    
+      </div>
+      {% if valid_spec and not papers_staged %}
+      <a class="btn btn-success float-end" href="{% url 'spec_summary' %}">View</a>
+      <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_spec' %}" hx-confirm="Are you sure?">Reset</a>
+      <a class="btn btn-primary float-end" href="{% url 'creator_launch' %}">
+        Modify
+        <i class="bi bi-chevron-right"></i>
+      </a>
+      {% elif papers_staged %}
+      <a class="btn btn-success float-end" href="{% url 'spec_summary' %}">View</a>
+      <a disabled>
+        Test-papers in database
+        <i class="bi bi-chevron-down"></i>
+      </a>
+      {% else %}
+      <a class="btn btn-primary float-end" href="{% url 'creator_launch' %}">
+        Create
+        <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
     </div>
-    <div>
-      <div class="card">
-        <div class="card-body">
-          {% if valid_spec %}
-            <h5 class="card-title">
-              Test specification
-              <i class="bi bi-check-circle text-success"></i>
-	          </h5>
-            <p class="card-text">Test specification has been created</p>
-            <strong>{{ spec_longname }}</strong>
-            <p>{{ spec_shortname }}</p>
-            <a class="btn btn-success" href="{% url 'spec_summary' %}">View summary</a>
-            <a class="btn btn-secondary" href="{% url 'generate_spec' %}" download="{{ slugged_spec_shortname }}.toml">Download</a>
-            <btn class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</btn>
+  </li>
 
-            <div class="modal fade" id="deleteModal">
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title">Confirmation</h5>
-                  </div>
-                  <div class="modal-body">
-                    <p>This will clear the test specification.</p>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <form action="{% url 'reset_spec_landing' %}" method="post">
-                      {% csrf_token %}
-                      <input type="submit" class="btn btn-danger" value="Delete">
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          {% else %}
-            <h5 class="card-title">
-              Test specification
-              <i class="bi bi-exclamation-diamond-fill text-primary"></i>
-            </h5>
-            <p class="card-text">Create a test-specification for your assessment.</p>
-            <a class="btn btn-primary" href="{% url 'creator_launch' %}">Create specification</a>
+  <li class="list-group-item list-group-item-action {% if not can_upload_source_tests %}disabled{% endif%}">
+    <div class="d-flex align-items-center gap-1">
+      {% if can_upload_source_tests %}
+      <div class="flex-fill">
+        <p class="fs-4 mb-0">
+          2. Upload sources ({{ uploaded_test_versions }} of {{ test_versions }})
+          {% if all_source_tests_uploaded %}
+          <i class="bi bi-check-circle text-success"></i>
           {% endif %}
-        </div>
+        </p>
+        <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>    
       </div>
+      {% if uploaded_test_versions %}
+      <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_sources' %}" hx-confirm="Are you sure?">Reset</a>
+      {% endif %}
+      <a class="btn btn-primary float-end" href="{% url 'prep_sources' %}">
+        Manage
+        <i class="bi bi-chevron-right"></i>
+      </a>
+      {% else %}
+      <div class="flex-fill">
+        <p class="fs-4 mb-0">2. Upload sources</p>
+        <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>
+      </div>
+      <a>
+        Specification needed
+        <i class="bi bi-chevron-up"></i>
+      </a>
+      {% endif %}
+    </div>    
+  </li>
+
+  <li class="list-group-item list-group-item-action">
+    <div class="d-flex align-items-center gap-1">
+      {% if prename_enabled %}
+      <div class="flex-fill">
+        <p class="fs-4 mb-0">3. Manage prenaming (optional)</p>
+        <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
+      </div>
+      <a disabled>Prenaming enabled</a>
+      {% if not papers_staged %}
+      <a class="btn btn-danger" hx-post="{% url 'prep_prename_toggle' %}">
+        Disable
+      </a>
+      {% endif %}
+      {% else %}
+      <div class="flex-fill">
+        <p class="fs-4 mb-0">3. Manage prenaming (optional)</p>
+        <p class="fs-7">&emsp;&ensp; Enable or disable pre-naming test papers.</p>
+      </div>
+      <a disabled>Prenaming disabled</a>
+      {% if not papers_staged %}
+        <a class="btn btn-success" hx-post="{% url 'prep_prename_toggle' %}">
+          Enable
+        </a>
+      {% endif %}
+      {% endif %}
     </div>
-    <div>
-      <div class="card">
-        <div class="card-body">
-          {% if can_upload_source_tests %}
-            <h5 class="card-title">
-              Source versions &mdash; {{ uploaded_test_versions }} of {{ test_versions }} uploaded
-              {% if all_source_tests_uploaded %}
-                <i class="bi bi-check-circle text-success"></i>
-              {% else %}
-                <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-              {% endif %}
-            </h5>
-            <p class="card-text">Upload source versions of your assessment</p>
-            <a class="btn btn-primary" href="test_source/">Manage sources</a>
-          {% else %}
-            <h5 class="card-title">
-              Source versions <i class="bi bi-caret-up-square-fill text-warning"></i>
-            </h5>
-            <p class="card-text">Cannot upload assessment sources until test specification has been created</p>
+  </li>
+
+  <li class="list-group-item list-group-item-action">
+    <div class="d-flex align-items-center gap-1">
+      <div class="flex-fill">
+        <p class="fs-4 mb-0">
+          3. Upload classlist
+          {% if student_list_present %}
+          <i class="bi bi-check-circle text-success"></i>
           {% endif %}
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">
-              Prenaming &mdash;
-	      {% if prename_enabled %}
-	      enabled <i class="bi bi-check-circle text-warning"></i>
-	      {% else %}
-	      disabled <i class="bi bi-dash-circle text-success"></i>
-	      {% endif %}
-            </h5>
-            <p class="card-text">Do you want to prename your papers?</p>
-            <a class="btn btn-primary" href="{% url 'prep_prename' %}">Manage prenaming</a>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="card">
-        <div class="card-body">
-	  {% if prename_enabled %}
-            <h5 class="card-title">
-              Classlist  &mdash; required
-	      {% if student_list_present %}
-	      &mdash; and present <i class="bi bi-check-circle text-success"></i>
-	      {% else %}
-	      <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-	      {% endif %}
-            </h5>
-
-	    {% if not student_list_present %}
-          <p class="card-text">Please upload a classlist</p>
-	  {% endif %}
-	  
-          <a class="btn btn-primary" href="classlist/">Classlist management</a>
+        </p>
+        <p class="fs-7">
+          &emsp;&ensp; Upload classlist
+          {% if prename_enabled %}
+          (Required with prenaming enabled)
           {% else %}
-            <h5 class="card-title">
-              Classlist  &mdash; optional
-	      {% if student_list_present %}
-	      &mdash; and present <i class="bi bi-check-circle text-success"></i>
-	      {% endif %}
-            </h5>
-	    {% if not student_list_present %}
-          <p class="card-text">Do you want to upload a classlist? You can do this later since prenaming is not enabled</p>
-	  {% endif %}
-            <a class="btn btn-primary" href="classlist/">Classlist management</a>    
+          (Optional with prenaming disabled)
           {% endif %}
-        </div>
+        </p>
       </div>
+      {% if not papers_staged %}
+        {% if student_list_present %}
+        <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_classlist' %}" hx-confirm="Are you sure?">Reset</a>
+        {% endif %}
+        <a class="btn btn-primary float-end" href="{% url 'prep_classlist' %}">
+          Manage
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      {% else %}
+        <a class="btn btn-success" href="{% url 'prep_classlist_view' %}">View</a>
+        <a disabled>
+          Test-papers in database
+          <i class="bi bi-chevron-down"></i>
+        </a>
+      {% endif %}
     </div>
+  </li>
 
-    {% if can_qvmap %}
-
-    {% if test_versions == 1 %}
-
-    <div>
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-	    Number of papers
-	    {% if pqv_mapping_present %}
-	    <i class="bi bi-check-circle text-success"></i>
-	    {% else %}
-	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-	    {% endif %}
-	  </h5>
-          <div class="card-text">
-	    <details>
-	    <summary>
-	    Set the number of papers to produce.
-	    </summary>
-	    <p>
-	      Since your test specification indicates only a single
-	      test version, you do not need to specify any
-	      question-version mapping.
-	    </p>
-	    </details>
-	    <a class="btn btn-primary" href="qvmapping/">Number management</a>
-	  </div>
-        </div>
-      </div>
-    </div>
-
-    {% else %}
-    
-    <div>
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-	    Number of papers and question-version mapping
-
-	    {% if pqv_mapping_present %}
-	    <i class="bi bi-check-circle text-success"></i>
-	    {% else %}
-	    <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-	    {% endif %}
-
-	  </h5>
-          <div class="card-text">
-	    <details>
-	    <summary>
-	    Set the number of papers to produce, and the question-version mapping
-	    </summary>
-	    <p>
-	      <ul>
-		<li> Since your test has multiple versions, plom needs to fix
-	      the versions of each question of each paper according to
-		  the specification you set.
-		</li>
-		<li> Plom can do this automagically for you, or your can
-	      upload your own mapping (advanced users).
-		</li>
-	    </p>
-	    </details>
-	    <a class="btn btn-primary" href="qvmapping/">Number and question-version management</a>    		
-	  </div>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    {% else %}
-
-    <div>
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-	    Number of papers and question-version mapping
-
-	    <i class="bi bi-caret-up-square-fill text-warning"></i>
-          </h5>
-            <p class="card-text">You cannot set these until a test specification has been created</p>
-        </div>
-      </div>
-    </div>
-
-    
-    {% endif %}
-
-    <div>
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-            Create test papers
-            {% if papers_staged %}
-            <i class="bi bi-check-circle text-success"></i>
-            {% else %}
-            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-            {% endif %}
-          </h5>
+  <li class="list-group-item list-group-item-action {% if not can_qvmap %}disabled{% endif %}">
+    <div class="d-flex align-items-center gap-1">
+      <div class="flex-fill">
+        <p class="fs-4 mb-0">
+          4. Question-version mapping
           {% if pqv_mapping_present %}
-          <p class="card-text">Use the test specification, classlist, and question-version map to create test-papers.</p>
-          <a class="btn btn-primary" href="{% url 'prep_test_papers' %}">Create papers</a>
-          {% else %}
-          <p class="card-text">Cannot create test-papers until question-version map has been created</p>
+          <i class="bi bi-check-circle text-success"></i>
           {% endif %}
-        </div>
+        </p>
+        <p class="fs-7">&emsp;&ensp; Create map for test versions.</p>    
       </div>
+      {% if papers_staged %}
+      <a class="btn btn-success float-end" href="{% url 'prep_qvmapping_view' %}">View</a>
+      <a disabled>
+        Test-papers in database
+        <i class="bi bi-chevron-down"></i>
+      </a>
+      {% elif can_qvmap %}
+        {% if pqv_mapping_present %}
+        <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_qvmap' %}" hx-confirm="Are you sure?">Reset</a>
+        {% endif %}
+      <a class="btn btn-primary float-end" href="{% url 'prep_qvmapping' %}">
+        Manage
+        <i class="bi bi-chevron-right"></i>
+      </a>
+      {% else %}
+      <a disabled>
+        Specification needed
+        <i class="bi bi-chevron-up"></i>
+      </a>
+      {% endif %}
     </div>
+  </li>
 
-    <div>
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-            Build test paper PDFs
-            {% if papers_built %}
-            <i class="bi bi-check-circle text-success"></i>
-            {% else %}
-            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-            {% endif %}
-          </h5>
-          <p class="card-text">Once all of the required information is loaded into Plom-classic, build exams and save to disk</p>
-          <a class="btn btn-primary" href="{% url 'create_paperPDFs' %}">Build papers</a>
-        </div>
+  <li class="list-group-item list-group-item-action {% if not can_build_papers %}disabled{% endif %}">
+    <div class="d-flex align-items-center">
+      <div class="flex-fill">
+        <p class="fs-4 mb-0">
+          5. Save to database
+          {% if papers_staged %}
+          <i class="bi bi-check-circle text-success"></i>
+          {% endif %}
+        </p>
+        <p class="fs-7">&emsp;&ensp; Write test-paper information to the database.</p>
       </div>
+      {% if prename_enabled and not student_list_present %}
+      <a disabled>
+        Classlist needed
+        <i class="bi bi-chevron-up"></i>
+      </a>
+      {% elif not pqv_mapping_present %}
+      <a disabled>
+        QV-map needed
+        <i class="bi bi-chevron-up"></i>
+      </a>
+      {% else %}
+      <a class="btn btn-primary float-end" href="{% url 'prep_test_papers' %}">
+        Manage
+        <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
     </div>
-  </div>
+  </li>
+
+  <li class="list-group-item list-group-item-action {% if not papers_staged %}disabled{% endif %}">
+    <div class="d-flex align-items-center">
+      <div class="flex-fill">
+        <p class="fs-4 mb-0">
+          6. Build test-paper PDFs
+          {% if papers_built %}
+          <i class="bi bi-check-circle text-success"></i>
+          {% endif %}
+        </p>
+        <p class="fs-7">&emsp;&ensp; Create test-papers and save to disk.</p>    
+      </div>
+      {% if not all_source_tests_uploaded %}
+      <a>
+        Needs test sources
+        <i class="bi bi-chevron-up"></i>
+      </a>
+      {% elif not papers_staged %}
+      <a>
+        Needs database
+        <i class="bi bi-chevron-up"></i>
+      </a>
+      {% else %}
+      <a class="btn btn-primary float-end" href="{% url 'create_paperPDFs' %}">
+        Manage
+        <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </li>
+</ul>
 {% endblock %}

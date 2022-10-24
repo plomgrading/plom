@@ -4,6 +4,13 @@
 
 {% block page_heading %} Create a test specification {% endblock %}
 
+{% block alert %}
+{% if show_alert %}
+<div class="alert alert-info">
+    For any changes to take effect, please validate and submit the specification again.
+</div>
+{% endif %}
+{% endblock %}
 
 {% block left_column %}
 

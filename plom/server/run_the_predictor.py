@@ -50,4 +50,5 @@ if __name__ == "__main__":
 
     lock_file.unlink()
 
-    print("Auto id reader has finished")
+    print("")
+    print("**** Auto id reader has finished ****")

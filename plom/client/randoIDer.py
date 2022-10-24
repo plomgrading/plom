@@ -16,6 +16,7 @@ import sys
 
 from stdiomask import getpass
 
+from plom import Default_Port
 from .random_identifying_utils import do_rando_identifying
 
 __all__ = [
@@ -28,14 +29,25 @@ def get_parser():
         description="Perform identifier tasks randomly, generally for testing."
     )
 
-    parser.add_argument("-w", "--password")
+    parser.add_argument(
+        "-w",
+        "--password",
+        type=str,
+        help="""
+            by default, for the "scanner" user', also checks the
+            environment variable PLOM_SCAN_PASSWORD.
+        """,
+    )
     parser.add_argument("-u", "--user", help='Override default of "scanner"')
     parser.add_argument(
         "-s",
         "--server",
         metavar="SERVER[:PORT]",
         action="store",
-        help="Which server to contact.",
+        help=f"""
+            Which server to contact, port defaults to {Default_Port}.
+            Also checks the environment variable PLOM_SERVER if omitted.
+        """,
     )
     return parser
 

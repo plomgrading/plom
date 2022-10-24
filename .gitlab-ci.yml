@@ -24,10 +24,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.15
+image: docker:20.10.18
 
 services:
-  - docker:20.10.15-dind
+  - docker:20.10.18-dind
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -282,19 +282,38 @@ flake8:
   allow_failure: true
 
 
-django:
+webplom_test:
   stage: test
   needs: ["docker-image"]
   image: $IM
   script:
-    - apt install -y python3-tk
     - pushd django
+    - python3 -m pip install coverage
     - python3 -m pip install -r requirements.txt
     - python3 manage.py makemigrations
     - python3 manage.py migrate
-    - python3 manage.py test
+    - coverage run --source='.' manage.py test
+    - coverage report --precision=2
+    - coverage xml -o django_coverage.xml
     - popd
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: django/django_coverage.xml
 
+
+webplom_demo:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - pushd django
+    - python3 -m pip install -r requirements.txt
+    - ./demo_test.sh
+    - popd
+        
 
 demoserver:
   stage: test
@@ -502,14 +521,13 @@ appstreamValid:
 
 
 # TODO: perhaps all deps should be in the docker image?
-# TODO: remove temporary sphinx pin Issue #2293
 docs_sphinx:
   stage: test
   needs: ["docker-image"]
   image: $IM
   before_script:
     - apt-get --no-install-recommends --yes install tex-gyre
-    - pip install myst-parser sphinx==5.1.1 sphinx_rtd_theme sphinx-argparse
+    - pip install myst-parser sphinx sphinx_rtd_theme sphinx-argparse
   script:
     - pushd doc
     - ls

@@ -1,5 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+
+import toml
+
 from django.test import TestCase
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.conf import settings
 
 from SpecCreator.services import StagingSpecificationService
 from SpecCreator.models import StagingSpecification
@@ -197,3 +202,19 @@ class StagingSpecificationTests(TestCase):
         spec.set_question_pages([0], 1)
         the_spec = spec.specification()
         self.assertEqual(the_spec.pages, page_dict)
+
+    def test_from_dict(self):
+        """Test StagingSpecService.create_from_dict()"""
+        upload_path = (
+            settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml"
+        )
+        toml_dict = toml.load(upload_path)
+
+        spec = StagingSpecificationService()
+        spec.create_from_dict(toml_dict)
+
+        the_spec = StagingSpecification.load()
+        self.assertEqual(the_spec.numberOfPages, 6)
+        self.assertEqual(the_spec.numberOfVersions, 2)
+        self.assertEqual(the_spec.numberToProduce, -1)
+        self.assertEqual(type(the_spec.questions), dict)

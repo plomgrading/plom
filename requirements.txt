@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Elizabeth Xiao
+# Copyright (C) 2022 Brennen Chiu
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -26,9 +27,10 @@ opencv-python-headless==4.6.0.66
 packaging==21.3
 pandas==1.4.4
 passlib==1.7.4
-peewee==3.15.2
+peewee==3.15.3
 Pillow==9.2.0
 pymupdf==1.20.2
+PyMySQL==1.0.2
 pyzbar==0.1.9
 requests==2.28.1
 requests-toolbelt==0.9.1
