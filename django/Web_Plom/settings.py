@@ -48,6 +48,9 @@ INSTALLED_APPS = [
     # Huey + polymorphism
     "django_huey",
     "polymorphic",
+    # REST framework
+    "rest_framework",
+    "rest_framework.authtoken",
     # add newly created app folder below
     "Base",
     "Authentication",
@@ -188,6 +191,13 @@ DJANGO_HUEY = {
             },
         }
     },
+}
+
+# DRF authentication
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
 }
 
 # Media and user-uploaded files

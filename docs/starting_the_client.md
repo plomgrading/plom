@@ -1,6 +1,6 @@
 <!--
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-9 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __license__ = "GFDL"
  -->
 # Starting the MLP client
