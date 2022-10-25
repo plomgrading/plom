@@ -11,7 +11,6 @@ from django.db import transaction
 from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
-from collections import defaultdict
 
 from Scan.models import (
     StagingBundle,
@@ -20,6 +19,7 @@ from Scan.models import (
     ParseQR,
 )
 
+from Scan.qr_error_services import QRErrorService
 
 class ScanService:
     """
@@ -214,7 +214,7 @@ class ScanService:
                     page_num = "".join(list_qr_codes[page][quadrant])[5:8]
                     version_num = "".join(list_qr_codes[page][quadrant])[8:11]
 
-                    grouping_key = "-".join([paper_id, page_num, version_num])
+                    # grouping_key = "-".join([paper_id, page_num, version_num])
                     qr_code_dict = {
                         "paper_id": paper_id,
                         "page_num": page_num,
@@ -232,12 +232,32 @@ class ScanService:
         Parse QR codes and save to database in the background 
         """
         scanner = ScanService()
+        qr_error_checker = QRErrorService()
         code_dict = QRextract(image_path, write_to_file=False)
         page_data = scanner.parse_qr_code([code_dict])
         # error handling here
-        img = StagingImage.objects.get(file_path=image_path)
-        img.parsed_qr = page_data
-        img.save()
+        # if {} is empty use not {}
+        error = QRErrorService.check_number_qr_codes(page_data)
+        if error is not None:
+            # Below is to write the parsed QR code to database.
+            img = StagingImage.objects.get(file_path=image_path)
+            img.parsed_qr = page_data
+            img.save()
+        
+    @transaction.atomic
+    def qr_codes_tasks(self, bundle, page_index, image_path):
+        """
+        Task of parsing QR codes.
+        """
+        qr_task = self._huey_parse_qr_code(image_path)
+        qr_task_obj = ParseQR(
+            bundle=bundle,
+            page_index=page_index,
+            file_path=image_path,
+            huey_id=qr_task.id,
+            status="queued",
+        )
+        qr_task_obj.save()
 
     def read_qr_codes(self, bundle):
         """
@@ -255,20 +275,6 @@ class ScanService:
         imgs = StagingImage.objects.filter(bundle=bundle)
         for page in imgs:
             self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
-
-    def qr_codes_tasks(self, bundle, page_index, image_path):
-        """
-        Task of parsing QR codes.
-        """
-        qr_task = self._huey_parse_qr_code(image_path)
-        qr_task_obj = ParseQR(
-            bundle=bundle,
-            page_index=page_index,
-            file_path=image_path,
-            huey_id=qr_task.id,
-            status="queued",
-        )
-        qr_task_obj.save()
 
     @transaction.atomic
     def get_qr_code_results(self, bundle, page_index):
