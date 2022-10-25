@@ -1256,7 +1256,14 @@ class MarkerClient(QWidget):
         else:
             # Colin doesn't understand this proxy: just pull task and query examModel
             task = self.prxM.getPrefix(pr)
-            self.testImg.updateImage(self.examModel.get_source_image_data(task))
+            img_src_data = self.examModel.get_source_image_data(task)
+            for r in img_src_data:
+                if not r.get("filename") and not r.get("local_filename"):
+                    print(r)
+                    raise PlomSeriousException(
+                        f"Unexpect Issue #2327: img_src_data is {img_src_data}, task={task}"
+                    )
+            self.testImg.updateImage(img_src_data)
         # TODO: seems to behave ok without this hack: delete?
         # self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
