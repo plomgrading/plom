@@ -19,7 +19,7 @@ from Scan.models import (
     ParseQR,
 )
 
-from Scan.qr_error_services import QRErrorService
+from Scan.qr_validators import QRErrorService
 
 class ScanService:
     """
@@ -237,12 +237,11 @@ class ScanService:
         page_data = scanner.parse_qr_code([code_dict])
         # error handling here
         # if {} is empty use not {}
-        error = QRErrorService.check_number_qr_codes(page_data)
-        if error is not None:
-            # Below is to write the parsed QR code to database.
-            img = StagingImage.objects.get(file_path=image_path)
-            img.parsed_qr = page_data
-            img.save()
+        qr_error_checker.check_qr_numbers(page_data)
+        # Below is to write the parsed QR code to database.
+        img = StagingImage.objects.get(file_path=image_path)
+        img.parsed_qr = page_data
+        img.save()
         
     @transaction.atomic
     def qr_codes_tasks(self, bundle, page_index, image_path):
