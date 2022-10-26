@@ -238,6 +238,7 @@ class ScanService:
         # error handling here
         # if {} is empty use not {}
         qr_error_checker.check_qr_numbers(page_data)
+        
         # Below is to write the parsed QR code to database.
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data
