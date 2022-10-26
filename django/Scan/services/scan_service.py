@@ -11,6 +11,7 @@ from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
 
+from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
     StagingImage,
@@ -238,8 +239,13 @@ class ScanService:
         scanner = ScanService()
         code_dict = QRextract(image_path, write_to_file=False)
         page_data = scanner.parse_qr_code([code_dict])
+
+        pipr = PageImageProcessor()
+        rotated = pipr.rotate_page_image(image_path, page_data)
+
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data
+        img.rotated = rotated
         img.save()
 
     def read_qr_codes(self, bundle):
@@ -336,3 +342,11 @@ class ScanService:
         print("SPEC PUBLIC CODE:", spec["publicCode"])
         qrs = checkQRsValid(base_path, spec)
         return qrs
+
+    @transaction.atomic
+    def was_page_rotated(self, bundle, page_index):
+        """
+        Return True if the page was rotated by PageImageProcessor.
+        """
+        img = StagingImage.objects.get(bundle=bundle, bundle_order=page_index)
+        return img.rotated

@@ -209,6 +209,8 @@ class UpdateQRProgressView(ScannerRequiredView):
             {
                 "timestamp": timestamp,
                 "index": index,
+                "rotated": scanner.was_page_rotated(bundle, index),
+                "task_status": task_status,
             }
         )
 
