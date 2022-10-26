@@ -2,7 +2,6 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 
-from asyncore import write
 import pathlib
 import hashlib
 import fitz
@@ -11,8 +10,8 @@ from django.db import transaction
 from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
-from collections import defaultdict
 
+from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
     StagingImage,
@@ -240,8 +239,13 @@ class ScanService:
         scanner = ScanService()
         code_dict = QRextract(image_path, write_to_file=False)
         page_data = scanner.parse_qr_code([code_dict])
+
+        pipr = PageImageProcessor()
+        rotated = pipr.rotate_page_image(image_path, page_data)
+
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data
+        img.rotated = rotated
         img.save()
 
     def read_qr_codes(self, bundle):
