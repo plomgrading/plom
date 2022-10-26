@@ -13,7 +13,7 @@ from model_bakery import baker
 
 from plom.scan import QRextract
 from Scan.services import ScanService
-from Scan.services import StagingBundle
+from Scan.models import StagingBundle
 
 
 class ScanServiceTests(TestCase):

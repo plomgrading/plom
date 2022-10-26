@@ -2,7 +2,6 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 
-from asyncore import write
 import pathlib
 import hashlib
 import fitz
@@ -11,7 +10,6 @@ from django.db import transaction
 from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
-from collections import defaultdict
 
 from Scan.models import (
     StagingBundle,
