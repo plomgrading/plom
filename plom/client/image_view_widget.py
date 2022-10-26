@@ -287,7 +287,8 @@ class _ExamView(QGraphicsView):
                 changing the zoom or pan.  Default: False.
 
         Raises:
-            ValueError: an image did not load, for example if was empty.
+            ValueError: an image did not load, for example if was empty, or
+                the filename was empty.
             KeyError: dict did not have appropriate keys.
         """
         if isinstance(image_data, (str, Path)):
@@ -310,13 +311,15 @@ class _ExamView(QGraphicsView):
             for data in image_data:
                 if not isinstance(data, dict):
                     data = {"filename": data, "orientation": 0}
-                filename = data.get("filename")
-                if filename is None:
-                    filename = data.get("local_filename")
-                if filename is None:
+                if not ("filename" in data.keys() or "local_filename" in data.keys()):
                     raise KeyError(
                         f"Cannot find 'filename' nor 'local_filename' in {data}"
                     )
+                filename = data.get("filename")
+                if not filename:
+                    filename = data.get("local_filename")
+                if not filename:
+                    raise ValueError(f"data row {data} has no nonempty filename")
                 qir = QImageReader(str(filename))
                 # deal with jpeg exif rotations
                 qir.setAutoTransform(True)
