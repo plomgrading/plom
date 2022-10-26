@@ -1261,7 +1261,7 @@ class MarkerClient(QWidget):
                 if not r.get("filename") and not r.get("local_filename"):
                     print(r)
                     raise PlomSeriousException(
-                        f"Unexpect Issue #2327: img_src_data is {img_src_data}, task={task}"
+                        f"Unexpected Issue #2327: img_src_data is {img_src_data}, task={task}"
                     )
             self.testImg.updateImage(img_src_data)
         # TODO: seems to behave ok without this hack: delete?
