@@ -13,111 +13,55 @@ class PageImageProcessorTests(TestCase):
 
     def setUp(self):
         self.upright_page_full = {
-            "NE": {
-                "quadrant": "1"
-            },
-            "NW": {
-                "quadrant": "2"
-            },
-            "SE": {
-                "quadrant": "4"
-            },
-            "SW": {
-                "quadrant": "3"
-            },
+            "NE": {"quadrant": "1"},
+            "NW": {"quadrant": "2"},
+            "SE": {"quadrant": "4"},
+            "SW": {"quadrant": "3"},
         }
 
-        self.upright_page_flaky = {
-            "NE": {
-                "quadrant": "1"
-            }
-        }
+        self.upright_page_flaky = {"NE": {"quadrant": "1"}}
 
         self.turned_left_page_full = {
-            "NE": {
-                "quadrant": "4"
-            },
-            "NW": {
-                "quadrant": "1"
-            },
-            "SE": {
-                "quadrant": "3"
-            },
-            "SW": {
-                "quadrant": "2"
-            },
+            "NE": {"quadrant": "4"},
+            "NW": {"quadrant": "1"},
+            "SE": {"quadrant": "3"},
+            "SW": {"quadrant": "2"},
         }
 
         self.turned_left_page_flaky = {
-            "NW": {
-                "quadrant": "1"
-            },
-            "SE": {
-                "quadrant": "3"
-            },
+            "NW": {"quadrant": "1"},
+            "SE": {"quadrant": "3"},
         }
 
         self.turned_right_page_full = {
-            "NE": {
-                "quadrant": "2"
-            },
-            "NW": {
-                "quadrant": "3"
-            },
-            "SE": {
-                "quadrant": "1"
-            },
-            "SW": {
-                "quadrant": "4"
-            },
+            "NE": {"quadrant": "2"},
+            "NW": {"quadrant": "3"},
+            "SE": {"quadrant": "1"},
+            "SW": {"quadrant": "4"},
         }
 
         self.turned_right_page_flaky = {
-            "NE": {
-                "quadrant": "2"
-            },
-            "NW": {
-                "quadrant": "3"
-            },
-            "SW": {
-                "quadrant": "4"
-            },
+            "NE": {"quadrant": "2"},
+            "NW": {"quadrant": "3"},
+            "SW": {"quadrant": "4"},
         }
 
         self.upside_down_page_full = {
-            "NE": {
-                "quadrant": "3"
-            },
-            "NW": {
-                "quadrant": "4"
-            },
-            "SE": {
-                "quadrant": "2"
-            },
-            "SW": {
-                "quadrant": "1"
-            },
+            "NE": {"quadrant": "3"},
+            "NW": {"quadrant": "4"},
+            "SE": {"quadrant": "2"},
+            "SW": {"quadrant": "1"},
         }
 
         self.upside_down_page_flaky = {
-            "SW": {
-                "quadrant": "1"
-            },
+            "SW": {"quadrant": "1"},
         }
 
         self.bogus_page = {
-            "NE": {
-                "quadrant": "4"
-            },
-            "NW": {
-                "quadrant": "3"
-            },
-            "SE": {
-                "quadrant": "2"
-            },
-            "SW": {
-                "quadrant": "1"
-            },
+            "NE": {"quadrant": "4"},
+            "NW": {"quadrant": "3"},
+            "SE": {"quadrant": "2"},
+            "SW": {"quadrant": "1"},
         }
         return super().setUp()
 
@@ -131,7 +75,7 @@ class PageImageProcessorTests(TestCase):
             upright="1",
             turned_right="2",
             turned_left="4",
-            upside_down="3"
+            upside_down="3",
         )
         self.assertEqual(orientation, "upright")
 
