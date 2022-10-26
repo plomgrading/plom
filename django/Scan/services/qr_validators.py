@@ -14,9 +14,16 @@ class QRErrorService:
             raise ValueError("Detected more than 3 QR codes.")
 
     def check_qr_matching(self, page_data):
-        temp_list = [page_data[i][0:11] for i in page_data]
-        for indx in range(len(temp_list)):
+        temp_list = []
+        for quadrant in page_data:
+            paper_id = list(page_data[quadrant].values())[0]
+            page_num = list(page_data[quadrant].values())[1]
+            version_num = list(page_data[quadrant].values())[2]
+            temp_list.append(paper_id + page_num + version_num)
+        
+        for indx in range(1, len(temp_list)):
             if temp_list[indx] == temp_list[indx-1]:
                 pass
             else:
                 raise ValueError("QR codes do not match.")
+                break

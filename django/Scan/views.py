@@ -16,7 +16,9 @@ from django_htmx.http import HttpResponseClientRefresh
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService
 from Scan.forms import BundleUploadForm
-from Scan.services import ScanService
+from Scan.services import (
+    ScanService
+)
 
 
 class ScannerHomeView(ScannerRequiredView):
