@@ -342,11 +342,3 @@ class ScanService:
         print("SPEC PUBLIC CODE:", spec["publicCode"])
         qrs = checkQRsValid(base_path, spec)
         return qrs
-
-    @transaction.atomic
-    def was_page_rotated(self, bundle, page_index):
-        """
-        Return True if the page was rotated by PageImageProcessor.
-        """
-        img = StagingImage.objects.get(bundle=bundle, bundle_order=page_index)
-        return img.rotated

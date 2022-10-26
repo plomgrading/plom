@@ -32,7 +32,6 @@ class StagingImage(models.Model):
     file_path = models.TextField(default="")
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)
-    rotated = models.BooleanField(default=False)
 
 
 class PageToImage(HueyTask):
