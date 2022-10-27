@@ -7,6 +7,8 @@
 
 set -e
 
+pip install -r requirements.txt --quiet
+
 rm -f db.sqlite3
 rm -f huey/huey_db.*
 
@@ -22,7 +24,7 @@ python3 manage.py plom_create_groups
 
 python3 manage.py plom_create_demo_users
 
-python3 manage.py plom_demo_spec --publicCode 47218
+python3 manage.py plom_demo_spec --publicCode 93849
 python3 manage.py plom_preparation_test_source upload -v 1 useful_files_for_testing/test_version1.pdf
 python3 manage.py plom_preparation_test_source upload -v 2 useful_files_for_testing/test_version2.pdf
 
