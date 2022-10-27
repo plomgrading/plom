@@ -3,7 +3,25 @@
 
 
 class QRErrorService:
+
+    def check_TPV_code(self, page_data):
+        temp_list = []
+        for q in page_data:
+            paper_id = list(page_data[q].values())[0]
+            page_num = list(page_data[q].values())[1]
+            version_num = list(page_data[q].values())[2]
+            quadrant = list(page_data[q].values())[3]
+            public_code = list(page_data[q].values())[4]
+            temp_list.append(paper_id + page_num + version_num + quadrant + public_code)
+        
+        for indx in templist:
+            if len(indx) != len("TTTTTPPPVVVOCCCCC"):
+                raise ValueError("Invalid QR code.")
+
     def check_qr_numbers(self, page_data):
+        """
+        Check number of QR codes in a given page.
+        """
         if len(page_data) == 0:
             raise ValueError("Unable to read QR codes.")
         elif len(page_data) <= 2:
@@ -14,6 +32,10 @@ class QRErrorService:
             raise ValueError("Detected more than 3 QR codes.")
 
     def check_qr_matching(self, page_data):
+        """
+        Check if QR codes matches. 
+        This is to check if a page is folded.
+        """
         temp_list = []
         for quadrant in page_data:
             paper_id = list(page_data[quadrant].values())[0]
@@ -27,3 +49,6 @@ class QRErrorService:
             else:
                 raise ValueError("QR codes do not match.")
                 break
+    
+    def check_public_code(self, page_data):
+        pass
