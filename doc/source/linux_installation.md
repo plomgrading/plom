@@ -18,7 +18,7 @@ a **Plom Client**.
 Fedora
 ------
 
-Tested on Fedora 35.  Some stuff from the package manager:
+Tested on Fedora 37.  Some stuff from the package manager:
 ```
   # sudo dnf install \
         ImageMagick openssl zbar gcc gcc-c++ cmake \
@@ -33,7 +33,7 @@ Tested on Fedora 35.  Some stuff from the package manager:
         python3-stdiomask python3-requests-toolbelt \
         python3-pip python3-wheel python3-setuptools \
         python3-toml python3-tqdm python3-urllib3 python3-weasyprint \
-        python3-pytest \
+        python3-pytest python3-PyMySQL \
         latexmk tex-dvipng texlive-scheme-basic \
         tex-preview tex-charter tex-exam tex-preprint \
         python3-myst-parser python3-sphinx python3-sphinx_rtd_theme
