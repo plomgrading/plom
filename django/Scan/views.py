@@ -350,6 +350,7 @@ class ReadQRcodesView(ScannerRequiredView):
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         scanner.read_qr_codes(bundle)
+
         # parsed_QR = scanner.parse_qr_code(result)
 
         # Save qr codes to disk
@@ -362,6 +363,7 @@ class ReadQRcodesView(ScannerRequiredView):
 
         # validate QRs
         # spec = SpecificationService().get_the_spec()
+        # print(spec['publicCode'])
         # qrs = scanner.validate_qr_codes(bundle, spec)
         # print(qrs)
 
