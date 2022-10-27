@@ -361,6 +361,7 @@ class ReadQRcodesView(ScannerRequiredView):
 
         # validate QRs
         # spec = SpecificationService().get_the_spec()
+        # print(spec['publicCode'])
         # qrs = scanner.validate_qr_codes(bundle, spec)
         # print(qrs)
 
