@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 
+import shutil
+
 from django.db import transaction
 from django.conf import settings
 
@@ -51,7 +53,7 @@ class ImageBundleService:
         return image
 
     @transaction.atomic
-    def push_staged_image(self, staged_image, test_paper):
+    def push_staged_image(self, staged_image, test_paper, page_number):
         """
         Save a staged bundle image to the database, after it has been
         successfully validated.
@@ -59,6 +61,7 @@ class ImageBundleService:
         Args:
             staged_image: StagingImage instance
             test_paper: string, test-paper ID of the image
+            page_number: int, page number in the test (not the bundle)
         """
 
         staged_bundle = staged_image.bundle
@@ -67,7 +70,7 @@ class ImageBundleService:
         else:
             bundle = self.get_bundle(staged_bundle.pdf_hash)
 
-        file_path = self.get_page_image_path(test_paper, staged_image.file_name)
+        file_path = self.get_page_image_path(test_paper, f"page{page_number}.png")
 
         image = self.create_image(
             bundle=bundle,
@@ -75,8 +78,13 @@ class ImageBundleService:
             original_name=staged_image.file_name,
             file_name=file_path,
             hash=staged_image.image_hash,
-            rotation=0,
+            rotation=staged_image.rotation,
         )
+
+        shutil.copy(staged_image.file_path, file_path)
+        staged_image.pushed = True
+        staged_image.save()
+        return image
 
     def get_page_image_path(self, test_paper, file_name):
         """
@@ -84,16 +92,21 @@ class ImageBundleService:
         Also, create the necessary folders in the media directory
         if they don't exist.
         """
-        page_image_dir = settings.BASE_DIR / "page_images"
+        page_image_dir = settings.BASE_DIR / "media" / "page_images"
         page_image_dir.mkdir(exist_ok=True)
 
         test_papers_dir = page_image_dir / "test_papers"
         test_papers_dir.mkdir(exist_ok=True)
 
-        paper_dir = test_papers_dir / test_paper
+        paper_dir = test_papers_dir / str(test_paper)
         paper_dir.mkdir(exist_ok=True)
 
         return str(paper_dir / file_name)
+
+    def copy_image(self, staging_path, push_path):
+        """
+        Copy an image from media/{username} to media/page_images
+        """
 
     def image_exists(self, hash):
         """

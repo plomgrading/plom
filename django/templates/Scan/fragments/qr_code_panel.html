@@ -21,7 +21,10 @@
             Push page image
         </a>
         {% else %}
-        <p>Image pushed!</p>
+        <p>
+            Image pushed
+            <i class="bi bi-check-circle text-success"></i>
+        </p>
         {% endif %}
     </div>
     {% elif task_status == 'error' %}

@@ -1,4 +1,5 @@
 from django.db import models
+from polymorphic.models import PolymorphicModel
 
 from .image_bundle import Image
 
@@ -6,7 +7,7 @@ from .image_bundle import Image
 class Paper(models.Model):
     """Table to store papers. Each entry corresponds to one (physical)
     test-paper that a student submits. The pages of that test-paper
-    are divided into pages - see the AbstractPage class.
+    are divided into pages - see the BasePage class.
     The Paper object does not contain explicit refs to pages, but rather
     the pages will reference the paper (as is usual in a database).
 
@@ -17,8 +18,8 @@ class Paper(models.Model):
     paper_number = models.PositiveIntegerField(null=False, unique=True)
 
 
-class AbstractPage(models.Model):
-    """Abstract table to store information about the pages within a given
+class BasePage(PolymorphicModel):
+    """Base table to store information about the pages within a given
     group of pages. This table is not used, but rather we define it
     here so that we can use the tables that inherit properties from
     it. Notice that we do not define the group to which this page
@@ -34,11 +35,8 @@ class AbstractPage(models.Model):
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
     page_number = models.PositiveIntegerField(null=False)
 
-    class Meta:
-        abstract = True
 
-
-class DNMPage(AbstractPage):
+class DNMPage(BasePage):
     """
     Table to store information about the pages in DoNotMark groups.
     """
@@ -46,7 +44,7 @@ class DNMPage(AbstractPage):
     pass
 
 
-class IDPage(AbstractPage):
+class IDPage(BasePage):
     """Table to store information about the pages in ID groups.
 
     Notice that at present IDGroups should only contain a single page
@@ -57,7 +55,7 @@ class IDPage(AbstractPage):
     pass
 
 
-class QuestionPage(AbstractPage):
+class QuestionPage(BasePage):
     """Table to store information about the pages in Question groups.
 
     question_number (int): the question that this page belongs to.

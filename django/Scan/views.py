@@ -4,9 +4,7 @@
 
 import pathlib
 from datetime import datetime
-from sys import prefix
 import arrow
-import json
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, FileResponse, Http404, HttpResponse
 from django.urls import reverse
@@ -14,7 +12,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
-from Papers.services import ImageBundleService
+from Papers.services import ImageBundleService, PaperCreatorService
 from Scan.forms import BundleUploadForm
 from Scan.services import ScanService
 
@@ -54,6 +52,7 @@ class ScannerHomeView(ScannerRequiredView):
                     "time_uploaded": arrow.get(date_time).humanize(),
                     "pages": scanner.get_n_images(bundle),
                     "n_read": scanner.get_n_complete_reading_tasks(bundle),
+                    "n_pushed": scanner.get_n_pushed_images(bundle),
                 }
             )
         context.update({"bundles": bundles})
@@ -390,9 +389,15 @@ class PushPageImage(ScannerRequiredView):
 
         # get the test-paper number from the QR dictionary
         any_qr = list(staging_image.parsed_qr.values())[0]
-        test_paper = any_qr["paper_id"]
+        test_paper = int(any_qr["paper_id"])
+        page_number = int(any_qr["page_num"])
 
         img_service = ImageBundleService()
-        img_service.push_staged_image(staging_image, test_paper)
+        image = img_service.push_staged_image(staging_image, test_paper, page_number)
 
-        return HttpResponse("<p>Image pushed!</p>")
+        paper_service = PaperCreatorService()
+        paper_service.update_page_image(test_paper, page_number, image)
+
+        return HttpResponse(
+            '<p>Image pushed <i class="bi bi-check-circle text-success"></i></p>'
+        )
