@@ -3,9 +3,12 @@
 
 from Papers.services import SpecificationService
 
-class QRErrorService:
 
+class QRErrorService:
     def check_qr_codes(self, page_data):
+        """
+        Check integrity of QR codes on a page.
+        """
         spec_service = SpecificationService()
         spec_dictionary = spec_service.get_the_spec()
         serialized_top_three_qr = self.serialize_qr_code(page_data, "top_3")
@@ -17,6 +20,13 @@ class QRErrorService:
         self.check_public_code(serialized_public_code, spec_dictionary)
 
     def serialize_qr_code(self, page_data, tpv_type):
+        """
+        Function to serialize QR code based on tpv type.
+        tpv_type:
+                  top_3:    get the top 3 tpv codes.
+                    all:    get all the tpv codes.
+            public_code:    get tpv public codes.
+        """
         qr_code_list = []
         for q in page_data:
             paper_id = list(page_data[q].values())[0]
@@ -28,7 +38,9 @@ class QRErrorService:
             if tpv_type == "top_3":
                 qr_code_list.append(paper_id + page_num + version_num)
             elif tpv_type == "all":
-                qr_code_list.append(paper_id + page_num + version_num + quadrant + public_code)
+                qr_code_list.append(
+                    paper_id + page_num + version_num + quadrant + public_code
+                )
             elif tpv_type == "public_code":
                 qr_code_list.append(public_code)
             else:
@@ -58,24 +70,25 @@ class QRErrorService:
 
     def check_qr_matching(self, qr_list):
         """
-        Check if QR codes matches. 
+        Check if QR codes matches.
         This is to check if a page is folded.
         """
         for indx in range(1, len(qr_list)):
-            if qr_list[indx] == qr_list[indx-1]:
+            if qr_list[indx] == qr_list[indx - 1]:
                 pass
             else:
                 raise ValueError("QR codes do not match.")
                 break
-    
+
     def check_public_code(self, public_codes, spec_dictionary):
         """
         Check if the paper public QR code matches with spec public code.
         """
-        spec_public_code = spec_dictionary['publicCode']
+        spec_public_code = spec_dictionary["publicCode"]
         for public_code in public_codes:
             if public_code == str(spec_public_code):
                 pass
             else:
-                raise ValueError(f"Magic code {public_code} did not match spec {spec_public_code}. Did you scan the wrong test?")
-            
+                raise ValueError(
+                    f"Magic code {public_code} did not match spec {spec_public_code}. Did you scan the wrong test?"
+                )

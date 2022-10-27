@@ -239,7 +239,7 @@ class ScanService:
     @db_task(queue="tasks")
     def _huey_parse_qr_code(image_path):
         """
-        Parse QR codes and save to database in the background 
+        Parse QR codes and save to database in the background
         """
         scanner = ScanService()
         qr_error_checker = QRErrorService()
@@ -257,7 +257,7 @@ class ScanService:
         if rotated:
             img.rotation = rotated
         img.save()
-        
+
     @transaction.atomic
     def qr_codes_tasks(self, bundle, page_index, image_path):
         """

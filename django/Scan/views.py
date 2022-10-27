@@ -14,9 +14,7 @@ from django_htmx.http import HttpResponseClientRefresh
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import ImageBundleService, PaperCreatorService
 from Scan.forms import BundleUploadForm
-from Scan.services import (
-    ScanService
-)
+from Scan.services import ScanService
 
 
 class ScannerHomeView(ScannerRequiredView):
@@ -352,7 +350,7 @@ class ReadQRcodesView(ScannerRequiredView):
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         scanner.read_qr_codes(bundle)
-        
+
         # parsed_QR = scanner.parse_qr_code(result)
 
         # Save qr codes to disk
