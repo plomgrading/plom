@@ -4,9 +4,7 @@
 
 import pathlib
 from datetime import datetime
-from sys import prefix
 import arrow
-import json
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, FileResponse, Http404, HttpResponse
 from django.urls import reverse
@@ -14,7 +12,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
-from Papers.services import SpecificationService
+from Papers.services import ImageBundleService, PaperCreatorService
 from Scan.forms import BundleUploadForm
 from Scan.services import ScanService
 
@@ -54,6 +52,7 @@ class ScannerHomeView(ScannerRequiredView):
                     "time_uploaded": arrow.get(date_time).humanize(),
                     "pages": scanner.get_n_images(bundle),
                     "n_read": scanner.get_n_complete_reading_tasks(bundle),
+                    "n_pushed": scanner.get_n_pushed_images(bundle),
                 }
             )
         context.update({"bundles": bundles})
@@ -213,6 +212,11 @@ class UpdateQRProgressView(ScannerRequiredView):
             }
         )
 
+        image = scanner.get_image(timestamp, user, index)
+        img_service = ImageBundleService()
+        if img_service.image_exists(image.image_hash):
+            context.update({"image_exists": True})
+
         if task_status:
             context.update({"in_progress": True})
             qr_data = scanner.get_qr_code_results(bundle, index)
@@ -366,3 +370,34 @@ class ReadQRcodesView(ScannerRequiredView):
         # )
 
         return HttpResponseClientRefresh()
+
+
+class PushPageImage(ScannerRequiredView):
+    """
+    Once it's passed all of the validation checks, push a page image
+    out of the "staging" database.
+    """
+
+    def post(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            return Http404()
+
+        scanner = ScanService()
+        staging_image = scanner.get_image(timestamp, request.user, index)
+
+        # get the test-paper number from the QR dictionary
+        any_qr = list(staging_image.parsed_qr.values())[0]
+        test_paper = int(any_qr["paper_id"])
+        page_number = int(any_qr["page_num"])
+
+        img_service = ImageBundleService()
+        image = img_service.push_staged_image(staging_image, test_paper, page_number)
+
+        paper_service = PaperCreatorService()
+        paper_service.update_page_image(test_paper, page_number, image)
+
+        return HttpResponse(
+            '<p>Image pushed <i class="bi bi-check-circle text-success"></i></p>'
+        )

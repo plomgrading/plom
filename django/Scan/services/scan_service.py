@@ -245,7 +245,8 @@ class ScanService:
 
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data
-        img.rotated = rotated
+        if rotated:
+            img.rotation = rotated
         img.save()
 
     def read_qr_codes(self, bundle):
@@ -342,3 +343,10 @@ class ScanService:
         print("SPEC PUBLIC CODE:", spec["publicCode"])
         qrs = checkQRsValid(base_path, spec)
         return qrs
+
+    def get_n_pushed_images(self, bundle):
+        """
+        Return the number of staging images that have been pushed.
+        """
+        pushed = StagingImage.objects.filter(bundle=bundle, pushed=True)
+        return len(pushed)

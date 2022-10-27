@@ -5,7 +5,7 @@
 {% block main_content %}
 <div class="container w-100 p-0 m-3">
     <div class="row">
-        <div class="col shadow-sm rounded p-0" style="background-color: lightgrey;">
+        <div class="col shadow-sm rounded" style="background-color: lightgrey;">
             <div hx-get="{% url 'scan_qr_alert' timestamp %}" hx-trigger="load" hx-swap="outerHTML"></div>
             <div class="row p-0">
                 <div class="col-sm-2 p-0 d-flex justify-content-center">

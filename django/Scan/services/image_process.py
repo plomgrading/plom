@@ -162,7 +162,7 @@ class PageImageProcessor:
             qr_data: (dict) parsed QR code data
 
         Returns:
-            bool: True if page was rotated, False otherwise
+            int | False: rotation angle if page was rotated, False otherwise
         """
         orientation = self.get_page_orientation(qr_data)
         if orientation == "upright":
@@ -177,4 +177,4 @@ class PageImageProcessor:
 
         new_img = self.rotate_image(path, rotate_angle)
         new_img.save(path)
-        return True
+        return rotate_angle

@@ -5,6 +5,7 @@ from django_huey import db_task
 from Papers.models import (
     Specification,
     Paper,
+    BasePage,
     IDPage,
     DNMPage,
     QuestionPage,
@@ -112,3 +113,19 @@ class PaperCreatorService:
     def remove_all_papers_from_db(self):
         # hopefully we don't actually need to call this outside of testing.
         Paper.objects.filter().delete()
+
+    @transaction.atomic
+    def update_page_image(self, paper_number, page_index, image):
+        """
+        Add a reference to an Image instance.
+
+        Args:
+            paper_number: (int) a Paper instance id
+            page_index: (int) the page number
+            image: (Image) the page-image
+        """
+
+        paper = Paper.objects.get(paper_number=paper_number)
+        page = BasePage.objects.get(paper=paper, page_number=page_index)
+        page.image = image
+        page.save()
