@@ -1,0 +1,44 @@
+{% if in_progress %}
+    {% if qr_results %}
+    <div class="d-flex vstack">
+        <h5 class="text-center">
+            <i class="bi bi-check-circle text-success"></i>
+            Page QR codes parsed
+        </h5>
+        <ul>
+            <li>Test-paper {{ qr_results.paper_id }}</li>
+            <li>Page {{ qr_results.page_num }}</li>
+            <li>Version {{ qr_results.version_num }}</li>
+        </ul>
+        {% if not image_exists %}
+        <a 
+            class="btn text-start" 
+            style="background-color: lightgrey;"
+            hx-post="{% url 'scan_push_img' timestamp index %}"
+            hx-swap="outerHTML"
+        >
+            <i class="bi bi-file-earmark-check"></i>
+            Push page image
+        </a>
+        {% else %}
+        <p>
+            Image pushed
+            <i class="bi bi-check-circle text-success"></i>
+        </p>
+        {% endif %}
+    </div>
+    {% elif task_status == 'error' %}
+    <div>
+        <p class="text-danger">{{ error }}</p>
+    </div>
+    {% else %}
+    <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s" hx-swap="outerHTML">
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border"></div>
+        </div>
+    </div>
+    {% endif %}
+{% else %}
+<div class="d-flex justify-content-center">
+</div>
+{% endif %}

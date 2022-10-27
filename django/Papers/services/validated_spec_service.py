@@ -101,6 +101,15 @@ class SpecificationService:
         return spec_obj["numberToProduce"]
 
     @transaction.atomic
+    def modify_n_to_produce(self, n):
+        """
+        Modify the number of papers to produce - assumes it's a valid value.
+        """
+        spec_obj = Specification.objects.get()
+        spec_obj.spec_dict["numberToProduce"] = n
+        spec_obj.save()
+
+    @transaction.atomic
     def get_question_mark(self, question_one_index):
         """
         Get the max mark of a given question

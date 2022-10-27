@@ -32,4 +32,5 @@ urlpatterns = [
     path("create/paperpdfs/", include("BuildPaperPDF.urls")),
     path("connect/", include("Connect.urls")),
     path("papers/", include("Papers.urls")),
+    path("scan/", include("Scan.urls")),
 ]

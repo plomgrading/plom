@@ -1,6 +1,7 @@
 from .image_bundle import Bundle, Image
 from .paper_structure import (
     Paper,
+    BasePage,
     DNMPage,
     IDPage,
     QuestionPage,
