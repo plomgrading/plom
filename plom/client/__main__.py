@@ -4,6 +4,7 @@
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2022 Edith Coates
 
 """Start the Plom client."""
 
@@ -100,12 +101,15 @@ def get_parser():
         "--server",
         metavar="SERVER[:PORT]",
         action="store",
-        help="""
-            Which server to contact, port defaults to {}.
-            Also checks the environment variable {} if omitted.
-            """.format(
-            Default_Port, "PLOM_SERVER"
-        ),
+        help=f"""
+            Which server to contact, port defaults to {Default_Port}.
+            Also checks the environment variable PLOM_SERVER if omitted.
+        """,
+    )
+    parser.add_argument(
+        "--webplom",
+        action="store_true",
+        help="Experimental: Run the client with the WebPlom messenger and connect to a Django server.",
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
@@ -146,7 +150,10 @@ def main():
     # got this solution from
     # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
 
-    window = Chooser(app)
+    if args.webplom:
+        window = Chooser(app, webplom=True)
+    else:
+        window = Chooser(app)
     window.show()
 
     if args.user:

@@ -1,13 +1,13 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
-from django_huey import db_task, get_queue
+from django_huey import db_task
 
 from Papers.models import (
     Specification,
     Paper,
-    IDGroup,
-    DNMGroup,
-    QuestionGroup,
+    IDPage,
+    DNMPage,
+    QuestionPage,
     CreatePaperTask,
 )
 
@@ -53,12 +53,6 @@ class PaperCreatorService:
             version for this particular paper. Of the form {q: v}
 
         """
-        # TODO - on successful build, we should add a
-        # "we-need-to-build-a-pdf-for-this-paper" task
-        # so that the user can (later) build it in the background
-        # via huey or similar.
-
-        # First build the paper itself
         paper_obj = Paper(paper_number=paper_number)
         try:
             paper_obj.save()
@@ -67,53 +61,30 @@ class PaperCreatorService:
             raise IntegrityError(
                 f"An entry paper {paper_number} already exists in the database"
             )
-        # Now build its groups - IDGroup, DNMGroup, QuestionGroups
-        gid = "{}i".format(str(paper_number).zfill(4))
-        idgroup_obj = IDGroup(
-            paper=paper_obj, gid=gid, expected_number_pages=1, complete=False
-        )
-        try:
-            idgroup_obj.save()
-        except IDGroup.IntegrityError as err:
-            log.error(f"Cannot create IDGroup {gid} for paper {paper_number}: {err}")
-            raise ValueError(f"Failed to create idgroup for paper {paper_number}")
 
-        gid = "{}d".format(str(paper_number).zfill(4))
-        dnmgroup_obj = DNMGroup(
+        id_page = IDPage(
             paper=paper_obj,
-            gid=gid,
-            expected_number_pages=len(spec["doNotMarkPages"]),
-            complete=False,
+            image=None,
+            page_number=int(spec["idPage"]),
         )
-        try:
-            dnmgroup_obj.save()
-        except DNMGroup.IntegrityError as err:
-            log.error(f"Cannot create DNMGroup {gid} for paper {paper_number}: {err}")
-            raise ValueError(f"Failed to create dnmgroup for paper {paper_number}")
+        id_page.save()
 
-        # build its QuestionGroups
-        for q_idx, question in spec["question"].items():
-            q = int(q_idx)
-            gid = "{}q{}".format(str(paper_number).zfill(4), q)
-            v = qv_mapping[q]
-            qgroup_obj = QuestionGroup(
-                paper=paper_obj,
-                gid=gid,
-                question=q,
-                version=v,
-                expected_number_pages=len(question["pages"]),
-                max_mark=question["mark"],
-                label=question["label"],
-            )
-            try:
-                qgroup_obj.save()
-            except QuestionGroup.IntegrityError as err:
-                log.error(
-                    f"Cannot create QGroup {gid} for paper {paper_number} question {q} version {v}: {err}"
+        for dnm_idx in spec["doNotMarkPages"]:
+            dnm_page = DNMPage(paper=paper_obj, image=None, page_number=int(dnm_idx))
+            dnm_page.save()
+
+        for q_id, question in spec["question"].items():
+            index = int(q_id)
+            version = qv_mapping[index]
+            for q_page in question["pages"]:
+                question_page = QuestionPage(
+                    paper=paper_obj,
+                    image=None,
+                    page_number=int(q_page),
+                    question_number=index,
+                    question_version=version,
                 )
-                raise ValueError(
-                    f"Failed to create qgroup {gid} for paper {paper_number:04}"
-                )
+                question_page.save()
 
     def add_all_papers_in_qv_map(self, qv_map):
         """Build all the papers given by the qv-map

@@ -6,6 +6,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022 Edith Coates
 
 import json
 import logging
@@ -101,7 +102,8 @@ class Server:
         validate,
         checkPassword,
         checkUserEnabled,
-        createModifyUser,
+        createUser,
+        changeUserPassword,
         InfoShortName,
         info_spec,
         giveUserToken,

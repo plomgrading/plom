@@ -264,7 +264,9 @@ def interactively_get_section(course, can_choose_none=True):
     sections = list(course.get_sections())
     i = 0
     if can_choose_none:
-        print(f"    {i}: Do not choose a section (None)")
+        print(
+            f"    {i}: Do not choose a section (None) (Probably the right choice; read the help)"
+        )
         i += 1
     for section in sections:
         print(f"    {i}: {section.name} ({section.id})")

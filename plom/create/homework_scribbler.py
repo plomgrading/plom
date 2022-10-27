@@ -18,6 +18,7 @@ import os
 from stdiomask import getpass
 
 from plom import __version__
+from plom import Default_Port
 from plom.create import make_hw_scribbles
 
 
@@ -26,8 +27,25 @@ def main():
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
-    parser.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
+    parser.add_argument(
+        "-s",
+        "--server",
+        metavar="SERVER[:PORT]",
+        action="store",
+        help=f"""
+            Which server to contact, port defaults to {Default_Port}.
+            Also checks the environment variable PLOM_SERVER if omitted.
+        """,
+    )
+    parser.add_argument(
+        "-w",
+        "--password",
+        type=str,
+        help="""
+            for the "manager" user, also checks the
+            environment variable PLOM_MANAGER_PASSWORD.
+        """,
+    )
     args = parser.parse_args()
 
     args.server = args.server or os.environ.get("PLOM_SERVER")

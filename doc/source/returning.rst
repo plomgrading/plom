@@ -142,6 +142,8 @@ it from the Plom source code.
 Run ``./plom-push-to-canvas.py --help`` for instructions.
 Use the ``--dry-run`` mode first!
 
+You almost certainly want ``--no-section`` unless you are doing something very specialized (see ``--help`` for more info).
+
 Go back to Canvas and examine a few papers: double check the scores.
 Double check some of the PDF files.  Unfortunately, you'll probably hit
 `this Canvas bug <https://github.com/instructure/canvas-lms/issues/1886>`_
