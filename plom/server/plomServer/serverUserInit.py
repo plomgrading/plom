@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2022 Edith Coates
 
 import logging
 
@@ -137,24 +138,39 @@ def setUserEnable(self, user, enableFlag):
     return [True]
 
 
-def createModifyUser(self, username, password):
+def createUser(self, username, password):
     r, msg = self.authority.basic_username_password_check(username, password)
     if not r:
         return [False, f"Username/Password fails basic checks: {msg}"]
     if username == "HAL":  # Don't mess with HAL
         return [False, "I'm sorry, Dave. I'm afraid I can't do that."]
-    # hash the password
+
+    if self.DB.doesUserExist(username):
+        return [False, "User already exists."]
+
     passwordHash = self.authority.create_password_hash(password)
-    if self.DB.doesUserExist(username):  # user exists, so update password
-        if self.DB.setUserPasswordHash(username, passwordHash):
-            return [True, False]
-        else:
-            return [False, "Password update error."]
-    else:  # user does not exist, so create them
-        if self.DB.createUser(username, passwordHash):
-            return [True, True]
-        else:
-            return [False, "User creation error."]
+    if self.DB.createUser(username.lower(), passwordHash):
+        return [True, True]
+
+    return [False, "User creation error."]
+
+
+def changeUserPassword(self, username, password):
+    r, msg = self.authority.basic_username_password_check(username, password)
+    if not r:
+        return [False, f"Username/Password fails basic checks: {msg}"]
+    if username == "HAL":  # Don't mess with HAL
+        return [False, "I'm sorry, Dave. I'm afraid I can't do that."]
+
+    if not self.DB.doesUserExist(username):
+        return [False, "User does not exist."]
+
+    passwordHash = self.authority.create_password_hash(password)
+    update_result = self.DB.setUserPasswordHash(username, passwordHash)
+    if update_result:
+        return [True, True]
+    else:
+        return [False, "Password update error."]
 
 
 def closeUser(self, user):

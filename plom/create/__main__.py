@@ -7,6 +7,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2022 Edith Coates
 
 """Plom tools related to producing papers, and setting up servers.
 
@@ -28,6 +29,7 @@ from stdiomask import getpass
 
 import plom
 from plom import __version__
+from plom import Default_Port
 from plom import SpecVerifier
 from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
@@ -144,20 +146,19 @@ def get_parser():
         dest="command", description="Perform tasks related to building tests."
     )
 
-    sp = sub.add_parser(
+    sp_status = sub.add_parser(
         "status",
         help="Status of the server",
         description="Information about the server.",
     )
-    sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
-    spC = sub.add_parser(
+
+    sp_newspec = sub.add_parser(
         "newspec",
         aliases=["new"],
         help="Create new spec file",
         description="Create new spec file.",
     )
-    group = spC.add_mutually_exclusive_group(required=False)
+    group = sp_newspec.add_mutually_exclusive_group(required=False)
     group.add_argument(
         "specFile",
         nargs="?",
@@ -169,8 +170,7 @@ def get_parser():
         action="store_true",
         help="Use an auto-generated demo test. **Obviously not for real use**",
     )
-    # Add to spC not exclusive group
-    spC.add_argument(
+    sp_newspec.add_argument(
         "--demo-num-papers",
         type=int,
         # default=20,  # we want it to give None
@@ -202,21 +202,19 @@ def get_parser():
         """,
     )
 
-    spS = sub.add_parser(
+    sp_uploadspec = sub.add_parser(
         "uploadspec",
         help="Upload spec to server",
         description="Upload exam specification to server.",
     )
-    spS.add_argument(
+    sp_uploadspec.add_argument(
         "specFile",
         nargs="?",
         default="testSpec.toml",
         help="defaults to '%(default)s'.",
     )
-    spS.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    spS.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
-    spL = sub.add_parser(
+    sp_class = sub.add_parser(
         "class",
         help="Read in a classlist",
         description="Get student names/numbers from csv, process, and upload to server.",
@@ -238,23 +236,21 @@ def get_parser():
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    spL.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    spL.add_argument("-w", "--password", type=str, help='for the "manager" user')
-    spL.add_argument(
+    sp_class.add_argument(
         "-i",
         "--ignore-warnings",
         action="store_true",
         help="Ignore any classlist warnings and upload anyway.",
     )
 
-    group = spL.add_mutually_exclusive_group(required=True)
+    group = sp_class.add_mutually_exclusive_group(required=True)
     group.add_argument("classlist", nargs="?", help="filename in csv format")
     group.add_argument(
         "--demo",
         action="store_true",
         help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
     )
-    spL.add_argument(
+    sp_class.add_argument(
         "--force",
         action="store_true",
         help="""
@@ -282,8 +278,6 @@ def get_parser():
         metavar="FILE",
         help="Read the version map from FILE.  WORK-IN-PROGRESS!",
     )
-    spDB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    spDB.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
     spQVM = sub.add_parser(
         "get-ver-map",
@@ -296,8 +290,6 @@ def get_parser():
             case of catastrophe: we recommend keeping a backup copy.
         """,
     )
-    spQVM.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    spQVM.add_argument("-w", "--password", type=str, help='for the "manager" user')
     spQVM.add_argument(
         "file",
         nargs="?",
@@ -324,8 +316,6 @@ def get_parser():
         action="store_true",
         help="Produce PDFs without QR codes and staple-corner indicators.",
     )
-    spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
     spB.add_argument(
         "-n", "--number", type=int, help="used for building a specific paper number"
     )
@@ -352,30 +342,31 @@ def get_parser():
             Defaults to 42.5 (for historical reasons!)""",
     )
 
-    sp = sub.add_parser(
+    sp_user = sub.add_parser(
         "user",
         help="Add/modify a user account.",
         description="""
           Add a new user account.  You can provide a password or one will be
-          autogenerated and echoed to the screen.  If the account already
-          exists the password will be updated.
+          autogenerated and echoed to the screen. Use the --update argument
+          to modify an existing user's password instead.
           TODO: support disable/enable and maybe delete?
         """,
     )
-    sp.add_argument(
+    sp_user.add_argument(
+        "--update", action="store_true", help="Update an existing user's password."
+    )
+    sp_user.add_argument(
         "username",
         nargs="?",
         help="The username",
     )
-    sp.add_argument(
+    sp_user.add_argument(
         "userpassword",
         nargs="?",
         help="Autogenerated xkcd-style if omitted.",
     )
-    sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
-    sp = sub.add_parser(
+    sp_users = sub.add_parser(
         "users",
         help="Create/manipulate user accounts",
         description="""
@@ -387,7 +378,7 @@ def get_parser():
           passwords.
         """,
     )
-    group = sp.add_mutually_exclusive_group()
+    group = sp_users.add_mutually_exclusive_group()
     group.add_argument(
         "userlist", nargs="?", help="Create/update a list of users from a csv file."
     )
@@ -417,21 +408,19 @@ def get_parser():
         """,
     )
     # TODO: goes with --auto
-    sp.add_argument(
+    sp_users.add_argument(
         "--numbered",
         action="store_true",
         help='Use numbered usernames, e.g. "user17", for the autogeneration.',
     )
-    sp.add_argument(
+    sp_users.add_argument(
         "--no-upload",
         action="store_false",
         dest="upload",
         help="Do not upload, just create a local template file.",
     )
-    sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
-    sp = sub.add_parser(
+    sp_rubric = sub.add_parser(
         "rubric",
         help="Add pre-build rubrics",
         description="""
@@ -440,9 +429,7 @@ def get_parser():
             add them here or by using the plom-manager tool.
             This tool can also dump the current rubrics from a running server.""",
     )
-    sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
-    group = sp.add_mutually_exclusive_group(required=True)
+    group = sp_rubric.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "--dump",
         type=str,
@@ -464,51 +451,79 @@ def get_parser():
         help="Upload an auto-generated rubric list for demos.",
     )
 
-    sp = sub.add_parser(
+    sp_tags = sub.add_parser(
         "tags",
         help="List tags",
         description="""
           List all the tags defined on the server.
         """,
     )
-    sp.add_argument(
+    sp_tags.add_argument(
         "--list",
         action="store_true",
         help="""List the tags on the server (default behaviour).""",
     )
-    sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
-    sp = sub.add_parser(
+    sp_tag = sub.add_parser(
         "tag",
         help="Add/remove tags from papers",
         description="""
           Add or remove tags from a paper and question.
         """,
     )
-    sp.add_argument(
+    sp_tag.add_argument(
         "--rm",
         action="store_true",
         help="""Remove tag(s) from paper (if omitted we add tags).""",
     )
-    sp.add_argument(
+    sp_tag.add_argument(
         "task",
         nargs=1,
         help="""
             Which task to tag, e.g., q0123g4 for paper 123 question 4.
         """,
     )
-    sp.add_argument("tags", nargs="+", help="Tag(s) to add to task.")
-    sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
+    sp_tag.add_argument("tags", nargs="+", help="Tag(s) to add to task.")
 
-    spClear = sub.add_parser(
+    sp_clear = sub.add_parser(
         "clear",
         help='Clear "manager" login',
         description='Clear "manager" login after a crash or other expected event.',
     )
-    spClear.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    spClear.add_argument("-w", "--password", type=str, help='for the "manager" user')
+
+    for sp in (
+        sp_status,
+        sp_uploadspec,
+        spDB,
+        spQVM,
+        spB,
+        sp_class,
+        sp_user,
+        sp_users,
+        sp_rubric,
+        sp_tags,
+        sp_tag,
+        sp_clear,
+    ):
+        sp.add_argument(
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help=f"""
+                Which server to contact, port defaults to {Default_Port}.
+                Also checks the environment variable PLOM_SERVER if omitted.
+            """,
+        )
+        sp.add_argument(
+            "-w",
+            "--password",
+            type=str,
+            help="""
+                for the "manager" user, also checks the
+                environment variable PLOM_MANAGER_PASSWORD.
+            """,
+        )
 
     return parser
 
@@ -656,7 +671,11 @@ def main():
             else:
                 pwd = simple_password()
                 print(f'Creating/updating user with password "{pwd}"')
-            ok, msg = msgr.createModifyUser(args.username, pwd)
+
+            if args.update:
+                ok, msg = msgr.changeUserPassword(args.username, pwd)
+            else:
+                ok, msg = msgr.createUser(args.username, pwd)
         finally:
             msgr.closeUser()
             msgr.stop()
@@ -699,7 +718,7 @@ def main():
             all_ok = True
             try:
                 for user, pw in users.items():
-                    ok, msg = msgr.createModifyUser(user, pw)
+                    ok, msg = msgr.createUser(user, pw)
                     if ok:
                         print(f'  user "{user}" success:\t{msg}')
                     else:

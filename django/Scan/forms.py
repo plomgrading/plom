@@ -12,6 +12,8 @@ from django.forms import ValidationError
 from django.utils.text import slugify
 from django.conf import settings
 
+from Scan.services import ScanService
+
 
 class BundleUploadForm(forms.Form):
     """
@@ -43,6 +45,9 @@ class BundleUploadForm(forms.Form):
 
             # TODO: Should we prevent uploading duplicate bundles or warn them?
             hashed = hashlib.sha256(file_bytes).hexdigest()
+            scanner = ScanService()
+            if scanner.check_for_duplicate_hash(hashed):
+                raise ValidationError("Bundle was already uploaded.")
 
             # get slug
             filename_stem = pathlib.Path(str(pdf)).stem

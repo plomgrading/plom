@@ -2,7 +2,6 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 
-from asyncore import write
 import pathlib
 import hashlib
 import fitz
@@ -12,6 +11,7 @@ from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
 
+from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
     StagingImage,
@@ -116,6 +116,15 @@ class ScanService:
         file_path = pathlib.Path(bundle.file_path)
         file_path.unlink()
         bundle.delete()
+
+    @transaction.atomic
+    def check_for_duplicate_hash(self, hash):
+        """
+        Check if a PDF has already been uploaded: return True if the hash
+        already exists in the database.
+        """
+        duplicate_hashes = StagingBundle.objects.filter(pdf_hash=hash)
+        return len(duplicate_hashes) > 0
 
     @transaction.atomic
     def get_bundle(self, timestamp, user):
@@ -239,8 +248,14 @@ class ScanService:
         # error handling here
         qr_error_checker.check_qr_codes(page_data)
         # Below is to write the parsed QR code to database.
+
+        pipr = PageImageProcessor()
+        rotated = pipr.rotate_page_image(image_path, page_data)
+
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data
+        if rotated:
+            img.rotation = rotated
         img.save()
         
     @transaction.atomic
@@ -341,3 +356,10 @@ class ScanService:
         print("SPEC PUBLIC CODE:", spec["publicCode"])
         qrs = checkQRsValid(base_path, spec)
         return qrs
+
+    def get_n_pushed_images(self, bundle):
+        """
+        Return the number of staging images that have been pushed.
+        """
+        pushed = StagingImage.objects.filter(bundle=bundle, pushed=True)
+        return len(pushed)
