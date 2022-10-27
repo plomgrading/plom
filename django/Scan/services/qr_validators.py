@@ -32,7 +32,7 @@ class QRErrorService:
             elif tpv_type == "public_code":
                 qr_code_list.append(public_code)
             else:
-                raise ValueError("No specific TPV type specified.")
+                raise ValueError("No specific TPV type.")
         return qr_code_list
 
     def check_TPV_code(self, qr_list):
@@ -69,6 +69,9 @@ class QRErrorService:
                 break
     
     def check_public_code(self, public_codes, spec_dictionary):
+        """
+        Check if the paper public QR code matches with spec public code.
+        """
         spec_public_code = spec_dictionary['publicCode']
         for public_code in public_codes:
             if public_code == str(spec_public_code):
