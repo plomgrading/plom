@@ -95,12 +95,18 @@ class QRParsingProgressAlert(ScannerRequiredView):
         context = self.build_context()
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
+
+        if scanner.is_bundle_reading_finished(bundle) and not bundle.has_qr_codes:
+            scanner.qr_reading_cleanup(bundle)
+            return render(request, "Scan/fragments/qr_complete_modal.html", context)
+
         context.update(
             {
                 "reading_ongoing": scanner.is_bundle_reading_ongoig(bundle),
                 "total_pages": scanner.get_n_images(bundle),
                 "total_complete": scanner.get_n_complete_reading_tasks(bundle),
                 "timestamp": timestamp,
+                "finished": scanner.is_bundle_reading_finished(bundle),
             }
         )
 

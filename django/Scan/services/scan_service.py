@@ -341,12 +341,42 @@ class ScanService:
         return len(bundle_tasks) > 0 and len(ongoing_tasks) > 0
 
     @transaction.atomic
+    def is_bundle_reading_finished(self, bundle):
+        """
+        Return True if there is at least one ParseQR task and all statuses are 'complete'
+        or 'error'.
+        """
+        bundle_tasks = ParseQR.objects.filter(bundle=bundle)
+        ended_tasks = bundle_tasks.filter(status="error") | bundle_tasks.filter(
+            status="complete"
+        )
+        print(len(bundle_tasks))
+        print(len(ended_tasks))
+        return len(bundle_tasks) > 0 and len(bundle_tasks) == len(ended_tasks)
+
+    @transaction.atomic
     def get_n_complete_reading_tasks(self, bundle):
         """
         Return the number of ParseQR tasks with the status 'complete'
         """
         complete_tasks = ParseQR.objects.filter(bundle=bundle, status="complete")
         return len(complete_tasks)
+
+    @transaction.atomic
+    def clear_qr_tasks(self, bundle):
+        """
+        Remove all of the ParseQR tasks for this bundle.
+        """
+        bundle_tasks = ParseQR.objects.filter(bundle=bundle)
+        bundle_tasks.delete()
+
+    @transaction.atomic
+    def qr_reading_cleanup(self, bundle):
+        """
+        Mark bundle as having QR codes in the database.
+        """
+        bundle.has_qr_codes = True
+        bundle.save()
 
     def validate_qr_codes(self, bundle, spec):
         """
