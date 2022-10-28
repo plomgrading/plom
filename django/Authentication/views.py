@@ -70,12 +70,17 @@ class SetPassword(View):
                     user.profile.signup_confirmation = True
                     user.save()
                     print(reset_form.cleaned_data.get("new_password1"))
-                    core.create_core_user(
-                        user.username, reset_form.cleaned_data.get("new_password1")
-                    )
-                    context = {
-                        "classic_Plom_user": "Web Plom created an account for you in Classic Plom as well. You can use the same account in Web Plom and Classic Plom."
-                    }
+                    if not core.is_there_a_valid_connection():
+                        context = {
+                            "classic_Plom_user": "Cannot create user on Plom-classic - no connection found."
+                        }
+                    else:
+                        core.create_core_user(
+                            user.username, reset_form.cleaned_data.get("new_password1")
+                        )
+                        context = {
+                            "classic_Plom_user": "Web Plom created an account for you in Plom-classic. You can use the same account in Web Plom and Plom-classic."
+                        }
                     return render(request, self.set_password_complete, context)
                 # display error message
                 else:
