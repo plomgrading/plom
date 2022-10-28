@@ -15,6 +15,7 @@ from Scan.views import (
     ReadQRcodesView,
     QRParsingProgressAlert,
     PushPageImage,
+    PushAllPageImages,
 )
 
 
@@ -70,4 +71,5 @@ urlpatterns = [
         PushPageImage.as_view(),
         name="scan_push_img",
     ),
+    path("push/<timestamp>/all/", PushAllPageImages.as_view(), name="scan_push_all"),
 ]

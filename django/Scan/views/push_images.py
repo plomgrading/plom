@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 
 from django.http import HttpResponse, Http404
+from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
 
@@ -39,3 +40,31 @@ class PushPageImage(ScannerRequiredView):
         return HttpResponse(
             '<p>Image pushed <i class="bi bi-check-circle text-success"></i></p>'
         )
+
+
+class PushAllPageImages(ScannerRequiredView):
+    """
+    Push all page-images that pass the QR validation checks.
+    """
+
+    def post(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            return Http404()
+
+        scanner = ScanService()
+        img_service = ImageBundleService()
+        paper_service = PaperCreatorService()
+
+        bundle = scanner.get_bundle(timestamp, request.user)
+        images = scanner.get_all_complete_images(bundle)
+
+        for img in images:
+            any_qr = list(img.parsed_qr.values())[0]
+            test_paper = int(any_qr["paper_id"])
+            page_number = int(any_qr["page_num"])
+            pushed_img = img_service.push_staged_image(img, test_paper, page_number)
+            paper_service.update_page_image(test_paper, page_number, pushed_img)
+
+        return HttpResponseClientRefresh()

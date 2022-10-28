@@ -98,6 +98,8 @@ class QRParsingProgressAlert(ScannerRequiredView):
 
         if scanner.is_bundle_reading_finished(bundle) and not bundle.has_qr_codes:
             scanner.qr_reading_cleanup(bundle)
+            n_complete = len(scanner.get_all_complete_images(bundle))
+            context.update({"n_complete": n_complete, "timestamp": timestamp})
             return render(request, "Scan/fragments/qr_complete_modal.html", context)
 
         context.update(

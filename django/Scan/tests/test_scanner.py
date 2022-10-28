@@ -13,7 +13,7 @@ from model_bakery import baker
 
 from plom.scan import QRextract
 from Scan.services import ScanService
-from Scan.models import StagingBundle
+from Scan.models import StagingBundle, StagingImage
 
 
 class ScanServiceTests(TestCase):
@@ -132,3 +132,23 @@ class ScanServiceTests(TestCase):
             },
         }
         self.assertEqual(parsed_codes, code_dict)
+
+    def test_complete_images(self):
+        """
+        Test ScanService.get_all_complete_images()
+        """
+        scanner = ScanService()
+        bundle = baker.make(
+            StagingBundle, user=self.user0, timestamp=datetime.now().timestamp()
+        )
+
+        imgs = scanner.get_all_complete_images(bundle)
+        self.assertEqual(imgs, [])
+
+        baker.make(StagingImage, parsed_qr={}, bundle=bundle)
+        imgs = scanner.get_all_complete_images(bundle)
+        self.assertEqual(imgs, [])
+
+        with_data = baker.make(StagingImage, parsed_qr={"dummy": "dict"}, bundle=bundle)
+        imgs = scanner.get_all_complete_images(bundle)
+        self.assertEqual(imgs, [with_data])
