@@ -79,7 +79,7 @@ class SetPassword(View):
                             user.username, reset_form.cleaned_data.get("new_password1")
                         )
                         context = {
-                            "classic_Plom_user": "Web Plom created an account for you in Classic Plom as well. You can use the same account in Web Plom and Classic Plom."
+                            "classic_Plom_user": "Web Plom created an account for you in Plom-classic. You can use the same account in Web Plom and Plom-classic."
                         }
                     return render(request, self.set_password_complete, context)
                 # display error message
