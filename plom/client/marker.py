@@ -1206,8 +1206,12 @@ class MarkerClient(QWidget):
 
         for row in src_img_data:
             for r in pagedata:
-                if r["md5"] == row["md5"]:
+                # Issue #2331: md5sum could be repeated, want nonempty local_filename
+                if r["md5"] == row["md5"] and r["local_filename"]:
                     row["filename"] = r["local_filename"]
+            assert row[
+                "filename"
+            ], f"Unexpected Issue #2331: task={task}; img_src_data is {img_src_data}; pagedata={pagedata}"
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1418,8 +1422,12 @@ class MarkerClient(QWidget):
 
         for row in src_img_data:
             for r in pagedata:
-                if r["md5"] == row["md5"]:
+                # Issue #2331: md5sum could be repeated, want nonempty local_filename
+                if r["md5"] == row["md5"] and r["local_filename"]:
                     row["filename"] = r["local_filename"]
+            assert row[
+                "filename"
+            ], f"Unexpected Issue #2331: task={task}; img_src_data is {img_src_data}; pagedata={pagedata}"
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -2419,9 +2427,11 @@ class MarkerClient(QWidget):
         gn = tgs.gsb.value()
 
         pagedata = self.msgr.get_pagedata_question(tn, gn)
+        print(pagedata)
         pagedata = download_pages(
             self.msgr, pagedata, self.workingDirectory, get_all=True
         )
+        print(pagedata)
         # don't cache this pagedata: "gn" might not be our question number
         # (but the images are cacheable)
         qvmap = self.msgr.getQuestionVersionMap(tn)

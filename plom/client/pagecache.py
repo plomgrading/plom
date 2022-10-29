@@ -64,4 +64,5 @@ def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):
             with open(f, "wb") as fh:
                 fh.write(im_bytes)
             row["local_filename"] = str(f)
+        print(f"A: {row}")
     return pagedata
