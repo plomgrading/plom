@@ -1211,7 +1211,7 @@ class MarkerClient(QWidget):
                     row["filename"] = r["local_filename"]
             assert row[
                 "filename"
-            ], f"Unexpected Issue #2331: task={task}; img_src_data is {img_src_data}; pagedata={pagedata}"
+            ], f"Unexpected Issue #2331: task={task}; src_img_data is {src_img_data}; pagedata={pagedata}"
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1427,7 +1427,7 @@ class MarkerClient(QWidget):
                     row["filename"] = r["local_filename"]
             assert row[
                 "filename"
-            ], f"Unexpected Issue #2331: task={task}; img_src_data is {img_src_data}; pagedata={pagedata}"
+            ], f"Unexpected Issue #2331: task={task}; src_img_data is {src_img_data}; pagedata={pagedata}"
 
         self.examModel.addPaper(
             ExamQuestion(
