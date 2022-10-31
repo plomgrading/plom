@@ -82,6 +82,11 @@
                         </a>
                         {% endif %}
                         <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="load"></div>
+                        <div 
+                            hx-get="{% url 'scan_push_update' timestamp index %}" 
+                            hx-trigger="load"
+                            class="d-flex vstack gap-3">
+                        </div>
                     </div>
                 </div>
             </div>
