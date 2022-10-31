@@ -86,7 +86,7 @@ class QRParsingProgressAlert(ScannerRequiredView):
     Display and update an alert while QR code reading is in progress.
     """
 
-    def get(self, request, timestamp):
+    def post(self, request, timestamp):
         try:
             timestamp = float(timestamp)
         except ValueError:

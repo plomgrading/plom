@@ -1,7 +1,7 @@
 {% if reading_ongoing %}
 <div 
     class="alert alert-info d-flex align-items-center" 
-    hx-get="{% url 'scan_qr_alert' timestamp %}" 
+    hx-post="{% url 'scan_qr_alert' timestamp %}" 
     hx-trigger="every 1s"
     style="display: inline;"
     hx-swap="outerHTML"
