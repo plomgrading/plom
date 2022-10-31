@@ -66,9 +66,10 @@
                                 View
                             </a>
                             <a 
-                                class="btn btn-danger" 
+                                class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}" 
                                 hx-delete="{% url 'scan_remove_bundle' bundle.timestamp %}"
-                                hx-confirm="Are you sure?">
+                                hx-confirm="Are you sure?"
+                            >
                                 Remove
                             </a>
                         </div>

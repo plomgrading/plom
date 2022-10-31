@@ -46,14 +46,18 @@ class ScannerHomeView(ScannerRequiredView):
         bundles = []
         for bundle in user_bundles:
             date_time = datetime.fromtimestamp(bundle.timestamp)
+            pages = scanner.get_n_images(bundle)
+            n_pushed = scanner.get_n_pushed_images(bundle)
+            disable_delete = n_pushed > 0 and n_pushed < pages
             bundles.append(
                 {
                     "slug": bundle.slug,
                     "timestamp": bundle.timestamp,
                     "time_uploaded": arrow.get(date_time).humanize(),
-                    "pages": scanner.get_n_images(bundle),
+                    "pages": pages,
                     "n_read": scanner.get_n_complete_reading_tasks(bundle),
-                    "n_pushed": scanner.get_n_pushed_images(bundle),
+                    "n_pushed": n_pushed,
+                    "disable_delete": disable_delete,
                 }
             )
         context.update({"bundles": bundles})
