@@ -403,3 +403,14 @@ class ScanService:
             .exclude(pushed=True)
         )
         return list(complete)
+
+    @transaction.atomic
+    def all_complete_images_pushed(self, bundle):
+        """
+        Return True if all of the completed images in a bundle have been pushed.
+        """
+        completed_images = self.get_all_complete_images(bundle)
+        for img in completed_images:
+            if not img.pushed:
+                return False
+        return True

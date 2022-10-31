@@ -1,6 +1,6 @@
 {% if in_progress %}
     {% if qr_results %}
-    <div class="d-flex vstack">
+    <div class="d-flex vstack gap-3">
         <h5 class="text-center">
             <i class="bi bi-check-circle text-success"></i>
             Page QR codes parsed
@@ -11,20 +11,30 @@
             <li>Version {{ qr_results.version_num }}</li>
         </ul>
         {% if not image_exists %}
-        <a 
-            class="btn text-start" 
-            style="background-color: lightgrey;"
-            hx-post="{% url 'scan_push_img' timestamp index %}"
-            hx-swap="outerHTML"
-        >
-            <i class="bi bi-file-earmark-check"></i>
-            Push page image
-        </a>
-        {% else %}
-        <p>
-            Image pushed
-            <i class="bi bi-check-circle text-success"></i>
-        </p>
+            <a 
+                class="btn text-start" 
+                style="background-color: lightgrey;"
+                hx-post="{% url 'scan_push_img' timestamp index %}"
+                hx-swap="outerHTML"
+            >
+                <i class="bi bi-file-earmark-check"></i>
+                Push page image
+            </a>
+            
+            {% else %}
+            <p>
+                Image pushed
+                <i class="bi bi-check-circle text-success"></i>
+            </p>
+        {% endif %}
+        {% if not all_pushed %}
+            <a 
+                class="btn text-start " 
+                style="background-color: lightgrey;"
+                hx-post="{% url 'scan_push_all' timestamp %}"
+            >
+                Push all ready pages
+            </a>
         {% endif %}
     </div>
     {% elif task_status == 'error' %}

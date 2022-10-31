@@ -46,6 +46,7 @@ class UpdateQRProgressView(ScannerRequiredView):
                 "timestamp": timestamp,
                 "index": index,
                 "task_status": task_status,
+                "all_pushed": scanner.all_complete_images_pushed(bundle),
             }
         )
 
