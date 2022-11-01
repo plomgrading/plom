@@ -87,11 +87,14 @@ class PaperCreatorService:
                 )
                 question_page.save()
 
-    def add_all_papers_in_qv_map(self, qv_map):
+    def add_all_papers_in_qv_map(self, qv_map, background=True):
         """Build all the papers given by the qv-map
 
         qv_map (dict): For each paper give the question-version map.
             Of the form {paper_number: {q: v}}
+
+        background (optional, bool): Run in the background. If false,
+        run with call_local.
 
         returns (pair): If all papers added to DB without errors then
             return (True, []) else return (False, list of errors) where
@@ -101,7 +104,12 @@ class PaperCreatorService:
         errors = []
         for paper_number, qv_mapping in qv_map.items():
             try:
-                self.create_paper_with_qvmapping(paper_number, qv_mapping)
+                if background:
+                    self.create_paper_with_qvmapping(paper_number, qv_mapping)
+                else:
+                    self._create_paper_with_qvmapping.call_local(
+                        self.spec, paper_number, qv_mapping
+                    )
             except ValueError as err:
                 errors.append((paper_number, err))
         if errors:
@@ -109,10 +117,13 @@ class PaperCreatorService:
         else:
             return True, []
 
-    @transaction.atomic
     def remove_all_papers_from_db(self):
         # hopefully we don't actually need to call this outside of testing.
-        Paper.objects.filter().delete()
+        # Have to use a loop because of a bug/quirk in django_polymorphic
+        # see https://github.com/django-polymorphic/django-polymorphic/issues/34
+        for page in BasePage.objects.all():
+            page.delete()
+        Paper.objects.all().delete()
 
     def update_page_image(self, paper_number, page_index, image):
         """
