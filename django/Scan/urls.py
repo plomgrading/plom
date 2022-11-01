@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
 from django.urls import path
 
@@ -15,6 +16,7 @@ from Scan.views import (
     ReadQRcodesView,
     QRParsingProgressAlert,
     PushPageImage,
+    FlagPageImage,
 )
 
 
@@ -69,5 +71,10 @@ urlpatterns = [
         "push/<timestamp>/<int:index>/",
         PushPageImage.as_view(),
         name="scan_push_img",
+    ),
+    path(
+        "flag/<timestamp>/<int:index>/",
+        FlagPageImage.as_view(),
+        name="scan_flag_img",
     ),
 ]

@@ -27,3 +27,7 @@ from .qr_codes import (
 from .push_images import (
     PushPageImage,
 )
+
+from .flag_images import (
+    FlagPageImage,
+)

@@ -30,6 +30,24 @@
     {% elif task_status == 'error' %}
     <div>
         <p class="text-danger">{{ error }}</p>
+        <a 
+            class="btn text-start" 
+            style="background-color: lightgrey;"
+            hx-post=""
+            hx-swap="outerHTML"
+        >
+            <i class=""></i>
+            Flag to manager
+        </a>
+        <a 
+            class="btn text-start" 
+            style="background-color: lightgrey;"
+            hx-post=""
+            hx-swap="outerHTML"
+        >
+            <i class=""></i>
+            Discard
+        </a>
     </div>
     {% else %}
     <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s" hx-swap="outerHTML">
