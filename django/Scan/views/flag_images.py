@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Brennen Chiu
 
 from Base.base_group_views import ScannerRequiredView
-from django.http import Http404
+from django.http import Http404, HttpResponse
 
 from Scan.services.scan_service import ScanService
 
@@ -18,5 +18,11 @@ class FlagPageImage(ScannerRequiredView):
         except ValueError:
             return Http404()
 
-        scanner = ScanService() 
+        scanner = ScanService()
+        flag_image = scanner.get_image(timestamp, request.user, index)
+        flag_image.flagged = True
+        flag_image.comment = "This page is folded, might have to rescan it."
+        flag_image.save()
+
+        return HttpResponse("<p>Image flagged to manager.</p>")
         
