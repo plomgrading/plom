@@ -26,4 +26,6 @@ from .qr_codes import (
 
 from .push_images import (
     PushPageImage,
+    PushAllPageImages,
+    PagePushingUpdateView,
 )

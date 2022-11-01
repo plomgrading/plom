@@ -12,7 +12,15 @@
                     QR reading complete
                     <i class="bi bi-check-circle text-success"></i>
                 </h5>
-                <p>Ready to save page-images.</p>
+                <p>{{ n_complete }} pages passed all validation checks and can be pushed.</p>
+                <a 
+                    class="btn text-start" 
+                    style="background-color: lightgrey;"
+                    hx-post="{% url 'scan_push_all' timestamp %}"
+                >
+                    <i class="bi bi-check-all"></i>
+                    Push all ready pages
+                </a>
             </div>
             <div class="modal-footer">
                 <a class="btn btn-secondary" data-bs-dismiss="modal">OK</a>

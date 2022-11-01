@@ -350,8 +350,6 @@ class ScanService:
         ended_tasks = bundle_tasks.filter(status="error") | bundle_tasks.filter(
             status="complete"
         )
-        print(len(bundle_tasks))
-        print(len(ended_tasks))
         return len(bundle_tasks) > 0 and len(bundle_tasks) == len(ended_tasks)
 
     @transaction.atomic
@@ -393,3 +391,27 @@ class ScanService:
         """
         pushed = StagingImage.objects.filter(bundle=bundle, pushed=True)
         return len(pushed)
+
+    @transaction.atomic
+    def get_all_complete_images(self, bundle):
+        """
+        Get all the images with completed QR code data - they can be pushed.
+        """
+        complete = (
+            StagingImage.objects.filter(bundle=bundle)
+            .exclude(parsed_qr={})
+            .exclude(pushed=True)
+            .exclude(colliding=True)
+        )
+        return list(complete)
+
+    @transaction.atomic
+    def all_complete_images_pushed(self, bundle):
+        """
+        Return True if all of the completed images in a bundle have been pushed.
+        """
+        completed_images = self.get_all_complete_images(bundle)
+        for img in completed_images:
+            if not img.pushed:
+                return False
+        return True
