@@ -9,6 +9,7 @@ from django_huey import db_task
 
 from Papers.models import Bundle, Image, CreateImageTask
 from .paper_creator import PaperCreatorService
+from .paper_info import PaperInfoService
 
 
 class ImageBundleService:
@@ -16,7 +17,6 @@ class ImageBundleService:
     Class to encapsulate all functions around validated page images and bundles.
     """
 
-    @transaction.atomic
     def create_bundle(self, name, hash):
         """
         Create a bundle and store its name and sha256 hash.
@@ -33,7 +33,6 @@ class ImageBundleService:
         """
         return Bundle.objects.get(hash=hash)
 
-    @transaction.atomic
     def create_image(
         self, bundle, bundle_order, original_name, file_name, hash, rotation
     ):
@@ -54,7 +53,6 @@ class ImageBundleService:
         image.save()
         return image
 
-    @transaction.atomic
     def push_staged_image(self, staged_image, test_paper, page_number):
         """
         Save a staged bundle image to the database, after it has been
@@ -72,7 +70,6 @@ class ImageBundleService:
         push_obj.save()
 
     @db_task(queue="tasks")
-    @transaction.atomic
     def _push_staged_image(staged_image, test_paper, page_number):
         """
         Save a staged bundle image to the database, after it has been
@@ -85,6 +82,22 @@ class ImageBundleService:
         """
 
         image_bundle = ImageBundleService()
+        papers = PaperCreatorService()
+        info = PaperInfoService()
+
+        if not info.is_this_paper_in_database(test_paper):
+            raise RuntimeError(f"Test paper {test_paper} is not in the database.")
+
+        if image_bundle.image_exists(staged_image.image_hash):
+            raise RuntimeError(f"Page image already exists in the database.")
+
+        if info.page_has_image(test_paper, page_number):
+            staged_image.colliding = True
+            staged_image.save()
+            raise RuntimeError(
+                f"Collision page detected: test {test_paper} already has page {page_number}."
+            )
+
         staged_bundle = staged_image.bundle
         if not Bundle.objects.filter(hash=staged_bundle.pdf_hash).exists():
             bundle = image_bundle.create_bundle(
@@ -110,7 +123,6 @@ class ImageBundleService:
         staged_image.pushed = True
         staged_image.save()
 
-        papers = PaperCreatorService()
         papers.update_page_image(test_paper, page_number, image)
 
     def get_page_image_path(self, test_paper, file_name):
@@ -136,6 +148,7 @@ class ImageBundleService:
         """
         return Image.objects.filter(hash=hash).exists()
 
+    @transaction.atomic
     def get_image_pushing_status(self, staged_image):
         """
         Return the status of a staged image's associated CreateImageTask instance
@@ -146,6 +159,7 @@ class ImageBundleService:
         except CreateImageTask.DoesNotExist:
             return None
 
+    @transaction.atomic
     def get_image_pushing_message(self, staged_image):
         """
         Return the error message of a staged image's CreateImageTask instance
@@ -156,6 +170,7 @@ class ImageBundleService:
         except CreateImageTask.DoesNotExist:
             return None
 
+    @transaction.atomic
     def is_image_pushing_in_progress(self, completed_images):
         """
         Return True if at least one CreateImageTask for a bundle has the status 'queued'

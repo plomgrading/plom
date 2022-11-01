@@ -88,6 +88,7 @@ class PagePushingUpdateView(ScannerRequiredView):
                 "timestamp": timestamp,
                 "index": index,
                 "status": img_service.get_image_pushing_status(staging_img),
+                "error": img_service.get_image_pushing_message(staging_img),
                 "image_exists": img_service.image_exists(staging_img.image_hash),
                 "qr_finished": scanner.is_bundle_reading_finished(bundle),
                 "qr_status": scanner.get_qr_code_reading_status(bundle, index),

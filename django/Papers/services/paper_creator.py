@@ -114,7 +114,6 @@ class PaperCreatorService:
         # hopefully we don't actually need to call this outside of testing.
         Paper.objects.filter().delete()
 
-    @transaction.atomic
     def update_page_image(self, paper_number, page_index, image):
         """
         Add a reference to an Image instance.

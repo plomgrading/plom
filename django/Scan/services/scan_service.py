@@ -401,6 +401,7 @@ class ScanService:
             StagingImage.objects.filter(bundle=bundle)
             .exclude(parsed_qr={})
             .exclude(pushed=True)
+            .exclude(colliding=True)
         )
         return list(complete)
 
