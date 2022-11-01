@@ -37,4 +37,4 @@ class PaperInfoService:
         """
         paper = Paper.objects.get(paper_number=paper_number)
         page = BasePage.objects.get(paper=paper, page_number=page_number)
-        return page.image != None
+        return page.image is not None
