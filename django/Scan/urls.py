@@ -17,6 +17,7 @@ from Scan.views import (
     QRParsingProgressAlert,
     PushPageImage,
     FlagPageImage,
+    DeleteErrorImage,
 )
 
 
@@ -76,5 +77,10 @@ urlpatterns = [
         "flag/<timestamp>/<int:index>/",
         FlagPageImage.as_view(),
         name="scan_flag_img",
+    ),
+    path(
+        "flag/<timestamp>/<int:index>/",
+        DeleteErrorImage.as_view(),
+        name="scan_delete_flag_img",
     ),
 ]

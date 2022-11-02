@@ -30,4 +30,5 @@ from .push_images import (
 
 from .flag_images import (
     FlagPageImage,
+    DeleteErrorImage
 )

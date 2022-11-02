@@ -24,5 +24,20 @@ class FlagPageImage(ScannerRequiredView):
         flag_image.comment = "This page is folded, might have to rescan it."
         flag_image.save()
 
-        return HttpResponse("<p>Image flagged to manager.</p>")
+        return HttpResponse('<p>Image flagged to manager <i class="bi bi-check-circle text-success"></i></p>')
+
+
+class DeleteErrorImage(ScannerRequiredView):
+    """
+    """
+    def post(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            return Http404()
         
+        scanner = ScanService()
+        image = scanner.get_image(timestamp, request.user, index)
+        image.delete()
+        
+        return HttpResponse()
