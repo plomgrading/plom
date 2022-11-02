@@ -23,3 +23,5 @@ python3 manage.py plom_preparation_test_source upload -v 2 useful_files_for_test
 python3 manage.py plom_preparation_prenaming --enable
 python3 manage.py plom_preparation_classlist upload useful_files_for_testing/cl_good.csv
 python3 manage.py plom_preparation_qvmap generate
+
+python3 manage.py plom_papers build
