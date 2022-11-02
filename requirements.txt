@@ -31,7 +31,7 @@ pandas==1.5.1
 passlib==1.7.4
 peewee==3.15.4
 Pillow==9.3.0
-pymupdf==1.20.2
+pymupdf==1.21.0rc1
 PyMySQL==1.0.2
 pyzbar==0.1.9
 requests==2.28.1
