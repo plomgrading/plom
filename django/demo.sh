@@ -7,8 +7,6 @@
 
 set -e
 
-pip install -r requirements.txt --quiet
-
 rm -f db.sqlite3
 rm -f huey/huey_db.*
 
