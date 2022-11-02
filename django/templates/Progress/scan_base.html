@@ -1,0 +1,69 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Web Plom - Progress{% endblock %}
+
+{% block page_heading %}Scanning progress{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid pe-4">
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-pills nav-fill">
+                <li class="nav-item">
+                    {% if curr_page == "overview" %}
+                    <a class="nav-link active" href="#">Overview</a>
+                    {% else %}
+                    <a class="nav-link" href="#">Overview</a>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    {% if curr_page == "bundles" %}
+                    <a class="nav-link active" href="#">Bundles</a>
+                    {% else %}
+                    <a class="nav-link" href="#">Bundles</a>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    {% if curr_page == "colliding" %}
+                    <a class="nav-link active" href="#">Colliding pages</a>
+                    {% else %}
+                    <a class="nav-link" href="#">Colliding pages</a>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    {% if curr_page == "unknown_page" %}
+                    <a class="nav-link active" href="#">Unknown pages</a>
+                    {% else %}
+                    <a class="nav-link" href="#">Unknown pages</a>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    {% if curr_page == "error_page" %}
+                    <a class="nav-link active" href="#">Error pages</a>
+                    {% else %}
+                    <a class="nav-link" href="#">Error pages</a>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    {% if curr_page == "extra" %}
+                    <a class="nav-link active" href="#">Extra pages</a>
+                    {% else %}
+                    <a class="nav-link" href="#">Extra pages</a>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    {% if curr_page == "discarded" %}
+                    <a class="nav-link active" href="#">Discarded pages</a>
+                    {% else %}
+                    <a class="nav-link" href="#">Discarded pages</a>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            {% block main_card_content %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
