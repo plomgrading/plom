@@ -70,15 +70,16 @@ class ImageBundleService:
         push_obj.save()
 
     @db_task(queue="tasks")
-    def _push_staged_image(staged_image, test_paper, page_number):
+    def _push_staged_image(staged_image, test_paper, page_number, make_dirs=True):
         """
         Save a staged bundle image to the database, after it has been
         successfully validated.
 
         Args:
             staged_image: StagingImage instance
-            test_paper: string, test-paper ID of the image
+            test_paper: int, test-paper ID of the image
             page_number: int, page number in the test (not the bundle)
+            make_dirs (optional): bool, set to False for testing (otherwise, creates directories in the file system.)
         """
 
         image_bundle = ImageBundleService()
@@ -107,7 +108,7 @@ class ImageBundleService:
             bundle = image_bundle.get_bundle(staged_bundle.pdf_hash)
 
         file_path = image_bundle.get_page_image_path(
-            test_paper, f"page{page_number}.png"
+            test_paper, f"page{page_number}.png", make_dirs
         )
 
         image = image_bundle.create_image(
@@ -119,26 +120,27 @@ class ImageBundleService:
             rotation=staged_image.rotation,
         )
 
-        shutil.copy(staged_image.file_path, file_path)
+        if make_dirs:
+            shutil.copy(staged_image.file_path, file_path)
         staged_image.pushed = True
         staged_image.save()
 
         papers.update_page_image(test_paper, page_number, image)
 
-    def get_page_image_path(self, test_paper, file_name):
+    def get_page_image_path(self, test_paper, file_name, make_dirs=True):
         """
         Return a save path for a test-paper page image.
         Also, create the necessary folders in the media directory
         if they don't exist.
         """
         page_image_dir = settings.BASE_DIR / "media" / "page_images"
-        page_image_dir.mkdir(exist_ok=True)
-
         test_papers_dir = page_image_dir / "test_papers"
-        test_papers_dir.mkdir(exist_ok=True)
-
         paper_dir = test_papers_dir / str(test_paper)
-        paper_dir.mkdir(exist_ok=True)
+
+        if make_dirs:
+            page_image_dir.mkdir(exist_ok=True)
+            test_papers_dir.mkdir(exist_ok=True)
+            paper_dir.mkdir(exist_ok=True)
 
         return str(paper_dir / file_name)
 
