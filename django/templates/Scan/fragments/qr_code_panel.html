@@ -30,6 +30,7 @@
     {% elif task_status == 'error' %}
     <div>
         <p class="text-danger">{{ error }}</p>
+        {% if not flagged %}
         <a 
             class="btn text-start" 
             style="background-color: lightgrey;"
@@ -39,6 +40,8 @@
             <i class=""></i>
             Flag to manager
         </a>
+        {% else %}
+        <p>Image flagged to manager <i class="bi bi-check-circle text-success"></i></p>
         <a 
             class="btn text-start" 
             style="background-color: lightgrey;"

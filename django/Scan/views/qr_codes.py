@@ -54,6 +54,9 @@ class UpdateQRProgressView(ScannerRequiredView):
         if img_service.image_exists(image.image_hash):
             context.update({"image_exists": True})
 
+        if image.flagged:
+            context.update({"flagged": True})
+
         if task_status:
             context.update({"in_progress": True})
             qr_data = scanner.get_qr_code_results(bundle, index)

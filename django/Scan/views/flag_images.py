@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 
-from Base.base_group_views import ScannerRequiredView
+from Scan.views.qr_codes import UpdateQRProgressView
 from django.http import Http404, HttpResponse
-
 from Scan.services.scan_service import ScanService
 
 
-class FlagPageImage(ScannerRequiredView):
+class FlagPageImage(UpdateQRProgressView):
     """
     If a page image has an error, this method allows
     scanners to flag the page image to the manager.
@@ -27,7 +26,7 @@ class FlagPageImage(ScannerRequiredView):
         return HttpResponse('<p>Image flagged to manager <i class="bi bi-check-circle text-success"></i></p>')
 
 
-class DeleteErrorImage(ScannerRequiredView):
+class DeleteErrorImage(UpdateQRProgressView):
     """
     """
     def post(self, request, timestamp, index):
@@ -39,5 +38,5 @@ class DeleteErrorImage(ScannerRequiredView):
         scanner = ScanService()
         image = scanner.get_image(timestamp, request.user, index)
         image.delete()
-        
+
         return HttpResponse()
