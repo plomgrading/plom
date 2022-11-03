@@ -3,7 +3,10 @@
 
 from Scan.views.qr_codes import UpdateQRProgressView
 from django.http import Http404, HttpResponse
+from django_htmx.http import HttpResponseClientRefresh
+from django.shortcuts import redirect
 from Scan.services.scan_service import ScanService
+from Scan.forms import FlagImageForm
 
 
 class FlagPageImage(UpdateQRProgressView):
@@ -19,24 +22,29 @@ class FlagPageImage(UpdateQRProgressView):
 
         scanner = ScanService()
         flag_image = scanner.get_image(timestamp, request.user, index)
-        flag_image.flagged = True
-        flag_image.comment = "This page is folded, might have to rescan it."
-        flag_image.save()
+        form = FlagImageForm(request.POST)
+        if form.is_valid():
+            flag_image.flagged = True
+            flag_image.comment = form.cleaned_data['comment']
+            flag_image.save()
+            return redirect('scan_manage_bundle', timestamp, index)
+        else:
+            return HttpResponse('Form error!')
 
-        return HttpResponse('<p>Image flagged to manager <i class="bi bi-check-circle text-success"></i></p>')
-
-
-class DeleteErrorImage(UpdateQRProgressView):
-    """
-    """
-    def post(self, request, timestamp, index):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            return Http404()
         
-        scanner = ScanService()
-        image = scanner.get_image(timestamp, request.user, index)
-        image.delete()
 
-        return HttpResponse()
+# put this into manager function instead
+# class DeleteErrorImage(UpdateQRProgressView):
+#     """
+#     """
+#     def post(self, request, timestamp, index):
+#         try:
+#             timestamp = float(timestamp)
+#         except ValueError:
+#             return Http404()
+        
+#         scanner = ScanService()
+#         image = scanner.get_image(timestamp, request.user, index)
+#         image.delete()
+
+#         return HttpResponse()

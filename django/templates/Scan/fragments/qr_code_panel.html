@@ -31,26 +31,31 @@
     <div>
         <p class="text-danger">{{ error }}</p>
         {% if not flagged %}
-        <a 
-            class="btn text-start" 
-            style="background-color: lightgrey;"
-            hx-post="{% url 'scan_flag_img' timestamp index %}"
-            hx-swap="outerHTML"
+        {% comment %} <form action="" method="post">
+            <a 
+                class="btn text-start" 
+                style="background-color: lightgrey;"
+                hx-post="{% url 'scan_flag_img' timestamp index %}"
+                hx-swap="outerHTML"
+            >
+                <i class=""></i>
+                Flag to manager
+            </a>
+            <input type="text" name="comment" placeholder="Add comment (optional)">
+        </form> {% endcomment %}
+        <form
+            enctype="multipart/form-data"
+            method="post"
+            action="{% url 'scan_flag_img' timestamp index %}"
         >
-            <i class=""></i>
-            Flag to manager
-        </a>
+            {% csrf_token %}
+            {{ form }}
+            <input type="submit" class="btn" style="background-color: lightgrey;" value="Flag to manager"> 
+        </form>
         {% else %}
         <p>Image flagged to manager <i class="bi bi-check-circle text-success"></i></p>
-        <a 
-            class="btn text-start" 
-            style="background-color: lightgrey;"
-            hx-post="{% url 'scan_delete_flag_img' timestamp index %}"
-            hx-swap="outerHTML"
-        >
-            <i class=""></i>
-            Discard
-        </a>
+        
+        {% endif %}
     </div>
     {% else %}
     <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s" hx-swap="outerHTML">

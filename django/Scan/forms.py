@@ -64,3 +64,20 @@ class BundleUploadForm(forms.Form):
             return data
         except (FileDataError, KeyError):
             raise ValidationError("Unable to open file.")
+
+class FlagImageForm(forms.Form):
+    """
+    A form to flag the images with error to the manager
+    Added comment to show what the error is.
+    """
+    comment = forms.CharField(
+        label='Comment',
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Comment to manager (optional)", 
+                "name": "comment",
+            }
+        ),
+        required=False, 
+    )
