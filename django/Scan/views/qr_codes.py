@@ -10,6 +10,7 @@ from Base.base_group_views import ScannerRequiredView
 
 from Papers.services import ImageBundleService
 from Scan.services import ScanService
+from Scan.forms import FlagImageForm
 
 
 class ReadQRcodesView(ScannerRequiredView):
@@ -38,6 +39,7 @@ class UpdateQRProgressView(ScannerRequiredView):
     def build_context(self, timestamp, user, index):
         context = super().build_context()
         scanner = ScanService()
+        form = FlagImageForm()
         bundle = scanner.get_bundle(timestamp, user)
         task_status = scanner.get_qr_code_reading_status(bundle, index)
 
@@ -46,6 +48,7 @@ class UpdateQRProgressView(ScannerRequiredView):
                 "timestamp": timestamp,
                 "index": index,
                 "task_status": task_status,
+                "form": form,
             }
         )
 
@@ -53,6 +56,9 @@ class UpdateQRProgressView(ScannerRequiredView):
         img_service = ImageBundleService()
         if img_service.image_exists(image.image_hash):
             context.update({"image_exists": True})
+
+        if image.flagged:
+            context.update({"flagged": True})
 
         if task_status:
             context.update({"in_progress": True})

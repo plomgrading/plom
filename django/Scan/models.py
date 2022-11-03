@@ -36,6 +36,10 @@ class StagingImage(models.Model):
     rotation = models.IntegerField(default=0)
     pushed = models.BooleanField(default=False)
     colliding = models.BooleanField(default=False)
+    unknown = models.BooleanField(default=False)
+    error = models.BooleanField(default=False)
+    flagged = models.BooleanField(default=False)
+    comment = models.TextField(default="", null=True)
 
 
 class PageToImage(HueyTask):
