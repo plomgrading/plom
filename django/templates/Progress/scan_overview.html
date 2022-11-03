@@ -5,12 +5,95 @@
 {% block page_heading %}Scanning progress{% endblock %}
 
 {% block main_card_content %}
-<ul class="list-unstyled">
-    <ul>30 test papers</ul>
-    <ul>15 complete test papers (50%)</ul>
-</ul>
-<ul class="list-unstyled">
-    <ul>90 pages</ul>
-    <ul>60 complete pages (66%)</ul>
-</ul>
+<script>
+    function toggle_pages(page_id) {
+        console.log('[id^="' + page_id + '"]');
+        let pages = document.querySelectorAll('[id^="' + page_id + '"]');
+        for (let page of pages) {
+            page.hidden = !page.hidden;
+        }
+    }
+</script>
+
+<div class="d-grid gap-2">
+    <div class="row">
+        <div class="col">
+            <ul class="list-unstyled">
+                <ul>{{ total_papers }} test papers</ul>
+                <ul>{{ completed_papers }} complete test papers ({{ percent_papers_complete }}%)</ul>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <ul class="list-unstyled">
+                <ul>{{ total_pages }} pages</ul>
+                <ul>{{ scanned_pages }} complete pages ({{ percent_pages_complete }}%)</ul>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row ps-5 pe-5">
+        <div class="card" style="max-height: 50vh;">
+            <div class="card-body overflow-auto">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Paper number</th>
+                            <th scope="col">Page number</th>
+                            <th scope="col">Question version</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tp in test_papers %}
+                            <tr>
+                                <td>
+                                    <a 
+                                        class="btn" 
+                                        onclick="toggle_pages('{{ tp.paper_number }}_page')" 
+                                        style="background-color: lightgrey;">
+                                        {{ tp.paper_number }}
+                                        <i class="bi bi-chevron-down"></i>
+                                    </a>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                {% if tp.complete %}
+                                    <td class="text-success">Complete</td>
+                                {% else %}
+                                    <td class="text-danger">Incomplete</td>
+                                {% endif %}
+                                <td>
+                                </td>
+                            </tr>
+                            {% for page in tp.pages %}
+                            <tr 
+                                id="{{ tp.paper_number }}_page{{ forloop.counter }}" 
+                                hidden="true"
+                                class="table-active"
+                            >
+                                <td></td>
+                                <td>{{ forloop.counter }}</td>
+                                <td></td>
+                                {% if page %}
+                                    <td class="text-success">&ensp;Scanned</td>
+                                {% else %}
+                                    <td class="text-danger">&ensp;Pending</td>
+                                {% endif %}
+                                <td>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 {% endblock %}

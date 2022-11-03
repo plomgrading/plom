@@ -3,6 +3,7 @@
 
 from django.shortcuts import render
 
+from Progress.services import ManageScanService
 from Base.base_group_views import ManagerRequiredView
 
 
@@ -27,7 +28,27 @@ class ScanOverview(BaseScanProgressPage):
     """
 
     def get(self, request):
+        mss = ManageScanService()
+        total_pages = mss.get_total_pages()
+        scanned_pages = mss.get_scanned_pages()
+        percent_pages_complete = scanned_pages / total_pages * 100
+
+        total_papers = mss.get_total_test_papers()
+        completed_papers = mss.get_completed_test_papers()
+        percent_papers_complete = completed_papers / total_papers * 100
+
         context = self.build_context("overview")
+        context.update(
+            {
+                "total_pages": total_pages,
+                "scanned_pages": scanned_pages,
+                "percent_pages_complete": int(percent_pages_complete),
+                "total_papers": total_papers,
+                "completed_papers": completed_papers,
+                "percent_papers_complete": int(percent_papers_complete),
+                "test_papers": mss.get_test_paper_list(),
+            }
+        )
         return render(request, "Progress/scan_overview.html", context)
 
 
