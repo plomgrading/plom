@@ -250,7 +250,7 @@ class ScanService:
 
         pipr = PageImageProcessor()
         rotated = pipr.rotate_page_image(image_path, page_data)
-        
+
         # Below is to write the parsed QR code to database.
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data

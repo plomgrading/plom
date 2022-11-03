@@ -31,18 +31,6 @@
     <div>
         <p class="text-danger">{{ error }}</p>
         {% if not flagged %}
-        {% comment %} <form action="" method="post">
-            <a 
-                class="btn text-start" 
-                style="background-color: lightgrey;"
-                hx-post="{% url 'scan_flag_img' timestamp index %}"
-                hx-swap="outerHTML"
-            >
-                <i class=""></i>
-                Flag to manager
-            </a>
-            <input type="text" name="comment" placeholder="Add comment (optional)">
-        </form> {% endcomment %}
         <form
             enctype="multipart/form-data"
             method="post"
@@ -50,10 +38,11 @@
         >
             {% csrf_token %}
             {{ form }}
-            <input type="submit" class="btn" style="background-color: lightgrey;" value="Flag to manager"> 
+            
+            <input type="submit" class="btn" style="background-color: lightgrey; width: 100%" value="Flag to manager"> 
         </form>
         {% else %}
-        <p>Image flagged to manager <i class="bi bi-check-circle text-success"></i></p>
+        <p>Paper flagged to manager <i class="bi bi-check-circle text-success"></i></p>
         
         {% endif %}
     </div>

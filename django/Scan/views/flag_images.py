@@ -3,7 +3,6 @@
 
 from Scan.views.qr_codes import UpdateQRProgressView
 from django.http import Http404, HttpResponse
-from django_htmx.http import HttpResponseClientRefresh
 from django.shortcuts import redirect
 from Scan.services.scan_service import ScanService
 from Scan.forms import FlagImageForm
@@ -14,6 +13,7 @@ class FlagPageImage(UpdateQRProgressView):
     If a page image has an error, this method allows
     scanners to flag the page image to the manager.
     """
+
     def post(self, request, timestamp, index):
         try:
             timestamp = float(timestamp)
@@ -25,13 +25,14 @@ class FlagPageImage(UpdateQRProgressView):
         form = FlagImageForm(request.POST)
         if form.is_valid():
             flag_image.flagged = True
-            flag_image.comment = form.cleaned_data['comment']
+            flag_image.comment = (
+                str(request.user.username) + "said " + str(form.cleaned_data["comment"])
+            )
             flag_image.save()
-            return redirect('scan_manage_bundle', timestamp, index)
+            return redirect("scan_manage_bundle", timestamp, index)
         else:
-            return HttpResponse('Form error!')
+            return HttpResponse("Form error!")
 
-        
 
 # put this into manager function instead
 # class DeleteErrorImage(UpdateQRProgressView):
@@ -42,7 +43,7 @@ class FlagPageImage(UpdateQRProgressView):
 #             timestamp = float(timestamp)
 #         except ValueError:
 #             return Http404()
-        
+
 #         scanner = ScanService()
 #         image = scanner.get_image(timestamp, request.user, index)
 #         image.delete()

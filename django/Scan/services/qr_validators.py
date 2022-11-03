@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Brennen Chiu
 
 from Papers.services import SpecificationService
-from Scan.models import (StagingImage)
+from Scan.models import StagingImage
 
 
 class QRErrorService:

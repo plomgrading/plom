@@ -48,7 +48,7 @@ class UpdateQRProgressView(ScannerRequiredView):
                 "timestamp": timestamp,
                 "index": index,
                 "task_status": task_status,
-                "form": form
+                "form": form,
             }
         )
 
