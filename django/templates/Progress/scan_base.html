@@ -11,51 +11,51 @@
             <ul class="nav nav-pills nav-fill">
                 <li class="nav-item">
                     {% if curr_page == "overview" %}
-                    <a class="nav-link active" href="#">Overview</a>
+                    <a class="nav-link active" href="{% url 'progress_scan_overview' %}">Overview</a>
                     {% else %}
-                    <a class="nav-link" href="#">Overview</a>
+                    <a class="nav-link" href="{% url 'progress_scan_overview' %}">Overview</a>
                     {% endif %}
                 </li>
                 <li class="nav-item">
                     {% if curr_page == "bundles" %}
-                    <a class="nav-link active" href="#">Bundles</a>
+                    <a class="nav-link active" href="{% url 'progress_scan_bundles' %}">Bundles</a>
                     {% else %}
-                    <a class="nav-link" href="#">Bundles</a>
+                    <a class="nav-link" href="{% url 'progress_scan_bundles' %}">Bundles</a>
                     {% endif %}
                 </li>
                 <li class="nav-item">
                     {% if curr_page == "colliding" %}
-                    <a class="nav-link active" href="#">Colliding pages</a>
+                    <a class="nav-link active" href="{% url 'progress_scan_colliding' %}">Colliding pages</a>
                     {% else %}
-                    <a class="nav-link" href="#">Colliding pages</a>
+                    <a class="nav-link" href="{% url 'progress_scan_colliding' %}">Colliding pages</a>
                     {% endif %}
                 </li>
                 <li class="nav-item">
                     {% if curr_page == "unknown_page" %}
-                    <a class="nav-link active" href="#">Unknown pages</a>
+                    <a class="nav-link active" href="{% url 'progress_scan_unknown' %}">Unknown pages</a>
                     {% else %}
-                    <a class="nav-link" href="#">Unknown pages</a>
+                    <a class="nav-link" href="{% url 'progress_scan_unknown' %}">Unknown pages</a>
                     {% endif %}
                 </li>
                 <li class="nav-item">
                     {% if curr_page == "error_page" %}
-                    <a class="nav-link active" href="#">Error pages</a>
+                    <a class="nav-link active" href="{% url 'progress_scan_error' %}">Error pages</a>
                     {% else %}
-                    <a class="nav-link" href="#">Error pages</a>
+                    <a class="nav-link" href="{% url 'progress_scan_error' %}">Error pages</a>
                     {% endif %}
                 </li>
                 <li class="nav-item">
                     {% if curr_page == "extra" %}
-                    <a class="nav-link active" href="#">Extra pages</a>
+                    <a class="nav-link active" href="{% url 'progress_scan_extra' %}">Extra pages</a>
                     {% else %}
-                    <a class="nav-link" href="#">Extra pages</a>
+                    <a class="nav-link" href="{% url 'progress_scan_extra' %}">Extra pages</a>
                     {% endif %}
                 </li>
                 <li class="nav-item">
                     {% if curr_page == "discarded" %}
-                    <a class="nav-link active" href="#">Discarded pages</a>
+                    <a class="nav-link active" href="{% url 'progress_scan_discarded' %}">Discarded pages</a>
                     {% else %}
-                    <a class="nav-link" href="#">Discarded pages</a>
+                    <a class="nav-link" href="{% url 'progress_scan_discarded' %}">Discarded pages</a>
                     {% endif %}
                 </li>
             </ul>
