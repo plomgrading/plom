@@ -4,7 +4,7 @@
 from django.db import transaction
 from django.db.models import Exists, OuterRef
 
-from Papers.models import BasePage, Paper
+from Papers.models import BasePage, Paper, QuestionPage
 
 
 class ManageScanService:
@@ -60,14 +60,26 @@ class ManageScanService:
         test_papers = []
         for tp in papers:
             paper = {}
-            pages = BasePage.objects.filter(paper=tp)
-            image_list = pages.values_list("image", flat=True)
-            is_incomplete = pages.filter(image=None).exists()
+            page_query = BasePage.objects.filter(paper=tp).order_by("page_number")
+            is_incomplete = page_query.filter(image=None).exists()
+
+            pages = []
+            for p in page_query:
+                if type(p) == QuestionPage:
+                    pages.append(
+                        {
+                            "image": p.image,
+                            "version": p.question_version,
+                            "number": p.page_number,
+                        }
+                    )
+                else:
+                    pages.append({"image": p.image, "number": p.page_number})
 
             paper.update(
                 {
                     "paper_number": f"{tp.paper_number:04}",
-                    "pages": list(image_list),
+                    "pages": list(pages),
                     "complete": not is_incomplete,
                 }
             )

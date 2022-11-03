@@ -76,9 +76,13 @@
                                 class="table-active"
                             >
                                 <td></td>
-                                <td>{{ forloop.counter }}</td>
-                                <td></td>
-                                {% if page %}
+                                <td>{{ page.number }}</td>
+                                {% if page.version %}
+                                    <td>{{ page.version }}</td>
+                                {% else %}
+                                    <td>-</td>
+                                {% endif %}
+                                {% if page.image %}
                                     <td class="text-success">&ensp;Scanned</td>
                                 {% else %}
                                     <td class="text-danger">&ensp;Pending</td>
