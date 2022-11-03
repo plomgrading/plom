@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 
 from django.shortcuts import render
+from django.http import Http404
 
 from Progress.services import ManageScanService
 from Base.base_group_views import ManagerRequiredView
@@ -50,6 +51,29 @@ class ScanOverview(BaseScanProgressPage):
             }
         )
         return render(request, "Progress/scan_overview.html", context)
+
+
+class ScanTestPaperProgress(ManagerRequiredView):
+    """
+    Get the current state of test-paper scanning, filtered by
+    'complete', 'incomplete', or 'all'.
+    """
+
+    def get(self, request, filter_by):
+        mss = ManageScanService()
+        context = self.build_context()
+
+        if filter_by == "all":
+            test_papers = mss.get_test_paper_list()
+        elif filter_by == "complete":
+            test_papers = mss.get_test_paper_list(exclude_incomplete=True)
+        elif filter_by == "incomplete":
+            test_papers = mss.get_test_paper_list(exclude_complete=True)
+        else:
+            raise Http404("Unrecognized filtering argument.")
+
+        context.update({"test_papers": test_papers})
+        return render(request, "Progress/fragments/scan_overview_table.html", context)
 
 
 class ScanBundles(BaseScanProgressPage):

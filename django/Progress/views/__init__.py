@@ -3,6 +3,7 @@
 
 from .scan_progress import (
     ScanOverview,
+    ScanTestPaperProgress,
     ScanBundles,
     ScanColliding,
     ScanUnknown,

@@ -35,65 +35,38 @@
     </div>
 
     <div class="row ps-5 pe-5">
+        <div class="hstack gap-2 ps-0 pb-1">
+            <a 
+                class="btn btn-primary"
+                hx-get="{% url 'progress_scan_tptable' 'all' %}"
+                hx-target="#progressTable"
+                hx-swap="outerHTML"
+            >
+                Show all
+            </a>
+            <a 
+                class="btn btn-primary"
+                hx-get="{% url 'progress_scan_tptable' 'complete' %}"
+                hx-target="#progressTable"
+                hx-swap="outerHTML"
+            >
+                Show complete papers
+            </a>
+            <a 
+                class="btn btn-primary"
+                hx-get="{% url 'progress_scan_tptable' 'incomplete' %}"
+                hx-target="#progressTable"
+                hx-swap="outerHTML"
+            >
+                Show incomplete papers
+            </a>
+        </div>
         <div class="card" style="max-height: 50vh;">
-            <div class="card-body overflow-auto">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th scope="col">Paper number</th>
-                            <th scope="col">Page number</th>
-                            <th scope="col">Question version</th>
-                            <th scope="col">Status</th>
-                            <th scope="col">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for tp in test_papers %}
-                            <tr>
-                                <td>
-                                    <a 
-                                        class="btn" 
-                                        onclick="toggle_pages('{{ tp.paper_number }}_page')" 
-                                        style="background-color: lightgrey;">
-                                        {{ tp.paper_number }}
-                                        <i class="bi bi-chevron-down"></i>
-                                    </a>
-                                </td>
-                                <td></td>
-                                <td></td>
-                                {% if tp.complete %}
-                                    <td class="text-success">Complete</td>
-                                {% else %}
-                                    <td class="text-danger">Incomplete</td>
-                                {% endif %}
-                                <td>
-                                </td>
-                            </tr>
-                            {% for page in tp.pages %}
-                            <tr 
-                                id="{{ tp.paper_number }}_page{{ forloop.counter }}" 
-                                hidden="true"
-                                class="table-active"
-                            >
-                                <td></td>
-                                <td>{{ page.number }}</td>
-                                {% if page.version %}
-                                    <td>{{ page.version }}</td>
-                                {% else %}
-                                    <td>-</td>
-                                {% endif %}
-                                {% if page.image %}
-                                    <td class="text-success">&ensp;Scanned</td>
-                                {% else %}
-                                    <td class="text-danger">&ensp;Pending</td>
-                                {% endif %}
-                                <td>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div 
+                class="card-body overflow-auto"
+                hx-get="{% url 'progress_scan_tptable' 'all' %}"
+                hx-trigger="load"
+            >
             </div>
         </div>
     </div>

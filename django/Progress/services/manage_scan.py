@@ -50,9 +50,13 @@ class ManageScanService:
         return len(complete_papers)
 
     @transaction.atomic
-    def get_test_paper_list(self):
+    def get_test_paper_list(self, exclude_complete=False, exclude_incomplete=False):
         """
         Return a list of test-papers and their scanning completion status.
+
+        Args:
+            exclude_complete (bool): if True, filter complete test-papers from the list.
+            exclude_incomplete (bool): if True, filter incomplete test-papers from the list.
         """
 
         papers = Paper.objects.all()
@@ -63,26 +67,29 @@ class ManageScanService:
             page_query = BasePage.objects.filter(paper=tp).order_by("page_number")
             is_incomplete = page_query.filter(image=None).exists()
 
-            pages = []
-            for p in page_query:
-                if type(p) == QuestionPage:
-                    pages.append(
-                        {
-                            "image": p.image,
-                            "version": p.question_version,
-                            "number": p.page_number,
-                        }
-                    )
-                else:
-                    pages.append({"image": p.image, "number": p.page_number})
+            if (is_incomplete and not exclude_incomplete) or (
+                not is_incomplete and not exclude_complete
+            ):
+                pages = []
+                for p in page_query:
+                    if type(p) == QuestionPage:
+                        pages.append(
+                            {
+                                "image": p.image,
+                                "version": p.question_version,
+                                "number": p.page_number,
+                            }
+                        )
+                    else:
+                        pages.append({"image": p.image, "number": p.page_number})
 
-            paper.update(
-                {
-                    "paper_number": f"{tp.paper_number:04}",
-                    "pages": list(pages),
-                    "complete": not is_incomplete,
-                }
-            )
-            test_papers.append(paper)
+                paper.update(
+                    {
+                        "paper_number": f"{tp.paper_number:04}",
+                        "pages": list(pages),
+                        "complete": not is_incomplete,
+                    }
+                )
+                test_papers.append(paper)
 
         return test_papers

@@ -5,6 +5,7 @@ from django.urls import path
 
 from Progress.views import (
     ScanOverview,
+    ScanTestPaperProgress,
     ScanBundles,
     ScanColliding,
     ScanUnknown,
@@ -16,6 +17,11 @@ from Progress.views import (
 
 urlpatterns = [
     path("scan/overview/", ScanOverview.as_view(), name="progress_scan_overview"),
+    path(
+        "scan/overview/<filter_by>",
+        ScanTestPaperProgress.as_view(),
+        name="progress_scan_tptable",
+    ),
     path("scan/bundles/", ScanBundles.as_view(), name="progress_scan_bundles"),
     path("scan/colliding/", ScanColliding.as_view(), name="progress_scan_colliding"),
     path("scan/unknown/", ScanUnknown.as_view(), name="progress_scan_unknown"),
