@@ -92,7 +92,7 @@ class QRParsingProgressAlert(ScannerRequiredView):
     Display and update an alert while QR code reading is in progress.
     """
 
-    def get(self, request, timestamp):
+    def post(self, request, timestamp):
         try:
             timestamp = float(timestamp)
         except ValueError:
@@ -104,6 +104,8 @@ class QRParsingProgressAlert(ScannerRequiredView):
 
         if scanner.is_bundle_reading_finished(bundle) and not bundle.has_qr_codes:
             scanner.qr_reading_cleanup(bundle)
+            n_complete = len(scanner.get_all_complete_images(bundle))
+            context.update({"n_complete": n_complete, "timestamp": timestamp})
             return render(request, "Scan/fragments/qr_complete_modal.html", context)
 
         context.update(

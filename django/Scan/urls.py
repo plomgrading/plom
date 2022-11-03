@@ -16,6 +16,8 @@ from Scan.views import (
     ReadQRcodesView,
     QRParsingProgressAlert,
     PushPageImage,
+    PushAllPageImages,
+    PagePushingUpdateView,
     FlagPageImage,
 )
 
@@ -71,6 +73,12 @@ urlpatterns = [
         "push/<timestamp>/<int:index>/",
         PushPageImage.as_view(),
         name="scan_push_img",
+    ),
+    path("push/<timestamp>/all/", PushAllPageImages.as_view(), name="scan_push_all"),
+    path(
+        "push_update/<timestamp>/<int:index>/",
+        PagePushingUpdateView.as_view(),
+        name="scan_push_update",
     ),
     path(
         "flag/<timestamp>/<int:index>/",

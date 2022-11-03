@@ -6,7 +6,7 @@
 <div class="container w-100 p-0 m-3">
     <div class="row">
         <div class="col shadow-sm rounded" style="background-color: lightgrey;">
-            <div hx-get="{% url 'scan_qr_alert' timestamp %}" hx-trigger="load" hx-swap="outerHTML"></div>
+            <div hx-post="{% url 'scan_qr_alert' timestamp %}" hx-trigger="load" hx-swap="outerHTML"></div>
             <div class="row p-0">
                 <div class="col-sm-2 p-0 d-flex justify-content-center">
                     {% if prev_idx >= 0 %}
@@ -58,14 +58,15 @@
                             <div class="vstack gap-2">
                                 {% for p in pages %}
                                 <a
-                                    {% if forloop.counter == one_index %}
-                                    class="btn text-start btn-info"
-                                    {% else %}
-                                    class="btn text-start"
-                                    {% endif %}
+                                    class="btn text-start {% if forloop.counter == one_index %}btn-info{% endif %} {% if p.status == 'error' %}text-danger{% elif p.status == 'complete' %}text-success{% endif %}"
                                     href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
                                 >
                                     Page {{ forloop.counter }}
+                                    {% if p.pushed %}
+                                    <i class="bi bi-file-earmark-check"></i>
+                                    {% elif p.status == 'error' %}
+                                    <i class="bi bi-exclamation-diamond"></i>
+                                    {% endif %}
                                 </a>
                                 {% endfor %}
                             </div>
@@ -81,6 +82,11 @@
                         </a>
                         {% endif %}
                         <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="load"></div>
+                        <div 
+                            hx-get="{% url 'scan_push_update' timestamp index %}" 
+                            hx-trigger="load"
+                            class="d-flex vstack gap-3">
+                        </div>
                     </div>
                 </div>
             </div>

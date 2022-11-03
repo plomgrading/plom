@@ -7,8 +7,6 @@
 
 set -e
 
-pip install -r requirements.txt --quiet
-
 rm -f db.sqlite3
 rm -f huey/huey_db.*
 
@@ -31,6 +29,8 @@ python3 manage.py plom_preparation_test_source upload -v 2 useful_files_for_test
 python3 manage.py plom_preparation_prenaming --enable
 python3 manage.py plom_preparation_classlist upload useful_files_for_testing/cl_good.csv
 python3 manage.py plom_preparation_qvmap generate
+
+python3 manage.py plom_papers build
 
 # WebPlom needs a Huey consumer running in order to complete some background tasks.
 # In a separate terminal window, call:

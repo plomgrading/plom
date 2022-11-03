@@ -35,6 +35,7 @@ class StagingImage(models.Model):
     parsed_qr = models.JSONField(default=dict, null=True)
     rotation = models.IntegerField(default=0)
     pushed = models.BooleanField(default=False)
+    colliding = models.BooleanField(default=False)
     unknown = models.BooleanField(default=False)
     error = models.BooleanField(default=False)
     flagged = models.BooleanField(default=False)

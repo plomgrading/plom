@@ -9,6 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
+from Scan.models import StagingImage
 
 
 class ManageBundleView(ScannerRequiredView):
@@ -30,7 +31,20 @@ class ManageBundleView(ScannerRequiredView):
         if index >= n_pages:
             raise Http404("Bundle page does not exist.")
 
-        pages = [scanner.get_qr_code_reading_status(bundle, i) for i in range(n_pages)]
+        # pages = [scanner.get_qr_code_reading_status(bundle, i) for i in range(n_pages)]
+        pages = []
+        for i in range(n_pages):
+            page_dict = {}
+            status = scanner.get_qr_code_reading_status(bundle, i)
+            img = scanner.get_image(timestamp, request.user, i)
+            page_dict.update(
+                {
+                    "status": status,
+                    "pushed": img.pushed,
+                }
+            )
+            pages.append(page_dict)
+
         qr_finished = scanner.is_bundle_reading_started(bundle)
 
         context.update(

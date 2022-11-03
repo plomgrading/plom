@@ -5,8 +5,11 @@ import shutil
 
 from django.db import transaction
 from django.conf import settings
+from django_huey import db_task
 
-from Papers.models import Bundle, Image
+from Papers.models import Bundle, Image, CreateImageTask
+from .paper_creator import PaperCreatorService
+from .paper_info import PaperInfoService
 
 
 class ImageBundleService:
@@ -14,7 +17,6 @@ class ImageBundleService:
     Class to encapsulate all functions around validated page images and bundles.
     """
 
-    @transaction.atomic
     def create_bundle(self, name, hash):
         """
         Create a bundle and store its name and sha256 hash.
@@ -31,7 +33,6 @@ class ImageBundleService:
         """
         return Bundle.objects.get(hash=hash)
 
-    @transaction.atomic
     def create_image(
         self, bundle, bundle_order, original_name, file_name, hash, rotation
     ):
@@ -52,7 +53,6 @@ class ImageBundleService:
         image.save()
         return image
 
-    @transaction.atomic
     def push_staged_image(self, staged_image, test_paper, page_number):
         """
         Save a staged bundle image to the database, after it has been
@@ -63,16 +63,55 @@ class ImageBundleService:
             test_paper: string, test-paper ID of the image
             page_number: int, page number in the test (not the bundle)
         """
+        push_task = self._push_staged_image(staged_image, test_paper, page_number)
+        push_obj = CreateImageTask(
+            huey_id=push_task.id, staging_image=staged_image, status="queued"
+        )
+        push_obj.save()
+
+    @db_task(queue="tasks")
+    def _push_staged_image(staged_image, test_paper, page_number, make_dirs=True):
+        """
+        Save a staged bundle image to the database, after it has been
+        successfully validated.
+
+        Args:
+            staged_image: StagingImage instance
+            test_paper: int, test-paper ID of the image
+            page_number: int, page number in the test (not the bundle)
+            make_dirs (optional): bool, set to False for testing (otherwise, creates directories in the file system.)
+        """
+
+        image_bundle = ImageBundleService()
+        papers = PaperCreatorService()
+        info = PaperInfoService()
+
+        if not info.is_this_paper_in_database(test_paper):
+            raise RuntimeError(f"Test paper {test_paper} is not in the database.")
+
+        if image_bundle.image_exists(staged_image.image_hash):
+            raise RuntimeError(f"Page image already exists in the database.")
+
+        if info.page_has_image(test_paper, page_number):
+            staged_image.colliding = True
+            staged_image.save()
+            raise RuntimeError(
+                f"Collision page detected: test {test_paper} already has page {page_number}."
+            )
 
         staged_bundle = staged_image.bundle
         if not Bundle.objects.filter(hash=staged_bundle.pdf_hash).exists():
-            bundle = self.create_bundle(staged_bundle.slug, staged_bundle.pdf_hash)
+            bundle = image_bundle.create_bundle(
+                staged_bundle.slug, staged_bundle.pdf_hash
+            )
         else:
-            bundle = self.get_bundle(staged_bundle.pdf_hash)
+            bundle = image_bundle.get_bundle(staged_bundle.pdf_hash)
 
-        file_path = self.get_page_image_path(test_paper, f"page{page_number}.png")
+        file_path = image_bundle.get_page_image_path(
+            test_paper, f"page{page_number}.png", make_dirs
+        )
 
-        image = self.create_image(
+        image = image_bundle.create_image(
             bundle=bundle,
             bundle_order=staged_image.bundle_order,
             original_name=staged_image.file_name,
@@ -81,35 +120,66 @@ class ImageBundleService:
             rotation=staged_image.rotation,
         )
 
-        shutil.copy(staged_image.file_path, file_path)
+        if make_dirs:
+            shutil.copy(staged_image.file_path, file_path)
         staged_image.pushed = True
         staged_image.save()
-        return image
 
-    def get_page_image_path(self, test_paper, file_name):
+        papers.update_page_image(test_paper, page_number, image)
+
+    def get_page_image_path(self, test_paper, file_name, make_dirs=True):
         """
         Return a save path for a test-paper page image.
         Also, create the necessary folders in the media directory
         if they don't exist.
         """
         page_image_dir = settings.BASE_DIR / "media" / "page_images"
-        page_image_dir.mkdir(exist_ok=True)
-
         test_papers_dir = page_image_dir / "test_papers"
-        test_papers_dir.mkdir(exist_ok=True)
-
         paper_dir = test_papers_dir / str(test_paper)
-        paper_dir.mkdir(exist_ok=True)
+
+        if make_dirs:
+            page_image_dir.mkdir(exist_ok=True)
+            test_papers_dir.mkdir(exist_ok=True)
+            paper_dir.mkdir(exist_ok=True)
 
         return str(paper_dir / file_name)
-
-    def copy_image(self, staging_path, push_path):
-        """
-        Copy an image from media/{username} to media/page_images
-        """
 
     def image_exists(self, hash):
         """
         Return True if a page image with the input hash exists in the database.
         """
         return Image.objects.filter(hash=hash).exists()
+
+    @transaction.atomic
+    def get_image_pushing_status(self, staged_image):
+        """
+        Return the status of a staged image's associated CreateImageTask instance
+        """
+        try:
+            task_obj = CreateImageTask.objects.get(staging_image=staged_image)
+            return task_obj.status
+        except CreateImageTask.DoesNotExist:
+            return None
+
+    @transaction.atomic
+    def get_image_pushing_message(self, staged_image):
+        """
+        Return the error message of a staged image's CreateImageTask instance
+        """
+        try:
+            task_obj = CreateImageTask.objects.get(staging_image=staged_image)
+            return task_obj.message
+        except CreateImageTask.DoesNotExist:
+            return None
+
+    @transaction.atomic
+    def is_image_pushing_in_progress(self, completed_images):
+        """
+        Return True if at least one CreateImageTask for a bundle has the status 'queued'
+        or 'running'.
+        """
+        for img in completed_images:
+            status = self.get_image_pushing_status(img)
+            if status == "queued" or status == "running":
+                return True
+        return False
