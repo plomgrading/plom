@@ -31,8 +31,8 @@
                 </td>
             </tr>
             {% for page in tp.pages %}
-            <tr 
-                id="{{ tp.paper_number }}_page{{ forloop.counter }}" 
+            <tr
+                id="{{ tp.paper_number }}_page{{ forloop.counter }}"
                 hidden="true"
                 class="table-active"
             >
@@ -49,6 +49,15 @@
                     <td class="text-danger">&ensp;Pending</td>
                 {% endif %}
                 <td>
+                    {% if page.image %}
+                    <a 
+                        class="btn btn-primary btn-small"
+                        hx-get="{% url 'progress_scan_page_modal' tp.paper_number page.number %}"
+                        hx-swap="afterend"
+                    >
+                        View
+                    </a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

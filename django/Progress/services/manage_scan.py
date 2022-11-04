@@ -93,3 +93,17 @@ class ManageScanService:
                 test_papers.append(paper)
 
         return test_papers
+
+    @transaction.atomic
+    def get_page_image(self, test_paper, index):
+        """
+        Return a page-image.
+
+        Args:
+            test_paper (int): paper ID
+            index (int): page number
+        """
+
+        paper = Paper.objects.get(paper_number=test_paper)
+        page = BasePage.objects.get(paper=paper, page_number=index)
+        return page.image

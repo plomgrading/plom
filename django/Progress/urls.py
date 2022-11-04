@@ -6,6 +6,8 @@ from django.urls import path
 from Progress.views import (
     ScanOverview,
     ScanTestPaperProgress,
+    ScanGetPageImage,
+    ScanTestPageModal,
     ScanBundles,
     ScanColliding,
     ScanUnknown,
@@ -21,6 +23,16 @@ urlpatterns = [
         "scan/overview/<filter_by>",
         ScanTestPaperProgress.as_view(),
         name="progress_scan_tptable",
+    ),
+    path(
+        "scan/overview/<int:test_paper>/<int:index>/img/",
+        ScanGetPageImage.as_view(),
+        name="progress_scan_page_image",
+    ),
+    path(
+        "scan/overview/<int:test_paper>/<int:index>/",
+        ScanTestPageModal.as_view(),
+        name="progress_scan_page_modal",
     ),
     path("scan/bundles/", ScanBundles.as_view(), name="progress_scan_bundles"),
     path("scan/colliding/", ScanColliding.as_view(), name="progress_scan_colliding"),
