@@ -14,6 +14,21 @@
     {% elif task_status == 'error' %}
     <div>
         <p class="text-danger">{{ error }}</p>
+        {% if not flagged %}
+        <form
+            enctype="multipart/form-data"
+            method="post"
+            action="{% url 'scan_flag_img' timestamp index %}"
+        >
+            {% csrf_token %}
+            {{ form }}
+            
+            <input type="submit" class="btn" style="background-color: lightgrey; width: 100%" value="Flag to manager"> 
+        </form>
+        {% else %}
+        <p>Paper flagged to manager <i class="bi bi-check-circle text-success"></i></p>
+        
+        {% endif %}
     </div>
     {% else %}
     <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s" hx-swap="outerHTML">

@@ -246,12 +246,12 @@ class ScanService:
         code_dict = QRextract(image_path, write_to_file=False)
         page_data = scanner.parse_qr_code([code_dict])
         # error handling here
-        qr_error_checker.check_qr_codes(page_data)
-        # Below is to write the parsed QR code to database.
+        qr_error_checker.check_qr_codes(page_data, image_path)
 
         pipr = PageImageProcessor()
         rotated = pipr.rotate_page_image(image_path, page_data)
 
+        # Below is to write the parsed QR code to database.
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data
         if rotated:

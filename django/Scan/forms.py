@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
 import pathlib
 import hashlib
@@ -64,3 +65,23 @@ class BundleUploadForm(forms.Form):
             return data
         except (FileDataError, KeyError):
             raise ValidationError("Unable to open file.")
+
+
+class FlagImageForm(forms.Form):
+    """
+    A form to flag the images with error to the manager
+    Added comment to show what the error is.
+    """
+
+    comment = forms.CharField(
+        label="Comment",
+        widget=forms.Textarea(
+            attrs={
+                "class": "comment-input",
+                "placeholder": "Comment to manager about this page (optional)",
+                "name": "comment",
+                "style": "display: block; width: 100%; height: 150px; border-radius: 0.375rem; margin-bottom: 4px;",
+            }
+        ),
+        required=False,
+    )

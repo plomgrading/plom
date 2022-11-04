@@ -29,3 +29,7 @@ from .push_images import (
     PushAllPageImages,
     PagePushingUpdateView,
 )
+
+from .flag_images import (
+    FlagPageImage,
+)
