@@ -10,9 +10,14 @@ from .scan_overview import (
     ScanTestPageModal,
 )
 
+from .scan_colliding import (
+    ScanColliding,
+    CollidingPagesModal,
+    CollisionPageImage,
+)
+
 from .scan_progress import (
     ScanBundles,
-    ScanColliding,
     ScanUnknown,
     ScanError,
     ScanExtra,

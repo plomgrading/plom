@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Exists, OuterRef
 
 from Papers.models import BasePage, Paper, QuestionPage
+from Scan.models import StagingImage
 
 
 class ManageScanService:
@@ -107,3 +108,46 @@ class ManageScanService:
         paper = Paper.objects.get(paper_number=test_paper)
         page = BasePage.objects.get(paper=paper, page_number=index)
         return page.image
+
+    @transaction.atomic
+    def get_n_colliding_pages(self):
+        """
+        Return the number of colliding images in the database.
+        """
+        colliding = StagingImage.objects.filter(colliding=True)
+        return len(colliding)
+
+    @transaction.atomic
+    def get_colliding_pages_list(self):
+        """
+        Return a list of colliding pages.
+        """
+
+        colliding_pages = []
+        colliding = StagingImage.objects.filter(colliding=True)
+
+        for page in colliding:
+            any_qr = list(page.parsed_qr.values())[0]
+            test_paper = int(any_qr["paper_id"])
+            page_number = int(any_qr["page_num"])
+            timestamp = page.bundle.timestamp
+            user = page.bundle.user.username
+            order = page.bundle_order
+
+            if any_qr["version_num"]:
+                version = int(any_qr["version_num"])
+            else:
+                version = None
+
+            colliding_pages.append(
+                {
+                    "test_paper": test_paper,
+                    "number": page_number,
+                    "version": version,
+                    "timestamp": timestamp,
+                    "user": user,
+                    "order": order,
+                }
+            )
+
+        return colliding_pages

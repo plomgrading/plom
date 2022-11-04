@@ -3,6 +3,8 @@
 
 from Base.base_group_views import ManagerRequiredView
 
+from Progress.services import ManageScanService
+
 
 class BaseScanProgressPage(ManagerRequiredView):
     """
@@ -14,6 +16,13 @@ class BaseScanProgressPage(ManagerRequiredView):
         page_name (str): name of the current page, for coloring in the active tab
         """
 
+        mss = ManageScanService()
         context = super().build_context()
-        context.update({"curr_page": page_name})
+        context.update(
+            {
+                "curr_page": page_name,
+                "n_colliding": mss.get_n_colliding_pages(),
+            }
+        )
+
         return context

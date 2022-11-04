@@ -24,11 +24,12 @@
                     {% endif %}
                 </li>
                 <li class="nav-item">
-                    {% if curr_page == "colliding" %}
-                    <a class="nav-link active" href="{% url 'progress_scan_colliding' %}">Colliding pages</a>
-                    {% else %}
-                    <a class="nav-link" href="{% url 'progress_scan_colliding' %}">Colliding pages</a>
-                    {% endif %}
+                    <a 
+                        class="nav-link {% if curr_page == 'colliding' %}active{% endif %}" 
+                        href="{% url 'progress_scan_colliding' %}"
+                    >
+                        Colliding pages {% if n_colliding %}({{ n_colliding }}){% endif %}
+                    </a>
                 </li>
                 <li class="nav-item">
                     {% if curr_page == "unknown_page" %}

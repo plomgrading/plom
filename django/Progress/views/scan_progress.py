@@ -3,6 +3,9 @@
 
 from django.shortcuts import render
 
+from Base.base_group_views import ManagerRequiredView
+
+from Progress.services import ManageScanService
 from Progress.views import BaseScanProgressPage
 
 
@@ -14,16 +17,6 @@ class ScanBundles(BaseScanProgressPage):
     def get(self, request):
         context = self.build_context("bundles")
         return render(request, "Progress/scan_bundles.html", context)
-
-
-class ScanColliding(BaseScanProgressPage):
-    """
-    View and manage colliding pages.
-    """
-
-    def get(self, request):
-        context = self.build_context("colliding")
-        return render(request, "Progress/scan_collide.html", context)
 
 
 class ScanUnknown(BaseScanProgressPage):
