@@ -26,7 +26,7 @@ class FlagPageImage(UpdateQRProgressView):
         if form.is_valid():
             flag_image.flagged = True
             flag_image.comment = (
-                str(request.user.username) + "said " + str(form.cleaned_data["comment"])
+                str(request.user.username) + "::" + str(form.cleaned_data["comment"])
             )
             flag_image.save()
             return redirect("scan_manage_bundle", timestamp, index)

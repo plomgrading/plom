@@ -13,9 +13,11 @@ class QRErrorService:
         spec_service = SpecificationService()
         spec_dictionary = spec_service.get_the_spec()
         img_obj = StagingImage.objects.get(file_path=image_path)
+
         serialized_top_three_qr = self.serialize_qr_code(page_data, "top_3")
         serialized_all_qr = self.serialize_qr_code(page_data, "all")
         serialized_public_code = self.serialize_qr_code(page_data, "public_code")
+
         self.check_TPV_code(serialized_all_qr, img_obj)
         self.check_qr_numbers(page_data, img_obj)
         self.check_qr_matching(serialized_top_three_qr, img_obj)
