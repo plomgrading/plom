@@ -4,8 +4,7 @@
 from django.db import transaction
 from django.db.models import Exists, OuterRef
 
-from Papers.models import BasePage, Paper, QuestionPage
-from Scan.models import StagingImage
+from Papers.models import BasePage, Paper, QuestionPage, CollidingImage
 
 
 class ManageScanService:
@@ -114,7 +113,7 @@ class ManageScanService:
         """
         Return the number of colliding images in the database.
         """
-        colliding = StagingImage.objects.filter(colliding=True)
+        colliding = CollidingImage.objects.all()
         return len(colliding)
 
     @transaction.atomic
@@ -124,30 +123,31 @@ class ManageScanService:
         """
 
         colliding_pages = []
-        colliding = StagingImage.objects.filter(colliding=True)
+        colliding = CollidingImage.objects.all()
 
         for page in colliding:
-            any_qr = list(page.parsed_qr.values())[0]
-            test_paper = int(any_qr["paper_id"])
-            page_number = int(any_qr["page_num"])
-            timestamp = page.bundle.timestamp
-            user = page.bundle.user.username
-            order = page.bundle_order
+            test_paper = page.paper_number
+            page_number = page.page_number
 
-            if any_qr["version_num"]:
-                version = int(any_qr["version_num"])
-            else:
-                version = None
+            version = None
 
             colliding_pages.append(
                 {
                     "test_paper": test_paper,
                     "number": page_number,
                     "version": version,
-                    "timestamp": timestamp,
-                    "user": user,
-                    "order": order,
                 }
             )
 
         return colliding_pages
+
+    @transaction.atomic
+    def get_colliding_image(self, test_paper, index):
+        """
+        Return a colliding page.
+
+        Args:
+            test_paper (int): paper ID
+            index (int): page number
+        """
+        return CollidingImage.objects.get(paper_number=test_paper, page_number=index)

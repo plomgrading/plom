@@ -4,7 +4,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth.models import User
 
 from Base.base_group_views import ManagerRequiredView
-from Scan.services import ScanService
 
 from Progress.views import BaseScanProgressPage
 from Progress.services import ManageScanService
@@ -33,16 +32,13 @@ class CollidingPagesModal(ManagerRequiredView):
     actions for resolving the collision.
     """
 
-    def get(self, request, test_paper, index, timestamp, username, order):
+    def get(self, request, test_paper, index):
         context = self.build_context()
 
         context.update(
             {
                 "test_paper": test_paper,
                 "index": index,
-                "timestamp": timestamp,
-                "username": username,
-                "order": order,
             }
         )
 
@@ -54,19 +50,13 @@ class CollisionPageImage(ManagerRequiredView):
     Display the collision page-image.
     """
 
-    def get(self, request, timestamp, username, order):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
+    def get(self, request, test_paper, index):
+        mss = ManageScanService()
+        colliding_image = mss.get_colliding_image(test_paper, index)
 
-        scanner = ScanService()
-        user = User.objects.get(username=username)
-
-        image = scanner.get_image(timestamp, user, order)
-        with open(str(image.file_path), "rb") as f:
+        with open(str(colliding_image.file_name), "rb") as f:
             image_file = SimpleUploadedFile(
-                f"{timestamp}_page{order}.png",
+                f"{test_paper:04}_page{index}_colliding.png",
                 f.read(),
                 content_type="image/png",
             )
