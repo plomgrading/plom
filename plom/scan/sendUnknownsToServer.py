@@ -38,7 +38,7 @@ def doFiling(rmsg, bundle, f):
             bundle / "uploads/discardedPages" / f"{f.name}.qr",
         )
     else:
-        raise RuntimeError("Unexpected code path that should not happen! msg={rmsg}")
+        raise RuntimeError(f"Unexpected code path that should not happen! msg={rmsg}")
 
 
 def sendUnknownFiles(msgr, bundle_name, files):

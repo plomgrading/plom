@@ -40,9 +40,9 @@ def doFiling(rmsg, bundle, f):
                 bundle / "uploads/discardedPages" / (f.name + suf),
             )
     elif rmsg[1] == "original":
-        raise RuntimeError("Unexpected code path that should not happen! msg={rmsg}")
+        raise RuntimeError(f"Unexpected code path that should not happen! msg={rmsg}")
     else:
-        raise RuntimeError("Unexpected code path that should not happen! msg={rmsg}")
+        raise RuntimeError(f"Unexpected code path that should not happen! msg={rmsg}")
 
 
 def sendCollidingFiles(scanMessenger, bundle_name, files):
