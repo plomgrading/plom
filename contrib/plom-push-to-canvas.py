@@ -34,6 +34,9 @@ there is no reassembled file in `reassembled/`: these are ignored.
 
 Solutions can also be uploaded.  Again, only solutions that
 correspond to an actual reassembled paper will be uploaded.
+
+Instructors and TAs can do this but in the past it would fail for
+the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
 """
 
 import argparse
