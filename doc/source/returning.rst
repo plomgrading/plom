@@ -151,10 +151,10 @@ An example invocation looks something like::
     ./plom-push-to-canvas.py \
         --dry-run \
         --course 112233 \
-	--assignment 1234123 \
-	--no-section \
-	--no-solutions \
-	2>&1 | tee push.log
+        --assignment 1234123 \
+        --no-section \
+        --no-solutions \
+        2>&1 | tee push.log
 
 Go back to Canvas and examine a few papers: double check the scores.
 Double check some of the PDF files.  Unfortunately, you'll probably hit
