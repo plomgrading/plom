@@ -39,12 +39,12 @@ urlpatterns = [
     path("scan/bundles/", ScanBundles.as_view(), name="progress_scan_bundles"),
     path("scan/colliding/", ScanColliding.as_view(), name="progress_scan_colliding"),
     path(
-        "scan/colliding/<int:test_paper>/<int:index>/",
+        "scan/colliding/<int:test_paper>/<int:index>/<colliding_hash>",
         CollidingPagesModal.as_view(),
         name="progress_colliding_modal",
     ),
     path(
-        "scan/colliding/get/<int:test_paper>/<int:index>/",
+        "scan/colliding/get/<colliding_hash>/",
         CollisionPageImage.as_view(),
         name="progress_collision_image",
     ),

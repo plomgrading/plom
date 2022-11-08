@@ -128,6 +128,7 @@ class ManageScanService:
         for page in colliding:
             test_paper = page.paper_number
             page_number = page.page_number
+            image_hash = page.hash
 
             version = None
 
@@ -136,18 +137,18 @@ class ManageScanService:
                     "test_paper": test_paper,
                     "number": page_number,
                     "version": version,
+                    "colliding_hash": image_hash,
                 }
             )
 
         return colliding_pages
 
     @transaction.atomic
-    def get_colliding_image(self, test_paper, index):
+    def get_colliding_image(self, image_hash):
         """
         Return a colliding page.
 
         Args:
-            test_paper (int): paper ID
-            index (int): page number
+            image_hash: sha256 of the image.
         """
-        return CollidingImage.objects.get(paper_number=test_paper, page_number=index)
+        return CollidingImage.objects.get(hash=image_hash)

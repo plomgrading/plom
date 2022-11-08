@@ -38,7 +38,7 @@
                             <div class="hstack gap-2">
                                 <a 
                                     class="btn btn-primary"
-                                    hx-get="{% url 'progress_colliding_modal' page.test_paper page.number %}"
+                                    hx-get="{% url 'progress_colliding_modal' page.test_paper page.number page.colliding_hash %}"
                                     hx-swap="afterend"
                                 >
                                     View

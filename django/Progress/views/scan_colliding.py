@@ -32,13 +32,14 @@ class CollidingPagesModal(ManagerRequiredView):
     actions for resolving the collision.
     """
 
-    def get(self, request, test_paper, index):
+    def get(self, request, test_paper, index, colliding_hash):
         context = self.build_context()
 
         context.update(
             {
                 "test_paper": test_paper,
                 "index": index,
+                "colliding_hash": colliding_hash,
             }
         )
 
@@ -50,13 +51,15 @@ class CollisionPageImage(ManagerRequiredView):
     Display the collision page-image.
     """
 
-    def get(self, request, test_paper, index):
+    def get(self, request, colliding_hash):
         mss = ManageScanService()
-        colliding_image = mss.get_colliding_image(test_paper, index)
+        colliding_image = mss.get_colliding_image(colliding_hash)
 
         with open(str(colliding_image.file_name), "rb") as f:
+            paper_number = colliding_image.paper_number
+            page_number = colliding_image.page_number
             image_file = SimpleUploadedFile(
-                f"{test_paper:04}_page{index}_colliding.png",
+                f"{paper_number:04}_page{page_number}_colliding.png",
                 f.read(),
                 content_type="image/png",
             )
