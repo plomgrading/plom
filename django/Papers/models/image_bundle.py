@@ -57,3 +57,11 @@ class CollidingImage(Image):
 
     paper_number = models.PositiveIntegerField()
     page_number = models.PositiveIntegerField()
+
+
+class DiscardedImage(Image):
+    """
+    Table to store information about discarded page-images.
+    """
+
+    pass

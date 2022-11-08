@@ -1,10 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 
+import shutil
+
 from django.db import transaction
 from django.db.models import Exists, OuterRef
+from django.conf import settings
 
-from Papers.models import BasePage, Paper, QuestionPage, CollidingImage
+from Papers.models import BasePage, Paper, QuestionPage, CollidingImage, DiscardedImage
+from Scan.models import StagingImage
 
 
 class ManageScanService:
@@ -152,3 +156,41 @@ class ManageScanService:
             image_hash: sha256 of the image.
         """
         return CollidingImage.objects.get(hash=image_hash)
+
+    @transaction.atomic
+    def discard_colliding_image(self, colliding_image, make_dirs=True):
+        """
+        Discard a colliding image.
+
+        Args:
+            colliding_image: reference to a CollidingImage instance
+            make_dirs (optional): bool, set to False for testing.
+        """
+        root_folder = settings.BASE_DIR / "media" / "page_images" / "discarded_pages"
+        test_paper_fodler = root_folder / str(colliding_image.paper_number)
+        image_path = test_paper_fodler / f"page{colliding_image.page_number}.png"
+
+        discarded_image = DiscardedImage(
+            bundle=colliding_image.bundle,
+            bundle_order=colliding_image.bundle_order,
+            original_name=colliding_image.original_name,
+            file_name=str(image_path),
+            hash=colliding_image.hash,
+            rotation=colliding_image.rotation,
+        )
+
+        staged_image = StagingImage.objects.get(
+            bundle__pdf_hash=colliding_image.bundle.hash,
+            bundle_order=colliding_image.bundle_order,
+        )
+        staged_image.colliding = False
+        staged_image.save()
+
+        if make_dirs:
+            root_folder.mkdir(exist_ok=True)
+            test_paper_fodler.mkdir(exist_ok=True)
+            print(colliding_image.file_name)
+            shutil.move(str(colliding_image.file_name), str(image_path))
+
+        colliding_image.delete()
+        discarded_image.save()

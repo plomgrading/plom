@@ -14,6 +14,7 @@ from .scan_colliding import (
     ScanColliding,
     CollidingPagesModal,
     CollisionPageImage,
+    DiscardCollidingPage,
 )
 
 from .scan_progress import (

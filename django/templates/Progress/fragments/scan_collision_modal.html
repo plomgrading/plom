@@ -33,8 +33,18 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <a class="btn btn-danger">Keep original</a>
-                <a class="btn btn-danger">Replace</a>
+                <a 
+                    class="btn btn-danger"
+                    hx-delete="{% url 'progress_discard_colliding' colliding_hash %}"
+                    hx-confirm="Are you sure?"
+                >
+                    Keep original
+                </a>
+                <a 
+                    class="btn btn-danger"
+                >
+                    Replace
+                </a>
             </div>
         </div>
     </div>

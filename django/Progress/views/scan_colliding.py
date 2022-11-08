@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import FileResponse, Http404
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.auth.models import User
+from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -64,3 +64,15 @@ class CollisionPageImage(ManagerRequiredView):
                 content_type="image/png",
             )
         return FileResponse(image_file)
+
+
+class DiscardCollidingPage(ManagerRequiredView):
+    """
+    Discard a colliding page.
+    """
+
+    def delete(self, request, colliding_hash):
+        mss = ManageScanService()
+        colliding_image = mss.get_colliding_image(colliding_hash)
+        mss.discard_colliding_image(colliding_image)
+        return HttpResponseClientRefresh()
