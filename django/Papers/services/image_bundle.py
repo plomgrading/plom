@@ -33,6 +33,16 @@ class ImageBundleService:
         """
         return Bundle.objects.get(hash=hash)
 
+    def get_or_create_bundle(self, name, hash):
+        """
+        Get a Bundle instance, or create if it doesn't exist
+        """
+
+        if not Bundle.objects.filter(hash=hash).exists():
+            return self.create_bundle(name, hash)
+        else:
+            return self.get_bundle(hash)
+
     def create_image(
         self, bundle, bundle_order, original_name, file_name, hash, rotation
     ):

@@ -6,6 +6,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import redirect
 from Scan.services.scan_service import ScanService
 from Scan.forms import FlagImageForm
+from Papers.services import ImageBundleService
 
 
 class FlagPageImage(UpdateQRProgressView):
@@ -20,8 +21,14 @@ class FlagPageImage(UpdateQRProgressView):
         except ValueError:
             return Http404()
 
+        context = self.build_context(timestamp, request.user, index)
+
         scanner = ScanService()
-        flag_image = scanner.get_image(timestamp, request.user, index)
+        img_bundle_service = ImageBundleService()
+        image = scanner.get_image(timestamp, request.user, index)
+        stagged_bundle = image.bundle
+        bundle = img_bundle_service.get_or_create_bundle(stagged_bundle.slug, stagged_bundle.pdf_hash)
+        flag_image = scanner.get_error_image(bundle, index)
         form = FlagImageForm(request.POST)
         if form.is_valid():
             flag_image.flagged = True
@@ -29,7 +36,9 @@ class FlagPageImage(UpdateQRProgressView):
                 str(request.user.username) + "::" + str(form.cleaned_data["comment"])
             )
             flag_image.save()
-            return redirect("scan_manage_bundle", timestamp, index)
+            if flag_image:
+                context.update({"flagged": True})
+            return redirect("scan_qr_progress", context)
         else:
             return HttpResponse("Form error!")
 

@@ -47,17 +47,17 @@ class Image(PolymorphicModel):
 # TODO Add unknown-image, discarded-image and annotation-image
 
 
-class CollidingImage(Image):
-    """
-    Table to store information about colliding page-images.
+# class CollidingImage(Image):
+#     """
+#     Table to store information about colliding page-images.
 
-    Args:
-        paper_number (int): test-paper ID
-        page_number (int): index of page
-    """
+#     Args:
+#         paper_number (int): test-paper ID
+#         page_number (int): index of page
+#     """
 
-    paper_number = models.PositiveIntegerField()
-    page_number = models.PositiveIntegerField()
+#     paper_number = models.PositiveIntegerField()
+#     page_number = models.PositiveIntegerField()
 
 
 class ErrorImage(Image):

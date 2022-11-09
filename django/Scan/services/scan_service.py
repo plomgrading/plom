@@ -18,6 +18,7 @@ from Scan.models import (
     PageToImage,
     ParseQR,
 )
+from Papers.models import ErrorImage
 
 from .qr_validators import QRErrorService
 
@@ -415,3 +416,11 @@ class ScanService:
             if not img.pushed:
                 return False
         return True
+
+    @transaction.atomic
+    def get_error_image(self, bundle, index):
+        error_image = ErrorImage.objects.get(
+            bundle=bundle,
+            bundle_order=index,
+        )
+        return error_image
