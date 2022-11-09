@@ -119,34 +119,38 @@ class QRErrorService:
                 )
 
     def create_error_image(self, img_obj, top_three_tpv):
-        img_bundle_service = ImageBundleService()
-        counter = Counter(top_three_tpv)
-        most_common_qr = counter.most_common(1)
-        common_qr = most_common_qr[0][0]
+        if ErrorImage.objects.filter(hash=img_obj.image_hash).exists():
+            pass
+        else:
+        
+            img_bundle_service = ImageBundleService()
+            counter = Counter(top_three_tpv)
+            most_common_qr = counter.most_common(1)
+            common_qr = most_common_qr[0][0]
 
-        test_paper = common_qr[0:5]
-        page_number = common_qr[5:8]
-        version_number = common_qr[8:]
+            test_paper = common_qr[0:5]
+            page_number = common_qr[5:8]
+            version_number = common_qr[8:]
 
-        root_folder = settings.BASE_DIR / "media" / "page_images" / "error_pages"
-        test_folder = root_folder / str(test_paper)
-        img_path = test_folder / f"page{page_number}.png"
+            root_folder = settings.BASE_DIR / "media" / "page_images" / "error_pages"
+            test_folder = root_folder / str(test_paper)
+            img_path = test_folder / f"page{page_number}.png"
 
-        staged_bundle = img_obj.bundle
-        bundle = img_bundle_service.get_or_create_bundle(staged_bundle.slug, staged_bundle.pdf_hash)
-
-        error_image = ErrorImage(
-            bundle = bundle,
-            bundle_order = img_obj.bundle_order,
-            original_name = img_obj.file_name,
-            file_name = str(img_path),
-            hash = img_obj.image_hash,
-            rotation = img_obj.rotation,
-            paper_number = int(test_paper),
-            page_number = int(page_number),
-            version_number = int(version_number),
-        )
-        error_image.save()
+            staged_bundle = img_obj.bundle
+            bundle = img_bundle_service.get_or_create_bundle(staged_bundle.slug, staged_bundle.pdf_hash)
+            
+            error_image = ErrorImage(
+                bundle = bundle,
+                bundle_order = img_obj.bundle_order,
+                original_name = img_obj.file_name,
+                file_name = str(img_path),
+                hash = img_obj.image_hash,
+                rotation = img_obj.rotation,
+                paper_number = int(test_paper),
+                page_number = int(page_number),
+                version_number = int(version_number),
+            )
+            error_image.save()
 
     def create_unknown_image(self, img_obj):
         pass

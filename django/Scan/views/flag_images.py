@@ -21,8 +21,6 @@ class FlagPageImage(UpdateQRProgressView):
         except ValueError:
             return Http404()
 
-        context = self.build_context(timestamp, request.user, index)
-
         scanner = ScanService()
         img_bundle_service = ImageBundleService()
         image = scanner.get_image(timestamp, request.user, index)
@@ -36,9 +34,7 @@ class FlagPageImage(UpdateQRProgressView):
                 str(request.user.username) + "::" + str(form.cleaned_data["comment"])
             )
             flag_image.save()
-            if flag_image:
-                context.update({"flagged": True})
-            return redirect("scan_qr_progress", context)
+            return redirect("scan_manage_bundle", timestamp, index)
         else:
             return HttpResponse("Form error!")
 
