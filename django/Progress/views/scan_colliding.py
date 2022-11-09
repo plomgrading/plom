@@ -76,3 +76,16 @@ class DiscardCollidingPage(ManagerRequiredView):
         colliding_image = mss.get_colliding_image(colliding_hash)
         mss.discard_colliding_image(colliding_image)
         return HttpResponseClientRefresh()
+
+
+class ReplaceImageWithColliding(ManagerRequiredView):
+    """
+    Discard an image and replace with a colliding image.
+    """
+
+    def delete(self, request, test_paper, index, colliding_hash):
+        mss = ManageScanService()
+        image = mss.get_page_image(test_paper, index)
+        colliding_image = mss.get_colliding_image(colliding_hash)
+        mss.replace_image_with_colliding(image, colliding_image)
+        return HttpResponseClientRefresh()

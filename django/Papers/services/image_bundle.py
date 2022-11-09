@@ -104,7 +104,7 @@ class ImageBundleService:
 
         root_folder = settings.BASE_DIR / "media" / "page_images" / "colliding_pages"
         test_folder = root_folder / str(test_paper)
-        image_path = test_folder / f"page{page_number}.png"
+        image_path = test_folder / f"page{page_number}_{staged_image.image_hash}.png"
 
         staged_bundle = staged_image.bundle
         bundle = self.get_or_create_bundle(staged_bundle.slug, staged_bundle.pdf_hash)

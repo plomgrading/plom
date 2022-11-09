@@ -38,12 +38,14 @@
                     hx-delete="{% url 'progress_discard_colliding' colliding_hash %}"
                     hx-confirm="Are you sure?"
                 >
-                    Keep original
+                    Keep original, discard colliding
                 </a>
                 <a 
                     class="btn btn-danger"
+                    hx-delete="{% url 'progress_replace_colliding' test_paper index colliding_hash %}"
+                    hx-confirm="Are you sure?"
                 >
-                    Replace
+                    Replace and discard original
                 </a>
             </div>
         </div>

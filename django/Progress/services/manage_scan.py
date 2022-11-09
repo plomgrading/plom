@@ -7,7 +7,14 @@ from django.db import transaction
 from django.db.models import Exists, OuterRef
 from django.conf import settings
 
-from Papers.models import BasePage, Paper, QuestionPage, CollidingImage, DiscardedImage
+from Papers.models import (
+    BasePage,
+    Paper,
+    QuestionPage,
+    CollidingImage,
+    DiscardedImage,
+    Image,
+)
 from Scan.models import StagingImage
 
 
@@ -158,6 +165,25 @@ class ManageScanService:
         return CollidingImage.objects.get(hash=image_hash)
 
     @transaction.atomic
+    def get_discarded_image_path(self, image_hash, make_dirs=True):
+        """
+        Return a Pathlib path pointing to
+        BASE_DIR/media/page_images/discarded_pages/{paper_number}/{page_number}.png
+
+        Args:
+            image_hash: str, sha256 of the discarded page
+            make_dirs (optional): set to False for testing
+        """
+
+        root_folder = settings.BASE_DIR / "media" / "page_images" / "discarded_pages"
+        image_path = root_folder / f"{image_hash}.png"
+
+        if make_dirs:
+            root_folder.mkdir(exist_ok=True)
+
+        return image_path
+
+    @transaction.atomic
     def discard_colliding_image(self, colliding_image, make_dirs=True):
         """
         Discard a colliding image.
@@ -166,9 +192,7 @@ class ManageScanService:
             colliding_image: reference to a CollidingImage instance
             make_dirs (optional): bool, set to False for testing.
         """
-        root_folder = settings.BASE_DIR / "media" / "page_images" / "discarded_pages"
-        test_paper_fodler = root_folder / str(colliding_image.paper_number)
-        image_path = test_paper_fodler / f"page{colliding_image.page_number}.png"
+        image_path = self.get_discarded_image_path(colliding_image.hash)
 
         discarded_image = DiscardedImage(
             bundle=colliding_image.bundle,
@@ -187,10 +211,50 @@ class ManageScanService:
         staged_image.save()
 
         if make_dirs:
-            root_folder.mkdir(exist_ok=True)
-            test_paper_fodler.mkdir(exist_ok=True)
-            print(colliding_image.file_name)
             shutil.move(str(colliding_image.file_name), str(image_path))
 
         colliding_image.delete()
         discarded_image.save()
+
+    @transaction.atomic
+    def replace_image_with_colliding(self, image, colliding_image, make_dirs=True):
+        """
+        Discard an Image instance and replace it with a colliding image.
+
+        Args:
+            image (Image): the currently accepted image
+            colliding_image (CollidingImage): another scanned image
+            make_dirs (optional): Bool, set to False for testing
+        """
+
+        discard_path = self.get_discarded_image_path(image.hash, make_dirs=make_dirs)
+        discarded_page = DiscardedImage(
+            bundle=image.bundle,
+            bundle_order=image.bundle_order,
+            original_name=image.original_name,
+            file_name=str(discard_path),
+            hash=image.hash,
+            rotation=image.rotation,
+        )
+
+        new_image = Image(
+            bundle=colliding_image.bundle,
+            bundle_order=colliding_image.bundle_order,
+            original_name=colliding_image.original_name,
+            file_name=image.file_name,
+            hash=colliding_image.hash,
+            rotation=colliding_image.rotation,
+        )
+
+        image_page = BasePage.objects.get(image=image)
+        image_page.image = new_image
+
+        if make_dirs:
+            shutil.move(str(image.file_name), str(discarded_page.file_name))
+            shutil.move(str(colliding_image.file_name), str(new_image.file_name))
+
+        colliding_image.delete()
+        image.delete()
+        discarded_page.save()
+        new_image.save()
+        image_page.save()
