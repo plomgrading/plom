@@ -39,7 +39,7 @@ class Image(PolymorphicModel):
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    file_name = models.ImageField(upload_to="images/", null=False)
+    file_name = models.TextField(null=False)
     hash = models.CharField(null=True, max_length=64)
     rotation = models.IntegerField(null=False, default=0)
 

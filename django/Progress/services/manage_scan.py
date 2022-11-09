@@ -192,7 +192,9 @@ class ManageScanService:
             colliding_image: reference to a CollidingImage instance
             make_dirs (optional): bool, set to False for testing.
         """
-        image_path = self.get_discarded_image_path(colliding_image.hash)
+        image_path = self.get_discarded_image_path(
+            colliding_image.hash, make_dirs=make_dirs
+        )
 
         discarded_image = DiscardedImage(
             bundle=colliding_image.bundle,
@@ -248,6 +250,13 @@ class ManageScanService:
 
         image_page = BasePage.objects.get(image=image)
         image_page.image = new_image
+
+        staged_image = StagingImage.objects.get(
+            bundle__pdf_hash=colliding_image.bundle.hash,
+            bundle_order=colliding_image.bundle_order,
+        )
+        staged_image.colliding = False
+        staged_image.save()
 
         if make_dirs:
             shutil.move(str(image.file_name), str(discarded_page.file_name))
