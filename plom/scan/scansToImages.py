@@ -122,6 +122,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     outname = dest / (basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
+                    # TODO: note this image will not be watermarked!
                     files.append(outname)
                     continue
                 # Issue #2346: could try to convert to png, but for now just let fitz render
@@ -135,6 +136,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                         fh.write(d["image"])
                     subprocess.check_call(["convert", f, outname])
                     f.unlink()
+                    # TODO: note this image will not be watermarked!
                     files.append(outname)
                     continue
 
@@ -211,6 +213,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                 msgs.append(f"exif rotate {r}")
             log.info("  Randomly making jpeg " + ", ".join(msgs))
             img.save(outname, "JPEG", quality=quality, optimize=True)
+            # TODO: note this image will not be watermarked!
             if r:
                 im = exif.Image(outname)
                 im.set("orientation", r)
@@ -232,6 +235,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
         # TODO: add progressive=True?
         # Note subsampling off to avoid mucking with red hairlines
         pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0)
+        # TODO: note this jpeg image will not be watermarked!
         # Keep the jpeg if its at least a little smaller
         if jpgname.stat().st_size < 0.9 * pngname.stat().st_size:
             pngname.unlink()
