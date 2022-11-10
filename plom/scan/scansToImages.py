@@ -118,17 +118,16 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     d["width"],
                     d["height"],
                 )
-                converttopng = False
-                if d["ext"].lower() not in PlomImageExts:
-                    converttopng = True
-                    log.info(f"  {d['ext']} not in allowlist: transcoding to PNG")
-
-                if not converttopng:
+                if d["ext"].lower() in PlomImageExts:
                     outname = dest / (basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
                     files.append(outname)
-                else:
+                    continue
+                # Issue #2346: could try to convert to png, but for now just let fitz render
+                log.info(f"  {d['ext']} not in allowlist: leave for fitz render")
+                if False:
+                    log.info(f"  {d['ext']} not in allowlist: transcoding to PNG")
                     outname = dest / (basename + ".png")
                     # Context manager not appropriate here, Issue #1996
                     f = Path(tempfile.NamedTemporaryFile(delete=False).name)
@@ -137,7 +136,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     subprocess.check_call(["convert", f, outname])
                     f.unlink()
                     files.append(outname)
-                continue
+                    continue
 
         aspect = p.mediabox_size[0] / p.mediabox_size[1]
         H = ScenePixelHeight
