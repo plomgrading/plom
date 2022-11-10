@@ -13,11 +13,13 @@ from multiprocessing import Pool
 import random
 import tempfile
 from warnings import warn
+import uuid
 
 from tqdm import tqdm
 import exif
 import fitz
 import PIL
+import PIL.PngImagePlugin
 
 from plom import PlomImageExts
 from plom import ScenePixelHeight
@@ -221,8 +223,13 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
         pngname = dest / (basename + ".png")
         jpgname = dest / (basename + ".jpg")
         # TODO: pil_save 10% smaller but 2x-3x slower, Issue #1866
-        pix.save(pngname)
-        # pix.pil_save(pngname, optimize=True)
+        # pix.save(pngname)
+        # We write some unique metadata into the Png file to avoid Issue #1573
+        metadata = PIL.PngImagePlugin.PngInfo()
+        metadata.add_text("SourceBundle", str(file_name))
+        metadata.add_text("SourceBundlePos", str(p.number))
+        metadata.add_text("RandomUUID", str(uuid.uuid4()))
+        pix.pil_save(pngname, optimize=True, pnginfo=metadata)
         # TODO: add progressive=True?
         # Note subsampling off to avoid mucking with red hairlines
         pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0)
