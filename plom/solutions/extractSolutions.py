@@ -2,9 +2,7 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2022 Colin B. Macdonald
 
-import os
 from pathlib import Path
-import shutil
 import tempfile
 
 from PIL import Image
@@ -111,44 +109,42 @@ def extractSolutionImages(solution_spec_filename=None, *, msgr):
         print(msg)
         return False
 
-    # create a tempdir for working
-    tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-    print(f"temp dir is {tmpdir}")
+    with tempfile.TemporaryDirectory() as _td:
+        tmp = Path(_td)
 
-    # split sources pdf into page images
-    for v in range(1, testSpec["numberOfVersions"] + 1):
-        # TODO: Issue #1744: this function returns the filenames...
-        processFileToBitmaps(source_path / f"solutions{v}.pdf", tmpdir)
+        # split sources pdf into page images
+        for v in range(1, testSpec["numberOfVersions"] + 1):
+            # TODO: Issue #1744: this function returns the filenames...
+            processFileToBitmaps(source_path / f"solutions{v}.pdf", tmp)
 
-    # time to combine things and save in solution_path
-    solution_path.mkdir(exist_ok=True)
-    for q in range(1, testSpec["numberOfQuestions"] + 1):
-        sq = str(q)
-        mxv = testSpec["numberOfVersions"]
-        if testSpec["question"][sq]["select"] == "fix":
-            mxv = 1  # only do version 1 if 'fix'
-        for v in range(1, mxv + 1):
-            print(f"Processing solutions for Q{q} V{v}")
-            image_list = [
-                tmpdir / f"solutions{v}-{p:03}.png"
-                for p in solutionSpec["solution"][sq]["pages"]
-            ]
-            # maybe processing made jpegs
-            for i, f in enumerate(image_list):
-                if not f.is_file():
-                    if f.with_suffix(".jpg").is_file():
-                        image_list[i] = f.with_suffix(".jpg")
-            # check the image list - make sure they exist
-            for fn in image_list:
-                if not fn.is_file():
-                    print("Make sure structure of solution pdf matches your test pdf.")
-                    print(f"Leaving tmpdir {tmpdir} in place for debugging")
-                    raise RuntimeError(
-                        f"Error - could not find solution image = {fn.name}"
-                    )
-            destination = solution_path / f"solution.q{q}.v{v}.png"
-            glueImages(image_list, destination)
-
-    shutil.rmtree(tmpdir)
+        # time to combine things and save in solution_path
+        solution_path.mkdir(exist_ok=True)
+        for q in range(1, testSpec["numberOfQuestions"] + 1):
+            sq = str(q)
+            mxv = testSpec["numberOfVersions"]
+            if testSpec["question"][sq]["select"] == "fix":
+                mxv = 1  # only do version 1 if 'fix'
+            for v in range(1, mxv + 1):
+                print(f"Processing solutions for Q{q} V{v}")
+                image_list = [
+                    tmp / f"solutions{v}-{p:03}.png"
+                    for p in solutionSpec["solution"][sq]["pages"]
+                ]
+                # maybe processing made jpegs
+                for i, f in enumerate(image_list):
+                    if not f.is_file():
+                        if f.with_suffix(".jpg").is_file():
+                            image_list[i] = f.with_suffix(".jpg")
+                # check the image list - make sure they exist
+                for fn in image_list:
+                    if not fn.is_file():
+                        print(
+                            "Make sure structure of solution pdf matches your test pdf."
+                        )
+                        raise RuntimeError(
+                            f"Error - could not find solution image = {fn.name}"
+                        )
+                destination = solution_path / f"solution.q{q}.v{v}.png"
+                glueImages(image_list, destination)
 
     return True
