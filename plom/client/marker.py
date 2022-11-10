@@ -1206,8 +1206,12 @@ class MarkerClient(QWidget):
 
         for row in src_img_data:
             for r in pagedata:
-                if r["md5"] == row["md5"]:
+                # Issue #2331: md5sum could be repeated, want nonempty local_filename
+                if r["md5"] == row["md5"] and r["local_filename"]:
                     row["filename"] = r["local_filename"]
+            assert row[
+                "filename"
+            ], f"Unexpected Issue #2331: task={task}; src_img_data is {src_img_data}; pagedata={pagedata}"
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1418,8 +1422,12 @@ class MarkerClient(QWidget):
 
         for row in src_img_data:
             for r in pagedata:
-                if r["md5"] == row["md5"]:
+                # Issue #2331: md5sum could be repeated, want nonempty local_filename
+                if r["md5"] == row["md5"] and r["local_filename"]:
                     row["filename"] = r["local_filename"]
+            assert row[
+                "filename"
+            ], f"Unexpected Issue #2331: task={task}; src_img_data is {src_img_data}; pagedata={pagedata}"
 
         self.examModel.addPaper(
             ExamQuestion(
