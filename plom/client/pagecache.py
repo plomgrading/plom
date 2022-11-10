@@ -5,6 +5,7 @@
 Tools for managing the local page cache.
 """
 
+from copy import deepcopy
 import logging
 from pathlib import Path
 
@@ -36,10 +37,10 @@ def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):
             ``get_all=True`` is also passed.
 
     Return:
-        list: the modified pagedata.  TODO: also modifies the
-        original as a side effect.  Should we deepcopy it first?
+        list: a modified copy of the input pagedata.
     """
     basedir = Path(basedir)
+    pagedata = deepcopy(pagedata)
     for row in pagedata:
         row["local_filename"] = None
         f = basedir / row["server_path"]

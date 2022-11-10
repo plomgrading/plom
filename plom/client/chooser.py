@@ -15,6 +15,7 @@ __license__ = "AGPL-3.0-or-later"
 import logging
 from pathlib import Path
 import tempfile
+import time
 
 import appdirs
 import arrow
@@ -247,6 +248,8 @@ class Chooser(QDialog):
             )
             if msg.exec() == QMessageBox.Yes:
                 self.messenger.clearAuthorisation(user, pwd)
+                # harmless probably useless pause, in case Issue #2328 was real
+                time.sleep(0.25)
                 # try again
                 self.validate(which_subapp)
                 return
