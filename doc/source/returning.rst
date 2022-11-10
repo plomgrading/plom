@@ -138,6 +138,10 @@ Make an "API key" for your Canvas account:
   - Click on ``+ New Access Token``.  The "purpose" can be "Plom upload" (or
     whatever you want) and you can set it to expire in a day or two.
   - Copy the token, something like ``11224~AABBCCDDEEFF...``.
+  - Who can do this?  The instructor can.  So can TAs, but be cautious:
+    Canvas has three kinds of TAs: `TA`, `TA Grader`, and `TA Course Builder`,
+    and at least before 2022-11-08 at UBC, it would fail for TA Graders,
+    `Issue #2338 <https://gitlab.com/plom/plom/-/issues/2338>`_.
 
 Also in Canvas, create column "Midterm 1" (or whatever) in Canvas with the
 correct number of points.  Publish the column but set to manual release.
@@ -151,10 +155,10 @@ An example invocation looks something like::
     ./plom-push-to-canvas.py \
         --dry-run \
         --course 112233 \
-	--assignment 1234123 \
-	--no-section \
-	--no-solutions \
-	2>&1 | tee push.log
+        --assignment 1234123 \
+        --no-section \
+        --no-solutions \
+        2>&1 | tee push.log
 
 Go back to Canvas and examine a few papers: double check the scores.
 Double check some of the PDF files.  Unfortunately, you'll probably hit
