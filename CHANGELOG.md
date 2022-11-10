@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Documentation improvements.
 
 ### Changed
+* Client "Tips" screen has more information.
+* Command line tools document the available environment variables.
 
 ### Fixed
-
+* Fix a client-side crash on unexpected identical images (same hash) within the same paper (#2331 and others).
+* Fix a manager crash when reassembling and current working directory is not writable (#2335).
+* Misc bug fixes and fixes for potential table sorting issues.
 
 
 ## [0.11.0] - 2022-09-24
