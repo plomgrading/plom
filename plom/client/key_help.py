@@ -403,24 +403,53 @@ class ClickDragPage(QWidget):
 
         film_label = QLabel()
         film_label.setMovie(film)
-        grid.addWidget(
-            QLabel(
-                "Click-drag-release-move-click to highlight a region, and stamp rubric with a connecting line."
-            )
+
+        label = QLabel(
+            """<p>
+            Most tools can <b>highlight a region</b>:
+            try click-drag-release-move-click to draw a box and connecting line.
+            Works with <tt>tick</tt>, <tt>cross</tt>, <tt>rubric</tt> or <tt>text</tt>.
+            </p>"""
         )
+        label.setWordWrap(True)
+        grid.addSpacing(6)
+        grid.addWidget(label)
         grid.addWidget(film_label)
         grid.addSpacing(6)
-        grid.addWidget(
-            QLabel(
-                "Students benefit from spatial feedback (as above) and the use of specific rubrics."
-            )
+        label = QLabel(
+            """<p>
+            Students benefit from this <b>spatial feedback</b>
+            as well as specific rubrics.
+            </p>"""
         )
+        label.setWordWrap(True)
+        grid.addWidget(label)
         grid.addSpacing(6)
-        grid.addWidget(QLabel("Rubrics are shared between markers."))
-        grid.addSpacing(6)
-        grid.addWidget(
-            QLabel("Try to keep one hand on the keyboard and one on the mouse.")
+        label = QLabel(
+            """<p>
+            Rubrics are reusable and shared between markers.
+            You can organize your rubrics into tabs.
+            </p>"""
         )
+        label.setWordWrap(True)
+        grid.addWidget(label)
+        grid.addSpacing(6)
+        label = QLabel(
+            """<p>
+            Start your text or rubric with &ldquo;<tt>tex:</tt>&rdquo; to
+            render mathematics.  Or press ctrl-enter.
+            </p>"""
+        )
+        label.setWordWrap(True)
+        grid.addWidget(label)
+        grid.addSpacing(6)
+        label = QLabel(
+            """<p>
+            Try to keep one hand on the keyboard and one on the mouse.
+            </p>"""
+        )
+        label.setWordWrap(True)
+        grid.addWidget(label)
         grid.addSpacing(6)
 
         self.setLayout(grid)
