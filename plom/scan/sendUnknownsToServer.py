@@ -126,5 +126,5 @@ def upload_unknowns(bundle_dir, *, msgr):
     files = []
     # Look for pages in unknowns
     for ext in PlomImageExts:
-        files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
+        files.extend((bundle_dir / "unknownPages").glob(f"*.{ext}"))
     sendUnknownFiles(msgr, bundle_dir.name, files)

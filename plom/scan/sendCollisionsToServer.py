@@ -153,5 +153,5 @@ def upload_collisions(bundle_dir, *, msgr):
 
     files = []
     for ext in PlomImageExts:
-        files.extend((bundle_dir / "uploads/collidingPages").glob("*.{}".format(ext)))
+        files.extend((bundle_dir / "uploads/collidingPages").glob(f"*.{ext}"))
     sendCollidingFiles(msgr, bundle_dir.name, files)

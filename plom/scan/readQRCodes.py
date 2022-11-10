@@ -36,7 +36,7 @@ def decode_QRs_in_image_files(where):
     """
     stuff = []
     for ext in PlomImageExts:
-        stuff.extend(where.glob("*.{}".format(ext)))
+        stuff.extend(where.glob(f"*.{ext}"))
     N = len(stuff)
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(QRextract, stuff), total=N))

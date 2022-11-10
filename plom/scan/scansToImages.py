@@ -342,7 +342,7 @@ def postProcessing(thedir, dest, skip_gamma=False):
 
     fileList = []
     for ext in PlomImageExts:
-        fileList.extend(thedir.glob("*.{}".format(ext)))
+        fileList.extend(thedir.glob(f"*.{ext}"))
     # move them to pageimages for barcode reading
     for file in fileList:
         shutil.move(file, dest / file.name)
