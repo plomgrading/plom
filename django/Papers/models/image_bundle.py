@@ -1,4 +1,5 @@
 from django.db import models
+from polymorphic.models import PolymorphicModel
 
 
 class Bundle(models.Model):
@@ -19,7 +20,7 @@ class Bundle(models.Model):
     hash = models.CharField(null=False, max_length=64)
 
 
-class Image(models.Model):
+class Image(PolymorphicModel):
     """Table to store information about an uploaded page-image.
 
     bundle (ref to Bundle object): which bundle the image is from
@@ -38,9 +39,29 @@ class Image(models.Model):
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    file_name = models.ImageField(upload_to="images/", null=False)
+    file_name = models.TextField(null=False)
     hash = models.CharField(null=True, max_length=64)
     rotation = models.IntegerField(null=False, default=0)
 
 
 # TODO Add unknown-image, discarded-image and annotation-image
+
+
+class CollidingImage(Image):
+    """Table to store information about colliding page-images.
+
+    Args:
+        paper_number (int): test-paper ID
+        page_number (int): index of page
+    """
+
+    paper_number = models.PositiveIntegerField()
+    page_number = models.PositiveIntegerField()
+
+
+class DiscardedImage(Image):
+    """
+    Table to store information about discarded page-images.
+    """
+
+    pass

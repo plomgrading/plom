@@ -1,4 +1,9 @@
-from .image_bundle import Bundle, Image
+from .image_bundle import (
+    Bundle,
+    Image,
+    CollidingImage,
+    DiscardedImage,
+)
 from .paper_structure import (
     Paper,
     BasePage,

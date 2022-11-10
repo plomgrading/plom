@@ -1,10 +1,9 @@
 from django.shortcuts import render
 from django.http import FileResponse, Http404
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.auth.models import User
+from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ManagerRequiredView
-from Scan.services import ScanService
 
 from Progress.views import BaseScanProgressPage
 from Progress.services import ManageScanService
@@ -33,16 +32,14 @@ class CollidingPagesModal(ManagerRequiredView):
     actions for resolving the collision.
     """
 
-    def get(self, request, test_paper, index, timestamp, username, order):
+    def get(self, request, test_paper, index, colliding_hash):
         context = self.build_context()
 
         context.update(
             {
                 "test_paper": test_paper,
                 "index": index,
-                "timestamp": timestamp,
-                "username": username,
-                "order": order,
+                "colliding_hash": colliding_hash,
             }
         )
 
@@ -54,20 +51,41 @@ class CollisionPageImage(ManagerRequiredView):
     Display the collision page-image.
     """
 
-    def get(self, request, timestamp, username, order):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
+    def get(self, request, colliding_hash):
+        mss = ManageScanService()
+        colliding_image = mss.get_colliding_image(colliding_hash)
 
-        scanner = ScanService()
-        user = User.objects.get(username=username)
-
-        image = scanner.get_image(timestamp, user, order)
-        with open(str(image.file_path), "rb") as f:
+        with open(str(colliding_image.file_name), "rb") as f:
+            paper_number = colliding_image.paper_number
+            page_number = colliding_image.page_number
             image_file = SimpleUploadedFile(
-                f"{timestamp}_page{order}.png",
+                f"{paper_number:04}_page{page_number}_colliding.png",
                 f.read(),
                 content_type="image/png",
             )
         return FileResponse(image_file)
+
+
+class DiscardCollidingPage(ManagerRequiredView):
+    """
+    Discard a colliding page.
+    """
+
+    def delete(self, request, colliding_hash):
+        mss = ManageScanService()
+        colliding_image = mss.get_colliding_image(colliding_hash)
+        mss.discard_colliding_image(colliding_image)
+        return HttpResponseClientRefresh()
+
+
+class ReplaceImageWithColliding(ManagerRequiredView):
+    """
+    Discard an image and replace with a colliding image.
+    """
+
+    def delete(self, request, test_paper, index, colliding_hash):
+        mss = ManageScanService()
+        image = mss.get_page_image(test_paper, index)
+        colliding_image = mss.get_colliding_image(colliding_hash)
+        mss.replace_image_with_colliding(image, colliding_image)
+        return HttpResponseClientRefresh()
