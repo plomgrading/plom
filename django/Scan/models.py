@@ -38,6 +38,7 @@ class StagingImage(models.Model):
     colliding = models.BooleanField(default=False)
     unknown = models.BooleanField(default=False)
     error = models.BooleanField(default=False)
+    flagged = models.BooleanField(default=False)
 
 
 class PageToImage(HueyTask):

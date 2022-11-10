@@ -15,6 +15,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
+from Papers.services import ImageBundleService
 from Scan.forms import BundleUploadForm
 
 
@@ -48,7 +49,9 @@ class ScannerHomeView(ScannerRequiredView):
             date_time = datetime.fromtimestamp(bundle.timestamp)
             pages = scanner.get_n_images(bundle)
             n_pushed = scanner.get_n_pushed_images(bundle)
-            disable_delete = n_pushed > 0 and n_pushed < pages
+            flagged_pages = scanner.get_n_flagged_image(bundle)
+            
+            disable_delete = (n_pushed > 0 and n_pushed < pages) or flagged_pages > 0
             bundles.append(
                 {
                     "slug": bundle.slug,
