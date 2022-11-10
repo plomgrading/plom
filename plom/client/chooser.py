@@ -248,8 +248,8 @@ class Chooser(QDialog):
             )
             if msg.exec() == QMessageBox.Yes:
                 self.messenger.clearAuthorisation(user, pwd)
-                # short pause in case that fixes unconfirmed Issue #2328
-                time.sleep(1)
+                # harmless probably useless pause, in case Issue #2328 was real
+                time.sleep(0.25)
                 # try again
                 self.validate(which_subapp)
                 return
