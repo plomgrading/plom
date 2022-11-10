@@ -51,6 +51,7 @@ def download_page_images(msgr, tmpdir, outdir, short_name, t, sid):
 
 
 def main(server=None, pwd=None):
+    print("Warning: deprecated? IDed-but-not-graded not recently tested!")
     msgr = start_messenger(server, pwd)
     with tempfile.TemporaryDirectory() as _td:
         tmp = Path(_td)
