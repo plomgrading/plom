@@ -29,6 +29,21 @@ from plom.scan.bundle_utils import make_bundle_dir
 log = logging.getLogger("scan")
 
 
+def get_png_metadata(bundle_name, page_number):
+    metadata = PIL.PngImagePlugin.PngInfo()
+    metadata.add_text("SourceBundle", str(bundle_name))
+    metadata.add_text("SourceBundlePos", str(page_number))
+    metadata.add_text("RandomUUID", str(uuid.uuid4()))
+    return metadata
+
+
+def post_proc_metadata_into_png(f, bundle_name, page_number):
+    # We write some unique metadata into the Png file to avoid Issue #1573
+    img = PIL.Image.open(f)
+    metadata = get_png_metadata(bundle_name, page_number)
+    img.save(f, optimize=True, pnginfo=metadata)
+
+
 def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=False):
     """Extract/convert each page of pdf into bitmap.
 
@@ -122,7 +137,8 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     outname = dest / (basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
-                    # TODO: note this image will not be watermarked!
+                    # watermark for Issue #1573
+                    post_proc_metadata_into_png(outname, file_name, str(p.number))
                     files.append(outname)
                     continue
                 # Issue #2346: could try to convert to png, but for now just let fitz render
@@ -227,10 +243,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
         # TODO: pil_save 10% smaller but 2x-3x slower, Issue #1866
         # pix.save(pngname)
         # We write some unique metadata into the Png file to avoid Issue #1573
-        metadata = PIL.PngImagePlugin.PngInfo()
-        metadata.add_text("SourceBundle", str(file_name))
-        metadata.add_text("SourceBundlePos", str(p.number))
-        metadata.add_text("RandomUUID", str(uuid.uuid4()))
+        metadata = get_png_metadata(str(file_name), str(p.number))
         pix.pil_save(pngname, optimize=True, pnginfo=metadata)
         # TODO: add progressive=True?
         # Note subsampling off to avoid mucking with red hairlines
