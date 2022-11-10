@@ -22,6 +22,7 @@ class BaseScanProgressPage(ManagerRequiredView):
             {
                 "curr_page": page_name,
                 "n_colliding": mss.get_n_colliding_pages(),
+                "n_discarded": mss.get_n_discarded_pages(),
             }
         )
 

@@ -267,3 +267,30 @@ class ManageScanService:
         discarded_page.save()
         new_image.save()
         image_page.save()
+
+    @transaction.atomic
+    def get_n_discarded_pages(self):
+        """
+        Return the number of discarded images.
+        """
+
+        discarded = DiscardedImage.objects.all()
+        return len(discarded)
+
+    @transaction.atomic
+    def get_discarded_pages_list(self):
+        """
+        Return a list of discarded pages.
+        """
+
+        discarded_images = []
+        discarded = DiscardedImage.objects.all()
+
+        for image in discarded:
+            discarded_images.append(
+                {
+                    "discarded_hash": image.hash,
+                }
+            )
+
+        return discarded_images
