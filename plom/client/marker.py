@@ -2427,11 +2427,9 @@ class MarkerClient(QWidget):
         gn = tgs.gsb.value()
 
         pagedata = self.msgr.get_pagedata_question(tn, gn)
-        print(pagedata)
         pagedata = download_pages(
             self.msgr, pagedata, self.workingDirectory, get_all=True
         )
-        print(pagedata)
         # don't cache this pagedata: "gn" might not be our question number
         # (but the images are cacheable)
         qvmap = self.msgr.getQuestionVersionMap(tn)
