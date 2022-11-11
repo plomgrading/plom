@@ -244,7 +244,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                 msgs.append(f"exif rotate {r}")
             log.info("  Randomly making jpeg " + ", ".join(msgs))
             img.save(outname, "JPEG", quality=quality, optimize=True)
-            # TODO: note this image will not be watermarked!
+            # TODO: note this jpeg image will not be watermarked!
             if r:
                 im = exif.Image(outname)
                 im.set("orientation", r)
@@ -425,6 +425,7 @@ def process_scans(
         do_not_extract=skip_img_extract,
         debug_jpeg=demo,
     )
+    # TODO: if not skip_gamma, this might clear our image uniqifier (#1573)
     postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
     #           ,,,
     #          (o o)
