@@ -96,12 +96,17 @@ def post_proc_metadata_into_jpeg(filename, bundle_name, bundle_page):
 
     TODO: it would probably be better to use exif or something.  This doesn't
     seem very standard: for example ``rdjpgcom`` command-line tool cannot read it.
-
-    TODO: the length is supposed to be encoded there too.
     """
+    import struct
+
+    s = generate_metadata_str(bundle_name, bundle_page)
+    bs = s.encode()
+    # start of comment
     b = b"\xff\xfe"
-    for k, v in _generate_metadata(bundle_name, bundle_page).items():
-        b += f"{k}:{v};".encode()
+    # 2 bytes, unsigned int, little-endian
+    b += struct.pack(">H", len(bs))
+    # trailing null
+    b += bs + b"\x00"
     with open(filename, "a+b") as f:
         f.write(b)
 
