@@ -294,3 +294,19 @@ class ManageScanService:
             )
 
         return discarded_images
+
+    @transaction.atomic
+    def get_discarded_image(self, discarded_hash):
+        """
+        Get a discarded image from its hash.
+        """
+
+        return DiscardedImage.objects.get(hash=discarded_hash)
+
+    @transaction.atomic
+    def delete_discarded_image(self, discarded_hash):
+        """
+        Delete a discarded page-image for good.
+        """
+
+        DiscardedImage.objects.get(hash=discarded_hash).delete()

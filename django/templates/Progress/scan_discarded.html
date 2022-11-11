@@ -24,11 +24,12 @@
                         <td></td>
                         <td>
                             <div class="hstack gap-2">
-                                <a class="btn btn-primary">
+                                <a 
+                                    class="btn btn-primary"
+                                    hx-get="{% url 'progress_discarded_modal' page.discarded_hash %}"
+                                    hx-swap="afterend"
+                                >
                                     View
-                                </a>
-                                <a class="btn btn-danger">
-                                    Delete
                                 </a>
                             </div>
                         </td>

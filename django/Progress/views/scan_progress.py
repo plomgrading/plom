@@ -47,19 +47,3 @@ class ScanExtra(BaseScanProgressPage):
     def get(self, request):
         context = self.build_context("extra")
         return render(request, "Progress/scan_extra.html", context)
-
-
-class ScanDiscarded(BaseScanProgressPage):
-    """
-    View and manage discarded pages.
-    """
-
-    def get(self, request):
-        context = self.build_context("discarded")
-        mss = ManageScanService()
-        context.update(
-            {
-                "discarded_pages": mss.get_discarded_pages_list(),
-            }
-        )
-        return render(request, "Progress/scan_discarded.html", context)

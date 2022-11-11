@@ -18,6 +18,9 @@ from Progress.views import (
     ScanError,
     ScanExtra,
     ScanDiscarded,
+    DiscardedPageImage,
+    DiscardedPageModal,
+    DeleteDiscardedPage,
 )
 
 
@@ -64,4 +67,19 @@ urlpatterns = [
     path("scan/error/", ScanError.as_view(), name="progress_scan_error"),
     path("scan/extra/", ScanExtra.as_view(), name="progress_scan_extra"),
     path("scan/discarded/", ScanDiscarded.as_view(), name="progress_scan_discarded"),
+    path(
+        "scan/discarded/get/<discarded_hash>/",
+        DiscardedPageImage.as_view(),
+        name="progress_scan_discarded_image",
+    ),
+    path(
+        "scan/discarded/view/<discarded_hash>/",
+        DiscardedPageModal.as_view(),
+        name="progress_discarded_modal",
+    ),
+    path(
+        "scan/discarded/delete/<discarded_hash>/",
+        DeleteDiscardedPage.as_view(),
+        name="progress_delete_discarded",
+    ),
 ]
