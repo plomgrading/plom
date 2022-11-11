@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Client "Tips" screen has more information.
 * Command line tools document the available environment variables.
+* `plom-scan` and `plom-hwscan` now invisibly watermark PNG/JPEG files, making unique images from identical pages (#1573).
 
 ### Fixed
 * Fix a client-side crash on unexpected identical images (same hash) within the same paper (#2331 and others).
