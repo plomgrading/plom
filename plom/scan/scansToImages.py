@@ -21,6 +21,7 @@ import fitz
 import PIL
 import PIL.PngImagePlugin
 
+from plom import __version__
 from plom import PlomImageExts
 from plom import ScenePixelHeight
 from plom.scan.bundle_utils import make_bundle_dir
@@ -29,19 +30,33 @@ from plom.scan.bundle_utils import make_bundle_dir
 log = logging.getLogger("scan")
 
 
-def get_png_metadata(bundle_name, page_number):
+def generate_png_metadata(bundle_name, page_number):
+    """Generate new metadata for a bitmap."""
     metadata = PIL.PngImagePlugin.PngInfo()
+    metadata.add_text("Creator", f"Plom v{__version__}")
     metadata.add_text("SourceBundle", str(bundle_name))
-    metadata.add_text("SourceBundlePos", str(page_number))
+    metadata.add_text("SourceBundlePosition", str(page_number))
     metadata.add_text("RandomUUID", str(uuid.uuid4()))
     return metadata
 
 
-def post_proc_metadata_into_png(f, bundle_name, page_number):
-    # We write some unique metadata into the Png file to avoid Issue #1573
+def post_proc_metadata_into_png(f, bundle_name, bundle_page):
+    """Insert metadata into an existing png file.
+
+    args:
+        f (pathlib.Path/str): name of a png file to edit.
+        bundle_name (str): usually the filename of the bundle.
+        bundle_page (int): what page of the bundle.
+
+    returns:
+        None
+
+    This is ued to write some unique metadata into the PNG file,
+    originally to avoid Issue #1573.
+    """
     img = PIL.Image.open(f)
-    metadata = get_png_metadata(bundle_name, page_number)
-    img.save(f, optimize=True, pnginfo=metadata)
+    metadata = generate_png_metadata(bundle_name, bundle_page)
+    img.save(f, pnginfo=metadata)
 
 
 def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=False):
@@ -243,7 +258,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
         # TODO: pil_save 10% smaller but 2x-3x slower, Issue #1866
         # pix.save(pngname)
         # We write some unique metadata into the Png file to avoid Issue #1573
-        metadata = get_png_metadata(str(file_name), str(p.number))
+        metadata = generate_png_metadata(str(file_name), str(p.number))
         pix.pil_save(pngname, optimize=True, pnginfo=metadata)
         # TODO: add progressive=True?
         # Note subsampling off to avoid mucking with red hairlines
