@@ -212,7 +212,14 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     if d["ext"].lower() == "png":
                         post_proc_metadata_into_png(outname, file_name, p.number)
                     elif d["ext"].lower() in ".jpeg":
-                        post_proc_metadata_into_jpeg(outname, file_name, p.number)
+                        # We write some unique metadata into the JPEG exif data
+                        im_shell = exif.Image(outname)
+                        im_shell.set(
+                            "user_comment", generate_metadata_str(file_name, p.number)
+                        )
+                        with open(outname, "wb") as f:
+                            f.write(im_shell.get_file())
+                        # post_proc_metadata_into_jpeg(outname, file_name, p.number)
                     else:
                         # there should be no other choice until PlomImageExts is updated
                         raise ValueError(
@@ -308,12 +315,14 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                 msgs.append(f"exif rotate {r}")
             log.info("  Randomly making jpeg " + ", ".join(msgs))
             img.save(outname, "JPEG", quality=quality, optimize=True)
+            # We write some unique metadata into the JPEG exif data to avoid Issue #1573
+            im_shell = exif.Image(outname)
+            im_shell.set("user_comment", generate_metadata_str(file_name, p.number))
             if r:
-                im = exif.Image(outname)
-                im.set("orientation", r)
-                # or cmdline, Ubuntu: libimage-exiftool-perl, Fedora: perl-Image-ExifTool
-                # subprocess.check_call(["exiftool", "-overwrite_original", f"-Orientation#={r}", outname])
-            post_proc_metadata_into_jpeg(outname, file_name, p.number)
+                im_shell.set("orientation", r)
+            with open(outname, "wb") as f:
+                f.write(im_shell.get_file())
+            # post_proc_metadata_into_jpeg(outname, file_name, p.number)
             files.append(outname)
             continue
 
@@ -325,7 +334,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
         metadata = generate_png_metadata(file_name, p.number)
         pix.pil_save(pngname, optimize=True, pnginfo=metadata)
 
-        # We write some unique metadata into the JPEG file to avoid Issue #1573
+        # We write some unique metadata into the JPEG exif data to avoid Issue #1573
         exy = PIL.Image.Exif()  # empty exif data
         assert PIL.ExifTags.TAGS[37510] == "UserComment"
         exy[37510] = generate_metadata_str(file_name, p.number)
