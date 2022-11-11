@@ -34,7 +34,7 @@ log = logging.getLogger("scan")
 def _generate_metadata(bundle_name, bundle_page):
     """Generate new metadata dict for a bitmap."""
     return {
-        "Creator": f"Plom v{__version__}",
+        "PlomVersion": __version__,
         "SourceBundle": str(bundle_name),
         "SourceBundlePosition": str(bundle_page),
         "RandomUUID": str(uuid.uuid4()),
