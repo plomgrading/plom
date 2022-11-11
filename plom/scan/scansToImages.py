@@ -84,7 +84,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
 
     Raises:
         RuntimeError: not a PDF and not something PyMuPDF can open.
-        TypeError: not a PDF, but it can be opened by PuMuPDF.
+        TypeError: not a PDF, but it can be opened by PyMuPDF.
         ValueError: unrealistically tall skinny or very wide pages.
 
     For extracting the scanned data as is, we must be careful not to
