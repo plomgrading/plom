@@ -51,7 +51,7 @@ def post_proc_metadata_into_png(f, bundle_name, bundle_page):
     returns:
         None
 
-    This is ued to write some unique metadata into the PNG file,
+    This is used to write some unique metadata into the PNG file,
     originally to avoid Issue #1573.
     """
     img = PIL.Image.open(f)
