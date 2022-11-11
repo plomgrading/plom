@@ -19,6 +19,7 @@ from tqdm import tqdm
 import exif
 import fitz
 import PIL
+import PIL.ExifTags
 import PIL.PngImagePlugin
 
 from plom import __version__
@@ -30,21 +31,27 @@ from plom.scan.bundle_utils import make_bundle_dir
 log = logging.getLogger("scan")
 
 
-def generate_metadata(bundle_name, bundle_page):
+def _generate_metadata(bundle_name, bundle_page):
     """Generate new metadata dict for a bitmap."""
-    d = {
+    return {
         "Creator": f"Plom v{__version__}",
         "SourceBundle": str(bundle_name),
         "SourceBundlePosition": str(bundle_page),
         "RandomUUID": str(uuid.uuid4()),
     }
-    return d
+
+
+def generate_metadata_str(bundle_name, bundle_page):
+    """Generate new metadata for a bitmap as a string."""
+    return " ".join(
+        f"{k}:{v};" for k, v in _generate_metadata(bundle_name, bundle_page).items()
+    )
 
 
 def generate_png_metadata(bundle_name, bundle_page):
     """Generate new metadata for a bitmap."""
     metadata = PIL.PngImagePlugin.PngInfo()
-    for k, v in generate_metadata(bundle_name, bundle_page).items():
+    for k, v in _generate_metadata(bundle_name, bundle_page).items():
         metadata.add_text(k, v)
     return metadata
 
@@ -91,7 +98,7 @@ def post_proc_metadata_into_jpeg(filename, bundle_name, bundle_page):
     seem very standard: for example ``rdjpgcom`` command-line tool cannot read it.
     """
     b = b"\xff\xfe"
-    for k, v in generate_metadata(bundle_name, bundle_page).items():
+    for k, v in _generate_metadata(bundle_name, bundle_page).items():
         b += f"{k}:{v};".encode()
     with open(filename, "a+b") as f:
         f.write(b)
@@ -310,11 +317,15 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
         # We write some unique metadata into the PNG file to avoid Issue #1573
         metadata = generate_png_metadata(file_name, p.number)
         pix.pil_save(pngname, optimize=True, pnginfo=metadata)
+
+        # We write some unique metadata into the JPEG file to avoid Issue #1573
+        exy = PIL.Image.Exif()  # empty exif data
+        assert PIL.ExifTags.TAGS[37510] == "UserComment"
+        exy[37510] = generate_metadata_str(file_name, p.number)
         # TODO: add progressive=True?
         # Note subsampling off to avoid mucking with red hairlines
-        pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0)
-        # We write some unique metadata into the JPEG file to avoid Issue #1573
-        post_proc_metadata_into_jpeg(jpgname, file_name, p.number)
+        pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0, exif=exy)
+
         # Keep the jpeg if its at least a little smaller
         if jpgname.stat().st_size < 0.9 * pngname.stat().st_size:
             pngname.unlink()
