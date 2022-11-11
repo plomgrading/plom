@@ -5,7 +5,6 @@
 
 from multiprocessing import Pool
 from pathlib import Path
-import shutil
 import tempfile
 
 from tqdm import tqdm
@@ -52,39 +51,41 @@ def download_page_images(msgr, tmpdir, outdir, short_name, t, sid):
 
 
 def main(server=None, pwd=None):
+    print("Warning: deprecated? IDed-but-not-graded not recently tested!")
     msgr = start_messenger(server, pwd)
-    try:
-        shortName = msgr.getInfoShortName()
+    with tempfile.TemporaryDirectory() as _td:
+        tmp = Path(_td)
 
-        outdir = Path("reassembled_ID_but_not_marked")
-        outdir.mkdir(exist_ok=True)
-        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=Path.cwd()))
-        print(f"Downloading to temp directory {tmpdir}")
+        try:
+            shortName = msgr.getInfoShortName()
 
-        identifiedTests = msgr.getIdentified()
-        pagelists = []
-        for t in identifiedTests:
-            if identifiedTests[t][0] is not None:
+            outdir = Path("reassembled_ID_but_not_marked")
+            outdir.mkdir(exist_ok=True)
+            print(f"Downloading to temp directory {tmp}")
+
+            identifiedTests = msgr.getIdentified()
+            pagelists = []
+            for t in identifiedTests:
+                if identifiedTests[t][0] is None:
+                    print(">>WARNING<< Test {} has no ID".format(t))
+                    continue
                 dat = download_page_images(
-                    msgr, tmpdir, outdir, shortName, t, identifiedTests[t][0]
+                    msgr, tmp, outdir, shortName, t, identifiedTests[t][0]
                 )
                 pagelists.append(dat)
-            else:
-                print(">>WARNING<< Test {} has no ID".format(t))
-    finally:
-        msgr.closeUser()
-        msgr.stop()
+        finally:
+            msgr.closeUser()
+            msgr.stop()
 
-    N = len(pagelists)
-    print("Reassembling {} papers...".format(N))
-    with Pool() as p:
-        r = list(tqdm(p.imap_unordered(_parfcn, pagelists), total=N))
+        N = len(pagelists)
+        print("Reassembling {} papers...".format(N))
+        with Pool() as p:
+            r = list(tqdm(p.imap_unordered(_parfcn, pagelists), total=N))
 
-    print(">>> Warning <<<")
-    print(
-        "This still gets files by looking into server directory. In future this should be done over http."
-    )
-    shutil.rmtree(tmpdir)
+        print(">>> Warning <<<")
+        print(
+            "This still gets files by looking into server directory. In future this should be done over http."
+        )
 
 
 if __name__ == "__main__":
