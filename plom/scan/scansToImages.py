@@ -106,9 +106,9 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
     2. Render the page with PyMuPDF
     3. Render the page with Ghostscript
 
-    Currently png files will have some metadata written into them but
-    jpeg will not.  The metadata prevents otherwise identical pages from
-    producing images with identical hashes.  See Issue #1573.
+    The bitmaps will have some metadata written into them to prevent
+    otherwise identical pages from producing images with identical
+    hashes.  See Issue #1573.
 
     Args:
         file_name (str, Path): PDF file from which to extract bitmaps.
