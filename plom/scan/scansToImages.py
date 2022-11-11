@@ -213,6 +213,9 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                         post_proc_metadata_into_png(outname, file_name, p.number)
                     elif d["ext"].lower() in ".jpeg":
                         # We write some unique metadata into the JPEG exif data
+                        # TODO: concerned about this as this is a jpeg we have no control
+                        # over.  Maybe in this one case, just tacking bits on the end
+                        # would be safer?  Or try: except: and then append bits?
                         im_shell = exif.Image(outname)
                         im_shell.set(
                             "user_comment", generate_metadata_str(file_name, p.number)
