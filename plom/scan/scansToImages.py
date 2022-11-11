@@ -96,6 +96,8 @@ def post_proc_metadata_into_jpeg(filename, bundle_name, bundle_page):
 
     TODO: it would probably be better to use exif or something.  This doesn't
     seem very standard: for example ``rdjpgcom`` command-line tool cannot read it.
+
+    TODO: the length is supposed to be encoded there too.
     """
     b = b"\xff\xfe"
     for k, v in _generate_metadata(bundle_name, bundle_page).items():
