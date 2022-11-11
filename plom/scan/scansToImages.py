@@ -30,21 +30,30 @@ from plom.scan.bundle_utils import make_bundle_dir
 log = logging.getLogger("scan")
 
 
-def generate_png_metadata(bundle_name, page_number):
+def generate_metadata(bundle_name, bundle_page):
+    """Generate new metadata dict for a bitmap."""
+    d = {
+        "Creator": f"Plom v{__version__}",
+        "SourceBundle": str(bundle_name),
+        "SourceBundlePosition": str(bundle_page),
+        "RandomUUID": str(uuid.uuid4()),
+    }
+    return d
+
+
+def generate_png_metadata(bundle_name, bundle_page):
     """Generate new metadata for a bitmap."""
     metadata = PIL.PngImagePlugin.PngInfo()
-    metadata.add_text("Creator", f"Plom v{__version__}")
-    metadata.add_text("SourceBundle", str(bundle_name))
-    metadata.add_text("SourceBundlePosition", str(page_number))
-    metadata.add_text("RandomUUID", str(uuid.uuid4()))
+    for k, v in generate_metadata(bundle_name, bundle_page).items():
+        metadata.add_text(k, v)
     return metadata
 
 
-def post_proc_metadata_into_png(f, bundle_name, bundle_page):
+def post_proc_metadata_into_png(filename, bundle_name, bundle_page):
     """Insert metadata into an existing png file.
 
     args:
-        f (pathlib.Path/str): name of a png file to edit.
+        filename (pathlib.Path/str): name of a png file to edit.
         bundle_name (str): usually the filename of the bundle.
         bundle_page (int): what page of the bundle.
 
@@ -54,9 +63,38 @@ def post_proc_metadata_into_png(f, bundle_name, bundle_page):
     This is used to write some unique metadata into the PNG file,
     originally to avoid Issue #1573.
     """
-    img = PIL.Image.open(f)
+    img = PIL.Image.open(filename)
     metadata = generate_png_metadata(bundle_name, bundle_page)
-    img.save(f, pnginfo=metadata)
+    img.save(filename, pnginfo=metadata)
+
+
+def post_proc_metadata_into_jpeg(filename, bundle_name, bundle_page):
+    """Insert metadata into an existing jpeg file.
+
+    args:
+        filename (pathlib.Path/str): name of a jpeg file to edit.
+        bundle_name (str): usually the filename of the bundle.
+        bundle_page (int): what page of the bundle.
+
+    returns:
+        None
+
+    This is used to write some unique metadata into the JPEG file,
+    originally to avoid Issue #1573.
+
+    We just append some data onto the end of the file.  As long as it
+    starts with the particular byte sequence ``ff fe``, then its a
+    comment.  Hat-tip:
+    https://stackoverflow.com/questions/8283798/adding-a-comment-to-a-jpeg-file-using-python
+
+    TODO: it would probably be better to use exif or something.  This doesn't
+    seem very standard: for example ``rdjpgcom`` command-line tool cannot read it.
+    """
+    b = b"\xff\xfe"
+    for k, v in generate_metadata(bundle_name, bundle_page).items():
+        b += f"{k}:{v};".encode()
+    with open(filename, "a+b") as f:
+        f.write(b)
 
 
 def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=False):
@@ -157,7 +195,15 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     with open(outname, "wb") as f:
                         f.write(d["image"])
                     # watermark for Issue #1573
-                    post_proc_metadata_into_png(outname, file_name, str(p.number))
+                    if d["ext"].lower() == "png":
+                        post_proc_metadata_into_png(outname, file_name, p.number)
+                    elif d["ext"].lower() in ".jpeg":
+                        post_proc_metadata_into_jpeg(outname, file_name, p.number)
+                    else:
+                        # there should be no other choice until PlomImageExts is updated
+                        raise ValueError(
+                            f"No support for watermarking \"{d['ext']}\" files"
+                        )
                     files.append(outname)
                     continue
                 # Issue #2346: could try to convert to png, but for now just let fitz render
@@ -254,6 +300,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                 im.set("orientation", r)
                 # or cmdline, Ubuntu: libimage-exiftool-perl, Fedora: perl-Image-ExifTool
                 # subprocess.check_call(["exiftool", "-overwrite_original", f"-Orientation#={r}", outname])
+            post_proc_metadata_into_jpeg(outname, file_name, p.number)
             files.append(outname)
             continue
 
@@ -261,13 +308,14 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
         jpgname = dest / (basename + ".jpg")
         # TODO: pil_save 10% smaller but 2x-3x slower, Issue #1866
         # pix.save(pngname)
-        # We write some unique metadata into the Png file to avoid Issue #1573
-        metadata = generate_png_metadata(str(file_name), str(p.number))
+        # We write some unique metadata into the PNG file to avoid Issue #1573
+        metadata = generate_png_metadata(file_name, p.number)
         pix.pil_save(pngname, optimize=True, pnginfo=metadata)
         # TODO: add progressive=True?
         # Note subsampling off to avoid mucking with red hairlines
         pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0)
-        # TODO: note this jpeg image will not be watermarked!
+        # We write some unique metadata into the JPEG file to avoid Issue #1573
+        post_proc_metadata_into_jpeg(jpgname, file_name, p.number)
         # Keep the jpeg if its at least a little smaller
         if jpgname.stat().st_size < 0.9 * pngname.stat().st_size:
             pngname.unlink()
