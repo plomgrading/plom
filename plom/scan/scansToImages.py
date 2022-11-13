@@ -341,16 +341,19 @@ def processFileToBitmaps(
 
         pngname = dest / (basename + ".png")
         jpgname = dest / (basename + ".jpg")
-        # TODO: pil_save 10% smaller but 2x-3x slower, Issue #1866
-        # pix.save(pngname)
-        # We write some unique metadata into the PNG file to avoid Issue #1573
-        metadata = generate_png_metadata(file_name, p.number)
-        pix.pil_save(pngname, optimize=True, pnginfo=metadata)
+        if add_metadata:
+            # We write some unique metadata into the PNG file to avoid Issue #1573
+            metadata = generate_png_metadata(file_name, p.number)
+            pix.pil_save(pngname, optimize=True, pnginfo=metadata)
+        else:
+            # pil_save 10% smaller but 2x-3x slower, Issue #1866
+            pix.save(pngname)
 
-        # We write some unique metadata into the JPEG exif data to avoid Issue #1573
         exy = PIL.Image.Exif()  # empty exif data
-        assert PIL.ExifTags.TAGS[37510] == "UserComment"
-        exy[37510] = generate_metadata_str(file_name, p.number)
+        if add_metadata:
+            # We write some unique metadata into the JPEG exif data to avoid Issue #1573
+            assert PIL.ExifTags.TAGS[37510] == "UserComment"
+            exy[37510] = generate_metadata_str(file_name, p.number)
         # TODO: add progressive=True?
         # Note subsampling off to avoid mucking with red hairlines
         pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0, exif=exy)
