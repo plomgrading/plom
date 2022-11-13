@@ -2,7 +2,6 @@
 # Copyright (C) 2022 Colin B. Macdonald
 
 from pathlib import Path
-from pytest import raises
 
 import fitz
 from PIL import Image, ImageDraw
@@ -11,17 +10,18 @@ from plom import __version__
 from plom.scan.scansToImages import (
     post_proc_metadata_into_jpeg,
     post_proc_metadata_into_png,
+    processFileToBitmaps,
 )
 
 
 white = (255, 255, 255)
 
 
-def make_a_jpeg(dur, name="foo.jpg"):
-    f = Path(dur) / name
-    img = Image.new("RGB", (300, 200), color=(73, 109, 137))
+def make_small_jpeg(dur):
+    f = Path(dur) / "small_jpg_file.jpg"
+    img = Image.new("RGB", (120, 100), color=(73, 109, 130))
     d = ImageDraw.Draw(img)
-    d.text((10, 10), "Here is some text in a jpeg", fill=(255, 255, 0))
+    d.text((2, 10), "small jpeg", fill=(255, 255, 0))
     img.save(f)
     return f
 
@@ -35,11 +35,31 @@ def make_a_png(dur, name="foo.png"):
     return f
 
 
+def make_jpeg(dur):
+    """page-size jpeg image."""
+    f = Path(dur) / "jpg_file.jpg"
+    img = Image.new("RGB", (900, 1500), color=(73, 109, 130))
+    d = ImageDraw.Draw(img)
+    d.text((10, 10), "some text", fill=(255, 255, 0))
+    img.save(f)
+    return (f, img)
+
+
+def make_png(dur):
+    """page-size png image."""
+    f = Path(dur) / "png_file.png"
+    img = Image.new("RGB", (900, 1500), color=(108, 72, 130))
+    d = ImageDraw.Draw(img)
+    d.text((10, 10), "some text", fill=(255, 255, 0))
+    img.save(f)
+    return (f, img)
+
+
 def test_jpeg_comment_write(tmpdir):
-    jpg = make_a_jpeg(tmpdir)
-    post_proc_metadata_into_jpeg(jpg, "helloworld", 424242)
-    with open(jpg, "rb") as f:
-        b = f.read()
+    f = make_small_jpeg(tmpdir)
+    post_proc_metadata_into_jpeg(f, "helloworld", 424242)
+    with open(f, "rb") as fh:
+        b = fh.read()
     b = str(b)
     assert "helloworld" in b
     assert "424242" in b
@@ -58,25 +78,11 @@ def test_png_metadata(tmpdir):
     assert int(img.text["SourceBundlePosition"]) == 424242
 
 
-# TODO: make jpeg and put 3 of them as 3 pages
-
-from plom.scan.scansToImages import processFileToBitmaps
-
-
 def test_pdf_can_extract_png_and_jpeg(tmpdir):
     tmp_path = Path(tmpdir)
 
-    jpg_file = tmp_path / "jpg_file.jpg"
-    jpg_img = Image.new("RGB", (900, 1500), color=(73, 109, 137))
-    d = ImageDraw.Draw(jpg_img)
-    d.text((10, 10), "some text", fill=(255, 255, 0))
-    jpg_img.save(jpg_file)
-
-    png_file = tmp_path / "png_file.png"
-    png_img = Image.new("RGB", (900, 1500), color=(73, 109, 137))
-    d = ImageDraw.Draw(png_img)
-    d.text((10, 10), "some text", fill=(255, 255, 0))
-    png_img.save(png_file)
+    jpg_file, jpg_img = make_jpeg(tmpdir)
+    png_file, png_img = make_png(tmpdir)
 
     f = tmp_path / "doc.pdf"
     d = fitz.open()
@@ -103,19 +109,10 @@ def test_pdf_can_extract_png_and_jpeg(tmpdir):
 def test_pdf_no_extract_cases(tmpdir):
     tmp_path = Path(tmpdir)
 
-    small_jpg_file = tmp_path / "small_jpg_file.jpg"
-    img = Image.new("RGB", (60, 100), color=(73, 109, 137))
-    d = ImageDraw.Draw(img)
-    d.text((2, 10), "small", fill=(255, 255, 0))
-    img.save(small_jpg_file)
+    small_jpg_file = make_small_jpeg(tmp_path)
+    jpg_file, jpg_img = make_jpeg(tmp_path)
 
-    jpg_file = tmp_path / "jpg_file.jpg"
-    jpg_img = Image.new("RGB", (900, 1500), color=(73, 109, 137))
-    d = ImageDraw.Draw(jpg_img)
-    d.text((10, 10), "some text", fill=(255, 255, 0))
-    jpg_img.save(jpg_file)
-
-    f = tmp_path / "doc_no_extract.pdf"
+    f = tmp_path / "doc.pdf"
     d = fitz.open()
 
     p = d.new_page(width=500, height=842)
@@ -133,18 +130,18 @@ def test_pdf_no_extract_cases(tmpdir):
     processFileToBitmaps(f, tmp_path, do_not_extract=False)
 
     # do not extract small images
-    (_,) = tmp_path.glob(f"{f.stem}-001.*")
+    (_,) = tmp_path.glob("doc-001.*")
     im = Image.open(_)
     assert im.getpixel((0, 0)) == white
 
     # big enough image but no extract b/c text on page
-    (_,) = tmp_path.glob(f"{f.stem}-002.*")
+    (_,) = tmp_path.glob("doc-002.*")
     im = Image.open(_)
     assert im.width != jpg_img.width
     assert im.getpixel((0, 0)) == white
 
     # big enough image but no extract b/c two images
-    (_,) = tmp_path.glob(f"{f.stem}-003.*")
+    (_,) = tmp_path.glob("doc-003.*")
     im = Image.open(_)
     assert im.width != jpg_img.width
     assert im.getpixel((0, 0)) == white
@@ -181,6 +178,7 @@ def test_pdf_identical_pages_render_png_made_unique(tmpdir):
 def test_pdf_identical_pages_render_jpeg_made_unique(tmpdir):
     tmp_path = Path(tmpdir)
 
+    # need some noise so we get jpeg
     png_file = tmp_path / "img.png"
     img = Image.radial_gradient("L")
     img.save(png_file)
@@ -219,30 +217,20 @@ def test_pdf_identical_pages_render_jpeg_made_unique(tmpdir):
 def test_pdf_can_extract_png_and_jpeg_uniquified(tmpdir):
     tmp_path = Path(tmpdir)
 
-    jpg_file = tmp_path / "jpg_file.jpg"
-    jpg_img = Image.new("RGB", (900, 1500), color=(73, 109, 137))
-    d = ImageDraw.Draw(jpg_img)
-    d.text((10, 10), "some text", fill=(255, 255, 0))
-    jpg_img.save(jpg_file)
-
-    png_file = tmp_path / "png_file.png"
-    png_img = Image.new("RGB", (900, 1500), color=(73, 109, 137))
-    d = ImageDraw.Draw(png_img)
-    d.text((10, 10), "some text", fill=(255, 255, 0))
-    png_img.save(png_file)
+    jpg_file, jpg_img = make_jpeg(tmp_path)
+    png_file, png_img = make_png(tmp_path)
 
     pdf_file = tmp_path / "doc.pdf"
     d = fitz.open()
     rect = fitz.Rect(20, 20, 480, 820)
     p = d.new_page(width=500, height=842)
     p.insert_image(rect, filename=jpg_file)
-    p = d.new_page(width=500, height=842)
-    p.insert_image(rect, filename=jpg_file)
-    p = d.new_page(width=500, height=842)
-    p.insert_image(rect, filename=png_file)
+    d.copy_page(0)
     p = d.new_page(width=500, height=842)
     p.insert_image(rect, filename=png_file)
+    d.copy_page(2)
     d.ez_save(pdf_file)
+
     processFileToBitmaps(pdf_file, tmp_path, add_metadata=True)
 
     f1 = tmp_path / "doc-001.jpeg"
@@ -259,6 +247,7 @@ def test_pdf_can_extract_png_and_jpeg_uniquified(tmpdir):
     assert im.text["RandomUUID"] != im2.text["RandomUUID"]
 
     processFileToBitmaps(pdf_file, tmp_path, add_metadata=False)
+
     f1 = tmp_path / "doc-001.jpeg"
     f2 = tmp_path / "doc-002.jpeg"
     with open(f1, "rb") as f:
@@ -266,6 +255,7 @@ def test_pdf_can_extract_png_and_jpeg_uniquified(tmpdir):
     with open(f2, "rb") as f:
         b2 = f.read()
     assert b1 == b2
+
     f1 = tmp_path / "doc-003.png"
     f2 = tmp_path / "doc-004.png"
     with open(f1, "rb") as f:
