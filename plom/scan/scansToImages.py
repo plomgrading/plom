@@ -19,6 +19,7 @@ from tqdm import tqdm
 import exif
 import fitz
 import PIL
+import PIL.ExifTags
 import PIL.PngImagePlugin
 
 from plom import __version__
@@ -30,21 +31,27 @@ from plom.scan.bundle_utils import make_bundle_dir
 log = logging.getLogger("scan")
 
 
-def generate_metadata(bundle_name, bundle_page):
+def _generate_metadata(bundle_name, bundle_page):
     """Generate new metadata dict for a bitmap."""
-    d = {
-        "Creator": f"Plom v{__version__}",
+    return {
+        "PlomVersion": __version__,
         "SourceBundle": str(bundle_name),
         "SourceBundlePosition": str(bundle_page),
         "RandomUUID": str(uuid.uuid4()),
     }
-    return d
+
+
+def generate_metadata_str(bundle_name, bundle_page):
+    """Generate new metadata for a bitmap as a string."""
+    return " ".join(
+        f"{k}:{v};" for k, v in _generate_metadata(bundle_name, bundle_page).items()
+    )
 
 
 def generate_png_metadata(bundle_name, bundle_page):
     """Generate new metadata for a bitmap."""
     metadata = PIL.PngImagePlugin.PngInfo()
-    for k, v in generate_metadata(bundle_name, bundle_page).items():
+    for k, v in _generate_metadata(bundle_name, bundle_page).items():
         metadata.add_text(k, v)
     return metadata
 
@@ -90,14 +97,23 @@ def post_proc_metadata_into_jpeg(filename, bundle_name, bundle_page):
     TODO: it would probably be better to use exif or something.  This doesn't
     seem very standard: for example ``rdjpgcom`` command-line tool cannot read it.
     """
+    import struct
+
+    s = generate_metadata_str(bundle_name, bundle_page)
+    bs = s.encode()
+    # start of comment
     b = b"\xff\xfe"
-    for k, v in generate_metadata(bundle_name, bundle_page).items():
-        b += f"{k}:{v};".encode()
+    # 2 bytes, unsigned int, little-endian
+    b += struct.pack(">H", len(bs))
+    # trailing null
+    b += bs + b"\x00"
     with open(filename, "a+b") as f:
         f.write(b)
 
 
-def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=False):
+def processFileToBitmaps(
+    file_name, dest, *, do_not_extract=False, debug_jpeg=False, add_metadata=True
+):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
@@ -119,6 +135,12 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
             it seems possible to do so.
         debug_jpeg (bool): make jpegs, randomly rotated of various
             quality settings, for debugging or demos.  Default: False.
+        add_metadata (bool): add invisible metadata to each image
+            including bundle name and random numbers.  Default: True.
+            If you disable this, you can get two identical images
+            (from different pages) giving identical hashes, which
+            in theory is harmless but at least in 2022 was causing
+            database/client issues.
 
     Returns:
         list: an ordered list of the images of each page.  Each entry
@@ -194,16 +216,28 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     outname = dest / (basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
-                    # watermark for Issue #1573
-                    if d["ext"].lower() == "png":
-                        post_proc_metadata_into_png(outname, file_name, p.number)
-                    elif d["ext"].lower() in ".jpeg":
-                        post_proc_metadata_into_jpeg(outname, file_name, p.number)
-                    else:
-                        # there should be no other choice until PlomImageExts is updated
-                        raise ValueError(
-                            f"No support for watermarking \"{d['ext']}\" files"
-                        )
+                    if add_metadata:
+                        # watermark for Issue #1573
+                        if d["ext"].lower() == "png":
+                            post_proc_metadata_into_png(outname, file_name, p.number)
+                        elif d["ext"].lower() in ".jpeg":
+                            # We write some unique metadata into the JPEG exif data
+                            # TODO: concerned about this as this is a jpeg we have no control
+                            # over.  Maybe in this one case, just tacking bits on the end
+                            # would be safer?  Or try: except: and then append bits?
+                            im_shell = exif.Image(outname)
+                            im_shell.set(
+                                "user_comment",
+                                generate_metadata_str(file_name, p.number),
+                            )
+                            with open(outname, "wb") as f:
+                                f.write(im_shell.get_file())
+                            # post_proc_metadata_into_jpeg(outname, file_name, p.number)
+                        else:
+                            # there should be no other choice until PlomImageExts is updated
+                            raise ValueError(
+                                f"No support for watermarking \"{d['ext']}\" files"
+                            )
                     files.append(outname)
                     continue
                 # Issue #2346: could try to convert to png, but for now just let fitz render
@@ -294,27 +328,36 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                 msgs.append(f"exif rotate {r}")
             log.info("  Randomly making jpeg " + ", ".join(msgs))
             img.save(outname, "JPEG", quality=quality, optimize=True)
+            # We write some unique metadata into the JPEG exif data to avoid Issue #1573
+            im_shell = exif.Image(outname)
+            im_shell.set("user_comment", generate_metadata_str(file_name, p.number))
             if r:
-                im = exif.Image(outname)
-                im.set("orientation", r)
-                # or cmdline, Ubuntu: libimage-exiftool-perl, Fedora: perl-Image-ExifTool
-                # subprocess.check_call(["exiftool", "-overwrite_original", f"-Orientation#={r}", outname])
-            post_proc_metadata_into_jpeg(outname, file_name, p.number)
+                im_shell.set("orientation", r)
+            with open(outname, "wb") as f:
+                f.write(im_shell.get_file())
+            # post_proc_metadata_into_jpeg(outname, file_name, p.number)
             files.append(outname)
             continue
 
         pngname = dest / (basename + ".png")
         jpgname = dest / (basename + ".jpg")
-        # TODO: pil_save 10% smaller but 2x-3x slower, Issue #1866
-        # pix.save(pngname)
-        # We write some unique metadata into the PNG file to avoid Issue #1573
-        metadata = generate_png_metadata(file_name, p.number)
-        pix.pil_save(pngname, optimize=True, pnginfo=metadata)
+        if add_metadata:
+            # We write some unique metadata into the PNG file to avoid Issue #1573
+            metadata = generate_png_metadata(file_name, p.number)
+            pix.pil_save(pngname, optimize=True, pnginfo=metadata)
+        else:
+            # pil_save 10% smaller but 2x-3x slower, Issue #1866
+            pix.save(pngname)
+
+        exy = PIL.Image.Exif()  # empty exif data
+        if add_metadata:
+            # We write some unique metadata into the JPEG exif data to avoid Issue #1573
+            assert PIL.ExifTags.TAGS[37510] == "UserComment"
+            exy[37510] = generate_metadata_str(file_name, p.number)
         # TODO: add progressive=True?
         # Note subsampling off to avoid mucking with red hairlines
-        pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0)
-        # We write some unique metadata into the JPEG file to avoid Issue #1573
-        post_proc_metadata_into_jpeg(jpgname, file_name, p.number)
+        pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0, exif=exy)
+
         # Keep the jpeg if its at least a little smaller
         if jpgname.stat().st_size < 0.9 * pngname.stat().st_size:
             pngname.unlink()

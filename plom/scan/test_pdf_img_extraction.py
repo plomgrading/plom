@@ -13,7 +13,7 @@ from plom import ScenePixelHeight
 from plom.scan import processFileToBitmaps
 
 
-def test_pdf_extract_img_height(tmpdir):
+def test_pdf_process_img_height(tmpdir):
     tmp_path = Path(tmpdir)
     f = tmp_path / "doc.pdf"
     d = fitz.open()
@@ -24,7 +24,7 @@ def test_pdf_extract_img_height(tmpdir):
     assert im.height == ScenePixelHeight
 
 
-def test_pdf_extract_img_heights_other(tmpdir):
+def test_pdf_process_img_heights_other(tmpdir):
     tmp_path = Path(tmpdir)
     f = tmp_path / "doc.pdf"
     d = fitz.open()
@@ -45,7 +45,7 @@ def test_pdf_extract_img_heights_other(tmpdir):
     assert im.height < ScenePixelHeight
 
 
-def test_pdf_extract_img_ridiculous_ratios(tmpdir):
+def test_pdf_process_img_ridiculous_ratios(tmpdir):
     tmp_path = Path(tmpdir)
     f = tmp_path / "doc.pdf"
     d = fitz.open()
@@ -60,13 +60,13 @@ def test_pdf_extract_img_ridiculous_ratios(tmpdir):
         processFileToBitmaps(f, tmp_path)
 
 
-def test_pdf_extract_error_no_file(tmpdir):
+def test_pdf_process_error_no_file(tmpdir):
     tmp_path = Path(tmpdir)
     with raises(RuntimeError):
         processFileToBitmaps(tmp_path / "no_such_file.pdf", tmp_path)
 
 
-def test_pdf_extract_error_not_pdf(tmpdir):
+def test_pdf_process_error_not_pdf(tmpdir):
     tmp_path = Path(tmpdir)
     textfile = tmp_path / "not_a_pdf.txt"
     with open(textfile, "w") as f:
@@ -81,7 +81,7 @@ def test_pdf_extract_error_not_pdf(tmpdir):
         processFileToBitmaps(textfile, tmp_path)
 
 
-def test_pdf_extract_error_zip_is_not_pdf(tmpdir):
+def test_pdf_process_error_zip_is_not_pdf(tmpdir):
     tmp_path = Path(tmpdir)
     with working_directory(tmp_path):
         zipfile = shutil.make_archive("not_a_pdf", "zip", tmp_path, tmp_path)
