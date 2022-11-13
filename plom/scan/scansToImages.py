@@ -111,7 +111,9 @@ def post_proc_metadata_into_jpeg(filename, bundle_name, bundle_page):
         f.write(b)
 
 
-def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=False):
+def processFileToBitmaps(
+    file_name, dest, *, do_not_extract=False, debug_jpeg=False, add_metadata=True
+):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
@@ -133,6 +135,12 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
             it seems possible to do so.
         debug_jpeg (bool): make jpegs, randomly rotated of various
             quality settings, for debugging or demos.  Default: False.
+        add_metadata (bool): add invisible metadata to each image
+            including bundle name and random numbers.  Default: True.
+            If you disable this, you can get two identical images
+            (from different pages) giving identical hashes, which
+            in theory is harmless but at least in 2022 was causing
+            database/client issues.
 
     Returns:
         list: an ordered list of the images of each page.  Each entry
@@ -208,26 +216,28 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     outname = dest / (basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
-                    # watermark for Issue #1573
-                    if d["ext"].lower() == "png":
-                        post_proc_metadata_into_png(outname, file_name, p.number)
-                    elif d["ext"].lower() in ".jpeg":
-                        # We write some unique metadata into the JPEG exif data
-                        # TODO: concerned about this as this is a jpeg we have no control
-                        # over.  Maybe in this one case, just tacking bits on the end
-                        # would be safer?  Or try: except: and then append bits?
-                        im_shell = exif.Image(outname)
-                        im_shell.set(
-                            "user_comment", generate_metadata_str(file_name, p.number)
-                        )
-                        with open(outname, "wb") as f:
-                            f.write(im_shell.get_file())
-                        # post_proc_metadata_into_jpeg(outname, file_name, p.number)
-                    else:
-                        # there should be no other choice until PlomImageExts is updated
-                        raise ValueError(
-                            f"No support for watermarking \"{d['ext']}\" files"
-                        )
+                    if add_metadata:
+                        # watermark for Issue #1573
+                        if d["ext"].lower() == "png":
+                            post_proc_metadata_into_png(outname, file_name, p.number)
+                        elif d["ext"].lower() in ".jpeg":
+                            # We write some unique metadata into the JPEG exif data
+                            # TODO: concerned about this as this is a jpeg we have no control
+                            # over.  Maybe in this one case, just tacking bits on the end
+                            # would be safer?  Or try: except: and then append bits?
+                            im_shell = exif.Image(outname)
+                            im_shell.set(
+                                "user_comment",
+                                generate_metadata_str(file_name, p.number),
+                            )
+                            with open(outname, "wb") as f:
+                                f.write(im_shell.get_file())
+                            # post_proc_metadata_into_jpeg(outname, file_name, p.number)
+                        else:
+                            # there should be no other choice until PlomImageExts is updated
+                            raise ValueError(
+                                f"No support for watermarking \"{d['ext']}\" files"
+                            )
                     files.append(outname)
                     continue
                 # Issue #2346: could try to convert to png, but for now just let fitz render
