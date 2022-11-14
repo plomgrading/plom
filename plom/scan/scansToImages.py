@@ -75,8 +75,16 @@ def post_proc_metadata_into_png(filename, bundle_name, bundle_page):
     img.save(filename, pnginfo=metadata)
 
 
+def post_proc_metadata_jpeg_exif(filename, bundle_name, bundle_page):
+    """Insert metadata into an existing jpeg file, via EXIF fields."""
+    im_shell = exif.Image(filename)
+    im_shell.set("user_comment", generate_metadata_str(bundle_name, bundle_page))
+    with open(filename, "wb") as f:
+        f.write(im_shell.get_file())
+
+
 def post_proc_metadata_into_jpeg(filename, bundle_name, bundle_page):
-    """Insert metadata into an existing jpeg file.
+    """Insert metadata into an existing jpeg file, by appending.
 
     args:
         filename (pathlib.Path/str): name of a jpeg file to edit.
@@ -225,13 +233,7 @@ def processFileToBitmaps(
                             # TODO: concerned about this as this is a jpeg we have no control
                             # over.  Maybe in this one case, just tacking bits on the end
                             # would be safer?  Or try: except: and then append bits?
-                            im_shell = exif.Image(outname)
-                            im_shell.set(
-                                "user_comment",
-                                generate_metadata_str(file_name, p.number),
-                            )
-                            with open(outname, "wb") as f:
-                                f.write(im_shell.get_file())
+                            post_proc_metadata_jpeg_exif(outname, file_name, p.number)
                             # post_proc_metadata_into_jpeg(outname, file_name, p.number)
                         else:
                             # there should be no other choice until PlomImageExts is updated

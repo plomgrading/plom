@@ -2,7 +2,9 @@
 # Copyright (C) 2022 Colin B. Macdonald
 
 from pathlib import Path
+import pytest
 
+import exif
 import fitz
 from PIL import Image, ImageDraw
 
@@ -263,3 +265,36 @@ def test_pdf_can_extract_png_and_jpeg_uniquified(tmpdir):
     with open(f2, "rb") as f:
         b2 = f.read()
     assert b1 == b2
+
+
+@pytest.mark.xfail
+def test_pdf_extract_jpeg_with_existing_exif(tmpdir):
+    # TODO: try modifying exif via PIL
+    # 2x2 case of things we could test here
+    tmp_path = Path(tmpdir)
+
+    jpg_file, _ = make_jpeg(tmp_path)
+    png_file, png_img = make_png(tmp_path)
+
+    im_shell = exif.Image(jpg_file)
+    im_shell.set("user_comment", "I will be overwritten")
+    with open(jpg_file, "wb") as f:
+        f.write(im_shell.get_file())
+
+    pdf_file = tmp_path / "doc.pdf"
+    d = fitz.open()
+    rect = fitz.Rect(20, 20, 480, 820)
+    p = d.new_page(width=500, height=842)
+    p.insert_image(rect, filename=jpg_file)
+    d.copy_page(0)
+    d.ez_save(pdf_file)
+
+    processFileToBitmaps(pdf_file, tmp_path, add_metadata=True)
+
+    f1 = tmp_path / "doc-001.jpeg"
+    f2 = tmp_path / "doc-002.jpeg"
+    with open(f1, "rb") as f:
+        b1 = f.read()
+    with open(f2, "rb") as f:
+        b2 = f.read()
+    assert b1 != b2
