@@ -125,28 +125,44 @@ Return via Canvas
     This feature is still being "beta" tested and is not yet
     integrated into Plom.  Proceed with caution.
 
-Make an "API key" for your Canvas account.
+Get the script called ``plom-push-to-canvas.py``.
+You might find it in a directory like ``/home/<user>/.local/share/plom/contrib``
+or you can get it from the Plom source code.
+Copy it to your working directory (where the ``reassembled/`` directory and
+``marks.csv`` are).
+
+Make an "API key" for your Canvas account:
 
   - Login to Canvas and click on "Account" (your picture in the top-left)
     then "Settings".
   - Click on ``+ New Access Token``.  The "purpose" can be "Plom upload" (or
     whatever you want) and you can set it to expire in a day or two.
   - Copy the token, something like ``11224~AABBCCDDEEFF...``.
+  - Who can do this?  The instructor can.  So can TAs, but be cautious:
+    Canvas has three kinds of TAs: `TA`, `TA Grader`, and `TA Course Builder`,
+    and at least before 2022-11-08 at UBC, it would fail for TA Graders,
+    `Issue #2338 <https://gitlab.com/plom/plom/-/issues/2338>`_.
 
 Also in Canvas, create column "Midterm 1" (or whatever) in Canvas with the
 correct number of points.  Publish the column but set to manual release.
 
-Get the script called `plom-push-to-canvas.py`.  You might find it
-in a directory like `/home/<user>/.local/share/plom/contrib` or you can get
-it from the Plom source code.
 Run ``./plom-push-to-canvas.py --help`` for instructions.
 Use the ``--dry-run`` mode first!
+You almost certainly want ``--no-section`` unless you are doing something
+very specialized (see ``--help`` for more info).
+An example invocation looks something like::
 
-You almost certainly want ``--no-section`` unless you are doing something very specialized (see ``--help`` for more info).
+    ./plom-push-to-canvas.py \
+        --dry-run \
+        --course 112233 \
+        --assignment 1234123 \
+        --no-section \
+        --no-solutions \
+        2>&1 | tee push.log
 
 Go back to Canvas and examine a few papers: double check the scores.
 Double check some of the PDF files.  Unfortunately, you'll probably hit
-`this Canvas bug <https://github.com/instructure/canvas-lms/issues/1886>`_
+`Canvas bug #1886 <https://github.com/instructure/canvas-lms/issues/1886>`_
 (which effects instructors not students).  Workarounds are offered in the bug report.
 
 Once happy, release the grades on Canvas.

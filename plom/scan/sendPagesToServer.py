@@ -202,7 +202,7 @@ def uploadTPages(bundle_dir, skip_list, *, msgr):
     files = []
     # Look for pages in decodedPages
     for ext in PlomImageExts:
-        files.extend(sorted((bundle_dir / "decodedPages").glob("t*.{}".format(ext))))
+        files.extend(sorted((bundle_dir / "decodedPages").glob(f"t*.{ext}")))
     TUP = sendTestFiles(msgr, bundle_dir.name, files, skip_list)
     # we do not automatically replace any missing test-pages, since that is a serious issue for tests, and should be done only by manager.
     return TUP

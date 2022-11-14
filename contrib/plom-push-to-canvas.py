@@ -11,18 +11,20 @@ Overview:
 
   1. Finish grading
   2. Run `plom-finish csv` and `plom-finish reassemble`.
-  3. Create `api_secrets.py` containing:
+  3. Copy this script into the current directory.
+  4. Create `api_secrets.py` containing:
      ```
      my_key = "11224~AABBCCDDEEFF..."
      ```
-  4. Run this script and follow the interactive menus:
+     Place it in the current directory.
+  5. Run this script and follow the interactive menus:
      ```
      ./plom-push-to-canvas.py --dry-run
      ```
      It will output what would be uploaded.
-  5. Run it again for real:
+  6. Run it again for real:
      ```
-     ./plom-push-to-canvas.py --course xxxxxx --assignment xxxxxxx 2>&1 | tee push.log
+     ./plom-push-to-canvas.py --course xxxxxx --assignment xxxxxxx --no-section 2>&1 | tee push.log
      ```
 
 This script traverses the files in `reassembled/` directory
@@ -32,6 +34,9 @@ there is no reassembled file in `reassembled/`: these are ignored.
 
 Solutions can also be uploaded.  Again, only solutions that
 correspond to an actual reassembled paper will be uploaded.
+
+Instructors and TAs can do this but in the past it would fail for
+the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
 """
 
 import argparse

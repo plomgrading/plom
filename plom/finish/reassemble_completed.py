@@ -4,9 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 
 import imghdr
-import os
 from pathlib import Path
-import shutil
 import tempfile
 
 from tqdm import tqdm
@@ -136,7 +134,9 @@ def _reassemble_one_paper(
 
 
 @with_finish_messenger
-def reassemble_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
+def reassemble_paper(
+    testnum, *, msgr, outdir=Path("reassembled"), tmpdir=None, skip=False
+):
     """Reassemble a particular test paper.
 
     Args:
@@ -148,6 +148,10 @@ def reassemble_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
         outdir (pathlib.Path/str): where to save the reassembled pdf file
             Defaults to "reassembled/" in the current working directory.
             It will be created if it does not exist.
+        tmpdir (pathlib.Path/str/None): temporary space for download of
+            images.  If you provide this, its your responsibility to
+            clean it up.  The default is `None`, in which case we will
+            use an OS temporary space and clean up afterward.
         skip (bool): Default False, but if True, skip any pdf files
             we already have (Careful: without checking for changes!)
 
@@ -181,25 +185,31 @@ def reassemble_paper(testnum, *, msgr, outdir=Path("reassembled"), skip=False):
     identifiedTests = msgr.getIdentified()
     # dict testNumber -> [sid, sname]
     sid = identifiedTests[t][0]
-    # TODO: will a context manager delete content too? helpful here!
-    tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-    outname = _reassemble_one_paper(
-        msgr,
-        tmpdir,
-        outdir,
-        short_name,
-        max_marks,
-        num_questions,
-        testnum,
-        sid,
-        skip,
-    )
-    shutil.rmtree(tmpdir)
+
+    with tempfile.TemporaryDirectory() as _td:
+        if tmpdir:
+            # note in this case we don't use the _td temp dir
+            print(f"Downloading temporary images to {tmpdir}")
+            tmpdir = Path(tmpdir)
+        else:
+            tmpdir = Path(_td)
+
+        outname = _reassemble_one_paper(
+            msgr,
+            tmpdir,
+            outdir,
+            short_name,
+            max_marks,
+            num_questions,
+            testnum,
+            sid,
+            skip,
+        )
     return outname
 
 
 @with_finish_messenger
-def reassemble_all_papers(*, msgr, outdir=Path("reassembled"), skip=False):
+def reassemble_all_papers(*, msgr, outdir=Path("reassembled"), tmpdir=None, skip=False):
     """Reassemble all test papers.
 
     Keyword Args:
@@ -208,6 +218,10 @@ def reassemble_all_papers(*, msgr, outdir=Path("reassembled"), skip=False):
         outdir (pathlib.Path/str): where to save the reassembled pdf file
             Defaults to "reassembled/" in the current working directory.
             It will be created if it does not exist.
+        tmpdir (pathlib.Path/str/None): temporary space for download of
+            images.  If you provide this, its your responsibility to
+            clean it up.  The default is `None`, in which case we will
+            use an OS temporary space and clean up afterward.
         skip (bool): Default False, but if True, skip any pdf files
             we already have (Careful: without checking for changes!)
     """
@@ -223,21 +237,25 @@ def reassemble_all_papers(*, msgr, outdir=Path("reassembled"), skip=False):
     identifiedTests = msgr.getIdentified()
     # dict testNumber -> [sid, sname]
 
-    tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-    print(f"Downloading to temp directory {tmpdir}")
+    with tempfile.TemporaryDirectory() as _td:
+        if tmpdir:
+            # note in this case we don't use the _td temp dir
+            print(f"Downloading temporary images to {tmpdir}")
+            tmpdir = Path(tmpdir)
+        else:
+            tmpdir = Path(_td)
 
-    for t, completed in tqdm(completedTests.items()):
-        if completed[0] and completed[1] and completed[2] == num_questions:
-            sid = identifiedTests[t][0]
-            _reassemble_one_paper(
-                msgr,
-                tmpdir,
-                outdir,
-                short_name,
-                max_marks,
-                num_questions,
-                t,
-                sid,
-                skip,
-            )
-    shutil.rmtree(tmpdir)
+        for t, completed in tqdm(completedTests.items()):
+            if completed[0] and completed[1] and completed[2] == num_questions:
+                sid = identifiedTests[t][0]
+                _reassemble_one_paper(
+                    msgr,
+                    tmpdir,
+                    outdir,
+                    short_name,
+                    max_marks,
+                    num_questions,
+                    t,
+                    sid,
+                    skip,
+                )

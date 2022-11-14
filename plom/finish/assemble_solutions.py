@@ -3,7 +3,6 @@
 # Copyright (C) 2022 Colin B. Macdonald
 
 from pathlib import Path
-import shutil
 import tempfile
 
 from tqdm import tqdm
@@ -21,9 +20,10 @@ def _assemble_one_soln(
     max_marks,
     t,
     sid,
-    skip=True,
     watermark=False,
     verbose=True,
+    *,
+    skip=True,
 ):
     """Assemble a solution for one particular paper.
 
@@ -39,11 +39,11 @@ def _assemble_one_soln(
         t (int): Test number.
         sid (str/None): The student number as a string.  Maybe `None` which
             means that student has no ID (?)  Currently we just skip these.
+        watermark (bool): whether to watermark solns with student-id.
+        verbose (bool): print messages or not.
 
     Keyword Args:
         skip (bool): whether to skip existing pdf files.
-        watermark (bool): whether to watermark solns with student-id.
-        verbose (bool): print messages or not.
 
     Returns:
         None
@@ -99,73 +99,64 @@ def assemble_solutions(
 
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
-    tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=Path.cwd()))
 
-    solutionList = msgr.getSolutionStatus()
-    for q, v, md5 in solutionList:
-        if md5 == "":
-            raise RuntimeError(f"Missing solution to question {q} version {v}")
-    if verbose:
-        print("All solutions present.")
-        print(f"Downloading solution images to temp directory {tmpdir}")
-    for q, v, md5 in tqdm(solutionList):
-        img = msgr.getSolutionImage(q, v)
-        filename = tmpdir / f"solution.{q}.{v}.png"
-        with open(filename, "wb") as f:
-            f.write(img)
+    with tempfile.TemporaryDirectory() as _td:
+        tmp = Path(_td)
 
-    completedTests = msgr.RgetCompletionStatus()
-    # dict testnumber -> [scanned, id'd, #q's marked]
-    identifiedTests = msgr.getIdentified()
-    # dict testNumber -> [sid, sname]
-    maxMarks = msgr.MgetAllMax()
-
-    if testnum is not None:
-        t = str(testnum)
-        try:
-            completed = completedTests[t]
-            # is 4-tuple [Scanned, IDed, #Marked, Last_update_time]
-        except KeyError:
-            raise ValueError(
-                f"Paper {t} does not exist or otherwise not ready"
-            ) from None
-        if not completed[0]:
-            raise ValueError(f"Paper {t} not scanned, cannot reassemble")
-        if not completed[1]:
-            raise ValueError(f"Paper {t} not identified, cannot reassemble")
-        if completed[2] != numberOfQuestions:
-            if verbose:
-                print(f"Note: paper {t} not fully marked but building soln anyway")
-        sid = identifiedTests[t][0]
-        _assemble_one_soln(
-            msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False, watermark, verbose
-        )
-    else:
+        solutionList = msgr.getSolutionStatus()
+        for q, v, md5 in solutionList:
+            if md5 == "":
+                raise RuntimeError(f"Missing solution to question {q} version {v}")
         if verbose:
-            print(f"Building UP TO {len(completedTests)} solutions...")
-        N = 0
-        for t, completed in tqdm(completedTests.items()):
-            # check if the given test is scanned and identified
-            if not (completed[0] and completed[1]):
-                continue
-            # Maybe someone wants only the finished papers?
-            # if completed[2] != numberOfQuestions:
-            #     continue
+            print("All solutions present.")
+            print(f"Downloading solution images to temp directory {tmp}")
+        for q, v, md5 in tqdm(solutionList):
+            img = msgr.getSolutionImage(q, v)
+            filename = tmp / f"solution.{q}.{v}.png"
+            with open(filename, "wb") as f:
+                f.write(img)
+
+        completedTests = msgr.RgetCompletionStatus()
+        # dict testnumber -> [scanned, id'd, #q's marked]
+        identifiedTests = msgr.getIdentified()
+        # dict testNumber -> [sid, sname]
+        maxMarks = msgr.MgetAllMax()
+
+        if testnum is not None:
+            t = str(testnum)
+            try:
+                completed = completedTests[t]
+                # is 4-tuple [Scanned, IDed, #Marked, Last_update_time]
+            except KeyError:
+                raise ValueError(
+                    f"Paper {t} does not exist or otherwise not ready"
+                ) from None
+            if not completed[0]:
+                raise ValueError(f"Paper {t} not scanned, cannot reassemble")
+            if not completed[1]:
+                raise ValueError(f"Paper {t} not identified, cannot reassemble")
+            if completed[2] != numberOfQuestions:
+                if verbose:
+                    print(f"Note: paper {t} not fully marked but building soln anyway")
             sid = identifiedTests[t][0]
             _assemble_one_soln(
-                msgr,
-                tmpdir,
-                outdir,
-                shortName,
-                maxMarks,
-                t,
-                sid,
-                False,
-                watermark,
-                verbose,
+                msgr, tmp, outdir, shortName, maxMarks, t, sid, watermark, verbose
             )
-            N += 1
-        if verbose:
-            print(f"Assembled {N} solutions from papers scanning and ID'd")
-
-    shutil.rmtree(tmpdir)
+        else:
+            if verbose:
+                print(f"Building UP TO {len(completedTests)} solutions...")
+            N = 0
+            for t, completed in tqdm(completedTests.items()):
+                # check if the given test is scanned and identified
+                if not (completed[0] and completed[1]):
+                    continue
+                # Maybe someone wants only the finished papers?
+                # if completed[2] != numberOfQuestions:
+                #     continue
+                sid = identifiedTests[t][0]
+                _assemble_one_soln(
+                    msgr, tmp, outdir, shortName, maxMarks, t, sid, watermark, verbose
+                )
+                N += 1
+            if verbose:
+                print(f"Assembled {N} solutions from papers scanning and ID'd")

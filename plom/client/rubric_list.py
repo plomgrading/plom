@@ -355,6 +355,9 @@ class RubricTable(QTableWidget):
             targetRow = self.indexAt(event.pos()).row()
             if targetRow == -1:  # no row, so drop at end
                 targetRow = self.rowCount()
+            # Careful about sorting during setItem calls: Issue #2065
+            _sorting_enabled = self.isSortingEnabled()
+            self.setSortingEnabled(False)
             # insert a new row at position targetRow
             self.insertRow(targetRow)
             # but now - if sourceRow after target row, sourceRow has moved by 1.
@@ -365,6 +368,7 @@ class RubricTable(QTableWidget):
                 self.setItem(targetRow, col, self.takeItem(sourceRow, col))
             self.selectRow(targetRow)
             self.removeRow(sourceRow)
+            self.setSortingEnabled(_sorting_enabled)
             event.accept()
 
     def appendByKey(self, key):
@@ -389,6 +393,9 @@ class RubricTable(QTableWidget):
             if rubric["id"] == self.item(r, 0).text():
                 return  # rubric already present
         # is a new rubric, so append it
+        # Careful about sorting during setItem calls: Issue #2065
+        _sorting_enabled = self.isSortingEnabled()
+        self.setSortingEnabled(False)
         self.insertRow(rc)
         self.setItem(rc, 0, QTableWidgetItem(rubric["id"]))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
@@ -411,6 +418,7 @@ class RubricTable(QTableWidget):
         if rubric["meta"] != "":
             hoverText += "{}\n".format(rubric["meta"])
         self.item(rc, 3).setToolTip(hoverText.strip())
+        self.setSortingEnabled(_sorting_enabled)
 
     def setRubricsByKeys(self, rubric_list, key_list):
         """Clear table and repopulate rubrics in the key_list"""

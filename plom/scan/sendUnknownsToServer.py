@@ -38,7 +38,7 @@ def doFiling(rmsg, bundle, f):
             bundle / "uploads/discardedPages" / f"{f.name}.qr",
         )
     else:
-        raise RuntimeError("Unexpected code path that should not happen! msg={rmsg}")
+        raise RuntimeError(f"Unexpected code path that should not happen! msg={rmsg}")
 
 
 def sendUnknownFiles(msgr, bundle_name, files):
@@ -126,5 +126,5 @@ def upload_unknowns(bundle_dir, *, msgr):
     files = []
     # Look for pages in unknowns
     for ext in PlomImageExts:
-        files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
+        files.extend((bundle_dir / "unknownPages").glob(f"*.{ext}"))
     sendUnknownFiles(msgr, bundle_dir.name, files)

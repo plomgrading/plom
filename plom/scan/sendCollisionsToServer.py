@@ -40,9 +40,9 @@ def doFiling(rmsg, bundle, f):
                 bundle / "uploads/discardedPages" / (f.name + suf),
             )
     elif rmsg[1] == "original":
-        raise RuntimeError("Unexpected code path that should not happen! msg={rmsg}")
+        raise RuntimeError(f"Unexpected code path that should not happen! msg={rmsg}")
     else:
-        raise RuntimeError("Unexpected code path that should not happen! msg={rmsg}")
+        raise RuntimeError(f"Unexpected code path that should not happen! msg={rmsg}")
 
 
 def sendCollidingFiles(scanMessenger, bundle_name, files):
@@ -153,5 +153,5 @@ def upload_collisions(bundle_dir, *, msgr):
 
     files = []
     for ext in PlomImageExts:
-        files.extend((bundle_dir / "uploads/collidingPages").glob("*.{}".format(ext)))
+        files.extend((bundle_dir / "uploads/collidingPages").glob(f"*.{ext}"))
     sendCollidingFiles(msgr, bundle_dir.name, files)

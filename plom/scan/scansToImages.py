@@ -8,17 +8,22 @@
 import logging
 from pathlib import Path
 import shutil
+import struct
 import subprocess
 from multiprocessing import Pool
 import random
 import tempfile
 from warnings import warn
+import uuid
 
 from tqdm import tqdm
 import exif
 import fitz
 import PIL
+import PIL.ExifTags
+import PIL.PngImagePlugin
 
+from plom import __version__
 from plom import PlomImageExts
 from plom import ScenePixelHeight
 from plom.scan.bundle_utils import make_bundle_dir
@@ -27,7 +32,101 @@ from plom.scan.bundle_utils import make_bundle_dir
 log = logging.getLogger("scan")
 
 
-def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=False):
+def _generate_metadata(bundle_name, bundle_page):
+    """Generate new metadata dict for a bitmap."""
+    return {
+        "PlomVersion": __version__,
+        "SourceBundle": str(bundle_name),
+        "SourceBundlePosition": str(bundle_page),
+        "RandomUUID": str(uuid.uuid4()),
+    }
+
+
+def generate_metadata_str(bundle_name, bundle_page):
+    """Generate new metadata for a bitmap as a string."""
+    return " ".join(
+        f"{k}:{v};" for k, v in _generate_metadata(bundle_name, bundle_page).items()
+    )
+
+
+def generate_png_metadata(bundle_name, bundle_page):
+    """Generate new metadata for a bitmap."""
+    metadata = PIL.PngImagePlugin.PngInfo()
+    for k, v in _generate_metadata(bundle_name, bundle_page).items():
+        metadata.add_text(k, v)
+    return metadata
+
+
+def add_metadata_png(filename, bundle_name, bundle_page):
+    """Insert metadata into an existing png file.
+
+    args:
+        filename (pathlib.Path/str): name of a png file to edit.
+        bundle_name (str): usually the filename of the bundle.
+        bundle_page (int): what page of the bundle.
+
+    returns:
+        None
+
+    This is used to write some unique metadata into the PNG file,
+    originally to avoid Issue #1573.
+    """
+    img = PIL.Image.open(filename)
+    metadata = generate_png_metadata(bundle_name, bundle_page)
+    img.save(filename, pnginfo=metadata)
+
+
+def add_metadata_jpeg_exif(filename, bundle_name, bundle_page):
+    """Insert metadata into an existing jpeg file, via EXIF fields.
+
+    raises:
+        ValueError: known to fail if existing file has a shorter
+            ``user_comment`` field.
+    """
+    im_shell = exif.Image(filename)
+    im_shell.set("user_comment", generate_metadata_str(bundle_name, bundle_page))
+    with open(filename, "wb") as f:
+        f.write(im_shell.get_file())
+
+
+def add_metadata_jpeg_comment(filename, bundle_name, bundle_page):
+    """Insert metadata into an existing jpeg file, by appending comment.
+
+    args:
+        filename (pathlib.Path/str): name of a jpeg file to edit.
+        bundle_name (str): usually the filename of the bundle.
+        bundle_page (int): what page of the bundle.
+
+    returns:
+        None
+
+    This is used to write some unique metadata into the JPEG file,
+    originally to avoid Issue #1573.
+
+    We just append some data onto the end of the file.  As long as it
+    starts with the particular byte sequence ``ff fe``, then its a
+    comment.  Hat-tip:
+    https://stackoverflow.com/questions/8283798/adding-a-comment-to-a-jpeg-file-using-python
+
+    You might prefer writing comments to EXIF.  However, this idea is fast and
+    safe (?).  Note: we don't put the comment *before* the EOF marker which is
+    non-standard: e.g., ``rdjpgcom`` command-line tool cannot read.
+    """
+    s = generate_metadata_str(bundle_name, bundle_page)
+    bs = s.encode()
+    # start of comment
+    b = b"\xff\xfe"
+    # 2 bytes, unsigned int, little-endian
+    b += struct.pack(">H", len(bs))
+    # trailing null
+    b += bs + b"\x00"
+    with open(filename, "a+b") as f:
+        f.write(b)
+
+
+def processFileToBitmaps(
+    file_name, dest, *, do_not_extract=False, debug_jpeg=False, add_metadata=True
+):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
@@ -35,6 +134,10 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
     1. Extract a scanned bitmap "as-is"
     2. Render the page with PyMuPDF
     3. Render the page with Ghostscript
+
+    The bitmaps will have some metadata written into them to prevent
+    otherwise identical pages from producing images with identical
+    hashes.  See Issue #1573.
 
     Args:
         file_name (str, Path): PDF file from which to extract bitmaps.
@@ -45,6 +148,12 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
             it seems possible to do so.
         debug_jpeg (bool): make jpegs, randomly rotated of various
             quality settings, for debugging or demos.  Default: False.
+        add_metadata (bool): add invisible metadata to each image
+            including bundle name and random numbers.  Default: True.
+            If you disable this, you can get two identical images
+            (from different pages) giving identical hashes, which
+            in theory is harmless but at least in 2022 was causing
+            database/client issues.
 
     Returns:
         list: an ordered list of the images of each page.  Each entry
@@ -52,7 +161,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
 
     Raises:
         RuntimeError: not a PDF and not something PyMuPDF can open.
-        TypeError: not a PDF, but it can be opened by PuMuPDF.
+        TypeError: not a PDF, but it can be opened by PyMuPDF.
         ValueError: unrealistically tall skinny or very wide pages.
 
     For extracting the scanned data as is, we must be careful not to
@@ -116,17 +225,33 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     d["width"],
                     d["height"],
                 )
-                converttopng = False
-                if d["ext"].lower() not in PlomImageExts:
-                    converttopng = True
-                    log.info(f"  {d['ext']} not in allowlist: transcoding to PNG")
-
-                if not converttopng:
+                if d["ext"].lower() in PlomImageExts:
                     outname = dest / (basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
+                    if add_metadata:
+                        # watermark for Issue #1573
+                        if d["ext"].lower() == "png":
+                            add_metadata_png(outname, file_name, p.number)
+                        elif d["ext"].lower() in ".jpeg":
+                            # We write some unique metadata into the JPEG file.  We could
+                            # use the EXIF data or a JPEG comment.  The latter seems safer
+                            # as we just append some bytes to the file...?  I'm concerned
+                            # about interactions with existing EXIF: for example `exif`
+                            # library cannot write longer "user_comment" field (see tests).
+                            add_metadata_jpeg_comment(outname, file_name, p.number)
+                            # add_metadata_jpeg_exif(outname, file_name, p.number)
+                        else:
+                            # there should be no other choice until PlomImageExts is updated
+                            raise ValueError(
+                                f"No support for watermarking \"{d['ext']}\" files"
+                            )
                     files.append(outname)
-                else:
+                    continue
+                # Issue #2346: could try to convert to png, but for now just let fitz render
+                log.info(f"  {d['ext']} not in allowlist: leave for fitz render")
+                if False:
+                    log.info(f"  {d['ext']} not in allowlist: transcoding to PNG")
                     outname = dest / (basename + ".png")
                     # Context manager not appropriate here, Issue #1996
                     f = Path(tempfile.NamedTemporaryFile(delete=False).name)
@@ -134,8 +259,9 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                         fh.write(d["image"])
                     subprocess.check_call(["convert", f, outname])
                     f.unlink()
+                    # TODO: note this image will not be watermarked!
                     files.append(outname)
-                continue
+                    continue
 
         aspect = p.mediabox_size[0] / p.mediabox_size[1]
         H = ScenePixelHeight
@@ -210,22 +336,36 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                 msgs.append(f"exif rotate {r}")
             log.info("  Randomly making jpeg " + ", ".join(msgs))
             img.save(outname, "JPEG", quality=quality, optimize=True)
+            # We write some unique metadata into the JPEG exif data to avoid Issue #1573
+            im_shell = exif.Image(outname)
+            im_shell.set("user_comment", generate_metadata_str(file_name, p.number))
             if r:
-                im = exif.Image(outname)
-                im.set("orientation", r)
-                # or cmdline, Ubuntu: libimage-exiftool-perl, Fedora: perl-Image-ExifTool
-                # subprocess.check_call(["exiftool", "-overwrite_original", f"-Orientation#={r}", outname])
+                im_shell.set("orientation", r)
+            with open(outname, "wb") as f:
+                f.write(im_shell.get_file())
+            # add_metadata_jpeg_comment(outname, file_name, p.number)
             files.append(outname)
             continue
 
         pngname = dest / (basename + ".png")
         jpgname = dest / (basename + ".jpg")
-        # TODO: pil_save 10% smaller but 2x-3x slower, Issue #1866
-        pix.save(pngname)
-        # pix.pil_save(pngname, optimize=True)
+        if add_metadata:
+            # We write some unique metadata into the PNG file to avoid Issue #1573
+            metadata = generate_png_metadata(file_name, p.number)
+            pix.pil_save(pngname, optimize=True, pnginfo=metadata)
+        else:
+            # pil_save 10% smaller but 2x-3x slower, Issue #1866
+            pix.save(pngname)
+
+        exy = PIL.Image.Exif()  # empty exif data
+        if add_metadata:
+            # We write some unique metadata into the JPEG exif data to avoid Issue #1573
+            assert PIL.ExifTags.TAGS[37510] == "UserComment"
+            exy[37510] = generate_metadata_str(file_name, p.number)
         # TODO: add progressive=True?
         # Note subsampling off to avoid mucking with red hairlines
-        pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0)
+        pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0, exif=exy)
+
         # Keep the jpeg if its at least a little smaller
         if jpgname.stat().st_size < 0.9 * pngname.stat().st_size:
             pngname.unlink()
@@ -342,7 +482,7 @@ def postProcessing(thedir, dest, skip_gamma=False):
 
     fileList = []
     for ext in PlomImageExts:
-        fileList.extend(thedir.glob("*.{}".format(ext)))
+        fileList.extend(thedir.glob(f"*.{ext}"))
     # move them to pageimages for barcode reading
     for file in fileList:
         shutil.move(file, dest / file.name)
@@ -387,6 +527,7 @@ def process_scans(
         do_not_extract=skip_img_extract,
         debug_jpeg=demo,
     )
+    # TODO: if not skip_gamma, this might clear our image uniqifier (#1573)
     postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
     #           ,,,
     #          (o o)

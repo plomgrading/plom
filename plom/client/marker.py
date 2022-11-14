@@ -1222,8 +1222,12 @@ class MarkerClient(QWidget):
 
         for row in src_img_data:
             for r in pagedata:
-                if r["md5"] == row["md5"]:
+                # Issue #2331: md5sum could be repeated, want nonempty local_filename
+                if r["md5"] == row["md5"] and r["local_filename"]:
                     row["filename"] = r["local_filename"]
+            assert row[
+                "filename"
+            ], f"Unexpected Issue #2331: task={task}; src_img_data is {src_img_data}; pagedata={pagedata}"
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1272,7 +1276,14 @@ class MarkerClient(QWidget):
         else:
             # Colin doesn't understand this proxy: just pull task and query examModel
             task = self.prxM.getPrefix(pr)
-            self.testImg.updateImage(self.examModel.get_source_image_data(task))
+            img_src_data = self.examModel.get_source_image_data(task)
+            for r in img_src_data:
+                if not r.get("filename") and not r.get("local_filename"):
+                    print(r)
+                    raise PlomSeriousException(
+                        f"Unexpected Issue #2327: img_src_data is {img_src_data}, task={task}"
+                    )
+            self.testImg.updateImage(img_src_data)
         # TODO: seems to behave ok without this hack: delete?
         # self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
@@ -1427,8 +1438,12 @@ class MarkerClient(QWidget):
 
         for row in src_img_data:
             for r in pagedata:
-                if r["md5"] == row["md5"]:
+                # Issue #2331: md5sum could be repeated, want nonempty local_filename
+                if r["md5"] == row["md5"] and r["local_filename"]:
                     row["filename"] = r["local_filename"]
+            assert row[
+                "filename"
+            ], f"Unexpected Issue #2331: task={task}; src_img_data is {src_img_data}; pagedata={pagedata}"
 
         self.examModel.addPaper(
             ExamQuestion(
