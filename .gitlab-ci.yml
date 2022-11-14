@@ -313,7 +313,7 @@ webplom_demo:
     - python3 -m pip install -r requirements.txt
     - ./demo_test.sh
     - popd
-        
+
 
 demoserver:
   stage: test
