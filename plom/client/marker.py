@@ -55,6 +55,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from plom import __version__
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -869,6 +870,7 @@ class MarkerClient(QWidget):
         self.downloader = self.Qapp.downloader
         self.downloader.download_finished.connect(self.background_download_finished)
         self.downloader.download_failed.connect(self.background_download_failed)
+        self.downloader.downloader_enqueued.connect(self._update_technical_stats)
 
         self.examModel = (
             MarkerExamModel()
@@ -1038,10 +1040,13 @@ class MarkerClient(QWidget):
         # Paste into appropriate location in gui.
         self.ui.paperBoxLayout.addWidget(self.testImg, 10)
 
+        if __version__.endswith("dev"):
+            self.ui.technicalButton.setChecked(True)
+        else:
+            self.ui.technicalButton.setChecked(False)
         self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
         self.show_hide_technical()
         self.update_technical_stats()
-
 
     def connectGuiButtons(self):
         """
@@ -1527,9 +1532,12 @@ class MarkerClient(QWidget):
         self.update_technical_stats()
 
     def update_technical_stats(self):
-        d = self.downloader.get_stats()
+        stats = self.downloader.get_stats()
+        self._update_technical_stats(stats)
+
+    def _update_technical_stats(self, d):
         self.ui.labelTech1.setText(
-            f"{d['queued']} queued, {d['cache_size']} cached, {d['fail']} failed"
+            f"downloads: {d['queued']} queued, {d['cache_size']} cached, {d['fail']} failed"
         )
 
     def show_hide_technical(self):

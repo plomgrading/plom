@@ -39,6 +39,8 @@ class Downloader(QObject):
     # emitted anytime a (background) download fails
     # TODO: document whether it is automatically restarted?
     download_failed = pyqtSignal(int)
+    # emitted when queue lengths change (i.e., things enqueued)
+    downloader_enqueued = pyqtSignal(dict)
 
     def __init__(self, basedir, *, msgr=None):
         """Initialize a new Downloader.
@@ -216,6 +218,7 @@ class Downloader(QObject):
             self._tries[row["id"]],
             self._total_tries[row["id"]],
         )
+        self.downloader_enqueued.emit(self.get_stats())
 
     def worker_delivers(self, img_id, md5, tmpfile, local_filename):
         """A worker has succeed and delivered a temp file to us.
