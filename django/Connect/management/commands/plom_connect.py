@@ -21,7 +21,7 @@ class Command(BaseCommand):
     """A command-line tool for connecting a Plom-classic server.
 
     To use:
-        `python3 manage.py plom_connec server --name [server_name] --port [port_number]`
+        `python3 manage.py plom_connect server --name [server_name] --port [port_number]`
             will ping a plom-classic server at the URL http://[server_name]:[port_number]
         `python3 manage.py plom_connect manager` will prompt for the manager password and
             attempt to sign in to the plom-classic manager account

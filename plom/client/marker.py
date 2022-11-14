@@ -3,13 +3,20 @@
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2022 Edith Coates
 
 """
 The Plom Marker client
 """
 
 __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
-__credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
+__credits__ = [
+    "Andrew Rechnitzer",
+    "Elvis Cai",
+    "Colin Macdonald",
+    "Victoria Schuster",
+    "Edith Coates",
+]
 __license__ = "AGPL-3.0-or-later"
 
 
@@ -63,6 +70,7 @@ from plom.plom_exceptions import (
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
+from plom.webPlomMessenger import WebPlomMessenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
@@ -87,7 +95,7 @@ class BackgroundUploader(QThread):
     uploadKnownFail = pyqtSignal(str, str)
     uploadUnknownFail = pyqtSignal(str, str)
 
-    def __init__(self, msgr):
+    def __init__(self, msgr, webplom=False):
         """Initialize a new uploader
 
         args:
@@ -100,7 +108,10 @@ class BackgroundUploader(QThread):
         super().__init__()
         self.q = None
         self.is_upload_in_progress = False
-        self._msgr = Messenger.clone(msgr)
+        if webplom:
+            self._msgr = WebPlomMessenger.clone(msgr)
+        else:
+            self._msgr = Messenger.clone(msgr)
 
     def enqueueNewUpload(self, *args):
         """
@@ -902,7 +913,6 @@ class MarkerClient(QWidget):
                      "CommentsWarnings"
                      "MarkWarnings"
                      "KeyBinding"
-                     "SidebarOnRight"
                    }
 
                 and potentially others
@@ -954,7 +964,8 @@ class MarkerClient(QWidget):
         log.debug("Marker main thread: " + str(threading.get_ident()))
 
         if self.allowBackgroundOps:
-            self.backgroundUploader = BackgroundUploader(self.msgr)
+            is_webplom = type(self.msgr) == WebPlomMessenger
+            self.backgroundUploader = BackgroundUploader(self.msgr, is_webplom)
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
             self.backgroundUploader.uploadKnownFail.connect(
                 self.backgroundUploadFailedServerChanged
@@ -984,8 +995,6 @@ class MarkerClient(QWidget):
 
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
-
-        self.ui.sidebarRightCB.setChecked(lastTime.get("SidebarOnRight", False))
 
     def UIInitialization(self):
         """
@@ -1269,7 +1278,14 @@ class MarkerClient(QWidget):
         else:
             # Colin doesn't understand this proxy: just pull task and query examModel
             task = self.prxM.getPrefix(pr)
-            self.testImg.updateImage(self.examModel.get_source_image_data(task))
+            img_src_data = self.examModel.get_source_image_data(task)
+            for r in img_src_data:
+                if not r.get("filename") and not r.get("local_filename"):
+                    print(r)
+                    raise PlomSeriousException(
+                        f"Unexpected Issue #2327: img_src_data is {img_src_data}, task={task}"
+                    )
+            self.testImg.updateImage(img_src_data)
         # TODO: seems to behave ok without this hack: delete?
         # self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
@@ -2176,12 +2192,10 @@ class MarkerClient(QWidget):
         except PlomAuthenticationException:
             log.warning("User tried to logout but was already logged out.")
             pass
-        sidebarRight = self.ui.sidebarRightCB.isChecked()
         log.debug("Emitting Marker shutdown signal")
         self.my_shutdown_signal.emit(
             2,
             [
-                sidebarRight,
                 self.annotatorSettings["keybinding_name"],
                 self.annotatorSettings["keybinding_custom_overlay"],
             ],

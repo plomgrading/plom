@@ -32,8 +32,5 @@ papersToPrint/*
 sourceVersions/*
 media/*
 
-# huey stuff
-huey/*
-
 # whitenoise static files (need to run python manage.py collectstatic)
 staticfiles/

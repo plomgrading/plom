@@ -79,8 +79,6 @@ def main():
         "specAndDatabase",
         "serverConfiguration",
         "archivedPDFs",
-        "pageImages",
-        "scanPNGs",
         "pages",
     ):
         if (args.server_dir / f).exists():

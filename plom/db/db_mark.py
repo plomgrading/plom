@@ -12,8 +12,6 @@ import uuid
 
 import peewee as pw
 
-from plom.db.tables import plomdb
-
 from plom.db.tables import AImage, Annotation, APage, ARLink
 from plom.db.tables import (
     Image,
@@ -106,7 +104,7 @@ def MgetDoneTasks(self, user_name, q, v):
 
 def MgetNextTask(self, q, v, *, tag, above):
     """Find unmarked (but scanned) q/v-group and send the group-id back to client."""
-    with plomdb.atomic():
+    with self._db.atomic():
         try:
             t0 = time()
             query = (
@@ -188,7 +186,7 @@ def MgiveTaskToClient(self, user_name, group_id, version):
 
     uref = User.get(name=user_name)  # authenticated, so not-None
 
-    with plomdb.atomic():
+    with self._db.atomic():
         gref = Group.get_or_none(Group.gid == group_id)
         if gref is None:
             msg = f"The task {group_id} does not exist"
@@ -259,7 +257,7 @@ def MgetOneImageRotation(self, image_id, md5):
         `error_msg` is the string ``"no such image"`` or
         ``"wrong md5sum"``, and `rotation` is a float.
     """
-    with plomdb.atomic():
+    with self._db.atomic():
         iref = Image.get_or_none(id=image_id)
         if iref is None:
             log.warning("Asked for a non-existent image with id={}".format(image_id))
@@ -286,7 +284,7 @@ def MgetOneImageFilename(self, image_id, md5):
         `error_msg` is the string ``"no such image"`` or
         ``"wrong md5sum"``, and `file_name` is a string.
     """
-    with plomdb.atomic():
+    with self._db.atomic():
         iref = Image.get_or_none(id=image_id)
         if iref is None:
             log.warning("Asked for a non-existent image with id={}".format(image_id))
@@ -321,7 +319,7 @@ def MtakeTaskFromClient(
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
 
-    with plomdb.atomic():
+    with self._db.atomic():
         # make sure all returned image-ids are actually images
         # keep the refs for apage creation
         image_ref_list = []
@@ -457,7 +455,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
         edition = -1
     edition = int(edition)
     task = f"q{number:04}g{question}"
-    with plomdb.atomic():
+    with self._db.atomic():
         gref = Group.get_or_none(Group.gid == task)
         if gref is None:
             log.info("M_get_annotations - task {} not known".format(task))
@@ -612,7 +610,7 @@ def MreviewQuestion(self, test_number, question):
     version = qref.version
     if qref is None:
         return False
-    with plomdb.atomic():
+    with self._db.atomic():
         qref.user = revref
         qref.time = datetime.now(timezone.utc)
         qref.save()
@@ -641,7 +639,7 @@ def MrevertTask(self, task):
     HAL_ref = User.get(name="HAL")
 
     # reset all the qgroup info
-    with plomdb.atomic():
+    with self._db.atomic():
         # clean up the now-outdated annotations
         for aref in qref.annotations:
             aref.outdated = True
@@ -703,7 +701,7 @@ def McreateNewTag(self, user_name, tag_text):
         return (False, "Tag already exists")
 
     uref = User.get(name=user_name)  # authenticated, so not-None
-    with plomdb.atomic():
+    with self._db.atomic():
         # build unique key while holding atomic access
         # use a 10digit key to distinguish from rubrics
         key = generate_new_comment_ID(10)

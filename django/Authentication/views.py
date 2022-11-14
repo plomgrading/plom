@@ -1,3 +1,4 @@
+from multiprocessing import context
 from django.contrib.auth.models import User, Group
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
@@ -10,10 +11,12 @@ from django.utils.encoding import force_str
 from django.views.generic import View
 from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
+from random_username.generate import generate_username
 
-from .services import generate_link
-from .signupForm import CreateManagerForm
+from .services import generate_link, check_username
+from .signupForm import CreateManagerForm, CreateScannersAndMarkersForm
 from Base.base_group_views import AdminRequiredView, ManagerRequiredView
+from Connect.services import CoreUsersService
 
 
 # Create your views here.
@@ -54,23 +57,64 @@ class SetPassword(View):
             user = None
         if user is not None and default_token_generator.check_token(user, token):
             reset_form = SetPasswordForm(user, request.POST)
-            if reset_form.is_valid():
-                user = reset_form.save()
-                user.is_active = True
-                user.profile.signup_confirmation = True
-                user.save()
-                return render(request, self.set_password_complete)
+            core = CoreUsersService()
+
+            # scanner and marker group
+            if (
+                user.groups.filter(name="scanner").exists()
+                or user.groups.filter(name="marker").exists()
+            ):
+                if reset_form.is_valid():
+                    user = reset_form.save()
+                    user.is_active = True
+                    user.profile.signup_confirmation = True
+                    user.save()
+                    print(reset_form.cleaned_data.get("new_password1"))
+                    if not core.is_there_a_valid_connection():
+                        context = {
+                            "classic_Plom_user": "Cannot create user on Plom-classic - no connection found."
+                        }
+                    else:
+                        core.create_core_user(
+                            user.username, reset_form.cleaned_data.get("new_password1")
+                        )
+                        context = {
+                            "classic_Plom_user": "Web Plom created an account for you in Plom-classic. You can use the same account in Web Plom and Plom-classic."
+                        }
+                    return render(request, self.set_password_complete, context)
+                # display error message
+                else:
+                    tri_quote = '"""'
+                    error_message = tri_quote + str(reset_form.errors) + tri_quote
+                    parsed_error = BeautifulSoup(error_message, "html.parser")
+                    error = parsed_error.li.text[13:]
+                    context = {
+                        "form": reset_form,
+                        "help_text": SetPassword.help_text,
+                        "error": error,
+                    }
+                    return render(request, self.template_name, context)
+
+            # manager group
             else:
-                tri_quote = '"""'
-                error_message = tri_quote + str(reset_form.errors) + tri_quote
-                parsed_error = BeautifulSoup(error_message, "html.parser")
-                error = parsed_error.li.text[13:]
-                context = {
-                    "form": reset_form,
-                    "help_text": SetPassword.help_text,
-                    "error": error,
-                }
-                return render(request, self.template_name, context)
+                if reset_form.is_valid():
+                    user = reset_form.save()
+                    user.is_active = True
+                    user.profile.signup_confirmation = True
+                    user.save()
+                    return render(request, self.set_password_complete)
+                # display error message
+                else:
+                    tri_quote = '"""'
+                    error_message = tri_quote + str(reset_form.errors) + tri_quote
+                    parsed_error = BeautifulSoup(error_message, "html.parser")
+                    error = parsed_error.li.text[13:]
+                    context = {
+                        "form": reset_form,
+                        "help_text": SetPassword.help_text,
+                        "error": error,
+                    }
+                    return render(request, self.template_name, context)
         else:
             return render(request, self.reset_invalid, status=403)
 
@@ -114,6 +158,7 @@ class Home(LoginRequiredMixin, View):
         return render(request, self.home_page, context, status=200)
 
 
+# Login the user
 class LoginView(View):
     template_name = "Authentication/login.html"
 
@@ -127,8 +172,14 @@ class LoginView(View):
             return redirect("home")
         else:
             username = request.POST.get("username")
+            temp_username = User.objects.filter(username__iexact=username).values()
+            if not temp_username.exists():
+                messages.info(request, "User does not exist!")
+                return render(request, self.template_name)
             password = request.POST.get("password")
-            user = authenticate(request, username=username, password=password)
+            user = authenticate(
+                request, username=temp_username[0]["username"], password=password
+            )
             if user is not None:
                 login(request, user)
                 return redirect("home")
@@ -144,6 +195,15 @@ class LogoutView(View):
         return redirect("login")
 
 
+# Signup Page
+class Signup(ManagerRequiredView):
+    template_name = "Authentication/signup.html"
+
+    def get(self, request):
+        context = self.build_context()
+        return render(request, self.template_name, context)
+
+
 # Signup Manager
 class SignupManager(AdminRequiredView):
     template_name = "Authentication/manager_signup.html"
@@ -152,12 +212,15 @@ class SignupManager(AdminRequiredView):
 
     def get(self, request):
         context = self.build_context()
-        context.update({"form": SignupManager.form})
+        context.update({"form": self.form})
         return render(request, self.template_name, context)
 
     def post(self, request):
         form = CreateManagerForm(request.POST)
-        if form.is_valid():
+        username = request.POST.get("username")
+        exist_username = User.objects.filter(username__iexact=username)
+        context = self.build_context()
+        if form.is_valid() and not exist_username.exists():
             user = form.save()
             user.refresh_from_db()
             user.profile.email = form.cleaned_data.get("email")
@@ -167,7 +230,6 @@ class SignupManager(AdminRequiredView):
             user.is_active = False
             user.save()
             link = generate_link(request, user)
-            context = self.build_context()
             context.update(
                 {
                     "user_email": user.profile.email,
@@ -176,13 +238,120 @@ class SignupManager(AdminRequiredView):
             )
             return render(request, self.activation_link, context)
         else:
-            context = self.build_context()
-            context.update({"form": SignupManager.form, "error": form.errors})
+            if exist_username.exists():
+                context.update(
+                    {
+                        "form": self.form,
+                        "error": "A user with that username already exists.",
+                    }
+                )
+                return render(request, self.template_name, context)
+            context.update({"form": self.form, "error": form.errors})
             return render(request, self.template_name, context)
 
 
-class SignupScannersAndMarkers(View):
-    pass
+# Create Scanner and Marker users
+class SignupScanners(ManagerRequiredView):
+    template_name = "Authentication/scanner_signup.html"
+    form = CreateScannersAndMarkersForm()
+
+    def get(self, request):
+        context = self.build_context()
+        context.update(
+            {
+                "form": self.form,
+                "created": False,
+            }
+        )
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        form = CreateScannersAndMarkersForm(request.POST)
+        scanner_group = Group.objects.get(name="scanner")
+        scanner_dict = {}
+        exist_usernames = [str(username) for username in User.objects.all()]
+
+        if form.is_valid():
+            num_users = form.cleaned_data.get("num_users")
+            scanner_username_list = generate_username(num_users)
+
+            for scanner in scanner_username_list:
+                scanner = check_username(
+                    scanner, exist_usernames, scanner_username_list
+                )
+                exist_usernames.append(scanner)
+
+                User.objects.create_user(
+                    username=scanner,
+                    email=None,
+                    password=None,
+                ).groups.add(scanner_group)
+                user = User.objects.get(username=scanner)
+                user.is_active = False
+                user.save()
+                link = generate_link(request, user)
+                scanner_dict[scanner] = link
+
+            context = self.build_context()
+            context.update(
+                {
+                    "form": self.form,
+                    "links": scanner_dict,
+                    "created": True,
+                }
+            )
+            return render(request, self.template_name, context)
+
+
+# Signup Markers
+class SignupMarkers(ManagerRequiredView):
+    template_name = "Authentication/marker_signup.html"
+    form = CreateScannersAndMarkersForm()
+
+    def get(self, request):
+        context = self.build_context()
+        context.update(
+            {
+                "form": self.form,
+                "created": False,
+            }
+        )
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        form = CreateScannersAndMarkersForm(request.POST)
+        marker_group = Group.objects.get(name="marker")
+        marker_dict = {}
+        exist_usernames = [str(username) for username in User.objects.all()]
+
+        if form.is_valid():
+            num_users = form.cleaned_data.get("num_users")
+            marker_username_list = generate_username(num_users)
+
+            for marker in marker_username_list:
+                marker = check_username(marker, exist_usernames, marker_username_list)
+                exist_usernames.append(marker)
+
+                User.objects.create_user(
+                    username=marker,
+                    email=None,
+                    password=None,
+                ).groups.add(marker_group)
+                user = User.objects.get(username=marker)
+                user.is_active = False
+                user.save()
+                link = generate_link(request, user)
+                marker_dict[marker] = link
+
+            context = self.build_context()
+            context.update(
+                {
+                    "form": self.form,
+                    "links": marker_dict,
+                    "created": True,
+                }
+            )
+            return render(request, self.template_name, context)
 
 
 class PasswordResetLinks(AdminRequiredView):

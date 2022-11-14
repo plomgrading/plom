@@ -5,6 +5,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021-2022 Elizabeth Xiao
+# Copyright (C) 2022 Edith Coates
 
 from collections import defaultdict
 import imghdr
@@ -95,11 +96,9 @@ log = logging.getLogger("manager")
 class UserDialog(QDialog):
     """Simple dialog to enter username and password"""
 
-    def __init__(self, parent, title, *, name=None, extant=[]):
+    def __init__(self, parent, title, *, name=None):
         super().__init__(parent)
         self.name = name
-        # put everything in lowercase to simplify checking.
-        self.extant = [x.lower() for x in extant]
 
         self.setWindowTitle(title)
         self.userL = QLabel("Username:")
@@ -151,16 +150,6 @@ class UserDialog(QDialog):
 
     def validate(self):
         """Check username not in list and that passwords match."""
-        # username not already in list
-        # be careful, because pwd-change users same interface
-        # make sure that we only do this check if the LE is enabled.
-        # put username into lowercase to check against extant which is in lowercase.
-        if self.userLE.isEnabled() and self.userLE.text().lower() in self.extant:
-            WarnMsg(
-                self, f'Username "{self.userLE.text()}" already in user list'
-            ).exec()
-            return
-
         if self.pwLE.text() != self.pwLE2.text():
             WarnMsg(self, "Passwords do not match").exec()
             return
@@ -2719,19 +2708,14 @@ class Manager(QWidget):
         user = self.ui.userListTW.item(r, 0).text()
         cpwd = UserDialog(self, f'Change password for "{user}"', name=user)
         if cpwd.exec() == QDialog.Accepted:
-            rval = self.msgr.createModifyUser(user, cpwd.password)
+            rval = self.msgr.changeUserPassword(user, cpwd.password)
             InfoMsg(self, rval[1]).exec()
         return
 
     def createUser(self):
-        # need to pass list of existing users
-        uList = [
-            self.ui.userListTW.item(r, 0).text()
-            for r in range(self.ui.userListTW.rowCount())
-        ]
-        cpwd = UserDialog(self, "Create new user", name=None, extant=uList)
+        cpwd = UserDialog(self, "Create new user", name=None)
         if cpwd.exec() == QDialog.Accepted:
-            rval = self.msgr.createModifyUser(cpwd.name, cpwd.password)
+            rval = self.msgr.createUser(cpwd.name, cpwd.password)
             InfoMsg(self, rval[1]).exec()
             self.refreshUserList()
         return

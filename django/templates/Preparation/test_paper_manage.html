@@ -6,7 +6,9 @@
 
 {% block main_content %}
 <div class="d-grid gap-2">
-    <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to test creator</a>
+    <div>
+        <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+    </div>
     <div class="card w-50">
         {% if is_populated %}
         <div class="card-body">
@@ -24,10 +26,9 @@
                 <li>{{ n_versions }} versions</li>
                 <li>{{ n_pages }} pages</li>
             </ul>
-            <form action="{% url 'create_papers' %}" method="post">
-                {% csrf_token %}
-                <input type="submit" class="btn btn-primary" value="Create">
-            </form>
+            <div id="progress_container">
+                <a class="btn btn-primary" hx-post="{% url 'create_papers' %}" hx-target="#progress_container">Create</a>
+            </div>
         </div>
         {% endif %}
     </div>

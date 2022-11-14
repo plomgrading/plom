@@ -49,7 +49,7 @@
                                 </li>
                                 {% else %}
                                 <li class="nav-item">
-                                    <p style="text-align: center; padding: 0px 5px; color: white">Welcome <br><b>{{ request.user.username }}</b>!</p>
+                                    <p style="text-align: center; padding: 0px 5px; color: white">Welcome <br><b>{{ request.user.username.lower }}</b>!</p>
                                 </li>
                                 {% endif %}
                                 <li class="nav-item">
@@ -73,7 +73,11 @@
                                         <a class="nav-link link-light is_sidebar_link" href="{% url 'prep_landing' %}">Create test</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'maintenance' %}">Create<br>Scanners/Markers</a>
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'signup' %}">Create<br>Scanners/Markers</a>
+                                    </li>
+                                {% elif user_group == 'scanner' %}
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'scan_home' %}">Scan</a>
                                     </li>
                                 {% endif %}
                                 <li class="nav-item">
@@ -84,8 +88,8 @@
                     </nav>
                     
                 </div>
-                <div class="col">
-                    <div class="container-fluid" style="padding-top: 12px; padding-bottom: 12px; min-height: 100%;">
+                <div class="col pe-0">
+                    <div class="container-fluid" style="padding-top: 12px; padding-bottom: 12px; padding-right: 0; min-height: 100%;">
                         <!-- Page heading -->
                         <h1 class="fw-lighter" style="margin: 15px;">{% block page_heading %}{% endblock %}</h1>
                         <p class="lead" style="margin-bottom: 25px;">{% block page_subheading %} {% endblock %}</p>

@@ -54,6 +54,7 @@ import os
 from stdiomask import getpass
 
 from plom.scan import __version__
+from plom import Default_Port
 from plom.scan import clear_login
 from plom.scan import check_and_print_scan_status
 from plom.scan import processScans, uploadImages
@@ -116,6 +117,7 @@ def get_parser():
             lossless (PNG).
             By default, this gamma shift is NOT applied; this is because it
             may worsen some poor-quality scans with large shadow regions.
+            Has not been extensively tested recently: NOT recommended.
         """,
     )
     g.add_argument(
@@ -186,9 +188,25 @@ def get_parser():
         """,
     )
     for x in (spU, spS, spC, spP):
-        x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-        x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
-
+        x.add_argument(
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help=f"""
+                Which server to contact, port defaults to {Default_Port}.
+                Also checks the environment variable PLOM_SERVER if omitted.
+            """,
+        )
+        x.add_argument(
+            "-w",
+            "--password",
+            type=str,
+            help="""
+                for the "scanner" user', also checks the
+                environment variable PLOM_SCAN_PASSWORD.
+            """,
+        )
     return parser
 
 

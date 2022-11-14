@@ -21,11 +21,11 @@ class CoreConnectionServiceTests(TestCase):
         )
 
         ccs = CoreConnectionService()
-        latest = ccs.get_latest_init_db_task(sense_core_db=False)
+        latest = ccs.get_latest_init_db_task()
         self.assertEqual(latest.huey_id, task2.huey_id)
 
     def test_latest_task_returns_none(self):
         """Test that CoreConnectionService.get_latest_running_init_db_task returns none if no tasks are present."""
         ccs = CoreConnectionService()
-        latest = ccs.get_latest_init_db_task(sense_core_db=False)
+        latest = ccs.get_latest_init_db_task()
         self.assertIsNone(latest)

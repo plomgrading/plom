@@ -1,5 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+
 import pathlib
-import queue
 import zipfile
 import shutil
 import random
@@ -16,7 +19,7 @@ from BuildPaperPDF.models import PDFTask
 
 
 class BuildPapersService:
-    """Use Core Plom to build test-papers."""
+    """Generate and stamp test-paper PDFs."""
 
     base_dir = settings.BASE_DIR
     papers_to_print = base_dir / "papersToPrint"
@@ -50,6 +53,12 @@ class BuildPapersService:
         total_tasks = self.get_n_tasks()
         complete_tasks = self.get_n_complete_tasks()
         return total_tasks > 0 and total_tasks == complete_tasks
+
+    @transaction.atomic
+    def are_there_errors(self):
+        """Return True if there are any PDFTasks with an 'error' status"""
+        error_tasks = PDFTask.objects.filter(status="error")
+        return len(error_tasks) > 0
 
     def create_task(self, index: int, huey_id: id, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database"""

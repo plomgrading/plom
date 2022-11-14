@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+
 """
 Django settings for Web_Plom project.
 
@@ -44,6 +48,9 @@ INSTALLED_APPS = [
     # Huey + polymorphism
     "django_huey",
     "polymorphic",
+    # REST framework
+    "rest_framework",
+    "rest_framework.authtoken",
     # add newly created app folder below
     "Base",
     "Authentication",
@@ -53,6 +60,8 @@ INSTALLED_APPS = [
     "Profile",
     "BuildPaperPDF",
     "Connect",
+    "Scan",
+    "API",
 ]
 
 MIDDLEWARE = [
@@ -183,3 +192,19 @@ DJANGO_HUEY = {
         }
     },
 }
+
+# DRF authentication
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+}
+
+# Media and user-uploaded files
+# MEDIA_ROOT = BASE_DIR / "media"
+
+# Configurable variables for Web Plom
+# ----------------------------------------------
+
+# Max file size for bundle uploads (1 GB for now)
+MAX_BUNDLE_SIZE = 1e9

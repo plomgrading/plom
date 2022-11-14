@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2022 Edith Coates
 
 """Chooser dialog"""
 
@@ -15,6 +16,7 @@ __license__ = "AGPL-3.0-or-later"
 import logging
 from pathlib import Path
 import tempfile
+import time
 
 import appdirs
 import arrow
@@ -45,6 +47,8 @@ from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQuestion
 from .useful_classes import ClientSettingsDialog
 
+from plom.messenger import ManagerMessenger
+from plom.webPlomMessenger import WebPlomMessenger
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -76,11 +80,12 @@ def readLastTime():
 
 
 class Chooser(QDialog):
-    def __init__(self, Qapp):
+    def __init__(self, Qapp, webplom=False):
         self.APIVersion = Plom_API_Version
         super().__init__()
         self.Qapp = Qapp
         self.messenger = None
+        self.webplom = webplom
 
         self.lastTime = readLastTime()
 
@@ -159,7 +164,6 @@ class Chooser(QDialog):
         self.lastTime["LogToFile"] = stuff[2]
         self.lastTime["CommentsWarnings"] = stuff[3]
         self.lastTime["MarkWarnings"] = stuff[4]
-        self.lastTime["SidebarOnRight"] = stuff[5]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def validate(self, which_subapp):
@@ -195,6 +199,8 @@ class Chooser(QDialog):
         if not self.messenger:
             if which_subapp == "Manager":
                 self.messenger = ManagerMessenger(server, mport)
+            elif self.webplom:
+                self.messenger = WebPlomMessenger(server, mport)
             else:
                 self.messenger = Messenger(server, mport)
         try:
@@ -248,6 +254,8 @@ class Chooser(QDialog):
             )
             if msg.exec() == QMessageBox.Yes:
                 self.messenger.clearAuthorisation(user, pwd)
+                # harmless probably useless pause, in case Issue #2328 was real
+                time.sleep(0.25)
                 # try again
                 self.validate(which_subapp)
                 return
@@ -431,7 +439,10 @@ class Chooser(QDialog):
         # self.ui.infoLabel.repaint()
 
         if not self.messenger:
-            self.messenger = Messenger(server, mport)
+            if self.webplom:
+                self.messenger = WebPlomMessenger(server, mport)
+            else:
+                self.messenger = Messenger(server, mport)
 
         try:
             try:
@@ -539,9 +550,8 @@ class Chooser(QDialog):
         if not stuff:
             return
         # note `stuff` is list of options - used to contain more... may contain more in future
-        self.lastTime["SidebarOnRight"] = stuff[0]
         # TODO: don't save custom until Issue #2254
-        if stuff[1] != "custom":
-            self.lastTime["KeyBinding"] = stuff[1]
+        if stuff[0] != "custom":
+            self.lastTime["KeyBinding"] = stuff[0]
         # TODO: not writing to disc until Issue #2254
-        # self.lastTime["CustomKeys"] = stuff[2]
+        # self.lastTime["CustomKeys"] = stuff[1]

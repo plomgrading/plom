@@ -4,20 +4,22 @@
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Chris Jin
+# Copyright (C) 2022 Brennen Chiu
 
 import peewee as pw
 
-plomdb = pw.SqliteDatabase(None)
+
+database_proxy = pw.Proxy()
 
 
 class BaseModel(pw.Model):
     class Meta:
-        database = plomdb
+        database = database_proxy
 
 
 class User(BaseModel):
     # TODO - should this be short - if so we need to check length elsewhere in code.
-    name = pw.CharField(unique=True)
+    name = pw.CharField(unique=True, max_length=1000)
     enabled = pw.BooleanField(default=True)
     password = pw.CharField(null=True)  # hash of password for comparison - fixed length
     token = pw.CharField(null=True)  # authentication token - fixed length

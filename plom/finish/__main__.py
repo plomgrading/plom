@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-21 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 
@@ -39,7 +39,7 @@ from textwrap import dedent
 from stdiomask import getpass
 
 from plom import __version__
-
+from plom import Default_Port
 from plom.finish import clear_manager_login
 from plom.finish import CSVFilename
 from plom.finish import pull_spreadsheet
@@ -219,9 +219,26 @@ def get_parser():
         spRubric,
         spAudit,
     ):
-        x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+        x.add_argument(
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help=f"""
+                Which server to contact, port defaults to {Default_Port}.
+                Also checks the environment variable PLOM_SERVER if omitted.
+            """,
+        )
     for x in (spCheck, spCSV, spAssemble, spSolution, spRubric, spClear, spAudit):
-        x.add_argument("-w", "--password", type=str, help='for the "manager" user')
+        x.add_argument(
+            "-w",
+            "--password",
+            type=str,
+            help="""
+                for the "manager" user, also checks the
+                environment variable PLOM_MANAGER_PASSWORD.
+            """,
+        )
 
     return parser
 

@@ -32,8 +32,13 @@ class SpecificationService:
 
     @transaction.atomic
     def get_the_spec_as_toml(self):
-        """Return the test-specification from the database."""
-        return toml.dumps(Specification.objects.get().spec_dict)
+        """Return the test-specification from the database.
+        If present, remove the private seed and public code.
+        """
+        spec = self.get_the_spec()
+        spec.pop("publicCode", None)
+        spec.pop("privateSeed", None)
+        return toml.dumps(spec)
 
     @transaction.atomic
     def store_validated_spec(self, validated_spec):
@@ -94,3 +99,20 @@ class SpecificationService:
         """
         spec_obj = self.get_the_spec()
         return spec_obj["numberToProduce"]
+
+    @transaction.atomic
+    def modify_n_to_produce(self, n):
+        """
+        Modify the number of papers to produce - assumes it's a valid value.
+        """
+        spec_obj = Specification.objects.get()
+        spec_obj.spec_dict["numberToProduce"] = n
+        spec_obj.save()
+
+    @transaction.atomic
+    def get_question_mark(self, question_one_index):
+        """
+        Get the max mark of a given question
+        """
+        spec_obj = self.get_the_spec()
+        return spec_obj["question"][str(question_one_index)]["mark"]

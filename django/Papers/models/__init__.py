@@ -1,12 +1,10 @@
 from .image_bundle import Bundle, Image
 from .paper_structure import (
     Paper,
-    DNMGroup,
-    IDGroup,
-    QuestionGroup,
+    BasePage,
     DNMPage,
     IDPage,
     QuestionPage,
 )
 from .specifications import Specification, SolutionSpecification
-from .background_tasks import CreatePaperTask
+from .background_tasks import CreatePaperTask, CreateImageTask

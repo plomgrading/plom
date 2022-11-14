@@ -3,9 +3,7 @@ from django.urls import path
 import Authentication.views
 
 urlpatterns = [
-    path(
-        "login/", Authentication.views.LoginView.as_view(), name="login"
-    ),  # newly added
+    path("login/", Authentication.views.LoginView.as_view(), name="login"),
     path("logout/", Authentication.views.LogoutView.as_view(), name="logout"),
     path("", Authentication.views.Home.as_view(), name="home"),
     path(
@@ -27,9 +25,21 @@ urlpatterns = [
         Authentication.views.SetPasswordComplete.as_view(),
         name="password_reset_complete",
     ),
-    # path('signup/'),
-    # path('signup/marker/'),
-    # path('signup/scanner/'),
+    path(
+        "signup/",
+        Authentication.views.Signup.as_view(),
+        name="signup",
+    ),
+    path(
+        "signup/scanners/",
+        Authentication.views.SignupScanners.as_view(),
+        name="signup_scanners",
+    ),
+    path(
+        "signup/markers/",
+        Authentication.views.SignupMarkers.as_view(),
+        name="signup_markers",
+    ),
     path(
         "passwordresetlinks/",
         Authentication.views.PasswordResetLinks.as_view(),

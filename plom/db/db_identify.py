@@ -9,7 +9,6 @@ import peewee as pw
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
-from plom.db.tables import plomdb
 from plom.db.tables import DNMPage, Group, IDGroup, IDPrediction, Test, User
 
 
@@ -92,7 +91,7 @@ def IDgetNextTask(self):
     # priority given to tests without prediction
     # then tests with prediction - low certainty before high certainty.
 
-    with plomdb.atomic():
+    with self._db.atomic():
         # Filter tests that have IDGroup.status = todo and Group.scanned=True.
         # get tests whose id groups are on the todo pile
         unidentified_tests = Test.select().join(IDGroup).where(IDGroup.status == "todo")
@@ -150,7 +149,7 @@ def IDgiveTaskToClient(self, user_name, test_number):
     """
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
-    with plomdb.atomic():
+    with self._db.atomic():
         # get that test
         tref = Test.get_or_none(Test.test_number == test_number)
         if tref is None:
@@ -319,7 +318,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
     # since user authenticated, this will always return legit ref.
 
     logbase = 'User "{}" tried to ID paper {}'.format(user_name, paper_num)
-    with plomdb.atomic():
+    with self._db.atomic():
         tref = Test.get_or_none(Test.test_number == paper_num)
         if tref is None:
             msg = "denied b/c paper not found"
@@ -414,7 +413,7 @@ def IDreviewID(self, test_number):
     )
     if iref is None:
         return False
-    with plomdb.atomic():
+    with self._db.atomic():
         iref.user = revref
         iref.time = datetime.now(timezone.utc)
         iref.save()
