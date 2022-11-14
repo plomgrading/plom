@@ -86,7 +86,8 @@ class Downloader(QObject):
         self._tries = {}
         self._total_tries = {}
         self._in_progress = {}
-        self._num_fails = 0
+        # it still counts as a fail if it eventually retried successfully
+        self.number_of_fails = 0
 
     def temp_attach_messenger(self, msgr):
         if type(msgr) == WebPlomMessenger:
@@ -112,7 +113,7 @@ class Downloader(QObject):
         in_progress_ids = [k for k, v in self._in_progress.items() if v is True]
         return {
             "cache_size": self.pagecache.how_many_cached(),
-            "fail": self._num_fails,
+            "fail": self.number_of_fails,
             "queued": len(in_progress_ids),
             "in_progress_ids": in_progress_ids,
         }
@@ -257,7 +258,7 @@ class Downloader(QObject):
     def worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
         """A worker has failed and called us: retry 3 times."""
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
-        self._num_fails += 1
+        self.number_of_fails += 1
         self.download_failed.emit(img_id)
         x = self._tries[img_id]
         if x >= 3:
