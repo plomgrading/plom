@@ -28,6 +28,9 @@ class PageCache:
         r = self._image_paths.get(img_id, None)
         return r is not None
 
+    def how_many_cached(self):
+        return len(self._image_paths)
+
     def page_image_path(self, img_id):
         """
 

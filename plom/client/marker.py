@@ -868,6 +868,7 @@ class MarkerClient(QWidget):
         self.maxMark = -1  # temp value
         self.downloader = self.Qapp.downloader
         self.downloader.download_finished.connect(self.background_download_finished)
+        self.downloader.download_failed.connect(self.background_download_failed)
 
         self.examModel = (
             MarkerExamModel()
@@ -1037,6 +1038,11 @@ class MarkerClient(QWidget):
         # Paste into appropriate location in gui.
         self.ui.paperBoxLayout.addWidget(self.testImg, 10)
 
+        self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
+        self.show_hide_technical()
+        self.update_technical_stats()
+
+
     def connectGuiButtons(self):
         """
         Connect gui buttons to appropriate functions
@@ -1077,6 +1083,7 @@ class MarkerClient(QWidget):
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.view_testnum_question)
+        self.ui.technicalButton.clicked.connect(self.show_hide_technical)
 
     def resizeEvent(self, event):
         """
@@ -1502,6 +1509,9 @@ class MarkerClient(QWidget):
 
     def background_download_finished(self, img_id, md5, local_filename):
         log.debug(f"PageCache has finished downloading {img_id} {local_filename}")
+        self.ui.labelTech2.setText(f"last msg: downloaded img id={img_id}")
+        self.ui.labelTech2.setToolTip(f"{local_filename}")
+        self.update_technical_stats()
         # TODO: time this
         self.examModel._expensive_search_and_update(img_id, md5, local_filename)
         # log.debug(f"Elapsed time for potentially expensive local DB update: %g", etime)
@@ -1509,6 +1519,31 @@ class MarkerClient(QWidget):
         # if any("placeholder" in x for x in testImg.imagenames):
         # force a redraw
         self._updateCurrentlySelectedRow()
+
+    def background_download_failed(self, img_id):
+        self.ui.labelTech2.setText(f"last msg: failed download img id={img_id}")
+        print(f"last msg: failed download img id={img_id}")
+        self.ui.labelTech2.setToolTip("")
+        self.update_technical_stats()
+
+    def update_technical_stats(self):
+        d = self.downloader.get_stats()
+        self.ui.labelTech1.setText(
+            f"{d['queued']} queued, {d['cache_size']} cached, {d['fail']} failed"
+        )
+
+    def show_hide_technical(self):
+        if self.ui.technicalButton.isChecked():
+            self.ui.technicalButton.setText("Hide technical info")
+            self.ui.technicalButton.setArrowType(Qt.DownArrow)
+            self.ui.frameTechnical.setVisible(True)
+            # future use
+            self.ui.labelTech3.setVisible(False)
+            self.ui.labelTech4.setVisible(False)
+        else:
+            self.ui.technicalButton.setText("Show technical info")
+            self.ui.technicalButton.setArrowType(Qt.RightArrow)
+            self.ui.frameTechnical.setVisible(False)
 
     def requestNextInBackgroundStart(self):
         """
