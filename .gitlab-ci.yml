@@ -34,6 +34,7 @@ variables:
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
+  BIN_PY_VER: 3.9.15
 
 stages:
   - static_analysis
@@ -984,16 +985,16 @@ macos11_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.15
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $BIN_PY_VER
   - asdf which python
-  - asdf shell python 3.9.15
+  - asdf shell python $BIN_PY_VER
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.15/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/${BIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1035,16 +1036,16 @@ macos1015_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.15
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $BIN_PY_VER
   - asdf which python
-  - asdf shell python 3.9.15
+  - asdf shell python $BIN_PY_VER
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.15/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/${BIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1079,8 +1080,8 @@ macos1014_client:
   - echo $SHELL
   - asdf current
   # asdf which python  # has no python for some reason
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.15
-  - asdf local python 3.9.15
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $BIN_PY_VER
+  - asdf local python $BIN_PY_VER
   - asdf which python
   - python --version
   - pip --version
@@ -1088,7 +1089,7 @@ macos1014_client:
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.15/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/${BIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1126,16 +1127,16 @@ macos1013_client:
   - echo $SHELL
   - asdf current
   - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.15
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $BIN_PY_VER
   - asdf which python
-  - asdf local python 3.9.15
+  - asdf local python $BIN_PY_VER
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.15/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/${BIN_PY_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1230,7 +1231,7 @@ macos_server:
 #   stage: test
 #   needs: []
 #   script:
-#   - choco install -y python3 --version 3.9.15
+#   - choco install -y python3 --version $BIN_PY_VER
 #   - refreshenv
 #   - c:\Python39\Scripts\pip install -r requirements.txt.client
 #   - refreshenv
@@ -1245,7 +1246,7 @@ winpyinst:
   - .shared_windows_runners
   stage: packaging
   before_script:
-  - choco install -y python3 --version 3.9.15
+  - choco install -y python3 --version $BIN_PY_VER
   - refreshenv
   - c:\python39\python -m pip --version
   - c:\python39\python -m pip install --user --upgrade pip
