@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 
+import shutil
+
 from django.conf import settings
 from Papers.services import SpecificationService
 from Scan.models import StagingImage
@@ -119,10 +121,8 @@ class QRErrorService:
                 )
 
     def create_error_image(self, img_obj, top_three_tpv):
-        if ErrorImage.objects.filter(hash=img_obj.image_hash).exists():
-            pass
-        else:
-        
+        if not ErrorImage.objects.filter(hash=img_obj.image_hash).exists():
+
             img_bundle_service = ImageBundleService()
             counter = Counter(top_three_tpv)
             most_common_qr = counter.most_common(1)
@@ -134,7 +134,7 @@ class QRErrorService:
 
             root_folder = settings.BASE_DIR / "media" / "page_images" / "error_pages"
             test_folder = root_folder / str(test_paper)
-            img_path = test_folder / f"page{page_number}.png"
+            img_path = test_folder / f"page{page_number}_{img_obj.image_hash}.png"
 
             staged_bundle = img_obj.bundle
             bundle = img_bundle_service.get_or_create_bundle(staged_bundle.slug, staged_bundle.pdf_hash)
@@ -151,6 +151,10 @@ class QRErrorService:
                 version_number = int(version_number),
             )
             error_image.save()
+
+            # root_folder.mkdir(exist_ok=True)
+            test_folder.mkdir(exist_ok=True)
+            shutil.copy(img_obj.file_path, img_path)
 
     def create_unknown_image(self, img_obj):
         pass
