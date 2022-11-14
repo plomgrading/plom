@@ -19,6 +19,7 @@ from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtCore import QThreadPool, QRunnable
 
 from plom.messenger import Messenger
+from plom.webPlomMessenger import WebPlomMessenger
 from plom.plom_exceptions import PlomException
 from .pagecache import PageCache
 
@@ -66,7 +67,10 @@ class Downloader(QObject):
         super().__init__()
         # self.is_download_in_progress = False
         if msgr:
-            self.msgr = Messenger.clone(msgr)
+            if type(msgr) == WebPlomMessenger:
+                self.msgr = WebPlomMessenger.clone(msgr)
+            else:
+                self.msgr = Messenger.clone(msgr)
         else:
             self.msgr = None
         self.basedir = Path(basedir)
@@ -82,7 +86,10 @@ class Downloader(QObject):
         self._in_progress = {}
 
     def temp_attach_messenger(self, msgr):
-        self.msgr = Messenger.clone(msgr)
+        if type(msgr) == WebPlomMessenger:
+            self.msgr = WebPlomMessenger.clone(msgr)
+        else:
+            self.msgr = Messenger.clone(msgr)
 
     @classmethod
     def get_placeholder_path(cls):
@@ -311,7 +318,10 @@ class WorkerSignals(QObject):
 class DownloadWorker(QRunnable):
     def __init__(self, msgr, img_id, md5, target_name, *, basedir):
         super().__init__()
-        self._msgr = Messenger.clone(msgr)
+        if type(msgr) == WebPlomMessenger:
+            self._msgr = WebPlomMessenger.clone(msgr)
+        else:
+            self._msgr = Messenger.clone(msgr)
         self.img_id = img_id
         self.md5 = md5
         self.target_name = Path(target_name)

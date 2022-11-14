@@ -41,14 +41,13 @@ from plom.plom_exceptions import (
     PlomSSLError,
 )
 from plom.messenger import Messenger, ManagerMessenger
+from plom.webPlomMessenger import WebPlomMessenger
 from plom.client import MarkerClient, IDClient
 from .downloader import Downloader
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQuestion
 from .useful_classes import ClientSettingsDialog
 
-from plom.messenger import ManagerMessenger
-from plom.webPlomMessenger import WebPlomMessenger
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
