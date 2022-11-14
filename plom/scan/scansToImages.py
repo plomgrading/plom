@@ -8,6 +8,7 @@
 import logging
 from pathlib import Path
 import shutil
+import struct
 import subprocess
 from multiprocessing import Pool
 import random
@@ -107,11 +108,10 @@ def add_metadata_jpeg_comment(filename, bundle_name, bundle_page):
     comment.  Hat-tip:
     https://stackoverflow.com/questions/8283798/adding-a-comment-to-a-jpeg-file-using-python
 
-    TODO: it would probably be better to use exif or something.  This doesn't
-    seem very standard: for example ``rdjpgcom`` command-line tool cannot read it.
+    You might prefer writing comments to EXIF.  However, this idea is fast and
+    safe (?).  Note: we don't put the comment *before* the EOF marker which is
+    non-standard: e.g., ``rdjpgcom`` command-line tool cannot read.
     """
-    import struct
-
     s = generate_metadata_str(bundle_name, bundle_page)
     bs = s.encode()
     # start of comment
