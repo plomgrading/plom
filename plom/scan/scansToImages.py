@@ -56,7 +56,7 @@ def generate_png_metadata(bundle_name, bundle_page):
     return metadata
 
 
-def post_proc_metadata_into_png(filename, bundle_name, bundle_page):
+def add_metadata_png(filename, bundle_name, bundle_page):
     """Insert metadata into an existing png file.
 
     args:
@@ -75,16 +75,21 @@ def post_proc_metadata_into_png(filename, bundle_name, bundle_page):
     img.save(filename, pnginfo=metadata)
 
 
-def post_proc_metadata_jpeg_exif(filename, bundle_name, bundle_page):
-    """Insert metadata into an existing jpeg file, via EXIF fields."""
+def add_metadata_jpeg_exif(filename, bundle_name, bundle_page):
+    """Insert metadata into an existing jpeg file, via EXIF fields.
+
+    raises:
+        ValueError: known to fail if existing file has a shorter
+            ``user_comment`` field.
+    """
     im_shell = exif.Image(filename)
     im_shell.set("user_comment", generate_metadata_str(bundle_name, bundle_page))
     with open(filename, "wb") as f:
         f.write(im_shell.get_file())
 
 
-def post_proc_metadata_into_jpeg(filename, bundle_name, bundle_page):
-    """Insert metadata into an existing jpeg file, by appending.
+def add_metadata_jpeg_comment(filename, bundle_name, bundle_page):
+    """Insert metadata into an existing jpeg file, by appending comment.
 
     args:
         filename (pathlib.Path/str): name of a jpeg file to edit.
@@ -227,14 +232,15 @@ def processFileToBitmaps(
                     if add_metadata:
                         # watermark for Issue #1573
                         if d["ext"].lower() == "png":
-                            post_proc_metadata_into_png(outname, file_name, p.number)
+                            add_metadata_png(outname, file_name, p.number)
                         elif d["ext"].lower() in ".jpeg":
-                            # We write some unique metadata into the JPEG exif data
-                            # TODO: concerned about this as this is a jpeg we have no control
-                            # over.  Maybe in this one case, just tacking bits on the end
-                            # would be safer?  Or try: except: and then append bits?
-                            post_proc_metadata_jpeg_exif(outname, file_name, p.number)
-                            # post_proc_metadata_into_jpeg(outname, file_name, p.number)
+                            # We write some unique metadata into the JPEG file.  We could
+                            # use the EXIF data or a JPEG comment.  The latter seems safer
+                            # as we just append some bytes to the file...?  I'm concerned
+                            # about interactions with existing EXIF: for example `exif`
+                            # library cannot write longer "user_comment" field (see tests).
+                            add_metadata_jpeg_comment(outname, file_name, p.number)
+                            # add_metadata_jpeg_exif(outname, file_name, p.number)
                         else:
                             # there should be no other choice until PlomImageExts is updated
                             raise ValueError(
@@ -337,7 +343,7 @@ def processFileToBitmaps(
                 im_shell.set("orientation", r)
             with open(outname, "wb") as f:
                 f.write(im_shell.get_file())
-            # post_proc_metadata_into_jpeg(outname, file_name, p.number)
+            # add_metadata_jpeg_comment(outname, file_name, p.number)
             files.append(outname)
             continue
 

@@ -10,9 +10,9 @@ from PIL import Image, ImageDraw
 
 from plom import __version__
 from plom.scan.scansToImages import (
-    post_proc_metadata_into_jpeg,
-    post_proc_metadata_jpeg_exif,
-    post_proc_metadata_into_png,
+    add_metadata_jpeg_comment,
+    add_metadata_jpeg_exif,
+    add_metadata_png,
     processFileToBitmaps,
 )
 
@@ -60,7 +60,7 @@ def make_png(dur):
 
 def test_jpeg_comment_write(tmpdir):
     f = make_small_jpeg(tmpdir)
-    post_proc_metadata_into_jpeg(f, "helloworld", 424242)
+    add_metadata_jpeg_comment(f, "helloworld", 424242)
     with open(f, "rb") as fh:
         b = fh.read()
     b = str(b)
@@ -78,7 +78,7 @@ def test_jpeg_metadata_with_existing_exif(tmpdir):
     im_shell.set("user_comment", "I will be overwritten")
     with open(jpg_file, "wb") as f:
         f.write(im_shell.get_file())
-    post_proc_metadata_jpeg_exif(jpg_file, "helloworld", 424242)
+    add_metadata_jpeg_exif(jpg_file, "helloworld", 424242)
 
 
 def test_png_metadata(tmpdir):
@@ -86,7 +86,7 @@ def test_png_metadata(tmpdir):
     img = Image.open(pngfile)
     assert not img.text
     del img
-    post_proc_metadata_into_png(pngfile, "helloworld", 424242)
+    add_metadata_png(pngfile, "helloworld", 424242)
     img = Image.open(pngfile)
     assert img.text["PlomVersion"] == __version__
     assert img.text["SourceBundle"] == "helloworld"
