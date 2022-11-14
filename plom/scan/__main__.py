@@ -117,6 +117,7 @@ def get_parser():
             lossless (PNG).
             By default, this gamma shift is NOT applied; this is because it
             may worsen some poor-quality scans with large shadow regions.
+            Has not been extensively tested recently: NOT recommended.
         """,
     )
     g.add_argument(
