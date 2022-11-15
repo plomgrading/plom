@@ -144,21 +144,20 @@ class Downloader(QObject):
             self._in_progress[k] = False
         self.download_queue_changed.emit(self.get_stats())
 
-    def stop(self, timeout=0):
+    def stop(self, timeout=-1):
         """Try to stop the downloader, after waiting for threads to clear.
 
         Args:
-            timeout (float): seconds to wait before giving up.
-                TODO: not implemented, probably just waits forever.
+            timeout (int): milliseconds seconds to wait before giving
+                up.  ``-1`` to wait forever.
 
         Returns:
-            bool: True if all threads finished or False if we waited
-            long.
+            bool: True if all threads finished or False if timeout reached.
         """
-        # TODO: more important is the queue length: can we release
-        # items not yet started?
-        self.print_queue()
-        self.threadpool.waitForDone(-1)
+        # first we clear the ones that haven't started
+        self.clear_queue()
+        # then wait for timeout for the in-progress ones
+        return self.threadpool.waitForDone(timeout)
 
     def download_in_background_thread(self, row, priority=False, _is_retry=False):
         """Enqueue the downloading of particular row of the image database.
