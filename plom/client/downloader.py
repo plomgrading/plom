@@ -28,7 +28,7 @@ log = logging.getLogger("Downloader")
 
 
 class Downloader(QObject):
-    """Downloads images.
+    """Downloads and maintains a cache of images.
 
     TODO:
     - need to shut this down before we logout
@@ -66,13 +66,16 @@ class Downloader(QObject):
         TODO: how do we shutdown cleanly?  Currently if you logout
         another msgr while this is downloading, we'll get a crash...
 
-        The Downloader will emit various signals::
+        The Downloader will emit various **signals**.  You can connect
+        slots to these:
 
-          * a download succeeds
-          * a download fails
-          * the queue length changes (e.g., something enqueued or the
-            queue is cleared).  The signal argument is a dict of
-            information about the queue.
+          * `download_finished(int, str, str)`: emitted when a
+            (background) download finishes.
+          * `download_failed(img_id: int)`: emitted when a (background)
+            download fails.
+          * `download_queue_changed(dict)`: the queue length changed
+            (e.g., something enqueued or the queue is cleared).  The
+            signal argument is a dict of information about the queue.
         """
         super().__init__()
         # self.is_download_in_progress = False
@@ -110,7 +113,7 @@ class Downloader(QObject):
         Currently this must be a string (not an Path for example) b/c of some Qt
         limitations in the ExamModel and proxy stuff in Marker.
 
-        TODO: a better image or perhaps an animation?
+        TODO: Issue #2357: better image or perhaps an animation?
         """
         # Not imported earlier b/c of some circular import stuff (?)
         import plom.client.icons
@@ -135,11 +138,10 @@ class Downloader(QObject):
 
     def clear_queue(self):
         """Cancel any enqueued (but not yet started) downloads."""
-        self.print_queue()
         # self.threadpool.cancel()
         self.threadpool.clear()
         # print(f"children: {self.threadpool.children()}")
-        print("forcing in_progress to false...")
+        # print("forcing in_progress to false...")
         for k, v in self._in_progress.items():
             self._in_progress[k] = False
         self.download_queue_changed.emit(self.get_stats())

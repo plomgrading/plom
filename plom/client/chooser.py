@@ -369,7 +369,8 @@ class Chooser(QDialog):
         self.saveDetails()
         dl = getattr(self.Qapp, "downloader", None)
         if dl:
-            dl.stop(1)
+            # TODO: just wait forever...?
+            dl.stop(-1)
         if self.messenger:
             self.messenger.stop()
 
