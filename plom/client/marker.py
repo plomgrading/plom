@@ -2239,7 +2239,7 @@ class MarkerClient(QWidget):
 
         log.debug("Revoking login token")
         # after revoking, Downloader's msgr will be invalid
-        self.Qapp.downloader._detach_messenger()
+        self.Qapp.downloader.detach_messenger()
         try:
             self.msgr.closeUser()
         except PlomAuthenticationException:

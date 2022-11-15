@@ -30,14 +30,46 @@ log = logging.getLogger("Downloader")
 class Downloader(QObject):
     """Downloads and maintains a cache of images.
 
-    TODO:
-    - need to shut this down before we logout
+    Downloader maintains a queue of downloads and emits signals
+    whenever downloads succeed or fail.
+
+    Call :meth:`download_in_background_thread` to enqueue an image
+    for asynchronous download.
+    Once enqueued, a download will be automatically retried several
+    times, but to prevent endless data usage, it will give up after
+    three tries.  That is, clients cannot assume that something
+    enqueued will inevitably be downloaded.  Clients can check by
+    TODO: document how to check if something is in the queue or/and
+    or currently downloading.
+
+    Synchronous downloads can be performed with :meth:`sync_download`
+    and :meth:`sync_downloads`.  These images will also be cached.
+
+    TODO: document how to query the queue size.
+    TODO: document how to query the size on disc.
+
+    The current queue can be cleared with :meth:`clear_queue`.
+    For shutting down the queue, see :meth:`stop`.
+    The Downlaoder keeps a clone of the messenger: if you logout
+    (revoke the token) in another msgr while this is downloading,
+    you'll get a crash.
+
+    The Downloader will emit various **signals**.  You can connect
+    slots to these:
+
+      * `download_finished(int, str, str)`: emitted when a
+        (background) download finishes.
+      * `download_failed(img_id: int)`: emitted when a (background)
+        download fails.  The job will be automatically restarted
+        up to three times.
+      * `download_queue_changed(dict)`: the queue length changed
+        (e.g., something enqueued or the queue is cleared).  The
+        signal argument is a dict of information about the queue.
     """
 
     # emitted anytime a (background) download finishes
     download_finished = pyqtSignal(int, str, str)
     # emitted anytime a (background) download fails
-    # TODO: document whether it is automatically restarted?
     download_failed = pyqtSignal(int)
     # emitted when queue lengths change (i.e., things enqueued)
     download_queue_changed = pyqtSignal(dict)
@@ -45,37 +77,14 @@ class Downloader(QObject):
     def __init__(self, basedir, *, msgr=None):
         """Initialize a new Downloader.
 
-        args:
+        Args:
+            basedir (pathlib.Path/str): a directory for the image cache.
+
+        Keyword Args:
             msgr (Messenger):
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
-
-        Downloader maintains a queue of downloads and emits signals
-        whenever downloads succeed or fail.
-
-        Once enqueued, a download will be automatically retried several
-        times, but to prevent endless data usage, it will give up after
-        three tries.  That is, clients cannot assume that something
-        enqueued will inevitably be downloaded.  Clients can check by
-        TODO: document how to check if something is in the queue or/and
-        or currently downloading.
-
-        TODO: document how to query the queue size, etc.
-
-        TODO: how do we shutdown cleanly?  Currently if you logout
-        another msgr while this is downloading, we'll get a crash...
-
-        The Downloader will emit various **signals**.  You can connect
-        slots to these:
-
-          * `download_finished(int, str, str)`: emitted when a
-            (background) download finishes.
-          * `download_failed(img_id: int)`: emitted when a (background)
-            download fails.
-          * `download_queue_changed(dict)`: the queue length changed
-            (e.g., something enqueued or the queue is cleared).  The
-            signal argument is a dict of information about the queue.
         """
         super().__init__()
         # self.is_download_in_progress = False
@@ -99,22 +108,23 @@ class Downloader(QObject):
         self._in_progress = {}
         # it still counts as a fail if it eventually retried successfully
         self.number_of_fails = 0
+        # we're trying to stop, so don't retry for example
         self._stopping = False
 
-    def _attach_messenger(self, msgr):
+    def attach_messenger(self, msgr):
         """Add/replace the current messenger."""
         if type(msgr) == WebPlomMessenger:
             self.msgr = WebPlomMessenger.clone(msgr)
         else:
             self.msgr = Messenger.clone(msgr)
 
-    def _detach_messenger(self):
+    def detach_messenger(self):
         """Stop our messenger and forget it (but do not logout)."""
         if self.msgr:
             self.msgr.stop()
         self.msgr = None
 
-    def _has_messenger(self):
+    def has_messenger(self):
         """Do we have a messenger?"""
         if self.msgr:
             return True
@@ -153,7 +163,8 @@ class Downloader(QObject):
     def clear_queue(self):
         """Cancel any enqueued (but not yet started) downloads.
 
-        TODO: should this prevent further retries?
+        Any existing downloads will continue, including their (up-to)
+        three retries.
         """
         # self.threadpool.cancel()
         self.threadpool.clear()
@@ -225,8 +236,8 @@ class Downloader(QObject):
             target_name,
             basedir=self.basedir,
         )
-        worker.signals.download_succeed.connect(self.worker_delivers)
-        worker.signals.download_fail.connect(self.worker_failed)
+        worker.signals.download_succeed.connect(self._worker_delivers)
+        worker.signals.download_fail.connect(self._worker_failed)
         if priority:
             self.threadpool.start(worker, priority=QThread.HighPriority)
         else:
@@ -251,7 +262,7 @@ class Downloader(QObject):
         # TODO: did it though?  Maybe more when it returns?
         self.download_queue_changed.emit(self.get_stats())
 
-    def worker_delivers(self, img_id, md5, tmpfile, local_filename):
+    def _worker_delivers(self, img_id, md5, tmpfile, local_filename):
         """A worker has succeed and delivered a temp file to us.
 
         This will emit a signal that others can listen for.
@@ -286,7 +297,7 @@ class Downloader(QObject):
         self.download_finished.emit(img_id, md5, local_filename)
         self.download_queue_changed.emit(self.get_stats())
 
-    def worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
+    def _worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
         """A worker has failed and called us: retry 3 times."""
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
         self.number_of_fails += 1
