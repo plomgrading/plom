@@ -148,6 +148,8 @@ class Ui_MarkerWindow(object):
         self.technicalButton.setCheckable(True)
         self.technicalButton.setChecked(True)
         self.technicalButton.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.technicalButton.setAutoRaise(True)
+        self.technicalButton.setArrowType(QtCore.Qt.DownArrow)
         self.technicalButton.setObjectName("technicalButton")
         self.layoutClose.addWidget(self.technicalButton)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)

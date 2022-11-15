@@ -1044,7 +1044,8 @@ class MarkerClient(QWidget):
             self.ui.technicalButton.setChecked(True)
         else:
             self.ui.technicalButton.setChecked(False)
-        self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
+        # if we want it to look like a label
+        # self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
         self.show_hide_technical()
         # self.force_update_technical_stats()
 
