@@ -193,20 +193,19 @@ class Messenger(BaseMessenger):
     # ------------------------
     # ------------------------
     # Marker stuff
-    def MgetMaxMark(self, question, ver):
+    def getMaxMark(self, question):
         """Get the maximum mark for this question and version.
 
         Raises:
-            PlomRangeExeception: `question` or `ver` is out of range or
-                non-integer.
+            PlomRangeExeception: `question` is out of range or non-integer.
             PlomAuthenticationException:
             PlomSeriousException: something unexpected happened.
         """
         self.SRmutex.acquire()
         try:
             response = self.get(
-                "/MK/maxMark",
-                json={"user": self.user, "token": self.token, "q": question, "v": ver},
+                f"/maxmark/{question}",
+                json={"user": self.user, "token": self.token},
             )
             # throw errors when response code != 200.
             response.raise_for_status()
