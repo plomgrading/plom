@@ -2200,9 +2200,14 @@ class MarkerClient(QWidget):
     def closeEvent(self, event):
         log.debug("Something has triggered a shutdown event")
         while not self.Qapp.downloader.stop(500):
-            print("download threads not stopped in 500ms... waiting more")
-            # TODO: need some max time to wait
-            # TODO: here versus in Chooser?
+            msg = SimpleQuestion(
+                self,
+                "Download threads are still in progress.",
+                question="Do you want to wait a little longer?",
+            )
+            if msg.exec() == QMessageBox.No:
+                # TODO: do we have a force quit?
+                break
         N = self.get_upload_queue_length()
         if N > 0:
             msg = QMessageBox()
@@ -2233,6 +2238,8 @@ class MarkerClient(QWidget):
                 self.backgroundUploader.terminate()
 
         log.debug("Revoking login token")
+        # after revoking, Downloader's msgr will be invalid
+        self.Qapp.downloader._detach_messenger()
         try:
             self.msgr.closeUser()
         except PlomAuthenticationException:

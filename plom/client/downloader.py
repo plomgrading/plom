@@ -99,6 +99,7 @@ class Downloader(QObject):
         self._in_progress = {}
         # it still counts as a fail if it eventually retried successfully
         self.number_of_fails = 0
+        self._stopping = False
 
     def _attach_messenger(self, msgr):
         """Add/replace the current messenger."""
@@ -150,7 +151,10 @@ class Downloader(QObject):
             print((k, v))
 
     def clear_queue(self):
-        """Cancel any enqueued (but not yet started) downloads."""
+        """Cancel any enqueued (but not yet started) downloads.
+
+        TODO: should this prevent further retries?
+        """
         # self.threadpool.cancel()
         self.threadpool.clear()
         # print(f"children: {self.threadpool.children()}")
@@ -169,6 +173,7 @@ class Downloader(QObject):
         Returns:
             bool: True if all threads finished or False if timeout reached.
         """
+        self._stopping = True
         # first we clear the ones that haven't started
         self.clear_queue()
         # then wait for timeout for the in-progress ones
@@ -294,6 +299,10 @@ class Downloader(QObject):
                 self._tries[img_id],
                 self._total_tries[img_id],
             )
+            self._in_progress[img_id] = False
+            return
+        if self._stopping:
+            log.warning("Not retrying image %d b/c we're stopping", img_id)
             self._in_progress[img_id] = False
             return
         # TODO: does not respect the original priority: high priority failure becomes ordinary

@@ -367,8 +367,9 @@ class Chooser(QDialog):
     def closeEvent(self, event):
         self.saveDetails()
         dl = getattr(self.Qapp, "downloader", None)
-        if dl:
-            # TODO: just wait forever...?
+        if dl and dl._has_messenger():
+            # TODO: do we just wait forever?
+            # TODO: Marker already tried to stop it: maybe never get here?
             dl.stop(-1)
         if self.messenger:
             self.messenger.stop()
