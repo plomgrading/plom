@@ -118,6 +118,8 @@ class Downloader(QObject):
         return str(resources.path(plom.client.icons, "manager_unknown.svg"))
 
     def get_stats(self):
+        # TODO: would be nice to know the "gave up after 3 tries" failures...
+        # TODO: track retries and fails (more positive!)
         in_progress_ids = [k for k, v in self._in_progress.items() if v is True]
         return {
             "cache_size": self.pagecache.how_many_cached(),
@@ -132,22 +134,22 @@ class Downloader(QObject):
             print((k, v))
 
     def clear_queue(self):
-        """Cancel any enqueued (but not yet started) downloads
-
-        TODO: not implemented yet.
-        """
-        print("-=~" * 33)
-        print(self.threadpool.children())
+        """Cancel any enqueued (but not yet started) downloads."""
         self.print_queue()
         # self.threadpool.cancel()
         self.threadpool.clear()
-        print(self.threadpool.children())
+        # print(f"children: {self.threadpool.children()}")
+        print("forcing in_progress to false...")
+        for k, v in self._in_progress.items():
+            self._in_progress[k] = False
+        self.download_queue_changed.emit(self.get_stats())
 
     def stop(self, timeout=0):
         """Try to stop the downloader, after waiting for threads to clear.
 
         Args:
             timeout (float): seconds to wait before giving up.
+                TODO: not implemented, probably just waits forever.
 
         Returns:
             bool: True if all threads finished or False if we waited
