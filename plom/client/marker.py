@@ -86,6 +86,7 @@ class BackgroundUploader(QThread):
     uploadSuccess = pyqtSignal(str, int, int)
     uploadKnownFail = pyqtSignal(str, str)
     uploadUnknownFail = pyqtSignal(str, str)
+    queue_status_changed = pyqtSignal(int, int)
 
     def __init__(self, msgr):
         """Initialize a new uploader
@@ -95,7 +96,6 @@ class BackgroundUploader(QThread):
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
-                TODO: have caller do clone, for symmetry with downloader?
         """
         super().__init__()
         self.q = None
@@ -123,6 +123,8 @@ class BackgroundUploader(QThread):
         """
         log.debug("upQ enqueuing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
+        n = 1 if self.is_upload_in_progress else 0
+        self.queue_status_changed.emit(self.q.qsize(), n)
 
     def queue_size(self):
         """Return the number of papers waiting or currently uploading."""
@@ -163,7 +165,8 @@ class BackgroundUploader(QThread):
             self.is_upload_in_progress = True
             # TODO: remove so that queue needs no knowledge of args
             code = data[0]
-            log.info("upQ thread: popped code {} from queue, uploading".format(code))
+            log.info("upQ thread: popped code %s from queue, uploading", code)
+            self.queue_status_changed.emit(self.q.qsize(), 1)
             # For experimenting with slow uploads
             # time.sleep(30)
             upload(
@@ -174,6 +177,7 @@ class BackgroundUploader(QThread):
                 successCallback=self.uploadSuccess.emit,
             )
             self.is_upload_in_progress = False
+            self.queue_status_changed.emit(self.q.qsize(), 0)
 
         self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
@@ -963,6 +967,9 @@ class MarkerClient(QWidget):
             self.backgroundUploader.uploadUnknownFail.connect(
                 self.backgroundUploadFailed
             )
+            self.backgroundUploader.queue_status_changed.connect(
+                self.update_technical_stats_upload
+            )
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
 
@@ -1037,6 +1044,7 @@ class MarkerClient(QWidget):
         # self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
         self.show_hide_technical()
         # self.force_update_technical_stats()
+        self.update_technical_stats_upload(0, 0)
 
     def connectGuiButtons(self):
         """
@@ -1539,6 +1547,12 @@ class MarkerClient(QWidget):
             "</p>"
         )
 
+    def update_technical_stats_upload(self, n, m):
+        if n == 0 and m == 0:
+            self.ui.labelTech3.setText("uploads: idle")
+        else:
+            self.ui.labelTech3.setText(f"uploads: {n} queued, {m} uploading")
+
     def show_hide_technical(self):
         if self.ui.technicalButton.isChecked():
             self.ui.technicalButton.setText("Hide technical info")
@@ -1549,7 +1563,6 @@ class MarkerClient(QWidget):
                 f"QWidget {{ font-size: {0.7*ptsz}pt; }}"
             )
             # future use
-            self.ui.labelTech3.setVisible(False)
             self.ui.labelTech4.setVisible(False)
         else:
             self.ui.technicalButton.setText("Show technical info")
