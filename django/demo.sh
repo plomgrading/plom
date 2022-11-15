@@ -15,6 +15,9 @@ rm -rf papersToPrint
 rm -rf media
 mkdir media
 
+# Mr Jackson has *had* it with these melon farmer migrations on this melon farmer plane!
+GLOBIGNORE="__init__.py" rm -f **migrations/*.py
+
 python3 manage.py makemigrations
 python3 manage.py migrate
 
