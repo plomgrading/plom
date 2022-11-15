@@ -1,10 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
 from django.db import transaction
 from django.db.models import Exists, OuterRef
 
-from Papers.models import BasePage, Paper, QuestionPage
+from Papers.models import (
+    BasePage,
+    Paper,
+    QuestionPage,
+    # CollidingImage,
+    # DiscardedImage,
+    # Image,
+    ErrorImage,
+)
 from Scan.models import StagingImage
 
 
@@ -151,3 +160,30 @@ class ManageScanService:
             )
 
         return colliding_pages
+    
+    @transaction.atomic
+    def get_error_pages_list(self):
+        """
+        Return a list of error pages.
+        """
+
+        error_pages = []
+        all_error_pages = ErrorImage.objects.all()
+
+        for error_page in all_error_pages:
+            test_paper = error_page.paper_number
+            page_number = error_page.page_number
+            version_number = error_page.version_number
+            flagged_by = error_page.flagged 
+            scanner_comment = error_page.comment
+
+            error_pages.append(
+                {
+                    "test_paper": test_paper,
+                    "page_number": page_number,
+                    "version": version_number,
+                    "flagged": flagged_by,
+                    "comment": scanner_comment,
+                }
+            )
+        return error_pages
