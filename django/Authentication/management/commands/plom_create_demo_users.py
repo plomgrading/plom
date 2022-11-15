@@ -83,12 +83,12 @@ class Command(BaseCommand):
             # Here is to create 5 scanners and markers
             for number_of_scanner_marker in range(1, range_of_scanners_markers + 1):
                 scanner_username = scanner + str(number_of_scanner_marker)
-                scanner_password = scanner_username + "_"
+                scanner_password = scanner_username
                 scanner_info["Username"].append(scanner_username)
                 scanner_info["Password"].append(scanner_password)
 
                 marker_username = marker + str(number_of_scanner_marker)
-                marker_password = marker_username + "_"
+                marker_password = marker_username
                 marker_info["Username"].append(marker_username)
                 marker_info["Password"].append(marker_password)
 
