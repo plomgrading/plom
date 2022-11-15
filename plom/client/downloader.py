@@ -40,7 +40,7 @@ class Downloader(QObject):
     # TODO: document whether it is automatically restarted?
     download_failed = pyqtSignal(int)
     # emitted when queue lengths change (i.e., things enqueued)
-    downloader_enqueued = pyqtSignal(dict)
+    download_queue_changed = pyqtSignal(dict)
 
     def __init__(self, basedir, *, msgr=None):
         """Initialize a new Downloader.
@@ -65,6 +65,14 @@ class Downloader(QObject):
 
         TODO: how do we shutdown cleanly?  Currently if you logout
         another msgr while this is downloading, we'll get a crash...
+
+        The Downloader will emit various signals::
+
+          * a download succeeds
+          * a download fails
+          * the queue length changes (e.g., something enqueued or the
+            queue is cleared).  The signal argument is a dict of
+            information about the queue.
         """
         super().__init__()
         # self.is_download_in_progress = False
@@ -219,7 +227,8 @@ class Downloader(QObject):
             self._tries[row["id"]],
             self._total_tries[row["id"]],
         )
-        self.downloader_enqueued.emit(self.get_stats())
+        # TODO: did it though?  Maybe more when it returns?
+        self.download_queue_changed.emit(self.get_stats())
 
     def worker_delivers(self, img_id, md5, tmpfile, local_filename):
         """A worker has succeed and delivered a temp file to us.
@@ -254,6 +263,7 @@ class Downloader(QObject):
             Path(tmpfile).rename(local_filename)
             self.pagecache.set_page_image_path(img_id, local_filename)
         self.download_finished.emit(img_id, md5, local_filename)
+        self.download_queue_changed.emit(self.get_stats())
 
     def worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
         """A worker has failed and called us: retry 3 times."""
@@ -275,6 +285,7 @@ class Downloader(QObject):
             {"id": img_id, "md5": md5, "local_filename": local_filename},
             _is_retry=True,
         )
+        self.download_queue_changed.emit(self.get_stats())
 
     def sync_downloads(self, pagedata):
         """Given a block of "pagedata" download all images synchronously and return updated data.
@@ -382,8 +393,8 @@ class DownloadWorker(QRunnable):
     def run(self):
         debug = True
         if debug:
-            fail = random.random() < 0.1
-            debug_wait2 = random.randint(5, 10)
+            fail = random.random() < 0.2
+            debug_wait2 = random.randint(3, 8)
             debug_wait1 = random.random() * debug_wait2
             debug_wait2 -= debug_wait1
             sleep(debug_wait1)

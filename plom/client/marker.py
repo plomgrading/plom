@@ -870,7 +870,7 @@ class MarkerClient(QWidget):
         self.downloader = self.Qapp.downloader
         self.downloader.download_finished.connect(self.background_download_finished)
         self.downloader.download_failed.connect(self.background_download_failed)
-        self.downloader.downloader_enqueued.connect(self._update_technical_stats)
+        self.downloader.download_queue_changed.connect(self.update_technical_stats)
 
         self.examModel = (
             MarkerExamModel()
@@ -1046,7 +1046,7 @@ class MarkerClient(QWidget):
             self.ui.technicalButton.setChecked(False)
         self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
         self.show_hide_technical()
-        self.update_technical_stats()
+        # self.force_update_technical_stats()
 
     def connectGuiButtons(self):
         """
@@ -1516,7 +1516,6 @@ class MarkerClient(QWidget):
         log.debug(f"PageCache has finished downloading {img_id} {local_filename}")
         self.ui.labelTech2.setText(f"last msg: downloaded img id={img_id}")
         self.ui.labelTech2.setToolTip(f"{local_filename}")
-        self.update_technical_stats()
         # TODO: time this
         self.examModel._expensive_search_and_update(img_id, md5, local_filename)
         # log.debug(f"Elapsed time for potentially expensive local DB update: %g", etime)
@@ -1529,13 +1528,12 @@ class MarkerClient(QWidget):
         self.ui.labelTech2.setText(f"last msg: failed download img id={img_id}")
         print(f"last msg: failed download img id={img_id}")
         self.ui.labelTech2.setToolTip("")
-        self.update_technical_stats()
 
-    def update_technical_stats(self):
+    def force_update_technical_stats(self):
         stats = self.downloader.get_stats()
-        self._update_technical_stats(stats)
+        self.update_technical_stats(stats)
 
-    def _update_technical_stats(self, d):
+    def update_technical_stats(self, d):
         self.ui.labelTech1.setText(
             f"downloads: {d['queued']} queued, {d['cache_size']} cached, {d['fail']} failed"
         )
