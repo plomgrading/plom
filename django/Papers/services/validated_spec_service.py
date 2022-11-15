@@ -113,6 +113,9 @@ class SpecificationService:
     def get_question_mark(self, question_one_index):
         """
         Get the max mark of a given question
+
+        Raises:
+            TODO:
         """
         spec_obj = self.get_the_spec()
         return spec_obj["question"][str(question_one_index)]["mark"]
