@@ -150,5 +150,3 @@ class Command(BaseCommand):
             print("Markers")
             print("Table: List of demo scanner usernames and passwords")
             print(tabulate(marker_info, headers="keys", tablefmt="fancy_grid"))
-
-            print("Note: If you change the demo user password, please remember it.")
