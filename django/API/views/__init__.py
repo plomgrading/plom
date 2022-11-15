@@ -12,3 +12,4 @@ from .identify import (
 )
 
 from .mark import QuestionMaxMark
+from .mark import QuestionMaxMark2

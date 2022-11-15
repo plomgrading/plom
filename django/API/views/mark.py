@@ -24,6 +24,7 @@ class QuestionMaxMark(APIView):
     """
 
     def get(self, request):
+        print(request)
         data = request.query_params
         print(data)
         try:
@@ -50,3 +51,29 @@ class QuestionMaxMark(APIView):
 
         spec = SpecificationService()
         return Response(spec.get_question_mark(question))
+
+
+class QuestionMaxMark2(APIView):
+    """
+    Return the max mark for a given question.
+
+    Returns:
+        (200):
+        (400): malformed, missing question, etc, TODO: not implemented
+        (416): question values out of range
+    """
+
+    def get(self, request, *, question):
+        print(request)
+        data = request.query_params
+        print(data)
+        print(question)
+        print(type(question))
+        spec = SpecificationService()
+        try:
+            return Response(spec.get_question_mark(question))
+        except KeyError:
+            exc = APIException()
+            exc.status_code = status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE
+            exc.detail = "question out of range"
+            raise exc

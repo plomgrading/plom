@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Colin B. Macdonald
+
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
 
@@ -114,8 +119,11 @@ class SpecificationService:
         """
         Get the max mark of a given question
 
+        Args:
+            question_one_index (str/int): question number, indexed from 1.
+
         Raises:
-            TODO:
+            KeyError: question out of range
         """
         spec_obj = self.get_the_spec()
         return spec_obj["question"][str(question_one_index)]["mark"]
