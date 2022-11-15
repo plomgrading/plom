@@ -209,9 +209,9 @@ class Downloader(QObject):
         worker.signals.download_succeed.connect(self.worker_delivers)
         worker.signals.download_fail.connect(self.worker_failed)
         if priority:
-            self.threadpool.start(worker, priority=QThread.Priority.HighPriority)
+            self.threadpool.start(worker, priority=QThread.HighPriority)
         else:
-            self.threadpool.start(worker, priority=QThread.Priority.LowPriority)
+            self.threadpool.start(worker, priority=QThread.LowPriority)
         # keep track of which img_ids are in progress
         # todo: semaphore around this and .start?
         self._in_progress[row["id"]] = True
