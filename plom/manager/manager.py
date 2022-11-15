@@ -404,8 +404,7 @@ class Manager(QWidget):
         # If Qapp doesn't have a Downloader, make a new one
         if self.downloader is None:
             tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
-            self.downloader = Downloader(tmpdir)
-            self.downloader.temp_attach_messenger(self.msgr)
+            self.downloader = Downloader(tmpdir, msgr=self.msgr)
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)

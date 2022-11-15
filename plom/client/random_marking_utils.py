@@ -227,8 +227,7 @@ def do_random_marking_backend(question, version, *, messenger):
             row["server_path"] = X[0]  # just take first one
 
         with tempfile.TemporaryDirectory() as td:
-            downloader = Downloader(td)
-            downloader.temp_attach_messenger(messenger)
+            downloader = Downloader(td, msgr=messenger)
             src_img_data = downloader.sync_downloads(src_img_data)
 
             # TODO: why?  sanity-ify this and similar in Marker

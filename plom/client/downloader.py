@@ -100,11 +100,24 @@ class Downloader(QObject):
         # it still counts as a fail if it eventually retried successfully
         self.number_of_fails = 0
 
-    def temp_attach_messenger(self, msgr):
+    def _attach_messenger(self, msgr):
+        """Add/replace the current messenger."""
         if type(msgr) == WebPlomMessenger:
             self.msgr = WebPlomMessenger.clone(msgr)
         else:
             self.msgr = Messenger.clone(msgr)
+
+    def _detach_messenger(self):
+        """Stop our messenger and forget it (but do not logout)."""
+        if self.msgr:
+            self.msgr.stop()
+        self.msgr = None
+
+    def _has_messenger(self):
+        """Do we have a messenger?"""
+        if self.msgr:
+            return True
+        return False
 
     @classmethod
     def get_placeholder_path(cls):

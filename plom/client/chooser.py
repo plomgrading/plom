@@ -291,8 +291,7 @@ class Chooser(QDialog):
                 return
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
-        self.Qapp.downloader = Downloader(tmpdir)
-        self.Qapp.downloader.temp_attach_messenger(self.messenger)
+        self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
 
         if which_subapp == "Manager":
             # Importing here avoids a circular import
