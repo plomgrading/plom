@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Colin B. Macdonald
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
@@ -85,7 +90,7 @@ class Command(BaseCommand):
                 marker_username = marker + str(number_of_scanner_marker)
                 marker_password = marker_username + "_"
                 marker_info["Username"].append(marker_username)
-                marker_info["Password"].append(marker_username)
+                marker_info["Password"].append(marker_password)
 
                 if scanner_username in exist_usernames:
                     print(f"{scanner_username} already exists!")
