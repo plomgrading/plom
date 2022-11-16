@@ -50,7 +50,7 @@ class Image(PolymorphicModel):
 class CollidingImage(Image):
     """Table to store information about colliding page-images.
 
-    Args:
+    Fields:
         paper_number (int): test-paper ID
         page_number (int): index of page
     """
@@ -62,6 +62,12 @@ class CollidingImage(Image):
 class DiscardedImage(Image):
     """
     Table to store information about discarded page-images.
+
+    Fields:
+        restore_class (str): the name of the class that this image would be restored to.
+        restore_fields (dict): Extra fields to populate when restoring the image. For example, it
+            would contain the "paper_number" and "page_number" fields of a discarded colliding-image.
     """
 
-    pass
+    restore_class = models.TextField(null=False, default="")
+    restore_fields = models.JSONField(null=False, default=dict)

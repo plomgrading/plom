@@ -53,11 +53,12 @@
                     {% endif %}
                 </li>
                 <li class="nav-item">
-                    {% if curr_page == "discarded" %}
-                    <a class="nav-link active" href="{% url 'progress_scan_discarded' %}">Discarded pages</a>
-                    {% else %}
-                    <a class="nav-link" href="{% url 'progress_scan_discarded' %}">Discarded pages</a>
-                    {% endif %}
+                    <a 
+                        class="nav-link {% if curr_page == 'discarded' %}active{% endif %}" 
+                        href="{% url 'progress_scan_discarded' %}"
+                    >
+                        Discarded pages {% if n_discarded %}({{ n_discarded }}){% endif %}
+                    </a>
                 </li>
             </ul>
         </div>

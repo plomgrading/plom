@@ -18,10 +18,17 @@ from .scan_colliding import (
     ReplaceImageWithColliding,
 )
 
+from .scan_discarded import (
+    ScanDiscarded,
+    DiscardedPageImage,
+    DiscardedPageModal,
+    DeleteDiscardedPage,
+    RestoreDiscardedPage,
+)
+
 from .scan_progress import (
     ScanBundles,
     ScanUnknown,
     ScanError,
     ScanExtra,
-    ScanDiscarded,
 )
