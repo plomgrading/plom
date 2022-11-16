@@ -47,7 +47,6 @@ from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQ
 from .useful_classes import ClientSettingsDialog
 
 from plom.messenger import ManagerMessenger
-from plom.webPlomMessenger import WebPlomMessenger
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -197,11 +196,9 @@ class Chooser(QDialog):
 
         if not self.messenger:
             if which_subapp == "Manager":
-                self.messenger = ManagerMessenger(server, mport)
-            elif self.webplom:
-                self.messenger = WebPlomMessenger(server, mport)
+                self.messenger = ManagerMessenger(server, mport, webplom=self.webplom)
             else:
-                self.messenger = Messenger(server, mport)
+                self.messenger = Messenger(server, mport, webplom=self.webplom)
         try:
             try:
                 server_ver_str = self.messenger.start()
@@ -436,10 +433,7 @@ class Chooser(QDialog):
         # self.ui.infoLabel.repaint()
 
         if not self.messenger:
-            if self.webplom:
-                self.messenger = WebPlomMessenger(server, mport)
-            else:
-                self.messenger = Messenger(server, mport)
+            self.messenger = Messenger(server, mport, webplom=self.webplom)
 
         try:
             try:

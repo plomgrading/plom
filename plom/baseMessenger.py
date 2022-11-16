@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
+# Copyright (C) 2022 Edith Coates
 
 from io import BytesIO
 import logging
@@ -48,7 +49,7 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, s=None, port=Default_Port, *, verify_ssl=True):
+    def __init__(self, s=None, port=Default_Port, *, verify_ssl=True, webplom=False):
         """Initialize a new BaseMessenger.
 
         Args:
@@ -60,8 +61,14 @@ class BaseMessenger:
             verify_ssl (True/False/str): controls where SSL certs are
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
+            webplom (True/False): default False, whether to connect to
+                Django-based servers.  Experimental!
         """
-        self.scheme = "https"
+        self.webplom = webplom
+        if self.webplom:
+            self.scheme = "http"
+        else:
+            self.scheme = "https"
         self.session = None
         self.user = None
         self.token = None
@@ -92,6 +99,7 @@ class BaseMessenger:
             s=m.server.split(":")[0],
             port=m.server.split(":")[1],
             verify_ssl=m.verify_ssl,
+            webplom=m.webplom,
         )
         x.start()
         log.debug("copying user/token into cloned messenger")
@@ -229,6 +237,12 @@ class BaseMessenger:
             PlomSeriousException: something else unexpected such as a
                 network failure.
         """
+        if self.webplom:
+            self._requestAndSaveToken_webplom(user, pw)
+        else:
+            self._requestAndSaveToken(user, pw)
+
+    def _requestAndSaveToken(self, user, pw):
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -249,6 +263,38 @@ class BaseMessenger:
             if response.status_code == 401:
                 raise PlomAuthenticationException(response.json()) from None
             elif response.status_code == 400:
+                raise PlomAPIException(response.json()) from None
+            elif response.status_code == 409:
+                raise PlomExistingLoginException(response.json()) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        except requests.ConnectionError as err:
+            raise PlomSeriousException(
+                f"Cannot connect to server {self.server}\n{err}\n\nPlease check details and try again."
+            ) from None
+        finally:
+            self.SRmutex.release()
+
+    def _requestAndSaveToken_webplom(self, user, pw):
+        """
+        Get an authorisation token from WebPlom.
+        """
+        self.SRmutex.acquire()
+        response = self.post(
+            "/get_token/",
+            json={
+                "username": user,
+                "password": pw,
+            },
+            timeout=5,
+        )
+        try:
+            response.raise_for_status()
+            self.token = response.json()
+            self.user = user
+        except requests.HTTPError as e:
+            if response.status_code == 400:
+                raise PlomAuthenticationException(response.json()) from None
+            elif response.status_code == 401:
                 raise PlomAPIException(response.json()) from None
             elif response.status_code == 409:
                 raise PlomExistingLoginException(response.json()) from None
