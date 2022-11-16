@@ -6,6 +6,7 @@ import pathlib
 import hashlib
 import fitz
 from datetime import datetime
+from django.conf import settings
 from django.db import transaction
 from django_huey import db_task
 from plom.scan import QRextract
@@ -287,6 +288,8 @@ class ScanService:
         -              SE:  4
         - Last five digit:  93849
         """
+        root_folder = settings.BASE_DIR / "media" / "page_images"
+        root_folder.mkdir(exist_ok=True)
         imgs = StagingImage.objects.filter(bundle=bundle)
         for page in imgs:
             self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)

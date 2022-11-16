@@ -2,8 +2,6 @@
 # Copyright (C) 2022 Brennen Chiu
 
 import shutil
-import os
-import pathlib
 
 from django.conf import settings
 from Papers.services import SpecificationService
@@ -154,11 +152,9 @@ class QRErrorService:
             )
             error_image.save()
 
-            os.makedirs(test_folder, exist_ok=True)
+            root_folder.mkdir(exist_ok=True)
+            test_folder.mkdir(exist_ok=True)
             shutil.copy(img_obj.file_path, img_path)
-            # root_folder.mkdir(exist_ok=True)
-            # test_folder.mkdir(exist_ok=True)
-            # shutil.copy(img_obj.file_path, img_path)
 
     def create_unknown_image(self, img_obj):
         pass
