@@ -334,7 +334,11 @@ class BaseMessenger:
                 logged in to call this.  A second call will raise this.
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
+
+        TODO: currently "close user" is a no-op on WebPlom!
         """
+        if self.webplom:
+            return
         self.SRmutex.acquire()
         try:
             response = self.delete(
