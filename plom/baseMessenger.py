@@ -65,6 +65,10 @@ class BaseMessenger:
                 Django-based servers.  Experimental!
         """
         self.webplom = webplom
+        if os.environ.get("WEBPLOM"):
+            log.warning("Enabling experimental WebPlom support via environment var")
+            self.webplom = True
+
         if self.webplom:
             # The django development server cannot handle https requests.
             # TODO: Revisit for production!  Issue #2361
