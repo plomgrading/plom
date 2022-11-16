@@ -23,6 +23,7 @@ from .scan_discarded import (
     DiscardedPageImage,
     DiscardedPageModal,
     DeleteDiscardedPage,
+    RestoreDiscardedPage,
 )
 
 from .scan_progress import (

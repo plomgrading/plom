@@ -26,9 +26,16 @@
                 <a 
                     class="btn btn-danger"
                     hx-delete="{% url 'progress_delete_discarded' discarded_hash %}"
-                    hx-confirm="Are you sure? The deleted page will be non-recoverable."
+                    hx-confirm="Are you sure? A deleted image cannot be recovered."
                 >
                     Delete
+                </a>
+                <a
+                    class="btn btn-primary"
+                    hx-post="{% url 'progress_restore_discarded' discarded_hash %}"
+                    hx-confirm="Are you sure?"
+                >
+                    Restore
                 </a>
             </div>
         </div>

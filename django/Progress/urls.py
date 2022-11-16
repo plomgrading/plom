@@ -21,6 +21,7 @@ from Progress.views import (
     DiscardedPageImage,
     DiscardedPageModal,
     DeleteDiscardedPage,
+    RestoreDiscardedPage,
 )
 
 
@@ -81,5 +82,10 @@ urlpatterns = [
         "scan/discarded/delete/<discarded_hash>/",
         DeleteDiscardedPage.as_view(),
         name="progress_delete_discarded",
+    ),
+    path(
+        "scan/discarded/restore/<discarded_hash>/",
+        RestoreDiscardedPage.as_view(),
+        name="progress_restore_discarded",
     ),
 ]

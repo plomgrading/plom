@@ -72,3 +72,15 @@ class DeleteDiscardedPage(ManagerRequiredView):
         mss.delete_discarded_image(discarded_hash)
 
         return HttpResponseClientRefresh()
+
+
+class RestoreDiscardedPage(ManagerRequiredView):
+    """
+    Restore a discarded page-image.
+    """
+
+    def post(self, request, discarded_hash):
+        mss = ManageScanService()
+        mss.restore_discarded_image(discarded_hash)
+
+        return HttpResponseClientRefresh()
