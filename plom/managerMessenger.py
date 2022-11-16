@@ -60,7 +60,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/initialiseDB",
+                "/plom/admin/initialiseDB",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -98,7 +98,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.put(
-                    "/admin/appendTestToDB",
+                    "/plom/admin/appendTestToDB",
                     json={
                         "user": self.user,
                         "token": self.token,
@@ -123,7 +123,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/pageVersionMap",
+                    "/plom/admin/pageVersionMap",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -575,7 +575,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/missingTestPage",
+                "/plom/admin/missingTestPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -601,7 +601,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/missingDNMPage",
+                "/plom/admin/missingDNMPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -626,7 +626,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/missingIDPage",
+                "/plom/admin/missingIDPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -653,7 +653,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/missingHWQuestion",
+                "/plom/admin/missingHWQuestion",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -681,7 +681,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.delete(
-                "/admin/singlePage",
+                "/plom/admin/singlePage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -704,7 +704,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.delete(
-                "/admin/scannedPages",
+                "/plom/admin/scannedPages",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -728,7 +728,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/scannedTPage",
+                    "/plom/admin/scannedTPage",
                     json={
                         "user": self.user,
                         "token": self.token,
@@ -751,7 +751,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/scannedHWPage",
+                    "/plom/admin/scannedHWPage",
                     json={
                         "user": self.user,
                         "token": self.token,
@@ -774,7 +774,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/scannedEXPage",
+                    "/plom/admin/scannedEXPage",
                     json={
                         "user": self.user,
                         "token": self.token,
@@ -797,7 +797,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                "/admin/collidingImage",
+                "/plom/admin/collidingImage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -835,7 +835,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.delete(
-                    "/admin/unknownImage",
+                    "/plom/admin/unknownImage",
                     json={
                         "user": self.user,
                         "token": self.token,
@@ -855,7 +855,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.delete(
-                "/admin/collidingImage",
+                "/plom/admin/collidingImage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -877,7 +877,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                "/admin/checkTPage",
+                "/plom/admin/checkTPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -924,7 +924,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/unknownToTestPage",
+                "/plom/admin/unknownToTestPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -961,7 +961,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/unknownToExtraPage",
+                "/plom/admin/unknownToExtraPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -997,7 +997,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/unknownToHWPage",
+                "/plom/admin/unknownToHWPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1024,7 +1024,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/collidingToTestPage",
+                "/plom/admin/collidingToTestPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1048,7 +1048,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/discardToUnknown",
+                "/plom/admin/discardToUnknown",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1552,7 +1552,7 @@ class ManagerMessenger(BaseMessenger):
                         }
                     )
                     response = self.put(
-                        "/admin/solution",
+                        "/plom/admin/solution",
                         json={"user": self.user, "token": self.token},
                         data=dat,
                         headers={"Content-Type": dat.content_type},
@@ -1567,7 +1567,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.delete(
-                "/admin/solution",
+                "/plom/admin/solution",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1648,7 +1648,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                "/admin/bundleFromImage",
+                "/plom/admin/bundleFromImage",
                 json={"user": self.user, "token": self.token, "filename": filename},
             )
             response.raise_for_status()
@@ -1667,7 +1667,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                "/admin/imagesInBundle",
+                "/plom/admin/imagesInBundle",
                 json={"user": self.user, "token": self.token, "bundle": bundle_name},
             )
             response.raise_for_status()
@@ -1686,7 +1686,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                "/admin/bundlePage",
+                "/plom/admin/bundlePage",
                 json={
                     "user": self.user,
                     "token": self.token,

@@ -405,7 +405,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    f"/admin/questionVersionMap/{papernum}",
+                    f"/plom/admin/questionVersionMap/{papernum}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -435,7 +435,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/questionVersionMap",
+                    "/plom/admin/questionVersionMap",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -1046,7 +1046,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/unknownPages",
+                    "/plom/admin/unknownPages",
                     json={
                         "user": self.user,
                         "token": self.token,
@@ -1063,7 +1063,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/discardedPages",
+                    "/plom/admin/discardedPages",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -1077,7 +1077,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/collidingPageNames",
+                    "/plom/admin/collidingPageNames",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()

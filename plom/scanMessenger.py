@@ -42,7 +42,7 @@ class ScanMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                "/admin/bundle",
+                "/plom/admin/bundle",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -71,7 +71,7 @@ class ScanMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/bundle",
+                "/plom/admin/bundle",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -99,7 +99,7 @@ class ScanMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                "/admin/bundle/list",
+                "/plom/admin/bundle/list",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -122,7 +122,7 @@ class ScanMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                "/admin/sidToTest",
+                "/plom/admin/sidToTest",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -187,7 +187,7 @@ class ScanMessenger(BaseMessenger):
                         }
                     )
                     response = self.put(
-                        f"/admin/testPages/{code}",
+                        f"/plom/admin/testPages/{code}",
                         json={"user": self.user, "token": self.token},
                         data=dat,
                         headers={"Content-Type": dat.content_type},
@@ -255,7 +255,7 @@ class ScanMessenger(BaseMessenger):
                         }
                     )
                     response = self.put(
-                        "/admin/hwPages",
+                        "/plom/admin/hwPages",
                         json={"user": self.user, "token": self.token},
                         data=dat,
                         headers={"Content-Type": dat.content_type},
@@ -289,7 +289,7 @@ class ScanMessenger(BaseMessenger):
                         }
                     )
                     response = self.put(
-                        "/admin/unknownPages",
+                        "/plom/admin/unknownPages",
                         data=dat,
                         headers={"Content-Type": dat.content_type},
                     )
@@ -326,7 +326,7 @@ class ScanMessenger(BaseMessenger):
                         }
                     )
                     response = self.put(
-                        f"/admin/collidingPages/{code}",
+                        f"/plom/admin/collidingPages/{code}",
                         data=dat,
                         headers={"Content-Type": dat.content_type},
                     )
@@ -428,7 +428,7 @@ class ScanMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                "/admin/missingHWQuestion",
+                "/plom/admin/missingHWQuestion",
                 json={
                     "user": self.user,
                     "token": self.token,

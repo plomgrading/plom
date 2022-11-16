@@ -450,7 +450,7 @@ class UploadHandler:
         else:
             return web.Response(status=404)  # page not found at all
 
-    # DELETE: /admin/singlePage
+    # DELETE: /plom/admin/singlePage
     @authenticate_by_token_required_fields(["user", "test", "page_name"])
     @write_admin
     def removeSinglePage(self, data, request):
@@ -604,7 +604,7 @@ class UploadHandler:
                 mpwriter.append(b)
             return web.Response(body=mpwriter, status=200)
 
-    # DELETE: /admin/unknownImage
+    # DELETE: /plom/admin/unknownImage
     @authenticate_by_token_required_fields(["fileName", "reason"])
     @write_admin
     def removeUnknownImage(self, data, request):
@@ -870,7 +870,7 @@ class UploadHandler:
             you may need to iterate and convert back to int.  Fails
             with 409 if the version map database has not been built yet.
 
-        .. caution:: careful not to confuse this with `/admin/questionVersionMap`
+        .. caution:: careful not to confuse this with `/plom/admin/questionVersionMap`
             which is much more likely what you are looking for.
         """
         spec = self.server.testSpec
@@ -974,42 +974,44 @@ class UploadHandler:
             raise web.HTTPGone(reason="Cannot find image or bundle.")
 
     def setUpRoutes(self, router):
-        router.add_get("/admin/bundle", self.doesBundleExist)
-        router.add_put("/admin/bundle", self.createNewBundle)
-        router.add_get("/admin/bundle/list", self.listBundles)
-        router.add_get("/admin/sidToTest", self.sidToTest)
-        router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
-        router.add_put("/admin/hwPages", self.uploadHWPage)
-        router.add_put("/admin/unknownPages", self.uploadUnknownPage)
-        router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
-        router.add_put("/admin/missingTestPage", self.replaceMissingTestPage)
-        router.add_put("/admin/missingDNMPage", self.replaceMissingDNMPage)
-        router.add_put("/admin/missingIDPage", self.replaceMissingIDPage)
-        router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
-        router.add_delete("/admin/scannedPages", self.removeAllScannedPages)
-        router.add_delete("/admin/singlePage", self.removeSinglePage)
-        router.add_get("/admin/scannedTPage", self.getTPageImage)
-        router.add_get("/admin/scannedHWPage", self.getHWPageImage)
-        router.add_get("/admin/scannedEXPage", self.getEXPageImage)
-        router.add_get("/admin/unknownPages", self.getUnknownPages)
-        router.add_get("/admin/discardedPages", self.getDiscardedPages)
-        router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
-        router.add_get("/admin/collidingImage", self.getCollidingImage)
-        router.add_get("/admin/checkTPage", self.checkTPage)
-        router.add_delete("/admin/unknownImage", self.removeUnknownImage)
-        router.add_delete("/admin/collidingImage", self.removeCollidingImage)
-        router.add_put("/admin/unknownToTestPage", self.unknownToTestPage)
-        router.add_put("/admin/unknownToHWPage", self.unknownToHWPage)
-        router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
-        router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
-        router.add_put("/admin/discardToUnknown", self.discardToUnknown)
-        router.add_put("/admin/initialiseDB", self.initialiseExamDatabase)
-        router.add_put("/admin/appendTestToDB", self.appendTestToExamDatabase)
-        router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
+        router.add_get("/plom/admin/bundle", self.doesBundleExist)
+        router.add_put("/plom/admin/bundle", self.createNewBundle)
+        router.add_get("/plom/admin/bundle/list", self.listBundles)
+        router.add_get("/plom/admin/sidToTest", self.sidToTest)
+        router.add_put("/plom/admin/testPages/{tpv}", self.uploadTestPage)
+        router.add_put("/plom/admin/hwPages", self.uploadHWPage)
+        router.add_put("/plom/admin/unknownPages", self.uploadUnknownPage)
+        router.add_put("/plom/admin/collidingPages/{tpv}", self.uploadCollidingPage)
+        router.add_put("/plom/admin/missingTestPage", self.replaceMissingTestPage)
+        router.add_put("/plom/admin/missingDNMPage", self.replaceMissingDNMPage)
+        router.add_put("/plom/admin/missingIDPage", self.replaceMissingIDPage)
+        router.add_put("/plom/admin/missingHWQuestion", self.replaceMissingHWQuestion)
+        router.add_delete("/plom/admin/scannedPages", self.removeAllScannedPages)
+        router.add_delete("/plom/admin/singlePage", self.removeSinglePage)
+        router.add_get("/plom/admin/scannedTPage", self.getTPageImage)
+        router.add_get("/plom/admin/scannedHWPage", self.getHWPageImage)
+        router.add_get("/plom/admin/scannedEXPage", self.getEXPageImage)
+        router.add_get("/plom/admin/unknownPages", self.getUnknownPages)
+        router.add_get("/plom/admin/discardedPages", self.getDiscardedPages)
+        router.add_get("/plom/admin/collidingPageNames", self.getCollidingPageNames)
+        router.add_get("/plom/admin/collidingImage", self.getCollidingImage)
+        router.add_get("/plom/admin/checkTPage", self.checkTPage)
+        router.add_delete("/plom/admin/unknownImage", self.removeUnknownImage)
+        router.add_delete("/plom/admin/collidingImage", self.removeCollidingImage)
+        router.add_put("/plom/admin/unknownToTestPage", self.unknownToTestPage)
+        router.add_put("/plom/admin/unknownToHWPage", self.unknownToHWPage)
+        router.add_put("/plom/admin/unknownToExtraPage", self.unknownToExtraPage)
+        router.add_put("/plom/admin/collidingToTestPage", self.collidingToTestPage)
+        router.add_put("/plom/admin/discardToUnknown", self.discardToUnknown)
+        router.add_put("/plom/admin/initialiseDB", self.initialiseExamDatabase)
+        router.add_put("/plom/admin/appendTestToDB", self.appendTestToExamDatabase)
+        router.add_get("/plom/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get(
-            "/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap
+            "/plom/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap
         )
-        router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
-        router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
-        router.add_get("/admin/imagesInBundle", self.getImagesInBundle)
-        router.add_get("/admin/bundlePage", self.getPageFromBundle)
+        router.add_get(
+            "/plom/admin/questionVersionMap", self.getGlobalQuestionVersionMap
+        )
+        router.add_get("/plom/admin/bundleFromImage", self.getBundleFromImage)
+        router.add_get("/plom/admin/imagesInBundle", self.getImagesInBundle)
+        router.add_get("/plom/admin/bundlePage", self.getPageFromBundle)
