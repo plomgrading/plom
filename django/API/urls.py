@@ -19,6 +19,10 @@ from API.views import (
 )
 
 
+# TODO: are any of these authenticated?  How do we decorate or otherwise implement
+# and indicate that?  See @write_admin, @readonly_admin in the legacy server.
+
+
 urlpatterns = [
     path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
     path("Version/", ServerVersion.as_view(), name="api_server_version"),
