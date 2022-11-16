@@ -3,15 +3,15 @@
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2022 Edith Coates
 
 """
 The Plom Marker client
 """
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
-__credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-
 
 from collections import defaultdict
 import imghdr
@@ -63,6 +63,7 @@ from plom.plom_exceptions import (
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
+from plom.webPlomMessenger import WebPlomMessenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
@@ -88,7 +89,7 @@ class BackgroundUploader(QThread):
     uploadKnownFail = pyqtSignal(str, str)
     uploadUnknownFail = pyqtSignal(str, str)
 
-    def __init__(self, msgr):
+    def __init__(self, msgr, webplom=False):
         """Initialize a new uploader
 
         args:
@@ -101,7 +102,10 @@ class BackgroundUploader(QThread):
         super().__init__()
         self.q = None
         self.is_upload_in_progress = False
-        self._msgr = Messenger.clone(msgr)
+        if webplom:
+            self._msgr = WebPlomMessenger.clone(msgr)
+        else:
+            self._msgr = Messenger.clone(msgr)
 
     def enqueueNewUpload(self, *args):
         """
@@ -900,7 +904,11 @@ class MarkerClient(QWidget):
         self.msgr = messenger
         # BackgroundDownloaders come and go but share a single cloned Messenger
         # Note: BackgroundUploader is persistent and makes its own clone.
-        self._bgdownloader_msgr = Messenger.clone(self.msgr)
+        if type(self.msgr) == WebPlomMessenger:
+            self._bgdownloader_msgr = WebPlomMessenger.clone(self.msgr)
+        else:
+            self._bgdownloader_msgr = Messenger.clone(self.msgr)
+
         self.question = question
         self.version = version
 
@@ -941,7 +949,8 @@ class MarkerClient(QWidget):
         log.debug("Marker main thread: " + str(threading.get_ident()))
 
         if self.allowBackgroundOps:
-            self.backgroundUploader = BackgroundUploader(self.msgr)
+            is_webplom = type(self.msgr) == WebPlomMessenger
+            self.backgroundUploader = BackgroundUploader(self.msgr, is_webplom)
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
             self.backgroundUploader.uploadKnownFail.connect(
                 self.backgroundUploadFailedServerChanged

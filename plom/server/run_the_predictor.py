@@ -9,9 +9,9 @@
 Executable file frontend to the actual ID reader code.
 """
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
-__credits__ = ["Andrew Rechnitzer", "Dryden Wiebe", "Vala Vakilian"]
-__license__ = "AGPLv3"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
 
 import json
 from pathlib import Path

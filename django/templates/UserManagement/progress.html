@@ -1,0 +1,28 @@
+{% extends 'base/base.html' %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        {% block title %}Progress - {{ username }}{% endblock %}
+    </head>
+    <body>
+        {% block page_heading %}Progress for {{ username }}{% endblock %}
+        {% block main_content %}
+        <div class="d-grid gap-2">
+            <div class="card w-50">
+                <div class="card-body">
+                    <h5 class="card-title">Marking</h5>
+                    <ul>
+                        <li class="card-text">Last login: {{ last_login }}</li>
+                        <li class="card-text">Last action: {{ last_action }}</li>
+                        <li class="card-text">Papers IDd: {{ n_papers_id }}</li>
+                        <li class="card-text">Papers marked: {{ n_papers_marked }}</li>
+                    </ul>
+                </div>
+            </div>
+            <a class="btn btn-primary w-25" href="/users">Return to users</a>
+        </div>
+        {% endblock %}
+    </body>
+</html>

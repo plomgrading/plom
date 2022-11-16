@@ -25,7 +25,6 @@ server_dirs = (
     Path("pages") / "unknownPages",
     Path("pages") / "originalPages",
     Path("markedQuestions"),
-    Path("markedQuestions") / "plomFiles",
     Path("userRubricPaneData"),
     Path("solutionImages"),
 )
@@ -61,7 +60,7 @@ def check_server_fully_configured(basedir):
         )
 
 
-def create_server_config(dur=confdir, *, port=None, name=None):
+def create_server_config(dur=confdir, *, port=None, name=None, db_name=None):
     """Create a default server configuration file.
 
     args:
@@ -73,9 +72,13 @@ def create_server_config(dur=confdir, *, port=None, name=None):
             "plom.example.com" or an IP address.  Defaults to
             "localhost" which is usually fine but may cause trouble
             with SSL certificates.
+        db_name (str/None): the name of the database, omitted if `None`.
 
     raises:
         FileExistsError: file is already there.
+
+    TODO: note the toml file is manipulated here with find-and-replace
+    so as to preserve comments in the template.
     """
     sd = Path(dur) / "serverDetails.toml"
     if sd.exists():
@@ -85,6 +88,8 @@ def create_server_config(dur=confdir, *, port=None, name=None):
         template = template.replace("localhost", name)
     if port:
         template = template.replace(f"{Default_Port}", str(port))
+    if db_name:
+        template = template.replace("#db_name =", f'db_name = "{db_name}"')
     with open(sd, "w") as fh:
         fh.write(template)
 

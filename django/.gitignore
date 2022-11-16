@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files:
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments:
+venv/
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Code coverage:
+.coverage
+
+# emacs backup files
+*.bak
+
+# PyCharm
+.idea/*
+
+# Migrations (ignores all files within migrations except __init__.py)
+**/migrations/**
+!**/migrations
+!**/migrations/__init__.py
+
+# Ignore PDF folders
+produced_papers.csv
+papersToPrint/*
+sourceVersions/*
+media/*
+
+# whitenoise static files (need to run python manage.py collectstatic)
+staticfiles/
