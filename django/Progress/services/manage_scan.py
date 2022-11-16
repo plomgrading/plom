@@ -174,14 +174,17 @@ class ManageScanService:
             test_paper = error_page.paper_number
             page_number = error_page.page_number
             version_number = error_page.version_number
-            flagged_by = error_page.flagged 
-            scanner_comment = error_page.comment
+            file_name = str(test_paper).zfill(5) + str(page_number).zfill(3) + ".png"
+            error_comment = error_page.comment.split("::")
+            flagged_by = error_comment[0].lower()
+            scanner_comment = error_comment[1]
 
             error_pages.append(
                 {
                     "test_paper": test_paper,
                     "page_number": page_number,
                     "version": version_number,
+                    "file_name": file_name,
                     "flagged": flagged_by,
                     "comment": scanner_comment,
                 }
