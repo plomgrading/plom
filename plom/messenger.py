@@ -214,9 +214,9 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 400:
-                raise PlomRangeException(response.text) from None
+                raise PlomRangeException(response.reason) from None
             if response.status_code == 416:
-                raise PlomRangeException(response.text) from None
+                raise PlomRangeException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
