@@ -71,11 +71,16 @@ class Command(BaseCommand):
                     username=manager, email=manager + email, password=manager
                 ).groups.add(manager_group, demo_group)
                 print(f"{manager} created and added to {manager_group} group!")
-
+                User.objects.create_user(
+                    username="manager", email="manager" + email, password="1234"
+                ).groups.add(manager_group, demo_group)
+                print(f"{manager} created and added to {manager_group} group!")
             except IntegrityError:
                 print(f"{manager} already exists!")
             manager_info["Username"].append(manager)
             manager_info["Password"].append(manager)
+            manager_info["Username"].append("manager")
+            manager_info["Password"].append("1234")
 
             # for updating a connected core server
             core = CoreUsersService()
