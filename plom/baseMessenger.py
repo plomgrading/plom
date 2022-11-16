@@ -66,6 +66,8 @@ class BaseMessenger:
         """
         self.webplom = webplom
         if self.webplom:
+            # The django development server cannot handle https requests.
+            # TODO: Revisit for production!  Issue #2361
             self.scheme = "http"
         else:
             self.scheme = "https"
