@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Colin B. Macdonald
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
@@ -78,14 +83,14 @@ class Command(BaseCommand):
             # Here is to create 5 scanners and markers
             for number_of_scanner_marker in range(1, range_of_scanners_markers + 1):
                 scanner_username = scanner + str(number_of_scanner_marker)
-                scanner_password = scanner_username + "_"
+                scanner_password = scanner_username
                 scanner_info["Username"].append(scanner_username)
                 scanner_info["Password"].append(scanner_password)
 
                 marker_username = marker + str(number_of_scanner_marker)
-                marker_password = marker_username + "_"
+                marker_password = marker_username
                 marker_info["Username"].append(marker_username)
-                marker_info["Password"].append(marker_username)
+                marker_info["Password"].append(marker_password)
 
                 if scanner_username in exist_usernames:
                     print(f"{scanner_username} already exists!")
@@ -145,5 +150,3 @@ class Command(BaseCommand):
             print("Markers")
             print("Table: List of demo scanner usernames and passwords")
             print(tabulate(marker_info, headers="keys", tablefmt="fancy_grid"))
-
-            print("Note: If you change the demo user password, please remember it.")
