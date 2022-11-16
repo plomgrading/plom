@@ -294,7 +294,10 @@ class ManageScanService:
 
         root_dir = settings.BASE_DIR / "media" / "page_images" / "colliding_pages"
         test_paper_dir = root_dir / str(colliding_fields["paper_number"])
-        image_path = test_paper_dir / f"page{colliding_fields['page_number']}.png"
+        image_path = (
+            test_paper_dir
+            / f"page{colliding_fields['page_number']}_{discarded_image.hash}.png"
+        )
 
         new_colliding_image = CollidingImage(
             bundle=discarded_image.bundle,
