@@ -53,6 +53,7 @@ class IDgetDoneTasks(APIView):
     Send back the list.
 
     TODO: Not implemented, just reports empty.
+    TODO: see ``plom/db/db_identify:IDgetDoneTasks``
     """
 
     def get(self, request):
@@ -60,16 +61,6 @@ class IDgetDoneTasks(APIView):
 
     # TODO: how do we get the user name?
     # TODO: how do we log?
-
-    # uref = User.get(name=user_name)
-    # # since user authenticated, this will always return legit ref.
-
-    # query = IDGroup.select().where(IDGroup.user == uref, IDGroup.status == "done")
-    # idList = []
-    # for iref in query:
-    #     idList.append([iref.test.test_number, iref.student_id, iref.student_name])
-    # log.debug("Sending completed ID tasks to user {}".format(user_name))
-    # return idList
 
 
 class IDgetNextTask(APIView):
@@ -81,6 +72,7 @@ class IDgetNextTask(APIView):
     Responds with status 200/204.
 
     TODO: Not implemented, just lies that we are done.
+    TODO: see ``plom/db/db_identify:IDgetNextTask``
     """
 
     def get(self, request):

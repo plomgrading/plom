@@ -15,5 +15,7 @@ from .identify import (
     IDprogressCount,
 )
 
-from .mark import QuestionMaxMark
-from .mark import QuestionMaxMark2
+from .mark import (
+    QuestionMaxMark_how_to_get_data,
+    QuestionMaxMark,
+)
