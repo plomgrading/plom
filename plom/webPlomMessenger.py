@@ -37,7 +37,7 @@ class WebPlomMessenger:
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
         """
-
+        self.scheme = "http"
         self.session = None
         self.user = None
         self.token = None
@@ -92,27 +92,33 @@ class WebPlomMessenger:
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.get(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.get(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.post(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.post(
+            f"{self.scheme}://{self.server}" + url, *args, **kwargs
+        )
 
     def put(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.put(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.put(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.delete(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.delete(
+            f"{self.scheme}://{self.server}" + url, *args, **kwargs
+        )
 
     def patch(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.patch(f"http://{self.server}" + url, *args, **kwargs)
+        return self.session.patch(
+            f"{self.scheme}://{self.server}" + url, *args, **kwargs
+        )
 
     def start(self):
         """Start the messenger session.
@@ -127,7 +133,9 @@ class WebPlomMessenger:
             self.session = requests.Session()
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
-            self.session.mount("http://", requests.adapters.HTTPAdapter(max_retries=2))
+            self.session.mount(
+                f"{self.scheme}://", requests.adapters.HTTPAdapter(max_retries=2)
+            )
             self.session.verify = self.verify_ssl
 
         try:

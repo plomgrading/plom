@@ -61,6 +61,7 @@ class BaseMessenger:
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
         """
+        self.scheme = "https"
         self.session = None
         self.user = None
         self.token = None
@@ -71,7 +72,6 @@ class BaseMessenger:
             server = "127.0.0.1"
         self.server = "{}:{}".format(server, port)
         self.SRmutex = threading.Lock()
-        # base = "https://{}:{}/".format(s, mp)
         self.verify_ssl = verify_ssl
         if not self.verify_ssl:
             self._shutup_urllib3()
@@ -116,27 +116,33 @@ class BaseMessenger:
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.get(f"https://{self.server}" + url, *args, **kwargs)
+        return self.session.get(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.post(f"https://{self.server}" + url, *args, **kwargs)
+        return self.session.post(
+            f"{self.scheme}://{self.server}" + url, *args, **kwargs
+        )
 
     def put(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.put(f"https://{self.server}" + url, *args, **kwargs)
+        return self.session.put(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.delete(f"https://{self.server}" + url, *args, **kwargs)
+        return self.session.delete(
+            f"{self.scheme}://{self.server}" + url, *args, **kwargs
+        )
 
     def patch(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.patch(f"https://{self.server}" + url, *args, **kwargs)
+        return self.session.patch(
+            f"{self.scheme}://{self.server}" + url, *args, **kwargs
+        )
 
     def start(self):
         """Start the messenger session.
@@ -151,7 +157,9 @@ class BaseMessenger:
             self.session = requests.Session()
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
-            self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=2))
+            self.session.mount(
+                f"{self.scheme}://", requests.adapters.HTTPAdapter(max_retries=2)
+            )
             self.session.verify = self.verify_ssl
 
         try:
