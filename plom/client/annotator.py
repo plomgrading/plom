@@ -6,9 +6,9 @@
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
-__credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
-__license__ = "AGPLv3"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
 
 import importlib.resources as resources
 import json

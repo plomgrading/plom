@@ -9,16 +9,9 @@
 The Plom Marker client
 """
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
-__credits__ = [
-    "Andrew Rechnitzer",
-    "Elvis Cai",
-    "Colin Macdonald",
-    "Victoria Schuster",
-    "Edith Coates",
-]
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-
 
 from collections import defaultdict
 import imghdr
@@ -71,7 +64,6 @@ from plom.plom_exceptions import (
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
-from plom.webPlomMessenger import WebPlomMessenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
@@ -96,7 +88,7 @@ class BackgroundUploader(QThread):
     uploadKnownFail = pyqtSignal(str, str)
     uploadUnknownFail = pyqtSignal(str, str)
 
-    def __init__(self, msgr, webplom=False):
+    def __init__(self, msgr):
         """Initialize a new uploader
 
         args:
@@ -109,10 +101,7 @@ class BackgroundUploader(QThread):
         super().__init__()
         self.q = None
         self.is_upload_in_progress = False
-        if webplom:
-            self._msgr = WebPlomMessenger.clone(msgr)
-        else:
-            self._msgr = Messenger.clone(msgr)
+        self._msgr = Messenger.clone(msgr)
 
     def enqueueNewUpload(self, *args):
         """
@@ -967,8 +956,7 @@ class MarkerClient(QWidget):
         log.debug("Marker main thread: " + str(threading.get_ident()))
 
         if self.allowBackgroundOps:
-            is_webplom = type(self.msgr) == WebPlomMessenger
-            self.backgroundUploader = BackgroundUploader(self.msgr, is_webplom)
+            self.backgroundUploader = BackgroundUploader(self.msgr)
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
             self.backgroundUploader.uploadKnownFail.connect(
                 self.backgroundUploadFailedServerChanged

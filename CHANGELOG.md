@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* "Tech preview" of a web-interface for configuring a Plom server.
+* Support for external databases.
 
 ### Changed
+* Server stores annotation data in the database instead of in `.plom` files.
 
 ### Fixed
-
+* Misc fixes.
 
 
 

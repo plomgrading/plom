@@ -41,7 +41,6 @@ from plom.plom_exceptions import (
     PlomSSLError,
 )
 from plom.messenger import Messenger, ManagerMessenger
-from plom.webPlomMessenger import WebPlomMessenger
 from plom.client import MarkerClient, IDClient
 from .downloader import Downloader
 from .uiFiles.ui_chooser import Ui_Chooser
@@ -197,11 +196,9 @@ class Chooser(QDialog):
 
         if not self.messenger:
             if which_subapp == "Manager":
-                self.messenger = ManagerMessenger(server, mport)
-            elif self.webplom:
-                self.messenger = WebPlomMessenger(server, mport)
+                self.messenger = ManagerMessenger(server, mport, webplom=self.webplom)
             else:
-                self.messenger = Messenger(server, mport)
+                self.messenger = Messenger(server, mport, webplom=self.webplom)
         try:
             try:
                 server_ver_str = self.messenger.start()
@@ -442,10 +439,7 @@ class Chooser(QDialog):
         # self.ui.infoLabel.repaint()
 
         if not self.messenger:
-            if self.webplom:
-                self.messenger = WebPlomMessenger(server, mport)
-            else:
-                self.messenger = Messenger(server, mport)
+            self.messenger = Messenger(server, mport, webplom=self.webplom)
 
         try:
             try:

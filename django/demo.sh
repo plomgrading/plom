@@ -15,6 +15,9 @@ rm -rf papersToPrint
 rm -rf media
 mkdir media
 
+# Mr Jackson has *had* it with these melon farmer migrations on this melon farmer plane!
+GLOBIGNORE="__init__.py" rm -f **migrations/*.py
+
 python3 manage.py makemigrations
 python3 manage.py migrate
 
@@ -35,6 +38,7 @@ python3 manage.py plom_papers build
 # WebPlom needs a Huey consumer running in order to complete some background tasks.
 # In a separate terminal window, call:
 # `python3 manage.py djangohuey`
+# you must do this after running demo.sh b/c it erases the huey_db file
 
 # This is for production use, when Debug = False
 # python3 manage.py collectstatic
