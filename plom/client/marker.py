@@ -9,16 +9,9 @@
 The Plom Marker client
 """
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
-__credits__ = [
-    "Andrew Rechnitzer",
-    "Elvis Cai",
-    "Colin Macdonald",
-    "Victoria Schuster",
-    "Edith Coates",
-]
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-
 
 from collections import defaultdict
 import imghdr
