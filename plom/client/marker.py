@@ -1544,7 +1544,9 @@ class MarkerClient(QWidget):
 
     def toggle_fail_mode(self):
         if self.ui.failmodeCB.isChecked():
-            self.ui.failmodeCB.setToolTip("delay ∈ [2s, 6s], 20% fail")
+            r = self.Qapp.downloader._simulate_failure_rate
+            a, b = self.Qapp.downloader._simulate_slow_net
+            self.ui.failmodeCB.setToolTip(f"delay ∈ [{a}s, {b}s], {r}% fail")
             self.Qapp.downloader.enable_fail_mode()
         else:
             self.ui.failmodeCB.setToolTip("")

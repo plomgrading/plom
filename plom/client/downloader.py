@@ -69,6 +69,10 @@ class Downloader(QObject):
       * `download_queue_changed(dict)`: the queue length changed
         (e.g., something enqueued or the queue is cleared).  The
         signal argument is a dict of information about the queue.
+
+    Use :meth:`enable_fail_mode` to artificially fail some download
+    attempts and generally take longer.  For debugging.  Disable again
+    with :method:`disable_fail_mode`.
     """
 
     # emitted anytime a (background) download finishes
@@ -111,8 +115,14 @@ class Downloader(QObject):
         self.number_of_fails = 0
         # we're trying to stop, so don't retry for example
         self._stopping = False
-        self.simulate_failures = False
         self.make_placeholder()
+        self.simulate_failures = False
+        # percentage of download attempts that will fail and an overall
+        # delay in seconds in a range (both are i.i.d. per retry).
+        # These are ignored unless simulate_failures is True.
+        # TODO: use these in DownloadWorker
+        self._simulate_failure_rate = 25.0
+        self._simulate_slow_net = (2, 6)
 
     def attach_messenger(self, msgr):
         """Add/replace the current messenger."""
@@ -374,6 +384,13 @@ class Downloader(QObject):
             its name into the ``local_filename`` key.  If we had to download
             it we also put the filename into ``local_filename``.
         """
+        if self.simulate_failures:
+            fail = random.random() <= self._simulate_failure_rate
+            a, b = self._simulate_slow_net
+            # generate wait1 + wait2 \in (a, b)
+            wait2 = random.random() * (b - a) + a
+            wait1 = random.random() * wait2
+            wait2 -= wait1
         # TODO: revisit once PageCache decides None/Exception...
         if self.pagecache.has_page_image(row["id"]):
             cur = self.pagecache.page_image_path(row["id"])
@@ -397,7 +414,13 @@ class Downloader(QObject):
         f.parent.mkdir(exist_ok=True, parents=True)
         # we're not entirely consistent...
         md5 = row.get("md5") or row["md5sum"]
+        if self.simulate_failures:
+            sleep(wait1)
+        # if self.simulate_failures and fail:
+        #     raise NotImplementedError("TODO: how to simulate failure?")
         im_bytes = self.msgr.get_image(row["id"], md5)
+        if self.simulate_failures:
+            sleep(wait2)
         # im_type = imghdr.what(None, h=im_bytes)
         with open(f, "wb") as fh:
             fh.write(im_bytes)
