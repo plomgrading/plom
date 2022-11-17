@@ -237,7 +237,7 @@ class Downloader(QObject):
             row["md5"],
             target_name,
             basedir=self.basedir,
-            simulate_failures=self.simulate_failures
+            simulate_failures=self.simulate_failures,
         )
         worker.signals.download_succeed.connect(self._worker_delivers)
         worker.signals.download_fail.connect(self._worker_failed)
@@ -413,7 +413,9 @@ class WorkerSignals(QObject):
 
 
 class DownloadWorker(QRunnable):
-    def __init__(self, msgr, img_id, md5, target_name, *, basedir, simulate_failures=False):
+    def __init__(
+        self, msgr, img_id, md5, target_name, *, basedir, simulate_failures=False
+    ):
         super().__init__()
         self._msgr = Messenger.clone(msgr)
         self.img_id = img_id
