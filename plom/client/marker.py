@@ -1518,7 +1518,7 @@ class MarkerClient(QWidget):
 
     def background_download_failed(self, img_id):
         self.ui.labelTech2.setText(f"last msg: failed download img id={img_id}")
-        print(f"last msg: failed download img id={img_id}")
+        print(f"failed download img id={img_id}")
         self.ui.labelTech2.setToolTip("")
 
     def force_update_technical_stats(self):
@@ -2112,7 +2112,6 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        print("updatePreviewImage")
         idx = new.indexes()
         if len(idx) == 0:
             # Remove preview when user unselects row (e.g., ctrl-click)
