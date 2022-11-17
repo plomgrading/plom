@@ -83,7 +83,7 @@ class SolutionHandler:
         Args:
             router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the response functions to.
         """
-        router.add_put("/admin/solution", self.uploadSolutionImage)
-        router.add_delete("/admin/solution", self.deleteSolutionImage)
+        router.add_put("/plom/admin/solution", self.uploadSolutionImage)
+        router.add_delete("/plom/admin/solution", self.deleteSolutionImage)
         router.add_get("/MK/solution", self.getSolutionImage)
         router.add_get("/REP/solutions", self.getSolutionStatus)
