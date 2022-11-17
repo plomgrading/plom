@@ -347,10 +347,12 @@ class Downloader(QObject):
             )
             self.number_of_fails += 1
             self._in_progress[img_id] = False
+            self.download_queue_changed.emit(self.get_stats())
             return
         if self._stopping:
             log.warning("Not retrying image %d b/c we're stopping", img_id)
             self._in_progress[img_id] = False
+            self.download_queue_changed.emit(self.get_stats())
             return
         # TODO: does not respect the original priority: high priority failure becomes ordinary
         self.download_in_background_thread(
