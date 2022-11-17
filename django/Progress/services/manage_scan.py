@@ -168,16 +168,21 @@ class ManageScanService:
         """
 
         error_pages = []
-        all_error_pages = ErrorImage.objects.all()
+        all_error_pages = ErrorImage.objects.filter(flagged=True)
 
         for error_page in all_error_pages:
             test_paper = error_page.paper_number
             page_number = error_page.page_number
             version_number = error_page.version_number
             file_name = str(test_paper).zfill(5) + str(page_number).zfill(3) + ".png"
-            error_comment = error_page.comment.split("::")
-            flagged_by = error_comment[0].lower()
-            scanner_comment = error_comment[1]
+            if error_page.comment:
+                error_comment = error_page.comment.split("::")
+                flagged_by = error_comment[0].lower()
+                scanner_comment = error_comment[1]
+            else:
+                flagged_by = None
+                scanner_comment = None
+            error_img_hash = str(error_page.hash)
 
             error_pages.append(
                 {
@@ -187,6 +192,7 @@ class ManageScanService:
                     "file_name": file_name,
                     "flagged": flagged_by,
                     "comment": scanner_comment,
+                    "error_hash": error_img_hash,
                 }
             )
         return error_pages

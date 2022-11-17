@@ -34,9 +34,13 @@
                         <td>{{error_page.comment}}</td>    
                         <td>
                             <div>
-                                <a class="btn btn-primary" href="">View</a>
-                                <a class="btn btn-primary" href="">Replace</a>
-                                <a class="btn btn-primary" href="">Push page</a>
+                                <a
+                                    class="btn btn-primary" 
+                                    hx-get="{% url 'progress_error_modal' error_page.test_paper error_page.page_number error_page.error_hash %}"
+                                    hx-swap="afterend"
+                                >
+                                    View
+                                </a>
                             </div>
                         </td>
                     </tr>   

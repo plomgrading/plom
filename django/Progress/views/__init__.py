@@ -19,6 +19,7 @@ from .scan_colliding import (
 
 from .scan_error import (
     ScanError,
+    ErrorPagesModal,
 )
 
 from .scan_progress import (
