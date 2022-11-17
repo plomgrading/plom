@@ -121,8 +121,8 @@ class Downloader(QObject):
         # percentage of download attempts that will fail and an overall
         # delay in seconds in a range (both are i.i.d. per retry).
         # These are ignored unless simulate_failures is True.
-        self._simulate_failure_rate = 25.0
-        self._simulate_slow_net = (2, 6)
+        self._simulate_failure_rate = 33.0
+        self._simulate_slow_net = (0.5, 3)
 
     def attach_messenger(self, msgr):
         """Add/replace the current messenger."""
