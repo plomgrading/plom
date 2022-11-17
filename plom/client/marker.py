@@ -1030,8 +1030,10 @@ class MarkerClient(QWidget):
 
         if __version__.endswith("dev"):
             self.ui.technicalButton.setChecked(True)
+            self.ui.failmodeCB.setEnabled(True)
         else:
             self.ui.technicalButton.setChecked(False)
+            self.ui.failmodeCB.setEnabled(False)
         # if we want it to look like a label
         # self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
         self.show_hide_technical()
@@ -1078,6 +1080,7 @@ class MarkerClient(QWidget):
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.view_testnum_question)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
+        self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
     def resizeEvent(self, event):
         """
@@ -1539,6 +1542,14 @@ class MarkerClient(QWidget):
             self.ui.technicalButton.setText("Show technical info")
             self.ui.technicalButton.setArrowType(Qt.RightArrow)
             self.ui.frameTechnical.setVisible(False)
+
+    def toggle_fail_mode(self):
+        if self.ui.failmodeCB.isChecked():
+            self.ui.failmodeCB.setToolTip("delay ∈ [2s, 6s], 20% fail")
+            self.Qapp.downloader.enable_fail_mode()
+        else:
+            self.ui.failmodeCB.setToolTip("")
+            self.Qapp.downloader.disable_fail_mode()
 
     def requestNextInBackgroundStart(self):
         """

@@ -106,6 +106,7 @@ class Downloader(QObject):
         self.number_of_fails = 0
         # we're trying to stop, so don't retry for example
         self._stopping = False
+        self.simulate_failures = False
 
     def attach_messenger(self, msgr):
         """Add/replace the current messenger."""
@@ -122,6 +123,14 @@ class Downloader(QObject):
         if self.msgr:
             return True
         return False
+
+    def enable_fail_mode(self):
+        log.info("fail mode ENABLED")
+        self.simulate_failures = True
+
+    def disable_fail_mode(self):
+        log.info("fail mode disabled")
+        self.simulate_failures = False
 
     @classmethod
     def get_placeholder_path(cls):
@@ -228,6 +237,7 @@ class Downloader(QObject):
             row["md5"],
             target_name,
             basedir=self.basedir,
+            simulate_failures=self.simulate_failures
         )
         worker.signals.download_succeed.connect(self._worker_delivers)
         worker.signals.download_fail.connect(self._worker_failed)
@@ -403,7 +413,7 @@ class WorkerSignals(QObject):
 
 
 class DownloadWorker(QRunnable):
-    def __init__(self, msgr, img_id, md5, target_name, *, basedir):
+    def __init__(self, msgr, img_id, md5, target_name, *, basedir, simulate_failures=False):
         super().__init__()
         self._msgr = Messenger.clone(msgr)
         self.img_id = img_id
@@ -411,16 +421,16 @@ class DownloadWorker(QRunnable):
         self.target_name = Path(target_name)
         self.basedir = Path(basedir)
         self.signals = WorkerSignals()
+        self.simulate_failures = simulate_failures
 
     # https://www.pythonguis.com/tutorials/multithreading-pyqt-applications-qthreadpool/
     # consider try except with error signal
 
     @pyqtSlot()
     def run(self):
-        debug = True
-        if debug:
-            fail = random.random() < 0.2
-            debug_wait2 = random.randint(3, 8)
+        if self.simulate_failures:
+            fail = random.random() <= 0.2
+            debug_wait2 = random.randint(2, 6)
             debug_wait1 = random.random() * debug_wait2
             debug_wait2 -= debug_wait1
             sleep(debug_wait1)
@@ -428,7 +438,7 @@ class DownloadWorker(QRunnable):
             t0 = time()
             try:
                 im_bytes = self._msgr.get_image(self.img_id, self.md5)
-                if debug and fail:
+                if self.simulate_failures and fail:
                     # TODO: can get PlomNotAuthorized if the pre-clone msgr is logged out
                     raise NotImplementedError(
                         "TODO: what sort of exceptions are possible?"
@@ -458,9 +468,9 @@ class DownloadWorker(QRunnable):
             )
             self.signals.finished.emit()
             return
-        if debug:
+        if self.simulate_failures:
             sleep(debug_wait2)
-        if debug:
+        if self.simulate_failures:
             log.debug(
                 "worker time: %.3gs download, %.3gs write, %.3gs debuggery",
                 t1 - t0,

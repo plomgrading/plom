@@ -373,7 +373,7 @@
           <item>
            <widget class="QLabel" name="labelTech2">
             <property name="text">
-             <string>last:</string>
+             <string/>
             </property>
            </widget>
           </item>
@@ -388,6 +388,16 @@
            <widget class="QLabel" name="labelTech4">
             <property name="text">
              <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="failmodeCB">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Simulate poor network</string>
             </property>
            </widget>
           </item>
