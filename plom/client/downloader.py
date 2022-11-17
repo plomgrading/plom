@@ -120,7 +120,6 @@ class Downloader(QObject):
         # percentage of download attempts that will fail and an overall
         # delay in seconds in a range (both are i.i.d. per retry).
         # These are ignored unless simulate_failures is True.
-        # TODO: use these in DownloadWorker
         self._simulate_failure_rate = 25.0
         self._simulate_slow_net = (2, 6)
 
@@ -264,7 +263,11 @@ class Downloader(QObject):
             row["md5"],
             target_name,
             basedir=self.basedir,
-            simulate_failures=self.simulate_failures,
+            simulate_failures=(
+                (self._simulate_failure_rate, self._simulate_slow_net)
+                if self.simulate_failures
+                else False
+            ),
         )
         worker.signals.download_succeed.connect(self._worker_delivers)
         worker.signals.download_fail.connect(self._worker_failed)
@@ -463,7 +466,12 @@ class DownloadWorker(QRunnable):
         self.target_name = Path(target_name)
         self.basedir = Path(basedir)
         self.signals = WorkerSignals()
-        self.simulate_failures = simulate_failures
+        if simulate_failures:
+            self._simulate_failure_rate = simulate_failures[0]
+            self._simulate_slow_net = simulate_failures[1]
+            self.simulate_failures = True
+        else:
+            self.simulate_failures = False
 
     # https://www.pythonguis.com/tutorials/multithreading-pyqt-applications-qthreadpool/
     # consider try except with error signal
@@ -471,11 +479,13 @@ class DownloadWorker(QRunnable):
     @pyqtSlot()
     def run(self):
         if self.simulate_failures:
-            fail = random.random() <= 0.2
-            debug_wait2 = random.randint(2, 6)
-            debug_wait1 = random.random() * debug_wait2
-            debug_wait2 -= debug_wait1
-            sleep(debug_wait1)
+            fail = random.random() <= self._simulate_failure_rate / 100
+            a, b = self._simulate_slow_net
+            # generate wait1 + wait2 \in (a, b)
+            wait2 = random.random() * (b - a) + a
+            wait1 = random.random() * wait2
+            wait2 -= wait1
+            sleep(wait1)
         try:
             t0 = time()
             try:
@@ -511,13 +521,13 @@ class DownloadWorker(QRunnable):
             self.signals.finished.emit()
             return
         if self.simulate_failures:
-            sleep(debug_wait2)
+            sleep(wait2)
         if self.simulate_failures:
             log.debug(
                 "worker time: %.3gs download, %.3gs write, %.3gs debuggery",
                 t1 - t0,
                 t2 - t1,
-                debug_wait1 + debug_wait2,
+                wait1 + wait2,
             )
         else:
             log.debug("worker time: %.3gs download, %.3gs write", t1 - t0, t2 - t1)
