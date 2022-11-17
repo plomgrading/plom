@@ -1526,7 +1526,8 @@ class MarkerClient(QWidget):
 
     def update_technical_stats(self, d):
         self.ui.labelTech1.setText(
-            f"downloads: {d['queued']} queued, {d['cache_size']} cached, {d['fail']} failed"
+            f"downloads: {d['queued']} queued, {d['cache_size']} cached,"
+            f" {d['retries']} retried, {d['fails']} failed"
         )
 
     def show_hide_technical(self):

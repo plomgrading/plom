@@ -113,6 +113,7 @@ class Downloader(QObject):
         self._in_progress = {}
         # it still counts as a fail if it eventually retried successfully
         self.number_of_fails = 0
+        self.number_of_retries = 0
         # we're trying to stop, so don't retry for example
         self._stopping = False
         self.make_placeholder()
@@ -178,7 +179,8 @@ class Downloader(QObject):
         in_progress_ids = [k for k, v in self._in_progress.items() if v is True]
         return {
             "cache_size": self.pagecache.how_many_cached(),
-            "fail": self.number_of_fails,
+            "fails": self.number_of_fails,
+            "retries": self.number_of_retries,
             "queued": len(in_progress_ids),
             "in_progress_ids": in_progress_ids,
         }
@@ -333,7 +335,7 @@ class Downloader(QObject):
     def _worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
         """A worker has failed and called us: retry 3 times."""
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
-        self.number_of_fails += 1
+        self.number_of_retries += 1
         self.download_failed.emit(img_id)
         x = self._tries[img_id]
         if x >= 3:
@@ -343,6 +345,7 @@ class Downloader(QObject):
                 self._tries[img_id],
                 self._total_tries[img_id],
             )
+            self.number_of_fails += 1
             self._in_progress[img_id] = False
             return
         if self._stopping:
