@@ -16,6 +16,7 @@ from Progress.views import (
     ScanUnknown,
     ScanError,
     ErrorPagesModal,
+    ErrorPageImage,
     ScanExtra,
     ScanDiscarded,
 )
@@ -56,6 +57,11 @@ urlpatterns = [
         "scan/error/<int:test_paper>/<int:page_number>/<hash>/", 
         ErrorPagesModal.as_view(), 
         name="progress_error_modal"
+    ),
+    path(
+        "scan/error/get/<hash>",
+        ErrorPageImage.as_view(),
+        name="progress_error_image",
     ),
     path("scan/extra/", ScanExtra.as_view(), name="progress_scan_extra"),
     path("scan/discarded/", ScanDiscarded.as_view(), name="progress_scan_discarded"),

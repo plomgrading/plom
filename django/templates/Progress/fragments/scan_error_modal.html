@@ -18,15 +18,22 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col">
-                        <p>Hello there</p>
+                    <div class="col-9">
+                        <img class="w-100 thumbnail shadow-sm" src="{% url 'progress_error_image' error_hash %}">
                     </div>
-                </div>
+                    <div class="col-1">
+                        <div class="w-100">
+                            <a class="btn btn-success">Push Image</a>
+                            <a class="btn btn-danger">Replace</a>
+                            <a class="btn btn-danger">Discard</a>
+                        </div>
+                    </div>
+                </div>  
             </div>
-            <div class="modal-footer">
-                <a class="btn btn-danger">Keep original</a>
+            {% comment %} <div class="modal-footer">
+                <a class="btn btn-danger">Push Image</a>
                 <a class="btn btn-danger">Replace</a>
-            </div>
+            </div> {% endcomment %}
         </div>
     </div>
 </div>

@@ -196,3 +196,13 @@ class ManageScanService:
                 }
             )
         return error_pages
+
+    @transaction.atomic
+    def get_error_image(self, error_image_hash):
+        """
+        Return an error image object based on the hash.
+
+        Args:
+            error_image_hash: sha 256 of the image.
+        """
+        return ErrorImage.objects.get(hash=error_image_hash)

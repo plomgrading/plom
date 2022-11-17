@@ -3,6 +3,7 @@
 
 from django.shortcuts import render
 from django.http import HttpResponse, Http404, FileResponse
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ManagerRequiredView
 from Progress.views import BaseScanProgressPage
@@ -37,3 +38,18 @@ class ErrorPagesModal(ManagerRequiredView):
         })
 
         return render(request, "Progress/fragments/scan_error_modal.html", context)
+
+
+class ErrorPageImage(ManagerRequiredView):
+    """
+    Display the error page image. 
+    """
+    def get(self, request, hash):
+        mss = ManageScanService()
+        error_image_obj = mss.get_error_image(hash)
+        with open(str(error_image_obj.file_name), "rb") as f:
+            test_paper = error_image_obj.paper_number
+            page_number = error_image_obj.page_number
+            error_img_file = str(test_paper).zfill(5) + "_" + str(page_number) + "_error.png"
+            image_file = SimpleUploadedFile(error_img_file, f.read(), content_type="image/png",)
+        return FileResponse(image_file)
