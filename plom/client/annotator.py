@@ -41,6 +41,7 @@ from PyQt5.QtWidgets import (
     QWidget,
     QMenu,
     QMessageBox,
+    QProgressDialog,
     QShortcut,
     QToolButton,
     QFileDialog,
@@ -716,7 +717,24 @@ class Annotator(QWidget):
 
         dl = self.parentMarkerUI.Qapp.downloader
         page_data = dl.msgr.get_pagedata_context_question(testNumber, self.question_num)
-        page_data = dl.sync_downloads(page_data)
+        # TODO: eventually want dialog to open during loading, Issue #2355
+        N = len(page_data)
+        pd = QProgressDialog(
+            "Downloading additional images\nStarting up...", None, 0, N, self
+        )
+        pd.setWindowModality(Qt.WindowModal)
+        pd.setMinimumDuration(500)
+        pd.setValue(0)
+        self.parentMarkerUI.Qapp.processEvents()
+        for i, row in enumerate(page_data):
+            # TODO: would be nice to show the size in MiB here!
+            pd.setLabelText(
+                f"Downloading additional images\nFile {i + 1} of {N}: img id {row['id']}"
+            )
+            pd.setValue(i + 1)
+            self.parentMarkerUI.Qapp.processEvents()
+            row = dl.sync_download(row)
+        pd.close()
 
         #
         for x in image_md5_list:
