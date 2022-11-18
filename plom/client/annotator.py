@@ -211,7 +211,7 @@ class Annotator(QWidget):
 
                 <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
 
-                <p>Copyright &copy; 2018-2021 Andrew Rechnitzer,
+                <p>Copyright &copy; 2018-2022 Andrew Rechnitzer,
                 Colin B. Macdonald, and other contributors.</p>
 
                 <p>Plom is Free Software, available under the GNU Affero
