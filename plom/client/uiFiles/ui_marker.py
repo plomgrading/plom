@@ -30,7 +30,11 @@ class Ui_MarkerWindow(object):
         self.verticalLayout = QtWidgets.QVBoxLayout(self.frame)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.tableBox = QtWidgets.QGroupBox(self.frame)
+        self.labelTasks = QtWidgets.QLabel(self.frame)
+        self.labelTasks.setText("<Tasks>")
+        self.labelTasks.setObjectName("labelTasks")
+        self.verticalLayout.addWidget(self.labelTasks)
+        self.tableBox = QtWidgets.QFrame(self.frame)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(1)
@@ -38,6 +42,7 @@ class Ui_MarkerWindow(object):
         self.tableBox.setSizePolicy(sizePolicy)
         self.tableBox.setObjectName("tableBox")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.tableBox)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.tableView = SimpleTableView(self.tableBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -151,7 +156,6 @@ class Ui_MarkerWindow(object):
     def retranslateUi(self, MarkerWindow):
         _translate = QtCore.QCoreApplication.translate
         MarkerWindow.setWindowTitle(_translate("MarkerWindow", "Mark papers"))
-        self.tableBox.setTitle(_translate("MarkerWindow", "Your paper list"))
         self.annButton.setText(_translate("MarkerWindow", "&Annotate && mark"))
         self.deferButton.setText(_translate("MarkerWindow", "&Defer"))
         self.tagButton.setText(_translate("MarkerWindow", "&Tags"))

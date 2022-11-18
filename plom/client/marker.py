@@ -988,7 +988,7 @@ class MarkerClient(QWidget):
             question_label = get_question_label(self.exam_spec, self.question)
         except (ValueError, KeyError):
             question_label = "???"
-        self.ui.tableBox.setTitle(
+        self.ui.labelTasks.setText(
             "Marking {} (ver. {}) of “{}”".format(
                 question_label, self.version, self.exam_spec["name"]
             )
