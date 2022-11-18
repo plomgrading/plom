@@ -914,7 +914,7 @@ class MarkerClient(QWidget):
         self.connectGuiButtons()
 
         try:
-            self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
+            self.maxMark = self.msgr.getMaxMark(self.question)
         except PlomRangeException as err:
             ErrorMsg(self, str(err)).exec()
             return

@@ -59,7 +59,8 @@ def status(*, msgr):
         sv = SpecVerifier(spec)
         print(sv)
         # maybe above printer should do this?
-        print(f"  Server public code: {spec['publicCode']}")
+        # TODO: Issue #2362, Django does not have
+        # print(f"  Server public code: {spec['publicCode']}")
 
     print("\nUser information")
     print("----------------\n")

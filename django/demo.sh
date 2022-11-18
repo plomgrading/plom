@@ -38,7 +38,9 @@ python3 manage.py plom_papers build
 # WebPlom needs a Huey consumer running in order to complete some background tasks.
 # In a separate terminal window, call:
 # `python3 manage.py djangohuey`
-# you must do this after running demo.sh b/c it erases the huey_db file
+# you must do this after running demo.sh b/c demo.sh erases the huey_db file
+# Here is one option for launching it automatically:
+xterm -e "python3 manage.py djangohuey" &
 
 # This is for production use, when Debug = False
 # python3 manage.py collectstatic
