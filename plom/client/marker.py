@@ -1512,9 +1512,7 @@ class MarkerClient(QWidget):
 
     def background_download_finished(self, img_id, md5, local_filename):
         log.debug(f"PageCache has finished downloading {img_id} {local_filename}")
-        self.ui.labelTech2.setText(
-            f"<p><small>last msg: downloaded img id={img_id}</p></small>"
-        )
+        self.ui.labelTech2.setText(f"<p>last msg: downloaded img id={img_id}</p>")
         self.ui.labelTech2.setToolTip(f"{local_filename}")
         # TODO: time this
         self.examModel._expensive_search_and_update(img_id, md5, local_filename)
@@ -1525,9 +1523,7 @@ class MarkerClient(QWidget):
         self._updateCurrentlySelectedRow()
 
     def background_download_failed(self, img_id):
-        self.ui.labelTech2.setText(
-            f"<p><small>last msg: failed download img id={img_id}</p><small>"
-        )
+        self.ui.labelTech2.setText(f"<p>last msg: failed download img id={img_id}</p>")
         print(f"failed download img id={img_id}")
         self.ui.labelTech2.setToolTip("")
 
@@ -1537,10 +1533,10 @@ class MarkerClient(QWidget):
 
     def update_technical_stats(self, d):
         self.ui.labelTech1.setText(
-            "<p><small>"
+            "<p>"
             f"downloads: {d['queued']} queued, {d['cache_size']} cached,"
             f" {d['retries']} retried, {d['fails']} failed"
-            "</small></p>"
+            "</p>"
         )
 
     def show_hide_technical(self):
@@ -1548,6 +1544,10 @@ class MarkerClient(QWidget):
             self.ui.technicalButton.setText("Hide technical info")
             self.ui.technicalButton.setArrowType(Qt.DownArrow)
             self.ui.frameTechnical.setVisible(True)
+            ptsz = self.ui.technicalButton.fontInfo().pointSizeF()
+            self.ui.frameTechnical.setStyleSheet(
+                f"QWidget {{ font-size: {0.7*ptsz}pt; }}"
+            )
             # future use
             self.ui.labelTech3.setVisible(False)
             self.ui.labelTech4.setVisible(False)
