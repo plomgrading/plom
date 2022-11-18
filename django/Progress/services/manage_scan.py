@@ -2,6 +2,8 @@
 # Copyright (C) 2022 Edith Coates
 
 import shutil
+import arrow
+from datetime import datetime
 
 from django.db import transaction
 from django.db.models import Exists, OuterRef
@@ -15,7 +17,7 @@ from Papers.models import (
     DiscardedImage,
     Image,
 )
-from Scan.models import StagingImage
+from Scan.models import StagingImage, StagingBundle
 
 
 class ManageScanService:
@@ -385,3 +387,37 @@ class ManageScanService:
         # TODO: calls for unknown images, page images, error images, etc
         else:
             raise ValueError("Unable to determine original class of discarded image.")
+
+    @transaction.atomic
+    def get_n_bundles(self):
+        """
+        Return the number of uploaded bundles.
+        """
+
+        return len(StagingBundle.objects.all())
+
+    @transaction.atomic
+    def get_bundles_list(self):
+        """
+        Return a list of all uploaded bundles.
+        """
+
+        bundles = StagingBundle.objects.all()
+
+        bundle_list = []
+        for bundle in bundles:
+            n_pages = len(StagingImage.objects.filter(bundle=bundle))
+            n_complete = len(Image.objects.filter(bundle__hash=bundle.pdf_hash))
+            time_uploaded = datetime.fromtimestamp(bundle.timestamp)
+
+            bundle_list.append(
+                {
+                    "name": bundle.slug,
+                    "username": bundle.user.username,
+                    "uploaded": arrow.get(time_uploaded).humanize(),
+                    "n_pages": n_pages,
+                    "n_complete": n_complete,
+                }
+            )
+
+        return bundle_list

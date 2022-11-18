@@ -16,6 +16,14 @@ class ScanBundles(BaseScanProgressPage):
 
     def get(self, request):
         context = self.build_context("bundles")
+        mss = ManageScanService()
+
+        context.update(
+            {
+                "n_bundles": mss.get_n_bundles(),
+                "bundles": mss.get_bundles_list(),
+            }
+        )
         return render(request, "Progress/scan_bundles.html", context)
 
 
