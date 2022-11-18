@@ -56,6 +56,7 @@ class Ui_MarkerWindow(object):
         self.tableView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.tableView.setGridStyle(QtCore.Qt.DotLine)
         self.tableView.setObjectName("tableView")
+        self.tableView.verticalHeader().setVisible(False)
         self.verticalLayout_2.addWidget(self.tableView)
         self.frame1 = QtWidgets.QFrame(self.tableBox)
         self.frame1.setObjectName("frame1")
