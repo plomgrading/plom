@@ -206,3 +206,11 @@ class ManageScanService:
             error_image_hash: sha 256 of the image.
         """
         return ErrorImage.objects.get(hash=error_image_hash)
+
+    @transaction.atomic
+    def get_n_error_image(self):
+        """
+        Return number of error pages that are flagged
+        to the manager.
+        """
+        return len(ErrorImage.objects.filter(flagged=True))

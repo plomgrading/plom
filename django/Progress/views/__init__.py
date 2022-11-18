@@ -21,6 +21,7 @@ from .scan_error import (
     ScanError,
     ErrorPagesModal,
     ErrorPageImage,
+    PushErrorPageImage,
 )
 
 from .scan_progress import (

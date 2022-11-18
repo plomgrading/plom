@@ -19,7 +19,7 @@ class ScanError(BaseScanProgressPage):
         context = self.build_context("error_page")
         mss = ManageScanService()
         error_pages = mss.get_error_pages_list()
-        context.update({"error_pages": error_pages, "n_errors": len(error_pages)})
+        context.update({"error_pages": error_pages, "n_error": len(error_pages)})
         return render(request, "Progress/scan_error.html", context)
 
 
@@ -53,3 +53,14 @@ class ErrorPageImage(ManagerRequiredView):
             error_img_file = str(test_paper).zfill(5) + "_" + str(page_number) + "_error.png"
             image_file = SimpleUploadedFile(error_img_file, f.read(), content_type="image/png",)
         return FileResponse(image_file)
+
+
+class ReplaceErrorPageImage(ManagerRequiredView):
+    pass
+
+
+class PushErrorPageImage(ManagerRequiredView):
+    """
+    Push the read
+    """
+    pass

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -22,6 +23,7 @@ class BaseScanProgressPage(ManagerRequiredView):
             {
                 "curr_page": page_name,
                 "n_colliding": mss.get_n_colliding_pages(),
+                "n_error": mss.get_n_error_image(),
             }
         )
 
