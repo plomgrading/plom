@@ -572,6 +572,7 @@ fedora_build:
     - pip --version
   script:
     # temporary, see https://github.com/cheind/py-lapsolver/issues/18
+    - dnf install -y git
     - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
     - pip install .
     # First, run the unit tests
