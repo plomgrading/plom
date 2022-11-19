@@ -153,7 +153,10 @@ class ImageItem(QGraphicsPixmapItem):
         Returns:
             None
         """
-        dialog = ImageSettingsDialog(self.scene().views()[0], int(self.scale() * 100), self.border)
+        # yuck, had to go way up the chain to find someone who can parent a dialog!
+        # maybe that means this code should NOT be opening dialogs
+        parent = self.scene().views()[0]
+        dialog = ImageSettingsDialog(parent, int(self.scale() * 100), self.border)
         if dialog.exec():
             scale, border = dialog.getSettings()
             self.setScale(scale / 100)
