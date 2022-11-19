@@ -571,6 +571,8 @@ fedora_build:
           iproute
     - pip --version
   script:
+    # temporary, see https://github.com/cheind/py-lapsolver/issues/18
+    - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
     - pip install .
     # First, run the unit tests
     - pytest-3 -l --pyargs plom
