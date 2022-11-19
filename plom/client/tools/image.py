@@ -163,7 +163,7 @@ class ImageItem(QGraphicsPixmapItem):
                     self.thick = 4
                 else:
                     self.thick = 0
-                self.update()  # trigger update
+            self.update()  # trigger update
 
 
 class ImageSettingsDialog(QDialog):
