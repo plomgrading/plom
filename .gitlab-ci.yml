@@ -564,7 +564,8 @@ fedora_build:
           python3-seaborn python3-aiohttp
           python3-peewee python3-pandas python3-requests-toolbelt
           python3-pip python3-wheel python3-setuptools
-          python3-toml python3-weasyprint python3-pillow python3-tqdm python3-appdirs
+          python3-toml python3-weasyprint python3-pillow python3-tqdm
+          python3-appdirs python3-arrow
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
           file python3-file-magic
