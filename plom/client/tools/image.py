@@ -153,7 +153,7 @@ class ImageItem(QGraphicsPixmapItem):
         Returns:
             None
         """
-        dialog = ImageSettingsDialog(int(self.scale() * 100), self.border)
+        dialog = ImageSettingsDialog(self.scene().views()[0], int(self.scale() * 100), self.border)
         if dialog.exec():
             scale, border = dialog.getSettings()
             self.setScale(scale / 100)
@@ -172,7 +172,7 @@ class ImageSettingsDialog(QDialog):
     NumGridRows = 2
     NumButtons = 3
 
-    def __init__(self, scalePercent, checked):
+    def __init__(self, parent, scalePercent, checked):
         """
         Initialize a new image settings dialog object.
 
@@ -181,7 +181,7 @@ class ImageSettingsDialog(QDialog):
             checked (bool): True if the image currently has a red border,
                 False otherwise.
         """
-        super().__init__()
+        super().__init__(parent)
         self.createFormGroupBox(scalePercent, checked)
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.accept)
