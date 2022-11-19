@@ -577,7 +577,9 @@ fedora_build:
     - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
     - pip install .
     # First, run the unit tests
-    - pytest-3 -l --pyargs plom
+    - which pytest-3
+    - which pytest
+    - pytest plom
     # Build tests
     - mkdir play
     - pushd play
