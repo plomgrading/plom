@@ -291,6 +291,7 @@ class TextItem(QGraphicsTextItem):
             command = CommandMoveText(self, value)
             # Notice that the value here is the new position, not the delta.
             self.scene().undoStack.push(command)
+            self.scene()._set_dirty()
         return super().itemChange(change, value)
 
     def pickle(self):

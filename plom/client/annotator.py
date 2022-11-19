@@ -474,10 +474,14 @@ class Annotator(QWidget):
         # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
             self.unpickleIt(plomDict)
+            self._is_reannotate = True
+            # restoring the scene would've marked it dirty
+            self.scene.reset_dirty()
         else:
             # if there is a held crop rectangle, then use it.
             if self.held_crop_rectangle_data:
                 self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
+            self._is_reannotate = False
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
@@ -739,10 +743,10 @@ class Annotator(QWidget):
                 log.error(s)
                 ErrorMsg(self, s).exec()
 
-        is_dirty = self.scene.areThereAnnotations()
+        has_annotations = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data, is_dirty
+            self, testNumber, self.src_img_data, page_data, has_annotations
         )
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
@@ -1597,7 +1601,7 @@ class Annotator(QWidget):
             return
 
         # We are here b/c of cancel button, titlebar close, or related
-        if self.scene and self.scene.areThereAnnotations():
+        if self.is_dirty():
             msg = SimpleQuestion(
                 self,
                 "<p>There are annotations on the page.</p>\n"
@@ -1610,6 +1614,22 @@ class Annotator(QWidget):
         log.debug("emitting reject/cancel signal, discarding, and closing")
         self.annotator_done_reject.emit(self.tgvID)
         event.accept()
+
+    def is_dirty(self):
+        """Is the scene dirty?
+
+        Has the scene been annotated this session?  Re-opening a previous
+        annotated scene does not dirty it, until changes are made.  The
+        concept is more like "filed saved" in a text editor.
+        """
+        if not self.scene:
+            return False
+        if self._is_reannotate:
+            return self.scene.is_dirty()
+        if self.scene.areThereAnnotations():
+            # scene.is_dirty() might be fragile, trust this easier check
+            return True
+        return False
 
     def get_nonrubric_text_from_page(self):
         """Retrieves text (not in rubrics) from the scene.

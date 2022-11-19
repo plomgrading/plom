@@ -50,6 +50,7 @@ class LineItem(QGraphicsLineItem):
             # If the position changes then do so with an redo/undo command
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
+            self.scene()._set_dirty()
         return super().itemChange(change, value)
 
     def pickle(self):

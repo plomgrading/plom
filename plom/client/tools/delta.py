@@ -55,6 +55,7 @@ class DeltaItem(QGraphicsTextItem):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveText(self, value)
             self.scene().undoStack.push(command)
+            self.scene()._set_dirty()
         return super().itemChange(change, value)
 
     def pickle(self):

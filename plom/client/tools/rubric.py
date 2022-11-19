@@ -151,6 +151,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
+            self.scene()._set_dirty()
         return QGraphicsItemGroup.itemChange(self, change, value)
 
     def pickle(self):

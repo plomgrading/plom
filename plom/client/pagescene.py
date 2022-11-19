@@ -420,6 +420,7 @@ class PageScene(QGraphicsScene):
                 example a string like "Q7", or `None` if not relevant.
         """
         super().__init__(parent)
+        self._dirty = False
         # Grab filename of groupimage
         self.src_img_data = src_img_data  # TODO: do we need this saved?
         self.maxMark = maxMark
@@ -822,6 +823,34 @@ class PageScene(QGraphicsScene):
             if type(X) is GroupDeltaTextItem:
                 count += 1
         return count
+
+    def reset_dirty(self):
+        if self._dirty:
+            log.debug("scene dirtiness reset")
+            # TODO: emit signal?
+            self._dirty = False
+
+    def _set_dirty(self):
+        if not self._dirty:
+            log.debug("scene is now dirty")
+            # TODO: emit signal?  Annotator can listen and mark a star
+            self._dirty = True
+
+    def is_dirty(self):
+        """Has the scene had new annotations added this session?
+
+        Note that annotations from a older session should not cause this
+        to return true.
+
+        Implementation notes: it should be possible to connect this to
+        the undo stack: that would be sensible.  But our undo stack is
+        not empty on regrade starting.  So for now we use an instance
+        variable and (try to) set it everywhere that changes annotations.
+
+        TODO: for the future, read about this:
+        https://doc.qt.io/qt-6/qundostack.html#clean-prop
+        """
+        return self._dirty
 
     def areThereAnnotations(self):
         """
@@ -1252,6 +1281,7 @@ class PageScene(QGraphicsScene):
                 command = CommandCross(self, pt)
             else:
                 command = CommandTick(self, pt)
+        self._set_dirty()
         self.undoStack.push(command)  # push onto the stack.
 
     def mousePressCross(self, event):
@@ -1388,6 +1418,7 @@ class PageScene(QGraphicsScene):
                     self.boxLineStampState
                 )
             )
+            self._set_dirty()
             self.undoStack.push(command)  # push the delta onto the undo stack.
             self.refreshStateAndScore()  # and now refresh the markingstate and score
 
@@ -1400,8 +1431,8 @@ class PageScene(QGraphicsScene):
 
     def mousePressMove(self, event):
         """
-        Create closed hand cursor when move-tool is selected, otherwise does
-            nothing.
+        Create closed hand cursor when move-tool is selected, otherwise does nothing.
+
         Notes:
             The actual moving of objects is handled by themselves since they
             know how to handle the ItemPositionChange signal as a move-command.
@@ -1481,6 +1512,7 @@ class PageScene(QGraphicsScene):
             # Construct empty text object, give focus to start editor
             ept = event.scenePos()
             command = CommandText(self, ept, "")
+            self._set_dirty()
             # move so centred under cursor   TODO: move into class!
             pt = ept - QPointF(0, command.blurb.boundingRect().height() / 2)
             command.blurb.setPos(pt)
@@ -1526,6 +1558,7 @@ class PageScene(QGraphicsScene):
             command.blurb.enable_interactive()
             command.blurb.setFocus()
             self.undoStack.push(command)
+            self._set_dirty()
 
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
@@ -1583,6 +1616,7 @@ class PageScene(QGraphicsScene):
             imageFilePath = self.tempImagePath
             command = CommandImage(self, event.scenePos(), QImage(imageFilePath))
             self.undoStack.push(command)
+            self._set_dirty()
             self.tempImagePath = None
             # set the mode back to move
             self.parent().toMoveMode()
@@ -1840,6 +1874,7 @@ class PageScene(QGraphicsScene):
             ):
                 command = CommandBox(self, nrect)
                 self.undoStack.push(command)
+                self._set_dirty()
         else:
             self.removeItem(self.ellipseItem)
             # check if ellipse has some area (don't allow long/thin)
@@ -1849,6 +1884,7 @@ class PageScene(QGraphicsScene):
             ):
                 command = CommandEllipse(self, self.ellipseItem.rect())
                 self.undoStack.push(command)
+                self._set_dirty()
 
         self.boxFlag = 0
 
@@ -1937,6 +1973,7 @@ class PageScene(QGraphicsScene):
         # don't add if too short
         if (self.originPos - self.currentPos).manhattanLength() > 24:
             self.undoStack.push(command)
+            self._set_dirty()
 
     def mousePressPen(self, event):
         """
@@ -2042,6 +2079,7 @@ class PageScene(QGraphicsScene):
         self.penFlag = 0
         self.removeItem(self.pathItem)
         self.undoStack.push(command)
+        self._set_dirty()
         # don't add if too short - check by boundingRect
         # TODO: decide threshold for pen annotation size
         # if (
@@ -2220,6 +2258,7 @@ class PageScene(QGraphicsScene):
         if getattr(item, "saveable", False):  # we can only delete "saveable" items
             command = CommandDelete(self, item)
             self.undoStack.push(command)
+            self._set_dirty()
 
     def mouseReleaseRubric(self, event):
         # if haven't started drawing, or are mid draw of line be careful of what is underneath
@@ -2251,6 +2290,7 @@ class PageScene(QGraphicsScene):
                     self.boxLineStampState
                 )
             )
+            self._set_dirty()
             # push the delta onto the undo stack.
             self.undoStack.push(command)
             self.refreshStateAndScore()  # and now refresh the markingstate and score
@@ -2571,6 +2611,7 @@ class PageScene(QGraphicsScene):
             "NO ANSWER GIVEN",
         )
         self.undoStack.push(command)
+        self._set_dirty()
         self.refreshStateAndScore()  # and now refresh the markingstate and score
 
     def stopMidDraw(self):

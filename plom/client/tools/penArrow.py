@@ -95,6 +95,7 @@ class PenArrowItem(QGraphicsItemGroup):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
+            self.scene()._set_dirty()
         return super().itemChange(change, value)
 
     # poorman's inheritance!

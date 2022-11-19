@@ -93,6 +93,7 @@ class ImageItem(QGraphicsPixmapItem):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
+            self.scene()._set_dirty()
         return super().itemChange(change, value)
 
     def paint(self, painter, option, widget=None):
@@ -157,6 +158,7 @@ class ImageItem(QGraphicsPixmapItem):
         if dialog.exec():
             scale, border = dialog.getSettings()
             self.setScale(scale / 100)
+            self.scene()._set_dirty()
             if border is not self.border:
                 self.border = border
                 if self.border:  # update border thickness
