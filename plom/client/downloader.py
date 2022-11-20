@@ -9,11 +9,16 @@ The background downloader downloads images using threads.
 
 import logging
 import random
-import importlib.resources as resources
+import sys
 import tempfile
 import threading
 from time import sleep, time
 from pathlib import Path
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtCore import QThreadPool, QRunnable
@@ -107,6 +112,7 @@ class Downloader(QObject):
         # we're trying to stop, so don't retry for example
         self._stopping = False
         self.simulate_failures = False
+        self.make_placeholder()
 
     def attach_messenger(self, msgr):
         """Add/replace the current messenger."""
@@ -132,19 +138,30 @@ class Downloader(QObject):
         log.info("fail mode disabled")
         self.simulate_failures = False
 
-    @classmethod
-    def get_placeholder_path(cls):
-        """A static image that can be used as a placeholder while images are downloading.
-
-        Currently this must be a string (not an Path for example) b/c of some Qt
-        limitations in the ExamModel and proxy stuff in Marker.
-
-        TODO: Issue #2357: better image or perhaps an animation?
-        """
+    def make_placeholder(self):
         # Not imported earlier b/c of some circular import stuff (?)
         import plom.client.icons
 
-        return str(resources.path(plom.client.icons, "manager_unknown.svg"))
+        res = resources.files(plom.client.icons) / "manager_unknown.svg"
+        placeholder = self.basedir / "placeholder"
+        placeholder = placeholder.with_suffix(res.suffix)
+        with res.open("rb") as fin, placeholder.open("wb") as fout:
+            fout.write(fin.read())
+        self._placeholder_image = placeholder
+
+    def get_placeholder_path(self):
+        """A static image that can be used as a placeholder while images are downloading.
+
+        returns:
+            pathlib.Path: a real path on disc to the image, possibly a cached
+                copy.  But for now its a `str` (TODO?).
+
+        Currently you may have to make a string (not an Path for example) b/c
+        of some Qt limitations in the ExamModel and proxy stuff in Marker.
+
+        TODO: Issue #2357: better image or perhaps an animation?
+        """
+        return str(self._placeholder_image)
 
     def get_stats(self):
         # TODO: would be nice to know the "gave up after 3 tries" failures...

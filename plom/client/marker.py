@@ -70,7 +70,6 @@ from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
-from .downloader import Downloader
 
 
 if platform.system() == "Darwin":
@@ -1232,7 +1231,7 @@ class MarkerClient(QWidget):
                 continue
             # TODO:
             # row["filename"] = None
-            row["filename"] = Downloader.get_placeholder_path()
+            row["filename"] = self.downloader.get_placeholder_path()
             self.downloader.download_in_background_thread(row)
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
@@ -1426,7 +1425,7 @@ class MarkerClient(QWidget):
         `examModel` having a row for the task already.
         """
         img_src_data = self.examModel.get_source_image_data(task)
-        placeholder = Downloader.get_placeholder_path()
+        placeholder = self.downloader.get_placeholder_path()
         for row in img_src_data:
             if row["filename"] == placeholder:
                 log.info(
@@ -1476,7 +1475,7 @@ class MarkerClient(QWidget):
             if PC.has_page_image(row["id"]):
                 row["filename"] = PC.page_image_path(row["id"])
             else:
-                row["filename"] = Downloader.get_placeholder_path()
+                row["filename"] = self.downloader.get_placeholder_path()
 
         # potential race with the downloader so trigger downloads after table insert
         self.examModel.addPaper(
@@ -1489,7 +1488,7 @@ class MarkerClient(QWidget):
         )
 
         for row in src_img_data:
-            if row["filename"] == Downloader.get_placeholder_path():
+            if row["filename"] == self.downloader.get_placeholder_path():
                 self.downloader.download_in_background_thread(row)
 
     def moveSelectionToTask(self, task):
@@ -1596,7 +1595,7 @@ class MarkerClient(QWidget):
         # processEvents() so we can receive the downloader-finished signal.
         task = self.prxM.getPrefix(pr)
         count = 0
-        placeholder = Downloader.get_placeholder_path()
+        placeholder = self.downloader.get_placeholder_path()
         while True:
             keep_waiting = False
             foo = self.examModel.get_source_image_data(task)
@@ -1718,7 +1717,7 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         count = 0
-        placeholder = Downloader.get_placeholder_path()
+        placeholder = self.downloader.get_placeholder_path()
         while True:
             keep_waiting = False
             img_src_data = self.examModel.get_source_image_data(task)
