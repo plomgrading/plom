@@ -11,13 +11,18 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 from copy import deepcopy
-import importlib.resources as resources
 import json
 import logging
 from pathlib import Path
 import os
 import re
+import sys
 from textwrap import dedent
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 from PyQt5.QtCore import (
     Qt,
@@ -542,7 +547,8 @@ class Annotator(QWidget):
 
         def _pixmap_from(f):
             pm = QPixmap()
-            pm.loadFromData(resources.read_binary(plom.client.cursors, f))
+            res = resources.files(plom.client.cursors) / f
+            pm.loadFromData(res.read_bytes())
             return pm
 
         # The keys here are magic values that connect to tools
@@ -945,7 +951,8 @@ class Annotator(QWidget):
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))
         pm = QPixmap()
-        pm.loadFromData(resources.read_binary(plom.client.icons, iconfile))
+        res = resources.files(plom.client.icons) / iconfile
+        pm.loadFromData(res.read_bytes())
         toolButton.setIcon(QIcon(pm))
         # toolButton.setIconSize(QSize(40, 40))
 

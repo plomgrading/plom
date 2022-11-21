@@ -3,8 +3,13 @@
 # Copyright (C) 2021-2022 Colin B. Macdonald
 
 from copy import deepcopy
-import importlib.resources as resources
 import logging
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 from PyQt5.QtCore import Qt, QBuffer, QByteArray
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
@@ -294,7 +299,8 @@ class RubricNavDiagram(QFrame):
 
     def put_stuff(self, keydata):
         pix = QPixmap()
-        pix.loadFromData(resources.read_binary(plom.client.help_img, "nav_rubric.png"))
+        res = resources.files(plom.client.help_img) / "nav_rubric.png"
+        pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
         sheet = "QPushButton { color : teal; font-size: 24pt;}"
@@ -350,7 +356,8 @@ class ToolNavDiagram(QFrame):
 
     def put_stuff(self, keydata):
         pix = QPixmap()
-        pix.loadFromData(resources.read_binary(plom.client.help_img, "nav_tools.png"))
+        res = resources.files(plom.client.help_img) / "nav_tools.png"
+        pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
         # little helper to extract from keydata
@@ -392,10 +399,8 @@ class ClickDragPage(QWidget):
         grid = QVBoxLayout()
         # load the gif from resources - needs a little subterfuge
         # https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif
-
-        film_bytes = QByteArray(
-            resources.read_binary(plom.client.help_img, "click_drag.gif")
-        )
+        res = resources.files(plom.client.help_img) / "click_drag.gif"
+        film_bytes = QByteArray(res.read_bytes())
         film_buffer = QBuffer(film_bytes)
         film = QMovie()
         film.setDevice(film_buffer)
