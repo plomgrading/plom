@@ -10,7 +10,6 @@ __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from copy import deepcopy
 import json
 import logging
 from pathlib import Path
