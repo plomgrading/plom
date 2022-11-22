@@ -189,32 +189,28 @@ def addCollidingPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
 
 
 def replaceMissingTestPage(self, testNumber, pageNumber, version):
-    # TODO - we should probably have some sort of try/except around this.
-    pageNotSubmitted.build_test_page_substitute(testNumber, pageNumber, version)
-    # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
-    originalName = "pns.{}.{}.{}.png".format(testNumber, pageNumber, version)
-    prefix = "pns.{}p{}v{}".format(
-        str(testNumber).zfill(4), str(pageNumber).zfill(2), version
-    )
-    # make a non-colliding name
-    while True:
-        unique = "." + str(uuid.uuid4())[:8]
-        newName = Path("pages/originalPages") / (prefix + unique + ".png")
-        if not newName.exists():
-            break
-    # compute md5sum and put into database
-    with open(originalName, "rb") as f:
-        md5 = hashlib.md5(f.read()).hexdigest()
-    rval = self.DB.replaceMissingTestPage(
-        testNumber, pageNumber, version, originalName, newName, md5
-    )
-    # if move successful then actually move file into place, else delete it
-    # TODO: see Issue #2377
-    if rval[0]:
-        shutil.move(originalName, newName)
-    else:
-        os.unlink(originalName)
-    return rval
+    with tempfile.TemporaryDirectory() as td:
+        tmp = pageNotSubmitted.build_test_page_substitute(
+            testNumber, pageNumber, version, outdir=td
+        )
+        prefix = "pns.{}p{}v{}".format(
+            str(testNumber).zfill(4), str(pageNumber).zfill(2), version
+        )
+        # make a non-colliding name
+        while True:
+            unique = "." + str(uuid.uuid4())[:8]
+            newName = Path("pages/originalPages") / (prefix + unique + tmp.suffix)
+            if not newName.exists():
+                break
+        with open(tmp, "rb") as f:
+            md5 = hashlib.md5(f.read()).hexdigest()
+        rval = self.DB.replaceMissingTestPage(
+            testNumber, pageNumber, version, tmp.name, newName, md5
+        )
+        # if DB successful then actually move file into place, else GC will cleanup
+        if rval[0]:
+            shutil.move(tmp, newName)
+        return rval
 
 
 def replaceMissingDNMPage(self, papernum, pagenum):
@@ -230,8 +226,10 @@ def replaceMissingDNMPage(self, papernum, pagenum):
         with open(tmp, "rb") as f:
             md5 = hashlib.md5(f.read()).hexdigest()
         # all DNM are test pages with version 1, so recycle the missing test page function
-        rval = self.DB.replaceMissingTestPage(papernum, pagenum, 1, tmp, newName, md5)
-        # if DB successful then actually move file into place
+        rval = self.DB.replaceMissingTestPage(
+            papernum, pagenum, 1, tmp.name, newName, md5
+        )
+        # if DB successful then actually move file into place, else GC will cleanup
         if rval[0]:
             shutil.move(tmp, newName)
         return rval
@@ -239,31 +237,27 @@ def replaceMissingDNMPage(self, papernum, pagenum):
 
 def autogenerateIDPage(self, testNumber, student_id, student_name):
     # Do not call this directly, it should be called by createIDPageForHW
-    pageNotSubmitted.build_generated_id_page_for_student(student_id, student_name)
-
-    # produces a file "autogen.<sid>.png"
-    originalName = "autogen.{}.png".format(student_id)
-    prefix = "autogen.{}.{}".format(str(testNumber).zfill(4), student_id)
-    # make a non-colliding name
-    while True:
-        unique = "." + str(uuid.uuid4())[:8]
-        newName = Path("pages/originalPages") / (prefix + unique + ".png")
-        if not newName.exists():
-            break
-    # compute md5sum and put into database
-    with open(originalName, "rb") as f:
-        md5 = hashlib.md5(f.read()).hexdigest()
-    # all ID are test pages with version 1, so recycle the missing test page function
-    # get the id-page's pagenumber from the spec
-    pg = self.testSpec["idPage"]
-    rval = self.DB.replaceMissingTestPage(testNumber, pg, 1, originalName, newName, md5)
-    # if move successful then actually move file into place, else delete it
-    # TODO: see Issue #2377
-    if rval[0]:
-        shutil.move(originalName, newName)
-    else:
-        os.unlink(originalName)
-    return rval
+    with tempfile.TemporaryDirectory() as td:
+        tmp = pageNotSubmitted.build_generated_id_page_for_student(
+            student_id, student_name, outdir=td
+        )
+        prefix = "autogen.{}.{}".format(str(testNumber).zfill(4), student_id)
+        # make a non-colliding name
+        while True:
+            unique = "." + str(uuid.uuid4())[:8]
+            newName = Path("pages/originalPages") / (prefix + unique + tmp.suffix)
+            if not newName.exists():
+                break
+        with open(tmp, "rb") as f:
+            md5 = hashlib.md5(f.read()).hexdigest()
+        # all ID are test pages with version 1, so recycle the missing test page function
+        # get the id-page's pagenumber from the spec
+        pg = self.testSpec["idPage"]
+        rval = self.DB.replaceMissingTestPage(testNumber, pg, 1, tmp.name, newName, md5)
+        # if DB successful then actually move file into place, else GC will cleanup
+        if rval[0]:
+            shutil.move(tmp, newName)
+        return rval
 
 
 def getTPageImage(self, *args, **kwargs):
@@ -396,34 +390,30 @@ def replaceMissingHWQuestion(self, sid, test, question):
         if test is None:
             return [False, "Need at least one of sid or test"]
         rval = self.DB.getSIDFromTest(test)
-        if rval[0]:
-            sid = rval[1]
-        else:
+        if not rval[0]:
             return rval
+        sid = rval[1]
 
-    # TODO - we should probably have some sort of try/except around this.
-    pageNotSubmitted.build_homework_question_substitute(sid, question)
-    # produces a file "pns.<sid>.<pageNumber>.<ver>.png"
-    originalName = "qns.{}.{}.png".format(sid, question)
-    prefix = "pns.{}q{}".format(sid, question)
-    # make a non-colliding name
-    while True:
-        unique = "." + str(uuid.uuid4())[:8]
-        newName = Path("pages/originalPages") / (prefix + unique + ".png")
-        if not newName.exists():
-            break
-    # compute md5sum and put into database
-    with open(originalName, "rb") as f:
-        md5 = hashlib.md5(f.read()).hexdigest()
-    # now try to put it into place
-    rval = self.DB.replaceMissingHWQuestion(sid, question, originalName, newName, md5)
-    # if move successful then actually move file into place, else delete it
-    # TODO: see Issue #2377
-    if rval[0]:
-        shutil.move(originalName, newName)
-    else:
-        os.unlink(originalName)
-    return rval
+    with tempfile.TemporaryDirectory() as td:
+        tmp = pageNotSubmitted.build_homework_question_substitute(
+            sid, question, outdir=td
+        )
+        # TODO: should this be qns?  tmp is...
+        prefix = "pns.{}q{}".format(sid, question)
+        # make a non-colliding name
+        while True:
+            unique = "." + str(uuid.uuid4())[:8]
+            newName = Path("pages/originalPages") / (prefix + unique + tmp.suffix)
+            if not newName.exists():
+                break
+        with open(tmp, "rb") as f:
+            md5 = hashlib.md5(f.read()).hexdigest()
+        # now try to put it into place
+        rval = self.DB.replaceMissingHWQuestion(sid, question, tmp.name, newName, md5)
+        # if DB successful then actually move file into place, else GC will cleanup
+        if rval[0]:
+            shutil.move(tmp, newName)
+        return rval
 
 
 def getBundleFromImage(self, *args, **kwargs):
