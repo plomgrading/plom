@@ -8,6 +8,7 @@ from rest_framework.exceptions import APIException
 from rest_framework import status
 
 from Papers.services import SpecificationService
+from Mark.services import MarkingTaskService
 
 
 class QuestionMaxMark_how_to_get_data(APIView):
@@ -57,3 +58,20 @@ class QuestionMaxMark(APIView):
             exc.status_code = status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE
             exc.detail = "question out of range"
             raise exc
+
+
+class MgetNextTask(APIView):
+    """
+    Responds with a code for the next available marking task.
+    """
+
+    def get(self, request, *args):
+        # return Response("q0001g1")
+        # TODO: find another place for populating the marking tasks table
+        mts = MarkingTaskService()
+        if not mts.are_there_tasks():
+            mts.init_all_tasks()
+
+        task = mts.get_first_available_task()
+        print(task.code)
+        return Response(task.code)
