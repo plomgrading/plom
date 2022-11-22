@@ -1526,7 +1526,8 @@ class MarkerClient(QWidget):
 
     def update_technical_stats(self, d):
         self.ui.labelTech1.setText(
-            f"downloads: {d['queued']} queued, {d['cache_size']} cached, {d['fail']} failed"
+            f"downloads: {d['queued']} queued, {d['cache_size']} cached,"
+            f" {d['retries']} retried, {d['fails']} failed"
         )
 
     def show_hide_technical(self):
@@ -1544,7 +1545,9 @@ class MarkerClient(QWidget):
 
     def toggle_fail_mode(self):
         if self.ui.failmodeCB.isChecked():
-            self.ui.failmodeCB.setToolTip("delay ∈ [2s, 6s], 20% fail")
+            r = self.Qapp.downloader._simulate_failure_rate
+            a, b = self.Qapp.downloader._simulate_slow_net
+            self.ui.failmodeCB.setToolTip(f"delay ∈ [{a}s, {b}s], {r:0g}% retry")
             self.Qapp.downloader.enable_fail_mode()
         else:
             self.ui.failmodeCB.setToolTip("")

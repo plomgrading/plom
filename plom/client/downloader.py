@@ -69,6 +69,10 @@ class Downloader(QObject):
       * `download_queue_changed(dict)`: the queue length changed
         (e.g., something enqueued or the queue is cleared).  The
         signal argument is a dict of information about the queue.
+
+    Use :meth:`enable_fail_mode` to artificially fail some download
+    attempts and generally take longer.  For debugging.  Disable again
+    with :method:`disable_fail_mode`.
     """
 
     # emitted anytime a (background) download finishes
@@ -109,10 +113,16 @@ class Downloader(QObject):
         self._in_progress = {}
         # it still counts as a fail if it eventually retried successfully
         self.number_of_fails = 0
+        self.number_of_retries = 0
         # we're trying to stop, so don't retry for example
         self._stopping = False
-        self.simulate_failures = False
         self.make_placeholder()
+        self.simulate_failures = False
+        # percentage of download attempts that will fail and an overall
+        # delay in seconds in a range (both are i.i.d. per retry).
+        # These are ignored unless simulate_failures is True.
+        self._simulate_failure_rate = 33.0
+        self._simulate_slow_net = (0.5, 3)
 
     def attach_messenger(self, msgr):
         """Add/replace the current messenger."""
@@ -169,7 +179,8 @@ class Downloader(QObject):
         in_progress_ids = [k for k, v in self._in_progress.items() if v is True]
         return {
             "cache_size": self.pagecache.how_many_cached(),
-            "fail": self.number_of_fails,
+            "fails": self.number_of_fails,
+            "retries": self.number_of_retries,
             "queued": len(in_progress_ids),
             "in_progress_ids": in_progress_ids,
         }
@@ -254,7 +265,11 @@ class Downloader(QObject):
             row["md5"],
             target_name,
             basedir=self.basedir,
-            simulate_failures=self.simulate_failures,
+            simulate_failures=(
+                (self._simulate_failure_rate, self._simulate_slow_net)
+                if self.simulate_failures
+                else False
+            ),
         )
         worker.signals.download_succeed.connect(self._worker_delivers)
         worker.signals.download_fail.connect(self._worker_failed)
@@ -320,7 +335,7 @@ class Downloader(QObject):
     def _worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
         """A worker has failed and called us: retry 3 times."""
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
-        self.number_of_fails += 1
+        self.number_of_retries += 1
         self.download_failed.emit(img_id)
         x = self._tries[img_id]
         if x >= 3:
@@ -330,11 +345,14 @@ class Downloader(QObject):
                 self._tries[img_id],
                 self._total_tries[img_id],
             )
+            self.number_of_fails += 1
             self._in_progress[img_id] = False
+            self.download_queue_changed.emit(self.get_stats())
             return
         if self._stopping:
             log.warning("Not retrying image %d b/c we're stopping", img_id)
             self._in_progress[img_id] = False
+            self.download_queue_changed.emit(self.get_stats())
             return
         # TODO: does not respect the original priority: high priority failure becomes ordinary
         self.download_in_background_thread(
@@ -374,6 +392,13 @@ class Downloader(QObject):
             its name into the ``local_filename`` key.  If we had to download
             it we also put the filename into ``local_filename``.
         """
+        if self.simulate_failures:
+            fail = random.random() <= self._simulate_failure_rate / 100
+            a, b = self._simulate_slow_net
+            # generate wait1 + wait2 \in (a, b)
+            wait2 = random.random() * (b - a) + a
+            wait1 = random.random() * wait2
+            wait2 -= wait1
         # TODO: revisit once PageCache decides None/Exception...
         if self.pagecache.has_page_image(row["id"]):
             cur = self.pagecache.page_image_path(row["id"])
@@ -397,7 +422,13 @@ class Downloader(QObject):
         f.parent.mkdir(exist_ok=True, parents=True)
         # we're not entirely consistent...
         md5 = row.get("md5") or row["md5sum"]
+        if self.simulate_failures:
+            sleep(wait1)
+        # if self.simulate_failures and fail:
+        #     raise NotImplementedError("TODO: how to simulate failure?")
         im_bytes = self.msgr.get_image(row["id"], md5)
+        if self.simulate_failures:
+            sleep(wait2)
         # im_type = imghdr.what(None, h=im_bytes)
         with open(f, "wb") as fh:
             fh.write(im_bytes)
@@ -440,7 +471,12 @@ class DownloadWorker(QRunnable):
         self.target_name = Path(target_name)
         self.basedir = Path(basedir)
         self.signals = WorkerSignals()
-        self.simulate_failures = simulate_failures
+        if simulate_failures:
+            self._simulate_failure_rate = simulate_failures[0]
+            self._simulate_slow_net = simulate_failures[1]
+            self.simulate_failures = True
+        else:
+            self.simulate_failures = False
 
     # https://www.pythonguis.com/tutorials/multithreading-pyqt-applications-qthreadpool/
     # consider try except with error signal
@@ -448,11 +484,13 @@ class DownloadWorker(QRunnable):
     @pyqtSlot()
     def run(self):
         if self.simulate_failures:
-            fail = random.random() <= 0.2
-            debug_wait2 = random.randint(2, 6)
-            debug_wait1 = random.random() * debug_wait2
-            debug_wait2 -= debug_wait1
-            sleep(debug_wait1)
+            fail = random.random() <= self._simulate_failure_rate / 100
+            a, b = self._simulate_slow_net
+            # generate wait1 + wait2 \in (a, b)
+            wait2 = random.random() * (b - a) + a
+            wait1 = random.random() * wait2
+            wait2 -= wait1
+            sleep(wait1)
         try:
             t0 = time()
             try:
@@ -488,13 +526,13 @@ class DownloadWorker(QRunnable):
             self.signals.finished.emit()
             return
         if self.simulate_failures:
-            sleep(debug_wait2)
+            sleep(wait2)
         if self.simulate_failures:
             log.debug(
                 "worker time: %.3gs download, %.3gs write, %.3gs debuggery",
                 t1 - t0,
                 t2 - t1,
-                debug_wait1 + debug_wait2,
+                wait1 + wait2,
             )
         else:
             log.debug("worker time: %.3gs download, %.3gs write", t1 - t0, t2 - t1)
