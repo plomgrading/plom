@@ -23,24 +23,29 @@ def main():
     msgr = start_messenger(server, pwd)
 
     # which pages do you want to forgive?  DNM please: very little error checking here
-    DNM_pageset = [2, ]
+    DNM_pageset = (2,)
 
     try:
         incomplete = msgr.getIncompleteTests()  # triples [p,v,true/false]
         for papernum, X in incomplete.items():
-            # [['t.1', 1, True], ['t.2', 1, True], ['t.3', 1, True], ['t.4', 1, True], ['t.5', 2, True], ['t.6', 2, False]])
+            papernum = int(papernum)
+            # [['t.1', 1, True], ['t.2', 1, False], ['t.3', 1, True], ...]
             for pagestr, version, scanned in X:
                 if not scanned:
                     # TODO now we should official check if that is a DNM page but instead
                     # I will blindly trust the DNM_pageset
                     for p in DNM_pageset:
                         if f"t.{p}" == pagestr:
-                            print(f"page {pagestr} is missing and is a DNM page: replacing...")
+                            print(
+                                f"{papernum:04} pg {pagestr} missing and is a DNM page: replacing..."
+                            )
                             rval = msgr.replaceMissingDNMPage(papernum, p)
                             # Cleanup, Issue #2141
                             print(rval)
-                        else:
-                            print(f"page {pagestr} is missing: but its not a DNM page: no-op")
+                    else:
+                        print(
+                            f"{papernum:04} pg {pagestr} missing: but its not a DNM page: no-op"
+                        )
 
     finally:
         msgr.closeUser()
