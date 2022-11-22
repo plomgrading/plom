@@ -156,7 +156,8 @@ def build_dnm_page_substitute(
         out_dir (pathlib.Path/str): where to save the output.
 
     Returns:
-        bool
+        libpath.Path: the generated file, in `out_dir`, you are responsible
+            for deleting it when you're done.
     """
     pdf = fitz.open(template)
 
@@ -179,10 +180,10 @@ def build_dnm_page_substitute(
     pdf[0].draw_rect(rect, color=[0, 0, 0])
 
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
-    image.save(out_dir / f"dnm.{test_number}.{page_number}.png")
+    f = out_dir / f"dnm.{test_number}.{page_number}.png"
+    image.save(f)
     pdf.close()
-
-    return True
+    return f
 
 
 def build_homework_question_substitute(

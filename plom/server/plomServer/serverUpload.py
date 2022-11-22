@@ -217,29 +217,27 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
 
 
 def replaceMissingDNMPage(self, testNumber, pageNumber):
-    pageNotSubmitted.build_dnm_page_substitute(testNumber, pageNumber)
-    # produces a file "dnm.<testNumber>.<pageNumber>.png"
-    originalName = "dnm.{}.{}.png".format(testNumber, pageNumber)
+    tmpfile = pageNotSubmitted.build_dnm_page_substitute(testNumber, pageNumber)
     prefix = "dnm.{}p{}".format(str(testNumber).zfill(4), str(pageNumber).zfill(2))
     # make a non-colliding name
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = Path("pages/originalPages") / (prefix + unique + ".png")
+        newName = Path("pages/originalPages") / (prefix + unique + tmpfile.suffix)
         if not newName.exists():
             break
     # compute md5sum and put into database
-    with open(originalName, "rb") as f:
+    with open(tmpfile, "rb") as f:
         md5 = hashlib.md5(f.read()).hexdigest()
     # all DNM are test pages with version 1, so recycle the missing test page function
     rval = self.DB.replaceMissingTestPage(
-        testNumber, pageNumber, 1, originalName, newName, md5
+        testNumber, pageNumber, 1, tmpfile, newName, md5
     )
     # if move successful then actually move file into place, else delete it
     # TODO: see Issue #2377
     if rval[0]:
-        shutil.move(originalName, newName)
+        shutil.move(tmpfile, newName)
     else:
-        os.unlink(originalName)
+        os.unlink(tmpfile)
     return rval
 
 
