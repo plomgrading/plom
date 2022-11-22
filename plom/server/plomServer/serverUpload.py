@@ -207,6 +207,7 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
         testNumber, pageNumber, version, originalName, newName, md5
     )
     # if move successful then actually move file into place, else delete it
+    # TODO: see Issue #2377
     if rval[0]:
         shutil.move(originalName, newName)
     else:
@@ -235,6 +236,7 @@ def replaceMissingDNMPage(self, testNumber, pageNumber):
         testNumber, pageNumber, 1, originalName, newName, md5
     )
     # if move successful then actually move file into place, else delete it
+    # TODO: see Issue #2377
     if rval[0]:
         shutil.move(originalName, newName)
     else:
@@ -265,6 +267,7 @@ def autogenerateIDPage(self, testNumber, student_id, student_name):
     pg = self.testSpec["idPage"]
     rval = self.DB.replaceMissingTestPage(testNumber, pg, 1, originalName, newName, md5)
     # if move successful then actually move file into place, else delete it
+    # TODO: see Issue #2377
     if rval[0]:
         shutil.move(originalName, newName)
     else:
@@ -425,6 +428,7 @@ def replaceMissingHWQuestion(self, sid, test, question):
     # now try to put it into place
     rval = self.DB.replaceMissingHWQuestion(sid, question, originalName, newName, md5)
     # if move successful then actually move file into place, else delete it
+    # TODO: see Issue #2377
     if rval[0]:
         shutil.move(originalName, newName)
     else:
