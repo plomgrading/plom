@@ -5,7 +5,6 @@
 # Copyright (C) 2022 Brennen Chiu
 
 from datetime import datetime, timezone
-from distutils.log import info
 import logging
 
 import peewee as pw
