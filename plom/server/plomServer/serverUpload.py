@@ -220,7 +220,7 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
 def replaceMissingDNMPage(self, papernum, pagenum):
     with tempfile.TemporaryDirectory() as td:
         tmp = pageNotSubmitted.build_dnm_page_substitute(papernum, pagenum, outdir=td)
-        prefix = f"dnm.{papernum:04}p{pagenum:02}"
+        prefix = "dnm.{}p{}".format(str(papernum).zfill(4), str(pagenum).zfill(2))
         # make a non-colliding name
         while True:
             unique = "." + str(uuid.uuid4())[:8]
