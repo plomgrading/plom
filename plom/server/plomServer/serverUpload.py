@@ -191,13 +191,13 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
     pageNotSubmitted.build_test_page_substitute(testNumber, pageNumber, version)
     # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
     originalName = "pns.{}.{}.{}.png".format(testNumber, pageNumber, version)
-    prefix = "pages/originalPages/pns.{}p{}v{}".format(
+    prefix = "pns.{}p{}v{}".format(
         str(testNumber).zfill(4), str(pageNumber).zfill(2), version
     )
     # make a non-colliding name
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = prefix + unique + ".png"
+        newName = "pages/originalPages/" + prefix + unique + ".png"
         if not os.path.isfile(newName):
             break
     # compute md5sum and put into database
@@ -219,13 +219,11 @@ def replaceMissingDNMPage(self, testNumber, pageNumber):
     pageNotSubmitted.build_dnm_page_substitute(testNumber, pageNumber)
     # produces a file "dnm.<testNumber>.<pageNumber>.png"
     originalName = "dnm.{}.{}.png".format(testNumber, pageNumber)
-    prefix = "pages/originalPages/dnm.{}p{}".format(
-        str(testNumber).zfill(4), str(pageNumber).zfill(2)
-    )
+    prefix = "dnm.{}p{}".format(str(testNumber).zfill(4), str(pageNumber).zfill(2))
     # make a non-colliding name
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = prefix + unique + ".png"
+        newName = "pages/originalPages/" + prefix + unique + ".png"
         if not os.path.isfile(newName):
             break
     # compute md5sum and put into database
@@ -414,14 +412,13 @@ def replaceMissingHWQuestion(self, sid, test, question):
     pageNotSubmitted.build_homework_question_substitute(sid, question)
     # produces a file "pns.<sid>.<pageNumber>.<ver>.png"
     originalName = "qns.{}.{}.png".format(sid, question)
-    prefix = "pages/originalPages/pns.{}q{}".format(sid, question)
+    prefix = "pns.{}q{}".format(sid, question)
     # make a non-colliding name
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = prefix + unique + ".png"
+        newName = "pages/originalPages/" + prefix + unique + ".png"
         if not os.path.isfile(newName):
             break
-        newName = "pages/originalPages/" + prefix + unique + ".png"
     # compute md5sum and put into database
     with open(originalName, "rb") as f:
         md5 = hashlib.md5(f.read()).hexdigest()
