@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Colin B. Macdonald
 
-"""Example stand-alone script to communicate with Plom server."""
+"""Stand-alone script to give all non-scanned do-not-mark papers."""
 
 import os
 from pathlib import Path
@@ -12,8 +12,6 @@ from plom import __version__
 from plom.plom_exceptions import PlomServerNotReady, PlomSeriousException
 
 from plom.create import start_messenger
-
-# from plom.scan import start_messenger
 
 
 def main():
@@ -27,20 +25,22 @@ def main():
     # which pages do you want to forgive?  DNM please: very little error checking here
     DNM_pageset = [2, ]
 
-    # largest paper number
-    N = 25
-
     try:
-        for papernum in range(1, N + 1):
-            for dnm_page in DNM_pageset:
-                try:
-                    rval = msgr.replaceMissingDNMPage(papernum, dnm_page)
-                except PlomSeriousException as e:
-                    # TODO: ugh this API has no proper error handling
-                    print(f"  Failed papernum {papernum} pg {dnm_page}: maybe b/c no paper or no page: {e}")
-                    continue
-                # Cleanup, Issue #2141
-                print(rval)
+        incomplete = msgr.getIncompleteTests()  # triples [p,v,true/false]
+        for papernum, X in incomplete.items():
+            # [['t.1', 1, True], ['t.2', 1, True], ['t.3', 1, True], ['t.4', 1, True], ['t.5', 2, True], ['t.6', 2, False]])
+            for pagestr, version, scanned in X:
+                if not scanned:
+                    # TODO now we should official check if that is a DNM page but instead
+                    # I will blindly trust the DNM_pageset
+                    for p in DNM_pageset:
+                        if f"t.{p}" == pagestr:
+                            print(f"page {pagestr} is missing and is a DNM page: replacing...")
+                            rval = msgr.replaceMissingDNMPage(papernum, p)
+                            # Cleanup, Issue #2141
+                            print(rval)
+                        else:
+                            print(f"page {pagestr} is missing: but its not a DNM page: no-op")
 
     finally:
         msgr.closeUser()
