@@ -427,7 +427,7 @@ class ScanService:
             bundle_order=index,
         )
         return error_image
-    
+
     @transaction.atomic
     def get_n_error_image(self, bundle):
         error_images = StagingImage.objects.filter(bundle=bundle, error=True)

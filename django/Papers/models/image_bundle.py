@@ -69,7 +69,7 @@ class ErrorImage(Image):
         page_number (int): index of page
         version_number (int): version of page
         flagged (bool): send to manager or not
-        comment (str): scanner message to manager 
+        comment (str): scanner message to manager
     """
 
     paper_number = models.PositiveIntegerField()

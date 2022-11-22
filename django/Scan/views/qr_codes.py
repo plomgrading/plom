@@ -70,7 +70,9 @@ class UpdateQRProgressView(ScannerRequiredView):
                 context.update({"qr_results": qr_results})
             if task_status == "error":
                 stagged_bundle = image.bundle
-                flagged_bundle = img_service.get_or_create_bundle(stagged_bundle.slug, stagged_bundle.pdf_hash)
+                flagged_bundle = img_service.get_or_create_bundle(
+                    stagged_bundle.slug, stagged_bundle.pdf_hash
+                )
                 flag_image = scanner.get_error_image(flagged_bundle, index)
                 context.update(
                     {"error": scanner.get_qr_code_error_message(bundle, index)}

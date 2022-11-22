@@ -160,7 +160,7 @@ class ManageScanService:
             )
 
         return colliding_pages
-    
+
     @transaction.atomic
     def get_error_pages_list(self):
         """

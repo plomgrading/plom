@@ -54,9 +54,9 @@ urlpatterns = [
     path("scan/unknown/", ScanUnknown.as_view(), name="progress_scan_unknown"),
     path("scan/error/", ScanError.as_view(), name="progress_scan_error"),
     path(
-        "scan/error/<int:test_paper>/<int:page_number>/<hash>/", 
-        ErrorPagesModal.as_view(), 
-        name="progress_error_modal"
+        "scan/error/<int:test_paper>/<int:page_number>/<hash>/",
+        ErrorPagesModal.as_view(),
+        name="progress_error_modal",
     ),
     path(
         "scan/error/get/<hash>",

@@ -28,39 +28,38 @@ class ErrorPagesModal(ManagerRequiredView):
     Display the error page, and give manager different
     types of actions to resolve the error page.
     """
+
     def get(self, request, test_paper, page_number, hash):
         context = self.build_context()
 
-        context.update({
-            "test_paper": test_paper,
-            "page_number": page_number,
-            "error_hash": hash,
-        })
+        context.update(
+            {
+                "test_paper": test_paper,
+                "page_number": page_number,
+                "error_hash": hash,
+            }
+        )
 
         return render(request, "Progress/fragments/scan_error_modal.html", context)
 
 
 class ErrorPageImage(ManagerRequiredView):
     """
-    Display the error page image. 
+    Display the error page image.
     """
+
     def get(self, request, hash):
         mss = ManageScanService()
         error_image_obj = mss.get_error_image(hash)
         with open(str(error_image_obj.file_name), "rb") as f:
             test_paper = error_image_obj.paper_number
             page_number = error_image_obj.page_number
-            error_img_file = str(test_paper).zfill(5) + "_" + str(page_number) + "_error.png"
-            image_file = SimpleUploadedFile(error_img_file, f.read(), content_type="image/png",)
+            error_img_file = (
+                str(test_paper).zfill(5) + "_" + str(page_number) + "_error.png"
+            )
+            image_file = SimpleUploadedFile(
+                error_img_file,
+                f.read(),
+                content_type="image/png",
+            )
         return FileResponse(image_file)
-
-
-class ReplaceErrorPageImage(ManagerRequiredView):
-    pass
-
-
-class PushErrorPageImage(ManagerRequiredView):
-    """
-    Push the read
-    """
-    pass

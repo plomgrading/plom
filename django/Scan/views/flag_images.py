@@ -25,7 +25,9 @@ class FlagPageImage(UpdateQRProgressView):
         img_bundle_service = ImageBundleService()
         image = scanner.get_image(timestamp, request.user, index)
         stagged_bundle = image.bundle
-        bundle = img_bundle_service.get_or_create_bundle(stagged_bundle.slug, stagged_bundle.pdf_hash)
+        bundle = img_bundle_service.get_or_create_bundle(
+            stagged_bundle.slug, stagged_bundle.pdf_hash
+        )
         flag_image = scanner.get_error_image(bundle, index)
         form = FlagImageForm(request.POST)
         if form.is_valid():

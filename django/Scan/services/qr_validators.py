@@ -26,8 +26,12 @@ class QRErrorService:
 
         self.check_TPV_code(serialized_all_qr, img_obj, serialized_top_three_qr)
         self.check_qr_numbers(page_data, img_obj, serialized_top_three_qr)
-        self.check_qr_matching(serialized_top_three_qr, img_obj, serialized_top_three_qr)
-        self.check_public_code(serialized_public_code, spec_dictionary, img_obj, serialized_top_three_qr)
+        self.check_qr_matching(
+            serialized_top_three_qr, img_obj, serialized_top_three_qr
+        )
+        self.check_public_code(
+            serialized_public_code, spec_dictionary, img_obj, serialized_top_three_qr
+        )
 
     def serialize_qr_code(self, page_data, tpv_type):
         """
@@ -137,18 +141,20 @@ class QRErrorService:
             img_path = test_folder / f"page{page_number}_{img_obj.image_hash}.png"
 
             staged_bundle = img_obj.bundle
-            bundle = img_bundle_service.get_or_create_bundle(staged_bundle.slug, staged_bundle.pdf_hash)
-            
+            bundle = img_bundle_service.get_or_create_bundle(
+                staged_bundle.slug, staged_bundle.pdf_hash
+            )
+
             error_image = ErrorImage(
-                bundle = bundle,
-                bundle_order = img_obj.bundle_order,
-                original_name = img_obj.file_name,
-                file_name = str(img_path),
-                hash = img_obj.image_hash,
-                rotation = img_obj.rotation,
-                paper_number = int(test_paper),
-                page_number = int(page_number),
-                version_number = int(version_number),
+                bundle=bundle,
+                bundle_order=img_obj.bundle_order,
+                original_name=img_obj.file_name,
+                file_name=str(img_path),
+                hash=img_obj.image_hash,
+                rotation=img_obj.rotation,
+                paper_number=int(test_paper),
+                page_number=int(page_number),
+                version_number=int(version_number),
             )
             error_image.save()
 
