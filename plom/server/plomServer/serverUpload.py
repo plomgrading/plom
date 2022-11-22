@@ -8,6 +8,7 @@
 import hashlib
 import logging
 import os
+from pathlib import Path
 import shutil
 import uuid
 
@@ -40,8 +41,8 @@ def addTestPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     prefix = "t{}p{}v{}".format(str(t).zfill(4), str(p).zfill(2), v)
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/originalPages/" + prefix + unique + ext
-        if not os.path.isfile(newName):
+        newName = Path("pages/originalPages") / (prefix + unique + ext)
+        if not newName.exists():
             break
     val = self.DB.uploadTestPage(t, p, v, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
@@ -122,8 +123,8 @@ def addHWPage(self, sid, student_name, q, o, fname, image, md5o, bundle, bundle_
     prefix = "s{}q{}o{}".format(sid, qstr, o)
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/originalPages/" + prefix + unique + ext
-        if not os.path.isfile(newName):
+        newName = Path("pages/originalPages") / (prefix + unique + ext)
+        if not newName.exists():
             break
     val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
@@ -145,8 +146,8 @@ def addUnknownPage(self, fname, image, order, md5o, bundle, bundle_order):
     prefix = "unk."
     while True:
         unique = str(uuid.uuid4())[:8]
-        newName = "pages/unknownPages/" + prefix + unique + ext
-        if not os.path.isfile(newName):
+        newName = Path("pages/unknownPages") / (prefix + unique + ext)
+        if not newName.exists():
             break
     val = self.DB.uploadUnknownPage(fname, newName, order, md5o, bundle, bundle_order)
     if val[0]:
@@ -168,8 +169,8 @@ def addCollidingPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     prefix = "col.t{}p{}v{}".format(str(t).zfill(4), str(p).zfill(2), v)
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/collidingPages/" + prefix + unique + ext
-        if not os.path.isfile(newName):
+        newName = Path("pages/collidingPages") / (prefix + unique + ext)
+        if not newName.exists():
             break
     val = self.DB.uploadCollidingPage(
         t, p, v, fname, newName, md5o, bundle, bundle_order
@@ -197,8 +198,8 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
     # make a non-colliding name
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/originalPages/" + prefix + unique + ".png"
-        if not os.path.isfile(newName):
+        newName = Path("pages/originalPages") / (prefix + unique + ".png")
+        if not newName.exists():
             break
     # compute md5sum and put into database
     with open(originalName, "rb") as f:
@@ -223,8 +224,8 @@ def replaceMissingDNMPage(self, testNumber, pageNumber):
     # make a non-colliding name
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/originalPages/" + prefix + unique + ".png"
-        if not os.path.isfile(newName):
+        newName = Path("pages/originalPages") / (prefix + unique + ".png")
+        if not newName.exists():
             break
     # compute md5sum and put into database
     with open(originalName, "rb") as f:
@@ -248,14 +249,12 @@ def autogenerateIDPage(self, testNumber, student_id, student_name):
 
     # produces a file "autogen.<sid>.png"
     originalName = "autogen.{}.png".format(student_id)
-    prefix = "pages/originalPages/autogen.{}.{}".format(
-        str(testNumber).zfill(4), student_id
-    )
+    prefix = "autogen.{}.{}".format(str(testNumber).zfill(4), student_id)
     # make a non-colliding name
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = prefix + unique + ".png"
-        if not os.path.isfile(newName):
+        newName = Path("pages/originalPages") / (prefix + unique + ".png")
+        if not newName.exists():
             break
     # compute md5sum and put into database
     with open(originalName, "rb") as f:
@@ -416,8 +415,8 @@ def replaceMissingHWQuestion(self, sid, test, question):
     # make a non-colliding name
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/originalPages/" + prefix + unique + ".png"
-        if not os.path.isfile(newName):
+        newName = Path("pages/originalPages") / (prefix + unique + ".png")
+        if not newName.exists():
             break
     # compute md5sum and put into database
     with open(originalName, "rb") as f:
