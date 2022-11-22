@@ -19,12 +19,12 @@ from plom.server import pageNotSubmitted
 log = logging.getLogger("server")
 
 
-def doesBundleExist(self, bundle_file, md5):
-    return self.DB.doesBundleExist(bundle_file, md5)
+def doesBundleExist(self, *args, **kwargs):
+    return self.DB.doesBundleExist(*args, **kwargs)
 
 
-def createNewBundle(self, bundle_file, md5):
-    return self.DB.createNewBundle(bundle_file, md5)
+def createNewBundle(self, *args, **kwargs):
+    return self.DB.createNewBundle(*args, **kwargs)
 
 
 def listBundles(self):
@@ -266,20 +266,20 @@ def autogenerateIDPage(self, testNumber, student_id, student_name):
     return rval
 
 
-def getTPageImage(self, testNumber, pageNumber, version):
-    return self.DB.getTPageImage(testNumber, pageNumber, version)
+def getTPageImage(self, *args, **kwargs):
+    return self.DB.getTPageImage(*args, **kwargs)
 
 
-def getHWPageImage(self, testNumber, question, order):
-    return self.DB.getHWPageImage(testNumber, question, order)
+def getHWPageImage(self, *args, **kwargs):
+    return self.DB.getHWPageImage(*args, **kwargs)
 
 
-def getEXPageImage(self, testNumber, question, order):
-    return self.DB.getEXPageImage(testNumber, question, order)
+def getEXPageImage(self, *args, **kwargs):
+    return self.DB.getEXPageImage(*args, **kwargs)
 
 
-def getCollidingImage(self, fname):
-    return self.DB.getCollidingImage(fname)
+def getCollidingImage(self, *args, **kwargs):
+    return self.DB.getCollidingImage(*args, **kwargs)
 
 
 def getUnknownPages(self):
@@ -294,8 +294,8 @@ def getCollidingPageNames(self):
     return self.DB.getCollidingPageNames()
 
 
-def checkTPage(self, testNumber, pageNumber):
-    return self.DB.checkTPage(testNumber, pageNumber)
+def checkTPage(self, *args, **kwargs):
+    return self.DB.checkTPage(*args, **kwargs)
 
 
 def removeUnknownImage(self, *args, **kwargs):
@@ -426,16 +426,16 @@ def replaceMissingHWQuestion(self, sid, test, question):
     return rval
 
 
-def getBundleFromImage(self, file_name):
-    return self.DB.getBundleFromImage(file_name)
+def getBundleFromImage(self, *args, **kwargs):
+    return self.DB.getBundleFromImage(*args, **kwargs)
 
 
-def getImagesInBundle(self, bundle_name):
-    return self.DB.getImagesInBundle(bundle_name)
+def getImagesInBundle(self, *args, **kwargs):
+    return self.DB.getImagesInBundle(*args, **kwargs)
 
 
-def getPageFromBundle(self, bundle_name, bundle_order):
-    return self.DB.getPageFromBundle(bundle_name, bundle_order)
+def getPageFromBundle(self, *args, **kwargs):
+    return self.DB.getPageFromBundle(*args, **kwargs)
 
 
 def initialiseExamDatabase(self, spec, vmap):
@@ -444,16 +444,16 @@ def initialiseExamDatabase(self, spec, vmap):
     return initialiseExamDatabaseFromSpec(spec, self.DB, vmap)
 
 
-def appendTestToExamDatabase(self, spec, t, vmap_for_test):
-    return self.DB.addSingleTestToDB(spec, t, vmap_for_test)
+def appendTestToExamDatabase(self, *args, **kwargs):
+    return self.DB.addSingleTestToDB(*args, **kwargs)
 
 
-def getPageVersions(self, paper_idx):
-    return self.DB.getPageVersions(paper_idx)
+def getPageVersions(self, *args, **kwargs):
+    return self.DB.getPageVersions(*args, **kwargs)
 
 
-def get_question_versions(self, paper_idx):
-    return self.DB.get_question_versions(paper_idx)
+def get_question_versions(self, *args, **kwargs):
+    return self.DB.get_question_versions(*args, **kwargs)
 
 
 def get_all_question_versions(self):
