@@ -62,7 +62,7 @@ class PlomDB:
         if self.should_connect_to_mysql(
             db_name, db_host, db_port, db_username, db_password
         ):
-            log.info(f"Connectig to MySQL database: {db_name}...")
+            log.info(f"Connecting to MySQL database: {db_name}...")
             try:
                 db = self.connect_mysql(
                     db_name, db_host, db_port, db_username, db_password
