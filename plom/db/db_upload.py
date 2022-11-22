@@ -73,7 +73,13 @@ def uploadTestPage(
 
     Return:
         tuple: ``(bool, reason, message_or_tuple)``, ``bool`` is true on
-        success, false on failure.
+        success, false on failure.  ``reason`` is a short code string
+        including `"success"` (when ``bool`` is true).  Error codes are
+        `"testError"`, `"pageError"`, `"duplicate"`, `"collision"`,
+        `"bundleError"` and `"bundle image duplication error"`.
+        TODO: that last one is not short!
+        ``message_or_tuple`` is either human-readable message or a list
+        or tuple of information (in the case of `"collision"`).
     """
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
@@ -146,12 +152,19 @@ def uploadTestPage(
 def replaceMissingTestPage(
     self, test_number, page_number, version, original_name, file_name, md5
 ):
+    """Add a image, often a template placeholder, to replace a missing page.
+
+    Return:
+        tuple: ``(bool, reason, message_or_tuple)``, ``bool`` is true on
+        success, false on failure, ``reason`` is a short code.  These are
+        documented in :func:`uploadTestPage`.
+    """
     # make sure owners of tasks in that test not logged in
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False, "Cannot find that test"]
+        return [False, "testError", f"Cannot find paper number {test_number}"]
 
-    # we can actually just call uploadTPage - we just need to set the bundle_name and bundle_order.
+    # we can actually just call uploadTestPage - we just need to set the bundle_name and bundle_order.
     # hw is different because we need to verify no hw pages present already.
 
     bref = Bundle.get_or_none(name="__replacements__system__")
