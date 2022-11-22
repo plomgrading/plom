@@ -60,11 +60,17 @@ class PlomDB:
     ):
 
         db = None
-        try:
-            db = self.connect_mysql(db_name, db_host, db_port, db_username, db_password)
-            log.info(f"Connected to MySQL database: {db_name}")
-        except (pymysql.err.OperationalError, ValueError):
-            log.exception("Unable to connect to MySQL server.")
+        if self.should_connect_to_mysql(db_name, db_host, db_port, db_username, db_password):
+            log.info(f"Connectig to MySQL database: {db_name}...")
+            try:
+                db = self.connect_mysql(db_name, db_host, db_port, db_username, db_password)
+                log.info(f"Connected to MySQL database: {db_name}")
+            except (pymysql.err.OperationalError):
+                log.exception("Unable to connect to MySQL server.")
+                log.info("Connecting to SQLite...")
+                db = self.connect_sqlite(dbfile_name)
+                log.info("Connected to SQLite.")
+        else:
             log.info("Connecting to SQLite...")
             db = self.connect_sqlite(dbfile_name)
             log.info("Connected to SQLite.")
@@ -118,10 +124,10 @@ class PlomDB:
             )
             log.info("User 'HAL' created to do all our automated tasks.")
 
-    def connect_mysql(self, db_name, db_host, db_port, db_username, db_password):
-        if not db_name:
-            raise ValueError("MySQL database name not found! Check serverDetails.toml.")
+    def should_connect_to_mysql(self, db_name, db_host, db_port, db_username, db_password):
+        return True if db_name else False
 
+    def connect_mysql(self, db_name, db_host, db_port, db_username, db_password):
         mysql_connection = pymysql.connect(
             host=db_host,
             port=db_port,
