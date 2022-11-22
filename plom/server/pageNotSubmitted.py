@@ -144,21 +144,25 @@ def build_test_page_substitute(
 def build_dnm_page_substitute(
     test_number,
     page_number,
+    *,
     template=specdir / "dnmPageNotSubmitted.pdf",
-    out_dir=Path("."),
+    outdir=Path("."),
 ):
     """Builds the substitute empty page for test.
 
     Arguments:
         test_number (int): Test number.
         page_number (int): Page number.
+
+    Keyword Args:
         template (pathlib.Path/str): the template pdf file.
-        out_dir (pathlib.Path/str): where to save the output.
+        outdir (pathlib.Path/str): where to save the output.
 
     Returns:
         libpath.Path: the generated file, in `out_dir`, you are responsible
             for deleting it when you're done.
     """
+    outdir = Path(outdir)
     pdf = fitz.open(template)
 
     # create a box for the test number near top-centre
@@ -180,7 +184,7 @@ def build_dnm_page_substitute(
     pdf[0].draw_rect(rect, color=[0, 0, 0])
 
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
-    f = out_dir / f"dnm.{test_number}.{page_number}.png"
+    f = outdir / f"dnm.{test_number}.{page_number}.png"
     image.save(f)
     pdf.close()
     return f

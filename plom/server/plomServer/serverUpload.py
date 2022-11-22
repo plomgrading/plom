@@ -10,6 +10,7 @@ import logging
 import os
 from pathlib import Path
 import shutil
+import tempfile
 import uuid
 
 from plom.server import pageNotSubmitted
@@ -216,29 +217,24 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
     return rval
 
 
-def replaceMissingDNMPage(self, testNumber, pageNumber):
-    tmpfile = pageNotSubmitted.build_dnm_page_substitute(testNumber, pageNumber)
-    prefix = "dnm.{}p{}".format(str(testNumber).zfill(4), str(pageNumber).zfill(2))
-    # make a non-colliding name
-    while True:
-        unique = "." + str(uuid.uuid4())[:8]
-        newName = Path("pages/originalPages") / (prefix + unique + tmpfile.suffix)
-        if not newName.exists():
-            break
-    # compute md5sum and put into database
-    with open(tmpfile, "rb") as f:
-        md5 = hashlib.md5(f.read()).hexdigest()
-    # all DNM are test pages with version 1, so recycle the missing test page function
-    rval = self.DB.replaceMissingTestPage(
-        testNumber, pageNumber, 1, tmpfile, newName, md5
-    )
-    # if move successful then actually move file into place, else delete it
-    # TODO: see Issue #2377
-    if rval[0]:
-        shutil.move(tmpfile, newName)
-    else:
-        os.unlink(tmpfile)
-    return rval
+def replaceMissingDNMPage(self, papernum, pagenum):
+    with tempfile.TemporaryDirectory() as td:
+        tmp = pageNotSubmitted.build_dnm_page_substitute(papernum, pagenum, outdir=td)
+        prefix = f"dnm.{papernum:04}p{pagenum:02}"
+        # make a non-colliding name
+        while True:
+            unique = "." + str(uuid.uuid4())[:8]
+            newName = Path("pages/originalPages") / (prefix + unique + tmp.suffix)
+            if not newName.exists():
+                break
+        with open(tmp, "rb") as f:
+            md5 = hashlib.md5(f.read()).hexdigest()
+        # all DNM are test pages with version 1, so recycle the missing test page function
+        rval = self.DB.replaceMissingTestPage(papernum, pagenum, 1, tmp, newName, md5)
+        # if DB successful then actually move file into place
+        if rval[0]:
+            shutil.move(tmp, newName)
+        return rval
 
 
 def autogenerateIDPage(self, testNumber, student_id, student_name):
