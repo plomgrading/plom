@@ -112,41 +112,41 @@ def uploadTestPage(
                 version,
             ],
         )
-    else:  # this is a new testpage. create an image and link it to the testpage
-        # we need the bundle-ref now.
-        bref = Bundle.get_or_none(name=bundle_name)
-        if bref is None:
-            return (False, "bundleError", f'Cannot find bundle "{bundle_name}"')
+    # this is a new testpage. create an image and link it to the testpage
+    # we need the bundle-ref now.
+    bref = Bundle.get_or_none(name=bundle_name)
+    if bref is None:
+        return (False, "bundleError", f'Cannot find bundle "{bundle_name}"')
 
-        try:
-            image_ref = self.createNewImage(
-                original_name, file_name, md5, bref, bundle_order
-            )
-        except PlomBundleImageDuplicationException:
-            return (
-                False,
-                "bundle image duplication error",
-                f"Image number {bundle_order} from bundle {bundle_name} uploaded previously",
-            )
-
-        self.attachImageToTPage(tref, pref, image_ref)
-        log.info(
-            "Uploaded image {} to tpv = {}.{}.{}".format(
-                original_name, test_number, page_number, version
-            )
+    try:
+        image_ref = self.createNewImage(
+            original_name, file_name, md5, bref, bundle_order
         )
-
-        # find all qgroups with non-outdated annotations using that image
-        groups_to_update = self.get_groups_using_image(pref.image)
-        # add the group that should use that page
-        groups_to_update.add(pref.group)
-        # update the test.
-        self.updateTestAfterChange(tref, group_refs=groups_to_update)
+    except PlomBundleImageDuplicationException:
         return (
-            True,
-            "success",
-            "Page saved as tpv = {}.{}.{}".format(test_number, page_number, version),
+            False,
+            "bundle image duplication error",
+            f"Image number {bundle_order} from bundle {bundle_name} uploaded previously",
         )
+
+    self.attachImageToTPage(tref, pref, image_ref)
+    log.info(
+        "Uploaded image {} to tpv = {}.{}.{}".format(
+            original_name, test_number, page_number, version
+        )
+    )
+
+    # find all qgroups with non-outdated annotations using that image
+    groups_to_update = self.get_groups_using_image(pref.image)
+    # add the group that should use that page
+    groups_to_update.add(pref.group)
+    # update the test.
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
+    return (
+        True,
+        "success",
+        "Page saved as tpv = {}.{}.{}".format(test_number, page_number, version),
+    )
 
 
 def replaceMissingTestPage(
