@@ -26,15 +26,27 @@
                     </div>
                     <div class="col">
                         <img
-                            src="{% url 'progress_collision_image' timestamp username order %}"
+                            src="{% url 'progress_collision_image' colliding_hash %}"
                             class="w-100 thumbnail shadow-sm"
                         >
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <a class="btn btn-danger">Keep original</a>
-                <a class="btn btn-danger">Replace</a>
+                <a 
+                    class="btn btn-danger"
+                    hx-delete="{% url 'progress_discard_colliding' colliding_hash %}"
+                    hx-confirm="Are you sure?"
+                >
+                    Keep original, discard colliding
+                </a>
+                <a 
+                    class="btn btn-danger"
+                    hx-delete="{% url 'progress_replace_colliding' test_paper index colliding_hash %}"
+                    hx-confirm="Are you sure?"
+                >
+                    Replace and discard original
+                </a>
             </div>
         </div>
     </div>

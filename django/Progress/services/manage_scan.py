@@ -2,16 +2,19 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 
+import shutil
+
 from django.db import transaction
 from django.db.models import Exists, OuterRef
+from django.conf import settings
 
 from Papers.models import (
     BasePage,
     Paper,
     QuestionPage,
-    # CollidingImage,
-    # DiscardedImage,
-    # Image,
+    CollidingImage,
+    DiscardedImage,
+    Image,
     ErrorImage,
 )
 from Scan.models import StagingImage
@@ -123,7 +126,7 @@ class ManageScanService:
         """
         Return the number of colliding images in the database.
         """
-        colliding = StagingImage.objects.filter(colliding=True)
+        colliding = CollidingImage.objects.all()
         return len(colliding)
 
     @transaction.atomic
@@ -133,33 +136,257 @@ class ManageScanService:
         """
 
         colliding_pages = []
-        colliding = StagingImage.objects.filter(colliding=True)
+        colliding = CollidingImage.objects.all()
 
         for page in colliding:
-            any_qr = list(page.parsed_qr.values())[0]
-            test_paper = int(any_qr["paper_id"])
-            page_number = int(any_qr["page_num"])
-            timestamp = page.bundle.timestamp
-            user = page.bundle.user.username
-            order = page.bundle_order
+            test_paper = page.paper_number
+            page_number = page.page_number
+            image_hash = page.hash
 
-            if any_qr["version_num"]:
-                version = int(any_qr["version_num"])
-            else:
-                version = None
+            version = None
 
             colliding_pages.append(
                 {
                     "test_paper": test_paper,
                     "number": page_number,
                     "version": version,
-                    "timestamp": timestamp,
-                    "user": user,
-                    "order": order,
+                    "colliding_hash": image_hash,
                 }
             )
 
         return colliding_pages
+
+    @transaction.atomic
+    def get_colliding_image(self, image_hash):
+        """
+        Return a colliding page.
+
+        Args:
+            image_hash: sha256 of the image.
+        """
+        return CollidingImage.objects.get(hash=image_hash)
+
+    @transaction.atomic
+    def get_discarded_image_path(self, image_hash, make_dirs=True):
+        """
+        Return a Pathlib path pointing to
+        BASE_DIR/media/page_images/discarded_pages/{paper_number}/{page_number}.png
+
+        Args:
+            image_hash: str, sha256 of the discarded page
+            make_dirs (optional): set to False for testing
+        """
+
+        root_folder = settings.BASE_DIR / "media" / "page_images" / "discarded_pages"
+        image_path = root_folder / f"{image_hash}.png"
+
+        if make_dirs:
+            root_folder.mkdir(exist_ok=True)
+
+        return image_path
+
+    @transaction.atomic
+    def discard_colliding_image(self, colliding_image, make_dirs=True):
+        """
+        Discard a colliding image.
+
+        Args:
+            colliding_image: reference to a CollidingImage instance
+            make_dirs (optional): bool, set to False for testing.
+        """
+        image_path = self.get_discarded_image_path(
+            colliding_image.hash, make_dirs=make_dirs
+        )
+
+        discarded_image = DiscardedImage(
+            bundle=colliding_image.bundle,
+            bundle_order=colliding_image.bundle_order,
+            original_name=colliding_image.original_name,
+            file_name=str(image_path),
+            hash=colliding_image.hash,
+            rotation=colliding_image.rotation,
+            restore_class="Colliding page",
+            restore_fields={
+                "paper_number": colliding_image.paper_number,
+                "page_number": colliding_image.page_number,
+            },
+        )
+
+        staged_image = StagingImage.objects.get(
+            bundle__pdf_hash=colliding_image.bundle.hash,
+            bundle_order=colliding_image.bundle_order,
+        )
+        staged_image.colliding = False
+        staged_image.save()
+
+        if make_dirs:
+            shutil.move(str(colliding_image.file_name), str(image_path))
+
+        colliding_image.delete()
+        discarded_image.save()
+
+    @transaction.atomic
+    def replace_image_with_colliding(self, image, colliding_image, make_dirs=True):
+        """
+        Discard an Image instance and replace it with a colliding image.
+
+        Args:
+            image (Image): the currently accepted image
+            colliding_image (CollidingImage): another scanned image
+            make_dirs (optional): Bool, set to False for testing
+        """
+
+        discard_path = self.get_discarded_image_path(image.hash, make_dirs=make_dirs)
+        discarded_page = DiscardedImage(
+            bundle=image.bundle,
+            bundle_order=image.bundle_order,
+            original_name=image.original_name,
+            file_name=str(discard_path),
+            hash=image.hash,
+            rotation=image.rotation,
+            restore_class="Colliding page",
+            restore_fields={
+                "paper_number": colliding_image.paper_number,
+                "page_number": colliding_image.page_number,
+            },
+        )
+
+        new_image = Image(
+            bundle=colliding_image.bundle,
+            bundle_order=colliding_image.bundle_order,
+            original_name=colliding_image.original_name,
+            file_name=image.file_name,
+            hash=colliding_image.hash,
+            rotation=colliding_image.rotation,
+        )
+
+        image_page = BasePage.objects.get(image=image)
+        image_page.image = new_image
+
+        staged_image = StagingImage.objects.get(
+            bundle__pdf_hash=colliding_image.bundle.hash,
+            bundle_order=colliding_image.bundle_order,
+        )
+        staged_image.colliding = False
+        staged_image.save()
+
+        if make_dirs:
+            shutil.move(str(image.file_name), str(discarded_page.file_name))
+            shutil.move(str(colliding_image.file_name), str(new_image.file_name))
+
+        colliding_image.delete()
+        image.delete()
+        discarded_page.save()
+        new_image.save()
+        image_page.save()
+
+    @transaction.atomic
+    def restore_colliding_image(self, discarded_image, make_dirs=True):
+        """
+        Undo the discarding of a colliding image.
+
+        Args:
+            discarded_image: reference to a DiscardedImage instance
+            make_dirs (optional): bool, set to False for testing
+        """
+        if "Colliding" not in discarded_image.restore_class:
+            raise RuntimeError("Discarded image was not originally a colliding image.")
+
+        colliding_fields = discarded_image.restore_fields
+
+        root_dir = settings.BASE_DIR / "media" / "page_images" / "colliding_pages"
+        test_paper_dir = root_dir / str(colliding_fields["paper_number"])
+        image_path = (
+            test_paper_dir
+            / f"page{colliding_fields['page_number']}_{discarded_image.hash}.png"
+        )
+
+        new_colliding_image = CollidingImage(
+            bundle=discarded_image.bundle,
+            bundle_order=discarded_image.bundle_order,
+            original_name=discarded_image.original_name,
+            file_name=str(image_path),
+            hash=discarded_image.hash,
+            rotation=discarded_image.rotation,
+            paper_number=colliding_fields["paper_number"],
+            page_number=colliding_fields["page_number"],
+        )
+
+        if make_dirs:
+            root_dir.mkdir(exist_ok=True)
+            test_paper_dir.mkdir(exist_ok=True)
+            shutil.move(str(discarded_image.file_name), str(image_path))
+
+        discarded_image.delete()
+        new_colliding_image.save()
+        return new_colliding_image
+
+    @transaction.atomic
+    def get_n_discarded_pages(self):
+        """
+        Return the number of discarded images.
+        """
+
+        discarded = DiscardedImage.objects.all()
+        return len(discarded)
+
+    @transaction.atomic
+    def get_discarded_pages_list(self):
+        """
+        Return a list of discarded pages.
+        """
+
+        discarded_images = []
+        discarded = DiscardedImage.objects.all()
+
+        for image in discarded:
+            if "Colliding" in image.restore_class:
+                restore_fields = image.restore_fields
+                previous_type = f"Collision (paper {restore_fields['paper_number']}, page {restore_fields['page_number']})"
+
+            discarded_images.append(
+                {
+                    "discarded_hash": image.hash,
+                    "previous_type": previous_type,
+                }
+            )
+
+        return discarded_images
+
+    @transaction.atomic
+    def get_discarded_image(self, discarded_hash):
+        """
+        Get a discarded image from its hash.
+        """
+
+        return DiscardedImage.objects.get(hash=discarded_hash)
+
+    @transaction.atomic
+    def delete_discarded_image(self, discarded_hash):
+        """
+        Delete a discarded page-image for good.
+        """
+
+        DiscardedImage.objects.get(hash=discarded_hash).delete()
+
+    @transaction.atomic
+    def restore_discarded_image(self, discarded_hash, make_dirs=True):
+        """
+        Restore a discarded page-image.
+
+        Args:
+            discarded_hash: str, the image hash
+            make_dirs (optional): bool, set to False for testing.
+        """
+
+        image = self.get_discarded_image(discarded_hash)
+        image_class = image.restore_class
+
+        if "Colliding" in image_class:
+            self.restore_colliding_image(image, make_dirs=make_dirs)
+        # TODO: calls for unknown images, page images, error images, etc
+        else:
+            raise ValueError("Unable to determine original class of discarded image.")
 
     @transaction.atomic
     def get_error_pages_list(self):

@@ -15,6 +15,16 @@ from .scan_colliding import (
     ScanColliding,
     CollidingPagesModal,
     CollisionPageImage,
+    DiscardCollidingPage,
+    ReplaceImageWithColliding,
+)
+
+from .scan_discarded import (
+    ScanDiscarded,
+    DiscardedPageImage,
+    DiscardedPageModal,
+    DeleteDiscardedPage,
+    RestoreDiscardedPage,
 )
 
 from .scan_error import (
@@ -27,5 +37,4 @@ from .scan_progress import (
     ScanBundles,
     ScanUnknown,
     ScanExtra,
-    ScanDiscarded,
 )

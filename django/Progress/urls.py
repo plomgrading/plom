@@ -13,12 +13,18 @@ from Progress.views import (
     ScanColliding,
     CollidingPagesModal,
     CollisionPageImage,
+    DiscardCollidingPage,
+    ReplaceImageWithColliding,
     ScanUnknown,
     ScanError,
     ErrorPagesModal,
     ErrorPageImage,
     ScanExtra,
     ScanDiscarded,
+    DiscardedPageImage,
+    DiscardedPageModal,
+    DeleteDiscardedPage,
+    RestoreDiscardedPage,
 )
 
 
@@ -42,14 +48,24 @@ urlpatterns = [
     path("scan/bundles/", ScanBundles.as_view(), name="progress_scan_bundles"),
     path("scan/colliding/", ScanColliding.as_view(), name="progress_scan_colliding"),
     path(
-        "scan/colliding/<int:test_paper>/<int:index>/<timestamp>/<username>/<int:order>/",
+        "scan/colliding/<int:test_paper>/<int:index>/<colliding_hash>",
         CollidingPagesModal.as_view(),
         name="progress_colliding_modal",
     ),
     path(
-        "scan/colliding/<timestamp>/<username>/<int:order>/",
+        "scan/colliding/get/<colliding_hash>/",
         CollisionPageImage.as_view(),
         name="progress_collision_image",
+    ),
+    path(
+        "scan/colliding/delete/<colliding_hash>/",
+        DiscardCollidingPage.as_view(),
+        name="progress_discard_colliding",
+    ),
+    path(
+        "scan/colliding/delete/<int:test_paper>/<int:index>/<colliding_hash>/",
+        ReplaceImageWithColliding.as_view(),
+        name="progress_replace_colliding",
     ),
     path("scan/unknown/", ScanUnknown.as_view(), name="progress_scan_unknown"),
     path("scan/error/", ScanError.as_view(), name="progress_scan_error"),
@@ -65,4 +81,24 @@ urlpatterns = [
     ),
     path("scan/extra/", ScanExtra.as_view(), name="progress_scan_extra"),
     path("scan/discarded/", ScanDiscarded.as_view(), name="progress_scan_discarded"),
+    path(
+        "scan/discarded/get/<discarded_hash>/",
+        DiscardedPageImage.as_view(),
+        name="progress_scan_discarded_image",
+    ),
+    path(
+        "scan/discarded/view/<discarded_hash>/",
+        DiscardedPageModal.as_view(),
+        name="progress_discarded_modal",
+    ),
+    path(
+        "scan/discarded/delete/<discarded_hash>/",
+        DeleteDiscardedPage.as_view(),
+        name="progress_delete_discarded",
+    ),
+    path(
+        "scan/discarded/restore/<discarded_hash>/",
+        RestoreDiscardedPage.as_view(),
+        name="progress_restore_discarded",
+    ),
 ]

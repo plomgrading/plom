@@ -1,7 +1,8 @@
 from .image_bundle import (
     Bundle,
     Image,
-    # CollidingImage,
+    CollidingImage,
+    DiscardedImage,
     ErrorImage,
 )
 from .paper_structure import (
