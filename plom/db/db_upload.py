@@ -76,8 +76,7 @@ def uploadTestPage(
         success, false on failure.  ``reason`` is a short code string
         including `"success"` (when ``bool`` is true).  Error codes are
         `"testError"`, `"pageError"`, `"duplicate"`, `"collision"`,
-        `"bundleError"` and `"bundle image duplication error"`.
-        TODO: that last one is not short!
+        `"bundleError"` and `"bundleErrorDupe"`.
         ``message_or_tuple`` is either human-readable message or a list
         or tuple of information (in the case of `"collision"`).
     """
@@ -125,8 +124,8 @@ def uploadTestPage(
     except PlomBundleImageDuplicationException:
         return (
             False,
-            "bundle image duplication error",
-            f"Image number {bundle_order} from bundle {bundle_name} uploaded previously",
+            "bundleErrorDupe",
+            f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
         )
 
     self.attachImageToTPage(tref, pref, image_ref)
@@ -285,14 +284,11 @@ def uploadHWPage(
             original_name, file_name, md5, bref, bundle_order
         )
     except PlomBundleImageDuplicationException:
-        return [
+        return (
             False,
-            "bundle image duplication error",
-            "Image number {} from bundle {} uploaded previously".format(
-                bundle_order,
-                bundle_name,
-            ),
-        ]
+            "bundleErrorDupe",
+            f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
+        )
 
     if len(questions) >= 1:
         log.info(
@@ -410,14 +406,11 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
             original_name, file_name, md5, bref, bundle_order
         )
     except PlomBundleImageDuplicationException:
-        return [
+        return (
             False,
-            "bundle image duplication error",
-            "Image number {} from bundle {} uploaded previously".format(
-                bundle_order,
-                bundle_name,
-            ),
-        ]
+            "bundleErrorDupe",
+            f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
+        )
 
     # create the associated HW page
     pref = self.createNewHWPage(tref, qref, order, image_ref)
@@ -458,14 +451,11 @@ def uploadUnknownPage(
                 rotation=0,
             )
         except PlomBundleImageDuplicationException:
-            return [
+            return (
                 False,
-                "bundle image duplication error",
-                "Image number {} from bundle {} uploaded previously".format(
-                    bundle_order,
-                    bundle_name,
-                ),
-            ]
+                "bundleErrorDupe",
+                f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
+            )
         UnknownPage.create(image=iref, order=order)
 
     log.info("Uploaded image {} as unknown".format(original_name))
@@ -532,14 +522,11 @@ def uploadCollidingPage(
                 rotation=0,  # TODO: replace with rotation from original UnknownPage
             )
         except PlomBundleImageDuplicationException:
-            return [
+            return (
                 False,
-                "bundle image duplication error",
-                "Image number {} from bundle {} uploaded previously".format(
-                    bundle_order,
-                    bundle_name,
-                ),
-            ]
+                "bundleErrorDupe",
+                f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
+            )
         cref = CollidingPage.create(tpage=pref, image=iref)
         cref.save()
     log.info(
