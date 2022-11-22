@@ -46,6 +46,7 @@ class Image(PolymorphicModel):
 
 # TODO Add unknown-image, discarded-image and annotation-image
 
+
 class CollidingImage(Image):
     """Table to store information about colliding page-images.
 
