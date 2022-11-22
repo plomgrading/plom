@@ -6,9 +6,14 @@
 
 """Misc utilities for the Plom Server"""
 
-import importlib.resources as resources
 import logging
 from pathlib import Path
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import plom
 from plom import Default_Port
@@ -83,7 +88,7 @@ def create_server_config(dur=confdir, *, port=None, name=None, db_name=None):
     sd = Path(dur) / "serverDetails.toml"
     if sd.exists():
         raise FileExistsError("Config already exists in {}".format(sd))
-    template = resources.read_text(plom, "serverDetails.toml")
+    template = (resources.files(plom) / "serverDetails.toml").read_text()
     if name:
         template = template.replace("localhost", name)
     if port:

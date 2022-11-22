@@ -109,7 +109,7 @@ def get_parser():
     parser.add_argument(
         "--webplom",
         action="store_true",
-        help="Experimental: Run the client with the WebPlom messenger and connect to a Django server.",
+        help="Experimental: support connecting to a Django server.",
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(

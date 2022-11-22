@@ -5,9 +5,14 @@
 # Copyright (C) 2021-2022 Colin B. Macdonald
 
 import csv
-import importlib.resources as resources
 import json
 from pathlib import Path
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import plom
 from plom.server import confdir
@@ -150,13 +155,13 @@ def _get_raw_user_dict(f):
 
 def get_template_user_list():
     """Gets the user/password list for some fixed demo values."""
-    with resources.open_text(plom, "templateUserList.csv") as f:
+    with (resources.files(plom) / "templateUserList.csv").open("r") as f:
         return _get_raw_user_list(f)
 
 
 def get_template_user_dict():
     """Gets the user/password dictionary for some fixed demo values."""
-    with resources.open_text(plom, "templateUserList.csv") as f:
+    with (resources.files(plom) / "templateUserList.csv").open("r") as f:
         return _get_raw_user_dict(f)
 
 

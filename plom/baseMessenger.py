@@ -65,6 +65,10 @@ class BaseMessenger:
                 Django-based servers.  Experimental!
         """
         self.webplom = webplom
+        if os.environ.get("WEBPLOM"):
+            log.warning("Enabling experimental WebPlom support via environment var")
+            self.webplom = True
+
         if self.webplom:
             # The django development server cannot handle https requests.
             # TODO: Revisit for production!  Issue #2361
@@ -330,7 +334,11 @@ class BaseMessenger:
                 logged in to call this.  A second call will raise this.
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
+
+        TODO: currently "close user" is a no-op on WebPlom!
         """
+        if self.webplom:
+            return
         self.SRmutex.acquire()
         try:
             response = self.delete(
@@ -405,7 +413,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    f"/admin/questionVersionMap/{papernum}",
+                    f"/plom/admin/questionVersionMap/{papernum}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -435,7 +443,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/questionVersionMap",
+                    "/plom/admin/questionVersionMap",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -1046,7 +1054,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/unknownPages",
+                    "/plom/admin/unknownPages",
                     json={
                         "user": self.user,
                         "token": self.token,
@@ -1063,7 +1071,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/discardedPages",
+                    "/plom/admin/discardedPages",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -1077,7 +1085,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/collidingPageNames",
+                    "/plom/admin/collidingPageNames",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()

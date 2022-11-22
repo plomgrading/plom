@@ -925,7 +925,7 @@ class MarkerClient(QWidget):
         self.connectGuiButtons()
 
         try:
-            self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
+            self.maxMark = self.msgr.getMaxMark(self.question)
         except PlomRangeException as err:
             ErrorMsg(self, str(err)).exec()
             return
@@ -1848,6 +1848,7 @@ class MarkerClient(QWidget):
         """
         self.setEnabled(True)
         if task:
+            # strip the "ann:"
             prevState = self.examModel.getStatusByTask("q" + task).split(":")[-1]
             # TODO: could also erase the paperdir
             self.examModel.setStatusByTask("q" + task, prevState)

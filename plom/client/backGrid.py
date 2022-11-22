@@ -2,8 +2,13 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
-import importlib.resources as resources
+import sys
 from time import localtime
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 from PyQt5.QtGui import QBrush, QPixmap
 
@@ -17,7 +22,8 @@ class BackGrid(QBrush):
         # generally disabled as we just use the window background
         if localtime().tm_mon == 4 and localtime().tm_mday == 1:
             pm = QPixmap()
-            pm.loadFromData(resources.read_binary(plom.client, "backGrid2.png"))
+            res = resources.files(plom.client) / "backGrid2.png"
+            pm.loadFromData(res.read_bytes())
             self.setTexture(pm)
         # else:
         #     pm = QPixmap()

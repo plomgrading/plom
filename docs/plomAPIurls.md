@@ -14,7 +14,6 @@
 * delete "/users/{user}" - close user-session + revoke auth-token
 * delete "/authorisation" - removes authorisation token from current user
 * delete "/authorisation/{user}" - removes authorisation token from a particular user
-* put "/admin/reloadUsers" - force server to reload user list
 
 ## Identifier
 * get "/ID/progress" - return [#done, #total]
@@ -49,8 +48,6 @@ Placed a checkmark next to each if appears in lists above.
 * get("/Version") ✓
 * delete("/users/{user}") ✓
 * put("/users/{user}") ✓
-* put("/admin/reloadUsers") ✓
-* put("/admin/reloadScans") ✓
 * get("/info/shortName") ✓
 * get("/info/general") ✓
 * get("/ID/progress") ✓

@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Colin B. Macdonald
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 
 from Preparation.services import StagingStudentService
 
@@ -44,3 +46,39 @@ class GetIDPredictions(APIView):
                         "predictor": "preID",
                     }
             return Response(predictions)
+
+
+class IDgetDoneTasks(APIView):
+    """When a id-client logs on they request a list of papers they have already IDd.
+    Send back the list.
+
+    TODO: Not implemented, just reports empty.
+    TODO: see ``plom/db/db_identify:IDgetDoneTasks``
+    """
+
+    def get(self, request):
+        return Response([])
+
+    # TODO: how do we get the user name?
+    # TODO: how do we log?
+
+
+class IDgetNextTask(APIView):
+    """Responds with a code for the the next available identify task.
+
+    Note: There is no guarantee that task will still be available later but at this moment in time,
+    no one else has claimed it
+
+    Responds with status 200/204.
+
+    TODO: Not implemented, just lies that we are done.
+    TODO: see ``plom/db/db_identify:IDgetNextTask``
+    """
+
+    def get(self, request):
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class IDprogressCount(APIView):
+    def get(self, request):
+        return Response([42, 4897])

@@ -10,13 +10,19 @@ __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-import importlib.resources as resources
+from copy import deepcopy
 import json
 import logging
 from pathlib import Path
 import os
 import re
+import sys
 from textwrap import dedent
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 from PyQt5.QtCore import (
     Qt,
@@ -210,7 +216,7 @@ class Annotator(QWidget):
 
                 <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
 
-                <p>Copyright &copy; 2018-2021 Andrew Rechnitzer,
+                <p>Copyright &copy; 2018-2022 Andrew Rechnitzer,
                 Colin B. Macdonald, and other contributors.</p>
 
                 <p>Plom is Free Software, available under the GNU Affero
@@ -541,7 +547,8 @@ class Annotator(QWidget):
 
         def _pixmap_from(f):
             pm = QPixmap()
-            pm.loadFromData(resources.read_binary(plom.client.cursors, f))
+            res = resources.files(plom.client.cursors) / f
+            pm.loadFromData(res.read_bytes())
             return pm
 
         # The keys here are magic values that connect to tools
@@ -947,7 +954,8 @@ class Annotator(QWidget):
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))
         pm = QPixmap()
-        pm.loadFromData(resources.read_binary(plom.client.icons, iconfile))
+        res = resources.files(plom.client.icons) / iconfile
+        pm.loadFromData(res.read_bytes())
         toolButton.setIcon(QIcon(pm))
         # toolButton.setIconSize(QSize(40, 40))
 
