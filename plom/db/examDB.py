@@ -63,16 +63,8 @@ class PlomDB:
             db_name, db_host, db_port, db_username, db_password
         ):
             log.info(f"Connecting to MySQL database: {db_name}...")
-            try:
-                db = self.connect_mysql(
-                    db_name, db_host, db_port, db_username, db_password
-                )
-                log.info(f"Connected to MySQL database: {db_name}")
-            except (pymysql.err.OperationalError):
-                log.exception("Unable to connect to MySQL server.")
-                log.info("Connecting to SQLite...")
-                db = self.connect_sqlite(dbfile_name)
-                log.info("Connected to SQLite.")
+            db = self.connect_mysql(db_name, db_host, db_port, db_username, db_password)
+            log.info(f"Connected to MySQL database: {db_name}")
         else:
             log.info("Connecting to SQLite...")
             db = self.connect_sqlite(dbfile_name)
