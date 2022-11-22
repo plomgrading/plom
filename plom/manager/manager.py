@@ -449,6 +449,7 @@ class Manager(QWidget):
 
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
+        self.ui.forgiveAllDNMButton.clicked.connect(self.substituteAllDNMPages)
         self.ui.removePartScanB.clicked.connect(self.removePagesFromPartScan)
         self.ui.removeDanglingB.clicked.connect(self.removeDanglingPage)
 
@@ -994,6 +995,25 @@ class Manager(QWidget):
             self.msgr.replaceMissingDNMPage(test_number, page_number)
         except (PlomConflict, PlomNoPaper) as e:
             InfoMsg(self, f"{e}").exec()
+
+    def substituteAllDNMPages(self):
+        msg = SimpleQuestion(
+            self,
+            "Bulk forgive all missing DNM pages?",
+            question="""
+                <p>Do-not-mark ("DNM") pages are not likely to be marked so
+                its no issue if they are not here.  For example, they might
+                be formula sheets.  This option will substitute a "Missing
+                Page" blank for all such pages, for any test that is
+                partially uploaded.</p>
+                <p>(Other pages and pages of unused tests will be uneffected.)</p>
+                <p><em>Caution: not well-tested!</em></p>
+                <p>Would you like to continue substituting missing DNM pages?</p>
+            """,
+        )
+        if msg.exec() == QMessageBox.No:
+            return
+        InfoMsg(self, "not implemented").exec()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(
