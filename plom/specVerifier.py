@@ -1,13 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 from copy import deepcopy
-import importlib.resources as resources
 import logging
 from math import ceil
 from pathlib import Path
 import random
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import toml
 
@@ -290,11 +295,11 @@ class SpecVerifier:
 
     @classmethod
     def _template_as_bytes(cls):
-        return resources.read_binary(plom, "templateTestSpec.toml")
+        return (resources.files(plom) / "templateTestSpec.toml").read_bytes()
 
     @classmethod
     def _template_as_string(cls):
-        return resources.read_text(plom, "templateTestSpec.toml")
+        return (resources.files(plom) / "templateTestSpec.toml").read_text()
 
     @classmethod
     def create_template(cls, fname="testSpec.toml"):

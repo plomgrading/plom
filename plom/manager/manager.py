@@ -9,12 +9,17 @@
 
 from collections import defaultdict
 import imghdr
-import importlib.resources as resources
 import logging
 import os
 from pathlib import Path
+import sys
 import tempfile
 from time import time
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import arrow
 import urllib3
@@ -1124,9 +1129,8 @@ class Manager(QWidget):
         for r, u in enumerate(unknowns):
             it0 = QStandardItem(Path(u["server_path"]).name)
             pm = QPixmap()
-            pm.loadFromData(
-                resources.read_binary(plom.client.icons, "manager_unknown.svg")
-            )
+            res = resources.files(plom.client.icons) / "manager_unknown.svg"
+            pm.loadFromData(res.read_bytes())
             it0.setIcon(QIcon(pm))
             it1 = QStandardItem("?")
             it1.setTextAlignment(Qt.AlignCenter)
@@ -1192,27 +1196,23 @@ class Manager(QWidget):
             self.unknownModel.item(r, 7).setText("{}".format(uvw.pq))
             if uvw.action == "discard":
                 pm = QPixmap()
-                pm.loadFromData(
-                    resources.read_binary(plom.client.icons, "manager_discard.svg")
-                )
+                res = resources.files(plom.client.icons) / "manager_discard.svg"
+                pm.loadFromData(res.read_bytes())
                 self.unknownModel.item(r, 1).setIcon(QIcon(pm))
             elif uvw.action == "extra":
                 pm = QPixmap()
-                pm.loadFromData(
-                    resources.read_binary(plom.client.icons, "manager_extra.svg")
-                )
+                res = resources.files(plom.client.icons) / "manager_extra.svg"
+                pm.loadFromData(res.read_bytes())
                 self.unknownModel.item(r, 1).setIcon(QIcon(pm))
             elif uvw.action == "test":
                 pm = QPixmap()
-                pm.loadFromData(
-                    resources.read_binary(plom.client.icons, "manager_test.svg")
-                )
+                res = resources.files(plom.client.icons) / "manager_test.svg"
+                pm.loadFromData(res.read_bytes())
                 self.unknownModel.item(r, 1).setIcon(QIcon(pm))
             elif uvw.action == "homework":
                 pm = QPixmap()
-                pm.loadFromData(
-                    resources.read_binary(plom.client.icons, "manager_hw.svg")
-                )
+                res = resources.files(plom.client.icons) / "manager_hw.svg"
+                pm.loadFromData(res.read_bytes())
                 self.unknownModel.item(r, 1).setIcon(QIcon(pm))
         f.unlink()
 
@@ -1338,9 +1338,8 @@ class Manager(QWidget):
             # it0 = QStandardItem(u)
             it1 = QStandardItem(os.path.split(u)[1])
             pm = QPixmap()
-            pm.loadFromData(
-                resources.read_binary(plom.client.icons, "manager_collide.svg")
-            )
+            res = resources.files(plom.client.icons) / "manager_collide.svg"
+            pm.loadFromData(res.read_bytes())
             it1.setIcon(QIcon(pm))
             it2 = QStandardItem("?")
             it2.setTextAlignment(Qt.AlignCenter)
@@ -1387,16 +1386,14 @@ class Manager(QWidget):
         if cvw.exec() == QDialog.Accepted:
             if cvw.action == "original":
                 pm = QPixmap()
-                pm.loadFromData(
-                    resources.read_binary(plom.client.icons, "manager_discard.svg")
-                )
+                res = resources.files(plom.client.icons) / "manager_discard.svg"
+                pm.loadFromData(res.read_bytes())
                 self.collideModel.item(r, 1).setIcon(QIcon(pm))
                 self.collideModel.item(r, 2).setText("discard")
             elif cvw.action == "collide":
                 pm = QPixmap()
-                pm.loadFromData(
-                    resources.read_binary(plom.client.icons, "manager_test.svg")
-                )
+                res = resources.files(plom.client.icons) / "manager_test.svg"
+                pm.loadFromData(res.read_bytes())
                 self.collideModel.item(r, 1).setIcon(QIcon(pm))
                 self.collideModel.item(r, 2).setText("replace")
         f_orig.unlink()
@@ -1447,9 +1444,8 @@ class Manager(QWidget):
         for r, d in enumerate(discards):
             it1 = QStandardItem(Path(d["server_path"]).name)
             pm = QPixmap()
-            pm.loadFromData(
-                resources.read_binary(plom.client.icons, "manager_none.svg")
-            )
+            res = resources.files(plom.client.icons) / "manager_none.svg"
+            pm.loadFromData(res.read_bytes())
             it1.setIcon(QIcon(pm))
             it2 = QStandardItem(d["reason"])
             raw = QStandardItem(str(d["id"]))
