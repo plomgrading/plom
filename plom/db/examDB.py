@@ -60,10 +60,14 @@ class PlomDB:
     ):
 
         db = None
-        if self.should_connect_to_mysql(db_name, db_host, db_port, db_username, db_password):
+        if self.should_connect_to_mysql(
+            db_name, db_host, db_port, db_username, db_password
+        ):
             log.info(f"Connectig to MySQL database: {db_name}...")
             try:
-                db = self.connect_mysql(db_name, db_host, db_port, db_username, db_password)
+                db = self.connect_mysql(
+                    db_name, db_host, db_port, db_username, db_password
+                )
                 log.info(f"Connected to MySQL database: {db_name}")
             except (pymysql.err.OperationalError):
                 log.exception("Unable to connect to MySQL server.")
@@ -124,7 +128,9 @@ class PlomDB:
             )
             log.info("User 'HAL' created to do all our automated tasks.")
 
-    def should_connect_to_mysql(self, db_name, db_host, db_port, db_username, db_password):
+    def should_connect_to_mysql(
+        self, db_name, db_host, db_port, db_username, db_password
+    ):
         return True if db_name else False
 
     def connect_mysql(self, db_name, db_host, db_port, db_username, db_password):
