@@ -79,6 +79,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomUnidentifiedPaperException,
     PlomNoMoreException,
+    PlomNoPaper,
     PlomNoSolutionException,
 )
 from plom.plom_exceptions import PlomException
@@ -979,9 +980,10 @@ class Manager(QWidget):
         if msg.exec() == QMessageBox.No:
             return
 
-        rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
-        # Cleanup, Issue #2141
-        InfoMsg(self, "{}".format(rval)).exec()
+        try:
+            self.msgr.replaceMissingDNMPage(test_number, page_number)
+        except (PlomConflict, PlomNoPaper) as e:
+            InfoMsg(self, f"{e}").exec()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(
