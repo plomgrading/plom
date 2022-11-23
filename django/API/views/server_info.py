@@ -20,8 +20,6 @@ class GetSpecification(APIView):
     """
 
     def get(self, request):
-        print(request.headers)
-        print(request.user)
 
         spec = SpecificationService()
         if not spec.is_there_a_spec():
