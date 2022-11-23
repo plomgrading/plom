@@ -17,6 +17,7 @@ from API.views import (
     IDgetNextTask,
     IDprogressCount,
     MgetNextTask,
+    MclaimThisTask,
 )
 
 
@@ -41,6 +42,7 @@ urlpatterns = [
     path("MK/tasks/available", MgetNextTask.as_view(), name="api_MK_get_next_tasks"),
     path("ID/progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
     path("MK/progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
+    path("MK/tasks/<code>", MclaimThisTask.as_view(), name="api_MK_claim_task"),
 ]
 
 urlpatterns += [

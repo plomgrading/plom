@@ -5,7 +5,7 @@ from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
 from Papers.models import Paper
 
-from Mark.models import MarkingTask
+from Mark.models import MarkingTask, ClaimMarkingTask
 
 
 class MarkingTaskService:
@@ -84,12 +84,23 @@ class MarkingTaskService:
 
         return self.get_task(paper_number, question_number)
 
-    def get_first_available_task(self):
+    def get_first_available_task(self, question=None, version=None):
         """
         Return the first marking task with a 'todo' status.
+
+        Args:
+            question (optional): int, requested question number
+            version (optional): int, requested version number
         """
 
         available = MarkingTask.objects.filter(status="todo")
+
+        if question:
+            available = available.filter(question_number=question)
+
+        if version:
+            available = available.filter(question_version=version)
+
         return available.first()
 
     def are_there_tasks(self):
@@ -98,3 +109,26 @@ class MarkingTaskService:
         """
 
         return MarkingTask.objects.exists()
+
+    def assign_task_to_user(self, user, task):
+        """
+        Write a user to a marking task and update its status. Also creates
+        and saves a ClaimMarkingTask action instance.
+
+        Args:
+            user: reference to a User instance
+            task: reference to a MarkingTask instance
+        """
+
+        if task.status == "out":
+            raise RuntimeError("Task is currently assigned.")
+
+        action = ClaimMarkingTask(
+            user=user,
+            task=task,
+        )
+        action.save()
+
+        task.assigned_user = user
+        task.status = "out"
+        task.save()

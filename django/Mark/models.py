@@ -21,3 +21,11 @@ class MarkingTask(BaseTask):
     code = models.TextField(default="", unique=True)
     question_number = models.PositiveIntegerField(null=False, default=0)
     question_version = models.PositiveIntegerField(null=False, default=0)
+
+
+class ClaimMarkingTask(BaseAction):
+    """
+    Represents a marker client claiming a marking task.
+    """
+
+    pass

@@ -86,7 +86,7 @@ class BaseTask(PolymorphicModel):
     assigned_user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     status = models.TextField(
         null=False, default="todo"
-    )  # choices: 'todo', 'sent', 'complete'
+    )  # choices: 'todo', 'out', 'complete'
 
 
 class BaseAction(PolymorphicModel):

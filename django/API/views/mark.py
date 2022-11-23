@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import status
+from django.contrib.auth.models import User
 
 from Papers.services import SpecificationService
 from Mark.services import MarkingTaskService
@@ -66,12 +67,38 @@ class MgetNextTask(APIView):
     """
 
     def get(self, request, *args):
+        data = request.data
+        question = data["q"]
+        version = data["v"]
+
         # return Response("q0001g1")
         # TODO: find another place for populating the marking tasks table
         mts = MarkingTaskService()
         if not mts.are_there_tasks():
             mts.init_all_tasks()
 
-        task = mts.get_first_available_task()
+        task = mts.get_first_available_task(question=question, version=version)
         print(task.code)
         return Response(task.code)
+
+
+class MclaimThisTask(APIView):
+    """
+    Attach a user to a marking task and return the task's metadata.
+    """
+
+    def patch(self, request, code, *args):
+        print(request.data)
+
+        mss = MarkingTaskService()
+        the_task = mss.get_task_from_code(code)
+
+        # TODO: We should get the user from request.user
+        # which requires more work w.r.t. DRF's TokenAuthentication framework
+        username = request.data["user"]
+        the_user = User.objects.get(username=username)
+        mss.assign_task_to_user(the_user, the_task)
+
+        # TODO: annotations and tags aren't implemented yet.
+        # Thus, the null response
+        return Response([[], [], []])
