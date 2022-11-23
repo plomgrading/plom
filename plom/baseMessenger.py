@@ -130,7 +130,7 @@ class BaseMessenger:
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        
+
         if self.webplom and self.token:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
@@ -384,9 +384,7 @@ class BaseMessenger:
     def _closeUser_webplom(self):
         self.SRmutex.acquire()
         try:
-            response = self.delete(
-                "/close_user/"
-            )
+            response = self.delete("/close_user/")
             response.raise_for_status()
             self.token = {}
         except requests.HTTPError as e:
