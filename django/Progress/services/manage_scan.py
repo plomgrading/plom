@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
 import shutil
 import arrow
@@ -16,6 +17,7 @@ from Papers.models import (
     CollidingImage,
     DiscardedImage,
     Image,
+    ErrorImage,
 )
 from Scan.models import StagingImage, StagingBundle
 
@@ -387,6 +389,60 @@ class ManageScanService:
         # TODO: calls for unknown images, page images, error images, etc
         else:
             raise ValueError("Unable to determine original class of discarded image.")
+
+    @transaction.atomic
+    def get_error_pages_list(self):
+        """
+        Return a list of error pages.
+        """
+
+        error_pages = []
+        all_error_pages = ErrorImage.objects.filter(flagged=True)
+
+        for error_page in all_error_pages:
+            test_paper = error_page.paper_number
+            page_number = error_page.page_number
+            version_number = error_page.version_number
+            file_name = str(test_paper).zfill(5) + str(page_number).zfill(3) + ".png"
+            if error_page.comment:
+                error_comment = error_page.comment.split("::")
+                flagged_by = error_comment[0].lower()
+                scanner_comment = error_comment[1]
+            else:
+                flagged_by = None
+                scanner_comment = None
+            error_img_hash = str(error_page.hash)
+
+            error_pages.append(
+                {
+                    "test_paper": test_paper,
+                    "page_number": page_number,
+                    "version": version_number,
+                    "file_name": file_name,
+                    "flagged": flagged_by,
+                    "comment": scanner_comment,
+                    "error_hash": error_img_hash,
+                }
+            )
+        return error_pages
+
+    @transaction.atomic
+    def get_error_image(self, error_image_hash):
+        """
+        Return an error image object based on the hash.
+
+        Args:
+            error_image_hash: sha 256 of the image.
+        """
+        return ErrorImage.objects.get(hash=error_image_hash)
+
+    @transaction.atomic
+    def get_n_error_image(self):
+        """
+        Return number of error pages that are flagged
+        to the manager.
+        """
+        return len(ErrorImage.objects.filter(flagged=True))
 
     @transaction.atomic
     def get_n_bundles(self):

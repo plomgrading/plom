@@ -37,16 +37,6 @@ class ScanUnknown(BaseScanProgressPage):
         return render(request, "Progress/scan_unknown.html", context)
 
 
-class ScanError(BaseScanProgressPage):
-    """
-    View and manage error pages.
-    """
-
-    def get(self, request):
-        context = self.build_context("error_page")
-        return render(request, "Progress/scan_error.html", context)
-
-
 class ScanExtra(BaseScanProgressPage):
     """
     View and manage extra pages.

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
 from .scan_base import BaseScanProgressPage
 
@@ -26,9 +27,14 @@ from .scan_discarded import (
     RestoreDiscardedPage,
 )
 
+from .scan_error import (
+    ScanError,
+    ErrorPagesModal,
+    ErrorPageImage,
+)
+
 from .scan_progress import (
     ScanBundles,
     ScanUnknown,
-    ScanError,
     ScanExtra,
 )

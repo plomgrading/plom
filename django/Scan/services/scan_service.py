@@ -6,6 +6,7 @@ import pathlib
 import hashlib
 import fitz
 from datetime import datetime
+from django.conf import settings
 from django.db import transaction
 from django_huey import db_task
 from plom.scan import QRextract
@@ -18,6 +19,7 @@ from Scan.models import (
     PageToImage,
     ParseQR,
 )
+from Papers.models import ErrorImage
 
 from .qr_validators import QRErrorService
 
@@ -286,6 +288,8 @@ class ScanService:
         -              SE:  4
         - Last five digit:  93849
         """
+        root_folder = settings.BASE_DIR / "media" / "page_images"
+        root_folder.mkdir(exist_ok=True)
         imgs = StagingImage.objects.filter(bundle=bundle)
         for page in imgs:
             self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
@@ -415,3 +419,21 @@ class ScanService:
             if not img.pushed:
                 return False
         return True
+
+    @transaction.atomic
+    def get_error_image(self, bundle, index):
+        error_image = ErrorImage.objects.get(
+            bundle=bundle,
+            bundle_order=index,
+        )
+        return error_image
+
+    @transaction.atomic
+    def get_n_error_image(self, bundle):
+        error_images = StagingImage.objects.filter(bundle=bundle, error=True)
+        return len(error_images)
+
+    @transaction.atomic
+    def get_n_flagged_image(self, bundle):
+        flag_images = StagingImage.objects.filter(bundle=bundle, flagged=True)
+        return len(flag_images)

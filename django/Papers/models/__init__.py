@@ -3,6 +3,7 @@ from .image_bundle import (
     Image,
     CollidingImage,
     DiscardedImage,
+    ErrorImage,
 )
 from .paper_structure import (
     Paper,

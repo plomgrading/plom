@@ -71,3 +71,22 @@ class DiscardedImage(Image):
 
     restore_class = models.TextField(null=False, default="")
     restore_fields = models.JSONField(null=False, default=dict)
+
+
+class ErrorImage(Image):
+    """
+    Table to store information about error page-images.
+
+    Args:
+        paper_number (int): test-paper ID
+        page_number (int): index of page
+        version_number (int): version of page
+        flagged (bool): send to manager or not
+        comment (str): scanner message to manager
+    """
+
+    paper_number = models.PositiveIntegerField()
+    page_number = models.PositiveIntegerField()
+    version_number = models.PositiveIntegerField()
+    flagged = models.BooleanField(default=False)
+    comment = models.TextField(default="", null=True)

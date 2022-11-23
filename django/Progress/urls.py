@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
 from django.urls import path
 
@@ -16,6 +17,8 @@ from Progress.views import (
     ReplaceImageWithColliding,
     ScanUnknown,
     ScanError,
+    ErrorPagesModal,
+    ErrorPageImage,
     ScanExtra,
     ScanDiscarded,
     DiscardedPageImage,
@@ -66,6 +69,16 @@ urlpatterns = [
     ),
     path("scan/unknown/", ScanUnknown.as_view(), name="progress_scan_unknown"),
     path("scan/error/", ScanError.as_view(), name="progress_scan_error"),
+    path(
+        "scan/error/<int:test_paper>/<int:page_number>/<hash>/",
+        ErrorPagesModal.as_view(),
+        name="progress_error_modal",
+    ),
+    path(
+        "scan/error/get/<hash>",
+        ErrorPageImage.as_view(),
+        name="progress_error_image",
+    ),
     path("scan/extra/", ScanExtra.as_view(), name="progress_scan_extra"),
     path("scan/discarded/", ScanDiscarded.as_view(), name="progress_scan_discarded"),
     path(
