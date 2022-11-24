@@ -131,7 +131,7 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and self.token:
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
@@ -141,7 +141,7 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and self.token:
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
@@ -153,7 +153,7 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and self.token:
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
@@ -163,7 +163,7 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and self.token:
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
@@ -175,7 +175,7 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and self.token:
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 
@@ -384,9 +384,12 @@ class BaseMessenger:
     def _closeUser_webplom(self):
         self.SRmutex.acquire()
         try:
-            response = self.delete("/close_user/")
+            response = self.delete(
+                "/close_user/",
+                json={"user": self.user, "token": self.token},
+            )
             response.raise_for_status()
-            self.token = {}
+            self.token = None
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
