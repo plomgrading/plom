@@ -110,16 +110,19 @@ Approx: 1030 over 3 courses
 
 ## 2022W1
 
-| Course  |  Tasks                  | # students |  Notes                      |
-|---------|-------------------------|:----------:|-----------------------------|
-| Math100 | 2 mock exams, exam      | ~4000      |                             |
-| Math110 | Midterm                 |            |                             |
-| Math220 |                         |            |                             |
-| Math221 |                         |            |                             |
-| Math300 | Quiz1, Quiz2            |            |                             |
-| Math319 |                         |            |                             |
-| Math341 | MT2                     |            |                             |
-| Phys117 |                         |            |                             |
+| Course  |  Tasks                  | # students |  Notes                        |
+|---------|-------------------------|:----------:|-------------------------------|
+| Math100 | 2 mock exams, exam      | ~4000      |                               |
+| Math110 | Midterm                 |            |                               |
+| Math220 |                         |            |                               |
+| Math215 |                         |            | Philip Loewen (x-listed 255)  |
+| Math221 | MT1, MT2                | 690        | Ben Williams                  |
+| Math300 | Quiz1, Quiz2, MT3       | 90         | Seckin Demirbas               |
+| Math319 |                         |            |                               |
+| Math341 | MT2                     |            |                               |
+| Math405 |                         |            | Christoph Ortner              |
+| Biol209 | Final (future)          |            | Mary Berbee                   |
+| Phys117 |                         |            |                               |
 
 
 
