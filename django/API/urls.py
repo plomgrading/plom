@@ -9,6 +9,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from API.views import (
     GetSpecification,
     ServerVersion,
+    CloseUser,
     QuestionMaxMark_how_to_get_data,
     QuestionMaxMark,
     GetClasslist,
@@ -47,4 +48,5 @@ urlpatterns = [
 
 urlpatterns += [
     path("get_token/", obtain_auth_token, name="api_get_token"),
+    path("close_user/", CloseUser.as_view(), name="api_close_user"),
 ]

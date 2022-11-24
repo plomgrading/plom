@@ -1,0 +1,48 @@
+{% extends 'Progress/scan_base.html' %}
+
+{% block title %}Web Plom - Progress{% endblock %}
+
+{% block page_heading %}Scanning progress{% endblock %}
+
+{% block main_card_content %}
+<div class="row ps-5 pe-5">
+    <h5>Bundles: {{ n_bundles }}</h5>
+    <div class="card" style="max-height: 50vh">
+        <div class="card-body overflow-auto">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">User</th>
+                        <th scope="col">Uploaded</th>
+                        <th scope="col">Pages</th>
+                        <th scope="col">Pushed pages</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bundle in bundles %}
+                    <tr>
+                        <td>{{ bundle.name }}</td>
+                        <td>{{ bundle.username }}</td>
+                        <td>{{ bundle.uploaded }}</td>
+                        <td>{{ bundle.n_pages }}</td>
+                        <td>{{ bundle.n_complete }}</td>
+                        <td>
+                            <div class="hstack gap-2">
+                                <a class="btn btn-primary">
+                                    View
+                                </a>
+                                <a class="btn btn-danger">
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

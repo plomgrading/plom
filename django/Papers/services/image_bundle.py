@@ -7,7 +7,14 @@ from django.db import transaction
 from django.conf import settings
 from django_huey import db_task
 
-from Papers.models import Bundle, Image, CreateImageTask
+from Papers.models import (
+    Bundle,
+    Image,
+    CreateImageTask,
+    CollidingImage,
+    Paper,
+    BasePage,
+)
 from .paper_creator import PaperCreatorService
 from .paper_info import PaperInfoService
 
@@ -32,6 +39,16 @@ class ImageBundleService:
         Get a bundle from its hash.
         """
         return Bundle.objects.get(hash=hash)
+
+    def get_or_create_bundle(self, name, hash):
+        """
+        Get a Bundle instance, or create if it doesn't exist
+        """
+
+        if not Bundle.objects.filter(hash=hash).exists():
+            return self.create_bundle(name, hash)
+        else:
+            return self.get_bundle(hash)
 
     def create_image(
         self, bundle, bundle_order, original_name, file_name, hash, rotation
@@ -69,6 +86,46 @@ class ImageBundleService:
         )
         push_obj.save()
 
+    def create_colliding_image(
+        self, staged_image, test_paper, page_number, make_dirs=True
+    ):
+        """
+        Save a colliding image to the database.
+
+        Args:
+            staged_image: StagingImage instance
+            test_paper: int, test-paper ID of the image
+            page_number: int, page number in the test (not the bundle)
+            make_dirs (optional): bool, set to False for testing
+        """
+
+        if Image.objects.filter(hash=hash).exists():
+            raise RuntimeError("An image with that hash already exists.")
+
+        root_folder = settings.BASE_DIR / "media" / "page_images" / "colliding_pages"
+        test_folder = root_folder / str(test_paper)
+        image_path = test_folder / f"page{page_number}_{staged_image.image_hash}.png"
+
+        staged_bundle = staged_image.bundle
+        bundle = self.get_or_create_bundle(staged_bundle.slug, staged_bundle.pdf_hash)
+
+        colliding_image = CollidingImage(
+            bundle=bundle,
+            bundle_order=staged_image.bundle_order,
+            original_name=staged_image.file_name,
+            file_name=str(image_path),
+            hash=staged_image.image_hash,
+            rotation=staged_image.rotation,
+            paper_number=test_paper,
+            page_number=page_number,
+        )
+        colliding_image.save()
+
+        if make_dirs:
+            root_folder.mkdir(exist_ok=True)
+            test_folder.mkdir(exist_ok=True)
+            shutil.copy(staged_image.file_path, image_path)
+
     @db_task(queue="tasks")
     def _push_staged_image(staged_image, test_paper, page_number, make_dirs=True):
         """
@@ -93,6 +150,9 @@ class ImageBundleService:
             raise RuntimeError(f"Page image already exists in the database.")
 
         if info.page_has_image(test_paper, page_number):
+            image_bundle.create_colliding_image(
+                staged_image, test_paper, page_number, make_dirs=make_dirs
+            )
             staged_image.colliding = True
             staged_image.save()
             raise RuntimeError(
@@ -100,12 +160,9 @@ class ImageBundleService:
             )
 
         staged_bundle = staged_image.bundle
-        if not Bundle.objects.filter(hash=staged_bundle.pdf_hash).exists():
-            bundle = image_bundle.create_bundle(
-                staged_bundle.slug, staged_bundle.pdf_hash
-            )
-        else:
-            bundle = image_bundle.get_bundle(staged_bundle.pdf_hash)
+        bundle = image_bundle.get_or_create_bundle(
+            staged_bundle.slug, staged_bundle.pdf_hash
+        )
 
         file_path = image_bundle.get_page_image_path(
             test_paper, f"page{page_number}.png", make_dirs
