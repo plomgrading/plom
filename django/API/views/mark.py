@@ -18,9 +18,7 @@ class QuestionMaxMark_how_to_get_data(APIView):
     """
 
     def get(self, request):
-        print(request)
         data = request.query_params
-        print(data)
         try:
             question = int(data["q"])
             version = int(data["v"])

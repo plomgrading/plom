@@ -130,11 +130,21 @@ class BaseMessenger:
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
         return self.session.get(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
         return self.session.post(
             f"{self.scheme}://{self.server}" + url, *args, **kwargs
         )
@@ -142,11 +152,21 @@ class BaseMessenger:
     def put(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
         return self.session.put(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
         return self.session.delete(
             f"{self.scheme}://{self.server}" + url, *args, **kwargs
         )
@@ -154,6 +174,11 @@ class BaseMessenger:
     def patch(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
         return self.session.patch(
             f"{self.scheme}://{self.server}" + url, *args, **kwargs
         )
@@ -335,10 +360,13 @@ class BaseMessenger:
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
 
-        TODO: currently "close user" is a no-op on WebPlom!
         """
         if self.webplom:
-            return
+            self._closeUser_webplom()
+        else:
+            self._closeUser()
+
+    def _closeUser(self):
         self.SRmutex.acquire()
         try:
             response = self.delete(
@@ -346,6 +374,22 @@ class BaseMessenger:
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def _closeUser_webplom(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.delete(
+                "/close_user/",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            self.token = None
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
