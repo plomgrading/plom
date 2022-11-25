@@ -14,6 +14,11 @@
     {% elif task_status == 'error' %}
     <div>
         <p class="text-danger">{{ error }}</p>
+        <a 
+            class="btn text-start"
+            style="background-color: lightgrey;"
+        ><i class="bi bi-file-earmark-check"></i>Push page image</a><br><br>
+        <a class="btn btn-warning text-start">Replace page image</a><br><br>
         {% if not flagged %}
         <form
             enctype="multipart/form-data"
@@ -29,6 +34,7 @@
         <p>Paper flagged to manager <i class="bi bi-check-circle text-success"></i></p>
         
         {% endif %}
+        <br><a class="btn btn-danger">Discard</a>
     </div>
     {% else %}
     <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s" hx-swap="outerHTML">

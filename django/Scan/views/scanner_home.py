@@ -50,6 +50,7 @@ class ScannerHomeView(ScannerRequiredView):
             pages = scanner.get_n_images(bundle)
             n_pushed = scanner.get_n_pushed_images(bundle)
             flagged_pages = scanner.get_n_flagged_image(bundle)
+            n_errors = scanner.get_n_error_image(bundle)
 
             disable_delete = (n_pushed > 0 and n_pushed < pages) or flagged_pages > 0
             bundles.append(
@@ -61,6 +62,7 @@ class ScannerHomeView(ScannerRequiredView):
                     "n_read": scanner.get_n_complete_reading_tasks(bundle),
                     "n_pushed": n_pushed,
                     "disable_delete": disable_delete,
+                    "n_errors": n_errors
                 }
             )
         context.update({"bundles": bundles})

@@ -34,7 +34,7 @@
             >
                 {% csrf_token %}
                 {{ form }}
-                <input type="submit" class="btn btn-primary" value="Upload">
+                <input type="submit" class="btn" value="Upload" style="background-color: #0F984F; color: white;">
             </form>
         </div>
     </div>
@@ -57,12 +57,13 @@
                             <ul class="list-unstyled">
                                 <li>Total pages: {{ bundle.pages }}</li>
                                 <li>Good pages: {{ bundle.n_read }}</li>
-                                <li>Error pages: 3</li>
+                                <li>Error pages: {{ bundle.n_errors}}</li>
                                 <li>Pushed pages: {{ bundle.n_pushed }}</li>
                             </ul>
                             <a 
-                                class="btn btn-primary" 
+                                class="btn" 
                                 href="{% url 'scan_manage_bundle' bundle.timestamp 0 %}"
+                                style="background-color: #0F984F; color: white;"
                             >
                                 View
                             </a>

@@ -85,7 +85,7 @@ class QRErrorService:
             self.create_error_image(img_obj, top_three_tpv)
             img_obj.error = True
             img_obj.save()
-            raise ValueError("Detect less than 3 QR codes.")
+            raise ValueError("Detected fewer than 3 QR codes.")
         elif len(page_data) == 3:
             pass
         else:
