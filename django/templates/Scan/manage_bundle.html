@@ -4,6 +4,58 @@
 
 {% block main_content %}
 <div class="container w-100 p-0 m-3">
+    <div class="row row-cols-auto">
+        <div class="col card w-25" style="margin-right: 5px">
+            <h5>Summary:</h5>
+            <p>3 / 30 completed test papers</p>
+            <p>18 / 180 completed papers</p>
+        </div>
+        <div class="col card w-25">
+            <h5>Bundle Summary:</h5>
+            <p>0 / 28 good pages</p>  
+            <p>3 error pages</p>
+        </div>
+    </div>
+</div>
+<div class="container w-100 p-0 m-3">
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+        data-bs-toggle="collapse"
+        role="button"
+        aria-expanded="false"
+        aria-controls="pagesList"
+        href="#pages"
+    >
+        <i class="bi bi-chevron-down"></i>
+        View pages
+    </a>
+    <a class="btn" style="display: inline;">Push all pages</a>
+</div>
+<div>
+    <div class="collapse" id="pages">
+        <div class="card" style="width: 97.5%">
+            <div>
+                {% for p in pages %}
+                <a
+                class="btn text-start {% if forloop.counter == one_index %}btn-info{% endif %} {% if p.status == 'error' %}text-danger{% elif p.status == 'complete' %}text-success{% endif %}"
+                href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+                >
+                Page {{ forloop.counter}}
+                {% if p.pushed%}
+                <i class="bi bi-file-earmark-check"></i>
+                {% elif p.status == 'error' %}
+                <i class="bi bi-exclamation-diamond"></i>
+                {% endif %}
+                </a>
+                {% endfor%}
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<div class="container w-100 p-0 m-3">
     <div class="row">
         <div class="col shadow-sm rounded" style="background-color: lightgrey;">
             <div hx-post="{% url 'scan_qr_alert' timestamp %}" hx-trigger="load" hx-swap="outerHTML"></div>
@@ -42,7 +94,7 @@
                     <h5 class="card-title">{{ slug }}.pdf</h5>
                     <p class="card-subtitle">Page {{ one_index }} of {{ total_pages }}</p>
                     <div class="vstack pt-3 gap-3">
-                        <a 
+                        {% comment %} <a 
                             class="btn text-start" 
                             style="background-color: lightgrey;"
                             data-bs-toggle="collapse"
@@ -53,8 +105,8 @@
                         >
                             <i class="bi bi-chevron-down"></i>
                             Pages
-                        </a>
-                        <div class="collapse vstack gap-2" id="pagesList">
+                        </a> {% endcomment %}
+                        {% comment %} <div class="collapse vstack gap-2" id="pagesList">
                             <div class="vstack gap-2">
                                 {% for p in pages %}
                                 <a
@@ -70,7 +122,7 @@
                                 </a>
                                 {% endfor %}
                             </div>
-                        </div>
+                        </div> {% endcomment %}
                         <a class="btn text-start" href="{% url 'scan_home' %}" style="background-color: lightgrey;">
                             <i class="bi bi-chevron-left"></i>
                             Return to upload
