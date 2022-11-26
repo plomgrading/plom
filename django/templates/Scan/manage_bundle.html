@@ -7,13 +7,13 @@
     <div class="row row-cols-auto">
         <div class="col card w-25" style="margin-right: 5px">
             <h5>Summary:</h5>
-            <p>3 / 30 completed test papers</p>
-            <p>18 / 180 completed papers</p>
+            <p>{{ completed_papers }} / {{ summary_total_papers }} completed test papers ({{ percent_papers_complete }}%)</p>
+            <p>{{ scanned_pages }} / {{ summary_total_pages }} completed pages ({{ percent_pages_complete }}%)</p>
         </div>
         <div class="col card w-25">
             <h5>Bundle Summary:</h5>
-            <p>0 / 28 good pages</p>  
-            <p>3 error pages</p>
+            <p>{{ good_pages }} / {{ total_pages }} good pages</p>
+            <p>{{ error_pages }} error pages</p>
         </div>
     </div>
 </div>
@@ -40,7 +40,7 @@
                 <a
                 class="btn text-start {% if p.status == 'error' %}text-danger{% elif p.status == 'complete' %}text-success{% endif %}"
                 href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-                style="{% if forloop.counter == one_index %}background-color: black{% endif %}"
+                style="{% if forloop.counter == one_index %}background-color: black; color: white{% endif %}"
                 >
                 Page {{ forloop.counter}}
                 {% if p.pushed%}

@@ -10,6 +10,7 @@ from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
 from Scan.models import StagingImage
+from Progress.services import ManageScanService
 
 
 class ManageBundleView(ScannerRequiredView):
@@ -25,8 +26,19 @@ class ManageBundleView(ScannerRequiredView):
 
         context = self.build_context()
         scanner = ScanService()
+        mss = ManageScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         n_pages = scanner.get_n_images(bundle)
+        good_pages = scanner.get_n_complete_reading_tasks(bundle)
+        error_pages = scanner.get_n_error_image(bundle)
+
+        total_pages = mss.get_total_pages()
+        scanned_pages = mss.get_scanned_pages()
+        percent_pages_complete = scanned_pages / total_pages * 100
+
+        total_papers = mss.get_total_test_papers()
+        completed_papers = mss.get_completed_test_papers()
+        percent_papers_complete = completed_papers / total_papers * 100
 
         if index >= n_pages:
             raise Http404("Bundle page does not exist.")
@@ -58,6 +70,14 @@ class ManageBundleView(ScannerRequiredView):
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
+                "summary_total_pages": total_pages,
+                "scanned_pages": scanned_pages,
+                "percent_pages_complete": int(percent_pages_complete),
+                "summary_total_papers": total_papers,
+                "completed_papers": completed_papers,
+                "percent_papers_complete": int(percent_papers_complete),
+                "good_pages": good_pages,
+                "error_pages": error_pages,
             }
         )
         return render(request, "Scan/manage_bundle.html", context)
