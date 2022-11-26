@@ -474,14 +474,12 @@ class Annotator(QWidget):
         # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
             self.unpickleIt(plomDict)
-            self._is_reannotate = True
             # restoring the scene would've marked it dirty
             self.scene.reset_dirty()
         else:
             # if there is a held crop rectangle, then use it.
             if self.held_crop_rectangle_data:
                 self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
-            self._is_reannotate = False
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
@@ -1618,18 +1616,14 @@ class Annotator(QWidget):
     def is_dirty(self):
         """Is the scene dirty?
 
-        Has the scene been annotated this session?  Re-opening a previous
-        annotated scene does not dirty it, until changes are made.  The
-        concept is more like "filed saved" in a text editor.
+        Has the scene been annotated or changed this session? Re-opening
+        a previous annotated scene does not dirty it, until changes are
+        made. Changes could be made and then undoe back to the clean state.
+        The concept should be familiar to "file saved" in a text editor.
         """
         if not self.scene:
             return False
-        if self._is_reannotate:
-            return self.scene.is_dirty()
-        if self.scene.areThereAnnotations():
-            # scene.is_dirty() might be fragile, trust this easier check
-            return True
-        return False
+        return self.scene.is_dirty()
 
     def get_nonrubric_text_from_page(self):
         """Retrieves text (not in rubrics) from the scene.
