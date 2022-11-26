@@ -1604,8 +1604,8 @@ class Annotator(QWidget):
         if self.is_dirty():
             msg = SimpleQuestion(
                 self,
-                "<p>There are annotations on the page.</p>\n"
-                "<p>Do you want to discard them and close the annotator?</p>",
+                "<p>There are unsaved changes to the annotations.</p>\n"
+                "<p>Do you want to discard changes and close the annotator?</p>",
             )
             if msg.exec() == QMessageBox.No:
                 event.ignore()
