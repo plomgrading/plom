@@ -9,8 +9,8 @@ from PyQt5.QtCore import Qt, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
 from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
-from plom.client.tools import CommandMoveItem
 from plom.client.tools.line import CommandLine, LineItem
+from plom.client.tools import UndoStackMoveMixin
 
 
 class CommandArrow(CommandLine):
@@ -22,7 +22,7 @@ class CommandArrow(CommandLine):
 
 
 # TODO: LineItem is a QGraphicsLineItem, so cannot inherit (?)
-class ArrowItem(QGraphicsPathItem):
+class ArrowItem(UndoStackMoveMixin, QGraphicsPathItem):
     def __init__(self, pti, ptf, style):
         """Creates an arrow from pti to ptf.
         Some manipulations required to draw the arrow head.
@@ -81,14 +81,6 @@ class ArrowItem(QGraphicsPathItem):
         # then back to the end of the line.
         self.path.lineTo(ptf)
         return self.path
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            # If the position changes then do so with an redo/undo command
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-            self.scene()._set_dirty()
-        return super().itemChange(change, value)
 
     # poorman's inheritance!
     pickle = LineItem.pickle

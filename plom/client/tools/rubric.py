@@ -7,7 +7,7 @@ from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
-from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
+from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
 
@@ -68,7 +68,7 @@ class CommandGroupDeltaText(CommandTool):
         self.scene.refreshStateAndScore()
 
 
-class GroupDeltaTextItem(QGraphicsItemGroup):
+class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
     """A group of Delta and Text presenting a rubric.
 
     TODO: passing in scene is a workaround so the TextItem can talk to
@@ -146,13 +146,6 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             cr = self.di.boundingRect()
             self.di.moveBy(0, -cr.height() / 2)
             self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-            self.scene()._set_dirty()
-        return QGraphicsItemGroup.itemChange(self, change, value)
 
     def pickle(self):
         return [

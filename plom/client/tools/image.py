@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QFormLayout,
 )
 
-from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
+from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 
 
 class CommandImage(CommandTool):
@@ -60,7 +60,7 @@ class CommandImage(CommandTool):
         return cls(scene, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
 
 
-class ImageItem(QGraphicsPixmapItem):
+class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
     """
     An image added to a paper.
     """
@@ -88,13 +88,6 @@ class ImageItem(QGraphicsPixmapItem):
         self.setScale(scale)
         self.data = data
         self.thick = 4
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-            self.scene()._set_dirty()
-        return super().itemChange(change, value)
 
     def paint(self, painter, option, widget=None):
         """
