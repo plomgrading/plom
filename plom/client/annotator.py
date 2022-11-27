@@ -1618,7 +1618,7 @@ class Annotator(QWidget):
 
         Has the scene been annotated or changed this session? Re-opening
         a previous annotated scene does not dirty it, until changes are
-        made. Changes could be made and then undoe back to the clean state.
+        made. Changes could be made and then undone back to the clean state.
         The concept should be familiar to "file saved" in a text editor.
         """
         if not self.scene:
