@@ -48,7 +48,7 @@ class CommandMoveItem(QUndoCommand):
         return True
 
 
-class UndoStackMoveMixin():
+class UndoStackMoveMixin:
     # a mixin class to avoid copy-pasting this method over many *Item classes.
     # Overrides the itemChange method.
     def itemChange(self, change, value):

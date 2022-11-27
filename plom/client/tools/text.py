@@ -53,7 +53,7 @@ class CommandMoveText(QUndoCommand):
         return True
 
 
-class UndoStackMoveTextMixin():
+class UndoStackMoveTextMixin:
     # a mixin class to avoid copy-pasting this method over many *Item classes.
     # Overrides the itemChange method.
     def itemChange(self, change, value):
