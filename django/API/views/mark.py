@@ -6,8 +6,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import status
+from django.contrib.auth.models import User
 
 from Papers.services import SpecificationService
+from Papers.models import Paper
+
+from Mark.services import MarkingTaskService, PageDataService
 
 
 class QuestionMaxMark_how_to_get_data(APIView):
@@ -18,9 +22,7 @@ class QuestionMaxMark_how_to_get_data(APIView):
     """
 
     def get(self, request):
-        print(request)
         data = request.query_params
-        print(data)
         try:
             question = int(data["q"])
             version = int(data["v"])
@@ -57,3 +59,59 @@ class QuestionMaxMark(APIView):
             exc.status_code = status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE
             exc.detail = "question out of range"
             raise exc
+
+
+class MgetNextTask(APIView):
+    """
+    Responds with a code for the next available marking task.
+    """
+
+    def get(self, request, *args):
+        data = request.data
+        question = data["q"]
+        version = data["v"]
+
+        # return Response("q0001g1")
+        # TODO: find another place for populating the marking tasks table
+        mts = MarkingTaskService()
+        if not mts.are_there_tasks():
+            mts.init_all_tasks()
+
+        task = mts.get_first_available_task(question=question, version=version)
+        print(task.code)
+        return Response(task.code)
+
+
+class MclaimThisTask(APIView):
+    """
+    Attach a user to a marking task and return the task's metadata.
+    """
+
+    def patch(self, request, code, *args):
+        mss = MarkingTaskService()
+        the_task = mss.get_task_from_code(code)
+        mss.assign_task_to_user(request.user, the_task)
+
+        pds = PageDataService()
+        paper, question = mss.unpack_code(code)
+        question_data = pds.get_question_pages_list(paper, question)
+
+        # TODO: tags and integrity check are hardcoded for now
+        return Response([question_data, [], "12345"])
+
+
+class MgetQuestionPageData(APIView):
+    """
+    Get page metadata for a particular test-paper and question.
+    """
+
+    def get(self, request, paper, question, *args):
+        pds = PageDataService()
+
+        try:
+            page_metadata = pds.get_question_pages_metadata(paper, question)
+            return Response(page_metadata, status=status.HTTP_200_OK)
+        except Paper.DoesNotExist:
+            raise APIException(
+                detail="Test paper does not exist.", status=status.HTTP_400_BAD_REQUEST
+            )

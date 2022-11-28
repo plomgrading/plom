@@ -293,9 +293,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     check_server_directories(basedir)
     server_info = get_server_info(basedir)
     log.info(f'Working from directory "{basedir}"')
-    if (basedir / specdir / "plom.db").exists():
-        log.info("Using existing Sqlite database.")
-    else:
+    if not (basedir / specdir / "plom.db").exists():
         log.info("Database is not yet present: creating...")
     db_name = server_info.get("db_name", None)
     db_host = server_info.get("db_host", None)

@@ -5,6 +5,7 @@
 from .server_info import (
     GetSpecification,
     ServerVersion,
+    CloseUser,
 )
 
 from .identify import (
@@ -18,4 +19,7 @@ from .identify import (
 from .mark import (
     QuestionMaxMark_how_to_get_data,
     QuestionMaxMark,
+    MgetNextTask,
+    MclaimThisTask,
+    MgetQuestionPageData,
 )
