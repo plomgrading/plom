@@ -1448,27 +1448,14 @@ class MarkerClient(QWidget):
             PlomTakenException
             PlomVersionMismatchException
         """
-        page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(
+        src_img_data, tags, integrity_check = self.msgr.MclaimThisTask(
             task, version=self.version
         )
-        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
-        del page_metadata
-
         # TODO: I dislike this packed-string: overdue for refactor
         assert task[0] == "q"
         assert task[5] == "g"
         question_idx = int(task[6:])
         assert question_idx == self.question
-        papernum = task[1:5]
-        # TODO: just put orientation, server_path in the MclaimThisTask call!
-        pagedata = self.msgr.get_pagedata_context_question(papernum, self.question)
-        # Populate the orientation keys and server_path from the pagedata
-        for row in src_img_data:
-            ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
-            # There could easily be more than one: what if orientation is contradictory?
-            row["orientation"] = ori[0]  # just take first one
-            X = [r["server_path"] for r in pagedata if r["id"] == row["id"]]
-            row["server_path"] = X[0]  # just take first one
 
         PC = self.downloader.pagecache
         for row in src_img_data:

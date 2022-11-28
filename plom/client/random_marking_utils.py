@@ -206,25 +206,12 @@ def do_random_marking_backend(question, version, *, messenger):
             break
         # print("Trying to claim next ask = ", task)
         try:
-            image_metadata, tags, integrity_check = messenger.MclaimThisTask(
+            src_img_data, tags, integrity_check = messenger.MclaimThisTask(
                 task, version=version
             )
         except PlomTakenException:
             print("Another user got task {}. Trying again...".format(task))
             continue
-
-        src_img_data = [{"id": r[0], "md5": r[1]} for r in image_metadata]
-
-        # See TODO in Marker: MclaimThisTask should include orientation etc
-        papernum = int(task[1:5])
-        pagedata = messenger.get_pagedata_context_question(papernum, question)
-        # Populate the orientation keys and server_path from the pagedata
-        for row in src_img_data:
-            ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
-            # There could easily be more than one: what if orientation is contradictory?
-            row["orientation"] = ori[0]  # just take first one
-            X = [r["server_path"] for r in pagedata if r["id"] == row["id"]]
-            row["server_path"] = X[0]  # just take first one
 
         with tempfile.TemporaryDirectory() as td:
             downloader = Downloader(td, msgr=messenger)
