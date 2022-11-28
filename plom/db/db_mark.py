@@ -160,7 +160,7 @@ def MgiveTaskToClient(self, user_name, group_id, version):
 
     args:
         user_name (str): the user name who is claiming the task.
-        group_id (TODO): somehow tells the task (?).
+        group_id (str): a "task code" like ``"q0020g3"``
         version (int): version requested - must match that in db.
 
     Return:
