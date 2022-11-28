@@ -17,6 +17,9 @@ from API.views import (
     IDgetDoneTasks,
     IDgetNextTask,
     IDprogressCount,
+    MgetNextTask,
+    MclaimThisTask,
+    MgetQuestionPageData,
 )
 
 
@@ -38,9 +41,15 @@ urlpatterns = [
     path("ID/tasks/complete", IDgetDoneTasks.as_view(), name="api_ID_get_done_tasks"),
     path("ID/tasks/available", IDgetNextTask.as_view(), name="api_ID_get_next_tasks"),
     path("MK/tasks/complete", IDgetDoneTasks.as_view(), name="api_MK_get_done_tasks"),
-    path("MK/tasks/available", IDgetNextTask.as_view(), name="api_MK_get_next_tasks"),
+    path("MK/tasks/available", MgetNextTask.as_view(), name="api_MK_get_next_tasks"),
     path("ID/progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
     path("MK/progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
+    path("MK/tasks/<code>", MclaimThisTask.as_view(), name="api_MK_claim_task"),
+    path(
+        "pagedata/<int:paper>/context/<int:question>",
+        MgetQuestionPageData.as_view(),
+        name="api_question_data",
+    ),
 ]
 
 urlpatterns += [
