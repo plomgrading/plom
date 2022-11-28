@@ -113,16 +113,16 @@ Approx: 1030 over 3 courses
 | Course  |  Tasks                           | # students |  Notes                        |
 |---------|----------------------------------|:----------:|-------------------------------|
 | Math100 | 2 Dry Runs, MT1, MT2, MT3, 2ndMT | ~4000      |                               |
-| Math110 | MT1                              |            | Seckin Demirbas               |
-| Math200 | MT                               |            | Young-Heon Kim                |
-| Math220 | MT1                              |            | Andrew Rechnitzer             |
-| Math215 | MT, Final                        |            | Philip Loewen (x-listed 255)  |
+| Math110 | MT1                              | 210        | Seckin Demirbas               |
+| Math200 | MT                               | 880        | Young-Heon Kim                |
+| Math220 | MT1                              | 390        | Andrew Rechnitzer             |
+| Math215 | MT, Final                        | 330        | Philip Loewen (x-listed 255)  |
 | Math221 | MT1, MT1A, MT2, MT2A, Final      | 690        | Ben Williams                  |
 | Math300 | Quiz1, MT1, MT3                  | 90         | Seckin Demirbas               |
-| Math319 | MT1                              |            | Andrew Rechnitzer             |
-| Math341 | MT                               |            | Jozsef Solymosi               |
-| Math344 | MT, Final                        |            | Omer Angel 
-| Math405 | MT                               |            | Christoph Ortner              |
+| Math319 | MT1                              | 30         | Andrew Rechnitzer             |
+| Math341 | MT                               | 80         | Jozsef Solymosi               |
+| Math344 | MT, Final                        | 80         | Omer Angel 
+| Math405 | MT                               | 40         | Christoph Ortner              |
 | Biol209 | Final (future)                   |            | Mary Berbee                   |
 | Phys117 | Not Available                    |            |                               |
 
