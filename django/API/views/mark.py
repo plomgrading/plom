@@ -9,7 +9,9 @@ from rest_framework import status
 from django.contrib.auth.models import User
 
 from Papers.services import SpecificationService
-from Mark.services import MarkingTaskService
+from Papers.models import Paper
+
+from Mark.services import MarkingTaskService, PageDataService
 
 
 class QuestionMaxMark_how_to_get_data(APIView):
@@ -86,17 +88,30 @@ class MclaimThisTask(APIView):
     """
 
     def patch(self, request, code, *args):
-        print(request.data)
-
         mss = MarkingTaskService()
         the_task = mss.get_task_from_code(code)
+        mss.assign_task_to_user(request.user, the_task)
 
-        # TODO: We should get the user from request.user
-        # which requires more work w.r.t. DRF's TokenAuthentication framework
-        username = request.data["user"]
-        the_user = User.objects.get(username=username)
-        mss.assign_task_to_user(the_user, the_task)
+        pds = PageDataService()
+        paper, question = mss.unpack_code(code)
+        question_data = pds.get_question_pages_list(paper, question)
 
-        # TODO: annotations and tags aren't implemented yet.
-        # Thus, the null response
-        return Response([[], [], []])
+        # TODO: tags and integrity check are hardcoded for now
+        return Response([question_data, [], "12345"])
+
+
+class MgetQuestionPageData(APIView):
+    """
+    Get page metadata for a particular test-paper and question.
+    """
+
+    def get(self, request, paper, question, *args):
+        pds = PageDataService()
+
+        try:
+            page_metadata = pds.get_question_pages_metadata(paper, question)
+            return Response(page_metadata, status=status.HTTP_200_OK)
+        except Paper.DoesNotExist:
+            raise APIException(
+                detail="Test paper does not exist.", status=status.HTTP_400_BAD_REQUEST
+            )

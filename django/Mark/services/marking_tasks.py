@@ -70,6 +70,21 @@ class MarkingTaskService:
         paper = Paper.objects.get(paper_number=paper_number)
         return MarkingTask.objects.get(paper=paper, question_number=question_number)
 
+    def unpack_code(self, code):
+        """
+        Return a tuple of (paper_number, question_number)
+        from a task code string.
+
+        Args:
+            code (str): a task code, e.g. q0001g1
+        """
+
+        assert len(code) == len("q0000g0")
+        paper_number = int(code[1:5])
+        question_number = int(code[-1])
+
+        return paper_number, question_number
+
     def get_task_from_code(self, code):
         """
         Get a marking task from its code.
@@ -78,10 +93,7 @@ class MarkingTaskService:
             code: str, a unique string that includes the paper number and question number.
         """
 
-        assert len(code) == len("q0000g0")
-        paper_number = int(code[1:5])
-        question_number = int(code[-1])
-
+        paper_number, question_number = self.unpack_code(code)
         return self.get_task(paper_number, question_number)
 
     def get_first_available_task(self, question=None, version=None):

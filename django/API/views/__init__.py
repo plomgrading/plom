@@ -21,4 +21,5 @@ from .mark import (
     QuestionMaxMark,
     MgetNextTask,
     MclaimThisTask,
+    MgetQuestionPageData,
 )

@@ -83,6 +83,10 @@ class BaseTask(PolymorphicModel):
     status: str, represents the status of the task: not started, sent to a client, completed
     """
 
+    # TODO: UUID for indexing
+    # TODO: created timestamp
+    # TODO: out-of-date boolean field
+
     assigned_user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     status = models.TextField(
         null=False, default="todo"
