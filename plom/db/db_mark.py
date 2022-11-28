@@ -171,10 +171,10 @@ def MgiveTaskToClient(self, user_name, group_id, version):
 
         On success, the list is
         `[True, metadata, [list of tag texts], integrity_check]`
-        where each row of `metadata` consists of
-        `[DB_id, md5_sum, server_filename]`.
+        where each row of `metadata` consists of dicts with keys
+        `id, `md5`, `included`, `order`, `server_path`, `orientation`.
 
-        Note: `server_filename` is implementation-dependent, could change
+        Note: `server_path` is implementation-dependent, could change
         without notice, etc.  Clients could use this to get hints for
         what to use for a local file name for example.
 
@@ -232,7 +232,17 @@ def MgiveTaskToClient(self, user_name, group_id, version):
         aref = qref.annotations[-1]  # are these in right order (TODO?)
         image_metadata = []
         for p in aref.apages.order_by(APage.order):
-            image_metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
+            # See MgetWholePaper: somehow very similar :(
+            # "pagename": "t{}".format(p.page_number) ?? ignore this?
+            row = {
+                "id": p.image.id,
+                "md5": p.image.md5sum,
+                "included": True,
+                "order": p.order,
+                "server_path": p.image.file_name,
+                "orientation": p.image.rotation,
+            }
+            image_metadata.append(row)
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now(timezone.utc)
