@@ -398,7 +398,7 @@ class MarkerExamModel(QStandardItemModel):
         )
         return r
 
-    def _expensive_search_and_update(self, img_id, md5, local_filename):
+    def _expensive_search_and_update(self, img_id, md5, filename):
         """Yuck, just yuck.
 
         Tested with a few hundred papers, is not noticeably slow.  So the code
@@ -409,7 +409,7 @@ class MarkerExamModel(QStandardItemModel):
             src_img_data = eval(self.data(self.index(i, 10)))
             for x in src_img_data:
                 if x["id"] == img_id:
-                    x["filename"] = local_filename
+                    x["filename"] = filename
             self.setData(self.index(i, 10), repr(src_img_data))
 
     def _getPrefix(self, r):
@@ -1510,12 +1510,12 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
 
-    def background_download_finished(self, img_id, md5, local_filename):
-        log.debug(f"PageCache has finished downloading {img_id} {local_filename}")
-        self.ui.labelTech2.setText(f"<p>last msg: downloaded img id={img_id}</p>")
-        self.ui.labelTech2.setToolTip(f"{local_filename}")
+    def background_download_finished(self, img_id, md5, filename):
+        log.debug(f"PageCache has finished downloading {img_id} to {filename}")
+        self.ui.labelTech2.setText(f"last msg: downloaded img id={img_id}")
+        self.ui.labelTech2.setToolTip(f"{filename}")
         # TODO: time this
-        self.examModel._expensive_search_and_update(img_id, md5, local_filename)
+        self.examModel._expensive_search_and_update(img_id, md5, filename)
         # log.debug(f"Elapsed time for potentially expensive local DB update: %g", etime)
         # TODO
         # if any("placeholder" in x for x in testImg.imagenames):

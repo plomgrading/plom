@@ -305,7 +305,7 @@ class Downloader(QObject):
         # TODO: did it though?  Maybe more when it returns?
         self.download_queue_changed.emit(self.get_stats())
 
-    def _worker_delivers(self, img_id, md5, tmpfile, local_filename):
+    def _worker_delivers(self, img_id, md5, tmpfile, targetfile):
         """A worker has succeed and delivered a temp file to us.
 
         Args:
@@ -313,7 +313,7 @@ class Downloader(QObject):
              md5 (str):
              tmpfile (str/pathlib.Path): a temporary path and filename
                  where the file is now.
-             local_filename (str/pathlib.Path): to where should we save
+             targetfile (str/pathlib.Path): to where should we save
                  (that is, rename) the file.
 
         This will emit a signal that others can listen for.
@@ -321,7 +321,7 @@ class Downloader(QObject):
         has downloaded in the meantime.  In that case we do not emit a
         signal.
         """
-        log.debug(f"Worker delivery: {img_id}, tmp={tmpfile}, target={local_filename}")
+        log.debug(f"Worker delivery: {img_id}, tmp={tmpfile}, target={targetfile}")
         # TODO: maybe pagecache should have the desired filename?
         # TODO: revisit once PageCache decides None/Exception...
         self._in_progress[img_id] = False
@@ -330,25 +330,25 @@ class Downloader(QObject):
         else:
             cur = None
         if cur:
-            if cur == local_filename:
+            if cur == targetfile:
                 log.info(
                     "Someone else downloaded %d (%s) for us in the meantime, no action",
                     img_id,
-                    local_filename,
+                    targetfile,
                 )
                 # no emit in this case
                 return
             raise RuntimeError(
-                f"downloaded wrong thing? {cur}, {local_filename}, {md5}"
+                f"downloaded wrong thing? {cur}, {targetfile}, {md5}"
             )
-        Path(local_filename).parent.mkdir(exist_ok=True, parents=True)
+        Path(targetfile).parent.mkdir(exist_ok=True, parents=True)
         with self.write_lock:
-            Path(tmpfile).rename(local_filename)
-            self.pagecache.set_page_image_path(img_id, local_filename)
-        self.download_finished.emit(img_id, md5, local_filename)
+            Path(tmpfile).rename(targetfile)
+            self.pagecache.set_page_image_path(img_id, targetfile)
+        self.download_finished.emit(img_id, md5, targetfile)
         self.download_queue_changed.emit(self.get_stats())
 
-    def _worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
+    def _worker_failed(self, img_id, md5, targetfile, err_stuff_tuple):
         """A worker has failed and called us: retry 3 times."""
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
         self.number_of_retries += 1
@@ -372,7 +372,7 @@ class Downloader(QObject):
             return
         # TODO: does not respect the original priority: high priority failure becomes ordinary
         self.download_in_background_thread(
-            {"id": img_id, "md5": md5, "server_path": local_filename},
+            {"id": img_id, "md5": md5, "server_path": targetfile},
             _is_retry=True,
         )
         self.download_queue_changed.emit(self.get_stats())
@@ -462,10 +462,10 @@ class WorkerSignals(QObject):
         No data
 
     download_success:
-        `(img_id (int), md5 (str), tempfile (str), local_filename (str)`
+        `(img_id (int), md5 (str), tempfile (str), targetfile (str)`
 
     download_fail:
-        `(img_id (int), md5 (str), local_filename (str), err_stuff_tuple (tuple)`
+        `(img_id (int), md5 (str), targetfile (str), err_stuff_tuple (tuple)`
         where the tuple is `(exctype, value, traceback.format_exc()`.
     """
 
