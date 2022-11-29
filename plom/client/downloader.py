@@ -61,8 +61,9 @@ class Downloader(QObject):
     The Downloader will emit various **signals**.  You can connect
     slots to these:
 
-      * `download_finished(int, str, str)`: emitted when a
-        (background) download finishes.
+      * `download_finished(img_id: int, md5sum: str, filename: str)`:
+        emitted when a (background) download finishes.  `filename` is
+        newly-downloaded file.
       * `download_failed(img_id: int)`: emitted when a (background)
         download fails.  The job will be automatically restarted
         up to three times.
@@ -300,12 +301,20 @@ class Downloader(QObject):
     def _worker_delivers(self, img_id, md5, tmpfile, local_filename):
         """A worker has succeed and delivered a temp file to us.
 
+        Args:
+             img_id (int):
+             md5 (str):
+             tmpfile (str/pathlib.Path): a temporary path and filename
+                 where the file is now.
+             local_filename (str/pathlib.Path): to where should we save
+                 (that is, rename) the file.
+
         This will emit a signal that others can listen for.
         In some cases, the worker will deliver something that somone else
         has downloaded in the meantime.  In that case we do not emit a
         signal.
         """
-        log.debug(f"Worker delivery: {img_id}, {local_filename}")
+        log.debug(f"Worker delivery: {img_id}, tmp={tmpfile}, target={local_filename}")
         # TODO: maybe pagecache should have the desired filename?
         # TODO: revisit once PageCache decides None/Exception...
         self._in_progress[img_id] = False
