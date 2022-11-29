@@ -227,7 +227,9 @@ class Downloader(QObject):
         Args:
             row (dict): One image entry in the "page data", has fields
                 `id`, `md5` and some others that are used to try to
-                choose a reasonable local file name.
+                choose a reasonable local file name.  Currently the
+                local file name is chosen from the ``"server_path"``
+                key.
 
         Keyword Args:
             priority (bool): high priority if user requested this (not a
@@ -252,12 +254,17 @@ class Downloader(QObject):
             return
         # try some things to get a reasonable local filename
         target_name = row.get("server_path", None)
-        if target_name is None:
-            target_name = row.get("local_filename", None)
-        if target_name is None:
-            target_name = row.get("filename", None)
+        # Note: too dangerous: callers are likely to have put placeholder in these!
+        # if target_name is None:
+        #     target_name = row.get("local_filename", None)
+        # if target_name is None:
+        #     target_name = row.get("filename", None)
         if target_name is None:
             raise NotImplementedError("TODO: then use a random value")
+        if str(target_name) == str(self._placeholder_image):
+            raise RuntimeError(
+                f"Unexpectedly detected target image as placeholder: {row}"
+            )
         target_name = self.basedir / target_name
 
         worker = DownloadWorker(

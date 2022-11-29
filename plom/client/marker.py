@@ -1229,6 +1229,8 @@ class MarkerClient(QWidget):
             if PC.has_page_image(row["id"]):
                 row["filename"] = PC.page_image_path(row["id"])
                 continue
+            if not row.get("server_path"):
+                row["server_path"] = row["filename"]
             self.downloader.download_in_background_thread(row)
             # TODO:
             # row["filename"] = None
