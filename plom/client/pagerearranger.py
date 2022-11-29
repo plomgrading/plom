@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
+from copy import deepcopy
 import logging
 
 from PyQt5.QtCore import Qt, QSize
@@ -331,7 +332,7 @@ class RearrangementViewer(QDialog):
         self.initial_page_data = page_data
         self.nameToIrefNFile = {}
         if current_pages:
-            self.populateListWithCurrent(current_pages)
+            self.populateListWithCurrent(deepcopy(current_pages))
         else:
             self.populateListOriginal()
 
@@ -383,7 +384,7 @@ class RearrangementViewer(QDialog):
         self.closeB = QPushButton("&Cancel")
         self.acceptB = QPushButton("&Accept")
 
-        self.permute = [False]
+        self.permute = []
 
         def GrippyMcGrab():
             """Grippy bars to spice-up QSplitterHandles."""
@@ -613,7 +614,7 @@ class RearrangementViewer(QDialog):
         self.listB.clear()
         move_order = {}
         for row in self.initial_page_data:
-            self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
+            self.nameToIrefNFile[row["pagename"]] = row
             # add every page image to list A
             self.listA.addImageItem(
                 row["pagename"],
@@ -649,7 +650,7 @@ class RearrangementViewer(QDialog):
         self.listA.clear()
         self.listB.clear()
         for row in self.initial_page_data:
-            self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
+            self.nameToIrefNFile[row["pagename"]] = row
             # add every page image to list A
             self.listA.addImageItem(
                 row["pagename"],
@@ -761,9 +762,8 @@ class RearrangementViewer(QDialog):
 
         Returns:
             Doesn't return anything directly but sets `permute` instance
-            variable which contains a list of tuples:
-                `(iref, filename, angle, database_id)`
-            (where `iref` seems to be md5sum?  TODO).
+            variable which contains a list of dicts, the "page data"
+            for the pages the user chose, possibly with new orientation.
         """
         if self.listB.count() == 0:
             msg = "You must have at least one page in the bottom list."
@@ -780,10 +780,10 @@ class RearrangementViewer(QDialog):
 
         self.permute = []
         for n in self.listB.getNameList():
-            tmp = self.nameToIrefNFile[n]
-            self.permute.append(
-                (*tmp, self.listB.item_orientation[n], self.listB.item_id[n])
-            )
+            row = self.nameToIrefNFile[n]
+            assert row["id"] == self.listB.item_id[n], "something we did not forsee!"
+            row["orientation"] = self.listB.item_orientation[n]
+            self.permute.append(row)
         self.accept()
 
     def singleSelect(self, currentList, allPages):

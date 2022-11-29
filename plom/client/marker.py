@@ -2020,18 +2020,10 @@ class MarkerClient(QWidget):
         """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
         src_img_data = []
-        # this is a bit silly, just converting list to dict...  maybe refactor caller?
         for row in imageList:
-            # TODO: do we need to let the cache know we want to keep these?
-            # TODO: see rearranger code in the annotator, which used to erase some
-            src_img_data.append(
-                {
-                    "id": row[3],
-                    "md5": row[0],
-                    "filename": str(row[1]),
-                    "orientation": row[2],
-                }
-            )
+            # TODO: sort out this filename versus local_filename business
+            row["filename"] = row["local_filename"]
+            src_img_data.append(row)
         task = "q" + task
         self.examModel.setOriginalFilesAndData(task, src_img_data)
         # set the status back to untouched so that any old plom files ignored
