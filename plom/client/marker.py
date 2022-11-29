@@ -1235,9 +1235,13 @@ class MarkerClient(QWidget):
                 row["filename"] = PC.page_image_path(row["id"])
                 continue
             row["filename"] = self.downloader.get_placeholder_path()
-            self.downloader.download_in_background_thread(row)
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
+        # after putting in model, trigger downloads (prevents race)
+        for row in src_img_data:
+            if PC.has_page_image(row["id"]):
+                continue
+            self.downloader.download_in_background_thread(row)
 
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         paperdir = Path(paperdir)
