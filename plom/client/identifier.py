@@ -339,16 +339,16 @@ class IDClient(QWidget):
         be prompted with little pop-up with list of possible completions.
         """
         # Build stringlistmodels - one for combined student_name_and_id = snid
-        self.snidlist = QStringListModel()
+        snidlist = QStringListModel()
         # Feed in the numbers and names.
-        self.snidlist.setStringList(list(self.snid_to_student_id.keys()))
+        snidlist.setStringList(list(self.snid_to_student_id.keys()))
         # Build the snid-completer = substring matching and case insensitive
-        self.snidcompleter = QCompleter()
-        self.snidcompleter.setModel(self.snidlist)
-        self.snidcompleter.setCaseSensitivity(Qt.CaseInsensitive)
-        self.snidcompleter.setFilterMode(Qt.MatchContains)
+        snidcompleter = QCompleter()
+        snidcompleter.setModel(snidlist)
+        snidcompleter.setCaseSensitivity(Qt.CaseInsensitive)
+        snidcompleter.setFilterMode(Qt.MatchContains)
         # Link the ID-completer to the ID-lineedit in the gui.
-        self.ui.idEdit.setCompleter(self.snidcompleter)
+        self.ui.idEdit.setCompleter(snidcompleter)
         # Make sure lineedit has little "Clear this" button.
         self.ui.idEdit.setClearButtonEnabled(True)
 
