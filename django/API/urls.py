@@ -20,6 +20,7 @@ from API.views import (
     MgetNextTask,
     MclaimThisTask,
     MgetQuestionPageData,
+    MgetOneImage,
 )
 
 
@@ -50,6 +51,7 @@ urlpatterns = [
         MgetQuestionPageData.as_view(),
         name="api_question_data",
     ),
+    path("MK/images/<int:pk>/<hash>/", MgetOneImage.as_view(), name="api_MK_one_image"),
 ]
 
 urlpatterns += [

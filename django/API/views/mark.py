@@ -2,14 +2,18 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
 
+import base64
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import status
-from django.contrib.auth.models import User
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import FileResponse
 
 from Papers.services import SpecificationService
-from Papers.models import Paper
+from Papers.models import Paper, Image
 
 from Mark.services import MarkingTaskService, PageDataService
 
@@ -114,4 +118,28 @@ class MgetQuestionPageData(APIView):
         except Paper.DoesNotExist:
             raise APIException(
                 detail="Test paper does not exist.", status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class MgetOneImage(APIView):
+    """
+    Get a page image from the server.
+    """
+
+    def get(self, request, pk, hash):
+        pds = PageDataService()
+
+        try:
+            img_path = pds.get_image_path(pk, hash)
+            with open(img_path, "rb") as f:
+                image = SimpleUploadedFile(
+                    f"{hash}.png",
+                    f.read(),
+                    content_type="image/png",
+                )
+            return FileResponse(image, status=status.HTTP_200_OK)
+        except Image.DoesNotExist:
+            raise APIException(
+                detail="Image does not exist.",
+                status=status.HTTP_400_BAD_REQUEST,
             )
