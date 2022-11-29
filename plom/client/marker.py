@@ -1231,10 +1231,8 @@ class MarkerClient(QWidget):
                 continue
             if not row.get("server_path"):
                 row["server_path"] = row["filename"]
-            self.downloader.download_in_background_thread(row)
-            # TODO:
-            # row["filename"] = None
             row["filename"] = self.downloader.get_placeholder_path()
+            self.downloader.download_in_background_thread(row)
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
