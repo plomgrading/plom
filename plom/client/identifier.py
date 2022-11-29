@@ -634,7 +634,7 @@ class IDClient(QWidget):
             self.exM.revertStudent(index)
             return False
         # successful ID
-        # Issue #25: Use timer to avoid macOS conflict between completer and
+        # Issue #23: Use timer to avoid macOS conflict between completer and
         # clearing the line-edit. Very annoying but this fixes it.
         QTimer.singleShot(0, self.ui.idEdit.clear)
         self.updateProgress()
