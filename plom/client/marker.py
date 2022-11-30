@@ -1221,20 +1221,20 @@ class MarkerClient(QWidget):
 
         log.info("importing source image data (orientations etc) from .plom file")
         # filenames likely stale: could have restarted client in meantime
-        # but does include "server_path" field.
         src_img_data = plomdata["base_images"]
-
         PC = self.downloader.pagecache
         for row in src_img_data:
-            # Page-arranger or other tools might've stripped this key
-            # last-time's local filename isn't right semantically but in
-            # practice its probably the same thing (and unimportant).
+            # remove legacy "local_filename" if present
+            f = row.pop("local_filename", None) or row.get("filename")
             if not row.get("server_path"):
-                row["server_path"] = row["filename"]
+                # E.g., Reannotator used to lose "server_path", keep workaround
+                # just in case, by using previous session's filename
+                row["server_path"] = f
+            # now overwrite "local_filename" from this session
             if PC.has_page_image(row["id"]):
                 row["filename"] = PC.page_image_path(row["id"])
-                continue
-            row["filename"] = self.downloader.get_placeholder_path()
+            else:
+                row["filename"] = self.downloader.get_placeholder_path()
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
         # after putting in model, trigger downloads (prevents race)
@@ -2007,23 +2007,17 @@ class MarkerClient(QWidget):
 
         return data
 
-    def PermuteAndGetSamePaper(self, task, imageList):
+    def PermuteAndGetSamePaper(self, task, src_img_data):
         """User has reorganized pages of an exam.
 
         Args:
             task (str): the task ID of the current test.
-            imageList (list[str]): list of image names to which are being
-                rearranged.  Each row looks like `[md5, filename, angle]`.
+            src_img_data (list[dict]): list of "page data" as rearranged.
 
         Returns:
             tuple: initialData (as described by :meth:`startTheAnnotator`.)
         """
-        log.info("Rearranging image list for task {} = {}".format(task, imageList))
-        src_img_data = []
-        for row in imageList:
-            # TODO: sort out this filename versus local_filename business
-            row["filename"] = row["local_filename"]
-            src_img_data.append(row)
+        log.info("Rearranging image list for task {} = {}".format(task, src_img_data))
         task = "q" + task
         self.examModel.setOriginalFilesAndData(task, src_img_data)
         # set the status back to untouched so that any old plom files ignored

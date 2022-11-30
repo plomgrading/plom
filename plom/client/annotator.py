@@ -662,13 +662,8 @@ class Annotator(QWidget):
         dl = self.parentMarkerUI.Qapp.downloader
         pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
         pagedata = dl.sync_downloads(pagedata)
-        # TODO: if we unified img_src_data and pagedata, could just pass onwards
-        files = [
-            {"filename": x["local_filename"], "orientation": x["orientation"]}
-            for x in pagedata
-        ]
         labels = [x["pagename"] for x in pagedata]
-        WholeTestView(testnum, files, labels, parent=self).exec()
+        WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
     def rearrangePages(self):
         """Rearranges pages in UI.

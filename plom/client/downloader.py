@@ -405,8 +405,8 @@ class Downloader(QObject):
 
         Return:
             dict: the modified row.  If the file was already downloaded, put
-            its name into the ``local_filename`` key.  If we had to download
-            it we also put the filename into ``local_filename``.
+            its name into the ``filename`` key.  If we had to download
+            it we also put the filename into ``filename``.
         """
         if self.simulate_failures:
             fail = random.random() <= self._simulate_failure_rate / 100
@@ -418,9 +418,9 @@ class Downloader(QObject):
         # TODO: revisit once PageCache decides None/Exception...
         if self.pagecache.has_page_image(row["id"]):
             cur = self.pagecache.page_image_path(row["id"])
-            row_cur = row.get("local_filename", None)
+            row_cur = row.get("filename", None)
             if row_cur is None:
-                row["local_filename"] = cur
+                row["filename"] = cur
                 # TODO: do we care if this matches row["server_path"]?
                 return row
             assert (
@@ -448,8 +448,8 @@ class Downloader(QObject):
         # im_type = imghdr.what(None, h=im_bytes)
         with open(f, "wb") as fh:
             fh.write(im_bytes)
-        row["local_filename"] = str(f)
-        self.pagecache.set_page_image_path(row["id"], row["local_filename"])
+        row["filename"] = str(f)
+        self.pagecache.set_page_image_path(row["id"], row["filename"])
         return row
 
 

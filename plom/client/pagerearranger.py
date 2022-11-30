@@ -521,7 +521,7 @@ class RearrangementViewer(QDialog):
         copy of each such duplicated page in the "Adjust pages" dialog.
 
         The `page_data` is a list of dicts, each with keys `"pagename"`,
-        `"md5"`, `"included"`, `"order"`, `"id"`, `"local_filename"`, and
+        `"md5"`, `"included"`, `"order"`, `"id"`, `"filename"`, and
         others (`"orientation"`, etc) not shown here.  These have
         corresponding values like in the example below.  We want to
         compress rows that have duplicated md5sums:
@@ -618,14 +618,14 @@ class RearrangementViewer(QDialog):
             # add every page image to list A
             self.listA.addImageItem(
                 row["pagename"],
-                row["local_filename"],
+                row["filename"],
                 row["orientation"],
                 row["included"],
             )
             # add the potential for every page to listB
             self.listB.addPotentialItem(
                 row["pagename"],
-                row["local_filename"],
+                row["filename"],
                 row["orientation"],
                 row["included"],
                 db_id=row["id"],
@@ -654,14 +654,14 @@ class RearrangementViewer(QDialog):
             # add every page image to list A
             self.listA.addImageItem(
                 row["pagename"],
-                row["local_filename"],
+                row["filename"],
                 row["orientation"],
                 row["included"],
             )
             # add the potential for every page to listB
             self.listB.addPotentialItem(
                 row["pagename"],
-                row["local_filename"],
+                row["filename"],
                 row["orientation"],
                 row["included"],
                 db_id=row["id"],
