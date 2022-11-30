@@ -372,7 +372,7 @@ class Downloader(QObject):
             return
         # TODO: does not respect the original priority: high priority failure becomes ordinary
         self.download_in_background_thread(
-            {"id": img_id, "md5": md5, "local_filename": local_filename},
+            {"id": img_id, "md5": md5, "server_path": local_filename},
             _is_retry=True,
         )
         self.download_queue_changed.emit(self.get_stats())
