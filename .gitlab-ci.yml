@@ -575,6 +575,8 @@ fedora_build:
     # temporary, see https://github.com/cheind/py-lapsolver/issues/18
     - dnf install -y git
     - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
+    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
+    - pip install -U pytest
     - pip install .
     # First, run the unit tests
     - which pytest-3
