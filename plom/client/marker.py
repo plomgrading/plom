@@ -1055,28 +1055,6 @@ class MarkerClient(QWidget):
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.view_testnum_question)
 
-    def resizeEvent(self, event):
-        """
-        Resizes the image and surrounding table.
-
-        Notes:
-            Overrides QWidget.resizeEvent()
-            a resize can be triggered before "setup" is called.
-            TODO: which is more evidence that "init" should consume "setup"
-
-        Args:
-            event (QEvent): the event to be resized.
-
-        Returns:
-            None
-
-        """
-        if hasattr(self, "ui"):
-            if hasattr(self.ui, "tableView"):
-                self.ui.tableView.resizeColumnsToContents()
-                self.ui.tableView.resizeRowsToContents()
-        super().resizeEvent(event)
-
     def toggle_prefer_tagged(self):
         pass
         # m = self.ui.getNextButton.menu()
