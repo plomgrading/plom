@@ -1073,6 +1073,7 @@ class MarkerClient(QWidget):
         """
         if hasattr(self, "ui"):
             if hasattr(self.ui, "tableView"):
+                self.ui.tableView.resizeColumnsToContents()
                 self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)
 
