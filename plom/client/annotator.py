@@ -230,6 +230,10 @@ class Annotator(QWidget):
 
     def toggle_hold_crop(self, checked):
         if checked:
+            if not self.scene:
+                # unfort. backref instance var: if no scene, prevent checking
+                self._hold_crop_checkbox.setChecked(False)
+                return
             self.held_crop_rectangle_data = (
                 self.scene.current_crop_rectangle_as_proportions()
             )
@@ -278,6 +282,7 @@ class Annotator(QWidget):
         hold_crop = m.addAction("(advanced option) Hold crop")
         hold_crop.setCheckable(True)
         hold_crop.triggered.connect(self.toggle_hold_crop)
+        self._hold_crop_checkbox = hold_crop
         m.addSeparator()
         subm = m.addMenu("Tools")
         # to make these actions checkable, they need to belong to self.
@@ -1146,8 +1151,10 @@ class Annotator(QWidget):
                 "You cannot un-crop while a crop is being held.",
                 info="Unselect 'hold crop' from the menu and then try again.",
             ).exec()
-        else:
-            self.scene.uncrop_underlying_images()
+            return
+        if not self.scene:
+            return
+        self.scene.uncrop_underlying_images()
 
     def toUndo(self):
         self.ui.undoButton.animateClick()
