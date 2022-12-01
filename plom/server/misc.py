@@ -97,19 +97,3 @@ def create_server_config(dur=confdir, *, port=None, name=None, db_name=None):
         template = template.replace("#db_name =", f'db_name = "{db_name}"')
     with open(sd, "w") as fh:
         fh.write(template)
-
-
-def create_blank_predictions(dur=specdir):
-    """Create empty prediction list to store machine-read student IDs.
-
-    args:
-        dur (str/pathlib.Path): where to put the file.
-
-    raises:
-        FileExistsError: file is already there.
-    """
-    pl = Path(dur) / "predictionlist.csv"
-    if pl.exists():
-        raise FileExistsError(f"{pl} already exists.")
-    with open(pl, "w") as fh:
-        fh.write("test, id\n")
