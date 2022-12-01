@@ -1830,7 +1830,11 @@ class Annotator(QWidget):
         CatViewer(self, dogAttempt=True).exec()
 
     def tag_paper(self, task=None, dialog_parent=None):
+        if not self.scene:
+            return
         if not task:
+            if not self.tgvID:
+                return
             task = f"q{self.tgvID}"
         if not dialog_parent:
             dialog_parent = self
