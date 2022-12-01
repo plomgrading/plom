@@ -1071,8 +1071,9 @@ class MarkerClient(QWidget):
             None
 
         """
-        if hasattr(self, "ui.tableView"):
-            self.ui.tableView.resizeRowsToContents()
+        if hasattr(self, "ui"):
+            if hasattr(self.ui, "tableView"):
+                self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)
 
     def toggle_prefer_tagged(self):
