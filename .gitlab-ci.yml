@@ -507,6 +507,7 @@ fullworkflow:
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
     - python3 -m plom.create.exam_scribbler
+    - plom-create rubric --demo
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
