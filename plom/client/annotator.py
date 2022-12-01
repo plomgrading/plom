@@ -928,7 +928,7 @@ class Annotator(QWidget):
         if newMode in self._list_of_minor_modes:
             self._which_tool = newMode
 
-        if imagePath is not None:
+        if self.scene and imagePath is not None:
             self.scene.tempImagePath = imagePath
 
         # pass the new mode to the graphicsview, and set the cursor in view
