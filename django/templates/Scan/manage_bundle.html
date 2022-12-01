@@ -3,7 +3,7 @@
 {% block page_heading %}Manage bundle{% endblock %}
 
 {% block main_content %}
-<div class="container w-100 p-0 m-3">
+<div style="margin: 0px 0px 16px 2.5px">
     <div class="card w-75">
         <div class="card-body">
             <div class="row">
@@ -76,15 +76,8 @@
             </div>
         </div>
     </div>
-    {% comment %} <div class="row row-cols-auto">
-        <div class="col card w-50">
-            <h5>Bundle Summary:</h5>
-            <p>{{ good_pages }} / {{ total_pages }} good pages</p>
-            <p>{{ error_pages }} error pages</p>
-        </div>
-    </div> {% endcomment %}
 </div>
-<div class="container w-100 p-0 m-3">
+<div style="margin: 0px 0px 16px 2.5px">
     <a 
         class="btn text-start" 
         style="background-color: lightgrey;"
@@ -104,16 +97,45 @@
         role="button"
         aria-expanded="false"
         aria-controls="pagesList"
-        href="#viewTestPapers"
+        href="#viewGoodPages"
     >
         <i class="bi bi-chevron-down"></i>
-        View test papers
+        View Good pages
     </a>
-    <a class="btn" style="display: inline;">Push all pages</a>
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+        data-bs-toggle="collapse"
+        role="button"
+        aria-expanded="false"
+        aria-controls="pagesList"
+        href="#viewErrorPages"
+    >
+        <i class="bi bi-chevron-down"></i>
+        View Error pages
+    </a>
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+    >
+        Test Order View
+    </a>
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+    >
+        Bundle Order View
+    </a>
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+    >
+        Push All Pages
+    </a>
 </div>
-<div>
+<div style="margin: 0px 0px 16px 2.5px">
     <div class="collapse" id="pages">
-        <div class="card" style="width: 97.5%">
+        <div class="card" style="width: 1345px;">
             <div>
                 {% for p in pages %}
                 <a
@@ -132,13 +154,6 @@
             </div>
             
         </div>
-    </div>
-</div>
-<div>
-    <div class="collapse" id="viewTestPapers">
-        <div class="card" style="width: 97.5%">
-            <p>hello there i am view by test papers</P>
-        </div>    
     </div>
 </div>
 
