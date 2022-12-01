@@ -338,9 +338,7 @@ class Downloader(QObject):
                 )
                 # no emit in this case
                 return
-            raise RuntimeError(
-                f"downloaded wrong thing? {cur}, {targetfile}, {md5}"
-            )
+            raise RuntimeError(f"downloaded wrong thing? {cur}, {targetfile}, {md5}")
         Path(targetfile).parent.mkdir(exist_ok=True, parents=True)
         with self.write_lock:
             Path(tmpfile).rename(targetfile)
