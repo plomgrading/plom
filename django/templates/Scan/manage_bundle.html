@@ -4,18 +4,85 @@
 
 {% block main_content %}
 <div class="container w-100 p-0 m-3">
-    <div class="row row-cols-auto">
-        <div class="col card w-25" style="margin-right: 5px">
-            <h5>Summary:</h5>
-            <p>{{ completed_papers }} / {{ summary_total_papers }} completed test papers ({{ percent_papers_complete }}%)</p>
-            <p>{{ scanned_pages }} / {{ summary_total_pages }} completed pages ({{ percent_pages_complete }}%)</p>
+    <div class="card w-75">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-3">
+                    <h5>Bundle Summary:</h5>
+                    <p>{{ good_pages }} / {{ total_pages }} good pages</p>
+                    <p>{{ error_pages }} error pages</p>
+                </div>
+                <div class="col-8">
+                    <h5>Bundle Contains:</h5>
+                    <div style="height: 130px; overflow-y: scroll;">
+                        <table class="table" style="table-layout: fixed; font-size: 12px">
+                            <thead>
+                                <tr style="background-color: black; color: white; position: sticky; z-index: 9999; top: 0;">
+                                    <th>Test Paper</th>
+                                    <th>Page Number</th>
+                                    <th>Question Version</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>1</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>2</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>4</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>5</td>
+                                    <td>2</td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>6</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>1</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>2</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>3</td>
+                                    <td>2</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col card w-25">
+    </div>
+    {% comment %} <div class="row row-cols-auto">
+        <div class="col card w-50">
             <h5>Bundle Summary:</h5>
             <p>{{ good_pages }} / {{ total_pages }} good pages</p>
             <p>{{ error_pages }} error pages</p>
         </div>
-    </div>
+    </div> {% endcomment %}
 </div>
 <div class="container w-100 p-0 m-3">
     <a 
