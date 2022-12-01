@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client no longer has a "No Answer" button: instead use the "no answer given" rubric.
 
 ### Fixed
+* Client: fix potential UI crashes when grading is complete.
 * Misc fixes.
 
 
