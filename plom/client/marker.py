@@ -1226,15 +1226,22 @@ class MarkerClient(QWidget):
 
         PC = self.downloader.pagecache
         for row in src_img_data:
+            # Page-arranger or other tools might've stripped this key
+            # last-time's local filename isn't right semantically but in
+            # practice its probably the same thing (and unimportant).
+            if not row.get("server_path"):
+                row["server_path"] = row["filename"]
             if PC.has_page_image(row["id"]):
                 row["filename"] = PC.page_image_path(row["id"])
                 continue
-            self.downloader.download_in_background_thread(row)
-            # TODO:
-            # row["filename"] = None
             row["filename"] = self.downloader.get_placeholder_path()
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
+        # after putting in model, trigger downloads (prevents race)
+        for row in src_img_data:
+            if PC.has_page_image(row["id"]):
+                continue
+            self.downloader.download_in_background_thread(row)
 
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         paperdir = Path(paperdir)
