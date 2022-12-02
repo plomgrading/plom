@@ -87,7 +87,7 @@ class BackgroundUploader(QThread):
     uploadSuccess = pyqtSignal(str, int, int)
     uploadKnownFail = pyqtSignal(str, str)
     uploadUnknownFail = pyqtSignal(str, str)
-    queue_status_changed = pyqtSignal(int, int)
+    queue_status_changed = pyqtSignal(int, int, int, int)
 
     def __init__(self, msgr):
         """Initialize a new uploader
@@ -102,6 +102,8 @@ class BackgroundUploader(QThread):
         self.q = None
         self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
+        self.num_uploaded = 0
+        self.num_failed = 0
         self.simulate_failures = False
         # percentage of download attempts that will fail and an overall
         # delay in seconds in a range (both are i.i.d. per retry).
@@ -139,7 +141,9 @@ class BackgroundUploader(QThread):
         log.debug("upQ enqueuing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
         n = 1 if self.is_upload_in_progress else 0
-        self.queue_status_changed.emit(self.q.qsize(), n)
+        self.queue_status_changed.emit(
+            self.q.qsize(), n, self.num_uploaded, self.num_failed
+        )
 
     def queue_size(self):
         """Return the number of papers waiting or currently uploading."""
@@ -181,7 +185,9 @@ class BackgroundUploader(QThread):
             # TODO: remove so that queue needs no knowledge of args
             code = data[0]
             log.info("upQ thread: popped code %s from queue, uploading", code)
-            self.queue_status_changed.emit(self.q.qsize(), 1)
+            self.queue_status_changed.emit(
+                self.q.qsize(), 1, self.num_uploaded, self.num_failed
+            )
             if self.simulate_failures:
                 simfail = random.random() <= self._simulate_failure_rate / 100
                 a, b = self._simulate_slow_net
@@ -190,16 +196,22 @@ class BackgroundUploader(QThread):
                 time.sleep(wait)
             if self.simulate_failures and simfail:
                 self.uploadUnknownFail.emit(code, "Simulated upload failure!")
+                self.num_failed += 1
             else:
-                upload(
+                if upload(
                     self._msgr,
                     *data,
                     knownFailCallback=self.uploadKnownFail.emit,
                     unknownFailCallback=self.uploadUnknownFail.emit,
                     successCallback=self.uploadSuccess.emit,
-                )
+                ):
+                    self.num_uploaded += 1
+                else:
+                    self.num_failed += 1
             self.is_upload_in_progress = False
-            self.queue_status_changed.emit(self.q.qsize(), 0)
+            self.queue_status_changed.emit(
+                self.q.qsize(), 0, self.num_uploaded, self.num_failed
+            )
 
         self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
@@ -249,7 +261,7 @@ def upload(
         successCallback: a function to call when we succeed.
 
     Returns:
-        None
+        bool: True for success, False for failure (either of the two).
 
     Raises:
         PlomSeriousException: elements in filenames do not correspond to
@@ -284,14 +296,15 @@ def upload(
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
         # probably previous call does not return: it forces a crash
-        return
+        return False
     except PlomException as ex:
         unknownFailCallback(task, str(ex))
-        return
+        return False
 
     numDone = msg[0]
     numTotal = msg[1]
     successCallback(task, numDone, numTotal)
+    return True
 
 
 class ExamQuestion:
@@ -1066,7 +1079,7 @@ class MarkerClient(QWidget):
         # self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
         self.show_hide_technical()
         # self.force_update_technical_stats()
-        self.update_technical_stats_upload(0, 0)
+        self.update_technical_stats_upload(0, 0, 0, 0)
 
     def connectGuiButtons(self):
         """
@@ -1569,11 +1582,13 @@ class MarkerClient(QWidget):
             "</p>"
         )
 
-    def update_technical_stats_upload(self, n, m):
+    def update_technical_stats_upload(self, n, m, numup, failed):
         if n == 0 and m == 0:
-            self.ui.labelTech3.setText("uploads: idle")
+            txt = "upload: idle"
         else:
-            self.ui.labelTech3.setText(f"uploads: {n} queued, {m} uploading")
+            txt = f"upload: {n} queued, {m} inprogress"
+        txt += f", {numup} done, {failed} failed"
+        self.ui.labelTech3.setText(txt)
 
     def show_hide_technical(self):
         if self.ui.technicalButton.isChecked():
