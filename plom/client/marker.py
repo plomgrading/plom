@@ -21,6 +21,7 @@ from math import ceil
 import os
 from pathlib import Path
 import queue
+import random
 import tempfile
 from textwrap import shorten
 import time
@@ -101,6 +102,20 @@ class BackgroundUploader(QThread):
         self.q = None
         self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
+        self.simulate_failures = False
+        # percentage of download attempts that will fail and an overall
+        # delay in seconds in a range (both are i.i.d. per retry).
+        # These are ignored unless simulate_failures is True.
+        self._simulate_failure_rate = 20.0
+        self._simulate_slow_net = (3, 8)
+
+    def enable_fail_mode(self):
+        log.info("fail mode ENABLED")
+        self.simulate_failures = True
+
+    def disable_fail_mode(self):
+        log.info("fail mode disabled")
+        self.simulate_failures = False
 
     def enqueueNewUpload(self, *args):
         """
@@ -167,15 +182,22 @@ class BackgroundUploader(QThread):
             code = data[0]
             log.info("upQ thread: popped code %s from queue, uploading", code)
             self.queue_status_changed.emit(self.q.qsize(), 1)
-            # For experimenting with slow uploads
-            # time.sleep(30)
-            upload(
-                self._msgr,
-                *data,
-                knownFailCallback=self.uploadKnownFail.emit,
-                unknownFailCallback=self.uploadUnknownFail.emit,
-                successCallback=self.uploadSuccess.emit,
-            )
+            if self.simulate_failures:
+                simfail = random.random() <= self._simulate_failure_rate / 100
+                a, b = self._simulate_slow_net
+                # generate wait1 + wait2 \in (a, b)
+                wait = random.random() * (b - a) + a
+                time.sleep(wait)
+            if self.simulate_failures and simfail:
+                self.uploadUnknownFail.emit(code, "Simulated upload failure!")
+            else:
+                upload(
+                    self._msgr,
+                    *data,
+                    knownFailCallback=self.uploadKnownFail.emit,
+                    unknownFailCallback=self.uploadUnknownFail.emit,
+                    successCallback=self.uploadSuccess.emit,
+                )
             self.is_upload_in_progress = False
             self.queue_status_changed.emit(self.q.qsize(), 0)
 
@@ -1571,13 +1593,21 @@ class MarkerClient(QWidget):
 
     def toggle_fail_mode(self):
         if self.ui.failmodeCB.isChecked():
+            self.Qapp.downloader.enable_fail_mode()
             r = self.Qapp.downloader._simulate_failure_rate
             a, b = self.Qapp.downloader._simulate_slow_net
-            self.ui.failmodeCB.setToolTip(f"delay ∈ [{a}s, {b}s], {r:0g}% retry")
-            self.Qapp.downloader.enable_fail_mode()
+            tip = f"download: delay ∈ [{a}s, {b}s], {r:0g}% retry"
+            if self.allowBackgroundOps:
+                self.backgroundUploader.enable_fail_mode()
+                r = self.backgroundUploader._simulate_failure_rate
+                a, b = self.backgroundUploader._simulate_slow_net
+                tip += f"\nupload delay ∈ [{a}s, {b}s], {r:0g}% fail"
+            self.ui.failmodeCB.setToolTip(tip)
         else:
             self.ui.failmodeCB.setToolTip("")
             self.Qapp.downloader.disable_fail_mode()
+            if self.allowBackgroundOps:
+                self.backgroundUploader.disable_fail_mode()
 
     def requestNextInBackgroundStart(self):
         """
