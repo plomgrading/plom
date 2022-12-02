@@ -16,6 +16,7 @@ from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
 from Papers.services import ImageBundleService
+from Progress.services import ManageScanService
 from Scan.forms import BundleUploadForm
 
 
@@ -28,6 +29,33 @@ class ScannerHomeView(ScannerRequiredView):
     def build_context(self, user):
         context = super().build_context()
         scanner = ScanService()
+        mss = ManageScanService()
+
+        total_papers = mss.get_total_test_papers()
+        completed_papers = mss.get_completed_test_papers()
+        percent_papers_complete = completed_papers / total_papers * 100
+
+        total_pages = mss.get_total_pages()
+        scanned_pages = mss.get_scanned_pages()
+        percent_pages_complete = scanned_pages / total_pages * 100
+
+        all_test_papers = mss.get_test_paper_list()
+        for test_paper in all_test_papers:
+            print(test_paper['paper_number'])
+            print(test_paper['complete'])
+        
+        context.update(
+            {
+                "completed_test_papers": completed_papers,
+                "total_completed_test_papers": total_papers,
+                "percent_papers_completed": int(percent_papers_complete),
+                "completed_pages": scanned_pages,
+                "total_completed_pages": total_pages,
+                "percent_pages_completed": int(percent_pages_complete),
+                "all_test_papers": all_test_papers,
+            }
+        )
+
         if not scanner.user_has_running_image_tasks(user):
             context.update(
                 {

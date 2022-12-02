@@ -16,83 +16,28 @@
             <div class="row">
                 <div class="col">
                     <h5>Summary:</h5>
-                    <p>456 / 1000 completed test papers</p>
-                    <p>2736 / 4000 completed pages</p>
-                    <a class="btn" style="background-color: #0F984F; color: white;">View Summary</a>
+                    <p>{{ completed_test_papers }} / {{ total_completed_test_papers }} completed test papers ({{ percent_papers_completed }}%)</p>
+                    <p>{{ completed_pages }} / {{ total_completed_pages }} completed pages ({{ percent_pages_completed }}%)</p>
+                    <a class="btn" style="background-color: #0F984F; color: white;" href="{% url 'scan_summary' %}">View Summary</a>
                 </div>
                 <div class="col">
                     <h5>Test Status:</h5>
                     <div style="height: 120px; overflow-y: scroll;">
                         <table class="table table-hover" style="table-layout: fixed;">
                             <tbody>
-                                <tr class="table-success">
-                                    <td>Test Paper 1</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td>Test Paper 2</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr class="table-danger">
-                                    <td>Test Paper 3</td>
-                                    <td>Incomplete</td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td>Test Paper 4</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr class="table-danger">
-                                    <td>Test Paper 5</td>
-                                    <td>Incomplete</td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td>Test Paper 6</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr class="table-danger">
-                                    <td>Test Paper 7</td>
-                                    <td>Inomplete</td>
-                                </tr>
-                                <tr class="table-danger">
-                                    <td>Test Paper 8</td>
-                                    <td>Inomplete</td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td>Test Paper 9</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr class="table-danger">
-                                    <td>Test Paper 10</td>
-                                    <td>Inomplete</td>
-                                </tr>
-                                <tr class="table-danger">
-                                    <td>Test Paper 11</td>
-                                    <td>Inomplete</td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td>Test Paper 12</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr class="table-danger">
-                                    <td>Test Paper 13</td>
-                                    <td>Inomplete</td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td>Test Paper 14</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td>Test Paper 15</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td>Test Paper 16</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr class="table-danger">
-                                    <td>Test Paper 17</td>
-                                    <td>Inomplete</td>
-                                </tr>
+                                {% for tp in all_test_papers %}
+                                    {% if tp.complete %}
+                                    <tr class="table-success">
+                                        <td>Test ID {{ tp.paper_number }}</td>
+                                        <td>Completed</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr class="table-danger">
+                                        <td>Test ID {{ tp.paper_number }}</td>
+                                        <td>Incomplete</td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -125,7 +70,7 @@
     </div>
     <br>
     <div>
-        <div class="row">
+        <div class="row" style="margin-right: 0.1px;">
             <div class="col">
                 <div>
                     <h5>Staged Bundles</h5>

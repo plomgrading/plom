@@ -19,6 +19,7 @@ from Scan.views import (
     PushAllPageImages,
     PagePushingUpdateView,
     FlagPageImage,
+    ScannerSummaryView,
 )
 
 
@@ -84,5 +85,10 @@ urlpatterns = [
         "flag/<timestamp>/<int:index>/",
         FlagPageImage.as_view(),
         name="scan_flag_img",
+    ),
+    path(
+        "summary",
+        ScannerSummaryView.as_view(),
+        name="scan_summary",
     ),
 ]
