@@ -130,8 +130,8 @@ def is_paper_database_initialised(self):
     """
     if self.is_paper_database_populated():
         return True
-    if self.hasNoAnswerRubric(1):
-        # if we have the No-Answer rubric for Q1, then we must be initialised
+    if self.hasAutoGenRubrics():
+        # if we have the no-answer rubrics, then we must be initialised
         return True
     return False
 
@@ -539,49 +539,14 @@ def remove_id_from_paper(self, paper_num):
     return True
 
 
-def hasNoAnswerRubric(self, questionNumber):
-    """Do we have rubrics for when no answer given for question.
-
-    Args:
-        questionNumber (int)
+def hasAutoGenRubrics(self):
+    """Do we have the manager auto-generated "no answer" rubrics.
 
     Returns:
         Bool: True if we have such a thing, else False.
     """
-    key = 1000 + questionNumber
-    if Rubric.get_or_none(key=key):
+    uref = User.get(name="manager")
+    # Note: this text must match exactly what is set in buildPlomDB.py
+    if Rubric.get_or_none(user=uref, text="no answer given"):
         return True
     return False
-
-
-def createNoAnswerRubric(self, questionNumber, maxMark):
-    """Create rubrics for when no answer given for question
-
-    Each question needs one such rubric
-
-    Args:
-        questionNumber (int)
-        maxMark: the max mark for that question
-
-    Returns:
-        Bool: True if successful, False if rubric already exists.
-    """
-    key = 1000 + questionNumber
-    uref = User.get(name="HAL")
-
-    if Rubric.get_or_none(key=key):
-        log.info("No-answer-rubric (up) for question %d already exists", questionNumber)
-        return False
-
-    Rubric.create(
-        key=key,
-        delta="0",
-        text="No answer given",
-        kind="absolute",
-        question=questionNumber,
-        user=uref,
-        creationTime=datetime.now(timezone.utc),
-        modificationTime=datetime.now(timezone.utc),
-    )
-    log.info("Created no-answer-rubric for question %d", questionNumber)
-    return True
