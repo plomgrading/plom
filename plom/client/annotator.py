@@ -1239,7 +1239,9 @@ class Annotator(QWidget):
         # handle rubric function.
         self.rubric_widget.rubricSignal.connect(self.handleRubric)
         # the no-answer button
-        self.ui.noAnswerButton.clicked.connect(self.noAnswer)
+        # self.ui.noAnswerButton.clicked.connect(self.noAnswer)
+        # TODO: we can remove a lot of code if we just delete it
+        self.ui.noAnswerButton.setVisible(False)
         # and the rearrange pages button
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
         # Connect up the finishing functions - using a dropdown menu
