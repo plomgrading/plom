@@ -62,11 +62,7 @@ from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
-from .useful_classes import (
-    SimpleQuestion,
-    SimpleQuestionCheckBox,
-    NoAnswerBox,
-)
+from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
 
 
 log = logging.getLogger("annotr")
@@ -1238,11 +1234,6 @@ class Annotator(QWidget):
         # First up connect the rubric list's signal to the annotator's
         # handle rubric function.
         self.rubric_widget.rubricSignal.connect(self.handleRubric)
-        # the no-answer button
-        # self.ui.noAnswerButton.clicked.connect(self.noAnswer)
-        # TODO: we can remove a lot of code if we just delete it
-        self.ui.noAnswerButton.setVisible(False)
-        # and the rearrange pages button
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
         # Connect up the finishing functions - using a dropdown menu
         m = QMenu()
@@ -1776,46 +1767,6 @@ class Annotator(QWidget):
         else:
             pass
         self.view.setFocus()
-
-    def noAnswer(self):
-        """
-        Handles when the user selects the "No Answer Given" option
-        and ensures the user has not assigned deltas on the page. If
-        deltas have been assigned, displays an error message.
-
-        Returns:
-            None
-
-        """
-        # ID for no-answer rubric is defined in the db_create module
-        # in the createNoAnswerRubric function.
-        # rID = 1000 + questionNumber = is absolute rubric
-
-        noAnswerCID = 1000 + self.question_num
-
-        # can only apply this if current marking state is neutral
-        # else user has scored the page
-
-        if self.getMarkingState() != "neutral":
-            WarnMsg(
-                self,
-                '<p>You have marked the page - cannot then set "No answer given".</p>'
-                "<p>Delete mark-changing annotations then try again.</p>",
-            ).exec()
-            return
-
-        self.scene.noAnswer(noAnswerCID)
-        nabValue = NoAnswerBox(self).exec()
-        if nabValue == 0:
-            # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
-            self.scene.undo()
-            self.scene.undo()
-            self.scene.undo()
-        elif nabValue == 1:
-            # equivalent to "yes - give me next paper"
-            self.ui.finishedButton.animateClick()
-        else:
-            pass
 
     def getRubricsFromServer(self):
         """Request a latest rubric list for current question."""

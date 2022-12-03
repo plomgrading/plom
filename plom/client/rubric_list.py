@@ -454,7 +454,7 @@ class RubricTable(QTableWidget):
         # now sort in numerical order away from 0 and add
         for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["delta"]))):
             self.appendNewRubric(rb)
-        # finally append the manager-created absolute rubrics (not HAL's no-answer ones)
+        # finally append the manager-created absolute rubrics
         for rb in rubrics:
             if rb["username"] == "manager" and rb["kind"] == "absolute":
                 self.appendNewRubric(rb)
@@ -1008,7 +1008,7 @@ class RubricWidget(QWidget):
 
         # Update the wranglerState for any new rubrics not in shown/hidden (Issue #1493)
         for rubric in self.rubrics:
-            # don't add HAL system rubrics
+            # don't add HAL system rubrics: TODO: are there any of these now?
             if rubric["username"] == "HAL":
                 continue
             # exclude manager-delta rubrics, see also Issue #1494

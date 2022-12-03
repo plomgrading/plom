@@ -2533,46 +2533,6 @@ class PageScene(QGraphicsScene):
         legality = self.isLegalRubric(rubricKind, delta)
         self.updateGhost(delta, text, legality)
 
-    def noAnswer(self, noAnswerCID):
-        """
-        Handles annotating the page if there is little or no answer written.
-
-        Args:
-            noAnswerCID (int): the key for the noAnswerRubric used
-
-        Returns:
-            None
-
-        """
-        br = self.sceneRect()
-        # put lines through the page
-        w = br.right()
-        h = br.bottom()
-        command = CommandLine(
-            self, QPointF(w * 0.1, h * 0.1), QPointF(w * 0.9, h * 0.9)
-        )
-        self.undoStack.push(command)
-        command = CommandLine(
-            self, QPointF(w * 0.9, h * 0.1), QPointF(w * 0.1, h * 0.9)
-        )
-        self.undoStack.push(command)
-
-        # ID for no-answer rubric is defined in the db_create module
-        # in the createNoAnswerRubric function.
-        # Using that ID lets us track the rubric in the DB
-
-        # build a delta-text-rubric-thingy
-        command = CommandGroupDeltaText(
-            self,
-            br.center() + br.topRight() / 8,
-            noAnswerCID,
-            "absolute",
-            0,
-            "NO ANSWER GIVEN",
-        )
-        self.undoStack.push(command)
-        self.refreshStateAndScore()  # and now refresh the markingstate and score
-
     def stopMidDraw(self):
         # look at all the mid-draw flags and cancel accordingly.
         # the flags are arrowFlag, boxFlag, penFlag, boxLineStampState, zoomBox
