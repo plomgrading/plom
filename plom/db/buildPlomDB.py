@@ -36,8 +36,19 @@ def buildSpecialRubrics(spec, db):
         rubric = {
             "kind": "absolute",
             "delta": "0",
+            "text": "no answer given",
+            "question": q,
+            "meta": "Is this answer blank or nearly blank?  Please do not use "
+            + "if there is any possibility of relevant writing on the page.",
+        }
+        if not db.McreateRubric("manager", rubric):
+            raise ValueError(f"Manager no-answer-rubric for q.{q} already exists")
+        rubric = {
+            "kind": "absolute",
+            "delta": "0",
             "text": "no marks",
             "question": q,
+            "meta": "There is writing here but its not sufficient for any points.",
         }
         if not db.McreateRubric("manager", rubric):
             raise ValueError(f"Manager no-marks-rubric for q.{q} already exists")
