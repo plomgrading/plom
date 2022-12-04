@@ -692,6 +692,7 @@ class RubricWidget(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.question_number = None
+        self.version = None
         self._parent = parent
         self.username = parent.username
         self.rubrics = []
@@ -1105,6 +1106,14 @@ class RubricWidget(QWidget):
             qn (int/None): the question number.
         """
         self.question_number = qn
+
+    def setVersion(self, version):
+        """Set version being graded.
+
+        args:
+            version (int/None): which version
+        """
+        self.version = version
 
     def reset(self):
         """Return the widget to a no-TGV-specified state."""

@@ -1735,13 +1735,14 @@ class MarkerClient(QWidget):
         # TODO: I dislike this packed-string: overdue for refactor
         assert task[5] == "g"
         question_num = int(task[6:])
-        tgv = task[1:]
+        taskid = task[1:]
         question_label = get_question_label(self.exam_spec, question_num)
         integrity_check = self.examModel.getIntegrityCheck(task)
         src_img_data = self.examModel.get_source_image_data(task)
         return (
-            tgv,
+            taskid,
             question_label,
+            self.version,
             exam_name,
             paperdir,
             aname,
