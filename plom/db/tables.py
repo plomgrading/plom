@@ -190,6 +190,11 @@ class Rubric(BaseModel):
     delta = pw.CharField(null=False)  # is short
     text = pw.TextField(null=False)  # can be long
     question = pw.IntegerField(null=False)
+    # I'm going to annoy Andrew and store a list in this:
+    #   "", "[]": all versions ("[]" is up for debate, whatever makes nice code)
+    #   "[1, 3]": versions 1 and 3 only
+    #   "4": version, maybe not in DB like this!
+    versions = pw.CharField(null=False, default="")
     user = pw.ForeignKeyField(User, backref="rubrics", null=False)
     revision = pw.IntegerField(null=False, default=0)
     count = pw.IntegerField(null=False, default=0)

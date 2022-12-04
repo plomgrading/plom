@@ -27,16 +27,20 @@ def McreateRubric(self, user_name, rubric):
             `{kind: "relative", delta: "-1", text: "blah", question: 2}`
             The following fields are optional and empty strings will be
             substituted:
-            `{tags: "blah", meta: "blah"}`
+            `{tags: "blah", meta: "blah", versions: "[1, 2]"}`
             Currently, its ok if it contains other fields: they are
             ignored.
+            ``versions`` should be a list of integers, or the empty list
+            where the empty list means "all versions".  Currently it also
+            accepts an empty string, or a scalar integer, subject to
+            change (i.e., don't rely on this, just send a list!)
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
         key for the new rubric.  Can fail if missing fields.
     """
     need_fields = ("kind", "delta", "text", "question")
-    optional_fields = ("tags", "meta")
+    optional_fields = ("tags", "meta", "versions")
     if any(x not in rubric for x in need_fields):
         return (False, "Must have all fields {}".format(need_fields))
     for f in optional_fields:
@@ -56,6 +60,7 @@ def McreateRubric(self, user_name, rubric):
             kind=rubric["kind"],
             delta=rubric["delta"],
             text=rubric["text"],
+            versions=str(rubric["versions"]),
             creationTime=datetime.now(timezone.utc),
             modificationTime=datetime.now(timezone.utc),
             meta=rubric["meta"],
@@ -65,7 +70,7 @@ def McreateRubric(self, user_name, rubric):
 
 
 def MgetRubrics(self, question_number=None):
-    # return the rubric sorted by kind, then delta, then text
+    """Get list of rubrics sorted by kind, then delta, then text."""
     rubric_list = []
     if question_number is None:
         query = Rubric.select().order_by(Rubric.kind, Rubric.delta, Rubric.text)
@@ -76,6 +81,11 @@ def MgetRubrics(self, question_number=None):
             .order_by(Rubric.kind, Rubric.delta, Rubric.text)
         )
     for r in query:
+        vers = r.versions.strip("[]")
+        if vers:
+            vers = [int(x) for x in vers.split(",")]
+        else:
+            vers = []
         rubric_list.append(
             {
                 "id": r.key,
@@ -89,6 +99,7 @@ def MgetRubrics(self, question_number=None):
                 "modified": datetime_to_json(r.modificationTime),
                 "username": r.user.name,
                 "question_number": r.question,
+                "versions": vers,
             }
         )
     return rubric_list
@@ -137,6 +148,7 @@ def MmodifyRubric(self, user_name, key, change):
         rref.kind = change["kind"]
         rref.delta = change["delta"]
         rref.text = change["text"]
+        rref.versions = change["versions"]
         rref.modificationTime = datetime.now(timezone.utc)
         rref.revision += 1
         rref.meta = change["meta"]
@@ -210,6 +222,7 @@ def Rget_rubric_counts(self):
             "count": 0,
             "username": rref.user.name,
             "question_number": rref.question,
+            "versions": rref.versions.strip("[]"),  # e.g., "1, 2, 3"
         }
 
     # now go through all rubrics that **have** been used
