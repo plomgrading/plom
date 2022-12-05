@@ -1,6 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+
 from django.db import transaction
 
-from Papers.models import Paper, BasePage, QuestionPage
+from Papers.models import Paper, BasePage, QuestionPage, Image
 
 
 class PageDataService:
@@ -41,7 +44,17 @@ class PageDataService:
         page_list = []
         for page in question_pages.order_by("page_number"):
             image = page.image
-            page_list.append([image.pk, image.hash])
+            if image:
+                page_list.append(
+                    {
+                        "id": image.pk,
+                        "md5": image.hash,
+                        "orientation": image.rotation,
+                        "server_path": image.file_name,
+                        "included": True,
+                        "order": page.page_number,
+                    }
+                )
 
         return page_list
 
@@ -49,7 +62,7 @@ class PageDataService:
     def get_question_pages_metadata(self, paper, question):
         """
         Return a list of metadata for all pages in a
-        particular paper/question.
+        particular paper.
 
         Args:
             paper (int): test-paper number
@@ -71,19 +84,17 @@ class PageDataService:
 
         test_paper = Paper.objects.get(paper_number=paper)
         # TODO: all pages in the test-paper, and included=true for the question
-        question_pages = QuestionPage.objects.filter(
-            paper=test_paper, question_number=question
-        )
+        paper_pages = BasePage.objects.filter(paper=test_paper)
 
         pages_metadata = []
-        for page in question_pages:
+        for page in paper_pages:
             if page.image:
                 pages_metadata.append(
                     {
                         "pagename": f"t{page.page_number}",
                         "md5": page.image.hash,
-                        "included": True,  # TODO: when is this false?
-                        "order": self.get_question_order(page, question_pages),
+                        "included": type(page) == QuestionPage,
+                        "order": page.page_number,
                         "id": page.image.pk,
                         "orientation": page.image.rotation,
                         "server_path": str(page.image.file_name),
@@ -92,3 +103,16 @@ class PageDataService:
                 # TODO: handle extra + homework pages
 
         return pages_metadata
+
+    @transaction.atomic
+    def get_image_path(self, pk, img_hash):
+        """
+        Return the path to a page-image from its public key and hash.
+
+        Args:
+            pk (int): image's public key
+            img_hash (str): image's hash
+        """
+
+        image = Image.objects.get(pk=pk, hash=img_hash)
+        return image.file_name

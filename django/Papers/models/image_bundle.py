@@ -90,3 +90,12 @@ class ErrorImage(Image):
     version_number = models.PositiveIntegerField()
     flagged = models.BooleanField(default=False)
     comment = models.TextField(default="", null=True)
+
+
+class AnnotationImage(Image):
+    """
+    Table to store information about annotation images: the raster
+    rendering of annotations + question page-images
+    """
+
+    pass

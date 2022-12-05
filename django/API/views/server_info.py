@@ -11,6 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from plom import __version__
 from plom import Plom_API_Version
 
+from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
 
 
@@ -61,6 +62,10 @@ class CloseUser(APIView):
     def delete(self, request):
         try:
             request.user.auth_token.delete()
+
+            # Tasks
+            mts = MarkingTaskService()
+            mts.surrender_all_tasks(request.user)
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)

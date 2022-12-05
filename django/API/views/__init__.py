@@ -22,4 +22,7 @@ from .mark import (
     MgetNextTask,
     MclaimThisTask,
     MgetQuestionPageData,
+    MgetOneImage,
+    MgetAnnotations,
+    MgetAnnotationImage,
 )
