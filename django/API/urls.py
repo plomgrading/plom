@@ -59,7 +59,11 @@ urlpatterns = [
         MgetAnnotations.as_view(),
         name="api_MK_annotation",
     ),
-    path("annotations_image/<int:paper>/<int:question>/", MgetAnnotationImage.as_view(), name="api_MK_annotation_img")
+    path(
+        "annotations_image/<int:paper>/<int:question>/",
+        MgetAnnotationImage.as_view(),
+        name="api_MK_annotation_img",
+    ),
 ]
 
 urlpatterns += [
