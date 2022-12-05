@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Natalie Balashov
 
 import csv
 from datetime import datetime, timezone
@@ -11,7 +12,7 @@ import subprocess
 import time
 
 from plom import specdir
-from plom.idreader.assign_prob import assemble_cost_matrix, lap_solver
+from plom.idreader.assign_prob import assemble_cost_matrix, lap_solver, greedy
 from plom.misc_utils import datetime_to_json
 
 log = logging.getLogger("servID")
@@ -126,7 +127,7 @@ def IDdeletePredictions(self):
     log.info("Wiping predictions by lap-solver")
     old_predictions = self.DB.ID_get_predictions()
     for papernum, v in old_predictions.items():
-        if v["predictor"] == "MLLAP":
+        if v["predictor"] == "MLLAP" or v["predictor"] == "MLGreedy":
             ok, code, msg = self.DB.remove_id_prediction(papernum)
             if not ok:
                 raise RuntimeError(
@@ -282,6 +283,10 @@ def predict_id_lap_solver(self):
     prediction_pairs = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
+    greedy_predictions = greedy(sids, probabilities)
+    with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
+        json.dump(greedy_predictions, greedy_results_file)
+
     self.IDdeletePredictions()
 
     # ------------------------ #
@@ -289,22 +294,22 @@ def predict_id_lap_solver(self):
     # our prediction_pairs should not (by construction) overlap with existing predictions on papernumber
     # but it might on SID - if an overlap in SID then remove from prediction_pairs and DB.
     # ------------------------ #
-    log.info("Sanity check that no *paper numbers* from the prenamed are in LAP output")
+    # log.info("Sanity check that no *paper numbers* from the prenamed are in LAP output")
     # 'predictions' only contains **non**MLLAP predictions
     predictions = self.DB.ID_get_predictions()
-    for papernum, _ in prediction_pairs:
-        # verify that there is no paper-number overlap between existing predictions
-        # and those from MLLAP
-        if papernum in predictions.keys():
-            raise RuntimeError(
-                f"Unexpectedly, found paper {papernum} in both LAP output and prename!"
-            )
+    # for papernum, _ in greedy_predictions:
+    #     # verify that there is no paper-number overlap between existing predictions
+    #     # and those from MLLAP
+    #     if papernum in predictions.keys():
+    #         raise RuntimeError(
+    #             f"Unexpectedly, found paper {papernum} in both LAP output and prename!"
+    #         )
     # at this point the database and the prediction_pairs contain no overlaps in paper_number.
     # but we need to keep uniqueness in SID, so construct SID-lookup dict from existing predictions
     existing_sid_to_papernum = {predictions[X]["student_id"]: X for X in predictions}
-    log.info("Saving prediction results into database /w certainty 0.5")
+    log.info("Saving prediction results into database /w certainty")
     errs = []
-    for papernum, student_ID in prediction_pairs:
+    for papernum, student_ID, certainty in greedy_predictions:
         # check if that SID is used in an existing prediction
         if student_ID in existing_sid_to_papernum:
             other_paper = existing_sid_to_papernum[student_ID]
@@ -319,7 +324,7 @@ def predict_id_lap_solver(self):
                 )
         else:  # is safe to add it to prediction list
             ok, code, msg = self.DB.add_or_change_id_prediction(
-                papernum, student_ID, 0.5, predictor="MLLAP"
+                papernum, student_ID, certainty, predictor="MLGreedy"
             )
             if not ok:
                 # TODO: perhaps we want to decrease the prename confidence?  Or even delete it.

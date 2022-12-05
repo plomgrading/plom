@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Natalie Balashov
 
 """
 Tools for building and solving assignment problems.
@@ -89,3 +90,48 @@ def lap_solver(test_numbers, student_IDs, costs):
     for r, c in zip(row_IDs, column_IDs):
         prediction_pairs.append((test_numbers[r], student_IDs[c]))
     return prediction_pairs
+
+
+def greedy(student_IDs, probabilities):
+    """Generate greedy predictions for student ID numbers.
+
+    Args:
+        student_IDs: integer list of student ID numbers
+
+        probabilities: dict with paper_number -> probability matrix.
+        Each matrix contains probabilities that the ith ID char is matched with digit j.
+
+    Returns:
+        list of tuples (paper_number, id_prediction, certainty)
+
+    Algorithm:
+        For each entry in probabilities, check each student id in the classlist against the matrix.
+        The probabilities corresponding to the digits in the student id are extracted.
+        Calculate a mean of those digit probabilities, and choose the student id that yielded the highest mean value.
+        The calculated digit probabilities mean is returned as the "certainty".
+    """
+    predictions = []
+
+    for paper_num in probabilities:
+        sid_probs = []
+
+        for id_num in student_IDs:
+            sid = str(id_num)
+            digit_probs = []
+
+            for i in range(len(sid)):
+                # find the probability of digit i in sid
+                i_prob = probabilities[paper_num][i][int(sid[i])]
+                digit_probs.append(i_prob)
+
+            # calculate the mean of all digit probabilities
+            mean = sum(digit_probs) / len(sid)
+            sid_probs.append(mean)
+
+        # choose the sid with the highest mean digit probability
+        largest_prob = sid_probs.index(max(sid_probs))
+        predictions.append(
+            (paper_num, student_IDs[largest_prob], round(max(sid_probs), 1))
+        )
+
+    return predictions
