@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Server stores annotation data in the database instead of in `.plom` files.
+* Client no longer has a "No Answer" button: instead use the "no answer given" rubric.
 
 ### Fixed
 * Misc fixes.

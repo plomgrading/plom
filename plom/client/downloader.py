@@ -61,8 +61,9 @@ class Downloader(QObject):
     The Downloader will emit various **signals**.  You can connect
     slots to these:
 
-      * `download_finished(int, str, str)`: emitted when a
-        (background) download finishes.
+      * `download_finished(img_id: int, md5sum: str, filename: str)`:
+        emitted when a (background) download finishes.  `filename` is
+        newly-downloaded file.
       * `download_failed(img_id: int)`: emitted when a (background)
         download fails.  The job will be automatically restarted
         up to three times.
@@ -226,7 +227,9 @@ class Downloader(QObject):
         Args:
             row (dict): One image entry in the "page data", has fields
                 `id`, `md5` and some others that are used to try to
-                choose a reasonable local file name.
+                choose a reasonable local file name.  Currently the
+                local file name is chosen from the ``"server_path"``
+                key.
 
         Keyword Args:
             priority (bool): high priority if user requested this (not a
@@ -251,12 +254,17 @@ class Downloader(QObject):
             return
         # try some things to get a reasonable local filename
         target_name = row.get("server_path", None)
-        if target_name is None:
-            target_name = row.get("local_filename", None)
-        if target_name is None:
-            target_name = row.get("filename", None)
+        # Note: too dangerous: callers are likely to have put placeholder in these!
+        # if target_name is None:
+        #     target_name = row.get("local_filename", None)
+        # if target_name is None:
+        #     target_name = row.get("filename", None)
         if target_name is None:
             raise NotImplementedError("TODO: then use a random value")
+        if str(target_name) == str(self._placeholder_image):
+            raise RuntimeError(
+                f"Unexpectedly detected target image as placeholder: {row}"
+            )
         target_name = self.basedir / target_name
 
         worker = DownloadWorker(
@@ -297,15 +305,23 @@ class Downloader(QObject):
         # TODO: did it though?  Maybe more when it returns?
         self.download_queue_changed.emit(self.get_stats())
 
-    def _worker_delivers(self, img_id, md5, tmpfile, local_filename):
+    def _worker_delivers(self, img_id, md5, tmpfile, targetfile):
         """A worker has succeed and delivered a temp file to us.
+
+        Args:
+             img_id (int):
+             md5 (str):
+             tmpfile (str/pathlib.Path): a temporary path and filename
+                 where the file is now.
+             targetfile (str/pathlib.Path): to where should we save
+                 (that is, rename) the file.
 
         This will emit a signal that others can listen for.
         In some cases, the worker will deliver something that somone else
         has downloaded in the meantime.  In that case we do not emit a
         signal.
         """
-        log.debug(f"Worker delivery: {img_id}, {local_filename}")
+        log.debug(f"Worker delivery: {img_id}, tmp={tmpfile}, target={targetfile}")
         # TODO: maybe pagecache should have the desired filename?
         # TODO: revisit once PageCache decides None/Exception...
         self._in_progress[img_id] = False
@@ -314,25 +330,23 @@ class Downloader(QObject):
         else:
             cur = None
         if cur:
-            if cur == local_filename:
+            if cur == targetfile:
                 log.info(
                     "Someone else downloaded %d (%s) for us in the meantime, no action",
                     img_id,
-                    local_filename,
+                    targetfile,
                 )
                 # no emit in this case
                 return
-            raise RuntimeError(
-                f"downloaded wrong thing? {cur}, {local_filename}, {md5}"
-            )
-        Path(local_filename).parent.mkdir(exist_ok=True, parents=True)
+            raise RuntimeError(f"downloaded wrong thing? {cur}, {targetfile}, {md5}")
+        Path(targetfile).parent.mkdir(exist_ok=True, parents=True)
         with self.write_lock:
-            Path(tmpfile).rename(local_filename)
-            self.pagecache.set_page_image_path(img_id, local_filename)
-        self.download_finished.emit(img_id, md5, local_filename)
+            Path(tmpfile).rename(targetfile)
+            self.pagecache.set_page_image_path(img_id, targetfile)
+        self.download_finished.emit(img_id, md5, targetfile)
         self.download_queue_changed.emit(self.get_stats())
 
-    def _worker_failed(self, img_id, md5, local_filename, err_stuff_tuple):
+    def _worker_failed(self, img_id, md5, targetfile, err_stuff_tuple):
         """A worker has failed and called us: retry 3 times."""
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
         self.number_of_retries += 1
@@ -356,7 +370,7 @@ class Downloader(QObject):
             return
         # TODO: does not respect the original priority: high priority failure becomes ordinary
         self.download_in_background_thread(
-            {"id": img_id, "md5": md5, "local_filename": local_filename},
+            {"id": img_id, "md5": md5, "server_path": targetfile},
             _is_retry=True,
         )
         self.download_queue_changed.emit(self.get_stats())
@@ -389,8 +403,8 @@ class Downloader(QObject):
 
         Return:
             dict: the modified row.  If the file was already downloaded, put
-            its name into the ``local_filename`` key.  If we had to download
-            it we also put the filename into ``local_filename``.
+            its name into the ``filename`` key.  If we had to download
+            it we also put the filename into ``filename``.
         """
         if self.simulate_failures:
             fail = random.random() <= self._simulate_failure_rate / 100
@@ -402,9 +416,9 @@ class Downloader(QObject):
         # TODO: revisit once PageCache decides None/Exception...
         if self.pagecache.has_page_image(row["id"]):
             cur = self.pagecache.page_image_path(row["id"])
-            row_cur = row.get("local_filename", None)
+            row_cur = row.get("filename", None)
             if row_cur is None:
-                row["local_filename"] = cur
+                row["filename"] = cur
                 # TODO: do we care if this matches row["server_path"]?
                 return row
             assert (
@@ -432,8 +446,8 @@ class Downloader(QObject):
         # im_type = imghdr.what(None, h=im_bytes)
         with open(f, "wb") as fh:
             fh.write(im_bytes)
-        row["local_filename"] = str(f)
-        self.pagecache.set_page_image_path(row["id"], row["local_filename"])
+        row["filename"] = str(f)
+        self.pagecache.set_page_image_path(row["id"], row["filename"])
         return row
 
 
@@ -446,10 +460,10 @@ class WorkerSignals(QObject):
         No data
 
     download_success:
-        `(img_id (int), md5 (str), tempfile (str), local_filename (str)`
+        `(img_id (int), md5 (str), tempfile (str), targetfile (str)`
 
     download_fail:
-        `(img_id (int), md5 (str), local_filename (str), err_stuff_tuple (tuple)`
+        `(img_id (int), md5 (str), targetfile (str), err_stuff_tuple (tuple)`
         where the tuple is `(exctype, value, traceback.format_exc()`.
     """
 

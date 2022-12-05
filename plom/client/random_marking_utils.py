@@ -217,10 +217,6 @@ def do_random_marking_backend(question, version, *, messenger):
             downloader = Downloader(td, msgr=messenger)
             src_img_data = downloader.sync_downloads(src_img_data)
 
-            # TODO: why?  sanity-ify this and similar in Marker
-            for row in src_img_data:
-                row["filename"] = row["local_filename"]
-
             basefile = Path(td) / "argh"
             score, rubrics, aname, plomfile = annotatePaper(
                 question, maxMark, task, src_img_data, basefile, tags

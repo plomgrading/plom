@@ -145,7 +145,7 @@ def upload_demo_rubrics(*, msgr, numquestions=3):
     rubrics_in = rubrics_in["rubric"]
     rubrics = []
     for rub in rubrics_in:
-        if not hasattr(rub, "kind"):
+        if not rub.get("kind"):
             if rub["delta"] == ".":
                 rub["kind"] = "neutral"
             elif rub["delta"].startswith("+") or rub["delta"].startswith("-"):
@@ -153,7 +153,7 @@ def upload_demo_rubrics(*, msgr, numquestions=3):
             else:
                 raise ValueError(f'not sure how to map "kind" for rubric:\n  {rub}')
         # Multiply rubrics w/o question numbers, avoids repetition in demo file
-        if not hasattr(rub, "question_number"):
+        if rub.get("question_number") is None:
             for q in range(1, numquestions + 1):
                 r = rub.copy()
                 r["question_number"] = q

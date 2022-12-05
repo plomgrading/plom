@@ -47,9 +47,9 @@ class PageCache:
         # hopefully temporary!
         # TODO: maybe check the md5sums since we didn't get it ourselves
         for r in pagedata:
-            if r["local_filename"]:
+            if r["filename"]:
                 cur = self._image_paths.get(r["id"], None)
                 if cur is not None:
-                    assert cur == r["local_filename"]
+                    assert cur == r["filename"]
                 else:
-                    self._image_paths[r["id"]] = r["local_filename"]
+                    self._image_paths[r["id"]] = r["filename"]

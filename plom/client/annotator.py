@@ -62,11 +62,7 @@ from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
-from .useful_classes import (
-    SimpleQuestion,
-    SimpleQuestionCheckBox,
-    NoAnswerBox,
-)
+from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
 
 
 log = logging.getLogger("annotr")
@@ -662,13 +658,8 @@ class Annotator(QWidget):
         dl = self.parentMarkerUI.Qapp.downloader
         pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
         pagedata = dl.sync_downloads(pagedata)
-        # TODO: if we unified img_src_data and pagedata, could just pass onwards
-        files = [
-            {"filename": x["local_filename"], "orientation": x["orientation"]}
-            for x in pagedata
-        ]
         labels = [x["pagename"] for x in pagedata]
-        WholeTestView(testnum, files, labels, parent=self).exec()
+        WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -763,12 +754,11 @@ class Annotator(QWidget):
         )
         # TODO: have rearrange react to new downloads
         # PC.download_finished.connect(rearrangeView.shake_things_up)
+        perm = []
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: {}".format(perm))
-        else:
-            perm = None
         # Workaround for memory leak Issue #1322, TODO better fix
         rearrangeView.listA.clear()
         rearrangeView.listB.clear()
@@ -777,7 +767,7 @@ class Annotator(QWidget):
         if perm:
             # Sanity check for dupes in the permutation
             # pylint: disable=unsubscriptable-object
-            md5 = [x[0] for x in perm]
+            md5 = [x["md5"] for x in perm]
             # But if the input already had dupes than its not our problem
             md5_in = [x["md5"] for x in self.src_img_data]
             if len(set(md5)) != len(md5) and len(set(md5_in)) == len(md5_in):
@@ -1258,9 +1248,6 @@ class Annotator(QWidget):
         # First up connect the rubric list's signal to the annotator's
         # handle rubric function.
         self.rubric_widget.rubricSignal.connect(self.handleRubric)
-        # the no-answer button
-        self.ui.noAnswerButton.clicked.connect(self.noAnswer)
-        # and the rearrange pages button
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
         # Connect up the finishing functions - using a dropdown menu
         m = QMenu()
@@ -1794,46 +1781,6 @@ class Annotator(QWidget):
         else:
             pass
         self.view.setFocus()
-
-    def noAnswer(self):
-        """
-        Handles when the user selects the "No Answer Given" option
-        and ensures the user has not assigned deltas on the page. If
-        deltas have been assigned, displays an error message.
-
-        Returns:
-            None
-
-        """
-        # ID for no-answer rubric is defined in the db_create module
-        # in the createNoAnswerRubric function.
-        # rID = 1000 + questionNumber = is absolute rubric
-
-        noAnswerCID = 1000 + self.question_num
-
-        # can only apply this if current marking state is neutral
-        # else user has scored the page
-
-        if self.getMarkingState() != "neutral":
-            WarnMsg(
-                self,
-                '<p>You have marked the page - cannot then set "No answer given".</p>'
-                "<p>Delete mark-changing annotations then try again.</p>",
-            ).exec()
-            return
-
-        self.scene.noAnswer(noAnswerCID)
-        nabValue = NoAnswerBox(self).exec()
-        if nabValue == 0:
-            # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
-            self.scene.undo()
-            self.scene.undo()
-            self.scene.undo()
-        elif nabValue == 1:
-            # equivalent to "yes - give me next paper"
-            self.ui.finishedButton.animateClick()
-        else:
-            pass
 
     def getRubricsFromServer(self):
         """Request a latest rubric list for current question."""

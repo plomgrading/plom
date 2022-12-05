@@ -398,7 +398,7 @@ class MarkerExamModel(QStandardItemModel):
         )
         return r
 
-    def _expensive_search_and_update(self, img_id, md5, local_filename):
+    def _expensive_search_and_update(self, img_id, md5, filename):
         """Yuck, just yuck.
 
         Tested with a few hundred papers, is not noticeably slow.  So the code
@@ -409,7 +409,7 @@ class MarkerExamModel(QStandardItemModel):
             src_img_data = eval(self.data(self.index(i, 10)))
             for x in src_img_data:
                 if x["id"] == img_id:
-                    x["filename"] = local_filename
+                    x["filename"] = filename
             self.setData(self.index(i, 10), repr(src_img_data))
 
     def _getPrefix(self, r):
@@ -1081,26 +1081,6 @@ class MarkerClient(QWidget):
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
-    def resizeEvent(self, event):
-        """
-        Resizes the image and surrounding table.
-
-        Notes:
-            Overrides QWidget.resizeEvent()
-            a resize can be triggered before "setup" is called.
-            TODO: which is more evidence that "init" should consume "setup"
-
-        Args:
-            event (QEvent): the event to be resized.
-
-        Returns:
-            None
-
-        """
-        if hasattr(self, "ui.tableView"):
-            self.ui.tableView.resizeRowsToContents()
-        super().resizeEvent(event)
-
     def toggle_prefer_tagged(self):
         pass
         # m = self.ui.getNextButton.menu()
@@ -1221,20 +1201,27 @@ class MarkerClient(QWidget):
 
         log.info("importing source image data (orientations etc) from .plom file")
         # filenames likely stale: could have restarted client in meantime
-        # but does include "server_path" field.
         src_img_data = plomdata["base_images"]
-
         PC = self.downloader.pagecache
         for row in src_img_data:
+            # remove legacy "local_filename" if present
+            f = row.pop("local_filename", None) or row.get("filename")
+            if not row.get("server_path"):
+                # E.g., Reannotator used to lose "server_path", keep workaround
+                # just in case, by using previous session's filename
+                row["server_path"] = f
+            # now overwrite "local_filename" from this session
             if PC.has_page_image(row["id"]):
                 row["filename"] = PC.page_image_path(row["id"])
-                continue
-            self.downloader.download_in_background_thread(row)
-            # TODO:
-            # row["filename"] = None
-            row["filename"] = self.downloader.get_placeholder_path()
+            else:
+                row["filename"] = self.downloader.get_placeholder_path()
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
+        # after putting in model, trigger downloads (prevents race)
+        for row in src_img_data:
+            if PC.has_page_image(row["id"]):
+                continue
+            self.downloader.download_in_background_thread(row)
 
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         paperdir = Path(paperdir)
@@ -1490,12 +1477,12 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
 
-    def background_download_finished(self, img_id, md5, local_filename):
-        log.debug(f"PageCache has finished downloading {img_id} {local_filename}")
+    def background_download_finished(self, img_id, md5, filename):
+        log.debug(f"PageCache has finished downloading {img_id} to {filename}")
         self.ui.labelTech2.setText(f"last msg: downloaded img id={img_id}")
-        self.ui.labelTech2.setToolTip(f"{local_filename}")
+        self.ui.labelTech2.setToolTip(f"{filename}")
         # TODO: time this
-        self.examModel._expensive_search_and_update(img_id, md5, local_filename)
+        self.examModel._expensive_search_and_update(img_id, md5, filename)
         # log.debug(f"Elapsed time for potentially expensive local DB update: %g", etime)
         # TODO
         # if any("placeholder" in x for x in testImg.imagenames):
@@ -1503,7 +1490,7 @@ class MarkerClient(QWidget):
         self._updateCurrentlySelectedRow()
 
     def background_download_failed(self, img_id):
-        self.ui.labelTech2.setText(f"last msg: failed download img id={img_id}")
+        self.ui.labelTech2.setText(f"<p>last msg: failed download img id={img_id}</p>")
         print(f"failed download img id={img_id}")
         self.ui.labelTech2.setToolTip("")
 
@@ -1513,8 +1500,10 @@ class MarkerClient(QWidget):
 
     def update_technical_stats(self, d):
         self.ui.labelTech1.setText(
+            "<p>"
             f"downloads: {d['queued']} queued, {d['cache_size']} cached,"
             f" {d['retries']} retried, {d['fails']} failed"
+            "</p>"
         )
 
     def show_hide_technical(self):
@@ -1522,6 +1511,10 @@ class MarkerClient(QWidget):
             self.ui.technicalButton.setText("Hide technical info")
             self.ui.technicalButton.setArrowType(Qt.DownArrow)
             self.ui.frameTechnical.setVisible(True)
+            ptsz = self.ui.technicalButton.fontInfo().pointSizeF()
+            self.ui.frameTechnical.setStyleSheet(
+                f"QWidget {{ font-size: {0.7*ptsz}pt; }}"
+            )
             # future use
             self.ui.labelTech3.setVisible(False)
             self.ui.labelTech4.setVisible(False)
@@ -1981,31 +1974,17 @@ class MarkerClient(QWidget):
 
         return data
 
-    def PermuteAndGetSamePaper(self, task, imageList):
+    def PermuteAndGetSamePaper(self, task, src_img_data):
         """User has reorganized pages of an exam.
 
         Args:
             task (str): the task ID of the current test.
-            imageList (list[str]): list of image names to which are being
-                rearranged.  Each row looks like `[md5, filename, angle]`.
+            src_img_data (list[dict]): list of "page data" as rearranged.
 
         Returns:
             tuple: initialData (as described by :meth:`startTheAnnotator`.)
         """
-        log.info("Rearranging image list for task {} = {}".format(task, imageList))
-        src_img_data = []
-        # this is a bit silly, just converting list to dict...  maybe refactor caller?
-        for row in imageList:
-            # TODO: do we need to let the cache know we want to keep these?
-            # TODO: see rearranger code in the annotator, which used to erase some
-            src_img_data.append(
-                {
-                    "id": row[3],
-                    "md5": row[0],
-                    "filename": str(row[1]),
-                    "orientation": row[2],
-                }
-            )
+        log.info("Rearranging image list for task {} = {}".format(task, src_img_data))
         task = "q" + task
         self.examModel.setOriginalFilesAndData(task, src_img_data)
         # set the status back to untouched so that any old plom files ignored
