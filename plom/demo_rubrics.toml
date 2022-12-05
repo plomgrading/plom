@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 # SPDX-License-Identifier: FSFAP
 #
 # Copying and distribution of this file, with or without modification,
@@ -45,13 +45,13 @@ text = "wrong angles used"
 [[rubric]]
 delta = "."
 text = "a comment specific to Q2"
-question = 2
+question_number = 2
 meta = "All rubrics are question specific."
 
 [[rubric]]
 delta = "."
 text = "another comment specific to Q2"
-question = 2
+question_number = 2
 tags = "foo"
 meta = "When the demo rubrics are loaded, most are auto-duplicated over multiple questions."
 
