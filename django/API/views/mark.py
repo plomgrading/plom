@@ -2,8 +2,6 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
 
-import base64
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
@@ -143,3 +141,21 @@ class MgetOneImage(APIView):
                 detail="Image does not exist.",
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class MgetAnnotations(APIView):
+    """
+    Get the latest annotations for a question.
+    """
+
+    def get(self, request, paper, question):
+        return Response({"annotation_edition": None}, status=status.HTTP_200_OK)
+
+
+class MgetAnnotationImage(APIView):
+    """
+    Get an annotation-image.
+    """
+
+    def get(self, request, paper, question):
+        return Response({}, status=status.HTTP_200_OK)

@@ -29,3 +29,22 @@ class ClaimMarkingTask(BaseAction):
     """
 
     pass
+
+
+class MarkAction(BaseAction):
+    """
+    Represents a marker client submitting an annotation and a mark.
+    """
+
+    claim_action = models.ForeignKey(ClaimMarkingTask, on_delete=models.CASCADE)
+    mark = models.IntegerField(null=True)
+
+
+class Annotation(models.Model):
+    """
+    Represents a marker's annotation of a particular test paper's question.
+    """
+
+    mark_action = models.OneToOneField(MarkAction, on_delete=models.CASCADE)
+    edition = models.IntegerField(null=True)
+    annotation_data = models.JSONField(null=True)

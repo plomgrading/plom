@@ -55,6 +55,7 @@ class MarkingTaskService:
         n_questions = spec["numberOfQuestions"]
 
         all_papers = Paper.objects.all()
+        all_papers = all_papers.order_by("paper_number")[:10]  # TODO: just the first ten!
         for p in all_papers:
             for i in range(1, n_questions + 1):
                 self.create_task(p, i)
@@ -106,6 +107,7 @@ class MarkingTaskService:
         """
 
         available = MarkingTask.objects.filter(status="todo")
+        available = available.order_by("paper__paper_number")
 
         if question:
             available = available.filter(question_number=question)

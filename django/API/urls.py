@@ -21,6 +21,8 @@ from API.views import (
     MclaimThisTask,
     MgetQuestionPageData,
     MgetOneImage,
+    MgetAnnotations,
+    MgetAnnotationImage,
 )
 
 
@@ -52,6 +54,12 @@ urlpatterns = [
         name="api_question_data",
     ),
     path("MK/images/<int:pk>/<hash>/", MgetOneImage.as_view(), name="api_MK_one_image"),
+    path(
+        "annotations/<int:paper>/<int:question>/",
+        MgetAnnotations.as_view(),
+        name="api_MK_annotation",
+    ),
+    path("annotations_image/<int:paper>/<int:question>/", MgetAnnotationImage.as_view(), name="api_MK_annotation_img")
 ]
 
 urlpatterns += [
