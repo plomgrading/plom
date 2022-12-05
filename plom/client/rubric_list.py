@@ -51,25 +51,35 @@ abs_suffix = " / N"
 abs_suffix_length = len(abs_suffix)
 
 
-def isLegalRubric(mss, kind, delta):
-    """Checks the 'legality' of the current rubric - returning one of three possible states
+def isLegalRubric(mss, *, kind, delta, versions):
+    """Checks the 'legality' of the current rubric - returning one of several possible states
+
+    Those states are:
     0 = incompatible - the kind of rubric is not compatible with the current state
     1 = compatible but out of range - the kind of rubric is compatible with the state but applying that rubric will take the score out of range [0, maxmark] (so cannot be used)
     2 = compatible and in range - is compatible and can be used.
-    Note that the rubric lists use the result to decide which rubrics will be shown (return value 2) which hidden (0 return) and greyed out (1 return)
-
+    3 = version does not match - should be hidden by default.
+    Note that the rubric lists use the result to decide which rubrics will
+    be shown (2), hidden (0, 3) and greyed out (1)
 
     Args:
         mss (list): triple that encodes max-mark, state, and current-score
-        kind: the kind of the rubric being checked
-        delta: the delta of the rubric being checked
+        kind (str): the kind of the rubric being checked
+        delta (str): the delta of the rubric being checked
+        versions (list): which versions are this rubric intended for.
+            Empty list means valid for all versions.
 
     Returns:
-        int: 0,1,2.
+        int: 0, 1, 2, 3 as documented above.
     """
     maxMark = mss[0]
     state = mss[1]
     score = mss[2]
+    our_version = mss[3]
+
+    if versions:
+        if our_version not in versions:
+            return 3
 
     # easy cases first
     # when state is neutral - all rubrics are fine
@@ -137,11 +147,13 @@ class RubricTable(QTableWidget):
         self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        self.setColumnCount(5)
-        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text", "Kind"])
+        _col_headers = ("Key", "Username", "Delta", "Text", "Kind", "Versions")
+        self.setColumnCount(len(_col_headers))
+        self.setHorizontalHeaderLabels(_col_headers)
         self.hideColumn(0)
         self.hideColumn(1)
         self.hideColumn(4)
+        self.hideColumn(5)
         # could use a subclass
         if self.tabType == "delta":
             self.hideColumn(3)
@@ -405,6 +417,8 @@ class RubricTable(QTableWidget):
             self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
         self.setItem(rc, 3, QTableWidgetItem(rubric["text"]))
         self.setItem(rc, 4, QTableWidgetItem(rubric["kind"]))
+        # TODO: unfortunate to do pack/unpack string in here
+        self.setItem(rc, 5, QTableWidgetItem(str(rubric["versions"])))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -596,9 +610,19 @@ class RubricTable(QTableWidget):
         return None
 
     def colourLegalRubric(self, r, mss):
-        # recall columns are ["Key", "Username", "Delta", "Text", "Kind"])
+        # recall columns are "Key", "Username", "Delta", "Text", "Kind", "Versions"
+        # TODO: is unforunate to have this pack/unpack string logic here :(
+        vers = self.item(r, 5).text()
+        vers = vers.strip("[]")
+        if vers:
+            vers = [int(x) for x in vers.split(",")]
+        else:
+            vers = []
         legal = isLegalRubric(
-            mss, kind=self.item(r, 4).text(), delta=self.item(r, 2).text()
+            mss,
+            kind=self.item(r, 4).text(),
+            delta=self.item(r, 2).text(),
+            versions=vers,
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
         colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
@@ -784,7 +808,7 @@ class RubricWidget(QWidget):
 
     @property
     def mss(self):
-        return (self.maxMark, self.currentState, self.currentScore)
+        return (self.maxMark, self.currentState, self.currentScore, self.version)
 
     @property
     def user_tabs(self):
