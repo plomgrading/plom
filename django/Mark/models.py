@@ -31,6 +31,14 @@ class ClaimMarkingTask(BaseAction):
     pass
 
 
+class SurrenderMarkingTask(BaseAction):
+    """
+    Represents a marker client surrendering a marking task.
+    """
+
+    pass
+
+
 class MarkAction(BaseAction):
     """
     Represents a marker client submitting an annotation and a mark.

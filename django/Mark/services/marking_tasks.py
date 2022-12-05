@@ -5,7 +5,7 @@ from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
 from Papers.models import Paper
 
-from Mark.models import MarkingTask, ClaimMarkingTask
+from Mark.models import MarkingTask, ClaimMarkingTask, SurrenderMarkingTask
 
 
 class MarkingTaskService:
@@ -148,3 +148,35 @@ class MarkingTaskService:
         task.assigned_user = user
         task.status = "out"
         task.save()
+
+    def surrender_task(self, user, task):
+        """
+        Remove a user from a marking task, set its status to 'todo', and
+        save the action to the database.
+
+        Args:
+            user: reference to a User instance
+            task: reference to a MarkingTask instance
+        """
+
+        task.assigned_user = None
+        task.status = "todo"
+        task.save()
+
+        action = SurrenderMarkingTask(
+            user=user,
+            task=task,
+        )
+        action.save()
+
+    def surrender_all_tasks(self, user):
+        """
+        Surrender all of the tasks currently assigned to the user.
+
+        Args:
+            user: reference to a User instance
+        """
+
+        user_tasks = MarkingTask.objects.filter(assigned_user=user)
+        for task in user_tasks:
+            self.assign_task_to_user(user, task)
