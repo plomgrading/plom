@@ -85,20 +85,8 @@ def MlatexFragment(self, latex_fragment):
     return texFragmentToPNG(latex_fragment)
 
 
-def MclaimThisTask(self, username, task_code, version):
-    """Assign the specified paper to this user and return the task information.
-
-    Args:
-        username (str): User who requests the paper.
-        task_code (str): Code string for the claimed task.
-        version (int): The version of the task (must match that in db)
-
-    Returns:
-        list: A list which either only has a False value included or
-        `[True, question_tag, integrity_check, list_of_image_md5s, image_file1, image_file2, ...]`.
-    """
-
-    return self.DB.MgiveTaskToClient(username, task_code, version)
+def MclaimThisTask(self, *args, **kwargs):
+    return self.DB.MgiveTaskToClient(*args, **kwargs)
 
 
 def MreturnMarkedTask(
