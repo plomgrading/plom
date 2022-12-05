@@ -611,7 +611,7 @@ class RubricTable(QTableWidget):
 
     def colourLegalRubric(self, r, mss):
         # recall columns are "Key", "Username", "Delta", "Text", "Kind", "Versions"
-        # TODO: is unforunate to have this pack/unpack string logic here :(
+        # TODO: is unfortunate to have this pack/unpack string logic here :(
         vers = self.item(r, 5).text()
         vers = vers.strip("[]")
         if vers:
