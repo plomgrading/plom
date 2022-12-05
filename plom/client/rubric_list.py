@@ -699,7 +699,6 @@ class RubricWidget(QWidget):
         self.maxMark = None
         self.currentScore = None
         self.currentState = None
-        self.mss = [self.maxMark, self.currentState, self.currentScore]
 
         grid = QGridLayout()
         # assume our container will deal with margins
@@ -782,6 +781,10 @@ class RubricWidget(QWidget):
             self.syncB.setEnabled(True)
             # reselect the current rubric
             self.handleClick()
+
+    @property
+    def mss(self):
+        return (self.maxMark, self.currentState, self.currentScore)
 
     @property
     def user_tabs(self):
@@ -1126,7 +1129,6 @@ class RubricWidget(QWidget):
             self.maxMark = maxMark
         self.currentScore = currentScore
         self.currentState = currentState
-        self.mss = [self.maxMark, self.currentState, self.currentScore]
         self.updateLegalityOfDeltas()
 
     def updateLegalityOfDeltas(self):
