@@ -662,13 +662,8 @@ class Annotator(QWidget):
         dl = self.parentMarkerUI.Qapp.downloader
         pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
         pagedata = dl.sync_downloads(pagedata)
-        # TODO: if we unified img_src_data and pagedata, could just pass onwards
-        files = [
-            {"filename": x["local_filename"], "orientation": x["orientation"]}
-            for x in pagedata
-        ]
         labels = [x["pagename"] for x in pagedata]
-        WholeTestView(testnum, files, labels, parent=self).exec()
+        WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -763,12 +758,11 @@ class Annotator(QWidget):
         )
         # TODO: have rearrange react to new downloads
         # PC.download_finished.connect(rearrangeView.shake_things_up)
+        perm = []
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: {}".format(perm))
-        else:
-            perm = None
         # Workaround for memory leak Issue #1322, TODO better fix
         rearrangeView.listA.clear()
         rearrangeView.listB.clear()
@@ -777,7 +771,7 @@ class Annotator(QWidget):
         if perm:
             # Sanity check for dupes in the permutation
             # pylint: disable=unsubscriptable-object
-            md5 = [x[0] for x in perm]
+            md5 = [x["md5"] for x in perm]
             # But if the input already had dupes than its not our problem
             md5_in = [x["md5"] for x in self.src_img_data]
             if len(set(md5)) != len(md5) and len(set(md5_in)) == len(md5_in):
