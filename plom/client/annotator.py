@@ -10,7 +10,6 @@ __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from copy import deepcopy
 import json
 import logging
 from pathlib import Path
@@ -42,6 +41,7 @@ from PyQt5.QtWidgets import (
     QWidget,
     QMenu,
     QMessageBox,
+    QProgressDialog,
     QShortcut,
     QToolButton,
     QFileDialog,
@@ -655,15 +655,11 @@ class Annotator(QWidget):
             return
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
-        self.parentMarkerUI.downloadAnyMissingPages(int(testnum))
-        pagedata = self.parentMarkerUI._full_pagedata[int(testnum)]
-        # TODO: if we unified img_src_data and pagedata, could just pass onwards
-        files = [
-            {"filename": x["local_filename"], "orientation": x["orientation"]}
-            for x in pagedata
-        ]
+        dl = self.parentMarkerUI.Qapp.downloader
+        pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
+        pagedata = dl.sync_downloads(pagedata)
         labels = [x["pagename"] for x in pagedata]
-        WholeTestView(testnum, files, labels, parent=self).exec()
+        WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -678,7 +674,6 @@ class Annotator(QWidget):
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
-        # TODO: maybe download should happen in Marker?
         image_md5_list = [x["md5"] for x in self.src_img_data]
         # Look for duplicates by first inverting the dict
         repeats = {}
@@ -710,11 +705,28 @@ class Annotator(QWidget):
                 f"Include this info if you think this is a bug!",
             ).exec()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
-        self.parentMarkerUI.downloadAnyMissingPages(testNumber)
 
-        # do a deep copy of this list of dict - else hit #1690
-        # keep original readonly?
-        page_data = deepcopy(self.parentMarkerUI._full_pagedata[int(testNumber)])
+        dl = self.parentMarkerUI.Qapp.downloader
+        page_data = dl.msgr.get_pagedata_context_question(testNumber, self.question_num)
+        # TODO: eventually want dialog to open during loading, Issue #2355
+        N = len(page_data)
+        pd = QProgressDialog(
+            "Downloading additional images\nStarting up...", None, 0, N, self
+        )
+        pd.setWindowModality(Qt.WindowModal)
+        pd.setMinimumDuration(500)
+        pd.setValue(0)
+        self.parentMarkerUI.Qapp.processEvents()
+        for i, row in enumerate(page_data):
+            # TODO: would be nice to show the size in MiB here!
+            pd.setLabelText(
+                f"Downloading additional images\nFile {i + 1} of {N}: img id {row['id']}"
+            )
+            pd.setValue(i + 1)
+            self.parentMarkerUI.Qapp.processEvents()
+            row = dl.sync_download(row)
+        pd.close()
+
         #
         for x in image_md5_list:
             if x not in [p["md5"] for p in page_data]:
@@ -740,20 +752,22 @@ class Annotator(QWidget):
         rearrangeView = RearrangementViewer(
             self, testNumber, self.src_img_data, page_data, is_dirty
         )
+        # TODO: have rearrange react to new downloads
+        # PC.download_finished.connect(rearrangeView.shake_things_up)
+        perm = []
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: {}".format(perm))
-        else:
-            perm = None
         # Workaround for memory leak Issue #1322, TODO better fix
         rearrangeView.listA.clear()
         rearrangeView.listB.clear()
+        rearrangeView.deleteLater()  # disconnects slots and signals
         del rearrangeView
         if perm:
             # Sanity check for dupes in the permutation
             # pylint: disable=unsubscriptable-object
-            md5 = [x[0] for x in perm]
+            md5 = [x["md5"] for x in perm]
             # But if the input already had dupes than its not our problem
             md5_in = [x["md5"] for x in self.src_img_data]
             if len(set(md5)) != len(md5) and len(set(md5_in)) == len(md5_in):

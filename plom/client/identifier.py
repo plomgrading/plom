@@ -49,7 +49,6 @@ from .useful_classes import SimpleQuestion, WarningQuestion
 from .useful_classes import BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .viewers import WholeTestView
-from .pagecache import download_pages
 
 
 log = logging.getLogger("identr")
@@ -175,20 +174,21 @@ class ExamModel(QAbstractTableModel):
 
 
 # TODO: should be a QMainWindow but at any rate not a Dialog
-# TODO: should this be parented by the QApplication?
 class IDClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(self, tmpdir=None):
+    def __init__(self, Qapp, tmpdir=None):
         """Initialize the Identifier Client.
 
         Args:
+            Qapp(QApplication): Main client application
             tmpdir (pathlib.Path/str/None): a temporary directory for
                 storing image files and other data.  In principle can
                 be shared with Marker although this may not be implemented.
                 If `None`, we will make our own.
         """
         super().__init__()
+        self.Qapp = Qapp
         # instance vars that get initialized later
         # Save the local temp directory for image files and the class list.
         if not tmpdir:
@@ -770,10 +770,7 @@ class IDClient(QWidget):
             return
         testnum = self.exM.data(index[0])
         pagedata = self.msgr.get_pagedata(testnum)
-        # TODO: do we need to think this for "included"?
-        pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, get_all=True
-        )
+        pagedata = self.Qapp.downloader.sync_downloads(pagedata)
         labels = [x["pagename"] for x in pagedata]
         WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
