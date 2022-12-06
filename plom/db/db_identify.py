@@ -432,10 +432,12 @@ def ID_get_predictions(self, *, predictor=None):
     """
     predictions = {}
     if predictor:
+        log.info('querying for predictions from "%s"', predictor)
         query = IDPrediction.select().where(IDPrediction == predictor)
     else:
         query = IDPrediction.select()
     for preidref in query:
+        print(preidref)
         predictions[preidref.test.test_number] = {
             "student_id": preidref.student_id,
             "certainty": preidref.certainty,
