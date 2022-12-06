@@ -154,14 +154,34 @@ class IDHandler:
     # @routes.get("/ID/predictions")
     @authenticate_by_token
     def IDgetPredictions(self):
-        """Returns current predictions for the identification of each paper.
+        """Returns all predictions for the identification of each paper.
 
-        Responds with status 200/404.
+        TODO: maybe this one should be a list including dupes.  Or maybe it
+        is not needed at all.
 
         Returns:
-            aiohttp.web_json_response: Dict of ``test: (sid, sname, certainty)``.
+            aiohttp.web_json_response: on success a dict where keys are
+            str of papernum, values themselves dicts with keys
+            `"student_id"`, `"certainty"`, and `"predictor"`.
+            Can fail with 400 (malformed) or 401 (auth trouble).
         """
         return web.json_response(self.server.ID_get_predictions())
+
+    # @routes.get("/ID/predictions/{predictor}")
+    @authenticate_by_token_required_fields([])
+    def IDgetPredictionsFromPredictor(self, data, request):
+        """Returns predictions from a particular predictor for the identification.
+
+        Returns:
+            aiohttp.web_json_response: on success a dict where keys are
+            str of papernum, values themselves dicts with keys
+            `"student_id"`, `"certainty"`, and `"predictor"`.
+            The `"predictor"` field is probably redundant: its what you
+            asked for parroted back to you.
+            Can fail with 400 (malformed) or 401 (auth trouble).
+        """
+        predictor = request.match_info["predictor"]
+        return web.json_response(self.server.ID_get_predictions(predictor=predictor))
 
     # @routes.get("/ID/tasks/complete")
     @authenticate_by_token_required_fields(["user"])
@@ -655,6 +675,9 @@ class IDHandler:
         router.add_get("/ID/classlist", self.IDgetClasslist)
         router.add_put("/ID/classlist", self.IDputClasslist)
         router.add_get("/ID/predictions", self.IDgetPredictions)
+        router.add_get(
+            "/ID/predictions/{predictor}", self.IDgetPredictionsFromPredictor
+        )
         router.add_put("/ID/predictions", self.IDputPredictions)
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
         router.add_get("/ID/image/{test}", self.IDgetImage)
