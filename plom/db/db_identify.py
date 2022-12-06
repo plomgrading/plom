@@ -433,7 +433,7 @@ def ID_get_predictions(self, *, predictor=None):
     predictions = {}
     if predictor:
         log.info('querying for predictions from "%s"', predictor)
-        query = IDPrediction.select().where(IDPrediction == predictor)
+        query = IDPrediction.select().where(IDPrediction.predictor == predictor)
     else:
         query = IDPrediction.select()
     for preidref in query:
