@@ -317,7 +317,7 @@ class IDClient(QWidget):
 
         For some reason, this also updates font-sizes and stuff.
         """
-        self.predictions = self.msgr.IDrequestPredictions()
+        self.predictions = self.msgr.IDgetPredictions()
 
         # Also tweak font size
         fnt = self.font()

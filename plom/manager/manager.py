@@ -1854,7 +1854,7 @@ class Manager(QWidget):
         self.getPredictions()
 
     def getPredictions(self):
-        predictions = self.msgr.IDrequestPredictions()
+        predictions = self.msgr.IDgetPredictions()
         identified = self.msgr.getIdentified()
 
         self.ui.predictionTW.clearContents()
