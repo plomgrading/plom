@@ -24,13 +24,19 @@ class QRErrorService:
         serialized_all_qr = self.serialize_qr_code(page_data, "all")
         serialized_public_code = self.serialize_qr_code(page_data, "public_code")
 
-        self.check_TPV_code(serialized_all_qr, img_obj, serialized_top_three_qr, page_data)
+        self.check_TPV_code(
+            serialized_all_qr, img_obj, serialized_top_three_qr, page_data
+        )
         self.check_qr_numbers(page_data, img_obj, serialized_top_three_qr)
         self.check_qr_matching(
             serialized_top_three_qr, img_obj, serialized_top_three_qr, page_data
         )
         self.check_public_code(
-            serialized_public_code, spec_dictionary, img_obj, serialized_top_three_qr, page_data
+            serialized_public_code,
+            spec_dictionary,
+            img_obj,
+            serialized_top_three_qr,
+            page_data,
         )
 
     def serialize_qr_code(self, page_data, tpv_type):
@@ -112,7 +118,9 @@ class QRErrorService:
                 img_obj.save()
                 raise ValueError("QR codes do not match.")
 
-    def check_public_code(self, public_codes, spec_dictionary, img_obj, top_three_tpv, page_data):
+    def check_public_code(
+        self, public_codes, spec_dictionary, img_obj, top_three_tpv, page_data
+    ):
         """
         Check if the paper public QR code matches with spec public code.
         """

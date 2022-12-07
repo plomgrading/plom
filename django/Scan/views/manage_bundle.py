@@ -9,6 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
+
 # from Scan.models import StagingImage
 # from Progress.services import ManageScanService
 
@@ -49,12 +50,12 @@ class ManageBundleView(ScannerRequiredView):
             pages.append(page_dict)
 
         qr_finished = scanner.is_bundle_reading_started(bundle)
-        
+
         finished_reading_qr = False
 
         if scanner.is_bundle_reading_finished(bundle):
             finished_reading_qr = True
-        
+
         print(finished_reading_qr)
 
         context.update(

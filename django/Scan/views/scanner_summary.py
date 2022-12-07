@@ -5,6 +5,7 @@
 from django.http import HttpResponse
 from Base.base_group_views import ScannerRequiredView
 
+
 class ScannerSummaryView(ScannerRequiredView):
     """
     Display the summary of the whole test

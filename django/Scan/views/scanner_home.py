@@ -40,7 +40,7 @@ class ScannerHomeView(ScannerRequiredView):
         percent_pages_complete = scanned_pages / total_pages * 100
 
         all_test_papers = mss.get_test_paper_list()
-        
+
         context.update(
             {
                 "completed_test_papers": completed_papers,
@@ -88,7 +88,7 @@ class ScannerHomeView(ScannerRequiredView):
                     "n_read": scanner.get_n_complete_reading_tasks(bundle),
                     # "n_pushed": n_pushed,
                     "disable_delete": disable_delete,
-                    "n_errors": n_errors
+                    "n_errors": n_errors,
                 }
             )
         context.update({"bundles": bundles})
