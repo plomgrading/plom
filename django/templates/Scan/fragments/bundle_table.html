@@ -10,51 +10,13 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>1</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>1</td>
-                    <td>2</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>1</td>
-                    <td>3</td>
-                    <td>2</td>
-                </tr>
-                <tr>
-                    <td>1</td>
-                    <td>4</td>
-                    <td>1</td>
-                </tr>
-                <tr>
-                    <td>1</td>
-                    <td>5</td>
-                    <td>2</td>
-                </tr>
-                <tr>
-                    <td>1</td>
-                    <td>6</td>
-                    <td>1</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>1</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>2</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>3</td>
-                    <td>2</td>
-                </tr>
+                {% for paper_id, page_num, version_num in paper_list %}
+                    <tr>
+                        <td>{{ paper_id }}</td>
+                        <td>{{ page_num }}</td>
+                        <td>{{ version_num }}</td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

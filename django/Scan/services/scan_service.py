@@ -169,7 +169,7 @@ class ScanService:
         """
         images = StagingImage.objects.filter(bundle=bundle)
         return images
-        
+
     @transaction.atomic
     def get_user_bundles(self, user):
         """
@@ -445,3 +445,18 @@ class ScanService:
     def get_n_flagged_image(self, bundle):
         flag_images = StagingImage.objects.filter(bundle=bundle, flagged=True)
         return len(flag_images)
+
+    @transaction.atomic
+    def bundle_contains_list(self, all_images, num_images):
+        qr_code_list = []
+        for image in all_images:
+            for qr_qadrant in image.parsed_qr:
+                paper_id = list(image.parsed_qr[qr_qadrant].values())[0]
+                page_num = list(image.parsed_qr[qr_qadrant].values())[1]
+                version_num = list(image.parsed_qr[qr_qadrant].values())[2]
+                qr_code_list.append(paper_id + page_num + version_num)
+        qr_code_list.sort()
+        qr_code_list = list(dict.fromkeys(qr_code_list))
+        while len(qr_code_list) < num_images:
+            qr_code_list.append("unknown page")
+        return qr_code_list

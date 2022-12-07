@@ -135,11 +135,21 @@ class BundleTableView(UpdateQRProgressView):
         
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
-        
+        num_images = scanner.get_n_images(bundle)
         all_images = scanner.get_all_images(bundle)
-        for i in all_images:
-            print(i.parsed_qr)
+        qr_code_list = scanner.bundle_contains_list(all_images, num_images)
 
-        context.update({'qr_reading': scanner.is_bundle_reading_ongoig(bundle)})
+        paper_id = []
+        page_num = []
+        version_num = []
+        
+        print(qr_code_list)
+        for i in qr_code_list:
+            if i != "unknown page":
+                paper_id.append(str(i[:5]).lstrip("0"))
+                page_num.append(str(i[5:8]).lstrip("0"))
+                version_num.append(str(i[8:11]).lstrip("0"))
+
+        context.update({'qr_reading': scanner.is_bundle_reading_ongoig(bundle), 'paper_list': zip(paper_id, page_num, version_num)})
         
         return render(request, 'Scan/fragments/bundle_table.html', context)
