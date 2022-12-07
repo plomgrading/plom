@@ -274,7 +274,8 @@ def predict_id_lap_solver(self):
     with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
         json.dump(greedy_predictions, greedy_results_file)
 
-    self.IDdeletePredictions()
+    self.ID_delete_predictions(predictor="MLLAP")
+    self.ID_delete_predictions(predictor="MLGreedy")
 
     # ------------------------ #
     # Maintain uniqueness in test and sid in the prediction list
