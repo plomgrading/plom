@@ -118,6 +118,10 @@ def ID_get_predictions(self, *args, **kwargs):
     return self.DB.ID_get_predictions(*args, **kwargs)
 
 
+def ID_delete_predictions(self, *args, **kwargs):
+    return self.DB.ID_delete_predictions(*args, **kwargs)
+
+
 def IDdeletePredictions(self):
     """Deletes the machine-learning predicted IDs for all papers.
 

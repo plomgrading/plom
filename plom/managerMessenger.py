@@ -1058,6 +1058,20 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def ID_delete_predictions_from_predictor(self, *, predictor):
+        """Deletes the predicted IDs for one particular predictor."""
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    "/ID/predictedID/{predictor}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def IDputPredictions(self, predictions):
         raise NotImplementedError(
             "No one is using this API call right now and it needs work: Issue #2080"
