@@ -453,7 +453,7 @@ class Manager(QWidget):
         self.ui.machineReadRefreshButton.clicked.connect(self.id_reader_get_log)
         self.ui.machineReadKillButton.clicked.connect(self.id_reader_kill)
         self.ui.predictButton.clicked.connect(self.run_predictor)
-        self.ui.delPredButton.clicked.connect(self.deletePredictions)
+        self.ui.delPredButton.clicked.connect(self.deleteMachinePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
         self.ui.enableUserB.clicked.connect(self.enableUsers)
         self.ui.disableUserB.clicked.connect(self.disableUsers)
@@ -1908,7 +1908,7 @@ class Manager(QWidget):
                     item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
         self.ui.predictionTW.setSortingEnabled(True)
 
-    def deletePredictions(self):
+    def deleteMachinePredictions(self):
         msg = SimpleQuestion(
             self,
             "Delete the auto-read predicted IDs?"
@@ -1917,7 +1917,9 @@ class Manager(QWidget):
         )
         if msg.exec() == QMessageBox.No:
             return
-        self.msgr.IDdeletePredictions()
+        self.msgr.ID_delete_machine_predictions()
+        # self.msgr.ID_delete_predictions_from_predictor(predictor="MLLAP")
+        # self.msgr.ID_delete_predictions_from_predictor(predictor="MLGreedy")
         self.getPredictions()
 
     def initMarkTab(self):

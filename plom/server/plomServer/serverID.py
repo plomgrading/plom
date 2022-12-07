@@ -122,23 +122,6 @@ def ID_delete_predictions(self, *args, **kwargs):
     return self.DB.ID_delete_predictions(*args, **kwargs)
 
 
-def IDdeletePredictions(self):
-    """Deletes the machine-learning predicted IDs for all papers.
-
-    Returns:
-        None
-    """
-    log.info("Wiping predictions by lap-solver")
-    old_predictions = self.DB.ID_get_predictions()
-    for papernum, v in old_predictions.items():
-        if v["predictor"] == "MLLAP" or v["predictor"] == "MLGreedy":
-            ok, code, msg = self.DB.remove_id_prediction(papernum)
-            if not ok:
-                raise RuntimeError(
-                    f"Unexpectedly cannot find promised paper {papernum} in prediction DB"
-                )
-
-
 def IDputPredictions(self, predictions, classlist, spec):
     """Push predictions to the database
 

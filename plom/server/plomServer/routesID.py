@@ -541,10 +541,8 @@ class IDHandler:
     # @routes.delete("/ID/predictedID")
     @authenticate_by_token_required_fields(["user"])
     @write_admin
-    def IDdeletePredictions(self, data, request):
+    def ID_delete_machine_predictions(self, data, request):
         """Deletes the machine-learning predicted IDs for all papers.
-
-        Responds with status 200/401/403.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
@@ -552,8 +550,10 @@ class IDHandler:
 
         Returns:
             aiohttp.web_response.Response: 200 if successful.
+            400 for malformed, or 401/403 for auth trouble.
         """
-        self.server.IDdeletePredictions()
+        self.server.ID_delete_predictions(predictor="MLLAP")
+        self.server.ID_delete_predictions(predictor="MLGreedy")
         return web.Response(status=200)
 
     # @routes.put("/ID/predictedID")
@@ -719,7 +719,8 @@ class IDHandler:
         router.add_put("/ID/preid/{paper_number}", self.PreIDPaper)
         router.add_delete("/ID/preid/{paper_number}", self.remove_id_prediction)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
-        router.add_delete("/ID/predictedID", self.IDdeletePredictions)
+        # TODO: likely unnecessary?
+        router.add_delete("/ID/predictedID", self.ID_delete_machine_predictions)
         router.add_post("/ID/predictedID", self.predict_id_lap_solver)
         router.add_get("/ID/id_reader", self.id_reader_get_log)
         router.add_post("/ID/id_reader", self.id_reader_run)

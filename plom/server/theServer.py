@@ -165,7 +165,6 @@ class Server:
         ID_id_paper,
         ID_get_predictions,
         ID_delete_predictions,
-        IDdeletePredictions,
         IDputPredictions,
         predict_id_lap_solver,
         id_reader_get_log,
