@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QGridLayout,
     QHBoxLayout,
+    QLineEdit,
     QMenu,
     QMessageBox,
     QPushButton,
@@ -717,6 +718,7 @@ class RubricWidget(QWidget):
         super().__init__(parent)
         self.question_number = None
         self.version = None
+        self.max_version = None
         self._parent = parent
         self.username = parent.username
         self.rubrics = []
@@ -1142,6 +1144,14 @@ class RubricWidget(QWidget):
         """
         self.version = version
 
+    def setMaxVersion(self, maxver):
+        """The largest version in this assessment.
+
+        args:
+            maxver (int)
+        """
+        self.max_version = maxver
+
     def reset(self):
         """Return the widget to a no-TGV-specified state."""
         self.setQuestionNumber(None)
@@ -1287,6 +1297,9 @@ class RubricWidget(QWidget):
             self,
             self.username,
             self.maxMark,
+            self.question_number,
+            self.version,
+            self.max_version,
             reapable,
             com,
             annotator_size=self._parent.size(),
@@ -1387,7 +1400,19 @@ class SignedSB(QSpinBox):
 
 
 class AddRubricBox(QDialog):
-    def __init__(self, parent, username, maxMark, lst, com=None, annotator_size=None):
+    def __init__(
+        self,
+        parent,
+        username,
+        maxMark,
+        question,
+        version,
+        maxver,
+        lst,
+        com=None,
+        *,
+        annotator_size=None,
+    ):
         """Initialize a new dialog to edit/create a comment.
 
         Args:
@@ -1446,9 +1471,55 @@ class AddRubricBox(QDialog):
         flay.addRow("", lay)
         lay = QHBoxLayout()
         lay.addWidget(self.DE)
-        lay.addItem(QSpacerItem(48, 10, QSizePolicy.Preferred, QSizePolicy.Minimum))
         lay.addWidget(self.SB)
+        lay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         flay.addRow("Delta mark", lay)
+
+        # scope
+        self.question = question
+        self.version = version
+        self.maxver = maxver
+        # TODO: nice to show question labels here!
+        cb = QCheckBox(f"specific to question index {self.question}")
+        cb.setChecked(True)
+        cb.setEnabled(False)
+        self.scopeButton = QToolButton()
+        self.scopeButton.setCheckable(True)
+        self.scopeButton.setChecked(True)
+        self.scopeButton.setArrowType(Qt.DownArrow)
+        self.scopeButton.setText("Scope")
+        self.scopeButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.scopeButton.setAutoRaise(True)
+        # never have a border
+        # self.scopeButton.setStyleSheet("QToolButton { border: none; }")
+        self.scopeButton.clicked.connect(self.toggle_scope_elements)
+        flay.addRow(self.scopeButton, cb)
+        # flay.addRow("", cb)
+        self.question_specific_cb = cb
+        lay = QHBoxLayout()
+        cb = QCheckBox("specific to version(s)")
+        cb.stateChanged.connect(self.toggle_version_specific)
+        lay.addWidget(cb)
+        self.version_specific_cb = cb
+        le = QLineEdit()
+        le.setPlaceholderText(", ".join(str(x + 1) for x in range(self.maxver)))
+        le.setEnabled(False)
+        lay.addWidget(le)
+        self.version_specific_le = le
+        space = QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.version_specific_space = space
+        lay.addItem(space)
+        flay.addRow("", lay)
+        label = QLabel(
+            """
+            <p>By default, rubrics are specific to a question and shared
+            between versions of that question.</p>
+            """
+        )
+        label.setWordWrap(True)
+        label.setAlignment(Qt.AlignTop)
+        flay.addRow("", label)
+        self.scope_info = label
         flay.addRow("Tags", self.TEtag)
         flay.addRow("Meta", self.TEmeta)
 
@@ -1523,6 +1594,35 @@ class AddRubricBox(QDialog):
         else:
             self.Lkind.setText("neutral")
             self.SB.setEnabled(False)
+
+    def toggle_version_specific(self):
+        if self.version_specific_cb.isChecked():
+            self.version_specific_le.setText(str(self.version))
+            self.version_specific_le.setPlaceholderText("")
+            self.version_specific_le.setEnabled(True)
+        else:
+            self.version_specific_le.setText("")
+            self.version_specific_le.setPlaceholderText(
+                ", ".join(str(x + 1) for x in range(self.maxver))
+            )
+            self.version_specific_le.setEnabled(False)
+
+    def toggle_scope_elements(self):
+        if self.scopeButton.isChecked():
+            self.scopeButton.setArrowType(Qt.DownArrow)
+            # QFormLayout.setRowVisible but only in Qt 6.4!
+            # TODO: instead put in a frame and hide that?
+            # self.extraframe.setVisible(True)
+            self.question_specific_cb.setVisible(True)
+            self.version_specific_cb.setVisible(True)
+            self.version_specific_le.setVisible(True)
+            self.scope_info.setVisible(True)
+        else:
+            self.scopeButton.setArrowType(Qt.RightArrow)
+            self.question_specific_cb.setVisible(False)
+            self.version_specific_cb.setVisible(False)
+            self.version_specific_le.setVisible(False)
+            self.scope_info.setVisible(False)
 
     def validate_and_accept(self):
         """Make sure rubric is valid before accepting"""

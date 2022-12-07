@@ -387,6 +387,7 @@ class Annotator(QWidget):
         tgvID,
         question_label,
         version,
+        max_version,
         testName,
         paperdir,
         saveName,
@@ -405,6 +406,7 @@ class Annotator(QWidget):
                 marking.  This is generally used for display only as
                 there is an integer for precise usage.
             version (int): which version are we working on?
+            max_version (int): what is the largest version in this assessment?
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
             saveName (str/pathlib.Path): file name (and dir, optionally)
@@ -425,6 +427,7 @@ class Annotator(QWidget):
         self.tgvID = tgvID
         self.question_num = int(re.split(r"\D+", tgvID)[-1])
         self.version = version
+        self.max_version = max_version
         self.question_label = question_label
         self.testName = testName
         s = "{} of {}: {}".format(self.question_label, testName, tgvID)
@@ -455,6 +458,7 @@ class Annotator(QWidget):
         )
         self.rubric_widget.setQuestionNumber(self.question_num)
         self.rubric_widget.setVersion(self.version)
+        self.rubric_widget.setMaxVersion(self.max_version)
         self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.

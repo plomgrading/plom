@@ -1743,6 +1743,7 @@ class MarkerClient(QWidget):
             taskid,
             question_label,
             self.version,
+            self.exam_spec["numberOfVersions"],
             exam_name,
             paperdir,
             aname,
