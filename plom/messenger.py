@@ -101,27 +101,6 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def IDrequestPredictions(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/ID/predictions",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            # returns a json of dict of test:(sid, sname, certainty)
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server cannot find the prediction list."
-                ) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def IDrequestDoneTasks(self):
         self.SRmutex.acquire()
         try:

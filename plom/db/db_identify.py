@@ -421,10 +421,23 @@ def IDreviewID(self, test_number):
     return True
 
 
-def ID_get_predictions(self):
-    """Return a dict of predicted test:student_ids"""
+def ID_get_predictions(self, *, predictor=None):
+    """Return a dict of predicted test to student_ids.
+
+    Keyword Args:
+        predictor (str/None): which predictor.  If not specified,
+            defaults to `None` which means all predictors.  In all cases
+            you can get only one prediction for each paper number.  Its
+            not defined which one you'll get in the `None` case.
+    """
     predictions = {}
-    for preidref in IDPrediction.select():
+    if predictor:
+        log.info('querying for predictions from "%s"', predictor)
+        query = IDPrediction.select().where(IDPrediction.predictor == predictor)
+    else:
+        query = IDPrediction.select()
+    for preidref in query:
+        print(preidref)
         predictions[preidref.test.test_number] = {
             "student_id": preidref.student_id,
             "certainty": preidref.certainty,
