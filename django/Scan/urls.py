@@ -15,6 +15,7 @@ from Scan.views import (
     RemoveBundleView,
     ReadQRcodesView,
     QRParsingProgressAlert,
+    BundleTableView,
     PushPageImage,
     PushAllPageImages,
     PagePushingUpdateView,
@@ -69,6 +70,11 @@ urlpatterns = [
         "read/<timestamp>/alert/",
         QRParsingProgressAlert.as_view(),
         name="scan_qr_alert",
+    ),
+    path(
+        "read/table/<timestamp>/<int:index>/",
+        BundleTableView.as_view(),
+        name="scan_bundle_table",
     ),
     path(
         "push/<timestamp>/<int:index>/",

@@ -40,9 +40,6 @@ class ScannerHomeView(ScannerRequiredView):
         percent_pages_complete = scanned_pages / total_pages * 100
 
         all_test_papers = mss.get_test_paper_list()
-        for test_paper in all_test_papers:
-            print(test_paper['paper_number'])
-            print(test_paper['complete'])
         
         context.update(
             {
@@ -77,6 +74,7 @@ class ScannerHomeView(ScannerRequiredView):
             date_time = datetime.fromtimestamp(bundle.timestamp)
             pages = scanner.get_n_images(bundle)
             n_pushed = scanner.get_n_pushed_images(bundle)
+            print(n_pushed)
             flagged_pages = scanner.get_n_flagged_image(bundle)
             n_errors = scanner.get_n_error_image(bundle)
 
@@ -88,7 +86,7 @@ class ScannerHomeView(ScannerRequiredView):
                     "time_uploaded": arrow.get(date_time).humanize(),
                     "pages": pages,
                     "n_read": scanner.get_n_complete_reading_tasks(bundle),
-                    "n_pushed": n_pushed,
+                    # "n_pushed": n_pushed,
                     "disable_delete": disable_delete,
                     "n_errors": n_errors
                 }

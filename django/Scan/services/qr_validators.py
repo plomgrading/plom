@@ -24,13 +24,13 @@ class QRErrorService:
         serialized_all_qr = self.serialize_qr_code(page_data, "all")
         serialized_public_code = self.serialize_qr_code(page_data, "public_code")
 
-        self.check_TPV_code(serialized_all_qr, img_obj, serialized_top_three_qr)
+        self.check_TPV_code(serialized_all_qr, img_obj, serialized_top_three_qr, page_data)
         self.check_qr_numbers(page_data, img_obj, serialized_top_three_qr)
         self.check_qr_matching(
-            serialized_top_three_qr, img_obj, serialized_top_three_qr
+            serialized_top_three_qr, img_obj, serialized_top_three_qr, page_data
         )
         self.check_public_code(
-            serialized_public_code, spec_dictionary, img_obj, serialized_top_three_qr
+            serialized_public_code, spec_dictionary, img_obj, serialized_top_three_qr, page_data
         )
 
     def serialize_qr_code(self, page_data, tpv_type):
@@ -61,13 +61,14 @@ class QRErrorService:
                 raise ValueError("No specific TPV type.")
         return qr_code_list
 
-    def check_TPV_code(self, qr_list, img_obj, top_three_tpv):
+    def check_TPV_code(self, qr_list, img_obj, top_three_tpv, page_data):
         """
         Check if TPV codes are 17 digits long.
         """
         for indx in qr_list:
             if len(indx) != len("TTTTTPPPVVVOCCCCC"):
                 self.create_error_image(img_obj, top_three_tpv)
+                img_obj.parsed_qr = page_data
                 img_obj.error = True
                 img_obj.save()
                 raise ValueError("Invalid QR code.")
@@ -83,6 +84,7 @@ class QRErrorService:
         elif len(page_data) <= 2:
             # self.create_error_image(img_obj)
             self.create_error_image(img_obj, top_three_tpv)
+            img_obj.parsed_qr = page_data
             img_obj.error = True
             img_obj.save()
             raise ValueError("Detected fewer than 3 QR codes.")
@@ -90,11 +92,12 @@ class QRErrorService:
             pass
         else:
             self.create_error_image(img_obj, top_three_tpv)
+            img_obj.parsed_qr = page_data
             img_obj.error = True
             img_obj.save()
             raise ValueError("Detected more than 3 QR codes.")
 
-    def check_qr_matching(self, qr_list, img_obj, top_three_tpv):
+    def check_qr_matching(self, qr_list, img_obj, top_three_tpv, page_data):
         """
         Check if QR codes matches.
         This is to check if a page is folded.
@@ -104,11 +107,12 @@ class QRErrorService:
                 pass
             else:
                 self.create_error_image(img_obj, top_three_tpv)
+                img_obj.parsed_qr = page_data
                 img_obj.error = True
                 img_obj.save()
                 raise ValueError("QR codes do not match.")
 
-    def check_public_code(self, public_codes, spec_dictionary, img_obj, top_three_tpv):
+    def check_public_code(self, public_codes, spec_dictionary, img_obj, top_three_tpv, page_data):
         """
         Check if the paper public QR code matches with spec public code.
         """
@@ -118,6 +122,7 @@ class QRErrorService:
                 pass
             else:
                 self.create_error_image(img_obj, top_three_tpv)
+                img_obj.parsed_qr = page_data
                 img_obj.error = True
                 img_obj.save()
                 raise ValueError(

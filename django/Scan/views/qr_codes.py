@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 
 from django.shortcuts import render
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
@@ -111,7 +111,7 @@ class QRParsingProgressAlert(ScannerRequiredView):
             n_complete = len(scanner.get_all_complete_images(bundle))
             context.update({"n_complete": n_complete, "timestamp": timestamp})
             return render(request, "Scan/fragments/qr_complete_modal.html", context)
-
+        
         context.update(
             {
                 "reading_ongoing": scanner.is_bundle_reading_ongoig(bundle),
@@ -123,3 +123,23 @@ class QRParsingProgressAlert(ScannerRequiredView):
         )
 
         return render(request, "Scan/fragments/qr_code_alert.html", context)
+
+
+class BundleTableView(UpdateQRProgressView):
+    def get(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+        context = self.build_context(timestamp, request.user, index)
+        
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, request.user)
+        
+        all_images = scanner.get_all_images(bundle)
+        for i in all_images:
+            print(i.parsed_qr)
+
+        context.update({'qr_reading': scanner.is_bundle_reading_ongoig(bundle)})
+        
+        return render(request, 'Scan/fragments/bundle_table.html', context)

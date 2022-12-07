@@ -9,8 +9,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
-from Scan.models import StagingImage
-from Progress.services import ManageScanService
+# from Scan.models import StagingImage
+# from Progress.services import ManageScanService
 
 
 class ManageBundleView(ScannerRequiredView):
@@ -26,7 +26,6 @@ class ManageBundleView(ScannerRequiredView):
 
         context = self.build_context()
         scanner = ScanService()
-        mss = ManageScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         n_pages = scanner.get_n_images(bundle)
         good_pages = scanner.get_n_complete_reading_tasks(bundle)
@@ -50,6 +49,13 @@ class ManageBundleView(ScannerRequiredView):
             pages.append(page_dict)
 
         qr_finished = scanner.is_bundle_reading_started(bundle)
+        
+        finished_reading_qr = False
+
+        if scanner.is_bundle_reading_finished(bundle):
+            finished_reading_qr = True
+        
+        print(finished_reading_qr)
 
         context.update(
             {
@@ -64,6 +70,7 @@ class ManageBundleView(ScannerRequiredView):
                 "next_idx": index + 1,
                 "good_pages": good_pages,
                 "error_pages": error_pages,
+                "finished_reading_qr": finished_reading_qr,
             }
         )
         return render(request, "Scan/manage_bundle.html", context)

@@ -22,6 +22,7 @@ from .qr_codes import (
     ReadQRcodesView,
     UpdateQRProgressView,
     QRParsingProgressAlert,
+    BundleTableView,
 )
 
 from .push_images import (

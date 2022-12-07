@@ -161,7 +161,15 @@ class ScanService:
         """
         images = StagingImage.objects.filter(bundle=bundle)
         return len(images)
-
+    
+    @transaction.atomic
+    def get_all_images(self, bundle):
+        """
+        Get all the page images in a bundle
+        """
+        images = StagingImage.objects.filter(bundle=bundle)
+        return images
+        
     @transaction.atomic
     def get_user_bundles(self, user):
         """

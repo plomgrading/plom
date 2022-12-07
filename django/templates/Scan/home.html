@@ -13,34 +13,18 @@
 <div class="d-grid gap-2">
     <div class="card w-50">
         <div class="card-body" style="height: 182.5px">
+            <h5>Pushed Summary:</h5>
             <div class="row">
                 <div class="col">
-                    <h5>Summary:</h5>
-                    <p>{{ completed_test_papers }} / {{ total_completed_test_papers }} completed test papers ({{ percent_papers_completed }}%)</p>
-                    <p>{{ completed_pages }} / {{ total_completed_pages }} completed pages ({{ percent_pages_completed }}%)</p>
-                    <a class="btn" style="background-color: #0F984F; color: white;" href="{% url 'scan_summary' %}">View Summary</a>
+                    <p style="color: green;">{{ completed_test_papers }} / {{ total_completed_test_papers }} completed test papers</p>
+                    <p>10 / 30 un-use test papers</p>
+                    <a class="btn" style="background-color: #0F984F; color: white;" href="{% url 'scan_summary' %}">View Details</a>
+                    {% comment %} un-use for when I don't see any paper {% endcomment %}
+                    {% comment %} incomplete for missing paper {% endcomment %}
+                    {% comment %} complete is when done {% endcomment %}
                 </div>
                 <div class="col">
-                    <h5>Test Status:</h5>
-                    <div style="height: 120px; overflow-y: scroll;">
-                        <table class="table table-hover" style="table-layout: fixed;">
-                            <tbody>
-                                {% for tp in all_test_papers %}
-                                    {% if tp.complete %}
-                                    <tr class="table-success">
-                                        <td>Test ID {{ tp.paper_number }}</td>
-                                        <td>Completed</td>
-                                    </tr>
-                                    {% else %}
-                                    <tr class="table-danger">
-                                        <td>Test ID {{ tp.paper_number }}</td>
-                                        <td>Incomplete</td>
-                                    </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    <p style="color: red;">10 / 30 incomplete test papers</p>
                 </div>
             </div>
         </div>
@@ -91,7 +75,6 @@
                                             <li>Total pages: {{ bundle.pages }}</li>
                                             <li>Good pages: {{ bundle.n_read }}</li>
                                             <li>Error pages: {{ bundle.n_errors}}</li>
-                                            <li>Pushed pages: {{ bundle.n_pushed }}</li>
                                         </ul>
                                         <a 
                                             class="btn" 

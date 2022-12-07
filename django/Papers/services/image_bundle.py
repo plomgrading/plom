@@ -126,6 +126,7 @@ class ImageBundleService:
             test_folder.mkdir(exist_ok=True)
             shutil.copy(staged_image.file_path, image_path)
 
+    # wrapper in the atomic
     @db_task(queue="tasks")
     def _push_staged_image(staged_image, test_paper, page_number, make_dirs=True):
         """
