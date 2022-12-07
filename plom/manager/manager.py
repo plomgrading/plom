@@ -1917,7 +1917,9 @@ class Manager(QWidget):
         )
         if msg.exec() == QMessageBox.No:
             return
+        # TODO: likely unnecessary?
         self.msgr.ID_delete_machine_predictions()
+        # Instead we can just do:
         # self.msgr.ID_delete_predictions_from_predictor(predictor="MLLAP")
         # self.msgr.ID_delete_predictions_from_predictor(predictor="MLGreedy")
         self.getPredictions()
