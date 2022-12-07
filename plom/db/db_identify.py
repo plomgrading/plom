@@ -447,7 +447,7 @@ def ID_get_predictions(self, *, predictor=None):
 
 
 def ID_delete_predictions(self, *, predictor=None):
-    """Return a dict of predicted test to student_ids.
+    """Remove the predictions for IDs, either from a particular predictor or all of them.
 
     Keyword Args:
         predictor (str/None): which predictor.  If not specified,
