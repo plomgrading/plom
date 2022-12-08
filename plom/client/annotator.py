@@ -456,7 +456,7 @@ class Annotator(QWidget):
         self.rubric_widget.changeMark(
             self.getScore(), self.getMarkingState(), self.maxMark
         )
-        self.rubric_widget.setQuestionNumber(self.question_num)
+        self.rubric_widget.setQuestion(self.question_num, self.question_label)
         self.rubric_widget.setVersion(self.version)
         self.rubric_widget.setMaxVersion(self.max_version)
         self.rubric_widget.setEnabled(True)

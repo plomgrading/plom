@@ -717,6 +717,7 @@ class RubricWidget(QWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.question_label = None
         self.question_number = None
         self.version = None
         self.max_version = None
@@ -1129,13 +1130,15 @@ class RubricWidget(QWidget):
             return False
         return self.RTW.currentWidget().selectRubricByKey(key)
 
-    def setQuestionNumber(self, qn):
-        """Set question number being graded.
+    def setQuestion(self, num, label):
+        """Set relevant question number and label.
 
         args:
-            qn (int/None): the question number.
+            num (int/None): the question number.
+            label (str/None): the question label.
         """
-        self.question_number = qn
+        self.question_number = num
+        self.question_label = label
 
     def setVersion(self, version):
         """Set version being graded.
@@ -1299,6 +1302,7 @@ class RubricWidget(QWidget):
             self.username,
             self.maxMark,
             self.question_number,
+            self.question_label,
             self.version,
             self.max_version,
             reapable,
@@ -1380,7 +1384,8 @@ class AddRubricBox(QDialog):
         parent,
         username,
         maxMark,
-        question,
+        question_number,
+        question_label,
         version,
         maxver,
         reapable,
@@ -1394,6 +1399,10 @@ class AddRubricBox(QDialog):
             parent (QWidget): the parent window.
             username (str)
             maxMark (int)
+            question_number (int)
+            question_label (str)
+            version (int)
+            maxver (int)
             reapable (list): these are used to "harvest" plain 'ol text
                 annotations and morph them into comments.
             com (dict/None): if None, we're creating a new rubric.
@@ -1452,13 +1461,9 @@ class AddRubricBox(QDialog):
         flay.addRow("Delta mark", lay)
 
         # scope
-        self.question = question
+        self.question_number = question_number
         self.version = version
         self.maxver = maxver
-        # TODO: nice to show question labels here!
-        cb = QCheckBox(f"specific to question index {self.question}")
-        cb.setEnabled(False)
-        cb.setChecked(True)
         self.scopeButton = QToolButton()
         self.scopeButton.setCheckable(True)
         self.scopeButton.setChecked(True)
@@ -1472,7 +1477,16 @@ class AddRubricBox(QDialog):
         flay.addRow(self.scopeButton, frame)
         vlay = QVBoxLayout(frame)
         vlay.setContentsMargins(0, 0, 0, 0)
+        cb = QCheckBox(
+            f'specific to question "{question_label}" (index {question_number})'
+        )
+        cb.setEnabled(False)
+        cb.setChecked(True)
         vlay.addWidget(cb)
+        # For the future, once implemented:
+        # label = QLabel("Specify a list of question indices to share this rubric.")
+        # label.setWordWrap(True)
+        # vlay.addWidget(label)
         lay = QHBoxLayout()
         cb = QCheckBox("specific to version(s)")
         cb.stateChanged.connect(self.toggle_version_specific)
@@ -1648,6 +1662,6 @@ class AddRubricBox(QDialog):
             "tags": tag,
             "meta": meta,
             "username": username,
-            "question": self.question,
+            "question": self.question_number,
             "versions": vers,
         }
