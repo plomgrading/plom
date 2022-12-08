@@ -92,8 +92,9 @@ class Test:
             assert "2" not in predictions, "only first one predicted"
 
             # TODO: did we want this to test for conflict?
-            with raises(PlomConflict, match="elsewhere"):
-                msgr.pre_id_paper(2, sid)
+            # Issue #2404: maybe we want conflicts for prename but not other predictors?
+            # with raises(PlomConflict, match="elsewhere"):
+            #     msgr.pre_id_paper(2, sid)
 
             msgr.remove_id_prediction(1)
 
