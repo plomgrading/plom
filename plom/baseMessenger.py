@@ -708,7 +708,7 @@ class BaseMessenger:
             return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+                raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Error getting rubric list: {e}") from None
         finally:
             self.SRmutex.release()
@@ -756,9 +756,8 @@ class BaseMessenger:
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, updated_commments_list] including the new comments.
+            str: the key/id of the rubric.  Currently should be unchanged
+            from what you sent.
         """
         self.SRmutex.acquire()
         try:
@@ -772,17 +771,16 @@ class BaseMessenger:
             )
             response.raise_for_status()
             new_key = response.json()
-            return [True, new_key]
-
+            return new_key
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+                raise PlomAuthenticationException(response.reason) from None
             elif response.status_code == 400:
-                raise PlomSeriousException("Key mismatch in request.") from None
+                raise PlomSeriousException(response.reason) from None
             elif response.status_code == 406:
-                raise PlomSeriousException("Rubric sent was incomplete.") from None
+                raise PlomSeriousException(response.reason) from None
             elif response.status_code == 409:
-                raise PlomSeriousException("No rubric with that key found.") from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(
                 f"Error of type {e} when creating new rubric"
             ) from None

@@ -1314,9 +1314,10 @@ class RubricWidget(QWidget):
         new_rubric = arb.gimme_rubric_data()
 
         if edit:
-            rv = self._parent.modifyRubric(new_rubric["id"], new_rubric)
+            key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
             # update the rubric in the current internal rubric list
             # make sure that keys match.
+            assert key == new_rubric["id"]
             assert self.rubrics[index]["id"] == new_rubric["id"]
             # then replace
             self.rubrics[index] = new_rubric
