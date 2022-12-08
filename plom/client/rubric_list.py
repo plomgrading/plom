@@ -1140,20 +1140,14 @@ class RubricWidget(QWidget):
         self.question_number = num
         self.question_label = label
 
-    def setVersion(self, version):
+    def setVersion(self, version, maxver):
         """Set version being graded.
 
         args:
-            version (int/None): which version
+            version (int/None): which version.
+            maxver (int): the largest version in this assessment.
         """
         self.version = version
-
-    def setMaxVersion(self, maxver):
-        """The largest version in this assessment.
-
-        args:
-            maxver (int)
-        """
         self.max_version = maxver
 
     def changeMark(self, currentScore, currentState, maxMark=None):

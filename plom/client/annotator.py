@@ -456,8 +456,7 @@ class Annotator(QWidget):
             self.getScore(), self.getMarkingState(), self.maxMark
         )
         self.rubric_widget.setQuestion(self.question_num, self.question_label)
-        self.rubric_widget.setVersion(self.version)
-        self.rubric_widget.setMaxVersion(self.max_version)
+        self.rubric_widget.setVersion(self.version, self.max_version)
         self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.
