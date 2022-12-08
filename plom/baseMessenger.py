@@ -565,7 +565,7 @@ class BaseMessenger:
 
         Args:
             predictor (string): predictors are currently `"prename"` and
-                `"MLLAP"`.  These are subject ot change.  If there are no
+                `"MLLAP"`.  These are subject to change.  If there are no
                 predictions or you pass some other string, you'll get an
                 empty dict.
 
