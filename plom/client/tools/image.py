@@ -147,7 +147,10 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         Returns:
             None
         """
-        dialog = ImageSettingsDialog(int(self.scale() * 100), self.border)
+        # yuck, had to go way up the chain to find someone who can parent a dialog!
+        # maybe that means this code should NOT be opening dialogs
+        parent = self.scene().views()[0]
+        dialog = ImageSettingsDialog(parent, int(self.scale() * 100), self.border)
         if dialog.exec():
             scale, border = dialog.getSettings()
             self.setScale(scale / 100)
@@ -159,7 +162,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
                     self.thick = 4
                 else:
                     self.thick = 0
-                self.update()  # trigger update
+            self.update()  # trigger update
 
 
 class ImageSettingsDialog(QDialog):
@@ -168,7 +171,7 @@ class ImageSettingsDialog(QDialog):
     NumGridRows = 2
     NumButtons = 3
 
-    def __init__(self, scalePercent, checked):
+    def __init__(self, parent, scalePercent, checked):
         """
         Initialize a new image settings dialog object.
 
@@ -177,7 +180,7 @@ class ImageSettingsDialog(QDialog):
             checked (bool): True if the image currently has a red border,
                 False otherwise.
         """
-        super().__init__()
+        super().__init__(parent)
         self.createFormGroupBox(scalePercent, checked)
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.accept)
