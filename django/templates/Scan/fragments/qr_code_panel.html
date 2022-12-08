@@ -1,43 +1,46 @@
 {% if in_progress %}
-    {% if qr_results %}
-    <div class="d-flex vstack gap-3">
-        <h5 class="text-center">
-            <i class="bi bi-check-circle text-success"></i>
-            Page QR codes parsed
-        </h5>
-        <ul>
-            <li>Test-paper {{ qr_results.paper_id }}</li>
-            <li>Page {{ qr_results.page_num }}</li>
-            <li>Version {{ qr_results.version_num }}</li>
-        </ul>
-    </div>
-    {% elif task_status == 'error' %}
-    <div>
-        <p class="text-danger">{{ error }}</p>
-        <a 
-            class="btn text-start"
-            style="background-color: lightgrey;"
-        ><i class="bi bi-file-earmark-check"></i>Push page image</a><br><br>
-        <a class="btn btn-warning text-start">Replace page image</a><br><br>
-        <a class="btn btn-danger text-start w-100">Discard</a><br><br>
-        {% if not flagged %}
-        <form
-            enctype="multipart/form-data"
-            method="post"
-            action="{% url 'scan_flag_img' timestamp index %}"
-        >
-            {% csrf_token %}
-            {{ form }}
-            
-            <input type="submit" class="btn" style="background-color: lightgrey; width: 100%" value="Flag to manager"> 
-        </form>
-        {% else %}
-        <p>Paper flagged to manager <i class="bi bi-check-circle text-success"></i></p>
-        {% endif %}
-    </div>
+    {% if qr_results and task_status == 'error' %}
+        <div>
+            <p class="text-danger">{{ error }}</p>
+            <a 
+                class="btn text-start"
+                style="background-color: lightgrey;"
+            >
+            <i class="bi bi-file-earmark-check"></i>
+            Push page image
+            </a><br><br>
+            <a class="btn btn-warning text-start">Replace page image</a><br><br>
+            <a class="btn btn-danger text-start w-100">Discard</a><br><br>
+            {% if not flagged %}
+                <form
+                    enctype="multipart/form-data"
+                    method="post"
+                    action="{% url 'scan_flag_img' timestamp index %}"
+                >
+                {% csrf_token %}
+                {{ form }}
+        
+                <input type="submit" class="btn" style="background-color: lightgrey; width: 100%" value="Flag to manager"> 
+                </form>
+            {% else %}
+                <p>Paper flagged to manager <i class="bi bi-check-circle text-success"></i></p>
+            {% endif %}
+        </div>
+    {% elif qr_results %}
+        <div class="d-flex vstack gap-3">
+            <h5 class="text-center">
+                <i class="bi bi-check-circle text-success"></i>
+                Page QR codes parsed
+            </h5>
+            <ul>
+                <li>Test-paper {{ qr_results.paper_id }}</li>
+                <li>Page {{ qr_results.page_num }}</li>
+                <li>Version {{ qr_results.version_num }}</li>
+            </ul>
+        </div>
     {% else %}
-    <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s" hx-swap="outerHTML">
-        <div class="d-flex justify-content-center">
+        <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="every 1s" hx-swap="outerHTML">
+            <div class="d-flex justify-content-center">
             <div class="spinner-border"></div>
         </div>
     </div>

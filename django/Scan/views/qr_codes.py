@@ -142,13 +142,11 @@ class BundleTableView(UpdateQRProgressView):
         paper_id = []
         page_num = []
         version_num = []
-
-        print(qr_code_list)
-        for i in qr_code_list:
-            if i != "unknown page":
-                paper_id.append(str(i[:5]).lstrip("0"))
-                page_num.append(str(i[5:8]).lstrip("0"))
-                version_num.append(str(i[8:11]).lstrip("0"))
+        for qr_code in qr_code_list:
+            if qr_code != "unknown page":
+                paper_id.append(str(qr_code[:5]).lstrip("0"))
+                page_num.append(str(qr_code[5:8]).lstrip("0"))
+                version_num.append(str(qr_code[8:11]).lstrip("0"))
 
         context.update(
             {
