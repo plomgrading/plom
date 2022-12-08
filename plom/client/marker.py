@@ -928,7 +928,6 @@ class MarkerClient(QWidget):
         except PlomRangeException as err:
             ErrorMsg(self, str(err)).exec()
             return
-        self.ui.maxscoreLabel.setText(str(self.maxMark))
 
         # Get list of papers already marked and add to table.
         # also read these into the history variable
@@ -998,13 +997,11 @@ class MarkerClient(QWidget):
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
-        # Paste the username, question and version into GUI.
-        self.ui.userLabel.setText(self.msgr.username)
         try:
             question_label = get_question_label(self.exam_spec, self.question)
         except (ValueError, KeyError):
             question_label = "???"
-        self.ui.infoBox.setTitle(
+        self.ui.labelTasks.setText(
             "Marking {} (ver. {}) of “{}”".format(
                 question_label, self.version, self.exam_spec["name"]
             )
@@ -1634,7 +1631,7 @@ class MarkerClient(QWidget):
 
         """
         annotator = Annotator(
-            self.ui.userLabel.text(),
+            self.msgr.username,
             parentMarkerUI=self,
             initialData=initialData,
         )
