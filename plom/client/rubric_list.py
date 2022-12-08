@@ -770,7 +770,7 @@ class RubricWidget(QWidget):
         self.showHideW.addWidget(self.RTW)
         self.showHideW.addWidget(self.groupHide)
         grid.addWidget(self.showHideW, 1, 1, 2, 4)
-        self.addB = QPushButton("Add")
+        self.addB = QPushButton("&Add")  # faster debugging, could remove?
         self.filtB = QPushButton("Arrange/Filter")
         self.hideB = QPushButton("Shown/Hidden")
         self.syncB = QToolButton()
