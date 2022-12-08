@@ -5,9 +5,14 @@
 # Copyright (C) 2020 Dryden Wiebe
 
 import csv
-import importlib.resources as resources
 from pathlib import Path
+import sys
 import tempfile
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
@@ -194,11 +199,11 @@ def process_classlist_backend(student_csv_file_name):
 def get_demo_classlist(spec):
     """Get the demo classlist."""
     # Direct approach: but maybe I like exercising code-paths with below...
-    # with resources.open_binary(plom, "demoClassList.csv") as f:
+    # with (resources.files(plom) / "demoClassList.csv").open("r") as f:
     #     df = clean_non_canvas_csv(f)
     # classlist = df.to_dict("records")
 
-    b = resources.read_binary(plom, "demoClassList.csv")
+    b = (resources.files(plom) / "demoClassList.csv").read_bytes()
     # Context manager not appropriate here, Issue #1996
     f = Path(tempfile.NamedTemporaryFile(delete=False, suffix=".csv").name)
     with open(f, "wb") as fh:

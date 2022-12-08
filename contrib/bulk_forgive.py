@@ -3,7 +3,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Colin B. Macdonald
 
-"""Stand-alone script to give all non-scanned do-not-mark papers."""
+"""Stand-alone script to give all non-scanned do-not-mark papers.
+
+Use at your own risk.
+"""
 
 import os
 from pathlib import Path

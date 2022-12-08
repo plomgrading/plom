@@ -8,10 +8,15 @@
 """Plom tools for scribbling fake answers on PDF files."""
 
 import base64
-import importlib.resources as resources
 import json
 from pathlib import Path
 import random
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import fitz
 
@@ -77,7 +82,7 @@ def scribble_name_and_id(
         None: but modifies the open document as a side effect.
     """
     # load the digit images
-    digit_array = json.loads(resources.read_text(plom.create, "digits.json"))
+    digit_array = json.loads((resources.files(plom.create) / "digits.json").read_text())
     # array is organized in blocks of each digit with this many samples of each
     num_samples = len(digit_array) // 10
     assert len(digit_array) % 10 == 0
@@ -104,7 +109,9 @@ def scribble_name_and_id(
 
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
     rect = fitz.Rect(220 + random.randrange(0, 16), 345, 600, 450)
-    with resources.path(plom.create.fonts, ttf) as fontfile:
+    fontres = resources.files(plom.create.fonts) / ttf
+    # once PyMuPDF >= 1.19.5, can we avoid as_file() and pass fontfile=fontres
+    with resources.as_file(fontres) as fontfile:
         excess = id_page.insert_textbox(
             rect,
             student_name,
@@ -131,7 +138,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
     By default exclude pages 0 and 1 (the ID page and DNM page in our demo data).
     """
     # In principle you can put other fonts in plom.create.fonts
-    # Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
+    # Can also use "helv" and `None` for the fontfile
     # fontname, ttf = random.choice(...)
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
 
@@ -144,7 +151,9 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
 
         if page_index in exclude:
             continue
-        with resources.path(plom.create.fonts, ttf) as fontfile:
+        fontres = resources.files(plom.create.fonts) / ttf
+        # once PyMuPDF >= 1.19.5, can we avoid as_file() and pass fontfile=fontres
+        with resources.as_file(fontres) as fontfile:
             excess = pdf_page.insert_textbox(
                 answer_rect,
                 answer_text,

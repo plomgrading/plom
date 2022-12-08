@@ -550,7 +550,7 @@ docs_sphinx:
 fedora_build:
   stage: alt_build
   needs: []
-  image: fedora:36
+  image: fedora:37
   when: manual
   allow_failure: true
   before_script:
@@ -564,16 +564,24 @@ fedora_build:
           python3-seaborn python3-aiohttp
           python3-peewee python3-pandas python3-requests-toolbelt
           python3-pip python3-wheel python3-setuptools
-          python3-toml python3-weasyprint python3-pillow python3-tqdm python3-appdirs
+          python3-toml python3-weasyprint python3-pillow python3-tqdm
+          python3-appdirs python3-arrow
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn
+          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
           file python3-file-magic
           iproute
     - pip --version
   script:
+    # temporary, see https://github.com/cheind/py-lapsolver/issues/18
+    - dnf install -y git
+    - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
+    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
+    - pip install -U pytest
     - pip install .
     # First, run the unit tests
-    - pytest-3 -l --pyargs plom
+    - which pytest-3
+    - which pytest
+    - pytest plom
     # Build tests
     - mkdir play
     - pushd play

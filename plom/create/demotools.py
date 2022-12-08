@@ -11,9 +11,13 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import csv
-import importlib.resources as resources
 from pathlib import Path
 import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import plom
 from plom.textools import buildLaTeX
@@ -26,7 +30,7 @@ def getDemoClassList():
         list: each entry is dict of one row of the demo classlist.
     """
     d = []
-    with resources.open_text(plom, "demoClassList.csv") as f:
+    with (resources.files(plom) / "demoClassList.csv").open("r") as f:
         reader = csv.DictReader(f)
         for row in reader:
             d.append(row)
@@ -52,30 +56,29 @@ def buildDemoSourceFiles(basedir=Path("."), solutions=False):
     src_dir = basedir / "sourceVersions"
     src_dir.mkdir(exist_ok=True)
 
+    resv1 = resources.files(plom) / "latexTemplate.tex"
+    resv2 = resources.files(plom) / "latexTemplatev2.tex"
+
     print("LaTeXing example exam file: latexTemplate.tex -> version1.pdf")
-    content = resources.read_text(plom, "latexTemplate.tex")
+    content = resv1.read_text()
     if not buildLaTeXExam2(content, src_dir / "version1.pdf"):
         return False
 
     print("LaTeXing example exam file: latexTemplatev2.tex -> version2.pdf")
-    content = resources.read_text(plom, "latexTemplatev2.tex")
+    content = resv2.read_text()
     if not buildLaTeXExam2(content, src_dir / "version2.pdf"):
         return False
 
     # if requested then also make the pdfs with solutions
     if solutions:
         print("LaTeXing example solution file: latexTemplate.tex -> solution1.pdf")
-        content = resources.read_text(plom, "latexTemplate.tex").replace(
-            "% \\printanswers", "\\printanswers"
-        )
+        content = resv1.read_text().replace("% \\printanswers", "\\printanswers")
         # uncomment the line "% \printanswers..."
         if not buildLaTeXExam2(content, Path("sourceVersions") / "solutions1.pdf"):
             return False
 
         print("LaTeXing example solution file: latexTemplatev2.tex -> solutions2.pdf")
-        content = resources.read_text(plom, "latexTemplatev2.tex").replace(
-            "% \\printanswers", "\\printanswers"
-        )
+        content = resv2.read_text().replace("% \\printanswers", "\\printanswers")
         # uncomment the line "% \printanswers..."
         if not buildLaTeXExam2(content, Path("sourceVersions") / "solutions2.pdf"):
             return False

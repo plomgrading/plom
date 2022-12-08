@@ -1076,6 +1076,7 @@ class ManagerMessenger(BaseMessenger):
         return True
 
     def IDdeletePredictions(self):
+        """Deletes the machine-learning predicted IDs for all papers."""
         with self.SRmutex:
             try:
                 response = self.delete(

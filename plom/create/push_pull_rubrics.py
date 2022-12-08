@@ -3,8 +3,13 @@
 
 """Tools for upload/downloading rubrics from Plom servers."""
 
-import importlib.resources as resources
 import json
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
@@ -136,11 +141,11 @@ def upload_demo_rubrics(*, msgr, numquestions=3):
     The demo data is a bit sparse: we fill in missing pieces and
     multiply over questions.
     """
-    rubrics_in = toml.loads(resources.read_text("plom", "demo_rubrics.toml"))
+    rubrics_in = toml.loads((resources.files("plom") / "demo_rubrics.toml").read_text())
     rubrics_in = rubrics_in["rubric"]
     rubrics = []
     for rub in rubrics_in:
-        if not hasattr(rub, "kind"):
+        if not rub.get("kind"):
             if rub["delta"] == ".":
                 rub["kind"] = "neutral"
             elif rub["delta"].startswith("+") or rub["delta"].startswith("-"):
@@ -148,7 +153,7 @@ def upload_demo_rubrics(*, msgr, numquestions=3):
             else:
                 raise ValueError(f'not sure how to map "kind" for rubric:\n  {rub}')
         # Multiply rubrics w/o question numbers, avoids repetition in demo file
-        if not hasattr(rub, "question_number"):
+        if rub.get("question_number") is None:
             for q in range(1, numquestions + 1):
                 r = rub.copy()
                 r["question_number"] = q

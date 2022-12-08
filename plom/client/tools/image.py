@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QFormLayout,
 )
 
-from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
+from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 
 
 class CommandImage(CommandTool):
@@ -60,7 +60,7 @@ class CommandImage(CommandTool):
         return cls(scene, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
 
 
-class ImageItem(QGraphicsPixmapItem):
+class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
     """
     An image added to a paper.
     """
@@ -88,12 +88,6 @@ class ImageItem(QGraphicsPixmapItem):
         self.setScale(scale)
         self.data = data
         self.thick = 4
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-        return super().itemChange(change, value)
 
     def paint(self, painter, option, widget=None):
         """
@@ -153,17 +147,22 @@ class ImageItem(QGraphicsPixmapItem):
         Returns:
             None
         """
-        dialog = ImageSettingsDialog(int(self.scale() * 100), self.border)
+        # yuck, had to go way up the chain to find someone who can parent a dialog!
+        # maybe that means this code should NOT be opening dialogs
+        parent = self.scene().views()[0]
+        dialog = ImageSettingsDialog(parent, int(self.scale() * 100), self.border)
         if dialog.exec():
             scale, border = dialog.getSettings()
             self.setScale(scale / 100)
+            # TODO: I don't think this event generates a Command!  No undo stack...
+            # self.scene()._set_dirty()
             if border is not self.border:
                 self.border = border
                 if self.border:  # update border thickness
                     self.thick = 4
                 else:
                     self.thick = 0
-                self.update()  # trigger update
+            self.update()  # trigger update
 
 
 class ImageSettingsDialog(QDialog):
@@ -172,7 +171,7 @@ class ImageSettingsDialog(QDialog):
     NumGridRows = 2
     NumButtons = 3
 
-    def __init__(self, scalePercent, checked):
+    def __init__(self, parent, scalePercent, checked):
         """
         Initialize a new image settings dialog object.
 
@@ -181,7 +180,7 @@ class ImageSettingsDialog(QDialog):
             checked (bool): True if the image currently has a red border,
                 False otherwise.
         """
-        super().__init__()
+        super().__init__(parent)
         self.createFormGroupBox(scalePercent, checked)
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.accept)

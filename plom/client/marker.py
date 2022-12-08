@@ -21,6 +21,7 @@ from math import ceil
 import os
 from pathlib import Path
 import queue
+import random
 import tempfile
 from textwrap import shorten
 import time
@@ -48,6 +49,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from plom import __version__
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -69,8 +71,6 @@ from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
-from .pagecache import download_pages
-from .background_downloader import BackgroundDownloader
 
 
 if platform.system() == "Darwin":
@@ -87,6 +87,7 @@ class BackgroundUploader(QThread):
     uploadSuccess = pyqtSignal(str, int, int)
     uploadKnownFail = pyqtSignal(str, str)
     uploadUnknownFail = pyqtSignal(str, str)
+    queue_status_changed = pyqtSignal(int, int, int, int)
 
     def __init__(self, msgr):
         """Initialize a new uploader
@@ -96,12 +97,27 @@ class BackgroundUploader(QThread):
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
-                TODO: have caller do clone, for symmetry with downloader?
         """
         super().__init__()
         self.q = None
         self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
+        self.num_uploaded = 0
+        self.num_failed = 0
+        self.simulate_failures = False
+        # percentage of download attempts that will fail and an overall
+        # delay in seconds in a range (both are i.i.d. per retry).
+        # These are ignored unless simulate_failures is True.
+        self._simulate_failure_rate = 20.0
+        self._simulate_slow_net = (3, 8)
+
+    def enable_fail_mode(self):
+        log.info("fail mode ENABLED")
+        self.simulate_failures = True
+
+    def disable_fail_mode(self):
+        log.info("fail mode disabled")
+        self.simulate_failures = False
 
     def enqueueNewUpload(self, *args):
         """
@@ -124,6 +140,10 @@ class BackgroundUploader(QThread):
         """
         log.debug("upQ enqueuing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
+        n = 1 if self.is_upload_in_progress else 0
+        self.queue_status_changed.emit(
+            self.q.qsize(), n, self.num_uploaded, self.num_failed
+        )
 
     def queue_size(self):
         """Return the number of papers waiting or currently uploading."""
@@ -164,17 +184,34 @@ class BackgroundUploader(QThread):
             self.is_upload_in_progress = True
             # TODO: remove so that queue needs no knowledge of args
             code = data[0]
-            log.info("upQ thread: popped code {} from queue, uploading".format(code))
-            # For experimenting with slow uploads
-            # time.sleep(30)
-            upload(
-                self._msgr,
-                *data,
-                knownFailCallback=self.uploadKnownFail.emit,
-                unknownFailCallback=self.uploadUnknownFail.emit,
-                successCallback=self.uploadSuccess.emit,
+            log.info("upQ thread: popped code %s from queue, uploading", code)
+            self.queue_status_changed.emit(
+                self.q.qsize(), 1, self.num_uploaded, self.num_failed
             )
+            if self.simulate_failures:
+                simfail = random.random() <= self._simulate_failure_rate / 100
+                a, b = self._simulate_slow_net
+                # generate wait1 + wait2 \in (a, b)
+                wait = random.random() * (b - a) + a
+                time.sleep(wait)
+            if self.simulate_failures and simfail:
+                self.uploadUnknownFail.emit(code, "Simulated upload failure!")
+                self.num_failed += 1
+            else:
+                if upload(
+                    self._msgr,
+                    *data,
+                    knownFailCallback=self.uploadKnownFail.emit,
+                    unknownFailCallback=self.uploadUnknownFail.emit,
+                    successCallback=self.uploadSuccess.emit,
+                ):
+                    self.num_uploaded += 1
+                else:
+                    self.num_failed += 1
             self.is_upload_in_progress = False
+            self.queue_status_changed.emit(
+                self.q.qsize(), 0, self.num_uploaded, self.num_failed
+            )
 
         self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
@@ -224,7 +261,7 @@ def upload(
         successCallback: a function to call when we succeed.
 
     Returns:
-        None
+        bool: True for success, False for failure (either of the two).
 
     Raises:
         PlomSeriousException: elements in filenames do not correspond to
@@ -259,14 +296,15 @@ def upload(
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
         # probably previous call does not return: it forces a crash
-        return
+        return False
     except PlomException as ex:
         unknownFailCallback(task, str(ex))
-        return
+        return False
 
     numDone = msg[0]
     numTotal = msg[1]
     successCallback(task, numDone, numTotal)
+    return True
 
 
 class ExamQuestion:
@@ -398,6 +436,20 @@ class MarkerExamModel(QStandardItemModel):
             ]
         )
         return r
+
+    def _expensive_search_and_update(self, img_id, md5, filename):
+        """Yuck, just yuck.
+
+        Tested with a few hundred papers, is not noticeably slow.  So the code
+        is aethetically unpleasant but perhaps good enough.
+        TODO: we could also just refresh/check the src_img_data on later read
+        """
+        for i in range(self.rowCount()):
+            src_img_data = eval(self.data(self.index(i, 10)))
+            for x in src_img_data:
+                if x["id"] == img_id:
+                    x["filename"] = filename
+            self.setData(self.index(i, 10), repr(src_img_data))
 
     def _getPrefix(self, r):
         """
@@ -842,9 +894,11 @@ class MarkerClient(QWidget):
         log.debug("Working directory set to %s", self.workingDirectory)
 
         self.maxMark = -1  # temp value
-        # TODO: a not-fully-thought-out datastore for immutable pagedata
-        # Note: specific to this question
-        self._full_pagedata = {}
+        self.downloader = self.Qapp.downloader
+        self.downloader.download_finished.connect(self.background_download_finished)
+        self.downloader.download_failed.connect(self.background_download_failed)
+        self.downloader.download_queue_changed.connect(self.update_technical_stats)
+
         self.examModel = (
             MarkerExamModel()
         )  # Exam model for the table of groupimages - connect to table
@@ -855,7 +909,6 @@ class MarkerClient(QWidget):
             lambda: None
         )  # settings variable for annotator settings (initially None)
         self.commentCache = {}  # cache for Latex Comments
-        self.backgroundDownloader = None
         self.backgroundUploader = None
 
         self.allowBackgroundOps = True
@@ -898,10 +951,6 @@ class MarkerClient(QWidget):
             None
         """
         self.msgr = messenger
-        # BackgroundDownloaders come and go but share a single cloned Messenger
-        # Note: BackgroundUploader is persistent and makes its own clone.
-        self._bgdownloader_msgr = Messenger.clone(self.msgr)
-
         self.question = question
         self.version = version
 
@@ -918,7 +967,6 @@ class MarkerClient(QWidget):
         except PlomRangeException as err:
             ErrorMsg(self, str(err)).exec()
             return
-        self.ui.maxscoreLabel.setText(str(self.maxMark))
 
         # Get list of papers already marked and add to table.
         # also read these into the history variable
@@ -929,9 +977,12 @@ class MarkerClient(QWidget):
         self.updateProgress()  # Update counts
 
         # Connect the view **after** list updated.
-        # Connect the table-model's selection change to appropriate function
+        # Connect the table-model's selection change to Marker functions
         self.ui.tableView.selectionModel().selectionChanged.connect(
             self.updatePreviewImage
+        )
+        self.ui.tableView.selectionModel().selectionChanged.connect(
+            self.ensureAllDownloaded
         )
 
         self.requestNext()  # Get a question to mark from the server
@@ -949,6 +1000,9 @@ class MarkerClient(QWidget):
             )
             self.backgroundUploader.uploadUnknownFail.connect(
                 self.backgroundUploadFailed
+            )
+            self.backgroundUploader.queue_status_changed.connect(
+                self.update_technical_stats_upload
             )
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
@@ -985,13 +1039,11 @@ class MarkerClient(QWidget):
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
-        # Paste the username, question and version into GUI.
-        self.ui.userLabel.setText(self.msgr.username)
         try:
             question_label = get_question_label(self.exam_spec, self.question)
         except (ValueError, KeyError):
             question_label = "???"
-        self.ui.infoBox.setTitle(
+        self.ui.labelTasks.setText(
             "Marking {} (ver. {}) of “{}”".format(
                 question_label, self.version, self.exam_spec["name"]
             )
@@ -1013,6 +1065,18 @@ class MarkerClient(QWidget):
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
         self.ui.paperBoxLayout.addWidget(self.testImg, 10)
+
+        if __version__.endswith("dev"):
+            self.ui.technicalButton.setChecked(True)
+            self.ui.failmodeCB.setEnabled(True)
+        else:
+            self.ui.technicalButton.setChecked(False)
+            self.ui.failmodeCB.setEnabled(False)
+        # if we want it to look like a label
+        # self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
+        self.show_hide_technical()
+        # self.force_update_technical_stats()
+        self.update_technical_stats_upload(0, 0, 0, 0)
 
     def connectGuiButtons(self):
         """
@@ -1054,26 +1118,8 @@ class MarkerClient(QWidget):
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.view_testnum_question)
-
-    def resizeEvent(self, event):
-        """
-        Resizes the image and surrounding table.
-
-        Notes:
-            Overrides QWidget.resizeEvent()
-            a resize can be triggered before "setup" is called.
-            TODO: which is more evidence that "init" should consume "setup"
-
-        Args:
-            event (QEvent): the event to be resized.
-
-        Returns:
-            None
-
-        """
-        if hasattr(self, "ui.tableView"):
-            self.ui.tableView.resizeRowsToContents()
-        super().resizeEvent(event)
+        self.ui.technicalButton.clicked.connect(self.show_hide_technical)
+        self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
     def toggle_prefer_tagged(self):
         pass
@@ -1193,28 +1239,29 @@ class MarkerClient(QWidget):
             self.Qapp.exit(57)
             # raise PlomForceLogoutException("Manager changed task") from ex
 
-        # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
-        # column means different things).  Instead, extract from .plom file.
         log.info("importing source image data (orientations etc) from .plom file")
         # filenames likely stale: could have restarted client in meantime
         src_img_data = plomdata["base_images"]
-
-        pagedata = self.msgr.get_pagedata_context_question(num, self.question)
-        pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
-        )
-        self._full_pagedata[num] = pagedata
-
+        PC = self.downloader.pagecache
         for row in src_img_data:
-            for r in pagedata:
-                # Issue #2331: md5sum could be repeated, want nonempty local_filename
-                if r["md5"] == row["md5"] and r["local_filename"]:
-                    row["filename"] = r["local_filename"]
-            assert row[
-                "filename"
-            ], f"Unexpected Issue #2331: task={task}; src_img_data is {src_img_data}; pagedata={pagedata}"
+            # remove legacy "local_filename" if present
+            f = row.pop("local_filename", None) or row.get("filename")
+            if not row.get("server_path"):
+                # E.g., Reannotator used to lose "server_path", keep workaround
+                # just in case, by using previous session's filename
+                row["server_path"] = f
+            # now overwrite "local_filename" from this session
+            if PC.has_page_image(row["id"]):
+                row["filename"] = PC.page_image_path(row["id"])
+            else:
+                row["filename"] = self.downloader.get_placeholder_path()
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
+        # after putting in model, trigger downloads (prevents race)
+        for row in src_img_data:
+            if PC.has_page_image(row["id"]):
+                continue
+            self.downloader.download_in_background_thread(row)
 
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         paperdir = Path(paperdir)
@@ -1331,19 +1378,26 @@ class MarkerClient(QWidget):
         if not ok:
             return
         log.info("getting paper num %s", n)
+        task = f"q{n:04}g{self.question}"
         try:
-            self.requestParticularPaper(n)
+            self.claim_task_and_trigger_downloads(task)
         except (
             PlomTakenException,
             PlomRangeException,
             PlomVersionMismatchException,
         ) as err:
             WarnMsg(self, f"Cannot get paper {n}.", info=err).exec()
+            return
+        self.moveSelectionToTask(task)
 
-    def requestNext(self):
+    def requestNext(self, *, update_select=True):
         """Ask server for an unmarked paper, get file, add to list, update view.
 
         Retry a few times in case two clients are asking for same.
+
+        Keyword Args:
+            update_select (bool): default True, send False if you don't
+                want to adjust the visual selection.
 
         Returns:
             None
@@ -1381,19 +1435,38 @@ class MarkerClient(QWidget):
                 ).exec()
                 raise
 
-            num = int(task[1:5])
             try:
-                self.requestParticularPaper(num)
+                self.claim_task_and_trigger_downloads(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
+        if update_select:
+            self.moveSelectionToTask(task)
 
-    def requestParticularPaper(self, papernum):
-        """Try to get a given paper number from the server.
+    def trigger_downloads_for_task(self, task):
+        """Make sure the images for a task are downloaded or trigger downloads.
+
+        TODO: this routine must've already done the initial download: maybe
+        a more general routine would be written that does not depend on the
+        `examModel` having a row for the task already.
+        """
+        img_src_data = self.examModel.get_source_image_data(task)
+        placeholder = self.downloader.get_placeholder_path()
+        for row in img_src_data:
+            if row["filename"] == placeholder:
+                log.info(
+                    "image id %d still has placeholder, re-triggering download",
+                    row["id"],
+                )
+            self.downloader.download_in_background_thread(row)
+
+    def claim_task_and_trigger_downloads(self, task):
+        """Claim a particular task for the current user and start image downloads.
 
         Notes:
-            Side effects: on success, updates the table of tasks
+            Side effects: on success, updates the table of tasks by adding
+            a new row.  The new row is *not* automatically selected.
 
         Returns:
             None
@@ -1402,34 +1475,23 @@ class MarkerClient(QWidget):
             PlomTakenException
             PlomVersionMismatchException
         """
-        task = f"q{papernum:04}g{self.question}"
-        page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(
+        src_img_data, tags, integrity_check = self.msgr.MclaimThisTask(
             task, version=self.version
         )
-        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
-        del page_metadata
+        # TODO: I dislike this packed-string: overdue for refactor
+        assert task[0] == "q"
+        assert task[5] == "g"
+        question_idx = int(task[6:])
+        assert question_idx == self.question
 
-        pagedata = self.msgr.get_pagedata_context_question(papernum, self.question)
-        pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
-        )
-        self._full_pagedata[papernum] = pagedata
-
-        # Populate the orientation keys from the pagedata
+        PC = self.downloader.pagecache
         for row in src_img_data:
-            ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
-            # There could easily be more than one: what if orientation is contradictory?
-            row["orientation"] = ori[0]  # just take first one
+            if PC.has_page_image(row["id"]):
+                row["filename"] = PC.page_image_path(row["id"])
+            else:
+                row["filename"] = self.downloader.get_placeholder_path()
 
-        for row in src_img_data:
-            for r in pagedata:
-                # Issue #2331: md5sum could be repeated, want nonempty local_filename
-                if r["md5"] == row["md5"] and r["local_filename"]:
-                    row["filename"] = r["local_filename"]
-            assert row[
-                "filename"
-            ], f"Unexpected Issue #2331: task={task}; src_img_data is {src_img_data}; pagedata={pagedata}"
-
+        # potential race with the downloader so trigger downloads after table insert
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -1438,15 +1500,93 @@ class MarkerClient(QWidget):
                 integrity_check=integrity_check,
             )
         )
+
+        for row in src_img_data:
+            if row["filename"] == self.downloader.get_placeholder_path():
+                self.downloader.download_in_background_thread(row)
+
+    def moveSelectionToTask(self, task):
+        """Update the selection in the list of papers."""
         pr = self.prxM.rowFromTask(task)
-        if pr is not None:
-            # if newly-added row is visible, select it and redraw
-            self.ui.tableView.selectRow(pr)
-            # this might redraw it twice: oh well this is not common operation
-            self._updateCurrentlySelectedRow()
-            # Clean up the table
-            self.ui.tableView.resizeColumnsToContents()
-            self.ui.tableView.resizeRowsToContents()
+        if pr is None:
+            return
+        self.ui.tableView.selectRow(pr)
+        # this might redraw it twice: oh well this is not common operation
+        self._updateCurrentlySelectedRow()
+        # Clean up the table
+        self.ui.tableView.resizeColumnsToContents()
+        self.ui.tableView.resizeRowsToContents()
+
+    def background_download_finished(self, img_id, md5, filename):
+        log.debug(f"PageCache has finished downloading {img_id} to {filename}")
+        self.ui.labelTech2.setText(f"last msg: downloaded img id={img_id}")
+        self.ui.labelTech2.setToolTip(f"{filename}")
+        # TODO: time this
+        self.examModel._expensive_search_and_update(img_id, md5, filename)
+        # log.debug(f"Elapsed time for potentially expensive local DB update: %g", etime)
+        # TODO
+        # if any("placeholder" in x for x in testImg.imagenames):
+        # force a redraw
+        self._updateCurrentlySelectedRow()
+
+    def background_download_failed(self, img_id):
+        self.ui.labelTech2.setText(f"<p>last msg: failed download img id={img_id}</p>")
+        print(f"failed download img id={img_id}")
+        self.ui.labelTech2.setToolTip("")
+
+    def force_update_technical_stats(self):
+        stats = self.downloader.get_stats()
+        self.update_technical_stats(stats)
+
+    def update_technical_stats(self, d):
+        self.ui.labelTech1.setText(
+            "<p>"
+            f"downloads: {d['queued']} queued, {d['cache_size']} cached,"
+            f" {d['retries']} retried, {d['fails']} failed"
+            "</p>"
+        )
+
+    def update_technical_stats_upload(self, n, m, numup, failed):
+        if n == 0 and m == 0:
+            txt = "upload: idle"
+        else:
+            txt = f"upload: {n} queued, {m} inprogress"
+        txt += f", {numup} done, {failed} failed"
+        self.ui.labelTech3.setText(txt)
+
+    def show_hide_technical(self):
+        if self.ui.technicalButton.isChecked():
+            self.ui.technicalButton.setText("Hide technical info")
+            self.ui.technicalButton.setArrowType(Qt.DownArrow)
+            self.ui.frameTechnical.setVisible(True)
+            ptsz = self.ui.technicalButton.fontInfo().pointSizeF()
+            self.ui.frameTechnical.setStyleSheet(
+                f"QWidget {{ font-size: {0.7*ptsz}pt; }}"
+            )
+            # future use
+            self.ui.labelTech4.setVisible(False)
+        else:
+            self.ui.technicalButton.setText("Show technical info")
+            self.ui.technicalButton.setArrowType(Qt.RightArrow)
+            self.ui.frameTechnical.setVisible(False)
+
+    def toggle_fail_mode(self):
+        if self.ui.failmodeCB.isChecked():
+            self.Qapp.downloader.enable_fail_mode()
+            r = self.Qapp.downloader._simulate_failure_rate
+            a, b = self.Qapp.downloader._simulate_slow_net
+            tip = f"download: delay ∈ [{a}s, {b}s], {r:0g}% retry"
+            if self.allowBackgroundOps:
+                self.backgroundUploader.enable_fail_mode()
+                r = self.backgroundUploader._simulate_failure_rate
+                a, b = self.backgroundUploader._simulate_slow_net
+                tip += f"\nupload delay ∈ [{a}s, {b}s], {r:0g}% fail"
+            self.ui.failmodeCB.setToolTip(tip)
+        else:
+            self.ui.failmodeCB.setToolTip("")
+            self.Qapp.downloader.disable_fail_mode()
+            if self.allowBackgroundOps:
+                self.backgroundUploader.disable_fail_mode()
 
     def requestNextInBackgroundStart(self):
         """
@@ -1456,106 +1596,7 @@ class MarkerClient(QWidget):
             None
 
         """
-        if self.backgroundDownloader:
-            log.info(
-                "Previous Downloader ({}) still here, waiting".format(
-                    str(self.backgroundDownloader)
-                )
-            )
-            # if prev downloader still going than wait.  might block the gui
-            self.backgroundDownloader.wait()
-        tag = None
-        if self.prefer_tagged:
-            tag = "@" + self.msgr.username
-        above = self.prefer_above
-        if tag and above:
-            log.info('Next available?  Prefer above %s, tagged with "%s"', above, tag)
-        elif tag:
-            log.info('Next available?  Prefer tagged with "%s"', tag)
-        elif above:
-            log.info("Next available?  Prefer above %s", above)
-        # New downloader but reuse the existing Messenger clone
-        self.backgroundDownloader = BackgroundDownloader(
-            self.question,
-            self.version,
-            self._bgdownloader_msgr,
-            workdir=self.workingDirectory,
-            tag=tag,
-            above=above,
-        )
-        self.backgroundDownloader.downloadSuccess.connect(
-            self._requestNextInBackgroundFinished
-        )
-        self.backgroundDownloader.downloadNoneAvailable.connect(
-            self.requestNextInBackgroundNoneAvailable
-        )
-        self.backgroundDownloader.downloadFail.connect(
-            self.requestNextInBackgroundFailed
-        )
-        self.backgroundDownloader.start()
-
-    def _requestNextInBackgroundFinished(
-        self, task, src_img_data, pagedata, tags, integrity_check
-    ):
-        """
-        Adds paper to exam model once it's been requested.
-
-        Args:
-            task (str): the task name for the next test.
-            src_img_data (list[dict]): the md5sums, filenames, etc for
-                the underlying images.
-            pagedata (list): temporary hacks to merge with above?
-            tags (list[str]): list of texts for tags for the TGV.
-            integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
-
-        Returns:
-            None
-        """
-        num = int(task[1:5])
-        self._full_pagedata[num] = pagedata
-        self.examModel.addPaper(
-            ExamQuestion(
-                task,
-                src_img_data=src_img_data,
-                tags=tags,
-                integrity_check=integrity_check,
-            )
-        )
-        # Clean up the table
-        self.ui.tableView.resizeColumnsToContents()
-        self.ui.tableView.resizeRowsToContents()
-
-    def requestNextInBackgroundNoneAvailable(self):
-        """
-        Empty.
-
-        Notes:
-            Keep this function here just in case we want to do something in the
-            future.
-        """
-        pass
-
-    def requestNextInBackgroundFailed(self, errmsg):
-        """
-        Sends an error message when requesting the next exam fails.
-
-        Args:
-            errmsg (str): Error message received.
-
-        Returns:
-            None
-
-        """
-        # TODO what should we do?  Is there a realistic way forward
-        # or should we just die with an exception?
-        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
-        ErrorMsg(
-            None,
-            "Unfortunately, there was an unexpected error downloading "
-            "next paper.\n\n{}\n\n"
-            "Please consider filing an issue?  I don't know if its "
-            "safe to continue from here...".format(errmsg),
-        ).exec()
+        self.requestNext(update_select=False)
 
     def moveToNextUnmarkedTest(self, task=None):
         """
@@ -1567,29 +1608,6 @@ class MarkerClient(QWidget):
         Returns:
              True if move was successful, False if not, for any reason.
         """
-        if self.backgroundDownloader:
-            # Might need to wait for a background downloader.  Important to
-            # processEvents() so we can receive the downloader-finished signal.
-            # TODO: assumes the downloader tries to stay just one ahead.
-            count = 0
-            while self.backgroundDownloader.isRunning():
-                time.sleep(0.05)
-                self.Qapp.processEvents()
-                count += 1
-                if (count % 10) == 0:
-                    log.info("waiting for downloader to fill table...")
-                if count >= 100:
-                    msg = SimpleQuestion(
-                        self,
-                        "Still waiting for downloader to get the next image.  "
-                        "Do you want to wait a few more seconds?\n\n"
-                        "(It is safe to choose 'no': the Annotator will simply close)",
-                    )
-                    if msg.exec() == QMessageBox.No:
-                        return False
-                    count = 0
-            self.Qapp.processEvents()
-
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
@@ -1610,6 +1628,38 @@ class MarkerClient(QWidget):
         if pr == prstart:
             return False  # have looped over all rows and not found anything.
         self.ui.tableView.selectRow(pr)
+
+        # Might need to wait for a background downloader.  Important to
+        # processEvents() so we can receive the downloader-finished signal.
+        task = self.prxM.getPrefix(pr)
+        count = 0
+        placeholder = self.downloader.get_placeholder_path()
+        while True:
+            keep_waiting = False
+            foo = self.examModel.get_source_image_data(task)
+            for row in foo:
+                if row["filename"] == placeholder:
+                    keep_waiting = True
+                    print(f">>>> row still has placeholder: {row}")
+            if not keep_waiting:
+                break
+            time.sleep(0.05)
+            self.Qapp.processEvents()
+            count += 1
+            if (count % 10) == 0:
+                log.info("waiting for downloader to fill table...")
+            if count >= 100:
+                msg = SimpleQuestion(
+                    self,
+                    "Still waiting for downloader to get the next image.  "
+                    "Do you want to wait a few more seconds?\n\n"
+                    "(It is safe to choose 'no': the Annotator will simply close)",
+                )
+                if msg.exec() == QMessageBox.No:
+                    return False
+                count = 0
+                self.Qapp.processEvents()
+
         return True
 
     def deferTest(self):
@@ -1639,7 +1689,7 @@ class MarkerClient(QWidget):
 
         """
         annotator = Annotator(
-            self.ui.userLabel.text(),
+            self.msgr.username,
             parentMarkerUI=self,
             initialData=initialData,
         )
@@ -1674,24 +1724,12 @@ class MarkerClient(QWidget):
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
 
-    def getDataForAnnotator(self, task, check_bguploader=True):
+    def getDataForAnnotator(self, task):
         """Start annotator on a particular task.
 
         Args:
             task (str): the task id.  If original qXXXXgYY, then annotated
                 version is GXXXXgYY (G=graded).
-
-        Keyword Args:
-            check_bguploader (bool): default True.  False if you are
-                *sure* we already have the required images.
-                Usually when this function is called, it will be for
-                the next paper and we will need to check if the
-                background downloader is done.  But the PageRearranger
-                also calls this and it *should not* wait for the next
-                paper.  In this case, pass False here to avoid waiting
-                on the backgrounder downloader in the common case when
-                users do Ctrl-R immediately upon starting a new paper.
-                See Issue 1967.  Long term: new background downloader.
 
         Returns:
             list/None: as described by startTheAnnotator, if successful.
@@ -1716,27 +1754,31 @@ class MarkerClient(QWidget):
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
-        img_src_data = self.examModel.get_source_image_data(task)
-        if check_bguploader and self.backgroundDownloader:
-            count = 0
-            # Notes: we could check using `while not os.path.exists(fname):`
-            # Or we can wait on the downloader, which works when there is only
-            # one download thread.  Better yet might be a dict/database that
-            # we update on downloadFinished signal.
-            while self.backgroundDownloader.isRunning():
-                time.sleep(0.1)
-                count += 1
-                # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
-                if (count % 10) == 0:
-                    log.info("waiting for downloader: {}".format(img_src_data))
-                if count >= 40:
-                    msg = SimpleQuestion(
-                        self,
-                        "Still waiting for download.  Do you want to wait a bit longer?",
-                    )
-                    if msg.exec() == QMessageBox.No:
-                        return
-                    count = 0
+        count = 0
+        placeholder = self.downloader.get_placeholder_path()
+        while True:
+            keep_waiting = False
+            img_src_data = self.examModel.get_source_image_data(task)
+            for row in img_src_data:
+                if row["filename"] == placeholder:
+                    keep_waiting = True
+                    print(f">>>> row still has placeholder: {row}")
+            if not keep_waiting:
+                break
+            time.sleep(0.1)
+            self.Qapp.processEvents()
+            count += 1
+            if (count % 10) == 0:
+                log.info("waiting for downloader: {}".format(img_src_data))
+            if count >= 40:
+                msg = SimpleQuestion(
+                    self,
+                    "Still waiting for download.  Do you want to wait a bit longer?",
+                )
+                if msg.exec() == QMessageBox.No:
+                    return
+                count = 0
+                self.Qapp.processEvents()
 
         # maybe the downloader failed for some (rare) reason
         for data in img_src_data:
@@ -1958,7 +2000,7 @@ class MarkerClient(QWidget):
         """
         log.debug("Annotator wants more (w/o closing)")
         if not self.allowBackgroundOps:
-            self.requestNext()
+            self.requestNext(update_select=False)
         if not self.moveToNextUnmarkedTest("q" + oldtgvID if oldtgvID else None):
             return False
         # TODO: copy paste of annotateTest()
@@ -1987,36 +2029,22 @@ class MarkerClient(QWidget):
 
         return data
 
-    def PermuteAndGetSamePaper(self, task, imageList):
+    def PermuteAndGetSamePaper(self, task, src_img_data):
         """User has reorganized pages of an exam.
 
         Args:
             task (str): the task ID of the current test.
-            imageList (list[str]): list of image names to which are being
-                rearranged.  Each row looks like `[md5, filename, angle]`.
+            src_img_data (list[dict]): list of "page data" as rearranged.
 
         Returns:
             tuple: initialData (as described by :meth:`startTheAnnotator`.)
         """
-        log.info("Rearranging image list for task {} = {}".format(task, imageList))
-        src_img_data = []
-        # this is a bit silly, just converting list to dict...  maybe refactor caller?
-        for row in imageList:
-            # TODO: do we need to let the cache know we want to keep these?
-            # TODO: see rearranger code in the annotator, which used to erase some
-            src_img_data.append(
-                {
-                    "id": row[3],
-                    "md5": row[0],
-                    "filename": str(row[1]),
-                    "orientation": row[2],
-                }
-            )
+        log.info("Rearranging image list for task {} = {}".format(task, src_img_data))
         task = "q" + task
         self.examModel.setOriginalFilesAndData(task, src_img_data)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
-        return self.getDataForAnnotator(task, check_bguploader=False)
+        return self.getDataForAnnotator(task)
 
     def backgroundUploadFinished(self, task, numDone, numtotal):
         """
@@ -2114,8 +2142,32 @@ class MarkerClient(QWidget):
             log.debug("User managed to unselect current row")
             self.testImg.updateImage(None)
             return
-        # Note: a single selection should have length 11: could assert
+        # Note: a single selection should have length 11 all with same row: could assert
         self._updateImage(idx[0].row())
+
+    def ensureAllDownloaded(self, new, old):
+        """Whenever the selection changes, ensure downloaders are either finished or running for each image.
+
+        We might need to restart downloaders if they have repeatedly failed.
+        Even if we are still waiting, we can signal to the download the we
+        have renewed interest in this particular download.
+        TODO: for example. maybe we should send a higher priority?  No: currently
+        this also happens "in the background" b/c Marker selects the new row.
+
+        Args:
+            new (QItemSelection): the newly selected cells.
+            old (QItemSelection): the previously selected cells.
+
+        Returns:
+            None
+        """
+        idx = new.indexes()
+        if len(idx) == 0:
+            return
+        # Note: a single selection should have length 11 all with same row: could assert
+        pr = idx[0].row()
+        task = self.prxM.getPrefix(pr)
+        self.trigger_downloads_for_task(task)
 
     def get_upload_queue_length(self):
         """How long is the upload queue?
@@ -2169,6 +2221,15 @@ class MarkerClient(QWidget):
 
     def closeEvent(self, event):
         log.debug("Something has triggered a shutdown event")
+        while not self.Qapp.downloader.stop(500):
+            msg = SimpleQuestion(
+                self,
+                "Download threads are still in progress.",
+                question="Do you want to wait a little longer?",
+            )
+            if msg.exec() == QMessageBox.No:
+                # TODO: do we have a force quit?
+                break
         N = self.get_upload_queue_length()
         if N > 0:
             msg = QMessageBox()
@@ -2199,6 +2260,8 @@ class MarkerClient(QWidget):
                 self.backgroundUploader.terminate()
 
         log.debug("Revoking login token")
+        # after revoking, Downloader's msgr will be invalid
+        self.Qapp.downloader.detach_messenger()
         try:
             self.msgr.closeUser()
         except PlomAuthenticationException:
@@ -2214,14 +2277,6 @@ class MarkerClient(QWidget):
         )
         event.accept()
         log.debug("Marker: goodbye!")
-
-    def downloadAnyMissingPages(self, test_number):
-        test_number = int(test_number)
-        pagedata = self._full_pagedata[test_number]
-        pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, get_all=True
-        )
-        self._full_pagedata[test_number] = pagedata
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""
@@ -2429,14 +2484,16 @@ class MarkerClient(QWidget):
         gn = tgs.gsb.value()
 
         pagedata = self.msgr.get_pagedata_question(tn, gn)
-        pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, get_all=True
-        )
         # don't cache this pagedata: "gn" might not be our question number
         # (but the images are cacheable)
+        pagedata = self.downloader.sync_downloads(pagedata)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
-        QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec()
+        d = QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self)
+        # TODO: future-proofing this a bit for live download updates
+        # PC.download_finished.connect(d.shake_things_up)
+        d.exec()
+        d.deleteLater()  # disconnects slots and signals
 
     def get_file_for_previous_viewer(self, task):
         """Get the annotation file for the given task. Check to see if the

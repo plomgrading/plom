@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools.pen import CommandPen, PenItem
-from plom.client.tools import CommandMoveItem, DeleteObject
+from plom.client.tools import DeleteObject, UndoStackMoveMixin
 
 
 class CommandHighlight(CommandPen):
@@ -18,7 +18,7 @@ class CommandHighlight(CommandPen):
         self.setText("Highlight")
 
 
-class HighlightItem(QGraphicsPathItem):
+class HighlightItem(UndoStackMoveMixin, QGraphicsPathItem):
     def __init__(self, path, style):
         super().__init__()
         self.saveable = True
@@ -31,12 +31,6 @@ class HighlightItem(QGraphicsPathItem):
 
     def restyle(self, style):
         self.setPen(QPen(style["highlight_color"], style["highlight_width"]))
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-        return super().itemChange(change, value)
 
     # poorman's inheritance!
     pickle = PenItem.pickle

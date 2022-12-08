@@ -204,7 +204,7 @@ class Ui_Manager(object):
         self.label_22.setObjectName("label_22")
         self.horizontalLayout_27.addWidget(self.label_22)
         self.makePapersYPosSpinBox = QtWidgets.QDoubleSpinBox(self.frame_6)
-        self.makePapersYPosSpinBox.setProperty("value", 42.5)
+        self.makePapersYPosSpinBox.setProperty("value", 42)
         self.makePapersYPosSpinBox.setObjectName("makePapersYPosSpinBox")
         self.horizontalLayout_27.addWidget(self.makePapersYPosSpinBox)
         spacerItem8 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)

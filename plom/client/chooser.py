@@ -40,13 +40,13 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomSSLError,
 )
-from plom.messenger import Messenger
+from plom.messenger import Messenger, ManagerMessenger
 from plom.client import MarkerClient, IDClient
+from .downloader import Downloader
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQuestion
 from .useful_classes import ClientSettingsDialog
 
-from plom.messenger import ManagerMessenger
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -287,7 +287,8 @@ class Chooser(QDialog):
                 self.messenger = None
                 return
 
-        # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
+        tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
+        self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
 
         if which_subapp == "Manager":
             # Importing here avoids a circular import
@@ -319,7 +320,7 @@ class Chooser(QDialog):
         elif which_subapp == "Identifier":
             self.setEnabled(False)
             self.hide()
-            idwin = IDClient()
+            idwin = IDClient(self.Qapp)
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
             idwin.setup(self.messenger)
@@ -362,6 +363,11 @@ class Chooser(QDialog):
 
     def closeEvent(self, event):
         self.saveDetails()
+        dl = getattr(self.Qapp, "downloader", None)
+        if dl and dl.has_messenger():
+            # TODO: do we just wait forever?
+            # TODO: Marker already tried to stop it: maybe never get here?
+            dl.stop(-1)
         if self.messenger:
             self.messenger.stop()
 

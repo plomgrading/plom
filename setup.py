@@ -46,12 +46,13 @@ server_install_requires = [
     "appdirs>=1.4.3",
     "canvasapi>=2.0.0",
     "exif>=1.2.2",
+    "fonttools>=4.37.1",
     "toml>=0.10.0",
     "tqdm",
     "numpy>=1.17.0",
     "pandas>=1.0.0",
     "passlib",
-    "pymupdf>=1.18.15",
+    "pymupdf>=1.19.0",
     "Pillow>=7.0.0",
     "aiohttp>=3.7.2",
     "weasyprint>=52.5",
@@ -66,6 +67,7 @@ server_install_requires = [
     "requests",
     "requests-toolbelt",
     "packaging",
+    'importlib_resources>=5.0.0 ; python_version<"3.9"',  # until we drop 3.8
     "stdiomask>=0.0.6",
 ]
 # TODO: optional dependency to enable lossless jpeg rotations

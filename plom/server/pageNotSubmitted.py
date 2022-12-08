@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 
 from pathlib import Path
@@ -12,6 +12,7 @@ import fitz
 
 from plom import specdir
 from plom.textools import buildLaTeX
+from plom.create.mergeAndCodePages import pdf_page_add_stamp, pdf_page_add_name_id_box
 
 
 # TODO: letterpaper hardcoded
@@ -120,24 +121,8 @@ def build_test_page_substitute(
     """
     outdir = Path(outdir)
     pdf = fitz.open(template)
-
-    # create a box for the test number near top-centre
-    # Get page width and use it to inset this text into the page
-    page_width = pdf[0].bound().width
-    rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
-    text = "{}.{}".format(str(test_number).zfill(4), str(page_number).zfill(2))
-    excess = pdf[0].insert_textbox(
-        rect,
-        text,
-        fontsize=18,
-        color=[0, 0, 0],
-        fontname="Helvetica",
-        fontfile=None,
-        align=1,
-    )
-    assert excess > 0, "Text didn't fit: paper label too long?"
-
-    pdf[0].draw_rect(rect, color=[0, 0, 0])
+    text = f"Test {test_number:04} [sub] p. {page_number}"
+    pdf_page_add_stamp(pdf[0], text)
 
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
     f = outdir / f"pns.{test_number}.{page_number}.{version_number}.png"
@@ -169,25 +154,8 @@ def build_dnm_page_substitute(
     """
     outdir = Path(outdir)
     pdf = fitz.open(template)
-
-    # create a box for the test number near top-centre
-    # Get page width and use it to inset this text into the page
-    page_width = pdf[0].bound().width
-    rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
-    text = "{}.{}".format(str(test_number).zfill(4), str(page_number).zfill(2))
-    excess = pdf[0].insert_textbox(
-        rect,
-        text,
-        fontsize=18,
-        color=[0, 0, 0],
-        fontname="Helvetica",
-        fontfile=None,
-        align=1,
-    )
-    assert excess > 0, "Text didn't fit: paper label too long?"
-
-    pdf[0].draw_rect(rect, color=[0, 0, 0])
-
+    text = f"Test {test_number:04} DNM[sub] p. {page_number}"
+    pdf_page_add_stamp(pdf[0], text)
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
     f = outdir / f"dnm.{test_number}.{page_number}.png"
     image.save(f)
@@ -218,25 +186,8 @@ def build_homework_question_substitute(
     """
     outdir = Path(outdir)
     pdf = fitz.open(template)
-
-    # create a box for the test number near top-centre
-    # Get page width and use it to inset this text into the page
-    page_width = pdf[0].bound().width
-    rect = fitz.Rect(page_width // 2 - 50, 20, page_width // 2 + 50, 54)
-    text = "{}.{}".format(student_id, question_number)
-    excess = pdf[0].insert_textbox(
-        rect,
-        text,
-        fontsize=18,
-        color=[0, 0, 0],
-        fontname="Helvetica",
-        fontfile=None,
-        align=1,
-    )
-    assert excess > 0, "Text didn't fit: paper label too long?"
-
-    pdf[0].draw_rect(rect, color=[0, 0, 0])
-
+    text = f"{student_id} Qidx{question_number}"
+    pdf_page_add_stamp(pdf[0], text)
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
     f = outdir / f"qns.{student_id}.{question_number}.png"
     image.save(f)
@@ -267,55 +218,7 @@ def build_generated_id_page_for_student(
     """
     outdir = Path(outdir)
     pdf = fitz.open(template)
-    y = 42.5  # magic number to center things
-
-    page_width = pdf[0].bound().width
-    page_height = pdf[0].bound().height
-
-    txt = "{}\n{}".format(student_id, student_name)
-
-    # make the box a little wider than the required text
-    box_width = 1.2 * max(
-        fitz.get_text_length(student_id, fontsize=36, fontname="Helvetica"),
-        fitz.get_text_length(student_name, fontsize=36, fontname="Helvetica"),
-    )
-    box1_height = 2 * 36 * 1.5  # two lines of 36 pt and baseline
-
-    name_id_rect = fitz.Rect(
-        page_width / 2 - box_width / 2,
-        (page_height - box1_height) * y / 100.0,
-        page_width / 2 + box_width / 2,
-        (page_height - box1_height) * y / 100.0 + box1_height,
-    )
-    pdf[0].draw_rect(name_id_rect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
-
-    # need this to check name encoding
-    def is_possible_to_encode_as(s, encoding):
-        try:
-            _tmp = s.encode(encoding)
-            return True
-        except UnicodeEncodeError:
-            return False
-
-    if is_possible_to_encode_as(txt, "Latin-1"):
-        fontname = "Helvetica"
-    elif is_possible_to_encode_as(txt, "gb2312"):
-        fontname = "china-ss"
-    else:
-        raise ValueError("Don't know how to write name {} into PDF".format(txt))
-
-    # We insert the student name and id text box
-    excess = pdf[0].insert_textbox(
-        name_id_rect,
-        txt,
-        fontsize=36,
-        color=[0, 0, 0],
-        fontname=fontname,
-        fontfile=None,
-        align=1,
-    )
-    assert excess > 0, "Text didn't fit: student name too long?"
-
+    pdf_page_add_name_id_box(pdf[0], student_name, student_id, signherebox=False)
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
     f = outdir / f"autogen.{student_id}.png"
     image.save(f)

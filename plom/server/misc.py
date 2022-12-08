@@ -6,9 +6,14 @@
 
 """Misc utilities for the Plom Server"""
 
-import importlib.resources as resources
 import logging
 from pathlib import Path
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import plom
 from plom import Default_Port
@@ -83,7 +88,7 @@ def create_server_config(dur=confdir, *, port=None, name=None, db_name=None):
     sd = Path(dur) / "serverDetails.toml"
     if sd.exists():
         raise FileExistsError("Config already exists in {}".format(sd))
-    template = resources.read_text(plom, "serverDetails.toml")
+    template = (resources.files(plom) / "serverDetails.toml").read_text()
     if name:
         template = template.replace("localhost", name)
     if port:
@@ -92,19 +97,3 @@ def create_server_config(dur=confdir, *, port=None, name=None, db_name=None):
         template = template.replace("#db_name =", f'db_name = "{db_name}"')
     with open(sd, "w") as fh:
         fh.write(template)
-
-
-def create_blank_predictions(dur=specdir):
-    """Create empty prediction list to store machine-read student IDs.
-
-    args:
-        dur (str/pathlib.Path): where to put the file.
-
-    raises:
-        FileExistsError: file is already there.
-    """
-    pl = Path(dur) / "predictionlist.csv"
-    if pl.exists():
-        raise FileExistsError(f"{pl} already exists.")
-    with open(pl, "w") as fh:
-        fh.write("test, id\n")

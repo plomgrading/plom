@@ -75,6 +75,22 @@
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link" href="{% url 'signup' %}">Create<br>Scanners/Markers</a>
                                     </li>
+                                    <li class="nav-item accordion accordion-flush">
+                                        <a class="nav-link link-light is_sidebar_link" data-bs-toggle="collapse" href="#progress">
+                                            Progress
+                                        </a>
+                                    </li>
+                                    <div class="collapse" id="progress">
+                                        <li class="nav-item" style="background-color: #b5a7fa;">
+                                            <a class="nav-link link-light is_sidebar_link" href="{% url 'progress_scan_overview' %}">Scan</a>
+                                        </li>
+                                        <li class="nav-item" style="background-color: #b5a7fa;">
+                                            <a class="nav-link link-light is_sidebar_link">Mark</a>
+                                        </li>
+                                        <li class="nav-item" style="background-color: #b5a7fa;">
+                                            <a class="nav-link link-light is_sidebar_link">Identify</a>
+                                        </li>
+                                    </div>
                                 {% elif user_group == 'scanner' %}
                                     <li class="nav-item">
                                         <a class="nav-link link-light is_sidebar_link" href="{% url 'scan_home' %}">Scan</a>

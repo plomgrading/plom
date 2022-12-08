@@ -10,14 +10,18 @@ __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from copy import deepcopy
-import importlib.resources as resources
 import json
 import logging
 from pathlib import Path
 import os
 import re
+import sys
 from textwrap import dedent
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 from PyQt5.QtCore import (
     Qt,
@@ -37,6 +41,7 @@ from PyQt5.QtWidgets import (
     QWidget,
     QMenu,
     QMessageBox,
+    QProgressDialog,
     QShortcut,
     QToolButton,
     QFileDialog,
@@ -57,11 +62,7 @@ from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
-from .useful_classes import (
-    SimpleQuestion,
-    SimpleQuestionCheckBox,
-    NoAnswerBox,
-)
+from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
 
 
 log = logging.getLogger("annotr")
@@ -469,6 +470,8 @@ class Annotator(QWidget):
         # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
             self.unpickleIt(plomDict)
+            # restoring the scene would've marked it dirty
+            self.scene.reset_dirty()
         else:
             # if there is a held crop rectangle, then use it.
             if self.held_crop_rectangle_data:
@@ -542,7 +545,8 @@ class Annotator(QWidget):
 
         def _pixmap_from(f):
             pm = QPixmap()
-            pm.loadFromData(resources.read_binary(plom.client.cursors, f))
+            res = resources.files(plom.client.cursors) / f
+            pm.loadFromData(res.read_bytes())
             return pm
 
         # The keys here are magic values that connect to tools
@@ -653,15 +657,11 @@ class Annotator(QWidget):
             return
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
-        self.parentMarkerUI.downloadAnyMissingPages(int(testnum))
-        pagedata = self.parentMarkerUI._full_pagedata[int(testnum)]
-        # TODO: if we unified img_src_data and pagedata, could just pass onwards
-        files = [
-            {"filename": x["local_filename"], "orientation": x["orientation"]}
-            for x in pagedata
-        ]
+        dl = self.parentMarkerUI.Qapp.downloader
+        pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
+        pagedata = dl.sync_downloads(pagedata)
         labels = [x["pagename"] for x in pagedata]
-        WholeTestView(testnum, files, labels, parent=self).exec()
+        WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -676,7 +676,6 @@ class Annotator(QWidget):
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
-        # TODO: maybe download should happen in Marker?
         image_md5_list = [x["md5"] for x in self.src_img_data]
         # Look for duplicates by first inverting the dict
         repeats = {}
@@ -708,11 +707,28 @@ class Annotator(QWidget):
                 f"Include this info if you think this is a bug!",
             ).exec()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
-        self.parentMarkerUI.downloadAnyMissingPages(testNumber)
 
-        # do a deep copy of this list of dict - else hit #1690
-        # keep original readonly?
-        page_data = deepcopy(self.parentMarkerUI._full_pagedata[int(testNumber)])
+        dl = self.parentMarkerUI.Qapp.downloader
+        page_data = dl.msgr.get_pagedata_context_question(testNumber, self.question_num)
+        # TODO: eventually want dialog to open during loading, Issue #2355
+        N = len(page_data)
+        pd = QProgressDialog(
+            "Downloading additional images\nStarting up...", None, 0, N, self
+        )
+        pd.setWindowModality(Qt.WindowModal)
+        pd.setMinimumDuration(500)
+        pd.setValue(0)
+        self.parentMarkerUI.Qapp.processEvents()
+        for i, row in enumerate(page_data):
+            # TODO: would be nice to show the size in MiB here!
+            pd.setLabelText(
+                f"Downloading additional images\nFile {i + 1} of {N}: img id {row['id']}"
+            )
+            pd.setValue(i + 1)
+            self.parentMarkerUI.Qapp.processEvents()
+            row = dl.sync_download(row)
+        pd.close()
+
         #
         for x in image_md5_list:
             if x not in [p["md5"] for p in page_data]:
@@ -733,25 +749,27 @@ class Annotator(QWidget):
                 log.error(s)
                 ErrorMsg(self, s).exec()
 
-        is_dirty = self.scene.areThereAnnotations()
+        has_annotations = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data, is_dirty
+            self, testNumber, self.src_img_data, page_data, has_annotations
         )
+        # TODO: have rearrange react to new downloads
+        # PC.download_finished.connect(rearrangeView.shake_things_up)
+        perm = []
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: {}".format(perm))
-        else:
-            perm = None
         # Workaround for memory leak Issue #1322, TODO better fix
         rearrangeView.listA.clear()
         rearrangeView.listB.clear()
+        rearrangeView.deleteLater()  # disconnects slots and signals
         del rearrangeView
         if perm:
             # Sanity check for dupes in the permutation
             # pylint: disable=unsubscriptable-object
-            md5 = [x[0] for x in perm]
+            md5 = [x["md5"] for x in perm]
             # But if the input already had dupes than its not our problem
             md5_in = [x["md5"] for x in self.src_img_data]
             if len(set(md5)) != len(md5) and len(set(md5_in)) == len(md5_in):
@@ -945,7 +963,8 @@ class Annotator(QWidget):
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))
         pm = QPixmap()
-        pm.loadFromData(resources.read_binary(plom.client.icons, iconfile))
+        res = resources.files(plom.client.icons) / iconfile
+        pm.loadFromData(res.read_bytes())
         toolButton.setIcon(QIcon(pm))
         # toolButton.setIconSize(QSize(40, 40))
 
@@ -1231,9 +1250,6 @@ class Annotator(QWidget):
         # First up connect the rubric list's signal to the annotator's
         # handle rubric function.
         self.rubric_widget.rubricSignal.connect(self.handleRubric)
-        # the no-answer button
-        self.ui.noAnswerButton.clicked.connect(self.noAnswer)
-        # and the rearrange pages button
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
         # Connect up the finishing functions - using a dropdown menu
         m = QMenu()
@@ -1590,11 +1606,11 @@ class Annotator(QWidget):
             return
 
         # We are here b/c of cancel button, titlebar close, or related
-        if self.scene and self.scene.areThereAnnotations():
+        if self.is_dirty():
             msg = SimpleQuestion(
                 self,
-                "<p>There are annotations on the page.</p>\n"
-                "<p>Do you want to discard them and close the annotator?</p>",
+                "<p>There are unsaved changes to the annotations.</p>\n"
+                "<p>Do you want to discard changes and close the annotator?</p>",
             )
             if msg.exec() == QMessageBox.No:
                 event.ignore()
@@ -1603,6 +1619,18 @@ class Annotator(QWidget):
         log.debug("emitting reject/cancel signal, discarding, and closing")
         self.annotator_done_reject.emit(self.tgvID)
         event.accept()
+
+    def is_dirty(self):
+        """Is the scene dirty?
+
+        Has the scene been annotated or changed this session? Re-opening
+        a previous annotated scene does not dirty it, until changes are
+        made. Changes could be made and then undone back to the clean state.
+        The concept should be familiar to "file saved" in a text editor.
+        """
+        if not self.scene:
+            return False
+        return self.scene.is_dirty()
 
     def get_nonrubric_text_from_page(self):
         """Retrieves text (not in rubrics) from the scene.
@@ -1767,46 +1795,6 @@ class Annotator(QWidget):
         else:
             pass
         self.view.setFocus()
-
-    def noAnswer(self):
-        """
-        Handles when the user selects the "No Answer Given" option
-        and ensures the user has not assigned deltas on the page. If
-        deltas have been assigned, displays an error message.
-
-        Returns:
-            None
-
-        """
-        # ID for no-answer rubric is defined in the db_create module
-        # in the createNoAnswerRubric function.
-        # rID = 1000 + questionNumber = is absolute rubric
-
-        noAnswerCID = 1000 + self.question_num
-
-        # can only apply this if current marking state is neutral
-        # else user has scored the page
-
-        if self.getMarkingState() != "neutral":
-            WarnMsg(
-                self,
-                '<p>You have marked the page - cannot then set "No answer given".</p>'
-                "<p>Delete mark-changing annotations then try again.</p>",
-            ).exec()
-            return
-
-        self.scene.noAnswer(noAnswerCID)
-        nabValue = NoAnswerBox(self).exec()
-        if nabValue == 0:
-            # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
-            self.scene.undo()
-            self.scene.undo()
-            self.scene.undo()
-        elif nabValue == 1:
-            # equivalent to "yes - give me next paper"
-            self.ui.finishedButton.animateClick()
-        else:
-            pass
 
     def getRubricsFromServer(self):
         """Request a latest rubric list for current question."""

@@ -33,4 +33,5 @@ urlpatterns = [
     path("connect/", include("Connect.urls")),
     path("papers/", include("Papers.urls")),
     path("scan/", include("Scan.urls")),
+    path("progress/", include("Progress.urls")),
 ]

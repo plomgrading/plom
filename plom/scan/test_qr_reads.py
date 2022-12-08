@@ -1,9 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2022 Colin B. Macdonald
 
-import importlib.resources as resources
 import json
 from pathlib import Path
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 from PIL import Image
 
@@ -12,9 +17,8 @@ from plom.scan import QRextract
 
 
 def test_qr_reads_from_image():
-    with resources.open_binary(plom.scan, "test_zbar_fails.png") as f:
-        im = Image.open(f)
-        im.load()
+    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im.load()
     p = QRextract(im, write_to_file=False)
     assert not p["NE"]  # staple
     assert p["NW"] == ["00002806012823730"]
@@ -23,9 +27,8 @@ def test_qr_reads_from_image():
 
 
 def test_qr_reads_slight_rotate():
-    with resources.open_binary(plom.scan, "test_zbar_fails.png") as f:
-        im = Image.open(f)
-        im.load()
+    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im.load()
     im = im.rotate(10, expand=True)
     p = QRextract(im, write_to_file=False)
     assert not p["NE"]
@@ -35,9 +38,8 @@ def test_qr_reads_slight_rotate():
 
 
 def test_qr_reads_upside_down():
-    with resources.open_binary(plom.scan, "test_zbar_fails.png") as f:
-        im = Image.open(f)
-        im.load()
+    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im.load()
     im = im.rotate(180)
     p = QRextract(im, write_to_file=False)
     assert not p["SW"]
@@ -47,7 +49,7 @@ def test_qr_reads_upside_down():
 
 
 def test_qr_reads_from_file(tmpdir):
-    b = resources.read_binary(plom.scan, "test_zbar_fails.png")
+    b = (resources.files(plom.scan) / "test_zbar_fails.png").read_bytes()
     tmp_path = Path(tmpdir)
     f = tmp_path / "test_zbar.png"
     with open(f, "wb") as fh:
@@ -60,7 +62,7 @@ def test_qr_reads_from_file(tmpdir):
 
 
 def test_qr_reads_write_dot_qr(tmpdir):
-    b = resources.read_binary(plom.scan, "test_zbar_fails.png")
+    b = (resources.files(plom.scan) / "test_zbar_fails.png").read_bytes()
     tmp_path = Path(tmpdir)
     f = tmp_path / "test_zbar.png"
     with open(f, "wb") as fh:
@@ -79,8 +81,7 @@ def test_qr_reads_one_fails():
 
     Test could be removed if issue is fixed in the future.
     """
-    with resources.open_binary(plom.scan, "test_zbar_fails.png") as f:
-        im = Image.open(f)
-        im.load()
+    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im.load()
     p = QRextract(im, write_to_file=False, try_harder=False)
     assert len([x for x in p.values() if x != []]) == 2  # only 2 not 3

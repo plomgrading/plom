@@ -7,7 +7,7 @@ from PyQt5.QtCore import QLineF, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsItem
 
-from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
+from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 
 
 class CommandLine(CommandTool):
@@ -29,7 +29,7 @@ class CommandLine(CommandTool):
         return cls(scene, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
 
 
-class LineItem(QGraphicsLineItem):
+class LineItem(UndoStackMoveMixin, QGraphicsLineItem):
     def __init__(self, pti, ptf, style):
         super().__init__()
         self.saveable = True
@@ -44,13 +44,6 @@ class LineItem(QGraphicsLineItem):
     def restyle(self, style):
         self.normal_thick = style["pen_width"]
         self.setPen(QPen(style["annot_color"], style["pen_width"]))
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            # If the position changes then do so with an redo/undo command
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-        return super().itemChange(change, value)
 
     def pickle(self):
         return [
