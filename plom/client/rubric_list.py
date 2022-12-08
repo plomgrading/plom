@@ -1437,9 +1437,9 @@ class AddRubricBox(QDialog):
         # TODO: make everything wider!
 
         flay = QFormLayout()
-        flay.addRow("Enter text", self.TE)
+        flay.addRow("Text", self.TE)
         lay = QFormLayout()
-        lay.addRow("or choose text", self.CB)
+        lay.addRow("or choose from page: ", self.CB)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.CB.setSizePolicy(sizePolicy)
         flay.addRow("", lay)
@@ -1497,12 +1497,13 @@ class AddRubricBox(QDialog):
         # too much space, seems putting inside a QFrame fixed that!
         vlay.addWidget(label)
 
-        flay.addRow("Tags", self.TEtag)
+        # TODO: in the future?
+        # flay.addRow("Tags", self.TEtag)
         flay.addRow("Meta", self.TEmeta)
 
         flay.addRow("kind", self.Lkind)
         flay.addRow("Rubric ID", self.label_rubric_id)
-        flay.addRow("User who created", self.Luser)
+        flay.addRow("Created by", self.Luser)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -1549,7 +1550,7 @@ class AddRubricBox(QDialog):
             self.TE.setPlaceholderText(
                 "Your rubric must contain some text.\n\n"
                 'Prepend with "tex:" to use latex.\n\n'
-                'You can "choose text" to harvest existing text from the page.\n\n'
+                "You can harvest existing text from the page.\n\n"
                 'Change "delta" below to associate a point-change.'
             )
             self.TEtag.setPlaceholderText(
