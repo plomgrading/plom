@@ -2,6 +2,12 @@
     {% if qr_results and task_status == 'error' %}
         <div>
             <p class="text-danger">{{ error }}</p>
+            <p>Parsed QR code:</p>
+            <ul>
+                <li>Test-paper {{ error_paper_id }}</li>
+                <li>Page {{ error_page_num }}</li>
+                <li>Version {{ error_version_num }}</li>
+            </ul>
             <a 
                 class="btn text-start"
                 style="background-color: lightgrey;"

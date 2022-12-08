@@ -6,6 +6,7 @@ import pathlib
 import hashlib
 import fitz
 from datetime import datetime
+from collections import Counter
 from django.conf import settings
 from django.db import transaction
 from django_huey import db_task
@@ -460,3 +461,16 @@ class ScanService:
         while len(qr_code_list) < num_images:
             qr_code_list.append("unknown page")
         return qr_code_list
+    
+    @transaction.atomic
+    def get_common_qr_code(self, qr_data):
+        qr_code_list = []
+        for qr_qadrant in qr_data:
+            paper_id = list(qr_data[qr_qadrant].values())[0]
+            page_num = list(qr_data[qr_qadrant].values())[1]
+            version_num = list(qr_data[qr_qadrant].values())[2]
+            qr_code_list.append(paper_id + page_num + version_num)
+        counter = Counter(qr_code_list)
+        most_common_qr = counter.most_common(1)
+        common_qr = most_common_qr[0][0]
+        return common_qr
