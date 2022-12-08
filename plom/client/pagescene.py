@@ -823,6 +823,20 @@ class PageScene(QGraphicsScene):
                 count += 1
         return count
 
+    def reset_dirty(self):
+        # TODO: what is the difference?
+        # self.undoStack.resetClean()
+        self.undoStack.setClean()
+
+    def is_dirty(self):
+        """Has the scene had annotations modified since it was last clean?
+
+        Note that annotations from a older session should not cause this
+        to return true.  If you have "saved" annotations you should call
+        :meth:`reset_dirty` to ensure this property.
+        """
+        return not self.undoStack.isClean()
+
     def areThereAnnotations(self):
         """
         Checks for pickleable annotations.
@@ -1400,8 +1414,8 @@ class PageScene(QGraphicsScene):
 
     def mousePressMove(self, event):
         """
-        Create closed hand cursor when move-tool is selected, otherwise does
-            nothing.
+        Create closed hand cursor when move-tool is selected, otherwise does nothing.
+
         Notes:
             The actual moving of objects is handled by themselves since they
             know how to handle the ItemPositionChange signal as a move-command.
