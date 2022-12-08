@@ -435,6 +435,8 @@ def make_PDF(
     # We embed fonts for names and other overlay.  But if there are non-latin
     # characters (e.g., CJK) in names, then the embedded font is quite large.
     # Subsetting requires https://pypi.org/project/fonttools
+    # Note: In theory, this could muck around with fonts from the source
+    # (i.e., if they were NOT subsetted).  Does not happen with LaTeX.
     exam.subset_fonts()
 
     # Add the deflate option to compress the embedded pngs
