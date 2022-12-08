@@ -4,6 +4,7 @@
 
 from collections import defaultdict
 from datetime import datetime, timezone
+import json
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
@@ -27,26 +28,24 @@ def McreateRubric(self, user_name, rubric):
             `{kind: "relative", delta: "-1", text: "blah", question: 2}`
             The following fields are optional and empty strings will be
             substituted:
-            `{tags: "blah", meta: "blah", versions: "[1, 2]"}`
+            `{tags: "blah", meta: "blah", versions: [1, 2]}`
             Currently, its ok if it contains other fields: they are
             ignored.
             ``versions`` should be a list of integers, or the empty list
-            where the empty list means "all versions".  Currently it also
-            accepts an empty string, or a scalar integer, subject to
-            change (i.e., don't rely on this, just send a list!)
+            which means "all versions".
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
         key for the new rubric.  Can fail if missing fields.
     """
     need_fields = ("kind", "delta", "text", "question")
-    optional_fields = ("tags", "meta", "versions")
+    optional_fields_and_defaults = (("tags", ""), ("meta", ""), ("versions", []))
     if any(x not in rubric for x in need_fields):
         return (False, "Must have all fields {}".format(need_fields))
-    for f in optional_fields:
+    for f, d in optional_fields_and_defaults:
         if f not in rubric:
             rubric = rubric.copy()  # in case caller uses reference
-            rubric[f] = ""
+            rubric[f] = d
     uref = User.get(name=user_name)  # authenticated, so not-None
     with self._db.atomic():
         # build unique key while holding atomic access
@@ -60,7 +59,7 @@ def McreateRubric(self, user_name, rubric):
             kind=rubric["kind"],
             delta=rubric["delta"],
             text=rubric["text"],
-            versions=str(rubric["versions"]),
+            versions=json.dumps(rubric["versions"]),
             creationTime=datetime.now(timezone.utc),
             modificationTime=datetime.now(timezone.utc),
             meta=rubric["meta"],
@@ -81,11 +80,6 @@ def MgetRubrics(self, question_number=None):
             .order_by(Rubric.kind, Rubric.delta, Rubric.text)
         )
     for r in query:
-        vers = r.versions.strip("[]")
-        if vers:
-            vers = [int(x) for x in vers.split(",")]
-        else:
-            vers = []
         rubric_list.append(
             {
                 "id": r.key,
@@ -99,7 +93,7 @@ def MgetRubrics(self, question_number=None):
                 "modified": datetime_to_json(r.modificationTime),
                 "username": r.user.name,
                 "question_number": r.question,
-                "versions": vers,
+                "versions": json.loads(r.versions),
             }
         )
     return rubric_list
@@ -222,8 +216,11 @@ def Rget_rubric_counts(self):
             "count": 0,
             "username": rref.user.name,
             "question_number": rref.question,
-            "versions": rref.versions.strip("[]"),  # e.g., "1, 2, 3"
+            "versions": str(json.loads(rref.versions)).strip("[]"),  # e.g., "1, 2, 3"
         }
+        # TODO: Issue #2406: can versions just be the list of ints?
+        # TODO: need to look who calls this: feel like it might end up as
+        # the column header of a spreadsheet.
 
     # now go through all rubrics that **have** been used
     # and increment the count

@@ -7,6 +7,7 @@
 # Copyright (C) 2021 Forest Kobayashi
 
 import html
+import json
 import logging
 from textwrap import shorten
 
@@ -419,8 +420,7 @@ class RubricTable(QTableWidget):
             self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
         self.setItem(rc, 3, QTableWidgetItem(rubric["text"]))
         self.setItem(rc, 4, QTableWidgetItem(rubric["kind"]))
-        # TODO: unfortunate to do pack/unpack string in here
-        self.setItem(rc, 5, QTableWidgetItem(str(rubric["versions"])))
+        self.setItem(rc, 5, QTableWidgetItem(json.dumps(rubric["versions"])))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -613,18 +613,11 @@ class RubricTable(QTableWidget):
 
     def colourLegalRubric(self, r, mss):
         # recall columns are "Key", "Username", "Delta", "Text", "Kind", "Versions"
-        # TODO: is unfortunate to have this pack/unpack string logic here :(
-        vers = self.item(r, 5).text()
-        vers = vers.strip("[]")
-        if vers:
-            vers = [int(x) for x in vers.split(",")]
-        else:
-            vers = []
         legal = isLegalRubric(
             mss,
             kind=self.item(r, 4).text(),
             delta=self.item(r, 2).text(),
-            versions=vers,
+            versions=json.loads(self.item(r, 5).text()),
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
         colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
