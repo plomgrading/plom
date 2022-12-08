@@ -24,8 +24,18 @@ class PlomBundleImageDuplicationException(Exception):
         Exception.__init__(self, *args, **kwargs)
 
 
-# - create an image and return the reference
 def createNewImage(self, original_name, file_name, md5, bundle_ref, bundle_order):
+    """Create an image and return the reference.
+
+    Args:
+        original_name (pathlib.Path/str): just the filename name please: we
+            will not strip the paths for you.
+        file_name (pathlib.Path/str): the path and filename where the file is
+            stored on the server.
+        md5 (str):
+        bundle_ref (TODO): TODO
+        bundle_order (int): TODO
+    """
     # todo = this should check for existence of (bundle_ref, bundle_order) before building.
     # if exists then send fail message.
     if Image.get_or_none(bundle=bundle_ref, bundle_order=bundle_order):

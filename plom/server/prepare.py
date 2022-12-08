@@ -74,19 +74,13 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
         )
 
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_test_page_substitute(
-        0, 0, 0, template=pns, out_dir=please_check
-    ):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing test page."
-        )
+    pageNotSubmitted.build_test_page_substitute(
+        0, 0, 0, template=pns, outdir=please_check
+    )
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_homework_question_substitute(
-        0, 0, template=qns, out_dir=please_check
-    ):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing homework question."
-        )
+    pageNotSubmitted.build_homework_question_substitute(
+        0, 0, template=qns, outdir=please_check
+    )
 
     print(
         fill(
