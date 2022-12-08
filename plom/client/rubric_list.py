@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QFrame,
     QInputDialog,
     QFormLayout,
     QGridLayout,
@@ -1306,31 +1307,10 @@ class RubricWidget(QWidget):
         )
         if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
             return
-        if arb.DE.checkState() == Qt.Checked:
-            dlt = str(arb.SB.textFromValue(arb.SB.value()))
-        else:
-            dlt = "."
-        txt = arb.TE.toPlainText().strip()  # we know this has non-zero length.
-        tag = arb.TEtag.toPlainText().strip()
-        meta = arb.TEmeta.toPlainText().strip()
-        kind = arb.Lkind.text().strip()
-        username = arb.Luser.text().strip()
-        # only meaningful if we're modifying
-        rubricID = arb.label_rubric_id.text().strip()
-
-        new_rubric = {
-            "kind": kind,
-            "delta": dlt,
-            "text": txt,
-            "tags": tag,
-            "meta": meta,
-            "username": self.username,
-            "question": self.question_number,
-        }
+        new_rubric = arb.gimme_rubric_data()
 
         if edit:
-            new_rubric["id"] = rubricID
-            rv = self._parent.modifyRubric(rubricID, new_rubric)
+            rv = self._parent.modifyRubric(new_rubric["id"], new_rubric)
             # update the rubric in the current internal rubric list
             # make sure that keys match.
             assert self.rubrics[index]["id"] == new_rubric["id"]
@@ -1339,13 +1319,8 @@ class RubricWidget(QWidget):
             # update the rubric in all lists
             self.updateRubricInLists(new_rubric)
         else:
-            rv = self._parent.createNewRubric(new_rubric)
-            # check was updated/created successfully
-            if not rv[0]:  # some sort of creation problem
-                return
-            # created ok
-            rubricID = rv[1]
-            new_rubric["id"] = rubricID
+            new_rubric.pop("id")
+            new_rubric["id"] = self._parent.createNewRubric(new_rubric)
             # at this point we have an accepted new rubric
             # add it to the internal list of rubrics
             self.rubrics.append(new_rubric)
@@ -1356,7 +1331,7 @@ class RubricWidget(QWidget):
             if self.RTW.currentWidget().is_user_tab():
                 self.RTW.currentWidget().appendNewRubric(new_rubric)
         # finally - select that rubric and simulate a click
-        self.RTW.currentWidget().selectRubricByKey(rubricID)
+        self.RTW.currentWidget().selectRubricByKey(new_rubric["id"])
         self.handleClick()
 
     def updateRubricInLists(self, new_rubric):
@@ -1442,7 +1417,7 @@ class AddRubricBox(QDialog):
         self.DE = QCheckBox("enabled")
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
-        self.TEtag = QTextEdit()
+        self.TEtag = QLineEdit()
         self.TEmeta = QTextEdit()
         # cannot edit these
         self.label_rubric_id = QLabel("Will be auto-assigned")
@@ -1458,7 +1433,6 @@ class AddRubricBox(QDialog):
         self.TE.setSizePolicy(sizePolicy)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setVerticalStretch(1)
-        self.TEtag.setSizePolicy(sizePolicy)
         self.TEmeta.setSizePolicy(sizePolicy)
         # TODO: make everything wider!
 
@@ -1481,8 +1455,8 @@ class AddRubricBox(QDialog):
         self.maxver = maxver
         # TODO: nice to show question labels here!
         cb = QCheckBox(f"specific to question index {self.question}")
-        cb.setChecked(True)
         cb.setEnabled(False)
+        cb.setChecked(True)
         self.scopeButton = QToolButton()
         self.scopeButton.setCheckable(True)
         self.scopeButton.setChecked(True)
@@ -1490,12 +1464,13 @@ class AddRubricBox(QDialog):
         self.scopeButton.setText("Scope")
         self.scopeButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.scopeButton.setAutoRaise(True)
-        # never have a border
-        # self.scopeButton.setStyleSheet("QToolButton { border: none; }")
         self.scopeButton.clicked.connect(self.toggle_scope_elements)
-        flay.addRow(self.scopeButton, cb)
-        # flay.addRow("", cb)
-        self.question_specific_cb = cb
+        frame = QFrame()
+        self.scope_frame = frame
+        flay.addRow(self.scopeButton, frame)
+        vlay = QVBoxLayout(frame)
+        vlay.setContentsMargins(0, 0, 0, 0)
+        vlay.addWidget(cb)
         lay = QHBoxLayout()
         cb = QCheckBox("specific to version(s)")
         cb.stateChanged.connect(self.toggle_version_specific)
@@ -1509,7 +1484,7 @@ class AddRubricBox(QDialog):
         space = QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.version_specific_space = space
         lay.addItem(space)
-        flay.addRow("", lay)
+        vlay.addLayout(lay)
         label = QLabel(
             """
             <p>By default, rubrics are specific to a question and shared
@@ -1517,9 +1492,11 @@ class AddRubricBox(QDialog):
             """
         )
         label.setWordWrap(True)
-        label.setAlignment(Qt.AlignTop)
-        flay.addRow("", label)
-        self.scope_info = label
+        # label.setAlignment(Qt.AlignTop)
+        # Note: I often have problems with workwrapped QLabels taking
+        # too much space, seems putting inside a QFrame fixed that!
+        vlay.addWidget(label)
+
         flay.addRow("Tags", self.TEtag)
         flay.addRow("Meta", self.TEmeta)
 
@@ -1548,8 +1525,7 @@ class AddRubricBox(QDialog):
                 self.TE.clear()
                 self.TE.insertPlainText(com["text"])
             if com["tags"]:
-                self.TEtag.clear()
-                self.TEtag.insertPlainText(com["tags"])
+                self.TEtag.setText(com["tags"])
             if com["meta"]:
                 self.TEmeta.clear()
                 self.TEmeta.insertPlainText(com["meta"])
@@ -1564,6 +1540,11 @@ class AddRubricBox(QDialog):
                 self.label_rubric_id.setText(str(com["id"]))
             if com["username"]:
                 self.Luser.setText(com["username"])
+            if com["versions"]:
+                self.version_specific_cb.setChecked(True)
+                self.version_specific_le.setText(
+                    ", ".join(str(x) for x in com["versions"])
+                )
         else:
             self.TE.setPlaceholderText(
                 "Your rubric must contain some text.\n\n"
@@ -1611,18 +1592,11 @@ class AddRubricBox(QDialog):
         if self.scopeButton.isChecked():
             self.scopeButton.setArrowType(Qt.DownArrow)
             # QFormLayout.setRowVisible but only in Qt 6.4!
-            # TODO: instead put in a frame and hide that?
-            # self.extraframe.setVisible(True)
-            self.question_specific_cb.setVisible(True)
-            self.version_specific_cb.setVisible(True)
-            self.version_specific_le.setVisible(True)
-            self.scope_info.setVisible(True)
+            # instead we are using a QFrame
+            self.scope_frame.setVisible(True)
         else:
             self.scopeButton.setArrowType(Qt.RightArrow)
-            self.question_specific_cb.setVisible(False)
-            self.version_specific_cb.setVisible(False)
-            self.version_specific_le.setVisible(False)
-            self.scope_info.setVisible(False)
+            self.scope_frame.setVisible(False)
 
     def validate_and_accept(self):
         """Make sure rubric is valid before accepting"""
@@ -1638,5 +1612,37 @@ class AddRubricBox(QDialog):
             ).exec()
             return
 
-        # future checks go here.
         self.accept()
+
+    def gimme_rubric_data(self):
+        if self.DE.checkState() == Qt.Checked:
+            dlt = str(self.SB.textFromValue(self.SB.value()))
+        else:
+            dlt = "."
+        txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
+        tag = self.TEtag.text().strip()
+        meta = self.TEmeta.toPlainText().strip()
+        kind = self.Lkind.text().strip()
+        username = self.Luser.text().strip()
+        # only meaningful if we're modifying
+        rubricID = self.label_rubric_id.text().strip()
+
+        if self.version_specific_cb.isChecked():
+            vers = self.version_specific_le.text()
+            vers = vers.strip("[]")
+            if vers:
+                vers = [int(x) for x in vers.split(",")]
+        else:
+            vers = []
+
+        return {
+            "id": rubricID,
+            "kind": kind,
+            "delta": dlt,
+            "text": txt,
+            "tags": tag,
+            "meta": meta,
+            "username": username,
+            "question": self.question,
+            "versions": vers,
+        }

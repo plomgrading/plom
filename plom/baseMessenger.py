@@ -660,9 +660,7 @@ class BaseMessenger:
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, updated_commments_list] including the new comments.
+            str: the key/id of the new rubric.
         """
         self.SRmutex.acquire()
         try:
@@ -676,7 +674,7 @@ class BaseMessenger:
             )
             response.raise_for_status()
             new_key = response.json()
-            return [True, new_key]
+            return new_key
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
