@@ -1156,11 +1156,6 @@ class RubricWidget(QWidget):
         """
         self.max_version = maxver
 
-    def reset(self):
-        """Return the widget to a no-TGV-specified state."""
-        self.setQuestionNumber(None)
-        log.debug("TODO - what else needs doing on reset")
-
     def changeMark(self, currentScore, currentState, maxMark=None):
         # Update the current and max mark and so recompute which deltas are displayed
         if maxMark:

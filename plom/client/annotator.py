@@ -367,7 +367,6 @@ class Annotator(QWidget):
             self.modeInformation.append((key, tab))
 
         # after grabbed mode information, reset rubric_widget
-        self.rubric_widget.reset()
         self.rubric_widget.setEnabled(False)
 
         del self.scene
