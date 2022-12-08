@@ -1422,7 +1422,7 @@ class AddRubricBox(QDialog):
         # cannot edit these
         self.label_rubric_id = QLabel("Will be auto-assigned")
         self.Luser = QLabel()
-        self.Lkind = QLabel("relative")
+        self.label_kind = QLabel("(relative)")
 
         sizePolicy = QSizePolicy(
             QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
@@ -1446,6 +1446,8 @@ class AddRubricBox(QDialog):
         lay = QHBoxLayout()
         lay.addWidget(self.DE)
         lay.addWidget(self.SB)
+        lay.addItem(QSpacerItem(16, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        lay.addWidget(self.label_kind)
         lay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         flay.addRow("Delta mark", lay)
 
@@ -1501,7 +1503,6 @@ class AddRubricBox(QDialog):
         # flay.addRow("Tags", self.TEtag)
         flay.addRow("Meta", self.TEmeta)
 
-        flay.addRow("kind", self.Lkind)
         flay.addRow("Rubric ID", self.label_rubric_id)
         flay.addRow("Created by", self.Luser)
 
@@ -1569,12 +1570,12 @@ class AddRubricBox(QDialog):
     def toggleSB(self):
         if self.DE.checkState() == Qt.Checked:
             self.SB.setEnabled(True)
-            self.Lkind.setText("relative")
+            self.label_kind.setText("(relative)")
             # a fix for #1561 - we need to make sure delta is not zero when we enable deltas
             if self.SB.value() == 0:
                 self.SB.setValue(1)
         else:
-            self.Lkind.setText("neutral")
+            self.label_kind.setText("(neutral)")
             self.SB.setEnabled(False)
 
     def toggle_version_specific(self):
@@ -1623,7 +1624,7 @@ class AddRubricBox(QDialog):
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
         tag = self.TEtag.text().strip()
         meta = self.TEmeta.toPlainText().strip()
-        kind = self.Lkind.text().strip()
+        kind = self.label_kind.text().strip(" ()")
         username = self.Luser.text().strip()
         # only meaningful if we're modifying
         rubricID = self.label_rubric_id.text().strip()
