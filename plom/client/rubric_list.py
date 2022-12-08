@@ -1383,7 +1383,7 @@ class AddRubricBox(QDialog):
         question,
         version,
         maxver,
-        lst,
+        reapable,
         com=None,
         *,
         annotator_size=None,
@@ -1394,7 +1394,7 @@ class AddRubricBox(QDialog):
             parent (QWidget): the parent window.
             username (str)
             maxMark (int)
-            lst (list): these are used to "harvest" plain 'ol text
+            reapable (list): these are used to "harvest" plain 'ol text
                 annotations and morph them into comments.
             com (dict/None): if None, we're creating a new rubric.
                 Otherwise, this has the current comment data.
@@ -1410,8 +1410,8 @@ class AddRubricBox(QDialog):
         # Set self to be 1/2 the size of the annotator
         if annotator_size:
             self.resize(annotator_size / 2)
-        #
-        self.CB = QComboBox()
+
+        self.reapable_CB = QComboBox()
         self.TE = QTextEdit()
         self.SB = SignedSB(maxMark)
         self.DE = QCheckBox("enabled")
@@ -1439,9 +1439,9 @@ class AddRubricBox(QDialog):
         flay = QFormLayout()
         flay.addRow("Text", self.TE)
         lay = QFormLayout()
-        lay.addRow("or choose from page: ", self.CB)
+        lay.addRow("or choose from page: ", self.reapable_CB)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.CB.setSizePolicy(sizePolicy)
+        self.reapable_CB.setSizePolicy(sizePolicy)
         flay.addRow("", lay)
         lay = QHBoxLayout()
         lay.addWidget(self.DE)
@@ -1516,12 +1516,15 @@ class AddRubricBox(QDialog):
         # set up widgets
         buttons.accepted.connect(self.validate_and_accept)
         buttons.rejected.connect(self.reject)
-        self.CB.addItem("")
-        self.CB.addItems(lst)
+        if reapable:
+            self.reapable_CB.addItem("")
+            self.reapable_CB.addItems(reapable)
+        else:
+            self.reapable_CB.setEnabled(False)
         # Set up TE and CB so that when CB changed, text is updated
-        self.CB.currentTextChanged.connect(self.changedCB)
-        # If supplied with current text/delta then set them
+        self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
 
+        # If supplied with current text/delta then set them
         if com:
             if com["text"]:
                 self.TE.clear()
@@ -1563,9 +1566,9 @@ class AddRubricBox(QDialog):
             )
             self.Luser.setText(username)
 
-    def changedCB(self):
+    def changedReapableCB(self):
         self.TE.clear()
-        self.TE.insertPlainText(self.CB.currentText())
+        self.TE.insertPlainText(self.reapable_CB.currentText())
 
     def toggleSB(self):
         if self.DE.checkState() == Qt.Checked:
