@@ -73,7 +73,12 @@ def uploadTestPage(
 
     Return:
         tuple: ``(bool, reason, message_or_tuple)``, ``bool`` is true on
-        success, false on failure.
+        success, false on failure.  ``reason`` is a short code string
+        including `"success"` (when ``bool`` is true).  Error codes are
+        `"testError"`, `"pageError"`, `"duplicate"`, `"collision"`,
+        `"bundleError"` and `"bundleErrorDupe"`.
+        ``message_or_tuple`` is either human-readable message or a list
+        or tuple of information (in the case of `"collision"`).
     """
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
@@ -106,52 +111,59 @@ def uploadTestPage(
                 version,
             ],
         )
-    else:  # this is a new testpage. create an image and link it to the testpage
-        # we need the bundle-ref now.
-        bref = Bundle.get_or_none(name=bundle_name)
-        if bref is None:
-            return (False, "bundleError", f'Cannot find bundle "{bundle_name}"')
+    # this is a new testpage. create an image and link it to the testpage
+    # we need the bundle-ref now.
+    bref = Bundle.get_or_none(name=bundle_name)
+    if bref is None:
+        return (False, "bundleError", f'Cannot find bundle "{bundle_name}"')
 
-        try:
-            image_ref = self.createNewImage(
-                original_name, file_name, md5, bref, bundle_order
-            )
-        except PlomBundleImageDuplicationException:
-            return (
-                False,
-                "bundle image duplication error",
-                f"Image number {bundle_order} from bundle {bundle_name} uploaded previously",
-            )
-
-        self.attachImageToTPage(tref, pref, image_ref)
-        log.info(
-            "Uploaded image {} to tpv = {}.{}.{}".format(
-                original_name, test_number, page_number, version
-            )
+    try:
+        image_ref = self.createNewImage(
+            original_name, file_name, md5, bref, bundle_order
         )
-
-        # find all qgroups with non-outdated annotations using that image
-        groups_to_update = self.get_groups_using_image(pref.image)
-        # add the group that should use that page
-        groups_to_update.add(pref.group)
-        # update the test.
-        self.updateTestAfterChange(tref, group_refs=groups_to_update)
+    except PlomBundleImageDuplicationException:
         return (
-            True,
-            "success",
-            "Page saved as tpv = {}.{}.{}".format(test_number, page_number, version),
+            False,
+            "bundleErrorDupe",
+            f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
         )
+
+    self.attachImageToTPage(tref, pref, image_ref)
+    log.info(
+        "Uploaded image {} to tpv = {}.{}.{}".format(
+            original_name, test_number, page_number, version
+        )
+    )
+
+    # find all qgroups with non-outdated annotations using that image
+    groups_to_update = self.get_groups_using_image(pref.image)
+    # add the group that should use that page
+    groups_to_update.add(pref.group)
+    # update the test.
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
+    return (
+        True,
+        "success",
+        "Page saved as tpv = {}.{}.{}".format(test_number, page_number, version),
+    )
 
 
 def replaceMissingTestPage(
     self, test_number, page_number, version, original_name, file_name, md5
 ):
+    """Add a image, often a template placeholder, to replace a missing page.
+
+    Return:
+        tuple: ``(bool, reason, message_or_tuple)``, ``bool`` is true on
+        success, false on failure, ``reason`` is a short code.  These are
+        documented in :func:`uploadTestPage`.
+    """
     # make sure owners of tasks in that test not logged in
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False, "Cannot find that test"]
+        return [False, "testError", f"Cannot find paper number {test_number}"]
 
-    # we can actually just call uploadTPage - we just need to set the bundle_name and bundle_order.
+    # we can actually just call uploadTestPage - we just need to set the bundle_name and bundle_order.
     # hw is different because we need to verify no hw pages present already.
 
     bref = Bundle.get_or_none(name="__replacements__system__")
@@ -272,14 +284,11 @@ def uploadHWPage(
             original_name, file_name, md5, bref, bundle_order
         )
     except PlomBundleImageDuplicationException:
-        return [
+        return (
             False,
-            "bundle image duplication error",
-            "Image number {} from bundle {} uploaded previously".format(
-                bundle_order,
-                bundle_name,
-            ),
-        ]
+            "bundleErrorDupe",
+            f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
+        )
 
     if len(questions) >= 1:
         log.info(
@@ -397,14 +406,11 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
             original_name, file_name, md5, bref, bundle_order
         )
     except PlomBundleImageDuplicationException:
-        return [
+        return (
             False,
-            "bundle image duplication error",
-            "Image number {} from bundle {} uploaded previously".format(
-                bundle_order,
-                bundle_name,
-            ),
-        ]
+            "bundleErrorDupe",
+            f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
+        )
 
     # create the associated HW page
     pref = self.createNewHWPage(tref, qref, order, image_ref)
@@ -445,14 +451,11 @@ def uploadUnknownPage(
                 rotation=0,
             )
         except PlomBundleImageDuplicationException:
-            return [
+            return (
                 False,
-                "bundle image duplication error",
-                "Image number {} from bundle {} uploaded previously".format(
-                    bundle_order,
-                    bundle_name,
-                ),
-            ]
+                "bundleErrorDupe",
+                f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
+            )
         UnknownPage.create(image=iref, order=order)
 
     log.info("Uploaded image {} as unknown".format(original_name))
@@ -519,14 +522,11 @@ def uploadCollidingPage(
                 rotation=0,  # TODO: replace with rotation from original UnknownPage
             )
         except PlomBundleImageDuplicationException:
-            return [
+            return (
                 False,
-                "bundle image duplication error",
-                "Image number {} from bundle {} uploaded previously".format(
-                    bundle_order,
-                    bundle_name,
-                ),
-            ]
+                "bundleErrorDupe",
+                f"Bundle error: image {bundle_order} from bundle {bundle_name} previously uploaded",
+            )
         cref = CollidingPage.create(tpage=pref, image=iref)
         cref.save()
     log.info(
