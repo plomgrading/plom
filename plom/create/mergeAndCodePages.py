@@ -6,6 +6,7 @@
 # Copyright (C) 2021 Peter Lee
 
 import tempfile
+import math
 from pathlib import Path
 
 # import pyqrcode
@@ -145,6 +146,36 @@ def create_exam_and_insert_QR(
     return exam
 
 
+def pdf_page_add_stamp(page, stamp):
+    """Add top-middle stamp to a PDF page.
+
+    args:
+        page (fitz.Page): a particular page of a PDF file.
+        stamp (str): text for the top-middle
+
+    returns:
+        None: but modifies page as a side-effect.
+    """
+    w = 70  # box width
+    mx, my = (15, 20)  # margins
+
+    pg_width = page.bound().width
+
+    tw = fitz.TextWriter(page.rect)
+    maxbox = fitz.Rect(mx + w + 10, my, pg_width - mx - w - 10, my + 30)
+    # page.draw_rect(maxbox, color=(1, 0, 0))
+    excess = tw.fill_textbox(
+        maxbox, stamp, align=fitz.TEXT_ALIGN_CENTER, fontsize=14, font=fitz.Font("helv")
+    )
+    assert not excess, "Text didn't fit: is paper number label too long?"
+    r = tw.text_rect
+    r = fitz.Rect(
+        pg_width // 2 - r.width / 2, my, pg_width // 2 + r.width / 2, my + r.height
+    )
+    page.draw_rect(r, color=(0, 0, 0), width=0.5)
+    tw.write_text(page)
+
+
 def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
@@ -161,33 +192,24 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     returns:
         None: but modifies page as a side-effect.
     """
-    page_width = page.bound().width
-    page_height = page.bound().height
+    w = 70  # box width
+    mx, my = (15, 20)  # margins
+
+    pg_width = page.bound().width
+    pg_height = page.bound().height
 
     # create two "do not write" (DNW) rectangles accordingly with TL (top left) and TR (top right)
-    rDNW_TL = fitz.Rect(15, 15, 90, 90)
-    rDNW_TR = fitz.Rect(page_width - 90, 15, page_width - 15, 90)
+    rDNW_TL = fitz.Rect(mx, my, mx + w, my + w)
+    rDNW_TR = fitz.Rect(pg_width - mx - w, my, pg_width - mx, my + w)
 
-    # 70x70 page-corner boxes for the QR codes
+    # page-corner boxes for the QR codes
     # TL: Top Left, TR: Top Right, BL: Bottom Left, BR: Bottom Right
-    TL = fitz.Rect(15, 20, 85, 90)
-    TR = fitz.Rect(page_width - 85, 20, page_width - 15, 90)
-    BL = fitz.Rect(15, page_height - 90, 85, page_height - 20)
-    BR = fitz.Rect(page_width - 85, page_height - 90, page_width - 15, page_height - 20)
+    TL = fitz.Rect(mx, my, mx + w, my + w)
+    TR = fitz.Rect(pg_width - w - mx, my, pg_width - mx, my + w)
+    BL = fitz.Rect(mx, pg_height - my - w, mx + w, pg_height - my)
+    BR = fitz.Rect(pg_width - mx - w, pg_height - my - w, pg_width - mx, pg_height - my)
 
-    # stamp in top-centre of page (TODO: fix hardcoded width Issue #1902)
-    rect = fitz.Rect(page_width // 2 - 100, 20, page_width // 2 + 100, 46)
-    excess = page.insert_textbox(
-        rect,
-        stamp,
-        fontsize=18,
-        color=[0, 0, 0],
-        fontname="Helvetica",
-        fontfile=None,
-        align=1,
-    )
-    assert excess > 0, "Text didn't fit: is paper number label too long?"
-    page.draw_rect(rect, color=[0, 0, 0])
+    pdf_page_add_stamp(page, stamp)
 
     # special code to skip staple mark and QR codes
     if odd is None:
@@ -202,25 +224,18 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
         shape.draw_line(rDNW.top_right, rDNW.bottom_left)
     else:
         shape.draw_line(rDNW.top_right, rDNW.bottom_right)
-    shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
+    shape.finish(width=0.5, color=(0, 0, 0), fill=(0.75, 0.75, 0.75))
     shape.commit()
-    # offset by trial-and-error
-    diaglabel_rect = rDNW + (-10, 26, 10, -33)
+
+    pivot = (rDNW.tl + rDNW.br) / 2
+    r = fitz.Rect(rDNW.tl.x - 30, pivot.y - 12, rDNW.tr.x + 30, pivot.y + 12)
+    tw = fitz.TextWriter(page.rect)
+    excess = tw.fill_textbox(r, shortname, fontsize=8, align=fitz.TEXT_ALIGN_CENTER)
+    assert not excess, "Text didn't fit: is shortname too long?"
+
     mat = fitz.Matrix(45 if odd else -45)
-    pivot = rDNW.tr / 2 + rDNW.bl / 2
-    morph = (pivot, mat)
-    excess = page.insert_textbox(
-        diaglabel_rect,
-        shortname,
-        fontsize=8,
-        fontname="Helvetica",
-        fontfile=None,
-        align=1,
-        morph=morph,
-    )
-    assert excess > 0, "Text didn't fit: shortname too long? font issue?"
-    # debugging
-    # page.draw_rect(diaglabel_rect, color=[1, 0, 0], morph=morph)
+    tw.write_text(page, color=(0, 0, 0), morph=(pivot, mat))
+    # page.draw_rect(r, color=(1, 0, 0))
 
     if not qr_code:
         # no more processing of this page if QR codes unwanted
@@ -259,12 +274,14 @@ def is_possible_to_encode_as(s, encoding):
         return False
 
 
-def insert_extra_info(extra, exam, x=None, y=None):
+def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
-        extra (dict): dictionary with keys ``id`` and ``name``.
-        exam (fitz.Document): PDF document.
+        page (fitz.Page): Page of a PDF document, will be modified as a side
+            effect.
+        name (str): student name.
+        sid (str): student id.
         x (float): specifies the x-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 has the centre
             of the box at left of the page and 100 has the centre at the right
@@ -275,37 +292,31 @@ def insert_extra_info(extra, exam, x=None, y=None):
             unexpectedly long.
         y (float): specifies the y-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 is the top
-            and 100 is the bottom of the page.  If None, defaults to 42.5
-            for historical reasons.
+            and 100 is the bottom of the page.  If None, defaults to 42
+            for historical reasons (to match the position in our demo).
+
+    Keyword args:
+        signherebox (bool): add a "sign here" box, default True.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable.
 
     Returns:
-        fitz.Document: the exam object from the input, but with the extra
-            info added into the first page.
+        None: modifies the first input as a side effect.
     """
     if x is None:
         x = 50
     if y is None:
-        y = 42.5
+        y = 42
 
-    page_width = exam[0].bound().width
-    page_height = exam[0].bound().height
+    page_width = page.bound().width
+    page_height = page.bound().height
 
-    txt = f'{extra["name"]}\n{extra["id"]}'
     sign_here = "Please sign here"
 
-    box_width = (
-        max(
-            fitz.get_text_length(extra["id"], fontsize=36, fontname="Helvetica"),
-            fitz.get_text_length(extra["name"], fontsize=36, fontname="Helvetica"),
-            fitz.get_text_length(sign_here, fontsize=48, fontname="Helvetica"),
-        )
-        * 1.11  # magic: just til it covers IDbox2
-    )
-    box1_height = 2 * 36 * 1.5  # two lines of 36 pt and baseline
-    box2_height = 48 * 1.6
+    box_width = 410
+    box1_height = 108  # two lines of 36 pt and 1.5 baseline
+    box2_height = 90
 
     name_id_rect = fitz.Rect(
         page_width * (x / 100.0) - box_width / 2,
@@ -319,45 +330,46 @@ def insert_extra_info(extra, exam, x=None, y=None):
         name_id_rect.x1,
         name_id_rect.y1 + box2_height,
     )
-    exam[0].draw_rect(name_id_rect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
-    exam[0].draw_rect(signature_rect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+    page.draw_rect(name_id_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
+    if signherebox:
+        page.draw_rect(signature_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
 
-    # TODO: This could be put into one function
-    if is_possible_to_encode_as(txt, "Latin-1"):
-        fontname = "Helvetica"
-    elif is_possible_to_encode_as(txt, "gb2312"):
-        # TODO: Double-check encoding name.  Add other CJK (how does Big5
-        # vs GB work?).  Check printers can handle these or do we need to
-        # embed a font?  (Adobe Acrobat users need to download something)
-        fontname = "china-ss"
-    else:
-        # TODO: instead we could warn, use Helvetica, and get "?????" chars
-        raise ValueError("Don't know how to write name {} into PDF".format(txt))
-
-    # We insert the student name and id text box
-    excess = exam[0].insert_textbox(
-        name_id_rect,
-        txt,
-        fontsize=36,
-        color=[0, 0, 0],
-        fontname=fontname,
-        fontfile=None,
-        align=1,
+    fontsize = 37
+    w = math.inf
+    font = fitz.Font("helv")
+    while w > name_id_rect.width:
+        if fontsize < 6:
+            raise RuntimeError(
+                f'Overly long name? fontsize={fontsize} for name="{name}"'
+            )
+        fontsize -= 1
+        w = font.text_length(name, fontsize=fontsize)
+    tw = fitz.TextWriter(page.rect)
+    tw.append(
+        fitz.Point(page_width / 2 - w / 2, name_id_rect.y0 + 38),
+        name,
+        fontsize=fontsize,
     )
-    assert excess > 0, "Text didn't fit: student name too long?"
+    fontsize = 36
+    w = font.text_length(sid, fontsize=fontsize)
+    tw.append(
+        fitz.Point(page_width / 2 - w / 2, name_id_rect.y0 + 90),
+        sid,
+        fontsize=fontsize,
+    )
+    tw.write_text(page)
 
-    excess = exam[0].insert_textbox(
-        signature_rect,
+    if not signherebox:
+        return
+    fontsize = 48
+    w = font.text_length(sign_here, fontsize=fontsize)
+    tw = fitz.TextWriter(page.rect, color=(0.9, 0.9, 0.9))
+    tw.append(
+        fitz.Point(page_width / 2 - w / 2, signature_rect.y0 + 52),
         sign_here,
-        fontsize=48,
-        color=[0.9, 0.9, 0.9],
-        fontname="Helvetica",
-        fontfile=None,
-        align=1,
+        fontsize=fontsize,
     )
-    assert excess > 0
-
-    return exam
+    tw.write_text(page)
 
 
 def make_PDF(
@@ -418,7 +430,14 @@ def make_PDF(
 
     # If provided with student name and id, preprint on cover
     if extra:
-        exam = insert_extra_info(extra, exam, xcoord, ycoord)
+        pdf_page_add_name_id_box(exam[0], extra["name"], extra["id"], xcoord, ycoord)
+
+    # We embed fonts for names and other overlay.  But if there are non-latin
+    # characters (e.g., CJK) in names, then the embedded font is quite large.
+    # Subsetting requires https://pypi.org/project/fonttools
+    # Note: In theory, this could muck around with fonts from the source
+    # (i.e., if they were NOT subsetted).  Does not happen with LaTeX.
+    exam.subset_fonts()
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save

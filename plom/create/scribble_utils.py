@@ -138,7 +138,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
     By default exclude pages 0 and 1 (the ID page and DNM page in our demo data).
     """
     # In principle you can put other fonts in plom.create.fonts
-    # Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
+    # Can also use "helv" and `None` for the fontfile
     # fontname, ttf = random.choice(...)
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
 
