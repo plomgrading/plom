@@ -282,7 +282,7 @@ def build_random_rubrics(question, *, messenger):
             "kind": "relative",
             "question": question,
         }
-        com["id"] = messenger.McreateRubric(com)[1]
+        com["id"] = messenger.McreateRubric(com)
         if question in positiveRubrics:
             positiveRubrics[question].append(com)
         else:
@@ -296,7 +296,7 @@ def build_random_rubrics(question, *, messenger):
             "kind": "relative",
             "question": question,
         }
-        com["id"] = messenger.McreateRubric(com)[1]
+        com["id"] = messenger.McreateRubric(com)
         if question in negativeRubrics:
             negativeRubrics[question].append(com)
         else:
