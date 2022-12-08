@@ -117,7 +117,7 @@ def build_test_page_substitute(
 
     Returns:
         libpath.Path: the generated file, in `outdir`, you are responsible
-            for deleting it when you're done.
+        for deleting it when you're done.
     """
     outdir = Path(outdir)
     pdf = fitz.open(template)
@@ -150,7 +150,7 @@ def build_dnm_page_substitute(
 
     Returns:
         libpath.Path: the generated file, in `outdir`, you are responsible
-            for deleting it when you're done.
+        for deleting it when you're done.
     """
     outdir = Path(outdir)
     pdf = fitz.open(template)
@@ -182,7 +182,7 @@ def build_homework_question_substitute(
 
     Returns:
         libpath.Path: the generated file, in `outdir`, you are responsible
-            for deleting it when you're done.
+        for deleting it when you're done.
     """
     outdir = Path(outdir)
     pdf = fitz.open(template)
@@ -214,7 +214,7 @@ def build_generated_id_page_for_student(
 
     Returns:
         libpath.Path: the generated file, in `outdir`, you are responsible
-            for deleting it when you're done.
+        for deleting it when you're done.
     """
     outdir = Path(outdir)
     pdf = fitz.open(template)
