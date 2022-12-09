@@ -110,17 +110,15 @@ def scribble_name_and_id(
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
     rect = fitz.Rect(220 + random.randrange(0, 16), 345, 600, 450)
     fontres = resources.files(plom.create.fonts) / ttf
-    # once PyMuPDF >= 1.19.5, can we avoid as_file() and pass fontfile=fontres
-    with resources.as_file(fontres) as fontfile:
-        excess = id_page.insert_textbox(
-            rect,
-            student_name,
-            fontsize=name_font_size,
-            color=blue,
-            fontname=fontname,
-            fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
-            align=0,
-        )
+    excess = id_page.insert_textbox(
+        rect,
+        student_name,
+        fontsize=name_font_size,
+        color=blue,
+        fontname=fontname,
+        fontfile=fontres,
+        align=0,
+    )
     assert excess > 0
     del id_page
 
@@ -152,18 +150,16 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
         if page_index in exclude:
             continue
         fontres = resources.files(plom.create.fonts) / ttf
-        # once PyMuPDF >= 1.19.5, can we avoid as_file() and pass fontfile=fontres
-        with resources.as_file(fontres) as fontfile:
-            excess = pdf_page.insert_textbox(
-                answer_rect,
-                answer_text,
-                fontsize=answer_font_size,
-                color=blue,
-                fontname=fontname,
-                fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
-                align=0,
-            )
-            assert excess > 0
+        excess = pdf_page.insert_textbox(
+            answer_rect,
+            answer_text,
+            fontsize=answer_font_size,
+            color=blue,
+            fontname=fontname,
+            fontfile=fontres,
+            align=0,
+        )
+        assert excess > 0
 
 
 def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):

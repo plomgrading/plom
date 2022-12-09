@@ -52,7 +52,7 @@ server_install_requires = [
     "numpy>=1.17.0",
     "pandas>=1.0.0",
     "passlib",
-    "pymupdf>=1.19.0",
+    "pymupdf>=1.21.0",
     "Pillow>=7.0.0",
     "aiohttp>=3.7.2",
     "weasyprint>=52.5",
