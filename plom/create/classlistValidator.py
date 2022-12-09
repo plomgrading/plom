@@ -181,17 +181,6 @@ class PlomClasslistValidator:
                 warn.append(
                     [x["_src_line"], f"Name '{tmp}' is very short  - please verify."]
                 )
-            # warn if non-latin char present
-            try:
-                tmp = x[fullname_key].encode("Latin-1")
-            except UnicodeEncodeError:
-                warn.append(
-                    [
-                        x["_src_line"],
-                        f"Non-latin characters - {x[fullname_key]} - Apologies for the eurocentricity.",
-                    ]
-                )
-        # return any warnings
         return warn
 
     def check_classlist_against_spec(self, spec, classlist_length):
