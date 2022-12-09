@@ -55,6 +55,20 @@ question_number = 2
 tags = "foo"
 meta = "When the demo rubrics are loaded, most are auto-duplicated over multiple questions."
 
+[[rubric]]
+delta = "."
+text = "a comment specific to Q3 version 1"
+question = 3
+versions = [1]
+meta = "By default, rubrics are shared between versions.  Not this one."
+
+[[rubric]]
+delta = "."
+text = "a comment specific to Q3 version 2"
+question = 3
+versions = [2]
+meta = "By default, rubrics are shared between versions.  Not this one."
+
 # a series of rubrics all related to the chain rule
 [[rubric]]
 delta = "-3"

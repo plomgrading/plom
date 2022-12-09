@@ -112,19 +112,19 @@ class RubricHandler:
             request (aiohttp.web_request.Request): A request of type PUT /MK/rubric.
 
         Returns:
-            aiohttp.web_response.Response: either 200,newkey or 406 if sent rubric was incomplete
+            aiohttp.web_response.Response: either 200 with the new key
+            or 406 if sent rubric was incomplete.
         """
         username = data["user"]
         new_rubric = data["rubric"]
 
         if not self.validateRubric(username, new_rubric):
-            return web.Response(status=406)
+            return web.HTTPNotAcceptable(reason="Rubric info incomplete/inconsistent")
 
-        rval = self.server.McreateRubric(username, new_rubric)
-        if rval[0]:  # worked - so return key
-            return web.json_response(rval[1], status=200)
-        else:  # failed - rubric sent is incomplete
-            return web.Response(status=406)
+        ok, key_or_reason = self.server.McreateRubric(username, new_rubric)
+        if ok:
+            return web.json_response(key_or_reason, status=200)
+        return web.HTTPNotAcceptable(reason=key_or_reason)
 
     # @routes.get("/MK/rubric")
     @authenticate_by_token_required_fields(["user"])
@@ -171,27 +171,28 @@ class RubricHandler:
             request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
 
         Returns:
-            aiohttp.web_response.Response: either 200,newkey or
-            406 if sent rubric was incomplete or inconsistent
+            aiohttp.web_response.Response: either 200 with the key or
+            406 if sent rubric was incomplete or inconsistent,
+            409 if no rubric found, or some unexpected situation.
         """
         username = data["user"]
         updated_rubric = data["rubric"]
         key = request.match_info["key"]
 
-        if key != updated_rubric["id"]:  # key mismatch
-            return web.Response(status=400)
+        if key != updated_rubric["id"]:
+            return web.HTTPBadRequest(reason="Key mismatch in request")
 
         if not self.validateRubric(username, updated_rubric):
-            return web.Response(status=406)
+            return web.HTTPNotAcceptable(reason="Sent rubric was inconsistent")
 
-        rval = self.server.MmodifyRubric(username, key, updated_rubric)
-        if rval[0]:  # worked - so return key
-            return web.json_response(rval[1], status=200)
-        else:  # failed - rubric sent is incomplete
-            if rval[1] == "incomplete":
-                return web.Response(status=406)
-            else:
-                return web.Response(status=409)
+        ok, key_or_reason = self.server.MmodifyRubric(username, key, updated_rubric)
+        if ok:
+            return web.json_response(key_or_reason, status=200)
+        if key_or_reason == "incomplete":
+            return web.HTTPNotAcceptable(reason="Sent rubric was incomplete")
+        elif key_or_reason == "noSuchRubric":
+            return web.HTTPConflict(reason="No rubric with that key found")
+        return web.HTTPConflict(reason=f"Unexpected error/bug: '{key_or_reason}'")
 
     # @routes.get("/MK/user/{user}/{question}")
     @authenticate_by_token_required_fields(["user", "question"])
