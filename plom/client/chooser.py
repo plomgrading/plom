@@ -15,13 +15,18 @@ __license__ = "AGPL-3.0-or-later"
 
 import logging
 from pathlib import Path
+import sys
 import tempfile
 import time
 
 import appdirs
 import arrow
 from packaging.version import Version
-import toml
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+import tomli_w
 
 import urllib3
 from PyQt5.QtCore import pyqtSlot
@@ -72,8 +77,8 @@ def readLastTime():
     # update default from config file
     if cfgfile.exists():
         # too early to log: log.info("Loading config file %s", cfgfile)
-        with open(cfgfile) as f:
-            lastTime.update(toml.load(f))
+        with open(cfgfile, "rb") as f:
+            lastTime.update(tomllib.load(f))
     return lastTime
 
 
@@ -350,8 +355,8 @@ class Chooser(QDialog):
         log.info("Saving config file %s", cfgfile)
         try:
             cfgfile.parent.mkdir(exist_ok=True)
-            with open(cfgfile, "w") as fh:
-                fh.write(toml.dumps(self.lastTime))
+            with open(cfgfile, "wb") as fh:
+                tomli_w.dump(self.lastTime, fh)
         except OSError as e:
             WarnMsg(
                 self,
