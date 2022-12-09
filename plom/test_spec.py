@@ -11,7 +11,6 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-from tomllib import TOMLDecodeError
 
 from plom import SpecVerifier, get_question_label
 
@@ -351,5 +350,5 @@ def test_spec_legacy_dupe_question_fails_to_load(tmpdir):
     """
     with open(tmpdir / "Fawlty.toml", "w") as f:
         f.write(old)
-    with raises(TOMLDecodeError):
+    with raises(tomllib.TOMLDecodeError):
         SpecVerifier.from_toml_file(tmpdir / "Fawlty.toml")
