@@ -22,6 +22,7 @@ import time
 import appdirs
 import arrow
 from packaging.version import Version
+
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:

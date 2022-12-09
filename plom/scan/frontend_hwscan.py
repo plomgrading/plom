@@ -19,7 +19,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import fitz
-import toml
+import tomlkit
 
 from plom.scan.sendPagesToServer import (
     does_bundle_exist_on_server,
@@ -220,7 +220,7 @@ def processHWScans(
     bundledir = get_bundle_dir(bundle_name, basedir=basedir)
 
     with open(bundledir / "source.toml", "w") as f:
-        toml.dump({"file": str(pdf_fname), "md5": md5}, f)
+        tomlkit.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
     files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
