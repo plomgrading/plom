@@ -26,7 +26,7 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-import tomli_w
+import tomlkit
 
 import urllib3
 from PyQt5.QtCore import pyqtSlot
@@ -356,7 +356,7 @@ class Chooser(QDialog):
         try:
             cfgfile.parent.mkdir(exist_ok=True)
             with open(cfgfile, "wb") as fh:
-                tomli_w.dump(self.lastTime, fh)
+                tomlkit.dump(self.lastTime, fh)
         except OSError as e:
             WarnMsg(
                 self,
