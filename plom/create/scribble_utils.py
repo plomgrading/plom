@@ -118,7 +118,7 @@ def scribble_name_and_id(
             fontsize=name_font_size,
             color=blue,
             fontname=fontname,
-            fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
+            fontfile=fontfile,
             align=0,
         )
     assert excess > 0
@@ -160,7 +160,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
                 fontsize=answer_font_size,
                 color=blue,
                 fontname=fontname,
-                fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
+                fontfile=fontfile,
                 align=0,
             )
             assert excess > 0
