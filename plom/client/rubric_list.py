@@ -1394,6 +1394,10 @@ class AddRubricBox(QDialog):
         """
         super().__init__(parent)
 
+        self.question_number = question_number
+        self.version = version
+        self.maxver = maxver
+
         if com:
             self.setWindowTitle("Modify rubric")
         else:
@@ -1444,16 +1448,12 @@ class AddRubricBox(QDialog):
         flay.addRow("Delta mark", lay)
 
         # scope
-        self.question_number = question_number
-        self.version = version
-        self.maxver = maxver
         self.scopeButton = QToolButton()
         self.scopeButton.setCheckable(True)
-        self.scopeButton.setChecked(True)
-        self.scopeButton.setArrowType(Qt.DownArrow)
+        self.scopeButton.setChecked(False)
+        self.scopeButton.setAutoRaise(True)
         self.scopeButton.setText("Scope")
         self.scopeButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        self.scopeButton.setAutoRaise(True)
         self.scopeButton.clicked.connect(self.toggle_scope_elements)
         frame = QFrame()
         self.scope_frame = frame
@@ -1476,8 +1476,6 @@ class AddRubricBox(QDialog):
         lay.addWidget(cb)
         self.version_specific_cb = cb
         le = QLineEdit()
-        le.setPlaceholderText(", ".join(str(x + 1) for x in range(self.maxver)))
-        le.setEnabled(False)
         lay.addWidget(le)
         self.version_specific_le = le
         space = QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -1495,6 +1493,8 @@ class AddRubricBox(QDialog):
         # Note: I often have problems with workwrapped QLabels taking
         # too much space, seems putting inside a QFrame fixed that!
         vlay.addWidget(label)
+        self.toggle_version_specific()
+        self.toggle_scope_elements()
 
         # TODO: in the future?
         # flay.addRow("Tags", self.TEtag)
