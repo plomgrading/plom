@@ -28,18 +28,24 @@ def McreateRubric(self, user_name, rubric):
             `{kind: "relative", delta: "-1", text: "blah", question: 2}`
             The following fields are optional and empty strings will be
             substituted:
-            `{tags: "blah", meta: "blah", versions: [1, 2]}`
+            `{tags: "blah", meta: "blah", versions: [1, 2], parameters: []}`
             Currently, its ok if it contains other fields: they are
             ignored.
             ``versions`` should be a list of integers, or the empty list
             which means "all versions".
+            ``parameters`` is list of per-version substitutions.
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
         key for the new rubric.  Can fail if missing fields.
     """
     need_fields = ("kind", "delta", "text", "question")
-    optional_fields_and_defaults = (("tags", ""), ("meta", ""), ("versions", []))
+    optional_fields_and_defaults = (
+        ("tags", ""),
+        ("meta", ""),
+        ("versions", []),
+        ("parameters", []),
+    )
     if any(x not in rubric for x in need_fields):
         return (False, "Must have all fields {}".format(need_fields))
     for f, d in optional_fields_and_defaults:
@@ -60,6 +66,7 @@ def McreateRubric(self, user_name, rubric):
             delta=rubric["delta"],
             text=rubric["text"],
             versions=json.dumps(rubric["versions"]),
+            parameters=json.dumps(rubric["parameters"]),
             creationTime=datetime.now(timezone.utc),
             modificationTime=datetime.now(timezone.utc),
             meta=rubric["meta"],
@@ -94,6 +101,7 @@ def MgetRubrics(self, question_number=None):
                 "username": r.user.name,
                 "question_number": r.question,
                 "versions": json.loads(r.versions),
+                "parameters": json.loads(r.parameters),
             }
         )
     return rubric_list
@@ -143,6 +151,7 @@ def MmodifyRubric(self, user_name, key, change):
         rref.delta = change["delta"]
         rref.text = change["text"]
         rref.versions = json.dumps(change["versions"])
+        rref.parameters = json.dumps(change["parameters"])
         rref.modificationTime = datetime.now(timezone.utc)
         rref.revision += 1
         rref.meta = change["meta"]
@@ -217,6 +226,7 @@ def Rget_rubric_counts(self):
             "username": rref.user.name,
             "question_number": rref.question,
             "versions": str(json.loads(rref.versions)).strip("[]"),  # e.g., "1, 2, 3"
+            "parameters": str(json.loads(rref.versions)),
         }
         # TODO: Issue #2406: can versions just be the list of ints?
         # TODO: need to look who calls this: feel like it might end up as

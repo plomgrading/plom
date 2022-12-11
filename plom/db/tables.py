@@ -196,6 +196,7 @@ class Rubric(BaseModel):
     #   "[]": all versions
     #   "[1, 3]": versions 1 and 3 only
     versions = pw.TextField(null=False, default=json.dumps([]))
+    parameters = pw.TextField(null=False, default=json.dumps([]))
     user = pw.ForeignKeyField(User, backref="rubrics", null=False)
     revision = pw.IntegerField(null=False, default=0)
     count = pw.IntegerField(null=False, default=0)

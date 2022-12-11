@@ -115,6 +115,15 @@ def isLegalRubric(mss, *, kind, delta, versions):
             return 2
 
 
+def render_params(template, params, ver):
+    """Perform version-dependent substitutions on a template text."""
+    s = template
+    for param, values in params:
+        print((param, values, ver))
+        s = s.replace(param, values[ver - 1])
+    return s
+
+
 class RubricTable(QTableWidget):
     def __init__(self, parent, shortname=None, sort=False, tabType=None):
         super().__init__(parent)
@@ -150,13 +159,24 @@ class RubricTable(QTableWidget):
         self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        _col_headers = ("Key", "Username", "Delta", "Text", "Kind", "Versions")
+        _col_headers = (
+            "Key",
+            "Username",
+            "Delta",
+            "Text",
+            "Kind",
+            "Versions",
+            "Parameters",
+            "Raw Text",
+        )
         self.setColumnCount(len(_col_headers))
         self.setHorizontalHeaderLabels(_col_headers)
         self.hideColumn(0)
         self.hideColumn(1)
         self.hideColumn(4)
         self.hideColumn(5)
+        self.hideColumn(6)
+        self.hideColumn(7)
         # could use a subclass
         if self.tabType == "delta":
             self.hideColumn(3)
@@ -419,9 +439,16 @@ class RubricTable(QTableWidget):
             self.setItem(rc, 2, QTableWidgetItem(rubric["delta"] + abs_suffix))
         else:
             self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
-        self.setItem(rc, 3, QTableWidgetItem(rubric["text"]))
+
+        # how to access version?  and where to store this function?
+        render = render_params(
+            rubric["text"], rubric["parameters"], self._parent.version
+        )
+        self.setItem(rc, 3, QTableWidgetItem(render))
         self.setItem(rc, 4, QTableWidgetItem(rubric["kind"]))
         self.setItem(rc, 5, QTableWidgetItem(json.dumps(rubric["versions"])))
+        self.setItem(rc, 6, QTableWidgetItem(json.dumps(rubric["parameters"])))
+        self.setItem(rc, 7, QTableWidgetItem(rubric["text"]))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -653,9 +680,15 @@ class RubricTable(QTableWidget):
             if self.item(r, 0).text() == new_rubric["id"]:
                 self.item(r, 1).setText(new_rubric["username"])
                 self.item(r, 2).setText(new_rubric["delta"])
-                self.item(r, 3).setText(new_rubric["text"])
+                # how to access version?  and where to store this function?
+                render = render_params(
+                    new_rubric["text"], new_rubric["parameters"], self._parent.version
+                )
+                self.item(r, 3).setText(render)
                 self.item(r, 4).setText(new_rubric["kind"])
                 self.item(r, 5).setText(json.dumps(new_rubric["versions"]))
+                self.item(r, 6).setText(json.dumps(new_rubric["parameters"]))
+                self.item(r, 7).setText(new_rubric["text"])
 
                 # update the legality
                 self.colourLegalRubric(r, mss)
@@ -1486,17 +1519,21 @@ class AddRubricBox(QDialog):
         self.version_specific_space = space
         lay.addItem(space)
         vlay.addLayout(lay)
-        label = QLabel(
-            """
+        s = """
             <p>By default, rubrics are specific to a question and shared
             between versions of that question.</p>
             """
-        )
+        if maxver > 1:
+            s += "<p>You can parameterize this rubric by making custom"
+            s += " version-specific substitutions.</p>"
+        # TODO: label: Substitutions
+        label = QLabel(s)
         label.setWordWrap(True)
         # label.setAlignment(Qt.AlignTop)
         # Note: I often have problems with workwrapped QLabels taking
         # too much space, seems putting inside a QFrame fixed that!
         vlay.addWidget(label)
+        vlay.addLayout(QGridLayout())  # placeholder
         self.toggle_version_specific()
         self.toggle_scope_elements()
 
@@ -1525,6 +1562,7 @@ class AddRubricBox(QDialog):
         # Set up TE and CB so that when CB changed, text is updated
         self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
 
+        params = []
         # If supplied with current text/delta then set them
         if com:
             if com["text"]:
@@ -1551,6 +1589,8 @@ class AddRubricBox(QDialog):
                 self.version_specific_le.setText(
                     ", ".join(str(x) for x in com["versions"])
                 )
+            if com["parameters"]:
+                params = com["parameters"]
         else:
             self.TE.setPlaceholderText(
                 "Your rubric must contain some text.\n\n"
@@ -1566,6 +1606,95 @@ class AddRubricBox(QDialog):
                 "Not shown to student!"
             )
             self.Luser.setText(username)
+        self.subsRemakeGridUI(params)
+
+    def subsMakeGridUI(self, stuff):
+        maxver = self.maxver
+        grid = QGridLayout()
+        for v in range(maxver):
+            grid.addWidget(QLabel(f"ver {v + 1}"), 0, v + 1)
+
+        def _func_factory(zelf, i):
+            def f():
+                zelf.subsRemoveRow(i)
+
+            return f
+
+        for i, (param, values) in enumerate(stuff):
+            grid.addWidget(QLineEdit(param), i + 1, 0)
+            for v in range(maxver):
+                grid.addWidget(QLineEdit(values[v]), i + 1, v + 1)
+            b = QToolButton(text="➖")  # \N{Minus Sign}
+            b.setToolTip("remove this parameter and values")
+            b.setAutoRaise(True)
+            f = _func_factory(self, i)
+            b.pressed.connect(f)
+            grid.addWidget(b, i + 1, maxver + 1)
+        b = QToolButton(text="➕ add new")
+        b.setAutoRaise(True)
+        b.pressed.connect(self.subsAddRow)
+        grid.addWidget(b, len(stuff) + 1, 0)
+        b.setToolTip("inserted at cursor point; highlighted text as initial value")
+        return grid
+
+    def subsAddRow(self):
+        params = self.get_parameters()
+        current_param_names = [p for p, _ in params]
+        # find a new parameter name not yet used
+        n = 1
+        while True:
+            new_param = "{param" + str(n) + "}"
+            new_param_alt = f"<param{n}>"
+            if (
+                new_param not in current_param_names
+                and new_param_alt not in current_param_names
+            ):
+                break
+            n += 1
+        # TODO: if "tex:" maybe use alt:
+        # new_param = new_param_alt
+
+        # we insert the new parameter at the cursor/selection
+        tc = self.TE.textCursor()
+        s = self.TE.textCursor().anchor()
+        e = self.TE.textCursor().position()
+        print((s, e))
+        # save the selection as the new parameter value for this version
+        values = ["" for _ in range(self.maxver)]
+        if tc.hasSelection():
+            values[self.version - 1] = tc.selectedText()
+        print(values)
+        self.TE.textCursor().insertText(new_param)
+        # TODO: rerun syntax highlighter once we have one
+        params.append([new_param, values])
+        self.subsRemakeGridUI(params)
+
+    def subsRemoveRow(self, i=0):
+        params = self.get_parameters()
+        params.pop(i)
+        self.subsRemakeGridUI(params)
+
+    def subsRemakeGridUI(self, params):
+        grid = self.subsMakeGridUI(params)
+        # discard the old grid and sub in a new one
+        layout = self.scope_frame.layout().takeAt(3)  # ugh, magic number 3
+        for i in reversed(range(layout.count())):
+            layout.itemAt(i).widget().deleteLater()
+        layout.deleteLater()
+        self.scope_frame.layout().addLayout(grid)
+
+    def get_parameters(self):
+        """Extract the current parametric values from the UI."""
+        layout = self.scope_frame.layout().itemAt(3)  # ugh, magic number 3
+        N = layout.rowCount()
+        params = []
+        for r in range(1, N - 1):
+            param = layout.itemAtPosition(r, 0).widget().text()
+            values = []
+            for c in range(1, self.maxver + 1):
+                values.append(layout.itemAtPosition(r, c).widget().text())
+            params.append([param, values])
+        return params
 
     def changedReapableCB(self):
         self.TE.clear()
@@ -1641,6 +1770,8 @@ class AddRubricBox(QDialog):
         else:
             vers = []
 
+        params = self.get_parameters()
+
         return {
             "id": rubricID,
             "kind": kind,
@@ -1651,4 +1782,5 @@ class AddRubricBox(QDialog):
             "username": username,
             "question": self.question_number,
             "versions": vers,
+            "parameters": params,
         }
