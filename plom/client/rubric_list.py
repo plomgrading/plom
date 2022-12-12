@@ -402,6 +402,7 @@ class RubricTable(QTableWidget):
         self.appendNewRubric(rubric)
 
     def appendNewRubric(self, rubric):
+        # TODO: much code dupe w/ self.updateRubric: update both for changes
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
@@ -647,12 +648,15 @@ class RubricTable(QTableWidget):
         self._parent.edit_rubric(rubricKey)
 
     def updateRubric(self, new_rubric, mss):
+        # TODO: much code dupe w/ self.appendNewRubric: update both for changes
         for r in range(self.rowCount()):
             if self.item(r, 0).text() == new_rubric["id"]:
                 self.item(r, 1).setText(new_rubric["username"])
                 self.item(r, 2).setText(new_rubric["delta"])
                 self.item(r, 3).setText(new_rubric["text"])
                 self.item(r, 4).setText(new_rubric["kind"])
+                self.item(r, 5).setText(json.dumps(new_rubric["versions"]))
+
                 # update the legality
                 self.colourLegalRubric(r, mss)
                 # set a tooltip that contains tags and meta info when someone hovers over text
