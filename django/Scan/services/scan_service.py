@@ -415,6 +415,8 @@ class ScanService:
             .exclude(parsed_qr={})
             .exclude(pushed=True)
             .exclude(colliding=True)
+            .exclude(error=True)
+            .exclude(unknown=True)
         )
         return list(complete)
 

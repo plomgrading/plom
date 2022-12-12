@@ -15,68 +15,6 @@
                 <div class="col-8">
                     <h5>Bundle Contains:</h5>
                     <div hx-get="{% url 'scan_bundle_table' timestamp index %}" hx-trigger="load"></div>
-                    {% comment %} {% if not finished_reading_qr %}
-                    <p>QR codes not read yet. Please click on 'Read bundle QRs' to determine which tests are in this bundle.</p>
-                    {% else %}
-                    <div style="height: 130px; overflow-y: scroll;">
-                        <table class="table" style="table-layout: fixed; font-size: 12px">
-                            <thead>
-                                <tr style="background-color: black; color: white; position: sticky; z-index: 9999; top: 0;">
-                                    <th>Test Paper</th>
-                                    <th>Page Number</th>
-                                    <th>Question Version</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>1</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>2</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>3</td>
-                                    <td>2</td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>4</td>
-                                    <td>1</td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>5</td>
-                                    <td>2</td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>6</td>
-                                    <td>1</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>1</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>2</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>3</td>
-                                    <td>2</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    {% endif %} {% endcomment %}
                 </div>
             </div>
         </div>

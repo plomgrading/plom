@@ -80,7 +80,7 @@ class FlagImageForm(forms.Form):
                 "class": "comment-input",
                 "placeholder": "Comment to manager about this page (optional)",
                 "name": "comment",
-                "style": "display: block; width: 100%; height: 150px; border-radius: 0.375rem; margin-bottom: 4px;",
+                "style": "display: block; width: 100%; height: 100px; border-radius: 0.375rem; margin-bottom: 4px;",
             }
         ),
         required=False,

@@ -2,7 +2,7 @@
     {% if qr_results and task_status == 'error' %}
         <div>
             <p class="text-danger">{{ error }}</p>
-            <p>Parsed QR code:</p>
+            <p style="margin-bottom: 0px;">Parsed QR code:</p>
             <ul>
                 <li>Test-paper {{ error_paper_id }}</li>
                 <li>Page {{ error_page_num }}</li>
@@ -13,7 +13,7 @@
                 style="background-color: lightgrey;"
             >
             <i class="bi bi-file-earmark-check"></i>
-            Push page image
+            Set as good page image
             </a><br><br>
             <a class="btn btn-warning text-start">Replace page image</a><br><br>
             <a class="btn btn-danger text-start w-100">Discard</a><br><br>
