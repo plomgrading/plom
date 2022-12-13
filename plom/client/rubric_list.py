@@ -9,10 +9,12 @@
 import html
 import json
 import logging
+import re
 from textwrap import shorten
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QPalette, QCursor
+from PyQt5.QtGui import QColor, QCursor, QPalette, QSyntaxHighlighter, QTextCharFormat
+
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAction,
@@ -1398,6 +1400,44 @@ class SignedSB(QSpinBox):
             return t
 
 
+class SubstitutionsHighlighter(QSyntaxHighlighter):
+    """Highlight tex prefix and parametric substitutions."""
+
+    def __init__(self, *args, **kwargs):
+        # TODO: initial value of subs?
+        self.subs = []
+        super().__init__(*args, **kwargs)
+
+    def highlightBlock(self, txt):
+        """Highlight tex prefix and matches in our substitution list.
+
+        args:
+            txt (str): the text to be highlighted.
+
+        TODO: use colours from the palette?
+        """
+        print(f"enter hiliter: {txt}")
+        # TODO: can we set a popup: "v2 value: 'x'"
+        # reset format
+        self.setFormat(0, len(txt), QTextCharFormat())
+        # highlight tex: at beginning
+        if txt.startswith("tex:"):  # casefold?
+            self.setFormat(0, len("tex:"), QColor("grey"))
+        # highlight parametric substitutions
+        for s in self.subs:
+            for match in re.finditer(s, txt):
+                # print(f"matched on {s} at {match.start()} to {match.end()}!")
+                frmt = QTextCharFormat()
+                frmt.setForeground(QColor("teal"))
+                # TODO: not sure why this doesn't work?x
+                frmt.setToolTip('v2 subs: "meh"')
+                self.setFormat(match.start(), match.end() - match.start(), frmt)
+
+    def setSubs(self, subs):
+        self.subs = subs
+        self.rehighlight()
+
+
 class AddRubricBox(QDialog):
     def __init__(
         self,
@@ -1446,6 +1486,7 @@ class AddRubricBox(QDialog):
 
         self.reapable_CB = QComboBox()
         self.TE = QTextEdit()
+        self.hiliter = SubstitutionsHighlighter(self.TE)
         self.SB = SignedSB(maxMark)
         self.DE = QCheckBox("enabled")
         self.DE.setCheckState(Qt.Checked)
@@ -1607,6 +1648,7 @@ class AddRubricBox(QDialog):
             )
             self.Luser.setText(username)
         self.subsRemakeGridUI(params)
+        self.hiliter.setSubs([x for x, _ in params])
 
     def subsMakeGridUI(self, stuff):
         maxver = self.maxver
@@ -1621,7 +1663,9 @@ class AddRubricBox(QDialog):
             return f
 
         for i, (param, values) in enumerate(stuff):
-            grid.addWidget(QLineEdit(param), i + 1, 0)
+            w = QLineEdit(param)
+            # w.connect...  # TODO: redo syntax highlighting?
+            grid.addWidget(w, i + 1, 0)
             for v in range(maxver):
                 grid.addWidget(QLineEdit(values[v]), i + 1, v + 1)
             b = QToolButton(text="➖")  # \N{Minus Sign}
@@ -1664,14 +1708,15 @@ class AddRubricBox(QDialog):
         if tc.hasSelection():
             values[self.version - 1] = tc.selectedText()
         print(values)
-        self.TE.textCursor().insertText(new_param)
-        # TODO: rerun syntax highlighter once we have one
         params.append([new_param, values])
+        self.hiliter.setSubs([x for x, _ in params])
+        self.TE.textCursor().insertText(new_param)
         self.subsRemakeGridUI(params)
 
     def subsRemoveRow(self, i=0):
         params = self.get_parameters()
         params.pop(i)
+        self.hiliter.setSubs([x for x, _ in params])
         self.subsRemakeGridUI(params)
 
     def subsRemakeGridUI(self, params):
