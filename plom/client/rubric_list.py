@@ -1560,14 +1560,12 @@ class AddRubricBox(QDialog):
         self.version_specific_space = space
         lay.addItem(space)
         vlay.addLayout(lay)
-        s = """
-            <p>By default, rubrics are specific to a question and shared
-            between versions of that question.</p>
-            """
         if maxver > 1:
-            s += "<p>You can parameterize this rubric by making custom"
+            s = "<p>By default, rubrics are shared between versions of a question."
+            s += "  You can also parameterize this rubric by making custom"
             s += " version-specific substitutions.</p>"
-        # TODO: label: Substitutions
+        else:
+            s = "<p>By default, rubrics are shared between versions of a question.</p>"
         label = QLabel(s)
         label.setWordWrap(True)
         # label.setAlignment(Qt.AlignTop)
@@ -1650,11 +1648,14 @@ class AddRubricBox(QDialog):
         self.subsRemakeGridUI(params)
         self.hiliter.setSubs([x for x, _ in params])
 
-    def subsMakeGridUI(self, stuff):
+    def subsMakeGridUI(self, params):
         maxver = self.maxver
         grid = QGridLayout()
-        for v in range(maxver):
-            grid.addWidget(QLabel(f"ver {v + 1}"), 0, v + 1)
+        nr = 0
+        if params:
+            for v in range(maxver):
+                grid.addWidget(QLabel(f"ver {v + 1}"), nr, v + 1)
+            nr += 1
 
         def _func_factory(zelf, i):
             def f():
@@ -1662,25 +1663,31 @@ class AddRubricBox(QDialog):
 
             return f
 
-        for i, (param, values) in enumerate(stuff):
+        for i, (param, values) in enumerate(params):
             w = QLineEdit(param)
             # w.connect...  # TODO: redo syntax highlighting?
-            grid.addWidget(w, i + 1, 0)
+            grid.addWidget(w, nr, 0)
             for v in range(maxver):
                 w = QLineEdit(values[v])
                 w.setPlaceholderText(f"<value for ver{v + 1}>")
-                grid.addWidget(w, i + 1, v + 1)
+                grid.addWidget(w, nr, v + 1)
             b = QToolButton(text="➖")  # \N{Minus Sign}
             b.setToolTip("remove this parameter and values")
             b.setAutoRaise(True)
             f = _func_factory(self, i)
             b.pressed.connect(f)
-            grid.addWidget(b, i + 1, maxver + 1)
-        b = QToolButton(text="➕ add new")
+            grid.addWidget(b, nr, maxver + 1)
+            nr += 1
+
+        if params:
+            b = QToolButton(text="➕ add another")
+        else:
+            b = QToolButton(text="➕ add a parameterized substitution")
         b.setAutoRaise(True)
         b.pressed.connect(self.subsAddRow)
-        grid.addWidget(b, len(stuff) + 1, 0)
         b.setToolTip("inserted at cursor point; highlighted text as initial value")
+        grid.addWidget(b, nr, 0)
+        nr += 1
         return grid
 
     def subsAddRow(self):
