@@ -1667,7 +1667,9 @@ class AddRubricBox(QDialog):
             # w.connect...  # TODO: redo syntax highlighting?
             grid.addWidget(w, i + 1, 0)
             for v in range(maxver):
-                grid.addWidget(QLineEdit(values[v]), i + 1, v + 1)
+                w = QLineEdit(values[v])
+                w.setPlaceholderText(f"<value for ver{v + 1}>")
+                grid.addWidget(w, i + 1, v + 1)
             b = QToolButton(text="➖")  # \N{Minus Sign}
             b.setToolTip("remove this parameter and values")
             b.setAutoRaise(True)
