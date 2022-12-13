@@ -1,7 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
-import toml
+import sys
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 from django.test import TestCase
 from django.conf import settings
@@ -208,7 +214,8 @@ class StagingSpecificationTests(TestCase):
         upload_path = (
             settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml"
         )
-        toml_dict = toml.load(upload_path)
+        with open(upload_path, "rb") as toml_file:
+            toml_dict = tomllib.load(toml_file)
 
         spec = StagingSpecificationService()
         spec.create_from_dict(toml_dict)

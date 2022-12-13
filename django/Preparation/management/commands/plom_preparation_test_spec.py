@@ -10,7 +10,13 @@ from plom import SpecVerifier
 import copy
 import fitz
 from pathlib import Path
-import toml
+import sys
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+import tomlkit
 
 
 class Command(BaseCommand):
@@ -19,7 +25,7 @@ class Command(BaseCommand):
     def show_status(self):
         speck = SpecificationService()
         spec_dict = speck.get_the_spec()
-        toml_text = toml.dumps(spec_dict)
+        toml_text = tomlkit.dump(spec_dict)
 
         if speck.is_there_a_spec():
             self.stdout.write("A valid test spec is present:")
@@ -46,7 +52,7 @@ class Command(BaseCommand):
             self.stderr.write(f"File {fname} already present - cannot overwrite.")
             return
         with open(fname, "w") as fh:
-            toml.dump(spec_dict, fh)
+            tomlkit.dump(spec_dict, fh)
 
     def upload_spec(self, spec_file, pdf_file):
         speck = SpecificationService()
@@ -62,8 +68,8 @@ class Command(BaseCommand):
             return
         try:
             with open(spec_path) as fh:
-                spec_dict = toml.load(fh)
-        except toml.TomlDecodeError as err:
+                spec_dict = tomllib.load(fh)
+        except tomllib.TomlDecodeError as err:
             self.stderr.write(f"Cannot decode the toml file - {err}")
             return
         self.stdout.write(f"From {spec_path} read spec dict = {spec_dict}")
