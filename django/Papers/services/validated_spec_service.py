@@ -44,7 +44,7 @@ class SpecificationService:
         spec = self.get_the_spec()
         spec.pop("publicCode", None)
         spec.pop("privateSeed", None)
-        return tomlkit.dump(spec)
+        return tomlkit.dumps(spec)
 
     @transaction.atomic
     def store_validated_spec(self, validated_spec):

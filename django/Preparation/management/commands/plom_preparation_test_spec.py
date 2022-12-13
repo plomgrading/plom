@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def show_status(self):
         speck = SpecificationService()
         spec_dict = speck.get_the_spec()
-        toml_text = tomlkit.dump(spec_dict)
+        toml_text = tomlkit.dumps(spec_dict)
 
         if speck.is_there_a_spec():
             self.stdout.write("A valid test spec is present:")
