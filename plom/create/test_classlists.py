@@ -316,7 +316,6 @@ def test_short_name_warning1(tmpdir):
 
 
 def test_non_latin_name(tmpdir):
-    # testing for #1314
     tmpdir = Path(tmpdir)
     vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
@@ -327,18 +326,7 @@ def test_non_latin_name(tmpdir):
             f.write('12345678,"Doe, 学生",2\n')
     success, warn_err = vlad.validate_csv(foo)
     assert success
-    expected = [
-        {
-            "warn_or_err": "warning",
-            "werr_line": 3,
-            "werr_text": "Non-latin characters - Doe, 学生 - Apologies for the eurocentricity.",
-        }
-    ]
-
-    # check these lists against each other - order not important
-    assert len(warn_err) == len(expected)
-    for X in expected:
-        assert X in warn_err
+    assert not warn_err
 
 
 def test_partial_papernumbers(tmpdir):
