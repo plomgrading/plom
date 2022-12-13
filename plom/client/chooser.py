@@ -356,7 +356,7 @@ class Chooser(QDialog):
         log.info("Saving config file %s", cfgfile)
         try:
             cfgfile.parent.mkdir(exist_ok=True)
-            with open(cfgfile, "wb") as fh:
+            with open(cfgfile, "w") as fh:
                 tomlkit.dump(self.lastTime, fh)
         except OSError as e:
             WarnMsg(
