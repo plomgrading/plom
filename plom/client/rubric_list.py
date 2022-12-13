@@ -121,7 +121,6 @@ def render_params(template, params, ver):
     """Perform version-dependent substitutions on a template text."""
     s = template
     for param, values in params:
-        print((param, values, ver))
         s = s.replace(param, values[ver - 1])
     return s
 
@@ -1416,7 +1415,6 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
 
         TODO: use colours from the palette?
         """
-        print(f"enter hiliter: {txt}")
         # TODO: can we set a popup: "v2 value: 'x'"
         # reset format
         self.setFormat(0, len(txt), QTextCharFormat())
@@ -1575,7 +1573,9 @@ class AddRubricBox(QDialog):
         self._param_grid = QGridLayout()  # placeholder
         vlay.addLayout(self._param_grid)
         # some extra space at the bottom of the scope panel
-        vlay.addItem(QSpacerItem(32, 10, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding))
+        vlay.addItem(
+            QSpacerItem(32, 10, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+        )
         self.toggle_version_specific()
         self.toggle_scope_elements()
 
@@ -1714,12 +1714,10 @@ class AddRubricBox(QDialog):
         tc = self.TE.textCursor()
         s = self.TE.textCursor().anchor()
         e = self.TE.textCursor().position()
-        print((s, e))
         # save the selection as the new parameter value for this version
         values = ["" for _ in range(self.maxver)]
         if tc.hasSelection():
             values[self.version - 1] = tc.selectedText()
-        print(values)
         params.append([new_param, values])
         self.hiliter.setSubs([x for x, _ in params])
         self.TE.textCursor().insertText(new_param)
@@ -1734,7 +1732,7 @@ class AddRubricBox(QDialog):
     def subsRemakeGridUI(self, params):
         # discard the old grid and sub in a new one
         idx = self.scope_frame.layout().indexOf(self._param_grid)
-        print(f"discarding old grid at layout index {idx} to build new one")
+        # print(f"discarding old grid at layout index {idx} to build new one")
         layout = self.scope_frame.layout().takeAt(idx)
         for i in reversed(range(layout.count())):
             layout.itemAt(i).widget().deleteLater()
@@ -1747,7 +1745,7 @@ class AddRubricBox(QDialog):
     def get_parameters(self):
         """Extract the current parametric values from the UI."""
         idx = self.scope_frame.layout().indexOf(self._param_grid)
-        print(f"extracting parameters from grid at layout index {idx}")
+        # print(f"extracting parameters from grid at layout index {idx}")
         layout = self.scope_frame.layout().itemAt(idx)
         N = layout.rowCount()
         params = []
