@@ -1697,8 +1697,8 @@ class AddRubricBox(QDialog):
             ):
                 break
             n += 1
-        # TODO: if "tex:" maybe use alt:
-        # new_param = new_param_alt
+        if self.TE.toPlainText().startswith("tex:"):  # casefold?
+            new_param = new_param_alt
 
         # we insert the new parameter at the cursor/selection
         tc = self.TE.textCursor()
