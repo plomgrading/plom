@@ -1562,7 +1562,7 @@ class AddRubricBox(QDialog):
         vlay.addLayout(lay)
         if maxver > 1:
             s = "<p>By default, rubrics are shared between versions of a question."
-            s += "  You can also parameterize this rubric by making custom"
+            s += "  You can also parameterize this rubric by making"
             s += " version-specific substitutions.</p>"
         else:
             s = "<p>By default, rubrics are shared between versions of a question.</p>"
@@ -1572,7 +1572,10 @@ class AddRubricBox(QDialog):
         # Note: I often have problems with workwrapped QLabels taking
         # too much space, seems putting inside a QFrame fixed that!
         vlay.addWidget(label)
-        vlay.addLayout(QGridLayout())  # placeholder
+        self._param_grid = QGridLayout()  # placeholder
+        vlay.addLayout(self._param_grid)
+        # some extra space at the bottom of the scope panel
+        vlay.addItem(QSpacerItem(32, 10, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding))
         self.toggle_version_specific()
         self.toggle_scope_elements()
 
@@ -1729,17 +1732,23 @@ class AddRubricBox(QDialog):
         self.subsRemakeGridUI(params)
 
     def subsRemakeGridUI(self, params):
-        grid = self.subsMakeGridUI(params)
         # discard the old grid and sub in a new one
-        layout = self.scope_frame.layout().takeAt(3)  # ugh, magic number 3
+        idx = self.scope_frame.layout().indexOf(self._param_grid)
+        print(f"discarding old grid at layout index {idx} to build new one")
+        layout = self.scope_frame.layout().takeAt(idx)
         for i in reversed(range(layout.count())):
             layout.itemAt(i).widget().deleteLater()
         layout.deleteLater()
-        self.scope_frame.layout().addLayout(grid)
+        grid = self.subsMakeGridUI(params)
+        # self.scope_frame.layout().addLayout(grid)
+        self.scope_frame.layout().insertLayout(idx, grid)
+        self._param_grid = grid
 
     def get_parameters(self):
         """Extract the current parametric values from the UI."""
-        layout = self.scope_frame.layout().itemAt(3)  # ugh, magic number 3
+        idx = self.scope_frame.layout().indexOf(self._param_grid)
+        print(f"extracting parameters from grid at layout index {idx}")
+        layout = self.scope_frame.layout().itemAt(idx)
         N = layout.rowCount()
         params = []
         for r in range(1, N - 1):
