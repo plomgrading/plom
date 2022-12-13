@@ -1,4 +1,10 @@
-import toml
+import sys
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
 import copy
 import fitz
 from django.core.management.base import BaseCommand
@@ -57,7 +63,8 @@ class Command(BaseCommand):
                     settings.BASE_DIR / "SpecCreator" / "management" / "commands"
                 )
                 toml_path = curr_path / "demo_spec.toml"
-                data = toml.load(toml_path)
+                with open(toml_path, "rb") as tomal_file:
+                    data = tomllib.load(tomal_file)
                 pdf_path = curr_path / "demo_version1.pdf"
 
                 # upload reference PDF

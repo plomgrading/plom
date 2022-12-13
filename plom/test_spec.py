@@ -3,10 +3,14 @@
 
 from copy import deepcopy
 from pathlib import Path
+import sys
 
 from pytest import raises
-import toml
-from toml import TomlDecodeError
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 from plom import SpecVerifier, get_question_label
 
@@ -318,7 +322,7 @@ def test_spec_not_legacy_format():
         pages = [4]
         mark = 5
     """
-    A = toml.loads(old)
+    A = tomllib.loads(old)
     sv = SpecVerifier(A)
     sv.verify()
 
@@ -346,5 +350,5 @@ def test_spec_legacy_dupe_question_fails_to_load(tmpdir):
     """
     with open(tmpdir / "Fawlty.toml", "w") as f:
         f.write(old)
-    with raises(TomlDecodeError):
+    with raises(tomllib.TOMLDecodeError):
         SpecVerifier.from_toml_file(tmpdir / "Fawlty.toml")

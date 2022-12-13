@@ -39,7 +39,8 @@ client_install_requires = [
     "requests",
     "requests-toolbelt",
     "stdiomask>=0.0.6",
-    "toml>=0.10.0",
+    'tomli>=2.0.1 ; python_version<"3.11"',  # until we drop 3.10
+    "tomlkit>=0.11.4",
 ]
 
 server_install_requires = [
