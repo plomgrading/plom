@@ -444,3 +444,21 @@ def ID_get_predictions(self, *, predictor=None):
             "predictor": preidref.predictor,
         }
     return predictions
+
+
+def ID_delete_predictions(self, *, predictor=None):
+    """Remove the predictions for IDs, either from a particular predictor or all of them.
+
+    Keyword Args:
+        predictor (str/None): which predictor.  If not specified,
+            defaults to `None` which means all predictors.
+    """
+    if predictor:
+        log.info('deleting all predictions from "%s"', predictor)
+        query = IDPrediction.select().where(IDPrediction.predictor == predictor)
+    else:
+        log.info("deleting all predictions from all predictors")
+        query = IDPrediction.select()
+    for preidref in query:
+        print(preidref)
+        preidref.delete_instance()

@@ -292,6 +292,7 @@ class PlomDB:
         IDgetImageFromATest,
         IDreviewID,
         ID_get_predictions,
+        ID_delete_predictions,
     )
 
     from plom.db.db_mark import (

@@ -1044,11 +1044,26 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
         return True
 
-    def IDdeletePredictions(self):
+    def ID_delete_machine_predictions(self):
+        """Deletes the machine-learning predicted IDs for all papers."""
         with self.SRmutex:
             try:
                 response = self.delete(
                     "/ID/predictedID",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def ID_delete_predictions_from_predictor(self, *, predictor):
+        """Deletes the predicted IDs for one particular predictor."""
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    "/ID/predictedID/{predictor}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
