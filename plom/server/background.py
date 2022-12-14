@@ -15,9 +15,13 @@ from pathlib import Path
 from shlex import split
 import shutil
 import subprocess
+import sys
 import time
 
-import toml
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 from plom import Default_Port
 from plom import SpecVerifier
@@ -150,8 +154,8 @@ class PlomServer:
 
         oldloglen = len(self.get_logfile_lines())
 
-        with open(self.basedir / confdir / "serverDetails.toml") as f:
-            self.server_info = toml.load(f)
+        with open(self.basedir / confdir / "serverDetails.toml", "rb") as f:
+            self.server_info = tomllib.load(f)
 
         if self._pymp:
             self._server_proc = _PlomServerProcess(self.basedir)

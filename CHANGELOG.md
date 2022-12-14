@@ -11,13 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * "Tech preview" of a web-interface for configuring a Plom server.
 * Support for external databases.
+* Rubrics can be version-specific.
 
 ### Changed
 * Server stores annotation data in the database instead of in `.plom` files.
 * Client no longer has a "No Answer" button: instead use the "no answer given" rubric.
+* Support for non-ascii names is much improved.
+* Client: simulated slow network mode for testing/debugging.
 
 ### Fixed
 * Misc fixes.
+* Longer question labels are possible.
+* Long names can fit on the prenamed pages by auto-shrinking font.
 
 
 

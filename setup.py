@@ -39,19 +39,21 @@ client_install_requires = [
     "requests",
     "requests-toolbelt",
     "stdiomask>=0.0.6",
-    "toml>=0.10.0",
+    'tomli>=2.0.1 ; python_version<"3.11"',  # until we drop 3.10
+    "tomlkit>=0.11.4",
 ]
 
 server_install_requires = [
     "appdirs>=1.4.3",
     "canvasapi>=2.0.0",
     "exif>=1.2.2",
+    "fonttools>=4.37.1",
     "toml>=0.10.0",
     "tqdm",
     "numpy>=1.17.0",
     "pandas>=1.0.0",
     "passlib",
-    "pymupdf>=1.18.15",
+    "pymupdf>=1.21.0",
     "Pillow>=7.0.0",
     "aiohttp>=3.7.2",
     "weasyprint>=52.5",

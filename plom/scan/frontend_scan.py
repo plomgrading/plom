@@ -19,8 +19,13 @@ in the exam is less clear.  For these, see :py:module:`frontend_hwscan`.
 
 import logging
 from pathlib import Path
+import sys
 
-import toml
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+import tomlkit
 
 from plom.scan.sendUnknownsToServer import (
     upload_unknowns,
@@ -117,7 +122,7 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
         log.warning(m)
 
     with open(bundledir / "source.toml", "w") as f:
-        toml.dump({"file": str(pdf_fname), "md5": md5}, f)
+        tomlkit.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
     process_scans(pdf_fname, bundledir, not gamma, not extractbmp, demo=demo)
@@ -159,7 +164,8 @@ def uploadImages(
     These will not be uploaded unless the appropriate flags are set.
     """
     bundledir = Path("bundles") / bundle_name
-    info = toml.load(bundledir / "source.toml")
+    with open(bundledir / "source.toml", "rb") as f:
+        info = tomllib.load(f)
     md5 = info["md5"]
 
     logfile = bundledir / "processing.log"

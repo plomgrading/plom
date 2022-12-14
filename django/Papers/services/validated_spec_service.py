@@ -2,11 +2,12 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022 Brennen Chiu
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
 
-import toml
+import tomlkit
 
 from Papers.models import Specification
 from Papers.services import PaperInfoService
@@ -43,7 +44,7 @@ class SpecificationService:
         spec = self.get_the_spec()
         spec.pop("publicCode", None)
         spec.pop("privateSeed", None)
-        return toml.dumps(spec)
+        return tomlkit.dumps(spec)
 
     @transaction.atomic
     def store_validated_spec(self, validated_spec):

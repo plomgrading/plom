@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QGraphicsItem,
 )
 
-from plom.client.tools import CommandMoveItem
+from plom.client.tools import UndoStackMoveMixin
 from plom.client.tools.pen import CommandPen, PenItem
 
 
@@ -24,7 +24,7 @@ class CommandPenArrow(CommandPen):
         self.setText("PenArrow")
 
 
-class PenArrowItem(QGraphicsItemGroup):
+class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
     def __init__(self, path, style):
         super().__init__()
         self.saveable = True
@@ -90,12 +90,6 @@ class PenArrowItem(QGraphicsItemGroup):
         self.endf.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.endi.setBrush(QBrush(style["annot_color"]))
         self.endf.setBrush(QBrush(style["annot_color"]))
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-        return super().itemChange(change, value)
 
     # poorman's inheritance!
     pickle = PenItem.pickle

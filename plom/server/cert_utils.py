@@ -37,7 +37,7 @@ def build_self_signed_SSL_keys(dur=confdir, extra_args=""):
     sslcmd += " {}".format(extra_args)
 
     # TODO: is this the way to get two digit country code?
-    tmp = locale.getdefaultlocale()[0]
+    tmp = locale.getlocale()[0]
     if tmp:
         twodigcc = tmp[-2:]
     else:

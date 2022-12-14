@@ -367,7 +367,6 @@ class Annotator(QWidget):
             self.modeInformation.append((key, tab))
 
         # after grabbed mode information, reset rubric_widget
-        self.rubric_widget.reset()
         self.rubric_widget.setEnabled(False)
 
         del self.scene
@@ -386,6 +385,8 @@ class Annotator(QWidget):
         self,
         tgvID,
         question_label,
+        version,
+        max_version,
         testName,
         paperdir,
         saveName,
@@ -399,9 +400,12 @@ class Annotator(QWidget):
         Args:
             tgvID (str): Test-Group-Version ID code.  For example, for
                 Test #0027, group #13, version #2, we have `t0027g13v2`.
+                TODO: currently only `t0027g13`, no version, despite name.
             question_label (str): The name of the question we are
                 marking.  This is generally used for display only as
                 there is an integer for precise usage.
+            version (int): which version are we working on?
+            max_version (int): what is the largest version in this assessment?
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
             saveName (str/pathlib.Path): file name (and dir, optionally)
@@ -421,6 +425,8 @@ class Annotator(QWidget):
         """
         self.tgvID = tgvID
         self.question_num = int(re.split(r"\D+", tgvID)[-1])
+        self.version = version
+        self.max_version = max_version
         self.question_label = question_label
         self.testName = testName
         s = "{} of {}: {}".format(self.question_label, testName, tgvID)
@@ -449,7 +455,8 @@ class Annotator(QWidget):
         self.rubric_widget.changeMark(
             self.getScore(), self.getMarkingState(), self.maxMark
         )
-        self.rubric_widget.setQuestionNumber(self.question_num)
+        self.rubric_widget.setQuestion(self.question_num, self.question_label)
+        self.rubric_widget.setVersion(self.version, self.max_version)
         self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.
@@ -470,6 +477,8 @@ class Annotator(QWidget):
         # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
             self.unpickleIt(plomDict)
+            # restoring the scene would've marked it dirty
+            self.scene.reset_dirty()
         else:
             # if there is a held crop rectangle, then use it.
             if self.held_crop_rectangle_data:
@@ -747,10 +756,10 @@ class Annotator(QWidget):
                 log.error(s)
                 ErrorMsg(self, s).exec()
 
-        is_dirty = self.scene.areThereAnnotations()
+        has_annotations = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data, is_dirty
+            self, testNumber, self.src_img_data, page_data, has_annotations
         )
         # TODO: have rearrange react to new downloads
         # PC.download_finished.connect(rearrangeView.shake_things_up)
@@ -1604,11 +1613,11 @@ class Annotator(QWidget):
             return
 
         # We are here b/c of cancel button, titlebar close, or related
-        if self.scene and self.scene.areThereAnnotations():
+        if self.is_dirty():
             msg = SimpleQuestion(
                 self,
-                "<p>There are annotations on the page.</p>\n"
-                "<p>Do you want to discard them and close the annotator?</p>",
+                "<p>There are unsaved changes to the annotations.</p>\n"
+                "<p>Do you want to discard changes and close the annotator?</p>",
             )
             if msg.exec() == QMessageBox.No:
                 event.ignore()
@@ -1617,6 +1626,18 @@ class Annotator(QWidget):
         log.debug("emitting reject/cancel signal, discarding, and closing")
         self.annotator_done_reject.emit(self.tgvID)
         event.accept()
+
+    def is_dirty(self):
+        """Is the scene dirty?
+
+        Has the scene been annotated or changed this session? Re-opening
+        a previous annotated scene does not dirty it, until changes are
+        made. Changes could be made and then undone back to the clean state.
+        The concept should be familiar to "file saved" in a text editor.
+        """
+        if not self.scene:
+            return False
+        return self.scene.is_dirty()
 
     def get_nonrubric_text_from_page(self):
         """Retrieves text (not in rubrics) from the scene.

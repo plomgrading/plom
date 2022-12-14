@@ -474,7 +474,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
              <string>%</string>
             </property>
             <property name="value">
-             <double>42.500000000000000</double>
+             <double>42.000000000000000</double>
             </property>
            </widget>
           </item>

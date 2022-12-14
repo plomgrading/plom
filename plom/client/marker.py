@@ -21,6 +21,7 @@ from math import ceil
 import os
 from pathlib import Path
 import queue
+import random
 import tempfile
 from textwrap import shorten
 import time
@@ -86,6 +87,7 @@ class BackgroundUploader(QThread):
     uploadSuccess = pyqtSignal(str, int, int)
     uploadKnownFail = pyqtSignal(str, str)
     uploadUnknownFail = pyqtSignal(str, str)
+    queue_status_changed = pyqtSignal(int, int, int, int)
 
     def __init__(self, msgr):
         """Initialize a new uploader
@@ -95,12 +97,27 @@ class BackgroundUploader(QThread):
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
-                TODO: have caller do clone, for symmetry with downloader?
         """
         super().__init__()
         self.q = None
         self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
+        self.num_uploaded = 0
+        self.num_failed = 0
+        self.simulate_failures = False
+        # percentage of download attempts that will fail and an overall
+        # delay in seconds in a range (both are i.i.d. per retry).
+        # These are ignored unless simulate_failures is True.
+        self._simulate_failure_rate = 20.0
+        self._simulate_slow_net = (3, 8)
+
+    def enable_fail_mode(self):
+        log.info("fail mode ENABLED")
+        self.simulate_failures = True
+
+    def disable_fail_mode(self):
+        log.info("fail mode disabled")
+        self.simulate_failures = False
 
     def enqueueNewUpload(self, *args):
         """
@@ -123,6 +140,10 @@ class BackgroundUploader(QThread):
         """
         log.debug("upQ enqueuing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
+        n = 1 if self.is_upload_in_progress else 0
+        self.queue_status_changed.emit(
+            self.q.qsize(), n, self.num_uploaded, self.num_failed
+        )
 
     def queue_size(self):
         """Return the number of papers waiting or currently uploading."""
@@ -163,17 +184,34 @@ class BackgroundUploader(QThread):
             self.is_upload_in_progress = True
             # TODO: remove so that queue needs no knowledge of args
             code = data[0]
-            log.info("upQ thread: popped code {} from queue, uploading".format(code))
-            # For experimenting with slow uploads
-            # time.sleep(30)
-            upload(
-                self._msgr,
-                *data,
-                knownFailCallback=self.uploadKnownFail.emit,
-                unknownFailCallback=self.uploadUnknownFail.emit,
-                successCallback=self.uploadSuccess.emit,
+            log.info("upQ thread: popped code %s from queue, uploading", code)
+            self.queue_status_changed.emit(
+                self.q.qsize(), 1, self.num_uploaded, self.num_failed
             )
+            if self.simulate_failures:
+                simfail = random.random() <= self._simulate_failure_rate / 100
+                a, b = self._simulate_slow_net
+                # generate wait1 + wait2 \in (a, b)
+                wait = random.random() * (b - a) + a
+                time.sleep(wait)
+            if self.simulate_failures and simfail:
+                self.uploadUnknownFail.emit(code, "Simulated upload failure!")
+                self.num_failed += 1
+            else:
+                if upload(
+                    self._msgr,
+                    *data,
+                    knownFailCallback=self.uploadKnownFail.emit,
+                    unknownFailCallback=self.uploadUnknownFail.emit,
+                    successCallback=self.uploadSuccess.emit,
+                ):
+                    self.num_uploaded += 1
+                else:
+                    self.num_failed += 1
             self.is_upload_in_progress = False
+            self.queue_status_changed.emit(
+                self.q.qsize(), 0, self.num_uploaded, self.num_failed
+            )
 
         self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
@@ -223,7 +261,7 @@ def upload(
         successCallback: a function to call when we succeed.
 
     Returns:
-        None
+        bool: True for success, False for failure (either of the two).
 
     Raises:
         PlomSeriousException: elements in filenames do not correspond to
@@ -258,14 +296,15 @@ def upload(
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
         # probably previous call does not return: it forces a crash
-        return
+        return False
     except PlomException as ex:
         unknownFailCallback(task, str(ex))
-        return
+        return False
 
     numDone = msg[0]
     numTotal = msg[1]
     successCallback(task, numDone, numTotal)
+    return True
 
 
 class ExamQuestion:
@@ -928,7 +967,6 @@ class MarkerClient(QWidget):
         except PlomRangeException as err:
             ErrorMsg(self, str(err)).exec()
             return
-        self.ui.maxscoreLabel.setText(str(self.maxMark))
 
         # Get list of papers already marked and add to table.
         # also read these into the history variable
@@ -962,6 +1000,9 @@ class MarkerClient(QWidget):
             )
             self.backgroundUploader.uploadUnknownFail.connect(
                 self.backgroundUploadFailed
+            )
+            self.backgroundUploader.queue_status_changed.connect(
+                self.update_technical_stats_upload
             )
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
@@ -998,13 +1039,11 @@ class MarkerClient(QWidget):
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
-        # Paste the username, question and version into GUI.
-        self.ui.userLabel.setText(self.msgr.username)
         try:
             question_label = get_question_label(self.exam_spec, self.question)
         except (ValueError, KeyError):
             question_label = "???"
-        self.ui.infoBox.setTitle(
+        self.ui.labelTasks.setText(
             "Marking {} (ver. {}) of “{}”".format(
                 question_label, self.version, self.exam_spec["name"]
             )
@@ -1037,6 +1076,7 @@ class MarkerClient(QWidget):
         # self.ui.technicalButton.setStyleSheet("QToolButton { border: none; }")
         self.show_hide_technical()
         # self.force_update_technical_stats()
+        self.update_technical_stats_upload(0, 0, 0, 0)
 
     def connectGuiButtons(self):
         """
@@ -1506,6 +1546,14 @@ class MarkerClient(QWidget):
             "</p>"
         )
 
+    def update_technical_stats_upload(self, n, m, numup, failed):
+        if n == 0 and m == 0:
+            txt = "upload: idle"
+        else:
+            txt = f"upload: {n} queued, {m} inprogress"
+        txt += f", {numup} done, {failed} failed"
+        self.ui.labelTech3.setText(txt)
+
     def show_hide_technical(self):
         if self.ui.technicalButton.isChecked():
             self.ui.technicalButton.setText("Hide technical info")
@@ -1516,7 +1564,6 @@ class MarkerClient(QWidget):
                 f"QWidget {{ font-size: {0.7*ptsz}pt; }}"
             )
             # future use
-            self.ui.labelTech3.setVisible(False)
             self.ui.labelTech4.setVisible(False)
         else:
             self.ui.technicalButton.setText("Show technical info")
@@ -1525,13 +1572,21 @@ class MarkerClient(QWidget):
 
     def toggle_fail_mode(self):
         if self.ui.failmodeCB.isChecked():
+            self.Qapp.downloader.enable_fail_mode()
             r = self.Qapp.downloader._simulate_failure_rate
             a, b = self.Qapp.downloader._simulate_slow_net
-            self.ui.failmodeCB.setToolTip(f"delay ∈ [{a}s, {b}s], {r:0g}% retry")
-            self.Qapp.downloader.enable_fail_mode()
+            tip = f"download: delay ∈ [{a}s, {b}s], {r:0g}% retry"
+            if self.allowBackgroundOps:
+                self.backgroundUploader.enable_fail_mode()
+                r = self.backgroundUploader._simulate_failure_rate
+                a, b = self.backgroundUploader._simulate_slow_net
+                tip += f"\nupload delay ∈ [{a}s, {b}s], {r:0g}% fail"
+            self.ui.failmodeCB.setToolTip(tip)
         else:
             self.ui.failmodeCB.setToolTip("")
             self.Qapp.downloader.disable_fail_mode()
+            if self.allowBackgroundOps:
+                self.backgroundUploader.disable_fail_mode()
 
     def requestNextInBackgroundStart(self):
         """
@@ -1634,7 +1689,7 @@ class MarkerClient(QWidget):
 
         """
         annotator = Annotator(
-            self.ui.userLabel.text(),
+            self.msgr.username,
             parentMarkerUI=self,
             initialData=initialData,
         )
@@ -1742,13 +1797,15 @@ class MarkerClient(QWidget):
         # TODO: I dislike this packed-string: overdue for refactor
         assert task[5] == "g"
         question_num = int(task[6:])
-        tgv = task[1:]
+        taskid = task[1:]
         question_label = get_question_label(self.exam_spec, question_num)
         integrity_check = self.examModel.getIntegrityCheck(task)
         src_img_data = self.examModel.get_source_image_data(task)
         return (
-            tgv,
+            taskid,
             question_label,
+            self.version,
+            self.exam_spec["numberOfVersions"],
             exam_name,
             paperdir,
             aname,
