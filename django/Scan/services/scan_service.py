@@ -476,3 +476,9 @@ class ScanService:
         most_common_qr = counter.most_common(1)
         common_qr = most_common_qr[0][0]
         return common_qr
+
+    @transaction.atomic
+    def change_error_image_state(self, bundle, page_index):
+        task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
+        task.status = "complete"
+        task.save()

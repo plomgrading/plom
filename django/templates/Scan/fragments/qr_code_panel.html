@@ -11,6 +11,7 @@
             <a 
                 class="btn text-start"
                 style="background-color: lightgrey;"
+                hx-post="{% url 'change_error_state' timestamp index %}"
             >
             <i class="bi bi-file-earmark-check"></i>
             Set as good page image

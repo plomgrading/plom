@@ -11,7 +11,6 @@ from Base.base_group_views import ScannerRequiredView
 from Papers.services import ImageBundleService
 from Scan.services import ScanService
 from Scan.forms import FlagImageForm
-from Scan.models import ParseQR
 
 
 class ReadQRcodesView(ScannerRequiredView):
@@ -162,10 +161,5 @@ class BundleTableView(UpdateQRProgressView):
                 "paper_list": zip(paper_id, page_num, version_num),
             }
         )
-        # task = ParseQR.objects.get(bundle=bundle, page_index=index)
-        # task.status = "complete"
-        # task.save()
-        # task_status = scanner.get_qr_code_reading_status(bundle, index)
-        # # task_status = "complete"
-        # print(task_status)
+        
         return render(request, "Scan/fragments/bundle_table.html", context)
