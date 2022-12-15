@@ -33,7 +33,9 @@ def buildSpecialRubrics(spec, db):
         # Note: the precise "no answer given" string is repated in db_create.py
         rubric = {
             "kind": "absolute",
-            "delta": "0",
+            "delta": f"0 / {mx}",
+            "value": "0",
+            "out_of": mx,
             "text": "no answer given",
             "question": q,
             "meta": "Is this answer blank or nearly blank?  Please do not use "
@@ -46,7 +48,9 @@ def buildSpecialRubrics(spec, db):
 
         rubric = {
             "kind": "absolute",
-            "delta": "0",
+            "delta": f"0 / {mx}",
+            "value": "0",
+            "out_of": mx,
             "text": "no marks",
             "question": q,
             "meta": "There is writing here but its not sufficient for any points.",
@@ -58,7 +62,9 @@ def buildSpecialRubrics(spec, db):
 
         rubric = {
             "kind": "absolute",
-            "delta": "{}".format(mx),
+            "delta": f"{mx} / {mx}",
+            "value": "0",
+            "out_of": mx,
             "text": "full marks",
             "question": q,
         }
@@ -72,6 +78,8 @@ def buildSpecialRubrics(spec, db):
             # make positive delta
             rubric = {
                 "delta": "+{}".format(m),
+                "value": m,
+                "out_of": mx,
                 "text": ".",
                 "kind": "delta",
                 "question": q,
@@ -85,6 +93,8 @@ def buildSpecialRubrics(spec, db):
             # make negative delta
             rubric = {
                 "delta": "-{}".format(m),
+                "value": -m,
+                "out_of": mx,
                 "text": ".",
                 "kind": "delta",
                 "question": q,

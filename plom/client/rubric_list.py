@@ -52,9 +52,6 @@ from .rubric_wrangler import RubricWrangler
 
 log = logging.getLogger("annotr")
 
-abs_suffix = " / N"
-abs_suffix_length = len(abs_suffix)
-
 
 def isLegalRubric(mss, *, kind, delta, versions):
     """Checks the 'legality' of the current rubric - returning one of several possible states
@@ -169,6 +166,8 @@ class RubricTable(QTableWidget):
             "Versions",
             "Parameters",
             "Raw Text",
+            "Value",
+            "Out of",
         )
         self.setColumnCount(len(_col_headers))
         self.setHorizontalHeaderLabels(_col_headers)
@@ -178,6 +177,8 @@ class RubricTable(QTableWidget):
         self.hideColumn(5)
         self.hideColumn(6)
         self.hideColumn(7)
+        self.hideColumn(8)
+        self.hideColumn(9)
         # could use a subclass
         if self.tabType == "delta":
             self.hideColumn(3)
@@ -436,10 +437,7 @@ class RubricTable(QTableWidget):
         self.insertRow(rc)
         self.setItem(rc, 0, QTableWidgetItem(rubric["id"]))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
-        if rubric["kind"] == "absolute":
-            self.setItem(rc, 2, QTableWidgetItem(rubric["delta"] + abs_suffix))
-        else:
-            self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
+        self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
 
         # how to access version?  and where to store this function?
         render = render_params(
@@ -450,6 +448,8 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 5, QTableWidgetItem(json.dumps(rubric["versions"])))
         self.setItem(rc, 6, QTableWidgetItem(json.dumps(rubric["parameters"])))
         self.setItem(rc, 7, QTableWidgetItem(rubric["text"]))
+        self.setItem(rc, 8, QTableWidgetItem(rubric["value"]))
+        self.setItem(rc, 9, QTableWidgetItem(rubric["out_of"]))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -491,13 +491,13 @@ class RubricTable(QTableWidget):
         for rb in rubrics:
             # take the manager generated delta rubrics
             if rb["username"] == "manager" and rb["kind"] == "delta":
-                if (positive and int(rb["delta"]) > 0) or (
-                    not positive and int(rb["delta"]) < 0
+                if (positive and int(rb["value"]) > 0) or (
+                    not positive and int(rb["value"]) < 0
                 ):
                     delta_rubrics.append(rb)
 
         # now sort in numerical order away from 0 and add
-        for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["delta"]))):
+        for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["value"]))):
             self.appendNewRubric(rb)
         # finally append the manager-created absolute rubrics
         for rb in rubrics:
@@ -613,11 +613,7 @@ class RubricTable(QTableWidget):
             if r is None:  # there is nothing unhidden here.
                 return
             self.selectRubricByRow(r)
-        # recall columns are ["Key", "Username", "Delta", "Text", "Kind"])
-        # absolute rubrics have trailing suffix - remove before sending signal
-        delta = self.item(r, 2).text()
-        if self.item(r, 4).text() == "absolute":
-            delta = self.item(r, 2).text()[:-abs_suffix_length]
+        delta = self.item(r, 8).text()
 
         self._parent.rubricSignal.emit(  # send delta, text, rubricID, kind
             [
@@ -641,7 +637,6 @@ class RubricTable(QTableWidget):
         return None
 
     def colourLegalRubric(self, r, mss):
-        # recall columns are "Key", "Username", "Delta", "Text", "Kind", "Versions"
         legal = isLegalRubric(
             mss,
             kind=self.item(r, 4).text(),
@@ -690,6 +685,8 @@ class RubricTable(QTableWidget):
                 self.item(r, 5).setText(json.dumps(new_rubric["versions"]))
                 self.item(r, 6).setText(json.dumps(new_rubric["parameters"]))
                 self.item(r, 7).setText(new_rubric["text"])
+                self.item(r, 8).setText(new_rubric["value"])
+                self.item(r, 9).setText(new_rubric["out_of"])
 
                 # update the legality
                 self.colourLegalRubric(r, mss)
@@ -1837,6 +1834,8 @@ class AddRubricBox(QDialog):
             "id": rubricID,
             "kind": kind,
             "delta": dlt,
+            "value": dlt,
+            "out_of": "0",  # TODO
             "text": txt,
             "tags": tag,
             "meta": meta,
