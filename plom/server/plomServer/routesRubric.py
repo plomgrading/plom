@@ -29,7 +29,7 @@ class RubricHandler:
             bool: true if valid, false otherwise.
         """
         # check rubric has minimal fields needed
-        need_fields = ("kind", "delta", "text", "question")
+        need_fields = ("kind", "value", "display_delta", "text", "question")
         if any(x not in rubric for x in need_fields):
             return False
         # check question number is in range
@@ -41,9 +41,10 @@ class RubricHandler:
         # set maxMark for checking marks are in range.
         maxMark = self.server.testSpec["question"][str(rubric["question"])]["mark"]
 
+        # TODO: should we enforce value=0/None?
         if rubric["kind"] == "neutral":
             # neutral rubric must have no delta - ie delta == '.'
-            if rubric["delta"] != ".":
+            if rubric["display_delta"] != ".":
                 return False
             # must have some text
             if len(rubric["text"].strip()) == 0:
@@ -54,13 +55,13 @@ class RubricHandler:
             if len(rubric["text"].strip()) == 0:
                 return False
             # the delta must be of the form -k or +k
-            if rubric["delta"][0] not in ["-", "+"]:
+            if rubric["display_delta"][0] not in ["-", "+"]:
                 return False
             # check rest of delta string is numeric
-            if not rubric["delta"][1:].isnumeric():
+            if not rubric["display_delta"][1:].isnumeric():
                 return False
             # check delta is in range
-            idelta = int(rubric["delta"])
+            idelta = int(rubric["display_delta"])
             if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
                 return False
 
@@ -72,12 +73,12 @@ class RubricHandler:
             if rubric["text"] != ".":
                 return False
             # the delta must be of the form -k or +k
-            if rubric["delta"][0] not in ["-", "+"]:
+            if rubric["display_delta"][0] not in ["-", "+"]:
                 return False
-            # check rest of delta string is numeric
-            if not rubric["delta"][1:].isnumeric():
+            # check rest of display delta string is numeric
+            if not rubric["display_delta"][1:].isnumeric():
                 return False
-            idelta = int(rubric["delta"])
+            idelta = int(rubric["display_delta"])
             if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
                 return False
 

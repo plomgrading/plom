@@ -11,13 +11,13 @@ from plom.client.tools.text import UndoStackMoveTextMixin
 
 
 class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
-    def __init__(self, pt, value, delta, style, fontsize=10):
+    def __init__(self, pt, value, display_delta, style, fontsize=10):
         super().__init__()
         self.saveable = True
-        self.delta = delta
+        self.display_delta = display_delta
         self.value = value
         self.restyle(style)
-        self.setPlainText(" {} ".format(self.delta))
+        self.setPlainText(" {} ".format(self.display_delta))
         font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
         font.setPixelSize(round(1.25 * fontsize))
@@ -57,22 +57,22 @@ class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         return [
             "Delta",
             self.value,
-            self.delta,
+            self.display_delta,
             self.scenePos().x(),
             self.scenePos().y() - self.offset,
         ]
 
 
 class GhostDelta(QGraphicsTextItem):
-    def __init__(self, delta, fontsize=10, legal=True):
+    def __init__(self, display_delta, fontsize=10, legal=True):
         super().__init__()
-        self.delta = delta
+        self.display_delta = display_delta
         if legal:
             self.setDefaultTextColor(Qt.blue)
         else:
             self.setDefaultTextColor(Qt.lightGray)
 
-        self.setPlainText(" {} ".format(self.delta))
+        self.setPlainText(" {} ".format(self.display_delta))
         font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
         font.setPixelSize(round(1.25 * fontsize))
@@ -81,9 +81,9 @@ class GhostDelta(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def changeDelta(self, dlt, legal=True):
-        self.delta = dlt
-        self.setPlainText(" {} ".format(self.delta))
+    def changeDelta(self, display_delta, legal=True):
+        self.display_delta = display_delta
+        self.setPlainText(" {} ".format(self.display_delta))
         if legal:
             self.setDefaultTextColor(Qt.blue)
         else:

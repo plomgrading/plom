@@ -13,7 +13,7 @@ from plom.client.tools.text import GhostText, TextItem
 
 
 class CommandGroupDeltaText(CommandTool):
-    """A group of delta and text.
+    """A group of marks and text.
 
     Command to do a delta and a textitem together (a "rubric" or
     "saved comment").
@@ -21,12 +21,12 @@ class CommandGroupDeltaText(CommandTool):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, rid, kind, value, delta, text):
+    def __init__(self, scene, pt, rid, kind, value, display_delta, text):
         super().__init__(scene)
         self.gdt = GroupDeltaTextItem(
             pt,
             value,
-            delta,
+            display_delta,
             text,
             rid,
             kind,
@@ -76,14 +76,16 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, value, delta, text, rid, kind, *, _scene, style, fontsize):
+    def __init__(
+        self, pt, value, display_delta, text, rid, kind, *, _scene, style, fontsize
+    ):
         super().__init__()
         self.pt = pt
         self.style = style
         self.rubricID = rid
         self.kind = kind
         # centre under click
-        self.di = DeltaItem(pt, value, delta, style=style, fontsize=fontsize)
+        self.di = DeltaItem(pt, value, display_delta, style=style, fontsize=fontsize)
         self.blurb = TextItem(
             pt,
             text,
@@ -104,9 +106,9 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.blurb.textToPng()
 
         # move blurb so that its top-left corner is next to top-right corner of delta.
-        self.tweakPositions(delta, text)
+        self.tweakPositions(display_delta, text)
         # hide delta if trivial
-        if delta == ".":  # hide the delta
+        if display_delta == ".":
             self.di.setVisible(False)
         else:
             self.di.setVisible(True)
@@ -128,7 +130,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.blurb.restyle(style)
         self.di.restyle(style)
 
-    def tweakPositions(self, delta, text):
+    def tweakPositions(self, display_delta, text):
         pt = self.pt
         self.blurb.setPos(pt)
         self.di.setPos(pt)
@@ -136,8 +138,8 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         # cr = self.di.boundingRect()
         # self.blurb.moveBy(cr.width() + 5, 0)
 
-        # if no delta, then move things accordingly
-        if delta == ".":
+        # if no display_delta, then move things accordingly
+        if display_delta == ".":
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -cr.height() / 2)
         elif text == ".":
@@ -156,7 +158,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.rubricID,
             self.kind,
             self.di.value,
-            self.di.delta,
+            self.di.display_delta,
             self.blurb.getContents(),
         ]
 
@@ -192,23 +194,23 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
 
 class GhostComment(QGraphicsItemGroup):
-    def __init__(self, dlt, txt, fontsize):
+    def __init__(self, display_delta, txt, fontsize):
         super().__init__()
-        self.di = GhostDelta(dlt, fontsize)
+        self.di = GhostDelta(display_delta, fontsize)
         self.rubricID = "987654"  # a dummy value
         self.kind = "relative"  # another dummy value
         self.blurb = GhostText(txt, fontsize)
-        self.changeComment(dlt, txt)
+        self.changeComment(display_delta, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def tweakPositions(self, dlt, txt):
+    def tweakPositions(self, display_delta, txt):
         """Adjust the positions of the delta and text depending on their size and ontent."""
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
 
         # if no delta, then move things accordingly
-        if dlt == ".":
+        if display_delta == ".":
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -cr.height() / 2)
         elif txt == ".":
@@ -219,16 +221,16 @@ class GhostComment(QGraphicsItemGroup):
             self.di.moveBy(0, -cr.height() / 2)
             self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
-    def changeComment(self, dlt, txt, legal=True):
+    def changeComment(self, display_delta, txt, legal=True):
         # need to force a bounding-rect update by removing an item and adding it back
         self.removeFromGroup(self.di)
         self.removeFromGroup(self.blurb)
         # change things
-        self.di.changeDelta(dlt, legal)
+        self.di.changeDelta(display_delta, legal)
         self.blurb.changeText(txt, legal)
         # move to correct positions
-        self.tweakPositions(dlt, txt)
-        if dlt == ".":  # hide the delta
+        self.tweakPositions(display_delta, txt)
+        if display_delta == ".":  # hide the delta
             self.di.setVisible(False)
         else:
             self.di.setVisible(True)

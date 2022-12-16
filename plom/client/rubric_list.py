@@ -161,7 +161,7 @@ class RubricTable(QTableWidget):
         _col_headers = (
             "Key",
             "Username",
-            "Delta",
+            "Display_Delta",
             "Text",
             "Kind",
             "Versions",
@@ -438,7 +438,7 @@ class RubricTable(QTableWidget):
         self.insertRow(rc)
         self.setItem(rc, 0, QTableWidgetItem(rubric["id"]))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
-        self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
+        self.setItem(rc, 2, QTableWidgetItem(rubric["display_delta"]))
 
         # how to access version?  and where to store this function?
         render = render_params(
@@ -676,7 +676,7 @@ class RubricTable(QTableWidget):
         for r in range(self.rowCount()):
             if self.item(r, 0).text() == new_rubric["id"]:
                 self.item(r, 1).setText(new_rubric["username"])
-                self.item(r, 2).setText(new_rubric["delta"])
+                self.item(r, 2).setText(new_rubric["display_delta"])
                 # how to access version?  and where to store this function?
                 render = render_params(
                     new_rubric["text"], new_rubric["parameters"], self._parent.version
@@ -976,7 +976,7 @@ class RubricWidget(QWidget):
             # We truncate the list to this many
             display_at_most = 12
             for n, r in enumerate(diff):
-                delta = ".&nbsp;" if r["delta"] == "." else r["delta"]
+                delta = ".&nbsp;" if r["display_delta"] == "." else r["display_delta"]
                 text = html.escape(shorten(r["text"], 36, placeholder=ell))
                 render = f"<li><tt>{delta}</tt> <i>&ldquo;{text}&rdquo;</i>&nbsp; by {r['username']}</li>"
                 if n < (display_at_most - 1):
@@ -1827,17 +1827,17 @@ class AddRubricBox(QDialog):
             kind = "neutral"
             value = "0"
             out_of = "0"
-            dlt = "."
+            display_delta = "."
         elif self.typeRB_relative.isChecked():
             kind = "relative"
             value = str(self.SB.textFromValue(self.SB.value()))
             out_of = "0"
-            dlt = value  # consider put the +/- on here?
+            display_delta = value  # consider put the +/- on here?
         elif self.typeRB_absolute.isChecked():
             kind = "absolute"
             value = self.rubric_value_SB.text()  # float/int
             out_of = self.rubric_out_of_SB.text()
-            dlt = f"{value} / {out_of}"
+            display_delta = f"{value} / {out_of}"
         else:
             raise RunTimeError("no radio was checked")
         username = self.Luser.text().strip()
@@ -1857,7 +1857,7 @@ class AddRubricBox(QDialog):
         return {
             "id": rubricID,
             "kind": kind,
-            "delta": dlt,
+            "display_delta": display_delta,
             "value": value,
             "out_of": out_of,
             "text": txt,

@@ -33,7 +33,7 @@ def buildSpecialRubrics(spec, db):
         # Note: the precise "no answer given" string is repated in db_create.py
         rubric = {
             "kind": "absolute",
-            "delta": f"0 / {mx}",
+            "display_delta": f"0 / {mx}",
             "value": "0",
             "out_of": mx,
             "text": "no answer given",
@@ -48,7 +48,7 @@ def buildSpecialRubrics(spec, db):
 
         rubric = {
             "kind": "absolute",
-            "delta": f"0 / {mx}",
+            "display_delta": f"0 / {mx}",
             "value": "0",
             "out_of": mx,
             "text": "no marks",
@@ -62,7 +62,7 @@ def buildSpecialRubrics(spec, db):
 
         rubric = {
             "kind": "absolute",
-            "delta": f"{mx} / {mx}",
+            "display_delta": f"{mx} / {mx}",
             "value": "0",
             "out_of": mx,
             "text": "full marks",
@@ -77,7 +77,7 @@ def buildSpecialRubrics(spec, db):
         for m in range(1, mx + 1):
             # make positive delta
             rubric = {
-                "delta": "+{}".format(m),
+                "display_delta": "+{}".format(m),
                 "value": m,
                 "out_of": mx,
                 "text": ".",
@@ -92,7 +92,7 @@ def buildSpecialRubrics(spec, db):
             log.info("Built delta-rubric +%d for Q%s: %s", m, q, key_or_err)
             # make negative delta
             rubric = {
-                "delta": "-{}".format(m),
+                "display_delta": "-{}".format(m),
                 "value": -m,
                 "out_of": mx,
                 "text": ".",
