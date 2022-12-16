@@ -82,18 +82,15 @@ class RubricHandler:
                 return False
 
         elif rubric["kind"] == "absolute":
-            # only HAL and manager can create absolute rubrics - this may change in the future
-            if username not in ["HAL", "manager"]:
-                return False
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
             # must have numeric delta
-            if not rubric["delta"].isnumeric():
+            if not rubric["value"].isnumeric():
                 return False
             # check score in range
-            idelta = int(rubric["delta"])
-            if (idelta < 0) or (idelta > maxMark):
+            value = int(rubric["value"])
+            if (value < 0) or (value > maxMark):
                 return False
 
         else:  # rubric kind must be neutral, relative, delta or absolute

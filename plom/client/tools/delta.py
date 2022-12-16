@@ -11,10 +11,11 @@ from plom.client.tools.text import UndoStackMoveTextMixin
 
 
 class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
-    def __init__(self, pt, delta, style, fontsize=10):
+    def __init__(self, pt, value, delta, style, fontsize=10):
         super().__init__()
         self.saveable = True
         self.delta = delta
+        self.value = value
         self.restyle(style)
         self.setPlainText(" {} ".format(self.delta))
         font = QFont("Helvetica")
@@ -51,9 +52,11 @@ class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         # paint the normal TextItem with the default 'paint' method
         super().paint(painter, option, widget)
 
-    def pickle(self):
+    def _pickle(self):
+        # TODO: I don't think these are pickled directly anymore (?)
         return [
             "Delta",
+            self.value,
             self.delta,
             self.scenePos().x(),
             self.scenePos().y() - self.offset,

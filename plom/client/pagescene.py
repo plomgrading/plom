@@ -494,6 +494,7 @@ class PageScene(QGraphicsScene):
 
         # Set a mark-delta, rubric-text and rubric-delta.
         self.rubricText = ""
+        self.rubricValue = "0"
         self.rubricDelta = "0"
         self.rubricID = None
         self.rubricKind = ""
@@ -1394,6 +1395,7 @@ class PageScene(QGraphicsScene):
                 pt,
                 self.rubricID,
                 self.rubricKind,
+                self.rubricValue,
                 self.rubricDelta,
                 self.rubricText,
             )
@@ -2257,6 +2259,7 @@ class PageScene(QGraphicsScene):
                 event.scenePos(),
                 self.rubricID,
                 self.rubricKind,
+                self.rubricValue,
                 self.rubricDelta,
                 self.rubricText,
             )
@@ -2517,12 +2520,13 @@ class PageScene(QGraphicsScene):
             )
             raise PlomInconsistentRubricsException
 
-    def changeTheRubric(self, delta, text, rubricID, rubricKind):
+    def changeTheRubric(self, value, delta, text, rubricID, rubricKind):
         """
         Changes the new rubric for the paper based on the delta and text.
 
         Args:
-            delta (str): a string containing the delta integer.
+            value (str): TODO should be int/float?
+            delta (str): a string displaying the value of the rubric.
             text (str): the text in the rubric.
             rubricID (int): the id of the rubric.
             rubricKind (str): ``"absolute"``, ``"neutral"``, etc.
@@ -2530,6 +2534,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
+        self.rubricValue = value
         self.rubricDelta = delta
         self.rubricText = text
         self.rubricID = rubricID

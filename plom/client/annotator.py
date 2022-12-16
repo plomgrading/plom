@@ -1297,8 +1297,10 @@ class Annotator(QWidget):
         """Pass rubric ID, delta, text, etc to the scene.
 
         Args:
-            dlt_txt (tuple): the delta, string of text, rubric_id, and
-                kind, e.g., `[-2, "missing chain rule", 12345, "relative"]`
+            dlt_txt (tuple): the value, display delta, string of text, rubric_id,
+                and kind.  Examples:
+                `[-2, "-2", "missing chain rule", 1234, "relative"]`
+                `[2, "2 / 3", "used chain rule", 1235, "absolute"]`
 
         Returns:
             None: Modifies self.scene

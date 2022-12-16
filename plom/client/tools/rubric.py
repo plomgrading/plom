@@ -21,10 +21,11 @@ class CommandGroupDeltaText(CommandTool):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, rid, kind, delta, text):
+    def __init__(self, scene, pt, rid, kind, value, delta, text):
         super().__init__(scene)
         self.gdt = GroupDeltaTextItem(
             pt,
+            value,
             delta,
             text,
             rid,
@@ -44,10 +45,10 @@ class CommandGroupDeltaText(CommandTool):
         """
         assert X[0] == "GroupDeltaText"
         X = X[1:]
-        if len(X) != 6:
+        if len(X) != 7:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4], X[5])
+        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4], X[5], X[6])
 
     def redo(self):
         self.scene.addItem(self.gdt)
@@ -75,14 +76,14 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, text, rid, kind, *, _scene, style, fontsize):
+    def __init__(self, pt, value, delta, text, rid, kind, *, _scene, style, fontsize):
         super().__init__()
         self.pt = pt
         self.style = style
         self.rubricID = rid
         self.kind = kind
         # centre under click
-        self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
+        self.di = DeltaItem(pt, value, delta, style=style, fontsize=fontsize)
         self.blurb = TextItem(
             pt,
             text,
@@ -154,6 +155,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.pt.y() + self.y(),
             self.rubricID,
             self.kind,
+            self.di.value,
             self.di.delta,
             self.blurb.getContents(),
         ]
@@ -175,27 +177,18 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         super().paint(painter, option, widget)
 
     def sign_of_delta(self):
-        if self.di.delta == ".":
+        if int(self.di.value) == 0:
             return 0
-        elif int(self.di.delta) == 0:
-            return 0
-        elif int(self.di.delta) > 0:
+        elif int(self.di.value) > 0:
             return 1
         else:
             return -1
 
     def is_delta_positive(self):
-        if self.di.delta == ".":
-            return False
-        if int(self.di.delta) <= 0:
-            return False
-        return True
+        return int(self.di.value) > 0
 
     def get_delta_value(self):
-        if self.di.delta == ".":
-            return 0
-        else:
-            return int(self.di.delta)
+        return int(self.di.value)
 
 
 class GhostComment(QGraphicsItemGroup):

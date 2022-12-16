@@ -32,6 +32,7 @@ from PyQt5.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QRadioButton,
     QToolButton,
     QSizePolicy,
     QSpacerItem,
@@ -613,11 +614,11 @@ class RubricTable(QTableWidget):
             if r is None:  # there is nothing unhidden here.
                 return
             self.selectRubricByRow(r)
-        delta = self.item(r, 8).text()
 
-        self._parent.rubricSignal.emit(  # send delta, text, rubricID, kind
+        self._parent.rubricSignal.emit(  # send value, delta, text, rubricID, kind
             [
-                delta,
+                self.item(r, 8).text(),
+                self.item(r, 2).text(),
                 self.item(r, 3).text(),
                 self.item(r, 0).text(),
                 self.item(r, 4).text(),
@@ -1483,15 +1484,11 @@ class AddRubricBox(QDialog):
         self.TE = QTextEdit()
         self.hiliter = SubstitutionsHighlighter(self.TE)
         self.SB = SignedSB(maxMark)
-        self.DE = QCheckBox("enabled")
-        self.DE.setCheckState(Qt.Checked)
-        self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QLineEdit()
         self.TEmeta = QTextEdit()
         # cannot edit these
         self.label_rubric_id = QLabel("Will be auto-assigned")
         self.Luser = QLabel()
-        self.label_kind = QLabel("(relative)")
 
         sizePolicy = QSizePolicy(
             QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
@@ -1512,13 +1509,44 @@ class AddRubricBox(QDialog):
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.reapable_CB.setSizePolicy(sizePolicy)
         flay.addRow("", lay)
+
+        frame = QFrame()
+        vlay = QVBoxLayout(frame)
+        vlay.setContentsMargins(0, 0, 0, 0)
+        b = QRadioButton("neutral")
+        b.setToolTip("more of a comment, this rubric does not change the mark")
+        b.setChecked(True)
+        vlay.addWidget(b)
+        self.typeRB_neutral = b
         lay = QHBoxLayout()
-        lay.addWidget(self.DE)
+        b = QRadioButton("relative")
+        b.setToolTip("changes the mark up or down by some number of points")
+        lay.addWidget(b)
+        self.typeRB_relative = b
+        # lay.addWidget(self.DE)
         lay.addWidget(self.SB)
         lay.addItem(QSpacerItem(16, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        lay.addWidget(self.label_kind)
         lay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
-        flay.addRow("Delta mark", lay)
+        vlay.addLayout(lay)
+        hlay = QHBoxLayout()
+        b = QRadioButton("absolute")
+        # b.setToolTip("TODO")
+        hlay.addWidget(b)
+        self.typeRB_absolute = b
+        _ = QSpinBox()
+        _.setRange(0, maxMark)
+        _.setValue(0)
+        hlay.addWidget(_)
+        self.rubric_value_SB = _
+        hlay.addWidget(QLabel("out of"))
+        _ = QSpinBox()
+        _.setRange(0, maxMark)
+        _.setValue(maxMark)
+        hlay.addWidget(_)
+        self.rubric_out_of_SB = _
+        hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        vlay.addLayout(hlay)
+        flay.addRow("Marks", frame)
 
         # scope
         self.scopeButton = QToolButton()
@@ -1612,13 +1640,18 @@ class AddRubricBox(QDialog):
             if com["meta"]:
                 self.TEmeta.clear()
                 self.TEmeta.insertPlainText(com["meta"])
-            if com["delta"]:
-                if com["delta"] in [".", 0, "0"]:
-                    # part of fixing #1561 - delta-spinbox was set to 0.
-                    self.SB.setValue(1)
-                    self.DE.setCheckState(Qt.Unchecked)
+            if com["kind"]:
+                if com["kind"] == "neutral":
+                    self.typeRB_neutral.setChecked(True)
+                elif com["kind"] == "relative":
+                    self.SB.setValue(int(com["value"]))
+                    self.typeRB_relative.setChecked(True)
+                elif com["kind"] == "absolute":
+                    self.rubric_value_SB.setValue(int(com["value"]))
+                    self.rubric_out_of_SB.setValue(int(com["out_of"]))
+                    self.typeRB_absolute.setChecked(True)
                 else:
-                    self.SB.setValue(int(com["delta"]))
+                    raise RuntimeError(f"unexpected kind in {com}")
             if com["id"]:
                 self.label_rubric_id.setText(str(com["id"]))
             if com["username"]:
@@ -1758,17 +1791,6 @@ class AddRubricBox(QDialog):
         self.TE.clear()
         self.TE.insertPlainText(self.reapable_CB.currentText())
 
-    def toggleSB(self):
-        if self.DE.checkState() == Qt.Checked:
-            self.SB.setEnabled(True)
-            self.label_kind.setText("(relative)")
-            # a fix for #1561 - we need to make sure delta is not zero when we enable deltas
-            if self.SB.value() == 0:
-                self.SB.setValue(1)
-        else:
-            self.label_kind.setText("(neutral)")
-            self.SB.setEnabled(False)
-
     def toggle_version_specific(self):
         if self.version_specific_cb.isChecked():
             self.version_specific_le.setText(str(self.version))
@@ -1796,26 +1818,29 @@ class AddRubricBox(QDialog):
         if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
             WarnMsg(self, "Your rubric must contain some text.").exec()
             return
-        # make sure that when delta-enabled we dont have delta=0
-        # part of fixing #1561
-        if self.SB.value() == 0 and self.DE.checkState() == Qt.Checked:
-            WarnMsg(
-                self,
-                "If 'Delta mark' is checked then the rubric cannot have a delta of zero.",
-            ).exec()
-            return
-
         self.accept()
 
     def gimme_rubric_data(self):
-        if self.DE.checkState() == Qt.Checked:
-            dlt = str(self.SB.textFromValue(self.SB.value()))
-        else:
-            dlt = "."
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
         tag = self.TEtag.text().strip()
         meta = self.TEmeta.toPlainText().strip()
-        kind = self.label_kind.text().strip(" ()")
+        if self.typeRB_neutral.isChecked():
+            kind = "neutral"
+            value = "0"
+            out_of = "0"
+            dlt = "."
+        elif self.typeRB_relative.isChecked():
+            kind = "relative"
+            value = str(self.SB.textFromValue(self.SB.value()))
+            out_of = "0"
+            dlt = value  # consider put the +/- on here?
+        elif self.typeRB_absolute.isChecked():
+            kind = "absolute"
+            value = self.rubric_value_SB.text()  # float/int
+            out_of = self.rubric_out_of_SB.text()
+            dlt = f"{value} / {out_of}"
+        else:
+            raise RunTimeError("no radio was checked")
         username = self.Luser.text().strip()
         # only meaningful if we're modifying
         rubricID = self.label_rubric_id.text().strip()
@@ -1834,8 +1859,8 @@ class AddRubricBox(QDialog):
             "id": rubricID,
             "kind": kind,
             "delta": dlt,
-            "value": dlt,
-            "out_of": "0",  # TODO
+            "value": value,
+            "out_of": out_of,
             "text": txt,
             "tags": tag,
             "meta": meta,
