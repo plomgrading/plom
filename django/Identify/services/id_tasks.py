@@ -91,7 +91,10 @@ class IdentifyTaskService:
         Claim an ID task for a user.
         """
 
-        task = PaperIDTask.objects.get(paper__paper_number=paper_number)
+        try:
+            task = PaperIDTask.objects.get(paper__paper_number=paper_number)
+        except PaperIDTask.DoesNotExist:
+            raise RuntimeError(f"Task with paper number {paper_number} does not exist.")
 
         if task.status == "out":
             raise RuntimeError("Task is currently assigned.")
