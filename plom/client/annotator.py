@@ -363,7 +363,7 @@ class Annotator(QWidget):
             if key is None:
                 # Maybe row hidden (illegal) but scene knows it in the blue
                 # ghost.  Fixes #1599.  Still None if scene didn't know.
-                key = self.scene.rubricID
+                key = self.scene.get_current_rubric_id()
             self.modeInformation.append((key, tab))
 
         # after grabbed mode information, reset rubric_widget
@@ -1293,14 +1293,12 @@ class Annotator(QWidget):
                 X.setChecked(False)
                 X.setAutoExclusive(True)
 
-    def handleRubric(self, dlt_txt):
-        """Pass rubric ID, delta, text, etc to the scene.
+    def handleRubric(self, rubric):
+        """Pass a rubric dict onward to the scene, if we have a scene.
 
         Args:
-            dlt_txt (tuple): the value, display delta, string of text, rubric_id,
-                and kind.  Examples:
-                `[-2, "-2", "missing chain rule", 1234, "relative"]`
-                `[2, "2 / 3", "used chain rule", 1235, "absolute"]`
+            rubric (dict): we don't care what's in it: that's for the scene
+                and the rubric widget to agree on!
 
         Returns:
             None: Modifies self.scene
@@ -1308,7 +1306,7 @@ class Annotator(QWidget):
         self.setToolMode("rubric")
         # TODO: move to "args"/"extra" kwarg of setToolMode when we add that
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheRubric(*dlt_txt)
+            self.scene.changeTheRubric(rubric)
 
     def loadWindowSettings(self):
         """Loads the window settings."""

@@ -607,7 +607,7 @@ class RubricTable(QTableWidget):
         self.handleClick()
 
     def handleClick(self):
-        # When an item is clicked, grab the details and emit rubric signal [key, delta, text]
+        # When an item is clicked, grab the details and emit rubric signal
         r = self.getCurrentRubricRow()
         if r is None:
             r = self.firstUnhiddenRow()
@@ -615,14 +615,14 @@ class RubricTable(QTableWidget):
                 return
             self.selectRubricByRow(r)
 
-        self._parent.rubricSignal.emit(  # send value, delta, text, rubricID, kind
-            [
-                self.item(r, 8).text(),
-                self.item(r, 2).text(),
-                self.item(r, 3).text(),
-                self.item(r, 0).text(),
-                self.item(r, 4).text(),
-            ]
+        self._parent.rubricSignal.emit(
+            {
+                "value": self.item(r, 8).text(),
+                "display_delta": self.item(r, 2).text(),
+                "text": self.item(r, 3).text(),
+                "id": self.item(r, 0).text(),
+                "kind": self.item(r, 4).text(),
+            }
         )
 
     def firstUnhiddenRow(self):
@@ -740,9 +740,8 @@ class TabBarWithAddRenameRemoveContext(QTabBar):
 class RubricWidget(QWidget):
     """The RubricWidget is a multi-tab interface for displaying, choosing and managing rubrics."""
 
-    # This is picked up by the annotator and tells is what is
-    # the current comment and delta
-    rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, kind]
+    # This is picked up by the annotator to tell the scene the current rubric
+    rubricSignal = pyqtSignal(dict)
 
     def __init__(self, parent):
         super().__init__(parent)

@@ -134,18 +134,26 @@ class SceneParent(QWidget):
         else:
             rubric = random.choice(negativeRubrics[self.question])
 
+        # TODO: so just the rubric?  but Colin is messing with the names of things...
         self.scene.changeTheRubric(
-            rubric["value"], rubric["delta"], rubric["text"], rubric["id"], rubric["kind"]
+            {
+                "value": rubric["value"],
+                "display_delta": rubric["delta"],
+                "text": rubric["text"],
+                "id": rubric["id"],
+                "kind": rubric["kind"],
+            }
         )
 
         # only do rubric if it is legal
-        if self.scene.isLegalRubric("relative", rubric["delta"]):
+        if self.scene.isLegalRubric(rubric):
             self.scene.undoStack.push(
                 CommandGroupDeltaText(
                     self.scene,
                     self.rpt(),
                     rubric["id"],
                     rubric["kind"],
+                    rubric["value"],
                     rubric["delta"],
                     rubric["text"],
                 )
@@ -263,6 +271,7 @@ def build_random_rubrics(question, *, messenger):
     """
     for (d, t) in positiveComments:
         com = {
+            "value": d,
             "delta": d,
             "text": t,
             "tags": "Random",
@@ -277,6 +286,7 @@ def build_random_rubrics(question, *, messenger):
             positiveRubrics[question] = [com]
     for (d, t) in negativeComments:
         com = {
+            "value": d,
             "delta": d,
             "text": t,
             "tags": "Random",

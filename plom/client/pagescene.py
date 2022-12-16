@@ -492,12 +492,8 @@ class PageScene(QGraphicsScene):
         self.ghostItem.setVisible(False)
         self.addItem(self.ghostItem)
 
-        # Set a mark-delta, rubric-text and rubric-delta.
-        self.rubricText = ""
-        self.rubricValue = "0"
-        self.rubricDelta = "0"
-        self.rubricID = None
-        self.rubricKind = ""
+        # cache some data about the currently selected rubric
+        self.current_rubric = None
 
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
@@ -535,9 +531,9 @@ class PageScene(QGraphicsScene):
         # update the ghostcomment if in rubric-mode.
         if self.mode == "rubric":
             self.updateGhost(
-                self.rubricDelta,
-                self.rubricText,
-                self.isLegalRubric(self.rubricKind, self.rubricDelta),
+                self.current_rubric["display_delta"],
+                self.current_rubric["text"],
+                self.isLegalRubric(self.current_rubric),
             )
 
     def refreshMarkingState(self):
@@ -823,6 +819,17 @@ class PageScene(QGraphicsScene):
             if type(X) is GroupDeltaTextItem:
                 count += 1
         return count
+
+    def get_current_rubric_id(self):
+        """Last-used or currently held rubric.
+
+        Returns:
+            int/str/None: the ID of the last-used or currently held
+                rubric.  None probably means we never had one.
+        """
+        if not self.current_rubric:
+            return None
+        return self.current_rubric["id"]
 
     def reset_dirty(self):
         # TODO: what is the difference?
@@ -1371,7 +1378,7 @@ class PageScene(QGraphicsScene):
             None
         """
         # if delta not legal, then don't start
-        if not self.isLegalRubric(self.rubricKind, self.rubricDelta):
+        if not self.isLegalRubric(self.current_rubric):
             return
 
         # check if anything underneath when trying to start/finish
@@ -1393,11 +1400,11 @@ class PageScene(QGraphicsScene):
             command = CommandGroupDeltaText(
                 self,
                 pt,
-                self.rubricID,
-                self.rubricKind,
-                self.rubricValue,
-                self.rubricDelta,
-                self.rubricText,
+                self.current_rubric["id"],
+                self.current_rubric["kind"],
+                self.current_rubric["value"],
+                self.current_rubric["display_delta"],
+                self.current_rubric["text"],
             )
             log.debug(
                 "Making a GroupDeltaText: boxLineStampState is {}".format(
@@ -2259,11 +2266,11 @@ class PageScene(QGraphicsScene):
             command = CommandGroupDeltaText(
                 self,
                 event.scenePos(),
-                self.rubricID,
-                self.rubricKind,
-                self.rubricValue,
-                self.rubricDelta,
-                self.rubricText,
+                self.current_rubric["id"],
+                self.current_rubric["kind"],
+                self.current_rubric["value"],
+                self.current_rubric["display_delta"],
+                self.current_rubric["text"],
             )
             log.debug(
                 "Making a GroupDeltaText: boxLineStampState is {}".format(
@@ -2477,17 +2484,19 @@ class PageScene(QGraphicsScene):
         """Redoes a given action."""
         self.undoStack.redo()
 
-    def isLegalRubric(self, kind, dn):
+    def isLegalRubric(self, rubric):
         """
-        Is this rubric-type legal, and does the delta move score  below 0 or above maxMark?
+        Is this rubric-type legal for the current scene, and does it move score below 0 or above maxMark?
 
         Args:
-            dn (int/str): the delta integer, either convertible to `int`
-                or the literal string ".".
+            rubric (dict): must have at least the keys "kind", "value",
+                and "display_delta".
+                TODO: may need updates to properly use "value".
 
         Returns:
             bool: True if the delta is legal, False otherwise.
         """
+        kind, dn = rubric["kind"], rubric["display_delta"]
         # a neutral rubric is always fine
         if kind == "neutral":
             return True
@@ -2522,25 +2531,22 @@ class PageScene(QGraphicsScene):
             )
             raise PlomInconsistentRubricsException
 
-    def changeTheRubric(self, value, delta, text, rubricID, rubricKind):
+    def changeTheRubric(self, rubric):
         """
         Changes the new rubric for the paper based on the delta and text.
 
         Args:
-            value (str): TODO should be int/float?
-            delta (str): a string displaying the value of the rubric.
-            text (str): the text in the rubric.
-            rubricID (int): the id of the rubric.
-            rubricKind (str): ``"absolute"``, ``"neutral"``, etc.
+            rubric (dict): must have at least the keys and values::
+                - value (str): TODO should be int/float?
+                - delta (str): a string displaying the value of the rubric.
+                - text (str): the text in the rubric.
+                - id (int): the id of the rubric.
+                - kind (str): ``"absolute"``, ``"neutral"``, etc.
 
         Returns:
             None
         """
-        self.rubricValue = value
-        self.rubricDelta = delta
-        self.rubricText = text
-        self.rubricID = rubricID
-        self.rubricKind = rubricKind
+        self.current_rubric = rubric
 
         gpt = QCursor.pos()  # global mouse pos
         vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
@@ -2548,11 +2554,9 @@ class PageScene(QGraphicsScene):
         self.ghostItem.setPos(spt)
         self.setToolMode("rubric")
         self.exposeGhost()  # unhide the ghostitem
-
-        # if we have passed ".", then we don't need to do any
-        # delta calcs, the ghost item knows how to handle it.
-        legality = self.isLegalRubric(rubricKind, delta)
-        self.updateGhost(delta, text, legality)
+        self.updateGhost(
+            rubric["display_delta"], rubric["text"], self.isLegalRubric(rubric)
+        )
 
     def stopMidDraw(self):
         # look at all the mid-draw flags and cancel accordingly.
