@@ -11,7 +11,7 @@ from Identify.models import (
     PaperIDTask,
     PaperIDClaim,
     PaperIDAction,
-    SurrenderPaperIDTask
+    SurrenderPaperIDTask,
 )
 
 
@@ -46,7 +46,13 @@ class IdentifyTaskTests(TestCase):
 
         paper = baker.make(Paper, paper_number=1)
         task = baker.make(PaperIDTask, paper=paper, status="done")
-        baker.make(PaperIDAction, user=self.marker0, task=task, student_name="A", student_id="1")
+        baker.make(
+            PaperIDAction,
+            user=self.marker0,
+            task=task,
+            student_name="A",
+            student_id="1",
+        )
 
         result = its.get_done_tasks(user=self.marker0)
         self.assertEqual(result, [[1, "1", "A"]])
@@ -71,9 +77,7 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(its.get_latest_id_results(task1), first)
 
         second = baker.make(
-            PaperIDAction,
-            time=start_time + timedelta(seconds=1),
-            task=task1
+            PaperIDAction, time=start_time + timedelta(seconds=1), task=task1
         )
 
         self.assertEqual(its.get_latest_id_results(task1), second)
