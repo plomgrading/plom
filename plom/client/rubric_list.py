@@ -1668,7 +1668,7 @@ class AddRubricBox(QDialog):
                 "Your rubric must contain some text.\n\n"
                 'Prepend with "tex:" to use latex.\n\n'
                 "You can harvest existing text from the page.\n\n"
-                'Change "delta" below to associate a point-change.'
+                'Change "Marks" below to associate a point-change.'
             )
             self.TEtag.setPlaceholderText(
                 "For any user tags you might want. (mostly future use)"
