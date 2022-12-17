@@ -55,7 +55,7 @@ log = logging.getLogger("annotr")
 
 
 def isLegalRubric(mss, *, kind, delta, versions):
-    """Checks the 'legality' of the current rubric - returning one of several possible states
+    """Checks the 'legality' of the current rubric - returning one of several possible indicators
 
     Those states are:
     0 = incompatible - the kind of rubric is not compatible with the current state
@@ -67,6 +67,7 @@ def isLegalRubric(mss, *, kind, delta, versions):
 
     Args:
         mss (list): triple that encodes max-mark, state, and current-score
+            "state" can be "neutral", "up", "down", "absolute", TODO: others?
         kind (str): the kind of the rubric being checked
         delta (str): the delta of the rubric being checked
         versions (list): which versions are this rubric intended for.
