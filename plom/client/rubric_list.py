@@ -1544,6 +1544,11 @@ class AddRubricBox(QDialog):
         _.setValue(maxMark)
         hlay.addWidget(_)
         self.rubric_out_of_SB = _
+        # TODO: disabled until we support these!
+        self.typeRB_absolute.setEnabled(False)
+        self.rubric_value_SB.setEnabled(False)
+        self.rubric_out_of_SB.setEnabled(False)
+        hlay.addWidget(QLabel("(coming soon!)"))
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(hlay)
         flay.addRow("Marks", frame)
