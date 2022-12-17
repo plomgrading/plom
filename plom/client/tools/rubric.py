@@ -123,6 +123,16 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
+    def as_rubric(self):
+        """return as a rubric dict"""
+        return {
+            "id": self.rubricID,
+            "kind": self.kind,
+            "display_delta": self.di.display_delta,
+            "value": self.di.value,
+            "text": self.blurb.toPlainText(),
+        }
+
     def restyle(self, style):
         self.style = style
         self.thick = self.style["pen_width"] / 2

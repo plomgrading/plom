@@ -50,11 +50,14 @@ from PyQt5.QtWidgets import (
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import WarnMsg, SimpleQuestion
 from .rubric_wrangler import RubricWrangler
+from .rubrics import compute_score
+from plom.plom_exceptions import PlomInconsistentRubricsException
+
 
 log = logging.getLogger("annotr")
 
 
-def isLegalRubric(mss, *, kind, delta, versions):
+def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
     """Checks the 'legality' of the current rubric - returning one of several possible indicators
 
     Those states are:
@@ -68,8 +71,7 @@ def isLegalRubric(mss, *, kind, delta, versions):
     Args:
         mss (list): triple that encodes max-mark, state, and current-score
             "state" can be "neutral", "up", "down", "absolute", TODO: others?
-        kind (str): the kind of the rubric being checked
-        delta (str): the delta of the rubric being checked
+        TODO (dict): other stuff should be just a rubric dict.  TODO: change.
         versions (list): which versions are this rubric intended for.
             Empty list means valid for all versions.
 
@@ -85,35 +87,21 @@ def isLegalRubric(mss, *, kind, delta, versions):
         if our_version not in versions:
             return 3
 
-    # easy cases first
-    # when state is neutral - all rubrics are fine
-    # a neutral rubric is always compatible and in range
-    if state == "neutral" or kind == "neutral":
+    if not scene:
         return 2
-    # now, neither state nor kind are neutral
 
-    # consequently if state is absolute, no remaining rubric is legal
-    # similarly, if kind is absolute, the rubric is not legal since state is not neutral
-    if state == "absolute" or kind == "absolute":
+    # TODO: obviously we should just pass it in
+    r = {"kind": kind, "value": value, "display_delta": display_delta, "out_of": out_of}
+    rubrics = scene.get_rubrics()
+    rubrics.append(r)
+
+    try:
+        N = compute_score(rubrics, maxMark)
+        return 2
+    except ValueError as e:
+        return 1
+    except PlomInconsistentRubricsException:
         return 0
-
-    # now state must be up or down, and kind must be delta or relative
-    # delta mark = delta = must be an non-zero int.
-    idelta = int(delta)
-    if state == "up":
-        if idelta < 0:  # not compat
-            return 0
-        elif idelta + score > maxMark:  # out of range
-            return 1
-        else:
-            return 2
-    else:  # state == "down"
-        if idelta > 0:  # not compat
-            return 0
-        elif idelta + score < 0:  # out of range
-            return 1
-        else:
-            return 2
 
 
 def render_params(template, params, ver):
@@ -642,8 +630,11 @@ class RubricTable(QTableWidget):
         legal = isLegalRubric(
             mss,
             kind=self.item(r, 4).text(),
-            delta=self.item(r, 2).text(),
+            display_delta=self.item(r, 2).text(),
+            value=self.item(r, 8).text(),
+            out_of=self.item(r, 9).text(),
             versions=json.loads(self.item(r, 5).text()),
+            scene=self._parent._parent.scene,
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
         colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
