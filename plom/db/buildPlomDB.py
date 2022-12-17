@@ -63,7 +63,7 @@ def buildSpecialRubrics(spec, db):
         rubric = {
             "kind": "absolute",
             "display_delta": f"{mx} / {mx}",
-            "value": "0",
+            "value": f"{mx}",
             "out_of": mx,
             "text": "full marks",
             "question": q,
