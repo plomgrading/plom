@@ -149,3 +149,29 @@ class IdentifyTaskTests(TestCase):
 
         with self.assertRaises(RuntimeError):
             its.claim_task(self.marker0, 1)
+
+    def test_identify_paper(self):
+        """
+        Test a simple case for IdentifyTaskService.identify_paper()
+        """
+
+        its = IdentifyTaskService()
+        with self.assertRaises(RuntimeError):
+            its.identify_paper(self.marker1, 1, "1", "A")
+
+        p1 = baker.make(Paper, paper_number=1)
+        task = baker.make(
+            PaperIDTask, paper=p1, status="out", assigned_user=self.marker0
+        )
+
+        its.identify_paper(self.marker0, 1, "1", "A")
+        task.refresh_from_db()
+
+        self.assertEqual(task.status, "complete")
+        self.assertEqual(
+            task.assigned_user, self.marker0
+        )  # Assumption: user keeps task after ID'ing
+
+        action = PaperIDAction.objects.get(user=self.marker0, task=task)
+        self.assertEqual(action.student_name, "A")
+        self.assertEqual(action.student_id, "1")

@@ -120,7 +120,10 @@ class IdentifyTaskService:
         Identify a test-paper and close its associated task.
         """
 
-        task = PaperIDTask.objects.get(paper__paper_number=paper_number)
+        try:
+            task = PaperIDTask.objects.get(paper__paper_number=paper_number)
+        except PaperIDTask.DoesNotExist:
+            raise RuntimeError(f"Task with paper number {paper_number} does not exist.")
 
         id_action = PaperIDAction(
             user=user, task=task, student_id=student_id, student_name=student_name
@@ -128,7 +131,6 @@ class IdentifyTaskService:
         id_action.save()
 
         task.status = "complete"
-        task.assigned_user = None
         task.save()
 
     def surrender_task(self, user, task):
