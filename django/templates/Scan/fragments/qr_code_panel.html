@@ -11,11 +11,30 @@
             <a 
                 class="btn text-start"
                 style="background-color: lightgrey;"
-                hx-post="{% url 'change_error_state' timestamp index %}"
+                data-bs-toggle="modal"
+                data-bs-target="#errorPageChangeModal"
             >
             <i class="bi bi-file-earmark-check"></i>
-            Set as good page image
+            Set as valid page image
             </a><br><br>
+            <!-- Modal -->
+            <div class="modal fade" id="errorPageChangeModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Are you sure you would like to change this error page to a valid page?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                    ...
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" hx-post="{% url 'change_error_state' timestamp index %}">Save changes</button>
+                    </div>
+                </div>
+                </div>
+            </div>
             <a class="btn btn-warning text-start">Replace page image</a><br><br>
             <a class="btn btn-danger text-start w-100">Discard</a><br><br>
             {% if not flagged %}
