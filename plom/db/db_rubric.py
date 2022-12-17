@@ -25,9 +25,9 @@ def McreateRubric(self, user_name, rubric):
         user_name (str): name of user creating the rubric element
         rubric (dict): dict containing the rubric details.
             Must contain these fields:
-            `{kind: "relative", delta: "-1", value: "-1", out_of: "0", text: "blah", question: 2}`
+            `{kind: "relative", display_delta: "-1", value: "-1", out_of: "0", text: "blah", question: 2}`
             # TODO: make out_of optional for relative rubrics?
-            `{kind: "absolte", delta: "1 / 5", value: "1", out_of: "5", text: "blah", question: 2}`
+            `{kind: "absolute", display_delta: "1 / 5", value: "1", out_of: "5", text: "blah", question: 2}`
             The following fields are optional and empty strings will be
             substituted:
             `{tags: "blah", meta: "blah", versions: [1, 2], parameters: []}`

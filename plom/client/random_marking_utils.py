@@ -264,6 +264,7 @@ def build_random_rubrics(question, *, messenger):
         com = {
             "value": d,
             "display_delta": d,
+            "out_of": "0",
             "text": t,
             "tags": "Random",
             "meta": "Randomness",
@@ -279,6 +280,7 @@ def build_random_rubrics(question, *, messenger):
         com = {
             "value": d,
             "display_delta": d,
+            "out_of": "0",
             "text": t,
             "tags": "Random",
             "meta": "Randomness",

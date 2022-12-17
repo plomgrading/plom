@@ -1845,7 +1845,7 @@ class AddRubricBox(QDialog):
             out_of = self.rubric_out_of_SB.text()
             display_delta = f"{value} / {out_of}"
         else:
-            raise RunTimeError("no radio was checked")
+            raise RuntimeError("no radio was checked")
         username = self.Luser.text().strip()
         # only meaningful if we're modifying
         rubricID = self.label_rubric_id.text().strip()
