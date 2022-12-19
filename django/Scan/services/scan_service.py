@@ -478,7 +478,9 @@ class ScanService:
         return common_qr
 
     @transaction.atomic
-    def change_error_image_state(self, bundle, page_index):
+    def change_error_image_state(self, bundle, page_index, img_bundle):
         task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
         task.status = "complete"
         task.save()
+        error_image = self.get_error_image(img_bundle, page_index)
+        error_image.delete()

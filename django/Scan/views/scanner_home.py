@@ -74,7 +74,6 @@ class ScannerHomeView(ScannerRequiredView):
             date_time = datetime.fromtimestamp(bundle.timestamp)
             pages = scanner.get_n_images(bundle)
             n_pushed = scanner.get_n_pushed_images(bundle)
-            print(n_pushed)
             flagged_pages = scanner.get_n_flagged_image(bundle)
             n_errors = scanner.get_n_error_image(bundle)
 

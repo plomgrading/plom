@@ -13,7 +13,8 @@ from Scan.services import ScanService
 # from Scan.models import StagingImage
 # from Progress.services import ManageScanService
 
-
+# change to valid page
+# overlay for valid or discard
 class ManageBundleView(ScannerRequiredView):
     """
     Let a user view an uploaded bundle and read its QR codes.

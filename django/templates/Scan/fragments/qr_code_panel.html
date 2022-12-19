@@ -17,16 +17,13 @@
             <i class="bi bi-file-earmark-check"></i>
             Set as valid page image
             </a><br><br>
-            <!-- Modal -->
-            <div class="modal fade" id="errorPageChangeModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <!-- "Set as valid page image" Modal -->
+            <div class="modal fade" id="errorPageChangeModal" tabindex="-1" aria-labelledby="errorPageChangeModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Are you sure you would like to change this error page to a valid page?</h5>
+                    <h5 class="modal-title" id="errorPageChangeModalLabel">Are you sure you would like to change this error page to a valid page?</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                    ...
                     </div>
                     <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -35,7 +32,32 @@
                 </div>
                 </div>
             </div>
-            <a class="btn btn-warning text-start">Replace page image</a><br><br>
+            <a 
+                class="btn btn-warning text-start"
+                data-bs-toggle="modal"
+                data-bs-target="#replacePageImageModal"
+            >
+            Replace page image
+            </a><br><br>
+            <!-- "Replace page image" Modal -->
+            <div class="modal fade" id="replacePageImageModal" tabindex="-1" aria-labelledby="replacePageImageModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="replacePageImageModalLabel">Are you sure you would like to change this error page to a valid page?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        hello
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" hx-post="#">Replace</button>
+                    {% comment %} <button type="button" class="btn btn-success" hx-post="{% url 'replace_page_image' timestamp index %}">Replace</button> {% endcomment %}
+                    </div>
+                </div>
+                </div>
+            </div>
             <a class="btn btn-danger text-start w-100">Discard</a><br><br>
             {% if not flagged %}
                 <form
