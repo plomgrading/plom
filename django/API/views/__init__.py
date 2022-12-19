@@ -14,6 +14,8 @@ from .identify import (
     IDgetDoneTasks,
     IDgetNextTask,
     IDprogressCount,
+    IDclaimThisTask,
+    IDgetImage,
 )
 
 from .mark import (

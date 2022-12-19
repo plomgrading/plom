@@ -12,6 +12,7 @@ from plom import __version__
 from plom import Plom_API_Version
 
 from Mark.services import MarkingTaskService
+from Identify.services import IdentifyTaskService
 from Papers.services import SpecificationService
 
 
@@ -66,6 +67,10 @@ class CloseUser(APIView):
             # Tasks
             mts = MarkingTaskService()
             mts.surrender_all_tasks(request.user)
+
+            its = IdentifyTaskService()
+            its.surrender_all_tasks(request.user)
+
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)

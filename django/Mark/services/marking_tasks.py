@@ -179,4 +179,4 @@ class MarkingTaskService:
 
         user_tasks = MarkingTask.objects.filter(assigned_user=user)
         for task in user_tasks:
-            self.assign_task_to_user(user, task)
+            self.surrender_task(user, task)
