@@ -53,7 +53,7 @@ class IdentifyTaskService:
         """
 
         id_list = []
-        done_tasks = PaperIDTask.objects.filter(status="done")
+        done_tasks = PaperIDTask.objects.filter(status="complete")
         for task in done_tasks:
             latest = self.get_latest_id_results(task)
             if latest and latest.user == user:
@@ -161,6 +161,6 @@ class IdentifyTaskService:
             user: reference to a User instance
         """
 
-        user_tasks = PaperIDTask.objects.filter(assigned_user=user)
+        user_tasks = PaperIDTask.objects.filter(assigned_user=user, status="out")
         for task in user_tasks:
             self.surrender_task(user, task)

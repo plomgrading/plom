@@ -45,7 +45,7 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(its.get_done_tasks(user=self.marker0), [])
 
         paper = baker.make(Paper, paper_number=1)
-        task = baker.make(PaperIDTask, paper=paper, status="done")
+        task = baker.make(PaperIDTask, paper=paper, status="complete")
         baker.make(
             PaperIDAction,
             user=self.marker0,
