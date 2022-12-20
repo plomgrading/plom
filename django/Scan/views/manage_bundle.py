@@ -57,8 +57,6 @@ class ManageBundleView(ScannerRequiredView):
         if scanner.is_bundle_reading_finished(bundle):
             finished_reading_qr = True
 
-        print(finished_reading_qr)
-
         context.update(
             {
                 "slug": bundle.slug,

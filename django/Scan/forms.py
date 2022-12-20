@@ -85,3 +85,15 @@ class FlagImageForm(forms.Form):
         ),
         required=False,
     )
+
+
+class ReplaceImageForm(forms.Form):
+    """
+    Replace an error page image form.
+    """
+    single_pdf = forms.FileField(
+        allow_empty_file=False,
+        max_length=100,
+        label="",
+        widget=forms.FileInput(attrs={"accept": "application/pdf"}),
+    )

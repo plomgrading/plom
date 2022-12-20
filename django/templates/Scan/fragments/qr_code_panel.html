@@ -48,13 +48,24 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        hello
+                        <form
+                            enctype="multipart/form-data"
+                            method="post"
+                            action="#"
+                        >
+                            {% csrf_token %}
+                            {{ replace_image_form }}
+                        </form>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <input type="submit" class="btn btn-warning" value="Replace">
+                        </div>
                     </div>
-                    <div class="modal-footer">
+                    {% comment %} <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-success" hx-post="#">Replace</button>
-                    {% comment %} <button type="button" class="btn btn-success" hx-post="{% url 'replace_page_image' timestamp index %}">Replace</button> {% endcomment %}
-                    </div>
+                    <button type="button" class="btn btn-success" hx-post="{% url 'replace_page_image' timestamp index %}">Replace</button>
+                    </div> {% endcomment %}
                 </div>
                 </div>
             </div>

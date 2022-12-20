@@ -7,6 +7,7 @@ from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
 from Papers.services import ImageBundleService
+from Scan.forms import ReplaceImageForm
 
 class ChangeErrorImageState(ScannerRequiredView):
     def post(self, request, timestamp, index):
@@ -34,6 +35,11 @@ class ReplacePageImage(ScannerRequiredView):
             timestamp = float(timestamp)
         except ValueError:
             return Http404()
+        form = ReplaceImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            print("uploaded file")
+        else:
+            print("no file uploaded")
         
-        
+
         return HttpResponseClientRefresh()
