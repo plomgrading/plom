@@ -267,9 +267,12 @@ def predict_id_lap_solver(self):
 
     status += "\nSolving assignment problem..."
     t = time.process_time()
-    prediction_pairs = lap_solver(papers, sids, cost_matrix)
+    lap_predictions = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
+    with open(specdir / "lap_predictions.json", "w") as lap_results_file:
+        json.dump(lap_predictions, lap_results_file)
+		
     greedy_predictions = greedy(sids, probabilities)
     with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
         json.dump(greedy_predictions, greedy_results_file)
