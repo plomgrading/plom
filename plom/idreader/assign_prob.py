@@ -102,7 +102,7 @@ def greedy(student_IDs, probabilities):
         Each matrix contains probabilities that the ith ID char is matched with digit j.
 
     Returns:
-        list of tuples (paper_number, id_prediction, certainty)
+        list: a list of tuples (paper_number, id_prediction, certainty)
 
     Algorithm:
         For each entry in probabilities, check each student id in the classlist against the matrix.
