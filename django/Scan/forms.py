@@ -97,3 +97,25 @@ class ReplaceImageForm(forms.Form):
         label="",
         widget=forms.FileInput(attrs={"accept": "application/pdf"}),
     )
+
+    # def clean(self):
+    #     data = self.cleaned_data
+    #     single_pdf = data["single_pdf"]
+
+    #     # set a file size?
+    #     # if single_pdf.size > settings.MAX_FILE_SIZE:
+    #     #     readable_single_file_size = settings.MAXFILE_SIZE / 1e6
+    #     #     raise ValidationError(f"File size limit is {readable_single_file_size} MB.")
+        
+        
+    #     try:
+    #         # make sure it is correct format
+    #         file_bytes = single_pdf.read()
+    #         pdf_doc = fitz.open(stream=file_bytes)
+    #         if "PDF" not in pdf_doc.metadata["format"]:
+    #             raise ValidationError("File is not a valid PDF.")
+    #         # make sure only 1 pdf page
+    #     except (FileDataError, KeyError):
+    #         raise ValidationError("Unable to open file.")
+    #     # turn that pdf file into page image 
+    #     # check for duplicate page image

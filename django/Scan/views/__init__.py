@@ -41,4 +41,5 @@ from .scanner_summary import (
 
 from .change_image_state import (
     ChangeErrorImageState,
+    ReplacePageImage,
 )

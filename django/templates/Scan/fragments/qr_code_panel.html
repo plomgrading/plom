@@ -44,22 +44,22 @@
                 <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                    <h5 class="modal-title" id="replacePageImageModalLabel">Are you sure you would like to change this error page to a valid page?</h5>
+                    <h5 class="modal-title" id="replacePageImageModalLabel">Replace File</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form
                             enctype="multipart/form-data"
                             method="post"
-                            action="#"
+                            action="{% url 'replace_page_image' timestamp index %}"
                         >
                             {% csrf_token %}
                             {{ replace_image_form }}
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <input type="submit" class="btn btn-warning" value="Replace">
+                            </div> 
                         </form>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <input type="submit" class="btn btn-warning" value="Replace">
-                        </div>
                     </div>
                     {% comment %} <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -69,7 +69,28 @@
                 </div>
                 </div>
             </div>
-            <a class="btn btn-danger text-start w-100">Discard</a><br><br>
+            <a 
+                class="btn btn-danger text-start w-100" 
+                data-bs-toggle="modal"
+                data-bs-target="#discardPageModal"
+            >
+            Discard
+            </a><br><br>
+            <!-- "Discard image" Modal -->
+            <div class="modal fade" id="discardPageModal" tabindex="-1" aria-labelledby="discardPageModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="discardPageModalLabel">Are you sure you would like to discard this page image?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" hx-post="#">Discard</button>
+                    </div>
+                </div>
+                </div>
+            </div>
             {% if not flagged %}
                 <form
                     enctype="multipart/form-data"

@@ -22,6 +22,7 @@ from Scan.views import (
     FlagPageImage,
     ScannerSummaryView,
     ChangeErrorImageState,
+    ReplacePageImage,
 )
 
 
@@ -102,5 +103,10 @@ urlpatterns = [
         "change/error_state/<timestamp>/<int:index>/",
         ChangeErrorImageState.as_view(),
         name="change_error_state",
+    ),
+    path(
+        "replace/<timestamp>/<int:index>",
+        ReplacePageImage.as_view(),
+        name="replace_page_image"
     ),
 ]

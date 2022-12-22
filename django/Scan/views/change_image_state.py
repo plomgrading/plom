@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django_htmx.http import HttpResponseClientRefresh
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
 from Papers.services import ImageBundleService
 from Scan.forms import ReplaceImageForm
+from Scan.views import UpdateQRProgressView
 
 class ChangeErrorImageState(ScannerRequiredView):
     def post(self, request, timestamp, index):
@@ -38,8 +39,7 @@ class ReplacePageImage(ScannerRequiredView):
         form = ReplaceImageForm(request.POST, request.FILES)
         if form.is_valid():
             print("uploaded file")
+            return HttpResponse("hello there")
         else:
             print("no file uploaded")
         
-
-        return HttpResponseClientRefresh()
