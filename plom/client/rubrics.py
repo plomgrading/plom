@@ -88,6 +88,86 @@ def compute_score_legacy2022(rubrics, maxscore):
     return score
 
 
+def compute_score_locabs(rubrics, maxscore):
+    """Compute score given a set of rubrics.
+
+    A new set of rubric summation rules, designed to allow mixing up
+    "locally absolute" rubrics for per-part marking, combined with
+    +/- rubrics when they are unambiguous.
+
+    args:
+        rubrics (list):
+        maxscore (int): the maximum anticipated score
+
+    returns:
+        int: the computed score
+
+    raises:
+        ValueError: int is outside range [0, maxscore]
+        or out_of summed above maxscore.
+    """
+    lo_score = 0
+    hi_score = maxscore
+    sum_out_of = 0
+
+    # step one: add up all the absolute rubrics
+    absolutes = [r for r in rubrics if r["kind"] == "absolute"]
+
+    for r in absolutes:
+        out_of = int(r["out_of"])
+        if out_of not in range(1, maxscore + 1):
+            # TODO: or Inconsistent?
+            raise ValueError(f"out_of is outside of [1, {maxscore}]")
+        if int(r["value"]) not in range(0, out_of + 1):
+            # TODO: or Inconsistent?
+            raise ValueError(f"value is outside of [0, out_of] where out_of={out_of}")
+        lo_score += int(r["value"])
+        hi_score -= int(r["out_of"]) - int(r["value"])
+        sum_out_of += out_of
+
+    if sum_out_of > maxscore:
+        # TODO: or Inconsistent?
+        raise ValueError(f"sum of out_of is outside [0, {maxscore}]")
+
+    uppers = [r for r in rubrics if r["kind"] == "relative" and int(r["value"]) > 0]
+    downrs = [r for r in rubrics if r["kind"] == "relative" and int(r["value"]) < 0]
+
+    # we now have a bracket [lo_score, hi_score]
+    # e.g., suppose question out of 10 and two abs rubrics used
+    # 3/4, 2/4 -> [5, 7]
+    # Now relative "+1" rubrics modify the 5.  Relative "-1" rubrics
+    # modify the 7.
+    #
+    # But you cannot lift the 5 above 7 nor drop the 7 below 5.
+
+    # TODO: if bracket from abs is trivial, then further relatives are
+    # modifiers.  In this case, we could decide mixing +/- is unambiguous.
+
+    # step two: adjust with relative rubrics
+    # uppers add to lower bound
+    # downers subtract from the upper bound
+    if uppers and downrs:
+        # TODO: might relax above
+        # e.g., if nontrivial bracket than its ambiguous to mix +/-
+        raise PlomInconsistentRubricsException("Ambiguous to mix up and down deltas")
+
+    score = lo_score
+    if uppers:
+        score = lo_score + sum(int(r["value"]) for r in uppers)
+    if downrs:
+        score = hi_score + sum(int(r["value"]) for r in downrs)
+
+    if score < 0 or score > maxscore:
+        raise ValueError("score is out of range")
+
+    if score < lo_score:
+        raise ValueError("cannot drop score below that established by absolute rubrics")
+    if score > hi_score:
+        raise ValueError("cannot lift score above that established by absolute rubrics")
+
+    return score
+
+
 # compute_score = compute_score_naive
 compute_score = compute_score_legacy2022
 
