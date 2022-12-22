@@ -23,23 +23,12 @@ def compute_score_naive(rubrics, maxscore):
     simple for actual use.
     """
     score = 0
-
-    # step one: add up all the absolute rubrics
     for r in rubrics:
-        if r["kind"] == "absolute":
+        if r["kind"] != "neutral":
+            # neutral should have value 0, but doesn't hurt
             score += int(r["value"])
-
-    # step two: adjust with relative rubrics
-    for r in rubrics:
-        if r["kind"] == "neutral":
-            continue
-        if r["kind"] != "absolute":
-            # no distinction between mixing up/down
-            score += int(r["value"])
-
     if score < 0 or score > maxscore:
         raise ValueError("score is out of range")
-
     return score
 
 
@@ -62,20 +51,17 @@ def compute_score_legacy2022(rubrics, maxscore):
     Tries to follow the rules as used in 2022, as closely as possible.
     """
     score = 0
-    is_set = False
 
-    # first: absolute rubrics: we allow only one
-    for r in rubrics:
-        if r["kind"] == "absolute":
-            if int(r["value"]) not in (0, maxscore):
-                raise ValueError(
-                    "only 0 or full-mark absolute rubrics allowed in legacy2022"
-                )
-            score += int(r["value"])
-            # and no other rubrics can be mixed with absolute, use this to check
-            is_set = True
+    absolutes = [r for r in rubrics if r["kind"] == "absolute"]
+    if len(absolutes) > 1:
+        raise PlomInconsistentRubricsException("Can use at most one absolute rubric")
 
-    # next, decide if up or dowm (not both) and adjust
+    for r in absolutes:
+        if int(r["value"]) not in (0, maxscore):
+            raise ValueError("legacy2022 allows only 0 or full-mark absolute rubrics")
+        score += int(r["value"])
+
+    # next, decide if up or down (not both) and adjust
     uppers = [
         int(r["value"])
         for r in rubrics
@@ -89,7 +75,7 @@ def compute_score_legacy2022(rubrics, maxscore):
 
     if uppers and downrs:
         raise PlomInconsistentRubricsException("Cannot mix up and down deltas")
-    if is_set and (uppers or downrs):
+    if len(absolutes) > 0 and (uppers or downrs):
         raise PlomInconsistentRubricsException("Cannot relative and absolute rubrics")
 
     if uppers:
