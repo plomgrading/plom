@@ -41,5 +41,5 @@ class ReplacePageImage(ScannerRequiredView):
             print("uploaded file")
             return HttpResponse("hello there")
         else:
-            print("no file uploaded")
+            return HttpResponse("error")
         
