@@ -122,7 +122,7 @@ def ID_delete_predictions(self, *args, **kwargs):
     return self.DB.ID_delete_predictions(*args, **kwargs)
 
 
-def IDputPredictions(self, predictions, classlist, spec):
+def IDputPredictions(self, predictions, classlist, predictor):
     """Push predictions to the database
 
     Note - does sanity checks against the current classlist
@@ -136,49 +136,12 @@ def IDputPredictions(self, predictions, classlist, spec):
         list: first entry is True/False for success.  If False, second
         entry is a string with an explanation.
     """
-
-    log.info("ID prediction list uploaded")
-    # do sanity check that the ID is in the classlist and the
-    # test number is in range.
-    ids = {int(X["id"]) for X in classlist}
-    for test, sid in predictions:
-        if int(sid) not in ids:
-            return [False, f"ID {sid} not in classlist"]
-        # TODO: Issue #1745: maybe check test is in database instead?
-        if test < 0 or test > spec["numberToProduce"]:
-            return [False, f"Test {test} outside range"]
-
-    # now make a dict of id: [test,name] to push to database
-    id_predictions = {}
-    for test, sid in predictions:
-        id_predictions[int(sid)] = [test]
-    for X in classlist:
-        if int(X["id"]) in id_predictions:
-            id_predictions[int(sid)].append(X["name"])
-    # now push everything into the DB
-    raise NotImplementedError(
-        "We have not decided what this operation should do with the old prediction list!  See Issue #2080"
-    )
-    problem_list = []
-    for sid, test_and_name in id_predictions.items():
-        # get the student_name from the classlist
-        # TODO: probably we should only do this if current certainty less than 0.5
-        # returns (True,None,None) or (False, 409, msg) or (False, 404, msg)
-        r, what, msg = self.server.DB.add_or_change_id_prediction(
-            test_and_name[0], sid, 0.5
+    log.info("Saving prediction results into database w/ certainty")
+    for papernum, student_ID, certainty in predictions:
+        ok, code, msg = self.DB.add_or_change_id_prediction(
+            papernum, student_ID, certainty, predictor=predictor
         )
-        if r:  # all good, continue pushing
-            pass
-        else:  # append the error to the problem list
-            problem_list.append((what, msg))
-
-    if problem_list:
-        return [
-            False,
-            "Some predictions could not be saved to the database",
-            problem_list,
-        ]
-    return [True, "All predictions saved to DB successfully"]
+    return [True, f"\nAll {predictor} predictions saved to DB successfully"]
 
 
 def IDreviewID(self, *args, **kwargs):
@@ -227,14 +190,17 @@ def predict_id_lap_solver(self):
     probabilities = {int(k): v for k, v in probabilities.items()}
 
     log.info("Getting the classlist")
+    classlist = []
     sids = []
     with open(specdir / "classlist.csv", newline="") as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=",")
         next(csv_reader, None)  # skip the header
         for row in csv_reader:
+            classlist.append((row[0], row[1]))
             sids.append(row[0])
 
     status = f"Original class list has {len(sids)} students.\n"
+
     X = self.DB.IDgetIdentifiedTests()
     for x in X:
         try:
@@ -272,58 +238,19 @@ def predict_id_lap_solver(self):
 
     with open(specdir / "lap_predictions.json", "w") as lap_results_file:
         json.dump(lap_predictions, lap_results_file)
-		
+        
     greedy_predictions = greedy(sids, probabilities)
     with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
         json.dump(greedy_predictions, greedy_results_file)
 
-    self.ID_delete_predictions(predictor="MLLAP")
-    self.ID_delete_predictions(predictor="MLGreedy")
+#    self.ID_delete_predictions(predictor="MLLAP")
+#    self.ID_delete_predictions(predictor="MLGreedy")
 
-    # ------------------------ #
-    # Maintain uniqueness in test and sid in the prediction list
-    # our prediction_pairs should not (by construction) overlap with existing predictions on papernumber
-    # but it might on SID - if an overlap in SID then remove from prediction_pairs and DB.
-    # ------------------------ #
-    # log.info("Sanity check that no *paper numbers* from the prenamed are in LAP output")
-    # 'predictions' only contains **non**MLLAP predictions
-    predictions = self.DB.ID_get_predictions()
-    # for papernum, _ in greedy_predictions:
-    #     # verify that there is no paper-number overlap between existing predictions
-    #     # and those from MLLAP
-    #     if papernum in predictions.keys():
-    #         raise RuntimeError(
-    #             f"Unexpectedly, found paper {papernum} in both LAP output and prename!"
-    #         )
-    # at this point the database and the prediction_pairs contain no overlaps in paper_number.
-    # but we need to keep uniqueness in SID, so construct SID-lookup dict from existing predictions
-    existing_sid_to_papernum = {predictions[X]["student_id"]: X for X in predictions}
-    log.info("Saving prediction results into database /w certainty")
-    errs = []
-    for papernum, student_ID, certainty in greedy_predictions:
-        # check if that SID is used in an existing prediction
-        if student_ID in existing_sid_to_papernum:
-            other_paper = existing_sid_to_papernum[student_ID]
-            # delete from both the prediction_pairs and from the database.
-            log.info(
-                f"New prediction that {student_ID} wrote paper {papernum} conflicts with existing prediction of paper {other_paper}, so discarding both."
-            )
-            ok, code, msg = self.DB.remove_id_prediction(other_paper)
-            if not ok:
-                raise RuntimeError(
-                    f"Unexpectedly cannot find promised paper {other_paper} in prediction DB"
-                )
-        else:  # is safe to add it to prediction list
-            ok, code, msg = self.DB.add_or_change_id_prediction(
-                papernum, student_ID, certainty, predictor="MLGreedy"
-            )
-            if not ok:
-                # TODO: perhaps we want to decrease the prename confidence?  Or even delete it.
-                # We may have detected student who should have been in the prename but wrote elsewhere
-                errs.append(msg)
-    if errs:
-        status += "\n\nThe following LAP results where not used:\n"
-        status += "  - " + "\n  - ".join(errs)
+    output_greedy = self.IDputPredictions(greedy_predictions, classlist, "MLGreedy")
+    status += output_greedy[1]
+
+    output_lap = self.IDputPredictions(lap_predictions, classlist, "MLLAP")
+    status += output_lap[1]
 
     return status
 
