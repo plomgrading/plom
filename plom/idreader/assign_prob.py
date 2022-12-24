@@ -75,7 +75,7 @@ def lap_solver(test_numbers, student_IDs, costs):
         cost_matrix (list): list of list of floats.
 
     Returns:
-        list: pairs of (`paper_number`, `student_ID`).
+        list: triples of (`paper_number`, `student_ID`, `certainty`), where certainty is hard-coded to 0.5
 
     use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
     (as implemented in the ``lapsolver`` package)
@@ -86,10 +86,10 @@ def lap_solver(test_numbers, student_IDs, costs):
     3000x3000 in around 3 seconds.
     """
     row_IDs, column_IDs = solve_dense(costs)
-    prediction_pairs = []
+    predictions = []
     for r, c in zip(row_IDs, column_IDs):
-        prediction_pairs.append((test_numbers[r], student_IDs[c]))
-    return prediction_pairs
+        predictions.append((test_numbers[r], student_IDs[c], 0.5))
+    return predictions
 
 
 def greedy(student_IDs, probabilities):
