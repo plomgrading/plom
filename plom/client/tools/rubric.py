@@ -17,8 +17,6 @@ class CommandGroupDeltaText(CommandTool):
 
     Command to do a delta and a textitem together (a "rubric" or
     "saved comment").
-
-    Note: must change mark
     """
 
     def __init__(self, scene, pt, rid, kind, value, display_delta, text):
