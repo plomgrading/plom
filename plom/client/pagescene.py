@@ -1353,15 +1353,7 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState == 3:  # time to stamp the rubric!
             pt = event.scenePos()  # grab the location of the mouse-click
-            command = CommandGroupDeltaText(
-                self,
-                pt,
-                self.current_rubric["id"],
-                self.current_rubric["kind"],
-                self.current_rubric["value"],
-                self.current_rubric["display_delta"],
-                self.current_rubric["text"],
-            )
+            command = CommandGroupDeltaText(self, pt, self.current_rubric)
             log.debug(
                 "Making a GroupDeltaText: boxLineStampState is {}".format(
                     self.boxLineStampState
@@ -2219,15 +2211,7 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 0
                 return
             # small box, so just stamp the rubric
-            command = CommandGroupDeltaText(
-                self,
-                event.scenePos(),
-                self.current_rubric["id"],
-                self.current_rubric["kind"],
-                self.current_rubric["value"],
-                self.current_rubric["display_delta"],
-                self.current_rubric["text"],
-            )
+            command = CommandGroupDeltaText(self, event.scenePos(), self.current_rubric)
             log.debug(
                 "Making a GroupDeltaText: boxLineStampState is {}".format(
                     self.boxLineStampState
@@ -2446,8 +2430,7 @@ class PageScene(QGraphicsScene):
 
         Args:
             rubric (dict): must have at least the keys "kind", "value",
-                and "display_delta".
-                TODO: may need updates to properly use "value".
+                "display_delta", and "out_of".
 
         Returns:
             bool: True if the delta is legal, False otherwise.

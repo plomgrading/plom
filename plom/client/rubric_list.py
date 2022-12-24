@@ -605,11 +605,12 @@ class RubricTable(QTableWidget):
 
         self._parent.rubricSignal.emit(
             {
-                "value": self.item(r, 8).text(),
+                "kind": self.item(r, 4).text(),
                 "display_delta": self.item(r, 2).text(),
+                "value": self.item(r, 8).text(),
+                "out_of": self.item(r, 9).text(),
                 "text": self.item(r, 3).text(),
                 "id": self.item(r, 0).text(),
-                "kind": self.item(r, 4).text(),
             }
         )
 

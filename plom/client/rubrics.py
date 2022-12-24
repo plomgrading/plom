@@ -169,7 +169,8 @@ def compute_score_locabs(rubrics, maxscore):
 
 
 # compute_score = compute_score_naive
-compute_score = compute_score_legacy2022
+# compute_score = compute_score_legacy2022
+compute_score = compute_score_locabs
 
 
 def is_ambiguous(rubrics, maxscore):

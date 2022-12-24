@@ -138,15 +138,7 @@ class SceneParent(QWidget):
         # only do rubric if it is legal
         if self.scene.isLegalRubric(rubric):
             self.scene.undoStack.push(
-                CommandGroupDeltaText(
-                    self.scene,
-                    self.rpt(),
-                    rubric["id"],
-                    rubric["kind"],
-                    rubric["value"],
-                    rubric["display_delta"],
-                    rubric["text"],
-                )
+                CommandGroupDeltaText(self.scene, self.rpt(), rubric)
             )
         else:  # not legal - push text
             self.scene.undoStack.push(

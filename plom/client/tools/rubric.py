@@ -3,6 +3,8 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
+from copy import deepcopy
+
 from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QGraphicsItemGroup, QGraphicsItem
@@ -19,18 +21,22 @@ class CommandGroupDeltaText(CommandTool):
     "saved comment").
     """
 
-    def __init__(self, scene, pt, rid, kind, value, display_delta, text):
+    def __init__(self, scene, pt, rubric):
+        """Constructor for this class.
+
+        args:
+            scene (PageScene): Plom's annotation scene.
+            pt (QPointF): where to place the rubric.
+            rubric (dict): must have at least these keys:
+                "id", "kind", "value", "out_of", "display_delta", "text".
+                Any other keys are probably ignored and will almost
+                certainly not survive being serialized.
+                We copy the data, so changes to the original will not
+                automatically update this object,
+        """
         super().__init__(scene)
         self.gdt = GroupDeltaTextItem(
-            pt,
-            value,
-            display_delta,
-            text,
-            rid,
-            kind,
-            _scene=scene,
-            style=scene.style,
-            fontsize=scene.fontSize,
+            pt, rubric, _scene=scene, style=scene.style, fontsize=scene.fontSize
         )
         self.do = DeleteObject(self.gdt.shape(), fill=True)
         self.setText("GroupDeltaText")
@@ -43,10 +49,21 @@ class CommandGroupDeltaText(CommandTool):
         """
         assert X[0] == "GroupDeltaText"
         X = X[1:]
-        if len(X) != 7:
+        if len(X) != 8:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4], X[5], X[6])
+        return cls(
+            scene,
+            QPointF(X[0], X[1]),
+            {
+                "id": X[2],
+                "kind": X[3],
+                "value": X[4],
+                "out_of": X[5],
+                "display_delta": X[6],
+                "text": X[7],
+            },
+        )
 
     def redo(self):
         self.scene.addItem(self.gdt)
@@ -74,19 +91,37 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(
-        self, pt, value, display_delta, text, rid, kind, *, _scene, style, fontsize
-    ):
+    def __init__(self, pt, rubric, *, _scene, style, fontsize):
+        """Constructor for this class.
+
+        Args:
+            pt (QPointF): where to place the rubric.
+            rubric (dict): must have at least these keys:
+                "id", "kind", "value", "out_of", "display_delta", "text".
+                Any other keys are probably ignored and will almost
+                certainly not survive being serialized.
+                We copy the data, so changes to the original will not
+                automatically update this object,
+
+        Keyword Args:
+            _scene (PageScene): Plom's annotation scene.
+            style:
+            fontsize:
+        """
         super().__init__()
         self.pt = pt
         self.style = style
-        self.rubricID = rid
-        self.kind = kind
+        self._rubric = deepcopy(rubric)
+        # TODO: replace each with @property?
+        self.rubricID = rubric["id"]
+        self.kind = rubric["kind"]
         # centre under click
-        self.di = DeltaItem(pt, value, display_delta, style=style, fontsize=fontsize)
+        self.di = DeltaItem(
+            pt, rubric["value"], rubric["display_delta"], style=style, fontsize=fontsize
+        )
         self.blurb = TextItem(
             pt,
-            text,
+            rubric["text"],
             fontsize=fontsize,
             color=style["annot_color"],
             _texmaker=_scene,
@@ -104,15 +139,15 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.blurb.textToPng()
 
         # move blurb so that its top-left corner is next to top-right corner of delta.
-        self.tweakPositions(display_delta, text)
+        self.tweakPositions(rubric["display_delta"], rubric["text"])
         # hide delta if trivial
-        if display_delta == ".":
+        if rubric["display_delta"] == ".":
             self.di.setVisible(False)
         else:
             self.di.setVisible(True)
             self.addToGroup(self.di)
         # hide blurb if text is trivial
-        if text == ".":  # hide the text
+        if rubric["text"] == ".":
             self.blurb.setVisible(False)
         else:
             self.blurb.setVisible(True)
@@ -128,6 +163,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             "kind": self.kind,
             "display_delta": self.di.display_delta,
             "value": self.di.value,
+            "out_of": self._rubric["out_of"],
             "text": self.blurb.toPlainText(),
         }
 
@@ -166,6 +202,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.rubricID,
             self.kind,
             self.di.value,
+            self._rubric["out_of"],
             self.di.display_delta,
             self.blurb.getContents(),
         ]
@@ -212,7 +249,7 @@ class GhostComment(QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def tweakPositions(self, display_delta, txt):
-        """Adjust the positions of the delta and text depending on their size and ontent."""
+        """Adjust the positions of the delta and text depending on their size and content."""
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
