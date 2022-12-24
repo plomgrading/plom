@@ -142,7 +142,7 @@ def MmodifyRubric(self, user_name, key, change):
         rref.kind = change["kind"]
         rref.delta = change["delta"]
         rref.text = change["text"]
-        rref.versions = change["versions"]
+        rref.versions = json.dumps(change["versions"])
         rref.modificationTime = datetime.now(timezone.utc)
         rref.revision += 1
         rref.meta = change["meta"]

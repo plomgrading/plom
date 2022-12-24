@@ -186,7 +186,7 @@ class APage(BaseModel):
 
 
 class Rubric(BaseModel):
-    # unique key - user-generated have 12 digits, HAL uses 1XXX.
+    # unique key - user-generated have 12 digits
     key = pw.CharField(unique=True, null=False)  # system generated + short
     kind = pw.CharField(null=False)  # abs, neut, delt, relative - is short
     delta = pw.CharField(null=False)  # is short
