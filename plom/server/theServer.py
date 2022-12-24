@@ -7,6 +7,7 @@
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Natalie Balashov 
 
 import json
 import logging
@@ -167,6 +168,7 @@ class Server:
         ID_delete_predictions,
         IDputPredictions,
         predict_id_lap_solver,
+        predict_id_greedy,
         id_reader_get_log,
         id_reader_run,
         id_reader_kill,

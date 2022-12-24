@@ -139,13 +139,57 @@ def IDputPredictions(self, predictions, classlist, predictor):
     log.info("Saving prediction results into database w/ certainty")
     for papernum, student_ID, certainty in predictions:
         ok, code, msg = self.DB.add_or_change_id_prediction(
-            papernum, student_ID, certainty, predictor=predictor
+            papernum, student_ID, certainty, predictor
         )
     return [True, f"\nAll {predictor} predictions saved to DB successfully"]
 
 
 def IDreviewID(self, *args, **kwargs):
     return self.DB.IDreviewID(*args, **kwargs)
+
+
+def get_classlist_and_probabilities():
+    lock_file = specdir / "IDReader.lock"
+    heatmaps_file = specdir / "id_prob_heatmaps.json"
+
+    if lock_file.exists():
+        _ = "ID reader lock present (still running?); cannot perform matching"
+        log.info(_)
+        raise RuntimeError(_)
+
+    t = time.process_time()
+
+    # implicitly raises FileNotFoundError if no heatmap
+    with open(heatmaps_file, "r") as fh:
+        probabilities = json.load(fh)
+    # ugh, undo Json mucking our int keys into str
+    probabilities = {int(k): v for k, v in probabilities.items()}
+
+    log.info("Getting the classlist")
+    classlist = []
+    sids = []
+    with open(specdir / "classlist.csv", newline="") as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=",")
+        next(csv_reader, None)  # skip the header
+        for row in csv_reader:
+            classlist.append((row[0], row[1]))
+            sids.append(row[0])
+
+    log.info(f"\nTime loading prediction data: {time.process_time() - t:.02} seconds.\n")
+
+    return sids, classlist, probabilities
+
+def predict_id_greedy(self):
+    sids, classlist, probabilities = get_classlist_and_probabilities()
+
+    greedy_predictions = greedy(sids, probabilities)
+    with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
+        json.dump(greedy_predictions, greedy_results_file)
+
+#    self.ID_delete_predictions(predictor="MLGreedy")
+    output_greedy = self.IDputPredictions(greedy_predictions, classlist, "MLGreedy")
+
+    return output_greedy[1]
 
 
 def predict_id_lap_solver(self):
@@ -173,31 +217,7 @@ def predict_id_lap_solver(self):
         FileNotFoundError: no probability data
         IndexError: something is zero, degenerate assignment problem.
     """
-    lock_file = specdir / "IDReader.lock"
-    heatmaps_file = specdir / "id_prob_heatmaps.json"
-
-    if lock_file.exists():
-        _ = "ID reader lock present (still running?); cannot perform matching"
-        log.info(_)
-        raise RuntimeError(_)
-
-    t = time.process_time()
-
-    # implicitly raises FileNotFoundError if no heatmap
-    with open(heatmaps_file, "r") as fh:
-        probabilities = json.load(fh)
-    # ugh, undo Json mucking our int keys into str
-    probabilities = {int(k): v for k, v in probabilities.items()}
-
-    log.info("Getting the classlist")
-    classlist = []
-    sids = []
-    with open(specdir / "classlist.csv", newline="") as csvfile:
-        csv_reader = csv.reader(csvfile, delimiter=",")
-        next(csv_reader, None)  # skip the header
-        for row in csv_reader:
-            classlist.append((row[0], row[1]))
-            sids.append(row[0])
+    sids, classlist, probabilities = get_classlist_and_probabilities()
 
     status = f"Original class list has {len(sids)} students.\n"
 
@@ -207,6 +227,7 @@ def predict_id_lap_solver(self):
             sids.remove(x[1])
         except ValueError:
             pass
+
     unidentified_papers = self.DB.IDgetUnidentifiedTests()
     status += "\nAssignment problem: "
     status += f"{len(unidentified_papers)} unidentified papers to match with "
@@ -224,8 +245,6 @@ def predict_id_lap_solver(self):
             f"machine-read papers and {len(sids)} unused students."
         )
 
-    status += f"\nTime loading data: {time.process_time() - t:.02} seconds.\n"
-
     status += "\nBuilding cost matrix..."
     t = time.process_time()
     cost_matrix = assemble_cost_matrix(papers, sids, probabilities)
@@ -239,18 +258,12 @@ def predict_id_lap_solver(self):
     with open(specdir / "lap_predictions.json", "w") as lap_results_file:
         json.dump(lap_predictions, lap_results_file)
         
-    greedy_predictions = greedy(sids, probabilities)
-    with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
-        json.dump(greedy_predictions, greedy_results_file)
-
 #    self.ID_delete_predictions(predictor="MLLAP")
-#    self.ID_delete_predictions(predictor="MLGreedy")
-
-    output_greedy = self.IDputPredictions(greedy_predictions, classlist, "MLGreedy")
-    status += output_greedy[1]
-
     output_lap = self.IDputPredictions(lap_predictions, classlist, "MLLAP")
     status += output_lap[1]
+
+    # temporarily run predict_id_greedy within predict_id_lap_solver
+    status += self.predict_id_greedy()
 
     return status
 
