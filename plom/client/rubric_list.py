@@ -69,8 +69,8 @@ def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
     be shown (2), hidden (0, 3) and greyed out (1)
 
     Args:
-        mss (list): triple that encodes max-mark, state, and current-score
-            "state" can be "neutral", "up", "down", "absolute", TODO: others?
+        mss (list): triple that encodes max-mark, state, and current-score.
+            "state" old unused stuff.
         TODO (dict): other stuff should be just a rubric dict.  TODO: change.
         versions (list): which versions are this rubric intended for.
             Empty list means valid for all versions.
@@ -79,7 +79,6 @@ def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
         int: 0, 1, 2, 3 as documented above.
     """
     maxMark = mss[0]
-    state = mss[1]
     score = mss[2]
     our_version = mss[3]
 
@@ -746,7 +745,6 @@ class RubricWidget(QWidget):
         self.rubrics = []
         self.maxMark = None
         self.currentScore = None
-        self.currentState = None
 
         grid = QGridLayout()
         # assume our container will deal with margins
@@ -832,7 +830,7 @@ class RubricWidget(QWidget):
 
     @property
     def mss(self):
-        return (self.maxMark, self.currentState, self.currentScore, self.version)
+        return (self.maxMark, None, self.currentScore, self.version)
 
     @property
     def user_tabs(self):
@@ -1170,12 +1168,11 @@ class RubricWidget(QWidget):
         self.version = version
         self.max_version = maxver
 
-    def changeMark(self, currentScore, currentState, maxMark=None):
+    def changeMark(self, currentScore, maxMark=None):
         # Update the current and max mark and so recompute which deltas are displayed
         if maxMark:
             self.maxMark = maxMark
         self.currentScore = currentScore
-        self.currentState = currentState
         self.updateLegalityOfDeltas()
 
     def updateLegalityOfDeltas(self):

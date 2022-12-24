@@ -91,7 +91,6 @@ class SceneParent(QWidget):
         plomDict = {
             "base_images": self.src_img_data,
             "saveName": str(aname),
-            "markState": self.scene.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.scene.getScore(),
             "sceneItems": lst,

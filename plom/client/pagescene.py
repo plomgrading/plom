@@ -424,9 +424,7 @@ class PageScene(QGraphicsScene):
         # Grab filename of groupimage
         self.src_img_data = src_img_data  # TODO: do we need this saved?
         self.maxMark = maxMark
-        # Initially both score is None and markingState is neutral
         self.score = None
-        self.markingState = "neutral"
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
@@ -515,8 +513,21 @@ class PageScene(QGraphicsScene):
     def getScore(self):
         return self.score
 
-    def getMarkingState(self):
-        return self.markingState
+    def is_neutral_state(self):
+        """Has the mark has been changed from the unmarked state?
+
+        No annotations is a neutral state.  Annotations that do not change the
+        mark leave the scene in a neutral state.   Even neutral rubrics leave
+        the scene in the neutral state.  But the use of any mark-changing
+        annotation (currently non-neutral rubrics) will change the scene from
+        neutral to non-neutral.
+
+        Returns:
+            bool
+        """
+        if all(r["kind"] == "neutral" for r in self.get_rubrics()):
+            return True
+        return False
 
     def refreshStateAndScore(self):
         self.refreshScore()
@@ -524,7 +535,7 @@ class PageScene(QGraphicsScene):
         # the scorebox
         self.scoreBox.changeScore(self.score)
         # TODO - this is a bit hack, but need to update the rubric-widget
-        self.parent().rubric_widget.changeMark(self.score, self.markingState)
+        self.parent().rubric_widget.changeMark(self.score)
         # also update the marklabel in the annotator - same text as scorebox
         self.parent().refreshDisplayedMark(self.score)
 

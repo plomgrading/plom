@@ -225,9 +225,6 @@ class Annotator(QWidget):
     def getScore(self):
         return self.scene.getScore()
 
-    def getMarkingState(self):
-        return self.scene.getMarkingState()
-
     def toggle_hold_crop(self, checked):
         if checked:
             self.held_crop_rectangle_data = (
@@ -452,9 +449,7 @@ class Annotator(QWidget):
         # update displayed score
         self.refreshDisplayedMark(self.getScore())
         # update rubrics
-        self.rubric_widget.changeMark(
-            self.getScore(), self.getMarkingState(), self.maxMark
-        )
+        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
         self.rubric_widget.setQuestion(self.question_num, self.question_label)
         self.rubric_widget.setVersion(self.version, self.max_version)
         self.rubric_widget.setEnabled(True)
@@ -470,9 +465,7 @@ class Annotator(QWidget):
             else:  # if that rubric-mode-set fails (eg - no such rubric)
                 self.toMoveMode()
         # redo this after all the other rubric stuff initialised
-        self.rubric_widget.changeMark(
-            self.getScore(), self.getMarkingState(), self.maxMark
-        )
+        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
 
         # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
@@ -1430,8 +1423,7 @@ class Annotator(QWidget):
             WarnMsg(self, msg, info=info, info_pre=False, details=details).exec()
             return False
 
-        # make sure not still in "neutral" marking-state = no score given
-        if self.getMarkingState() == "neutral":
+        if self.scene.is_neutral_state():
             msg = InfoMsg(self, "You have not yet set a score.")
             msg.exec()
             return False
@@ -1679,7 +1671,6 @@ class Annotator(QWidget):
         plomData = {
             "base_images": self.src_img_data,
             "saveName": str(aname),
-            "markState": self.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),
             "sceneScale": self.scene.get_scale_factor(),
