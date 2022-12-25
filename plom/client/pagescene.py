@@ -121,7 +121,7 @@ class ScoreBox(QGraphicsTextItem):
         if self.question_label:
             s += self.question_label + ": "
         if self.score is None:
-            s += "no mark"
+            s += "Unmarked"
         else:
             s += "{} out of {}".format(self.score, self.maxScore)
         self.setPlainText(s)

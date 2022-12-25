@@ -530,8 +530,8 @@ class Annotator(QWidget):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         self.ui.narrowMarkLabel.setStyleSheet("color: #ff0000; font: bold;")
         if score is None:
-            self.ui.markLabel.setText("No mark")
-            self.ui.narrowMarkLabel.setText("No mark")
+            self.ui.markLabel.setText("Unmarked")
+            self.ui.narrowMarkLabel.setText("Unmarked")
         else:
             self.ui.markLabel.setText("{} out of {}".format(score, self.maxMark))
             self.ui.narrowMarkLabel.setText("{} out of {}".format(score, self.maxMark))
