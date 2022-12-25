@@ -441,7 +441,7 @@ def add_or_change_id_prediction(
             log.error("HAL tried to predict ID: paper %s not found", paper_number)
             return False, 404, f"denied b/c paper {paper_number} not found"
 
-        p = IDPrediction.get_or_none(test=tref)
+        p = IDPrediction.get_or_none(test=tref, predictor=predictor)
 
         try:
             if p is None:
@@ -452,27 +452,22 @@ def add_or_change_id_prediction(
                     student_id=sid,
                     predictor=predictor,
                 )
-                log.info('Paper %s pre-ided by HAL as "%s" using %s', paper_number, censorID(sid), predictor)
+                log.info(
+                    'Paper %s pre-ided by HAL as "%s" using %s',
+                    paper_number,
+                    censorID(sid),
+                    predictor,
+                )
             else:
-                if p.predictor is not predictor and p.predictor is not "prename":
-                    IDPrediction.create(
-                        test=tref,
-                        user=uref,
-                        certainty=certainty,
-                        student_id=sid,
-                        predictor=predictor,
-                    )
-                    log.info('Paper %s IDed by HAL as "%s" using %s (another predictor)', paper_number, censorID(sid), predictor)
-                else:
-                    p.student_id = sid
-                    p.certainty = certainty
-                    p.predictor = predictor
-                    p.save()
-                    log.info(
-                        'Paper %s changed predicted ID by HAL to "%s"',
-                        paper_number,
-                        censorID(sid),
-                    )
+                p.student_id = sid
+                p.certainty = certainty
+                p.predictor = predictor
+                p.save()
+                log.info(
+                    'Paper %s changed predicted ID by HAL to "%s"',
+                    paper_number,
+                    censorID(sid),
+                )
         except pw.IntegrityError:
             log.error(
                 'HAL tried to predict ID: paper %s but student id "%s" in use elsewhere',
