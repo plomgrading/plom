@@ -40,6 +40,12 @@ def test_legacy_accepts_string_values():
     assert lg([{"kind": "relative", "value": "-1"}], 5) == 4
 
 
+def test_legacy_none():
+    assert lg([], 10) is None
+    assert lg([{"kind": "neutral"}], 10) is None
+    assert lg([{"kind": "neutral", "value": 0}], 10) is None
+
+
 def test_legacy_score_out_range():
     with raises(ValueError):
         lg([{"kind": "absolute", "value": -1}], 5)
@@ -159,3 +165,9 @@ def test_score_mix_absolute_rubric_with_relative():
         s(mk_rubrics(2, 3, -4), 5)
     with raises(ValueError, match="out of range"):
         s(mk_rubrics(2, 3, -5), 5)
+
+
+def test_score_none():
+    assert s([], 10) is None
+    assert s([{"kind": "neutral"}], 10) is None
+    assert s([{"kind": "neutral", "value": 0}], 10) is None

@@ -40,7 +40,8 @@ def compute_score_legacy2022(rubrics, maxscore):
         maxscore (int): the maximum anticipated score
 
     returns:
-        int: the computed score
+        None/int: the computed score or `None` if there are no mark-changing
+        annotations on the page.  Note `None` is different from `0`.
 
     raises:
         PlomInconsistentRubricsException: for example, absolute and
@@ -50,7 +51,7 @@ def compute_score_legacy2022(rubrics, maxscore):
 
     Tries to follow the rules as used in 2022, as closely as possible.
     """
-    score = 0
+    score = None
 
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]
     if len(absolutes) > 1:
@@ -59,6 +60,8 @@ def compute_score_legacy2022(rubrics, maxscore):
     for r in absolutes:
         if int(r["value"]) not in (0, maxscore):
             raise ValueError("legacy2022 allows only 0 or full-mark absolute rubrics")
+        if score is None:
+            score = 0
         score += int(r["value"])
 
     # next, decide if up or down (not both) and adjust
@@ -83,7 +86,7 @@ def compute_score_legacy2022(rubrics, maxscore):
     if downrs:
         score = maxscore + sum(downrs)
 
-    if score < 0 or score > maxscore:
+    if score is not None and (score < 0 or score > maxscore):
         raise ValueError("score is out of range")
     return score
 
@@ -103,8 +106,8 @@ def compute_score_locabs(rubrics, maxscore):
         int: the computed score
 
     raises:
-        ValueError: int is outside range [0, maxscore]
-        or out_of summed above maxscore.
+        None/int: the computed score or `None` if there are no mark-changing
+        annotations on the page.  Note `None` is different from `0`.
     """
     lo_score = 0
     hi_score = maxscore
@@ -150,6 +153,9 @@ def compute_score_locabs(rubrics, maxscore):
         # TODO: might relax above
         # e.g., if nontrivial bracket than its ambiguous to mix +/-
         raise PlomInconsistentRubricsException("Ambiguous to mix up and down deltas")
+
+    if not absolutes and not uppers and not downrs:
+        return None
 
     score = lo_score
     if uppers:
