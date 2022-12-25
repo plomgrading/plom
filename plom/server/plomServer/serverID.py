@@ -136,12 +136,13 @@ def IDputPredictions(self, predictions, classlist, predictor):
         list: first entry is True/False for success.  If False, second
         entry is a string with an explanation.
     """
-    log.info("Saving prediction results into database w/ certainty")
+    log.info(f"Saving {predictor} prediction results into database w/ certainty")
     for papernum, student_ID, certainty in predictions:
         ok, code, msg = self.DB.add_or_change_id_prediction(
             papernum, student_ID, certainty, predictor
         )
-    return [True, f"\nAll {predictor} predictions saved to DB successfully"]
+
+    return [True, f"\nAll {predictor} predictions saved to DB successfully."]
 
 
 def IDreviewID(self, *args, **kwargs):
@@ -179,6 +180,7 @@ def get_classlist_and_probabilities():
 
     return sids, classlist, probabilities
 
+
 def predict_id_greedy(self):
     sids, classlist, probabilities = get_classlist_and_probabilities()
 
@@ -186,7 +188,6 @@ def predict_id_greedy(self):
     with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
         json.dump(greedy_predictions, greedy_results_file)
 
-#    self.ID_delete_predictions(predictor="MLGreedy")
     output_greedy = self.IDputPredictions(greedy_predictions, classlist, "MLGreedy")
 
     return output_greedy[1]
@@ -258,12 +259,18 @@ def predict_id_lap_solver(self):
     with open(specdir / "lap_predictions.json", "w") as lap_results_file:
         json.dump(lap_predictions, lap_results_file)
         
-#    self.ID_delete_predictions(predictor="MLLAP")
+    # temporarily run predict_id_greedy within predict_id_lap_solver
+    status += self.predict_id_greedy()
+
     output_lap = self.IDputPredictions(lap_predictions, classlist, "MLLAP")
     status += output_lap[1]
 
-    # temporarily run predict_id_greedy within predict_id_lap_solver
-    status += self.predict_id_greedy()
+    # check whether both MLLAP and MLGreedy were added to the DB
+    lap_predictions_in_DB = self.DB.ID_get_predictions(predictor="MLLAP")
+    log.info(lap_predictions_in_DB)
+
+    greedy_predictions_in_DB = self.DB.ID_get_predictions(predictor="MLGreedy")
+    log.info(greedy_predictions_in_DB)
 
     return status
 
