@@ -7,7 +7,7 @@
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022 Natalie Balashov 
+# Copyright (C) 2022 Natalie Balashov
 
 import json
 import logging

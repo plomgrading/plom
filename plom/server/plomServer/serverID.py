@@ -122,18 +122,15 @@ def ID_delete_predictions(self, *args, **kwargs):
     return self.DB.ID_delete_predictions(*args, **kwargs)
 
 
-def IDputPredictions(self, predictions, classlist, predictor):
+def IDputPredictions(self, predictions, predictor):
     """Push predictions to the database
-
-    Note - does sanity checks against the current classlist
 
     Args:
         predictions (list): A list of pairs of (testnumber, student id)
-        classlist (list): A list of pairs of (student id, student name)
-        spec (dict): The test specification
+        predictor (string): The predictor that generated the predictions 
 
     Returns:
-        list: first entry is True/False for success.  If False, second
+        list: first entry is True/False for success. If False, second
         entry is a string with an explanation.
     """
     log.info(f"Saving {predictor} prediction results into database w/ certainty")
@@ -141,15 +138,28 @@ def IDputPredictions(self, predictions, classlist, predictor):
         ok, code, msg = self.DB.add_or_change_id_prediction(
             papernum, student_ID, certainty, predictor
         )
-
-    return [True, f"\nAll {predictor} predictions saved to DB successfully."]
+    if ok:
+        return [True, f"\nAll {predictor} predictions saved to DB successfully."]
+    else:
+        return [False, f"\nError occurred when saving predictions: {msg}"]
 
 
 def IDreviewID(self, *args, **kwargs):
     return self.DB.IDreviewID(*args, **kwargs)
 
 
-def get_classlist_and_probabilities():
+def get_sids_and_probabilities():
+    """Retrieve student ID numbers from `classlist.csv` and 
+       probability data from `id_prob_heatmaps.json`
+
+    Returns:
+        list: a list containing student ID numbers
+        list: a list containing the probability data 
+
+    Raises:
+        RuntimeError: id reader still running
+        FileNotFoundError: no probability data
+    """
     lock_file = specdir / "IDReader.lock"
     heatmaps_file = specdir / "id_prob_heatmaps.json"
 
@@ -167,40 +177,46 @@ def get_classlist_and_probabilities():
     probabilities = {int(k): v for k, v in probabilities.items()}
 
     log.info("Getting the classlist")
-    classlist = []
     sids = []
     with open(specdir / "classlist.csv", newline="") as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=",")
         next(csv_reader, None)  # skip the header
         for row in csv_reader:
-            classlist.append((row[0], row[1]))
             sids.append(row[0])
 
-    log.info(f"\nTime loading prediction data: {time.process_time() - t:.02} seconds.\n")
+    log.info(
+        f"\nTime loading prediction data: {time.process_time() - t:.02} seconds.\n"
+    )
 
-    return sids, classlist, probabilities
+    return sids, probabilities
 
 
 def predict_id_greedy(self):
-    sids, classlist, probabilities = get_classlist_and_probabilities()
+    """Predict IDs by matching unidentified papers against the classlist via the greedy algorithm,
+       and insert these predictions into the DB as "MLGreedy" predictions
+
+    Returns:
+        string: output message that communicates whether the predictions were successfully inserted into the DB 
+    """
+    sids, probabilities = get_sids_and_probabilities()
 
     greedy_predictions = greedy(sids, probabilities)
     with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
         json.dump(greedy_predictions, greedy_results_file)
 
-    output_greedy = self.IDputPredictions(greedy_predictions, classlist, "MLGreedy")
+    output_greedy = self.IDputPredictions(greedy_predictions, "MLGreedy")
 
     return output_greedy[1]
 
 
 def predict_id_lap_solver(self):
-    """Predict IDs by matching unidentified papers against the classlist via linear assignment problem.
+    """Predict IDs by matching unidentified papers against the classlist via linear assignment problem,
+       and insert these predictions into the DB as "MLLAP" predictions
 
     Get the classlist and remove all people that are already IDed
-    against a paper.  Get the list of unidentified papers.  Get the
-    previously-computed probabilities of images being each digit.
+    against a paper.  Get the list of unidentified papers.  
 
-    Probably some cannot be read: drop those from the list of unidenfied
+    Probably some cannot be read: drop those from the list of unidentified
     papers.
 
     Match the two.
@@ -208,17 +224,13 @@ def predict_id_lap_solver(self):
     TODO: consider doing this client-side, although Manager tool would
     then depend on lapsolver or perhaps SciPy's linear_sum_assignment
 
-    TODO: arguments to control which papers to run on...?
-
     Returns:
         str: status text, appropriate to show to a user.
 
     Raises:
-        RuntimeError: id reader still running
-        FileNotFoundError: no probability data
         IndexError: something is zero, degenerate assignment problem.
     """
-    sids, classlist, probabilities = get_classlist_and_probabilities()
+    sids, probabilities = get_sids_and_probabilities()
 
     status = f"Original class list has {len(sids)} students.\n"
 
@@ -258,11 +270,11 @@ def predict_id_lap_solver(self):
 
     with open(specdir / "lap_predictions.json", "w") as lap_results_file:
         json.dump(lap_predictions, lap_results_file)
-        
+
     # temporarily run predict_id_greedy within predict_id_lap_solver
     status += self.predict_id_greedy()
 
-    output_lap = self.IDputPredictions(lap_predictions, classlist, "MLLAP")
+    output_lap = self.IDputPredictions(lap_predictions, "MLLAP")
     status += output_lap[1]
 
     # check whether both MLLAP and MLGreedy were added to the DB
