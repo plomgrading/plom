@@ -127,7 +127,7 @@ def IDputPredictions(self, predictions, predictor):
 
     Args:
         predictions (list): A list of pairs of (testnumber, student id)
-        predictor (string): The predictor that generated the predictions 
+        predictor (string): The predictor that generated the predictions
 
     Returns:
         list: first entry is True/False for success. If False, second
@@ -149,12 +149,12 @@ def IDreviewID(self, *args, **kwargs):
 
 
 def get_sids_and_probabilities():
-    """Retrieve student ID numbers from `classlist.csv` and 
+    """Retrieve student ID numbers from `classlist.csv` and
        probability data from `id_prob_heatmaps.json`
 
     Returns:
-        list: a list containing student ID numbers
-        list: a list containing the probability data 
+        tuple: a 2-tuple consisting of two lists, where the first contains student ID numbers
+               and the second contains the probability data
 
     Raises:
         RuntimeError: id reader still running
@@ -196,7 +196,7 @@ def predict_id_greedy(self):
        and insert these predictions into the DB as "MLGreedy" predictions
 
     Returns:
-        string: output message that communicates whether the predictions were successfully inserted into the DB 
+        string: output message that communicates whether the predictions were successfully inserted into the DB
     """
     sids, probabilities = get_sids_and_probabilities()
 
@@ -214,7 +214,7 @@ def predict_id_lap_solver(self):
        and insert these predictions into the DB as "MLLAP" predictions
 
     Get the classlist and remove all people that are already IDed
-    against a paper.  Get the list of unidentified papers.  
+    against a paper.  Get the list of unidentified papers.
 
     Probably some cannot be read: drop those from the list of unidentified
     papers.
