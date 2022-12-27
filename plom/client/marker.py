@@ -1360,11 +1360,17 @@ class MarkerClient(QWidget):
         if maxm == 0:
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
-            InfoMsg(self, "No papers have version " + str(self.version)
+            InfoMsg(
+                self,
+                "No papers have version "
+                + str(self.version)
                 + " of question "
                 + get_question_label(self.exam_spec, self.question)
-                + " (internal number " + str(self.question) + ")."
-                + " Invalid combination?").exec()
+                + " (internal number "
+                + str(self.question)
+                + ")."
+                + " Invalid combination?",
+            ).exec()
         else:
             # Neither is quite right, instead, we cache on init
             self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
