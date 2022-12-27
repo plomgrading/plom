@@ -1344,19 +1344,10 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
-
         if not val and not maxm:
             # ask server for progress update
-            try:
-                val, maxm = self.msgr.MprogressCount(self.question, self.version)
-            except PlomSeriousException as err:
-                log.exception("Serious error detected while updating progress: %s", err)
-                msg = f"A serious error happened while updating progress:\n{err}"
-                msg += "\nThis is not good: restart, report bug, etc."
-                ErrorMsg(self, msg).exec()
-                return
+            val, maxm = self.msgr.MprogressCount(self.question, self.version)
         if maxm == 0:
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
