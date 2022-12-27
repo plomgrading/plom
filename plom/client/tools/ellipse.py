@@ -7,7 +7,7 @@ from PyQt5.QtCore import QRectF
 from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
 
-from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
+from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 
 
 class CommandEllipse(CommandTool):
@@ -27,7 +27,7 @@ class CommandEllipse(CommandTool):
         return cls(scene, QRectF(X[0], X[1], X[2], X[3]))
 
 
-class EllipseItem(QGraphicsEllipseItem):
+class EllipseItem(UndoStackMoveMixin, QGraphicsEllipseItem):
     def __init__(self, rect, style):
         super().__init__()
         self.saveable = True
@@ -42,12 +42,6 @@ class EllipseItem(QGraphicsEllipseItem):
         self.normal_thick = style["pen_width"]
         self.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.setBrush(QBrush(style["box_tint"]))
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-        return super().itemChange(change, value)
 
     def pickle(self):
         return [

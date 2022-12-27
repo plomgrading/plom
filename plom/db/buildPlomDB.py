@@ -25,19 +25,27 @@ def buildSpecialRubrics(spec, db):
         ValueError: if a rubric already exists (likely b/c you've called
             this twice)
     """
-    # create no-answer-given rubrics
-    for q in range(1, 1 + spec["numberOfQuestions"]):
-        if not db.createNoAnswerRubric(q, spec["question"]["{}".format(q)]["mark"]):
-            raise ValueError(f"No-answer rubric for q.{q} already exists")
     # create standard manager delta-rubrics - but no 0, nor +/- max-mark
     for q in range(1, 1 + spec["numberOfQuestions"]):
         mx = spec["question"]["{}".format(q)]["mark"]
         # make zero mark and full mark rubrics
+        # Note: the precise "no answer given" string is repated in db_create.py
+        rubric = {
+            "kind": "absolute",
+            "delta": "0",
+            "text": "no answer given",
+            "question": q,
+            "meta": "Is this answer blank or nearly blank?  Please do not use "
+            + "if there is any possibility of relevant writing on the page.",
+        }
+        if not db.McreateRubric("manager", rubric):
+            raise ValueError(f"Manager no-answer-rubric for q.{q} already exists")
         rubric = {
             "kind": "absolute",
             "delta": "0",
             "text": "no marks",
             "question": q,
+            "meta": "There is writing here but its not sufficient for any points.",
         }
         if not db.McreateRubric("manager", rubric):
             raise ValueError(f"Manager no-marks-rubric for q.{q} already exists")

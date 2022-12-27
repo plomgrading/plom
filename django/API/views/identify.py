@@ -4,9 +4,14 @@
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import APIException
 from rest_framework import status
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import FileResponse
+
 from Preparation.services import StagingStudentService
+from Identify.services import IdentifyTaskService
 
 
 class GetClasslist(APIView):
@@ -51,15 +56,18 @@ class GetIDPredictions(APIView):
 class IDgetDoneTasks(APIView):
     """When a id-client logs on they request a list of papers they have already IDd.
     Send back the list.
-
-    TODO: Not implemented, just reports empty.
-    TODO: see ``plom/db/db_identify:IDgetDoneTasks``
     """
 
     def get(self, request):
-        return Response([])
+        its = IdentifyTaskService()
+        tasks = its.get_done_tasks(request.user)
 
-    # TODO: how do we get the user name?
+        # TODO: placeholder, create ID tasks if there are none
+        if not its.are_there_id_tasks():
+            its.init_id_tasks()
+
+        return Response(tasks, status=status.HTTP_200_OK)
+
     # TODO: how do we log?
 
 
@@ -76,9 +84,70 @@ class IDgetNextTask(APIView):
     """
 
     def get(self, request):
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        its = IdentifyTaskService()
+        next_task = its.get_next_task()
+        if next_task:
+            paper_id = next_task.paper.paper_number
+            return Response(paper_id, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class IDprogressCount(APIView):
     def get(self, request):
-        return Response([42, 4897])
+        """
+        Responds with a list of completed/total tasks.
+        """
+
+        its = IdentifyTaskService()
+        progress = its.get_id_progress()
+        return Response(progress, status=status.HTTP_200_OK)
+
+
+class IDclaimThisTask(APIView):
+    def patch(self, request, paper_id):
+        """Claims this identifying task for the user."""
+
+        its = IdentifyTaskService()
+        try:
+            its.claim_task(request.user, paper_id)
+            return Response(status=status.HTTP_200_OK)
+        except RuntimeError:
+            raise APIException(
+                detail="ID task already claimed.", code=status.HTTP_409_CONFLICT
+            )
+
+    def put(self, request, paper_id):
+        """Assigns a name and a student ID to the paper."""
+
+        data = request.data
+        user = request.user
+
+        its = IdentifyTaskService()
+        its.identify_paper(user, paper_id, data["sid"], data["sname"])
+        return Response(status=status.HTTP_200_OK)
+
+
+class IDgetImage(APIView):
+    def get(self, request, paper_id):
+        """
+        Responds with an ID page image file.
+        """
+
+        its = IdentifyTaskService()
+        id_img = its.get_id_page(paper_id)
+
+        if not id_img:
+            raise APIException(
+                detail="ID page-image not found for this test.",
+                code=status.HTTP_404_NOT_FOUND,
+            )
+
+        img_path = id_img.file_name
+        with open(img_path, "rb") as f:
+            image = SimpleUploadedFile(
+                f"{paper_id}_id.png",
+                f.read(),
+                content_type="image/png",
+            )
+        return FileResponse(image, status=status.HTTP_200_OK)

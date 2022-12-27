@@ -11,6 +11,7 @@ from plom.client.tools import CommandTool, DeleteObject
 from plom.client.tools import log
 
 
+# TODO: move this to move.py?
 class CommandMoveText(QUndoCommand):
     # Moves the textitem. we give it an ID so it can be merged with other
     # commandmoves on the undo-stack.
@@ -50,6 +51,16 @@ class CommandMoveText(QUndoCommand):
             return False
         self.new_pos = other.new_pos
         return True
+
+
+class UndoStackMoveTextMixin:
+    # a mixin class to avoid copy-pasting this method over many *Item classes.
+    # Overrides the itemChange method.
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveText(self, value)
+            self.scene().undoStack.push(command)
+        return super().itemChange(change, value)
 
 
 class CommandText(CommandTool):
@@ -96,7 +107,7 @@ class CommandText(CommandTool):
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
-class TextItem(QGraphicsTextItem):
+class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     """A multiline text annotation with optional LaTeX rendering.
 
     Textitem has to handle textinput.  Shift-return ends the editor.
@@ -285,13 +296,6 @@ class TextItem(QGraphicsTextItem):
                 painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super().paint(painter, option, widget)
-
-    def itemChange(self, change, value):
-        if change == QGraphicsTextItem.ItemPositionChange and self.scene():
-            command = CommandMoveText(self, value)
-            # Notice that the value here is the new position, not the delta.
-            self.scene().undoStack.push(command)
-        return super().itemChange(change, value)
 
     def pickle(self):
         src = self.toPlainText()

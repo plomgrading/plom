@@ -14,6 +14,8 @@ from .identify import (
     IDgetDoneTasks,
     IDgetNextTask,
     IDprogressCount,
+    IDclaimThisTask,
+    IDgetImage,
 )
 
 from .mark import (
@@ -22,4 +24,7 @@ from .mark import (
     MgetNextTask,
     MclaimThisTask,
     MgetQuestionPageData,
+    MgetOneImage,
+    MgetAnnotations,
+    MgetAnnotationImage,
 )

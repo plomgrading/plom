@@ -60,8 +60,8 @@ from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.useful_classes import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
+from plom.client.downloader import Downloader
 from plom.client import ImageViewWidget
-from plom.client.pagecache import download_pages
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -85,6 +85,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomUnidentifiedPaperException,
     PlomNoMoreException,
+    PlomNoPaper,
     PlomNoSolutionException,
 )
 from plom.plom_exceptions import PlomException
@@ -406,6 +407,11 @@ class Manager(QWidget):
         else:
             if password:
                 self.login()
+        self.downloader = getattr(self.Qapp, "downloader", None)
+        # If Qapp doesn't have a Downloader, make a new one
+        if self.downloader is None:
+            tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
+            self.downloader = Downloader(tmpdir, msgr=self.msgr)
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
@@ -893,9 +899,8 @@ class Manager(QWidget):
 
         if not pagedata:
             return
-        with tempfile.TemporaryDirectory() as td:
-            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
-            GroupView(self, pagedata).exec()
+        pagedata = self.downloader.sync_downloads(pagedata)
+        GroupView(self, pagedata).exec()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -985,9 +990,10 @@ class Manager(QWidget):
         if msg.exec() == QMessageBox.No:
             return
 
-        rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
-        # Cleanup, Issue #2141
-        InfoMsg(self, "{}".format(rval)).exec()
+        try:
+            self.msgr.replaceMissingDNMPage(test_number, page_number)
+        except (PlomConflict, PlomNoPaper) as e:
+            InfoMsg(self, f"{e}").exec()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(
@@ -1173,18 +1179,13 @@ class Manager(QWidget):
         if len(pvi) == 0:
             return
         r = pvi[0].row()
-        pagedata = self.unknownModel.item(r, 0).data()  # .toPyObject?
-        obj = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
+        pagedatum = self.unknownModel.item(r, 0).data()  # .toPyObject?
+        pagedatum = self.downloader.sync_download(pagedatum)
         # get the list of ID'd papers
         iDict = self.msgr.getIdentified()
-        # Context manager not appropriate, Issue #1996
-        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
-        with open(f, "wb") as fh:
-            fh.write(obj)
-        pagedata["local_filename"] = f
         uvw = UnknownViewWindow(
             self,
-            [pagedata],
+            [pagedatum],
             [self.max_papers, self.numberOfPages, self.qlabels],
             iDict,
         )
@@ -1215,7 +1216,6 @@ class Manager(QWidget):
                 res = resources.files(plom.client.icons) / "manager_hw.svg"
                 pm.loadFromData(res.read_bytes())
                 self.unknownModel.item(r, 1).setIcon(QIcon(pm))
-        f.unlink()
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
@@ -1286,11 +1286,9 @@ class Manager(QWidget):
         if parent is None:
             parent = self
         pagedata = self.msgr.get_pagedata(testnum)
-        with tempfile.TemporaryDirectory() as td:
-            # get_all=True should be default?
-            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
-            labels = [x["pagename"] for x in pagedata]
-            WholeTestView(testnum, pagedata, labels, parent=parent).exec()
+        pagedata = self.downloader.sync_downloads(pagedata)
+        labels = [x["pagename"] for x in pagedata]
+        WholeTestView(testnum, pagedata, labels, parent=parent).exec()
 
     def checkTPage(self, testNumber, pageNumber, parent=None):
         if parent is None:
@@ -1465,16 +1463,11 @@ class Manager(QWidget):
             return
         r = pvi[0].row()
         pagedata = self.discardModel.item(r, 0).data()
-        obj = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
-        # Context manager not appropriate, Issue #1996
-        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
-        with open(f, "wb") as fh:
-            fh.write(obj)
-        pagedata["local_filename"] = f
+        pagedata = self.downloader.sync_download(pagedata)
         if DiscardViewWindow(self, [pagedata]).exec() == QDialog.Accepted:
+            # Scary, nicer to require img id?
             self.msgr.discardToUnknown(pagedata["server_path"])
             self.refreshDiscardList()
-        f.unlink()
 
     def initDanglingTab(self):
         self.ui.labelDanglingExplain.setText(

@@ -369,20 +369,39 @@ class UploadHandler:
         else:
             return web.Response(status=404)  # page not found at all
 
-    async def replaceMissingDNMPage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+    # @routes.put("/plom/admin/missingDNMPage")
+    @authenticate_by_token_required_fields(["test", "page"])
+    @write_admin
+    def replaceMissingDNMPage(self, data, request):
+        """Replace a do-not-mark page with a server-generated placeholder.
 
-        rval = self.server.replaceMissingDNMPage(data["test"], data["page"])
-        if rval[0]:
-            return web.json_response(rval, status=200)  # all fine
-        else:
-            return web.Response(status=404)  # page not found at all
+        We will create the placeholder image.
+
+        Args:
+            ``test`` and ``page`` in the data dict.
+
+        Returns:
+            200: on success, currently with some json diagnostics info.
+            401/403: auth
+            404: page or test not found
+            409: conflict such as collision with image already in place
+                 or a repeated upload of the same placeholder.
+            400: poorly formed or otherwise unexpected catchall
+        """
+        ok, reason, X = self.server.replaceMissingDNMPage(data["test"], data["page"])
+        if ok:
+            return web.json_response([ok, reason, X], status=200)
+        if reason in ("testError", "pageError"):
+            raise web.HTTPNotFound(reason=X)
+        if reason == "duplicate":
+            raise web.HTTPConflict(reason=X)
+        if reason in "collision":
+            # TODO: refactor `message_or_tuple`?
+            msg = "Collision: " + str(X)
+            raise web.HTTPConflict(reason=msg)
+        # includes "bundleError" and anything unexpected
+        msg = reason + ": " + str(X)
+        raise web.HTTPBadRequest(reason=msg)
 
     async def replaceMissingIDPage(self, request):
         data = await request.json()

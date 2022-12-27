@@ -7,7 +7,7 @@ from PyQt5.QtCore import QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
-from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
+from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 
 
 class CommandCross(CommandTool):
@@ -27,7 +27,7 @@ class CommandCross(CommandTool):
         return cls(scene, QPointF(X[0], X[1]))
 
 
-class CrossItem(QGraphicsPathItem):
+class CrossItem(UndoStackMoveMixin, QGraphicsPathItem):
     def __init__(self, pt, style):
         super().__init__()
         self.saveable = True
@@ -47,12 +47,6 @@ class CrossItem(QGraphicsPathItem):
     def restyle(self, style):
         self.normal_thick = 3 * style["pen_width"] / 2
         self.setPen(QPen(style["annot_color"], self.normal_thick))
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-        return super().itemChange(change, value)
 
     def pickle(self):
         return ["Cross", self.pt.x() + self.x(), self.pt.y() + self.y()]

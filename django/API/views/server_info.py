@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Colin B. Macdonald
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,6 +8,11 @@ from rest_framework.exceptions import APIException
 from rest_framework import status
 from django.core.exceptions import ObjectDoesNotExist
 
+from plom import __version__
+from plom import Plom_API_Version
+
+from Mark.services import MarkingTaskService
+from Identify.services import IdentifyTaskService
 from Papers.services import SpecificationService
 
 
@@ -40,7 +46,7 @@ class ServerVersion(APIView):
     """
 
     def get(self, request):
-        version = "Plom server version 0.12.0.dev with API 55"
+        version = f"Plom server version {__version__} with API {Plom_API_Version}"
         return Response(version)
 
 
@@ -57,6 +63,14 @@ class CloseUser(APIView):
     def delete(self, request):
         try:
             request.user.auth_token.delete()
+
+            # Tasks
+            mts = MarkingTaskService()
+            mts.surrender_all_tasks(request.user)
+
+            its = IdentifyTaskService()
+            its.surrender_all_tasks(request.user)
+
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)

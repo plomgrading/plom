@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "Scan",
     "API",
     "Mark",
+    "Identify",
     "Progress",
 ]
 

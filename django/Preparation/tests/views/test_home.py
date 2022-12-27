@@ -1,7 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
 
-import toml
+import sys
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 from django.test import TestCase, Client, RequestFactory
 from django.contrib.auth.models import User, Group
@@ -68,9 +74,11 @@ class PreparationLandingTests(TestCase):
         Test the seatbelts after a specification is saved - it should reveal
         source versions and QV map.
         """
-        demo_spec = toml.load(
+        testing_test_spec_file_path = (
             settings.BASE_DIR / "useful_files_for_testing" / "testing_test_spec.toml"
         )
+        with open(testing_test_spec_file_path, "rb") as toml_file:
+            demo_spec = tomllib.load(toml_file)
         baker.make(Specification, spec_dict=demo_spec)
 
         landing = PreparationLandingView()

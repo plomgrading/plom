@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2022 Brennen Chiu
+
+import json
 
 import peewee as pw
 
@@ -182,12 +184,16 @@ class APage(BaseModel):
 
 
 class Rubric(BaseModel):
-    # unique key - user-generated have 12 digits, HAL uses 1XXX.
+    # unique key - user-generated have 12 digits
     key = pw.CharField(unique=True, null=False)  # system generated + short
     kind = pw.CharField(null=False)  # abs, neut, delt, relative - is short
     delta = pw.CharField(null=False)  # is short
     text = pw.TextField(null=False)  # can be long
     question = pw.IntegerField(null=False)
+    # versions is a list of integers, stored in json field
+    #   "[]": all versions
+    #   "[1, 3]": versions 1 and 3 only
+    versions = pw.TextField(null=False, default=json.dumps([]))
     user = pw.ForeignKeyField(User, backref="rubrics", null=False)
     revision = pw.IntegerField(null=False, default=0)
     count = pw.IntegerField(null=False, default=0)

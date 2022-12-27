@@ -7,10 +7,10 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QGraphicsTextItem, QGraphicsItem
 
-from plom.client.tools.text import CommandMoveText
+from plom.client.tools.text import UndoStackMoveTextMixin
 
 
-class DeltaItem(QGraphicsTextItem):
+class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     def __init__(self, pt, delta, style, fontsize=10):
         super().__init__()
         self.saveable = True
@@ -50,12 +50,6 @@ class DeltaItem(QGraphicsTextItem):
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super().paint(painter, option, widget)
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveText(self, value)
-            self.scene().undoStack.push(command)
-        return super().itemChange(change, value)
 
     def pickle(self):
         return [

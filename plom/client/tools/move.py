@@ -46,3 +46,13 @@ class CommandMoveItem(QUndoCommand):
             return False
         self.delta = other.delta
         return True
+
+
+class UndoStackMoveMixin:
+    # a mixin class to avoid copy-pasting this method over many *Item classes.
+    # Overrides the itemChange method.
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveItem(self, value)
+            self.scene().undoStack.push(command)
+        return super().itemChange(change, value)

@@ -72,7 +72,7 @@ This stores the name and ID-number of the student who wrote the given test. At t
 * test = points to its parent test.
 * group = points to its parent group
 * studentID = the ID of the student who wrote this test.
-* studentName = the name of the student who wrote this test. **Check if this can handle non-ascii**
+* studentName = the name of the student who wrote this test.
 * user = points to the user who did the identifying, or the user who has grabbed the "task" of identifying this paper.
 * status = one of
     * blank if this is not yet ready (ie not all pages scanned)

@@ -11,10 +11,14 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+import tomlkit
+
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
-
-import toml
 
 from plom.create import with_manager_messenger
 
@@ -62,7 +66,7 @@ def download_rubrics_to_file(filename, *, msgr, verbose=True):
         if suffix == ".json":
             json.dump(rubrics, f, indent="  ")
         elif suffix == ".toml":
-            toml.dump({"rubric": rubrics}, f)
+            tomlkit.dump({"rubric": rubrics}, f)
         elif suffix == ".csv":
             import pandas
 
@@ -88,20 +92,22 @@ def upload_rubrics_from_file(filename, *, msgr, verbose=True):
         filename = filename.with_suffix(filename.suffix + ".toml")
     suffix = filename.suffix
 
-    with open(filename, "r") as f:
-        if suffix == ".json":
+    if suffix == ".json":
+        with open(filename, "r") as f:
             rubrics = json.load(f)
-        elif suffix == ".toml":
-            rubrics = toml.load(f)["rubric"]
-        elif suffix == ".csv":
+    elif suffix == ".toml":
+        with open(filename, "rb") as f:
+            rubrics = tomllib.load(f)["rubric"]
+    elif suffix == ".csv":
+        with open(filename, "r") as f:
             import pandas
 
             df = pandas.read_csv(f)
             df.fillna("", inplace=True)
             # TODO: flycheck is whining about this to_json
             rubrics = json.loads(df.to_json(orient="records"))
-        else:
-            raise NotImplementedError(f'Don\'t know how to import from "{filename}"')
+    else:
+        raise NotImplementedError(f'Don\'t know how to import from "{filename}"')
 
     if verbose:
         print(f'Adding {len(rubrics)} rubrics from file "{filename}"')
@@ -141,11 +147,12 @@ def upload_demo_rubrics(*, msgr, numquestions=3):
     The demo data is a bit sparse: we fill in missing pieces and
     multiply over questions.
     """
-    rubrics_in = toml.loads((resources.files("plom") / "demo_rubrics.toml").read_text())
+    with open(resources.files("plom") / "demo_rubrics.toml", "rb") as f:
+        rubrics_in = tomllib.load(f)
     rubrics_in = rubrics_in["rubric"]
     rubrics = []
     for rub in rubrics_in:
-        if not hasattr(rub, "kind"):
+        if not rub.get("kind"):
             if rub["delta"] == ".":
                 rub["kind"] = "neutral"
             elif rub["delta"].startswith("+") or rub["delta"].startswith("-"):
@@ -153,7 +160,7 @@ def upload_demo_rubrics(*, msgr, numquestions=3):
             else:
                 raise ValueError(f'not sure how to map "kind" for rubric:\n  {rub}')
         # Multiply rubrics w/o question numbers, avoids repetition in demo file
-        if not hasattr(rub, "question_number"):
+        if rub.get("question_number") is None:
             for q in range(1, numquestions + 1):
                 r = rub.copy()
                 r["question_number"] = q

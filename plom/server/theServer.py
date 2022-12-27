@@ -14,11 +14,16 @@ import logging
 from pathlib import Path
 import ssl
 import subprocess
+import sys
 import tempfile
 
 import arrow
-import toml
 from aiohttp import web
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
@@ -242,8 +247,8 @@ def get_server_info(basedir):
     log = logging.getLogger("server")
     serverInfo = {"server": "127.0.0.1", "port": Default_Port}
     try:
-        with open(basedir / confdir / "serverDetails.toml") as data_file:
-            serverInfo = toml.load(data_file)
+        with open(basedir / confdir / "serverDetails.toml", "rb") as data_file:
+            serverInfo = tomllib.load(data_file)
             logging.getLogger().setLevel(serverInfo["LogLevel"].upper())
             log.debug("Server details loaded: {}".format(serverInfo))
     except FileNotFoundError:

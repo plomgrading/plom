@@ -3,9 +3,10 @@
 
 from django.contrib import admin
 
-from Mark.models import MarkingTask, ClaimMarkingTask
+from Mark.models import MarkingTask, ClaimMarkingTask, SurrenderMarkingTask
 
 
 # Register your models here.
 admin.site.register(MarkingTask)
 admin.site.register(ClaimMarkingTask)
+admin.site.register(SurrenderMarkingTask)
