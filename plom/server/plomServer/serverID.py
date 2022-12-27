@@ -206,6 +206,10 @@ def predict_id_greedy(self):
 
     output_greedy = self.IDputPredictions(greedy_predictions, "MLGreedy")
 
+    # check whether MLGreedy predictions were added to the DB
+    greedy_predictions_in_DB = self.DB.ID_get_predictions(predictor="MLGreedy")
+    log.info(greedy_predictions_in_DB)
+
     return output_greedy[1]
 
 
@@ -271,18 +275,12 @@ def predict_id_lap_solver(self):
     with open(specdir / "lap_predictions.json", "w") as lap_results_file:
         json.dump(lap_predictions, lap_results_file)
 
-    # temporarily run predict_id_greedy within predict_id_lap_solver
-    status += self.predict_id_greedy()
-
     output_lap = self.IDputPredictions(lap_predictions, "MLLAP")
     status += output_lap[1]
 
-    # check whether both MLLAP and MLGreedy were added to the DB
+    # check whether MLLAP were added to the DB
     lap_predictions_in_DB = self.DB.ID_get_predictions(predictor="MLLAP")
     log.info(lap_predictions_in_DB)
-
-    greedy_predictions_in_DB = self.DB.ID_get_predictions(predictor="MLGreedy")
-    log.info(greedy_predictions_in_DB)
 
     return status
 

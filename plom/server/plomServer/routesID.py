@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Natalie Balashov
 
 import csv
 import os
@@ -641,8 +642,8 @@ class IDHandler:
 
     @authenticate_by_token_required_fields(["user"])
     @write_admin
-    def predict_id_lap_solver(self, data, request):
-        """Match Runs the id digit reader on all paper ID pages.
+    def machine_learning_predict_id(self, data, request):
+        """Match Runs the id digit reader (MLLAP and MLGreedy) on all paper ID pages.
 
         Args:
             data (dict): A dictionary having the user/token.
@@ -652,13 +653,13 @@ class IDHandler:
             aiohttp.web_response.Response: Can be:
 
             - 200: successful.
-            - 401/403: authentication ttroubles
+            - 401/403: authentication troubles
             - 406 (not acceptable): LAP is degenerate
             - 409 (conflict): ID reader still running
             - 412 (precondition failed) for no ID reader
         """
         try:
-            status = self.server.predict_id_lap_solver()
+            status = self.server.predict_id_lap_solver() + self.server.predict_id_greedy()
         except RuntimeError as e:
             log.warning(e)
             return web.HTTPConflict(reason=e)
@@ -721,7 +722,7 @@ class IDHandler:
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         # TODO: likely unnecessary?
         router.add_delete("/ID/predictedID", self.ID_delete_machine_predictions)
-        router.add_post("/ID/predictedID", self.predict_id_lap_solver)
+        router.add_post("/ID/predictedID", self.machine_learning_predict_id)
         router.add_get("/ID/id_reader", self.id_reader_get_log)
         router.add_post("/ID/id_reader", self.id_reader_run)
         router.add_delete("/ID/id_reader", self.id_reader_kill)
