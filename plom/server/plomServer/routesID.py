@@ -36,7 +36,7 @@ class IDHandler:
         Responds with status 200.
 
         Returns:
-            list: A list of [all the ID'd record , all the records] in the form of int.
+            list: A list of [all the ID'd records, all the records] in the form of ints.
         """
         return web.json_response(self.server.IDprogressCount(), status=200)
 

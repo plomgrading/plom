@@ -43,7 +43,7 @@ class MarkHandler:
         try:
             question = int(question)
         except (ValueError, TypeError):
-            raise web.HTTPBadRequest(reason="question must be integers")
+            raise web.HTTPBadRequest(reason="question must be integer")
         if question < 1 or question > self.server.testSpec["numberOfQuestions"]:
             raise web.HTTPRequestRangeNotSatisfiable(
                 reason="Question out of range - please check and try again.",
@@ -66,10 +66,18 @@ class MarkHandler:
         Returns:
             aiohttp.web_response.Response: Includes the number of marked
             tasks and the total number of marked/unmarked tasks.
+            400 error if `q` or `v` cannot be converted to int.
+            416 error if `q` or `v` are out of range.
         """
-        return web.json_response(
-            self.server.MprogressCount(data["q"], data["v"]), status=200
-        )
+        try:
+            q = int(data["q"])
+            v = int(data["v"])
+        except (ValueError, TypeError):
+            raise web.HTTPBadRequest(reason="question and version must be integers")
+        try:
+            return web.json_response(self.server.MprogressCount(q, v))
+        except ValueError as e:
+            raise web.HTTPRequestRangeNotSatisfiable(reason=str(e))
 
     # @routes.get("/MK/tasks/complete")
     @authenticate_by_token_required_fields(["user", "q", "v"])
