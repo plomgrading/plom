@@ -63,7 +63,7 @@ tag_list = ["creative", "suspicious", "needs_review", "hall_of_fame", "needs_iic
 class RW:
     """A dummy class needed for compatibility with pagescene."""
 
-    def changeMark(self, a, b):
+    def changeMark(self, a, b=None):
         pass
 
 
