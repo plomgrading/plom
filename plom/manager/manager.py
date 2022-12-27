@@ -1876,7 +1876,7 @@ class Manager(QWidget):
                     item = QTableWidgetItem()
                     item.setData(Qt.DisplayRole, int(t))
                     self.ui.predictionTW.setItem(r, 0, item)
-                
+
                     item0 = QTableWidgetItem()
                     item0.setData(Qt.DisplayRole, pred["student_id"])
                     self.ui.predictionTW.setItem(r, 3, item0)
@@ -1911,7 +1911,6 @@ class Manager(QWidget):
                 self.ui.predictionTW.setItem(r, 2, item)
 
         self.ui.predictionTW.setSortingEnabled(True)
-
 
     def deleteMachinePredictions(self):
         msg = SimpleQuestion(

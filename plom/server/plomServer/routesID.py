@@ -659,7 +659,9 @@ class IDHandler:
             - 412 (precondition failed) for no ID reader
         """
         try:
-            status = self.server.predict_id_lap_solver() + self.server.predict_id_greedy()
+            status = (
+                self.server.predict_id_lap_solver() + self.server.predict_id_greedy()
+            )
         except RuntimeError as e:
             log.warning(e)
             return web.HTTPConflict(reason=e)
