@@ -1514,6 +1514,8 @@ class AddRubricBox(QDialog):
         self.typeRB_relative = b
         # lay.addWidget(self.DE)
         lay.addWidget(self.SB)
+        self.SB.textChanged.connect(b.click)
+        # self.SB.clicked.connect(b.click)
         lay.addItem(QSpacerItem(16, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
         lay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(lay)
@@ -1525,12 +1527,18 @@ class AddRubricBox(QDialog):
         _ = QSpinBox()
         _.setRange(0, maxMark)
         _.setValue(0)
+        _.textChanged.connect(b.click)
+        # _.clicked.connect(b.click)
         hlay.addWidget(_)
         self.rubric_value_SB = _
-        hlay.addWidget(QLabel("out of"))
+        _ = QLabel("out of")
+        # _.clicked.connect(b.click)
+        hlay.addWidget(_)
         _ = QSpinBox()
         _.setRange(0, maxMark)
         _.setValue(maxMark)
+        _.textChanged.connect(b.click)
+        # _.clicked.connect(b.click)
         hlay.addWidget(_)
         self.rubric_out_of_SB = _
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
