@@ -4,6 +4,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Lior Silberman
 
 """
 The Plom Marker client
