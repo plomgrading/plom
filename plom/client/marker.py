@@ -1360,17 +1360,20 @@ class MarkerClient(QWidget):
         if maxm == 0:
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
-            InfoMsg(
-                self,
-                "No papers have version "
-                + str(self.version)
-                + " of question "
-                + get_question_label(self.exam_spec, self.question)
-                + " (internal number "
-                + str(self.question)
-                + ")."
-                + " Invalid combination?",
-            ).exec()
+            qlabel = get_question_label(self.exam_spec, self.question)
+            msg = f"""
+                <p>Currently there is nothing to mark for version {self.version}
+                of {qlabel} (question index {self.question}).
+                There are several ways this can happen:
+                </p>
+                <ul>
+                <li>Perhaps the relevant papers have not yet been scanned.</li>
+                <li>This assessment may not have instances of version
+                    {self.version} of {qlabel}.</li>
+                <li>You have requested "out of range" values.</li>
+                </ul>
+            """
+            InfoMsg(self, msg).exec()
         else:
             # Neither is quite right, instead, we cache on init
             self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
