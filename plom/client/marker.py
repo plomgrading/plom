@@ -1366,7 +1366,6 @@ class MarkerClient(QWidget):
                 <li>Perhaps the relevant papers have not yet been scanned.</li>
                 <li>This assessment may not have instances of version
                     {self.version} of {qlabel}.</li>
-                <li>You have requested "out of range" values.</li>
                 </ul>
             """
             InfoMsg(self, msg, info=info, info_pre=False).exec()
