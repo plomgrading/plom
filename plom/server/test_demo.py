@@ -81,7 +81,7 @@ class Test:
             self.env["PLOM_SERVER"], self.env["PLOM_MANAGER_PASSWORD"], verify_ssl=False
         )
         try:
-            predictions = msgr.IDrequestPredictions()
+            predictions = msgr.IDgetPredictions()
             assert "1" in predictions, "The lite demo has the first one predicted"
             sid = predictions["1"]["student_id"]
             cert = predictions["1"]["certainty"]
@@ -92,30 +92,31 @@ class Test:
             assert "2" not in predictions, "only first one predicted"
 
             # TODO: did we want this to test for conflict?
-            with raises(PlomConflict, match="elsewhere"):
-                msgr.pre_id_paper(2, sid)
+            # Issue #2404: maybe we want conflicts for prename but not other predictors?
+            # with raises(PlomConflict, match="elsewhere"):
+            #     msgr.pre_id_paper(2, sid)
 
             msgr.remove_id_prediction(1)
 
-            predictions = msgr.IDrequestPredictions()
+            predictions = msgr.IDgetPredictions()
             assert "1" not in predictions
 
             # now we can assign `sid` to paper 2
             msgr.pre_id_paper(2, sid)
-            predictions = msgr.IDrequestPredictions()
+            predictions = msgr.IDgetPredictions()
             assert "2" in predictions
             assert predictions["2"]["student_id"] == sid
 
             # now we can assign ANYTHING else to paper 2's prediction
             msgr.pre_id_paper(2, "eleventyfour")
-            predictions = msgr.IDrequestPredictions()
+            predictions = msgr.IDgetPredictions()
             assert "2" in predictions
             assert predictions["2"]["student_id"] == "eleventyfour"
 
             # we leave the state hopefully as we found it
             msgr.remove_id_prediction(2)
             msgr.pre_id_paper(1, sid, predictor="prename")
-            predictions = msgr.IDrequestPredictions()
+            predictions = msgr.IDgetPredictions()
             assert "1" in predictions
             assert "2" not in predictions
             assert predictions["1"]["student_id"] == sid
@@ -139,7 +140,7 @@ class Test:
             iDict = msgr.getIdentified()
             assert len(iDict) == 0, "Currently no one IDed in the lite demo"
 
-            predictions = msgr.IDrequestPredictions()
+            predictions = msgr.IDgetPredictions()
             sid = predictions["1"]["student_id"]
             cl = msgr.IDrequestClasslist()
             (person,) = [x for x in cl if x["id"] == sid]

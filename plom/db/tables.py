@@ -62,11 +62,9 @@ class Group(BaseModel):
     scanned = pw.BooleanField(default=False)  # should get all its tpages
 
 
-# TODO: Colin thinks we will regret making unique=True on the student_id field
-# and that is should be an arbitrary string.  To be sorted out later.
 class IDPrediction(BaseModel):
     test = pw.ForeignKeyField(Test, backref="idpredictions")
-    student_id = pw.CharField(unique=True, null=True)  # short, no arbitrary length ids
+    student_id = pw.CharField(null=True)  # short, no arbitrary length ids
     user = pw.ForeignKeyField(User, backref="idpredictions", null=True)
     predictor = pw.CharField(null=False)  # is short - system generated.
     certainty = pw.DoubleField(null=False, default=0.0)

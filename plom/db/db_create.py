@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2022 Natalie Balashov
 
 from datetime import datetime, timezone
 import logging
@@ -440,7 +441,7 @@ def add_or_change_id_prediction(
             log.error("HAL tried to predict ID: paper %s not found", paper_number)
             return False, 404, f"denied b/c paper {paper_number} not found"
 
-        p = IDPrediction.get_or_none(test=tref)
+        p = IDPrediction.get_or_none(test=tref, predictor=predictor)
 
         try:
             if p is None:
@@ -452,7 +453,10 @@ def add_or_change_id_prediction(
                     predictor=predictor,
                 )
                 log.info(
-                    'Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid)
+                    'Paper %s pre-ided by HAL as "%s" using %s',
+                    paper_number,
+                    censorID(sid),
+                    predictor,
                 )
             else:
                 p.student_id = sid
@@ -476,6 +480,9 @@ def add_or_change_id_prediction(
 
 def remove_id_prediction(self, paper_number):
     """Remove any id predictions associated with a particular paper.
+
+    Note: Somewhat deprecated?  At least needs a ``predictor=`` kwarg.
+    See #2446.
 
     Args:
         paper_number (int)

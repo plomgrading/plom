@@ -6,6 +6,7 @@
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021-2022 Elizabeth Xiao
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Natalie Balashov
 
 from collections import defaultdict
 import imghdr
@@ -459,7 +460,7 @@ class Manager(QWidget):
         self.ui.machineReadRefreshButton.clicked.connect(self.id_reader_get_log)
         self.ui.machineReadKillButton.clicked.connect(self.id_reader_kill)
         self.ui.predictButton.clicked.connect(self.run_predictor)
-        self.ui.delPredButton.clicked.connect(self.deletePredictions)
+        self.ui.delPredButton.clicked.connect(self.deleteMachinePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
         self.ui.enableUserB.clicked.connect(self.enableUsers)
         self.ui.disableUserB.clicked.connect(self.disableUsers)
@@ -1847,7 +1848,9 @@ class Manager(QWidget):
         self.getPredictions()
 
     def getPredictions(self):
-        predictions = self.msgr.IDrequestPredictions()
+        prename_predictions = self.msgr.IDgetPredictionsFromPredictor("prename")
+        lap_predictions = self.msgr.IDgetPredictionsFromPredictor("MLLAP")
+        greedy_predictions = self.msgr.IDgetPredictionsFromPredictor("MLGreedy")
         identified = self.msgr.getIdentified()
 
         self.ui.predictionTW.clearContents()
@@ -1859,34 +1862,32 @@ class Manager(QWidget):
         alltests = range(1, s["numberToProduce"] + 1)
 
         for r, t in enumerate(alltests):
-            self.ui.predictionTW.setSortingEnabled(False)
-            self.ui.predictionTW.insertRow(r)
-            # put in the test-number
-            item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, int(t))
-            self.ui.predictionTW.setItem(r, 0, item)
-
+            predictions_to_add = []
+            predictions_to_add.append(prename_predictions.get(str(t), None))
+            predictions_to_add.append(lap_predictions.get(str(t), None))
+            predictions_to_add.append(greedy_predictions.get(str(t), None))
             identity = identified.get(str(t), None)
-            if identity:
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, identity[0])
-                item.setToolTip("Has been identified")
-                self.ui.predictionTW.setItem(r, 1, item)
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, identity[1])
-                item.setToolTip("Has been identified")
-                self.ui.predictionTW.setItem(r, 2, item)
-            pred = predictions.get(str(t), None)
-            if pred:
-                item0 = QTableWidgetItem()
-                item0.setData(Qt.DisplayRole, pred["student_id"])
-                self.ui.predictionTW.setItem(r, 3, item0)
-                item1 = QTableWidgetItem()
-                item1.setData(Qt.DisplayRole, pred["predictor"])
-                self.ui.predictionTW.setItem(r, 4, item1)
-                item2 = QTableWidgetItem()
-                item2.setData(Qt.DisplayRole, pred["certainty"])
-                self.ui.predictionTW.setItem(r, 5, item2)
+
+            for pred in predictions_to_add:
+                if pred is not None:
+                    self.ui.predictionTW.setSortingEnabled(False)
+                    self.ui.predictionTW.insertRow(r)
+                    # put in the test-number
+                    item = QTableWidgetItem()
+                    item.setData(Qt.DisplayRole, int(t))
+                    self.ui.predictionTW.setItem(r, 0, item)
+
+                    item0 = QTableWidgetItem()
+                    item0.setData(Qt.DisplayRole, pred["student_id"])
+                    self.ui.predictionTW.setItem(r, 3, item0)
+                    item1 = QTableWidgetItem()
+                    item1.setData(Qt.DisplayRole, pred["predictor"])
+                    self.ui.predictionTW.setItem(r, 4, item1)
+                    item2 = QTableWidgetItem()
+                    # round displayed certainty to 2 decimal places
+                    item2.setData(Qt.DisplayRole, round(pred["certainty"], 2))
+                    self.ui.predictionTW.setItem(r, 5, item2)
+
                 if identity:
                     # prediction less important but perhaps not irrelevant
                     item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
@@ -1899,9 +1900,20 @@ class Manager(QWidget):
                     item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
                     item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
                     item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
+
+            if identity:
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, identity[0])
+                item.setToolTip("Has been identified")
+                self.ui.predictionTW.setItem(r, 1, item)
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, identity[1])
+                item.setToolTip("Has been identified")
+                self.ui.predictionTW.setItem(r, 2, item)
+
         self.ui.predictionTW.setSortingEnabled(True)
 
-    def deletePredictions(self):
+    def deleteMachinePredictions(self):
         msg = SimpleQuestion(
             self,
             "Delete the auto-read predicted IDs?"
@@ -1910,7 +1922,11 @@ class Manager(QWidget):
         )
         if msg.exec() == QMessageBox.No:
             return
-        self.msgr.IDdeletePredictions()
+        # TODO: likely unnecessary?
+        self.msgr.ID_delete_machine_predictions()
+        # Instead we can just do:
+        # self.msgr.ID_delete_predictions_from_predictor(predictor="MLLAP")
+        # self.msgr.ID_delete_predictions_from_predictor(predictor="MLGreedy")
         self.getPredictions()
 
     def initMarkTab(self):

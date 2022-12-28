@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 """Randomly ID papers for testing purposes."""
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer and others"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -21,7 +21,7 @@ from plom.messenger import Messenger
 def do_rando_identifying_backend(messenger):
     classlist = messenger.IDrequestClasslist()
     # classlist is a list of dicts {'id': sid, 'name: name}
-    predictions = messenger.IDrequestPredictions()
+    predictions = messenger.IDgetPredictions()
     # due to jsonnery the key test_number is a string (sigh).
 
     # make sid to name look up for predictions

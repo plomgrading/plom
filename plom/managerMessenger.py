@@ -466,28 +466,6 @@ class ManagerMessenger(BaseMessenger):
 
         return imageList
 
-    def IDrequestPredictions(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/ID/predictions",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            predictions = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server cannot find the prediction list."
-                ) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return predictions
-
     def IDgetImageFromATest(self):
         self.SRmutex.acquire()
         try:
@@ -1075,7 +1053,7 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
         return True
 
-    def IDdeletePredictions(self):
+    def ID_delete_machine_predictions(self):
         """Deletes the machine-learning predicted IDs for all papers."""
         with self.SRmutex:
             try:
@@ -1089,29 +1067,19 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def IDputPredictions(self, predictions):
-        raise NotImplementedError(
-            "No one is using this API call right now and it needs work: Issue #2080"
-        )
-
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/ID/predictions",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "predictions": predictions,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code in (401, 403):
-                raise PlomAuthenticationException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def ID_delete_predictions_from_predictor(self, *, predictor):
+        """Deletes the predicted IDs for one particular predictor."""
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    "/ID/predictedID/{predictor}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def run_predictor(self):
         """Match the results of the id digit reader with unidentified papers.

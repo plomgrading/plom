@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Natalie Balashov
 
 import csv
 from datetime import datetime, timezone
@@ -11,7 +12,7 @@ import subprocess
 import time
 
 from plom import specdir
-from plom.idreader.assign_prob import assemble_cost_matrix, lap_solver
+from plom.idreader.assign_prob import assemble_cost_matrix, lap_solver, greedy
 from plom.misc_utils import datetime_to_json
 
 log = logging.getLogger("servID")
@@ -117,110 +118,47 @@ def ID_get_predictions(self, *args, **kwargs):
     return self.DB.ID_get_predictions(*args, **kwargs)
 
 
-def IDdeletePredictions(self):
-    """Deletes the machine-learning predicted IDs for all papers.
-
-    Returns:
-        None
-    """
-    log.info("Wiping predictions by lap-solver")
-    old_predictions = self.DB.ID_get_predictions()
-    for papernum, v in old_predictions.items():
-        if v["predictor"] == "MLLAP":
-            ok, code, msg = self.DB.remove_id_prediction(papernum)
-            if not ok:
-                raise RuntimeError(
-                    f"Unexpectedly cannot find promised paper {papernum} in prediction DB"
-                )
+def ID_delete_predictions(self, *args, **kwargs):
+    return self.DB.ID_delete_predictions(*args, **kwargs)
 
 
-def IDputPredictions(self, predictions, classlist, spec):
+def ID_put_predictions(self, predictions, predictor):
     """Push predictions to the database
-
-    Note - does sanity checks against the current classlist
 
     Args:
         predictions (list): A list of pairs of (testnumber, student id)
-        classlist (list): A list of pairs of (student id, student name)
-        spec (dict): The test specification
+        predictor (string): The predictor that generated the predictions
 
     Returns:
-        list: first entry is True/False for success.  If False, second
+        tuple: first entry is True/False for success. If False, second
         entry is a string with an explanation.
     """
-
-    log.info("ID prediction list uploaded")
-    # do sanity check that the ID is in the classlist and the
-    # test number is in range.
-    ids = {int(X["id"]) for X in classlist}
-    for test, sid in predictions:
-        if int(sid) not in ids:
-            return [False, f"ID {sid} not in classlist"]
-        # TODO: Issue #1745: maybe check test is in database instead?
-        if test < 0 or test > spec["numberToProduce"]:
-            return [False, f"Test {test} outside range"]
-
-    # now make a dict of id: [test,name] to push to database
-    id_predictions = {}
-    for test, sid in predictions:
-        id_predictions[int(sid)] = [test]
-    for X in classlist:
-        if int(X["id"]) in id_predictions:
-            id_predictions[int(sid)].append(X["name"])
-    # now push everything into the DB
-    raise NotImplementedError(
-        "We have not decided what this operation should do with the old prediction list!  See Issue #2080"
-    )
-    problem_list = []
-    for sid, test_and_name in id_predictions.items():
-        # get the student_name from the classlist
-        # TODO: probably we should only do this if current certainty less than 0.5
-        # returns (True,None,None) or (False, 409, msg) or (False, 404, msg)
-        r, what, msg = self.server.DB.add_or_change_id_prediction(
-            test_and_name[0], sid, 0.5
+    log.info(f"Saving {predictor} prediction results into database w/ certainty")
+    for papernum, student_ID, certainty in predictions:
+        ok, code, msg = self.DB.add_or_change_id_prediction(
+            papernum, student_ID, certainty, predictor
         )
-        if r:  # all good, continue pushing
-            pass
-        else:  # append the error to the problem list
-            problem_list.append((what, msg))
+        if not ok:
+            return (False, f"Error occurred when saving predictions: {msg}")
 
-    if problem_list:
-        return [
-            False,
-            "Some predictions could not be saved to the database",
-            problem_list,
-        ]
-    return [True, "All predictions saved to DB successfully"]
+    return (True, f"All {predictor} predictions saved to DB successfully.")
 
 
 def IDreviewID(self, *args, **kwargs):
     return self.DB.IDreviewID(*args, **kwargs)
 
 
-def predict_id_lap_solver(self):
-    """Predict IDs by matching unidentified papers against the classlist via linear assignment problem.
-
-    Get the classlist and remove all people that are already IDed
-    against a paper.  Get the list of unidentified papers.  Get the
-    previously-computed probabilities of images being each digit.
-
-    Probably some cannot be read: drop those from the list of unidenfied
-    papers.
-
-    Match the two.
-
-    TODO: consider doing this client-side, although Manager tool would
-    then depend on lapsolver or perhaps SciPy's linear_sum_assignment
-
-    TODO: arguments to control which papers to run on...?
+def get_sids_and_probabilities():
+    """Retrieve student ID numbers from `classlist.csv` and
+       probability data from `id_prob_heatmaps.json`
 
     Returns:
-        str: status text, appropriate to show to a user.
+        tuple: a 2-tuple consisting of two lists, where the first contains student ID numbers
+               and the second contains the probability data
 
     Raises:
         RuntimeError: id reader still running
         FileNotFoundError: no probability data
-        IndexError: something is zero, degenerate assignment problem.
     """
     lock_file = specdir / "IDReader.lock"
     heatmaps_file = specdir / "id_prob_heatmaps.json"
@@ -246,13 +184,67 @@ def predict_id_lap_solver(self):
         for row in csv_reader:
             sids.append(row[0])
 
+    log.info(
+        f"\nTime loading prediction data: {time.process_time() - t:.02} seconds.\n"
+    )
+
+    return sids, probabilities
+
+
+def predict_id_greedy(self):
+    """Match each unidentified paper against best fit in classlist.
+
+    Insert these predictions into the database as "MLGreedy" predictions.
+
+    Returns:
+        string: a message that communicates whether the predictions were
+        successfully inserted into the DB.
+    """
+    sids, probabilities = get_sids_and_probabilities()
+    greedy_predictions = greedy(sids, probabilities)
+
+    # temporary, for debugging/experimenting
+    # with open(specdir / "greedy_predictions.json", "w") as f:
+    #     json.dump(greedy_predictions, f)
+
+    ok, msg = self.ID_put_predictions(greedy_predictions, "MLGreedy")
+    assert ok
+    return msg
+
+
+def predict_id_lap_solver(self):
+    """Matching unidentified papers against classlist via linear assignment problem.
+
+    Get the classlist and remove all people that are already IDed
+    against a paper.  Get the list of unidentified papers.
+
+    Probably some cannot be read: drop those from the list of unidentified
+    papers.
+
+    Match the two.
+
+    Insert these predictions into the database as "MLLAP" predictions.
+
+    TODO: consider doing this client-side, although Manager tool would
+    then depend on lapsolver or perhaps SciPy's linear_sum_assignment
+
+    Returns:
+        str: multiline status text, appropriate to show to a user.
+
+    Raises:
+        IndexError: something is zero, degenerate assignment problem.
+    """
+    sids, probabilities = get_sids_and_probabilities()
+
     status = f"Original class list has {len(sids)} students.\n"
+
     X = self.DB.IDgetIdentifiedTests()
     for x in X:
         try:
             sids.remove(x[1])
         except ValueError:
             pass
+
     unidentified_papers = self.DB.IDgetUnidentifiedTests()
     status += "\nAssignment problem: "
     status += f"{len(unidentified_papers)} unidentified papers to match with "
@@ -270,8 +262,6 @@ def predict_id_lap_solver(self):
             f"machine-read papers and {len(sids)} unused students."
         )
 
-    status += f"\nTime loading data: {time.process_time() - t:.02} seconds.\n"
-
     status += "\nBuilding cost matrix..."
     t = time.process_time()
     cost_matrix = assemble_cost_matrix(papers, sids, probabilities)
@@ -279,55 +269,16 @@ def predict_id_lap_solver(self):
 
     status += "\nSolving assignment problem..."
     t = time.process_time()
-    prediction_pairs = lap_solver(papers, sids, cost_matrix)
+    lap_predictions = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
-    self.IDdeletePredictions()
+    # temporary, for debugging/experimenting
+    # with open(specdir / "lap_predictions.json", "w") as f:
+    #     json.dump(lap_predictions, f)
 
-    # ------------------------ #
-    # Maintain uniqueness in test and sid in the prediction list
-    # our prediction_pairs should not (by construction) overlap with existing predictions on papernumber
-    # but it might on SID - if an overlap in SID then remove from prediction_pairs and DB.
-    # ------------------------ #
-    log.info("Sanity check that no *paper numbers* from the prenamed are in LAP output")
-    # 'predictions' only contains **non**MLLAP predictions
-    predictions = self.DB.ID_get_predictions()
-    for papernum, _ in prediction_pairs:
-        # verify that there is no paper-number overlap between existing predictions
-        # and those from MLLAP
-        if papernum in predictions.keys():
-            raise RuntimeError(
-                f"Unexpectedly, found paper {papernum} in both LAP output and prename!"
-            )
-    # at this point the database and the prediction_pairs contain no overlaps in paper_number.
-    # but we need to keep uniqueness in SID, so construct SID-lookup dict from existing predictions
-    existing_sid_to_papernum = {predictions[X]["student_id"]: X for X in predictions}
-    log.info("Saving prediction results into database /w certainty 0.5")
-    errs = []
-    for papernum, student_ID in prediction_pairs:
-        # check if that SID is used in an existing prediction
-        if student_ID in existing_sid_to_papernum:
-            other_paper = existing_sid_to_papernum[student_ID]
-            # delete from both the prediction_pairs and from the database.
-            log.info(
-                f"New prediction that {student_ID} wrote paper {papernum} conflicts with existing prediction of paper {other_paper}, so discarding both."
-            )
-            ok, code, msg = self.DB.remove_id_prediction(other_paper)
-            if not ok:
-                raise RuntimeError(
-                    f"Unexpectedly cannot find promised paper {other_paper} in prediction DB"
-                )
-        else:  # is safe to add it to prediction list
-            ok, code, msg = self.DB.add_or_change_id_prediction(
-                papernum, student_ID, 0.5, predictor="MLLAP"
-            )
-            if not ok:
-                # TODO: perhaps we want to decrease the prename confidence?  Or even delete it.
-                # We may have detected student who should have been in the prename but wrote elsewhere
-                errs.append(msg)
-    if errs:
-        status += "\n\nThe following LAP results where not used:\n"
-        status += "  - " + "\n  - ".join(errs)
+    ok, msg = self.ID_put_predictions(lap_predictions, "MLLAP")
+    assert ok
+    status += "\n" + msg
 
     return status
 
