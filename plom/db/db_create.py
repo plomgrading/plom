@@ -482,6 +482,7 @@ def remove_id_prediction(self, paper_number):
     """Remove any id predictions associated with a particular paper.
 
     Note: Somewhat deprecated?  At least needs a ``predictor=`` kwarg.
+    See #2446.
 
     Args:
         paper_number (int)
