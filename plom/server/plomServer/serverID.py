@@ -207,10 +207,6 @@ def predict_id_greedy(self):
     ok, msg = self.IDputPredictions(greedy_predictions, "MLGreedy")
     assert ok
 
-    # check whether MLGreedy predictions were added to the DB
-    greedy_predictions_in_DB = self.DB.ID_get_predictions(predictor="MLGreedy")
-    log.info(greedy_predictions_in_DB)
-
     return msg
 
 
@@ -279,10 +275,6 @@ def predict_id_lap_solver(self):
     ok, msg = self.IDputPredictions(lap_predictions, "MLLAP")
     assert ok
     status += msg
-
-    # check whether MLLAP were added to the DB
-    lap_predictions_in_DB = self.DB.ID_get_predictions(predictor="MLLAP")
-    log.info(lap_predictions_in_DB)
 
     return status
 
