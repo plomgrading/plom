@@ -122,7 +122,7 @@ def ID_delete_predictions(self, *args, **kwargs):
     return self.DB.ID_delete_predictions(*args, **kwargs)
 
 
-def IDputPredictions(self, predictions, predictor):
+def ID_put_predictions(self, predictions, predictor):
     """Push predictions to the database
 
     Args:
@@ -130,7 +130,7 @@ def IDputPredictions(self, predictions, predictor):
         predictor (string): The predictor that generated the predictions
 
     Returns:
-        list: first entry is True/False for success. If False, second
+        tuple: first entry is True/False for success. If False, second
         entry is a string with an explanation.
     """
     log.info(f"Saving {predictor} prediction results into database w/ certainty")
@@ -139,9 +139,9 @@ def IDputPredictions(self, predictions, predictor):
             papernum, student_ID, certainty, predictor
         )
         if not ok:
-            return [False, f"\nError occurred when saving predictions: {msg}"]
+            return (False, f"Error occurred when saving predictions: {msg}")
 
-    return [True, f"\nAll {predictor} predictions saved to DB successfully."]
+    return (True, f"All {predictor} predictions saved to DB successfully.")
 
 
 def IDreviewID(self, *args, **kwargs):
@@ -199,14 +199,12 @@ def predict_id_greedy(self):
         string: output message that communicates whether the predictions were successfully inserted into the DB
     """
     sids, probabilities = get_sids_and_probabilities()
-
     greedy_predictions = greedy(sids, probabilities)
     with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
         json.dump(greedy_predictions, greedy_results_file)
 
-    ok, msg = self.IDputPredictions(greedy_predictions, "MLGreedy")
+    ok, msg = self.ID_put_predictions(greedy_predictions, "MLGreedy")
     assert ok
-
     return msg
 
 
@@ -226,7 +224,7 @@ def predict_id_lap_solver(self):
     then depend on lapsolver or perhaps SciPy's linear_sum_assignment
 
     Returns:
-        str: status text, appropriate to show to a user.
+        str: multiline status text, appropriate to show to a user.
 
     Raises:
         IndexError: something is zero, degenerate assignment problem.
@@ -272,9 +270,9 @@ def predict_id_lap_solver(self):
     with open(specdir / "lap_predictions.json", "w") as lap_results_file:
         json.dump(lap_predictions, lap_results_file)
 
-    ok, msg = self.IDputPredictions(lap_predictions, "MLLAP")
+    ok, msg = self.ID_put_predictions(lap_predictions, "MLLAP")
     assert ok
-    status += msg
+    status += "\n" + msg
 
     return status
 

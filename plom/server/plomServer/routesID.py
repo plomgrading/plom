@@ -616,16 +616,16 @@ class IDHandler:
         Returns:
             aiohttp.web_response.Response: Can be:
 
-            - 200: successful.
+            - 200: successful, with some status text explaing what happened.
             - 401/403: authentication troubles
             - 406 (not acceptable): LAP is degenerate
             - 409 (conflict): ID reader still running
             - 412 (precondition failed) for no ID reader
         """
         try:
-            status = (
-                self.server.predict_id_lap_solver() + self.server.predict_id_greedy()
-            )
+            status = self.server.predict_id_lap_solver()
+            status += "\n"
+            status += self.server.predict_id_greedy()
         except RuntimeError as e:
             log.warning(e)
             return web.HTTPConflict(reason=e)
