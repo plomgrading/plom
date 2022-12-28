@@ -1132,6 +1132,7 @@ class Manager(QWidget):
 
     def refreshUnknownList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
+        self.ui.unknownTV.setSortingEnabled(False)
         unknowns = self.msgr.getUnknownPages()
         for r, u in enumerate(unknowns):
             it0 = QStandardItem(Path(u["server_path"]).name)
@@ -1173,6 +1174,7 @@ class Manager(QWidget):
             self.ui.scanTabW.indexOf(self.ui.unknownTab),
             f"&Unknown Pages ({countstr})",
         )
+        self.ui.unknownTV.setSortingEnabled(True)
 
     def viewUnknownPage(self):
         pvi = self.ui.unknownTV.selectedIndexes()
