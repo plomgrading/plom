@@ -110,13 +110,16 @@ def test_score_multiple_absolute_rubric():
     assert s(mk_rubrics(2, 2, 3, 3), 5) == 5
     assert s(mk_rubrics(2, 2, 0, 3), 5) == 2
     assert s(mk_rubrics(1, 2, 2, 3), 5) == 3
-    # fmt: off
-    with raises(ValueError, match="outside"): s(mk_rubrics(1, 2, -1, 3), 5)
-    with raises(ValueError, match="outside"): s(mk_rubrics(1, 2, 4, 3), 5)
-    with raises(ValueError, match="outside"): s(mk_rubrics(1, 2, 1, 0), 5)
-    with raises(ValueError, match="outside"): s(mk_rubrics(1, 2, 1, 6), 5)
-    with raises(ValueError, match="outside"): s(mk_rubrics(1, 4, 1, 4), 5)
-    # fmt: on
+    with raises(ValueError, match="outside"):
+        s(mk_rubrics(1, 2, -1, 3), 5)
+    with raises(ValueError, match="outside"):
+        s(mk_rubrics(1, 2, 4, 3), 5)
+    with raises(ValueError, match="outside"):
+        s(mk_rubrics(1, 2, 1, 0), 5)
+    with raises(ValueError, match="outside"):
+        s(mk_rubrics(1, 2, 1, 6), 5)
+    with raises(ValueError, match="outside"):
+        s(mk_rubrics(1, 4, 1, 4), 5)
 
 
 def test_score_mix_absolute_rubric_with_relative():
