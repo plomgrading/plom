@@ -557,42 +557,6 @@ class IDHandler:
         self.server.ID_delete_predictions(predictor="MLGreedy")
         return web.Response(status=200)
 
-    # @routes.put("/ID/predictedID")
-    @authenticate_by_token_required_fields(["user", "predictions"])
-    @write_admin
-    def IDputPredictions(self, data, request):
-        """Upload and save id-predictions (eg via machine learning)
-
-        TODO: is anyone calling this?  It seems to be a bulk setter, in principle
-        we could require callers to do per-paper in a loop.  But perhaps this is
-        intended to have different semantics with respect to existing predictions?
-        E.g., perhaps this could wipe the table first?  Sort these things out and
-        then document them here!
-
-        Args:
-            data (dict): A (str:str) dictionary having keys `user`, `token` and `predictions`.
-            request (aiohttp.web_request.Request): PUT /ID/put type request object.
-
-        Returns:
-            aiohttp.web_response.Response: Returns a response with a
-            `[True, message]` or `[False,message]` indicating if
-            predictions upload was successful.
-        """
-        # this classlist reading should probably happen in the serverID not here
-        try:
-            with open(specdir / "classlist.csv", "r") as f:
-                reader = csv.DictReader(f)
-                classlist = list(reader)
-        except FileNotFoundError:
-            raise web.HTTPNotFound(reason="classlist not found")
-
-        return web.json_response(
-            self.server.IDputPredictions(
-                data["predictions"], classlist, self.server.testSpec
-            ),
-            status=200,
-        )
-
     # @routes.get("/ID/id_reader"
     @authenticate_by_token_required_fields([])
     @write_admin
@@ -712,7 +676,6 @@ class IDHandler:
         router.add_delete(
             "/ID/predictions/{predictor}", self.ID_delete_predictions_from_predictor
         )
-        router.add_put("/ID/predictions", self.IDputPredictions)
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
         router.add_get("/ID/image/{test}", self.IDgetImage)
         router.add_get("/ID/donotmark_images/{test}", self.ID_get_donotmark_images)
