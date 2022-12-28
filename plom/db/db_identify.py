@@ -437,7 +437,6 @@ def ID_get_predictions(self, *, predictor=None):
     else:
         query = IDPrediction.select()
     for preidref in query:
-        print(preidref)
         predictions[preidref.test.test_number] = {
             "student_id": preidref.student_id,
             "certainty": preidref.certainty,
@@ -460,5 +459,4 @@ def ID_delete_predictions(self, *, predictor=None):
         log.info("deleting all predictions from all predictors")
         query = IDPrediction.select()
     for preidref in query:
-        print(preidref)
         preidref.delete_instance()
