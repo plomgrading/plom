@@ -192,11 +192,13 @@ def get_sids_and_probabilities():
 
 
 def predict_id_greedy(self):
-    """Predict IDs by matching unidentified papers against the classlist via the greedy algorithm,
-       and insert these predictions into the DB as "MLGreedy" predictions
+    """Match each unidentified paper against best fit in classlist.
+
+    Insert these predictions into the database as "MLGreedy" predictions.
 
     Returns:
-        string: output message that communicates whether the predictions were successfully inserted into the DB
+        string: a message that communicates whether the predictions were
+        successfully inserted into the DB.
     """
     sids, probabilities = get_sids_and_probabilities()
     greedy_predictions = greedy(sids, probabilities)
@@ -211,8 +213,7 @@ def predict_id_greedy(self):
 
 
 def predict_id_lap_solver(self):
-    """Predict IDs by matching unidentified papers against the classlist via linear assignment problem,
-       and insert these predictions into the DB as "MLLAP" predictions
+    """Matching unidentified papers against classlist via linear assignment problem.
 
     Get the classlist and remove all people that are already IDed
     against a paper.  Get the list of unidentified papers.
@@ -221,6 +222,8 @@ def predict_id_lap_solver(self):
     papers.
 
     Match the two.
+
+    Insert these predictions into the database as "MLLAP" predictions.
 
     TODO: consider doing this client-side, although Manager tool would
     then depend on lapsolver or perhaps SciPy's linear_sum_assignment
