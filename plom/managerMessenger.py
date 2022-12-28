@@ -1081,30 +1081,6 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def IDputPredictions(self, predictions):
-        raise NotImplementedError(
-            "No one is using this API call right now and it needs work: Issue #2080"
-        )
-
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/ID/predictions",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "predictions": predictions,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code in (401, 403):
-                raise PlomAuthenticationException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def run_predictor(self):
         """Match the results of the id digit reader with unidentified papers.
 

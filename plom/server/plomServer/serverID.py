@@ -138,10 +138,10 @@ def IDputPredictions(self, predictions, predictor):
         ok, code, msg = self.DB.add_or_change_id_prediction(
             papernum, student_ID, certainty, predictor
         )
-    if ok:
-        return [True, f"\nAll {predictor} predictions saved to DB successfully."]
-    else:
-        return [False, f"\nError occurred when saving predictions: {msg}"]
+        if not ok:
+            return [False, f"\nError occurred when saving predictions: {msg}"]
+
+    return [True, f"\nAll {predictor} predictions saved to DB successfully."]
 
 
 def IDreviewID(self, *args, **kwargs):
@@ -204,13 +204,14 @@ def predict_id_greedy(self):
     with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
         json.dump(greedy_predictions, greedy_results_file)
 
-    output_greedy = self.IDputPredictions(greedy_predictions, "MLGreedy")
+    ok, msg = self.IDputPredictions(greedy_predictions, "MLGreedy")
+    assert ok
 
     # check whether MLGreedy predictions were added to the DB
     greedy_predictions_in_DB = self.DB.ID_get_predictions(predictor="MLGreedy")
     log.info(greedy_predictions_in_DB)
 
-    return output_greedy[1]
+    return msg
 
 
 def predict_id_lap_solver(self):
@@ -275,8 +276,9 @@ def predict_id_lap_solver(self):
     with open(specdir / "lap_predictions.json", "w") as lap_results_file:
         json.dump(lap_predictions, lap_results_file)
 
-    output_lap = self.IDputPredictions(lap_predictions, "MLLAP")
-    status += output_lap[1]
+    ok, msg = self.IDputPredictions(lap_predictions, "MLLAP")
+    assert ok
+    status += msg
 
     # check whether MLLAP were added to the DB
     lap_predictions_in_DB = self.DB.ID_get_predictions(predictor="MLLAP")
