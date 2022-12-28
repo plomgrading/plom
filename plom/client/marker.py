@@ -4,6 +4,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Lior Silberman
 
 """
 The Plom Marker client
@@ -1359,7 +1360,21 @@ class MarkerClient(QWidget):
         if maxm == 0:
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
-            InfoMsg(self, "No papers to mark.").exec()
+            qlabel = get_question_label(self.exam_spec, self.question)
+            msg = f"<p>Currently there is nothing to mark for version {self.version}"
+            if qlabel == f"Q{self.question}":
+                msg += f" of {qlabel}.</p>"
+            else:
+                msg += f" of {qlabel} (question index {self.question}).</p>"
+            info = f"""<p>There are several ways this can happen:</p>
+                <ul>
+                <li>Perhaps the relevant papers have not yet been scanned.</li>
+                <li>This assessment may not have instances of version
+                    {self.version} of {qlabel}.</li>
+                <li>You have requested "out of range" values.</li>
+                </ul>
+            """
+            InfoMsg(self, msg, info=info, info_pre=False).exec()
         else:
             # Neither is quite right, instead, we cache on init
             self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
