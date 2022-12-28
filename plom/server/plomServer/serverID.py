@@ -200,8 +200,10 @@ def predict_id_greedy(self):
     """
     sids, probabilities = get_sids_and_probabilities()
     greedy_predictions = greedy(sids, probabilities)
-    with open(specdir / "greedy_predictions.json", "w") as greedy_results_file:
-        json.dump(greedy_predictions, greedy_results_file)
+
+    # temporary, for debugging/experimenting
+    # with open(specdir / "greedy_predictions.json", "w") as f:
+    #     json.dump(greedy_predictions, f)
 
     ok, msg = self.ID_put_predictions(greedy_predictions, "MLGreedy")
     assert ok
@@ -267,8 +269,9 @@ def predict_id_lap_solver(self):
     lap_predictions = lap_solver(papers, sids, cost_matrix)
     status += f" done in {time.process_time() - t:.02} seconds."
 
-    with open(specdir / "lap_predictions.json", "w") as lap_results_file:
-        json.dump(lap_predictions, lap_results_file)
+    # temporary, for debugging/experimenting
+    # with open(specdir / "lap_predictions.json", "w") as f:
+    #     json.dump(lap_predictions, f)
 
     ok, msg = self.ID_put_predictions(lap_predictions, "MLLAP")
     assert ok
