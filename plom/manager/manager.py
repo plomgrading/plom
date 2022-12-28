@@ -1884,7 +1884,8 @@ class Manager(QWidget):
                     item1.setData(Qt.DisplayRole, pred["predictor"])
                     self.ui.predictionTW.setItem(r, 4, item1)
                     item2 = QTableWidgetItem()
-                    item2.setData(Qt.DisplayRole, pred["certainty"])
+                    # round displayed certainty to 2 decimal places
+                    item2.setData(Qt.DisplayRole, round(pred["certainty"], 2))
                     self.ui.predictionTW.setItem(r, 5, item2)
 
                 if identity:

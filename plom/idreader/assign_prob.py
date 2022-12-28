@@ -130,8 +130,6 @@ def greedy(student_IDs, probabilities):
 
         # choose the sid with the highest mean digit probability
         largest_prob = sid_probs.index(max(sid_probs))
-        predictions.append(
-            (paper_num, student_IDs[largest_prob], round(max(sid_probs), 1))
-        )
+        predictions.append((paper_num, student_IDs[largest_prob], max(sid_probs)))
 
     return predictions
