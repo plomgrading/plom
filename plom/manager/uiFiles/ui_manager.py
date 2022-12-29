@@ -1204,7 +1204,7 @@ class Ui_Manager(object):
         self.label_23.setText(_translate("Manager", "Note: you may see many lines like &ldquo;<tt>UserWarning: X does not have valid feature names...</tt>&rdquo;  These are probably harmless, see <a href=\"https://gitlab.com/plom/plom/-/issues/1840\">Issue #1840</a>."))
         self.groupBox_6.setTitle(_translate("Manager", "Match machine-read IDs to classlist"))
         self.predictButton.setToolTip(_translate("Manager", "Predict IDs by matching unID\'d papers with machine-read digits"))
-        self.predictButton.setText(_translate("Manager", "Run LAP solver"))
+        self.predictButton.setText(_translate("Manager", "Run matching tools"))
         self.delPredButton.setText(_translate("Manager", "Delete predictions"))
         self.predGB.setTitle(_translate("Manager", "Identified papers and predictions"))
         self.predictionTW.setSortingEnabled(True)
