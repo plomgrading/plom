@@ -1840,11 +1840,16 @@ class Manager(QWidget):
         idx = self.ui.predictionTW.selectedIndexes()
         if not idx:
             return
-        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
-        msg = f"Do you want to reset the predicted ID of test number {test}?"
+        # TODO: replace with loop over multiple row selections?
+        assert len(idx) == 6
+        idx = idx[0]  # they all have the same row
+        test = self.ui.predictionTW.item(idx.row(), 0).data(Qt.DisplayRole)
+        predictor = self.ui.predictionTW.item(idx.row(), 4).data(Qt.DisplayRole)
+        msg = f'Do you want to remove "{predictor}" predicted ID of test number {test}?'
         if SimpleQuestion(self, msg).exec() == QMessageBox.No:
             return
-        self.msgr.remove_id_prediction(test)
+        # TODO: kwarg not implemented yet
+        self.msgr.remove_id_prediction(test, predictor=predictor)
         self.getPredictions()
 
     def getPredictions(self):
