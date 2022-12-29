@@ -65,7 +65,6 @@ def status(*, msgr):
     print("\nUser information")
     print("----------------\n")
     users = msgr.getUserDetails()
-    users.pop("HAL")
     if users.pop("manager", None):
         print(check_mark + " manager account")
     else:

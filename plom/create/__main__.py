@@ -697,9 +697,8 @@ def main():
                 msgr.stop()
             print("Users:")
             for user, stuff in user_dict.items():
-                if user != "HAL":
-                    stuffit = "\t".join(str(x) for x in stuff)
-                    print(f"  {user:10}\t{stuffit}")
+                stuffit = "\t".join(str(x) for x in stuff)
+                print(f"  {user:10}\t{stuffit}")
             if "scanner" not in user_dict:
                 print('WARNING: server has no "scanner" user')
             if "reviewer" not in user_dict:
