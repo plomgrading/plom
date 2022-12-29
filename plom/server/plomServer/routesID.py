@@ -460,7 +460,6 @@ class IDHandler:
             - 200: success.
             - 403: not manager.
             - 404: papernum not found, or other data errors.
-            - 409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["paper_number"]
         r, what, msg = self.server.pre_id_paper(
@@ -468,8 +467,6 @@ class IDHandler:
         )
         if r:
             return web.Response(status=200)
-        elif what == 409:
-            raise web.HTTPConflict(reason=msg)
         elif what == 404:
             raise web.HTTPNotFound(reason=msg)
         else:

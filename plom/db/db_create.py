@@ -441,7 +441,6 @@ def add_or_change_id_prediction(
     # by the plom system, we put user = HAL.
 
     with self._db.atomic():
-        # find the test-ref
         tref = Test.get_or_none(Test.test_number == paper_number)
         if tref is None:
             log.error("tried to predict ID: paper %s not found", paper_number)
@@ -449,39 +448,31 @@ def add_or_change_id_prediction(
 
         p = IDPrediction.get_or_none(test=tref, predictor=predictor)
 
-        try:
-            if p is None:
-                IDPrediction.create(
-                    test=tref,
-                    user=uref,
-                    certainty=certainty,
-                    student_id=sid,
-                    predictor=predictor,
-                )
-                log.info(
-                    'Paper %s pre-ided by "%s" as "%s"',
-                    paper_number,
-                    predictor,
-                    censorID(sid),
-                )
-            else:
-                p.student_id = sid
-                p.certainty = certainty
-                p.predictor = predictor
-                p.save()
-                log.info(
-                    'Paper %s changed "%s" predicted ID to "%s"',
-                    paper_number,
-                    predictor,
-                    censorID(sid),
-                )
-        except pw.IntegrityError:
-            log.error(
-                'HAL tried to predict ID: paper %s but student id "%s" in use elsewhere',
+        if p is None:
+            IDPrediction.create(
+                test=tref,
+                user=uref,
+                certainty=certainty,
+                student_id=sid,
+                predictor=predictor,
+            )
+            log.info(
+                'Paper %s pre-ided by "%s" as "%s"',
                 paper_number,
+                predictor,
                 censorID(sid),
             )
-            return False, 409, f"student id {sid} in use elsewhere"
+        else:
+            p.student_id = sid
+            p.certainty = certainty
+            p.predictor = predictor
+            p.save()
+            log.info(
+                'Paper %s changed "%s" predicted ID to "%s"',
+                paper_number,
+                predictor,
+                censorID(sid),
+            )
         return True, None, None
 
 
