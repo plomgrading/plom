@@ -38,13 +38,15 @@ def MprogressCount(self, question_number, version_number):
         version_number (int): Version number.
 
     Returns:
-        list: A list of two integers indicating the number of questions graded
-        and the total number of assigned question to be graded of this question number
-        and question version.
+        list: with two integers, indicating the number of questions
+        graded and the total number of questions to be graded of
+        this question-version pair.
     """
-
-    version_number = int(version_number)
-    question_number = int(question_number)
+    # TODO: consider refactoring McountMarked/McountAll to raise these instead
+    if question_number < 1 or question_number > self.testSpec["numberOfQuestions"]:
+        raise ValueError("Question number out of range.")
+    if version_number < 1 or version_number > self.testSpec["numberOfVersions"]:
+        raise ValueError("Version number out of range.")
     return [
         self.DB.McountMarked(question_number, version_number),
         self.DB.McountAll(question_number, version_number),
