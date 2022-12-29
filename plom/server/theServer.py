@@ -167,7 +167,7 @@ class Server:
         ID_get_donotmark_images,
         IDclaimThisTask,
         pre_id_paper,
-        remove_id_prediction,
+        remove_pre_id,
         ID_id_paper,
         ID_get_predictions,
         ID_delete_predictions,

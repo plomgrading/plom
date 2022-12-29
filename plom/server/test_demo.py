@@ -96,7 +96,7 @@ class Test:
             # with raises(PlomConflict, match="elsewhere"):
             #     msgr.pre_id_paper(2, sid)
 
-            msgr.remove_id_prediction(1)
+            msgr.remove_pre_id(1)
 
             predictions = msgr.IDgetPredictions()
             assert "1" not in predictions
@@ -114,7 +114,7 @@ class Test:
             assert predictions["2"]["student_id"] == "eleventyfour"
 
             # we leave the state hopefully as we found it
-            msgr.remove_id_prediction(2)
+            msgr.remove_pre_id(2)
             msgr.pre_id_paper(1, sid, predictor="prename")
             predictions = msgr.IDgetPredictions()
             assert "1" in predictions

@@ -1848,8 +1848,12 @@ class Manager(QWidget):
         msg = f'Do you want to remove "{predictor}" predicted ID of test number {test}?'
         if SimpleQuestion(self, msg).exec() == QMessageBox.No:
             return
-        # TODO: kwarg not implemented yet
-        self.msgr.remove_id_prediction(test, predictor=predictor)
+        if predictor == "prename":
+            self.msgr.remove_pre_id(test)
+        else:
+            ErrorMsg(self, "Sorry removing non-prename not implemented yet").exec()
+            # TODO: kwarg not implemented yet
+            # self.msgr.remove_id_prediction(test, predictor=predictor)
         self.getPredictions()
 
     def getPredictions(self):
