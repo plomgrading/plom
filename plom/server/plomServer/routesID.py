@@ -157,8 +157,7 @@ class IDHandler:
     def IDgetPredictions(self):
         """Returns all predictions for the identification of each paper.
 
-        TODO: maybe this one should be a list including dupes.  Or maybe it
-        is not needed at all.
+        Each entry in the dict may contain multiple predictions.
 
         Returns:
             aiohttp.web_json_response: on success a dict where keys are

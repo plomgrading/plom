@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Natalie Balashov
 
 """
 The Plom Identifier client
@@ -57,7 +58,7 @@ log = logging.getLogger("identr")
 class Paper:
     """A simple container for storing a test's idgroup code (tgv) and
     the associated filename for the image. Once identified also
-    store the studentName and ID-numer.
+    store the studentName and ID-number.
     """
 
     def __init__(self, test, fname=None, *, stat="unidentified", id="", name=""):
@@ -425,38 +426,35 @@ class IDClient(QWidget):
         self.testImg.updateImage(self.exM.paperList[r].originalFile, keep_zoom=True)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
-        prediction = self.predictions.get(str(tn), None)
-        if prediction:
-            psid = prediction["student_id"]  # predicted student ID
-            psnid = self.student_id_to_snid[psid]  # predicted SNID
-            pname = self.snid_to_student_name[psnid]  # predicted student name
-            if pname == "":
-                # disable accept prediction button
-                prediction = []
-        if prediction:
-            self.ui.predButton.setText("&Accept\nPrediction")
-            self.ui.predButton.show()
-            self.ui.pSIDLabel.setText(psid)
-            self.ui.pNameLabel.setText(pname)
-            if prediction["predictor"] == "prename":
-                self.ui.predictionBox.setTitle(
-                    "Prenamed paper: is it signed?  if not signed, is it blank?"
-                )
-                self.ui.predButton.setText("Confirm\n&Prename")
-            else:
-                self.ui.predictionBox.setTitle(
-                    f"Prediction by {prediction['predictor']}"
-                )
-
-            # TODO - set thresholds
-            # when certainty level is high, set the background to green
-            if prediction["certainty"] > 0.8:  # pre-id'd has certainty 0.9
-                self.ui.predictionBox.setStyleSheet("background-color: #00FA9A")
-            elif prediction["certainty"] > 0.4:
-                # machine prediction currently hardcoded to 0.5
-                self.ui.predictionBox.setStyleSheet("background-color: #FFD700")
-            else:  # else leave background unset.
-                self.ui.predictionBox.setStyleSheet("background-color:")
+        all_predictions_for_paper = self.predictions.get(str(tn), None)
+        if all_predictions_for_paper:
+            for pred in all_predictions_for_paper:
+                psid = pred["student_id"]  # predicted student ID
+                psnid = self.student_id_to_snid[psid]  # predicted SNID
+                pname = self.snid_to_student_name[psnid]  # predicted student name
+                if pname == "":
+                    # disable accept prediction button
+                    pred = []
+                self.ui.predButton.setText("&Accept\nPrediction")
+                self.ui.predButton.show()
+                self.ui.pSIDLabel.setText(psid)
+                self.ui.pNameLabel.setText(pname)
+                if pred["predictor"] == "prename":
+                    self.ui.predictionBox.setTitle(
+                        "Prenamed paper: is it signed?  if not signed, is it blank?"
+                    )
+                    self.ui.predButton.setText("Confirm\n&Prename")
+                else:
+                    self.ui.predictionBox.setTitle(
+                        f"Prediction by {all_predictions_for_paper[0]['predictor']} with certainty {all_predictions_for_paper[0]['certainty']} and {all_predictions_for_paper[1]['predictor']} with certainty {all_predictions_for_paper[1]['certainty']}"
+                    )
+                    if (
+                        all_predictions_for_paper[0]["student_id"]
+                        == all_predictions_for_paper[1]["student_id"]
+                    ):
+                        self.ui.predictionBox.setStyleSheet("background-color: #00FA9A")
+                    else:
+                        self.ui.predictionBox.setStyleSheet("background-color: #FFD700")
 
         else:
             self.ui.predButton.hide()
