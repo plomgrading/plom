@@ -444,7 +444,7 @@ def add_or_change_id_prediction(
         # find the test-ref
         tref = Test.get_or_none(Test.test_number == paper_number)
         if tref is None:
-            log.error("HAL tried to predict ID: paper %s not found", paper_number)
+            log.error("tried to predict ID: paper %s not found", paper_number)
             return False, 404, f"denied b/c paper {paper_number} not found"
 
         p = IDPrediction.get_or_none(test=tref, predictor=predictor)
@@ -459,10 +459,10 @@ def add_or_change_id_prediction(
                     predictor=predictor,
                 )
                 log.info(
-                    'Paper %s pre-ided by HAL as "%s" using %s',
+                    'Paper %s pre-ided by "%s" as "%s"',
                     paper_number,
-                    censorID(sid),
                     predictor,
+                    censorID(sid),
                 )
             else:
                 p.student_id = sid
@@ -470,8 +470,9 @@ def add_or_change_id_prediction(
                 p.predictor = predictor
                 p.save()
                 log.info(
-                    'Paper %s changed predicted ID by HAL to "%s"',
+                    'Paper %s changed "%s" predicted ID to "%s"',
                     paper_number,
+                    predictor,
                     censorID(sid),
                 )
         except pw.IntegrityError:
