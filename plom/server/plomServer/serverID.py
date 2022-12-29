@@ -136,7 +136,7 @@ def ID_put_predictions(self, predictions, predictor):
     log.info(f"Saving {predictor} prediction results into database w/ certainty")
     for papernum, student_ID, certainty in predictions:
         ok, code, msg = self.DB.add_or_change_id_prediction(
-            papernum, student_ID, certainty, predictor
+            papernum, student_ID, certainty=certainty, predictor=predictor
         )
         if not ok:
             return (False, f"Error occurred when saving predictions: {msg}")

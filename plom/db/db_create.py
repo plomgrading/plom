@@ -416,14 +416,20 @@ def get_all_question_versions(self):
 
 
 def add_or_change_id_prediction(
-    self, paper_number, sid, certainty=0.9, predictor="prename"
+    self, paper_number, sid, *, certainty=0.9, predictor="prename"
 ):
     """Pre-id a paper with a given student id. If that test already has a prediction of that sid, then do nothing.
 
     Args:
         paper_number (int)
         sid (str): a student id.
-        certaintly (float): TODO: meaning of this is still evolving.
+
+    Keyword Args:
+        certainty (float): TODO: meaning of this is still evolving.
+        predictor (str): what sort of prediction this is, meaning is
+            still evolving but "prename" is a rather special case.
+            Others include "MLLAP" and "MLGreedy" and may change in
+            future.
 
     Returns:
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`
