@@ -89,14 +89,14 @@ def IDclaimThisTask(self, username, test_number):
     return self.DB.IDgiveTaskToClient(username, test_number)
 
 
-def pre_id_paper(self, *args, **kwargs):
-    """Put a student id into database prename prediction table, manager only."""
-    return self.DB.add_or_change_id_prediction(*args, **kwargs)
+def add_or_change_predicted_id(self, *args, **kwargs):
+    """Put/change a student id in database prediction table."""
+    return self.DB.add_or_change_predicted_id(*args, **kwargs)
 
 
-def remove_pre_id(self, *args, **kwargs):
-    """Remove a particular test from the prename database prediction table, manager only."""
-    return self.DB.remove_id_prediction(*args, **kwargs)
+def remove_predicted_id(self, *args, **kwargs):
+    """Remove a particular paper number from database prediction table."""
+    return self.DB.remove_predicted_id(*args, **kwargs)
 
 
 def ID_id_paper(self, *args, **kwargs):
@@ -135,7 +135,7 @@ def ID_put_predictions(self, predictions, predictor):
     """
     log.info(f"Saving {predictor} prediction results into database w/ certainty")
     for papernum, student_ID, certainty in predictions:
-        ok, code, msg = self.DB.add_or_change_id_prediction(
+        ok, code, msg = self.DB.add_or_change_predicted_id(
             papernum, student_ID, certainty=certainty, predictor=predictor
         )
         if not ok:

@@ -454,6 +454,8 @@ class IDHandler:
     def pre_id_paper(self, data, request):
         """Set the prediction identification for a paper.
 
+        TODO: predictor data is unused!  Currently expected to be "prename" only?
+
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
 
@@ -462,7 +464,7 @@ class IDHandler:
             - 404: papernum not found, or other data errors.
         """
         papernum = request.match_info["paper_number"]
-        r, what, msg = self.server.pre_id_paper(
+        r, what, msg = self.server.add_or_change_predicted_id(
             papernum, data["sid"], predictor=data["predictor"]
         )
         if r:
@@ -489,7 +491,7 @@ class IDHandler:
             - 404: papernum not found, or other data errors.
         """
         papernum = request.match_info["paper_number"]
-        r, what, msg = self.server.remove_pre_id(papernum)
+        r, what, msg = self.server.remove_predicted_id(papernum, predictor="prename")
         if r:
             return web.Response(status=200)
         elif what == 404:

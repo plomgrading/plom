@@ -415,7 +415,7 @@ def get_all_question_versions(self):
     return qvmap
 
 
-def add_or_change_id_prediction(
+def add_or_change_predicted_id(
     self, paper_number, sid, *, certainty=0.9, predictor="prename"
 ):
     """Pre-id a paper with a given student id. If that test already has a prediction of that sid, then do nothing.
@@ -476,14 +476,17 @@ def add_or_change_id_prediction(
         return True, None, None
 
 
-def remove_id_prediction(self, paper_number):
+def remove_predicted_id(self, paper_number, *, predictor=None):
     """Remove any id predictions associated with a particular paper.
-
-    Note: Somewhat deprecated?  At least needs a ``predictor=`` kwarg.
-    See #2446.
 
     Args:
         paper_number (int)
+
+    Keyword Args:
+        predictor (str): what sort of prediction this is, meaning is
+            still evolving but "prename" is a rather special case.
+            Others include "MLLAP" and "MLGreedy" and may change in
+            future.  TODO: if missing are we going to erase them all?
 
     Returns:
         tuple: `(True, None, None)` if successful, or `(False, 404, msg)`
@@ -496,12 +499,16 @@ def remove_id_prediction(self, paper_number):
             log.error(f"Tried to remove prediction: {msg}")
             return False, 404, msg
 
-        p = IDPrediction.get_or_none(test=tref)
+        p = IDPrediction.get_or_none(test=tref, predictor=predictor)
         if p is None:
-            log.info("Paper %s remove predicted ID was unnecessary", paper_number)
+            log.info(
+                "Paper %s remove %s predicted ID was unnecessary",
+                paper_number,
+                predictor,
+            )
         else:
             p.delete_instance()
-            log.info("Paper %s removed predicted ID", paper_number)
+            log.info("Paper %s removed %s predicted ID", paper_number, predictor)
         return True, None, None
 
 

@@ -189,8 +189,8 @@ class PlomDB:
         getPageVersions,
         get_question_versions,
         get_all_question_versions,
-        add_or_change_id_prediction,
-        remove_id_prediction,
+        add_or_change_predicted_id,
+        remove_predicted_id,
         remove_id_from_paper,
         hasAutoGenRubrics,
     )
