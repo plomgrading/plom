@@ -12,9 +12,9 @@ PyQt5==5.15.7
 PyQt5-sip==12.11.0
 appdirs==1.4.4
 arrow==1.2.3
-exif==1.4.0
+exif==1.4.2
 fonttools==4.38.0
-importlib-resources==5.10.1
+importlib-resources==5.10.2
 packaging==22.0
 pandas==1.5.2
 passlib==1.7.4
@@ -29,4 +29,4 @@ tomli==2.0.1
 tomlkit==0.11.6
 tqdm==4.64.1
 urllib3==1.26.13
-weasyprint==57.1
+weasyprint==57.2
