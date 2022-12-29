@@ -1865,21 +1865,42 @@ class Manager(QWidget):
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
 
+        self.ui.predictionTW.setSortingEnabled(False)
+
         # TODO: Issue #1745
         # TODO: all existing papers or scanned only?
         s = self.msgr.get_spec()
         alltests = range(1, s["numberToProduce"] + 1)
 
-        for r, t in enumerate(alltests):
+        r = 0
+        for t in alltests:
             predictions_to_add = []
             predictions_to_add.append(prename_predictions.get(str(t), None))
             predictions_to_add.append(lap_predictions.get(str(t), None))
             predictions_to_add.append(greedy_predictions.get(str(t), None))
             identity = identified.get(str(t), None)
 
+            if not any(predictions_to_add) and identity:
+                self.ui.predictionTW.insertRow(r)
+                # put in the test-number
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, int(t))
+                self.ui.predictionTW.setItem(r, 0, item)
+
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, identity[0])
+                item.setToolTip("Has been identified")
+                self.ui.predictionTW.setItem(r, 1, item)
+
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, identity[1])
+                item.setToolTip("Has been identified")
+                self.ui.predictionTW.setItem(r, 2, item)
+                r += 1
+                continue
+
             for pred in predictions_to_add:
                 if pred is not None:
-                    self.ui.predictionTW.setSortingEnabled(False)
                     self.ui.predictionTW.insertRow(r)
                     # put in the test-number
                     item = QTableWidgetItem()
@@ -1893,32 +1914,34 @@ class Manager(QWidget):
                     item1.setData(Qt.DisplayRole, pred["predictor"])
                     self.ui.predictionTW.setItem(r, 4, item1)
                     item2 = QTableWidgetItem()
-                    # round displayed certainty to 2 decimal places
-                    item2.setData(Qt.DisplayRole, round(pred["certainty"], 2))
+                    # round certainty for display
+                    item2.setData(Qt.DisplayRole, round(pred["certainty"], 3))
                     self.ui.predictionTW.setItem(r, 5, item2)
 
-                if identity:
-                    # prediction less important but perhaps not irrelevant
-                    item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                    item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                    item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                    # This doesn't work
-                    # item0.setEnabled(False)
-                else:
-                    # TODO: colour-code based on confidence?
-                    item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                    item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                    item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                    if identity:
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, identity[0])
+                        item.setToolTip("Has been identified")
+                        self.ui.predictionTW.setItem(r, 1, item)
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, identity[1])
+                        item.setToolTip("Has been identified")
+                        self.ui.predictionTW.setItem(r, 2, item)
 
-            if identity:
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, identity[0])
-                item.setToolTip("Has been identified")
-                self.ui.predictionTW.setItem(r, 1, item)
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, identity[1])
-                item.setToolTip("Has been identified")
-                self.ui.predictionTW.setItem(r, 2, item)
+                    if identity:
+                        # prediction less important but perhaps not irrelevant
+                        # TODO: currently predictions erased on ID #2081 (probably shouldn't)
+                        item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                        item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                        item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                        # This doesn't work
+                        # item0.setEnabled(False)
+                    else:
+                        # TODO: colour-code based on confidence?
+                        item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                        item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                        item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                    r += 1
 
         self.ui.predictionTW.setSortingEnabled(True)
 
