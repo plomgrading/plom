@@ -1874,11 +1874,18 @@ class Manager(QWidget):
 
         r = 0
         for t in alltests:
-            predictions_to_add = []
-            predictions_to_add.append(prename_predictions.get(str(t), None))
-            predictions_to_add.append(lap_predictions.get(str(t), None))
-            predictions_to_add.append(greedy_predictions.get(str(t), None))
             identity = identified.get(str(t), None)
+            prename = prename_predictions.get(str(t), None)
+            lap = lap_predictions.get(str(t), None)
+            greedy = greedy_predictions.get(str(t), None)
+
+            hilite = False
+            # TODO: highlight identified if not matching prename, after #2081
+            if lap and greedy:
+                if lap["student_id"] != greedy["student_id"]:
+                    hilite = True
+
+            predictions_to_add = [prename, lap, greedy]
 
             if not any(predictions_to_add) and identity:
                 self.ui.predictionTW.insertRow(r)
@@ -1938,9 +1945,10 @@ class Manager(QWidget):
                         # item0.setEnabled(False)
                     else:
                         # TODO: colour-code based on confidence?
-                        item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                        item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                        item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                        if hilite:
+                            item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                            item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                            item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
                     r += 1
 
         self.ui.predictionTW.setSortingEnabled(True)
