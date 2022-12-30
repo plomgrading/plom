@@ -437,8 +437,8 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 5, QTableWidgetItem(json.dumps(rubric["versions"])))
         self.setItem(rc, 6, QTableWidgetItem(json.dumps(rubric["parameters"])))
         self.setItem(rc, 7, QTableWidgetItem(rubric["text"]))
-        self.setItem(rc, 8, QTableWidgetItem(rubric["value"]))
-        self.setItem(rc, 9, QTableWidgetItem(rubric["out_of"]))
+        self.setItem(rc, 8, QTableWidgetItem(str(rubric["value"])))
+        self.setItem(rc, 9, QTableWidgetItem(str(rubric["out_of"])))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -607,8 +607,8 @@ class RubricTable(QTableWidget):
             {
                 "kind": self.item(r, 4).text(),
                 "display_delta": self.item(r, 2).text(),
-                "value": self.item(r, 8).text(),
-                "out_of": self.item(r, 9).text(),
+                "value": int(self.item(r, 8).text()),
+                "out_of": int(self.item(r, 9).text()),
                 "text": self.item(r, 3).text(),
                 "id": self.item(r, 0).text(),
             }
@@ -631,8 +631,8 @@ class RubricTable(QTableWidget):
             mss,
             kind=self.item(r, 4).text(),
             display_delta=self.item(r, 2).text(),
-            value=self.item(r, 8).text(),
-            out_of=self.item(r, 9).text(),
+            value=int(self.item(r, 8).text()),
+            out_of=int(self.item(r, 9).text()),
             versions=json.loads(self.item(r, 5).text()),
             scene=self._parent._parent.scene,
         )
@@ -678,8 +678,8 @@ class RubricTable(QTableWidget):
                 self.item(r, 5).setText(json.dumps(new_rubric["versions"]))
                 self.item(r, 6).setText(json.dumps(new_rubric["parameters"]))
                 self.item(r, 7).setText(new_rubric["text"])
-                self.item(r, 8).setText(new_rubric["value"])
-                self.item(r, 9).setText(new_rubric["out_of"])
+                self.item(r, 8).setText(str(new_rubric["value"]))
+                self.item(r, 9).setText(str(new_rubric["out_of"]))
 
                 # update the legality
                 self.colourLegalRubric(r, mss)
@@ -1815,18 +1815,18 @@ class AddRubricBox(QDialog):
         meta = self.TEmeta.toPlainText().strip()
         if self.typeRB_neutral.isChecked():
             kind = "neutral"
-            value = "0"
-            out_of = "0"
+            value = 0
+            out_of = 0
             display_delta = "."
         elif self.typeRB_relative.isChecked():
             kind = "relative"
-            value = str(self.SB.textFromValue(self.SB.value()))
-            out_of = "0"
-            display_delta = value  # consider put the +/- on here?
+            value = self.SB.value()
+            out_of = 0
+            display_delta = str(value) if value < 0 else f"+{value}"
         elif self.typeRB_absolute.isChecked():
             kind = "absolute"
-            value = self.rubric_value_SB.text()  # float/int
-            out_of = self.rubric_out_of_SB.text()
+            value = self.rubric_value_SB.value()
+            out_of = self.rubric_out_of_SB.value()
             display_delta = f"{value} / {out_of}"
         else:
             raise RuntimeError("no radio was checked")
