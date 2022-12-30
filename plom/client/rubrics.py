@@ -117,23 +117,23 @@ def compute_score_locabs(rubrics, maxscore):
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]
 
     for r in absolutes:
-        out_of = int(r["out_of"])
+        out_of = r["out_of"]
         if out_of not in range(1, maxscore + 1):
             # TODO: or Inconsistent?
             raise ValueError(f"out_of is outside of [1, {maxscore}]")
-        if int(r["value"]) not in range(0, out_of + 1):
+        if r["value"] not in range(0, out_of + 1):
             # TODO: or Inconsistent?
             raise ValueError(f"value is outside of [0, out_of] where out_of={out_of}")
-        lo_score += int(r["value"])
-        hi_score -= int(r["out_of"]) - int(r["value"])
+        lo_score += r["value"]
+        hi_score -= r["out_of"] - r["value"]
         sum_out_of += out_of
 
     if sum_out_of > maxscore:
         # TODO: or Inconsistent?
         raise ValueError(f"sum of out_of is outside [0, {maxscore}]")
 
-    uppers = [r for r in rubrics if r["kind"] == "relative" and int(r["value"]) > 0]
-    downrs = [r for r in rubrics if r["kind"] == "relative" and int(r["value"]) < 0]
+    uppers = [r for r in rubrics if r["kind"] == "relative" and r["value"] > 0]
+    downrs = [r for r in rubrics if r["kind"] == "relative" and r["value"] < 0]
 
     # we now have a bracket [lo_score, hi_score]
     # e.g., suppose question out of 10 and two abs rubrics used
@@ -159,9 +159,9 @@ def compute_score_locabs(rubrics, maxscore):
 
     score = lo_score
     if uppers:
-        score = lo_score + sum(int(r["value"]) for r in uppers)
+        score = lo_score + sum(r["value"] for r in uppers)
     if downrs:
-        score = hi_score + sum(int(r["value"]) for r in downrs)
+        score = hi_score + sum(r["value"] for r in downrs)
 
     if score < 0 or score > maxscore:
         raise ValueError("score is out of range")

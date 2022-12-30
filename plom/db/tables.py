@@ -191,10 +191,9 @@ class Rubric(BaseModel):
     kind = pw.CharField(null=False)  # abs, neut, delt, relative - is short
     display_delta = pw.CharField(null=False)  # is short
     # Note: designing for "value / out_of" absolute rubrics
-    #   - not sure why not float/int?
     #   - value is also used for relative rubrics
-    value = pw.CharField(null=False)
-    out_of = pw.CharField(null=False)
+    value = pw.IntegerField(null=False)
+    out_of = pw.IntegerField(null=False)
     text = pw.TextField(null=False)  # can be long
     question = pw.IntegerField(null=False)
     # versions is a list of integers, stored in json field
