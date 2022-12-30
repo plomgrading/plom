@@ -286,11 +286,6 @@ def IDgetImagesOfUnidentified(self):
 def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
     """Associate student name and id with a paper in the database.
 
-    Used by the normal users for identifying papers.
-
-    See also :func:`plom.db.db_create.id_paper` which is just this with
-    `checks=False`, and is used by manager.  Likely want to consolidate.
-
     Args:
         paper_num (int)
         user_name (str): User who did the IDing.
