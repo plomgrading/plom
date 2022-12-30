@@ -50,11 +50,14 @@ from PyQt5.QtWidgets import (
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import WarnMsg, SimpleQuestion
 from .rubric_wrangler import RubricWrangler
+from .rubrics import compute_score
+from plom.plom_exceptions import PlomInconsistentRubricsException
+
 
 log = logging.getLogger("annotr")
 
 
-def isLegalRubric(mss, *, kind, delta, versions):
+def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
     """Checks the 'legality' of the current rubric - returning one of several possible indicators
 
     Those states are:
@@ -66,10 +69,9 @@ def isLegalRubric(mss, *, kind, delta, versions):
     be shown (2), hidden (0, 3) and greyed out (1)
 
     Args:
-        mss (list): triple that encodes max-mark, state, and current-score
-            "state" can be "neutral", "up", "down", "absolute", TODO: others?
-        kind (str): the kind of the rubric being checked
-        delta (str): the delta of the rubric being checked
+        mss (list): triple that encodes max-mark, state, and current-score.
+            "state" old unused stuff.
+        TODO (dict): other stuff should be just a rubric dict.  TODO: change.
         versions (list): which versions are this rubric intended for.
             Empty list means valid for all versions.
 
@@ -77,7 +79,6 @@ def isLegalRubric(mss, *, kind, delta, versions):
         int: 0, 1, 2, 3 as documented above.
     """
     maxMark = mss[0]
-    state = mss[1]
     score = mss[2]
     our_version = mss[3]
 
@@ -85,35 +86,21 @@ def isLegalRubric(mss, *, kind, delta, versions):
         if our_version not in versions:
             return 3
 
-    # easy cases first
-    # when state is neutral - all rubrics are fine
-    # a neutral rubric is always compatible and in range
-    if state == "neutral" or kind == "neutral":
+    if not scene:
         return 2
-    # now, neither state nor kind are neutral
 
-    # consequently if state is absolute, no remaining rubric is legal
-    # similarly, if kind is absolute, the rubric is not legal since state is not neutral
-    if state == "absolute" or kind == "absolute":
+    # TODO: obviously we should just pass it in
+    r = {"kind": kind, "value": value, "display_delta": display_delta, "out_of": out_of}
+    rubrics = scene.get_rubrics()
+    rubrics.append(r)
+
+    try:
+        N = compute_score(rubrics, maxMark)
+        return 2
+    except ValueError as e:
+        return 1
+    except PlomInconsistentRubricsException:
         return 0
-
-    # now state must be up or down, and kind must be delta or relative
-    # delta mark = delta = must be an non-zero int.
-    idelta = int(delta)
-    if state == "up":
-        if idelta < 0:  # not compat
-            return 0
-        elif idelta + score > maxMark:  # out of range
-            return 1
-        else:
-            return 2
-    else:  # state == "down"
-        if idelta > 0:  # not compat
-            return 0
-        elif idelta + score < 0:  # out of range
-            return 1
-        else:
-            return 2
 
 
 def render_params(template, params, ver):
@@ -450,8 +437,8 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 5, QTableWidgetItem(json.dumps(rubric["versions"])))
         self.setItem(rc, 6, QTableWidgetItem(json.dumps(rubric["parameters"])))
         self.setItem(rc, 7, QTableWidgetItem(rubric["text"]))
-        self.setItem(rc, 8, QTableWidgetItem(rubric["value"]))
-        self.setItem(rc, 9, QTableWidgetItem(rubric["out_of"]))
+        self.setItem(rc, 8, QTableWidgetItem(str(rubric["value"])))
+        self.setItem(rc, 9, QTableWidgetItem(str(rubric["out_of"])))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -618,11 +605,12 @@ class RubricTable(QTableWidget):
 
         self._parent.rubricSignal.emit(
             {
-                "value": self.item(r, 8).text(),
+                "kind": self.item(r, 4).text(),
                 "display_delta": self.item(r, 2).text(),
+                "value": int(self.item(r, 8).text()),
+                "out_of": int(self.item(r, 9).text()),
                 "text": self.item(r, 3).text(),
                 "id": self.item(r, 0).text(),
-                "kind": self.item(r, 4).text(),
             }
         )
 
@@ -642,8 +630,11 @@ class RubricTable(QTableWidget):
         legal = isLegalRubric(
             mss,
             kind=self.item(r, 4).text(),
-            delta=self.item(r, 2).text(),
+            display_delta=self.item(r, 2).text(),
+            value=int(self.item(r, 8).text()),
+            out_of=int(self.item(r, 9).text()),
             versions=json.loads(self.item(r, 5).text()),
+            scene=self._parent._parent.scene,
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
         colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
@@ -687,8 +678,8 @@ class RubricTable(QTableWidget):
                 self.item(r, 5).setText(json.dumps(new_rubric["versions"]))
                 self.item(r, 6).setText(json.dumps(new_rubric["parameters"]))
                 self.item(r, 7).setText(new_rubric["text"])
-                self.item(r, 8).setText(new_rubric["value"])
-                self.item(r, 9).setText(new_rubric["out_of"])
+                self.item(r, 8).setText(str(new_rubric["value"]))
+                self.item(r, 9).setText(str(new_rubric["out_of"]))
 
                 # update the legality
                 self.colourLegalRubric(r, mss)
@@ -755,7 +746,6 @@ class RubricWidget(QWidget):
         self.rubrics = []
         self.maxMark = None
         self.currentScore = None
-        self.currentState = None
 
         grid = QGridLayout()
         # assume our container will deal with margins
@@ -841,7 +831,7 @@ class RubricWidget(QWidget):
 
     @property
     def mss(self):
-        return (self.maxMark, self.currentState, self.currentScore, self.version)
+        return (self.maxMark, None, self.currentScore, self.version)
 
     @property
     def user_tabs(self):
@@ -1179,12 +1169,11 @@ class RubricWidget(QWidget):
         self.version = version
         self.max_version = maxver
 
-    def changeMark(self, currentScore, currentState, maxMark=None):
+    def changeMark(self, currentScore, maxMark=None):
         # Update the current and max mark and so recompute which deltas are displayed
         if maxMark:
             self.maxMark = maxMark
         self.currentScore = currentScore
-        self.currentState = currentState
         self.updateLegalityOfDeltas()
 
     def updateLegalityOfDeltas(self):
@@ -1544,11 +1533,6 @@ class AddRubricBox(QDialog):
         _.setValue(maxMark)
         hlay.addWidget(_)
         self.rubric_out_of_SB = _
-        # TODO: disabled until we support these!
-        self.typeRB_absolute.setEnabled(False)
-        self.rubric_value_SB.setEnabled(False)
-        self.rubric_out_of_SB.setEnabled(False)
-        hlay.addWidget(QLabel("(coming soon!)"))
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(hlay)
         flay.addRow("Marks", frame)
@@ -1831,18 +1815,18 @@ class AddRubricBox(QDialog):
         meta = self.TEmeta.toPlainText().strip()
         if self.typeRB_neutral.isChecked():
             kind = "neutral"
-            value = "0"
-            out_of = "0"
+            value = 0
+            out_of = 0
             display_delta = "."
         elif self.typeRB_relative.isChecked():
             kind = "relative"
-            value = str(self.SB.textFromValue(self.SB.value()))
-            out_of = "0"
-            display_delta = value  # consider put the +/- on here?
+            value = self.SB.value()
+            out_of = 0
+            display_delta = str(value) if value < 0 else f"+{value}"
         elif self.typeRB_absolute.isChecked():
             kind = "absolute"
-            value = self.rubric_value_SB.text()  # float/int
-            out_of = self.rubric_out_of_SB.text()
+            value = self.rubric_value_SB.value()
+            out_of = self.rubric_out_of_SB.value()
             display_delta = f"{value} / {out_of}"
         else:
             raise RuntimeError("no radio was checked")

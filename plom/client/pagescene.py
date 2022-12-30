@@ -76,6 +76,7 @@ from .elastics import (
     which_classic_shortest_corner_side,
     which_centre_to_centre,
 )
+from plom.client.rubrics import compute_score
 
 
 log = logging.getLogger("pagescene")
@@ -120,7 +121,7 @@ class ScoreBox(QGraphicsTextItem):
         if self.question_label:
             s += self.question_label + ": "
         if self.score is None:
-            s += "no mark"
+            s += "Unmarked"
         else:
             s += "{} out of {}".format(self.score, self.maxScore)
         self.setPlainText(s)
@@ -423,9 +424,7 @@ class PageScene(QGraphicsScene):
         # Grab filename of groupimage
         self.src_img_data = src_img_data  # TODO: do we need this saved?
         self.maxMark = maxMark
-        # Initially both score is None and markingState is neutral
         self.score = None
-        self.markingState = "neutral"
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
@@ -514,17 +513,29 @@ class PageScene(QGraphicsScene):
     def getScore(self):
         return self.score
 
-    def getMarkingState(self):
-        return self.markingState
+    def is_neutral_state(self):
+        """Has the mark has been changed from the unmarked state?
+
+        No annotations is a neutral state.  Annotations that do not change the
+        mark leave the scene in a neutral state.   Even neutral rubrics leave
+        the scene in the neutral state.  But the use of any mark-changing
+        annotation (currently non-neutral rubrics) will change the scene from
+        neutral to non-neutral.
+
+        Returns:
+            bool
+        """
+        if all(r["kind"] == "neutral" for r in self.get_rubrics()):
+            return True
+        return False
 
     def refreshStateAndScore(self):
-        self.refreshMarkingState()
         self.refreshScore()
         # after score and state are recomputed, we need to update a few things
         # the scorebox
         self.scoreBox.changeScore(self.score)
         # TODO - this is a bit hack, but need to update the rubric-widget
-        self.parent().rubric_widget.changeMark(self.score, self.markingState)
+        self.parent().rubric_widget.changeMark(self.score)
         # also update the marklabel in the annotator - same text as scorebox
         self.parent().refreshDisplayedMark(self.score)
 
@@ -536,83 +547,28 @@ class PageScene(QGraphicsScene):
                 self.isLegalRubric(self.current_rubric),
             )
 
-    def refreshMarkingState(self):
-        """Compute the marking-state from the rubrics on the page and store
+    def get_rubrics(self):
+        """A list of the rubrics current used in the scene.
 
-        * State can be one of ["neutral", "absolute", "up", "down"]
-        * Rubric's kind can be one of ["neutral", "absolute", "delta", "relative"]
-            * neutral has no effect on state - coexists with everything
-            * absolute must be unique on page
-            * delta/relative can coexist with delta/relative of same sign, and neutral
-        * Raise InconsistentRubricsException when one of the following
-            * more than one absolute rubric
-            * mix absolute rubric with delta or relative
-            * mix delta/relative of different signs
+        Return:
+            list: a list of dicts, one for each rubric that is on the page.
+
+        TODO: we will be calling this function quite a lot: maybe its worth
+        caching or something.
         """
-
-        state = "neutral"
+        rubrics = []
         for X in self.items():
-            if isinstance(X, GroupDeltaTextItem):
-                if X.kind == "neutral":  # does not change state
-                    continue
-                elif X.kind == "absolute":  # absolute must be unique on page
-                    if state == "neutral":
-                        state = "absolute"
-                    else:
-                        log.error(
-                            "Inconsistent rubric = mixed absolute rubric with non-neutral rubric(s)"
-                        )
-                        raise PlomInconsistentRubricsException
-                elif X.kind in ["delta", "relative"]:  # must be delta>0 or delta<0
-                    if X.is_delta_positive():
-                        if state in ["neutral", "up"]:
-                            state = "up"
-                        else:
-                            log.error(
-                                "Inconsistent rubric = mixed positive-delta rubric with absolute or negative-delta rubric"
-                            )
-                            raise PlomInconsistentRubricsException
-                    else:
-                        if state in ["neutral", "down"]:
-                            state = "down"
-                        else:
-                            log.error(
-                                "Inconsistent rubric = mixed negative-delta rubric with absolute or positive-delta rubric"
-                            )
-                            raise PlomInconsistentRubricsException
-                else:
-                    log.error(
-                        "Inconsistent rubric = unknown kind-type = {}".format(X.kind)
-                    )
-                    raise PlomInconsistentRubricsException
-        self.markingState = state
+            # check if object has "saveable" attribute and it is set to true.
+            if getattr(X, "saveable", False):
+                if isinstance(X, GroupDeltaTextItem):
+                    rubrics.append(X.as_rubric())
+        return rubrics
 
     def refreshScore(self):
         """Compute the current score by adding up the rubric items on the page
         Note that this assumes that the rubrics are consistent as per currentMarkingState
         """
-        score = None
-        for X in self.items():
-            if isinstance(X, GroupDeltaTextItem):
-                if X.kind == "neutral":
-                    continue
-                elif X.kind == "absolute":  # there can be only one
-                    score = X.get_delta_value()
-                    break
-                elif X.kind in ["delta", "relative"]:
-                    # handle the score=None case carefully
-                    if score is None:
-                        score = 0 if X.get_delta_value() > 0 else self.maxMark
-                    # now update the score
-                    score += X.get_delta_value()
-                else:  # this should not happnen if rubrics okay
-                    log.error(
-                        "Inconsistent rubric = rubric of unknown type = {}".format(
-                            X.kind
-                        )
-                    )
-                    raise PlomInconsistentRubricsException
-        self.score = score
+        self.score = compute_score(self.get_rubrics(), self.maxMark)
 
     def how_many_underlying_images_wide(self):
         """How many images wide is the bottom layer?
@@ -1397,15 +1353,7 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState == 3:  # time to stamp the rubric!
             pt = event.scenePos()  # grab the location of the mouse-click
-            command = CommandGroupDeltaText(
-                self,
-                pt,
-                self.current_rubric["id"],
-                self.current_rubric["kind"],
-                self.current_rubric["value"],
-                self.current_rubric["display_delta"],
-                self.current_rubric["text"],
-            )
+            command = CommandGroupDeltaText(self, pt, self.current_rubric)
             log.debug(
                 "Making a GroupDeltaText: boxLineStampState is {}".format(
                     self.boxLineStampState
@@ -2263,15 +2211,7 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 0
                 return
             # small box, so just stamp the rubric
-            command = CommandGroupDeltaText(
-                self,
-                event.scenePos(),
-                self.current_rubric["id"],
-                self.current_rubric["kind"],
-                self.current_rubric["value"],
-                self.current_rubric["display_delta"],
-                self.current_rubric["text"],
-            )
+            command = CommandGroupDeltaText(self, event.scenePos(), self.current_rubric)
             log.debug(
                 "Making a GroupDeltaText: boxLineStampState is {}".format(
                     self.boxLineStampState
@@ -2490,46 +2430,21 @@ class PageScene(QGraphicsScene):
 
         Args:
             rubric (dict): must have at least the keys "kind", "value",
-                and "display_delta".
-                TODO: may need updates to properly use "value".
+                "display_delta", and "out_of".
 
         Returns:
             bool: True if the delta is legal, False otherwise.
         """
-        kind, dn = rubric["kind"], rubric["display_delta"]
-        # a neutral rubric is always fine
-        if kind == "neutral":
-            return True
-        elif kind == "absolute":  # can only paste neutral rubrics
-            if self.markingState == "neutral":
-                return True
-            else:
-                return False
-        # at this point we know that the kind is delta/relative
-        elif int(dn) > 0:  # is positive relative-rubric
-            if self.markingState in ["absolute", "down"]:
-                return False
-            elif self.markingState == "neutral":  # score is None
-                return True
-            # we know score is pos-int here
-            elif self.score + int(dn) > self.maxMark:
-                return False
-            else:
-                return True
-        elif int(dn) < 0:  # is negative relative-rubric
-            if self.markingState in ["absolute", "up"]:
-                return False
-            elif self.markingState == "neutral":  # score is None
-                return True
-            elif self.score + int(dn) < 0:  # we know score is pos-int here
-                return False
-            else:
-                return True
-        else:  # this should not happen
-            log.error(
-                "Inconsistent rubric = {} {} {}".format(self.markingState, kind, dn)
-            )
-            raise PlomInconsistentRubricsException
+        rubrics = self.get_rubrics()
+        rubrics.append(rubric)
+
+        try:
+            N = compute_score(rubrics, self.maxMark)
+        except ValueError:
+            return False
+        except PlomInconsistentRubricsException:
+            return False
+        return True
 
     def changeTheRubric(self, rubric):
         """
