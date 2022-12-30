@@ -1822,7 +1822,7 @@ class AddRubricBox(QDialog):
             kind = "relative"
             value = str(self.SB.textFromValue(self.SB.value()))
             out_of = "0"
-            display_delta = value  # consider put the +/- on here?
+            display_delta = str(value) if value < 0 else f"+{value}"
         elif self.typeRB_absolute.isChecked():
             kind = "absolute"
             value = self.rubric_value_SB.text()  # float/int
