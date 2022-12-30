@@ -168,8 +168,6 @@ def get_sids_and_probabilities():
         log.info(_)
         raise RuntimeError(_)
 
-    t = time.process_time()
-
     # implicitly raises FileNotFoundError if no heatmap
     with open(heatmaps_file, "r") as fh:
         probabilities = json.load(fh)
@@ -183,10 +181,6 @@ def get_sids_and_probabilities():
         next(csv_reader, None)  # skip the header
         for row in csv_reader:
             sids.append(row[0])
-
-    log.info(
-        f"\nTime loading prediction data: {time.process_time() - t:.02} seconds.\n"
-    )
 
     return sids, probabilities
 
