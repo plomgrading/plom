@@ -167,7 +167,7 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def remove_id_prediction(self, paper_number):
+    def remove_pre_id(self, paper_number):
         """Remove the predicted "pre-id" for a particular paper.
 
         Exceptions:

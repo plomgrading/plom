@@ -451,8 +451,10 @@ class IDHandler:
     # @routes.put("/ID/preid/{paper_number}")
     @authenticate_by_token_required_fields(["user", "sid", "predictor"])
     @write_admin
-    def PreIDPaper(self, data, request):
+    def pre_id_paper(self, data, request):
         """Set the prediction identification for a paper.
+
+        TODO: predictor data is unused!  Currently expected to be "prename" only?
 
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
@@ -460,16 +462,13 @@ class IDHandler:
             - 200: success.
             - 403: not manager.
             - 404: papernum not found, or other data errors.
-            - 409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["paper_number"]
-        r, what, msg = self.server.pre_id_paper(
+        r, what, msg = self.server.add_or_change_predicted_id(
             papernum, data["sid"], predictor=data["predictor"]
         )
         if r:
             return web.Response(status=200)
-        elif what == 409:
-            raise web.HTTPConflict(reason=msg)
         elif what == 404:
             raise web.HTTPNotFound(reason=msg)
         else:
@@ -478,8 +477,8 @@ class IDHandler:
     # @routes.delete("/ID/preid/{paper_number}")
     @authenticate_by_token_required_fields([])
     @write_admin
-    def remove_id_prediction(self, data, request):
-        """Remove the prediction identification for a paper.
+    def remove_pre_id(self, data, request):
+        """Remove the "prename" prediction identification for a paper.
 
         Only "manager" can perform this action.  Typical client IDing
         would call func:`IdentifyPaperTask` instead.
@@ -492,7 +491,7 @@ class IDHandler:
             - 404: papernum not found, or other data errors.
         """
         papernum = request.match_info["paper_number"]
-        r, what, msg = self.server.remove_id_prediction(papernum)
+        r, what, msg = self.server.remove_predicted_id(papernum, predictor="prename")
         if r:
             return web.Response(status=200)
         elif what == 404:
@@ -682,8 +681,8 @@ class IDHandler:
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
-        router.add_put("/ID/preid/{paper_number}", self.PreIDPaper)
-        router.add_delete("/ID/preid/{paper_number}", self.remove_id_prediction)
+        router.add_put("/ID/preid/{paper_number}", self.pre_id_paper)
+        router.add_delete("/ID/preid/{paper_number}", self.remove_pre_id)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         # TODO: likely unnecessary?
         router.add_delete("/ID/predictedID", self.ID_delete_machine_predictions)

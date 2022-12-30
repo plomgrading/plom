@@ -89,14 +89,14 @@ def IDclaimThisTask(self, username, test_number):
     return self.DB.IDgiveTaskToClient(username, test_number)
 
 
-def pre_id_paper(self, *args, **kwargs):
-    """Put a student id into database prediction table, manager only."""
-    return self.DB.add_or_change_id_prediction(*args, **kwargs)
+def add_or_change_predicted_id(self, *args, **kwargs):
+    """Put/change a student id in database prediction table."""
+    return self.DB.add_or_change_predicted_id(*args, **kwargs)
 
 
-def remove_id_prediction(self, *args, **kwargs):
-    """Remove a particular test from the database prediction table, manager only."""
-    return self.DB.remove_id_prediction(*args, **kwargs)
+def remove_predicted_id(self, *args, **kwargs):
+    """Remove a particular paper number from database prediction table."""
+    return self.DB.remove_predicted_id(*args, **kwargs)
 
 
 def ID_id_paper(self, *args, **kwargs):
@@ -135,8 +135,8 @@ def ID_put_predictions(self, predictions, predictor):
     """
     log.info(f"Saving {predictor} prediction results into database w/ certainty")
     for papernum, student_ID, certainty in predictions:
-        ok, code, msg = self.DB.add_or_change_id_prediction(
-            papernum, student_ID, certainty, predictor
+        ok, code, msg = self.DB.add_or_change_predicted_id(
+            papernum, student_ID, certainty=certainty, predictor=predictor
         )
         if not ok:
             return (False, f"Error occurred when saving predictions: {msg}")
@@ -168,8 +168,6 @@ def get_sids_and_probabilities():
         log.info(_)
         raise RuntimeError(_)
 
-    t = time.process_time()
-
     # implicitly raises FileNotFoundError if no heatmap
     with open(heatmaps_file, "r") as fh:
         probabilities = json.load(fh)
@@ -183,10 +181,6 @@ def get_sids_and_probabilities():
         next(csv_reader, None)  # skip the header
         for row in csv_reader:
             sids.append(row[0])
-
-    log.info(
-        f"\nTime loading prediction data: {time.process_time() - t:.02} seconds.\n"
-    )
 
     return sids, probabilities
 
