@@ -1879,8 +1879,12 @@ class Manager(QWidget):
             lap = lap_predictions.get(str(t), None)
             greedy = greedy_predictions.get(str(t), None)
 
+            hilite_id = False
+            if prename and identity:
+                if prename["student_id"] != identity[0]:
+                    # TODO: highlight identified if not matching prename, after #2081
+                    hilite_id = True
             hilite = False
-            # TODO: highlight identified if not matching prename, after #2081
             if lap and greedy:
                 if lap["student_id"] != greedy["student_id"]:
                     hilite = True
@@ -1930,19 +1934,25 @@ class Manager(QWidget):
                         item.setData(Qt.DisplayRole, identity[0])
                         item.setToolTip("Has been identified")
                         self.ui.predictionTW.setItem(r, 1, item)
+                        if hilite_id:
+                            item.setBackground(QBrush(QColor(255, 0, 0, 48)))
                         item = QTableWidgetItem()
                         item.setData(Qt.DisplayRole, identity[1])
                         item.setToolTip("Has been identified")
                         self.ui.predictionTW.setItem(r, 2, item)
 
                     if identity:
-                        # prediction less important but perhaps not irrelevant
-                        # TODO: currently predictions erased on ID #2081 (probably shouldn't)
-                        item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                        item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                        item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                        # This doesn't work
-                        # item0.setEnabled(False)
+                        if hilite_id:
+                            item0.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                            item1.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                            item2.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                        else:
+                            # prediction less important but perhaps not irrelevant
+                            item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                            item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                            item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                            # This doesn't work
+                            # item0.setEnabled(False)
                     else:
                         # TODO: colour-code based on confidence?
                         if hilite:
