@@ -97,6 +97,8 @@ codespell:
 wet_no_drift:
   stage: static_analysis
   image: alpine
+  before_script:
+    - apk add bash
   script:
     # Issue #2402: two copies of the latex template
     - diff -s plom/latexTemplate.tex plom/testTemplates/latexTemplate.tex
@@ -106,7 +108,7 @@ wet_no_drift:
     - export VER2=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
     - echo $VER1
     - echo $VER2
-    # TODO: ensure same
+    - bash -c "[[ x$VER1 == x$VER2 ]]"
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
