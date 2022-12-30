@@ -2320,7 +2320,12 @@ class Manager(QWidget):
         if owner != "reviewer":
             self.msgr.clearAuthorisationUser(owner)
         # then map that question's owner "reviewer"
-        self.msgr.MreviewQuestion(test, question)
+        try:
+            self.msgr.MreviewQuestion(test, question)
+        except PlomConflict as e:
+            s = "<p>You need to create a &ldquo;<tt>reviewer</tt>&rdquo; account"
+            s += " before you can use this feature.</p>"
+            InfoMsg(self, str(e), info=s, info_pre=False).exec()
 
     def removeAnnotationsFromRange(self):
         ri = self.ui.reviewTW.selectedIndexes()
