@@ -32,6 +32,7 @@ from PyQt5.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QRadioButton,
     QToolButton,
     QSizePolicy,
     QSpacerItem,
@@ -49,15 +50,15 @@ from PyQt5.QtWidgets import (
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import WarnMsg, SimpleQuestion
 from .rubric_wrangler import RubricWrangler
+from .rubrics import compute_score
+from plom.plom_exceptions import PlomInconsistentRubricsException
+
 
 log = logging.getLogger("annotr")
 
-abs_suffix = " / N"
-abs_suffix_length = len(abs_suffix)
 
-
-def isLegalRubric(mss, *, kind, delta, versions):
-    """Checks the 'legality' of the current rubric - returning one of several possible states
+def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
+    """Checks the 'legality' of the current rubric - returning one of several possible indicators
 
     Those states are:
     0 = incompatible - the kind of rubric is not compatible with the current state
@@ -68,9 +69,9 @@ def isLegalRubric(mss, *, kind, delta, versions):
     be shown (2), hidden (0, 3) and greyed out (1)
 
     Args:
-        mss (list): triple that encodes max-mark, state, and current-score
-        kind (str): the kind of the rubric being checked
-        delta (str): the delta of the rubric being checked
+        mss (list): triple that encodes max-mark, state, and current-score.
+            "state" old unused stuff.
+        TODO (dict): other stuff should be just a rubric dict.  TODO: change.
         versions (list): which versions are this rubric intended for.
             Empty list means valid for all versions.
 
@@ -78,7 +79,6 @@ def isLegalRubric(mss, *, kind, delta, versions):
         int: 0, 1, 2, 3 as documented above.
     """
     maxMark = mss[0]
-    state = mss[1]
     score = mss[2]
     our_version = mss[3]
 
@@ -86,35 +86,21 @@ def isLegalRubric(mss, *, kind, delta, versions):
         if our_version not in versions:
             return 3
 
-    # easy cases first
-    # when state is neutral - all rubrics are fine
-    # a neutral rubric is always compatible and in range
-    if state == "neutral" or kind == "neutral":
+    if not scene:
         return 2
-    # now, neither state nor kind are neutral
 
-    # consequently if state is absolute, no remaining rubric is legal
-    # similarly, if kind is absolute, the rubric is not legal since state is not neutral
-    if state == "absolute" or kind == "absolute":
+    # TODO: obviously we should just pass it in
+    r = {"kind": kind, "value": value, "display_delta": display_delta, "out_of": out_of}
+    rubrics = scene.get_rubrics()
+    rubrics.append(r)
+
+    try:
+        N = compute_score(rubrics, maxMark)
+        return 2
+    except ValueError as e:
+        return 1
+    except PlomInconsistentRubricsException:
         return 0
-
-    # now state must be up or down, and kind must be delta or relative
-    # delta mark = delta = must be an non-zero int.
-    idelta = int(delta)
-    if state == "up":
-        if idelta < 0:  # not compat
-            return 0
-        elif idelta + score > maxMark:  # out of range
-            return 1
-        else:
-            return 2
-    else:  # state == "down"
-        if idelta > 0:  # not compat
-            return 0
-        elif idelta + score < 0:  # out of range
-            return 1
-        else:
-            return 2
 
 
 def render_params(template, params, ver):
@@ -163,12 +149,14 @@ class RubricTable(QTableWidget):
         _col_headers = (
             "Key",
             "Username",
-            "Delta",
+            "Display_Delta",
             "Text",
             "Kind",
             "Versions",
             "Parameters",
             "Raw Text",
+            "Value",
+            "Out of",
         )
         self.setColumnCount(len(_col_headers))
         self.setHorizontalHeaderLabels(_col_headers)
@@ -178,6 +166,8 @@ class RubricTable(QTableWidget):
         self.hideColumn(5)
         self.hideColumn(6)
         self.hideColumn(7)
+        self.hideColumn(8)
+        self.hideColumn(9)
         # could use a subclass
         if self.tabType == "delta":
             self.hideColumn(3)
@@ -436,10 +426,7 @@ class RubricTable(QTableWidget):
         self.insertRow(rc)
         self.setItem(rc, 0, QTableWidgetItem(rubric["id"]))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
-        if rubric["kind"] == "absolute":
-            self.setItem(rc, 2, QTableWidgetItem(rubric["delta"] + abs_suffix))
-        else:
-            self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
+        self.setItem(rc, 2, QTableWidgetItem(rubric["display_delta"]))
 
         # how to access version?  and where to store this function?
         render = render_params(
@@ -450,6 +437,8 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 5, QTableWidgetItem(json.dumps(rubric["versions"])))
         self.setItem(rc, 6, QTableWidgetItem(json.dumps(rubric["parameters"])))
         self.setItem(rc, 7, QTableWidgetItem(rubric["text"]))
+        self.setItem(rc, 8, QTableWidgetItem(str(rubric["value"])))
+        self.setItem(rc, 9, QTableWidgetItem(str(rubric["out_of"])))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -491,13 +480,13 @@ class RubricTable(QTableWidget):
         for rb in rubrics:
             # take the manager generated delta rubrics
             if rb["username"] == "manager" and rb["kind"] == "delta":
-                if (positive and int(rb["delta"]) > 0) or (
-                    not positive and int(rb["delta"]) < 0
+                if (positive and int(rb["value"]) > 0) or (
+                    not positive and int(rb["value"]) < 0
                 ):
                     delta_rubrics.append(rb)
 
         # now sort in numerical order away from 0 and add
-        for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["delta"]))):
+        for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["value"]))):
             self.appendNewRubric(rb)
         # finally append the manager-created absolute rubrics
         for rb in rubrics:
@@ -606,26 +595,23 @@ class RubricTable(QTableWidget):
         self.handleClick()
 
     def handleClick(self):
-        # When an item is clicked, grab the details and emit rubric signal [key, delta, text]
+        # When an item is clicked, grab the details and emit rubric signal
         r = self.getCurrentRubricRow()
         if r is None:
             r = self.firstUnhiddenRow()
             if r is None:  # there is nothing unhidden here.
                 return
             self.selectRubricByRow(r)
-        # recall columns are ["Key", "Username", "Delta", "Text", "Kind"])
-        # absolute rubrics have trailing suffix - remove before sending signal
-        delta = self.item(r, 2).text()
-        if self.item(r, 4).text() == "absolute":
-            delta = self.item(r, 2).text()[:-abs_suffix_length]
 
-        self._parent.rubricSignal.emit(  # send delta, text, rubricID, kind
-            [
-                delta,
-                self.item(r, 3).text(),
-                self.item(r, 0).text(),
-                self.item(r, 4).text(),
-            ]
+        self._parent.rubricSignal.emit(
+            {
+                "kind": self.item(r, 4).text(),
+                "display_delta": self.item(r, 2).text(),
+                "value": int(self.item(r, 8).text()),
+                "out_of": int(self.item(r, 9).text()),
+                "text": self.item(r, 3).text(),
+                "id": self.item(r, 0).text(),
+            }
         )
 
     def firstUnhiddenRow(self):
@@ -641,12 +627,14 @@ class RubricTable(QTableWidget):
         return None
 
     def colourLegalRubric(self, r, mss):
-        # recall columns are "Key", "Username", "Delta", "Text", "Kind", "Versions"
         legal = isLegalRubric(
             mss,
             kind=self.item(r, 4).text(),
-            delta=self.item(r, 2).text(),
+            display_delta=self.item(r, 2).text(),
+            value=int(self.item(r, 8).text()),
+            out_of=int(self.item(r, 9).text()),
             versions=json.loads(self.item(r, 5).text()),
+            scene=self._parent._parent.scene,
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
         colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
@@ -680,7 +668,7 @@ class RubricTable(QTableWidget):
         for r in range(self.rowCount()):
             if self.item(r, 0).text() == new_rubric["id"]:
                 self.item(r, 1).setText(new_rubric["username"])
-                self.item(r, 2).setText(new_rubric["delta"])
+                self.item(r, 2).setText(new_rubric["display_delta"])
                 # how to access version?  and where to store this function?
                 render = render_params(
                     new_rubric["text"], new_rubric["parameters"], self._parent.version
@@ -690,6 +678,8 @@ class RubricTable(QTableWidget):
                 self.item(r, 5).setText(json.dumps(new_rubric["versions"]))
                 self.item(r, 6).setText(json.dumps(new_rubric["parameters"]))
                 self.item(r, 7).setText(new_rubric["text"])
+                self.item(r, 8).setText(str(new_rubric["value"]))
+                self.item(r, 9).setText(str(new_rubric["out_of"]))
 
                 # update the legality
                 self.colourLegalRubric(r, mss)
@@ -742,9 +732,8 @@ class TabBarWithAddRenameRemoveContext(QTabBar):
 class RubricWidget(QWidget):
     """The RubricWidget is a multi-tab interface for displaying, choosing and managing rubrics."""
 
-    # This is picked up by the annotator and tells is what is
-    # the current comment and delta
-    rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, kind]
+    # This is picked up by the annotator to tell the scene the current rubric
+    rubricSignal = pyqtSignal(dict)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -757,7 +746,6 @@ class RubricWidget(QWidget):
         self.rubrics = []
         self.maxMark = None
         self.currentScore = None
-        self.currentState = None
 
         grid = QGridLayout()
         # assume our container will deal with margins
@@ -843,7 +831,7 @@ class RubricWidget(QWidget):
 
     @property
     def mss(self):
-        return (self.maxMark, self.currentState, self.currentScore, self.version)
+        return (self.maxMark, None, self.currentScore, self.version)
 
     @property
     def user_tabs(self):
@@ -979,7 +967,7 @@ class RubricWidget(QWidget):
             # We truncate the list to this many
             display_at_most = 12
             for n, r in enumerate(diff):
-                delta = ".&nbsp;" if r["delta"] == "." else r["delta"]
+                delta = ".&nbsp;" if r["display_delta"] == "." else r["display_delta"]
                 text = html.escape(shorten(r["text"], 36, placeholder=ell))
                 render = f"<li><tt>{delta}</tt> <i>&ldquo;{text}&rdquo;</i>&nbsp; by {r['username']}</li>"
                 if n < (display_at_most - 1):
@@ -1181,12 +1169,11 @@ class RubricWidget(QWidget):
         self.version = version
         self.max_version = maxver
 
-    def changeMark(self, currentScore, currentState, maxMark=None):
+    def changeMark(self, currentScore, maxMark=None):
         # Update the current and max mark and so recompute which deltas are displayed
         if maxMark:
             self.maxMark = maxMark
         self.currentScore = currentScore
-        self.currentState = currentState
         self.updateLegalityOfDeltas()
 
     def updateLegalityOfDeltas(self):
@@ -1486,15 +1473,11 @@ class AddRubricBox(QDialog):
         self.TE = QTextEdit()
         self.hiliter = SubstitutionsHighlighter(self.TE)
         self.SB = SignedSB(maxMark)
-        self.DE = QCheckBox("enabled")
-        self.DE.setCheckState(Qt.Checked)
-        self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QLineEdit()
         self.TEmeta = QTextEdit()
         # cannot edit these
         self.label_rubric_id = QLabel("Will be auto-assigned")
         self.Luser = QLabel()
-        self.label_kind = QLabel("(relative)")
 
         sizePolicy = QSizePolicy(
             QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
@@ -1515,13 +1498,44 @@ class AddRubricBox(QDialog):
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.reapable_CB.setSizePolicy(sizePolicy)
         flay.addRow("", lay)
+
+        frame = QFrame()
+        vlay = QVBoxLayout(frame)
+        vlay.setContentsMargins(0, 0, 0, 0)
+        b = QRadioButton("neutral")
+        b.setToolTip("more of a comment, this rubric does not change the mark")
+        b.setChecked(True)
+        vlay.addWidget(b)
+        self.typeRB_neutral = b
         lay = QHBoxLayout()
-        lay.addWidget(self.DE)
+        b = QRadioButton("relative")
+        b.setToolTip("changes the mark up or down by some number of points")
+        lay.addWidget(b)
+        self.typeRB_relative = b
+        # lay.addWidget(self.DE)
         lay.addWidget(self.SB)
         lay.addItem(QSpacerItem(16, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        lay.addWidget(self.label_kind)
         lay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
-        flay.addRow("Delta mark", lay)
+        vlay.addLayout(lay)
+        hlay = QHBoxLayout()
+        b = QRadioButton("absolute")
+        # b.setToolTip("TODO")
+        hlay.addWidget(b)
+        self.typeRB_absolute = b
+        _ = QSpinBox()
+        _.setRange(0, maxMark)
+        _.setValue(0)
+        hlay.addWidget(_)
+        self.rubric_value_SB = _
+        hlay.addWidget(QLabel("out of"))
+        _ = QSpinBox()
+        _.setRange(0, maxMark)
+        _.setValue(maxMark)
+        hlay.addWidget(_)
+        self.rubric_out_of_SB = _
+        hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        vlay.addLayout(hlay)
+        flay.addRow("Marks", frame)
 
         # scope
         self.scopeButton = QToolButton()
@@ -1615,13 +1629,18 @@ class AddRubricBox(QDialog):
             if com["meta"]:
                 self.TEmeta.clear()
                 self.TEmeta.insertPlainText(com["meta"])
-            if com["delta"]:
-                if com["delta"] in [".", 0, "0"]:
-                    # part of fixing #1561 - delta-spinbox was set to 0.
-                    self.SB.setValue(1)
-                    self.DE.setCheckState(Qt.Unchecked)
+            if com["kind"]:
+                if com["kind"] == "neutral":
+                    self.typeRB_neutral.setChecked(True)
+                elif com["kind"] == "relative":
+                    self.SB.setValue(int(com["value"]))
+                    self.typeRB_relative.setChecked(True)
+                elif com["kind"] == "absolute":
+                    self.rubric_value_SB.setValue(int(com["value"]))
+                    self.rubric_out_of_SB.setValue(int(com["out_of"]))
+                    self.typeRB_absolute.setChecked(True)
                 else:
-                    self.SB.setValue(int(com["delta"]))
+                    raise RuntimeError(f"unexpected kind in {com}")
             if com["id"]:
                 self.label_rubric_id.setText(str(com["id"]))
             if com["username"]:
@@ -1638,7 +1657,7 @@ class AddRubricBox(QDialog):
                 "Your rubric must contain some text.\n\n"
                 'Prepend with "tex:" to use latex.\n\n'
                 "You can harvest existing text from the page.\n\n"
-                'Change "delta" below to associate a point-change.'
+                'Change "Marks" below to associate a point-change.'
             )
             self.TEtag.setPlaceholderText(
                 "For any user tags you might want. (mostly future use)"
@@ -1761,17 +1780,6 @@ class AddRubricBox(QDialog):
         self.TE.clear()
         self.TE.insertPlainText(self.reapable_CB.currentText())
 
-    def toggleSB(self):
-        if self.DE.checkState() == Qt.Checked:
-            self.SB.setEnabled(True)
-            self.label_kind.setText("(relative)")
-            # a fix for #1561 - we need to make sure delta is not zero when we enable deltas
-            if self.SB.value() == 0:
-                self.SB.setValue(1)
-        else:
-            self.label_kind.setText("(neutral)")
-            self.SB.setEnabled(False)
-
     def toggle_version_specific(self):
         if self.version_specific_cb.isChecked():
             self.version_specific_le.setText(str(self.version))
@@ -1799,26 +1807,29 @@ class AddRubricBox(QDialog):
         if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
             WarnMsg(self, "Your rubric must contain some text.").exec()
             return
-        # make sure that when delta-enabled we dont have delta=0
-        # part of fixing #1561
-        if self.SB.value() == 0 and self.DE.checkState() == Qt.Checked:
-            WarnMsg(
-                self,
-                "If 'Delta mark' is checked then the rubric cannot have a delta of zero.",
-            ).exec()
-            return
-
         self.accept()
 
     def gimme_rubric_data(self):
-        if self.DE.checkState() == Qt.Checked:
-            dlt = str(self.SB.textFromValue(self.SB.value()))
-        else:
-            dlt = "."
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
         tag = self.TEtag.text().strip()
         meta = self.TEmeta.toPlainText().strip()
-        kind = self.label_kind.text().strip(" ()")
+        if self.typeRB_neutral.isChecked():
+            kind = "neutral"
+            value = 0
+            out_of = 0
+            display_delta = "."
+        elif self.typeRB_relative.isChecked():
+            kind = "relative"
+            value = self.SB.value()
+            out_of = 0
+            display_delta = str(value) if value < 0 else f"+{value}"
+        elif self.typeRB_absolute.isChecked():
+            kind = "absolute"
+            value = self.rubric_value_SB.value()
+            out_of = self.rubric_out_of_SB.value()
+            display_delta = f"{value} / {out_of}"
+        else:
+            raise RuntimeError("no radio was checked")
         username = self.Luser.text().strip()
         # only meaningful if we're modifying
         rubricID = self.label_rubric_id.text().strip()
@@ -1836,7 +1847,9 @@ class AddRubricBox(QDialog):
         return {
             "id": rubricID,
             "kind": kind,
-            "delta": dlt,
+            "display_delta": display_delta,
+            "value": value,
+            "out_of": out_of,
             "text": txt,
             "tags": tag,
             "meta": meta,

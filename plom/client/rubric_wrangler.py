@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 
 import logging
@@ -39,6 +39,7 @@ def showRubricToUser(rubric):
     if rubric["username"] == "HAL":
         return False
     # hide manager-delta rubrics
+    # TODO: is this really meta?  not kind?  2022-12-16
     if rubric["username"] == "manager" and rubric["meta"] == "delta":
         return False
     # passes filters
@@ -76,7 +77,7 @@ class RubricModel(QStandardItemModel):
     def __init__(self, data=None):
         super(RubricModel, self).__init__()
         self.setColumnCount(4)
-        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
+        self.setHorizontalHeaderLabels(["Key", "Username", "Display Delta", "Text"])
         if data is not None:
             self._data = data
             self.populate(data)
@@ -96,7 +97,7 @@ class RubricModel(QStandardItemModel):
                     [
                         QStandardItem(str(X["id"])),
                         QStandardItem(X["username"]),
-                        QStandardItem(str(X["delta"])),
+                        QStandardItem(str(X["display_delta"])),
                         QStandardItem(X["text"]),
                     ]
                 )
@@ -138,9 +139,9 @@ class RubricProxyModel(QSortFilterProxyModel):
             return True
 
     def lessThan(self, left, right):
-        # Cols = [0"Key", 1"Username", 2"Delta", 3"Text"]
-        # if sorting on key or delta then turn things into ints
-        if left.column() == 2:  # sort on delta - treat '.' as 0
+        # Cols = [0"Key", 1"Username", 2"Display Delta", 3"Text"]
+        # if sorting on key or display_delta then turn things into ints
+        if left.column() == 2:  # sort on display_delta - treat '.' as 0
             ld = deltaToInt(self.sourceModel().data(left))
             rd = deltaToInt(self.sourceModel().data(right))
         else:
@@ -159,7 +160,7 @@ class ShowTable(QTableWidget):
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setColumnCount(4)
-        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
+        self.setHorizontalHeaderLabels(["Key", "Username", "Display Delta", "Text"])
 
     def cleanUp(self):
         # remove all rows
@@ -185,7 +186,7 @@ class ShowTable(QTableWidget):
                 self.insertRow(rc)
                 self.setItem(rc, 0, QTableWidgetItem(rubrics[rind]["id"]))
                 self.setItem(rc, 1, QTableWidgetItem(rubrics[rind]["username"]))
-                self.setItem(rc, 2, QTableWidgetItem(rubrics[rind]["delta"]))
+                self.setItem(rc, 2, QTableWidgetItem(rubrics[rind]["display_delta"]))
                 self.setItem(rc, 3, QTableWidgetItem(rubrics[rind]["text"]))
                 self.setSortingEnabled(_sorting_enabled)
 
@@ -430,7 +431,7 @@ class RubricWrangler(QDialog):
         #     store["user_tab_names"].append(...)
         store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
         # anything not hidden is shown
-        # columns are ["Key", "Username", "Delta", "Text"])
+        # columns are ["Key", "Username", "Display Delta", "Text"])
         for r in range(self.model.rowCount()):
             key = self.model.index(r, 0).data()
             # check if is in "hidden" list

@@ -677,9 +677,9 @@ class BaseMessenger:
             return new_key
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
-                raise PlomSeriousException("Rubric sent was incomplete.") from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(f"Error when creating new rubric: {e}") from None
         finally:
             self.SRmutex.release()
