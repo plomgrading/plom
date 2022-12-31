@@ -243,7 +243,7 @@ class IDClient(QWidget):
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
         self.ui.predButton0.clicked.connect(self.acceptPrediction)
-        self.ui.predButton1.clicked.connect(self.acceptPrediction)
+        self.ui.predButton1.clicked.connect(self.acceptOtherPrediction)
         self.ui.blankButton.clicked.connect(self.blankPaper)
         self.ui.viewButton.clicked.connect(self.viewWholePaper)
 
@@ -597,6 +597,26 @@ class IDClient(QWidget):
         sname = self.ui.pNameLabel0.text()
         sid = self.ui.pSIDLabel0.text()
 
+        if not self.identifyStudent(index, sid, sname):
+            return
+
+        if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
+            self.requestNext()  # updates progressbars.
+        else:  # else move to the next unidentified paper.
+            self.moveToNextUnID()  # doesn't
+            self.updateProgress()
+        return
+
+    def acceptOtherPrediction(self):
+        # first check currently selected paper is unidentified - else do nothing
+        index = self.ui.tableView.selectedIndexes()
+        status = self.exM.data(index[1])
+        if status != "unidentified":
+            msg = SimpleQuestion(self, "Do you want to change the ID?")
+            # Put message popup on top-corner of idenfier window
+            if msg.exec() == QMessageBox.No:
+                return
+        # code = self.exM.data(index[0])
         sname = self.ui.pNameLabel1.text()
         sid = self.ui.pSIDLabel1.text()
 
