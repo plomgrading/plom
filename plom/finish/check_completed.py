@@ -134,7 +134,7 @@ def main(server=None, password=None):
         msgr.closeUser()
         msgr.stop()
 
-    idList, mList, histList, cList, numScanned, partMarked = proc_everything(
+    idList, hist, marked, completed, numScanned, partMarked = proc_everything(
         completions, numberOfQuestions
     )
     print("*********************")
@@ -144,22 +144,20 @@ def main(server=None, password=None):
         print(f"Scanned papers: {numScanned}")
     else:
         print(f"Scanned papers: {numScanned} (currently)")
-    print(f"Number of papers marked: {mList[numberOfQuestions]}")
+    print(f"Number of papers marked: {hist[numberOfQuestions]}")
     print(f"Number of papers identified: {len(idList)}")
-    numberComplete = len(cList)
+    numberComplete = len(completed)
     print(f"Number completed (marked and ID'd): {numberComplete}")
 
     print("")
     print("******************************")
     print("** Detailed completion data **")
     print(f"Identified papers: {with_runs(idList)}")
-    print(f"Completed papers (marked & ID'd): {with_runs(cList)}")
+    print(f"Completed papers (marked & ID'd): {with_runs(completed)}")
     print("Questions marked histogram:")
     pad = 1 if numberOfQuestions <= 9 else 2
-    for n in range(numberOfQuestions + 1):
-        print(
-            f"{mList[n]:5} papers with {n:{pad}} questions marked: {with_runs(histList[n])}"
-        )
+    for n, h in enumerate(hist):
+        print(f"{h:5} papers with {n:{pad}} questions marked: {with_runs(marked[n])}")
     print(
         f"{len(partMarked):5} papers have at least one question marked: {with_runs(partMarked)}"
     )
