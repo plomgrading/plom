@@ -39,32 +39,6 @@ def proc_everything(comps, numberOfQuestions):
     return idList, mList, histList, cList, numScanned, partMarked
 
 
-def print_everything(comps, numPapersProduced, numQ):
-    idList, mList, histList, cList, numScanned, partMarked = proc_everything(
-        comps, numQ
-    )
-    print("*********************")
-    print("** Completion data **")
-    print("Produced papers: {}".format(numPapersProduced))
-    if numPapersProduced == numScanned:
-        print("Scanned papers: {}".format(numScanned))
-    else:
-        print("Scanned papers: {} (currently)".format(numScanned))
-    print("Completed papers: {}".format(format_int_list_with_runs(cList)))
-    print("Identified papers: {}".format(format_int_list_with_runs(idList)))
-    for n in range(numQ + 1):
-        print(
-            "Number of papers with {} questions marked = {}. Tests numbers = {}".format(
-                n, mList[n], format_int_list_with_runs(histList[n])
-            )
-        )
-    print(
-        "Papers with at least one question marked = {}".format(
-            format_int_list_with_runs(partMarked)
-        )
-    )
-
-
 def print_still_out(outToDo):
     if len(outToDo) == 0:
         print("*******************************")
@@ -160,27 +134,51 @@ def main(server=None, password=None):
         msgr.closeUser()
         msgr.stop()
 
-    print_everything(completions, max_papers, numberOfQuestions)
-
-    idList, mList, sList, cList, numScanned, partMarked = proc_everything(
+    idList, mList, histList, cList, numScanned, partMarked = proc_everything(
         completions, numberOfQuestions
     )
+    print("*********************")
+    print("** Completion info **")
+    print(f"Produced papers: {max_papers}")
+    if max_papers == numScanned:
+        print(f"Scanned papers: {numScanned}")
+    else:
+        print(f"Scanned papers: {numScanned} (currently)")
+    print(f"Number of papers marked: {mList[numberOfQuestions]}")
+    print(f"Number of papers identified: {len(idList)}")
     numberComplete = len(cList)
-    print("{} complete of {} scanned".format(numberComplete, numScanned))
+    print(f"Number completed (marked and ID'd): {numberComplete}")
 
+    print("")
+    print("******************************")
+    print("** Detailed completion data **")
+    print("Identified papers: {}".format(format_int_list_with_runs(idList)))
+    print("Completed papers (marked & ID'd): {}".format(format_int_list_with_runs(cList)))
+    print("Questions marked histogram:")
+    pad = 1 if numberOfQuestions <= 9 else 2
+    for n in range(numberOfQuestions + 1):
+        print(
+            f"{mList[n]:5} papers with {n:{pad}} questions marked: {format_int_list_with_runs(histList[n])}"
+        )
+    print(
+        f"{len(partMarked):5} papers have at least one question marked: {format_int_list_with_runs(partMarked)}"
+    )
+
+    print("")
     print_classlist_db_xor(classlist, paper_nums_to_ids, max_papers)
 
+    print("")
     print_still_out(outToDo)
+    print("")
     print_dangling(dangling)
 
     if len(partMarked) > numberComplete:
-        print("*********************")
-        print(
-            "Still {} part-marked papers to go.".format(
-                len(partMarked) - numberComplete
-            )
+        s = "Warning: {} papers incomplete (part-marked or unidentified).".format(
+            len(partMarked) - numberComplete
         )
-        print("*********************")
+        print("*" * len(s))
+        print(s)
+        print("*" * len(s))
 
     if numberComplete == numScanned:
         sys.exit(0)
