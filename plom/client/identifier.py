@@ -497,6 +497,7 @@ class IDClient(QWidget):
             self.ui.pNameLabel0.setText("")
             self.ui.predictionBox0.setTitle("No prediction")
             self.ui.predictionBox0.setStyleSheet("background-color:")
+            self.ui.predictionBox1.hide()
 
         # now update the snid entry line-edit.
         # if test is already identified then populate the idlinedit accordingly
