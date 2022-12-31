@@ -422,7 +422,9 @@ def IDreviewID(self, test_number):
 
 
 def ID_get_predictions(self, *, predictor=None):
-    """Return a dict of predicted test to student_ids, where the dict value contains a list of predictions.
+    """Return a dict of predicted test to student_ids.
+       If all predictions are returned, each dict value contains a list of prediction dicts.
+       If predictions for a specified predictor are returned, each dict value contains a single prediction dict.
 
     Keyword Args:
         predictor (str/None): which predictor.  If not specified,
@@ -433,25 +435,32 @@ def ID_get_predictions(self, *, predictor=None):
     if predictor:
         log.info('querying for predictions from "%s"', predictor)
         query = IDPrediction.select().where(IDPrediction.predictor == predictor)
+        for preidref in query:
+            predictions[preidref.test.test_number] = {
+                "student_id": preidref.student_id,
+                "certainty": preidref.certainty,
+                "predictor": preidref.predictor,
+            }
+
     else:
         query = IDPrediction.select()
-    for preidref in query:
-        if predictions.get(preidref.test.test_number) == None:
-            predictions[preidref.test.test_number] = [
-                {
-                    "student_id": preidref.student_id,
-                    "certainty": preidref.certainty,
-                    "predictor": preidref.predictor,
-                }
-            ]
-        else:
-            predictions[preidref.test.test_number].append(
-                {
-                    "student_id": preidref.student_id,
-                    "certainty": preidref.certainty,
-                    "predictor": preidref.predictor,
-                }
-            )
+        for preidref in query:
+            if predictions.get(preidref.test.test_number) is None:
+                predictions[preidref.test.test_number] = [
+                    {
+                        "student_id": preidref.student_id,
+                        "certainty": preidref.certainty,
+                        "predictor": preidref.predictor,
+                    }
+                ]
+            else:
+                predictions[preidref.test.test_number].append(
+                    {
+                        "student_id": preidref.student_id,
+                        "certainty": preidref.certainty,
+                        "predictor": preidref.predictor,
+                    }
+                )
     return predictions
 
 
