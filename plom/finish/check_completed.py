@@ -74,7 +74,7 @@ def print_dangling(dangling):
             A dangling page is part of a test that is not yet completely scanned
             and uploaded.  If you have assigned all extra pages etc and there
             are still dangling pages, then this might indicates that you have
-            mis-assigned an extra page to a test that has not actually in use.
+            mis-assigned an extra page to a test that is not actually in use.
             """
         )
     )
