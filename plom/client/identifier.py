@@ -242,7 +242,8 @@ class IDClient(QWidget):
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
-        self.ui.predButton.clicked.connect(self.acceptPrediction)
+        self.ui.predButton0.clicked.connect(self.acceptPrediction)
+        self.ui.predButton1.clicked.connect(self.acceptPrediction)
         self.ui.blankButton.clicked.connect(self.blankPaper)
         self.ui.viewButton.clicked.connect(self.viewWholePaper)
 
@@ -319,24 +320,24 @@ class IDClient(QWidget):
         For some reason, this also updates font-sizes and stuff.
         """
         self.predictions = self.msgr.IDgetPredictions()
-        # TODO: see Issue #2444
-        # print(self.predictions)
-        # print(self.msgr.IDgetPredictionsFromPredictor("prename"))
-        # print(self.msgr.IDgetPredictionsFromPredictor("MLLAP"))
 
         # Also tweak font size
         fnt = self.font()
         fnt.setPointSize(fnt.pointSize() * 2)
-        self.ui.pNameLabel.setFont(fnt)
+        self.ui.pNameLabel0.setFont(fnt)
+        self.ui.pNameLabel1.setFont(fnt)
         # also tweak size of "accept prediction" button font
-        self.ui.predButton.setFont(fnt)
+        self.ui.predButton0.setFont(fnt)
+        self.ui.predButton1.setFont(fnt)
         # make the SID larger still.
         fnt.setPointSizeF(fnt.pointSize() * 1.5)
-        self.ui.pSIDLabel.setFont(fnt)
+        self.ui.pSIDLabel0.setFont(fnt)
+        self.ui.pSIDLabel1.setFont(fnt)
         # And if no predictions then hide that box
         # TODO do this on a paper-by-paper basis
         if not self.predictions:
-            self.ui.predictionBox.hide()
+            self.ui.predictionBox0.hide()
+            self.ui.predictionBox1.hide()
 
     def setCompleters(self):
         """Set up the studentname + studentnumber line-edit completers.
@@ -426,7 +427,10 @@ class IDClient(QWidget):
         self.testImg.updateImage(self.exM.paperList[r].originalFile, keep_zoom=True)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
+
+        # get a list of predictions for test number tn
         all_predictions_for_paper = self.predictions.get(str(tn), None)
+
         if all_predictions_for_paper:
             for pred in all_predictions_for_paper:
                 psid = pred["student_id"]  # predicted student ID
@@ -435,33 +439,64 @@ class IDClient(QWidget):
                 if pname == "":
                     # disable accept prediction button
                     pred = []
-                self.ui.predButton.setText("&Accept\nPrediction")
-                self.ui.predButton.show()
-                self.ui.pSIDLabel.setText(psid)
-                self.ui.pNameLabel.setText(pname)
+
                 if pred["predictor"] == "prename":
-                    self.ui.predictionBox.setTitle(
+                    self.ui.predButton0.show()
+                    self.ui.pSIDLabel0.setText(psid)
+                    self.ui.pNameLabel0.setText(pname)
+                    self.ui.predictionBox0.setTitle(
                         "Prenamed paper: is it signed?  if not signed, is it blank?"
                     )
-                    self.ui.predButton.setText("Confirm\n&Prename")
-                else:
-                    self.ui.predictionBox.setTitle(
-                        f"Prediction by {all_predictions_for_paper[0]['predictor']} with certainty {all_predictions_for_paper[0]['certainty']} and {all_predictions_for_paper[1]['predictor']} with certainty {all_predictions_for_paper[1]['certainty']}"
+                    self.ui.predButton0.setText("Confirm\n&Prename")
+                    self.ui.predictionBox0.setStyleSheet("background-color: #89CFF0")
+
+                    self.ui.predictionBox1.hide()
+
+                elif pred["predictor"] == "MLLAP":
+                    self.ui.predButton0.show()
+                    self.ui.pSIDLabel0.setText(psid)
+                    self.ui.pNameLabel0.setText(pname)
+                    self.ui.predictionBox0.setTitle(
+                        f"Prediction by MLLAP with certainty {round(pred['certainty'], 3)}"
                     )
+                    self.ui.predButton0.setText("&Accept\nPrediction")
+
+                    self.ui.predictionBox1.hide()
+
+                else:
+                    self.ui.predictionBox1.show()
+                    self.ui.predButton1.show()
+                    self.ui.pSIDLabel1.setText(psid)
+                    self.ui.pNameLabel1.setText(pname)
+                    self.ui.predictionBox1.setTitle(
+                        f"Prediction by MLGreedy with certainty {round(pred['certainty'], 3)}"
+                    )
+                    self.ui.predButton1.setText("&Accept\nPrediction")
+
                     if (
                         all_predictions_for_paper[0]["student_id"]
-                        == all_predictions_for_paper[1]["student_id"]
+                        != all_predictions_for_paper[1]["student_id"]
                     ):
-                        self.ui.predictionBox.setStyleSheet("background-color: #00FA9A")
+                        self.ui.predictionBox0.setStyleSheet(
+                            "background-color: #FFD700"
+                        )
+                        self.ui.predictionBox1.setStyleSheet(
+                            "background-color: #FFD700"
+                        )
                     else:
-                        self.ui.predictionBox.setStyleSheet("background-color: #FFD700")
+                        self.ui.predictionBox0.setStyleSheet(
+                            "background-color: #00FA9A"
+                        )
+                        self.ui.predictionBox1.setStyleSheet(
+                            "background-color: #00FA9A"
+                        )
 
         else:
-            self.ui.predButton.hide()
-            self.ui.pSIDLabel.setText("")
-            self.ui.pNameLabel.setText("")
-            self.ui.predictionBox.setTitle("No prediction")
-            self.ui.predictionBox.setStyleSheet("background-color:")
+            self.ui.predButton0.hide()
+            self.ui.pSIDLabel0.setText("")
+            self.ui.pNameLabel0.setText("")
+            self.ui.predictionBox0.setTitle("No prediction")
+            self.ui.predictionBox0.setStyleSheet("background-color:")
 
         # now update the snid entry line-edit.
         # if test is already identified then populate the idlinedit accordingly
@@ -559,8 +594,11 @@ class IDClient(QWidget):
             if msg.exec() == QMessageBox.No:
                 return
         # code = self.exM.data(index[0])
-        sname = self.ui.pNameLabel.text()
-        sid = self.ui.pSIDLabel.text()
+        sname = self.ui.pNameLabel0.text()
+        sid = self.ui.pSIDLabel0.text()
+
+        sname = self.ui.pNameLabel1.text()
+        sid = self.ui.pSIDLabel1.text()
 
         if not self.identifyStudent(index, sid, sname):
             return
