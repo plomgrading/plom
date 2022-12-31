@@ -97,9 +97,12 @@ def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
             f"There were {len(cl_not_db)} students listed in `classlist.csv` "
             "who do not seem to have submissions in the Plom database."
         )
-        # classlist too long, than this is not useful info
-        if len(classlist) > max_papers:
-            print(f"  (omitted list b/c only {max_papers} entries in the database)")
+        if len(classlist) > 1.1 * max_papers:
+            # classlist too long, likely not useful info
+            print(
+                f"  (list omitted b/c only {max_papers} rows in the database"
+                f" and {len(classlist)} in the classlist)"
+            )
         else:
             for sid, sname in cl_not_db:
                 print(f"  ID: {sid}\tName: {sname}")
