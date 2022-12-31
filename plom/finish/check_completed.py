@@ -9,7 +9,7 @@
 import sys
 from textwrap import dedent
 
-from plom.misc_utils import format_int_list_with_runs
+from plom.misc_utils import format_int_list_with_runs as with_runs
 from plom.finish import start_messenger
 
 
@@ -152,16 +152,16 @@ def main(server=None, password=None):
     print("")
     print("******************************")
     print("** Detailed completion data **")
-    print("Identified papers: {}".format(format_int_list_with_runs(idList)))
-    print("Completed papers (marked & ID'd): {}".format(format_int_list_with_runs(cList)))
+    print(f"Identified papers: {with_runs(idList)}")
+    print(f"Completed papers (marked & ID'd): {with_runs(cList)}")
     print("Questions marked histogram:")
     pad = 1 if numberOfQuestions <= 9 else 2
     for n in range(numberOfQuestions + 1):
         print(
-            f"{mList[n]:5} papers with {n:{pad}} questions marked: {format_int_list_with_runs(histList[n])}"
+            f"{mList[n]:5} papers with {n:{pad}} questions marked: {with_runs(histList[n])}"
         )
     print(
-        f"{len(partMarked):5} papers have at least one question marked: {format_int_list_with_runs(partMarked)}"
+        f"{len(partMarked):5} papers have at least one question marked: {with_runs(partMarked)}"
     )
 
     print("")
