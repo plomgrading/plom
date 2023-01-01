@@ -441,26 +441,18 @@ def ID_get_predictions(self, *, predictor=None):
                 "certainty": preidref.certainty,
                 "predictor": preidref.predictor,
             }
-
     else:
         query = IDPrediction.select()
         for preidref in query:
             if predictions.get(preidref.test.test_number) is None:
-                predictions[preidref.test.test_number] = [
-                    {
-                        "student_id": preidref.student_id,
-                        "certainty": preidref.certainty,
-                        "predictor": preidref.predictor,
-                    }
-                ]
-            else:
-                predictions[preidref.test.test_number].append(
-                    {
-                        "student_id": preidref.student_id,
-                        "certainty": preidref.certainty,
-                        "predictor": preidref.predictor,
-                    }
-                )
+                predictions[preidref.test.test_number] = []
+            predictions[preidref.test.test_number].append(
+                {
+                    "student_id": preidref.student_id,
+                    "certainty": preidref.certainty,
+                    "predictor": preidref.predictor,
+                }
+            )
     return predictions
 
 
