@@ -161,7 +161,7 @@ class IDHandler:
 
         Returns:
             aiohttp.web_json_response: on success a dict where keys are
-            str of papernum, values themselves dicts with keys
+            str of papernum, values are lists of dicts with keys
             `"student_id"`, `"certainty"`, and `"predictor"`.
             Can fail with 400 (malformed) or 401 (auth trouble).
         """

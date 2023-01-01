@@ -543,7 +543,7 @@ class BaseMessenger:
         You may want :meth:`IDgetPredictionsFromPredictor` instead.
 
         Returns:
-            dict: keys are str of papernum, values themselves dicts with
+            dict: keys are str of papernum, values themselves are lists of dicts with
             keys `"student_id"`, `"certainty"`, and `"predictor"`.
         """
         with self.SRmutex:
