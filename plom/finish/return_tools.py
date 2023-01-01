@@ -9,9 +9,6 @@
 Most of the Canvas-related functions are overly UBC-specific or fragile.
 """
 
-__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald, Matthew Coles, and others"
-__license__ = "AGPL-3.0-or-later"
-
 from pathlib import Path
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
