@@ -157,12 +157,11 @@ class IDHandler:
     def IDgetPredictions(self):
         """Returns all predictions for the identification of each paper.
 
-        TODO: maybe this one should be a list including dupes.  Or maybe it
-        is not needed at all.
+        Each entry in the dict may contain multiple predictions.
 
         Returns:
             aiohttp.web_json_response: on success a dict where keys are
-            str of papernum, values themselves dicts with keys
+            str of papernum, values are lists of dicts with keys
             `"student_id"`, `"certainty"`, and `"predictor"`.
             Can fail with 400 (malformed) or 401 (auth trouble).
         """

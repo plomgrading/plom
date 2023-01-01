@@ -382,18 +382,15 @@ def id_reader_run(self, top, bottom, *, ignore_timestamp=False):
 
     # Only mess with predictions that were created by MLLAP and not
     # any prenaming.
-    predictions = self.DB.ID_get_predictions()
+    predictions = self.DB.ID_get_predictions(predictor="prename")
     # is dict {paper_number: (sid, certainty, who)}
     for k in list(test_image_dict.keys()):
         P = predictions.get(k, None)
         if P:
             # TODO: future may need in ["prename", "human", ...]
-            if P["predictor"] == "prename":
-                # Don't try to read IDs from prenamed papers
-                test_image_dict.pop(k)
-                log.info(
-                    'ID reader: drop test number "%s" b/c we think its prenamed', k
-                )
+            # Don't try to read IDs from prenamed papers
+            test_image_dict.pop(k)
+            log.info('ID reader: drop test number "%s" b/c we think its prenamed', k)
 
     # dump this as parameters_file for subprocess to use in background.
     with open(params_file, "w") as fh:

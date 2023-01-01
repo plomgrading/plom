@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2022 Natalie Balashov
 
 import os
 from pathlib import Path
@@ -73,7 +74,7 @@ class Test:
 
     # This test assumes very specific setup of the Lite Demo
     # The test can be updated if those details change.
-    def test_predictions(self):
+    def test_prename_predictions(self):
         # TODO: use connectmanager messenger, See MR !1275.
         from plom.create import start_messenger
 
@@ -81,7 +82,7 @@ class Test:
             self.env["PLOM_SERVER"], self.env["PLOM_MANAGER_PASSWORD"], verify_ssl=False
         )
         try:
-            predictions = msgr.IDgetPredictions()
+            predictions = msgr.IDgetPredictionsFromPredictor("prename")
             assert "1" in predictions, "The lite demo has the first one predicted"
             sid = predictions["1"]["student_id"]
             cert = predictions["1"]["certainty"]
@@ -98,25 +99,25 @@ class Test:
 
             msgr.remove_pre_id(1)
 
-            predictions = msgr.IDgetPredictions()
+            predictions = msgr.IDgetPredictionsFromPredictor("prename")
             assert "1" not in predictions
 
             # now we can assign `sid` to paper 2
             msgr.pre_id_paper(2, sid)
-            predictions = msgr.IDgetPredictions()
+            predictions = msgr.IDgetPredictionsFromPredictor("prename")
             assert "2" in predictions
             assert predictions["2"]["student_id"] == sid
 
             # now we can assign ANYTHING else to paper 2's prediction
             msgr.pre_id_paper(2, "eleventyfour")
-            predictions = msgr.IDgetPredictions()
+            predictions = msgr.IDgetPredictionsFromPredictor("prename")
             assert "2" in predictions
             assert predictions["2"]["student_id"] == "eleventyfour"
 
             # we leave the state hopefully as we found it
             msgr.remove_pre_id(2)
             msgr.pre_id_paper(1, sid, predictor="prename")
-            predictions = msgr.IDgetPredictions()
+            predictions = msgr.IDgetPredictionsFromPredictor("prename")
             assert "1" in predictions
             assert "2" not in predictions
             assert predictions["1"]["student_id"] == sid
@@ -140,7 +141,7 @@ class Test:
             iDict = msgr.getIdentified()
             assert len(iDict) == 0, "Currently no one IDed in the lite demo"
 
-            predictions = msgr.IDgetPredictions()
+            predictions = msgr.IDgetPredictionsFromPredictor("prename")
             sid = predictions["1"]["student_id"]
             cl = msgr.IDrequestClasslist()
             (person,) = [x for x in cl if x["id"] == sid]

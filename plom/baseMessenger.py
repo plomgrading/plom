@@ -539,11 +539,11 @@ class BaseMessenger:
         """Get all the predicted student ids.
 
         If there is more than one predictor for a particular paper number
-        this routine will return one of them (not defined which).  You
-        may want :meth:`IDgetPredictionsFromPredictor` instead.
+        this routine will return all of them.
+        You may want :meth:`IDgetPredictionsFromPredictor` instead.
 
         Returns:
-            dict: keys are str of papernum, values themselves dicts with
+            dict: keys are str of papernum, values themselves are lists of dicts with
             keys `"student_id"`, `"certainty"`, and `"predictor"`.
         """
         with self.SRmutex:
