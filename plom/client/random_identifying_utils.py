@@ -21,10 +21,10 @@ from plom.messenger import Messenger
 def do_rando_identifying_backend(messenger):
     classlist = messenger.IDrequestClasslist()
     # classlist is a list of dicts {'id': sid, 'name: name}
-    predictions = messenger.IDgetPredictions()
+    predictions = messenger.IDgetPredictionsFromPredictor("prename")
     # due to jsonnery the key test_number is a string (sigh).
 
-    # make sid to name look up for predictions
+    # make sid to name look up for prenames
     sid_to_name = {X["id"]: X["name"] for X in classlist}
     # and a sid to test look up
     sid_to_test = {predictions[X]["student_id"]: X for X in predictions}
@@ -41,11 +41,11 @@ def do_rando_identifying_backend(messenger):
             # task already taken.
             continue
 
-        # where possible take the predicted ID
+        # where possible take the prenamed ID
         if str(task) in predictions:
             sid = predictions[str(task)]["student_id"]
             name = sid_to_name[sid]
-            print(f"Task {task} predicted to be {sid} {name} - using that")
+            print(f"Task {task} prenamed to be {sid} {name} - using that")
             try:
                 messenger.IDreturnIDdTask(task, sid, name)
             except PlomConflict:
