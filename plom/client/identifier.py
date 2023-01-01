@@ -243,7 +243,7 @@ class IDClient(QWidget):
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
         self.ui.predButton0.clicked.connect(self.acceptPrediction)
-        self.ui.predButton1.clicked.connect(self.acceptOtherPrediction)
+        self.ui.predButton1.clicked.connect(self.acceptPrediction)
         self.ui.blankButton.clicked.connect(self.blankPaper)
         self.ui.viewButton.clicked.connect(self.viewWholePaper)
 
@@ -463,7 +463,7 @@ class IDClient(QWidget):
 
                     self.ui.predictionBox1.hide()
 
-                else:
+                elif pred["predictor"] == "MLGreedy":
                     self.ui.predictionBox1.show()
                     self.ui.predButton1.show()
                     self.ui.pSIDLabel1.setText(psid)
@@ -490,6 +490,10 @@ class IDClient(QWidget):
                         self.ui.predictionBox1.setStyleSheet(
                             "background-color: #00FA9A"
                         )
+                else:
+                    raise RuntimeError(
+                        f"Found unexpected predictions by predictor {pred['predictor']}, which should not be here."
+                    )
 
         else:
             self.ui.predButton0.hide()
@@ -595,31 +599,17 @@ class IDClient(QWidget):
             if msg.exec() == QMessageBox.No:
                 return
         # code = self.exM.data(index[0])
-        sname = self.ui.pNameLabel0.text()
-        sid = self.ui.pSIDLabel0.text()
+        is_clicked_predButton0 = self.ui.predButton0.sender()
+        is_clicked_predButton1 = self.ui.predButton1.sender()
 
-        if not self.identifyStudent(index, sid, sname):
+        if is_clicked_predButton0:
+            sname = self.ui.pNameLabel0.text()
+            sid = self.ui.pSIDLabel0.text()
+        elif is_clicked_predButton1:
+            sname = self.ui.pNameLabel1.text()
+            sid = self.ui.pSIDLabel1.text()
+        else:
             return
-
-        if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
-            self.requestNext()  # updates progressbars.
-        else:  # else move to the next unidentified paper.
-            self.moveToNextUnID()  # doesn't
-            self.updateProgress()
-        return
-
-    def acceptOtherPrediction(self):
-        # first check currently selected paper is unidentified - else do nothing
-        index = self.ui.tableView.selectedIndexes()
-        status = self.exM.data(index[1])
-        if status != "unidentified":
-            msg = SimpleQuestion(self, "Do you want to change the ID?")
-            # Put message popup on top-corner of idenfier window
-            if msg.exec() == QMessageBox.No:
-                return
-        # code = self.exM.data(index[0])
-        sname = self.ui.pNameLabel1.text()
-        sid = self.ui.pSIDLabel1.text()
 
         if not self.identifyStudent(index, sid, sname):
             return
