@@ -74,7 +74,7 @@ class Test:
 
     # This test assumes very specific setup of the Lite Demo
     # The test can be updated if those details change.
-    def test_predictions(self):
+    def test_prename_predictions(self):
         # TODO: use connectmanager messenger, See MR !1275.
         from plom.create import start_messenger
 
