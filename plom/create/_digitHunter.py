@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020, 2022 Colin B. Macdonald
+# Copyright (C) 2020, 2022-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 """
@@ -12,10 +12,6 @@ is being kept in the repo for posterity.
 
 Dataset used: https://en.wikipedia.org/wiki/MNIST_database
 """
-
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
 
 import base64
 import json

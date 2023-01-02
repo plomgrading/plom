@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -212,7 +212,7 @@ class Annotator(QWidget):
 
                 <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
 
-                <p>Copyright &copy; 2018-2022 Andrew Rechnitzer,
+                <p>Copyright &copy; 2018-2023 Andrew Rechnitzer,
                 Colin B. Macdonald, and other contributors.</p>
 
                 <p>Plom is Free Software, available under the GNU Affero

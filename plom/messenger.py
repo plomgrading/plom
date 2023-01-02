@@ -1,14 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 
 """
 Backend bits n bobs to talk to the server
 """
-
-__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
 
 import hashlib
 from io import StringIO, BytesIO
