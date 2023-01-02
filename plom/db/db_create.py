@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Natalie Balashov
 
@@ -432,8 +432,8 @@ def add_or_change_predicted_id(
             future.
 
     Returns:
-        tuple: `(True, None, None)` if successful, `(False, 409, msg)`
-        or `(False, 404, msg)` on error.  See docs in other function.
+        tuple: `(True, None, None)` if successful, `(False, 404, msg)`
+        on error.
     """
     # TODO: Issue #2075
     uref = User.get(name="HAL")
