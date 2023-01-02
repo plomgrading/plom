@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
 
 import hashlib
@@ -136,36 +136,45 @@ class ManagerMessenger(BaseMessenger):
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
 
-    def pre_id_paper(self, paper_number, studentID, predictor="prename"):
+    def pre_id_paper(
+        self, paper_number, studentID, *, certainty=0.9, predictor="prename"
+    ):
         """Pre-id a paper.
+
+        Args:
+            paper_number (str)
+            studentID (str)
+
+        Keyword Args:
+            predictor: defaults to "prename"
+            certainty: defaults to 0.9
 
         Exceptions:
             PlomConflict: `studentID` already used on a different paper.
+                Currently does not do this.  Could enable again in the
+                future.
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                f"/ID/preid/{paper_number}",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "sid": studentID,
-                    "predictor": predictor,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code in (401, 403):
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 409:
-                raise PlomConflict(e) from None
-            if response.status_code == 404:
-                raise PlomSeriousException(e) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    f"/ID/preid/{paper_number}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "sid": studentID,
+                        "predictor": predictor,
+                        "certainty": certainty,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def remove_pre_id(self, paper_number):
         """Remove the predicted "pre-id" for a particular paper.

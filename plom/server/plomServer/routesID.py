@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Natalie Balashov
 
@@ -448,7 +448,7 @@ class IDHandler:
         raise web.HTTPNotAcceptable(reason=f"Did not find papernum {paper_number}")
 
     # @routes.put("/ID/preid/{paper_number}")
-    @authenticate_by_token_required_fields(["user", "sid", "predictor"])
+    @authenticate_by_token_required_fields(["user", "sid", "certainty", "predictor"])
     @write_admin
     def pre_id_paper(self, data, request):
         """Set the prediction identification for a paper.
@@ -459,19 +459,22 @@ class IDHandler:
             aiohttp.web_response.Response: Success or failure.  Can be:
 
             - 200: success.
+            - 401: auth
             - 403: not manager.
             - 404: papernum not found, or other data errors.
         """
         papernum = request.match_info["paper_number"]
         r, what, msg = self.server.add_or_change_predicted_id(
-            papernum, data["sid"], predictor=data["predictor"]
+            papernum,
+            data["sid"],
+            certainty=data["certainty"],
+            predictor=data["predictor"],
         )
         if r:
             return web.Response(status=200)
         elif what == 404:
             raise web.HTTPNotFound(reason=msg)
-        else:
-            raise web.HTTPInternalServerError(reason=msg)
+        raise web.HTTPInternalServerError(reason=msg)
 
     # @routes.delete("/ID/preid/{paper_number}")
     @authenticate_by_token_required_fields([])
