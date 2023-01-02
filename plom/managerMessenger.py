@@ -1443,27 +1443,27 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MreviewQuestion(self, testNumber, questionNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                "/MK/review",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "testNumber": testNumber,
-                    "questionNumber": questionNumber,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code in (401, 403):
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 404:
-                raise PlomSeriousException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def MreviewQuestion(self, paper_number, question):
+        with self.SRmutex:
+            try:
+                response = self.patch(
+                    "/MK/review",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "paper_number": paper_number,
+                        "question": question,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def IDreviewID(self, testNumber):
         self.SRmutex.acquire()

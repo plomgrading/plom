@@ -785,20 +785,21 @@ class MarkHandler:
     def MreviewQuestion(self, data, request):
         """Confirm the question review done on plom-manager.
 
-        Respond with status 200/404.
-
         Args:
-            data (dict): Dictionary including user data, test_number (int)
-                and question_number (int).
+            data (dict): Dictionary including user data, `paper_number` (int)
+                and `question` (int).
             request (aiohttp.web_request.Request): Request of type PATCH /MK/review .
 
         Returns:
-            aiohttp.web.Response: 200 on success, 404 on failure (could not find).
+            aiohttp.web.Response: 200 on success, 404 on failure (could not find),
+            409 if no reviewer user.
         """
-        if not self.server.MreviewQuestion(data["testNumber"], data["questionNumber"]):
-            raise web.HTTPNotFound(
-                reason=f'Could not find t/q {data["testNumber"]}/{data["questionNumber"]}'
-            )
+        try:
+            self.server.MreviewQuestion(data["paper_number"], data["question"])
+        except ValueError as e:
+            raise web.HTTPNotFound(reason=str(e))
+        except RuntimeError as e:
+            raise web.HTTPConflict(reason=str(e))
         return web.Response(status=200)
 
     # @routes.patch("/MK/revert/{task}")

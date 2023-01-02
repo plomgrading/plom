@@ -606,12 +606,23 @@ def MgetWholePaper(self, test_number, question):
 
 
 def MreviewQuestion(self, test_number, question):
-    """Give ownership of the given marking task to the reviewer."""
-    revref = User.get(name="reviewer")  # should always be there
+    """Give ownership of the given marking task to the reviewer.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: could not find paper or question.
+        RuntimeError: no "reviewer" account.
+    """
+    revref = User.get_or_none(name="reviewer")
+
+    if not revref:
+        raise RuntimeError('There is no "reviewer" account')
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return False
+        raise ValueError(f"Could not find paper number {test_number}")
     qref = QGroup.get_or_none(
         QGroup.test == tref,
         QGroup.question == question,
@@ -619,13 +630,14 @@ def MreviewQuestion(self, test_number, question):
     )
     version = qref.version
     if qref is None:
-        return False
+        raise ValueError(
+            f"Could not find question {question} of paper number {test_number}"
+        )
     with self._db.atomic():
         qref.user = revref
         qref.time = datetime.now(timezone.utc)
         qref.save()
     log.info("Setting tqv %s for reviewer", (test_number, question, version))
-    return True
 
 
 def MrevertTask(self, task):
