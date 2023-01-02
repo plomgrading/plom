@@ -151,6 +151,8 @@ class ManagerMessenger(BaseMessenger):
 
         Exceptions:
             PlomConflict: `studentID` already used on a different paper.
+                Currently does not do this.  Could enable again in the
+                future.
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
