@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 
 from django.shortcuts import render
-from django.http import Http404, FileResponse
+from django.http import Http404, FileResponse, HttpResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ScannerRequiredView
@@ -20,17 +20,12 @@ class ManageBundleView(ScannerRequiredView):
     Let a user view an uploaded bundle and read its QR codes.
     """
 
-    def get(self, request, timestamp, index):
-        try:
-            timestamp = float(timestamp)
-        except ValueError:
-            raise Http404()
-
-        context = self.build_context()
+    def build_context(self, timestamp, user, index):
+        context = super().build_context()
         scanner = ScanService()
-        bundle = scanner.get_bundle(timestamp, request.user)
+        bundle = scanner.get_bundle(timestamp, user)
         n_pages = scanner.get_n_images(bundle)
-        good_pages = scanner.get_n_complete_reading_tasks(bundle)
+        valid_pages = scanner.get_n_complete_reading_tasks(bundle)
         error_pages = scanner.get_n_error_image(bundle)
 
         if index >= n_pages:
@@ -41,7 +36,7 @@ class ManageBundleView(ScannerRequiredView):
         for i in range(n_pages):
             page_dict = {}
             status = scanner.get_qr_code_reading_status(bundle, i)
-            img = scanner.get_image(timestamp, request.user, i)
+            img = scanner.get_image(timestamp, user, i)
             page_dict.update(
                 {
                     "status": status,
@@ -49,14 +44,14 @@ class ManageBundleView(ScannerRequiredView):
                 }
             )
             pages.append(page_dict)
-
+        
         qr_finished = scanner.is_bundle_reading_started(bundle)
 
         finished_reading_qr = False
 
         if scanner.is_bundle_reading_finished(bundle):
             finished_reading_qr = True
-
+        
         context.update(
             {
                 "slug": bundle.slug,
@@ -68,11 +63,20 @@ class ManageBundleView(ScannerRequiredView):
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
-                "good_pages": good_pages,
+                "valid_pages": valid_pages,
                 "error_pages": error_pages,
                 "finished_reading_qr": finished_reading_qr,
             }
         )
+        return context
+
+    def get(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        context = self.build_context(timestamp, request.user, index)
         return render(request, "Scan/manage_bundle.html", context)
 
 
