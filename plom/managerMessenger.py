@@ -588,7 +588,7 @@ class ManagerMessenger(BaseMessenger):
         """Replace a do-not-mark page with a server-generated placeholder.
 
         Returns:
-            list: some diagnostics, TODO: perhaps unnecessary?
+            str: diagnostic message, largely unnecessary
 
         Raises:
             PlomConflict: collisions, duplicates

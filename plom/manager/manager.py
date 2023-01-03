@@ -93,6 +93,7 @@ from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 from plom.misc_utils import arrowtime_to_simple_string
 from plom.specVerifier import get_question_label
+from plom.misc_utils import format_int_list_with_runs
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -1023,7 +1024,30 @@ class Manager(QWidget):
         )
         if msg.exec() == QMessageBox.No:
             return
-        InfoMsg(self, "not implemented").exec()
+
+        incomplete = self.msgr.getIncompleteTests()  # triples [p, v, true/false]
+        output_log = "Output log:"
+        subs = []
+        for papernum, X in incomplete.items():
+            papernum = int(papernum)
+            # [['t.1', 1, True], ['t.2', 1, False], ['t.3', 1, True], ...]
+            for pagestr, version, scanned in X:
+                if not scanned:
+                    for p in dnm_pages:
+                        if f"t.{p}" == pagestr:
+                            subs.append(papernum)
+                            b = f"replacing {papernum:04} DNM pg {pagestr}:"
+                            s = self.msgr.replaceMissingDNMPage(papernum, p)
+                            output_log += "\n" + b + " " + s
+
+        InfoMsg(
+            self,
+            f"Finished forgiving missing DNM pages: made {len(subs)} substitutions.",
+            info="Paper numbers: " + format_int_list_with_runs(subs),
+            info_pre=False,
+            details=output_log,
+        ).exec()
+        self.refresh_scan_status_lists()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(

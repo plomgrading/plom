@@ -390,7 +390,8 @@ class UploadHandler:
         """
         ok, reason, X = self.server.replaceMissingDNMPage(data["test"], data["page"])
         if ok:
-            return web.json_response([ok, reason, X], status=200)
+            assert reason == "success"
+            return web.json_response(X, status=200)
         if reason in ("testError", "pageError"):
             raise web.HTTPNotFound(reason=X)
         if reason == "duplicate":
