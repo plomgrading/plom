@@ -41,7 +41,6 @@ class RubricHandler:
         # set maxMark for checking marks are in range.
         maxMark = self.server.testSpec["question"][str(rubric["question"])]["mark"]
 
-        # TODO: should we enforce value=0/None?
         if rubric["kind"] == "neutral":
             # neutral rubric must have no delta - ie delta == '.'
             if rubric["display_delta"] != ".":
@@ -49,10 +48,19 @@ class RubricHandler:
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
+            # for now, must be int or None
+            if not (rubric["value"] is None or isinstance(rubric["value"], int)):
+                return False
+            # TODO: should we enforce value=0/None?
+            if not (rubric["value"] is None or rubric["value"] == 0):
+                return False
 
         elif rubric["kind"] == "relative":
             # must have some text
             if len(rubric["text"].strip()) == 0:
+                return False
+            # for now, must be int
+            if not isinstance(rubric["value"], int):
                 return False
             # the delta must be of the form -k or +k
             if rubric["display_delta"][0] not in ["-", "+"]:
@@ -72,6 +80,9 @@ class RubricHandler:
             # must have text field == '.'
             if rubric["text"] != ".":
                 return False
+            # for now, must be int
+            if not isinstance(rubric["value"], int):
+                return False
             # the delta must be of the form -k or +k
             if rubric["display_delta"][0] not in ["-", "+"]:
                 return False
@@ -86,8 +97,8 @@ class RubricHandler:
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
-            # must have numeric delta
-            if not rubric["value"].isnumeric():
+            # for now, must be int
+            if not isinstance(rubric["value"], int):
                 return False
             # check score in range
             value = int(rubric["value"])
