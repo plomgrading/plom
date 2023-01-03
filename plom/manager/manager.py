@@ -997,17 +997,27 @@ class Manager(QWidget):
             InfoMsg(self, f"{e}").exec()
 
     def substituteAllDNMPages(self):
+        spec = self.msgr.get_spec()
+        dnm_pages = spec["doNotMarkPages"]
+        if not dnm_pages:
+            InfoMsg(
+                self,
+                "There are no do-not-mark pages in the spec.",
+                details="\n".join(f"{k}: {v}" for k, v in spec.items()),
+            ).exec()
+            return
         msg = SimpleQuestion(
             self,
             "Bulk forgive all missing DNM pages?",
-            question="""
+            question=f"""
                 <p>Do-not-mark ("DNM") pages are not likely to be marked so
                 its no issue if they are not here.  For example, they might
                 be formula sheets.  This option will substitute a "Missing
-                Page" blank for all such pages, for any test that is
+                Page" placeholder for all such pages, for any test that is
                 partially uploaded.</p>
-                <p>(Other pages and pages of unused tests will be uneffected.)</p>
-                <p><em>Caution: not well-tested!</em></p>
+                <p>This assessment has DNM pages:
+                {", ".join(str(n) for n in dnm_pages)}<br />
+                (Other pages and pages of unused tests will be uneffected.)</p>
                 <p>Would you like to continue substituting missing DNM pages?</p>
             """,
         )
