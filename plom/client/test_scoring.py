@@ -1,16 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Colin B. Macdonald
-
-from copy import deepcopy
-from pathlib import Path
-import sys
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from pytest import raises
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
 
 from plom.plom_exceptions import PlomInconsistentRubricsException
 from plom.client.rubrics import compute_score_naive as naive
@@ -26,6 +17,16 @@ def test_naive_score():
         {"kind": "neutral", "value": 0},
     ]
     assert naive(r, 10) == 9
+
+
+def test_naive_legacy_out_of_range():
+    r = [
+        {"kind": "relative", "value": 4},
+        {"kind": "relative", "value": 3}]
+    with raises(ValueError, match="out of range"):
+        naive(r, 5)
+    with raises(ValueError, match="out of range"):
+        lg(r, 5)
 
 
 def test_legacy_score():
@@ -174,3 +175,11 @@ def test_score_none():
     assert s([], 10) is None
     assert s([{"kind": "neutral"}], 10) is None
     assert s([{"kind": "neutral", "value": 0}], 10) is None
+
+
+def test_score_ambiguous_mix_up_down():
+    r = [
+        {"kind": "relative", "value": 4},
+        {"kind": "relative", "value": -3}]
+    with raises(PlomInconsistentRubricsException, match="Ambiguous"):
+        s(r, 10)
