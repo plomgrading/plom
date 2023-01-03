@@ -1,14 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 
 """
 Backend bits n bobs to talk to the server
 """
-
-__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
 
 import hashlib
 from io import StringIO, BytesIO
@@ -56,22 +52,29 @@ class Messenger(BaseMessenger):
     # ID client API stuff
 
     def IDprogressCount(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/ID/progress",
-                json={"user": self.user, "token": self.token},
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            progress = response.json()
-            return progress
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        """Return info about progress on identifiying.
+
+        Return:
+            list: with two integers, indicating the number of papers
+            identified and the total number of papers to be identified.
+
+        Raises:
+            PlomAuthenticationException:
+            PlomSeriousException: something unexpected happened.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/ID/progress",
+                    json={"user": self.user, "token": self.token},
+                )
+                # throw errors when response code != 200.
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def IDaskNextTask(self):
         """Return the TGV of a paper that needs IDing.
@@ -97,27 +100,6 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def IDrequestPredictions(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/ID/predictions",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            # returns a json of dict of test:(sid, sname, certainty)
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server cannot find the prediction list."
-                ) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -197,7 +179,7 @@ class Messenger(BaseMessenger):
         """Get the maximum mark for this question and version.
 
         Raises:
-            PlomRangeExeception: `question` is out of range or non-integer.
+            PlomRangeException: `question` is out of range or non-integer.
             PlomAuthenticationException:
             PlomSeriousException: something unexpected happened.
         """
@@ -239,22 +221,38 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
     def MprogressCount(self, q, v):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/MK/progress",
-                json={"user": self.user, "token": self.token, "q": q, "v": v},
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            progress = response.json()
-            return progress
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        """Return info about progress on a particular question-version pair.
+
+        Args:
+            q (str/int): a question number.
+            v (str/int): a version number.
+
+        Return:
+            list: with two integers, indicating the number of questions
+            graded and the total number of questions to be graded of
+            this question-version pair.
+
+        Raises:
+            PlomRangeException: `q` or `v` is out of range.
+            PlomAuthenticationException:
+            PlomSeriousException: something unexpected happened, such as
+                non-integer `q` or `v`.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/MK/progress",
+                    json={"user": self.user, "token": self.token, "q": q, "v": v},
+                )
+                # throw errors when response code != 200.
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 416:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MaskNextTask(self, q, v, tag=None, above=None):
         """Ask server for a new marking task, return tgv or None.

@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -212,7 +212,7 @@ class Annotator(QWidget):
 
                 <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
 
-                <p>Copyright &copy; 2018-2022 Andrew Rechnitzer,
+                <p>Copyright &copy; 2018-2023 Andrew Rechnitzer,
                 Colin B. Macdonald, and other contributors.</p>
 
                 <p>Plom is Free Software, available under the GNU Affero
@@ -227,6 +227,10 @@ class Annotator(QWidget):
 
     def toggle_hold_crop(self, checked):
         if checked:
+            if not self.scene:
+                # unfort. backref instance var: if no scene, prevent checking
+                self._hold_crop_checkbox.setChecked(False)
+                return
             self.held_crop_rectangle_data = (
                 self.scene.current_crop_rectangle_as_proportions()
             )
@@ -275,6 +279,7 @@ class Annotator(QWidget):
         hold_crop = m.addAction("(advanced option) Hold crop")
         hold_crop.setCheckable(True)
         hold_crop.triggered.connect(self.toggle_hold_crop)
+        self._hold_crop_checkbox = hold_crop
         m.addSeparator()
         subm = m.addMenu("Tools")
         # to make these actions checkable, they need to belong to self.
@@ -925,7 +930,7 @@ class Annotator(QWidget):
         if newMode in self._list_of_minor_modes:
             self._which_tool = newMode
 
-        if imagePath is not None:
+        if self.scene and imagePath is not None:
             self.scene.tempImagePath = imagePath
 
         # pass the new mode to the graphicsview, and set the cursor in view
@@ -1148,8 +1153,10 @@ class Annotator(QWidget):
                 "You cannot un-crop while a crop is being held.",
                 info="Unselect 'hold crop' from the menu and then try again.",
             ).exec()
-        else:
-            self.scene.uncrop_underlying_images()
+            return
+        if not self.scene:
+            return
+        self.scene.uncrop_underlying_images()
 
     def toUndo(self):
         self.ui.undoButton.animateClick()
@@ -1835,7 +1842,11 @@ class Annotator(QWidget):
         CatViewer(self, dogAttempt=True).exec()
 
     def tag_paper(self, task=None, dialog_parent=None):
+        if not self.scene:
+            return
         if not task:
+            if not self.tgvID:
+                return
             task = f"q{self.tgvID}"
         if not dialog_parent:
             dialog_parent = self

@@ -7,6 +7,7 @@
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Natalie Balashov
 
 import json
 import logging
@@ -165,13 +166,14 @@ class Server:
         IDgetImageFromATest,
         ID_get_donotmark_images,
         IDclaimThisTask,
-        pre_id_paper,
-        remove_id_prediction,
+        add_or_change_predicted_id,
+        remove_predicted_id,
         ID_id_paper,
         ID_get_predictions,
-        IDdeletePredictions,
-        IDputPredictions,
+        ID_delete_predictions,
+        ID_put_predictions,
         predict_id_lap_solver,
+        predict_id_greedy,
         id_reader_get_log,
         id_reader_run,
         id_reader_kill,

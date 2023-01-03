@@ -177,6 +177,6 @@ class MarkingTaskService:
             user: reference to a User instance
         """
 
-        user_tasks = MarkingTask.objects.filter(assigned_user=user)
+        user_tasks = MarkingTask.objects.filter(assigned_user=user, status="out")
         for task in user_tasks:
-            self.assign_task_to_user(user, task)
+            self.surrender_task(user, task)

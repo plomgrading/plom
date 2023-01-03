@@ -24,17 +24,17 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.21
+image: docker:20.10.22
 
 services:
-  - docker:20.10.21-dind
+  - docker:20.10.22-dind
 
 variables:
   DOCKER_DRIVER: overlay2
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
-  MACBIN_PY_VER: 3.9.15
+  MACBIN_PY_VER: 3.9.16
   WINBIN_PY_VER: 3.9.13
 
 stages:
@@ -81,7 +81,7 @@ quick-pytests:
 
 
 codespell:
-  image: python:3.10
+  image: python:3.11
   stage: static_analysis
   before_script:
     - python3 -m pip install codespell
@@ -91,6 +91,24 @@ codespell:
   artifacts:
     reports:
       dotenv: release_info.env
+
+
+# sometimes we write everything twice: this job ensures dupe file/info stay same
+wet_no_drift:
+  stage: static_analysis
+  image: alpine
+  before_script:
+    - apk add bash
+  script:
+    # Issue #2402: two copies of the latex template
+    - diff -s plom/latexTemplate.tex plom/testTemplates/latexTemplate.tex
+    - diff -s plom/latexTemplatev2.tex plom/testTemplates/latexTemplatev2.tex
+    # dupe version info
+    - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
+    - export VER2=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
+    - echo $VER1
+    - echo $VER2
+    - bash -c "[[ x$VER1 == x$VER2 ]]"
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
@@ -186,7 +204,7 @@ release_job:
 # block release unless tag matches in-source version
 tag_matches_ver:
   stage: static_analysis
-  image: python:3.10
+  image: python:3.11
   rules:
    - if: $CI_COMMIT_TAG
   script:
@@ -201,9 +219,9 @@ tag_matches_ver:
 
 black:
   stage: static_analysis
-  image: python:3.10
+  image: python:3.11
   before_script:
-    - pip3 install "black~=22.3"
+    - pip3 install "black~=22.12"
   script:
     - black --check --diff .
   allow_failure: true
@@ -1263,7 +1281,7 @@ winpyinst:
   script:
   - c:\python39\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python39\python -m pip install pyinstaller==5.1
+  - c:\python39\python -m pip install pyinstaller==5.7.0
   - refreshenv
   - c:\python39\python -m plom.client -h
   - c:\python39\scripts\pyinstaller client.windows.spec

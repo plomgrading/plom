@@ -76,8 +76,9 @@ def RgetScannedTests(self):
 
 def RgetIncompleteTests(self):
     """Get dict of incomplete tests - ie some test pages scanned but not all.
+
     Indexed by test_number
-    Each test lists triples [page-code, page-version, scanned_or_not].
+    Each test lists triples [page-code, version, scanned_or_not].
     page-code is t{page}, h{question}{order}, or l{order}.
     Note - if no tpages scanned, then it will not return tpages.
     Similalry, if no hwpages/expages scanned, then it will not return hwpages/expages.

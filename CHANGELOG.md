@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client: simulated slow network mode for testing/debugging.
 
 ### Fixed
+* Client: fix potential UI crashes when grading is complete.
 * Misc fixes.
 * Longer question labels are possible.
 * Long names can fit on the prenamed pages by auto-shrinking font.

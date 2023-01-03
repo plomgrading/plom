@@ -1742,7 +1742,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
                        <string>Predict IDs by matching unID'd papers with machine-read digits</string>
                       </property>
                       <property name="text">
-                       <string>Run LAP solver</string>
+                       <string>Run matching tools</string>
                       </property>
                      </widget>
                     </item>

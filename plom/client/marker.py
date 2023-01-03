@@ -1,15 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Lior Silberman
 
 """
 The Plom Marker client
 """
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -1343,23 +1344,31 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
-
         if not val and not maxm:
             # ask server for progress update
             try:
                 val, maxm = self.msgr.MprogressCount(self.question, self.version)
-            except PlomSeriousException as err:
-                log.exception("Serious error detected while updating progress: %s", err)
-                msg = f"A serious error happened while updating progress:\n{err}"
-                msg += "\nThis is not good: restart, report bug, etc."
-                ErrorMsg(self, msg).exec()
+            except PlomRangeException as e:
+                ErrorMsg(self, str(e)).exec()
                 return
         if maxm == 0:
             val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
-            InfoMsg(self, "No papers to mark.").exec()
+            qlabel = get_question_label(self.exam_spec, self.question)
+            msg = f"<p>Currently there is nothing to mark for version {self.version}"
+            if qlabel == f"Q{self.question}":
+                msg += f" of {qlabel}.</p>"
+            else:
+                msg += f" of {qlabel} (question index {self.question}).</p>"
+            info = f"""<p>There are several ways this can happen:</p>
+                <ul>
+                <li>Perhaps the relevant papers have not yet been scanned.</li>
+                <li>This assessment may not have instances of version
+                    {self.version} of {qlabel}.</li>
+                </ul>
+            """
+            InfoMsg(self, msg, info=info, info_pre=False).exec()
         else:
             # Neither is quite right, instead, we cache on init
             self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
