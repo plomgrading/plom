@@ -27,6 +27,7 @@ from API.views import (
     MgetAnnotationImage,
     MgetRubricsByQuestion,
     MgetRubricPanes,
+    McreateRubric,
 )
 
 
@@ -80,6 +81,7 @@ urlpatterns = [
         MgetRubricPanes.as_view(),
         name="api_MK_get_rubric_panes",
     ),
+    path("MK/rubric", McreateRubric.as_view(), name="api_MK_create_rubric"),
 ]
 
 urlpatterns += [

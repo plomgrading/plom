@@ -32,4 +32,5 @@ from .mark import (
 from .rubrics import (
     MgetRubricsByQuestion,
     MgetRubricPanes,
+    McreateRubric,
 )
