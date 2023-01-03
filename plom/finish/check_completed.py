@@ -9,7 +9,7 @@
 import sys
 from textwrap import dedent
 
-from plom.misc_utils import format_int_list_with_runs
+from plom.misc_utils import format_int_list_with_runs as with_runs
 from plom.finish import start_messenger
 
 
@@ -37,32 +37,6 @@ def proc_everything(comps, numberOfQuestions):
     # TODO bit crude, better to get from server
     numScanned = len(scannedList)
     return idList, mList, histList, cList, numScanned, partMarked
-
-
-def print_everything(comps, numPapersProduced, numQ):
-    idList, mList, histList, cList, numScanned, partMarked = proc_everything(
-        comps, numQ
-    )
-    print("*********************")
-    print("** Completion data **")
-    print("Produced papers: {}".format(numPapersProduced))
-    if numPapersProduced == numScanned:
-        print("Scanned papers: {}".format(numScanned))
-    else:
-        print("Scanned papers: {} (currently)".format(numScanned))
-    print("Completed papers: {}".format(format_int_list_with_runs(cList)))
-    print("Identified papers: {}".format(format_int_list_with_runs(idList)))
-    for n in range(numQ + 1):
-        print(
-            "Number of papers with {} questions marked = {}. Tests numbers = {}".format(
-                n, mList[n], format_int_list_with_runs(histList[n])
-            )
-        )
-    print(
-        "Papers with at least one question marked = {}".format(
-            format_int_list_with_runs(partMarked)
-        )
-    )
 
 
 def print_still_out(outToDo):
@@ -100,7 +74,7 @@ def print_dangling(dangling):
             A dangling page is part of a test that is not yet completely scanned
             and uploaded.  If you have assigned all extra pages etc and there
             are still dangling pages, then this might indicates that you have
-            mis-assigned an extra page to a test that has not actually in use.
+            mis-assigned an extra page to a test that is not actually in use.
             """
         )
     )
@@ -109,10 +83,10 @@ def print_dangling(dangling):
 def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
     """Find and print things in classlist or database (but not both)."""
 
-    # Note: note all rows of pns_to_ids are identified: does this matter?
-
     students_from_cl = {(s["id"], s["name"]) for s in classlist}
-    students_from_db = {(s["sid"], s["sname"]) for n, s in pns_to_ids.items()}
+    students_from_db = {
+        (s["sid"], s["sname"]) for n, s in pns_to_ids.items() if s["identified"]
+    }
     students_to_papernum = {(s["sid"], s["sname"]): n for n, s in pns_to_ids.items()}
 
     cl_not_db = students_from_cl - students_from_db
@@ -123,9 +97,12 @@ def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
             f"There were {len(cl_not_db)} students listed in `classlist.csv` "
             "who do not seem to have submissions in the Plom database."
         )
-        # classlist too long, than this is not useful info
-        if len(classlist) > max_papers:
-            print(f"  (omitted list b/c only {max_papers} entries in the database)")
+        if len(classlist) > 1.1 * max_papers:
+            # classlist too long, likely not useful info
+            print(
+                f"  (list omitted b/c only {max_papers} rows in the database"
+                f" and {len(classlist)} in the classlist)"
+            )
         else:
             for sid, sname in cl_not_db:
                 print(f"  ID: {sid}\tName: {sname}")
@@ -160,27 +137,49 @@ def main(server=None, password=None):
         msgr.closeUser()
         msgr.stop()
 
-    print_everything(completions, max_papers, numberOfQuestions)
-
-    idList, mList, sList, cList, numScanned, partMarked = proc_everything(
+    idList, hist, marked, completed, numScanned, partMarked = proc_everything(
         completions, numberOfQuestions
     )
-    numberComplete = len(cList)
-    print("{} complete of {} scanned".format(numberComplete, numScanned))
+    print("*********************")
+    print("** Completion info **")
+    print(f"Produced papers: {max_papers}")
+    if max_papers == numScanned:
+        print(f"Scanned papers: {numScanned}")
+    else:
+        print(f"Scanned papers: {numScanned} (currently)")
+    print(f"Number of papers marked: {hist[numberOfQuestions]}")
+    print(f"Number of papers identified: {len(idList)}")
+    numberComplete = len(completed)
+    print(f"Number completed (marked and ID'd): {numberComplete}")
 
+    print("")
+    print("******************************")
+    print("** Detailed completion data **")
+    print(f"Identified papers: {with_runs(idList)}")
+    print(f"Completed papers (marked & ID'd): {with_runs(completed)}")
+    print("Questions marked histogram:")
+    pad = 1 if numberOfQuestions <= 9 else 2
+    for n, h in enumerate(hist):
+        print(f"{h:5} papers with {n:{pad}} questions marked: {with_runs(marked[n])}")
+    print(
+        f"{len(partMarked):5} papers have at least one question marked: {with_runs(partMarked)}"
+    )
+
+    print("")
     print_classlist_db_xor(classlist, paper_nums_to_ids, max_papers)
 
+    print("")
     print_still_out(outToDo)
+    print("")
     print_dangling(dangling)
 
     if len(partMarked) > numberComplete:
-        print("*********************")
-        print(
-            "Still {} part-marked papers to go.".format(
-                len(partMarked) - numberComplete
-            )
+        s = "Warning: {} papers incomplete (part-marked or unidentified).".format(
+            len(partMarked) - numberComplete
         )
-        print("*********************")
+        print("*" * len(s))
+        print(s)
+        print("*" * len(s))
 
     if numberComplete == numScanned:
         sys.exit(0)
