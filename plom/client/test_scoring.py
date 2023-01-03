@@ -22,7 +22,8 @@ def test_naive_score():
 def test_naive_legacy_out_of_range():
     r = [
         {"kind": "relative", "value": 4},
-        {"kind": "relative", "value": 3}]
+        {"kind": "relative", "value": 3},
+    ]
     with raises(ValueError, match="out of range"):
         naive(r, 5)
     with raises(ValueError, match="out of range"):
@@ -180,6 +181,7 @@ def test_score_none():
 def test_score_ambiguous_mix_up_down():
     r = [
         {"kind": "relative", "value": 4},
-        {"kind": "relative", "value": -3}]
+        {"kind": "relative", "value": -3},
+    ]
     with raises(PlomInconsistentRubricsException, match="Ambiguous"):
         s(r, 10)
