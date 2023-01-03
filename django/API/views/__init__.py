@@ -28,3 +28,8 @@ from .mark import (
     MgetAnnotations,
     MgetAnnotationImage,
 )
+
+from .rubrics import (
+    MgetRubricsByQuestion,
+    MgetRubricPanes,
+)

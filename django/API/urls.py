@@ -25,6 +25,8 @@ from API.views import (
     MgetOneImage,
     MgetAnnotations,
     MgetAnnotationImage,
+    MgetRubricsByQuestion,
+    MgetRubricPanes,
 )
 
 
@@ -67,6 +69,16 @@ urlpatterns = [
         "annotations_image/<int:paper>/<int:question>/",
         MgetAnnotationImage.as_view(),
         name="api_MK_annotation_img",
+    ),
+    path(
+        "MK/rubric/<int:question>/",
+        MgetRubricsByQuestion.as_view(),
+        name="api_MK_get_rubric",
+    ),
+    path(
+        "MK/user/<username>/<int:question>/",
+        MgetRubricPanes.as_view(),
+        name="api_MK_get_rubric_panes",
     ),
 ]
 
