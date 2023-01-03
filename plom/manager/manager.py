@@ -978,10 +978,8 @@ class Manager(QWidget):
         )
         if msg.exec() == QMessageBox.No:
             return
-
-        rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
-        # Cleanup, Issue #2141
-        InfoMsg(self, "{}".format(rval)).exec()
+        s = self.msgr.replaceMissingTestPage(test_number, page_number, version)
+        InfoMsg(self, "Successfully substituted.", info=s).exec()
 
     def substituteTestDNMPage(self, test_number, page_number):
         msg = SimpleQuestion(
