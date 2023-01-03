@@ -48,20 +48,20 @@ class RubricHandler:
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
-            # for now, must be int or None
-            if not (rubric["value"] is None or isinstance(rubric["value"], int)):
-                return False
+            # do we care if its int/None?
+            # if not (rubric["value"] is None or isinstance(rubric["value"], int)):
+            #     return False
             # TODO: should we enforce value=0/None?
-            if not (rubric["value"] is None or rubric["value"] == 0):
+            if not (rubric["value"] is None or int(rubric["value"]) == 0):
                 return False
 
         elif rubric["kind"] == "relative":
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
-            # for now, must be int
-            if not isinstance(rubric["value"], int):
-                return False
+            # do we care if its int?
+            # if not isinstance(rubric["value"], int):
+            #     return False
             # the delta must be of the form -k or +k
             if rubric["display_delta"][0] not in ["-", "+"]:
                 return False
@@ -80,9 +80,9 @@ class RubricHandler:
             # must have text field == '.'
             if rubric["text"] != ".":
                 return False
-            # for now, must be int
-            if not isinstance(rubric["value"], int):
-                return False
+            # do we care if its int?
+            # if not isinstance(rubric["value"], int):
+            #     return False
             # the delta must be of the form -k or +k
             if rubric["display_delta"][0] not in ["-", "+"]:
                 return False
@@ -97,9 +97,9 @@ class RubricHandler:
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
-            # for now, must be int
-            if not isinstance(rubric["value"], int):
-                return False
+            # do we care if its int?
+            # if not isinstance(rubric["value"], int):
+            #     return False
             # check score in range
             value = int(rubric["value"])
             if (value < 0) or (value > maxMark):
