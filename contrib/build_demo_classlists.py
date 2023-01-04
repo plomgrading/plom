@@ -37,6 +37,37 @@ for person in nameset.last_names:
     if person[:2] == "Ex" and " " not in person:
         x_last.append(person)
 
+block_list = [
+    "Extremepartygroup",
+    "Extremmeakeover",
+    "Exclusiveband",
+    "Exclusiveplus",
+    "Exceptional",
+    "Exam",
+    "Example",
+    "Exclusividades" "Exit",
+    "Exitfm",
+    "Exiuspretty",
+    "Exotic-Mm",
+    "Exotiik",
+    "Exotiques",
+    "Exterminating" "Extensibile",
+    "Extension",
+    "Extensions",
+    "Exhibit",
+    "Exhibition",
+]
+
+for x in block_list:
+    try:
+        x_first.remove(x)
+    except ValueError:
+        pass
+    try:
+        x_last.remove(x)
+    except ValueError:
+        pass
+
 N = 60
 id_and_name = []
 for (a, b) in zip(random.choices(x_first, k=N), random.choices(x_last, k=N)):
