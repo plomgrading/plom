@@ -179,6 +179,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     # Customizable data
     extra_page_probability = 0.2
     extra_page_font_size = 18
+    extra_student_probability = 0.5
 
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
@@ -196,6 +197,25 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     # get those students not used in the the prename
     available_classlist = [x for x in classlist if x["id"] not in used_ids]
     random.shuffle(available_classlist)
+    # work out how many names actually needed
+    number_of_unnamed_papers = len(papers_paths) - len(named_papers_paths)
+
+    # get the list of extra names and shuffle them
+    extra_names = json.loads(
+        (resources.files(plom) / "demo" / "extra_students.json").read_text()
+    )
+    random.shuffle(extra_names)    
+    # use at least 3 but not more extra names than in the resource file
+    number_of_extra_students = min(
+        max(3, int(number_of_unnamed_papers * extra_student_probability)),
+        len(extra_names),
+    )
+    # cut the available_classlist and add in 3 names from the extra list
+    use_these_students = available_classlist[
+        : number_of_unnamed_papers - number_of_extra_students
+    ] + [{"id": x[0], "name": x[1]} for x in extra_names[:number_of_extra_students]]
+    # now shuffle everything
+    random.shuffle(use_these_students)
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
@@ -204,7 +224,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
         if f in named_papers_paths:
             print(f"{f.name} - prenamed paper - scribbled")
         else:
-            x = available_classlist.pop()
+            x = use_these_students.pop()
             # TODO: Issue #1646: check for "student_number" fallback to id
             student_number = x["id"]
             student_name = x["name"]
