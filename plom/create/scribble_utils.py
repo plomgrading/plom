@@ -204,7 +204,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     extra_names = json.loads(
         (resources.files(plom) / "demo" / "extra_students.json").read_text()
     )
-    random.shuffle(extra_names)    
+    random.shuffle(extra_names)
     # use at least 3 but not more extra names than in the resource file
     number_of_extra_students = min(
         max(3, int(number_of_unnamed_papers * extra_student_probability)),

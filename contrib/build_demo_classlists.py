@@ -24,16 +24,16 @@ with open(dcl) as fh:
     for row in red:
         sid[int(row["id"])] = row["name"]
 
-nd = NameDataset()
+nameset = NameDataset()
 
 x_first = []
 x_last = []
 
-for person in nd.first_names:
+for person in nameset.first_names:
     if person[:2] == "Ex" and " " not in person:
         x_first.append(person)
 
-for person in nd.last_names:
+for person in nameset.last_names:
     if person[:2] == "Ex" and " " not in person:
         x_last.append(person)
 
