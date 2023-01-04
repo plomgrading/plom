@@ -1132,7 +1132,13 @@ class Manager(QWidget):
 
     def refreshUnknownList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
+        self.ui.unknownTV.setSortingEnabled(False)
         unknowns = self.msgr.getUnknownPages()
+        # We don't have proper sorting in this table: Issues #2414, #2067
+        # We can at least initially populate it in a meaningful way!
+        unknowns = sorted(
+            unknowns, key=lambda x: (x["bundle_name"], x["bundle_position"])
+        )
         for r, u in enumerate(unknowns):
             it0 = QStandardItem(Path(u["server_path"]).name)
             pm = QPixmap()
@@ -1173,6 +1179,8 @@ class Manager(QWidget):
             self.ui.scanTabW.indexOf(self.ui.unknownTab),
             f"&Unknown Pages ({countstr})",
         )
+        # Issue #2414: this would mess up the careful manual sort we did above
+        # self.ui.unknownTV.setSortingEnabled(True)
 
     def viewUnknownPage(self):
         pvi = self.ui.unknownTV.selectedIndexes()
