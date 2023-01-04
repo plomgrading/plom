@@ -12,19 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * "Tech preview" of a web-interface for configuring a Plom server.
 * Support for external databases.
 * Rubrics can be version-specific.
+* Manager can "bulk-forgive" missing do-not-mark pages.
 
 ### Changed
 * Server stores annotation data in the database instead of in `.plom` files.
 * Client no longer has a "No Answer" button: instead use the "no answer given" rubric.
 * Support for non-ascii names is much improved.
 * Client: simulated slow network mode for testing/debugging.
+* Manager sorts unknown pages by their position in the bundle.
 
 ### Fixed
 * Client: fix potential UI crashes when grading is complete.
-* Misc fixes.
 * Longer question labels are possible.
 * Long names can fit on the prenamed pages by auto-shrinking font.
-
+* Output of `plom-finish status` is easier to understand.
+* Misc fixes.
 
 
 ## [0.11.1] - 2022-11-14
