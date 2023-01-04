@@ -1607,26 +1607,42 @@ class AddRubricBox(QDialog):
         vlay.addLayout(self._param_grid)
         vlay.addWidget(QLabel("<hr>"))
         hlay = QHBoxLayout()
-        hlay.addWidget(QCheckBox("Add to group "))
-        hlay.addWidget(QComboBox())
+        self.group_checkbox = QCheckBox("Associate with the group ")
+        hlay.addWidget(self.group_checkbox)
+        b = QComboBox()
+        # b.setEditable(True)
+        # b.setDuplicatesEnabled(False)
+        # changing the group ticks the group checkbox
+        b.activated.connect(lambda: self.group_checkbox.setChecked(True))
+        hlay.addWidget(b)
+        self.group_combobox = b
         b = QToolButton(text="➕")
         b.setToolTip("Add new group")
         b.setAutoRaise(True)
+        b.clicked.connect(self.add_new_group)
+        self.group_add_btn = b
         hlay.addWidget(b)
-        b = QToolButton(text="➖")
-        b.setToolTip("Delete currently-selected group")
-        b.setAutoRaise(True)
-        hlay.addWidget(b)
+        # b = QToolButton(text="➖")
+        # b.setToolTip("Delete currently-selected group")
+        # b.setAutoRaise(True)
+        # hlay.addWidget(b)
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(hlay)
-        # TODO maybe these go inside a frame?  anyway indent
         hlay = QHBoxLayout()
-        hlay.addItem(QSpacerItem(32, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        hlay.addWidget(QRadioButton("Exclusive (default for absolute rubrics)"))
-        vlay.addLayout(hlay)
-        hlay = QHBoxLayout()
-        hlay.addItem(QSpacerItem(32, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        hlay.addWidget(QRadioButton("Associated (default for relative/neutral rubrics)"))
+        hlay.addItem(QSpacerItem(24, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        # TODO: need more explanation here or in tooltip
+        c = QCheckBox("Exclusive (default for absolute rubrics)")
+        hlay.addWidget(c)
+        self.group_excl = c
+        self.group_checkbox.toggled.connect(lambda x: self.group_excl.setEnabled(x))
+        self.group_checkbox.toggled.connect(lambda x: self.group_combobox.setEnabled(x))
+        self.group_checkbox.toggled.connect(lambda x: self.group_add_btn.setEnabled(x))
+        # TODO: connect self.typeRB_neutral etc change to check/uncheck the exclusive button
+        self.group_excl.setChecked(False)
+        self.group_excl.setEnabled(False)
+        self.group_combobox.setEnabled(False)
+        self.group_add_btn.setEnabled(False)
+        self.group_checkbox.setChecked(False)
         vlay.addLayout(hlay)
         vlay.addWidget(QLabel("<hr>"))
         self.toggle_version_specific()
@@ -1819,6 +1835,19 @@ class AddRubricBox(QDialog):
                 values.append(layout.itemAtPosition(r, c).widget().text())
             params.append([param, values])
         return params
+
+    def add_new_group(self):
+        s, ok = QInputDialog.getText(
+            self, "New group for rubric", "New group for rubric"
+        )
+        if not ok:
+            return
+        s = s.strip()
+        if not s:
+            return
+        n = self.group_combobox.count()
+        self.group_combobox.insertItem(n, s)
+        self.group_combobox.setCurrentIndex(n)
 
     def changedReapableCB(self):
         self.TE.clear()
