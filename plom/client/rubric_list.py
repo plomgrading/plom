@@ -1705,9 +1705,14 @@ class AddRubricBox(QDialog):
             b = QToolButton(text="➕ add another")
         else:
             b = QToolButton(text="➕ add a parameterized substitution")
+            # disabled for Issue #2462
+            b.setEnabled(False)
         b.setAutoRaise(True)
         b.pressed.connect(self.subsAddRow)
-        b.setToolTip("inserted at cursor point; highlighted text as initial value")
+        b.setToolTip(
+            "[disabled, Issue #2462] inserted at cursor point; highlighted text as initial value"
+        )
+        # b.setToolTip("inserted at cursor point; highlighted text as initial value")
         grid.addWidget(b, nr, 0)
         nr += 1
         return grid
