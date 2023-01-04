@@ -93,6 +93,7 @@ from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 from plom.misc_utils import arrowtime_to_simple_string
 from plom.specVerifier import get_question_label
+from plom.misc_utils import format_int_list_with_runs
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -449,6 +450,7 @@ class Manager(QWidget):
 
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
+        self.ui.forgiveAllDNMButton.clicked.connect(self.substituteAllDNMPages)
         self.ui.removePartScanB.clicked.connect(self.removePagesFromPartScan)
         self.ui.removeDanglingB.clicked.connect(self.removeDanglingPage)
 
@@ -976,10 +978,8 @@ class Manager(QWidget):
         )
         if msg.exec() == QMessageBox.No:
             return
-
-        rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
-        # Cleanup, Issue #2141
-        InfoMsg(self, "{}".format(rval)).exec()
+        s = self.msgr.replaceMissingTestPage(test_number, page_number, version)
+        InfoMsg(self, "Successfully substituted.", info=s).exec()
 
     def substituteTestDNMPage(self, test_number, page_number):
         msg = SimpleQuestion(
@@ -994,6 +994,58 @@ class Manager(QWidget):
             self.msgr.replaceMissingDNMPage(test_number, page_number)
         except (PlomConflict, PlomNoPaper) as e:
             InfoMsg(self, f"{e}").exec()
+
+    def substituteAllDNMPages(self):
+        spec = self.msgr.get_spec()
+        dnm_pages = spec["doNotMarkPages"]
+        if not dnm_pages:
+            InfoMsg(
+                self,
+                "There are no do-not-mark pages in the spec.",
+                details="\n".join(f"{k}: {v}" for k, v in spec.items()),
+            ).exec()
+            return
+        msg = SimpleQuestion(
+            self,
+            "Bulk forgive all missing DNM pages?",
+            question=f"""
+                <p>Do-not-mark ("DNM") pages are not likely to be marked so
+                its no issue if they are not here.  For example, they might
+                be formula sheets.  This option will substitute a "Missing
+                Page" placeholder for all such pages, for any test that is
+                partially uploaded.</p>
+                <p>This assessment has DNM pages:
+                {", ".join(str(n) for n in dnm_pages)}<br />
+                (Other pages and pages of unused tests will be uneffected.)</p>
+                <p>Would you like to continue substituting missing DNM pages?</p>
+            """,
+        )
+        if msg.exec() == QMessageBox.No:
+            return
+
+        incomplete = self.msgr.getIncompleteTests()  # triples [p, v, true/false]
+        output_log = "Output log:"
+        subs = []
+        for papernum, X in incomplete.items():
+            papernum = int(papernum)
+            # [['t.1', 1, True], ['t.2', 1, False], ['t.3', 1, True], ...]
+            for pagestr, version, scanned in X:
+                if not scanned:
+                    for p in dnm_pages:
+                        if f"t.{p}" == pagestr:
+                            subs.append(papernum)
+                            b = f"replacing {papernum:04} DNM pg {pagestr}:"
+                            s = self.msgr.replaceMissingDNMPage(papernum, p)
+                            output_log += "\n" + b + " " + s
+
+        InfoMsg(
+            self,
+            f"Finished forgiving missing DNM pages: made {len(subs)} substitutions.",
+            info="Paper numbers: " + format_int_list_with_runs(subs),
+            info_pre=False,
+            details=output_log,
+        ).exec()
+        self.refresh_scan_status_lists()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(

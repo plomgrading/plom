@@ -559,36 +559,45 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
     def replaceMissingTestPage(self, t, p, v):
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/plom/admin/missingTestPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                    "page": p,
-                    "version": v,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the page - this should not happen!"
-                ) from None
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        """Replace a do-not-mark page with a server-generated placeholder.
+
+        Returns:
+            str: diagnostic message, largely unnecessary
+
+        Raises:
+            PlomConflict: collisions, duplicates
+            PlomNoPaper: no paper or also invalid page
+            PlomAuthenticationException: auth or invalid user
+            PlomSeriousException: anything unexpected
+        """
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/plom/admin/missingTestPage",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "test": t,
+                        "page": p,
+                        "version": v,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def replaceMissingDNMPage(self, t, p):
         """Replace a do-not-mark page with a server-generated placeholder.
 
         Returns:
-            list: some diagnostics, TODO: perhaps unnecessary?
+            str: diagnostic message, largely unnecessary
 
         Raises:
             PlomConflict: collisions, duplicates
