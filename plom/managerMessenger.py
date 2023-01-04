@@ -643,12 +643,10 @@ class ManagerMessenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code in (401, 403):
                     raise PlomAuthenticationException(response.reason) from None
-                if response.status_code == 404:
-                    raise PlomSeriousException(
-                        "Server could not find the page - this should not happen!"
-                    ) from None
                 if response.status_code == 410:
                     raise PlomUnidentifiedPaperException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def replaceMissingHWQuestion(self, student_id=None, test=None, question=None):
