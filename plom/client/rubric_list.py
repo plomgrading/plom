@@ -163,6 +163,7 @@ class RubricTable(QTableWidget):
             "Raw Text",
             "Value",
             "Out of",
+            "Tags",
         )
         self.setColumnCount(len(_col_headers))
         self.setHorizontalHeaderLabels(_col_headers)
@@ -174,6 +175,7 @@ class RubricTable(QTableWidget):
         self.hideColumn(7)
         self.hideColumn(8)
         self.hideColumn(9)
+        self.hideColumn(10)
         # could use a subclass
         if self.tabType == "delta":
             self.hideColumn(3)
@@ -445,6 +447,7 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 7, QTableWidgetItem(rubric["text"]))
         self.setItem(rc, 8, QTableWidgetItem(str(rubric["value"])))
         self.setItem(rc, 9, QTableWidgetItem(str(rubric["out_of"])))
+        self.setItem(rc, 10, QTableWidgetItem(rubric["tags"]))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -616,6 +619,7 @@ class RubricTable(QTableWidget):
                 "out_of": int(self.item(r, 9).text()),
                 "text": self.item(r, 3).text(),
                 "id": self.item(r, 0).text(),
+                "tags": self.item(r, 10).text(),
             }
         )
 
@@ -685,6 +689,7 @@ class RubricTable(QTableWidget):
                 self.item(r, 7).setText(new_rubric["text"])
                 self.item(r, 8).setText(str(new_rubric["value"]))
                 self.item(r, 9).setText(str(new_rubric["out_of"]))
+                self.item(r, 10).setText(new_rubric["tags"])
 
                 # update the legality
                 self.colourLegalRubric(r, mss)
@@ -1649,7 +1654,8 @@ class AddRubricBox(QDialog):
         self.toggle_scope_elements()
 
         # TODO: in the future?
-        # flay.addRow("Tags", self.TEtag)
+        flay.addRow("Tags", self.TEtag)
+        self.TEtag.setEnabled(False)
         flay.addRow("Meta", self.TEmeta)
 
         flay.addRow("Rubric ID", self.label_rubric_id)
@@ -1904,6 +1910,19 @@ class AddRubricBox(QDialog):
     def gimme_rubric_data(self):
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
         tag = self.TEtag.text().strip()
+        if self.group_checkbox.isChecked():
+            group = self.group_combobox.currentText()
+            # quote spacs
+            if " " in group:
+                group = '"' + group + '"'
+                raise NotImplementedError("groups with spaces not implemented")
+            if tag:
+                tag += " "
+            if self.group_excl.isChecked():
+                tag += "exclgroup:" + group
+            else:
+                tag += "group:" + group
+            print(f"tag='{tag}'")
         meta = self.TEmeta.toPlainText().strip()
         if self.typeRB_neutral.isChecked():
             kind = "neutral"
