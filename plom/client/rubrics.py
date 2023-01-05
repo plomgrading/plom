@@ -122,7 +122,8 @@ def compute_score_locabs(rubrics, maxscore):
             are out of their own range ``[0, out_of]``.  Can also be because
             the total of all ``out_of`` are more than maxscore.  The absolute
             rubrics give upper/lower bounds for possible scores which raise
-            ValueErrors if exceeded by relative rubrics.
+            ValueErrors if exceeded by relative rubrics.  More than one
+            rubric from an exclusive group is a ValueError.
         PlomInvalidRubric: unexpectedly invalid rubric.
     """
     lo_score = 0
@@ -132,6 +133,18 @@ def compute_score_locabs(rubrics, maxscore):
     for r in rubrics:
         if r["kind"] not in ("absolute", "relative", "neutral"):
             raise PlomInvalidRubric(f'Invalid rubric kind={r["kind"]}')
+
+    # first ensure at most one member of an exclusive group
+    exclusives = []
+    for r in rubrics:
+        # TODO: assumes no spaces in tags
+        tt = r["tags"].split()
+        for t in tt:
+            if t.startswith("exclgroup:"):
+                g = t.removeprefix("exclgroup:")
+                if g in exclusives:
+                    raise ValueError(f"more than one exclusive: {g}")
+                exclusives.append(g)
 
     # step one: add up all the absolute rubrics
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]
