@@ -103,11 +103,17 @@ def compute_score_locabs(rubrics, maxscore):
         maxscore (int): the maximum anticipated score
 
     returns:
-        int: the computed score
-
-    raises:
         None/int: the computed score or `None` if there are no mark-changing
         annotations on the page.  Note `None` is different from `0`.
+
+    raises:
+        PlomInconsistentRubricsException: for example, absolute and
+            relative rubrics cannot be mixed.
+        ValueError: int is outside range [0, maxscore], or absolute rubrics
+            are out of their own range ``[0, out_of]``.  Can also be because
+            the total of all ``out_of`` are more than maxscore.  The absolute
+            rubrics give upper/lower bounds for possible scores which raise
+            ValueErrors if exceeded by relative rubrics.
     """
     lo_score = 0
     hi_score = maxscore
