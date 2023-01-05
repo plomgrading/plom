@@ -634,10 +634,14 @@ class RubricTable(QTableWidget):
             tt = tt.split()
             for t in tt:
                 if t.startswith("exclgroup:"):
-                    g = t.removeprefix("exclgroup:")
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("exclgroup:")
+                    g = t[len("exclgroup:") :]
                     groups.append(g)
                 elif t.startswith("group:"):
-                    g = t.removeprefix("group:")
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("group:")
+                    g = t[len("group:") :]
                     groups.append(g)
         return list(set(groups))
 
@@ -1740,18 +1744,21 @@ class AddRubricBox(QDialog):
             tags = com.get("tags", "").split()
             # TODO: share pack/unpack from tag w/ dialog & compute_score
             # TODO: if more than one group, we set one of them
-            # TODO: removeprefix is Python >= 3.9 (?)
             for t in tags:
                 if t.startswith("exclgroup:"):
                     tags.remove(t)
-                    g = t.removeprefix("exclgroup:")
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("exclgroup:")
+                    g = t[len("exclgroup:") :]
                     self.group_combobox.setCurrentText(g)
                     self.group_checkbox.setChecked(True)
                     self.group_excl.setChecked(True)
                     break
                 if t.startswith("group:"):
                     tags.remove(t)
-                    g = t.removeprefix("group:")
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("group:")
+                    g = t[len("group:") :]
                     self.group_combobox.setCurrentText(g)
                     self.group_checkbox.setChecked(True)
                     self.group_excl.setChecked(False)

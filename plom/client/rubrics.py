@@ -144,7 +144,9 @@ def compute_score_locabs(rubrics, maxscore):
             continue
         for t in tt:
             if t.startswith("exclgroup:"):
-                g = t.removeprefix("exclgroup:")
+                # TODO: Python >= 3.9
+                # g = t.removeprefix("exclgroup:")
+                g = t[len("exclgroup:") :]
                 if g in exclusives:
                     raise ValueError(f'more than one from exclusive group "{g}"')
                 exclusives.append(g)
