@@ -192,3 +192,32 @@ def test_score_invalid_kind():
         lg([{"kind": "sHiFtY"}], 5)
     with raises(PlomInvalidRubric, match="kind"):
         s([{"kind": "sHiFtY"}], 5)
+
+
+def test_score_exclusive():
+    # TODO: group storage still in-flux: adjust test if it moves out of tags
+    r = [
+        {"kind": "absolute", "value": 2, "out_of": 5, "tags": "exclgroup:foo"},
+        {"kind": "absolute", "value": 1, "out_of": 5, "tags": "exclgroup:foo"},
+    ]
+    with raises(ValueError, match="exclusive.*foo"):
+        s(r, 10)
+
+
+def test_score_exclusive_not_only_absolute():
+    # TODO: group storage still in-flux: adjust test if it moves out of tags
+    r = [
+        {"kind": "neutral", "tags": "exclgroup:bar"},
+        {"kind": "relative", "value": -1, "tags": "exclgroup:bar"},
+    ]
+    with raises(ValueError, match="exclusive.*bar"):
+        s(r, 10)
+
+
+def test_score_exclusive_diff_groups_ok():
+    # TODO: group storage still in-flux: adjust test if it moves out of tags
+    r = [
+        {"kind": "neutral", "tags": "exclgroup:foo"},
+        {"kind": "neutral", "tags": "exclgroup:baz"},
+    ]
+    s(r, 10)  # no ValueError

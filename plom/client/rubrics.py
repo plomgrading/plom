@@ -137,13 +137,16 @@ def compute_score_locabs(rubrics, maxscore):
     # first ensure at most one member of an exclusive group
     exclusives = []
     for r in rubrics:
-        # TODO: assumes no spaces in tags
-        tt = r["tags"].split()
+        try:
+            # TODO: assumes no spaces in tags
+            tt = r["tags"].split()
+        except KeyError:
+            continue
         for t in tt:
             if t.startswith("exclgroup:"):
                 g = t.removeprefix("exclgroup:")
                 if g in exclusives:
-                    raise ValueError(f"more than one exclusive: {g}")
+                    raise ValueError(f'more than one from exclusive group "{g}"')
                 exclusives.append(g)
 
     # step one: add up all the absolute rubrics
