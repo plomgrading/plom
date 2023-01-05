@@ -412,7 +412,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
         3, int(number_of_unnamed_papers * extra_student_probability)
     )
     extra_names = []
-    real_ids = [x['id'] for x in classlist]
+    real_ids = [x["id"] for x in classlist]
     for _ in range(number_of_extra_students):
         nm = "{}, {}".format(
             random.choice(extra_last_names), random.choice(extra_first_names)
