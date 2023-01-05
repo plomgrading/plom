@@ -130,7 +130,6 @@ setup(
                 "plom/templateSolutionSpec.toml",
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
-                "plom/demo/extra_students.json",
                 "plom/demo_rubrics.toml",
             ],
         ),

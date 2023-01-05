@@ -19,7 +19,6 @@ include plom/create/digits.json
 include plom/serverDetails.toml
 include plom/templateUserList.csv
 include plom/demoClassList.csv
-include plom/demo/extra_students.json
 include plom/demo_rubrics.toml
 include plom/scan/test_zbar_fails.png
 include plom/server/target_Q_latex_plom.png
