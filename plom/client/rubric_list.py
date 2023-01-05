@@ -1348,7 +1348,7 @@ class RubricWidget(QWidget):
             reapable,
             com,
             annotator_size=self._parent.size(),
-            groups=self.get_group_names()
+            groups=self.get_group_names(),
         )
         if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
             return
