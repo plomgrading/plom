@@ -86,7 +86,7 @@ codespell:
   before_script:
     - python3 -m pip install codespell
   script:
-    - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
+    - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
   allow_failure: true
   artifacts:
     reports:

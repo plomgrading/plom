@@ -240,24 +240,3 @@ extra_first_names = [
     "Špela",
 ]
 
-
-sid = {}
-dcl = Path("../plom/demoClassList.csv")
-with open(dcl) as fh:
-    red = csv.DictReader(fh)
-    for row in red:
-        sid[int(row["id"])] = row["name"]
-
-
-N = 100
-id_and_name = []
-for (a, b) in zip(
-    random.choices(extra_first_names, k=N), random.choices(extra_last_names, k=N)
-):
-    while True:
-        id = random.randint(10**7, 10**8)
-        if id not in sid:
-            break
-    id_and_name.append((f"{id}", f"{b}, {a}"))
-
-print(json.dumps(id_and_name))
