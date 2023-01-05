@@ -626,6 +626,21 @@ class RubricTable(QTableWidget):
             "tags": self.item(r, 10).text(),
         }
 
+    def get_group_names(self):
+        groups = []
+        for r in range(self.rowCount()):
+            tt = self.item(r, 10).text()
+            # TODO: share pack/unpack from tag w/ dialog & compute_score
+            tt = tt.split()
+            for t in tt:
+                if t.startswith("exclgroup:"):
+                    g = t.removeprefix("exclgroup:")
+                    groups.append(g)
+                elif t.startswith("group:"):
+                    g = t.removeprefix("group:")
+                    groups.append(g)
+        return list(set(groups))
+
     def firstUnhiddenRow(self):
         for r in range(self.rowCount()):
             if not self.isRowHidden(r):
@@ -1251,6 +1266,9 @@ class RubricWidget(QWidget):
         """
         return self._parent.get_nonrubric_text_from_page()
 
+    def get_group_names(self):
+        return self.tabS.get_group_names()
+
     def unhideRubricByKey(self, key):
         index = [x["id"] for x in self.rubrics].index(key)
         self.tabS.appendNewRubric(self.rubrics[index])
@@ -1326,6 +1344,7 @@ class RubricWidget(QWidget):
             reapable,
             com,
             annotator_size=self._parent.size(),
+            groups=self.get_group_names()
         )
         if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
             return
@@ -1448,6 +1467,7 @@ class AddRubricBox(QDialog):
         com=None,
         *,
         annotator_size=None,
+        groups=[],
     ):
         """Initialize a new dialog to edit/create a comment.
 
@@ -1463,7 +1483,11 @@ class AddRubricBox(QDialog):
                 annotations and morph them into comments.
             com (dict/None): if None, we're creating a new rubric.
                 Otherwise, this has the current comment data.
+
+        Keyword Args:
             annotator_size (QSize/None): size of the parent annotator
+            groups (list): existing group names that the rubric could be
+                added to.
         """
         super().__init__(parent)
 
@@ -1618,6 +1642,7 @@ class AddRubricBox(QDialog):
         b = QComboBox()
         # b.setEditable(True)
         # b.setDuplicatesEnabled(False)
+        b.addItems(groups)
         # changing the group ticks the group checkbox
         b.activated.connect(lambda: self.group_checkbox.setChecked(True))
         hlay.addWidget(b)
@@ -1686,8 +1711,6 @@ class AddRubricBox(QDialog):
             if com["text"]:
                 self.TE.clear()
                 self.TE.insertPlainText(com["text"])
-            if com["tags"]:
-                self.TEtag.setText(com["tags"])
             if com["meta"]:
                 self.TEmeta.clear()
                 self.TEmeta.insertPlainText(com["meta"])
@@ -1714,6 +1737,28 @@ class AddRubricBox(QDialog):
                 )
             if com["parameters"]:
                 params = com["parameters"]
+            tags = com.get("tags", "").split()
+            # TODO: share pack/unpack from tag w/ dialog & compute_score
+            # TODO: if more than one group, we set one of them
+            # TODO: removeprefix is Python >= 3.9 (?)
+            for t in tags:
+                if t.startswith("exclgroup:"):
+                    tags.remove(t)
+                    g = t.removeprefix("exclgroup:")
+                    self.group_combobox.setCurrentText(g)
+                    self.group_checkbox.setChecked(True)
+                    self.group_excl.setChecked(True)
+                    break
+                if t.startswith("group:"):
+                    tags.remove(t)
+                    g = t.removeprefix("group:")
+                    self.group_combobox.setCurrentText(g)
+                    self.group_checkbox.setChecked(True)
+                    self.group_excl.setChecked(False)
+                    break
+            # repack the other tags
+            self.TEtag.setText(" ".join(tags))
+
         else:
             self.TE.setPlaceholderText(
                 "Your rubric must contain some text.\n\n"
@@ -1910,20 +1955,22 @@ class AddRubricBox(QDialog):
 
     def gimme_rubric_data(self):
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
-        tag = self.TEtag.text().strip()
+        tags = self.TEtag.text().strip()
         if self.group_checkbox.isChecked():
             group = self.group_combobox.currentText()
             # quote spacs
             if " " in group:
                 group = '"' + group + '"'
                 raise NotImplementedError("groups with spaces not implemented")
-            if tag:
-                tag += " "
             if self.group_excl.isChecked():
-                tag += "exclgroup:" + group
+                tag = "exclgroup:" + group
             else:
-                tag += "group:" + group
-            print(f"tag='{tag}'")
+                tag = "group:" + group
+            if tags:
+                tags = tag + " " + tags
+            else:
+                tags = tag
+
         meta = self.TEmeta.toPlainText().strip()
         if self.typeRB_neutral.isChecked():
             kind = "neutral"
@@ -1963,7 +2010,7 @@ class AddRubricBox(QDialog):
             "value": value,
             "out_of": out_of,
             "text": txt,
-            "tags": tag,
+            "tags": tags,
             "meta": meta,
             "username": username,
             "question": self.question_number,
