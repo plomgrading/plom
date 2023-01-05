@@ -63,7 +63,7 @@ def rubric_is_naked_delta(r):
     return False
 
 
-def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
+def isLegalRubric(mss, rubric, *, versions, scene):
     """Checks the 'legality' of the current rubric - returning one of several possible indicators
 
     Those states are:
@@ -77,9 +77,12 @@ def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
     Args:
         mss (list): triple that encodes max-mark, state, and current-score.
             "state" old unused stuff.
-        TODO (dict): other stuff should be just a rubric dict.  TODO: change.
+        rubric (dict):
+
+    Keyword Args:
         versions (list): which versions are this rubric intended for.
             Empty list means valid for all versions.
+        scene (PageScene):
 
     Returns:
         int: 0, 1, 2, 3 as documented above.
@@ -95,15 +98,13 @@ def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
     if not scene:
         return 2
 
-    # TODO: obviously we should just pass it in
-    r = {"kind": kind, "value": value, "display_delta": display_delta, "out_of": out_of}
     rubrics = scene.get_rubrics()
-    rubrics.append(r)
+    rubrics.append(rubric)
 
     try:
-        N = compute_score(rubrics, maxMark)
+        _ = compute_score(rubrics, maxMark)
         return 2
-    except ValueError as e:
+    except ValueError:
         return 1
     except PlomInconsistentRubric:
         return 0
@@ -611,17 +612,19 @@ class RubricTable(QTableWidget):
                 return
             self.selectRubricByRow(r)
 
-        self._parent.rubricSignal.emit(
-            {
-                "kind": self.item(r, 4).text(),
-                "display_delta": self.item(r, 2).text(),
-                "value": int(self.item(r, 8).text()),
-                "out_of": int(self.item(r, 9).text()),
-                "text": self.item(r, 3).text(),
-                "id": self.item(r, 0).text(),
-                "tags": self.item(r, 10).text(),
-            }
-        )
+        self._parent.rubricSignal.emit(self.selected_row_as_rubric(r))
+
+    def selected_row_as_rubric(self, r):
+        # TODO: why not include versions too?
+        return {
+            "kind": self.item(r, 4).text(),
+            "display_delta": self.item(r, 2).text(),
+            "value": int(self.item(r, 8).text()),
+            "out_of": int(self.item(r, 9).text()),
+            "text": self.item(r, 3).text(),
+            "id": self.item(r, 0).text(),
+            "tags": self.item(r, 10).text(),
+        }
 
     def firstUnhiddenRow(self):
         for r in range(self.rowCount()):
@@ -636,12 +639,10 @@ class RubricTable(QTableWidget):
         return None
 
     def colourLegalRubric(self, r, mss):
+        # TODO: why not stuff versions back into the rubric?
         legal = isLegalRubric(
             mss,
-            kind=self.item(r, 4).text(),
-            display_delta=self.item(r, 2).text(),
-            value=int(self.item(r, 8).text()),
-            out_of=int(self.item(r, 9).text()),
+            self.selected_row_as_rubric(r),
             versions=json.loads(self.item(r, 5).text()),
             scene=self._parent._parent.scene,
         )
