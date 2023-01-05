@@ -1665,8 +1665,8 @@ class AddRubricBox(QDialog):
         vlay.addLayout(hlay)
         hlay = QHBoxLayout()
         hlay.addItem(QSpacerItem(24, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        # TODO: need more explanation here or in tooltip
-        c = QCheckBox("Exclusive (default for absolute rubrics)")
+        # TODO: note default for absolute rubrics?  (once it is the default)
+        c = QCheckBox("Exclusive in this group (at most one such rubric can be placed)")
         hlay.addWidget(c)
         self.group_excl = c
         self.group_checkbox.toggled.connect(lambda x: self.group_excl.setEnabled(x))
