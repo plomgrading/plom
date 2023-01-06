@@ -112,13 +112,40 @@ class ReplaceImageForm(forms.Form):
             # make sure it is correct format
             file_bytes = single_pdf.read()
             pdf_doc = fitz.open(stream=file_bytes)
-            if "PDF" not in pdf_doc.metadata["format"]:
-                raise ValidationError("File is not a valid PDF.")
-            # make sure only 1 pdf page
-            if pdf_doc.page_count > 1:
-                raise ValidationError("Only upload a single page pdf file.")
-            # turn that pdf file into page image
-            # check for duplicate page image
+            timestamp = datetime.timestamp(datetime.now())
+            file_name = f"{timestamp}.pdf"
+            replace_dir = pathlib.Path("media") / "replace_pages"
+            replace_dir.mkdir(exist_ok=True)
+            save_as_pdf = replace_dir / "pdfs"
+            save_as_pdf.mkdir(exist_ok=True)
+            with open(save_as_pdf / file_name, "w") as f:
+                pdf_doc.save(f)
+            
+            save_path = replace_dir / "images"
+            save_path.mkdir(exist_ok=True)
+            save_as_image = replace_dir / "images" / f"{timestamp}.png"
+            uploaded_pdf_file = fitz.Document(save_as_pdf / file_name)
+            transform = fitz.Matrix(4, 4)
+            pixmap = uploaded_pdf_file[0].get_pixmap(matrix=transform)
+            pixmap.save(save_as_image)
+
+            image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
+            print(image_hash)
+            
+            # pdf_file = fitz.Document(replace_dir / file_name)
+            # transform = fitz.Matrix(4, 4)
+            # pixmap = pdf_file.get_pixmap(matrix=transform)
+            # pixmap.save(replace_dir / file_name)
+            # image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
+            # print(image_hash)
+            
+            # if "PDF" not in pdf_doc.metadata["format"]:
+            #     raise ValidationError("File is not a valid PDF.")
+            # # make sure only 1 pdf page
+            # if pdf_doc.page_count > 1:
+            #     raise ValidationError("Only upload a single page pdf file.")
+            # # TODO turn that pdf file into page image
+            # # check for duplicate page image
 
         except (FileDataError, KeyError):
             raise ValidationError("Unable to open file.")
