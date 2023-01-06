@@ -1521,7 +1521,8 @@ class AddRubricBox(QDialog):
         vlay.addLayout(lay)
         hlay = QHBoxLayout()
         b = QRadioButton("absolute")
-        # b.setToolTip("TODO")
+        abs_tooltip = "Indicates a score as a part of a maximum possible amount"
+        b.setToolTip(abs_tooltip)
         hlay.addWidget(b)
         self.typeRB_absolute = b
         _ = QSpinBox()
@@ -1532,6 +1533,7 @@ class AddRubricBox(QDialog):
         hlay.addWidget(_)
         self.rubric_value_SB = _
         _ = QLabel("out of")
+        _.setToolTip(abs_tooltip)
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
         _ = QSpinBox()
