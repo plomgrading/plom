@@ -1541,6 +1541,9 @@ class AddRubricBox(QDialog):
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
         self.rubric_out_of_SB = _
+        # TODO: coming soon notice and setEnabled(False) below
+        hlay.addWidget(QLabel("  (coming soon!)"))
+        self.typeRB_absolute.setEnabled(False)
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(hlay)
         flay.addRow("Marks", frame)
@@ -1581,9 +1584,10 @@ class AddRubricBox(QDialog):
         lay.addItem(space)
         vlay.addLayout(lay)
         if maxver > 1:
-            s = "<p>By default, rubrics are shared between versions of a question."
-            s += "  You can also parameterize this rubric by making"
-            s += " version-specific substitutions.</p>"
+            # TODO: coming soon notice and setEnabled(False) below
+            s = "<p>By default, rubrics are shared between versions of a question.<br />"
+            s += "  Coming soon: You can also parameterize this rubric by making"
+            s += " version-specific substitutions.  </p>"
         else:
             s = "<p>By default, rubrics are shared between versions of a question.</p>"
         label = QLabel(s)
