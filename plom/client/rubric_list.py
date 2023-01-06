@@ -1840,7 +1840,7 @@ class AddRubricBox(QDialog):
             kind = "absolute"
             value = self.rubric_value_SB.value()
             out_of = self.rubric_out_of_SB.value()
-            display_delta = f"{value} / {out_of}"
+            display_delta = f"{value} of {out_of}"
         else:
             raise RuntimeError("no radio was checked")
         username = self.Luser.text().strip()
