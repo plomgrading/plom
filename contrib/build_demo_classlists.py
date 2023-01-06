@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
-"""Simple script to build a list of random first/last names starting with 'Ex'.
+"""Simple script to build a list of random first/last names and student IDs.
 
-Also constructs random 8 digit student numbers which do not clash with those in the existing demoClassList.csv file.
+The last names are currently hard-coded translations of the word "Extra", while the first-names are chosen to be common first names from each country.
 
-Re-generation of data requires the names_dataset which is (essentially) a big dump of names from facebook, and also the alphabet-detector module
+The student-IDs are 8 digit student numbers which do not clash with those in the existing demoClassList.csv file.
+
+Re-generation of data requires the names_dataset which is (essentially) a big dump of names from facebook, and also the alphabet-detector module.
 """
 
 
