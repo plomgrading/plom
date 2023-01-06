@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web
@@ -29,7 +29,7 @@ class RubricHandler:
             bool: true if valid, false otherwise.
         """
         # check rubric has minimal fields needed
-        need_fields = ("kind", "delta", "text", "question")
+        need_fields = ("kind", "value", "display_delta", "text", "question")
         if any(x not in rubric for x in need_fields):
             return False
         # check question number is in range
@@ -43,24 +43,33 @@ class RubricHandler:
 
         if rubric["kind"] == "neutral":
             # neutral rubric must have no delta - ie delta == '.'
-            if rubric["delta"] != ".":
+            if rubric["display_delta"] != ".":
                 return False
             # must have some text
             if len(rubric["text"].strip()) == 0:
+                return False
+            # do we care if its int/None?
+            # if not (rubric["value"] is None or isinstance(rubric["value"], int)):
+            #     return False
+            # TODO: should we enforce value=0/None?
+            if not (rubric["value"] is None or int(rubric["value"]) == 0):
                 return False
 
         elif rubric["kind"] == "relative":
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
+            # do we care if its int?
+            # if not isinstance(rubric["value"], int):
+            #     return False
             # the delta must be of the form -k or +k
-            if rubric["delta"][0] not in ["-", "+"]:
+            if rubric["display_delta"][0] not in ["-", "+"]:
                 return False
             # check rest of delta string is numeric
-            if not rubric["delta"][1:].isnumeric():
+            if not rubric["display_delta"][1:].isnumeric():
                 return False
             # check delta is in range
-            idelta = int(rubric["delta"])
+            idelta = int(rubric["display_delta"])
             if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
                 return False
 
@@ -71,29 +80,29 @@ class RubricHandler:
             # must have text field == '.'
             if rubric["text"] != ".":
                 return False
+            # do we care if its int?
+            # if not isinstance(rubric["value"], int):
+            #     return False
             # the delta must be of the form -k or +k
-            if rubric["delta"][0] not in ["-", "+"]:
+            if rubric["display_delta"][0] not in ["-", "+"]:
                 return False
-            # check rest of delta string is numeric
-            if not rubric["delta"][1:].isnumeric():
+            # check rest of display delta string is numeric
+            if not rubric["display_delta"][1:].isnumeric():
                 return False
-            idelta = int(rubric["delta"])
+            idelta = int(rubric["display_delta"])
             if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
                 return False
 
         elif rubric["kind"] == "absolute":
-            # only HAL and manager can create absolute rubrics - this may change in the future
-            if username not in ["HAL", "manager"]:
-                return False
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
-            # must have numeric delta
-            if not rubric["delta"].isnumeric():
-                return False
+            # do we care if its int?
+            # if not isinstance(rubric["value"], int):
+            #     return False
             # check score in range
-            idelta = int(rubric["delta"])
-            if (idelta < 0) or (idelta > maxMark):
+            value = int(rubric["value"])
+            if (value < 0) or (value > maxMark):
                 return False
 
         else:  # rubric kind must be neutral, relative, delta or absolute

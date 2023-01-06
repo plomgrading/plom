@@ -225,9 +225,6 @@ class Annotator(QWidget):
     def getScore(self):
         return self.scene.getScore()
 
-    def getMarkingState(self):
-        return self.scene.getMarkingState()
-
     def toggle_hold_crop(self, checked):
         if checked:
             if not self.scene:
@@ -368,7 +365,7 @@ class Annotator(QWidget):
             if key is None:
                 # Maybe row hidden (illegal) but scene knows it in the blue
                 # ghost.  Fixes #1599.  Still None if scene didn't know.
-                key = self.scene.rubricID
+                key = self.scene.get_current_rubric_id()
             self.modeInformation.append((key, tab))
 
         # after grabbed mode information, reset rubric_widget
@@ -457,9 +454,7 @@ class Annotator(QWidget):
         # update displayed score
         self.refreshDisplayedMark(self.getScore())
         # update rubrics
-        self.rubric_widget.changeMark(
-            self.getScore(), self.getMarkingState(), self.maxMark
-        )
+        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
         self.rubric_widget.setQuestion(self.question_num, self.question_label)
         self.rubric_widget.setVersion(self.version, self.max_version)
         self.rubric_widget.setEnabled(True)
@@ -475,9 +470,7 @@ class Annotator(QWidget):
             else:  # if that rubric-mode-set fails (eg - no such rubric)
                 self.toMoveMode()
         # redo this after all the other rubric stuff initialised
-        self.rubric_widget.changeMark(
-            self.getScore(), self.getMarkingState(), self.maxMark
-        )
+        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
 
         # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
@@ -542,8 +535,8 @@ class Annotator(QWidget):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         self.ui.narrowMarkLabel.setStyleSheet("color: #ff0000; font: bold;")
         if score is None:
-            self.ui.markLabel.setText("No mark")
-            self.ui.narrowMarkLabel.setText("No mark")
+            self.ui.markLabel.setText("Unmarked")
+            self.ui.narrowMarkLabel.setText("Unmarked")
         else:
             self.ui.markLabel.setText("{} out of {}".format(score, self.maxMark))
             self.ui.narrowMarkLabel.setText("{} out of {}".format(score, self.maxMark))
@@ -1300,12 +1293,12 @@ class Annotator(QWidget):
                 X.setChecked(False)
                 X.setAutoExclusive(True)
 
-    def handleRubric(self, dlt_txt):
-        """Pass rubric ID, delta, text, etc to the scene.
+    def handleRubric(self, rubric):
+        """Pass a rubric dict onward to the scene, if we have a scene.
 
         Args:
-            dlt_txt (tuple): the delta, string of text, rubric_id, and
-                kind, e.g., `[-2, "missing chain rule", 12345, "relative"]`
+            rubric (dict): we don't care what's in it: that's for the scene
+                and the rubric widget to agree on!
 
         Returns:
             None: Modifies self.scene
@@ -1313,7 +1306,7 @@ class Annotator(QWidget):
         self.setToolMode("rubric")
         # TODO: move to "args"/"extra" kwarg of setToolMode when we add that
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheRubric(*dlt_txt)
+            self.scene.changeTheRubric(rubric)
 
     def loadWindowSettings(self):
         """Loads the window settings."""
@@ -1437,8 +1430,7 @@ class Annotator(QWidget):
             WarnMsg(self, msg, info=info, info_pre=False, details=details).exec()
             return False
 
-        # make sure not still in "neutral" marking-state = no score given
-        if self.getMarkingState() == "neutral":
+        if self.scene.is_neutral_state():
             msg = InfoMsg(self, "You have not yet set a score.")
             msg.exec()
             return False
@@ -1686,7 +1678,6 @@ class Annotator(QWidget):
         plomData = {
             "base_images": self.src_img_data,
             "saveName": str(aname),
-            "markState": self.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),
             "sceneScale": self.scene.get_scale_factor(),

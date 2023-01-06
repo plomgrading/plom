@@ -187,13 +187,18 @@ class Rubric(BaseModel):
     # unique key - user-generated have 12 digits
     key = pw.CharField(unique=True, null=False)  # system generated + short
     kind = pw.CharField(null=False)  # abs, neut, delt, relative - is short
-    delta = pw.CharField(null=False)  # is short
+    display_delta = pw.CharField(null=False)  # is short
+    # Note: designing for "value / out_of" absolute rubrics
+    #   - value is also used for relative rubrics
+    value = pw.IntegerField(null=False)
+    out_of = pw.IntegerField(null=False)
     text = pw.TextField(null=False)  # can be long
     question = pw.IntegerField(null=False)
     # versions is a list of integers, stored in json field
     #   "[]": all versions
     #   "[1, 3]": versions 1 and 3 only
     versions = pw.TextField(null=False, default=json.dumps([]))
+    parameters = pw.TextField(null=False, default=json.dumps([]))
     user = pw.ForeignKeyField(User, backref="rubrics", null=False)
     revision = pw.IntegerField(null=False, default=0)
     count = pw.IntegerField(null=False, default=0)

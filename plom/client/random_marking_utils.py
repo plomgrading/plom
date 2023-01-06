@@ -63,7 +63,7 @@ tag_list = ["creative", "suspicious", "needs_review", "hall_of_fame", "needs_iic
 class RW:
     """A dummy class needed for compatibility with pagescene."""
 
-    def changeMark(self, a, b):
+    def changeMark(self, a, b=None):
         pass
 
 
@@ -91,7 +91,6 @@ class SceneParent(QWidget):
         plomDict = {
             "base_images": self.src_img_data,
             "saveName": str(aname),
-            "markState": self.scene.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.scene.getScore(),
             "sceneItems": lst,
@@ -134,21 +133,12 @@ class SceneParent(QWidget):
         else:
             rubric = random.choice(negativeRubrics[self.question])
 
-        self.scene.changeTheRubric(
-            rubric["delta"], rubric["text"], rubric["id"], rubric["kind"]
-        )
+        self.scene.changeTheRubric(rubric)
 
         # only do rubric if it is legal
-        if self.scene.isLegalRubric("relative", rubric["delta"]):
+        if self.scene.isLegalRubric(rubric):
             self.scene.undoStack.push(
-                CommandGroupDeltaText(
-                    self.scene,
-                    self.rpt(),
-                    rubric["id"],
-                    rubric["kind"],
-                    rubric["delta"],
-                    rubric["text"],
-                )
+                CommandGroupDeltaText(self.scene, self.rpt(), rubric)
             )
         else:  # not legal - push text
             self.scene.undoStack.push(
@@ -263,7 +253,9 @@ def build_random_rubrics(question, *, messenger):
     """
     for (d, t) in positiveComments:
         com = {
-            "delta": d,
+            "value": int(d),
+            "display_delta": d,
+            "out_of": 0,
             "text": t,
             "tags": "Random",
             "meta": "Randomness",
@@ -277,7 +269,9 @@ def build_random_rubrics(question, *, messenger):
             positiveRubrics[question] = [com]
     for (d, t) in negativeComments:
         com = {
-            "delta": d,
+            "value": int(d),
+            "display_delta": d,
+            "out_of": 0,
             "text": t,
             "tags": "Random",
             "meta": "Randomness",
