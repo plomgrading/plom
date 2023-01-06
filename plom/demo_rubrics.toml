@@ -6,6 +6,10 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
+# TODO: special code in push_pull_rubrics.py to deal with these
+# delta keys (which elsewhere are called "display_delta").  Revisit
+# all this soon...
+
 [[rubric]]
 delta = "."
 text = "be careful"

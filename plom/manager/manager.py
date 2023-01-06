@@ -93,6 +93,7 @@ from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 from plom.misc_utils import arrowtime_to_simple_string
 from plom.specVerifier import get_question_label
+from plom.misc_utils import format_int_list_with_runs
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -449,6 +450,7 @@ class Manager(QWidget):
 
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
+        self.ui.forgiveAllDNMButton.clicked.connect(self.substituteAllDNMPages)
         self.ui.removePartScanB.clicked.connect(self.removePagesFromPartScan)
         self.ui.removeDanglingB.clicked.connect(self.removeDanglingPage)
 
@@ -976,10 +978,8 @@ class Manager(QWidget):
         )
         if msg.exec() == QMessageBox.No:
             return
-
-        rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
-        # Cleanup, Issue #2141
-        InfoMsg(self, "{}".format(rval)).exec()
+        s = self.msgr.replaceMissingTestPage(test_number, page_number, version)
+        InfoMsg(self, "Successfully substituted.", info=s).exec()
 
     def substituteTestDNMPage(self, test_number, page_number):
         msg = SimpleQuestion(
@@ -994,6 +994,58 @@ class Manager(QWidget):
             self.msgr.replaceMissingDNMPage(test_number, page_number)
         except (PlomConflict, PlomNoPaper) as e:
             InfoMsg(self, f"{e}").exec()
+
+    def substituteAllDNMPages(self):
+        spec = self.msgr.get_spec()
+        dnm_pages = spec["doNotMarkPages"]
+        if not dnm_pages:
+            InfoMsg(
+                self,
+                "There are no do-not-mark pages in the spec.",
+                details="\n".join(f"{k}: {v}" for k, v in spec.items()),
+            ).exec()
+            return
+        msg = SimpleQuestion(
+            self,
+            "Bulk forgive all missing DNM pages?",
+            question=f"""
+                <p>Do-not-mark ("DNM") pages are not likely to be marked so
+                its no issue if they are not here.  For example, they might
+                be formula sheets.  This option will substitute a "Missing
+                Page" placeholder for all such pages, for any test that is
+                partially uploaded.</p>
+                <p>This assessment has DNM pages:
+                {", ".join(str(n) for n in dnm_pages)}<br />
+                (Other pages and pages of unused tests will be uneffected.)</p>
+                <p>Would you like to continue substituting missing DNM pages?</p>
+            """,
+        )
+        if msg.exec() == QMessageBox.No:
+            return
+
+        incomplete = self.msgr.getIncompleteTests()  # triples [p, v, true/false]
+        output_log = "Output log:"
+        subs = []
+        for papernum, X in incomplete.items():
+            papernum = int(papernum)
+            # [['t.1', 1, True], ['t.2', 1, False], ['t.3', 1, True], ...]
+            for pagestr, version, scanned in X:
+                if not scanned:
+                    for p in dnm_pages:
+                        if f"t.{p}" == pagestr:
+                            subs.append(papernum)
+                            b = f"replacing {papernum:04} DNM pg {pagestr}:"
+                            s = self.msgr.replaceMissingDNMPage(papernum, p)
+                            output_log += "\n" + b + " " + s
+
+        InfoMsg(
+            self,
+            f"Finished forgiving missing DNM pages: made {len(subs)} substitutions.",
+            info="Paper numbers: " + format_int_list_with_runs(subs),
+            info_pre=False,
+            details=output_log,
+        ).exec()
+        self.refresh_scan_status_lists()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(
@@ -1132,7 +1184,13 @@ class Manager(QWidget):
 
     def refreshUnknownList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
+        self.ui.unknownTV.setSortingEnabled(False)
         unknowns = self.msgr.getUnknownPages()
+        # We don't have proper sorting in this table: Issues #2414, #2067
+        # We can at least initially populate it in a meaningful way!
+        unknowns = sorted(
+            unknowns, key=lambda x: (x["bundle_name"], x["bundle_position"])
+        )
         for r, u in enumerate(unknowns):
             it0 = QStandardItem(Path(u["server_path"]).name)
             pm = QPixmap()
@@ -1173,6 +1231,8 @@ class Manager(QWidget):
             self.ui.scanTabW.indexOf(self.ui.unknownTab),
             f"&Unknown Pages ({countstr})",
         )
+        # Issue #2414: this would mess up the careful manual sort we did above
+        # self.ui.unknownTV.setSortingEnabled(True)
 
     def viewUnknownPage(self):
         pvi = self.ui.unknownTV.selectedIndexes()
@@ -1879,8 +1939,12 @@ class Manager(QWidget):
             lap = lap_predictions.get(str(t), None)
             greedy = greedy_predictions.get(str(t), None)
 
+            hilite_id = False
+            if prename and identity:
+                if prename["student_id"] != identity[0]:
+                    # TODO: highlight identified if not matching prename, after #2081
+                    hilite_id = True
             hilite = False
-            # TODO: highlight identified if not matching prename, after #2081
             if lap and greedy:
                 if lap["student_id"] != greedy["student_id"]:
                     hilite = True
@@ -1930,19 +1994,25 @@ class Manager(QWidget):
                         item.setData(Qt.DisplayRole, identity[0])
                         item.setToolTip("Has been identified")
                         self.ui.predictionTW.setItem(r, 1, item)
+                        if hilite_id:
+                            item.setBackground(QBrush(QColor(255, 0, 0, 48)))
                         item = QTableWidgetItem()
                         item.setData(Qt.DisplayRole, identity[1])
                         item.setToolTip("Has been identified")
                         self.ui.predictionTW.setItem(r, 2, item)
 
                     if identity:
-                        # prediction less important but perhaps not irrelevant
-                        # TODO: currently predictions erased on ID #2081 (probably shouldn't)
-                        item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                        item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                        item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                        # This doesn't work
-                        # item0.setEnabled(False)
+                        if hilite_id:
+                            item0.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                            item1.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                            item2.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                        else:
+                            # prediction less important but perhaps not irrelevant
+                            item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                            item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                            item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                            # This doesn't work
+                            # item0.setEnabled(False)
                     else:
                         # TODO: colour-code based on confidence?
                         if hilite:

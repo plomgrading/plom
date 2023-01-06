@@ -155,10 +155,16 @@ def upload_demo_rubrics(*, msgr, numquestions=3):
         if not rub.get("kind"):
             if rub["delta"] == ".":
                 rub["kind"] = "neutral"
+                rub["value"] = 0
+                rub["out_of"] = 0
             elif rub["delta"].startswith("+") or rub["delta"].startswith("-"):
                 rub["kind"] = "relative"
+                rub["value"] = int(rub["delta"])
+                rub["out_of"] = 0  # unused for relative
             else:
                 raise ValueError(f'not sure how to map "kind" for rubric:\n  {rub}')
+        rub["display_delta"] = rub["delta"]
+        rub.pop("delta")
         # Multiply rubrics w/o question numbers, avoids repetition in demo file
         if rub.get("question_number") is None:
             for q in range(1, numquestions + 1):
