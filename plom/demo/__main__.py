@@ -227,8 +227,12 @@ def main():
     with working_directory(args.server_dir):
         subprocess.check_call(split("python3 -m plom.create.exam_scribbler"))
     print(">>>>>>>>>> NOTE <<<<<<<<<<")
-    print("Some of the demo papers will belong to extra students who are not on the demo classlist.")
-    print("This is to mimic the situation in which students from another class/section/time sit your test.")
+    print(
+        "Some of the demo papers will belong to extra students who are not on the demo classlist."
+    )
+    print(
+        "This is to mimic the situation in which students from another class/section/time sit your test."
+    )
 
     if args.no_scans:
         print(

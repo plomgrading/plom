@@ -411,7 +411,9 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     number_of_extra_students = max(
         3, int(number_of_unnamed_papers * extra_student_probability)
     )
-    print(f"Note - {number_of_extra_students} papers will belong to students who are not on the classlist.")
+    print(
+        f"Note - {number_of_extra_students} papers will belong to students who are not on the classlist."
+    )
     extra_names = []
     real_ids = [x["id"] for x in classlist]
     for _ in range(number_of_extra_students):
