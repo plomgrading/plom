@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019 John Hsu
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022 Edith Coates
@@ -86,6 +86,7 @@ codespell:
   before_script:
     - python3 -m pip install codespell
   script:
+    - echo "Need an exception?  See the .codespell-ignore* files"
     - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
   allow_failure: true
   artifacts:
@@ -100,10 +101,10 @@ wet_no_drift:
   before_script:
     - apk add bash
   script:
-    # Issue #2402: two copies of the latex template
+    - 'echo "Issue #2402: ensure two identical copies of the latex template"'
     - diff -s plom/latexTemplate.tex plom/testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex plom/testTemplates/latexTemplatev2.tex
-    # dupe version info
+    - echo "Version info duplicated in two places, ensure same"
     - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
     - export VER2=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
     - echo $VER1
@@ -339,6 +340,7 @@ demoserver:
   needs: ["docker-image"]
   image: $IM
   before_script:
+    - apt-get update
     - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
     - mkdir demo
@@ -385,6 +387,7 @@ hwdemoserver:
   needs: ["docker-image"]
   image: $IM
   before_script:
+    - apt-get update
     - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
     - mkdir demo
@@ -450,6 +453,7 @@ fullworkflow:
   needs: ["docker-image"]
   image: $IM
   before_script:
+    - apt-get update
     - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
     # Build tests
@@ -545,6 +549,7 @@ docs_sphinx:
   needs: ["docker-image"]
   image: $IM
   before_script:
+    - apt-get update
     - apt-get --no-install-recommends --yes install tex-gyre
     - pip install myst-parser sphinx sphinx_rtd_theme sphinx-argparse
   script:
@@ -797,7 +802,7 @@ minpy_mindeps:
   needs: []
   image: python:3.7
   before_script:
-    - apt-get --yes update
+    - apt-get update
     - apt-get --no-install-recommends --yes install
       cmake make imagemagick dvipng g++ openssl
       libzbar0
