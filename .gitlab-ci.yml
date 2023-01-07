@@ -101,7 +101,7 @@ wet_no_drift:
   before_script:
     - apk add bash
   script:
-    - echo "Issue #2402: ensure two identical copies of the latex template"
+    - 'echo "Issue #2402: ensure two identical copies of the latex template"'
     - diff -s plom/latexTemplate.tex plom/testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex plom/testTemplates/latexTemplatev2.tex
     - echo "Version info duplicated in two places, ensure same"
