@@ -54,6 +54,212 @@ possible_answers = [
     "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
 ]
 
+# some simple translations of the word "extra" into other languages courtesy of google-translate
+# and https://www.indifferentlanguages.com/words/extra
+extra_last_names = [
+    "Extra",
+    "Ekstra",
+    "Supplémentaire",
+    "Aukalega",
+    "Aparteko",
+    "Ychwanegol",
+    "A-bharrachd",
+    "Breise",
+    "Papildomai",
+    "Dodatkowy",
+    "Okwengeziwe",
+    "Tlaleletso",
+    "Ziada",
+    "Ylimääräinen",
+]
+# some common M/F first (latin script) names taken from the names_dataset module
+# https://pypi.org/project/names-dataset/
+# generating script in contrib.
+extra_first_names = [
+    "Abdiel",
+    "Adel",
+    "Adi",
+    "Adissa",
+    "Adriana",
+    "Agron",
+    "Agus",
+    "Akmal",
+    "Alaa",
+    "Alan",
+    "Alejandra",
+    "Alejandro",
+    "Aleksandr",
+    "Alemtsehay",
+    "Ali",
+    "Allen",
+    "Amira",
+    "Amr",
+    "Anabela",
+    "Andrey",
+    "Anila",
+    "Ariel",
+    "Aya",
+    "Aysel",
+    "Ayu",
+    "Ayşe",
+    "Björn",
+    "Carine",
+    "Carla",
+    "Carlos",
+    "Chang",
+    "Cheng",
+    "Chiara",
+    "Choukri",
+    "Claudio",
+    "Cristhian",
+    "Devon",
+    "Dimitra",
+    "Elizabeth",
+    "Fathmath",
+    "Fatma",
+    "Fernando",
+    "Fiona",
+    "Francis",
+    "Frida",
+    "Fábio",
+    "Gelson",
+    "Genesis",
+    "Hanane",
+    "Hawra",
+    "Hernández",
+    "Hiba",
+    "Hilma",
+    "Hüseyin",
+    "Ifrah",
+    "Ildikó",
+    "Indah",
+    "Inês",
+    "Ivan",
+    "Ivelina",
+    "Javier",
+    "Jemal",
+    "Jenni",
+    "Jesmond",
+    "Jie",
+    "Joana",
+    "Joao",
+    "Johan",
+    "Jonas",
+    "Josipa",
+    "Juan",
+    "Karel",
+    "Kari",
+    "Karin",
+    "Katherine",
+    "Khaled",
+    "Kim",
+    "Kitty",
+    "Lavenia",
+    "Laxmi",
+    "Lebo",
+    "Lebogang",
+    "Lela",
+    "Li",
+    "Liline",
+    "Linda",
+    "Ling",
+    "Luis",
+    "Luka",
+    "Maha",
+    "Mahamadi",
+    "Marcelina",
+    "Marco",
+    "Maria",
+    "Markus",
+    "Martha",
+    "Marthese",
+    "Marvín",
+    "Mary",
+    "Mary Grace",
+    "María",
+    "Masud",
+    "Maxine",
+    "Maya",
+    "Małgorzata",
+    "Mehdi",
+    "Mekan",
+    "Michalis",
+    "Michel",
+    "Miguel",
+    "Mikael",
+    "Milan",
+    "Mohamed",
+    "Mohammed",
+    "Monika",
+    "Monique",
+    "Mouna",
+    "Muhamad",
+    "Muhammad",
+    "Muhammed",
+    "Munezero",
+    "Nana",
+    "Nargiza",
+    "Neha",
+    "Nicole",
+    "Nikolay",
+    "Nikos",
+    "Nilsa",
+    "Nishantha",
+    "Niyonkuru",
+    "Noel",
+    "Noor",
+    "Noriko",
+    "Nur",
+    "Or",
+    "Peter",
+    "Petra",
+    "Philippe",
+    "Rafał",
+    "Raja",
+    "Rajesh",
+    "Ravi",
+    "Renel",
+    "Ricardo",
+    "Richard",
+    "Rodrigo",
+    "Ryo",
+    "Said",
+    "Sam",
+    "Sami",
+    "Sanjida",
+    "Sarah",
+    "Shaik",
+    "Sigríður",
+    "Silvia",
+    "Simona",
+    "Siyabonga",
+    "Snezana",
+    "Solange",
+    "Sophie",
+    "Sri",
+    "Steve",
+    "Tamás",
+    "Tanja",
+    "Temo",
+    "Thabang",
+    "Thomas",
+    "Trond",
+    "Tural",
+    "Valentina",
+    "Valeria",
+    "Vasile",
+    "Victor",
+    "Waisea",
+    "Willem",
+    "Yiota",
+    "Yolani",
+    "Yosiris",
+    "Yves",
+    "Zainab",
+    "Zoila",
+    "Spela",
+]
+
 
 # Customizable data
 blue = [0, 0, 0.75]
@@ -179,6 +385,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     # Customizable data
     extra_page_probability = 0.2
     extra_page_font_size = 18
+    extra_student_probability = 0.1
 
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
@@ -196,6 +403,37 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     # get those students not used in the the prename
     available_classlist = [x for x in classlist if x["id"] not in used_ids]
     random.shuffle(available_classlist)
+    # work out how many names actually needed
+    number_of_unnamed_papers = len(papers_paths) - len(named_papers_paths)
+
+    # how many extra names to generate
+    number_of_extra_students = max(
+        3, int(number_of_unnamed_papers * extra_student_probability)
+    )
+    print(
+        f"Note - {number_of_extra_students} papers will belong to students who are not on the classlist."
+    )
+    extra_names = []
+    real_ids = [x["id"] for x in classlist]
+    for _ in range(number_of_extra_students):
+        nm = "{}, {}".format(
+            random.choice(extra_last_names), random.choice(extra_first_names)
+        )
+        # make an 8 digit ID - TODO - move this function into rules.py
+        while True:
+            id = str(random.randint(10**7, 10**8))
+            if id not in real_ids:
+                break
+        real_ids.append(id)
+        extra_names.append({"id": id, "name": nm})
+
+    # cut the available_classlist and add in thenames from the extra list
+    use_these_students = (
+        available_classlist[: number_of_unnamed_papers - number_of_extra_students]
+        + extra_names
+    )
+    # now shuffle everything
+    random.shuffle(use_these_students)
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
@@ -204,7 +442,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
         if f in named_papers_paths:
             print(f"{f.name} - prenamed paper - scribbled")
         else:
-            x = available_classlist.pop()
+            x = use_these_students.pop()
             # TODO: Issue #1646: check for "student_number" fallback to id
             student_number = x["id"]
             student_name = x["name"]
