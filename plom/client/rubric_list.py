@@ -1644,7 +1644,7 @@ class AddRubricBox(QDialog):
         vlay.addLayout(self._param_grid)
         vlay.addWidget(QLabel("<hr>"))
         hlay = QHBoxLayout()
-        self.group_checkbox = QCheckBox("Associate with the group ")
+        self.group_checkbox = QCheckBox("(Coming soon!) Associate with the group ")
         hlay.addWidget(self.group_checkbox)
         b = QComboBox()
         # b.setEditable(True)
