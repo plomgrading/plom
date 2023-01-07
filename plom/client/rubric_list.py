@@ -48,7 +48,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import WarnMsg, SimpleQuestion
+from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score
 from plom.plom_exceptions import PlomInconsistentRubric
@@ -1662,6 +1662,19 @@ class AddRubricBox(QDialog):
         # b.setAutoRaise(True)
         # hlay.addWidget(b)
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        b = QToolButton(text="What are groups?")
+        b.setAutoRaise(True)
+        msg = """<p>Tips on groups</p>
+            <ul>
+            <li><b>experimental feature:</b> please discuss with your team.</li>
+            <!--<li>Groups create automatic tabs, shared with other users.</li>-->
+            <li>Groups are intended for multi-part questions.</li>
+            <li>Within a group, you can use at most one exclusive rubric.</li>
+            <li>Groups will disappear if no rubrics are in them.</li>
+            <ul>
+        """
+        b.clicked.connect(lambda: InfoMsg(self, msg).exec())
+        hlay.addWidget(b)
         vlay.addLayout(hlay)
         hlay = QHBoxLayout()
         hlay.addItem(QSpacerItem(24, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
