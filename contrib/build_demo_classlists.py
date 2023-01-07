@@ -86,7 +86,6 @@ extra_first_names = [
     "Chiara",
     "Choukri",
     "Claudio",
-    "Claus",
     "Cristhian",
     "Devon",
     "Dimitra",
