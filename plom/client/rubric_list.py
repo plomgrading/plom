@@ -1598,10 +1598,10 @@ class AddRubricBox(QDialog):
         self.scopeButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.scopeButton.clicked.connect(self.toggle_scope_elements)
         frame = QFrame()
+        frame.setFrameStyle(QFrame.StyledPanel)
         self.scope_frame = frame
         flay.addRow(self.scopeButton, frame)
         vlay = QVBoxLayout(frame)
-        vlay.setContentsMargins(0, 0, 0, 0)
         cb = QCheckBox(
             f'specific to question "{question_label}" (index {question_number})'
         )
@@ -1612,6 +1612,7 @@ class AddRubricBox(QDialog):
         # label = QLabel("Specify a list of question indices to share this rubric.")
         # label.setWordWrap(True)
         # vlay.addWidget(label)
+        vlay.addWidget(QLabel("<hr>"))
         lay = QHBoxLayout()
         cb = QCheckBox("specific to version(s)")
         cb.stateChanged.connect(self.toggle_version_specific)
@@ -1692,7 +1693,6 @@ class AddRubricBox(QDialog):
         self.group_add_btn.setEnabled(False)
         self.group_checkbox.setChecked(False)
         vlay.addLayout(hlay)
-        vlay.addWidget(QLabel("<hr>"))
         self.toggle_version_specific()
         self.toggle_scope_elements()
 
