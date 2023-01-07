@@ -1532,8 +1532,10 @@ class AddRubricBox(QDialog):
 
         flay = QFormLayout()
         flay.addRow("Text", self.TE)
-        lay = QFormLayout()
-        lay.addRow("or choose from page: ", self.reapable_CB)
+        lay = QHBoxLayout()
+        lay.addItem(QSpacerItem(32, 10, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum))
+        lay.addWidget(QLabel("Choose text from page:"))
+        lay.addWidget(self.reapable_CB)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.reapable_CB.setSizePolicy(sizePolicy)
         flay.addRow("", lay)
