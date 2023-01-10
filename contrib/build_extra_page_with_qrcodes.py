@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
+
 from pathlib import Path
 from plom.misc_utils import working_directory
 import segno
