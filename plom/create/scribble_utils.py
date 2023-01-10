@@ -60,6 +60,8 @@ possible_answers = [
     "Cupcake ipsum dolor sit amet pastry. Apple pie I love marzipan souffle"
     " jelly tart I love jelly. Chocolate lemon drops chupa chups I love pie"
     " cookie candy donut pudding.  -- www.cupcakeipsum.com",
+    "Algebra is but written geometry and geometry is but"
+    " figured algebra.  -- Sophie Germain",
 ]
 
 # some simple translations of the word "extra" into other languages courtesy of google-translate
