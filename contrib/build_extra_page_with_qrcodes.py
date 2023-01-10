@@ -25,5 +25,13 @@ with tempfile.TemporaryDirectory() as tmpdirname:
         for crn in range(1, 9):
             qr = segno.make_micro(f"{base}{crn}")
             qr.save(tmp_path / f"qr_crn_{crn}.eps", border=2)
-        subprocess.run(["latexmk", "extra_page"])
+        subprocess.run(
+            (
+                "latexmk",
+                "-pdf",
+                "-interaction=nonstopmode",
+                "-no-shell-escape",
+                "extra_page",
+            )
+        )
         shutil.copy("extra_page.pdf", current_dir)
