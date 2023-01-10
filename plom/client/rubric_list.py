@@ -198,6 +198,9 @@ class RubricTable(QTableWidget):
     def is_user_tab(self):
         return self.tabType is None
 
+    def is_group_tab(self):
+        return self.tabType == "group"
+
     def is_delta_tab(self):
         return self.tabType == "delta"
 
@@ -866,6 +869,10 @@ class RubricWidget(QWidget):
     @property
     def user_tabs(self):
         """Dynamically construct the ordered list of user-defined tabs."""
+        return self.get_user_tabs()
+
+    def get_user_tabs(self):
+        """Get an ordered list of user-defined tabs."""
         # this is all tabs: we want only the user ones
         # return [self.RTW.widget(n) for n in range(self.RTW.count())]
         L = []
@@ -875,11 +882,52 @@ class RubricWidget(QWidget):
                 L.append(tab)
         return L
 
+    def get_group_tabs(self):
+        """Get an ordered list of the group tabs."""
+        L = []
+        for n in range(self.RTW.count()):
+            tab = self.RTW.widget(n)
+            if tab.is_group_tab():
+                L.append(tab)
+        return L
+
+    def get_group_tabs_dict(self):
+        """Get a dict of the group tabs, keyed by name"""
+        d = {}
+        for n in range(self.RTW.count()):
+            tab = self.RTW.widget(n)
+            if tab.is_group_tab():
+                d[tab.shortname] = tab
+        return d
+
     def update_tab_names(self):
         """Loop over the tabs and update their displayed names"""
         for n in range(self.RTW.count()):
             self.RTW.setTabText(n, self.RTW.widget(n).shortname)
             # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
+
+    def add_new_group_tab(self, name):
+        """Add new group-defined tab
+
+        The new tab is inserted after the right-most "group" tab, or
+        immediately after the "All" tab if there are no "group" tabs.
+
+        args:
+            name (str): name of the new tab.
+
+        return:
+            RubricTable: the newly added table.
+        """
+        tab = RubricTable(self, shortname=name, tabType="group")
+        idx = None
+        for n in range(0, self.RTW.count()):
+            if self.RTW.widget(n).is_group_tab():
+                idx = n
+        if idx is None:
+            idx = 0
+        # insert tab after that
+        self.RTW.insertTab(idx + 1, tab, tab.shortname)
+        return tab
 
     def add_new_tab(self, name=None):
         """Add new user-defined tab either to end or near end.
@@ -1101,6 +1149,36 @@ class RubricWidget(QWidget):
             ):
                 log.info("Appending new rubric with id {}".format(rubric["id"]))
                 wranglerState["shown"].append(rubric["id"])
+
+        group_tab_data = {}
+        for rubric in self.rubrics:
+            tags = rubric.get("tags", "").split()
+            # TODO: share pack/unpack from tag w/ dialog & compute_score
+            for t in tags:
+                g = None
+                if t.startswith("exclgroup:"):
+                    tags.remove(t)
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("exclgroup:")
+                    g = t[len("exclgroup:") :]
+                if t.startswith("group:"):
+                    tags.remove(t)
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("group:")
+                    g = t[len("group:") :]
+                if not g:
+                    continue
+                if not group_tab_data.get(g):
+                    group_tab_data[g] = []
+                group_tab_data[g].append(rubric["id"])
+
+        # TODO: order of rubrics within group tabs?
+        current_group_tabs = self.get_group_tabs_dict()
+        for g, idlist in group_tab_data.items():
+            tab = current_group_tabs.get(g)
+            if tab is None:
+                tab = self.add_new_group_tab(g)
+            tab.setRubricsByKeys(self.rubrics, idlist)
 
         # TODO: if we later deleting rubrics, this will need to deal with rubrics that
         # have disappeared from self.rubrics but still appear in some tab
@@ -1354,6 +1432,7 @@ class RubricWidget(QWidget):
             return
         new_rubric = arb.gimme_rubric_data()
 
+        # TODO: wouldn't it not be simpler to rebuild everything?
         if edit:
             key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
             # update the rubric in the current internal rubric list
@@ -1376,6 +1455,8 @@ class RubricWidget(QWidget):
             # also add it to the list in the current rubriclist (if it is a user-generated tab)
             if self.RTW.currentWidget().is_user_tab():
                 self.RTW.currentWidget().appendNewRubric(new_rubric)
+            if self.RTW.currentWidget().is_group_tab():
+                self.RTW.currentWidget().appendNewRubric(new_rubric)
         # finally - select that rubric and simulate a click
         self.RTW.currentWidget().selectRubricByKey(new_rubric["id"])
         self.handleClick()
@@ -1383,11 +1464,16 @@ class RubricWidget(QWidget):
     def updateRubricInLists(self, new_rubric):
         self.tabS.updateRubric(new_rubric, self.mss)
         self.tabHide.updateRubric(new_rubric, self.mss)
-        for tab in self.user_tabs:
+        for tab in self.get_user_tabs():
+            tab.updateRubric(new_rubric, self.mss)
+        for tab in self.get_group_tabs():
             tab.updateRubric(new_rubric, self.mss)
 
     def get_tab_rubric_lists(self):
-        """returns a dict of lists of the current rubrics"""
+        """returns a dict of lists of the current rubrics.
+
+        Currently does not include "group tabs".
+        """
         return {
             "user_tab_names": [t.shortname for t in self.user_tabs],
             "shown": self.tabS.getKeyList(),
