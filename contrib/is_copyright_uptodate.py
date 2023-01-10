@@ -7,7 +7,7 @@
 Gives non-zero exit code if there were any that need updates.
 
 Also, snitches on files without apparent copyright headers, although
-this is FYI only (does not effect exit code).
+in some cases, maybe they have to be like that!
 """
 
 import re
@@ -33,11 +33,13 @@ if __name__ == "__main__":
             print(f"    Skipping deleted (?) file: {f}")
             continue
         if not p2.match(data):
-            print(f"[!] Skipping file without copyright header: {f}")
+            print(f"[!] File without copyright header: {f}")
+            # TODO: or leave as False to just skip these
+            at_least_one = True
             continue
         if not p.match(data):
             at_least_one = True
-            print(f"[F] Needs copyright header update: {f}")
+            print(f"[w] Needs copyright header update: {f}")
     if at_least_one:
         print("At least one file needs updated, see list above")
         sys.exit(1)
