@@ -1751,7 +1751,7 @@ class AddRubricBox(QDialog):
         msg = """<p>Tips on groups</p>
             <ul>
             <li><b>experimental feature:</b> please discuss with your team.</li>
-            <!--<li>Groups create automatic tabs, shared with other users.</li>-->
+            <li>Groups create automatic tabs, shared with other users.</li>
             <li>Groups are intended for multi-part questions.</li>
             <li>Within a group, you can use at most one exclusive rubric.</li>
             <li>Groups will disappear if no rubrics are in them.</li>
