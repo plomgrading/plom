@@ -125,8 +125,8 @@ copyright_year:
   script:
     - echo "Considering the following commits to this branch (since main):"
     - git shortlog origin/main..${CI_COMMIT_BRANCH} --
-    - echo "This gives the following files (with dupes):"
-    - git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} --
+    - echo "Those commits touch the following files:"
+    - git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} -- | uniq -u
     - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only origin/main..$CI_COMMIT_BRANCH --`
   allow_failure: true
 
