@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
 
-from plom.plom_exceptions import PlomInconsistentRubricsException
+from plom.plom_exceptions import PlomInconsistentRubricsException, PlomInvalidRubric
 
 
 def compute_score_naive(rubrics, maxscore):
@@ -50,6 +50,7 @@ def compute_score_legacy2022(rubrics, maxscore):
             relative rubrics cannot be mixed.
         ValueError: int is outside range [0, maxscore], or non-zero,
             non-full marks absolute rubrics in use.
+        PlomInvalidRubric: unexpectedly invalid rubric.
 
     Tries to follow the rules as used in 2022, as closely as possible.
     """
@@ -57,8 +58,7 @@ def compute_score_legacy2022(rubrics, maxscore):
 
     for r in rubrics:
         if r["kind"] not in ("absolute", "relative", "neutral"):
-            # TODO: probably this error is too mild (this means hide in list)
-            raise PlomInconsistentRubricsException(f'Invalid rubric kind={r["kind"]}')
+            raise PlomInvalidRubric(f'Invalid rubric kind={r["kind"]}')
 
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]
     if len(absolutes) > 1:
@@ -124,6 +124,7 @@ def compute_score_locabs(rubrics, maxscore):
             the total of all ``out_of`` are more than maxscore.  The absolute
             rubrics give upper/lower bounds for possible scores which raise
             ValueErrors if exceeded by relative rubrics.
+        PlomInvalidRubric: unexpectedly invalid rubric.
     """
     lo_score = 0
     hi_score = maxscore
@@ -131,8 +132,7 @@ def compute_score_locabs(rubrics, maxscore):
 
     for r in rubrics:
         if r["kind"] not in ("absolute", "relative", "neutral"):
-            # TODO: probably this error is too mild (this means hide in list)
-            raise PlomInconsistentRubricsException(f'Invalid rubric kind={r["kind"]}')
+            raise PlomInvalidRubric(f'Invalid rubric kind={r["kind"]}')
 
     # step one: add up all the absolute rubrics
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]

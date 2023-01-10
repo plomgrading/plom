@@ -3,7 +3,7 @@
 
 from pytest import raises
 
-from plom.plom_exceptions import PlomInconsistentRubricsException
+from plom.plom_exceptions import PlomInconsistentRubricsException, PlomInvalidRubric
 from plom.client.rubrics import compute_score_naive as naive
 from plom.client.rubrics import compute_score_legacy2022 as lg
 from plom.client.rubrics import compute_score_locabs as s
@@ -188,7 +188,7 @@ def test_score_ambiguous_mix_up_down():
 
 
 def test_score_invalid_kind():
-    with raises(PlomInconsistentRubricsException, match="Invalid"):
+    with raises(PlomInvalidRubric, match="kind"):
         lg([{"kind": "sHiFtY"}], 5)
-    with raises(PlomInconsistentRubricsException, match="Invalid"):
+    with raises(PlomInvalidRubric, match="kind"):
         s([{"kind": "sHiFtY"}], 5)
