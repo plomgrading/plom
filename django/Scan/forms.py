@@ -107,11 +107,17 @@ class ReplaceImageForm(forms.Form):
         #     readable_single_file_size = settings.MAXFILE_SIZE / 1e6
         #     raise ValidationError(f"File size limit is {readable_single_file_size} MB.")
         
-        
         try:
-            # make sure it is correct format
+            scanner = ScanService()
             file_bytes = single_pdf.read()
             pdf_doc = fitz.open(stream=file_bytes)
+            # make sure it is correct format
+            if "PDF" not in pdf_doc.metadata["format"]:
+                raise ValidationError("File is not a valid PDF.")
+            # make sure only 1 pdf page
+            if pdf_doc.page_count > 1:
+                raise ValidationError("Only upload a single page pdf file.")
+            # turn that pdf file into page image
             timestamp = datetime.timestamp(datetime.now())
             file_name = f"{timestamp}.pdf"
             replace_dir = pathlib.Path("media") / "replace_pages"
@@ -124,28 +130,17 @@ class ReplaceImageForm(forms.Form):
             save_path = replace_dir / "images"
             save_path.mkdir(exist_ok=True)
             save_as_image = replace_dir / "images" / f"{timestamp}.png"
+
             uploaded_pdf_file = fitz.Document(save_as_pdf / file_name)
             transform = fitz.Matrix(4, 4)
             pixmap = uploaded_pdf_file[0].get_pixmap(matrix=transform)
             pixmap.save(save_as_image)
 
-            image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
-            print(image_hash)
-            
-            # pdf_file = fitz.Document(replace_dir / file_name)
-            # transform = fitz.Matrix(4, 4)
-            # pixmap = pdf_file.get_pixmap(matrix=transform)
-            # pixmap.save(replace_dir / file_name)
-            # image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
-            # print(image_hash)
-            
-            # if "PDF" not in pdf_doc.metadata["format"]:
-            #     raise ValidationError("File is not a valid PDF.")
-            # # make sure only 1 pdf page
-            # if pdf_doc.page_count > 1:
-            #     raise ValidationError("Only upload a single page pdf file.")
-            # # TODO turn that pdf file into page image
-            # # check for duplicate page image
+            uploaded_image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
+            all_image_hash_list = scanner.get_all_staging_image_hash()
+            for image_hash in all_image_hash_list:
+                if str(uploaded_image_hash) == str(image_hash):
+                    raise ValidationError("This page already uploaded.")
 
         except (FileDataError, KeyError):
             raise ValidationError("Unable to open file.")

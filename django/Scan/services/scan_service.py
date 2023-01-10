@@ -484,3 +484,8 @@ class ScanService:
         task.save()
         error_image = self.get_error_image(img_bundle, page_index)
         error_image.delete()
+
+    @transaction.atomic
+    def get_all_staging_image_hash(self):
+        image_hash_list = StagingImage.objects.values('image_hash')
+        return image_hash_list
