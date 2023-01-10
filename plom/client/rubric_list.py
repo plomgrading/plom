@@ -1174,7 +1174,8 @@ class RubricWidget(QWidget):
 
         # TODO: order of rubrics within group tabs?
         current_group_tabs = self.get_group_tabs_dict()
-        for g, idlist in group_tab_data.items():
+        for g in sorted(group_tab_data.keys()):
+            idlist = group_tab_data[g]
             tab = current_group_tabs.get(g)
             if tab is None:
                 tab = self.add_new_group_tab(g)
