@@ -25,5 +25,5 @@ ignored-modules = ["tensorflow", "api_secrets"]
 omit = ["*/test_*", "/usr/*", "*/config*", "django/*"]
 
 [tool.pytest.ini_options]
-# always ignore the django folder
+# TODO: for now ignore the django folder
 addopts = "--ignore plom/django"
