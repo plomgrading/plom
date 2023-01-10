@@ -785,7 +785,7 @@ class RubricWidget(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
         deltaP_label = "+\N{Greek Small Letter Delta}"
         deltaN_label = "\N{Minus Sign}\N{Greek Small Letter Delta}"
-        self.tabS = RubricTable(self, shortname="Shared", tabType="show")
+        self.tabS = RubricTable(self, shortname="All", tabType="show")
         self.tabDeltaP = RubricTable(self, shortname=deltaP_label, tabType="delta")
         self.tabDeltaN = RubricTable(self, shortname=deltaN_label, tabType="delta")
         self.RTW = QTabWidget()
