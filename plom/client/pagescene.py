@@ -525,9 +525,7 @@ class PageScene(QGraphicsScene):
         Returns:
             bool
         """
-        if all(r["kind"] == "neutral" for r in self.get_rubrics()):
-            return True
-        return False
+        return self.getScore() is None
 
     def refreshStateAndScore(self):
         self.refreshScore()
