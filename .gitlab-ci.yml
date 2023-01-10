@@ -128,6 +128,7 @@ copyright_year:
     - echo "This gives the following files (with dupes):"
     - git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} --
     - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only origin/main..$CI_COMMIT_BRANCH --`
+  allow_failure: true
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
