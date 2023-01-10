@@ -1828,8 +1828,27 @@ class AddRubricBox(QDialog):
 
     def validate_and_accept(self):
         """Make sure rubric is valid before accepting"""
-        if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
-            WarnMsg(self, "Your rubric must contain some text.").exec()
+        txt = self.TE.toPlainText().strip()
+        if len(txt) <= 0:
+            WarnMsg(
+                self,
+                "Your rubric must contain some text.",
+                info="No whitespace only rubrics.",
+                info_pre=False,
+            ).exec()
+            return
+        if txt == ".":
+            WarnMsg(
+                self,
+                f"Invalid text &ldquo;<tt>{txt}</tt>&rdquo; for rubric",
+                info="""
+                   <p>A single full-stop has meaning internally (as a sentinel),
+                   so we cannot let you make one.  See
+                   <a href="https://gitlab.com/plom/plom/-/issues/2421">Issue #2421</a>
+                   for details.</p>
+                """,
+                info_pre=False,
+            ).exec()
             return
         self.accept()
 
