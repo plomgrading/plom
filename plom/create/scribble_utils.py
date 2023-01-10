@@ -62,6 +62,8 @@ possible_answers = [
     " cookie candy donut pudding.  -- www.cupcakeipsum.com",
     "Algebra is but written geometry and geometry is but"
     " figured algebra.  -- Sophie Germain",
+    "Understand it well as I may, my comprehension can only be an"
+    " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
 ]
 
 # some simple translations of the word "extra" into other languages courtesy of google-translate
