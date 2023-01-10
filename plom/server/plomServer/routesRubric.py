@@ -90,6 +90,8 @@ class RubricHandler:
             if not rubric["display_delta"][1:].isnumeric():
                 return False
             idelta = int(rubric["display_delta"])
+            if rubric["value"] != idelta:
+                return False
             if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
                 return False
 
