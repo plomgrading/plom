@@ -58,9 +58,7 @@ log = logging.getLogger("annotr")
 
 
 def rubric_is_naked_delta(r):
-    # TODO: seems unimportant they came from manager.  Perhaps we don't
-    # want users to make these, but that is "SEP".
-    if r["username"] == "manager" and r["kind"] == "relative" and r["text"] == ".":
+    if r["kind"] == "relative" and r["text"] == ".":
         return True
     return False
 
@@ -486,7 +484,6 @@ class RubricTable(QTableWidget):
         # grab the delta-rubrics from the rubricslist
         delta_rubrics = []
         for rb in rubrics:
-            # take the manager generated delta rubrics
             if rubric_is_naked_delta(rb):
                 if (positive and int(rb["value"]) > 0) or (
                     not positive and int(rb["value"]) < 0
