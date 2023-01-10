@@ -1425,6 +1425,7 @@ class RubricWidget(QWidget):
         new_rubric = arb.gimme_rubric_data()
 
         # TODO: wouldn't it not be simpler to rebuild everything?
+        # TODO: currently things do not move b/w groups properly
         if edit:
             key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
             # update the rubric in the current internal rubric list
