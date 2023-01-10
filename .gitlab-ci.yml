@@ -119,7 +119,7 @@ copyright_headers:
     - git --version
   script:
     - echo "Looking for files changed on this branch without copyright for current year"
-    - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only main.. --`
+    - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only main..$CI_COMMIT_BRANCH`
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
