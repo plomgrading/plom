@@ -2333,7 +2333,8 @@ class PageScene(QGraphicsScene):
                     continue
                 if isinstance(x, GroupDeltaTextItem):
                     # check if this is a delta-rubric
-                    if x.kind == "delta":
+                    # TODO: see rubrics_list.py: rubric_is_naked_delta
+                    if x.kind == "relative" and x.text == ".":
                         continue
                 return False  # otherwise
         return True  # only tick,cross or delta-rubrics

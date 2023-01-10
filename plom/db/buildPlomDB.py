@@ -81,7 +81,7 @@ def buildSpecialRubrics(spec, db):
                 "value": m,
                 "out_of": 0,
                 "text": ".",
-                "kind": "delta",
+                "kind": "relative",
                 "question": q,
             }
             ok, key_or_err = db.McreateRubric("manager", rubric)
@@ -96,7 +96,7 @@ def buildSpecialRubrics(spec, db):
                 "value": -m,
                 "out_of": 0,
                 "text": ".",
-                "kind": "delta",
+                "kind": "relative",
                 "question": q,
             }
             ok, key_or_err = db.McreateRubric("manager", rubric)

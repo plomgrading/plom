@@ -73,28 +73,6 @@ class RubricHandler:
             if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
                 return False
 
-        elif rubric["kind"] == "delta":
-            # only HAL and manager can create delta rubrics - this may change in the future
-            if username not in ["HAL", "manager"]:
-                return False
-            # must have text field == '.'
-            if rubric["text"] != ".":
-                return False
-            # do we care if its int?
-            # if not isinstance(rubric["value"], int):
-            #     return False
-            # the delta must be of the form -k or +k
-            if rubric["display_delta"][0] not in ["-", "+"]:
-                return False
-            # check rest of display delta string is numeric
-            if not rubric["display_delta"][1:].isnumeric():
-                return False
-            idelta = int(rubric["display_delta"])
-            if rubric["value"] != idelta:
-                return False
-            if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
-                return False
-
         elif rubric["kind"] == "absolute":
             # must have some text
             if len(rubric["text"].strip()) == 0:

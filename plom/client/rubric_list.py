@@ -57,6 +57,14 @@ from plom.plom_exceptions import PlomInconsistentRubric
 log = logging.getLogger("annotr")
 
 
+def rubric_is_naked_delta(r):
+    # TODO: seems unimportant they came from manager.  Perhaps we don't
+    # want users to make these, but that is "SEP".
+    if r["username"] == "manager" and r["kind"] == "relative" and r["text"] == ".":
+        return True
+    return False
+
+
 def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
     """Checks the 'legality' of the current rubric - returning one of several possible indicators
 
@@ -479,7 +487,7 @@ class RubricTable(QTableWidget):
         delta_rubrics = []
         for rb in rubrics:
             # take the manager generated delta rubrics
-            if rb["username"] == "manager" and rb["kind"] == "delta":
+            if rubric_is_naked_delta(rb):
                 if (positive and int(rb["value"]) > 0) or (
                     not positive and int(rb["value"]) < 0
                 ):
@@ -1063,7 +1071,7 @@ class RubricWidget(QWidget):
             if rubric["username"] == "HAL":
                 continue
             # exclude manager-delta rubrics, see also Issue #1494
-            if rubric["username"] == "manager" and rubric["kind"] == "delta":
+            if rubric_is_naked_delta(rubric):
                 continue
             if (
                 rubric["id"] not in wranglerState["hidden"]
