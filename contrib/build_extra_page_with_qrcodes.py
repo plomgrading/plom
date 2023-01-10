@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory() as tmpdirname:
         shutil.copy(src_tex_path, "extra_page.tex")
         for crn in range(1, 9):
             qr = segno.make_micro(f"{base}{crn}")
-            qr.save(tmp_path / f"qr_crn_{crn}.png", border=2)
+            qr.save(tmp_path / f"qr_crn_{crn}.png", border=2, scale=4)
         subprocess.run(
             (
                 "latexmk",
