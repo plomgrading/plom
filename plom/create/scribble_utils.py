@@ -48,10 +48,22 @@ possible_answers = [
     "I knew that it, it was illegal  -- Arlo Guthrie",
     "But there will always be science, engineering, and technology.  "
     "And there will always, always be mathematics.  -- Katherine Johnson",
+    "I like to learn. That's an art and a science.  -- Katherine Johnson",
+    "You tell me when you want it and where you want it to land, and I'll"
+    " do it backwards and tell you when to take off.  -- Katherine Johnson",
     "Is 5 = 1?  Let's see... multiply both sides by 0.  "
     "Now 0 = 0 so therefore 5 = 1.",
     "I mean, you could claim that anything's real if the only basis for "
     "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
+    "Mathematics: the only province of the literary world"
+    " where peace reigns.  -- Maria Gaetana Agnesi",  # doi:10.1086/385354
+    "Cupcake ipsum dolor sit amet pastry. Apple pie I love marzipan souffle"
+    " jelly tart I love jelly. Chocolate lemon drops chupa chups I love pie"
+    " cookie candy donut pudding.  -- www.cupcakeipsum.com",
+    "Algebra is but written geometry and geometry is but"
+    " figured algebra.  -- Sophie Germain",
+    "Understand it well as I may, my comprehension can only be an"
+    " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
 ]
 
 # some simple translations of the word "extra" into other languages courtesy of google-translate
