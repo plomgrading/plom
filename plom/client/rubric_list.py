@@ -1204,20 +1204,11 @@ class RubricWidget(QWidget):
                 idlist = []
             else:
                 idlist = wranglerState["tabs"][n]
-            tab.setRubricsByKeys(
-                self.rubrics,
-                idlist,
-            )
-        self.tabS.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["shown"],
-        )
+            tab.setRubricsByKeys(self.rubrics, idlist)
+        self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
-        self.tabHide.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["hidden"],
-        )
+        self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
 
         # make sure something selected in each tab
         self.tabHide.selectRubricByVisibleRow(0)
