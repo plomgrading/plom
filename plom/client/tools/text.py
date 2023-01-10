@@ -186,10 +186,6 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
             return self._tex_src_cache
         return super().toPlainText()
 
-    def getContents(self):
-        """Older, maybe deprecated way of getting the text/source."""
-        return self.toPlainText()
-
     def focusInEvent(self, event):
         """On focus, we switch back to source/test mode."""
         if self.is_rendered():

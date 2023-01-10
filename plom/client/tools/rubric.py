@@ -204,7 +204,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.di.value,
             self._rubric["out_of"],
             self.di.display_delta,
-            self.blurb.getContents(),
+            self.blurb.toPlainText(),
         ]
 
     def paint(self, painter, option, widget):

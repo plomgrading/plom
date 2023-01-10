@@ -709,7 +709,7 @@ class PageScene(QGraphicsScene):
                 # if item is in a rubric then its 'group' will be non-null
                 # only keep those with group=None to keep non-rubric text
                 if X.group() is None:
-                    texts.append(X.getContents())
+                    texts.append(X.toPlainText())
         return texts
 
     def get_rubrics_from_page(self):
@@ -2334,7 +2334,7 @@ class PageScene(QGraphicsScene):
                 if isinstance(x, GroupDeltaTextItem):
                     # check if this is a delta-rubric
                     # TODO: see rubrics_list.py: rubric_is_naked_delta
-                    if x.kind == "relative" and x.text == ".":
+                    if x.kind == "relative" and x.blurb.toPlainText() == ".":
                         continue
                 return False  # otherwise
         return True  # only tick,cross or delta-rubrics
