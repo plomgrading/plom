@@ -282,7 +282,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 2.15.*: should be manually bumped sometimes
-    - python3 -m pip install pylint~=2.15.5
+    - python3 -m pip install astroid~=2.12.14
+    - python3 -m pip install pylint~=2.15.9
   script:
     - pylint plom
   allow_failure: true
