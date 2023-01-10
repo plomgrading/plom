@@ -15,8 +15,8 @@ import sys
 from datetime import datetime
 
 year = datetime.utcnow().year
-p = re.compile(f'.*Copyright.*{year}.*')
-p2 = re.compile('.*Copyright.*')
+p = re.compile(f".*Copyright.*{year}.*")
+p2 = re.compile(".*Copyright.*")
 
 if __name__ == "__main__":
     at_least_one = False
@@ -24,8 +24,8 @@ if __name__ == "__main__":
     print(f"Checking copyright headers for {year} in {len(files)} files...")
     for f in files:
         try:
-            with open(f, 'r') as fh:
-                data = fh.read().replace('\n', '')
+            with open(f, "r") as fh:
+                data = fh.read().replace("\n", "")
         except UnicodeDecodeError:
             print(f"    Skipping binary (?) file: {f}")
             continue
