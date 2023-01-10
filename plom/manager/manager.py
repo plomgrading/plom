@@ -1060,11 +1060,7 @@ class Manager(QWidget):
             # Cleanup, Issue #2141
             InfoMsg(self, "{}".format(rval)).exec()
         except PlomUnidentifiedPaperException as err:
-            WarnMsg(
-                self,
-                "Cannot substitute that page - that paper has not been identified",
-                info=err,
-            ).exec()
+            WarnMsg(self, str(err)).exec()
 
     def substituteTestPage(self, test_number, page_number, version):
         page_type = self.testPageTypes[page_number]

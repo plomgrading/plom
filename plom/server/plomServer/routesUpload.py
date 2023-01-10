@@ -422,23 +422,36 @@ class UploadHandler:
         msg = reason + ": " + str(X)
         raise web.HTTPBadRequest(reason=msg)
 
-    async def replaceMissingIDPage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+    # @routes.put("/plom/admin/missingDNMPage")
+    @authenticate_by_token_required_fields(["test"])
+    @write_admin
+    def replaceMissingIDPage(self, data, request):
+        """Replace a missing ID page a server-generated placeholder, for identified tests only.
 
+        TODO: suspicious quality, needs work, Issue #2461.
+
+        Args:
+            ``test`` in the data dict.
+
+        Returns:
+            200: on success, currently with some json diagnostics info (?) but
+            can also return 200 when HW already had an ID page (?)
+            401/403: auth
+            404: page or test not found
+            410: paper not identified (e.g., not homework)
+            400: poorly formed or otherwise unexpected catchall
+        """
         rval = self.server.replaceMissingIDPage(data["test"])
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
-        else:
-            if rval[1] == "unknown":
-                return web.Response(status=410)
-            else:
-                return web.Response(status=404)  # page not found at all
+        if rval[1] == "unknown":
+            raise web.HTTPGone(
+                reason=f'Cannot substitute ID page of test {data["test"]}'
+                " because that paper is not identified"
+            )
+        if rval[1] is False:
+            raise web.HTTPNotFound(reason="unexpectedly could not find something")
+        raise web.HTTPBadRequest(reason=f"Something has gone wrong: {str(rval)}")
 
     async def replaceMissingHWQuestion(self, request):
         # can replace either by SID-lookup or test-number

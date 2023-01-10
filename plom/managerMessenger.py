@@ -628,30 +628,26 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def replaceMissingIDPage(self, t):
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/plom/admin/missingIDPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the page - this should not happen!"
-                ) from None
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 410:
-                raise PlomUnidentifiedPaperException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/plom/admin/missingIDPage",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "test": t,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 410:
+                    raise PlomUnidentifiedPaperException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def replaceMissingHWQuestion(self, student_id=None, test=None, question=None):
         # can replace by SID or by test-number

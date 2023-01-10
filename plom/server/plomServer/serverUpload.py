@@ -63,6 +63,8 @@ def replaceMissingIDPage(self, test_number):
     if val[0] is False:
         return [False, "unknown"]
     sid = val[1]
+    # TODO: returns True/False/None
+    # Also: this looks broken, no student_name arg: Issue #2461
     return self.createIDPageForHW(sid)
 
 
@@ -87,7 +89,10 @@ def createIDPageForHW(self, sid, student_name):
         f"HW from {sid} {student_name} is test {test_number} - creating ID page and identifying test."
     )
     # this makes a auto-gen id page and uploads it into the db
-    autogenerateIDPage(self, test_number, sid, student_name)
+    rval = autogenerateIDPage(self, test_number, sid, student_name)
+    # TODO: rather fragile error handling
+    assert rval[0]
+    assert rval[1] == "success"
     # now identify the test
     log.warning("About to id it")
     self.DB.ID_id_paper(test_number, "scanner", sid, student_name, checks=False)
