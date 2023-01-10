@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 
 from plom.plom_exceptions import PlomInconsistentRubricsException
@@ -36,7 +36,9 @@ def compute_score_legacy2022(rubrics, maxscore):
     """Compute score given a set of rubrics, using "Plom 2022" rules.
 
     args:
-        rubrics (list):
+        rubrics (list): each rubric is dict with (at least) these
+            keys: `kind`, `value`.  Kind must be a string in
+            ``("absolute", "relative", "neutral")``.
         maxscore (int): the maximum anticipated score
 
     returns:
@@ -52,6 +54,11 @@ def compute_score_legacy2022(rubrics, maxscore):
     Tries to follow the rules as used in 2022, as closely as possible.
     """
     score = None
+
+    for r in rubrics:
+        if r["kind"] not in ("absolute", "relative", "neutral"):
+            # TODO: probably this error is too mild (this means hide in list)
+            raise PlomInconsistentRubricsException(f'Invalid rubric kind={r["kind"]}')
 
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]
     if len(absolutes) > 1:
@@ -99,7 +106,10 @@ def compute_score_locabs(rubrics, maxscore):
     +/- rubrics when they are unambiguous.
 
     args:
-        rubrics (list):
+        rubrics (list): each rubric is dict with (at least) these
+            keys: `kind`, `value`.  Kind must be a string in
+            ``("absolute", "relative", "neutral")``.
+            Any ``kind="absolute"`` must also have `out_of` fields.
         maxscore (int): the maximum anticipated score
 
     returns:
@@ -118,6 +128,11 @@ def compute_score_locabs(rubrics, maxscore):
     lo_score = 0
     hi_score = maxscore
     sum_out_of = 0
+
+    for r in rubrics:
+        if r["kind"] not in ("absolute", "relative", "neutral"):
+            # TODO: probably this error is too mild (this means hide in list)
+            raise PlomInconsistentRubricsException(f'Invalid rubric kind={r["kind"]}')
 
     # step one: add up all the absolute rubrics
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]

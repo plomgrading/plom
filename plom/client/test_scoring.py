@@ -185,3 +185,10 @@ def test_score_ambiguous_mix_up_down():
     ]
     with raises(PlomInconsistentRubricsException, match="Ambiguous"):
         s(r, 10)
+
+
+def test_score_invalid_kind():
+    with raises(PlomInconsistentRubricsException, match="Invalid"):
+        lg([{"kind": "sHiFtY"}], 5)
+    with raises(PlomInconsistentRubricsException, match="Invalid"):
+        s([{"kind": "sHiFtY"}], 5)
