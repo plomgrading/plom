@@ -112,14 +112,22 @@ wet_no_drift:
     - bash -c "[[ x$VER1 == x$VER2 ]]"
 
 
-copyright_headers:
+copyright_year:
   image: python:3.11
   stage: static_analysis
   before_script:
     - git --version
+    - echo "ensure we have the main branch for comparing"
+    - git fetch origin main
+    - git checkout main
+    - git checkout $CI_COMMIT_BRANCH
+    - git branch -avv
   script:
-    - echo "Looking for files changed on this branch without copyright for current year"
-    - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only main..$CI_COMMIT_BRANCH`
+    - echo "Considering the following commits to this branch (since main):"
+    - git shortlog origin/main..${CI_COMMIT_BRANCH} --
+    - echo "This gives the following files (with dupes):"
+    - git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} --
+    - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only origin/main..$CI_COMMIT_BRANCH --`
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
