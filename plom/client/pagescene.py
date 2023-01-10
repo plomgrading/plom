@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 
 from plom import AnnFontSizePts, ScenePixelHeight
-from plom.plom_exceptions import PlomInconsistentRubricsException
+from plom.plom_exceptions import PlomInconsistentRubric
 from plom.client.image_view_widget import mousewheel_delta_to_scale
 
 from .tools import (
@@ -745,7 +745,7 @@ class PageScene(QGraphicsScene):
                     r = s
                     continue
                 else:  # now s non-zero and different from r - so problem
-                    raise PlomInconsistentRubricsException
+                    raise PlomInconsistentRubric
         return r
 
     def countComments(self):
@@ -2440,7 +2440,7 @@ class PageScene(QGraphicsScene):
             N = compute_score(rubrics, self.maxMark)
         except ValueError:
             return False
-        except PlomInconsistentRubricsException:
+        except PlomInconsistentRubric:
             return False
         return True
 

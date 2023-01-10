@@ -139,7 +139,7 @@ class PlomNoClasslist(PlomServerNotReady):
     pass
 
 
-class PlomInconsistentRubricsException(PlomSeriousException):
+class PlomInconsistentRubric(PlomSeriousException):
     pass
 
 

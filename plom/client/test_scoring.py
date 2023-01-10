@@ -3,7 +3,7 @@
 
 from pytest import raises
 
-from plom.plom_exceptions import PlomInconsistentRubricsException, PlomInvalidRubric
+from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 from plom.client.rubrics import compute_score_naive as naive
 from plom.client.rubrics import compute_score_legacy2022 as lg
 from plom.client.rubrics import compute_score_locabs as s
@@ -61,17 +61,17 @@ def test_legacy_score_no_partial_absolute_rubrics():
 
 
 def test_legacy_score_only_one_absolute_rubric():
-    with raises(PlomInconsistentRubricsException):
+    with raises(PlomInconsistentRubric):
         lg([{"kind": "absolute", "value": 0}, {"kind": "absolute", "value": 0}], 5)
 
 
 def test_legacy_score_no_mix_relative_absolute_rubric():
-    with raises(PlomInconsistentRubricsException):
+    with raises(PlomInconsistentRubric):
         lg([{"kind": "absolute", "value": 0}, {"kind": "relative", "value": -1}], 5)
 
 
 def test_legacy_score_no_mix_up_down_rubrics():
-    with raises(PlomInconsistentRubricsException):
+    with raises(PlomInconsistentRubric):
         lg([{"kind": "relative", "value": 2}, {"kind": "relative", "value": -1}], 5)
 
 
@@ -183,7 +183,7 @@ def test_score_ambiguous_mix_up_down():
         {"kind": "relative", "value": 4},
         {"kind": "relative", "value": -3},
     ]
-    with raises(PlomInconsistentRubricsException, match="Ambiguous"):
+    with raises(PlomInconsistentRubric, match="Ambiguous"):
         s(r, 10)
 
 

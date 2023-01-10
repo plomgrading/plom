@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
@@ -51,7 +51,7 @@ from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import WarnMsg, SimpleQuestion
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score
-from plom.plom_exceptions import PlomInconsistentRubricsException
+from plom.plom_exceptions import PlomInconsistentRubric
 
 
 log = logging.getLogger("annotr")
@@ -99,7 +99,7 @@ def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
         return 2
     except ValueError as e:
         return 1
-    except PlomInconsistentRubricsException:
+    except PlomInconsistentRubric:
         return 0
 
 
