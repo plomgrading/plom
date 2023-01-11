@@ -1318,7 +1318,6 @@ class RubricWidget(QWidget):
                     groups.append(g)
         return list(set(groups))
 
-
     def unhideRubricByKey(self, key):
         index = [x["id"] for x in self.rubrics].index(key)
         self.tabS.appendNewRubric(self.rubrics[index])
