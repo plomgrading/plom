@@ -7,7 +7,6 @@
 # Copyright (C) 2021 Forest Kobayashi
 
 import html
-import json
 import logging
 import re
 from textwrap import shorten
@@ -63,7 +62,7 @@ def rubric_is_naked_delta(r):
     return False
 
 
-def isLegalRubric(mss, rubric, *, versions, scene):
+def isLegalRubric(mss, rubric, *, scene):
     """Checks the 'legality' of the current rubric - returning one of several possible indicators
 
     Those states are:
@@ -80,8 +79,6 @@ def isLegalRubric(mss, rubric, *, versions, scene):
         rubric (dict):
 
     Keyword Args:
-        versions (list): which versions are this rubric intended for.
-            Empty list means valid for all versions.
         scene (PageScene):
 
     Returns:
@@ -91,8 +88,8 @@ def isLegalRubric(mss, rubric, *, versions, scene):
     score = mss[2]
     our_version = mss[3]
 
-    if versions:
-        if our_version not in versions:
+    if rubric["versions"]:
+        if our_version not in rubric["versions"]:
             return 3
 
     if not scene:
@@ -445,13 +442,6 @@ class RubricTable(QTableWidget):
             rubric["text"], rubric["parameters"], self._parent.version
         )
         self.setItem(rc, 3, QTableWidgetItem(render))
-        self.setItem(rc, 4, QTableWidgetItem(rubric["kind"]))
-        self.setItem(rc, 5, QTableWidgetItem(json.dumps(rubric["versions"])))
-        self.setItem(rc, 6, QTableWidgetItem(json.dumps(rubric["parameters"])))
-        self.setItem(rc, 7, QTableWidgetItem(rubric["text"]))
-        self.setItem(rc, 8, QTableWidgetItem(str(rubric["value"])))
-        self.setItem(rc, 9, QTableWidgetItem(str(rubric["out_of"])))
-        self.setItem(rc, 10, QTableWidgetItem(rubric["tags"]))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -618,16 +608,11 @@ class RubricTable(QTableWidget):
         self._parent.rubricSignal.emit(self.selected_row_as_rubric(r))
 
     def selected_row_as_rubric(self, r):
-        # TODO: why not include versions too?
-        return {
-            "kind": self.item(r, 4).text(),
-            "display_delta": self.item(r, 2).text(),
-            "value": int(self.item(r, 8).text()),
-            "out_of": int(self.item(r, 9).text()),
-            "text": self.item(r, 3).text(),
-            "id": self.item(r, 0).text(),
-            "tags": self.item(r, 10).text(),
-        }
+        id = self.item(r, 0).text()
+        # TODO: we want a dict lookup
+        for r in self._parent.rubrics:
+            if r["id"] == id:
+                return r
 
     def get_group_names(self):
         groups = []
@@ -661,11 +646,9 @@ class RubricTable(QTableWidget):
         return None
 
     def colourLegalRubric(self, r, mss):
-        # TODO: why not stuff versions back into the rubric?
         legal = isLegalRubric(
             mss,
             self.selected_row_as_rubric(r),
-            versions=json.loads(self.item(r, 5).text()),
             scene=self._parent._parent.scene,
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
@@ -706,14 +689,6 @@ class RubricTable(QTableWidget):
                     new_rubric["text"], new_rubric["parameters"], self._parent.version
                 )
                 self.item(r, 3).setText(render)
-                self.item(r, 4).setText(new_rubric["kind"])
-                self.item(r, 5).setText(json.dumps(new_rubric["versions"]))
-                self.item(r, 6).setText(json.dumps(new_rubric["parameters"]))
-                self.item(r, 7).setText(new_rubric["text"])
-                self.item(r, 8).setText(str(new_rubric["value"]))
-                self.item(r, 9).setText(str(new_rubric["out_of"]))
-                self.item(r, 10).setText(new_rubric["tags"])
-
                 # update the legality
                 self.colourLegalRubric(r, mss)
                 # set a tooltip that contains tags and meta info when someone hovers over text
