@@ -209,6 +209,7 @@ class RubricTable(QTableWidget):
         return self.tabType == "show"
 
     def contextMenuEvent(self, event):
+        """Delegate the context menu to appropriate function."""
         if self.is_hidden_tab():
             self.hideContextMenuEvent(event)
         elif self.is_shared_tab():
@@ -217,6 +218,8 @@ class RubricTable(QTableWidget):
             self.defaultContextMenuEvent(event)
         elif self.is_delta_tab():
             self.tabContextMenuEvent(event)
+        elif self.is_group_tab():
+            self.showContextMenuEvent(event)
         else:
             event.ignore()
 
