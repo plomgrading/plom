@@ -131,6 +131,7 @@ setup(
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
                 "plom/demo_rubrics.toml",
+                "plom/create/extra_pages.pdf",
             ],
         ),
         # TODO: move up from plom

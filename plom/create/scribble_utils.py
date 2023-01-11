@@ -402,6 +402,8 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
 
+    extra_pages_pdf = fitz.open(resources.files(plom.create) / "extra_pages.pdf")
+
     print("Annotating papers with fake student data and scribbling on pages...")
     if which:
         papers_paths = sorted([paper_dir / f"exam_{i:04}.pdf" for i in which])
@@ -490,15 +492,40 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
             print(
                 f"  making an extra page for test {test_number} and id {student_number}"
             )
-            all_pdf_documents.insert_page(
-                -1,
-                text=f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
-                fontsize=extra_page_font_size,
-                color=blue,
+
+            # insert a copy of the extra page from the extra page pdf
+            all_pdf_documents.insert_pdf(
+                extra_pages_pdf,
+                from_page=0,
+                to_page=0,
+                start_at=-1,
             )
+            page_rect = all_pdf_documents[-1].rect
+            # stamp some info on it - TODO - make this look better.
+            tw = fitz.TextWriter(page_rect, color=(0, 0, 1))
+            # TODO - make these numbers less magical
+            maxbox = fitz.Rect(25, 400, 500, 600)
+            # page.draw_rect(maxbox, color=(1, 0, 0))
+            excess = tw.fill_textbox(
+                maxbox,
+                f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
+                align=fitz.TEXT_ALIGN_LEFT,
+                fontsize=18,
+                font=fitz.Font("helv"),
+            )
+            assert not excess, "Text didn't fit: is extra-page text too long?"
+            tw.write_text(all_pdf_documents[-1])
+
+            # all_pdf_documents.insert_page(
+            #     -1,
+            #     text=f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
+            #     fontsize=extra_page_font_size,
+            #     color=blue,
+            # )
 
     all_pdf_documents.save(outfile)
     all_pdf_documents.close()
+    extra_pages_pdf.close()
     print(f'Assembled in "{outfile}"')
 
 
