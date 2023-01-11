@@ -1684,7 +1684,7 @@ class AddRubricBox(QDialog):
         vlay.addLayout(self._param_grid)
         vlay.addWidget(QLabel("<hr>"))
         hlay = QHBoxLayout()
-        self.group_checkbox = QCheckBox("(Coming soon!) Associate with the group ")
+        self.group_checkbox = QCheckBox("Associate with the group ")
         hlay.addWidget(self.group_checkbox)
         b = QComboBox()
         # b.setEditable(True)
@@ -1707,11 +1707,16 @@ class AddRubricBox(QDialog):
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         b = QToolButton(text="What are groups?")
         b.setAutoRaise(True)
-        msg = """<p>Tips on groups</p>
+        msg = """<p>Groups are intended for multi-part questions.
+              For example, you could make groups &ldquo;(a)&rdquo;,
+              &ldquo;(b)&rdquo; and &ldquo;(c)&rdquo;.
+              Some tips:</p>
             <ul>
-            <li><b>experimental feature:</b> please discuss with your team.</li>
-            <li>Groups create automatic tabs, shared with other users.</li>
-            <li>Groups are intended for multi-part questions.</li>
+            <li><b>This is an experimental feature:</b> please discuss
+              with your team.</li>
+            <li>Groups create automatic tabs, shared with other users.
+              <b>Other users may need to click the &ldquo;sync&rdquo; button.</b>
+            </li>
             <li>Within a group, you can use at most one exclusive rubric.</li>
             <li>Groups will disappear if no rubrics are in them.</li>
             <ul>
