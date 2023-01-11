@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 import random
 
 from django.db import models
 from django.contrib.auth.models import User
+from polymorphic.models import PolymorphicModel
 
 
 def generate_key():
@@ -19,18 +20,31 @@ def generate_unique_key():
     return key
 
 
-class Rubric(models.Model):
+class Rubric(PolymorphicModel):
     """
     Represents a marker's comment and mark delta for a particular question.
     """
 
     key = models.TextField(null=False, default=generate_unique_key)
-    kind = models.TextField(
-        null=False, default="abs"
-    )  # abs, neut, delt, relative - is short
-    delta = models.TextField(null=False, default="0")  # is short
     text = models.TextField(null=False, default="")  # can be long
     question = models.IntegerField(null=False, default=0)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     tags = models.TextField(null=True)  # can be long
     meta = models.TextField(null=True)  # can be long
+
+
+class RelativeRubric(Rubric):
+    """
+    A rubric that modifies the total score by an integer value.
+    """
+
+    delta = models.TextField(null=False, default="0")  # is short
+
+
+class RubricPane(models.Model):
+    """
+    A user's configuration for the 'rubrics' pane in the annotation window.
+    """
+
+    user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
+    data = models.JSONField(null=False, default=dict)

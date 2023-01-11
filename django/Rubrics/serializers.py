@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from rest_framework import serializers
 
-from Rubrics.models import Rubric
+from Rubrics.models import RelativeRubric
 
 
-class RubricSerializer(serializers.ModelSerializer):
+class RelativeRubricSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Rubric
+        model = RelativeRubric
         fields = "__all__"
         extra_kwargs = {
             "tags": {

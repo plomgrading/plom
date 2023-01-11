@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Colin B. Macdonald
 
-from django.urls import path
+from django.urls import path, re_path
 from rest_framework.authtoken.views import obtain_auth_token
 
 from API.views import (
@@ -28,6 +28,7 @@ from API.views import (
     MgetRubricsByQuestion,
     MgetRubricPanes,
     McreateRubric,
+    MmodifyRubric,
 )
 
 
@@ -71,17 +72,22 @@ urlpatterns = [
         MgetAnnotationImage.as_view(),
         name="api_MK_annotation_img",
     ),
-    path(
-        "MK/rubric/<int:question>/",
+    re_path(
+        r"MK/rubric/(?P<question>[0-9]{,5})$",
         MgetRubricsByQuestion.as_view(),
         name="api_MK_get_rubric",
     ),
     path(
-        "MK/user/<username>/<int:question>/",
+        "MK/user/<username>/<int:question>",
         MgetRubricPanes.as_view(),
         name="api_MK_get_rubric_panes",
     ),
     path("MK/rubric", McreateRubric.as_view(), name="api_MK_create_rubric"),
+    re_path(
+        r"MK/rubric/(?P<key>[0-9]{12})$",
+        MmodifyRubric.as_view(),
+        name="api_MK_modify_rubric",
+    ),
 ]
 
 urlpatterns += [

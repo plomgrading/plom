@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -25,7 +25,19 @@ class McreateRubric(APIView):
         try:
             rubric = rs.create_rubric(request.data["rubric"])
             return Response(rubric.key, status=status.HTTP_200_OK)
-        except ValidationError:
+        except (ValidationError, NotImplementedError):
             raise APIException(
                 detail="Invalid rubric", code=status.HTTP_406_NOT_ACCEPTABLE
+            )
+
+
+class MmodifyRubric(APIView):
+    def patch(self, request, key):
+        rs = RubricService()
+        try:
+            rubric = rs.modify_rubric(key, request.data["rubric"])
+            return Response(rubric.key, status=status.HTTP_200_OK)
+        except (ValidationError, NotImplementedError):
+            raise APIException(
+                detail="Invalid rubric data", code=status.HTTP_406_NOT_ACCEPTABLE
             )
