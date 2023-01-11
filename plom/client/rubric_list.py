@@ -582,7 +582,7 @@ class RubricTable(QTableWidget):
         self.handleClick()
 
     def previousRubric(self):
-        """Move selection to the prevoous row, wrapping around if needed."""
+        """Move selection to the previous row, wrapping around if needed."""
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
