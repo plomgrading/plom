@@ -4,6 +4,7 @@
 from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponse
 from django_htmx.http import HttpResponseClientRefresh
+from bs4 import BeautifulSoup
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
@@ -43,7 +44,10 @@ class ReplacePageImage(ManageBundleView):
             print("uploaded file")
             return HttpResponse("No error")
         else:
+            error_message = '""""' + str(form.errors) + '""""'
+            parsed_error = BeautifulSoup(error_message, "html.parser")
+            error = parsed_error.li.text[7:]
             error_message = "An error occurred replacing the page image."
-            context.update({"replace_image_error_message": error_message})
+            context.update({"replace_image_error_message": error})
             return render(request, "Scan/manage_bundle.html", context)
         

@@ -111,12 +111,15 @@ class ReplaceImageForm(forms.Form):
             scanner = ScanService()
             file_bytes = single_pdf.read()
             pdf_doc = fitz.open(stream=file_bytes)
+            
             # make sure it is correct format
             if "PDF" not in pdf_doc.metadata["format"]:
                 raise ValidationError("File is not a valid PDF.")
+            
             # make sure only 1 pdf page
             if pdf_doc.page_count > 1:
                 raise ValidationError("Only upload a single page pdf file.")
+            
             # turn that pdf file into page image
             timestamp = datetime.timestamp(datetime.now())
             file_name = f"{timestamp}.pdf"
@@ -136,11 +139,16 @@ class ReplaceImageForm(forms.Form):
             pixmap = uploaded_pdf_file[0].get_pixmap(matrix=transform)
             pixmap.save(save_as_image)
 
+            # check uploaded image hash
             uploaded_image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
             all_image_hash_list = scanner.get_all_staging_image_hash()
             for image_hash in all_image_hash_list:
                 if str(uploaded_image_hash) == str(image_hash):
                     raise ValidationError("This page already uploaded.")
+
+            # removes the file
+            pathlib.Path.unlink(save_as_pdf / file_name)
+            pathlib.Path.unlink(save_as_image)
 
         except (FileDataError, KeyError):
             raise ValidationError("Unable to open file.")
