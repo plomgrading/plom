@@ -1399,8 +1399,6 @@ class RubricWidget(QWidget):
             return
         new_rubric = arb.gimme_rubric_data()
 
-        # TODO: wouldn't it not be simpler to rebuild everything?
-        # TODO: currently things do not move b/w groups properly
         if edit:
             key = self._parent.modifyRubric(new_rubric["id"], new_rubric)
             # update the rubric in the current internal rubric list
@@ -1409,14 +1407,14 @@ class RubricWidget(QWidget):
             assert self.rubrics[index]["id"] == new_rubric["id"]
             # then replace
             self.rubrics[index] = new_rubric
-            self.setRubricTabsFromState(self.get_tab_rubric_lists())
         else:
             new_rubric.pop("id")
             new_rubric["id"] = self._parent.createNewRubric(new_rubric)
             # at this point we have an accepted new rubric
             # add it to the internal list of rubrics
             self.rubrics.append(new_rubric)
-            self.setRubricTabsFromState(self.get_tab_rubric_lists())
+
+        self.setRubricTabsFromState(self.get_tab_rubric_lists())
         # finally - select that rubric and simulate a click
         self.RTW.currentWidget().selectRubricByKey(new_rubric["id"])
         self.handleClick()
