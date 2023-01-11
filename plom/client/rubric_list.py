@@ -614,25 +614,6 @@ class RubricTable(QTableWidget):
             if r["id"] == id:
                 return r
 
-    def get_group_names(self):
-        groups = []
-        for r in range(self.rowCount()):
-            tt = self.item(r, 10).text()
-            # TODO: share pack/unpack from tag w/ dialog & compute_score
-            tt = tt.split()
-            for t in tt:
-                if t.startswith("exclgroup:"):
-                    # TODO: Python >= 3.9
-                    # g = t.removeprefix("exclgroup:")
-                    g = t[len("exclgroup:") :]
-                    groups.append(g)
-                elif t.startswith("group:"):
-                    # TODO: Python >= 3.9
-                    # g = t.removeprefix("group:")
-                    g = t[len("group:") :]
-                    groups.append(g)
-        return list(set(groups))
-
     def firstUnhiddenRow(self):
         for r in range(self.rowCount()):
             if not self.isRowHidden(r):
@@ -1316,7 +1297,24 @@ class RubricWidget(QWidget):
         return self._parent.get_nonrubric_text_from_page()
 
     def get_group_names(self):
-        return self.tabS.get_group_names()
+        groups = []
+        for r in self.rubrics:
+            tt = r["tags"]
+            # TODO: share pack/unpack from tag w/ dialog & compute_score
+            tt = tt.split()
+            for t in tt:
+                if t.startswith("exclgroup:"):
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("exclgroup:")
+                    g = t[len("exclgroup:") :]
+                    groups.append(g)
+                elif t.startswith("group:"):
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("group:")
+                    g = t[len("group:") :]
+                    groups.append(g)
+        return list(set(groups))
+
 
     def unhideRubricByKey(self, key):
         index = [x["id"] for x in self.rubrics].index(key)
