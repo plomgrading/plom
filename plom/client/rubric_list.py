@@ -1409,33 +1409,17 @@ class RubricWidget(QWidget):
             assert self.rubrics[index]["id"] == new_rubric["id"]
             # then replace
             self.rubrics[index] = new_rubric
-            # update the rubric in all lists
-            self.updateRubricInLists(new_rubric)
+            self.setRubricTabsFromState(self.get_tab_rubric_lists())
         else:
             new_rubric.pop("id")
             new_rubric["id"] = self._parent.createNewRubric(new_rubric)
             # at this point we have an accepted new rubric
             # add it to the internal list of rubrics
             self.rubrics.append(new_rubric)
-            # append the rubric to the shownList
-            self.tabS.appendNewRubric(new_rubric)
-            # fix for #1563 - should only add to shared list and user-generated list
-            # also add it to the list in the current rubriclist (if it is a user-generated tab)
-            if self.RTW.currentWidget().is_user_tab():
-                self.RTW.currentWidget().appendNewRubric(new_rubric)
-            if self.RTW.currentWidget().is_group_tab():
-                self.RTW.currentWidget().appendNewRubric(new_rubric)
+            self.setRubricTabsFromState(self.get_tab_rubric_lists())
         # finally - select that rubric and simulate a click
         self.RTW.currentWidget().selectRubricByKey(new_rubric["id"])
         self.handleClick()
-
-    def updateRubricInLists(self, new_rubric):
-        self.tabS.updateRubric(new_rubric, self.mss)
-        self.tabHide.updateRubric(new_rubric, self.mss)
-        for tab in self.get_user_tabs():
-            tab.updateRubric(new_rubric, self.mss)
-        for tab in self.get_group_tabs():
-            tab.updateRubric(new_rubric, self.mss)
 
     def get_tab_rubric_lists(self):
         """returns a dict of lists of the current rubrics.
