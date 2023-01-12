@@ -150,30 +150,11 @@ class RubricTable(QTableWidget):
         self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        _col_headers = (
-            "Key",
-            "Username",
-            "Display_Delta",
-            "Text",
-            "Kind",
-            "Versions",
-            "Parameters",
-            "Raw Text",
-            "Value",
-            "Out of",
-            "Tags",
-        )
+        _col_headers = ("Key", "Username", "Display_Delta", "Text")
         self.setColumnCount(len(_col_headers))
         self.setHorizontalHeaderLabels(_col_headers)
         self.hideColumn(0)
         self.hideColumn(1)
-        self.hideColumn(4)
-        self.hideColumn(5)
-        self.hideColumn(6)
-        self.hideColumn(7)
-        self.hideColumn(8)
-        self.hideColumn(9)
-        self.hideColumn(10)
         # could use a subclass
         if self.tabType == "delta":
             self.hideColumn(3)
@@ -425,7 +406,6 @@ class RubricTable(QTableWidget):
         self.appendNewRubric(rubric)
 
     def appendNewRubric(self, rubric):
-        # TODO: much code dupe w/ self.updateRubric: update both for changes
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
@@ -661,27 +641,6 @@ class RubricTable(QTableWidget):
         r = tableIndex.row()
         rubricKey = self.item(r, 0).text()
         self._parent.edit_rubric(rubricKey)
-
-    def updateRubric(self, new_rubric, mss):
-        # TODO: much code dupe w/ self.appendNewRubric: update both for changes
-        for r in range(self.rowCount()):
-            if self.item(r, 0).text() == new_rubric["id"]:
-                self.item(r, 1).setText(new_rubric["username"])
-                self.item(r, 2).setText(new_rubric["display_delta"])
-                # how to access version?  and where to store this function?
-                render = render_params(
-                    new_rubric["text"], new_rubric["parameters"], self._parent.version
-                )
-                self.item(r, 3).setText(render)
-                # update the legality
-                self.colourLegalRubric(r, mss)
-                # set a tooltip that contains tags and meta info when someone hovers over text
-                hoverText = ""
-                if new_rubric["tags"] != "":
-                    hoverText += "Tagged as {}\n".format(new_rubric["tags"])
-                if new_rubric["meta"] != "":
-                    hoverText += "{}\n".format(new_rubric["meta"])
-                self.item(r, 3).setToolTip(hoverText.strip())
 
 
 class TabBarWithAddRenameRemoveContext(QTabBar):
