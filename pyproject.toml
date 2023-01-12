@@ -13,7 +13,7 @@ target-version = ['py37']
 exclude = '/(\.eggs|\.git|\.hg|\.mypy _cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/|ui_.+\.py'
 
 [tool.pylint.main]
-extension-pkg-allow-list = ["PyQt5", "cv2"]
+extension-pkg-allow-list = ["PyQt5", "cv2", "zxingcpp"]
 generated-members = ["pandas", "cv2.*"]
 # order matters: need errors-only before disable
 errors-only = true
