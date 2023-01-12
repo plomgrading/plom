@@ -57,7 +57,6 @@ server_install_requires = [
     "Pillow>=7.0.0",
     "aiohttp>=3.7.2",
     "weasyprint>=52.5",
-    "pyzbar",
     "peewee>=3.13.3",
     "PyMySQL>=1.0.2",
     "imutils",
