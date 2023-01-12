@@ -162,7 +162,10 @@ def checkQRsValid(bundledir, spec):
 
         if not problemFlag:
             for tpvc in qrs.values():
-                if not isValidTPV(tpvc):
+                if tpvc in [f"plomX{n}" for n in range(1, 9)]:
+                    msg = f"Is >> extra page << with code '{tpvc}' - todo orient and file differently"
+                    problemFlag = True
+                elif not isValidTPV(tpvc):
                     msg = "TPV '{}' is not a valid format".format(tpvc)
                     problemFlag = True
                 elif str(getCode(tpvc)) != str(spec["publicCode"]):
