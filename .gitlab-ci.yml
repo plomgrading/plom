@@ -590,6 +590,7 @@ docs_sphinx:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
+# TODO: likely python3-zxing-cpp is too old
 fedora_build:
   stage: alt_build
   needs: []
@@ -597,7 +598,7 @@ fedora_build:
   when: manual
   allow_failure: true
   before_script:
-    - dnf install -y ImageMagick openssl zxing-cpp gcc gcc-c++ cmake
+    - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
           turbojpeg-devel libjpeg-turbo-devel
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
