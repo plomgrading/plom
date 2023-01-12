@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 
@@ -79,9 +79,9 @@ def buildSpecialRubrics(spec, db):
             rubric = {
                 "display_delta": "+{}".format(m),
                 "value": m,
-                "out_of": mx,
+                "out_of": 0,
                 "text": ".",
-                "kind": "delta",
+                "kind": "relative",
                 "question": q,
             }
             ok, key_or_err = db.McreateRubric("manager", rubric)
@@ -94,9 +94,9 @@ def buildSpecialRubrics(spec, db):
             rubric = {
                 "display_delta": "-{}".format(m),
                 "value": -m,
-                "out_of": mx,
+                "out_of": 0,
                 "text": ".",
-                "kind": "delta",
+                "kind": "relative",
                 "question": q,
             }
             ok, key_or_err = db.McreateRubric("manager", rubric)

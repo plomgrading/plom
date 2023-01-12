@@ -1435,6 +1435,8 @@ class Annotator(QWidget):
             msg.exec()
             return False
 
+        assert self.getScore() is not None
+
         # do some checks when score is zero
         if self.getScore() == 0:
             if not self._zeroMarksWarn():

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 
@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 
 from plom import AnnFontSizePts, ScenePixelHeight
-from plom.plom_exceptions import PlomInconsistentRubricsException
+from plom.plom_exceptions import PlomInconsistentRubric
 from plom.client.image_view_widget import mousewheel_delta_to_scale
 
 from .tools import (
@@ -525,9 +525,7 @@ class PageScene(QGraphicsScene):
         Returns:
             bool
         """
-        if all(r["kind"] == "neutral" for r in self.get_rubrics()):
-            return True
-        return False
+        return self.getScore() is None
 
     def refreshStateAndScore(self):
         self.refreshScore()
@@ -711,7 +709,7 @@ class PageScene(QGraphicsScene):
                 # if item is in a rubric then its 'group' will be non-null
                 # only keep those with group=None to keep non-rubric text
                 if X.group() is None:
-                    texts.append(X.getContents())
+                    texts.append(X.toPlainText())
         return texts
 
     def get_rubrics_from_page(self):
@@ -747,7 +745,7 @@ class PageScene(QGraphicsScene):
                     r = s
                     continue
                 else:  # now s non-zero and different from r - so problem
-                    raise PlomInconsistentRubricsException
+                    raise PlomInconsistentRubric
         return r
 
     def countComments(self):
@@ -2335,7 +2333,8 @@ class PageScene(QGraphicsScene):
                     continue
                 if isinstance(x, GroupDeltaTextItem):
                     # check if this is a delta-rubric
-                    if x.kind == "delta":
+                    # TODO: see rubrics_list.py: rubric_is_naked_delta
+                    if x.kind == "relative" and x.blurb.toPlainText() == ".":
                         continue
                 return False  # otherwise
         return True  # only tick,cross or delta-rubrics
@@ -2442,7 +2441,7 @@ class PageScene(QGraphicsScene):
             N = compute_score(rubrics, self.maxMark)
         except ValueError:
             return False
-        except PlomInconsistentRubricsException:
+        except PlomInconsistentRubric:
             return False
         return True
 

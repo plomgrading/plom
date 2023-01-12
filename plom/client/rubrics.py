@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
-
-from plom.plom_exceptions import PlomInconsistentRubricsException
+from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
 def compute_score_naive(rubrics, maxscore):
@@ -36,7 +35,9 @@ def compute_score_legacy2022(rubrics, maxscore):
     """Compute score given a set of rubrics, using "Plom 2022" rules.
 
     args:
-        rubrics (list):
+        rubrics (list): each rubric is dict with (at least) these
+            keys: `kind`, `value`.  Kind must be a string in
+            ``("absolute", "relative", "neutral")``.
         maxscore (int): the maximum anticipated score
 
     returns:
@@ -44,18 +45,23 @@ def compute_score_legacy2022(rubrics, maxscore):
         annotations on the page.  Note `None` is different from `0`.
 
     raises:
-        PlomInconsistentRubricsException: for example, absolute and
-            relative rubrics cannot be mixed.
+        PlomInconsistentRubric: for example, absolute and relative rubrics
+            cannot be mixed.
         ValueError: int is outside range [0, maxscore], or non-zero,
             non-full marks absolute rubrics in use.
+        PlomInvalidRubric: unexpectedly invalid rubric.
 
     Tries to follow the rules as used in 2022, as closely as possible.
     """
     score = None
 
+    for r in rubrics:
+        if r["kind"] not in ("absolute", "relative", "neutral"):
+            raise PlomInvalidRubric(f'Invalid rubric kind={r["kind"]}')
+
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]
     if len(absolutes) > 1:
-        raise PlomInconsistentRubricsException("Can use at most one absolute rubric")
+        raise PlomInconsistentRubric("Can use at most one absolute rubric")
 
     for r in absolutes:
         if int(r["value"]) not in (0, maxscore):
@@ -77,9 +83,9 @@ def compute_score_legacy2022(rubrics, maxscore):
     ]
 
     if uppers and downrs:
-        raise PlomInconsistentRubricsException("Cannot mix up and down deltas")
+        raise PlomInconsistentRubric("Cannot mix up and down deltas")
     if len(absolutes) > 0 and (uppers or downrs):
-        raise PlomInconsistentRubricsException("Cannot relative and absolute rubrics")
+        raise PlomInconsistentRubric("Cannot relative and absolute rubrics")
 
     if uppers:
         score = sum(uppers)
@@ -99,7 +105,10 @@ def compute_score_locabs(rubrics, maxscore):
     +/- rubrics when they are unambiguous.
 
     args:
-        rubrics (list):
+        rubrics (list): each rubric is dict with (at least) these
+            keys: `kind`, `value`.  Kind must be a string in
+            ``("absolute", "relative", "neutral")``.
+            Any ``kind="absolute"`` must also have `out_of` fields.
         maxscore (int): the maximum anticipated score
 
     returns:
@@ -107,17 +116,22 @@ def compute_score_locabs(rubrics, maxscore):
         annotations on the page.  Note `None` is different from `0`.
 
     raises:
-        PlomInconsistentRubricsException: for example, absolute and
-            relative rubrics cannot be mixed.
+        PlomInconsistentRubric: for example, absolute and relative rubrics
+            cannot be mixed.
         ValueError: int is outside range [0, maxscore], or absolute rubrics
             are out of their own range ``[0, out_of]``.  Can also be because
             the total of all ``out_of`` are more than maxscore.  The absolute
             rubrics give upper/lower bounds for possible scores which raise
             ValueErrors if exceeded by relative rubrics.
+        PlomInvalidRubric: unexpectedly invalid rubric.
     """
     lo_score = 0
     hi_score = maxscore
     sum_out_of = 0
+
+    for r in rubrics:
+        if r["kind"] not in ("absolute", "relative", "neutral"):
+            raise PlomInvalidRubric(f'Invalid rubric kind={r["kind"]}')
 
     # step one: add up all the absolute rubrics
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]
@@ -158,7 +172,7 @@ def compute_score_locabs(rubrics, maxscore):
     if uppers and downrs:
         # TODO: might relax above
         # e.g., if nontrivial bracket than its ambiguous to mix +/-
-        raise PlomInconsistentRubricsException("Ambiguous to mix up and down deltas")
+        raise PlomInconsistentRubric("Ambiguous to mix up and down deltas")
 
     if not absolutes and not uppers and not downrs:
         return None
