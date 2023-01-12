@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 #
@@ -17,7 +17,7 @@ RUN apt-get -y update && \
         openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
         libpango-1.0-0 libpangocairo-1.0-0 \
-        libzbar0 \
+	libzxingcore1 \
         libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev \
         file \
         python3 \
