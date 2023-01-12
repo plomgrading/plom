@@ -75,13 +75,3 @@ def test_qr_reads_write_dot_qr(tmpdir):
         J = json.load(f)
     assert p == J  # .png.qr matches return values
 
-
-def test_qr_reads_one_fails():
-    """This test may be sensitive to ZBar version, machine, etc.
-
-    Test could be removed if issue is fixed in the future.
-    """
-    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im.load()
-    p = QRextract(im, write_to_file=False, try_harder=False)
-    assert len([x for x in p.values() if x != []]) == 2  # only 2 not 3
