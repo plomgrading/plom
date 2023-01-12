@@ -597,7 +597,7 @@ fedora_build:
   when: manual
   allow_failure: true
   before_script:
-    - dnf install -y ImageMagick openssl zbar gcc gcc-c++ cmake
+    - dnf install -y ImageMagick openssl zxing-cpp gcc gcc-c++ cmake
           turbojpeg-devel libjpeg-turbo-devel
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
@@ -825,7 +825,7 @@ minpy_mindeps:
     - apt-get update
     - apt-get --no-install-recommends --yes install
       cmake make imagemagick dvipng g++ openssl
-      libzbar0
+      libzxingcore1
       texlive-latex-extra latexmk texlive-fonts-recommended
       libpango-1.0-0 libpangocairo-1.0-0
       libgl1-mesa-glx libsm6 libxrender1
