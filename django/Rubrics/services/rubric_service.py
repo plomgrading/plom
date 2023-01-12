@@ -4,7 +4,7 @@
 from django.contrib.auth.models import User
 
 from Rubrics.serializers import RelativeRubricSerializer
-from Rubrics.models import RelativeRubric
+from Rubrics.models import RelativeRubric, RubricPane
 
 
 class RubricService:
@@ -73,3 +73,36 @@ class RubricService:
         serializer.save()
 
         return serializer.instance
+
+    def get_rubric_pane(self, user, question):
+        """
+        Gets a rubric pane for a user.
+
+        Args:
+            user: a User instance
+            question: (int)
+
+        Returns:
+            dict: the JSON representation of the pane.
+        """
+
+        pane, created = RubricPane.objects.get_or_create(
+            user=user, question=question
+        )  # TODO: have a default pane instead of a blank one?
+        if created:
+            return {}
+        return pane.data
+
+    def update_rubric_pane(self, user, question, data):
+        """
+        Updates a rubric pane for a user.
+
+        Args:
+            user: a User isntance
+            question: int
+            data: dict representing the new pane
+        """
+
+        pane = RubricPane.objects.get(user=user, question=question)
+        pane.data = data
+        pane.save()

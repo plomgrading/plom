@@ -16,7 +16,15 @@ class MgetRubricsByQuestion(APIView):
 
 class MgetRubricPanes(APIView):
     def get(self, request, username, question):
-        return Response({}, status=status.HTTP_200_OK)
+        rs = RubricService()
+        pane = rs.get_rubric_pane(request.user, question)
+        return Response(pane, status=status.HTTP_200_OK)
+
+    def put(self, request, username, question):
+        rs = RubricService()
+        config = request.data["rubric_config"]
+        rs.update_rubric_pane(request.user, question, config)
+        return Response(status=status.HTTP_200_OK)
 
 
 class McreateRubric(APIView):

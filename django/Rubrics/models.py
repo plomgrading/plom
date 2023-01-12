@@ -47,4 +47,5 @@ class RubricPane(models.Model):
     """
 
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
+    question = models.PositiveIntegerField(default=0)
     data = models.JSONField(null=False, default=dict)
