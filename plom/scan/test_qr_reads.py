@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import json
 from pathlib import Path
@@ -74,4 +75,3 @@ def test_qr_reads_write_dot_qr(tmpdir):
     with open(qrfile, "r") as f:
         J = json.load(f)
     assert p == J  # .png.qr matches return values
-
