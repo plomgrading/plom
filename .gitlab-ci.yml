@@ -744,6 +744,7 @@ newOS_newdeps:
 # 2. take python deps from package manager
 # 3. force the minimum version from setup.py
 # Goal here is to catch changes that need newer features of a dependency.
+# TODO: interestingly, zxing-cpp==1.4.0 builds here without libzxingcore1
 oldOS_mindeps:
   stage: alt_build
   needs: []
@@ -824,7 +825,6 @@ minpy_mindeps:
     - apt-get update
     - apt-get --no-install-recommends --yes install
       cmake make imagemagick dvipng g++ openssl
-      libzxingcore1
       texlive-latex-extra latexmk texlive-fonts-recommended
       libpango-1.0-0 libpangocairo-1.0-0
       libgl1-mesa-glx libsm6 libxrender1
