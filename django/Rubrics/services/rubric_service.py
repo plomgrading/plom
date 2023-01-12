@@ -98,7 +98,7 @@ class RubricService:
         Updates a rubric pane for a user.
 
         Args:
-            user: a User isntance
+            user: a User instance
             question: int
             data: dict representing the new pane
         """
