@@ -12,7 +12,7 @@ FROM ubuntu:20.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
-        cmake make g++ \
+        cmake make g++ git\
         imagemagick \
         openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
