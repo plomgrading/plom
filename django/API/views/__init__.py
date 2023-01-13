@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
 
 from .server_info import (
@@ -27,4 +27,11 @@ from .mark import (
     MgetOneImage,
     MgetAnnotations,
     MgetAnnotationImage,
+)
+
+from .rubrics import (
+    MgetRubricsByQuestion,
+    MgetRubricPanes,
+    McreateRubric,
+    MmodifyRubric,
 )

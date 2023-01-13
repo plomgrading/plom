@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "Mark",
     "Identify",
     "Progress",
+    "Rubrics",
 ]
 
 MIDDLEWARE = [
