@@ -3,8 +3,7 @@
 
 from pytest import raises
 
-from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
-from plom.client.rubrics import compute_score_locabs as s
+from plom.client.rubrics import compute_score_locabs as score
 from plom.client.rubrics import check_for_illadvised
 
 
@@ -20,6 +19,8 @@ def test_ill_no_warnings():
             {"kind": "absolute", "value": 3, "out_of": 5},
         ],
     ):
+        # any good situation here should not be an error from the scoring function
+        score(rublist, maxscore)
         ok, code, msg = check_for_illadvised(rublist, maxscore)
         assert ok
         assert code is None
@@ -41,6 +42,8 @@ def test_ill_not_enough_out_of():
         {"kind": "absolute", "value": 2, "out_of": 4},
         {"kind": "absolute", "value": 3, "out_of": 4},
     ]
+    # example should be legal
+    assert score(rublist, maxscore) <= maxscore
     ok, code, msg = check_for_illadvised(rublist, maxscore)
     assert not ok
     assert code
@@ -55,6 +58,7 @@ def test_ill_too_much_out_of():
         {"kind": "absolute", "value": 3, "out_of": 4},
         {"kind": "absolute", "value": 4, "out_of": 4},
     ]
+    # this one is also not legal, but seems like a good properly for illadvised too
     ok, code, msg = check_for_illadvised(rublist, maxscore)
     assert not ok
     assert code
@@ -74,6 +78,8 @@ def test_ill_dont_mix_abs_minus_relative():
         },
         {"kind": "relative", "value": -1, "display_delta": "-1", "text": "C"},
     ]
+    # example should be legal
+    assert score(rublist, maxscore) <= maxscore
     ok, code, msg = check_for_illadvised(rublist, maxscore)
     assert not ok
     assert code
@@ -95,6 +101,8 @@ def test_ill_dont_mix_abs_plus_relative():
         },
         {"kind": "relative", "value": 1, "display_delta": "+1", "text": "C"},
     ]
+    # example should be legal
+    assert score(rublist, maxscore) <= maxscore
     ok, code, msg = check_for_illadvised(rublist, maxscore)
     assert not ok
     assert code
