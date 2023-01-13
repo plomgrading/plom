@@ -130,9 +130,9 @@ class ReplaceImageForm(forms.Form):
             with open(save_as_pdf / file_name, "w") as f:
                 pdf_doc.save(f)
             
-            save_path = replace_dir / "images"
-            save_path.mkdir(exist_ok=True)
-            save_as_image = replace_dir / "images" / f"{timestamp}.png"
+            save_dir = replace_dir / "images"
+            save_dir.mkdir(exist_ok=True)
+            save_as_image = save_dir / f"{timestamp}.png"
 
             uploaded_pdf_file = fitz.Document(save_as_pdf / file_name)
             transform = fitz.Matrix(4, 4)
@@ -149,6 +149,14 @@ class ReplaceImageForm(forms.Form):
             # removes the file
             pathlib.Path.unlink(save_as_pdf / file_name)
             pathlib.Path.unlink(save_as_image)
+
+            data.update(
+                {
+                    "pdf_doc": pdf_doc,
+                    "time_uploaded": timestamp,
+                }
+            )
+            return data
 
         except (FileDataError, KeyError):
             raise ValidationError("Unable to open file.")

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 
+import pathlib
 from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponse
 from django_htmx.http import HttpResponseClientRefresh
@@ -41,7 +42,13 @@ class ReplacePageImage(ManageBundleView):
         context = self.build_context(timestamp, request.user, index)
         form = ReplaceImageForm(request.POST, request.FILES)
         if form.is_valid():
-            print("uploaded file")
+            data = form.cleaned_data
+            user = request.user
+            time_uploaded = data["time_uploaded"]
+            uploaded_pdf = data["pdf_doc"]
+
+            scanner = ScanService()
+            scanner.upload_replace_page(user, timestamp, time_uploaded, uploaded_pdf)
             return HttpResponse("No error")
         else:
             error_message = '""""' + str(form.errors) + '""""'

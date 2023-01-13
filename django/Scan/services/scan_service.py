@@ -489,3 +489,28 @@ class ScanService:
     def get_all_staging_image_hash(self):
         image_hash_list = StagingImage.objects.values('image_hash')
         return image_hash_list
+
+    @transaction.atomic
+    def upload_replace_page(self, user, timestamp, time_uploaded, pdf_doc):
+        replace_pages_dir = pathlib.Path("media") / user.username / "bundles" / str(timestamp) / "replacePages"
+        replace_pages_dir.mkdir(exist_ok=True)
+        replace_pages_pdf_dir = replace_pages_dir / "pdfs"
+        replace_pages_pdf_dir.mkdir(exist_ok=True)
+
+        filename = f"{time_uploaded}.pdf"
+        with open(replace_pages_pdf_dir / filename, "w") as f:
+            pdf_doc.save(f)
+        
+        self.save_replace_page_image(replace_pages_dir, replace_pages_pdf_dir, filename, time_uploaded)
+
+    @transaction.atomic
+    def save_replace_page_image(self, replace_pages_file_path, replace_pages_pdf_file_path, filename, time_uploaded):
+        save_replace_image_dir = replace_pages_file_path / "images"
+        save_replace_image_dir.mkdir(exist_ok=True)
+        save_as_image = save_replace_image_dir / f"{time_uploaded}.png"
+
+        upload_pdf_file = fitz.Document(replace_pages_pdf_file_path / filename)
+        transform = fitz.Matrix(4, 4)
+        pixmap = upload_pdf_file[0].get_pixmap(matrix=transform)
+        pixmap.save(save_as_image)
+        
