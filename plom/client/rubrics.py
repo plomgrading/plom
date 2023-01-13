@@ -248,6 +248,11 @@ def check_for_illadvised(rubrics, maxscore):
         string for programmitically tracking what happened and ``msg``
         is some html appropriate to show to the user, e.g., as part of
         a dialog questioning if they really wish to continue.
+
+    raises:
+        KeyError: rubric must have at least "kind", "value", "out_of"
+            keys.  In some cases, also "display_delta" and "text"  which
+            are used to render error messages.
     """
     absolutes = [r for r in rubrics if r["kind"] == "absolute"]
     uppers = [r for r in rubrics if r["kind"] == "relative" and r["value"] > 0]
