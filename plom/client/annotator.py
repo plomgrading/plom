@@ -53,6 +53,7 @@ from plom import __version__
 import plom.client.cursors
 import plom.client.icons
 from .rubric_list import RubricWidget
+from .rubrics import check_for_illadvised
 from .key_wrangler import get_key_bindings
 from .key_help import KeyHelp
 
@@ -1467,6 +1468,15 @@ class Annotator(QWidget):
             if msg.cb.checkState() == Qt.Checked:
                 # Note: these are only saved if we ultimately accept
                 self.rubricWarn = False
+
+        # some combinations of rubrics may seem ambiguous or potentially confusing
+        rubrics = self.scene.get_rubrics()
+        ok, code, msg = check_for_illadvised(rubrics, self.maxMark)
+        if not ok:
+            # TODO: some more serious than others, may want to add
+            # "don't ask me again" for only some.  For now, none.
+            if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+                return False
 
         aname, plomfile = self.pickleIt()
         rubric_ids = self.scene.get_rubric_ids()

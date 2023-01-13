@@ -217,9 +217,89 @@ def compute_score_locabs(rubrics, maxscore):
 compute_score = compute_score_locabs
 
 
-def is_ambiguous(rubrics, maxscore):
-    """TODO
+def render_rubric_as_html(r):
+    # sadly Qt does not seem to understand borders on spans
 
-    rough idea: returns false for mixed up/down?
+    # This seems a little plain
+    # return f"""
+    #    <span style="color:#FF0000;"><b>{r["display_delta"]}</b> {r["text"]}</span>
+    # """
+
+    return f"""
+        <table style="color:#FF0000;">
+          <tr>
+            <td style="padding:2px; border-width:1px; border-style:solid; border-color:#FF0000;">
+              <b>{r["display_delta"]}</b>
+            </td>
+            <td style="padding:2px; border-width:1px; border-style:dotted; border-color:#FF0000; border-left-style:None;">
+             {r["text"]}
+            </td>
+          </tr>
+        </table>
     """
-    pass
+
+
+def check_for_illadvised(rubrics, maxscore):
+    """Certain combinations of rubrics are legal but not a good idea.
+
+    return:
+        tuple: if there are no concerns, return `(True, None, None)`.
+        Otherwise, ``[False, code, msg]``, where ``code`` is a short
+        string for programmitically tracking what happened and ``msg``
+        is some html appropriate to show to the user, e.g., as part of
+        a dialog questioning if they really wish to continue.
+    """
+    absolutes = [r for r in rubrics if r["kind"] == "absolute"]
+    uppers = [r for r in rubrics if r["kind"] == "relative" and r["value"] > 0]
+    downrs = [r for r in rubrics if r["kind"] == "relative" and r["value"] < 0]
+
+    if absolutes:
+        out_of = sum([r["out_of"] for r in absolutes])
+        if out_of != maxscore and not uppers and not downrs:
+            msg = f"""
+                <p>This question is out of {maxscore}.
+                You used {len(absolutes)} absolute rubrics for a
+                total &ldquo;out of&rdquo; of {out_of}.</p>
+                <p>Are you sure you finished marking this question?</p>
+            """
+            return False, "out-of-not-max-score", msg
+
+    if absolutes and downrs:
+        exemplar1 = absolutes[0]
+        exemplar2 = downrs[0]
+        msg = f"""
+            <p>Its probably confusing to combine absolute rubrics such as</p>
+            <blockquote>
+              {render_rubric_as_html(exemplar1)}
+            </blockquote>
+            <p>with negative relative rubrics such as</p>
+            <blockquote>
+              {render_rubric_as_html(exemplar2)}
+            </blockquote>
+            <p>because the reader may be uncertain what is changed by the
+              &ldquo;<b>{exemplar2["display_delta"]}</b>&rdquo;.
+            </p>
+            <p>Are you sure this feedback will be understandable?</p>
+        """
+        return False, "dont-mix-abs-minus-relative", msg
+
+    if absolutes and uppers:
+        exemplar1 = absolutes[0]
+        exemplar2 = uppers[0]
+        msg = f"""
+            <p>Combining absolute rubrics such as</p>
+            <blockquote>
+              {render_rubric_as_html(exemplar1)}
+            </blockquote>
+            <p>with positive relative rubrics such as</p>
+            <blockquote>
+              {render_rubric_as_html(exemplar2)}
+            </blockquote>
+            <p>is potentially confusing.</p>
+            <p>You may want to <b>check with your team</b>
+            to decide if this case is acceptable or not.</p>
+            <p>Do you want to continue?</p>
+        """
+        return False, "dont-mix-abs-plus-relative", msg
+
+    return True, None, None
