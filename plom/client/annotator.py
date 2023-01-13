@@ -1469,7 +1469,7 @@ class Annotator(QWidget):
                 self.rubricWarn = False
 
         aname, plomfile = self.pickleIt()
-        rubrics = self.scene.get_rubrics_from_page()
+        rubric_ids = self.scene.get_rubric_ids()
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
@@ -1481,7 +1481,7 @@ class Annotator(QWidget):
             self.paperDir,
             aname,
             plomfile,
-            rubrics,
+            rubric_ids,
             self.integrity_check,
             self.src_img_data,
         ]

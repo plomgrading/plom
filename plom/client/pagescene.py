@@ -712,12 +712,12 @@ class PageScene(QGraphicsScene):
                     texts.append(X.toPlainText())
         return texts
 
-    def get_rubrics_from_page(self):
+    def get_rubric_ids(self):
         """
-        Get the rubrics associated with this paper.
+        Get the rubric IDs associated with this scene.
 
         Returns:
-            list: pairs of IDs and strings from each bit of text.
+            list: of IDs.
         """
         rubrics = []
         for X in self.items():
