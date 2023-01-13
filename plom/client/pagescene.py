@@ -725,29 +725,6 @@ class PageScene(QGraphicsScene):
                 rubrics.append(X.rubricID)
         return rubrics
 
-    def getSignOfRubrics(self):
-        """
-        Get the sign of the rubrics associated with this paper.
-
-        Returns:
-            int: +1, -1, 0 being the sign of the rubrics currently on paper. if no rubrics then 0.
-
-        """
-        r = 0  # the running "sign"
-        for X in self.items():
-            if isinstance(X, GroupDeltaTextItem):
-                s = X.sign_of_delta()
-                # 0 okay with everything, and if same, all ok
-                if s == 0 or r == s:
-                    continue
-                # now s is not zero and s!=r...
-                if r == 0:  # this is fine - set running sign = current sign
-                    r = s
-                    continue
-                else:  # now s non-zero and different from r - so problem
-                    raise PlomInconsistentRubric
-        return r
-
     def countComments(self):
         """
         Counts current text items and comments associated with the paper.
