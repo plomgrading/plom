@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import Qt, QPointF, QTimer
@@ -185,10 +185,6 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         if self.is_rendered():
             return self._tex_src_cache
         return super().toPlainText()
-
-    def getContents(self):
-        """Older, maybe deprecated way of getting the text/source."""
-        return self.toPlainText()
 
     def focusInEvent(self, event):
         """On focus, we switch back to source/test mode."""

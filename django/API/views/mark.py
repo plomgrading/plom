@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
 
 from rest_framework.views import APIView
@@ -80,7 +80,6 @@ class MgetNextTask(APIView):
             mts.init_all_tasks()
 
         task = mts.get_first_available_task(question=question, version=version)
-        print(task.code)
         return Response(task.code)
 
 

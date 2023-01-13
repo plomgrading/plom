@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
@@ -51,10 +51,16 @@ from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import WarnMsg, SimpleQuestion
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score
-from plom.plom_exceptions import PlomInconsistentRubricsException
+from plom.plom_exceptions import PlomInconsistentRubric
 
 
 log = logging.getLogger("annotr")
+
+
+def rubric_is_naked_delta(r):
+    if r["kind"] == "relative" and r["text"] == ".":
+        return True
+    return False
 
 
 def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
@@ -99,7 +105,7 @@ def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
         return 2
     except ValueError as e:
         return 1
-    except PlomInconsistentRubricsException:
+    except PlomInconsistentRubric:
         return 0
 
 
@@ -478,8 +484,7 @@ class RubricTable(QTableWidget):
         # grab the delta-rubrics from the rubricslist
         delta_rubrics = []
         for rb in rubrics:
-            # take the manager generated delta rubrics
-            if rb["username"] == "manager" and rb["kind"] == "delta":
+            if rubric_is_naked_delta(rb):
                 if (positive and int(rb["value"]) > 0) or (
                     not positive and int(rb["value"]) < 0
                 ):
@@ -1063,7 +1068,7 @@ class RubricWidget(QWidget):
             if rubric["username"] == "HAL":
                 continue
             # exclude manager-delta rubrics, see also Issue #1494
-            if rubric["username"] == "manager" and rubric["kind"] == "delta":
+            if rubric_is_naked_delta(rubric):
                 continue
             if (
                 rubric["id"] not in wranglerState["hidden"]
@@ -1823,8 +1828,27 @@ class AddRubricBox(QDialog):
 
     def validate_and_accept(self):
         """Make sure rubric is valid before accepting"""
-        if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
-            WarnMsg(self, "Your rubric must contain some text.").exec()
+        txt = self.TE.toPlainText().strip()
+        if len(txt) <= 0:
+            WarnMsg(
+                self,
+                "Your rubric must contain some text.",
+                info="No whitespace only rubrics.",
+                info_pre=False,
+            ).exec()
+            return
+        if txt == ".":
+            WarnMsg(
+                self,
+                f"Invalid text &ldquo;<tt>{txt}</tt>&rdquo; for rubric",
+                info="""
+                   <p>A single full-stop has meaning internally (as a sentinel),
+                   so we cannot let you make one.  See
+                   <a href="https://gitlab.com/plom/plom/-/issues/2421">Issue #2421</a>
+                   for details.</p>
+                """,
+                info_pre=False,
+            ).exec()
             return
         self.accept()
 

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from copy import deepcopy
@@ -204,7 +204,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.di.value,
             self._rubric["out_of"],
             self.di.display_delta,
-            self.blurb.getContents(),
+            self.blurb.toPlainText(),
         ]
 
     def paint(self, painter, option, widget):

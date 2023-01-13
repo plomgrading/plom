@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 
 import logging
@@ -39,8 +39,9 @@ def showRubricToUser(rubric):
     if rubric["username"] == "HAL":
         return False
     # hide manager-delta rubrics
-    # TODO: is this really meta?  not kind?  2022-12-16
-    if rubric["username"] == "manager" and rubric["meta"] == "delta":
+    from .rubric_list import rubric_is_naked_delta
+
+    if rubric_is_naked_delta(rubric):
         return False
     # passes filters
     return True
