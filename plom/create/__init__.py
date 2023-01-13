@@ -21,6 +21,7 @@ from .start_messenger import clear_manager_login
 
 from .buildDatabaseAndPapers import build_database, build_papers
 from .mergeAndCodePages import make_PDF
+from .build_extra_page_with_qrcodes import build_extra_page_pdf
 
 from .classlistValidator import sid_field, fullname_field, papernumber_field
 from .buildClasslist import process_classlist_file, get_demo_classlist

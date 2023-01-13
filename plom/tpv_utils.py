@@ -33,6 +33,22 @@ Orientation code:
 
 TODO: might encapsulate position code, have ``getPosition`` return
 e.g., the string `"NE"`
+
+Also handles plom extra page codes. These are alpha-numeric stored in micro-qr codes
+and are of the form
+
+  sssssO
+  012345
+
+where
+  * 01234 = "plomX"
+  * 5 = orientation
+with the orientation code being similar to that used for the TPV
+  * 1,5 NE
+  * 2,6 NW
+  * 3,7 SW
+  * 4,8 SE
+
 """
 
 import random
@@ -40,7 +56,6 @@ import random
 
 def isValidTPV(tpv):
     """Is this a valid TPV code?"""
-    tpv = tpv.lstrip("QR-Code:")
     if len(tpv) != len("TTTTTPPPVVVOCCCCC"):
         return False
     return tpv.isnumeric()
@@ -131,3 +146,42 @@ def new_magic_code(seed=None):
     magic = str(random.randrange(0, 10**5)).zfill(5)
     assert len(magic) == 5
     return magic
+
+
+def isValidExtraPageCode(code):
+    """Is this a valid plom-extra-page code?
+
+    Args:
+       code (str): a plom extra page code
+
+    Returns:
+       bool: the validity of the extra page code.
+
+    """
+    code = code.lstrip("plomX")
+    if len(code) != len("O"):
+        return False
+    # now check that remaining letter is a digit in 1,2,..,8.
+    if code.isnumeric():
+        if 1 <= int(code) <= 8:
+            return True
+    return False
+
+
+def encodeExtraPageCode(orientation):
+    """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code\
+    """
+    assert int(orientation) >= 1 and int(orientation) <= 8
+    return f"plomX{orientation}"
+
+
+def getExtraPageOrientation(code):
+    """Extra the orientation digit from a valid plom extra page code
+
+    Args:
+       code (str): a plom extra page code
+
+    Returns:
+       int: the orientation
+    """
+    return int(code[5])

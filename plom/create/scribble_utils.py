@@ -24,6 +24,7 @@ import plom.create
 import plom.create.fonts
 from plom.create import paperdir as _paperdir
 from plom.create import with_manager_messenger
+from plom.create import build_extra_page_pdf
 
 
 possible_answers = [
@@ -395,14 +396,18 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
             subset. (default: `None`)
     """
     # Customizable data
-    extra_page_probability = 0.2
+    extra_page_probability = 0.9
     extra_page_font_size = 18
     extra_student_probability = 0.1
 
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
 
-    extra_pages_pdf = fitz.open(resources.files(plom.create) / "extra_pages.pdf")
+    extra_pages_pdf_path = _paperdir / "extra_page.pdf"
+    # build the extra pages pdf if needed.
+    if not extra_pages_pdf_path.exists():
+        build_extra_page_pdf()
+    extra_pages_pdf = fitz.open(extra_pages_pdf_path)
 
     print("Annotating papers with fake student data and scribbling on pages...")
     if which:
@@ -510,7 +515,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
                 maxbox,
                 f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
                 align=fitz.TEXT_ALIGN_LEFT,
-                fontsize=18,
+                fontsize=extra_page_font_size,
                 font=fitz.Font("helv"),
             )
             assert not excess, "Text didn't fit: is extra-page text too long?"

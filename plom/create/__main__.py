@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
@@ -34,7 +34,7 @@ from plom import SpecVerifier
 from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
-from plom.create import build_database, build_papers
+from plom.create import build_database, build_papers, build_extra_page_pdf
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
@@ -340,6 +340,15 @@ def get_parser():
             named papers, a float from 0 (top) to 100 (bottom) of the
             page.
             Defaults to 42.""",
+    )
+
+    sp_extra = sub.add_parser(
+        "extra-pages",
+        help="Make an extra pages PDF",
+        description="""
+        Make a simple extra-paper PDF for students to use when they need more
+        space.
+        .""",
     )
 
     sp_user = sub.add_parser(
@@ -662,6 +671,8 @@ def main():
             ycoord=args.namebox_ypos,
             msgr=(args.server, args.password),
         )
+    elif args.command == "extra-pages":
+        build_extra_page_pdf()
 
     elif args.command == "user":
         msgr = start_messenger(args.server, args.password)

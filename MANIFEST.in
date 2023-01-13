@@ -20,7 +20,7 @@ include plom/serverDetails.toml
 include plom/templateUserList.csv
 include plom/demoClassList.csv
 include plom/demo_rubrics.toml
-include plom/create/extra_pages.pdf
+include plom/create/extra_pages_src.tex
 include plom/scan/test_zbar_fails.png
 include plom/server/target_Q_latex_plom.png
 include plom/latexTemplate.tex
