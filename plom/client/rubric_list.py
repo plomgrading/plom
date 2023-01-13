@@ -1581,9 +1581,6 @@ class AddRubricBox(QDialog):
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
         self.rubric_out_of_SB = _
-        # TODO: coming soon notice and setEnabled(False) below
-        hlay.addWidget(QLabel("  (coming soon!)"))
-        self.typeRB_absolute.setEnabled(False)
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(hlay)
         flay.addRow("Marks", frame)
