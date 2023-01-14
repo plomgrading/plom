@@ -5,6 +5,7 @@
 import pathlib
 import hashlib
 import fitz
+import shutil
 from datetime import datetime
 from collections import Counter
 from django.conf import settings
@@ -491,7 +492,7 @@ class ScanService:
         return image_hash_list
 
     @transaction.atomic
-    def upload_replace_page(self, user, timestamp, time_uploaded, pdf_doc):
+    def upload_replace_page(self, user, timestamp, time_uploaded, pdf_doc, index):
         replace_pages_dir = pathlib.Path("media") / user.username / "bundles" / str(timestamp) / "replacePages"
         replace_pages_dir.mkdir(exist_ok=True)
         replace_pages_pdf_dir = replace_pages_dir / "pdfs"
@@ -501,10 +502,11 @@ class ScanService:
         with open(replace_pages_pdf_dir / filename, "w") as f:
             pdf_doc.save(f)
         
-        self.save_replace_page_image(replace_pages_dir, replace_pages_pdf_dir, filename, time_uploaded)
+        save_as_image_path = self.save_replace_page_as_image(replace_pages_dir, replace_pages_pdf_dir, filename, time_uploaded)
+        self.replace_image(user, timestamp, index, save_as_image_path)
 
     @transaction.atomic
-    def save_replace_page_image(self, replace_pages_file_path, replace_pages_pdf_file_path, filename, time_uploaded):
+    def save_replace_page_as_image(self, replace_pages_file_path, replace_pages_pdf_file_path, filename, time_uploaded):
         save_replace_image_dir = replace_pages_file_path / "images"
         save_replace_image_dir.mkdir(exist_ok=True)
         save_as_image = save_replace_image_dir / f"{time_uploaded}.png"
@@ -514,3 +516,16 @@ class ScanService:
         pixmap = upload_pdf_file[0].get_pixmap(matrix=transform)
         pixmap.save(save_as_image)
         
+        return save_as_image
+    
+    @transaction.atomic
+    def replace_image(self, user, bundle_timestamp, index, saved_image_path):
+        # send the error image to discarded_pages folder
+        root_folder = pathlib.Path("media") / "page_images" / "discarded_pages"
+        root_folder.mkdir(exist_ok=True)
+
+        error_image = self.get_image(bundle_timestamp, user, index)
+        shutil.move(error_image.file_path, root_folder / f"{error_image.image_hash}.png")
+        shutil.move(saved_image_path, pathlib.Path("media") / f"{user}" / "bundles" / f"{bundle_timestamp}" / "pageImages" / f"page{index}.png")
+        
+

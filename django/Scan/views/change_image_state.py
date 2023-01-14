@@ -48,7 +48,7 @@ class ReplacePageImage(ManageBundleView):
             uploaded_pdf = data["pdf_doc"]
 
             scanner = ScanService()
-            scanner.upload_replace_page(user, timestamp, time_uploaded, uploaded_pdf)
+            scanner.upload_replace_page(user, timestamp, time_uploaded, uploaded_pdf, index)
             return HttpResponse("No error")
         else:
             error_message = '""""' + str(form.errors) + '""""'
