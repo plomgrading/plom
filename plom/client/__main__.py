@@ -15,10 +15,12 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import signal
 import os
+import platform
 import sys
 import traceback as tblib
 from multiprocessing import freeze_support
 
+from PyQt5.Qt import PYQT_VERSION_STR, QT_VERSION_STR
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 
@@ -42,10 +44,15 @@ def add_popup_to_toplevel_exception_handler():
             abbrev = "".join(lines)
         lines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")
 
-        txt = """<p><b>Something unexpected has happened!</b>
-        A partial error message is shown below.</p>
+        txt = f"""<p><b>Something unexpected has happened!</b>
+        A partial error message follows.</p>
         <p>(You could consider filing an issue; if you do, please copy-paste
-        the entire text under &ldquo;Show Details&rdquo;.)</p>"""
+        the text under &ldquo;Show Details&rdquo;.)</p>
+        <p>Plom v{__version__}<br />
+        Python {platform.python_version()},
+        PyQt5 {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
+        {platform.platform()}</p>
+        """
         msg = ErrorMsg(
             None,
             txt,
