@@ -1034,9 +1034,10 @@ macos11_client:
   - python --version
   - pip --version
   - asdf current
+  - asdf info
   - asdf which python
   - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf shell python $MACBIN_PY_VER
   - python --version
@@ -1085,9 +1086,10 @@ macos1015_client:
   - python --version
   - pip --version
   - asdf current
+  - asdf info
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - CONFIGURE_OPTS="--enable-framework=${PREFIX_PATH}/Library/Frameworks" asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf shell python $MACBIN_PY_VER
   - python --version
@@ -1130,8 +1132,9 @@ macos1014_client:
   - sw_vers
   - echo $SHELL
   - asdf current
+  - asdf info
   # asdf which python  # has no python for some reason
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - PYTHON_CONFIGURE_OPTS="--enable-framework=/Users/gitlab/.asdf/installs/python/Library/Frameworks" asdf install python $MACBIN_PY_VER
   - asdf local python $MACBIN_PY_VER
   - asdf which python
   - python --version
