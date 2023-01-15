@@ -20,10 +20,10 @@ else:
     import importlib_resources as resources
 
 
-def build_extra_page_pdf():
+def build_extra_page_pdf(destination_dir=Path.cwd()):
     print("Building the extra pages PDF for students to use when they need more space.")
+
     src_tex = (resources.files(plom.create) / "extra_pages_src.tex").read_text()
-    papers_to_print_dir = plom.create.paperdir.absolute()
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmp_path = Path(tmpdirname)
         with working_directory(tmp_path):
@@ -43,5 +43,4 @@ def build_extra_page_pdf():
                 ),
                 stdout=subprocess.DEVNULL,
             )
-            shutil.copy("extra_page.pdf", papers_to_print_dir)
-    print("PDF built and copied to the 'papers_to_print' directory")
+            shutil.copy("extra_page.pdf", destination_dir)
