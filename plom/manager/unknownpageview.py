@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QStringListModel
 from PyQt5.QtWidgets import (
@@ -13,8 +13,6 @@ from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
-    QSizePolicy,
-    QSpacerItem,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
