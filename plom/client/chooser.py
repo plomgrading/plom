@@ -1,26 +1,33 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2022 Edith Coates
 
 """Chooser dialog"""
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import logging
 from pathlib import Path
+import sys
 import tempfile
 import time
 
 import appdirs
 import arrow
 from packaging.version import Version
-import toml
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+import tomlkit
 
 import urllib3
 from PyQt5.QtCore import pyqtSlot
@@ -39,13 +46,13 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomSSLError,
 )
-from plom.messenger import Messenger
+from plom.messenger import Messenger, ManagerMessenger
 from plom.client import MarkerClient, IDClient
+from .downloader import Downloader
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQuestion
 from .useful_classes import ClientSettingsDialog
 
-from plom.messenger import ManagerMessenger
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -71,17 +78,18 @@ def readLastTime():
     # update default from config file
     if cfgfile.exists():
         # too early to log: log.info("Loading config file %s", cfgfile)
-        with open(cfgfile) as f:
-            lastTime.update(toml.load(f))
+        with open(cfgfile, "rb") as f:
+            lastTime.update(tomllib.load(f))
     return lastTime
 
 
 class Chooser(QDialog):
-    def __init__(self, Qapp):
+    def __init__(self, Qapp, webplom=False):
         self.APIVersion = Plom_API_Version
         super().__init__()
         self.Qapp = Qapp
         self.messenger = None
+        self.webplom = webplom
 
         self.lastTime = readLastTime()
 
@@ -194,9 +202,9 @@ class Chooser(QDialog):
 
         if not self.messenger:
             if which_subapp == "Manager":
-                self.messenger = ManagerMessenger(server, mport)
+                self.messenger = ManagerMessenger(server, mport, webplom=self.webplom)
             else:
-                self.messenger = Messenger(server, mport)
+                self.messenger = Messenger(server, mport, webplom=self.webplom)
         try:
             try:
                 server_ver_str = self.messenger.start()
@@ -285,7 +293,8 @@ class Chooser(QDialog):
                 self.messenger = None
                 return
 
-        # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
+        tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
+        self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
 
         if which_subapp == "Manager":
             # Importing here avoids a circular import
@@ -317,7 +326,7 @@ class Chooser(QDialog):
         elif which_subapp == "Identifier":
             self.setEnabled(False)
             self.hide()
-            idwin = IDClient()
+            idwin = IDClient(self.Qapp)
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
             idwin.setup(self.messenger)
@@ -348,7 +357,7 @@ class Chooser(QDialog):
         try:
             cfgfile.parent.mkdir(exist_ok=True)
             with open(cfgfile, "w") as fh:
-                fh.write(toml.dumps(self.lastTime))
+                tomlkit.dump(self.lastTime, fh)
         except OSError as e:
             WarnMsg(
                 self,
@@ -360,6 +369,11 @@ class Chooser(QDialog):
 
     def closeEvent(self, event):
         self.saveDetails()
+        dl = getattr(self.Qapp, "downloader", None)
+        if dl and dl.has_messenger():
+            # TODO: do we just wait forever?
+            # TODO: Marker already tried to stop it: maybe never get here?
+            dl.stop(-1)
         if self.messenger:
             self.messenger.stop()
 
@@ -431,7 +445,7 @@ class Chooser(QDialog):
         # self.ui.infoLabel.repaint()
 
         if not self.messenger:
-            self.messenger = Messenger(server, mport)
+            self.messenger = Messenger(server, mport, webplom=self.webplom)
 
         try:
             try:

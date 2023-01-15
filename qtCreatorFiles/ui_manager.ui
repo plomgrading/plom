@@ -474,7 +474,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
              <string>%</string>
             </property>
             <property name="value">
-             <double>42.500000000000000</double>
+             <double>42.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -1156,31 +1156,14 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_3">
                 <item>
-                 <spacer name="horizontalSpacer_3">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
                  <widget class="QPushButton" name="subsPageB">
                   <property name="text">
                    <string>Substitute missing page / question with blank</string>
                   </property>
                  </widget>
                 </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_25">
                 <item>
-                 <spacer name="horizontalSpacer_13">
+                 <spacer name="horizontalSpacer_3">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
                   </property>
@@ -1198,6 +1181,30 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
                    <string>Remove page(s) from partially-scanned Test</string>
                   </property>
                  </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_25">
+                <item>
+                 <widget class="QPushButton" name="forgiveAllDNMButton">
+                  <property name="text">
+                   <string>Forgive all missing DNM pages</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_13">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
                 </item>
                </layout>
               </item>
@@ -1742,7 +1749,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
                        <string>Predict IDs by matching unID'd papers with machine-read digits</string>
                       </property>
                       <property name="text">
-                       <string>Run LAP solver</string>
+                       <string>Run matching tools</string>
                       </property>
                      </widget>
                     </item>
@@ -2719,7 +2726,6 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
   <tabstop>scanTW</tabstop>
   <tabstop>removePagesB</tabstop>
   <tabstop>incompTW</tabstop>
-  <tabstop>subsPageB</tabstop>
   <tabstop>overallTW</tabstop>
   <tabstop>predictionTW</tabstop>
   <tabstop>scrollArea</tabstop>

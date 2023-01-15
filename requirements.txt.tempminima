@@ -2,6 +2,7 @@
 # Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Elizabeth Xiao
+# Copyright (C) 2022 Brennen Chiu
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -19,12 +20,16 @@ aiohttp==3.7.2
 arrow==1.1.1
 canvasapi==2.0.0
 exif==1.2.2
+fonttools==4.37.1
+importlib_resources==5.0.0
 Pillow==7.0.0
 opencv-python-headless==4.4.0.40
 pandas==1.0.0
 peewee==3.13.3
-pymupdf==1.18.15
+pymupdf==1.21.0
+PyMySQL==1.0.2
 scikit-learn==0.23.1
 stdiomask==0.0.6
-toml==0.10.0
+tomli==2.0.1
+tomlkit==0.11.4
 weasyprint==52.5

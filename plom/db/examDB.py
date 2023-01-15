@@ -2,16 +2,41 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2022 Brennen Chiu
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import logging
 
-from plom.db.tables import *
+import peewee as pw
+import pymysql
 
-from peewee import *
-
-from plom.rules import censorStudentNumber as censorID
-from plom.rules import censorStudentName as censorName
+from plom.db.tables import (
+    User,
+    Bundle,
+    Image,
+    Test,
+    Group,
+    IDPrediction,
+    IDGroup,
+    DNMGroup,
+    QGroup,
+    TPage,
+    HWPage,
+    EXPage,
+    UnknownPage,
+    CollidingPage,
+    DiscardedPage,
+    IDPage,
+    DNMPage,
+    AImage,
+    Annotation,
+    APage,
+    Rubric,
+    ARLink,
+    Tag,
+    QuestionTagLink,
+)
+from plom.db.tables import database_proxy
 
 
 log = logging.getLogger("DB")
@@ -20,12 +45,36 @@ log = logging.getLogger("DB")
 class PlomDB:
     """The main Plom database."""
 
-    def __init__(self, dbfile_name="plom.db"):
-        # can't handle pathlib?
-        plomdb.init(str(dbfile_name))
+    MySQL = None
 
-        with plomdb:
-            plomdb.create_tables(
+    def __init__(
+        self,
+        dbfile_name="plom.db",
+        *,
+        db_name,
+        db_host,
+        db_port,
+        db_username,
+        db_password,
+    ):
+
+        db = None
+        if self.should_connect_to_mysql(
+            db_name, db_host, db_port, db_username, db_password
+        ):
+            log.info(f"Connecting to MySQL database: {db_name}...")
+            db = self.connect_mysql(db_name, db_host, db_port, db_username, db_password)
+            log.info(f"Connected to MySQL database: {db_name}")
+        else:
+            log.info("Connecting to SQLite...")
+            db = self.connect_sqlite(dbfile_name)
+            log.info("Connected to SQLite.")
+
+        self._db = db
+        database_proxy.initialize(self._db)
+
+        with self._db:
+            self._db.create_tables(
                 [
                     User,
                     Image,
@@ -70,6 +119,40 @@ class PlomDB:
             )
             log.info("User 'HAL' created to do all our automated tasks.")
 
+    def should_connect_to_mysql(
+        self, db_name, db_host, db_port, db_username, db_password
+    ):
+        return True if db_name else False
+
+    def connect_mysql(self, db_name, db_host, db_port, db_username, db_password):
+        mysql_connection = pymysql.connect(
+            host=db_host,
+            port=db_port,
+            user=db_username,
+            password=db_password,
+        )
+
+        mysql_connection.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {db_name};")
+        mysql_connection.close()
+
+        self.MySQL = mysql_connection
+
+        return pw.MySQLDatabase(
+            db_name,
+            host=db_host,
+            port=db_port,
+            user=db_username,
+            password=db_password,
+        )
+        # TODO?  db.init?  maybe stuff in other file?
+
+    def connect_sqlite(self, dbfile_name):
+        db = pw.SqliteDatabase(None)
+        # can't handle pathlib?
+        db.init(str(dbfile_name))
+
+        return db
+
     # User stuff
     from plom.db.db_user import (
         createUser,
@@ -106,11 +189,10 @@ class PlomDB:
         getPageVersions,
         get_question_versions,
         get_all_question_versions,
-        add_or_change_id_prediction,
-        remove_id_prediction,
+        add_or_change_predicted_id,
+        remove_predicted_id,
         remove_id_from_paper,
-        hasNoAnswerRubric,
-        createNoAnswerRubric,
+        hasAutoGenRubrics,
     )
 
     from plom.db.db_upload import (
@@ -209,6 +291,7 @@ class PlomDB:
         IDgetImageFromATest,
         IDreviewID,
         ID_get_predictions,
+        ID_delete_predictions,
     )
 
     from plom.db.db_mark import (

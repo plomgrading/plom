@@ -21,17 +21,16 @@ class MarkHandler:
     def __init__(self, plomServer):
         self.server = plomServer
 
-    # @routes.get("/MK/maxMark")
-    @authenticate_by_token_required_fields(["q", "v"])
+    # @routes.get("/maxmark/{question}")
+    @authenticate_by_token_required_fields([])
     def MgetQuestionMark(self, data, request):
         """Retrieve the maximum mark for a question.
 
         Respond with status 200/416.
 
         Args:
-            data (dict): Dictionary including user data in addition to question number
-                and test version.
-            request (aiohttp.web_response.Response): GET /MK/maxMark request object.
+            data (dict): Dictionary including user data
+            request (aiohttp.web_request.Request)
 
         Returns:
             aiohttp.web_response.Response: JSON with the maximum mark for
@@ -39,20 +38,15 @@ class MarkHandler:
             out of range.  Or BadRequest (400) if question/version cannot
             be converted to integers.
         """
-        question = data["q"]
-        version = data["v"]
+        question = request.match_info["question"]
+
         try:
             question = int(question)
-            version = int(version)
         except (ValueError, TypeError):
-            raise web.HTTPBadRequest(reason="question and version must be integers")
+            raise web.HTTPBadRequest(reason="question must be integer")
         if question < 1 or question > self.server.testSpec["numberOfQuestions"]:
             raise web.HTTPRequestRangeNotSatisfiable(
                 reason="Question out of range - please check and try again.",
-            )
-        if version < 1 or version > self.server.testSpec["numberOfVersions"]:
-            raise web.HTTPRequestRangeNotSatisfiable(
-                reason="Version out of range - please check and try again.",
             )
         maxmark = self.server.testSpec["question"][str(question)]["mark"]
         return web.json_response(maxmark, status=200)
@@ -72,10 +66,18 @@ class MarkHandler:
         Returns:
             aiohttp.web_response.Response: Includes the number of marked
             tasks and the total number of marked/unmarked tasks.
+            400 error if `q` or `v` cannot be converted to int.
+            416 error if `q` or `v` are out of range.
         """
-        return web.json_response(
-            self.server.MprogressCount(data["q"], data["v"]), status=200
-        )
+        try:
+            q = int(data["q"])
+            v = int(data["v"])
+        except (ValueError, TypeError):
+            raise web.HTTPBadRequest(reason="question and version must be integers")
+        try:
+            return web.json_response(self.server.MprogressCount(q, v))
+        except ValueError as e:
+            raise web.HTTPRequestRangeNotSatisfiable(reason=str(e))
 
     # @routes.get("/MK/tasks/complete")
     @authenticate_by_token_required_fields(["user", "q", "v"])
@@ -783,20 +785,21 @@ class MarkHandler:
     def MreviewQuestion(self, data, request):
         """Confirm the question review done on plom-manager.
 
-        Respond with status 200/404.
-
         Args:
-            data (dict): Dictionary including user data, test_number (int)
-                and question_number (int).
+            data (dict): Dictionary including user data, `paper_number` (int)
+                and `question` (int).
             request (aiohttp.web_request.Request): Request of type PATCH /MK/review .
 
         Returns:
-            aiohttp.web.Response: 200 on success, 404 on failure (could not find).
+            aiohttp.web.Response: 200 on success, 404 on failure (could not find),
+            409 if no reviewer user.
         """
-        if not self.server.MreviewQuestion(data["testNumber"], data["questionNumber"]):
-            raise web.HTTPNotFound(
-                reason=f'Could not find t/q {data["testNumber"]}/{data["questionNumber"]}'
-            )
+        try:
+            self.server.MreviewQuestion(data["paper_number"], data["question"])
+        except ValueError as e:
+            raise web.HTTPNotFound(reason=str(e))
+        except RuntimeError as e:
+            raise web.HTTPConflict(reason=str(e))
         return web.Response(status=200)
 
     # @routes.patch("/MK/revert/{task}")
@@ -817,7 +820,7 @@ class MarkHandler:
             router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the response functions to.
         """
         router.add_get("/MK/allMax", self.MgetAllMax)
-        router.add_get("/MK/maxMark", self.MgetQuestionMark)
+        router.add_get("/maxmark/{question}", self.MgetQuestionMark)
         router.add_get("/MK/progress", self.MprogressCount)
         router.add_get("/MK/tasks/complete", self.MgetDoneTasks)
         router.add_get("/MK/tasks/available", self.MgetNextTask)

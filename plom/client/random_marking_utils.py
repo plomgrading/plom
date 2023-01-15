@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 import json
@@ -35,7 +35,7 @@ from plom.client.tools import (
 )
 
 from plom.messenger import Messenger
-from .pagecache import download_pages
+from .downloader import Downloader
 
 
 # comments which will be made into rubrics by pushing them to server and getting back keys
@@ -63,7 +63,7 @@ tag_list = ["creative", "suspicious", "needs_review", "hall_of_fame", "needs_iic
 class RW:
     """A dummy class needed for compatibility with pagescene."""
 
-    def changeMark(self, a, b):
+    def changeMark(self, a, b=None):
         pass
 
 
@@ -91,7 +91,6 @@ class SceneParent(QWidget):
         plomDict = {
             "base_images": self.src_img_data,
             "saveName": str(aname),
-            "markState": self.scene.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.scene.getScore(),
             "sceneItems": lst,
@@ -134,21 +133,12 @@ class SceneParent(QWidget):
         else:
             rubric = random.choice(negativeRubrics[self.question])
 
-        self.scene.changeTheRubric(
-            rubric["delta"], rubric["text"], rubric["id"], rubric["kind"]
-        )
+        self.scene.changeTheRubric(rubric)
 
         # only do rubric if it is legal
-        if self.scene.isLegalRubric("relative", rubric["delta"]):
+        if self.scene.isLegalRubric(rubric):
             self.scene.undoStack.push(
-                CommandGroupDeltaText(
-                    self.scene,
-                    self.rpt(),
-                    rubric["id"],
-                    rubric["kind"],
-                    rubric["delta"],
-                    rubric["text"],
-                )
+                CommandGroupDeltaText(self.scene, self.rpt(), rubric)
             )
         else:  # not legal - push text
             self.scene.undoStack.push(
@@ -173,7 +163,7 @@ class SceneParent(QWidget):
 
     def doneAnnotating(self):
         aname, plomfile = self.pickleIt()
-        return self.scene.score, self.scene.get_rubrics_from_page(), aname, plomfile
+        return self.scene.score, self.scene.get_rubric_ids(), aname, plomfile
 
     def refreshDisplayedMark(self, score):
         # needed for compat with pagescene.py
@@ -197,7 +187,7 @@ def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
 
 
 def do_random_marking_backend(question, version, *, messenger):
-    maxMark = messenger.MgetMaxMark(question, version)
+    maxMark = messenger.getMaxMark(question)
 
     while True:
         task = messenger.MaskNextTask(question, version)
@@ -206,28 +196,16 @@ def do_random_marking_backend(question, version, *, messenger):
             break
         # print("Trying to claim next ask = ", task)
         try:
-            image_metadata, tags, integrity_check = messenger.MclaimThisTask(
+            src_img_data, tags, integrity_check = messenger.MclaimThisTask(
                 task, version=version
             )
         except PlomTakenException:
             print("Another user got task {}. Trying again...".format(task))
             continue
 
-        src_img_data = [{"id": r[0], "md5": r[1]} for r in image_metadata]
-        papernum = int(task[1:5])
-        pagedata = messenger.get_pagedata_context_question(papernum, question)
         with tempfile.TemporaryDirectory() as td:
-            pagedata = download_pages(messenger, pagedata, td, alt_get=src_img_data)
-            # Populate the orientation keys from the full pagedata
-            for row in src_img_data:
-                ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
-                # There could easily be more than one: what if orientation is contradictory?
-                row["orientation"] = ori[0]  # just take first one
-
-            for row in src_img_data:
-                for r in pagedata:
-                    if r["md5"] == row["md5"]:
-                        row["filename"] = r["local_filename"]
+            downloader = Downloader(td, msgr=messenger)
+            src_img_data = downloader.sync_downloads(src_img_data)
 
             basefile = Path(td) / "argh"
             score, rubrics, aname, plomfile = annotatePaper(
@@ -275,28 +253,32 @@ def build_random_rubrics(question, *, messenger):
     """
     for (d, t) in positiveComments:
         com = {
-            "delta": d,
+            "value": int(d),
+            "display_delta": d,
+            "out_of": 0,
             "text": t,
             "tags": "Random",
             "meta": "Randomness",
             "kind": "relative",
             "question": question,
         }
-        com["id"] = messenger.McreateRubric(com)[1]
+        com["id"] = messenger.McreateRubric(com)
         if question in positiveRubrics:
             positiveRubrics[question].append(com)
         else:
             positiveRubrics[question] = [com]
     for (d, t) in negativeComments:
         com = {
-            "delta": d,
+            "value": int(d),
+            "display_delta": d,
+            "out_of": 0,
             "text": t,
             "tags": "Random",
             "meta": "Randomness",
             "kind": "relative",
             "question": question,
         }
-        com["id"] = messenger.McreateRubric(com)[1]
+        com["id"] = messenger.McreateRubric(com)
         if question in negativeRubrics:
             negativeRubrics[question].append(com)
         else:

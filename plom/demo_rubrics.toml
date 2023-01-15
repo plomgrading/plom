@@ -1,10 +1,14 @@
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 # SPDX-License-Identifier: FSFAP
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
+
+# TODO: special code in push_pull_rubrics.py to deal with these
+# delta keys (which elsewhere are called "display_delta").  Revisit
+# all this soon...
 
 [[rubric]]
 delta = "."
@@ -45,15 +49,29 @@ text = "wrong angles used"
 [[rubric]]
 delta = "."
 text = "a comment specific to Q2"
-question = 2
+question_number = 2
 meta = "All rubrics are question specific."
 
 [[rubric]]
 delta = "."
 text = "another comment specific to Q2"
-question = 2
+question_number = 2
 tags = "foo"
 meta = "When the demo rubrics are loaded, most are auto-duplicated over multiple questions."
+
+[[rubric]]
+delta = "."
+text = "a comment specific to Q3 version 1"
+question = 3
+versions = [1]
+meta = "By default, rubrics are shared between versions.  Not this one."
+
+[[rubric]]
+delta = "."
+text = "a comment specific to Q3 version 2"
+question = 3
+versions = [2]
+meta = "By default, rubrics are shared between versions.  Not this one."
 
 # a series of rubrics all related to the chain rule
 [[rubric]]

@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2022 Edith Coates
 
 """Start the Plom client."""
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -105,6 +106,11 @@ def get_parser():
             Also checks the environment variable PLOM_SERVER if omitted.
         """,
     )
+    parser.add_argument(
+        "--webplom",
+        action="store_true",
+        help="Experimental: support connecting to a Django server.",
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "-i", "--identifier", action="store_true", help="Run the identifier"
@@ -144,7 +150,10 @@ def main():
     # got this solution from
     # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
 
-    window = Chooser(app)
+    if args.webplom:
+        window = Chooser(app, webplom=True)
+    else:
+        window = Chooser(app)
     window.show()
 
     if args.user:

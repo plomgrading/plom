@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web
@@ -29,7 +29,7 @@ class RubricHandler:
             bool: true if valid, false otherwise.
         """
         # check rubric has minimal fields needed
-        need_fields = ("kind", "delta", "text", "question")
+        need_fields = ("kind", "value", "display_delta", "text", "question")
         if any(x not in rubric for x in need_fields):
             return False
         # check question number is in range
@@ -43,57 +43,46 @@ class RubricHandler:
 
         if rubric["kind"] == "neutral":
             # neutral rubric must have no delta - ie delta == '.'
-            if rubric["delta"] != ".":
+            if rubric["display_delta"] != ".":
                 return False
             # must have some text
             if len(rubric["text"].strip()) == 0:
+                return False
+            # do we care if its int/None?
+            # if not (rubric["value"] is None or isinstance(rubric["value"], int)):
+            #     return False
+            # TODO: should we enforce value=0/None?
+            if not (rubric["value"] is None or int(rubric["value"]) == 0):
                 return False
 
         elif rubric["kind"] == "relative":
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
+            # do we care if its int?
+            # if not isinstance(rubric["value"], int):
+            #     return False
             # the delta must be of the form -k or +k
-            if rubric["delta"][0] not in ["-", "+"]:
+            if rubric["display_delta"][0] not in ["-", "+"]:
                 return False
             # check rest of delta string is numeric
-            if not rubric["delta"][1:].isnumeric():
+            if not rubric["display_delta"][1:].isnumeric():
                 return False
             # check delta is in range
-            idelta = int(rubric["delta"])
-            if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
-                return False
-
-        elif rubric["kind"] == "delta":
-            # only HAL and manager can create delta rubrics - this may change in the future
-            if username not in ["HAL", "manager"]:
-                return False
-            # must have text field == '.'
-            if rubric["text"] != ".":
-                return False
-            # the delta must be of the form -k or +k
-            if rubric["delta"][0] not in ["-", "+"]:
-                return False
-            # check rest of delta string is numeric
-            if not rubric["delta"][1:].isnumeric():
-                return False
-            idelta = int(rubric["delta"])
+            idelta = int(rubric["display_delta"])
             if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
                 return False
 
         elif rubric["kind"] == "absolute":
-            # only HAL and manager can create absolute rubrics - this may change in the future
-            if username not in ["HAL", "manager"]:
-                return False
             # must have some text
             if len(rubric["text"].strip()) == 0:
                 return False
-            # must have numeric delta
-            if not rubric["delta"].isnumeric():
-                return False
+            # do we care if its int?
+            # if not isinstance(rubric["value"], int):
+            #     return False
             # check score in range
-            idelta = int(rubric["delta"])
-            if (idelta < 0) or (idelta > maxMark):
+            value = int(rubric["value"])
+            if (value < 0) or (value > maxMark):
                 return False
 
         else:  # rubric kind must be neutral, relative, delta or absolute
@@ -112,19 +101,19 @@ class RubricHandler:
             request (aiohttp.web_request.Request): A request of type PUT /MK/rubric.
 
         Returns:
-            aiohttp.web_response.Response: either 200,newkey or 406 if sent rubric was incomplete
+            aiohttp.web_response.Response: either 200 with the new key
+            or 406 if sent rubric was incomplete.
         """
         username = data["user"]
         new_rubric = data["rubric"]
 
         if not self.validateRubric(username, new_rubric):
-            return web.Response(status=406)
+            return web.HTTPNotAcceptable(reason="Rubric info incomplete/inconsistent")
 
-        rval = self.server.McreateRubric(username, new_rubric)
-        if rval[0]:  # worked - so return key
-            return web.json_response(rval[1], status=200)
-        else:  # failed - rubric sent is incomplete
-            return web.Response(status=406)
+        ok, key_or_reason = self.server.McreateRubric(username, new_rubric)
+        if ok:
+            return web.json_response(key_or_reason, status=200)
+        return web.HTTPNotAcceptable(reason=key_or_reason)
 
     # @routes.get("/MK/rubric")
     @authenticate_by_token_required_fields(["user"])
@@ -171,27 +160,28 @@ class RubricHandler:
             request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
 
         Returns:
-            aiohttp.web_response.Response: either 200,newkey or
-            406 if sent rubric was incomplete or inconsistent
+            aiohttp.web_response.Response: either 200 with the key or
+            406 if sent rubric was incomplete or inconsistent,
+            409 if no rubric found, or some unexpected situation.
         """
         username = data["user"]
         updated_rubric = data["rubric"]
         key = request.match_info["key"]
 
-        if key != updated_rubric["id"]:  # key mismatch
-            return web.Response(status=400)
+        if key != updated_rubric["id"]:
+            return web.HTTPBadRequest(reason="Key mismatch in request")
 
         if not self.validateRubric(username, updated_rubric):
-            return web.Response(status=406)
+            return web.HTTPNotAcceptable(reason="Sent rubric was inconsistent")
 
-        rval = self.server.MmodifyRubric(username, key, updated_rubric)
-        if rval[0]:  # worked - so return key
-            return web.json_response(rval[1], status=200)
-        else:  # failed - rubric sent is incomplete
-            if rval[1] == "incomplete":
-                return web.Response(status=406)
-            else:
-                return web.Response(status=409)
+        ok, key_or_reason = self.server.MmodifyRubric(username, key, updated_rubric)
+        if ok:
+            return web.json_response(key_or_reason, status=200)
+        if key_or_reason == "incomplete":
+            return web.HTTPNotAcceptable(reason="Sent rubric was incomplete")
+        elif key_or_reason == "noSuchRubric":
+            return web.HTTPConflict(reason="No rubric with that key found")
+        return web.HTTPConflict(reason=f"Unexpected error/bug: '{key_or_reason}'")
 
     # @routes.get("/MK/user/{user}/{question}")
     @authenticate_by_token_required_fields(["user", "question"])

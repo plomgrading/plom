@@ -2,14 +2,14 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2021 Nicholas J H Lai
 
 """Command line tool to start Plom servers."""
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -182,6 +182,11 @@ def get_parser():
             server will autogenerate a password.
         """,
     )
+    spI.add_argument(
+        "--db-name",
+        type=str,
+        help="The name for the database, omit for a default autogen choice.",
+    )
 
     spU = sub.add_parser(
         "users",
@@ -277,6 +282,7 @@ def main():
             name=args.server_name,
             make_selfsigned_keys=args.selfsigned,
             manager_pw=args.manager_pw,
+            db_name=args.db_name,
         )
 
     elif args.command == "users":

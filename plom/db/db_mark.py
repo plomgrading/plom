@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2022 Chris Jin
 
 from datetime import datetime, timezone
 import json
@@ -10,8 +11,6 @@ from time import time
 import uuid
 
 import peewee as pw
-
-from plom.db.tables import plomdb
 
 from plom.db.tables import AImage, Annotation, APage, ARLink
 from plom.db.tables import (
@@ -105,7 +104,7 @@ def MgetDoneTasks(self, user_name, q, v):
 
 def MgetNextTask(self, q, v, *, tag, above):
     """Find unmarked (but scanned) q/v-group and send the group-id back to client."""
-    with plomdb.atomic():
+    with self._db.atomic():
         try:
             t0 = time()
             query = (
@@ -161,7 +160,7 @@ def MgiveTaskToClient(self, user_name, group_id, version):
 
     args:
         user_name (str): the user name who is claiming the task.
-        group_id (TODO): somehow tells the task (?).
+        group_id (str): a "task code" like ``"q0020g3"``
         version (int): version requested - must match that in db.
 
     Return:
@@ -172,10 +171,10 @@ def MgiveTaskToClient(self, user_name, group_id, version):
 
         On success, the list is
         `[True, metadata, [list of tag texts], integrity_check]`
-        where each row of `metadata` consists of
-        `[DB_id, md5_sum, server_filename]`.
+        where each row of `metadata` consists of dicts with keys
+        `id, `md5`, `included`, `order`, `server_path`, `orientation`.
 
-        Note: `server_filename` is implementation-dependent, could change
+        Note: `server_path` is implementation-dependent, could change
         without notice, etc.  Clients could use this to get hints for
         what to use for a local file name for example.
 
@@ -187,7 +186,7 @@ def MgiveTaskToClient(self, user_name, group_id, version):
 
     uref = User.get(name=user_name)  # authenticated, so not-None
 
-    with plomdb.atomic():
+    with self._db.atomic():
         gref = Group.get_or_none(Group.gid == group_id)
         if gref is None:
             msg = f"The task {group_id} does not exist"
@@ -233,7 +232,17 @@ def MgiveTaskToClient(self, user_name, group_id, version):
         aref = qref.annotations[-1]  # are these in right order (TODO?)
         image_metadata = []
         for p in aref.apages.order_by(APage.order):
-            image_metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
+            # See MgetWholePaper: somehow very similar :(
+            # "pagename": "t{}".format(p.page_number) ?? ignore this?
+            row = {
+                "id": p.image.id,
+                "md5": p.image.md5sum,
+                "included": True,
+                "order": p.order,
+                "server_path": p.image.file_name,
+                "orientation": p.image.rotation,
+            }
+            image_metadata.append(row)
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now(timezone.utc)
@@ -258,7 +267,7 @@ def MgetOneImageRotation(self, image_id, md5):
         `error_msg` is the string ``"no such image"`` or
         ``"wrong md5sum"``, and `rotation` is a float.
     """
-    with plomdb.atomic():
+    with self._db.atomic():
         iref = Image.get_or_none(id=image_id)
         if iref is None:
             log.warning("Asked for a non-existent image with id={}".format(image_id))
@@ -285,7 +294,7 @@ def MgetOneImageFilename(self, image_id, md5):
         `error_msg` is the string ``"no such image"`` or
         ``"wrong md5sum"``, and `file_name` is a string.
     """
-    with plomdb.atomic():
+    with self._db.atomic():
         iref = Image.get_or_none(id=image_id)
         if iref is None:
             log.warning("Asked for a non-existent image with id={}".format(image_id))
@@ -306,7 +315,7 @@ def MtakeTaskFromClient(
     user_name,
     mark,
     annot_fname,
-    plom_fname,
+    plom_json,
     rubrics,
     marking_time,
     md5,
@@ -320,7 +329,7 @@ def MtakeTaskFromClient(
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
 
-    with plomdb.atomic():
+    with self._db.atomic():
         # make sure all returned image-ids are actually images
         # keep the refs for apage creation
         image_ref_list = []
@@ -394,7 +403,7 @@ def MtakeTaskFromClient(
         # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
         aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
         aref.mark = mark
-        aref.plom_file = plom_fname
+        aref.plom_json = plom_json
         aref.marking_time = marking_time
         qref.save()
         aref.save()
@@ -448,7 +457,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
             which I have forgotten.
 
     Returns:
-        list: `[True, plom_file_data, annotation_image]` on success or
+        list: `[True, plom_json_data , annotation_image]` on success or
         on error `[False, error_msg]`.  If the task is not yet
         annotated, the error will be ``"no_such_task"``.
     """
@@ -456,7 +465,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
         edition = -1
     edition = int(edition)
     task = f"q{number:04}g{question}"
-    with plomdb.atomic():
+    with self._db.atomic():
         gref = Group.get_or_none(Group.gid == task)
         if gref is None:
             log.info("M_get_annotations - task {} not known".format(task))
@@ -477,13 +486,16 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
             metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
         if aref.aimage is None:
             return [False, "no_such_task"]
-        plom_file = aref.plom_file
+
         img_file = aref.aimage.file_name
-    with open(plom_file, "r") as f:
-        plom_data = json.load(f)
+
+    plom_json = aref.plom_json
+    plom_data = json.loads(plom_json)
+
     plom_data["user"] = aref.user.name
     plom_data["annotation_edition"] = aref.edition
     plom_data["annotation_reference"] = aref.id
+
     # Report any duplication in DB and plomfile (and keep DB version!)
     if plom_data["currentMark"] != aref.mark:
         log.warning("Plom file has wrong score, replacing")
@@ -594,12 +606,23 @@ def MgetWholePaper(self, test_number, question):
 
 
 def MreviewQuestion(self, test_number, question):
-    """Give ownership of the given marking task to the reviewer."""
-    revref = User.get(name="reviewer")  # should always be there
+    """Give ownership of the given marking task to the reviewer.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: could not find paper or question.
+        RuntimeError: no "reviewer" account.
+    """
+    revref = User.get_or_none(name="reviewer")
+
+    if not revref:
+        raise RuntimeError('There is no "reviewer" account')
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return False
+        raise ValueError(f"Could not find paper number {test_number}")
     qref = QGroup.get_or_none(
         QGroup.test == tref,
         QGroup.question == question,
@@ -607,13 +630,14 @@ def MreviewQuestion(self, test_number, question):
     )
     version = qref.version
     if qref is None:
-        return False
-    with plomdb.atomic():
+        raise ValueError(
+            f"Could not find question {question} of paper number {test_number}"
+        )
+    with self._db.atomic():
         qref.user = revref
         qref.time = datetime.now(timezone.utc)
         qref.save()
     log.info("Setting tqv %s for reviewer", (test_number, question, version))
-    return True
 
 
 def MrevertTask(self, task):
@@ -637,7 +661,7 @@ def MrevertTask(self, task):
     HAL_ref = User.get(name="HAL")
 
     # reset all the qgroup info
-    with plomdb.atomic():
+    with self._db.atomic():
         # clean up the now-outdated annotations
         for aref in qref.annotations:
             aref.outdated = True
@@ -670,6 +694,7 @@ def MrevertTask(self, task):
         qref.user = None
         qref.marked = False
         qref.time = datetime.now(timezone.utc)
+
         qref.save()
         # set the test as unmarked.
         tref.marked = False
@@ -698,7 +723,7 @@ def McreateNewTag(self, user_name, tag_text):
         return (False, "Tag already exists")
 
     uref = User.get(name=user_name)  # authenticated, so not-None
-    with plomdb.atomic():
+    with self._db.atomic():
         # build unique key while holding atomic access
         # use a 10digit key to distinguish from rubrics
         key = generate_new_comment_ID(10)

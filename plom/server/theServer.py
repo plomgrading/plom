@@ -5,17 +5,25 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Chris Jin
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Natalie Balashov
 
 import json
 import logging
 from pathlib import Path
 import ssl
 import subprocess
+import sys
 import tempfile
 
 import arrow
-import toml
 from aiohttp import web
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
@@ -100,7 +108,8 @@ class Server:
         validate,
         checkPassword,
         checkUserEnabled,
-        createModifyUser,
+        createUser,
+        changeUserPassword,
         InfoShortName,
         info_spec,
         giveUserToken,
@@ -157,13 +166,14 @@ class Server:
         IDgetImageFromATest,
         ID_get_donotmark_images,
         IDclaimThisTask,
-        pre_id_paper,
-        remove_id_prediction,
+        add_or_change_predicted_id,
+        remove_predicted_id,
         ID_id_paper,
         ID_get_predictions,
-        IDdeletePredictions,
-        IDputPredictions,
+        ID_delete_predictions,
+        ID_put_predictions,
         predict_id_lap_solver,
+        predict_id_greedy,
         id_reader_get_log,
         id_reader_run,
         id_reader_kill,
@@ -237,8 +247,8 @@ def get_server_info(basedir):
     log = logging.getLogger("server")
     serverInfo = {"server": "127.0.0.1", "port": Default_Port}
     try:
-        with open(basedir / confdir / "serverDetails.toml") as data_file:
-            serverInfo = toml.load(data_file)
+        with open(basedir / confdir / "serverDetails.toml", "rb") as data_file:
+            serverInfo = tomllib.load(data_file)
             logging.getLogger().setLevel(serverInfo["LogLevel"].upper())
             log.debug("Server details loaded: {}".format(serverInfo))
     except FileNotFoundError:
@@ -290,11 +300,22 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     check_server_directories(basedir)
     server_info = get_server_info(basedir)
     log.info(f'Working from directory "{basedir}"')
-    if (basedir / specdir / "plom.db").exists():
-        log.info("Using existing database.")
-    else:
+    if not (basedir / specdir / "plom.db").exists():
         log.info("Database is not yet present: creating...")
-    examDB = PlomDB(basedir / specdir / "plom.db")
+    db_name = server_info.get("db_name", None)
+    db_host = server_info.get("db_host", None)
+    db_port = server_info.get("db_port", None)
+    db_username = server_info.get("db_username", None)
+    db_password = server_info.get("db_password", None)
+    examDB = PlomDB(
+        basedir / specdir / "plom.db",
+        db_name=db_name,
+        db_host=db_host,
+        db_port=db_port,
+        db_username=db_username,
+        db_password=db_password,
+    )
+
     if (basedir / specdir / "classlist.csv").exists():
         log.info("Classlist is present.")
     else:

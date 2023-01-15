@@ -6,12 +6,16 @@ import hashlib
 import logging
 from pathlib import Path
 import shutil
+import sys
 
-import toml
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+import tomlkit
 
 
 log = logging.getLogger("scan")
-
 
 archivedir = Path("archivedPDFs")
 
@@ -115,12 +119,13 @@ def _archiveBundle(filename, *, basedir=Path("."), subdir=Path(".")):
     move_to = subdir / Path(filename).name
     shutil.move(filename, basedir / archivedir / move_to)
     try:
-        arch = toml.load(basedir / archivedir / "archive.toml")
+        with open(basedir / archivedir / "archive.toml", "rb") as f:
+            arch = tomllib.load(f)
     except FileNotFoundError:
         arch = {}
     arch[md5] = str(move_to)
     with open(basedir / archivedir / "archive.toml", "w") as fh:
-        toml.dump(arch, fh)
+        tomlkit.dump(arch, fh)
 
 
 def archiveHWBundle(file_name, *, basedir=Path(".")):

@@ -5,11 +5,16 @@
 
 """Tools for working with TeX"""
 
-import importlib.resources as resources
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 from textwrap import dedent
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import plom
 
@@ -156,7 +161,7 @@ def buildLaTeX(src, out):
 
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(Path(tmpdir) / "idBox2.pdf", "wb") as fh:
-            fh.write(resources.read_binary(plom, "idBox2.pdf"))
+            fh.write((resources.files(plom) / "idBox2.pdf").read_bytes())
         with open(Path(tmpdir) / "stuff.tex", "w") as fh:
             fh.write(src)
 

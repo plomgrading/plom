@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
+# Copyright (C) 2022 Edith Coates
 
 from io import BytesIO
 import logging
@@ -48,7 +49,7 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, s=None, port=Default_Port, *, verify_ssl=True):
+    def __init__(self, s=None, port=Default_Port, *, verify_ssl=True, webplom=False):
         """Initialize a new BaseMessenger.
 
         Args:
@@ -60,7 +61,20 @@ class BaseMessenger:
             verify_ssl (True/False/str): controls where SSL certs are
                 checked, see the `requests` library parameter `verify`
                 which ultimately receives this.
+            webplom (True/False): default False, whether to connect to
+                Django-based servers.  Experimental!
         """
+        self.webplom = webplom
+        if os.environ.get("WEBPLOM"):
+            log.warning("Enabling experimental WebPlom support via environment var")
+            self.webplom = True
+
+        if self.webplom:
+            # The django development server cannot handle https requests.
+            # TODO: Revisit for production!  Issue #2361
+            self.scheme = "http"
+        else:
+            self.scheme = "https"
         self.session = None
         self.user = None
         self.token = None
@@ -71,7 +85,6 @@ class BaseMessenger:
             server = "127.0.0.1"
         self.server = "{}:{}".format(server, port)
         self.SRmutex = threading.Lock()
-        # base = "https://{}:{}/".format(s, mp)
         self.verify_ssl = verify_ssl
         if not self.verify_ssl:
             self._shutup_urllib3()
@@ -92,6 +105,7 @@ class BaseMessenger:
             s=m.server.split(":")[0],
             port=m.server.split(":")[1],
             verify_ssl=m.verify_ssl,
+            webplom=m.webplom,
         )
         x.start()
         log.debug("copying user/token into cloned messenger")
@@ -116,27 +130,58 @@ class BaseMessenger:
     def get(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.get(f"https://{self.server}" + url, *args, **kwargs)
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
+        return self.session.get(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.post(f"https://{self.server}" + url, *args, **kwargs)
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
+        return self.session.post(
+            f"{self.scheme}://{self.server}" + url, *args, **kwargs
+        )
 
     def put(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.put(f"https://{self.server}" + url, *args, **kwargs)
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
+        return self.session.put(f"{self.scheme}://{self.server}" + url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.delete(f"https://{self.server}" + url, *args, **kwargs)
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
+        return self.session.delete(
+            f"{self.scheme}://{self.server}" + url, *args, **kwargs
+        )
 
     def patch(self, url, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return self.session.patch(f"https://{self.server}" + url, *args, **kwargs)
+
+        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+            token_str = self.token["token"]
+            kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
+        return self.session.patch(
+            f"{self.scheme}://{self.server}" + url, *args, **kwargs
+        )
 
     def start(self):
         """Start the messenger session.
@@ -151,7 +196,9 @@ class BaseMessenger:
             self.session = requests.Session()
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
-            self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=2))
+            self.session.mount(
+                f"{self.scheme}://", requests.adapters.HTTPAdapter(max_retries=2)
+            )
             self.session.verify = self.verify_ssl
 
         try:
@@ -221,6 +268,12 @@ class BaseMessenger:
             PlomSeriousException: something else unexpected such as a
                 network failure.
         """
+        if self.webplom:
+            self._requestAndSaveToken_webplom(user, pw)
+        else:
+            self._requestAndSaveToken(user, pw)
+
+    def _requestAndSaveToken(self, user, pw):
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -241,6 +294,38 @@ class BaseMessenger:
             if response.status_code == 401:
                 raise PlomAuthenticationException(response.json()) from None
             elif response.status_code == 400:
+                raise PlomAPIException(response.json()) from None
+            elif response.status_code == 409:
+                raise PlomExistingLoginException(response.json()) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        except requests.ConnectionError as err:
+            raise PlomSeriousException(
+                f"Cannot connect to server {self.server}\n{err}\n\nPlease check details and try again."
+            ) from None
+        finally:
+            self.SRmutex.release()
+
+    def _requestAndSaveToken_webplom(self, user, pw):
+        """
+        Get an authorisation token from WebPlom.
+        """
+        self.SRmutex.acquire()
+        response = self.post(
+            "/get_token/",
+            json={
+                "username": user,
+                "password": pw,
+            },
+            timeout=5,
+        )
+        try:
+            response.raise_for_status()
+            self.token = response.json()
+            self.user = user
+        except requests.HTTPError as e:
+            if response.status_code == 400:
+                raise PlomAuthenticationException(response.json()) from None
+            elif response.status_code == 401:
                 raise PlomAPIException(response.json()) from None
             elif response.status_code == 409:
                 raise PlomExistingLoginException(response.json()) from None
@@ -274,7 +359,14 @@ class BaseMessenger:
                 logged in to call this.  A second call will raise this.
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
+
         """
+        if self.webplom:
+            self._closeUser_webplom()
+        else:
+            self._closeUser()
+
+    def _closeUser(self):
         self.SRmutex.acquire()
         try:
             response = self.delete(
@@ -282,6 +374,22 @@ class BaseMessenger:
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def _closeUser_webplom(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.delete(
+                "/close_user/",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            self.token = None
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -349,7 +457,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    f"/admin/questionVersionMap/{papernum}",
+                    f"/plom/admin/questionVersionMap/{papernum}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -379,7 +487,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/questionVersionMap",
+                    "/plom/admin/questionVersionMap",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -426,6 +534,57 @@ class BaseMessenger:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+
+    def IDgetPredictions(self):
+        """Get all the predicted student ids.
+
+        If there is more than one predictor for a particular paper number
+        this routine will return all of them.
+        You may want :meth:`IDgetPredictionsFromPredictor` instead.
+
+        Returns:
+            dict: keys are str of papernum, values themselves are lists of dicts with
+            keys `"student_id"`, `"certainty"`, and `"predictor"`.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/ID/predictions",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                # returns a json of dict of test:(sid, sname, certainty)
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def IDgetPredictionsFromPredictor(self, predictor):
+        """Get all the predicted student ids, generated by a particular predictor.
+
+        Args:
+            predictor (string): predictors are currently `"prename"` and
+                `"MLLAP"`.  These are subject to change.  If there are no
+                predictions or you pass some other string, you'll get an
+                empty dict.
+
+        Returns:
+            dict: keys are str of papernum, values themselves dicts with
+            keys `"student_id"`, `"certainty"`, and `"predictor"`.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/ID/predictions/{predictor}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_all_tags(self):
         """All the tags currently in use and their frequencies.
@@ -552,9 +711,7 @@ class BaseMessenger:
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, updated_commments_list] including the new comments.
+            str: the key/id of the new rubric.
         """
         self.SRmutex.acquire()
         try:
@@ -568,12 +725,12 @@ class BaseMessenger:
             )
             response.raise_for_status()
             new_key = response.json()
-            return [True, new_key]
+            return new_key
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
-                raise PlomSeriousException("Rubric sent was incomplete.") from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(f"Error when creating new rubric: {e}") from None
         finally:
             self.SRmutex.release()
@@ -602,7 +759,7 @@ class BaseMessenger:
             return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+                raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Error getting rubric list: {e}") from None
         finally:
             self.SRmutex.release()
@@ -650,9 +807,8 @@ class BaseMessenger:
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, updated_commments_list] including the new comments.
+            str: the key/id of the rubric.  Currently should be unchanged
+            from what you sent.
         """
         self.SRmutex.acquire()
         try:
@@ -666,17 +822,16 @@ class BaseMessenger:
             )
             response.raise_for_status()
             new_key = response.json()
-            return [True, new_key]
-
+            return new_key
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+                raise PlomAuthenticationException(response.reason) from None
             elif response.status_code == 400:
-                raise PlomSeriousException("Key mismatch in request.") from None
+                raise PlomSeriousException(response.reason) from None
             elif response.status_code == 406:
-                raise PlomSeriousException("Rubric sent was incomplete.") from None
+                raise PlomSeriousException(response.reason) from None
             elif response.status_code == 409:
-                raise PlomSeriousException("No rubric with that key found.") from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(
                 f"Error of type {e} when creating new rubric"
             ) from None
@@ -990,7 +1145,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/unknownPages",
+                    "/plom/admin/unknownPages",
                     json={
                         "user": self.user,
                         "token": self.token,
@@ -1007,7 +1162,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/discardedPages",
+                    "/plom/admin/discardedPages",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
@@ -1021,7 +1176,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 response = self.get(
-                    "/admin/collidingPageNames",
+                    "/plom/admin/collidingPageNames",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()

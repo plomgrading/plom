@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Natalie Balashov
 
 import csv
 import os
@@ -35,7 +36,7 @@ class IDHandler:
         Responds with status 200.
 
         Returns:
-            list: A list of [all the ID'd record , all the records] in the form of int.
+            list: A list of [all the ID'd records, all the records] in the form of ints.
         """
         return web.json_response(self.server.IDprogressCount(), status=200)
 
@@ -154,14 +155,60 @@ class IDHandler:
     # @routes.get("/ID/predictions")
     @authenticate_by_token
     def IDgetPredictions(self):
-        """Returns current predictions for the identification of each paper.
+        """Returns all predictions for the identification of each paper.
 
-        Responds with status 200/404.
+        Each entry in the dict may contain multiple predictions.
 
         Returns:
-            aiohttp.web_json_response: Dict of ``test: (sid, sname, certainty)``.
+            aiohttp.web_json_response: on success a dict where keys are
+            str of papernum, values are lists of dicts with keys
+            `"student_id"`, `"certainty"`, and `"predictor"`.
+            Can fail with 400 (malformed) or 401 (auth trouble).
         """
         return web.json_response(self.server.ID_get_predictions())
+
+    # @routes.get("/ID/predictions/{predictor}")
+    @authenticate_by_token_required_fields([])
+    def IDgetPredictionsFromPredictor(self, data, request):
+        """Returns predictions from a particular predictor for the identification.
+
+        Returns:
+            aiohttp.web_json_response: on success a dict where keys are
+            str of papernum, values themselves dicts with keys
+            `"student_id"`, `"certainty"`, and `"predictor"`.
+            The `"predictor"` field is probably redundant: its what you
+            asked for parroted back to you.
+            Can fail with 400 (malformed) or 401 (auth trouble).
+        """
+        predictor = request.match_info["predictor"]
+        return web.json_response(self.server.ID_get_predictions(predictor=predictor))
+
+    # @routes.delete("/ID/predictions/{predictor}")
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def ID_delete_all_predictions(self, data, request):
+        """Removes all predictions from all predictors for the identification.
+
+        Returns:
+            200 on success.
+            Can fail with 400 (malformed) or 401/403 (auth trouble).
+        """
+        self.server.ID_delete_predictions()
+        return web.Response()
+
+    # @routes.delete("/ID/predictions/{predictor}")
+    @authenticate_by_token_required_fields([])
+    @write_admin
+    def ID_delete_predictions_from_predictor(self, data, request):
+        """Removes all predictions from a particular predictor for the identification.
+
+        Returns:
+            200 on success.
+            Can fail with 400 (malformed) or 401/403 (auth trouble).
+        """
+        predictor = request.match_info["predictor"]
+        self.server.ID_delete_predictions(predictor=predictor)
+        return web.Response()
 
     # @routes.get("/ID/tasks/complete")
     @authenticate_by_token_required_fields(["user"])
@@ -401,37 +448,39 @@ class IDHandler:
         raise web.HTTPNotAcceptable(reason=f"Did not find papernum {paper_number}")
 
     # @routes.put("/ID/preid/{paper_number}")
-    @authenticate_by_token_required_fields(["user", "sid", "predictor"])
+    @authenticate_by_token_required_fields(["user", "sid", "certainty", "predictor"])
     @write_admin
-    def PreIDPaper(self, data, request):
+    def pre_id_paper(self, data, request):
         """Set the prediction identification for a paper.
+
+        TODO: predictor data is unused!  Currently expected to be "prename" only?
 
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
 
             - 200: success.
+            - 401: auth
             - 403: not manager.
             - 404: papernum not found, or other data errors.
-            - 409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["paper_number"]
-        r, what, msg = self.server.pre_id_paper(
-            papernum, data["sid"], predictor=data["predictor"]
+        r, what, msg = self.server.add_or_change_predicted_id(
+            papernum,
+            data["sid"],
+            certainty=data["certainty"],
+            predictor=data["predictor"],
         )
         if r:
             return web.Response(status=200)
-        elif what == 409:
-            raise web.HTTPConflict(reason=msg)
         elif what == 404:
             raise web.HTTPNotFound(reason=msg)
-        else:
-            raise web.HTTPInternalServerError(reason=msg)
+        raise web.HTTPInternalServerError(reason=msg)
 
     # @routes.delete("/ID/preid/{paper_number}")
     @authenticate_by_token_required_fields([])
     @write_admin
-    def remove_id_prediction(self, data, request):
-        """Remove the prediction identification for a paper.
+    def remove_pre_id(self, data, request):
+        """Remove the "prename" prediction identification for a paper.
 
         Only "manager" can perform this action.  Typical client IDing
         would call func:`IdentifyPaperTask` instead.
@@ -444,7 +493,7 @@ class IDHandler:
             - 404: papernum not found, or other data errors.
         """
         papernum = request.match_info["paper_number"]
-        r, what, msg = self.server.remove_id_prediction(papernum)
+        r, what, msg = self.server.remove_predicted_id(papernum, predictor="prename")
         if r:
             return web.Response(status=200)
         elif what == 404:
@@ -494,10 +543,8 @@ class IDHandler:
     # @routes.delete("/ID/predictedID")
     @authenticate_by_token_required_fields(["user"])
     @write_admin
-    def IDdeletePredictions(self, data, request):
+    def ID_delete_machine_predictions(self, data, request):
         """Deletes the machine-learning predicted IDs for all papers.
-
-        Responds with status 200/401/403.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
@@ -505,45 +552,11 @@ class IDHandler:
 
         Returns:
             aiohttp.web_response.Response: 200 if successful.
+            400 for malformed, or 401/403 for auth trouble.
         """
-        self.server.IDdeletePredictions()
+        self.server.ID_delete_predictions(predictor="MLLAP")
+        self.server.ID_delete_predictions(predictor="MLGreedy")
         return web.Response(status=200)
-
-    # @routes.put("/ID/predictedID")
-    @authenticate_by_token_required_fields(["user", "predictions"])
-    @write_admin
-    def IDputPredictions(self, data, request):
-        """Upload and save id-predictions (eg via machine learning)
-
-        TODO: is anyone calling this?  It seems to be a bulk setter, in principle
-        we could require callers to do per-paper in a loop.  But perhaps this is
-        intended to have different semantics with respect to existing predictions?
-        E.g., perhaps this could wipe the table first?  Sort these things out and
-        then document them here!
-
-        Args:
-            data (dict): A (str:str) dictionary having keys `user`, `token` and `predictions`.
-            request (aiohttp.web_request.Request): PUT /ID/put type request object.
-
-        Returns:
-            aiohttp.web_response.Response: Returns a response with a
-            `[True, message]` or `[False,message]` indicating if
-            predictions upload was successful.
-        """
-        # this classlist reading should probably happen in the serverID not here
-        try:
-            with open(specdir / "classlist.csv", "r") as f:
-                reader = csv.DictReader(f)
-                classlist = list(reader)
-        except FileNotFoundError:
-            raise web.HTTPNotFound(reason="classlist not found")
-
-        return web.json_response(
-            self.server.IDputPredictions(
-                data["predictions"], classlist, self.server.testSpec
-            ),
-            status=200,
-        )
 
     # @routes.get("/ID/id_reader"
     @authenticate_by_token_required_fields([])
@@ -594,8 +607,8 @@ class IDHandler:
 
     @authenticate_by_token_required_fields(["user"])
     @write_admin
-    def predict_id_lap_solver(self, data, request):
-        """Match Runs the id digit reader on all paper ID pages.
+    def machine_learning_predict_id(self, data, request):
+        """Match Runs the id digit reader (MLLAP and MLGreedy) on all paper ID pages.
 
         Args:
             data (dict): A dictionary having the user/token.
@@ -604,14 +617,16 @@ class IDHandler:
         Returns:
             aiohttp.web_response.Response: Can be:
 
-            - 200: successful.
-            - 401/403: authentication ttroubles
+            - 200: successful, with some status text explaing what happened.
+            - 401/403: authentication troubles
             - 406 (not acceptable): LAP is degenerate
             - 409 (conflict): ID reader still running
             - 412 (precondition failed) for no ID reader
         """
         try:
             status = self.server.predict_id_lap_solver()
+            status += "\n"
+            status += self.server.predict_id_greedy()
         except RuntimeError as e:
             log.warning(e)
             return web.HTTPConflict(reason=e)
@@ -655,18 +670,25 @@ class IDHandler:
         router.add_get("/ID/classlist", self.IDgetClasslist)
         router.add_put("/ID/classlist", self.IDputClasslist)
         router.add_get("/ID/predictions", self.IDgetPredictions)
-        router.add_put("/ID/predictions", self.IDputPredictions)
+        router.add_delete("/ID/predictions", self.ID_delete_all_predictions)
+        router.add_get(
+            "/ID/predictions/{predictor}", self.IDgetPredictionsFromPredictor
+        )
+        router.add_delete(
+            "/ID/predictions/{predictor}", self.ID_delete_predictions_from_predictor
+        )
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
         router.add_get("/ID/image/{test}", self.IDgetImage)
         router.add_get("/ID/donotmark_images/{test}", self.ID_get_donotmark_images)
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
-        router.add_put("/ID/preid/{paper_number}", self.PreIDPaper)
-        router.add_delete("/ID/preid/{paper_number}", self.remove_id_prediction)
+        router.add_put("/ID/preid/{paper_number}", self.pre_id_paper)
+        router.add_delete("/ID/preid/{paper_number}", self.remove_pre_id)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
-        router.add_delete("/ID/predictedID", self.IDdeletePredictions)
-        router.add_post("/ID/predictedID", self.predict_id_lap_solver)
+        # TODO: likely unnecessary?
+        router.add_delete("/ID/predictedID", self.ID_delete_machine_predictions)
+        router.add_post("/ID/predictedID", self.machine_learning_predict_id)
         router.add_get("/ID/id_reader", self.id_reader_get_log)
         router.add_post("/ID/id_reader", self.id_reader_run)
         router.add_delete("/ID/id_reader", self.id_reader_kill)

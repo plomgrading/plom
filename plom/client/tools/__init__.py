@@ -7,7 +7,7 @@ import logging
 
 log = logging.getLogger("tools")
 
-from plom.client.tools.move import CommandMoveItem
+from plom.client.tools.move import CommandMoveItem, UndoStackMoveMixin
 from plom.client.tools.tool import CommandTool, DeleteObject, DeleteItem
 from plom.client.tools.delete import CommandDelete
 from plom.client.tools.crop import CommandCrop

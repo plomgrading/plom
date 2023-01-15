@@ -1,0 +1,97 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Connect to classic - Manager{% endblock %}
+
+{% block page_heading %}Manage connection to Plom-classic server{% endblock %}
+
+{% block main_content %}
+
+<div class="d-grid gap-2">
+    <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+
+    <div class="card w-50">
+        <details class="card-body">
+            <summary>Setting up a Plom-classic server</summary>
+            <p>
+                <ul>
+                    <li>Placeholder docs</li>
+                    <li>First, download and install Plom</li>
+                    <li>Pull up a terminal window and initialize a server, calling <code>plom-server init</code> and <code>plom-server users</code></li>
+                    <li>Run the server with <code>plom-server launch</code></li>
+                    <li>Web Plom is now ready to connect to the classic server!</li>
+                </ul>
+            </p>
+        </details>
+    </div>
+
+    <div class="card w-50" x-data="{server_url: '{{ form.server_url.initial }}', port_number: '{{ form.port_number.initial }}'}">
+        <div class="card-body">
+            <h5 class="card-title">Connection details</h5>
+            <form hx-post="{% url 'attempt_core_connection' %}" hx-target="#init_connection_response">
+                {% csrf_token %}
+            
+                <div class="row">
+                    <label for="{{ form.server_url.id_for_label }}" class="col-sm-3 col-form-label fs-7">{{ form.server_url.label }}</label>
+                    <div class="col-sm-9">
+                        {{ form.server_url }}
+                    </div>
+
+                    <label for="{{ form.port_number.id_for_label }}" class="col-sm-3 col-form-label fs-7">{{ form.port_number.label }}</label>
+                    <div class="col-sm-9">
+                        {{ form.port_number }}
+                    </div>
+
+                    <p x-text="'Will connect to https://' + server_url + ':' + port_number" style="margin-top: 25px;"></p>
+
+                </div>
+
+                <div id="init_connection_response">
+                    {% if is_valid %}
+                    <p class="text-success">Core server successfully pinged.</p>
+                    {% else %}
+                    <p></p>
+                    {% endif %}
+                </div>
+
+                <input type="submit" class="btn btn-primary" value="Test connection" onclick="document.getElementById('result').style.opacity = '0';">
+                <button class="btn btn-danger" hx-post="{% url 'forget_core_connection' %}" hx-target="#init_connection_response">Forget</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card w-50">
+        <div class="card-body">
+            <h5 class="card-title">Manager details</h5>
+            <p class="card-text">Set the login details for the Plom-classic manager account.</p>
+
+            <form hx-post="{% url 'attempt_manager_signup' %}" hx-target="#init_manager_response">
+                {% csrf_token %}
+
+                <div class="row">
+                    <label for="manager_username" class="col-sm-3 col-form-label fs-7">Username: </label>
+                    <div class="col-sm-9">
+                        <input id="manager_username" class="form-control" type="text" value="manager" readonly>
+                    </div>
+
+                    <label for="{{ manager_form.password.id_for_label }}" class="col-sm-3 col-form-label fs-7">{{ manager_form.password.label }}</label>
+                    <div class="col-sm-9">
+                        {{ manager_form.password }}
+                    </div>
+                </div>
+
+                <div id="init_manager_response">
+                    {% if manager_logged_in %}
+                    <p class="text-success">Manager login details validated.</p>
+                    {% else %}
+                    <p></p>
+                    {% endif %}
+                </div>
+
+                <input type="submit" class="btn btn-primary" value="Test manager login" onclick="document.getElementById('manager_result').style.opacity = '0';">
+                <button class="btn btn-danger" hx-post="{% url 'forget_manager_connection' %}" hx-target="#init_manager_response">Forget</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

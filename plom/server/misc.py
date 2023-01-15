@@ -1,14 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2018-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 
 """Misc utilities for the Plom Server"""
 
-import importlib.resources as resources
 import logging
 from pathlib import Path
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import plom
 from plom import Default_Port
@@ -25,7 +30,6 @@ server_dirs = (
     Path("pages") / "unknownPages",
     Path("pages") / "originalPages",
     Path("markedQuestions"),
-    Path("markedQuestions") / "plomFiles",
     Path("userRubricPaneData"),
     Path("solutionImages"),
 )
@@ -61,7 +65,7 @@ def check_server_fully_configured(basedir):
         )
 
 
-def create_server_config(dur=confdir, *, port=None, name=None):
+def create_server_config(dur=confdir, *, port=None, name=None, db_name=None):
     """Create a default server configuration file.
 
     args:
@@ -73,33 +77,23 @@ def create_server_config(dur=confdir, *, port=None, name=None):
             "plom.example.com" or an IP address.  Defaults to
             "localhost" which is usually fine but may cause trouble
             with SSL certificates.
+        db_name (str/None): the name of the database, omitted if `None`.
 
     raises:
         FileExistsError: file is already there.
+
+    TODO: note the toml file is manipulated here with find-and-replace
+    so as to preserve comments in the template.
     """
     sd = Path(dur) / "serverDetails.toml"
     if sd.exists():
         raise FileExistsError("Config already exists in {}".format(sd))
-    template = resources.read_text(plom, "serverDetails.toml")
+    template = (resources.files(plom) / "serverDetails.toml").read_text()
     if name:
         template = template.replace("localhost", name)
     if port:
         template = template.replace(f"{Default_Port}", str(port))
+    if db_name:
+        template = template.replace("#db_name =", f'db_name = "{db_name}"')
     with open(sd, "w") as fh:
         fh.write(template)
-
-
-def create_blank_predictions(dur=specdir):
-    """Create empty prediction list to store machine-read student IDs.
-
-    args:
-        dur (str/pathlib.Path): where to put the file.
-
-    raises:
-        FileExistsError: file is already there.
-    """
-    pl = Path(dur) / "predictionlist.csv"
-    if pl.exists():
-        raise FileExistsError(f"{pl} already exists.")
-    with open(pl, "w") as fh:
-        fh.write("test, id\n")

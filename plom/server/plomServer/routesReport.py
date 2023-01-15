@@ -66,8 +66,7 @@ class ReportHandler:
         # Ex: {1: [['t.1', 1, True], ['t.2', 1, True], ['t.3', 2, True], ['t.4', 1, True], ['t.5', 2, True], ['t.6', 2, False]]}
         return web.json_response(self.server.RgetIncompleteTests(), status=200)
 
-        # @routes.get("/REP/dangling")
-
+    # @routes.get("/REP/dangling")p
     @authenticate_by_token_required_fields(["user"])
     def getDanglingPages(self, data, request):
         """Respond with the list of dangling pages - pages attached to groups that are not complete.

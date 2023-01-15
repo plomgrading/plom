@@ -59,12 +59,12 @@ def status(*, msgr):
         sv = SpecVerifier(spec)
         print(sv)
         # maybe above printer should do this?
-        print(f"  Server public code: {spec['publicCode']}")
+        # TODO: Issue #2362, Django does not have
+        # print(f"  Server public code: {spec['publicCode']}")
 
     print("\nUser information")
     print("----------------\n")
     users = msgr.getUserDetails()
-    users.pop("HAL")
     if users.pop("manager", None):
         print(check_mark + " manager account")
     else:
@@ -119,7 +119,7 @@ def status(*, msgr):
         print("    " + "\n    ".join(wrap(format_int_list_with_runs(not_named), 72)))
 
     print("\nDatabase")
-    print("---------\n")
+    print("--------\n")
     vmap = msgr.getGlobalQuestionVersionMap()
     if len(vmap) > 0:
         print(check_mark + f" There are {len(vmap)} rows in the papers table")
@@ -130,7 +130,7 @@ def status(*, msgr):
         print(warn_mark + " No rows have been inserted in the papers table")
 
     print("\nRubrics")
-    print("---------\n")
+    print("-------\n")
     rubs = msgr.MgetRubrics()
     if len(rubs) == 0:
         print("Server does not yet have any rubrics")

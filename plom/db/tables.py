@@ -1,22 +1,27 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2022 Chris Jin
+# Copyright (C) 2022 Brennen Chiu
+
+import json
 
 import peewee as pw
 
-plomdb = pw.SqliteDatabase(None)
+
+database_proxy = pw.Proxy()
 
 
 class BaseModel(pw.Model):
     class Meta:
-        database = plomdb
+        database = database_proxy
 
 
 class User(BaseModel):
     # TODO - should this be short - if so we need to check length elsewhere in code.
-    name = pw.CharField(unique=True)
+    name = pw.CharField(unique=True, max_length=1000)
     enabled = pw.BooleanField(default=True)
     password = pw.CharField(null=True)  # hash of password for comparison - fixed length
     token = pw.CharField(null=True)  # authentication token - fixed length
@@ -57,11 +62,9 @@ class Group(BaseModel):
     scanned = pw.BooleanField(default=False)  # should get all its tpages
 
 
-# TODO: Colin thinks we will regret making unique=True on the student_id field
-# and that is should be an arbitrary string.  To be sorted out later.
 class IDPrediction(BaseModel):
     test = pw.ForeignKeyField(Test, backref="idpredictions")
-    student_id = pw.CharField(unique=True, null=True)  # short, no arbitrary length ids
+    student_id = pw.CharField(null=True)  # short, no arbitrary length ids
     user = pw.ForeignKeyField(User, backref="idpredictions", null=True)
     predictor = pw.CharField(null=False)  # is short - system generated.
     certainty = pw.DoubleField(null=False, default=0.0)
@@ -168,7 +171,7 @@ class Annotation(BaseModel):
     outdated = pw.BooleanField(default=False)
     #
     # we need to order the annotations - want the latest.
-    plom_file = pw.TextField(null=True)  # might be long
+    plom_json = pw.TextField(null=True)
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=False)
@@ -181,12 +184,21 @@ class APage(BaseModel):
 
 
 class Rubric(BaseModel):
-    # unique key - user-generated have 12 digits, HAL uses 1XXX.
+    # unique key - user-generated have 12 digits
     key = pw.CharField(unique=True, null=False)  # system generated + short
     kind = pw.CharField(null=False)  # abs, neut, delt, relative - is short
-    delta = pw.CharField(null=False)  # is short
+    display_delta = pw.CharField(null=False)  # is short
+    # Note: designing for "value / out_of" absolute rubrics
+    #   - value is also used for relative rubrics
+    value = pw.IntegerField(null=False)
+    out_of = pw.IntegerField(null=False)
     text = pw.TextField(null=False)  # can be long
     question = pw.IntegerField(null=False)
+    # versions is a list of integers, stored in json field
+    #   "[]": all versions
+    #   "[1, 3]": versions 1 and 3 only
+    versions = pw.TextField(null=False, default=json.dumps([]))
+    parameters = pw.TextField(null=False, default=json.dumps([]))
     user = pw.ForeignKeyField(User, backref="rubrics", null=False)
     revision = pw.IntegerField(null=False, default=0)
     count = pw.IntegerField(null=False, default=0)

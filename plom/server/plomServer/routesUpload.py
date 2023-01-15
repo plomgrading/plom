@@ -350,57 +350,108 @@ class UploadHandler:
         # note 200 used here for errors too
         return web.json_response(rmsg, status=200)
 
-    async def replaceMissingTestPage(self, request):
-        data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "test", "page", "version"]
-        ):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+    # @routes.put("/plom/admin/missingTestPage")
+    @authenticate_by_token_required_fields(["test", "page", "version"])
+    @write_admin
+    def replaceMissingTestPage(self, data, request):
+        """Replace a do-not-mark page with a server-generated placeholder.
 
-        rval = self.server.replaceMissingTestPage(
+        We will create the placeholder image.
+
+        Args:
+            ``test``, ``page``, and ``version`` in the data dict.
+
+        Returns:
+            200: on success, currently with some json diagnostics info.
+            401/403: auth
+            404: page or test not found
+            409: conflict such as collision with image already in place
+                 or a repeated upload of the same placeholder.
+            400: poorly formed or otherwise unexpected catchall
+        """
+        ok, reason, X = self.server.replaceMissingTestPage(
             data["test"], data["page"], data["version"]
         )
-        if rval[0]:
-            return web.json_response(rval, status=200)  # all fine
-        else:
-            return web.Response(status=404)  # page not found at all
+        if ok:
+            assert reason == "success"
+            return web.json_response(X, status=200)
+        if reason in ("testError", "pageError"):
+            raise web.HTTPNotFound(reason=X)
+        if reason == "duplicate":
+            raise web.HTTPConflict(reason=X)
+        if reason in "collision":
+            # TODO: refactor `message_or_tuple`?
+            msg = "Collision: " + str(X)
+            raise web.HTTPConflict(reason=msg)
+        # includes "bundleError" and anything unexpected
+        msg = reason + ": " + str(X)
+        raise web.HTTPBadRequest(reason=msg)
 
-    async def replaceMissingDNMPage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+    # @routes.put("/plom/admin/missingDNMPage")
+    @authenticate_by_token_required_fields(["test", "page"])
+    @write_admin
+    def replaceMissingDNMPage(self, data, request):
+        """Replace a do-not-mark page with a server-generated placeholder.
 
-        rval = self.server.replaceMissingDNMPage(data["test"], data["page"])
-        if rval[0]:
-            return web.json_response(rval, status=200)  # all fine
-        else:
-            return web.Response(status=404)  # page not found at all
+        We will create the placeholder image.
 
-    async def replaceMissingIDPage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+        Args:
+            ``test`` and ``page`` in the data dict.
 
+        Returns:
+            200: on success, currently with some json diagnostics info.
+            401/403: auth
+            404: page or test not found
+            409: conflict such as collision with image already in place
+                 or a repeated upload of the same placeholder.
+            400: poorly formed or otherwise unexpected catchall
+        """
+        ok, reason, X = self.server.replaceMissingDNMPage(data["test"], data["page"])
+        if ok:
+            assert reason == "success"
+            return web.json_response(X, status=200)
+        if reason in ("testError", "pageError"):
+            raise web.HTTPNotFound(reason=X)
+        if reason == "duplicate":
+            raise web.HTTPConflict(reason=X)
+        if reason in "collision":
+            # TODO: refactor `message_or_tuple`?
+            msg = "Collision: " + str(X)
+            raise web.HTTPConflict(reason=msg)
+        # includes "bundleError" and anything unexpected
+        msg = reason + ": " + str(X)
+        raise web.HTTPBadRequest(reason=msg)
+
+    # @routes.put("/plom/admin/missingDNMPage")
+    @authenticate_by_token_required_fields(["test"])
+    @write_admin
+    def replaceMissingIDPage(self, data, request):
+        """Replace a missing ID page a server-generated placeholder, for identified tests only.
+
+        TODO: suspicious quality, needs work, Issue #2461.
+
+        Args:
+            ``test`` in the data dict.
+
+        Returns:
+            200: on success, currently with some json diagnostics info (?) but
+            can also return 200 when HW already had an ID page (?)
+            401/403: auth
+            404: page or test not found
+            410: paper not identified (e.g., not homework)
+            400: poorly formed or otherwise unexpected catchall
+        """
         rval = self.server.replaceMissingIDPage(data["test"])
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
-        else:
-            if rval[1] == "unknown":
-                return web.Response(status=410)
-            else:
-                return web.Response(status=404)  # page not found at all
+        if rval[1] == "unknown":
+            raise web.HTTPGone(
+                reason=f'Cannot substitute ID page of test {data["test"]}'
+                " because that paper is not identified"
+            )
+        if rval[1] is False:
+            raise web.HTTPNotFound(reason="unexpectedly could not find something")
+        raise web.HTTPBadRequest(reason=f"Something has gone wrong: {str(rval)}")
 
     async def replaceMissingHWQuestion(self, request):
         # can replace either by SID-lookup or test-number
@@ -450,7 +501,7 @@ class UploadHandler:
         else:
             return web.Response(status=404)  # page not found at all
 
-    # DELETE: /admin/singlePage
+    # DELETE: /plom/admin/singlePage
     @authenticate_by_token_required_fields(["user", "test", "page_name"])
     @write_admin
     def removeSinglePage(self, data, request):
@@ -604,7 +655,7 @@ class UploadHandler:
                 mpwriter.append(b)
             return web.Response(body=mpwriter, status=200)
 
-    # DELETE: /admin/unknownImage
+    # DELETE: /plom/admin/unknownImage
     @authenticate_by_token_required_fields(["fileName", "reason"])
     @write_admin
     def removeUnknownImage(self, data, request):
@@ -870,7 +921,7 @@ class UploadHandler:
             you may need to iterate and convert back to int.  Fails
             with 409 if the version map database has not been built yet.
 
-        .. caution:: careful not to confuse this with `/admin/questionVersionMap`
+        .. caution:: careful not to confuse this with `/plom/admin/questionVersionMap`
             which is much more likely what you are looking for.
         """
         spec = self.server.testSpec
@@ -974,42 +1025,44 @@ class UploadHandler:
             raise web.HTTPGone(reason="Cannot find image or bundle.")
 
     def setUpRoutes(self, router):
-        router.add_get("/admin/bundle", self.doesBundleExist)
-        router.add_put("/admin/bundle", self.createNewBundle)
-        router.add_get("/admin/bundle/list", self.listBundles)
-        router.add_get("/admin/sidToTest", self.sidToTest)
-        router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
-        router.add_put("/admin/hwPages", self.uploadHWPage)
-        router.add_put("/admin/unknownPages", self.uploadUnknownPage)
-        router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
-        router.add_put("/admin/missingTestPage", self.replaceMissingTestPage)
-        router.add_put("/admin/missingDNMPage", self.replaceMissingDNMPage)
-        router.add_put("/admin/missingIDPage", self.replaceMissingIDPage)
-        router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
-        router.add_delete("/admin/scannedPages", self.removeAllScannedPages)
-        router.add_delete("/admin/singlePage", self.removeSinglePage)
-        router.add_get("/admin/scannedTPage", self.getTPageImage)
-        router.add_get("/admin/scannedHWPage", self.getHWPageImage)
-        router.add_get("/admin/scannedEXPage", self.getEXPageImage)
-        router.add_get("/admin/unknownPages", self.getUnknownPages)
-        router.add_get("/admin/discardedPages", self.getDiscardedPages)
-        router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
-        router.add_get("/admin/collidingImage", self.getCollidingImage)
-        router.add_get("/admin/checkTPage", self.checkTPage)
-        router.add_delete("/admin/unknownImage", self.removeUnknownImage)
-        router.add_delete("/admin/collidingImage", self.removeCollidingImage)
-        router.add_put("/admin/unknownToTestPage", self.unknownToTestPage)
-        router.add_put("/admin/unknownToHWPage", self.unknownToHWPage)
-        router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
-        router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
-        router.add_put("/admin/discardToUnknown", self.discardToUnknown)
-        router.add_put("/admin/initialiseDB", self.initialiseExamDatabase)
-        router.add_put("/admin/appendTestToDB", self.appendTestToExamDatabase)
-        router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
+        router.add_get("/plom/admin/bundle", self.doesBundleExist)
+        router.add_put("/plom/admin/bundle", self.createNewBundle)
+        router.add_get("/plom/admin/bundle/list", self.listBundles)
+        router.add_get("/plom/admin/sidToTest", self.sidToTest)
+        router.add_put("/plom/admin/testPages/{tpv}", self.uploadTestPage)
+        router.add_put("/plom/admin/hwPages", self.uploadHWPage)
+        router.add_put("/plom/admin/unknownPages", self.uploadUnknownPage)
+        router.add_put("/plom/admin/collidingPages/{tpv}", self.uploadCollidingPage)
+        router.add_put("/plom/admin/missingTestPage", self.replaceMissingTestPage)
+        router.add_put("/plom/admin/missingDNMPage", self.replaceMissingDNMPage)
+        router.add_put("/plom/admin/missingIDPage", self.replaceMissingIDPage)
+        router.add_put("/plom/admin/missingHWQuestion", self.replaceMissingHWQuestion)
+        router.add_delete("/plom/admin/scannedPages", self.removeAllScannedPages)
+        router.add_delete("/plom/admin/singlePage", self.removeSinglePage)
+        router.add_get("/plom/admin/scannedTPage", self.getTPageImage)
+        router.add_get("/plom/admin/scannedHWPage", self.getHWPageImage)
+        router.add_get("/plom/admin/scannedEXPage", self.getEXPageImage)
+        router.add_get("/plom/admin/unknownPages", self.getUnknownPages)
+        router.add_get("/plom/admin/discardedPages", self.getDiscardedPages)
+        router.add_get("/plom/admin/collidingPageNames", self.getCollidingPageNames)
+        router.add_get("/plom/admin/collidingImage", self.getCollidingImage)
+        router.add_get("/plom/admin/checkTPage", self.checkTPage)
+        router.add_delete("/plom/admin/unknownImage", self.removeUnknownImage)
+        router.add_delete("/plom/admin/collidingImage", self.removeCollidingImage)
+        router.add_put("/plom/admin/unknownToTestPage", self.unknownToTestPage)
+        router.add_put("/plom/admin/unknownToHWPage", self.unknownToHWPage)
+        router.add_put("/plom/admin/unknownToExtraPage", self.unknownToExtraPage)
+        router.add_put("/plom/admin/collidingToTestPage", self.collidingToTestPage)
+        router.add_put("/plom/admin/discardToUnknown", self.discardToUnknown)
+        router.add_put("/plom/admin/initialiseDB", self.initialiseExamDatabase)
+        router.add_put("/plom/admin/appendTestToDB", self.appendTestToExamDatabase)
+        router.add_get("/plom/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get(
-            "/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap
+            "/plom/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap
         )
-        router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
-        router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
-        router.add_get("/admin/imagesInBundle", self.getImagesInBundle)
-        router.add_get("/admin/bundlePage", self.getPageFromBundle)
+        router.add_get(
+            "/plom/admin/questionVersionMap", self.getGlobalQuestionVersionMap
+        )
+        router.add_get("/plom/admin/bundleFromImage", self.getBundleFromImage)
+        router.add_get("/plom/admin/imagesInBundle", self.getImagesInBundle)
+        router.add_get("/plom/admin/bundlePage", self.getPageFromBundle)

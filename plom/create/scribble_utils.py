@@ -8,10 +8,15 @@
 """Plom tools for scribbling fake answers on PDF files."""
 
 import base64
-import importlib.resources as resources
 import json
 from pathlib import Path
 import random
+import sys
+
+if sys.version_info >= (3, 9):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import fitz
 
@@ -43,10 +48,228 @@ possible_answers = [
     "I knew that it, it was illegal  -- Arlo Guthrie",
     "But there will always be science, engineering, and technology.  "
     "And there will always, always be mathematics.  -- Katherine Johnson",
+    "I like to learn. That's an art and a science.  -- Katherine Johnson",
+    "You tell me when you want it and where you want it to land, and I'll"
+    " do it backwards and tell you when to take off.  -- Katherine Johnson",
     "Is 5 = 1?  Let's see... multiply both sides by 0.  "
     "Now 0 = 0 so therefore 5 = 1.",
     "I mean, you could claim that anything's real if the only basis for "
     "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
+    "Mathematics: the only province of the literary world"
+    " where peace reigns.  -- Maria Gaetana Agnesi",  # doi:10.1086/385354
+    "Cupcake ipsum dolor sit amet pastry. Apple pie I love marzipan souffle"
+    " jelly tart I love jelly. Chocolate lemon drops chupa chups I love pie"
+    " cookie candy donut pudding.  -- www.cupcakeipsum.com",
+    "Algebra is but written geometry and geometry is but"
+    " figured algebra.  -- Sophie Germain",
+    "Understand it well as I may, my comprehension can only be an"
+    " infinitesimal fraction of all I want to understand.  -- Ada Lovelace",
+]
+
+# some simple translations of the word "extra" into other languages courtesy of google-translate
+# and https://www.indifferentlanguages.com/words/extra
+extra_last_names = [
+    "Extra",
+    "Ekstra",
+    "Supplémentaire",
+    "Aukalega",
+    "Aparteko",
+    "Ychwanegol",
+    "A-bharrachd",
+    "Breise",
+    "Papildomai",
+    "Dodatkowy",
+    "Okwengeziwe",
+    "Tlaleletso",
+    "Ziada",
+    "Ylimääräinen",
+]
+# some common M/F first (latin script) names taken from the names_dataset module
+# https://pypi.org/project/names-dataset/
+# generating script in contrib.
+extra_first_names = [
+    "Abdiel",
+    "Adel",
+    "Adi",
+    "Adissa",
+    "Adriana",
+    "Agron",
+    "Agus",
+    "Akmal",
+    "Alaa",
+    "Alan",
+    "Alejandra",
+    "Alejandro",
+    "Aleksandr",
+    "Alemtsehay",
+    "Ali",
+    "Allen",
+    "Amira",
+    "Amr",
+    "Anabela",
+    "Andrey",
+    "Anila",
+    "Ariel",
+    "Aya",
+    "Aysel",
+    "Ayu",
+    "Ayşe",
+    "Björn",
+    "Carine",
+    "Carla",
+    "Carlos",
+    "Chang",
+    "Cheng",
+    "Chiara",
+    "Choukri",
+    "Claudio",
+    "Cristhian",
+    "Devon",
+    "Dimitra",
+    "Elizabeth",
+    "Fathmath",
+    "Fatma",
+    "Fernando",
+    "Fiona",
+    "Francis",
+    "Frida",
+    "Fábio",
+    "Gelson",
+    "Genesis",
+    "Hanane",
+    "Hawra",
+    "Hernández",
+    "Hiba",
+    "Hilma",
+    "Hüseyin",
+    "Ifrah",
+    "Ildikó",
+    "Indah",
+    "Inês",
+    "Ivan",
+    "Ivelina",
+    "Javier",
+    "Jemal",
+    "Jenni",
+    "Jesmond",
+    "Jie",
+    "Joana",
+    "Joao",
+    "Johan",
+    "Jonas",
+    "Josipa",
+    "Juan",
+    "Karel",
+    "Kari",
+    "Karin",
+    "Katherine",
+    "Khaled",
+    "Kim",
+    "Kitty",
+    "Lavenia",
+    "Laxmi",
+    "Lebo",
+    "Lebogang",
+    "Lela",
+    "Li",
+    "Liline",
+    "Linda",
+    "Ling",
+    "Luis",
+    "Luka",
+    "Maha",
+    "Mahamadi",
+    "Marcelina",
+    "Marco",
+    "Maria",
+    "Markus",
+    "Martha",
+    "Marthese",
+    "Marvín",
+    "Mary",
+    "Mary Grace",
+    "María",
+    "Masud",
+    "Maxine",
+    "Maya",
+    "Małgorzata",
+    "Mehdi",
+    "Mekan",
+    "Michalis",
+    "Michel",
+    "Miguel",
+    "Mikael",
+    "Milan",
+    "Mohamed",
+    "Mohammed",
+    "Monika",
+    "Monique",
+    "Mouna",
+    "Muhamad",
+    "Muhammad",
+    "Muhammed",
+    "Munezero",
+    "Nana",
+    "Nargiza",
+    "Neha",
+    "Nicole",
+    "Nikolay",
+    "Nikos",
+    "Nilsa",
+    "Nishantha",
+    "Niyonkuru",
+    "Noel",
+    "Noor",
+    "Noriko",
+    "Nur",
+    "Or",
+    "Peter",
+    "Petra",
+    "Philippe",
+    "Rafał",
+    "Raja",
+    "Rajesh",
+    "Ravi",
+    "Renel",
+    "Ricardo",
+    "Richard",
+    "Rodrigo",
+    "Ryo",
+    "Said",
+    "Sam",
+    "Sami",
+    "Sanjida",
+    "Sarah",
+    "Shaik",
+    "Sigríður",
+    "Silvia",
+    "Simona",
+    "Siyabonga",
+    "Snezana",
+    "Solange",
+    "Sophie",
+    "Sri",
+    "Steve",
+    "Tamás",
+    "Tanja",
+    "Temo",
+    "Thabang",
+    "Thomas",
+    "Trond",
+    "Tural",
+    "Valentina",
+    "Valeria",
+    "Vasile",
+    "Victor",
+    "Waisea",
+    "Willem",
+    "Yiota",
+    "Yolani",
+    "Yosiris",
+    "Yves",
+    "Zainab",
+    "Zoila",
+    "Spela",
 ]
 
 
@@ -77,7 +300,7 @@ def scribble_name_and_id(
         None: but modifies the open document as a side effect.
     """
     # load the digit images
-    digit_array = json.loads(resources.read_text(plom.create, "digits.json"))
+    digit_array = json.loads((resources.files(plom.create) / "digits.json").read_text())
     # array is organized in blocks of each digit with this many samples of each
     num_samples = len(digit_array) // 10
     assert len(digit_array) % 10 == 0
@@ -104,16 +327,16 @@ def scribble_name_and_id(
 
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
     rect = fitz.Rect(220 + random.randrange(0, 16), 345, 600, 450)
-    with resources.path(plom.create.fonts, ttf) as fontfile:
-        excess = id_page.insert_textbox(
-            rect,
-            student_name,
-            fontsize=name_font_size,
-            color=blue,
-            fontname=fontname,
-            fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
-            align=0,
-        )
+    fontres = resources.files(plom.create.fonts) / ttf
+    excess = id_page.insert_textbox(
+        rect,
+        student_name,
+        fontsize=name_font_size,
+        color=blue,
+        fontname=fontname,
+        fontfile=fontres,
+        align=0,
+    )
     assert excess > 0
     del id_page
 
@@ -131,7 +354,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
     By default exclude pages 0 and 1 (the ID page and DNM page in our demo data).
     """
     # In principle you can put other fonts in plom.create.fonts
-    # Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
+    # Can also use "helv" and `None` for the fontfile
     # fontname, ttf = random.choice(...)
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
 
@@ -144,17 +367,17 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
 
         if page_index in exclude:
             continue
-        with resources.path(plom.create.fonts, ttf) as fontfile:
-            excess = pdf_page.insert_textbox(
-                answer_rect,
-                answer_text,
-                fontsize=answer_font_size,
-                color=blue,
-                fontname=fontname,
-                fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
-                align=0,
-            )
-            assert excess > 0
+        fontres = resources.files(plom.create.fonts) / ttf
+        excess = pdf_page.insert_textbox(
+            answer_rect,
+            answer_text,
+            fontsize=answer_font_size,
+            color=blue,
+            fontname=fontname,
+            fontfile=fontres,
+            align=0,
+        )
+        assert excess > 0
 
 
 def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
@@ -174,6 +397,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     # Customizable data
     extra_page_probability = 0.2
     extra_page_font_size = 18
+    extra_student_probability = 0.1
 
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
@@ -191,6 +415,37 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     # get those students not used in the the prename
     available_classlist = [x for x in classlist if x["id"] not in used_ids]
     random.shuffle(available_classlist)
+    # work out how many names actually needed
+    number_of_unnamed_papers = len(papers_paths) - len(named_papers_paths)
+
+    # how many extra names to generate
+    number_of_extra_students = max(
+        3, int(number_of_unnamed_papers * extra_student_probability)
+    )
+    print(
+        f"Note - {number_of_extra_students} papers will belong to students who are not on the classlist."
+    )
+    extra_names = []
+    real_ids = [x["id"] for x in classlist]
+    for _ in range(number_of_extra_students):
+        nm = "{}, {}".format(
+            random.choice(extra_last_names), random.choice(extra_first_names)
+        )
+        # make an 8 digit ID - TODO - move this function into rules.py
+        while True:
+            id = str(random.randint(10**7, 10**8))
+            if id not in real_ids:
+                break
+        real_ids.append(id)
+        extra_names.append({"id": id, "name": nm})
+
+    # cut the available_classlist and add in thenames from the extra list
+    use_these_students = (
+        available_classlist[: number_of_unnamed_papers - number_of_extra_students]
+        + extra_names
+    )
+    # now shuffle everything
+    random.shuffle(use_these_students)
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
@@ -199,7 +454,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
         if f in named_papers_paths:
             print(f"{f.name} - prenamed paper - scribbled")
         else:
-            x = available_classlist.pop()
+            x = use_these_students.pop()
             # TODO: Issue #1646: check for "student_number" fallback to id
             student_number = x["id"]
             student_name = x["name"]

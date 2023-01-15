@@ -108,6 +108,26 @@ Approx: 9230 over 7 courses
 Approx: 1030 over 3 courses
 
 
+## 2022W1
+
+| Course  |  Tasks                           | # students |  Notes                        |
+|---------|----------------------------------|:----------:|-------------------------------|
+| Math100 | Mock final x2, Final             | ~4000      | mixed-mode sync/async         |
+| Math110 | MT1                              | 230        | Seckin Demirbas               |
+| Math200 | MT                               | 890        | Young-Heon Kim                |
+| Math220 | MT1                              | 390        | Andrew Rechnitzer             |
+| Math215 | MT, Final                        | 330        | Philip Loewen (x-listed 255)  |
+| Math221 | MT1, MT2, Final                  | 690        | Ben Williams                  |
+| Math300 | Quiz1, MT1, MT3                  | 90         | Seckin Demirbas               |
+| Math319 | MT1                              | 30         | Andrew Rechnitzer             |
+| Math341 | MT                               | 80         | Jozsef Solymosi               |
+| Math344 | MT, Final                        | 80         | Omer Angel                    |
+| Math405 | MT                               | 40         | Christoph Ortner              |
+| Biol209 | Final (future)                   |            | Mary Berbee                   |
+| Phys117 |                                  |            |                               |
+
+
+
 ## Totals up to August 30th 2022
 
   * Approx 43260 papers in 45 courses.

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2021 Nicholas J H Lai
@@ -74,19 +74,13 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
         )
 
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_test_page_substitute(
-        0, 0, 0, template=pns, out_dir=please_check
-    ):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing test page."
-        )
+    pageNotSubmitted.build_test_page_substitute(
+        0, 0, 0, template=pns, outdir=please_check
+    )
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_homework_question_substitute(
-        0, 0, template=qns, out_dir=please_check
-    ):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing homework question."
-        )
+    pageNotSubmitted.build_homework_question_substitute(
+        0, 0, template=qns, outdir=please_check
+    )
 
     print(
         fill(
@@ -105,7 +99,13 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
 
 
 def initialise_server(
-    basedir, *, port=None, name=None, make_selfsigned_keys=True, manager_pw=None
+    basedir,
+    *,
+    port=None,
+    name=None,
+    make_selfsigned_keys=True,
+    manager_pw=None,
+    db_name=None,
 ):
     """Setup various files needed before a Plom server can be started.
 
@@ -119,6 +119,8 @@ def initialise_server(
         make_selfsigned_keys (bool): Defaults to True.
         manager_pw (str/None): the initial manager password.  Can be
             omitted; other ways to set this later.
+        db_name (str/None): the name of the database, with a default
+            randomly generated if `None`.
     """
     if not basedir:
         basedir = Path(".")
@@ -134,7 +136,7 @@ def initialise_server(
 
     print("Copy server networking configuration template into place.")
     try:
-        create_server_config(basedir / confdir, port=port, name=name)
+        create_server_config(basedir / confdir, port=port, name=name, db_name=db_name)
     except FileExistsError as err:
         print(f"Skipping server config - {err}")
     else:
