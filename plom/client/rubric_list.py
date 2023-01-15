@@ -7,7 +7,6 @@
 # Copyright (C) 2021 Forest Kobayashi
 
 import html
-import json
 import logging
 import re
 from textwrap import shorten
@@ -48,7 +47,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import WarnMsg, SimpleQuestion
+from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score
 from plom.plom_exceptions import PlomInconsistentRubric
@@ -63,7 +62,7 @@ def rubric_is_naked_delta(r):
     return False
 
 
-def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
+def isLegalRubric(mss, rubric, *, scene):
     """Checks the 'legality' of the current rubric - returning one of several possible indicators
 
     Those states are:
@@ -77,9 +76,10 @@ def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
     Args:
         mss (list): triple that encodes max-mark, state, and current-score.
             "state" old unused stuff.
-        TODO (dict): other stuff should be just a rubric dict.  TODO: change.
-        versions (list): which versions are this rubric intended for.
-            Empty list means valid for all versions.
+        rubric (dict):
+
+    Keyword Args:
+        scene (PageScene):
 
     Returns:
         int: 0, 1, 2, 3 as documented above.
@@ -88,22 +88,20 @@ def isLegalRubric(mss, *, kind, display_delta, value, out_of, versions, scene):
     score = mss[2]
     our_version = mss[3]
 
-    if versions:
-        if our_version not in versions:
+    if rubric["versions"]:
+        if our_version not in rubric["versions"]:
             return 3
 
     if not scene:
         return 2
 
-    # TODO: obviously we should just pass it in
-    r = {"kind": kind, "value": value, "display_delta": display_delta, "out_of": out_of}
     rubrics = scene.get_rubrics()
-    rubrics.append(r)
+    rubrics.append(rubric)
 
     try:
-        N = compute_score(rubrics, maxMark)
+        _ = compute_score(rubrics, maxMark)
         return 2
-    except ValueError as e:
+    except ValueError:
         return 1
     except PlomInconsistentRubric:
         return 0
@@ -152,28 +150,11 @@ class RubricTable(QTableWidget):
         self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        _col_headers = (
-            "Key",
-            "Username",
-            "Display_Delta",
-            "Text",
-            "Kind",
-            "Versions",
-            "Parameters",
-            "Raw Text",
-            "Value",
-            "Out of",
-        )
+        _col_headers = ("Key", "Username", "Display_Delta", "Text")
         self.setColumnCount(len(_col_headers))
         self.setHorizontalHeaderLabels(_col_headers)
         self.hideColumn(0)
         self.hideColumn(1)
-        self.hideColumn(4)
-        self.hideColumn(5)
-        self.hideColumn(6)
-        self.hideColumn(7)
-        self.hideColumn(8)
-        self.hideColumn(9)
         # could use a subclass
         if self.tabType == "delta":
             self.hideColumn(3)
@@ -195,6 +176,9 @@ class RubricTable(QTableWidget):
     def is_user_tab(self):
         return self.tabType is None
 
+    def is_group_tab(self):
+        return self.tabType == "group"
+
     def is_delta_tab(self):
         return self.tabType == "delta"
 
@@ -206,6 +190,7 @@ class RubricTable(QTableWidget):
         return self.tabType == "show"
 
     def contextMenuEvent(self, event):
+        """Delegate the context menu to appropriate function."""
         if self.is_hidden_tab():
             self.hideContextMenuEvent(event)
         elif self.is_shared_tab():
@@ -214,6 +199,8 @@ class RubricTable(QTableWidget):
             self.defaultContextMenuEvent(event)
         elif self.is_delta_tab():
             self.tabContextMenuEvent(event)
+        elif self.is_group_tab():
+            self.showContextMenuEvent(event)
         else:
             event.ignore()
 
@@ -419,7 +406,6 @@ class RubricTable(QTableWidget):
         self.appendNewRubric(rubric)
 
     def appendNewRubric(self, rubric):
-        # TODO: much code dupe w/ self.updateRubric: update both for changes
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
@@ -439,12 +425,6 @@ class RubricTable(QTableWidget):
             rubric["text"], rubric["parameters"], self._parent.version
         )
         self.setItem(rc, 3, QTableWidgetItem(render))
-        self.setItem(rc, 4, QTableWidgetItem(rubric["kind"]))
-        self.setItem(rc, 5, QTableWidgetItem(json.dumps(rubric["versions"])))
-        self.setItem(rc, 6, QTableWidgetItem(json.dumps(rubric["parameters"])))
-        self.setItem(rc, 7, QTableWidgetItem(rubric["text"]))
-        self.setItem(rc, 8, QTableWidgetItem(str(rubric["value"])))
-        self.setItem(rc, 9, QTableWidgetItem(str(rubric["out_of"])))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
@@ -585,7 +565,7 @@ class RubricTable(QTableWidget):
         self.handleClick()
 
     def previousRubric(self):
-        """Move selection to the prevoous row, wrapping around if needed."""
+        """Move selection to the previous row, wrapping around if needed."""
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
@@ -608,16 +588,14 @@ class RubricTable(QTableWidget):
                 return
             self.selectRubricByRow(r)
 
-        self._parent.rubricSignal.emit(
-            {
-                "kind": self.item(r, 4).text(),
-                "display_delta": self.item(r, 2).text(),
-                "value": int(self.item(r, 8).text()),
-                "out_of": int(self.item(r, 9).text()),
-                "text": self.item(r, 3).text(),
-                "id": self.item(r, 0).text(),
-            }
-        )
+        self._parent.rubricSignal.emit(self.selected_row_as_rubric(r))
+
+    def selected_row_as_rubric(self, r):
+        id = self.item(r, 0).text()
+        # TODO: we want a dict lookup
+        for r in self._parent.rubrics:
+            if r["id"] == id:
+                return r
 
     def firstUnhiddenRow(self):
         for r in range(self.rowCount()):
@@ -634,11 +612,7 @@ class RubricTable(QTableWidget):
     def colourLegalRubric(self, r, mss):
         legal = isLegalRubric(
             mss,
-            kind=self.item(r, 4).text(),
-            display_delta=self.item(r, 2).text(),
-            value=int(self.item(r, 8).text()),
-            out_of=int(self.item(r, 9).text()),
-            versions=json.loads(self.item(r, 5).text()),
+            self.selected_row_as_rubric(r),
             scene=self._parent._parent.scene,
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
@@ -667,34 +641,6 @@ class RubricTable(QTableWidget):
         r = tableIndex.row()
         rubricKey = self.item(r, 0).text()
         self._parent.edit_rubric(rubricKey)
-
-    def updateRubric(self, new_rubric, mss):
-        # TODO: much code dupe w/ self.appendNewRubric: update both for changes
-        for r in range(self.rowCount()):
-            if self.item(r, 0).text() == new_rubric["id"]:
-                self.item(r, 1).setText(new_rubric["username"])
-                self.item(r, 2).setText(new_rubric["display_delta"])
-                # how to access version?  and where to store this function?
-                render = render_params(
-                    new_rubric["text"], new_rubric["parameters"], self._parent.version
-                )
-                self.item(r, 3).setText(render)
-                self.item(r, 4).setText(new_rubric["kind"])
-                self.item(r, 5).setText(json.dumps(new_rubric["versions"]))
-                self.item(r, 6).setText(json.dumps(new_rubric["parameters"]))
-                self.item(r, 7).setText(new_rubric["text"])
-                self.item(r, 8).setText(str(new_rubric["value"]))
-                self.item(r, 9).setText(str(new_rubric["out_of"]))
-
-                # update the legality
-                self.colourLegalRubric(r, mss)
-                # set a tooltip that contains tags and meta info when someone hovers over text
-                hoverText = ""
-                if new_rubric["tags"] != "":
-                    hoverText += "Tagged as {}\n".format(new_rubric["tags"])
-                if new_rubric["meta"] != "":
-                    hoverText += "{}\n".format(new_rubric["meta"])
-                self.item(r, 3).setToolTip(hoverText.strip())
 
 
 class TabBarWithAddRenameRemoveContext(QTabBar):
@@ -757,7 +703,7 @@ class RubricWidget(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
         deltaP_label = "+\N{Greek Small Letter Delta}"
         deltaN_label = "\N{Minus Sign}\N{Greek Small Letter Delta}"
-        self.tabS = RubricTable(self, shortname="Shared", tabType="show")
+        self.tabS = RubricTable(self, shortname="All", tabType="show")
         self.tabDeltaP = RubricTable(self, shortname=deltaP_label, tabType="delta")
         self.tabDeltaN = RubricTable(self, shortname=deltaN_label, tabType="delta")
         self.RTW = QTabWidget()
@@ -841,6 +787,10 @@ class RubricWidget(QWidget):
     @property
     def user_tabs(self):
         """Dynamically construct the ordered list of user-defined tabs."""
+        return self.get_user_tabs()
+
+    def get_user_tabs(self):
+        """Get an ordered list of user-defined tabs."""
         # this is all tabs: we want only the user ones
         # return [self.RTW.widget(n) for n in range(self.RTW.count())]
         L = []
@@ -850,11 +800,52 @@ class RubricWidget(QWidget):
                 L.append(tab)
         return L
 
+    def get_group_tabs(self):
+        """Get an ordered list of the group tabs."""
+        L = []
+        for n in range(self.RTW.count()):
+            tab = self.RTW.widget(n)
+            if tab.is_group_tab():
+                L.append(tab)
+        return L
+
+    def get_group_tabs_dict(self):
+        """Get a dict of the group tabs, keyed by name"""
+        d = {}
+        for n in range(self.RTW.count()):
+            tab = self.RTW.widget(n)
+            if tab.is_group_tab():
+                d[tab.shortname] = tab
+        return d
+
     def update_tab_names(self):
         """Loop over the tabs and update their displayed names"""
         for n in range(self.RTW.count()):
             self.RTW.setTabText(n, self.RTW.widget(n).shortname)
             # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
+
+    def add_new_group_tab(self, name):
+        """Add new group-defined tab
+
+        The new tab is inserted after the right-most "group" tab, or
+        immediately after the "All" tab if there are no "group" tabs.
+
+        args:
+            name (str): name of the new tab.
+
+        return:
+            RubricTable: the newly added table.
+        """
+        tab = RubricTable(self, shortname=name, tabType="group")
+        idx = None
+        for n in range(0, self.RTW.count()):
+            if self.RTW.widget(n).is_group_tab():
+                idx = n
+        if idx is None:
+            idx = 0
+        # insert tab after that
+        self.RTW.insertTab(idx + 1, tab, tab.shortname)
+        return tab
 
     def add_new_tab(self, name=None):
         """Add new user-defined tab either to end or near end.
@@ -1077,6 +1068,37 @@ class RubricWidget(QWidget):
                 log.info("Appending new rubric with id {}".format(rubric["id"]))
                 wranglerState["shown"].append(rubric["id"])
 
+        group_tab_data = {}
+        for rubric in self.rubrics:
+            tags = rubric.get("tags", "").split()
+            # TODO: share pack/unpack from tag w/ dialog & compute_score
+            for t in tags:
+                g = None
+                if t.startswith("exclgroup:"):
+                    tags.remove(t)
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("exclgroup:")
+                    g = t[len("exclgroup:") :]
+                if t.startswith("group:"):
+                    tags.remove(t)
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("group:")
+                    g = t[len("group:") :]
+                if not g:
+                    continue
+                if not group_tab_data.get(g):
+                    group_tab_data[g] = []
+                group_tab_data[g].append(rubric["id"])
+
+        # TODO: order of rubrics within group tabs?
+        current_group_tabs = self.get_group_tabs_dict()
+        for g in sorted(group_tab_data.keys()):
+            idlist = group_tab_data[g]
+            tab = current_group_tabs.get(g)
+            if tab is None:
+                tab = self.add_new_group_tab(g)
+            tab.setRubricsByKeys(self.rubrics, idlist)
+
         # TODO: if we later deleting rubrics, this will need to deal with rubrics that
         # have disappeared from self.rubrics but still appear in some tab
 
@@ -1101,20 +1123,11 @@ class RubricWidget(QWidget):
                 idlist = []
             else:
                 idlist = wranglerState["tabs"][n]
-            tab.setRubricsByKeys(
-                self.rubrics,
-                idlist,
-            )
-        self.tabS.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["shown"],
-        )
+            tab.setRubricsByKeys(self.rubrics, idlist)
+        self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
-        self.tabHide.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["hidden"],
-        )
+        self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
 
         # make sure something selected in each tab
         self.tabHide.selectRubricByVisibleRow(0)
@@ -1245,6 +1258,25 @@ class RubricWidget(QWidget):
         """
         return self._parent.get_nonrubric_text_from_page()
 
+    def get_group_names(self):
+        groups = []
+        for r in self.rubrics:
+            tt = r["tags"]
+            # TODO: share pack/unpack from tag w/ dialog & compute_score
+            tt = tt.split()
+            for t in tt:
+                if t.startswith("exclgroup:"):
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("exclgroup:")
+                    g = t[len("exclgroup:") :]
+                    groups.append(g)
+                elif t.startswith("group:"):
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("group:")
+                    g = t[len("group:") :]
+                    groups.append(g)
+        return list(set(groups))
+
     def unhideRubricByKey(self, key):
         index = [x["id"] for x in self.rubrics].index(key)
         self.tabS.appendNewRubric(self.rubrics[index])
@@ -1320,6 +1352,7 @@ class RubricWidget(QWidget):
             reapable,
             com,
             annotator_size=self._parent.size(),
+            groups=self.get_group_names(),
         )
         if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
             return
@@ -1333,32 +1366,23 @@ class RubricWidget(QWidget):
             assert self.rubrics[index]["id"] == new_rubric["id"]
             # then replace
             self.rubrics[index] = new_rubric
-            # update the rubric in all lists
-            self.updateRubricInLists(new_rubric)
         else:
             new_rubric.pop("id")
             new_rubric["id"] = self._parent.createNewRubric(new_rubric)
             # at this point we have an accepted new rubric
             # add it to the internal list of rubrics
             self.rubrics.append(new_rubric)
-            # append the rubric to the shownList
-            self.tabS.appendNewRubric(new_rubric)
-            # fix for #1563 - should only add to shared list and user-generated list
-            # also add it to the list in the current rubriclist (if it is a user-generated tab)
-            if self.RTW.currentWidget().is_user_tab():
-                self.RTW.currentWidget().appendNewRubric(new_rubric)
+
+        self.setRubricTabsFromState(self.get_tab_rubric_lists())
         # finally - select that rubric and simulate a click
         self.RTW.currentWidget().selectRubricByKey(new_rubric["id"])
         self.handleClick()
 
-    def updateRubricInLists(self, new_rubric):
-        self.tabS.updateRubric(new_rubric, self.mss)
-        self.tabHide.updateRubric(new_rubric, self.mss)
-        for tab in self.user_tabs:
-            tab.updateRubric(new_rubric, self.mss)
-
     def get_tab_rubric_lists(self):
-        """returns a dict of lists of the current rubrics"""
+        """returns a dict of lists of the current rubrics.
+
+        Currently does not include "group tabs".
+        """
         return {
             "user_tab_names": [t.shortname for t in self.user_tabs],
             "shown": self.tabS.getKeyList(),
@@ -1442,6 +1466,7 @@ class AddRubricBox(QDialog):
         com=None,
         *,
         annotator_size=None,
+        groups=[],
     ):
         """Initialize a new dialog to edit/create a comment.
 
@@ -1457,7 +1482,11 @@ class AddRubricBox(QDialog):
                 annotations and morph them into comments.
             com (dict/None): if None, we're creating a new rubric.
                 Otherwise, this has the current comment data.
+
+        Keyword Args:
             annotator_size (QSize/None): size of the parent annotator
+            groups (list): existing group names that the rubric could be
+                added to.
         """
         super().__init__(parent)
 
@@ -1498,8 +1527,12 @@ class AddRubricBox(QDialog):
 
         flay = QFormLayout()
         flay.addRow("Text", self.TE)
-        lay = QFormLayout()
-        lay.addRow("or choose from page: ", self.reapable_CB)
+        lay = QHBoxLayout()
+        lay.addItem(
+            QSpacerItem(32, 10, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        )
+        lay.addWidget(QLabel("Choose text from page:"))
+        lay.addWidget(self.reapable_CB)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.reapable_CB.setSizePolicy(sizePolicy)
         flay.addRow("", lay)
@@ -1548,9 +1581,6 @@ class AddRubricBox(QDialog):
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
         self.rubric_out_of_SB = _
-        # TODO: coming soon notice and setEnabled(False) below
-        hlay.addWidget(QLabel("  (coming soon!)"))
-        self.typeRB_absolute.setEnabled(False)
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(hlay)
         flay.addRow("Marks", frame)
@@ -1564,10 +1594,10 @@ class AddRubricBox(QDialog):
         self.scopeButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.scopeButton.clicked.connect(self.toggle_scope_elements)
         frame = QFrame()
+        frame.setFrameStyle(QFrame.StyledPanel)
         self.scope_frame = frame
         flay.addRow(self.scopeButton, frame)
         vlay = QVBoxLayout(frame)
-        vlay.setContentsMargins(0, 0, 0, 0)
         cb = QCheckBox(
             f'specific to question "{question_label}" (index {question_number})'
         )
@@ -1578,6 +1608,7 @@ class AddRubricBox(QDialog):
         # label = QLabel("Specify a list of question indices to share this rubric.")
         # label.setWordWrap(True)
         # vlay.addWidget(label)
+        vlay.addWidget(QLabel("<hr>"))
         lay = QHBoxLayout()
         cb = QCheckBox("specific to version(s)")
         cb.stateChanged.connect(self.toggle_version_specific)
@@ -1605,15 +1636,70 @@ class AddRubricBox(QDialog):
         vlay.addWidget(label)
         self._param_grid = QGridLayout()  # placeholder
         vlay.addLayout(self._param_grid)
-        # some extra space at the bottom of the scope panel
-        vlay.addItem(
-            QSpacerItem(32, 10, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
-        )
+        vlay.addWidget(QLabel("<hr>"))
+        hlay = QHBoxLayout()
+        self.group_checkbox = QCheckBox("Associate with the group ")
+        hlay.addWidget(self.group_checkbox)
+        b = QComboBox()
+        # b.setEditable(True)
+        # b.setDuplicatesEnabled(False)
+        b.addItems(groups)
+        # changing the group ticks the group checkbox
+        b.activated.connect(lambda: self.group_checkbox.setChecked(True))
+        hlay.addWidget(b)
+        self.group_combobox = b
+        b = QToolButton(text="➕")
+        b.setToolTip("Add new group")
+        b.setAutoRaise(True)
+        b.clicked.connect(self.add_new_group)
+        self.group_add_btn = b
+        hlay.addWidget(b)
+        # b = QToolButton(text="➖")
+        # b.setToolTip("Delete currently-selected group")
+        # b.setAutoRaise(True)
+        # hlay.addWidget(b)
+        hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        b = QToolButton(text="What are groups?")
+        b.setAutoRaise(True)
+        msg = """<p>Groups are intended for multi-part questions.
+              For example, you could make groups &ldquo;(a)&rdquo;,
+              &ldquo;(b)&rdquo; and &ldquo;(c)&rdquo;.
+              Some tips:</p>
+            <ul>
+            <li><b>This is an experimental feature:</b> please discuss
+              with your team.</li>
+            <li>Groups create automatic tabs, shared with other users.
+              <b>Other users may need to click the &ldquo;sync&rdquo; button.</b>
+            </li>
+            <li>Within a group, you can use at most one exclusive rubric.</li>
+            <li>Groups will disappear if no rubrics are in them.</li>
+            <ul>
+        """
+        b.clicked.connect(lambda: InfoMsg(self, msg).exec())
+        hlay.addWidget(b)
+        vlay.addLayout(hlay)
+        hlay = QHBoxLayout()
+        hlay.addItem(QSpacerItem(24, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        # TODO: note default for absolute rubrics?  (once it is the default)
+        c = QCheckBox("Exclusive in this group (at most one such rubric can be placed)")
+        hlay.addWidget(c)
+        self.group_excl = c
+        self.group_checkbox.toggled.connect(lambda x: self.group_excl.setEnabled(x))
+        self.group_checkbox.toggled.connect(lambda x: self.group_combobox.setEnabled(x))
+        self.group_checkbox.toggled.connect(lambda x: self.group_add_btn.setEnabled(x))
+        # TODO: connect self.typeRB_neutral etc change to check/uncheck the exclusive button
+        self.group_excl.setChecked(False)
+        self.group_excl.setEnabled(False)
+        self.group_combobox.setEnabled(False)
+        self.group_add_btn.setEnabled(False)
+        self.group_checkbox.setChecked(False)
+        vlay.addLayout(hlay)
         self.toggle_version_specific()
         self.toggle_scope_elements()
 
         # TODO: in the future?
-        # flay.addRow("Tags", self.TEtag)
+        flay.addRow("Tags", self.TEtag)
+        self.TEtag.setEnabled(False)
         flay.addRow("Meta", self.TEmeta)
 
         flay.addRow("Rubric ID", self.label_rubric_id)
@@ -1643,8 +1729,6 @@ class AddRubricBox(QDialog):
             if com["text"]:
                 self.TE.clear()
                 self.TE.insertPlainText(com["text"])
-            if com["tags"]:
-                self.TEtag.setText(com["tags"])
             if com["meta"]:
                 self.TEmeta.clear()
                 self.TEmeta.insertPlainText(com["meta"])
@@ -1671,6 +1755,31 @@ class AddRubricBox(QDialog):
                 )
             if com["parameters"]:
                 params = com["parameters"]
+            tags = com.get("tags", "").split()
+            # TODO: share pack/unpack from tag w/ dialog & compute_score
+            # TODO: if more than one group, we set one of them
+            for t in tags:
+                if t.startswith("exclgroup:"):
+                    tags.remove(t)
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("exclgroup:")
+                    g = t[len("exclgroup:") :]
+                    self.group_combobox.setCurrentText(g)
+                    self.group_checkbox.setChecked(True)
+                    self.group_excl.setChecked(True)
+                    break
+                if t.startswith("group:"):
+                    tags.remove(t)
+                    # TODO: Python >= 3.9
+                    # g = t.removeprefix("group:")
+                    g = t[len("group:") :]
+                    self.group_combobox.setCurrentText(g)
+                    self.group_checkbox.setChecked(True)
+                    self.group_excl.setChecked(False)
+                    break
+            # repack the other tags
+            self.TEtag.setText(" ".join(tags))
+
         else:
             self.TE.setPlaceholderText(
                 "Your rubric must contain some text.\n\n"
@@ -1800,6 +1909,19 @@ class AddRubricBox(QDialog):
             params.append([param, values])
         return params
 
+    def add_new_group(self):
+        s, ok = QInputDialog.getText(
+            self, "New group for rubric", "New group for rubric"
+        )
+        if not ok:
+            return
+        s = s.strip()
+        if not s:
+            return
+        n = self.group_combobox.count()
+        self.group_combobox.insertItem(n, s)
+        self.group_combobox.setCurrentIndex(n)
+
     def changedReapableCB(self):
         self.TE.clear()
         self.TE.insertPlainText(self.reapable_CB.currentText())
@@ -1854,7 +1976,22 @@ class AddRubricBox(QDialog):
 
     def gimme_rubric_data(self):
         txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
-        tag = self.TEtag.text().strip()
+        tags = self.TEtag.text().strip()
+        if self.group_checkbox.isChecked():
+            group = self.group_combobox.currentText()
+            # quote spacs
+            if " " in group:
+                group = '"' + group + '"'
+                raise NotImplementedError("groups with spaces not implemented")
+            if self.group_excl.isChecked():
+                tag = "exclgroup:" + group
+            else:
+                tag = "group:" + group
+            if tags:
+                tags = tag + " " + tags
+            else:
+                tags = tag
+
         meta = self.TEmeta.toPlainText().strip()
         if self.typeRB_neutral.isChecked():
             kind = "neutral"
@@ -1894,7 +2031,7 @@ class AddRubricBox(QDialog):
             "value": value,
             "out_of": out_of,
             "text": txt,
-            "tags": tag,
+            "tags": tags,
             "meta": meta,
             "username": username,
             "question": self.question_number,

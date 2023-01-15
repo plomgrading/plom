@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 import json
@@ -163,7 +163,7 @@ class SceneParent(QWidget):
 
     def doneAnnotating(self):
         aname, plomfile = self.pickleIt()
-        return self.scene.score, self.scene.get_rubrics_from_page(), aname, plomfile
+        return self.scene.score, self.scene.get_rubric_ids(), aname, plomfile
 
     def refreshDisplayedMark(self, score):
         # needed for compat with pagescene.py

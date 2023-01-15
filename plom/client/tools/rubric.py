@@ -49,7 +49,7 @@ class CommandGroupDeltaText(CommandTool):
         """
         assert X[0] == "GroupDeltaText"
         X = X[1:]
-        if len(X) != 8:
+        if len(X) != 9:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
         return cls(
@@ -62,6 +62,7 @@ class CommandGroupDeltaText(CommandTool):
                 "out_of": X[5],
                 "display_delta": X[6],
                 "text": X[7],
+                "tags": X[8],
             },
         )
 
@@ -165,6 +166,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             "value": self.di.value,
             "out_of": self._rubric["out_of"],
             "text": self.blurb.toPlainText(),
+            "tags": self._rubric["tags"],
         }
 
     def restyle(self, style):
@@ -205,6 +207,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self._rubric["out_of"],
             self.di.display_delta,
             self.blurb.toPlainText(),
+            self._rubric["tags"],
         ]
 
     def paint(self, painter, option, widget):
