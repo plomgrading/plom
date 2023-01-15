@@ -975,7 +975,11 @@ linuxbin_ubuntu2004:
 
 
 # Notes on macOS client builds
-# - build python from src for https://github.com/danhper/asdf-python/issues/38
+# - Aug 2021, based on https://github.com/danhper/asdf-python/issues/38 we used:
+#     - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+#   Not sure what this was for but it broke in 2023-Jan (Issue #2478).  I tried:
+#   "--enable-framework=/Users/gitlab/.asdf/installs/Library/Frameworks" asdf ...
+#   Also "--enable-shared", but it seems to work without any of these things?
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 macos12_client:
@@ -1088,7 +1092,7 @@ macos1015_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-shared" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf shell python $MACBIN_PY_VER
   - python --version
@@ -1132,7 +1136,7 @@ macos1014_client:
   - echo $SHELL
   - asdf current
   # asdf which python  # has no python for some reason
-  - PYTHON_CONFIGURE_OPTS="--enable-framework=/Users/gitlab/.asdf/installs/python/Library/Frameworks" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf local python $MACBIN_PY_VER
   - asdf which python
   - python --version
@@ -1179,7 +1183,7 @@ macos1013_client:
   - echo $SHELL
   - asdf current
   - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf local python $MACBIN_PY_VER
   - python --version
