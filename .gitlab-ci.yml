@@ -1088,7 +1088,7 @@ macos1015_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework=${PREFIX_PATH}/Library/Frameworks" asdf install python $MACBIN_PY_VER
+  - PYTHON_CONFIGURE_OPTS="--enable-shared" asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf shell python $MACBIN_PY_VER
   - python --version
