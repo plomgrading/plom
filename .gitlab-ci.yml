@@ -1037,7 +1037,7 @@ macos11_client:
   - asdf info
   - asdf which python
   - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework=/Users/gitlab/.asdf/installs/Library/Frameworks" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf shell python $MACBIN_PY_VER
   - python --version
