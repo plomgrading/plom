@@ -1166,53 +1166,6 @@ macos1014_client:
     expire_in: 16 days
 
 
-# often fails: currently set to only run manually
-macos1013_client:
-  image: macos-10.13-xcode-9
-  tags:
-  - shared-macos-amd64
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
-  allow_failure: true
-  stage: packaging
-  script:
-  - sw_vers
-  - echo $SHELL
-  - asdf current
-  - asdf which python
-  - asdf install python $MACBIN_PY_VER
-  - asdf which python
-  - asdf local python $MACBIN_PY_VER
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos10_13.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
-    expire_in: 16 days
-
-
 # this was slow and failed, went back to "brew"
 #   asdf plugin-add imagemagick
 #   asdf install imagemagick 7.0.11-5
