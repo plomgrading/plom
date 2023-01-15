@@ -13,6 +13,10 @@
 
 See help for each subcommand or consult online documentation for an
 overview of the steps in setting up a server.
+
+Most subcommands communicate with a server, which can be specified
+on the command line or by setting environment variables PLOM_SERVER
+and PLOM_MANAGER_PASSWORD.
 """
 
 __copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
