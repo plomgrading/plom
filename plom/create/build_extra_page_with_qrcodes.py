@@ -20,8 +20,10 @@ else:
     import importlib_resources as resources
 
 
-def build_extra_page_pdf(destination_dir=Path.cwd()):
+def build_extra_page_pdf(destination_dir=None):
     print("Building the extra pages PDF for students to use when they need more space.")
+    if destination_dir is None:
+        destination_dir = Path.cwd()
 
     src_tex = (resources.files(plom.create) / "extra_pages_src.tex").read_text()
     with tempfile.TemporaryDirectory() as tmpdirname:
