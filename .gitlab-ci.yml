@@ -34,8 +34,8 @@ variables:
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
-  MACBIN_PY_VER: 3.9.16
-  WINBIN_PY_VER: 3.9.13
+  MACBIN_PY_VER: 3.10.9
+  WINBIN_PY_VER: 3.10.8
 
 stages:
   - static_analysis
@@ -974,7 +974,11 @@ linuxbin_ubuntu2004:
 
 
 # Notes on macOS client builds
-# - build python from src for https://github.com/danhper/asdf-python/issues/38
+# - Aug 2021, based on https://github.com/danhper/asdf-python/issues/38 we used:
+#     - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+#   Not sure what this was for but it broke in 2023-Jan (Issue #2478).  I tried:
+#   "--enable-framework=/Users/gitlab/.asdf/installs/Library/Frameworks" asdf ...
+#   Also "--enable-shared", but it seems to work without any of these things?
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 macos12_client:
@@ -1033,9 +1037,10 @@ macos11_client:
   - python --version
   - pip --version
   - asdf current
+  - asdf info
   - asdf which python
   - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf shell python $MACBIN_PY_VER
   - python --version
@@ -1086,7 +1091,7 @@ macos1015_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf shell python $MACBIN_PY_VER
   - python --version
@@ -1130,7 +1135,7 @@ macos1014_client:
   - echo $SHELL
   - asdf current
   # asdf which python  # has no python for some reason
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf local python $MACBIN_PY_VER
   - asdf which python
   - python --version
@@ -1177,7 +1182,7 @@ macos1013_client:
   - echo $SHELL
   - asdf current
   - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf local python $MACBIN_PY_VER
   - python --version
@@ -1282,10 +1287,10 @@ macos_server:
 #   script:
 #   - choco install -y python3 --version $WINBIN_PY_VER
 #   - refreshenv
-#   - c:\Python39\Scripts\pip install -r requirements.txt.client
+#   - c:\Python310\Scripts\pip install -r requirements.txt.client
 #   - refreshenv
 #   - echo $Env:Path
-#   - c:\Python39\python -m plom.client -h
+#   - c:\Python310\python -m plom.client -h
 
 
 # Build Windows client binaries
@@ -1297,18 +1302,18 @@ winpyinst:
   before_script:
   - choco install -y python3 --version $WINBIN_PY_VER
   - refreshenv
-  - c:\python39\python -m pip --version
-  - c:\python39\python -m pip install --user --upgrade pip
-  - c:\python39\python -m pip --version
-  - c:\python39\python -m pip install --user --upgrade setuptools wheel
+  - c:\python310\python -m pip --version
+  - c:\python310\python -m pip install --user --upgrade pip
+  - c:\python310\python -m pip --version
+  - c:\python310\python -m pip install --user --upgrade setuptools wheel
   script:
-  - c:\python39\python -m pip install -r requirements.txt.client
+  - c:\python310\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python39\python -m pip install pyinstaller==5.7.0
+  - c:\python310\python -m pip install pyinstaller==5.7.0
   - refreshenv
-  - c:\python39\python -m plom.client -h
-  - c:\python39\scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\python39\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
+  - c:\python310\python -m plom.client -h
+  - c:\python310\scripts\pyinstaller client.windows.spec
+  - $VER = &"c:\python310\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME

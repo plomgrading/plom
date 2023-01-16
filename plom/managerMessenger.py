@@ -404,10 +404,12 @@ class ManagerMessenger(BaseMessenger):
 
     def getDanglingPages(self):
         self.SRmutex.acquire()
+        timeout = (self.default_timeout[0], 5 * self.default_timeout[1])
         try:
             response = self.get(
                 "/REP/dangling",
                 json={"user": self.user, "token": self.token},
+                timeout=timeout,
             )
             response.raise_for_status()
             return response.json()
