@@ -26,6 +26,9 @@ RUN apt-get -y update && \
         python3-wheel \
         python3-pytest \
         python3-magic
+	
+# Note that git is required for pip install of zxingcpp on ubuntu 20.04
+# - see https://github.com/zxing-cpp/zxing-cpp/issues/489
 
 # file-magic: https://gitlab.com/plom/plom/-/issues/1570
 
