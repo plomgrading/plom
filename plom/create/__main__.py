@@ -672,7 +672,10 @@ def main():
             msgr=(args.server, args.password),
         )
     elif args.command == "extra-pages":
-        build_extra_page_pdf(destination_dir=Path(plom.create.paperdir))
+        from plom.create import paperdir
+
+        dest_dir = Path.cwd()/paperdir
+        build_extra_page_pdf(destination_dir=dest_dir)
 
     elif args.command == "user":
         msgr = start_messenger(args.server, args.password)

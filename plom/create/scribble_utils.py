@@ -406,7 +406,6 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     extra_pages_pdf_path = paper_dir / "extra_page.pdf"
     # build the extra pages pdf if needed.
     if not extra_pages_pdf_path.exists():
-        print("Hello from here - ", paper_dir)
         build_extra_page_pdf(destination_dir=paper_dir)
     extra_pages_pdf = fitz.open(extra_pages_pdf_path)
 

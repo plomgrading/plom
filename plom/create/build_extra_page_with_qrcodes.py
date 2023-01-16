@@ -44,3 +44,4 @@ def build_extra_page_pdf(destination_dir=Path.cwd()):
                 stdout=subprocess.DEVNULL,
             )
             shutil.copy("extra_page.pdf", destination_dir)
+            print("Copying extra_page.pdf to ", Path(destination_dir).absolute())
