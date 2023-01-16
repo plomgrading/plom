@@ -292,7 +292,7 @@ doctests:
   script:
     # TODO how to run only doctests?  here we just ignore-glib on "test_*"
     - pytest --version
-    - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*IDReader_TF" --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
+    - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
 pylint:
