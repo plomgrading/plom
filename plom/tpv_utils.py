@@ -55,8 +55,14 @@ import random
 
 
 def isValidTPV(tpv):
-    """Is this a valid TPV code?"""
-    if len(tpv) != len("TTTTTPPPVVVOCCCCC"):
+    """Is this a valid TPV code?
+
+    Note that the pyzbar module gives codes with the prefix 'QR-Code:',
+    however the zxing-cpp module does not.
+    """
+    # string prefix is needed for pyzbar but not zxingcpp
+    tpv = tpv.lstrip("QR-Code:")
+    if len(tpv) != len("TTTTTPPPVVVOCCCCC"):  # todo = remove in future.
         return False
     return tpv.isnumeric()
 
@@ -74,7 +80,8 @@ def parseTPV(tpv):
        cn (str): the "magic code", 5 digits zero padded
        o (str): the orientation code, TODO
     """
-    tpv = tpv.lstrip("QR-Code:")
+    # strip prefix is needed for pyzbar but not zxingcpp
+    tpv = tpv.lstrip("QR-Code:")  # todo = remove in future.
     tn = int(tpv[0:5])
     pn = int(tpv[5:8])
     vn = int(tpv[8:11])
