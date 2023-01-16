@@ -21,29 +21,28 @@ else:
 
 
 def build_extra_page_pdf(destination_dir=None):
-    print("Building the extra pages PDF for students to use when they need more space.")
     if destination_dir is None:
         destination_dir = Path.cwd()
 
     src_tex = (resources.files(plom.create) / "extra_pages_src.tex").read_text()
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmp_path = Path(tmpdirname)
-        with working_directory(tmp_path):
-            with open("extra_page.tex", "w") as fh:
-                fh.write(src_tex)
+        with open(tmp_path / "extra_page.tex", "w") as fh:
+            fh.write(src_tex)
 
-            for crn in range(1, 9):
-                qr = segno.make_micro(encodeExtraPageCode(crn))
-                qr.save(tmp_path / f"qr_crn_{crn}.png", border=2, scale=4)
-            subprocess.run(
-                (
-                    "latexmk",
-                    "-pdf",
-                    "-interaction=nonstopmode",
-                    "-no-shell-escape",
-                    "extra_page",
-                ),
-                stdout=subprocess.DEVNULL,
-            )
-            shutil.copy("extra_page.pdf", destination_dir)
-            print("Copying extra_page.pdf to ", Path(destination_dir).absolute())
+        for crn in range(1, 9):
+            qr = segno.make_micro(encodeExtraPageCode(crn))
+            qr.save(tmp_path / f"qr_crn_{crn}.png", border=2, scale=4)
+
+        subprocess.run(
+            (
+                "latexmk",
+                "-pdf",
+                "-interaction=nonstopmode",
+                "-no-shell-escape",
+                "extra_page",
+            ),
+            cwd=tmp_path,
+            stdout=subprocess.DEVNULL,
+        )
+        shutil.copy(tmp_path / "extra_page.pdf", destination_dir)

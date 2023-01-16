@@ -403,7 +403,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
 
-    extra_pages_pdf_path = Path.cwd()/"extra_page.pdf"
+    extra_pages_pdf_path = Path.cwd() / "extra_page.pdf"
     # build the extra pages pdf if needed.
     if not extra_pages_pdf_path.exists():
         build_extra_page_pdf(destination_dir=Path.cwd())

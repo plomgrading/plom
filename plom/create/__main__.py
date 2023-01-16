@@ -672,6 +672,9 @@ def main():
             msgr=(args.server, args.password),
         )
     elif args.command == "extra-pages":
+        print(
+            "Building the extra pages PDF for students to use when they need more space."
+        )
         dest_dir = Path.cwd()
         build_extra_page_pdf(destination_dir=dest_dir)
 
