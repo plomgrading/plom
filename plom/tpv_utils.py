@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020, 2022 Colin B. Macdonald
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Andrew Rechnitzer
 
 """Utilities for dealing with TPV codes
 
@@ -34,7 +34,7 @@ Orientation code:
 TODO: might encapsulate position code, have ``getPosition`` return
 e.g., the string `"NE"`
 
-Also handles plom extra page codes. These are alpha-numeric stored in micro-qr codes
+Also handles plom extra page codes. These are alphanumeric stored in micro-qr codes
 and are of the form
 
   sssssO

@@ -674,7 +674,7 @@ def main():
     elif args.command == "extra-pages":
         from plom.create import paperdir
 
-        dest_dir = Path.cwd()/paperdir
+        dest_dir = Path.cwd() / paperdir
         build_extra_page_pdf(destination_dir=dest_dir)
 
     elif args.command == "user":
