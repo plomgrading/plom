@@ -1,37 +1,42 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+
+from copy import deepcopy
 
 from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
-from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
+from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
 
 
 class CommandGroupDeltaText(CommandTool):
-    """A group of delta and text.
+    """A group of marks and text.
 
     Command to do a delta and a textitem together (a "rubric" or
     "saved comment").
-
-    Note: must change mark
     """
 
-    def __init__(self, scene, pt, rid, kind, delta, text):
+    def __init__(self, scene, pt, rubric):
+        """Constructor for this class.
+
+        args:
+            scene (PageScene): Plom's annotation scene.
+            pt (QPointF): where to place the rubric.
+            rubric (dict): must have at least these keys:
+                "id", "kind", "value", "out_of", "display_delta", "text".
+                Any other keys are probably ignored and will almost
+                certainly not survive being serialized.
+                We copy the data, so changes to the original will not
+                automatically update this object,
+        """
         super().__init__(scene)
         self.gdt = GroupDeltaTextItem(
-            pt,
-            delta,
-            text,
-            rid,
-            kind,
-            _scene=scene,
-            style=scene.style,
-            fontsize=scene.fontSize,
+            pt, rubric, _scene=scene, style=scene.style, fontsize=scene.fontSize
         )
         self.do = DeleteObject(self.gdt.shape(), fill=True)
         self.setText("GroupDeltaText")
@@ -44,10 +49,22 @@ class CommandGroupDeltaText(CommandTool):
         """
         assert X[0] == "GroupDeltaText"
         X = X[1:]
-        if len(X) != 6:
+        if len(X) != 9:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4], X[5])
+        return cls(
+            scene,
+            QPointF(X[0], X[1]),
+            {
+                "id": X[2],
+                "kind": X[3],
+                "value": X[4],
+                "out_of": X[5],
+                "display_delta": X[6],
+                "text": X[7],
+                "tags": X[8],
+            },
+        )
 
     def redo(self):
         self.scene.addItem(self.gdt)
@@ -68,24 +85,44 @@ class CommandGroupDeltaText(CommandTool):
         self.scene.refreshStateAndScore()
 
 
-class GroupDeltaTextItem(QGraphicsItemGroup):
+class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
     """A group of Delta and Text presenting a rubric.
 
     TODO: passing in scene is a workaround so the TextItem can talk to
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, text, rid, kind, *, _scene, style, fontsize):
+    def __init__(self, pt, rubric, *, _scene, style, fontsize):
+        """Constructor for this class.
+
+        Args:
+            pt (QPointF): where to place the rubric.
+            rubric (dict): must have at least these keys:
+                "id", "kind", "value", "out_of", "display_delta", "text".
+                Any other keys are probably ignored and will almost
+                certainly not survive being serialized.
+                We copy the data, so changes to the original will not
+                automatically update this object,
+
+        Keyword Args:
+            _scene (PageScene): Plom's annotation scene.
+            style:
+            fontsize:
+        """
         super().__init__()
         self.pt = pt
         self.style = style
-        self.rubricID = rid
-        self.kind = kind
+        self._rubric = deepcopy(rubric)
+        # TODO: replace each with @property?
+        self.rubricID = rubric["id"]
+        self.kind = rubric["kind"]
         # centre under click
-        self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
+        self.di = DeltaItem(
+            pt, rubric["value"], rubric["display_delta"], style=style, fontsize=fontsize
+        )
         self.blurb = TextItem(
             pt,
-            text,
+            rubric["text"],
             fontsize=fontsize,
             color=style["annot_color"],
             _texmaker=_scene,
@@ -103,15 +140,15 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         self.blurb.textToPng()
 
         # move blurb so that its top-left corner is next to top-right corner of delta.
-        self.tweakPositions(delta, text)
+        self.tweakPositions(rubric["display_delta"], rubric["text"])
         # hide delta if trivial
-        if delta == ".":  # hide the delta
+        if rubric["display_delta"] == ".":
             self.di.setVisible(False)
         else:
             self.di.setVisible(True)
             self.addToGroup(self.di)
         # hide blurb if text is trivial
-        if text == ".":  # hide the text
+        if rubric["text"] == ".":
             self.blurb.setVisible(False)
         else:
             self.blurb.setVisible(True)
@@ -120,6 +157,18 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
+    def as_rubric(self):
+        """return as a rubric dict"""
+        return {
+            "id": self.rubricID,
+            "kind": self.kind,
+            "display_delta": self.di.display_delta,
+            "value": self.di.value,
+            "out_of": self._rubric["out_of"],
+            "text": self.blurb.toPlainText(),
+            "tags": self._rubric["tags"],
+        }
+
     def restyle(self, style):
         self.style = style
         self.thick = self.style["pen_width"] / 2
@@ -127,7 +176,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         self.blurb.restyle(style)
         self.di.restyle(style)
 
-    def tweakPositions(self, delta, text):
+    def tweakPositions(self, display_delta, text):
         pt = self.pt
         self.blurb.setPos(pt)
         self.di.setPos(pt)
@@ -135,8 +184,8 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         # cr = self.di.boundingRect()
         # self.blurb.moveBy(cr.width() + 5, 0)
 
-        # if no delta, then move things accordingly
-        if delta == ".":
+        # if no display_delta, then move things accordingly
+        if display_delta == ".":
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -cr.height() / 2)
         elif text == ".":
@@ -147,12 +196,6 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             self.di.moveBy(0, -cr.height() / 2)
             self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-        return QGraphicsItemGroup.itemChange(self, change, value)
-
     def pickle(self):
         return [
             "GroupDeltaText",
@@ -160,8 +203,11 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             self.pt.y() + self.y(),
             self.rubricID,
             self.kind,
-            self.di.delta,
-            self.blurb.getContents(),
+            self.di.value,
+            self._rubric["out_of"],
+            self.di.display_delta,
+            self.blurb.toPlainText(),
+            self._rubric["tags"],
         ]
 
     def paint(self, painter, option, widget):
@@ -181,47 +227,38 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         super().paint(painter, option, widget)
 
     def sign_of_delta(self):
-        if self.di.delta == ".":
+        if int(self.di.value) == 0:
             return 0
-        elif int(self.di.delta) == 0:
-            return 0
-        elif int(self.di.delta) > 0:
+        elif int(self.di.value) > 0:
             return 1
         else:
             return -1
 
     def is_delta_positive(self):
-        if self.di.delta == ".":
-            return False
-        if int(self.di.delta) <= 0:
-            return False
-        return True
+        return int(self.di.value) > 0
 
     def get_delta_value(self):
-        if self.di.delta == ".":
-            return 0
-        else:
-            return int(self.di.delta)
+        return int(self.di.value)
 
 
 class GhostComment(QGraphicsItemGroup):
-    def __init__(self, dlt, txt, fontsize):
+    def __init__(self, display_delta, txt, fontsize):
         super().__init__()
-        self.di = GhostDelta(dlt, fontsize)
+        self.di = GhostDelta(display_delta, fontsize)
         self.rubricID = "987654"  # a dummy value
         self.kind = "relative"  # another dummy value
         self.blurb = GhostText(txt, fontsize)
-        self.changeComment(dlt, txt)
+        self.changeComment(display_delta, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def tweakPositions(self, dlt, txt):
-        """Adjust the positions of the delta and text depending on their size and ontent."""
+    def tweakPositions(self, display_delta, txt):
+        """Adjust the positions of the delta and text depending on their size and content."""
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
 
         # if no delta, then move things accordingly
-        if dlt == ".":
+        if display_delta == ".":
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -cr.height() / 2)
         elif txt == ".":
@@ -232,16 +269,16 @@ class GhostComment(QGraphicsItemGroup):
             self.di.moveBy(0, -cr.height() / 2)
             self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
-    def changeComment(self, dlt, txt, legal=True):
+    def changeComment(self, display_delta, txt, legal=True):
         # need to force a bounding-rect update by removing an item and adding it back
         self.removeFromGroup(self.di)
         self.removeFromGroup(self.blurb)
         # change things
-        self.di.changeDelta(dlt, legal)
+        self.di.changeDelta(display_delta, legal)
         self.blurb.changeText(txt, legal)
         # move to correct positions
-        self.tweakPositions(dlt, txt)
-        if dlt == ".":  # hide the delta
+        self.tweakPositions(display_delta, txt)
+        if display_delta == ".":  # hide the delta
             self.di.setVisible(False)
         else:
             self.di.setVisible(True)

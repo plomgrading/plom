@@ -4,6 +4,7 @@
 
 from collections import defaultdict
 from datetime import datetime, timezone
+import json
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
@@ -24,25 +25,35 @@ def McreateRubric(self, user_name, rubric):
         user_name (str): name of user creating the rubric element
         rubric (dict): dict containing the rubric details.
             Must contain these fields:
-            `{kind: "relative", delta: "-1", text: "blah", question: 2}`
+            `{kind: "relative", display_delta: "-1", value: -1, out_of: 0, text: "blah", question: 2}`
+            # TODO: make out_of optional for relative rubrics?
+            `{kind: "absolute", display_delta: "1 / 5", value: 1, out_of: 5, text: "blah", question: 2}`
             The following fields are optional and empty strings will be
             substituted:
-            `{tags: "blah", meta: "blah"}`
+            `{tags: "blah", meta: "blah", versions: [1, 2], parameters: []}`
             Currently, its ok if it contains other fields: they are
             ignored.
+            ``versions`` should be a list of integers, or the empty list
+            which means "all versions".
+            ``parameters`` is list of per-version substitutions.
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
         key for the new rubric.  Can fail if missing fields.
     """
-    need_fields = ("kind", "delta", "text", "question")
-    optional_fields = ("tags", "meta")
+    need_fields = ("kind", "display_delta", "value", "out_of", "text", "question")
+    optional_fields_and_defaults = (
+        ("tags", ""),
+        ("meta", ""),
+        ("versions", []),
+        ("parameters", []),
+    )
     if any(x not in rubric for x in need_fields):
         return (False, "Must have all fields {}".format(need_fields))
-    for f in optional_fields:
+    for f, d in optional_fields_and_defaults:
         if f not in rubric:
             rubric = rubric.copy()  # in case caller uses reference
-            rubric[f] = ""
+            rubric[f] = d
     uref = User.get(name=user_name)  # authenticated, so not-None
     with self._db.atomic():
         # build unique key while holding atomic access
@@ -54,8 +65,12 @@ def McreateRubric(self, user_name, rubric):
             user=uref,
             question=rubric["question"],
             kind=rubric["kind"],
-            delta=rubric["delta"],
+            display_delta=rubric["display_delta"],
+            value=rubric["value"],
+            out_of=rubric["out_of"],
             text=rubric["text"],
+            versions=json.dumps(rubric["versions"]),
+            parameters=json.dumps(rubric["parameters"]),
             creationTime=datetime.now(timezone.utc),
             modificationTime=datetime.now(timezone.utc),
             meta=rubric["meta"],
@@ -65,22 +80,24 @@ def McreateRubric(self, user_name, rubric):
 
 
 def MgetRubrics(self, question_number=None):
-    # return the rubric sorted by kind, then delta, then text
+    """Get list of rubrics sorted by kind, then delta, then text."""
     rubric_list = []
     if question_number is None:
-        query = Rubric.select().order_by(Rubric.kind, Rubric.delta, Rubric.text)
+        query = Rubric.select().order_by(Rubric.kind, Rubric.display_delta, Rubric.text)
     else:
         query = (
             Rubric.select()
             .where(Rubric.question == question_number)
-            .order_by(Rubric.kind, Rubric.delta, Rubric.text)
+            .order_by(Rubric.kind, Rubric.display_delta, Rubric.text)
         )
     for r in query:
         rubric_list.append(
             {
                 "id": r.key,
                 "kind": r.kind,
-                "delta": r.delta,
+                "display_delta": r.display_delta,
+                "value": r.value,
+                "out_of": r.out_of,
                 "text": r.text,
                 "tags": r.tags,
                 "meta": r.meta,
@@ -89,6 +106,8 @@ def MgetRubrics(self, question_number=None):
                 "modified": datetime_to_json(r.modificationTime),
                 "username": r.user.name,
                 "question_number": r.question,
+                "versions": json.loads(r.versions),
+                "parameters": json.loads(r.parameters),
             }
         )
     return rubric_list
@@ -122,7 +141,7 @@ def MmodifyRubric(self, user_name, key, change):
         (which might be the old key but this is not promised),
         or `(False, "incomplete")`, or `(False, "noSuchRubric")`.
     """
-    need_fields = ("delta", "text", "tags", "meta", "kind")
+    need_fields = ("display_delta", "text", "tags", "meta", "kind", "value", "out_of")
     if any(x not in change for x in need_fields):
         return (False, "incomplete")
     uref = User.get(name=user_name)  # authenticated, so not-None
@@ -135,8 +154,12 @@ def MmodifyRubric(self, user_name, key, change):
 
     with self._db.atomic():
         rref.kind = change["kind"]
-        rref.delta = change["delta"]
+        rref.display_delta = change["display_delta"]
+        rref.value = change["value"]
+        rref.out_of = change["out_of"]
         rref.text = change["text"]
+        rref.versions = json.dumps(change["versions"])
+        rref.parameters = json.dumps(change["parameters"])
         rref.modificationTime = datetime.now(timezone.utc)
         rref.revision += 1
         rref.meta = change["meta"]
@@ -205,12 +228,19 @@ def Rget_rubric_counts(self):
         rubric_info[rref.key] = {
             "id": rref.key,
             "kind": rref.kind,
-            "delta": rref.delta,
+            "display_delta": rref.display_delta,
+            "value": rref.value,
+            "out_of": rref.out_of,
             "text": rref.text,
             "count": 0,
             "username": rref.user.name,
             "question_number": rref.question,
+            "versions": str(json.loads(rref.versions)).strip("[]"),  # e.g., "1, 2, 3"
+            "parameters": str(json.loads(rref.versions)),
         }
+        # TODO: Issue #2406: can versions just be the list of ints?
+        # TODO: need to look who calls this: feel like it might end up as
+        # the column header of a spreadsheet.
 
     # now go through all rubrics that **have** been used
     # and increment the count
@@ -236,7 +266,9 @@ def Rget_rubric_details(self, key):
     rubric_details = {
         "id": r.key,
         "kind": r.kind,
-        "delta": r.delta,
+        "display_delta": r.display_delta,
+        "value": r.value,
+        "out_of": r.out_of,
         "text": r.text,
         "tags": r.tags,
         "meta": r.meta,

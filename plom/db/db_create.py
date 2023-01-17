@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2022 Natalie Balashov
 
 from datetime import datetime, timezone
 import logging
@@ -130,8 +131,8 @@ def is_paper_database_initialised(self):
     """
     if self.is_paper_database_populated():
         return True
-    if self.hasNoAnswerRubric(1):
-        # if we have the No-Answer rubric for Q1, then we must be initialised
+    if self.hasAutoGenRubrics():
+        # if we have the no-answer rubrics, then we must be initialised
         return True
     return False
 
@@ -414,19 +415,25 @@ def get_all_question_versions(self):
     return qvmap
 
 
-def add_or_change_id_prediction(
-    self, paper_number, sid, certainty=0.9, predictor="prename"
+def add_or_change_predicted_id(
+    self, paper_number, sid, *, certainty=0.9, predictor="prename"
 ):
     """Pre-id a paper with a given student id. If that test already has a prediction of that sid, then do nothing.
 
     Args:
         paper_number (int)
         sid (str): a student id.
-        certaintly (float): TODO: meaning of this is still evolving.
+
+    Keyword Args:
+        certainty (float): TODO: meaning of this is still evolving.
+        predictor (str): what sort of prediction this is, meaning is
+            still evolving but "prename" is a rather special case.
+            Others include "MLLAP" and "MLGreedy" and may change in
+            future.
 
     Returns:
-        tuple: `(True, None, None)` if successful, `(False, 409, msg)`
-        or `(False, 404, msg)` on error.  See docs in other function.
+        tuple: `(True, None, None)` if successful, `(False, 404, msg)`
+        on error.
     """
     # TODO: Issue #2075
     uref = User.get(name="HAL")
@@ -434,51 +441,52 @@ def add_or_change_id_prediction(
     # by the plom system, we put user = HAL.
 
     with self._db.atomic():
-        # find the test-ref
         tref = Test.get_or_none(Test.test_number == paper_number)
         if tref is None:
-            log.error("HAL tried to predict ID: paper %s not found", paper_number)
+            log.error("tried to predict ID: paper %s not found", paper_number)
             return False, 404, f"denied b/c paper {paper_number} not found"
 
-        p = IDPrediction.get_or_none(test=tref)
+        p = IDPrediction.get_or_none(test=tref, predictor=predictor)
 
-        try:
-            if p is None:
-                IDPrediction.create(
-                    test=tref,
-                    user=uref,
-                    certainty=certainty,
-                    student_id=sid,
-                    predictor=predictor,
-                )
-                log.info(
-                    'Paper %s pre-ided by HAL as "%s"', paper_number, censorID(sid)
-                )
-            else:
-                p.student_id = sid
-                p.certainty = certainty
-                p.predictor = predictor
-                p.save()
-                log.info(
-                    'Paper %s changed predicted ID by HAL to "%s"',
-                    paper_number,
-                    censorID(sid),
-                )
-        except pw.IntegrityError:
-            log.error(
-                'HAL tried to predict ID: paper %s but student id "%s" in use elsewhere',
+        if p is None:
+            IDPrediction.create(
+                test=tref,
+                user=uref,
+                certainty=certainty,
+                student_id=sid,
+                predictor=predictor,
+            )
+            log.info(
+                'Paper %s pre-ided by "%s" as "%s"',
                 paper_number,
+                predictor,
                 censorID(sid),
             )
-            return False, 409, f"student id {sid} in use elsewhere"
+        else:
+            p.student_id = sid
+            p.certainty = certainty
+            p.predictor = predictor
+            p.save()
+            log.info(
+                'Paper %s changed "%s" predicted ID to "%s"',
+                paper_number,
+                predictor,
+                censorID(sid),
+            )
         return True, None, None
 
 
-def remove_id_prediction(self, paper_number):
+def remove_predicted_id(self, paper_number, *, predictor=None):
     """Remove any id predictions associated with a particular paper.
 
     Args:
         paper_number (int)
+
+    Keyword Args:
+        predictor (str): what sort of prediction this is, meaning is
+            still evolving but "prename" is a rather special case.
+            Others include "MLLAP" and "MLGreedy" and may change in
+            future.  TODO: if missing are we going to erase them all?
 
     Returns:
         tuple: `(True, None, None)` if successful, or `(False, 404, msg)`
@@ -491,12 +499,16 @@ def remove_id_prediction(self, paper_number):
             log.error(f"Tried to remove prediction: {msg}")
             return False, 404, msg
 
-        p = IDPrediction.get_or_none(test=tref)
+        p = IDPrediction.get_or_none(test=tref, predictor=predictor)
         if p is None:
-            log.info("Paper %s remove predicted ID was unnecessary", paper_number)
+            log.info(
+                "Paper %s remove %s predicted ID was unnecessary",
+                paper_number,
+                predictor,
+            )
         else:
             p.delete_instance()
-            log.info("Paper %s removed predicted ID", paper_number)
+            log.info("Paper %s removed %s predicted ID", paper_number, predictor)
         return True, None, None
 
 
@@ -539,49 +551,14 @@ def remove_id_from_paper(self, paper_num):
     return True
 
 
-def hasNoAnswerRubric(self, questionNumber):
-    """Do we have rubrics for when no answer given for question.
-
-    Args:
-        questionNumber (int)
+def hasAutoGenRubrics(self):
+    """Do we have the manager auto-generated "no answer" rubrics.
 
     Returns:
         Bool: True if we have such a thing, else False.
     """
-    key = 1000 + questionNumber
-    if Rubric.get_or_none(key=key):
+    uref = User.get(name="manager")
+    # Note: this text must match exactly what is set in buildPlomDB.py
+    if Rubric.get_or_none(user=uref, text="no answer given"):
         return True
     return False
-
-
-def createNoAnswerRubric(self, questionNumber, maxMark):
-    """Create rubrics for when no answer given for question
-
-    Each question needs one such rubric
-
-    Args:
-        questionNumber (int)
-        maxMark: the max mark for that question
-
-    Returns:
-        Bool: True if successful, False if rubric already exists.
-    """
-    key = 1000 + questionNumber
-    uref = User.get(name="HAL")
-
-    if Rubric.get_or_none(key=key):
-        log.info("No-answer-rubric (up) for question %d already exists", questionNumber)
-        return False
-
-    Rubric.create(
-        key=key,
-        delta="0",
-        text="No answer given",
-        kind="absolute",
-        question=questionNumber,
-        user=uref,
-        creationTime=datetime.now(timezone.utc),
-        modificationTime=datetime.now(timezone.utc),
-    )
-    log.info("Created no-answer-rubric for question %d", questionNumber)
-    return True

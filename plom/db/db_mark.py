@@ -160,7 +160,7 @@ def MgiveTaskToClient(self, user_name, group_id, version):
 
     args:
         user_name (str): the user name who is claiming the task.
-        group_id (TODO): somehow tells the task (?).
+        group_id (str): a "task code" like ``"q0020g3"``
         version (int): version requested - must match that in db.
 
     Return:
@@ -171,10 +171,10 @@ def MgiveTaskToClient(self, user_name, group_id, version):
 
         On success, the list is
         `[True, metadata, [list of tag texts], integrity_check]`
-        where each row of `metadata` consists of
-        `[DB_id, md5_sum, server_filename]`.
+        where each row of `metadata` consists of dicts with keys
+        `id, `md5`, `included`, `order`, `server_path`, `orientation`.
 
-        Note: `server_filename` is implementation-dependent, could change
+        Note: `server_path` is implementation-dependent, could change
         without notice, etc.  Clients could use this to get hints for
         what to use for a local file name for example.
 
@@ -232,7 +232,17 @@ def MgiveTaskToClient(self, user_name, group_id, version):
         aref = qref.annotations[-1]  # are these in right order (TODO?)
         image_metadata = []
         for p in aref.apages.order_by(APage.order):
-            image_metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
+            # See MgetWholePaper: somehow very similar :(
+            # "pagename": "t{}".format(p.page_number) ?? ignore this?
+            row = {
+                "id": p.image.id,
+                "md5": p.image.md5sum,
+                "included": True,
+                "order": p.order,
+                "server_path": p.image.file_name,
+                "orientation": p.image.rotation,
+            }
+            image_metadata.append(row)
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now(timezone.utc)
@@ -596,12 +606,23 @@ def MgetWholePaper(self, test_number, question):
 
 
 def MreviewQuestion(self, test_number, question):
-    """Give ownership of the given marking task to the reviewer."""
-    revref = User.get(name="reviewer")  # should always be there
+    """Give ownership of the given marking task to the reviewer.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: could not find paper or question.
+        RuntimeError: no "reviewer" account.
+    """
+    revref = User.get_or_none(name="reviewer")
+
+    if not revref:
+        raise RuntimeError('There is no "reviewer" account')
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return False
+        raise ValueError(f"Could not find paper number {test_number}")
     qref = QGroup.get_or_none(
         QGroup.test == tref,
         QGroup.question == question,
@@ -609,13 +630,14 @@ def MreviewQuestion(self, test_number, question):
     )
     version = qref.version
     if qref is None:
-        return False
+        raise ValueError(
+            f"Could not find question {question} of paper number {test_number}"
+        )
     with self._db.atomic():
         qref.user = revref
         qref.time = datetime.now(timezone.utc)
         qref.save()
     log.info("Setting tqv %s for reviewer", (test_number, question, version))
-    return True
 
 
 def MrevertTask(self, task):

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 """SSL and related utilities for the Plom Server"""
 
@@ -37,7 +37,7 @@ def build_self_signed_SSL_keys(dur=confdir, extra_args=""):
     sslcmd += " {}".format(extra_args)
 
     # TODO: is this the way to get two digit country code?
-    tmp = locale.getdefaultlocale()[0]
+    tmp = locale.getlocale()[0]
     if tmp:
         twodigcc = tmp[-2:]
     else:

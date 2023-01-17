@@ -11,7 +11,11 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-import toml
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
@@ -90,7 +94,8 @@ def get_keybindings_list():
             overlay = {}
         else:
             log.info("Loading keybindings from %s", f)
-            overlay = toml.load(resources.files(plom) / f)
+            with open(resources.files(plom) / f, "rb") as fh:
+                overlay = tomllib.load(fh)
         metadata = overlay.pop("__metadata__", {})
         for k, v in metadata.items():
             kb[k] = v
@@ -107,7 +112,8 @@ def get_keybinding_overlay(name):
         overlay = {}
     else:
         log.info("Loading keybindings from %s", f)
-        overlay = toml.load(resources.files(plom) / f)
+        with open(resources.files(plom) / f, "rb") as fh:
+            overlay = tomllib.load(fh)
     # note copy unnecessary as we have fresh copy from file
     overlay.pop("__metadata__", None)
     return overlay
@@ -137,7 +143,8 @@ def get_key_bindings(name, custom_overlay={}):
     # TODO: I think plom.client would be better, but can't get it to work
     f = "default_keys.toml"
     log.info("Loading keybindings from %s", f)
-    default_keydata = toml.load(resources.files(plom) / f)
+    with open(resources.files(plom) / f, "rb") as fh:
+        default_keydata = tomllib.load(fh)
     default_keydata.pop("__metadata__")
 
     _keybindings_dict = {x["name"]: x for x in _keybindings_list}
@@ -150,7 +157,8 @@ def get_key_bindings(name, custom_overlay={}):
             overlay = {}
         else:
             log.info("Loading keybindings from %s", f)
-            overlay = toml.load(resources.files(plom) / f)
+            with open(resources.files(plom) / f, "rb") as fh:
+                overlay = tomllib.load(fh)
             overlay.pop("__metadata__", None)
         # keymap["overlay"] = overlay
     # note copy unnecessary as we have fresh copy from file

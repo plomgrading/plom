@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Victoria Schuster
 
@@ -35,6 +35,7 @@ Now in the second terminal::
     plom-create rubric --demo
     cd mysrv
     plom-create make
+    plom-create extra-pages
     plom-solutions extract solutionSpec.toml
     plom-solutions extract --upload
     cd ..
@@ -50,7 +51,7 @@ Now in the second terminal::
     cd ..
 """
 
-__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -211,6 +212,7 @@ def main():
     subprocess.check_call(split("python3 -m plom.create rubric --demo"))
     with working_directory(args.server_dir):
         subprocess.check_call(split("python3 -m plom.create make"))
+        subprocess.check_call(split("python3 -m plom.create extra-pages"))
     # extract solution images
     print("Extract solution images from pdfs")
     with working_directory(args.server_dir):
@@ -226,6 +228,13 @@ def main():
     print("Creating fake-scan data")
     with working_directory(args.server_dir):
         subprocess.check_call(split("python3 -m plom.create.exam_scribbler"))
+    print(">>>>>>>>>> NOTE <<<<<<<<<<")
+    print(
+        "Some of the demo papers will belong to extra students who are not on the demo classlist."
+    )
+    print(
+        "This is to mimic the situation in which students from another class/section/time sit your test."
+    )
 
     if args.no_scans:
         print(

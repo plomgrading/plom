@@ -1,19 +1,26 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2019-2023 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 import json
 from pathlib import Path
 from statistics import mean
 
-from pyzbar.pyzbar import decode
-from pyzbar.pyzbar import ZBarSymbol
+# use this to replace pyzbar - since it handles micro-qr-codes
+from zxingcpp import read_barcodes, BarcodeFormats, BarcodeFormat
+
 from PIL import Image
 
 
 def findCorner(qr, dim):
-    mx = mean([p.x for p in qr.polygon])
-    my = mean([p.y for p in qr.polygon])
+    qr_polygon = [
+        qr.position.top_left,
+        qr.position.top_right,
+        qr.position.bottom_left,
+        qr.position.bottom_right,
+    ]
+    mx = mean([p.x for p in qr_polygon])
+    my = mean([p.y for p in qr_polygon])
     width, height = dim
 
     NS = "?"
@@ -100,20 +107,24 @@ def QRextract(image, write_to_file=True, try_harder=True):
     if not isinstance(image, Image.Image):
         image = Image.open(image)
 
-    qrlist = decode(image, symbols=[ZBarSymbol.QRCODE])
+    qrlist = read_barcodes(
+        image, formats=(BarcodeFormat.QRCode | BarcodeFormat.MircoQRCode)
+    )
     for qr in qrlist:
         cnr = findCorner(qr, image.size)
         if cnr in cornerQR.keys():
-            cornerQR[cnr].append(qr.data.decode())
+            cornerQR[cnr].append(qr.text)
 
     if try_harder:
         # try again on smaller image: avoids random CI failures #967?
         image = image.reduce(2)
-        qrlist = decode(image, symbols=[ZBarSymbol.QRCODE])
+        qrlist = read_barcodes(
+            image, formats=(BarcodeFormat.QRCode | BarcodeFormat.MircoQRCode)
+        )
         for qr in qrlist:
             cnr = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
-                s = qr.data.decode()
+                s = qr.text
                 if s not in cornerQR[cnr]:
                     # TODO: log these failures?
                     # print(

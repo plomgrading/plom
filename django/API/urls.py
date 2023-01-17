@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Colin B. Macdonald
 
-from django.urls import path
+from django.urls import path, re_path
 from rest_framework.authtoken.views import obtain_auth_token
 
 from API.views import (
@@ -17,6 +17,18 @@ from API.views import (
     IDgetDoneTasks,
     IDgetNextTask,
     IDprogressCount,
+    IDclaimThisTask,
+    IDgetImage,
+    MgetNextTask,
+    MclaimThisTask,
+    MgetQuestionPageData,
+    MgetOneImage,
+    MgetAnnotations,
+    MgetAnnotationImage,
+    MgetRubricsByQuestion,
+    MgetRubricPanes,
+    McreateRubric,
+    MmodifyRubric,
 )
 
 
@@ -38,9 +50,44 @@ urlpatterns = [
     path("ID/tasks/complete", IDgetDoneTasks.as_view(), name="api_ID_get_done_tasks"),
     path("ID/tasks/available", IDgetNextTask.as_view(), name="api_ID_get_next_tasks"),
     path("MK/tasks/complete", IDgetDoneTasks.as_view(), name="api_MK_get_done_tasks"),
-    path("MK/tasks/available", IDgetNextTask.as_view(), name="api_MK_get_next_tasks"),
+    path("MK/tasks/available", MgetNextTask.as_view(), name="api_MK_get_next_tasks"),
     path("ID/progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
     path("MK/progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
+    path("MK/tasks/<code>", MclaimThisTask.as_view(), name="api_MK_claim_task"),
+    path("ID/tasks/<paper_id>", IDclaimThisTask.as_view(), name="api_ID_claim_task"),
+    path(
+        "pagedata/<int:paper>/context/<int:question>",
+        MgetQuestionPageData.as_view(),
+        name="api_question_data",
+    ),
+    path("MK/images/<int:pk>/<hash>/", MgetOneImage.as_view(), name="api_MK_one_image"),
+    path("ID/image/<paper_id>/", IDgetImage.as_view(), name="api_ID_get_image"),
+    path(
+        "annotations/<int:paper>/<int:question>/",
+        MgetAnnotations.as_view(),
+        name="api_MK_annotation",
+    ),
+    path(
+        "annotations_image/<int:paper>/<int:question>/",
+        MgetAnnotationImage.as_view(),
+        name="api_MK_annotation_img",
+    ),
+    re_path(
+        r"MK/rubric/(?P<question>[0-9]{,5})$",
+        MgetRubricsByQuestion.as_view(),
+        name="api_MK_get_rubric",
+    ),
+    path(
+        "MK/user/<username>/<int:question>",
+        MgetRubricPanes.as_view(),
+        name="api_MK_get_rubric_panes",
+    ),
+    path("MK/rubric", McreateRubric.as_view(), name="api_MK_create_rubric"),
+    re_path(
+        r"MK/rubric/(?P<key>[0-9]{12})$",
+        MmodifyRubric.as_view(),
+        name="api_MK_modify_rubric",
+    ),
 ]
 
 urlpatterns += [

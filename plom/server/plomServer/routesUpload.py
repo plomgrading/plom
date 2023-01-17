@@ -350,57 +350,108 @@ class UploadHandler:
         # note 200 used here for errors too
         return web.json_response(rmsg, status=200)
 
-    async def replaceMissingTestPage(self, request):
-        data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "test", "page", "version"]
-        ):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+    # @routes.put("/plom/admin/missingTestPage")
+    @authenticate_by_token_required_fields(["test", "page", "version"])
+    @write_admin
+    def replaceMissingTestPage(self, data, request):
+        """Replace a do-not-mark page with a server-generated placeholder.
 
-        rval = self.server.replaceMissingTestPage(
+        We will create the placeholder image.
+
+        Args:
+            ``test``, ``page``, and ``version`` in the data dict.
+
+        Returns:
+            200: on success, currently with some json diagnostics info.
+            401/403: auth
+            404: page or test not found
+            409: conflict such as collision with image already in place
+                 or a repeated upload of the same placeholder.
+            400: poorly formed or otherwise unexpected catchall
+        """
+        ok, reason, X = self.server.replaceMissingTestPage(
             data["test"], data["page"], data["version"]
         )
-        if rval[0]:
-            return web.json_response(rval, status=200)  # all fine
-        else:
-            return web.Response(status=404)  # page not found at all
+        if ok:
+            assert reason == "success"
+            return web.json_response(X, status=200)
+        if reason in ("testError", "pageError"):
+            raise web.HTTPNotFound(reason=X)
+        if reason == "duplicate":
+            raise web.HTTPConflict(reason=X)
+        if reason in "collision":
+            # TODO: refactor `message_or_tuple`?
+            msg = "Collision: " + str(X)
+            raise web.HTTPConflict(reason=msg)
+        # includes "bundleError" and anything unexpected
+        msg = reason + ": " + str(X)
+        raise web.HTTPBadRequest(reason=msg)
 
-    async def replaceMissingDNMPage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+    # @routes.put("/plom/admin/missingDNMPage")
+    @authenticate_by_token_required_fields(["test", "page"])
+    @write_admin
+    def replaceMissingDNMPage(self, data, request):
+        """Replace a do-not-mark page with a server-generated placeholder.
 
-        rval = self.server.replaceMissingDNMPage(data["test"], data["page"])
-        if rval[0]:
-            return web.json_response(rval, status=200)  # all fine
-        else:
-            return web.Response(status=404)  # page not found at all
+        We will create the placeholder image.
 
-    async def replaceMissingIDPage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+        Args:
+            ``test`` and ``page`` in the data dict.
 
+        Returns:
+            200: on success, currently with some json diagnostics info.
+            401/403: auth
+            404: page or test not found
+            409: conflict such as collision with image already in place
+                 or a repeated upload of the same placeholder.
+            400: poorly formed or otherwise unexpected catchall
+        """
+        ok, reason, X = self.server.replaceMissingDNMPage(data["test"], data["page"])
+        if ok:
+            assert reason == "success"
+            return web.json_response(X, status=200)
+        if reason in ("testError", "pageError"):
+            raise web.HTTPNotFound(reason=X)
+        if reason == "duplicate":
+            raise web.HTTPConflict(reason=X)
+        if reason in "collision":
+            # TODO: refactor `message_or_tuple`?
+            msg = "Collision: " + str(X)
+            raise web.HTTPConflict(reason=msg)
+        # includes "bundleError" and anything unexpected
+        msg = reason + ": " + str(X)
+        raise web.HTTPBadRequest(reason=msg)
+
+    # @routes.put("/plom/admin/missingDNMPage")
+    @authenticate_by_token_required_fields(["test"])
+    @write_admin
+    def replaceMissingIDPage(self, data, request):
+        """Replace a missing ID page a server-generated placeholder, for identified tests only.
+
+        TODO: suspicious quality, needs work, Issue #2461.
+
+        Args:
+            ``test`` in the data dict.
+
+        Returns:
+            200: on success, currently with some json diagnostics info (?) but
+            can also return 200 when HW already had an ID page (?)
+            401/403: auth
+            404: page or test not found
+            410: paper not identified (e.g., not homework)
+            400: poorly formed or otherwise unexpected catchall
+        """
         rval = self.server.replaceMissingIDPage(data["test"])
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
-        else:
-            if rval[1] == "unknown":
-                return web.Response(status=410)
-            else:
-                return web.Response(status=404)  # page not found at all
+        if rval[1] == "unknown":
+            raise web.HTTPGone(
+                reason=f'Cannot substitute ID page of test {data["test"]}'
+                " because that paper is not identified"
+            )
+        if rval[1] is False:
+            raise web.HTTPNotFound(reason="unexpectedly could not find something")
+        raise web.HTTPBadRequest(reason=f"Something has gone wrong: {str(rval)}")
 
     async def replaceMissingHWQuestion(self, request):
         # can replace either by SID-lookup or test-number

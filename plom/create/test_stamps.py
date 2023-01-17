@@ -15,18 +15,16 @@ from plom import SpecVerifier
 from plom.misc_utils import working_directory
 
 
-def test_staple_marker_diagname_too_long(tmpdir):
+def test_staple_marker_diagname_very_long(tmpdir):
     tmpdir = Path(tmpdir)
     assert buildDemoSourceFiles(basedir=tmpdir)
     d = fitz.open(tmpdir / "sourceVersions/version1.pdf")
     pdf_page_add_labels_QRs(d[0], "Mg " * 7, "bar", [])
     # d.save("debug_staple_position.pdf")  # uncomment for debugging
     with raises(AssertionError):
-        pdf_page_add_labels_QRs(d[0], "Mg " * 8, "bar", [], odd=True)
-    with raises(AssertionError):
-        pdf_page_add_labels_QRs(d[0], "Mg " * 8, "bar", [], odd=False)
+        pdf_page_add_labels_QRs(d[0], "Mg " * 32, "bar", [], odd=False)
     # but no error if we're not drawing staple corners
-    pdf_page_add_labels_QRs(d[0], "Mg " * 8, "bar", [], odd=None)
+    pdf_page_add_labels_QRs(d[0], "Mg " * 32, "bar", [], odd=None)
     d.close()
 
 
@@ -37,7 +35,7 @@ def test_stamp_too_long(tmpdir):
     d = fitz.open(tmpdir / "sourceVersions/version1.pdf")
     pdf_page_add_labels_QRs(d[0], "foo", "1234 Q33 p. 38", [])
     with raises(AssertionError):
-        pdf_page_add_labels_QRs(d[0], "foo", "MMMM MMMM MMMM MMMM 12345", [])
+        pdf_page_add_labels_QRs(d[0], "foo", "12345 " * 20, [])
     d.close()
 
 

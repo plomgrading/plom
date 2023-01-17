@@ -1,16 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from copy import deepcopy
 import json
 import logging
 from pathlib import Path
@@ -42,6 +41,7 @@ from PyQt5.QtWidgets import (
     QWidget,
     QMenu,
     QMessageBox,
+    QProgressDialog,
     QShortcut,
     QToolButton,
     QFileDialog,
@@ -53,6 +53,7 @@ from plom import __version__
 import plom.client.cursors
 import plom.client.icons
 from .rubric_list import RubricWidget
+from .rubrics import check_for_illadvised
 from .key_wrangler import get_key_bindings
 from .key_help import KeyHelp
 
@@ -62,11 +63,7 @@ from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
-from .useful_classes import (
-    SimpleQuestion,
-    SimpleQuestionCheckBox,
-    NoAnswerBox,
-)
+from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
 
 
 log = logging.getLogger("annotr")
@@ -216,7 +213,7 @@ class Annotator(QWidget):
 
                 <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
 
-                <p>Copyright &copy; 2018-2022 Andrew Rechnitzer,
+                <p>Copyright &copy; 2018-2023 Andrew Rechnitzer,
                 Colin B. Macdonald, and other contributors.</p>
 
                 <p>Plom is Free Software, available under the GNU Affero
@@ -229,11 +226,12 @@ class Annotator(QWidget):
     def getScore(self):
         return self.scene.getScore()
 
-    def getMarkingState(self):
-        return self.scene.getMarkingState()
-
     def toggle_hold_crop(self, checked):
         if checked:
+            if not self.scene:
+                # unfort. backref instance var: if no scene, prevent checking
+                self._hold_crop_checkbox.setChecked(False)
+                return
             self.held_crop_rectangle_data = (
                 self.scene.current_crop_rectangle_as_proportions()
             )
@@ -282,6 +280,7 @@ class Annotator(QWidget):
         hold_crop = m.addAction("(advanced option) Hold crop")
         hold_crop.setCheckable(True)
         hold_crop.triggered.connect(self.toggle_hold_crop)
+        self._hold_crop_checkbox = hold_crop
         m.addSeparator()
         subm = m.addMenu("Tools")
         # to make these actions checkable, they need to belong to self.
@@ -367,11 +366,10 @@ class Annotator(QWidget):
             if key is None:
                 # Maybe row hidden (illegal) but scene knows it in the blue
                 # ghost.  Fixes #1599.  Still None if scene didn't know.
-                key = self.scene.rubricID
+                key = self.scene.get_current_rubric_id()
             self.modeInformation.append((key, tab))
 
         # after grabbed mode information, reset rubric_widget
-        self.rubric_widget.reset()
         self.rubric_widget.setEnabled(False)
 
         del self.scene
@@ -390,6 +388,8 @@ class Annotator(QWidget):
         self,
         tgvID,
         question_label,
+        version,
+        max_version,
         testName,
         paperdir,
         saveName,
@@ -403,9 +403,12 @@ class Annotator(QWidget):
         Args:
             tgvID (str): Test-Group-Version ID code.  For example, for
                 Test #0027, group #13, version #2, we have `t0027g13v2`.
+                TODO: currently only `t0027g13`, no version, despite name.
             question_label (str): The name of the question we are
                 marking.  This is generally used for display only as
                 there is an integer for precise usage.
+            version (int): which version are we working on?
+            max_version (int): what is the largest version in this assessment?
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
             saveName (str/pathlib.Path): file name (and dir, optionally)
@@ -425,6 +428,8 @@ class Annotator(QWidget):
         """
         self.tgvID = tgvID
         self.question_num = int(re.split(r"\D+", tgvID)[-1])
+        self.version = version
+        self.max_version = max_version
         self.question_label = question_label
         self.testName = testName
         s = "{} of {}: {}".format(self.question_label, testName, tgvID)
@@ -450,10 +455,9 @@ class Annotator(QWidget):
         # update displayed score
         self.refreshDisplayedMark(self.getScore())
         # update rubrics
-        self.rubric_widget.changeMark(
-            self.getScore(), self.getMarkingState(), self.maxMark
-        )
-        self.rubric_widget.setQuestionNumber(self.question_num)
+        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
+        self.rubric_widget.setQuestion(self.question_num, self.question_label)
+        self.rubric_widget.setVersion(self.version, self.max_version)
         self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.
@@ -467,13 +471,13 @@ class Annotator(QWidget):
             else:  # if that rubric-mode-set fails (eg - no such rubric)
                 self.toMoveMode()
         # redo this after all the other rubric stuff initialised
-        self.rubric_widget.changeMark(
-            self.getScore(), self.getMarkingState(), self.maxMark
-        )
+        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
 
         # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
             self.unpickleIt(plomDict)
+            # restoring the scene would've marked it dirty
+            self.scene.reset_dirty()
         else:
             # if there is a held crop rectangle, then use it.
             if self.held_crop_rectangle_data:
@@ -532,8 +536,8 @@ class Annotator(QWidget):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         self.ui.narrowMarkLabel.setStyleSheet("color: #ff0000; font: bold;")
         if score is None:
-            self.ui.markLabel.setText("No mark")
-            self.ui.narrowMarkLabel.setText("No mark")
+            self.ui.markLabel.setText("Unmarked")
+            self.ui.narrowMarkLabel.setText("Unmarked")
         else:
             self.ui.markLabel.setText("{} out of {}".format(score, self.maxMark))
             self.ui.narrowMarkLabel.setText("{} out of {}".format(score, self.maxMark))
@@ -659,15 +663,11 @@ class Annotator(QWidget):
             return
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
-        self.parentMarkerUI.downloadAnyMissingPages(int(testnum))
-        pagedata = self.parentMarkerUI._full_pagedata[int(testnum)]
-        # TODO: if we unified img_src_data and pagedata, could just pass onwards
-        files = [
-            {"filename": x["local_filename"], "orientation": x["orientation"]}
-            for x in pagedata
-        ]
+        dl = self.parentMarkerUI.Qapp.downloader
+        pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
+        pagedata = dl.sync_downloads(pagedata)
         labels = [x["pagename"] for x in pagedata]
-        WholeTestView(testnum, files, labels, parent=self).exec()
+        WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -682,7 +682,6 @@ class Annotator(QWidget):
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
-        # TODO: maybe download should happen in Marker?
         image_md5_list = [x["md5"] for x in self.src_img_data]
         # Look for duplicates by first inverting the dict
         repeats = {}
@@ -714,11 +713,28 @@ class Annotator(QWidget):
                 f"Include this info if you think this is a bug!",
             ).exec()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
-        self.parentMarkerUI.downloadAnyMissingPages(testNumber)
 
-        # do a deep copy of this list of dict - else hit #1690
-        # keep original readonly?
-        page_data = deepcopy(self.parentMarkerUI._full_pagedata[int(testNumber)])
+        dl = self.parentMarkerUI.Qapp.downloader
+        page_data = dl.msgr.get_pagedata_context_question(testNumber, self.question_num)
+        # TODO: eventually want dialog to open during loading, Issue #2355
+        N = len(page_data)
+        pd = QProgressDialog(
+            "Downloading additional images\nStarting up...", None, 0, N, self
+        )
+        pd.setWindowModality(Qt.WindowModal)
+        pd.setMinimumDuration(500)
+        pd.setValue(0)
+        self.parentMarkerUI.Qapp.processEvents()
+        for i, row in enumerate(page_data):
+            # TODO: would be nice to show the size in MiB here!
+            pd.setLabelText(
+                f"Downloading additional images\nFile {i + 1} of {N}: img id {row['id']}"
+            )
+            pd.setValue(i + 1)
+            self.parentMarkerUI.Qapp.processEvents()
+            row = dl.sync_download(row)
+        pd.close()
+
         #
         for x in image_md5_list:
             if x not in [p["md5"] for p in page_data]:
@@ -739,25 +755,27 @@ class Annotator(QWidget):
                 log.error(s)
                 ErrorMsg(self, s).exec()
 
-        is_dirty = self.scene.areThereAnnotations()
+        has_annotations = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data, is_dirty
+            self, testNumber, self.src_img_data, page_data, has_annotations
         )
+        # TODO: have rearrange react to new downloads
+        # PC.download_finished.connect(rearrangeView.shake_things_up)
+        perm = []
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: {}".format(perm))
-        else:
-            perm = None
         # Workaround for memory leak Issue #1322, TODO better fix
         rearrangeView.listA.clear()
         rearrangeView.listB.clear()
+        rearrangeView.deleteLater()  # disconnects slots and signals
         del rearrangeView
         if perm:
             # Sanity check for dupes in the permutation
             # pylint: disable=unsubscriptable-object
-            md5 = [x[0] for x in perm]
+            md5 = [x["md5"] for x in perm]
             # But if the input already had dupes than its not our problem
             md5_in = [x["md5"] for x in self.src_img_data]
             if len(set(md5)) != len(md5) and len(set(md5_in)) == len(md5_in):
@@ -913,7 +931,7 @@ class Annotator(QWidget):
         if newMode in self._list_of_minor_modes:
             self._which_tool = newMode
 
-        if imagePath is not None:
+        if self.scene and imagePath is not None:
             self.scene.tempImagePath = imagePath
 
         # pass the new mode to the graphicsview, and set the cursor in view
@@ -1136,8 +1154,10 @@ class Annotator(QWidget):
                 "You cannot un-crop while a crop is being held.",
                 info="Unselect 'hold crop' from the menu and then try again.",
             ).exec()
-        else:
-            self.scene.uncrop_underlying_images()
+            return
+        if not self.scene:
+            return
+        self.scene.uncrop_underlying_images()
 
     def toUndo(self):
         self.ui.undoButton.animateClick()
@@ -1238,9 +1258,6 @@ class Annotator(QWidget):
         # First up connect the rubric list's signal to the annotator's
         # handle rubric function.
         self.rubric_widget.rubricSignal.connect(self.handleRubric)
-        # the no-answer button
-        self.ui.noAnswerButton.clicked.connect(self.noAnswer)
-        # and the rearrange pages button
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
         # Connect up the finishing functions - using a dropdown menu
         m = QMenu()
@@ -1277,12 +1294,12 @@ class Annotator(QWidget):
                 X.setChecked(False)
                 X.setAutoExclusive(True)
 
-    def handleRubric(self, dlt_txt):
-        """Pass rubric ID, delta, text, etc to the scene.
+    def handleRubric(self, rubric):
+        """Pass a rubric dict onward to the scene, if we have a scene.
 
         Args:
-            dlt_txt (tuple): the delta, string of text, rubric_id, and
-                kind, e.g., `[-2, "missing chain rule", 12345, "relative"]`
+            rubric (dict): we don't care what's in it: that's for the scene
+                and the rubric widget to agree on!
 
         Returns:
             None: Modifies self.scene
@@ -1290,7 +1307,7 @@ class Annotator(QWidget):
         self.setToolMode("rubric")
         # TODO: move to "args"/"extra" kwarg of setToolMode when we add that
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheRubric(*dlt_txt)
+            self.scene.changeTheRubric(rubric)
 
     def loadWindowSettings(self):
         """Loads the window settings."""
@@ -1414,11 +1431,12 @@ class Annotator(QWidget):
             WarnMsg(self, msg, info=info, info_pre=False, details=details).exec()
             return False
 
-        # make sure not still in "neutral" marking-state = no score given
-        if self.getMarkingState() == "neutral":
+        if self.scene.is_neutral_state():
             msg = InfoMsg(self, "You have not yet set a score.")
             msg.exec()
             return False
+
+        assert self.getScore() is not None
 
         # do some checks when score is zero
         if self.getScore() == 0:
@@ -1451,8 +1469,17 @@ class Annotator(QWidget):
                 # Note: these are only saved if we ultimately accept
                 self.rubricWarn = False
 
+        # some combinations of rubrics may seem ambiguous or potentially confusing
+        rubrics = self.scene.get_rubrics()
+        ok, code, msg = check_for_illadvised(rubrics, self.maxMark)
+        if not ok:
+            # TODO: some more serious than others, may want to add
+            # "don't ask me again" for only some.  For now, none.
+            if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+                return False
+
         aname, plomfile = self.pickleIt()
-        rubrics = self.scene.get_rubrics_from_page()
+        rubric_ids = self.scene.get_rubric_ids()
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
@@ -1464,7 +1491,7 @@ class Annotator(QWidget):
             self.paperDir,
             aname,
             plomfile,
-            rubrics,
+            rubric_ids,
             self.integrity_check,
             self.src_img_data,
         ]
@@ -1597,11 +1624,11 @@ class Annotator(QWidget):
             return
 
         # We are here b/c of cancel button, titlebar close, or related
-        if self.scene and self.scene.areThereAnnotations():
+        if self.is_dirty():
             msg = SimpleQuestion(
                 self,
-                "<p>There are annotations on the page.</p>\n"
-                "<p>Do you want to discard them and close the annotator?</p>",
+                "<p>There are unsaved changes to the annotations.</p>\n"
+                "<p>Do you want to discard changes and close the annotator?</p>",
             )
             if msg.exec() == QMessageBox.No:
                 event.ignore()
@@ -1610,6 +1637,18 @@ class Annotator(QWidget):
         log.debug("emitting reject/cancel signal, discarding, and closing")
         self.annotator_done_reject.emit(self.tgvID)
         event.accept()
+
+    def is_dirty(self):
+        """Is the scene dirty?
+
+        Has the scene been annotated or changed this session? Re-opening
+        a previous annotated scene does not dirty it, until changes are
+        made. Changes could be made and then undone back to the clean state.
+        The concept should be familiar to "file saved" in a text editor.
+        """
+        if not self.scene:
+            return False
+        return self.scene.is_dirty()
 
     def get_nonrubric_text_from_page(self):
         """Retrieves text (not in rubrics) from the scene.
@@ -1651,7 +1690,6 @@ class Annotator(QWidget):
         plomData = {
             "base_images": self.src_img_data,
             "saveName": str(aname),
-            "markState": self.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),
             "sceneScale": self.scene.get_scale_factor(),
@@ -1775,46 +1813,6 @@ class Annotator(QWidget):
             pass
         self.view.setFocus()
 
-    def noAnswer(self):
-        """
-        Handles when the user selects the "No Answer Given" option
-        and ensures the user has not assigned deltas on the page. If
-        deltas have been assigned, displays an error message.
-
-        Returns:
-            None
-
-        """
-        # ID for no-answer rubric is defined in the db_create module
-        # in the createNoAnswerRubric function.
-        # rID = 1000 + questionNumber = is absolute rubric
-
-        noAnswerCID = 1000 + self.question_num
-
-        # can only apply this if current marking state is neutral
-        # else user has scored the page
-
-        if self.getMarkingState() != "neutral":
-            WarnMsg(
-                self,
-                '<p>You have marked the page - cannot then set "No answer given".</p>'
-                "<p>Delete mark-changing annotations then try again.</p>",
-            ).exec()
-            return
-
-        self.scene.noAnswer(noAnswerCID)
-        nabValue = NoAnswerBox(self).exec()
-        if nabValue == 0:
-            # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
-            self.scene.undo()
-            self.scene.undo()
-            self.scene.undo()
-        elif nabValue == 1:
-            # equivalent to "yes - give me next paper"
-            self.ui.finishedButton.animateClick()
-        else:
-            pass
-
     def getRubricsFromServer(self):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
@@ -1856,7 +1854,11 @@ class Annotator(QWidget):
         CatViewer(self, dogAttempt=True).exec()
 
     def tag_paper(self, task=None, dialog_parent=None):
+        if not self.scene:
+            return
         if not task:
+            if not self.tgvID:
+                return
             task = f"q{self.tgvID}"
         if not dialog_parent:
             dialog_parent = self

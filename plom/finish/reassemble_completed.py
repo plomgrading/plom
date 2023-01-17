@@ -64,6 +64,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     id_pages = []
     id_image_blob = msgr.request_ID_image(t)
     if id_image_blob:
+        # TODO: imghdr is deprecated
         im_type = imghdr.what(None, h=id_image_blob)
         id_page = tmpdir / f"img_{int(t):04}_id0.{im_type}"
         if not im_type:
@@ -74,6 +75,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     marked_pages = []
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
+        # TODO: imghdr is deprecated
         im_type = imghdr.what(None, h=obj)
         filename = tmpdir / f"img_{int(t):04}_q{q:02}.{im_type}"
         if not im_type:

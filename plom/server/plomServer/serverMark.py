@@ -38,13 +38,15 @@ def MprogressCount(self, question_number, version_number):
         version_number (int): Version number.
 
     Returns:
-        list: A list of two integers indicating the number of questions graded
-        and the total number of assigned question to be graded of this question number
-        and question version.
+        list: with two integers, indicating the number of questions
+        graded and the total number of questions to be graded of
+        this question-version pair.
     """
-
-    version_number = int(version_number)
-    question_number = int(question_number)
+    # TODO: consider refactoring McountMarked/McountAll to raise these instead
+    if question_number < 1 or question_number > self.testSpec["numberOfQuestions"]:
+        raise ValueError("Question number out of range.")
+    if version_number < 1 or version_number > self.testSpec["numberOfVersions"]:
+        raise ValueError("Version number out of range.")
     return [
         self.DB.McountMarked(question_number, version_number),
         self.DB.McountAll(question_number, version_number),
@@ -85,20 +87,8 @@ def MlatexFragment(self, latex_fragment):
     return texFragmentToPNG(latex_fragment)
 
 
-def MclaimThisTask(self, username, task_code, version):
-    """Assign the specified paper to this user and return the task information.
-
-    Args:
-        username (str): User who requests the paper.
-        task_code (str): Code string for the claimed task.
-        version (int): The version of the task (must match that in db)
-
-    Returns:
-        list: A list which either only has a False value included or
-        `[True, question_tag, integrity_check, list_of_image_md5s, image_file1, image_file2, ...]`.
-    """
-
-    return self.DB.MgiveTaskToClient(username, task_code, version)
+def MclaimThisTask(self, *args, **kwargs):
+    return self.DB.MgiveTaskToClient(*args, **kwargs)
 
 
 def MreturnMarkedTask(

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2018-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 
@@ -97,19 +97,3 @@ def create_server_config(dur=confdir, *, port=None, name=None, db_name=None):
         template = template.replace("#db_name =", f'db_name = "{db_name}"')
     with open(sd, "w") as fh:
         fh.write(template)
-
-
-def create_blank_predictions(dur=specdir):
-    """Create empty prediction list to store machine-read student IDs.
-
-    args:
-        dur (str/pathlib.Path): where to put the file.
-
-    raises:
-        FileExistsError: file is already there.
-    """
-    pl = Path(dur) / "predictionlist.csv"
-    if pl.exists():
-        raise FileExistsError(f"{pl} already exists.")
-    with open(pl, "w") as fh:
-        fh.write("test, id\n")

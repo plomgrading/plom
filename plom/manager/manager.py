@@ -6,6 +6,7 @@
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021-2022 Elizabeth Xiao
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Natalie Balashov
 
 from collections import defaultdict
 import imghdr
@@ -59,8 +60,8 @@ from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.useful_classes import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
+from plom.client.downloader import Downloader
 from plom.client import ImageViewWidget
-from plom.client.pagecache import download_pages
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -84,6 +85,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomUnidentifiedPaperException,
     PlomNoMoreException,
+    PlomNoPaper,
     PlomNoSolutionException,
 )
 from plom.plom_exceptions import PlomException
@@ -91,6 +93,7 @@ from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 from plom.misc_utils import arrowtime_to_simple_string
 from plom.specVerifier import get_question_label
+from plom.misc_utils import format_int_list_with_runs
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -405,6 +408,11 @@ class Manager(QWidget):
         else:
             if password:
                 self.login()
+        self.downloader = getattr(self.Qapp, "downloader", None)
+        # If Qapp doesn't have a Downloader, make a new one
+        if self.downloader is None:
+            tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
+            self.downloader = Downloader(tmpdir, msgr=self.msgr)
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
@@ -442,6 +450,7 @@ class Manager(QWidget):
 
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
+        self.ui.forgiveAllDNMButton.clicked.connect(self.substituteAllDNMPages)
         self.ui.removePartScanB.clicked.connect(self.removePagesFromPartScan)
         self.ui.removeDanglingB.clicked.connect(self.removeDanglingPage)
 
@@ -453,7 +462,7 @@ class Manager(QWidget):
         self.ui.machineReadRefreshButton.clicked.connect(self.id_reader_get_log)
         self.ui.machineReadKillButton.clicked.connect(self.id_reader_kill)
         self.ui.predictButton.clicked.connect(self.run_predictor)
-        self.ui.delPredButton.clicked.connect(self.deletePredictions)
+        self.ui.delPredButton.clicked.connect(self.deleteMachinePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
         self.ui.enableUserB.clicked.connect(self.enableUsers)
         self.ui.disableUserB.clicked.connect(self.disableUsers)
@@ -892,9 +901,8 @@ class Manager(QWidget):
 
         if not pagedata:
             return
-        with tempfile.TemporaryDirectory() as td:
-            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
-            GroupView(self, pagedata).exec()
+        pagedata = self.downloader.sync_downloads(pagedata)
+        GroupView(self, pagedata).exec()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -970,10 +978,8 @@ class Manager(QWidget):
         )
         if msg.exec() == QMessageBox.No:
             return
-
-        rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
-        # Cleanup, Issue #2141
-        InfoMsg(self, "{}".format(rval)).exec()
+        s = self.msgr.replaceMissingTestPage(test_number, page_number, version)
+        InfoMsg(self, "Successfully substituted.", info=s).exec()
 
     def substituteTestDNMPage(self, test_number, page_number):
         msg = SimpleQuestion(
@@ -984,9 +990,62 @@ class Manager(QWidget):
         if msg.exec() == QMessageBox.No:
             return
 
-        rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
-        # Cleanup, Issue #2141
-        InfoMsg(self, "{}".format(rval)).exec()
+        try:
+            self.msgr.replaceMissingDNMPage(test_number, page_number)
+        except (PlomConflict, PlomNoPaper) as e:
+            InfoMsg(self, f"{e}").exec()
+
+    def substituteAllDNMPages(self):
+        spec = self.msgr.get_spec()
+        dnm_pages = spec["doNotMarkPages"]
+        if not dnm_pages:
+            InfoMsg(
+                self,
+                "There are no do-not-mark pages in the spec.",
+                details="\n".join(f"{k}: {v}" for k, v in spec.items()),
+            ).exec()
+            return
+        msg = SimpleQuestion(
+            self,
+            "Bulk forgive all missing DNM pages?",
+            question=f"""
+                <p>Do-not-mark ("DNM") pages are not likely to be marked so
+                its no issue if they are not here.  For example, they might
+                be formula sheets.  This option will substitute a "Missing
+                Page" placeholder for all such pages, for any test that is
+                partially uploaded.</p>
+                <p>This assessment has DNM pages:
+                {", ".join(str(n) for n in dnm_pages)}<br />
+                (Other pages and pages of unused tests will be uneffected.)</p>
+                <p>Would you like to continue substituting missing DNM pages?</p>
+            """,
+        )
+        if msg.exec() == QMessageBox.No:
+            return
+
+        incomplete = self.msgr.getIncompleteTests()  # triples [p, v, true/false]
+        output_log = "Output log:"
+        subs = []
+        for papernum, X in incomplete.items():
+            papernum = int(papernum)
+            # [['t.1', 1, True], ['t.2', 1, False], ['t.3', 1, True], ...]
+            for pagestr, version, scanned in X:
+                if not scanned:
+                    for p in dnm_pages:
+                        if f"t.{p}" == pagestr:
+                            subs.append(papernum)
+                            b = f"replacing {papernum:04} DNM pg {pagestr}:"
+                            s = self.msgr.replaceMissingDNMPage(papernum, p)
+                            output_log += "\n" + b + " " + s
+
+        InfoMsg(
+            self,
+            f"Finished forgiving missing DNM pages: made {len(subs)} substitutions.",
+            info="Paper numbers: " + format_int_list_with_runs(subs),
+            info_pre=False,
+            details=output_log,
+        ).exec()
+        self.refresh_scan_status_lists()
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleQuestion(
@@ -1001,11 +1060,7 @@ class Manager(QWidget):
             # Cleanup, Issue #2141
             InfoMsg(self, "{}".format(rval)).exec()
         except PlomUnidentifiedPaperException as err:
-            WarnMsg(
-                self,
-                "Cannot substitute that page - that paper has not been identified",
-                info=err,
-            ).exec()
+            WarnMsg(self, str(err)).exec()
 
     def substituteTestPage(self, test_number, page_number, version):
         page_type = self.testPageTypes[page_number]
@@ -1125,7 +1180,13 @@ class Manager(QWidget):
 
     def refreshUnknownList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
+        self.ui.unknownTV.setSortingEnabled(False)
         unknowns = self.msgr.getUnknownPages()
+        # We don't have proper sorting in this table: Issues #2414, #2067
+        # We can at least initially populate it in a meaningful way!
+        unknowns = sorted(
+            unknowns, key=lambda x: (x["bundle_name"], x["bundle_position"])
+        )
         for r, u in enumerate(unknowns):
             it0 = QStandardItem(Path(u["server_path"]).name)
             pm = QPixmap()
@@ -1166,24 +1227,21 @@ class Manager(QWidget):
             self.ui.scanTabW.indexOf(self.ui.unknownTab),
             f"&Unknown Pages ({countstr})",
         )
+        # Issue #2414: this would mess up the careful manual sort we did above
+        # self.ui.unknownTV.setSortingEnabled(True)
 
     def viewUnknownPage(self):
         pvi = self.ui.unknownTV.selectedIndexes()
         if len(pvi) == 0:
             return
         r = pvi[0].row()
-        pagedata = self.unknownModel.item(r, 0).data()  # .toPyObject?
-        obj = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
+        pagedatum = self.unknownModel.item(r, 0).data()  # .toPyObject?
+        pagedatum = self.downloader.sync_download(pagedatum)
         # get the list of ID'd papers
         iDict = self.msgr.getIdentified()
-        # Context manager not appropriate, Issue #1996
-        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
-        with open(f, "wb") as fh:
-            fh.write(obj)
-        pagedata["local_filename"] = f
         uvw = UnknownViewWindow(
             self,
-            [pagedata],
+            [pagedatum],
             [self.max_papers, self.numberOfPages, self.qlabels],
             iDict,
         )
@@ -1214,7 +1272,6 @@ class Manager(QWidget):
                 res = resources.files(plom.client.icons) / "manager_hw.svg"
                 pm.loadFromData(res.read_bytes())
                 self.unknownModel.item(r, 1).setIcon(QIcon(pm))
-        f.unlink()
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
@@ -1285,11 +1342,9 @@ class Manager(QWidget):
         if parent is None:
             parent = self
         pagedata = self.msgr.get_pagedata(testnum)
-        with tempfile.TemporaryDirectory() as td:
-            # get_all=True should be default?
-            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
-            labels = [x["pagename"] for x in pagedata]
-            WholeTestView(testnum, pagedata, labels, parent=parent).exec()
+        pagedata = self.downloader.sync_downloads(pagedata)
+        labels = [x["pagename"] for x in pagedata]
+        WholeTestView(testnum, pagedata, labels, parent=parent).exec()
 
     def checkTPage(self, testNumber, pageNumber, parent=None):
         if parent is None:
@@ -1464,16 +1519,11 @@ class Manager(QWidget):
             return
         r = pvi[0].row()
         pagedata = self.discardModel.item(r, 0).data()
-        obj = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
-        # Context manager not appropriate, Issue #1996
-        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
-        with open(f, "wb") as fh:
-            fh.write(obj)
-        pagedata["local_filename"] = f
+        pagedata = self.downloader.sync_download(pagedata)
         if DiscardViewWindow(self, [pagedata]).exec() == QDialog.Accepted:
+            # Scary, nicer to require img id?
             self.msgr.discardToUnknown(pagedata["server_path"])
             self.refreshDiscardList()
-        f.unlink()
 
     def initDanglingTab(self):
         self.ui.labelDanglingExplain.setText(
@@ -1846,69 +1896,130 @@ class Manager(QWidget):
         idx = self.ui.predictionTW.selectedIndexes()
         if not idx:
             return
-        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
-        msg = f"Do you want to reset the predicted ID of test number {test}?"
+        # TODO: replace with loop over multiple row selections?
+        assert len(idx) == 6
+        idx = idx[0]  # they all have the same row
+        test = self.ui.predictionTW.item(idx.row(), 0).data(Qt.DisplayRole)
+        predictor = self.ui.predictionTW.item(idx.row(), 4).data(Qt.DisplayRole)
+        msg = f'Do you want to remove "{predictor}" predicted ID of test number {test}?'
         if SimpleQuestion(self, msg).exec() == QMessageBox.No:
             return
-        self.msgr.remove_id_prediction(test)
+        if predictor == "prename":
+            self.msgr.remove_pre_id(test)
+        else:
+            ErrorMsg(self, "Sorry removing non-prename not implemented yet").exec()
+            # TODO: kwarg not implemented yet
+            # self.msgr.remove_id_prediction(test, predictor=predictor)
         self.getPredictions()
 
     def getPredictions(self):
-        predictions = self.msgr.IDrequestPredictions()
+        prename_predictions = self.msgr.IDgetPredictionsFromPredictor("prename")
+        lap_predictions = self.msgr.IDgetPredictionsFromPredictor("MLLAP")
+        greedy_predictions = self.msgr.IDgetPredictionsFromPredictor("MLGreedy")
         identified = self.msgr.getIdentified()
 
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
+
+        self.ui.predictionTW.setSortingEnabled(False)
 
         # TODO: Issue #1745
         # TODO: all existing papers or scanned only?
         s = self.msgr.get_spec()
         alltests = range(1, s["numberToProduce"] + 1)
 
-        for r, t in enumerate(alltests):
-            self.ui.predictionTW.setSortingEnabled(False)
-            self.ui.predictionTW.insertRow(r)
-            # put in the test-number
-            item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, int(t))
-            self.ui.predictionTW.setItem(r, 0, item)
-
+        r = 0
+        for t in alltests:
             identity = identified.get(str(t), None)
-            if identity:
+            prename = prename_predictions.get(str(t), None)
+            lap = lap_predictions.get(str(t), None)
+            greedy = greedy_predictions.get(str(t), None)
+
+            hilite_id = False
+            if prename and identity:
+                if prename["student_id"] != identity[0]:
+                    # TODO: highlight identified if not matching prename, after #2081
+                    hilite_id = True
+            hilite = False
+            if lap and greedy:
+                if lap["student_id"] != greedy["student_id"]:
+                    hilite = True
+
+            predictions_to_add = [prename, lap, greedy]
+
+            if not any(predictions_to_add) and identity:
+                self.ui.predictionTW.insertRow(r)
+                # put in the test-number
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, int(t))
+                self.ui.predictionTW.setItem(r, 0, item)
+
                 item = QTableWidgetItem()
                 item.setData(Qt.DisplayRole, identity[0])
                 item.setToolTip("Has been identified")
                 self.ui.predictionTW.setItem(r, 1, item)
+
                 item = QTableWidgetItem()
                 item.setData(Qt.DisplayRole, identity[1])
                 item.setToolTip("Has been identified")
                 self.ui.predictionTW.setItem(r, 2, item)
-            pred = predictions.get(str(t), None)
-            if pred:
-                item0 = QTableWidgetItem()
-                item0.setData(Qt.DisplayRole, pred["student_id"])
-                self.ui.predictionTW.setItem(r, 3, item0)
-                item1 = QTableWidgetItem()
-                item1.setData(Qt.DisplayRole, pred["predictor"])
-                self.ui.predictionTW.setItem(r, 4, item1)
-                item2 = QTableWidgetItem()
-                item2.setData(Qt.DisplayRole, pred["certainty"])
-                self.ui.predictionTW.setItem(r, 5, item2)
-                if identity:
-                    # prediction less important but perhaps not irrelevant
-                    item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                    item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                    item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
-                    # This doesn't work
-                    # item0.setEnabled(False)
-                else:
-                    # TODO: colour-code based on confidence?
-                    item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                    item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
-                    item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                r += 1
+                continue
+
+            for pred in predictions_to_add:
+                if pred is not None:
+                    self.ui.predictionTW.insertRow(r)
+                    # put in the test-number
+                    item = QTableWidgetItem()
+                    item.setData(Qt.DisplayRole, int(t))
+                    self.ui.predictionTW.setItem(r, 0, item)
+
+                    item0 = QTableWidgetItem()
+                    item0.setData(Qt.DisplayRole, pred["student_id"])
+                    self.ui.predictionTW.setItem(r, 3, item0)
+                    item1 = QTableWidgetItem()
+                    item1.setData(Qt.DisplayRole, pred["predictor"])
+                    self.ui.predictionTW.setItem(r, 4, item1)
+                    item2 = QTableWidgetItem()
+                    # round certainty for display
+                    item2.setData(Qt.DisplayRole, round(pred["certainty"], 3))
+                    self.ui.predictionTW.setItem(r, 5, item2)
+
+                    if identity:
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, identity[0])
+                        item.setToolTip("Has been identified")
+                        self.ui.predictionTW.setItem(r, 1, item)
+                        if hilite_id:
+                            item.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, identity[1])
+                        item.setToolTip("Has been identified")
+                        self.ui.predictionTW.setItem(r, 2, item)
+
+                    if identity:
+                        if hilite_id:
+                            item0.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                            item1.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                            item2.setBackground(QBrush(QColor(255, 0, 0, 48)))
+                        else:
+                            # prediction less important but perhaps not irrelevant
+                            item0.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                            item1.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                            item2.setBackground(QBrush(QColor(128, 128, 128, 48)))
+                            # This doesn't work
+                            # item0.setEnabled(False)
+                    else:
+                        # TODO: colour-code based on confidence?
+                        if hilite:
+                            item0.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                            item1.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                            item2.setBackground(QBrush(QColor(0, 255, 255, 48)))
+                    r += 1
+
         self.ui.predictionTW.setSortingEnabled(True)
 
-    def deletePredictions(self):
+    def deleteMachinePredictions(self):
         msg = SimpleQuestion(
             self,
             "Delete the auto-read predicted IDs?"
@@ -1917,7 +2028,11 @@ class Manager(QWidget):
         )
         if msg.exec() == QMessageBox.No:
             return
-        self.msgr.IDdeletePredictions()
+        # TODO: likely unnecessary?
+        self.msgr.ID_delete_machine_predictions()
+        # Instead we can just do:
+        # self.msgr.ID_delete_predictions_from_predictor(predictor="MLLAP")
+        # self.msgr.ID_delete_predictions_from_predictor(predictor="MLGreedy")
         self.getPredictions()
 
     def initMarkTab(self):
@@ -2271,7 +2386,12 @@ class Manager(QWidget):
         if owner != "reviewer":
             self.msgr.clearAuthorisationUser(owner)
         # then map that question's owner "reviewer"
-        self.msgr.MreviewQuestion(test, question)
+        try:
+            self.msgr.MreviewQuestion(test, question)
+        except PlomConflict as e:
+            s = "<p>You need to create a &ldquo;<tt>reviewer</tt>&rdquo; account"
+            s += " before you can use this feature.</p>"
+            InfoMsg(self, str(e), info=s, info_pre=False).exec()
 
     def removeAnnotationsFromRange(self):
         ri = self.ui.reviewTW.selectedIndexes()

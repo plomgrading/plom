@@ -17,3 +17,5 @@ djangorestframework
 # https://pypi.org/project/random-username/
 # https://github.com/williexu/random_username
 random-username
+tomli
+tomlkit

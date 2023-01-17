@@ -159,6 +159,9 @@ def validateToken(self, uname, token):
 def getUserList(self):
     rval = []
     for uref in User.select():
+        if uref.name == "HAL":
+            # hide implementation details Issue #2321
+            continue
         rval.append(uref.name)
     return rval
 
@@ -166,6 +169,9 @@ def getUserList(self):
 def getUserDetails(self):
     rval = {}
     for uref in User.select():
+        if uref.name == "HAL":
+            # hide implementation details Issue #2321
+            continue
         val = [False, False]
         if uref.enabled:
             val[0] = True

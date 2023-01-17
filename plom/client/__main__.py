@@ -2,24 +2,25 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2022 Edith Coates
 
 """Start the Plom client."""
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import signal
 import os
+import platform
 import sys
 import traceback as tblib
 from multiprocessing import freeze_support
 
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, PYQT_VERSION_STR, QT_VERSION_STR
 from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 
 from plom import __version__
@@ -42,10 +43,15 @@ def add_popup_to_toplevel_exception_handler():
             abbrev = "".join(lines)
         lines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")
 
-        txt = """<p><b>Something unexpected has happened!</b>
-        A partial error message is shown below.</p>
+        txt = f"""<p><b>Something unexpected has happened!</b>
+        A partial error message follows.</p>
         <p>(You could consider filing an issue; if you do, please copy-paste
-        the entire text under &ldquo;Show Details&rdquo;.)</p>"""
+        the text under &ldquo;Show Details&rdquo;.)</p>
+        <p>Plom v{__version__}<br />
+        PyQt5 {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
+        Python {platform.python_version()},
+        {platform.platform()}</p>
+        """
         msg = ErrorMsg(
             None,
             txt,

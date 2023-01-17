@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 #
@@ -12,12 +12,11 @@ FROM ubuntu:20.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
-        cmake make g++ \
+        cmake make g++ git\
         imagemagick \
         openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
         libpango-1.0-0 libpangocairo-1.0-0 \
-        libzbar0 \
         libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev \
         file \
         python3 \
@@ -27,6 +26,9 @@ RUN apt-get -y update && \
         python3-wheel \
         python3-pytest \
         python3-magic
+	
+# Note that git is required for pip install of zxingcpp on ubuntu 20.04
+# - see https://github.com/zxing-cpp/zxing-cpp/issues/489
 
 # file-magic: https://gitlab.com/plom/plom/-/issues/1570
 

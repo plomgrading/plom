@@ -4,6 +4,7 @@ from .image_bundle import (
     CollidingImage,
     DiscardedImage,
     ErrorImage,
+    AnnotationImage,
 )
 from .paper_structure import (
     Paper,

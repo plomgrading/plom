@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021 Peter Lee
@@ -15,7 +15,7 @@ See help for each subcommand or consult online documentation for an
 overview of the steps in setting up a server.
 """
 
-__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -34,7 +34,7 @@ from plom import SpecVerifier
 from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
-from plom.create import build_database, build_papers
+from plom.create import build_database, build_papers, build_extra_page_pdf
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
@@ -339,7 +339,16 @@ def get_parser():
             Specify vertical location of the name/ID that will be printed on
             named papers, a float from 0 (top) to 100 (bottom) of the
             page.
-            Defaults to 42.5 (for historical reasons!)""",
+            Defaults to 42.""",
+    )
+
+    sp_extra = sub.add_parser(
+        "extra-pages",
+        help="Make an extra pages PDF",
+        description="""
+          Make a simple extra-paper PDF for students to use when they need more
+          space.
+        """,
     )
 
     sp_user = sub.add_parser(
@@ -662,6 +671,10 @@ def main():
             ycoord=args.namebox_ypos,
             msgr=(args.server, args.password),
         )
+    elif args.command == "extra-pages":
+        print("Building extra page in case students need more space...")
+        build_extra_page_pdf(destination_dir=Path.cwd())
+        print('See "extra_page.pdf" in the current directory')
 
     elif args.command == "user":
         msgr = start_messenger(args.server, args.password)
@@ -697,9 +710,8 @@ def main():
                 msgr.stop()
             print("Users:")
             for user, stuff in user_dict.items():
-                if user != "HAL":
-                    stuffit = "\t".join(str(x) for x in stuff)
-                    print(f"  {user:10}\t{stuffit}")
+                stuffit = "\t".join(str(x) for x in stuff)
+                print(f"  {user:10}\t{stuffit}")
             if "scanner" not in user_dict:
                 print('WARNING: server has no "scanner" user')
             if "reviewer" not in user_dict:

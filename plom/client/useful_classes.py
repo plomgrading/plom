@@ -155,33 +155,6 @@ class SimpleTableView(QTableView):
             super(SimpleTableView, self).keyPressEvent(event)
 
 
-class NoAnswerBox(QDialog):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.setWindowTitle("Is this answer blank?")
-        self.yesNextB = QPushButton("Yes and &Next")
-        self.yesDoneB = QPushButton("&Yes")
-        self.noB = QPushButton("No, &cancel")
-        self.yesNextB.clicked.connect(lambda: self.done(1))
-        self.yesDoneB.clicked.connect(lambda: self.done(2))
-        self.noB.clicked.connect(self.reject)
-        grid = QGridLayout()
-        moreinfo = QLabel(
-            "<p>Is this answer blank or nearly blank?</p>"
-            "<p>Please answer &ldquo;no&rdquo; if there is "
-            "<em>any possibility</em> of relevant writing on the page.</p>"
-        )
-        moreinfo.setWordWrap(True)
-        grid.addWidget(moreinfo, 0, 1, 1, 2)
-        grid.addWidget(QLabel("advance to next paper"), 1, 2)
-        grid.addWidget(QLabel("keep annotating"), 2, 2)
-        grid.addWidget(QLabel("keep annotating"), 3, 2)
-        grid.addWidget(self.yesNextB, 1, 1)
-        grid.addWidget(self.yesDoneB, 2, 1)
-        grid.addWidget(self.noB, 3, 1)
-        self.setLayout(grid)
-
-
 class BlankIDBox(QDialog):
     def __init__(self, parent, testNumber):
         super().__init__(parent)

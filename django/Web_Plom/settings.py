@@ -62,7 +62,10 @@ INSTALLED_APPS = [
     "Connect",
     "Scan",
     "API",
+    "Mark",
+    "Identify",
     "Progress",
+    "Rubrics",
 ]
 
 MIDDLEWARE = [

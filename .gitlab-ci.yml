@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019 John Hsu
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022 Edith Coates
@@ -24,18 +24,18 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.21
+image: docker:20.10.22
 
 services:
-  - docker:20.10.21-dind
+  - docker:20.10.22-dind
 
 variables:
   DOCKER_DRIVER: overlay2
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
-  MACBIN_PY_VER: 3.9.15
-  WINBIN_PY_VER: 3.9.13
+  MACBIN_PY_VER: 3.10.9
+  WINBIN_PY_VER: 3.10.8
 
 stages:
   - static_analysis
@@ -81,16 +81,54 @@ quick-pytests:
 
 
 codespell:
-  image: python:3.10
+  image: python:3.11
   stage: static_analysis
   before_script:
     - python3 -m pip install codespell
   script:
-    - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
+    - echo "Need an exception?  See the .codespell-ignore* files"
+    - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
   allow_failure: true
   artifacts:
     reports:
       dotenv: release_info.env
+
+
+# sometimes we write everything twice: this job ensures dupe file/info stay same
+wet_no_drift:
+  stage: static_analysis
+  image: alpine
+  before_script:
+    - apk add bash
+  script:
+    - 'echo "Issue #2402: ensure two identical copies of the latex template"'
+    - diff -s plom/latexTemplate.tex plom/testTemplates/latexTemplate.tex
+    - diff -s plom/latexTemplatev2.tex plom/testTemplates/latexTemplatev2.tex
+    - echo "Version info duplicated in two places, ensure same"
+    - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
+    - export VER2=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
+    - echo $VER1
+    - echo $VER2
+    - bash -c "[[ x$VER1 == x$VER2 ]]"
+
+
+copyright_year:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - git --version
+    - echo "ensure we have the main branch for comparing"
+    - git fetch origin main
+    - git checkout main
+    - git checkout $CI_COMMIT_BRANCH
+    - git branch -avv
+  script:
+    - echo "Considering the following commits to this branch (since main):"
+    - git shortlog origin/main..${CI_COMMIT_BRANCH} --
+    - echo "Those commits touch the following files:"
+    - git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} -- | uniq -u
+    - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only origin/main..$CI_COMMIT_BRANCH --`
+  allow_failure: true
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
@@ -186,7 +224,7 @@ release_job:
 # block release unless tag matches in-source version
 tag_matches_ver:
   stage: static_analysis
-  image: python:3.10
+  image: python:3.11
   rules:
    - if: $CI_COMMIT_TAG
   script:
@@ -201,9 +239,9 @@ tag_matches_ver:
 
 black:
   stage: static_analysis
-  image: python:3.10
+  image: python:3.11
   before_script:
-    - pip3 install "black~=22.3"
+    - pip3 install "black~=22.12"
   script:
     - black --check --diff .
   allow_failure: true
@@ -254,7 +292,7 @@ doctests:
   script:
     # TODO how to run only doctests?  here we just ignore-glib on "test_*"
     - pytest --version
-    - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*IDReader_TF" --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
+    - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
 pylint:
@@ -262,8 +300,9 @@ pylint:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    # These are pinned at 2.15.*: should be manually bumped sometimes
-    - python3 -m pip install pylint~=2.15.5
+    # These are pinned at 2.x.*: should be manually bumped sometimes
+    - python3 -m pip install astroid~=2.12.14
+    - python3 -m pip install pylint~=2.15.10
   script:
     - pylint plom
   allow_failure: true
@@ -321,6 +360,7 @@ demoserver:
   needs: ["docker-image"]
   image: $IM
   before_script:
+    - apt-get update
     - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
     - mkdir demo
@@ -367,6 +407,7 @@ hwdemoserver:
   needs: ["docker-image"]
   image: $IM
   before_script:
+    - apt-get update
     - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
     - mkdir demo
@@ -432,6 +473,7 @@ fullworkflow:
   needs: ["docker-image"]
   image: $IM
   before_script:
+    - apt-get update
     - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
     # Build tests
@@ -527,6 +569,7 @@ docs_sphinx:
   needs: ["docker-image"]
   image: $IM
   before_script:
+    - apt-get update
     - apt-get --no-install-recommends --yes install tex-gyre
     - pip install myst-parser sphinx sphinx_rtd_theme sphinx-argparse
   script:
@@ -547,14 +590,15 @@ docs_sphinx:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
+# TODO: likely python3-zxing-cpp is too old
 fedora_build:
   stage: alt_build
   needs: []
-  image: fedora:36
+  image: fedora:37
   when: manual
   allow_failure: true
   before_script:
-    - dnf install -y ImageMagick openssl zbar gcc gcc-c++ cmake
+    - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
           turbojpeg-devel libjpeg-turbo-devel
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
@@ -564,16 +608,24 @@ fedora_build:
           python3-seaborn python3-aiohttp
           python3-peewee python3-pandas python3-requests-toolbelt
           python3-pip python3-wheel python3-setuptools
-          python3-toml python3-weasyprint python3-pillow python3-tqdm python3-appdirs
+          python3-tomlkit python3-weasyprint python3-pillow python3-tqdm
+          python3-appdirs python3-arrow
           python3-pytest
-          python3-PyMuPDF python3-scikit-learn
+          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
           file python3-file-magic
           iproute
     - pip --version
   script:
+    # temporary, see https://github.com/cheind/py-lapsolver/issues/18
+    - dnf install -y git
+    - pip install git+https://github.com/cbm755/py-lapsolver@pybind11_bump
+    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
+    - pip install -U pytest
     - pip install .
     # First, run the unit tests
-    - pytest-3 -l --pyargs plom
+    - which pytest-3
+    - which pytest
+    - pytest plom
     # Build tests
     - mkdir play
     - pushd play
@@ -630,7 +682,6 @@ newOS_newdeps:
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libpango-1.0-0 libpangocairo-1.0-0
-      libzbar0
       libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev
       libgl1-mesa-glx libsm6 libxrender1
       python3-pytest python3-dev
@@ -704,7 +755,6 @@ oldOS_mindeps:
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libpango-1.0-0 libpangocairo-1.0-0
-      libzbar0
       libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev
       libgl1-mesa-glx libsm6 libxrender1
       python3-pytest python3 python3-dev
@@ -771,10 +821,9 @@ minpy_mindeps:
   needs: []
   image: python:3.7
   before_script:
-    - apt-get --yes update
+    - apt-get update
     - apt-get --no-install-recommends --yes install
       cmake make imagemagick dvipng g++ openssl
-      libzbar0
       texlive-latex-extra latexmk texlive-fonts-recommended
       libpango-1.0-0 libpangocairo-1.0-0
       libgl1-mesa-glx libsm6 libxrender1
@@ -924,7 +973,11 @@ linuxbin_ubuntu2004:
 
 
 # Notes on macOS client builds
-# - build python from src for https://github.com/danhper/asdf-python/issues/38
+# - Aug 2021, based on https://github.com/danhper/asdf-python/issues/38 we used:
+#     - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+#   Not sure what this was for but it broke in 2023-Jan (Issue #2478).  I tried:
+#   "--enable-framework=/Users/gitlab/.asdf/installs/Library/Frameworks" asdf ...
+#   Also "--enable-shared", but it seems to work without any of these things?
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 macos12_client:
@@ -983,9 +1036,10 @@ macos11_client:
   - python --version
   - pip --version
   - asdf current
+  - asdf info
   - asdf which python
   - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf shell python $MACBIN_PY_VER
   - python --version
@@ -1036,7 +1090,7 @@ macos1015_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf which python
   - asdf shell python $MACBIN_PY_VER
   - python --version
@@ -1080,7 +1134,7 @@ macos1014_client:
   - echo $SHELL
   - asdf current
   # asdf which python  # has no python for some reason
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
+  - asdf install python $MACBIN_PY_VER
   - asdf local python $MACBIN_PY_VER
   - asdf which python
   - python --version
@@ -1094,53 +1148,6 @@ macos1014_client:
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos10_14.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
-    expire_in: 16 days
-
-
-# often fails: currently set to only run manually
-macos1013_client:
-  image: macos-10.13-xcode-9
-  tags:
-  - shared-macos-amd64
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
-  allow_failure: true
-  stage: packaging
-  script:
-  - sw_vers
-  - echo $SHELL
-  - asdf current
-  - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
-  - asdf which python
-  - asdf local python $MACBIN_PY_VER
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos10_13.zip
   - pushd dist
   - ls
   - ls -sklR PlomClient-$VER.app
@@ -1190,7 +1197,6 @@ macos_server:
   # brew update
   # brew --version
   - brew install cmake libffi pango
-  - time brew install zbar
   - brew install imagemagick
   - brew install openssl
   - time brew install basictex
@@ -1233,10 +1239,10 @@ macos_server:
 #   script:
 #   - choco install -y python3 --version $WINBIN_PY_VER
 #   - refreshenv
-#   - c:\Python39\Scripts\pip install -r requirements.txt.client
+#   - c:\Python310\Scripts\pip install -r requirements.txt.client
 #   - refreshenv
 #   - echo $Env:Path
-#   - c:\Python39\python -m plom.client -h
+#   - c:\Python310\python -m plom.client -h
 
 
 # Build Windows client binaries
@@ -1248,18 +1254,18 @@ winpyinst:
   before_script:
   - choco install -y python3 --version $WINBIN_PY_VER
   - refreshenv
-  - c:\python39\python -m pip --version
-  - c:\python39\python -m pip install --user --upgrade pip
-  - c:\python39\python -m pip --version
-  - c:\python39\python -m pip install --user --upgrade setuptools wheel
+  - c:\python310\python -m pip --version
+  - c:\python310\python -m pip install --user --upgrade pip
+  - c:\python310\python -m pip --version
+  - c:\python310\python -m pip install --user --upgrade setuptools wheel
   script:
-  - c:\python39\python -m pip install -r requirements.txt.client
+  - c:\python310\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python39\python -m pip install pyinstaller==5.1
+  - c:\python310\python -m pip install pyinstaller==5.7.0
   - refreshenv
-  - c:\python39\python -m plom.client -h
-  - c:\python39\scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\python39\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
+  - c:\python310\python -m plom.client -h
+  - c:\python310\scripts\pyinstaller client.windows.spec
+  - $VER = &"c:\python310\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME

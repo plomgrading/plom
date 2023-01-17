@@ -3,10 +3,16 @@
 # Copyright (C) 2022 Colin B. Macdonald
 
 from pathlib import Path
+import sys
 import tempfile
 
 from PIL import Image
-import toml
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+import tomlkit
 
 from plom.scan import processFileToBitmaps
 from plom.specVerifier import checkSolutionSpec
@@ -54,12 +60,12 @@ def createSolutionSpec(testSpec):
 
 def saveSolutionSpec(solutionSpec):
     with open("solutionSpec.toml", "w") as fh:
-        toml.dump(solutionSpec, fh)
+        tomlkit.dump(solutionSpec, fh)
 
 
 def loadSolutionSpec(spec_filename):
-    with open(spec_filename, "r") as fh:
-        solutionSpec = toml.load(fh)
+    with open(spec_filename, "rb") as fh:
+        solutionSpec = tomllib.load(fh)
     return solutionSpec
 
 

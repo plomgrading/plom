@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2021 Nicholas J H Lai
@@ -74,19 +74,13 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
         )
 
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_test_page_substitute(
-        0, 0, 0, template=pns, out_dir=please_check
-    ):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing test page."
-        )
+    pageNotSubmitted.build_test_page_substitute(
+        0, 0, 0, template=pns, outdir=please_check
+    )
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_homework_question_substitute(
-        0, 0, template=qns, out_dir=please_check
-    ):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing homework question."
-        )
+    pageNotSubmitted.build_homework_question_substitute(
+        0, 0, template=qns, outdir=please_check
+    )
 
     print(
         fill(

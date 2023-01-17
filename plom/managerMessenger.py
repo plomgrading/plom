@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
 
 import hashlib
@@ -136,38 +136,47 @@ class ManagerMessenger(BaseMessenger):
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
 
-    def pre_id_paper(self, paper_number, studentID, predictor="prename"):
+    def pre_id_paper(
+        self, paper_number, studentID, *, certainty=0.9, predictor="prename"
+    ):
         """Pre-id a paper.
+
+        Args:
+            paper_number (str)
+            studentID (str)
+
+        Keyword Args:
+            predictor: defaults to "prename"
+            certainty: defaults to 0.9
 
         Exceptions:
             PlomConflict: `studentID` already used on a different paper.
+                Currently does not do this.  Could enable again in the
+                future.
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                f"/ID/preid/{paper_number}",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "sid": studentID,
-                    "predictor": predictor,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code in (401, 403):
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 409:
-                raise PlomConflict(e) from None
-            if response.status_code == 404:
-                raise PlomSeriousException(e) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    f"/ID/preid/{paper_number}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "sid": studentID,
+                        "predictor": predictor,
+                        "certainty": certainty,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def remove_id_prediction(self, paper_number):
+    def remove_pre_id(self, paper_number):
         """Remove the predicted "pre-id" for a particular paper.
 
         Exceptions:
@@ -395,10 +404,12 @@ class ManagerMessenger(BaseMessenger):
 
     def getDanglingPages(self):
         self.SRmutex.acquire()
+        timeout = (self.default_timeout[0], 5 * self.default_timeout[1])
         try:
             response = self.get(
                 "/REP/dangling",
                 json={"user": self.user, "token": self.token},
+                timeout=timeout,
             )
             response.raise_for_status()
             return response.json()
@@ -465,28 +476,6 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return imageList
-
-    def IDrequestPredictions(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/ID/predictions",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            predictions = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server cannot find the prediction list."
-                ) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return predictions
 
     def IDgetImageFromATest(self):
         self.SRmutex.acquire()
@@ -572,81 +561,95 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
     def replaceMissingTestPage(self, t, p, v):
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/plom/admin/missingTestPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                    "page": p,
-                    "version": v,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the page - this should not happen!"
-                ) from None
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        """Replace a do-not-mark page with a server-generated placeholder.
+
+        Returns:
+            str: diagnostic message, largely unnecessary
+
+        Raises:
+            PlomConflict: collisions, duplicates
+            PlomNoPaper: no paper or also invalid page
+            PlomAuthenticationException: auth or invalid user
+            PlomSeriousException: anything unexpected
+        """
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/plom/admin/missingTestPage",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "test": t,
+                        "page": p,
+                        "version": v,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def replaceMissingDNMPage(self, t, p):
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/plom/admin/missingDNMPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                    "page": p,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the page - this should not happen!"
-                ) from None
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        """Replace a do-not-mark page with a server-generated placeholder.
+
+        Returns:
+            str: diagnostic message, largely unnecessary
+
+        Raises:
+            PlomConflict: collisions, duplicates
+            PlomNoPaper: no paper or also invalid page
+            PlomAuthenticationException: auth or invalid user
+            PlomSeriousException: anything unexpected
+        """
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/plom/admin/missingDNMPage",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "test": t,
+                        "page": p,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def replaceMissingIDPage(self, t):
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/plom/admin/missingIDPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the page - this should not happen!"
-                ) from None
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 410:
-                raise PlomUnidentifiedPaperException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/plom/admin/missingIDPage",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "test": t,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 410:
+                    raise PlomUnidentifiedPaperException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def replaceMissingHWQuestion(self, student_id=None, test=None, question=None):
         # can replace by SID or by test-number
@@ -1066,7 +1069,8 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
         return True
 
-    def IDdeletePredictions(self):
+    def ID_delete_machine_predictions(self):
+        """Deletes the machine-learning predicted IDs for all papers."""
         with self.SRmutex:
             try:
                 response = self.delete(
@@ -1079,29 +1083,19 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def IDputPredictions(self, predictions):
-        raise NotImplementedError(
-            "No one is using this API call right now and it needs work: Issue #2080"
-        )
-
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/ID/predictions",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "predictions": predictions,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code in (401, 403):
-                raise PlomAuthenticationException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def ID_delete_predictions_from_predictor(self, *, predictor):
+        """Deletes the predicted IDs for one particular predictor."""
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    "/ID/predictedID/{predictor}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def run_predictor(self):
         """Match the results of the id digit reader with unidentified papers.
@@ -1456,27 +1450,27 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MreviewQuestion(self, testNumber, questionNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                "/MK/review",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "testNumber": testNumber,
-                    "questionNumber": questionNumber,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code in (401, 403):
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 404:
-                raise PlomSeriousException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def MreviewQuestion(self, paper_number, question):
+        with self.SRmutex:
+            try:
+                response = self.patch(
+                    "/MK/review",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "paper_number": paper_number,
+                        "question": question,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def IDreviewID(self, testNumber):
         self.SRmutex.acquire()

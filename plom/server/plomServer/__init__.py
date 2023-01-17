@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020, 2022 Colin B. Macdonald
+# Copyright (C) 2020, 2022-2023 Colin B. Macdonald
 
 """Routes and server details for the Plom server.
 
@@ -9,7 +9,7 @@ stuff, but this separation is not perfect.  In many cases the server
 bit just makes the same call to the database code in :doc:`module-plom-db`.
 """
 
-__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
