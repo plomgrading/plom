@@ -20,8 +20,7 @@ import sys
 import traceback as tblib
 from multiprocessing import freeze_support
 
-# from PyQt5.Qt import PYQT_VERSION_STR, QT_VERSION_STR
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, PYQT_VERSION_STR, QT_VERSION_STR
 from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 
 from plom import __version__
@@ -44,12 +43,12 @@ def add_popup_to_toplevel_exception_handler():
             abbrev = "".join(lines)
         lines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")
 
-        # PyQt5 {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
         txt = f"""<p><b>Something unexpected has happened!</b>
         A partial error message follows.</p>
         <p>(You could consider filing an issue; if you do, please copy-paste
         the text under &ldquo;Show Details&rdquo;.)</p>
         <p>Plom v{__version__}<br />
+        PyQt5 {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
         Python {platform.python_version()},
         {platform.platform()}</p>
         """
