@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -18,32 +18,45 @@
 # TODO: what bits of our source code to put in src?
 
 
-# from "bash" onward is copy-paste from appimage-builder-1.0.3:
+# from "breeze-icon-theme" onward is copy-paste from appimage-builder-1.1.0:
 FROM ubuntu:20.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get install -y python3-dev && \
-    apt-get install -y python3-pip python3-setuptools \
+    apt-get install -y \
         fuse \
-        gtk-update-icon-cache \
         bash \
         coreutils \
         binutils \
         util-linux \
-        file \
-        desktop-file-utils \
-        fakeroot \
-        libgdk-pixbuf2.0-dev \
         patchelf \
-        squashfs-tools \
+        squashfs-tools && \
+   apt-get install -y \
+        breeze-icon-theme \
+        desktop-file-utils \
+        elfutils \
+        fakeroot \
+        file \
+        git \
+        gnupg2 \
+        gtk-update-icon-cache \
+        libgdk-pixbuf2.0-dev \
+        libglib2.0-bin \
+        librsvg2-dev \
+        libyaml-dev \
+        python3 \
+        python3-pip \
+        python3-setuptools \
         strace \
-        zsync
+        wget \
+        zsync && \
+    apt-get -yq autoclean
 
 # used to get errors on validating our file
 RUN apt-get -y install appstream appstream-util
 
 RUN python3 -m pip install --upgrade pip
-RUN pip install appimage-builder>=1.0.3
+RUN pip install appimage-builder>=1.1.0
 
 COPY AppImageBuilder.yml /app/
 COPY . /app/src/
