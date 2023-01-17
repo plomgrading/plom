@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """
@@ -73,7 +73,7 @@ class Downloader(QObject):
 
     Use :meth:`enable_fail_mode` to artificially fail some download
     attempts and generally take longer.  For debugging.  Disable again
-    with :method:`disable_fail_mode`.
+    with :meth:`disable_fail_mode`.
     """
 
     # emitted anytime a (background) download finishes

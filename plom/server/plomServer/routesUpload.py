@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartWriter, MultipartReader
@@ -363,11 +363,11 @@ class UploadHandler:
 
         Returns:
             200: on success, currently with some json diagnostics info.
-            401/403: auth
-            404: page or test not found
+            401/403: auth.
+            404: page or test not found.
             409: conflict such as collision with image already in place
-                 or a repeated upload of the same placeholder.
-            400: poorly formed or otherwise unexpected catchall
+            or a repeated upload of the same placeholder.
+            400: poorly formed or otherwise unexpected catchall.
         """
         ok, reason, X = self.server.replaceMissingTestPage(
             data["test"], data["page"], data["version"]
@@ -400,11 +400,11 @@ class UploadHandler:
 
         Returns:
             200: on success, currently with some json diagnostics info.
-            401/403: auth
-            404: page or test not found
+            401/403: auth.
+            404: page or test not found.
             409: conflict such as collision with image already in place
-                 or a repeated upload of the same placeholder.
-            400: poorly formed or otherwise unexpected catchall
+            or a repeated upload of the same placeholder.
+            400: poorly formed or otherwise unexpected catchall.
         """
         ok, reason, X = self.server.replaceMissingDNMPage(data["test"], data["page"])
         if ok:
