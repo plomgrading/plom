@@ -1131,6 +1131,31 @@ class RubricWidget(QWidget):
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
         self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
 
+        # re-order the tabs
+        print("re-ordering tabs")
+        print(self.tabS.shortname)
+        print(self.tabDeltaP.shortname)
+        print(self.tabDeltaN.shortname)
+        current_order = [
+            self.RTW.widget(n).shortname for n in range(0, self.RTW.count())
+        ]
+        print(f"    order: {current_order}")
+        # TODO: what should happen here if (b) is new and thus not in "tab_order"?
+        # new_order = wranglerState["tab_order"]
+        #    order: ['All', '(a)', '★', '+δ', '−δ']
+        new_order = ["−δ", "(a)", "★", "+δ", "All"]
+        print(f"new order: {new_order}")
+        for i, name in enumerate(current_order):
+            print(f"i={i}, name: {name}")
+            try:
+                j = new_order.index(name)
+            except ValueError:
+                continue
+            print(f"moving '{name}' from i={i} to j={j}")
+            self.RTW.tabBar().moveTab(i, j)
+            # TODO: first move is correct but later ones likely not :(
+            break
+
         # make sure something selected in each tab
         self.tabHide.selectRubricByVisibleRow(0)
         self.tabDeltaP.selectRubricByVisibleRow(0)
