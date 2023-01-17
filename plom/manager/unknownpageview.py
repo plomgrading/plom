@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QStringListModel
 from PyQt5.QtWidgets import (
@@ -13,8 +13,6 @@ from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
-    QSizePolicy,
-    QSpacerItem,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -25,59 +23,21 @@ from plom.client import ImageViewWidget
 from plom.client.useful_classes import WarnMsg
 
 
-class ActionTab(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self._parent = parent
-        vb = QVBoxLayout()
-        db = QPushButton("Discard Page")
-        eb = QPushButton("Extra Page")
-        tb = QPushButton("Test Page")
-        hb = QPushButton("Homework Page")
-        vb.addWidget(eb)
-        vb.addWidget(tb)
-        vb.addWidget(hb)
-        vb.addWidget(db)
-        self.setLayout(vb)
-        db.clicked.connect(self.discard)
-        hb.clicked.connect(self.homework)
-        eb.clicked.connect(self.extra)
-        tb.clicked.connect(self.test)
-
-    def discard(self):
-        self._parent.optionTW.setCurrentIndex(4)
-
-    def extra(self):
-        self._parent.optionTW.setCurrentIndex(1)
-
-    def test(self):
-        self._parent.optionTW.setCurrentIndex(2)
-
-    def homework(self):
-        self._parent.optionTW.setCurrentIndex(3)
-
-
 class DiscardTab(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self._parent = parent
         vb = QVBoxLayout()
         db = QPushButton("Click to co&nfirm discard")
-        ob = QPushButton("&Return to other options")
         vb.addStretch(0)
         vb.addWidget(db)
         vb.addStretch(0)
-        vb.addWidget(ob)
         self.setLayout(vb)
         db.clicked.connect(self.discard)
-        ob.clicked.connect(self.other)
 
     def discard(self):
         self._parent.action = "discard"
         self._parent.accept()
-
-    def other(self):
-        self._parent.optionTW.setCurrentIndex(0)
 
 
 class ExtraTab(QWidget):
@@ -85,7 +45,6 @@ class ExtraTab(QWidget):
         super().__init__(parent)
         self._parent = parent
         fl = QFormLayout()
-        ob = QPushButton("&Return to other options")
         self.tsb = QSpinBox()
         self.tsb.setMinimum(1)
         self.tsb.setMaximum(maxT)
@@ -102,12 +61,9 @@ class ExtraTab(QWidget):
         fl.addRow(qgb)
         fl.addRow(vwb)
         fl.addRow(cb)
-        fl.addItem(QSpacerItem(16, 32, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        fl.addRow(ob)
         self.setLayout(fl)
         vwb.clicked.connect(self.viewWholeTest)
         cb.clicked.connect(self.confirm)
-        ob.clicked.connect(self.other)
 
     def confirm(self):
         checked = [i for i, x in enumerate(self.questionCheckBoxes) if x.isChecked()]
@@ -123,16 +79,12 @@ class ExtraTab(QWidget):
     def viewWholeTest(self):
         self._parent.viewWholeTest(self.tsb.value())
 
-    def other(self):
-        self._parent.optionTW.setCurrentIndex(0)
-
 
 class HWTab(QWidget):
     def __init__(self, parent, questionLabels, iDict):
         super().__init__(parent)
         self._parent = parent
         fl = QFormLayout()
-        ob = QPushButton("&Return to other options")
         self.sidle = QLineEdit()
         # set up sid completion
         self.sidTestDict = {"{}: {}".format(iDict[x][0], iDict[x][1]): x for x in iDict}
@@ -159,12 +111,9 @@ class HWTab(QWidget):
         fl.addRow(qgb)
         fl.addRow(vwb)
         fl.addRow(cb)
-        fl.addItem(QSpacerItem(16, 32, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        fl.addRow(ob)
         self.setLayout(fl)
         vwb.clicked.connect(self.viewWholeTest)
         cb.clicked.connect(self.confirm)
-        ob.clicked.connect(self.other)
         self.sidle.returnPressed.connect(self.checkID)
         # check ID when user clicks on entry in completer pop-up - not just when return pressed
         self.sidcompleter.activated.connect(self.checkID)
@@ -196,16 +145,12 @@ class HWTab(QWidget):
         else:
             self._parent.viewWholeTest(int(self.testl.text()))
 
-    def other(self):
-        self._parent.optionTW.setCurrentIndex(0)
-
 
 class TestTab(QWidget):
     def __init__(self, parent, maxT, maxP):
         super().__init__(parent)
         self._parent = parent
         fl = QFormLayout()
-        ob = QPushButton("&Return to other options")
         self.tsb = QSpinBox()
         self.psb = QSpinBox()
         self.tsb.setMinimum(1)
@@ -220,13 +165,10 @@ class TestTab(QWidget):
         fl.addRow(cpb)
         fl.addRow(vwb)
         fl.addRow(cb)
-        fl.addItem(QSpacerItem(16, 32, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        fl.addRow(ob)
         self.setLayout(fl)
         cpb.clicked.connect(self.checkTPage)
         vwb.clicked.connect(self.viewWholeTest)
         cb.clicked.connect(self.confirm)
-        ob.clicked.connect(self.other)
 
     def confirm(self):
         self._parent.action = "test"
@@ -239,9 +181,6 @@ class TestTab(QWidget):
 
     def viewWholeTest(self):
         self._parent.viewWholeTest(self.tsb.value())
-
-    def other(self):
-        self._parent.optionTW.setCurrentIndex(0)
 
 
 class UnknownViewWindow(QDialog):
@@ -268,6 +207,7 @@ class UnknownViewWindow(QDialog):
 
         self.img = ImageViewWidget(self, fnames, dark_background=True)
         self.optionTW = QTabWidget()
+        self.optionTW.setTabPosition(QTabWidget.East)
 
         cancelB = QPushButton("&Cancel")
         cancelB.clicked.connect(self.reject)
@@ -283,19 +223,17 @@ class UnknownViewWindow(QDialog):
         grid.addLayout(vb)
         self.setLayout(grid)
 
-        t0 = ActionTab(self)
         t1 = ExtraTab(self, self.numberOfTests, self.questionLabels)
         t2 = TestTab(self, self.numberOfTests, self.numberOfPages)
         t3 = HWTab(self, self.questionLabels, self.iDict)
         t4 = DiscardTab(self)
-        self.optionTW.addTab(t0, "Actions")
         self.optionTW.addTab(t1, "&Extra Page")
         self.optionTW.addTab(t2, "&Test Page")
         self.optionTW.addTab(t3, "&Homework Page")
         self.optionTW.addTab(t4, "&Discard")
 
         # hack/workaround: keep focus away from left-hand panel: Issue #2271
-        t0.setFocus()
+        t1.setFocus()
 
     def get_orientation(self):
         return self.img.get_orientation()
