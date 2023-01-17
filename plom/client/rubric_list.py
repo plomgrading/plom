@@ -1131,15 +1131,12 @@ class RubricWidget(QWidget):
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
         self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
 
-        # re-order the tabs
-        print("re-ordering tabs")
+        # Re-order the tabs in three steps
+        # First, introduce anything new into target order, preserving current order
         current = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
-        print(f"    order: {current}")
         target_order = wranglerState["tab_order"]
-        # target_order = ["−δ", "(a)", "★", "+δ", "All"]
-        # target_order = ["−δ", "(a)", "★", "+δ"]
-        print(f"target order: {target_order}")
-        # first, introduce anything new into target order, preserving current order
+        # debugging: target_order = ["−δ", "(a)", "nosuch", "★", "+δ", "All"]
+        # print(f"order: {current}\ntarget order: {target_order}")
         for i, name in enumerate(current):
             if name in target_order:
                 continue
@@ -1149,25 +1146,27 @@ class RubricWidget(QWidget):
             previous_name = current[i - 1]
             j = target_order.index(previous_name)
             target_order.insert(j + 1, name)
-        print(f"updated target order: {target_order}")
-
+        # Second, prune anything in target no longer in tabs
+        for i, name in enumerate(target_order):
+            if name not in current:
+                target_order.pop(i)
+        # print(f"updated target order: {target_order}")
         assert len(target_order) == len(current)
 
-        # now sort
+        # Third, sort according to the target
         i = 0
         while i < self.RTW.count():
             current = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
-            print(current)
+            # print((i, current))
             # we know we can find it b/c we just updated target
             j = target_order.index(current[i])
             if i == j:
-                print(f"i={i}, j={j} happy where it is")
+                # all indices before this are now in the correct order
                 i += 1
                 continue
             self.RTW.tabBar().moveTab(i, j)
-        final = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
-        print(f"final order is {final}")
-        assert final == target_order
+        check = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
+        assert check == target_order
 
         # make sure something selected in each tab
         self.tabHide.selectRubricByVisibleRow(0)
