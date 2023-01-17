@@ -1,6 +1,6 @@
 <!--
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2022 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2023 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2019-2020 Matthew Coles"
 __license__ = "AGPL-3.0-or-later"
  -->
@@ -36,7 +36,8 @@ Tested on Fedora 37.  Some stuff from the package manager:
         python3-pytest python3-PyMySQL \
         latexmk tex-dvipng texlive-scheme-basic \
         tex-preview tex-charter tex-exam tex-preprint \
-        python3-myst-parser python3-sphinx python3-sphinx_rtd_theme
+        python3-myst-parser python3-sphinx python3-sphinx_rtd_theme \
+        python3-sphinx-argparse
 ```
 At this point `pip install plom` (or `pip install --user .` from inside
 the Plom source tree) should pull in the remaining dependencies.
