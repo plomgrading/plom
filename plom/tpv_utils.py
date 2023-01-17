@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020, 2022 Colin B. Macdonald
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Andrew Rechnitzer
 
 """Utilities for dealing with TPV codes
 
@@ -33,15 +33,36 @@ Orientation code:
 
 TODO: might encapsulate position code, have ``getPosition`` return
 e.g., the string `"NE"`
+
+Also handles plom extra page codes. These are alphanumeric stored in micro-qr codes
+and are of the form
+
+  sssssO
+  012345
+
+where
+  * 01234 = "plomX"
+  * 5 = orientation
+with the orientation code being similar to that used for the TPV
+  * 1,5 NE
+  * 2,6 NW
+  * 3,7 SW
+  * 4,8 SE
+
 """
 
 import random
 
 
 def isValidTPV(tpv):
-    """Is this a valid TPV code?"""
+    """Is this a valid TPV code?
+
+    Note that the pyzbar module gives codes with the prefix 'QR-Code:',
+    however the zxing-cpp module does not.
+    """
+    # string prefix is needed for pyzbar but not zxingcpp
     tpv = tpv.lstrip("QR-Code:")
-    if len(tpv) != len("TTTTTPPPVVVOCCCCC"):
+    if len(tpv) != len("TTTTTPPPVVVOCCCCC"):  # todo = remove in future.
         return False
     return tpv.isnumeric()
 
@@ -59,7 +80,8 @@ def parseTPV(tpv):
        cn (str): the "magic code", 5 digits zero padded
        o (str): the orientation code, TODO
     """
-    tpv = tpv.lstrip("QR-Code:")
+    # strip prefix is needed for pyzbar but not zxingcpp
+    tpv = tpv.lstrip("QR-Code:")  # todo = remove in future.
     tn = int(tpv[0:5])
     pn = int(tpv[5:8])
     vn = int(tpv[8:11])
@@ -131,3 +153,42 @@ def new_magic_code(seed=None):
     magic = str(random.randrange(0, 10**5)).zfill(5)
     assert len(magic) == 5
     return magic
+
+
+def isValidExtraPageCode(code):
+    """Is this a valid plom-extra-page code?
+
+    Args:
+       code (str): a plom extra page code
+
+    Returns:
+       bool: the validity of the extra page code.
+
+    """
+    code = code.lstrip("plomX")
+    if len(code) != len("O"):
+        return False
+    # now check that remaining letter is a digit in 1,2,..,8.
+    if code.isnumeric():
+        if 1 <= int(code) <= 8:
+            return True
+    return False
+
+
+def encodeExtraPageCode(orientation):
+    """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code\
+    """
+    assert int(orientation) >= 1 and int(orientation) <= 8
+    return f"plomX{orientation}"
+
+
+def getExtraPageOrientation(code):
+    """Extra the orientation digit from a valid plom extra page code
+
+    Args:
+       code (str): a plom extra page code
+
+    Returns:
+       int: the orientation
+    """
+    return int(code[5])

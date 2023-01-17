@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Elizabeth Xiao
 # Copyright (C) 2022 Natalia Accomazzo Scotti
@@ -57,7 +57,6 @@ server_install_requires = [
     "Pillow>=7.0.0",
     "aiohttp>=3.7.2",
     "weasyprint>=52.5",
-    "pyzbar",
     "peewee>=3.13.3",
     "PyMySQL>=1.0.2",
     "imutils",
@@ -70,6 +69,7 @@ server_install_requires = [
     "packaging",
     'importlib_resources>=5.0.0 ; python_version<"3.9"',  # until we drop 3.8
     "stdiomask>=0.0.6",
+    "zxing-cpp>=1.4.0",
 ]
 # TODO: optional dependency to enable lossless jpeg rotations
 #   "cffi",
@@ -131,6 +131,7 @@ setup(
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
                 "plom/demo_rubrics.toml",
+                "plom/create/extra_pages_src.tex",
             ],
         ),
         # TODO: move up from plom

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2022 Colin B. Macdonald
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Elizabeth Xiao
@@ -24,6 +24,7 @@ import plom.create
 import plom.create.fonts
 from plom.create import paperdir as _paperdir
 from plom.create import with_manager_messenger
+from plom.create import build_extra_page_pdf
 
 
 possible_answers = [
@@ -402,6 +403,12 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
 
+    extra_pages_pdf_path = Path.cwd() / "extra_page.pdf"
+    # build the extra pages pdf if needed.
+    if not extra_pages_pdf_path.exists():
+        build_extra_page_pdf(destination_dir=Path.cwd())
+    extra_pages_pdf = fitz.open(extra_pages_pdf_path)
+
     print("Annotating papers with fake student data and scribbling on pages...")
     if which:
         papers_paths = sorted([paper_dir / f"exam_{i:04}.pdf" for i in which])
@@ -490,15 +497,40 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
             print(
                 f"  making an extra page for test {test_number} and id {student_number}"
             )
-            all_pdf_documents.insert_page(
-                -1,
-                text=f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
-                fontsize=extra_page_font_size,
-                color=blue,
+
+            # insert a copy of the extra page from the extra page pdf
+            all_pdf_documents.insert_pdf(
+                extra_pages_pdf,
+                from_page=0,
+                to_page=0,
+                start_at=-1,
             )
+            page_rect = all_pdf_documents[-1].rect
+            # stamp some info on it - TODO - make this look better.
+            tw = fitz.TextWriter(page_rect, color=(0, 0, 1))
+            # TODO - make these numbers less magical
+            maxbox = fitz.Rect(25, 400, 500, 600)
+            # page.draw_rect(maxbox, color=(1, 0, 0))
+            excess = tw.fill_textbox(
+                maxbox,
+                f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
+                align=fitz.TEXT_ALIGN_LEFT,
+                fontsize=extra_page_font_size,
+                font=fitz.Font("helv"),
+            )
+            assert not excess, "Text didn't fit: is extra-page text too long?"
+            tw.write_text(all_pdf_documents[-1])
+
+            # all_pdf_documents.insert_page(
+            #     -1,
+            #     text=f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
+            #     fontsize=extra_page_font_size,
+            #     color=blue,
+            # )
 
     all_pdf_documents.save(outfile)
     all_pdf_documents.close()
+    extra_pages_pdf.close()
     print(f'Assembled in "{outfile}"')
 
 

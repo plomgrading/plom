@@ -35,6 +35,7 @@ Now in the second terminal::
     plom-create rubric --demo
     cd mysrv
     plom-create make
+    plom-create extra-pages
     plom-solutions extract solutionSpec.toml
     plom-solutions extract --upload
     cd ..
@@ -211,6 +212,7 @@ def main():
     subprocess.check_call(split("python3 -m plom.create rubric --demo"))
     with working_directory(args.server_dir):
         subprocess.check_call(split("python3 -m plom.create make"))
+        subprocess.check_call(split("python3 -m plom.create extra-pages"))
     # extract solution images
     print("Extract solution images from pdfs")
     with working_directory(args.server_dir):

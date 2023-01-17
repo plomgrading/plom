@@ -292,7 +292,7 @@ doctests:
   script:
     # TODO how to run only doctests?  here we just ignore-glib on "test_*"
     - pytest --version
-    - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*IDReader_TF" --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
+    - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
 pylint:
@@ -590,6 +590,7 @@ docs_sphinx:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
+# TODO: likely python3-zxing-cpp is too old
 fedora_build:
   stage: alt_build
   needs: []
@@ -597,7 +598,7 @@ fedora_build:
   when: manual
   allow_failure: true
   before_script:
-    - dnf install -y ImageMagick openssl zbar gcc gcc-c++ cmake
+    - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
           turbojpeg-devel libjpeg-turbo-devel
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
@@ -681,7 +682,6 @@ newOS_newdeps:
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libpango-1.0-0 libpangocairo-1.0-0
-      libzbar0
       libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev
       libgl1-mesa-glx libsm6 libxrender1
       python3-pytest python3-dev
@@ -755,7 +755,6 @@ oldOS_mindeps:
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libpango-1.0-0 libpangocairo-1.0-0
-      libzbar0
       libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev
       libgl1-mesa-glx libsm6 libxrender1
       python3-pytest python3 python3-dev
@@ -825,7 +824,6 @@ minpy_mindeps:
     - apt-get update
     - apt-get --no-install-recommends --yes install
       cmake make imagemagick dvipng g++ openssl
-      libzbar0
       texlive-latex-extra latexmk texlive-fonts-recommended
       libpango-1.0-0 libpangocairo-1.0-0
       libgl1-mesa-glx libsm6 libxrender1
@@ -1199,7 +1197,6 @@ macos_server:
   # brew update
   # brew --version
   - brew install cmake libffi pango
-  - time brew install zbar
   - brew install imagemagick
   - brew install openssl
   - time brew install basictex
