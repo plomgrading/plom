@@ -1864,8 +1864,6 @@ class AddRubricBox(QDialog):
 
         # we insert the new parameter at the cursor/selection
         tc = self.TE.textCursor()
-        s = self.TE.textCursor().anchor()
-        e = self.TE.textCursor().position()
         # save the selection as the new parameter value for this version
         values = ["" for _ in range(self.maxver)]
         if tc.hasSelection():
