@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -396,7 +396,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
             subset. (default: `None`)
     """
     # Customizable data
-    extra_page_probability = 0.9
+    extra_page_probability = 0.2
     extra_page_font_size = 18
     extra_student_probability = 0.1
 
