@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 
 project = "Plom"
-copyright = "2018-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
+copyright = "2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 author = "Andrew Rechnitzer, Colin B. Macdonald, and others"
 
 # The full version, including alpha/beta/rc tags
