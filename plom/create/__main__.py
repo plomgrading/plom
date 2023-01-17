@@ -346,9 +346,9 @@ def get_parser():
         "extra-pages",
         help="Make an extra pages PDF",
         description="""
-        Make a simple extra-paper PDF for students to use when they need more
-        space.
-        .""",
+          Make a simple extra-paper PDF for students to use when they need more
+          space.
+        """,
     )
 
     sp_user = sub.add_parser(

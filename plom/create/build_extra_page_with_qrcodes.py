@@ -11,7 +11,6 @@ import sys
 import tempfile
 
 import plom.create
-from plom.misc_utils import working_directory
 from plom.tpv_utils import encodeExtraPageCode
 
 if sys.version_info >= (3, 9):
