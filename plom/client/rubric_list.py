@@ -1038,6 +1038,9 @@ class RubricWidget(QWidget):
                 have arrived or some have been deleted.  Can be None
                 meaning no state.
                 The contents must contain lists `shown`, `hidden`,
+                `tab_order` and `user_tabs`.
+                `user_tabs` is a list of dicts, with `name` and `ids`
+                fields.
                 `tabs`, and `user_tab_names`.  The last two are lists of
                 lists.  Any of these could be empty.
 
@@ -1047,10 +1050,10 @@ class RubricWidget(QWidget):
         """
         if not wranglerState:
             wranglerState = {
-                "user_tab_names": [],
                 "shown": [],
                 "hidden": [],
-                "tabs": [],
+                "tab_order": [],
+                "user_tabs": [],
             }
 
         # Update the wranglerState for any new rubrics not in shown/hidden (Issue #1493)
@@ -1106,7 +1109,7 @@ class RubricWidget(QWidget):
         # for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
         #    tab.set_name(name)
         curtabs = self.user_tabs
-        newnames = wranglerState["user_tab_names"]
+        newnames = [x["name"] for x in wranglerState["user_tabs"]]
         for n in range(max(len(curtabs), len(newnames))):
             if n < len(curtabs):
                 if n < len(newnames):
@@ -1116,13 +1119,12 @@ class RubricWidget(QWidget):
                     self.add_new_tab(newnames[n])
         del curtabs
 
-        # compute legality for putting things in tables
         for n, tab in enumerate(self.user_tabs):
-            if n >= len(wranglerState["tabs"]):
+            if n >= len(wranglerState["user_tabs"]):
                 # not enough data for number of tabs
                 idlist = []
             else:
-                idlist = wranglerState["tabs"][n]
+                idlist = wranglerState["user_tabs"][n]["ids"]
             tab.setRubricsByKeys(self.rubrics, idlist)
         self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
@@ -1384,10 +1386,14 @@ class RubricWidget(QWidget):
         Currently does not include "group tabs".
         """
         return {
-            "user_tab_names": [t.shortname for t in self.user_tabs],
             "shown": self.tabS.getKeyList(),
             "hidden": self.tabHide.getKeyList(),
-            "tabs": [t.getKeyList() for t in self.user_tabs],
+            "tab_order": [
+                self.RTW.widget(n).shortname for n in range(0, self.RTW.count())
+            ],
+            "user_tabs": [
+                {"name": t.shortname, "ids": t.getKeyList()} for t in self.user_tabs
+            ],
         }
 
 

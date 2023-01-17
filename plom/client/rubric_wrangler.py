@@ -374,8 +374,8 @@ class RubricWrangler(QDialog):
         self.rubricTable.setDragEnabled(True)
         self.rubricTable.setAcceptDrops(False)
         ##
-        self.num_user_tabs = len(wranglerState["user_tab_names"])
-        tab_names = wranglerState["user_tab_names"].copy()  # copy needed?
+        self.num_user_tabs = len(wranglerState["user_tabs"])
+        tab_names = [x["name"] for x in wranglerState["user_tabs"]]
         tab_names.append("HIDE")
         self.ST = ShowListFrame(tab_names)
         ##
@@ -402,10 +402,10 @@ class RubricWrangler(QDialog):
         # set sensible default state if rubricWidget sends state=none
         if wranglerState is None:
             wranglerState = {
-                "user_tab_names": [],
                 "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
-                "tabs": [],
+                "tab_order": [],
+                "user_tabs": [],
             }
         self.setFromWranglerState(wranglerState)
 
@@ -419,17 +419,18 @@ class RubricWrangler(QDialog):
 
     def toWranglerState(self):
         store = {
-            "user_tab_names": [],
             "shown": [],
             "hidden": [],
-            "tabs": [],
+            "tab_order": [],
+            "user_tabs": [],
         }
         for p in range(self.num_user_tabs):
-            store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
-        # TODO: this doesn't yet set the names: but they can't change in here anyway
-        # for p in range(self.num_user_tabs):
-        #     log.warning(self.ST.STW.widget(p).shortname)
-        #     store["user_tab_names"].append(...)
+            store["user_tabs"].append(
+                {
+                    "name": self.ST.STW.widget(p).shortname,
+                    "ids": self.ST.STW.widget(p).getCurrentKeys(),
+                }
+            )
         store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
         # anything not hidden is shown
         # columns are ["Key", "Username", "Display Delta", "Text"])
@@ -458,7 +459,7 @@ class RubricWrangler(QDialog):
         self.model.repopulate(mainList)
         # populate the ABC lists
         for p in range(self.num_user_tabs):
-            self.ST.populate(p, self.rubrics, state["tabs"][p])
+            self.ST.populate(p, self.rubrics, state["user_tabs"][p]["ids"])
         # populate the hide-list
         idx = self.num_user_tabs
         self.ST.populate(idx, self.rubrics, state["hidden"])
