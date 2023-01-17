@@ -1041,8 +1041,8 @@ class RubricWidget(QWidget):
                 `tab_order` and `user_tabs`.
                 `user_tabs` is a list of dicts, with `name` and `ids`
                 fields.
-                `tabs`, and `user_tab_names`.  The last two are lists of
-                lists.  Any of these could be empty.
+                Any of these lists could be empty.  The order in
+                `user_tabs` is not significant.
 
         If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
