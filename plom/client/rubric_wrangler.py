@@ -290,8 +290,6 @@ class ShowTabW(QTabWidget):
         self.tabBar().setAcceptDrops(True)
         self.tabBar().setChangeCurrentOnDrag(True)
         for X in nameList:
-            if isinstance(X, dict):
-                X = X["longname"] if X["longname"] else "List {}".format(X["shortname"])
             self.addTab(ShowTable(), X)
 
     def dropEvent(self, event):
@@ -331,8 +329,6 @@ class ShowListFrame(QFrame):
         self.DI = DeleteIcon()
         vl = QVBoxLayout()
         for n, X in enumerate(nameList):
-            if isinstance(X, dict):
-                X = X["longname"] if X["longname"] else "List {}".format(X["shortname"])
             vl.addWidget(DropButton(n, X))
         hl = QHBoxLayout()
         hl.addLayout(vl)
