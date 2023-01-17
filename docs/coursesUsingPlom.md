@@ -126,8 +126,9 @@ Approx: 1030 over 3 courses
 | Biol209 | Final                            | 130        | Mary Berbee                   |
 | Phys117 |                                  |            |                               |
 
+Approx: 17760 over 12 courses
 
 
 ## Totals up to August 30th 2022
 
-  * Approx 43260 papers in 45 courses.
+  * Approx 61000 papers in 45 courses.
