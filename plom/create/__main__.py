@@ -672,11 +672,9 @@ def main():
             msgr=(args.server, args.password),
         )
     elif args.command == "extra-pages":
-        print(
-            "Building the extra pages PDF for students to use when they need more space."
-        )
-        dest_dir = Path.cwd()
-        build_extra_page_pdf(destination_dir=dest_dir)
+        print("Building extra page in case students need more space...")
+        build_extra_page_pdf(destination_dir=Path.cwd())
+        print('See "extra_page.pdf" in the current directory')
 
     elif args.command == "user":
         msgr = start_messenger(args.server, args.password)
