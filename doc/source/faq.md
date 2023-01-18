@@ -90,6 +90,20 @@ that a small amount of progress has been made, but not enough to be
 worth a full point.
 
 
+Scanning
+--------
+
+### Do I need to carefully pick out just the right pages when rescanning a bundle?
+
+It depends.  Suppose we have scanned "BundleA1" but some pages misfed,
+and do not appear in the resulting PDF file.  In this case, its
+perfectly fine to rescan the whole bundle.  Use a new bundle name, say
+"BundleA1-rescan".  Now process as usual.  When uploading, `plom-scan
+upload BundleA1-rescan` will upload the new non-colliding pages and
+you'll get a message about collisions (lots and lots of collisions!)
+Just ignore that and *do not* pass `--collisions`.
+
+
 
 Server administration
 ---------------------
