@@ -120,7 +120,7 @@ copyright_year:
     - echo "ensure we have the main branch for comparing"
     - git fetch origin main
     - git checkout main
-    - git checkout $CI_COMMIT_BRANCH
+    - git checkout $CI_COMMIT_BRANCH --
     - git branch -avv
   script:
     - echo "Considering the following commits to this branch (since main):"

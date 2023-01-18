@@ -13,6 +13,10 @@
 
 See help for each subcommand or consult online documentation for an
 overview of the steps in setting up a server.
+
+Most subcommands communicate with a server, which can be specified
+on the command line or by setting environment variables PLOM_SERVER
+and PLOM_MANAGER_PASSWORD.
 """
 
 __copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
@@ -229,7 +233,9 @@ def get_parser():
               * name - student name in a single field
               * paper_number - the test-number to assign to that student for
                                prenaming papers. If unsure, include the column,
-                               but leave it blank.
+                               but leave it blank. Each paper_number must be
+                               unique and in the range [1, NumberToProduce]
+                               but they need not be contiguous nor ordered.
 
             Plom will accept uppercase or lowercase column headers.
             """
