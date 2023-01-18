@@ -1142,7 +1142,11 @@ class RubricWidget(QWidget):
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
         self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
 
-        self.reorder_tabs(wranglerState["tab_order"])
+        try:
+            self.reorder_tabs(wranglerState["tab_order"])
+        except AssertionError as e:
+            # its not critical to re-order: if it fails just log
+            log.error("Unexpected failure sorting tabs: %s", str(e))
 
         # make sure something selected in each tab
         self.tabHide.selectRubricByVisibleRow(0)
@@ -1160,7 +1164,9 @@ class RubricWidget(QWidget):
                 like to see.  We will copy and then dedupe this input.
 
         returns:
-            None: but modies the tab order.
+            None: but modifies the tab order.
+
+        Algorithm probably relies on the tabs having unique names.
         """
 
         def order_preserving_dedupe(L):
@@ -1178,6 +1184,7 @@ class RubricWidget(QWidget):
         # Re-order the tabs in three steps
         # First, introduce anything new into target order, preserving current order
         current = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
+        assert len(set(current)) == len(current), "Non-unique tab names"
         # debugging: target_order = ["−δ", "(a)", "nosuch", "★", "+δ", "All"]
         # print(f"order: {current}\ntarget order: {target_order}")
         for i, name in enumerate(current):
@@ -1194,11 +1201,15 @@ class RubricWidget(QWidget):
             if name not in current:
                 target_order.pop(i)
         # print(f"updated target: {target_order}")
-        assert len(target_order) == len(current)
+        assert len(target_order) == len(current), "Length mismatch"
 
         # Third, sort according to the target
         i = 0
+        iter = 0
+        maxiter = (self.RTW.count()) ** 2
         while i < self.RTW.count():
+            iter += 1
+            assert iter < maxiter, "quadratic iteration cap exceeded"
             current = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
             # print((i, current))
             # we know we can find it b/c we just updated target
@@ -1209,7 +1220,7 @@ class RubricWidget(QWidget):
                 continue
             self.RTW.tabBar().moveTab(i, j)
         check = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
-        assert check == target_order
+        assert check == target_order, "did not achieve target"
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab.
