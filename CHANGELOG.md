@@ -10,9 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * "Tech preview" of a web-interface for configuring a Plom server.
-* Support for external databases.
-* Rubrics can be version-specific.
+* Users can create "absolute rubrics" of the form "2 of 3: comment".
+* The "scope" of rubrics can be adjusted:
+    - Rubrics can be version-specific.
+    - Rubrics can be parameterized using per-version textual substitutions.
+    - Rubrics can be organized into groups such as "(a)" which correspond to
+      shared tabs.
+    - Rubrics can be made "exclusive" within a group: at most one rubric can
+      be used from each exclusive group.
 * Manager can "bulk-forgive" missing do-not-mark pages.
+* Support for external databases.
 
 ### Changed
 * Server stores annotation data in the database instead of in `.plom` files.
