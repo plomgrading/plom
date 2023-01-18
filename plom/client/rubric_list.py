@@ -1110,6 +1110,17 @@ class RubricWidget(QWidget):
         #    tab.set_name(name)
         curtabs = self.user_tabs
         newnames = [x["name"] for x in wranglerState["user_tabs"]]
+
+        # prime any names that overlap with group names or are duplicates
+        # we want unique tab names; group names could've changed while logged out
+        s = set()
+        for i, name in enumerate(newnames):
+            while name in group_tab_data.keys() or name in s:
+                log.warn("renaming user tab %s to %s for conflict", name, name + "'")
+                name += "'"
+                newnames[i] = name
+            s.add(name)
+
         for n in range(max(len(curtabs), len(newnames))):
             if n < len(curtabs):
                 if n < len(newnames):
@@ -1131,10 +1142,42 @@ class RubricWidget(QWidget):
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
         self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
 
+        self.reorder_tabs(wranglerState["tab_order"])
+
+        # make sure something selected in each tab
+        self.tabHide.selectRubricByVisibleRow(0)
+        self.tabDeltaP.selectRubricByVisibleRow(0)
+        self.tabDeltaN.selectRubricByVisibleRow(0)
+        self.tabS.selectRubricByVisibleRow(0)
+        for tab in self.user_tabs:
+            tab.selectRubricByVisibleRow(0)
+
+    def reorder_tabs(self, target_order):
+        """Change the order of the tabs to match a target order.
+
+        args:
+            target_order (list): a list of strings for the order we would
+                like to see.  We will copy and then dedupe this input.
+
+        returns:
+            None: but modies the tab order.
+        """
+
+        def order_preserving_dedupe(L):
+            s = set()
+            for i, name in enumerate(L):
+                if name in s:
+                    L.pop(i)
+                else:
+                    s.add(name)
+            return L
+
+        target_order = target_order.copy()
+        target_order = order_preserving_dedupe(target_order)
+
         # Re-order the tabs in three steps
         # First, introduce anything new into target order, preserving current order
         current = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
-        target_order = wranglerState["tab_order"]
         # debugging: target_order = ["−δ", "(a)", "nosuch", "★", "+δ", "All"]
         # print(f"order: {current}\ntarget order: {target_order}")
         for i, name in enumerate(current):
@@ -1150,7 +1193,7 @@ class RubricWidget(QWidget):
         for i, name in enumerate(target_order):
             if name not in current:
                 target_order.pop(i)
-        # print(f"updated target order: {target_order}")
+        # print(f"updated target: {target_order}")
         assert len(target_order) == len(current)
 
         # Third, sort according to the target
@@ -1167,14 +1210,6 @@ class RubricWidget(QWidget):
             self.RTW.tabBar().moveTab(i, j)
         check = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
         assert check == target_order
-
-        # make sure something selected in each tab
-        self.tabHide.selectRubricByVisibleRow(0)
-        self.tabDeltaP.selectRubricByVisibleRow(0)
-        self.tabDeltaN.selectRubricByVisibleRow(0)
-        self.tabS.selectRubricByVisibleRow(0)
-        for tab in self.user_tabs:
-            tab.selectRubricByVisibleRow(0)
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab.
