@@ -209,7 +209,7 @@ if __name__ == "__main__":
     if hasattr(args, "api_key"):
         args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
         if not args.api_key:
-            args.api_key = input('Please enter the API key for Canvas: ')
+            args.api_key = input("Please enter the API key for Canvas: ")
 
     user = canvas_login(args.api_url, args.api_key)
 
