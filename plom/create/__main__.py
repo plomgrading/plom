@@ -233,7 +233,9 @@ def get_parser():
               * name - student name in a single field
               * paper_number - the test-number to assign to that student for
                                prenaming papers. If unsure, include the column,
-                               but leave it blank.
+                               but leave it blank. Each paper_number must be
+                               unique and in the range [1, NumberToProduce]
+                               but they need not be contiguous nor ordered.
 
             Plom will accept uppercase or lowercase column headers.
             """
