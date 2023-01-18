@@ -225,16 +225,17 @@ class PlomClasslistValidator:
             and still have non-empty "warnings_and_errors" for example
             when there are only warnings.
         """
+        werr = []
         try:
             cl_as_dicts = self.readClassList(filename)
-        except FileNotFoundError:
-            return (False, [f"Cannot open {filename}"])
-        except ValueError:
-            return (False, [f"No header in {filename}"])
+        except (ValueError, FileNotFoundError) as err:
+            e = f"Can't read {filename}: {err}"
+            werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
+            return (False, werr)
         except Exception as err:
-            return (False, [f"Some other sort of error reading {filename} - {err}"])
-
-        werr = []
+            e = f"Some other sort of error reading {filename}: {err}"
+            werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
+            return (False, werr)
 
         # check the headers - potentially un-recoverable errors here
         cl_header_info = self.checkHeaders(cl_as_dicts[0])
