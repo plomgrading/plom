@@ -1,5 +1,5 @@
 <!--
-__copyright__ = "Copyright (C) 2019-2022 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019-2023 Colin B. Macdonald"
 __license__ = "AGPL-3.0-or-later"
  -->
 
@@ -222,3 +222,35 @@ But for now, the workaround is:
   3. Have your grading team grade on both (alternatively, have them
      do most of the grading on Server 1, then download the rubrics
 	 with `plom-create` and push those rubrics to Server 2.
+
+
+
+Changing the spec later
+-----------------------
+
+### Students have already written my assessment, can I split one of my questions up?  Can I merge two questions?
+
+Yes, although there is some work.  Keep the old server up for now
+("Server A").  Make a new server ("Server B").  Hack the spec to
+duplicate the public code from A to B (see instructions above for
+"resetting a server to the pre-named state").  Change the spec as you
+wish (with in the constraints of the papers you already have).  If you
+have mono-versioned test, nothing else is required: upload the papers
+to Server B.
+
+If you have a multiversioned test, its a bit harder:
+  1. extract the version map from Server A
+     (``plom-create get-ver-map -s plomA.example.com``).
+  2. modify that version map for your new paper layout.  For example,
+     if you are splitting "Q5" (physically laid out as 5(a) on Page 11
+     and 5(b) on Page 12) into separate "Q5" and "Q6", then they must
+     both have the same version as the original Q5.
+  3. upload that version map to Server B when making the database.
+     ``plom-create make-db --from-file my_new_vermap.csv -s plomB.example.com``
+  4. Upload the papers to Server B.
+
+
+### I have already uploaded scans, can I split one of my questions up?  Can I merge two questions?
+
+Not easily.  Currently we would suggest re-uploading to a new server
+following the instructions above.
