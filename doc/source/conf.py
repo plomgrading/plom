@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2020-2023 Colin B. Macdonald
+
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
