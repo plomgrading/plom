@@ -33,10 +33,14 @@ of additional students that are not in your class.
 
 ### Student wrote a different paper; I cannot ID their new paper.
 
-You must first "Unidentify" the prenamed paper.  For example suppose
-Isla's name was printed on paper 0120 but they wrote blank paper 1280
-instead.  In this case you should "UnID" paper 0120, and then you'll
-be able to identify paper 1280 to Isla.
+For example suppose Isla's name was printed on paper 0120 but they
+wrote blank paper 1280 instead.  Plom's "prenaming" is now a
+"prediction" because of exactly this situation.  Simply ID 1280 as
+normal.  (If 0120 was scanned and is blank, you can note that it is
+blank within the Identifier)
+
+
+### I made a mistake identifying: how can I revert an ID?
 
 The UnID operation is exposed in the beta Manager Tool -> ID Progress
 tab.
