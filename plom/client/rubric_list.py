@@ -821,8 +821,11 @@ class RubricWidget(QWidget):
     def update_tab_names(self):
         """Loop over the tabs and update their displayed names"""
         for n in range(self.RTW.count()):
-            self.RTW.setTabText(n, self.RTW.widget(n).shortname)
-            # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
+            tab = self.RTW.widget(n)
+            self.RTW.setTabText(n, tab.shortname)
+            # self.RTW.setTabToolTip(n, tab.longname)
+            if tab.is_user_tab():
+                self.RTW.tabBar().setTabTextColor(n, QColor("teal"))
 
     def add_new_group_tab(self, name):
         """Add new group-defined tab
