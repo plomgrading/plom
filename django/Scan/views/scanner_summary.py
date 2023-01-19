@@ -4,6 +4,7 @@
 
 from django.http import HttpResponse
 from Base.base_group_views import ScannerRequiredView
+from Scan.services import ScanService
 
 
 class ScannerSummaryView(ScannerRequiredView):
@@ -12,4 +13,8 @@ class ScannerSummaryView(ScannerRequiredView):
     """
 
     def get(self, request):
+        scanner = ScanService()
+        img = scanner.get_image(1673999616.639863, request.user, 10)
+        
+        print(img)
         return HttpResponse("I am Summary initial page")

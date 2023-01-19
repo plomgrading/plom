@@ -132,19 +132,21 @@ class ReplaceImageForm(forms.Form):
             
             save_dir = replace_dir / "images"
             save_dir.mkdir(exist_ok=True)
-            save_as_image = save_dir / f"{timestamp}.png"
 
             uploaded_pdf_file = fitz.Document(save_as_pdf / file_name)
             transform = fitz.Matrix(4, 4)
             pixmap = uploaded_pdf_file[0].get_pixmap(matrix=transform)
-            pixmap.save(save_as_image)
 
-            # check uploaded image hash
+            # check uploaded image hash and save image as hash
             uploaded_image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
+            save_as_image = save_dir / f"{uploaded_image_hash}.png"
             all_image_hash_list = scanner.get_all_staging_image_hash()
             for image_hash in all_image_hash_list:
                 if str(uploaded_image_hash) == str(image_hash):
                     raise ValidationError("This page already uploaded.")
+                else:
+                    # save image file name as image hash
+                    pixmap.save(save_as_image)
 
             # removes the file
             pathlib.Path.unlink(save_as_pdf / file_name)
@@ -154,6 +156,7 @@ class ReplaceImageForm(forms.Form):
                 {
                     "pdf_doc": pdf_doc,
                     "time_uploaded": timestamp,
+                    "uploaded_image_hash": uploaded_image_hash,
                 }
             )
             return data

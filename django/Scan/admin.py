@@ -3,10 +3,11 @@
 # Copyright (C) 2022 Brennen Chiu
 
 from django.contrib import admin
-from .models import StagingBundle, StagingImage, PageToImage, ParseQR
+from .models import StagingBundle, StagingImage, PageToImage, ParseQR, DiscardedStagingImage
 
 # Register your models here.
 admin.site.register(StagingBundle)
 admin.site.register(StagingImage)
 admin.site.register(PageToImage)
 admin.site.register(ParseQR)
+admin.site.register(DiscardedStagingImage)

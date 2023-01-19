@@ -44,11 +44,12 @@ class ReplacePageImage(ManageBundleView):
         if form.is_valid():
             data = form.cleaned_data
             user = request.user
-            time_uploaded = data["time_uploaded"]
             uploaded_pdf = data["pdf_doc"]
-
+            time_uploaded = data["time_uploaded"]
+            uploaded_image_hash = data["uploaded_image_hash"]
+            
             scanner = ScanService()
-            scanner.upload_replace_page(user, timestamp, time_uploaded, uploaded_pdf, index)
+            scanner.upload_replace_page(user, timestamp, time_uploaded, uploaded_pdf, index, uploaded_image_hash)
             return HttpResponse("No error")
         else:
             error_message = '""""' + str(form.errors) + '""""'

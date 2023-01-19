@@ -20,6 +20,7 @@ from Scan.models import (
     StagingImage,
     PageToImage,
     ParseQR,
+    DiscardedStagingImage,
 )
 from Papers.models import ErrorImage
 
@@ -492,7 +493,7 @@ class ScanService:
         return image_hash_list
 
     @transaction.atomic
-    def upload_replace_page(self, user, timestamp, time_uploaded, pdf_doc, index):
+    def upload_replace_page(self, user, timestamp, time_uploaded, pdf_doc, index, uploaded_image_hash):
         replace_pages_dir = pathlib.Path("media") / user.username / "bundles" / str(timestamp) / "replacePages"
         replace_pages_dir.mkdir(exist_ok=True)
         replace_pages_pdf_dir = replace_pages_dir / "pdfs"
@@ -502,14 +503,14 @@ class ScanService:
         with open(replace_pages_pdf_dir / filename, "w") as f:
             pdf_doc.save(f)
         
-        save_as_image_path = self.save_replace_page_as_image(replace_pages_dir, replace_pages_pdf_dir, filename, time_uploaded)
-        self.replace_image(user, timestamp, index, save_as_image_path)
+        save_as_image_path = self.save_replace_page_as_image(replace_pages_dir, replace_pages_pdf_dir, filename, time_uploaded, uploaded_image_hash)
+        self.replace_image(user, timestamp, index, save_as_image_path, uploaded_image_hash)
 
     @transaction.atomic
-    def save_replace_page_as_image(self, replace_pages_file_path, replace_pages_pdf_file_path, filename, time_uploaded):
+    def save_replace_page_as_image(self, replace_pages_file_path, replace_pages_pdf_file_path, filename, time_uploaded, uploaded_image_hash):
         save_replace_image_dir = replace_pages_file_path / "images"
         save_replace_image_dir.mkdir(exist_ok=True)
-        save_as_image = save_replace_image_dir / f"{time_uploaded}.png"
+        save_as_image = save_replace_image_dir / f"{uploaded_image_hash}.png"
 
         upload_pdf_file = fitz.Document(replace_pages_pdf_file_path / filename)
         transform = fitz.Matrix(4, 4)
@@ -519,13 +520,26 @@ class ScanService:
         return save_as_image
     
     @transaction.atomic
-    def replace_image(self, user, bundle_timestamp, index, saved_image_path):
+    def replace_image(self, user, bundle_timestamp, index, saved_image_path, uploaded_image_hash):
         # send the error image to discarded_pages folder
         root_folder = pathlib.Path("media") / "page_images" / "discarded_pages"
         root_folder.mkdir(exist_ok=True)
 
         error_image = self.get_image(bundle_timestamp, user, index)
         shutil.move(error_image.file_path, root_folder / f"{error_image.image_hash}.png")
-        shutil.move(saved_image_path, pathlib.Path("media") / f"{user}" / "bundles" / f"{bundle_timestamp}" / "pageImages" / f"page{index}.png")
-        
 
+        discarded_image = DiscardedStagingImage(
+            bundle = error_image.bundle,
+            bundle_order = error_image.bundle_order,
+            file_name = error_image.file_name,
+            file_path = root_folder / f"{error_image.image_hash}.png",
+            image_hash = error_image.image_hash,
+            parsed_qr = error_image.parsed_qr,
+            rotation = error_image.rotation,
+            restore_class = "replace"
+        )
+        discarded_image.save()
+
+        error_image.file_path = saved_image_path
+        error_image.image_hash = uploaded_image_hash
+        error_image.save()
