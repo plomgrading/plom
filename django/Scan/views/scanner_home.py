@@ -16,6 +16,7 @@ from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
 from Papers.services import ImageBundleService
+from Progress.services import ManageScanService
 from Scan.forms import BundleUploadForm
 
 
@@ -28,6 +29,30 @@ class ScannerHomeView(ScannerRequiredView):
     def build_context(self, user):
         context = super().build_context()
         scanner = ScanService()
+        mss = ManageScanService()
+
+        total_papers = mss.get_total_test_papers()
+        completed_papers = mss.get_completed_test_papers()
+        percent_papers_complete = completed_papers / total_papers * 100
+
+        total_pages = mss.get_total_pages()
+        scanned_pages = mss.get_scanned_pages()
+        percent_pages_complete = scanned_pages / total_pages * 100
+
+        all_test_papers = mss.get_test_paper_list()
+
+        context.update(
+            {
+                "completed_test_papers": completed_papers,
+                "total_completed_test_papers": total_papers,
+                "percent_papers_completed": int(percent_papers_complete),
+                "completed_pages": scanned_pages,
+                "total_completed_pages": total_pages,
+                "percent_pages_completed": int(percent_pages_complete),
+                "all_test_papers": all_test_papers,
+            }
+        )
+
         if not scanner.user_has_running_image_tasks(user):
             context.update(
                 {
@@ -50,6 +75,7 @@ class ScannerHomeView(ScannerRequiredView):
             pages = scanner.get_n_images(bundle)
             n_pushed = scanner.get_n_pushed_images(bundle)
             flagged_pages = scanner.get_n_flagged_image(bundle)
+            n_errors = scanner.get_n_error_image(bundle)
 
             disable_delete = (n_pushed > 0 and n_pushed < pages) or flagged_pages > 0
             bundles.append(
@@ -59,8 +85,9 @@ class ScannerHomeView(ScannerRequiredView):
                     "time_uploaded": arrow.get(date_time).humanize(),
                     "pages": pages,
                     "n_read": scanner.get_n_complete_reading_tasks(bundle),
-                    "n_pushed": n_pushed,
+                    # "n_pushed": n_pushed,
                     "disable_delete": disable_delete,
+                    "n_errors": n_errors,
                 }
             )
         context.update({"bundles": bundles})

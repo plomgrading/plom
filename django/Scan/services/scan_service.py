@@ -5,7 +5,9 @@
 import pathlib
 import hashlib
 import fitz
+import shutil
 from datetime import datetime
+from collections import Counter
 from django.conf import settings
 from django.db import transaction
 from django_huey import db_task
@@ -18,6 +20,7 @@ from Scan.models import (
     StagingImage,
     PageToImage,
     ParseQR,
+    DiscardedStagingImage,
 )
 from Papers.models import ErrorImage
 
@@ -161,6 +164,14 @@ class ScanService:
         """
         images = StagingImage.objects.filter(bundle=bundle)
         return len(images)
+
+    @transaction.atomic
+    def get_all_images(self, bundle):
+        """
+        Get all the page images in a bundle
+        """
+        images = StagingImage.objects.filter(bundle=bundle)
+        return images
 
     @transaction.atomic
     def get_user_bundles(self, user):
@@ -406,6 +417,8 @@ class ScanService:
             .exclude(parsed_qr={})
             .exclude(pushed=True)
             .exclude(colliding=True)
+            .exclude(error=True)
+            .exclude(unknown=True)
         )
         return list(complete)
 
@@ -437,3 +450,96 @@ class ScanService:
     def get_n_flagged_image(self, bundle):
         flag_images = StagingImage.objects.filter(bundle=bundle, flagged=True)
         return len(flag_images)
+
+    @transaction.atomic
+    def bundle_contains_list(self, all_images, num_images):
+        qr_code_list = []
+        for image in all_images:
+            for qr_qadrant in image.parsed_qr:
+                paper_id = list(image.parsed_qr[qr_qadrant].values())[0]
+                page_num = list(image.parsed_qr[qr_qadrant].values())[1]
+                version_num = list(image.parsed_qr[qr_qadrant].values())[2]
+                qr_code_list.append(paper_id + page_num + version_num)
+        qr_code_list.sort()
+        qr_code_list = list(dict.fromkeys(qr_code_list))
+        while len(qr_code_list) < num_images:
+            qr_code_list.append("unknown page")
+        return qr_code_list
+    
+    @transaction.atomic
+    def get_common_qr_code(self, qr_data):
+        qr_code_list = []
+        for qr_qadrant in qr_data:
+            paper_id = list(qr_data[qr_qadrant].values())[0]
+            page_num = list(qr_data[qr_qadrant].values())[1]
+            version_num = list(qr_data[qr_qadrant].values())[2]
+            qr_code_list.append(paper_id + page_num + version_num)
+        counter = Counter(qr_code_list)
+        most_common_qr = counter.most_common(1)
+        common_qr = most_common_qr[0][0]
+        return common_qr
+
+    @transaction.atomic
+    def change_error_image_state(self, bundle, page_index, img_bundle):
+        task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
+        task.status = "complete"
+        task.save()
+        error_image = self.get_error_image(img_bundle, page_index)
+        error_image.delete()
+
+    @transaction.atomic
+    def get_all_staging_image_hash(self):
+        image_hash_list = StagingImage.objects.values('image_hash')
+        return image_hash_list
+
+    @transaction.atomic
+    def upload_replace_page(self, user, timestamp, time_uploaded, pdf_doc, index, uploaded_image_hash):
+        replace_pages_dir = pathlib.Path("media") / user.username / "bundles" / str(timestamp) / "replacePages"
+        replace_pages_dir.mkdir(exist_ok=True)
+        replace_pages_pdf_dir = replace_pages_dir / "pdfs"
+        replace_pages_pdf_dir.mkdir(exist_ok=True)
+
+        filename = f"{time_uploaded}.pdf"
+        with open(replace_pages_pdf_dir / filename, "w") as f:
+            pdf_doc.save(f)
+        
+        save_as_image_path = self.save_replace_page_as_image(replace_pages_dir, replace_pages_pdf_dir, filename, time_uploaded, uploaded_image_hash)
+        self.replace_image(user, timestamp, index, save_as_image_path, uploaded_image_hash)
+
+    @transaction.atomic
+    def save_replace_page_as_image(self, replace_pages_file_path, replace_pages_pdf_file_path, filename, time_uploaded, uploaded_image_hash):
+        save_replace_image_dir = replace_pages_file_path / "images"
+        save_replace_image_dir.mkdir(exist_ok=True)
+        save_as_image = save_replace_image_dir / f"{uploaded_image_hash}.png"
+
+        upload_pdf_file = fitz.Document(replace_pages_pdf_file_path / filename)
+        transform = fitz.Matrix(4, 4)
+        pixmap = upload_pdf_file[0].get_pixmap(matrix=transform)
+        pixmap.save(save_as_image)
+        
+        return save_as_image
+    
+    @transaction.atomic
+    def replace_image(self, user, bundle_timestamp, index, saved_image_path, uploaded_image_hash):
+        # send the error image to discarded_pages folder
+        root_folder = pathlib.Path("media") / "page_images" / "discarded_pages"
+        root_folder.mkdir(exist_ok=True)
+
+        error_image = self.get_image(bundle_timestamp, user, index)
+        shutil.move(error_image.file_path, root_folder / f"{error_image.image_hash}.png")
+
+        discarded_image = DiscardedStagingImage(
+            bundle = error_image.bundle,
+            bundle_order = error_image.bundle_order,
+            file_name = error_image.file_name,
+            file_path = root_folder / f"{error_image.image_hash}.png",
+            image_hash = error_image.image_hash,
+            parsed_qr = error_image.parsed_qr,
+            rotation = error_image.rotation,
+            restore_class = "replace"
+        )
+        discarded_image.save()
+
+        error_image.file_path = saved_image_path
+        error_image.image_hash = uploaded_image_hash
+        error_image.save()

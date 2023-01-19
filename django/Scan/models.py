@@ -41,6 +41,17 @@ class StagingImage(models.Model):
     flagged = models.BooleanField(default=False)
 
 
+class DiscardedStagingImage(models.Model):
+    bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
+    bundle_order = models.PositiveIntegerField(null=True)
+    file_name = models.TextField(default="")
+    file_path = models.TextField(default="")
+    image_hash = models.CharField(max_length=64)
+    parsed_qr = models.JSONField(default=dict, null=True)
+    rotation = models.IntegerField(default=0)
+    restore_class = models.TextField(null=False, default="")
+
+
 class PageToImage(HueyTask):
     """
     Convert a PDF page into an image in the background.

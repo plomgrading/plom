@@ -15,10 +15,14 @@ from Scan.views import (
     RemoveBundleView,
     ReadQRcodesView,
     QRParsingProgressAlert,
+    BundleTableView,
     PushPageImage,
     PushAllPageImages,
     PagePushingUpdateView,
     FlagPageImage,
+    ScannerSummaryView,
+    ChangeErrorImageState,
+    ReplacePageImage,
 )
 
 
@@ -70,6 +74,11 @@ urlpatterns = [
         name="scan_qr_alert",
     ),
     path(
+        "read/table/<timestamp>/<int:index>/",
+        BundleTableView.as_view(),
+        name="scan_bundle_table",
+    ),
+    path(
         "push/<timestamp>/<int:index>/",
         PushPageImage.as_view(),
         name="scan_push_img",
@@ -84,5 +93,20 @@ urlpatterns = [
         "flag/<timestamp>/<int:index>/",
         FlagPageImage.as_view(),
         name="scan_flag_img",
+    ),
+    path(
+        "summary/",
+        ScannerSummaryView.as_view(),
+        name="scan_summary",
+    ),
+    path(
+        "change/error_state/<timestamp>/<int:index>/",
+        ChangeErrorImageState.as_view(),
+        name="change_error_state",
+    ),
+    path(
+        "replace/<timestamp>/<int:index>",
+        ReplacePageImage.as_view(),
+        name="replace_page_image"
     ),
 ]

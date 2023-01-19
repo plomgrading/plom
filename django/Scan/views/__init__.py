@@ -22,6 +22,7 @@ from .qr_codes import (
     ReadQRcodesView,
     UpdateQRProgressView,
     QRParsingProgressAlert,
+    BundleTableView,
 )
 
 from .push_images import (
@@ -32,4 +33,13 @@ from .push_images import (
 
 from .flag_images import (
     FlagPageImage,
+)
+
+from .scanner_summary import (
+    ScannerSummaryView,
+)
+
+from .change_image_state import (
+    ChangeErrorImageState,
+    ReplacePageImage,
 )
