@@ -9,6 +9,7 @@ from Mark.models import (
     SurrenderMarkingTask,
     MarkAction,
     Annotation,
+    AnnotationImage,
 )
 
 
@@ -18,3 +19,4 @@ admin.site.register(ClaimMarkingTask)
 admin.site.register(SurrenderMarkingTask)
 admin.site.register(MarkAction)
 admin.site.register(Annotation)
+admin.site.register(AnnotationImage)

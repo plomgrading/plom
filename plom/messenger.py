@@ -416,7 +416,7 @@ class Messenger(BaseMessenger):
                 plomfile=plomfile,
                 rubrics=rubrics,
                 integrity_check=integrity_check,
-                image_md5_list=image_md5_list,
+                image_md5_list=json.dumps(image_md5_list),
             )
 
         # Python <= 3.7 fails on pathlib.Path. remove `str` when we drop Python 3.7

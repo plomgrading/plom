@@ -119,9 +119,8 @@ class MclaimThisTask(APIView):
 
         imgs_folder = settings.BASE_DIR / "media" / "annotation_images"
         imgs_folder.mkdir(exist_ok=True)
-        md5s_data = data["image_md5s"].replace("'", '"')
-        md5s_data = md5s_data.replace("True", "true")
-        img_md5sum = json.loads(md5s_data)["md5"]
+        md5s_data = data["image_md5s"]
+        img_md5sum = json.loads(md5s_data)[0]["md5"]
         img_path = imgs_folder / f"{img_md5sum}.png"
         with open(img_path, "wb") as saved_annot_image:
             for chunk in annotation_image.chunks():
