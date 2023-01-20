@@ -756,6 +756,7 @@ class RubricWidget(QWidget):
         self.filtB.clicked.connect(self.wrangleRubricsInteractively)
         self.syncB.clicked.connect(self.refreshRubrics)
         self.hideB.clicked.connect(self.toggleShowHide)
+        self.update_tab_names()
 
     def toggleShowHide(self):
         if self.showHideW.currentIndex() == 0:  # on main lists
@@ -845,6 +846,7 @@ class RubricWidget(QWidget):
             idx = 0
         # insert tab after that
         self.RTW.insertTab(idx + 1, tab, tab.shortname)
+        self.update_tab_names()
         return tab
 
     def add_new_tab(self, name=None):
@@ -891,6 +893,7 @@ class RubricWidget(QWidget):
             n = n - 1
         # insert tab after it
         self.RTW.insertTab(n + 1, tab, tab.shortname)
+        self.update_tab_names()
 
     def remove_current_tab(self):
         n = self.RTW.currentIndex()
@@ -1157,6 +1160,8 @@ class RubricWidget(QWidget):
         except AssertionError as e:
             # its not critical to re-order: if it fails just log
             log.error("Unexpected failure sorting tabs: %s", str(e))
+
+        self.update_tab_names()
 
         # make sure something selected in each tab
         self.tabHide.selectRubricByVisibleRow(0)
