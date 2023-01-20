@@ -3,7 +3,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from io import BytesIO
 import logging
