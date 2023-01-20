@@ -821,13 +821,15 @@ class RubricWidget(QWidget):
         for n in range(self.RTW.count()):
             tab = self.RTW.widget(n)
             self.RTW.setTabText(n, tab.shortname)
+            # colours that seem vaguely visible in both light/dark theme: "teal", "olive"
             if tab.is_user_tab():
                 self.RTW.setTabToolTip(n, "custom tab")
                 # TODO: blend green with palette color?
-                self.RTW.tabBar().setTabTextColor(n, QColor("darkgreen"))
+                self.RTW.tabBar().setTabTextColor(n, QColor("teal"))
             elif tab.is_group_tab():
                 self.RTW.setTabToolTip(n, "shared group")
-                self.RTW.tabBar().setTabTextColor(n, QColor("darkblue"))
+                # maybe no need to highlight shared tabs?
+                # self.RTW.tabBar().setTabTextColor(n, QColor("olive"))
             # elif tab.is_shared_tab():
             #     self.RTW.setTabToolTip(n, "All rubrics")
             # elif tab.is_delta_tab():
