@@ -49,27 +49,27 @@ text = "wrong angles used"
 [[rubric]]
 delta = "."
 text = "a comment specific to Q2"
-question_number = 2
+question = 2
 meta = "All rubrics are question specific."
 
 [[rubric]]
 delta = "."
 text = "another comment specific to Q2"
-question_number = 2
+question = 2
 tags = "foo"
 meta = "When the demo rubrics are loaded, most are auto-duplicated over multiple questions."
 
 [[rubric]]
 delta = "."
 text = "a comment specific to Q3 version 1"
-question_number = 3
+question = 3
 versions = [1]
 meta = "By default, rubrics are shared between versions.  Not this one."
 
 [[rubric]]
 delta = "."
 text = "a comment specific to Q3 version 2"
-question_number = 3
+question = 3
 versions = [2]
 meta = "By default, rubrics are shared between versions.  Not this one."
 

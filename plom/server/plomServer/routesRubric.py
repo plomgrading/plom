@@ -145,9 +145,9 @@ class RubricHandler:
             aiohttp.web_response.Response: List of all comments in DB
         """
         username = data["user"]
-        question_number = request.match_info["question"]
+        question = request.match_info["question"]
 
-        rubrics = self.server.MgetRubrics(question_number)
+        rubrics = self.server.MgetRubrics(question)
         return web.json_response(rubrics, status=200)
 
     # @routes.patch("/MK/rubric/{key}")

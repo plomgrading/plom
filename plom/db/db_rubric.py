@@ -79,15 +79,15 @@ def McreateRubric(self, user_name, rubric):
     return (True, key)
 
 
-def MgetRubrics(self, question_number=None):
+def MgetRubrics(self, question=None):
     """Get list of rubrics sorted by kind, then delta, then text."""
     rubric_list = []
-    if question_number is None:
+    if question is None:
         query = Rubric.select().order_by(Rubric.kind, Rubric.display_delta, Rubric.text)
     else:
         query = (
             Rubric.select()
-            .where(Rubric.question == question_number)
+            .where(Rubric.question == question)
             .order_by(Rubric.kind, Rubric.display_delta, Rubric.text)
         )
     for r in query:
@@ -105,7 +105,7 @@ def MgetRubrics(self, question_number=None):
                 "created": datetime_to_json(r.creationTime),
                 "modified": datetime_to_json(r.modificationTime),
                 "username": r.user.name,
-                "question_number": r.question,
+                "question": r.question,
                 "versions": json.loads(r.versions),
                 "parameters": json.loads(r.parameters),
             }
@@ -234,7 +234,7 @@ def Rget_rubric_counts(self):
             "text": rref.text,
             "count": 0,
             "username": rref.user.name,
-            "question_number": rref.question,
+            "question": rref.question,
             "versions": str(json.loads(rref.versions)).strip("[]"),  # e.g., "1, 2, 3"
             "parameters": str(json.loads(rref.versions)),
         }
@@ -276,7 +276,7 @@ def Rget_rubric_details(self, key):
         "created": datetime_to_json(r.creationTime),
         "modified": datetime_to_json(r.modificationTime),
         "username": r.user.name,
-        "question_number": r.question,
+        "question": r.question,
         "test_list": [],
     }
     # now compute all tests using that rubric.

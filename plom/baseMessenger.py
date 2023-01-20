@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022 Edith Coates
@@ -764,11 +764,11 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def MgetRubricsByQuestion(self, question_number):
+    def MgetRubricsByQuestion(self, question):
         """Retrieve list of all rubrics from server for given question.
 
         Args:
-            question_number (int)
+            question (int)
 
         Raises:
             PlomAuthenticationException: Authentication error.
@@ -781,7 +781,7 @@ class BaseMessenger:
         self.SRmutex.acquire()
         try:
             response = self.get(
-                f"/MK/rubric/{question_number}",
+                f"/MK/rubric/{question}",
                 json={
                     "user": self.user,
                     "token": self.token,
