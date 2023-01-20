@@ -312,9 +312,6 @@ class RubricTable(QTableWidget):
             hideAction.triggered.connect(self.hideCurrentRubric)
             menu.addAction(hideAction)
             menu.addSeparator()
-        a = QAction("Rename this tab...", self)
-        a.triggered.connect(self._parent.rename_current_tab)
-        menu.addAction(a)
         a = QAction("Add new tab", self)
         a.triggered.connect(self._parent.add_new_tab)
         menu.addAction(a)
@@ -821,8 +818,11 @@ class RubricWidget(QWidget):
     def update_tab_names(self):
         """Loop over the tabs and update their displayed names"""
         for n in range(self.RTW.count()):
-            self.RTW.setTabText(n, self.RTW.widget(n).shortname)
-            # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
+            tab = self.RTW.widget(n)
+            self.RTW.setTabText(n, tab.shortname)
+            # self.RTW.setTabToolTip(n, tab.longname)
+            if tab.is_user_tab():
+                self.RTW.tabBar().setTabTextColor(n, QColor("teal"))
 
     def add_new_group_tab(self, name):
         """Add new group-defined tab
@@ -928,15 +928,25 @@ class RubricWidget(QWidget):
         tab = self.RTW.widget(n)
         if not tab:
             return
-        # TODO: Issue #2165: should we disable renaming Shared tab?
+        if tab.is_shared_tab():  # no renaming the "all" tab
+            return
         if tab.is_delta_tab():  # no renaming +/- delta tabs
             return
         curname = tab.shortname
-        s, ok = QInputDialog.getText(
-            self, f'Rename tab "{curname}"', f'Enter new name for tab "{curname}"'
-        )
-        if not ok:
-            return
+        s = ""
+        while True:
+            msg = f"<p>Enter new name for tab &ldquo;{curname}&rdquo;.</p>"
+            if s:
+                msg = f"<p>There is already a tab named &ldquo;{s}&rdquo;.</p>" + msg
+            s, ok = QInputDialog.getText(self, f'Rename tab "{curname}"', msg)
+            if not ok or not s:
+                return
+            for n in range(self.RTW.count()):
+                if s == self.RTW.widget(n).shortname:
+                    ok = False
+            if ok:
+                break
+
         # TODO: hint that "&nice" will enable "alt-n" shortcut on most OSes
         # TODO: use a custom dialog
         # s2, ok2 = QInputDialog.getText(
@@ -1038,8 +1048,11 @@ class RubricWidget(QWidget):
                 have arrived or some have been deleted.  Can be None
                 meaning no state.
                 The contents must contain lists `shown`, `hidden`,
-                `tabs`, and `user_tab_names`.  The last two are lists of
-                lists.  Any of these could be empty.
+                `tab_order` and `user_tabs`.
+                `user_tabs` is a list of dicts, with `name` and `ids`
+                fields.
+                Any of these lists could be empty.  The order in
+                `user_tabs` is not significant.
 
         If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
@@ -1047,10 +1060,10 @@ class RubricWidget(QWidget):
         """
         if not wranglerState:
             wranglerState = {
-                "user_tab_names": [],
                 "shown": [],
                 "hidden": [],
-                "tabs": [],
+                "tab_order": [],
+                "user_tabs": [],
             }
 
         # Update the wranglerState for any new rubrics not in shown/hidden (Issue #1493)
@@ -1106,7 +1119,18 @@ class RubricWidget(QWidget):
         # for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
         #    tab.set_name(name)
         curtabs = self.user_tabs
-        newnames = wranglerState["user_tab_names"]
+        newnames = [x["name"] for x in wranglerState["user_tabs"]]
+
+        # prime any names that overlap with group names or are duplicates
+        # we want unique tab names; group names could've changed while logged out
+        s = set()
+        for i, name in enumerate(newnames):
+            while name in group_tab_data.keys() or name in s:
+                log.warn("renaming user tab %s to %s for conflict", name, name + "'")
+                name += "'"
+                newnames[i] = name
+            s.add(name)
+
         for n in range(max(len(curtabs), len(newnames))):
             if n < len(curtabs):
                 if n < len(newnames):
@@ -1116,18 +1140,23 @@ class RubricWidget(QWidget):
                     self.add_new_tab(newnames[n])
         del curtabs
 
-        # compute legality for putting things in tables
         for n, tab in enumerate(self.user_tabs):
-            if n >= len(wranglerState["tabs"]):
+            if n >= len(wranglerState["user_tabs"]):
                 # not enough data for number of tabs
                 idlist = []
             else:
-                idlist = wranglerState["tabs"][n]
+                idlist = wranglerState["user_tabs"][n]["ids"]
             tab.setRubricsByKeys(self.rubrics, idlist)
         self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
         self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
+
+        try:
+            self.reorder_tabs(wranglerState["tab_order"])
+        except AssertionError as e:
+            # its not critical to re-order: if it fails just log
+            log.error("Unexpected failure sorting tabs: %s", str(e))
 
         # make sure something selected in each tab
         self.tabHide.selectRubricByVisibleRow(0)
@@ -1136,6 +1165,72 @@ class RubricWidget(QWidget):
         self.tabS.selectRubricByVisibleRow(0)
         for tab in self.user_tabs:
             tab.selectRubricByVisibleRow(0)
+
+    def reorder_tabs(self, target_order):
+        """Change the order of the tabs to match a target order.
+
+        args:
+            target_order (list): a list of strings for the order we would
+                like to see.  We will copy and then dedupe this input.
+
+        returns:
+            None: but modifies the tab order.
+
+        Algorithm probably relies on the tabs having unique names.
+        """
+
+        def order_preserving_dedupe(L):
+            s = set()
+            for i, name in enumerate(L):
+                if name in s:
+                    L.pop(i)
+                else:
+                    s.add(name)
+            return L
+
+        target_order = target_order.copy()
+        target_order = order_preserving_dedupe(target_order)
+
+        # Re-order the tabs in three steps
+        # First, introduce anything new into target order, preserving current order
+        current = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
+        assert len(set(current)) == len(current), "Non-unique tab names"
+        # debugging: target_order = ["−δ", "(a)", "nosuch", "★", "+δ", "All"]
+        # print(f"order: {current}\ntarget order: {target_order}")
+        for i, name in enumerate(current):
+            if name in target_order:
+                continue
+            if i == 0:
+                target_order.insert(0, name)
+                continue
+            previous_name = current[i - 1]
+            j = target_order.index(previous_name)
+            target_order.insert(j + 1, name)
+        # Second, prune anything in target no longer in tabs
+        for i, name in enumerate(target_order):
+            if name not in current:
+                target_order.pop(i)
+        # print(f"updated target: {target_order}")
+        assert len(target_order) == len(current), "Length mismatch"
+
+        # Third, sort according to the target
+        i = 0
+        iter = 0
+        maxiter = (self.RTW.count()) ** 2
+        while i < self.RTW.count():
+            iter += 1
+            assert iter < maxiter, "quadratic iteration cap exceeded"
+            current = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
+            # print((i, current))
+            # we know we can find it b/c we just updated target
+            j = target_order.index(current[i])
+            if i == j:
+                # all indices before this are now in the correct order
+                i += 1
+                continue
+            self.RTW.tabBar().moveTab(i, j)
+        check = [self.RTW.widget(n).shortname for n in range(0, self.RTW.count())]
+        assert check == target_order, "did not achieve target"
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab.
@@ -1384,10 +1479,14 @@ class RubricWidget(QWidget):
         Currently does not include "group tabs".
         """
         return {
-            "user_tab_names": [t.shortname for t in self.user_tabs],
             "shown": self.tabS.getKeyList(),
             "hidden": self.tabHide.getKeyList(),
-            "tabs": [t.getKeyList() for t in self.user_tabs],
+            "tab_order": [
+                self.RTW.widget(n).shortname for n in range(0, self.RTW.count())
+            ],
+            "user_tabs": [
+                {"name": t.shortname, "ids": t.getKeyList()} for t in self.user_tabs
+            ],
         }
 
 
@@ -1864,8 +1963,6 @@ class AddRubricBox(QDialog):
 
         # we insert the new parameter at the cursor/selection
         tc = self.TE.textCursor()
-        s = self.TE.textCursor().anchor()
-        e = self.TE.textCursor().position()
         # save the selection as the new parameter value for this version
         values = ["" for _ in range(self.maxver)]
         if tc.hasSelection():
