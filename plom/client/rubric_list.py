@@ -931,7 +931,8 @@ class RubricWidget(QWidget):
         tab = self.RTW.widget(n)
         if not tab:
             return
-        # TODO: Issue #2165: should we disable renaming Shared tab?
+        if tab.is_shared_tab():  # no renaming the "all" tab
+            return
         if tab.is_delta_tab():  # no renaming +/- delta tabs
             return
         curname = tab.shortname
