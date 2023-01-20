@@ -821,9 +821,17 @@ class RubricWidget(QWidget):
         for n in range(self.RTW.count()):
             tab = self.RTW.widget(n)
             self.RTW.setTabText(n, tab.shortname)
-            # self.RTW.setTabToolTip(n, tab.longname)
             if tab.is_user_tab():
-                self.RTW.tabBar().setTabTextColor(n, QColor("teal"))
+                self.RTW.setTabToolTip(n, "custom tab")
+                # TODO: blend green with palette color?
+                self.RTW.tabBar().setTabTextColor(n, QColor("darkgreen"))
+            elif tab.is_group_tab():
+                self.RTW.setTabToolTip(n, "shared group")
+                self.RTW.tabBar().setTabTextColor(n, QColor("darkblue"))
+            # elif tab.is_shared_tab():
+            #     self.RTW.setTabToolTip(n, "All rubrics")
+            # elif tab.is_delta_tab():
+            #     self.RTW.setTabToolTip(n, "delta")
 
     def add_new_group_tab(self, name):
         """Add new group-defined tab
