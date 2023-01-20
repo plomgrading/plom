@@ -115,7 +115,10 @@ def get_parser():
     parser.add_argument(
         "--webplom",
         action="store_true",
-        help="Experimental: support connecting to a Django server.",
+        help="""
+            Experimental: support connecting to a Django server.
+            You can also set the WEBPLOM environment variable.
+        """,
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
