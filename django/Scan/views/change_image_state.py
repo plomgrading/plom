@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 
 import pathlib
 from django.shortcuts import render, redirect
@@ -50,7 +50,7 @@ class ReplacePageImage(ManageBundleView):
             
             scanner = ScanService()
             scanner.upload_replace_page(user, timestamp, time_uploaded, uploaded_pdf, index, uploaded_image_hash)
-            return HttpResponse("No error")
+            return render(request, "Scan/manage_bundle.html", context)
         else:
             error_message = '""""' + str(form.errors) + '""""'
             parsed_error = BeautifulSoup(error_message, "html.parser")

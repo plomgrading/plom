@@ -503,11 +503,11 @@ class ScanService:
         with open(replace_pages_pdf_dir / filename, "w") as f:
             pdf_doc.save(f)
         
-        save_as_image_path = self.save_replace_page_as_image(replace_pages_dir, replace_pages_pdf_dir, filename, time_uploaded, uploaded_image_hash)
+        save_as_image_path = self.save_replace_page_as_image(replace_pages_dir, replace_pages_pdf_dir, filename, uploaded_image_hash)
         self.replace_image(user, timestamp, index, save_as_image_path, uploaded_image_hash)
 
     @transaction.atomic
-    def save_replace_page_as_image(self, replace_pages_file_path, replace_pages_pdf_file_path, filename, time_uploaded, uploaded_image_hash):
+    def save_replace_page_as_image(self, replace_pages_file_path, replace_pages_pdf_file_path, filename, uploaded_image_hash):
         save_replace_image_dir = replace_pages_file_path / "images"
         save_replace_image_dir.mkdir(exist_ok=True)
         save_as_image = save_replace_image_dir / f"{uploaded_image_hash}.png"

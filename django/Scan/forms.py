@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 
 import pathlib
 import hashlib
@@ -142,7 +142,7 @@ class ReplaceImageForm(forms.Form):
             save_as_image = save_dir / f"{uploaded_image_hash}.png"
             all_image_hash_list = scanner.get_all_staging_image_hash()
             for image_hash in all_image_hash_list:
-                if str(uploaded_image_hash) == str(image_hash):
+                if str(uploaded_image_hash) == str(image_hash['image_hash']):
                     raise ValidationError("This page already uploaded.")
                 else:
                     # save image file name as image hash
