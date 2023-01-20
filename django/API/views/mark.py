@@ -115,6 +115,8 @@ class MclaimThisTask(APIView):
         # TODO: validation for uploaded files and other integrity checks
 
         annotation_image = files["annotation_image"]
+        print(annotation_image.size)
+
         imgs_folder = settings.BASE_DIR / "media" / "annotation_images"
         imgs_folder.mkdir(exist_ok=True)
         md5s_data = data["image_md5s"].replace("'", '"')

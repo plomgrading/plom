@@ -519,6 +519,9 @@ class Messenger(BaseMessenger):
                         "integrity_check": integrity_check,
                         "image_md5s": image_md5_list,
                     }
+
+                    annot_img_file.seek(0)
+
                     files = {
                         "annotation_image": annot_img_file,
                         "plomfile": plom_data_file,
