@@ -942,7 +942,7 @@ class RubricWidget(QWidget):
             if s:
                 msg = f"<p>There is already a tab named &ldquo;{s}&rdquo;.</p>" + msg
             s, ok = QInputDialog.getText(self, f'Rename tab "{curname}"', msg)
-            if not ok:
+            if not ok or not s:
                 return
             for n in range(self.RTW.count()):
                 if s == self.RTW.widget(n).shortname:
