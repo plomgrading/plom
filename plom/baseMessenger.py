@@ -141,7 +141,7 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+        if self.webplom and self.token:
             token_str = self.token["token"]
             kwargs["headers"] = {"Authorization": f"Token {token_str}"}
 

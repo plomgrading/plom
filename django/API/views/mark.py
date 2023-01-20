@@ -2,6 +2,8 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
 
+import json
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
@@ -9,11 +11,13 @@ from rest_framework import status
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import FileResponse
+from django.conf import settings
 
 from Papers.services import SpecificationService
 from Papers.models import Paper, Image
 
 from Mark.services import MarkingTaskService, PageDataService
+from Mark.models import AnnotationImage
 
 
 class QuestionMaxMark_how_to_get_data(APIView):
@@ -84,11 +88,11 @@ class MgetNextTask(APIView):
 
 
 class MclaimThisTask(APIView):
-    """
-    Attach a user to a marking task and return the task's metadata.
-    """
-
     def patch(self, request, code, *args):
+        """
+        Attach a user to a marking task and return the task's metadata.
+        """
+
         mss = MarkingTaskService()
         the_task = mss.get_task_from_code(code)
         mss.assign_task_to_user(request.user, the_task)
@@ -99,6 +103,40 @@ class MclaimThisTask(APIView):
 
         # TODO: tags and integrity check are hardcoded for now
         return Response([question_data, [], "12345"])
+
+    def post(self, request, code, *args):
+        """
+        Accept a marker's grade and annotation for a task.
+        """
+
+        data = request.POST
+        files = request.FILES
+
+        # TODO: validation for uploaded files and other integrity checks
+
+        annotation_image = files["annotation_image"]
+        imgs_folder = settings.BASE_DIR / "media" / "annotation_images"
+        imgs_folder.mkdir(exist_ok=True)
+        md5s_data = data["image_md5s"].replace("'", '"')
+        md5s_data = md5s_data.replace("True", "true")
+        img_md5sum = json.loads(md5s_data)["md5"]
+        img_path = imgs_folder / f"{img_md5sum}.png"
+        with open(img_path, "wb") as saved_annot_image:
+            for chunk in annotation_image.chunks():
+                saved_annot_image.write(chunk)
+        img = AnnotationImage(path=img_path, hash=img_md5sum)
+        img.save()
+
+        plomfile = request.FILES["plomfile"]
+        plom_data = plomfile.read()
+
+        mts = MarkingTaskService()
+        mts.mark_task(request.user, code, data["score"], img, str(plom_data))
+
+        return Response(
+            [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
+            status=status.HTTP_200_OK,
+        )
 
 
 class MgetQuestionPageData(APIView):

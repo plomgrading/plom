@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from django.db import models
 
 from Base.models import BaseTask, BaseAction
 from Papers.models import Paper
+from Mark.models import Annotation
 
 
 class MarkingTask(BaseTask):
@@ -45,14 +46,4 @@ class MarkAction(BaseAction):
     """
 
     claim_action = models.ForeignKey(ClaimMarkingTask, on_delete=models.CASCADE)
-    mark = models.IntegerField(null=True)
-
-
-class Annotation(models.Model):
-    """
-    Represents a marker's annotation of a particular test paper's question.
-    """
-
-    mark_action = models.OneToOneField(MarkAction, on_delete=models.CASCADE)
-    edition = models.IntegerField(null=True)
-    annotation_data = models.JSONField(null=True)
+    annotation = models.OneToOneField(Annotation, null=True, on_delete=models.SET_NULL)

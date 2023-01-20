@@ -1,11 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
 from Papers.models import Paper
 
-from Mark.models import MarkingTask, ClaimMarkingTask, SurrenderMarkingTask
+from Mark.models import (
+    MarkingTask,
+    ClaimMarkingTask,
+    SurrenderMarkingTask,
+    MarkAction,
+    Annotation,
+)
 
 
 class MarkingTaskService:
@@ -180,3 +186,74 @@ class MarkingTaskService:
         user_tasks = MarkingTask.objects.filter(assigned_user=user, status="out")
         for task in user_tasks:
             self.surrender_task(user, task)
+
+    def user_can_update_task(self, user, code):
+        """
+        Return true if a user is allowed to update a certain task, false otherwise.
+
+        TODO: should be possible to remove the "assigned user" and "status" fields
+        and infer both from querying ClaimTask and MarkAction instances.
+
+        Args:
+            user: reference to a User instance
+            code: (str) task code
+        """
+
+        the_task = self.get_task_from_code(code)
+        if the_task.assigned_user and the_task.assigned_user != user:
+            return False
+
+        if the_task.status != "out" and the_task.status != "complete":
+            return False
+
+        return True
+
+    def get_latest_claim(self, user, code):
+        """
+        Get the latest ClaimMarkingTask instance for a user and task.
+        """
+
+        task = self.get_task_from_code(code)
+        claims = ClaimMarkingTask.objects.filter(user=user, task=task)
+        latest_claim = claims.order_by("time").first()
+        return latest_claim
+
+    def mark_task(self, user, code, score, image, data):
+        """
+        Save a user's marking attempt to the database.
+        """
+
+        if not self.user_can_update_task(user, code):
+            raise RuntimeError("User cannot update task " + code)
+
+        claim = self.get_latest_claim(user, code)
+        editions_so_far = len(MarkAction.objects.filter(claim_action=claim))
+        annotation = Annotation(
+            edition=editions_so_far + 1,
+            score=score,
+            image=image,
+            annotation_data=data,
+        )
+        annotation.save()
+
+        action = MarkAction(
+            claim_action=claim,
+            annotation=annotation,
+            user=user,
+            task=claim.task,
+        )
+        action.save()
+
+    def get_n_marked_tasks(self):
+        """
+        Return the number of marking tasks that are completed.
+        """
+
+        return len(MarkingTask.objects.filter(status="complete"))
+
+    def get_n_total_tasks(self):
+        """
+        Return the total number of tasks in the database.
+        """
+
+        return len(MarkingTask.objects.all())
