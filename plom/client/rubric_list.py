@@ -936,11 +936,20 @@ class RubricWidget(QWidget):
         if tab.is_delta_tab():  # no renaming +/- delta tabs
             return
         curname = tab.shortname
-        s, ok = QInputDialog.getText(
-            self, f'Rename tab "{curname}"', f'Enter new name for tab "{curname}"'
-        )
-        if not ok:
-            return
+        s = ""
+        while True:
+            msg = f"<p>Enter new name for tab &ldquo;{curname}&rdquo;.</p>"
+            if s:
+                msg = f"<p>There is already a tab named &ldquo;{s}&rdquo;.</p>" + msg
+            s, ok = QInputDialog.getText(self, f'Rename tab "{curname}"', msg)
+            if not ok:
+                return
+            for n in range(self.RTW.count()):
+                if s == self.RTW.widget(n).shortname:
+                    ok = False
+            if ok:
+                break
+
         # TODO: hint that "&nice" will enable "alt-n" shortcut on most OSes
         # TODO: use a custom dialog
         # s2, ok2 = QInputDialog.getText(
