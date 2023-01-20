@@ -143,6 +143,8 @@ class ReplaceImageForm(forms.Form):
             all_image_hash_list = scanner.get_all_staging_image_hash()
             for image_hash in all_image_hash_list:
                 if str(uploaded_image_hash) == str(image_hash['image_hash']):
+                    pathlib.Path.unlink(save_as_pdf / file_name)
+                    pathlib.Path.unlink(save_as_image)
                     raise ValidationError("This page already uploaded.")
                 else:
                     # save image file name as image hash

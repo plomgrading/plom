@@ -50,12 +50,13 @@ class ReplacePageImage(ManageBundleView):
             
             scanner = ScanService()
             scanner.upload_replace_page(user, timestamp, time_uploaded, uploaded_pdf, index, uploaded_image_hash)
+            success = "Successfully replaced image."
+            context.update({"replace_image_success_message": success})
             return render(request, "Scan/manage_bundle.html", context)
         else:
             error_message = '""""' + str(form.errors) + '""""'
             parsed_error = BeautifulSoup(error_message, "html.parser")
             error = parsed_error.li.text[7:]
-            error_message = "An error occurred replacing the page image."
             context.update({"replace_image_error_message": error})
             return render(request, "Scan/manage_bundle.html", context)
         
