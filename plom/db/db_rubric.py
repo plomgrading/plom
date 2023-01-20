@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2022 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -100,14 +100,14 @@ def MgetRubrics(self, question=None):
                 "out_of": r.out_of,
                 "text": r.text,
                 "tags": r.tags,
-                "meta": r.meta,
-                "count": r.count,
-                "created": datetime_to_json(r.creationTime),
-                "modified": datetime_to_json(r.modificationTime),
-                "username": r.user.name,
                 "question": r.question,
                 "versions": json.loads(r.versions),
                 "parameters": json.loads(r.parameters),
+                "meta": r.meta,
+                "count": r.count,
+                "username": r.user.name,
+                "created": datetime_to_json(r.creationTime),
+                "modified": datetime_to_json(r.modificationTime),
             }
         )
     return rubric_list
@@ -271,12 +271,14 @@ def Rget_rubric_details(self, key):
         "out_of": r.out_of,
         "text": r.text,
         "tags": r.tags,
+        "question": r.question,
+        "versions": json.loads(r.versions),
+        "parameters": json.loads(r.parameters),
         "meta": r.meta,
         "count": r.count,
+        "username": r.user.name,
         "created": datetime_to_json(r.creationTime),
         "modified": datetime_to_json(r.modificationTime),
-        "username": r.user.name,
-        "question": r.question,
         "test_list": [],
     }
     # now compute all tests using that rubric.
