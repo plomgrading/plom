@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2022 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -79,15 +79,15 @@ def McreateRubric(self, user_name, rubric):
     return (True, key)
 
 
-def MgetRubrics(self, question_number=None):
+def MgetRubrics(self, question=None):
     """Get list of rubrics sorted by kind, then delta, then text."""
     rubric_list = []
-    if question_number is None:
+    if question is None:
         query = Rubric.select().order_by(Rubric.kind, Rubric.display_delta, Rubric.text)
     else:
         query = (
             Rubric.select()
-            .where(Rubric.question == question_number)
+            .where(Rubric.question == question)
             .order_by(Rubric.kind, Rubric.display_delta, Rubric.text)
         )
     for r in query:
@@ -100,14 +100,14 @@ def MgetRubrics(self, question_number=None):
                 "out_of": r.out_of,
                 "text": r.text,
                 "tags": r.tags,
-                "meta": r.meta,
-                "count": r.count,
-                "created": datetime_to_json(r.creationTime),
-                "modified": datetime_to_json(r.modificationTime),
-                "username": r.user.name,
-                "question_number": r.question,
+                "question": r.question,
                 "versions": json.loads(r.versions),
                 "parameters": json.loads(r.parameters),
+                "meta": r.meta,
+                "count": r.count,
+                "username": r.user.name,
+                "created": datetime_to_json(r.creationTime),
+                "modified": datetime_to_json(r.modificationTime),
             }
         )
     return rubric_list
@@ -234,7 +234,7 @@ def Rget_rubric_counts(self):
             "text": rref.text,
             "count": 0,
             "username": rref.user.name,
-            "question_number": rref.question,
+            "question": rref.question,
             "versions": str(json.loads(rref.versions)).strip("[]"),  # e.g., "1, 2, 3"
             "parameters": str(json.loads(rref.versions)),
         }
@@ -271,12 +271,14 @@ def Rget_rubric_details(self, key):
         "out_of": r.out_of,
         "text": r.text,
         "tags": r.tags,
+        "question": r.question,
+        "versions": json.loads(r.versions),
+        "parameters": json.loads(r.parameters),
         "meta": r.meta,
         "count": r.count,
+        "username": r.user.name,
         "created": datetime_to_json(r.creationTime),
         "modified": datetime_to_json(r.modificationTime),
-        "username": r.user.name,
-        "question_number": r.question,
         "test_list": [],
     }
     # now compute all tests using that rubric.
