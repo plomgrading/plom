@@ -480,21 +480,22 @@ class IDClient(QWidget):
                         )
                     self.ui.predButton1.setText("&Accept\nPrediction")
 
-                    if (
-                        all_predictions_for_paper[0]["student_id"]
-                        != all_predictions_for_paper[1]["student_id"]
-                    ):
+                    if first_pred["student_id"] != second_pred["student_id"]:
                         self.ui.predictionBox0.setStyleSheet(
                             "background-color: #FFD700"
                         )
                         self.ui.predictionBox1.setStyleSheet(
                             "background-color: #FFD700"
+                        )
+                    elif (
+                        pred["certainty"] < 0.3
+                    ):  # inaccurate Greedy prediction tend to have certainty less than 0.3
+                        # useful to warn the user if LAP agrees with Greedy, but both have a high chance of being incorrect
+                        self.ui.predictionBox0.setStyleSheet(
+                            "background-color: #FF7F50"
                         )
                     else:
                         self.ui.predictionBox0.setStyleSheet(
-                            "background-color: #00FA9A"
-                        )
-                        self.ui.predictionBox1.setStyleSheet(
                             "background-color: #00FA9A"
                         )
                 else:
