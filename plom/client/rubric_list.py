@@ -1285,9 +1285,11 @@ class RubricWidget(QWidget):
         self.updateLegalityOfDeltas()
 
     def updateLegalityOfDeltas(self):
-        # now redo each tab
+        """Redo the colour highlight/deemphasis in each tab"""
         self.tabS.updateLegalityOfDeltas(self.mss)
-        for tab in self.user_tabs:
+        for tab in self.get_user_tabs():
+            tab.updateLegalityOfDeltas(self.mss)
+        for tab in self.get_group_tabs():
             tab.updateLegalityOfDeltas(self.mss)
         self.tabDeltaP.updateLegalityOfDeltas(self.mss)
         self.tabDeltaN.updateLegalityOfDeltas(self.mss)
