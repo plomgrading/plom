@@ -1740,7 +1740,7 @@ class AddRubricBox(QDialog):
         label = QLabel(s)
         label.setWordWrap(True)
         # label.setAlignment(Qt.AlignTop)
-        # Note: I often have problems with workwrapped QLabels taking
+        # Note: I often have problems with wordwrapped QLabels taking
         # too much space, seems putting inside a QFrame fixed that!
         vlay.addWidget(label)
         self._param_grid = QGridLayout()  # placeholder
