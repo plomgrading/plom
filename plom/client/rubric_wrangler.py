@@ -57,7 +57,7 @@ def deltaToInt(x):
 
 class DeleteIcon(QPushButton):
     def __init__(self):
-        super(DeleteIcon, self).__init__()
+        super().__init__()
         self.setText("Drag here\n to remove\n from tab")
         self.setAcceptDrops(True)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -76,7 +76,7 @@ class DeleteIcon(QPushButton):
 
 class RubricModel(QStandardItemModel):
     def __init__(self, data=None):
-        super(RubricModel, self).__init__()
+        super().__init__()
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(["Key", "Username", "Display Delta", "Text"])
         if data is not None:
@@ -153,7 +153,7 @@ class RubricProxyModel(QSortFilterProxyModel):
 
 class ShowTable(QTableWidget):
     def __init__(self):
-        super(ShowTable, self).__init__()
+        super().__init__()
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -423,11 +423,13 @@ class RubricWrangler(QDialog):
         for p in range(self.num_user_tabs):
             store["user_tabs"].append(
                 {
-                    "name": self.ST.STW.widget(p).shortname,
+                    "name": self.ST.STW.tabText(p),
                     "ids": self.ST.STW.widget(p).getCurrentKeys(),
                 }
             )
+        # the hidden tab is stored in the index *after* the last user tab
         store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
+        assert self.num_user_tabs + 1 == self.ST.STW.count()
         # anything not hidden is shown
         # columns are ["Key", "Username", "Display Delta", "Text"])
         for r in range(self.model.rowCount()):

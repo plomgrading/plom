@@ -143,10 +143,10 @@ def compute_score_locabs(rubrics, maxscore):
         except KeyError:
             continue
         for t in tt:
-            if t.startswith("exclgroup:"):
+            if t.startswith("exclusive:"):
                 # TODO: Python >= 3.9
-                # g = t.removeprefix("exclgroup:")
-                g = t[len("exclgroup:") :]
+                # g = t.removeprefix("exclusive:")
+                g = t[len("exclusive:") :]
                 if g in exclusives:
                     raise ValueError(f'more than one from exclusive group "{g}"')
                 exclusives.append(g)

@@ -1100,11 +1100,6 @@ class RubricWidget(QWidget):
             # TODO: share pack/unpack from tag w/ dialog & compute_score
             for t in tags:
                 g = None
-                if t.startswith("exclgroup:"):
-                    tags.remove(t)
-                    # TODO: Python >= 3.9
-                    # g = t.removeprefix("exclgroup:")
-                    g = t[len("exclgroup:") :]
                 if t.startswith("group:"):
                     tags.remove(t)
                     # TODO: Python >= 3.9
@@ -1305,9 +1300,11 @@ class RubricWidget(QWidget):
         self.updateLegalityOfDeltas()
 
     def updateLegalityOfDeltas(self):
-        # now redo each tab
+        """Redo the colour highlight/deemphasis in each tab"""
         self.tabS.updateLegalityOfDeltas(self.mss)
-        for tab in self.user_tabs:
+        for tab in self.get_user_tabs():
+            tab.updateLegalityOfDeltas(self.mss)
+        for tab in self.get_group_tabs():
             tab.updateLegalityOfDeltas(self.mss)
         self.tabDeltaP.updateLegalityOfDeltas(self.mss)
         self.tabDeltaN.updateLegalityOfDeltas(self.mss)
@@ -1375,12 +1372,7 @@ class RubricWidget(QWidget):
             # TODO: share pack/unpack from tag w/ dialog & compute_score
             tt = tt.split()
             for t in tt:
-                if t.startswith("exclgroup:"):
-                    # TODO: Python >= 3.9
-                    # g = t.removeprefix("exclgroup:")
-                    g = t[len("exclgroup:") :]
-                    groups.append(g)
-                elif t.startswith("group:"):
+                if t.startswith("group:"):
                     # TODO: Python >= 3.9
                     # g = t.removeprefix("group:")
                     g = t[len("group:") :]
@@ -1785,7 +1777,8 @@ class AddRubricBox(QDialog):
             <li>Groups create automatic tabs, shared with other users.
               <b>Other users may need to click the &ldquo;sync&rdquo; button.</b>
             </li>
-            <li>Within a group, you can use at most one exclusive rubric.</li>
+            <li>Making a rubric <em>exclusive</em> means it cannot be used alongside
+              others from the same exclusion group.</li>
             <li>Groups will disappear if no rubrics are in them.</li>
             <ul>
         """
@@ -1870,28 +1863,34 @@ class AddRubricBox(QDialog):
             if com["parameters"]:
                 params = com["parameters"]
             tags = com.get("tags", "").split()
-            # TODO: share pack/unpack from tag w/ dialog & compute_score
-            # TODO: if more than one group, we set one of them
-            for t in tags:
-                if t.startswith("exclgroup:"):
-                    tags.remove(t)
-                    # TODO: Python >= 3.9
-                    # g = t.removeprefix("exclgroup:")
-                    g = t[len("exclgroup:") :]
-                    self.group_combobox.setCurrentText(g)
-                    self.group_checkbox.setChecked(True)
-                    self.group_excl.setChecked(True)
-                    break
-                if t.startswith("group:"):
-                    tags.remove(t)
-                    # TODO: Python >= 3.9
-                    # g = t.removeprefix("group:")
-                    g = t[len("group:") :]
-                    self.group_combobox.setCurrentText(g)
-                    self.group_checkbox.setChecked(True)
+            # TODO: Python >= 3.9: t.removeprefix("exclusive:")
+            exclusives = [
+                t[len("exclusive:") :] for t in tags if t.startswith("exclusive:")
+            ]
+            groups = [t[len("group:") :] for t in tags if t.startswith("group:")]
+
+            if len(groups) == 1:
+                (g,) = groups
+                self.group_combobox.setCurrentText(g)
+                self.group_checkbox.setChecked(True)
+                if not exclusives:
                     self.group_excl.setChecked(False)
-                    break
-            # repack the other tags
+                    tags.remove(f"group:{g}")
+                elif len(exclusives) == 1 and exclusives[0] == g:
+                    self.group_excl.setChecked(True)
+                    tags.remove(f"exclusive:{exclusives[0]}")
+                    tags.remove(f"group:{g}")
+                else:
+                    # not UI representable: disable UI controls
+                    self.group_checkbox.setEnabled(False)
+                    self.group_excl.setEnabled(False)
+                    self.TEtag.setEnabled(True)
+            else:
+                # not UI representable: disable UI controls
+                self.group_checkbox.setEnabled(False)
+                self.group_excl.setEnabled(False)
+                self.TEtag.setEnabled(True)
+            # repack the tags
             self.TEtag.setText(" ".join(tags))
 
         else:
@@ -2096,9 +2095,9 @@ class AddRubricBox(QDialog):
                 group = '"' + group + '"'
                 raise NotImplementedError("groups with spaces not implemented")
             if self.group_excl.isChecked():
-                tag = "exclgroup:" + group
+                tag = f"group:{group} exclusive:{group}"
             else:
-                tag = "group:" + group
+                tag = f"group:{group}"
             if tags:
                 tags = tag + " " + tags
             else:
