@@ -417,7 +417,7 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
         self.setItem(rc, 2, QTableWidgetItem(rubric["display_delta"]))
 
-        # how to access version?  and where to store this function?
+        # Issue #2492: how to access version?  and where to store this function?
         render = render_params(
             rubric["text"], rubric["parameters"], self._parent.version
         )
