@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 """Misc utils for interacting with Canvas"""
 
 import csv
 from pathlib import Path
 import string
+from warnings import warn
 
 from canvasapi import Canvas
 
@@ -370,15 +371,16 @@ def canvas_login(api_url=None, api_key=None):
     """
     if not api_url:
         api_url = __DEFAULT_CANVAS_API_URL__
-    if api_key:
-        canvas = Canvas(api_url, api_key)
-    else:
-        # TODO: if exists
+    if not api_key:
+        warn(
+            "Loading from `api_secrets.py` is deprecated: consider changing your script to use env vars instead",
+            category=DeprecationWarning,
+        )
         from api_secrets import my_key as API_KEY
 
-        # TODO: else prompt?  with a message of how to save?
-        canvas = Canvas(api_url, API_KEY)
+        api_key = API_KEY
         del API_KEY
+    canvas = Canvas(api_url, api_key)
     this_user = canvas.get_current_user()
     del canvas
     return this_user
