@@ -423,11 +423,13 @@ class RubricWrangler(QDialog):
         for p in range(self.num_user_tabs):
             store["user_tabs"].append(
                 {
-                    "name": self.ST.STW.widget(p).shortname,
+                    "name": self.ST.STW.tabText(p),
                     "ids": self.ST.STW.widget(p).getCurrentKeys(),
                 }
             )
+        # the hidden tab is stored in the index *after* the last user tab
         store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
+        assert self.num_user_tabs + 1 == self.ST.STW.count()
         # anything not hidden is shown
         # columns are ["Key", "Username", "Display Delta", "Text"])
         for r in range(self.model.rowCount()):
