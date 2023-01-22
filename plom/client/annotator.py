@@ -240,6 +240,26 @@ class Annotator(QWidget):
             log.debug("Released crop")
             self.held_crop_rectangle_data = None
 
+    def toggle_experimental(self, checked):
+        if checked:
+            # popup a warning yes/no dialog
+            msg = SimpleQuestion(
+                self,
+                """<p>Do you want to enable experimental/advanced options?</p>
+                <p>You should probably discuss enablng this with your team.</p>
+                """,
+            )
+            if msg.exec() == QMessageBox.No:
+                self._experimental_mode_checkbox.setChecked(False)
+                return
+            log.info("Experimental/advanced mode enabled")
+        else:
+            log.info("Experimental/advanced mode disabled")
+
+    @property
+    def is_experimental(self):
+        return self._experimental_mode_checkbox.isChecked()
+
     def buildHamburger(self):
         # TODO: use QAction, share with other UI?
         keydata = self.get_key_bindings()
@@ -327,6 +347,10 @@ class Annotator(QWidget):
             self.change_annotation_colour,
         )
         m.addSeparator()
+        x = m.addAction("Experimental features")
+        x.setCheckable(True)
+        x.triggered.connect(self.toggle_experimental)
+        self._experimental_mode_checkbox = x
         m.addAction("Synchronise rubrics", self.refreshRubrics)
         (key,) = keydata["toggle-wide-narrow"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
