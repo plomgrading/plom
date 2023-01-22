@@ -1455,6 +1455,7 @@ class RubricWidget(QWidget):
             com,
             annotator_size=self._parent.size(),
             groups=self.get_group_names(),
+            experimental=self._parent.is_experimental,
         )
         if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
             return
@@ -1573,6 +1574,7 @@ class AddRubricBox(QDialog):
         *,
         annotator_size=None,
         groups=[],
+        experimental=False,
     ):
         """Initialize a new dialog to edit/create a comment.
 
@@ -1593,9 +1595,12 @@ class AddRubricBox(QDialog):
             annotator_size (QSize/None): size of the parent annotator
             groups (list): existing group names that the rubric could be
                 added to.
+            experimental (bool): whether to enable experimental or advanced
+                features.
         """
         super().__init__(parent)
 
+        self.use_experimental_features = experimental
         self.question_number = question_number
         self.version = version
         self.maxver = maxver
@@ -1687,9 +1692,10 @@ class AddRubricBox(QDialog):
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
         self.rubric_out_of_SB = _
-        # TODO: coming soon notice and setEnabled(False) below
-        hlay.addWidget(QLabel("  (coming soon)"))
-        self.typeRB_absolute.setEnabled(False)
+        # TODO: remove this notice
+        hlay.addWidget(QLabel("  (experimental!)"))
+        if not self.use_experimental_features:
+            self.typeRB_absolute.setEnabled(False)
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(hlay)
         flay.addRow("Marks", frame)
@@ -1733,8 +1739,8 @@ class AddRubricBox(QDialog):
         if maxver > 1:
             # TODO: coming soon notice and setEnabled(False) below
             s = "<p>By default, rubrics are shared between versions of a question.<br />"
-            s += "  Coming soon: You can also parameterize this rubric by making"
-            s += " version-specific substitutions.  </p>"
+            s += " Experimental feature: You can also parameterize this rubric by"
+            s += " making version-specific substitutions.</p>"
         else:
             s = "<p>By default, rubrics are shared between versions of a question.</p>"
         label = QLabel(s)
@@ -1950,13 +1956,14 @@ class AddRubricBox(QDialog):
         else:
             b = QToolButton(text="➕ add a parameterized substitution")
             # disabled for Issue #2462
-            b.setEnabled(False)
+            if not self.use_experimental_features:
+                b.setEnabled(False)
         b.setAutoRaise(True)
         b.pressed.connect(self.subsAddRow)
-        b.setToolTip(
-            "[disabled, Issue #2462] inserted at cursor point; highlighted text as initial value"
-        )
-        # b.setToolTip("inserted at cursor point; highlighted text as initial value")
+        s = "Inserted at cursor point; highlighted text as initial value"
+        if not self.use_experimental_features:
+            s = "[disabled, experimental] " + s
+        b.setToolTip(s)
         grid.addWidget(b, nr, 0)
         nr += 1
         return grid
