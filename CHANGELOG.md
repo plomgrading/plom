@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* `plom-create` command line tool can list and clear paper id prediction tables.
 
 ### Changed
+* Possible if somewhat ill-advised to replace the prenaming after papers have been created.
 
 ### Fixed
-
+* Misc fixes.
 
 
 
