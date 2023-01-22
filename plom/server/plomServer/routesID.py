@@ -453,8 +453,6 @@ class IDHandler:
     def pre_id_paper(self, data, request):
         """Set the prediction identification for a paper.
 
-        TODO: predictor data is unused!  Currently expected to be "prename" only?
-
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
 
