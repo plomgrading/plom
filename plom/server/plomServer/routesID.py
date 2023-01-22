@@ -183,7 +183,7 @@ class IDHandler:
         predictor = request.match_info["predictor"]
         return web.json_response(self.server.ID_get_predictions(predictor=predictor))
 
-    # @routes.delete("/ID/predictions/{predictor}")
+    # @routes.delete("/ID/predictions")
     @authenticate_by_token_required_fields([])
     @write_admin
     def ID_delete_all_predictions(self, data, request):

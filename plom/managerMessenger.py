@@ -1088,7 +1088,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.delete(
-                    "/ID/predictedID/{predictor}",
+                    "/ID/predictions/{predictor}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
