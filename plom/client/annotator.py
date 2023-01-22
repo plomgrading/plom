@@ -246,7 +246,7 @@ class Annotator(QWidget):
             msg = SimpleQuestion(
                 self,
                 """<p>Do you want to enable experimental/advanced options?</p>
-                <p>You should probably discuss enablng this with your team.</p>
+                <p>You should probably discuss enabling this with your team.</p>
                 """,
             )
             if msg.exec() == QMessageBox.No:
