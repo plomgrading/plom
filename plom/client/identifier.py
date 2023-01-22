@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
-# Copyright (C) 2022 Natalie Balashov
+# Copyright (C) 2022-2023 Natalie Balashov
 
 """
 The Plom Identifier client
@@ -464,30 +464,38 @@ class IDClient(QWidget):
                     self.ui.predictionBox1.hide()
 
                 elif pred["predictor"] == "MLGreedy":
-                    self.ui.predictionBox1.show()
-                    self.ui.predButton1.show()
-                    self.ui.pSIDLabel1.setText(psid)
-                    self.ui.pNameLabel1.setText(pname)
-                    self.ui.predictionBox1.setTitle(
-                        f"Prediction by MLGreedy with certainty {round(pred['certainty'], 3)}"
-                    )
+                    first_pred = all_predictions_for_paper[0]
+                    second_pred = all_predictions_for_paper[1]
+                    if first_pred["student_id"] == second_pred["student_id"]:
+                        self.ui.predictionBox0.setTitle(
+                            f"{first_pred['predictor']} prediction with certainty {round(first_pred['certainty'], 3)} agrees with {second_pred['predictor']} prediction of certainty {round(second_pred['certainty'], 3)}"
+                        )
+                    else:
+                        self.ui.predictionBox1.show()
+                        self.ui.predButton1.show()
+                        self.ui.pSIDLabel1.setText(psid)
+                        self.ui.pNameLabel1.setText(pname)
+                        self.ui.predictionBox1.setTitle(
+                            f"Prediction by MLGreedy with certainty {round(pred['certainty'], 3)}"
+                        )
                     self.ui.predButton1.setText("&Accept\nPrediction")
 
-                    if (
-                        all_predictions_for_paper[0]["student_id"]
-                        != all_predictions_for_paper[1]["student_id"]
-                    ):
+                    if first_pred["student_id"] != second_pred["student_id"]:
                         self.ui.predictionBox0.setStyleSheet(
                             "background-color: #FFD700"
                         )
                         self.ui.predictionBox1.setStyleSheet(
                             "background-color: #FFD700"
+                        )
+                    elif (
+                        pred["certainty"] < 0.3
+                    ):  # inaccurate Greedy prediction tend to have certainty less than 0.3
+                        # useful to warn the user if LAP agrees with Greedy, but both have a high chance of being incorrect
+                        self.ui.predictionBox0.setStyleSheet(
+                            "background-color: #FF7F50"
                         )
                     else:
                         self.ui.predictionBox0.setStyleSheet(
-                            "background-color: #00FA9A"
-                        )
-                        self.ui.predictionBox1.setStyleSheet(
                             "background-color: #00FA9A"
                         )
                 else:
