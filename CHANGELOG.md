@@ -10,11 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * `plom-create` command line tool can list and clear paper id prediction tables.
+* Plom-Client has an "experimental" menu item: currently creates a bit of friction before using the new parameterized rubrics and absolute rubrics.
 
 ### Changed
 * Possible if somewhat ill-advised to replace the prenaming after papers have been created.
 
 ### Fixed
+* Fix rendering of parameterized rubrics.
 * Misc fixes.
 
 
