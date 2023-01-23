@@ -1573,7 +1573,9 @@ class PageScene(QGraphicsScene):
             # self.rubricDelta = "0"
             # self.rubricKind = "neutral"
             # self.mousePressRubric(e)
-            log.error("Issue #2417: Drag-drop gave plain text but no way to add: {txt}")
+            log.error(
+                f"Issue #2417: Drag-drop gave plain text but no way to add: {txt}"
+            )
         elif e.mimeData().hasFormat(
             "application/x-qabstractitemmodeldatalist"
         ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
@@ -2415,7 +2417,7 @@ class PageScene(QGraphicsScene):
         rubrics.append(rubric)
 
         try:
-            N = compute_score(rubrics, self.maxMark)
+            compute_score(rubrics, self.maxMark)
         except ValueError:
             return False
         except PlomInconsistentRubric:
