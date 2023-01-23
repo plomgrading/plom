@@ -447,9 +447,9 @@ def get_parser():
         help="Manipulate servers prediction lists",
         description="""
             Before papers are identified, there can exist various predictions
-            about which paper goes with with individual.  "Prenamed" is one
-            example where names are pre-printed on the ID sheet.
-            Computer vision tools also make predictions based student ID
+            about which paper goes with which individual.  "Prenamed" is one
+            example, where names are pre-printed on the ID sheet.
+            Computer vision tools also make predictions based on student ID
             numbers.
         """,
     )
