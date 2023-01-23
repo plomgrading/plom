@@ -126,7 +126,7 @@ class UserDialog(QDialog):
         self.cnB.clicked.connect(self.reject)
 
         self.pwCB = QCheckBox("(hide/show)")
-        self.pwCB.setCheckState(Qt.CheckState.Unchecked)
+        self.pwCB.setChecked(False)
         self.pwCB.stateChanged.connect(self.togglePWShow)
         self.pwNewB = QPushButton("New rand pwd")
         self.pwNewB.clicked.connect(self.newRandomPassword)
@@ -146,7 +146,7 @@ class UserDialog(QDialog):
         self.setLayout(grid)
 
     def togglePWShow(self):
-        if self.pwCB.checkState() == Qt.CheckState.Checked:
+        if self.pwCB.isChecked():
             self.pwLE.setEchoMode(QLineEdit.Password)
         else:
             self.pwLE.setEchoMode(QLineEdit.Normal)
@@ -257,12 +257,12 @@ class TestStatus(QDialog):
         idCB.setAttribute(Qt.WA_TransparentForMouseEvents)
         idCB.setFocusPolicy(Qt.NoFocus)
         if status["identified"]:
-            idCB.setCheckState(Qt.CheckState.Checked)
+            idCB.setChecked(True)
         mkCB = QCheckBox("Fully marked")
         mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
         mkCB.setFocusPolicy(Qt.NoFocus)
         if status["marked"]:
-            mkCB.setCheckState(Qt.CheckState.Checked)
+            mkCB.setChecked(True)
 
         hb = QHBoxLayout()
         vb1 = QVBoxLayout()
@@ -2291,11 +2291,7 @@ class Manager(QWidget):
 
     def filterReview(self):
         t0 = time()
-        markedOnly = (
-            True
-            if self.ui.markedOnlyCB.checkState() == Qt.CheckState.Checked
-            else False
-        )
+        markedOnly = self.ui.markedOnlyCB.isChecked()
         # 1-based question indexing but 0th element is the any match
         qidx = self.ui.questionCB.currentIndex()
         if qidx == 0:

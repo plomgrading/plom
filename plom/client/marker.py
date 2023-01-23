@@ -2481,7 +2481,7 @@ class MarkerClient(QWidget):
         """Sets a filter tag."""
         self.prxM.setFilterString(self.ui.filterLE.text().strip())
         # check to see if invert-filter is checked
-        if self.ui.filterInvCB.checkState() == Qt.CheckState.Checked:
+        if self.ui.filterInvCB.isChecked():
             self.prxM.filterTags(invert=True)
         else:
             self.prxM.filterTags()
