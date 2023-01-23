@@ -240,6 +240,35 @@ class Annotator(QWidget):
             log.debug("Released crop")
             self.held_crop_rectangle_data = None
 
+    def toggle_experimental(self, checked):
+        if checked:
+            # popup a warning yes/no dialog
+            msg = SimpleQuestion(
+                self,
+                """<p>Do you want to enable experimental and/or advanced
+                options?</p>
+                <p>If you are part of a large marking team, you should
+                probably discuss with your manager before enabling this
+                option.</p>
+                """,
+            )
+            # Image by liftarn, public domain, https://freesvg.org/put-your-fingers-in-the-gears
+            res = resources.files(plom.client.icons) / "fingers_in_gears.svg"
+            pix = QPixmap()
+            pix.loadFromData(res.read_bytes())
+            pix = pix.scaledToHeight(200, Qt.SmoothTransformation)
+            msg.setIconPixmap(pix)
+            if msg.exec() == QMessageBox.No:
+                self._experimental_mode_checkbox.setChecked(False)
+                return
+            log.info("Experimental/advanced mode enabled")
+        else:
+            log.info("Experimental/advanced mode disabled")
+
+    @property
+    def is_experimental(self):
+        return self._experimental_mode_checkbox.isChecked()
+
     def buildHamburger(self):
         # TODO: use QAction, share with other UI?
         keydata = self.get_key_bindings()
@@ -327,6 +356,10 @@ class Annotator(QWidget):
             self.change_annotation_colour,
         )
         m.addSeparator()
+        x = m.addAction("Experimental features")
+        x.setCheckable(True)
+        x.triggered.connect(self.toggle_experimental)
+        self._experimental_mode_checkbox = x
         m.addAction("Synchronise rubrics", self.refreshRubrics)
         (key,) = keydata["toggle-wide-narrow"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
