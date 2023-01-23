@@ -1,11 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Template released under AGPLv3 by Andrew Rechnitzer (c) 2019-2022
-%% This template uses latex exam class.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SPDX-License-Identifier: AGPL-3.0-or-later
+% Copyright (C) 2019-2022 Andrew Rechnitzer
+% Copyright (C) 2022-2023 Colin B. Macdonald
 
 \documentclass[12pt]{exam}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% This template uses latex exam class.
+%%
 %% This template is for letter-paper, not a4 paper.
 %% The margins have been set so as to work nicely
 %% with the QR-codes etc needed by Plom.
@@ -172,10 +173,12 @@ You may find the following formulas useful in the questions that follow.
 \begin{questions}
 \question[5] Please place your answers in the boxes provided.
 \begin{parts}
-  \part Answer something simple, \textbf{but this is ver2}
-  \answerbox{ABC}
+  \part Find the derivative of $\cos(x^2 y^3)$ with respect to $y$.
+  \textbf{(note this is ver2)}
+  \answerbox{$-3 x^2 y^2 \sin(x^2 y^3)$}
   \begin{solution}
-    Some working will go here. \textbf{but this is ver2}
+    We calculate the partial derivative.
+    We also need the chain rule.
   \end{solution}
   \blank
   % Use \blank to space out the question parts nicely.

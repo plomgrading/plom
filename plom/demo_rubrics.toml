@@ -73,6 +73,14 @@ question = 3
 versions = [2]
 meta = "By default, rubrics are shared between versions.  Not this one."
 
+[[rubric]]
+delta = "."
+text = "tex: correct deriv of ${param1}$ but missed ${param2}$ in chain rule"
+parameters = [["{param1}", ["\\sin", "\\cos"]], ["{param2}", ["y^3", "x^2"]]]
+question = 1
+versions = []
+meta = "This rubric is parameterized: it has slightly different text for each version."
+
 # a series of rubrics all related to the chain rule
 [[rubric]]
 delta = "-3"
