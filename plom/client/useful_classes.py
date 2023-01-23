@@ -63,8 +63,8 @@ class ErrorMsg(QMessageBox):
                 )
             else:
                 self.setInformativeText(f"<small>{info}</small>")
-        self.setStandardButtons(QMessageBox.Ok)
-        self.setDefaultButton(QMessageBox.Ok)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok)
+        self.setDefaultButton(QMessageBox.StandardButton.Ok)
         self.setIcon(QMessageBox.Icon.Critical)
 
 
@@ -312,7 +312,9 @@ class ClientSettingsDialog(QDialog):
         q.setAlignment(Qt.AlignTop)
         flay.addRow("Temporary files:", q)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
 
         vlay = QVBoxLayout()
         vlay.addLayout(flay)
@@ -420,7 +422,9 @@ class AddRemoveTagDialog(QDialog):
         )
 
         # TODO: cannot tab to OK
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         vlay = QVBoxLayout()
         vlay.addLayout(flay)
         vlay.addWidget(buttons)
