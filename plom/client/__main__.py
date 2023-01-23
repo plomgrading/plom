@@ -58,7 +58,7 @@ def add_popup_to_toplevel_exception_handler():
             info=abbrev,
             details="".join(lines),
         )
-        msg.setIcon(QMessageBox.Critical)
+        msg.setIcon(QMessageBox.Icon.Critical)
         msg.exec()
         # call the original hook after our dialog closes
         sys._excepthook(exctype, value, traceback)

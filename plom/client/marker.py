@@ -2241,7 +2241,7 @@ class MarkerClient(QWidget):
             msg.setDefaultButton(QMessageBox.Cancel)
             button = msg.button(QMessageBox.Cancel)
             button.setText("Wait (cancel close)")
-            msg.setIcon(QMessageBox.Warning)
+            msg.setIcon(QMessageBox.Icon.Warning)
             if msg.exec() == QMessageBox.Cancel:
                 event.ignore()
                 return

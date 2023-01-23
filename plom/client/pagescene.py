@@ -1665,7 +1665,7 @@ class PageScene(QGraphicsScene):
             self.parent().toMoveMode()
 
             msg = QMessageBox(self.parent())
-            msg.setIcon(QMessageBox.Information)
+            msg.setIcon(QMessageBox.Icon.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
                 "You can double-click on an Image to modify its scale and border."

@@ -1252,7 +1252,7 @@ class Annotator(QWidget):
             return
         if os.path.getsize(fileName) > 200000:
             msg = QMessageBox()
-            msg.setIcon(QMessageBox.Critical)
+            msg.setIcon(QMessageBox.Icon.Critical)
             msg.setWindowTitle("Image Too large.")
             msg.setText(
                 "Max image size (200kB) reached. Please try again with a smaller image."

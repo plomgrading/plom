@@ -65,7 +65,7 @@ class ErrorMsg(QMessageBox):
                 self.setInformativeText(f"<small>{info}</small>")
         self.setStandardButtons(QMessageBox.Ok)
         self.setDefaultButton(QMessageBox.Ok)
-        self.setIcon(QMessageBox.Critical)
+        self.setIcon(QMessageBox.Icon.Critical)
 
 
 class WarnMsg(ErrorMsg):
@@ -73,7 +73,7 @@ class WarnMsg(ErrorMsg):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setIcon(QMessageBox.Warning)
+        self.setIcon(QMessageBox.Icon.Warning)
 
 
 class InfoMsg(ErrorMsg):
@@ -81,7 +81,7 @@ class InfoMsg(ErrorMsg):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setIcon(QMessageBox.Information)
+        self.setIcon(QMessageBox.Icon.Information)
 
 
 class SimpleQuestion(QMessageBox):
@@ -97,7 +97,7 @@ class SimpleQuestion(QMessageBox):
         if icon_pixmap:
             self.setIconPixmap(icon_pixmap)
         else:
-            self.setIcon(QMessageBox.Question)
+            self.setIcon(QMessageBox.Icon.Question)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
 
@@ -111,7 +111,7 @@ class WarningQuestion(SimpleQuestion):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setIcon(QMessageBox.Warning)
+        self.setIcon(QMessageBox.Icon.Warning)
 
 
 class SimpleQuestionCheckBox(QMessageBox):
@@ -131,7 +131,7 @@ class SimpleQuestionCheckBox(QMessageBox):
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
-        self.setIcon(QMessageBox.Question)
+        self.setIcon(QMessageBox.Icon.Question)
         self.setCheckBox(self.cb)
 
 
