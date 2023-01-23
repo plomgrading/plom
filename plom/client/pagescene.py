@@ -2430,8 +2430,9 @@ class PageScene(QGraphicsScene):
 
         Args:
             rubric (dict): must have at least the keys and values::
-                - value (str): TODO should be int/float?
-                - delta (str): a string displaying the value of the rubric.
+                - value (int):
+                - out_of (int):
+                - display_delta (str): a string displaying the value of the rubric.
                 - text (str): the text in the rubric.
                 - id (int): the id of the rubric.
                 - kind (str): ``"absolute"``, ``"neutral"``, etc.
