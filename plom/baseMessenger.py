@@ -28,6 +28,7 @@ from plom.plom_exceptions import (
     PlomNoMoreException,
     PlomNoPaper,
     PlomNoSolutionException,
+    PlomRangeException,
     PlomServerNotReady,
     PlomSSLError,
     PlomTakenException,
@@ -1040,7 +1041,9 @@ class BaseMessenger:
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
-            if response.status_code == 401:
+            if response.status_code == 400:
+                raise PlomRangeException(response.reason) from None
+            elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomNoPaper(
@@ -1054,6 +1057,8 @@ class BaseMessenger:
                 raise PlomTaskDeletedError(
                     "Task {} has been deleted by manager.".format(num)
                 ) from None
+            elif response.status_code == 416:
+                raise PlomRangeException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1086,7 +1091,9 @@ class BaseMessenger:
             response.raise_for_status()
             return BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
-            if response.status_code == 401:
+            if response.status_code == 400:
+                raise PlomRangeException(response.reason) from None 
+            elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomNoPaper(
@@ -1100,6 +1107,8 @@ class BaseMessenger:
                 raise PlomTaskDeletedError(
                     "Task {} has been deleted by manager.".format(num)
                 ) from None
+            elif response.status_code == 416:
+                raise PlomRangeException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

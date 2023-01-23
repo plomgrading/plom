@@ -324,9 +324,25 @@ class MarkHandler:
         Getting data back from this function does not imply permission
         to submit to this task.
         """
-        number = int(request.match_info["number"])
-        question = int(request.match_info["question"])
-        edition = int(request.match_info["edition"])
+        number = request.match_info["number"]
+        question = request.match_info["question"]
+        edition = request.match_info["edition"]
+
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="paper number must be integer")
+
+        try:
+            question = int(question)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="question number must be integer")
+
+        try:
+            edition = int(edition)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="edition must be integer")
+
         integrity = data.get("integrity")
         return self._get_annotations_backend(number, question, edition, integrity)
 
@@ -337,10 +353,21 @@ class MarkHandler:
 
         See :func:`get_annotations`.
         """
-        number = int(request.match_info["number"])
-        question = int(request.match_info["question"])
+        number = request.match_info["number"]
+        question = request.match_info["question"]
         edition = None
         integrity = data.get("integrity")
+
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="paper number must be integer")
+
+        try:
+            question = int(question)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="question number must be integer")
+
         return self._get_annotations_backend(number, question, edition, integrity)
 
     def _get_annotations_backend(self, number, question, edition, integrity):
@@ -387,9 +414,25 @@ class MarkHandler:
         Getting data back from this function does not imply permission
         to submit to this task.
         """
-        number = int(request.match_info["number"])
-        question = int(request.match_info["question"])
-        edition = int(request.match_info["edition"])
+        number = request.match_info["number"]
+        question = request.match_info["question"]
+        edition = request.match_info["edition"]
+
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="paper number must be integer")
+
+        try:
+            question = int(question)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="question number must be integer")
+
+        try:
+            edition = int(edition)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="edition must be integer")
+
         return self._get_annotations_img_backend(number, question, edition)
 
     # @routes.get("/annotations_image/{number}/{question}")
@@ -399,9 +442,20 @@ class MarkHandler:
 
         See :func:`get_annotations_img`.
         """
-        number = int(request.match_info["number"])
-        question = int(request.match_info["question"])
+        number = request.match_info["number"]
+        question = request.match_info["question"]
         edition = None
+
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="paper number must be integer")
+
+        try:
+            question = int(question)
+        except (TypeError, ValueError):
+            raise web.HTTPBadRequest(reason="question number must be integer")
+
         return self._get_annotations_img_backend(number, question, edition)
 
     def _get_annotations_img_backend(self, number, question, edition):
