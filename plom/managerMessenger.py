@@ -1083,12 +1083,27 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def ID_delete_all_predictions(self):
+        """Deletes the predicted IDs for all predictors including prenamed."""
+        with self.SRmutex:
+            try:
+                response = self.delete(
+                    "/ID/predictions",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def ID_delete_predictions_from_predictor(self, *, predictor):
         """Deletes the predicted IDs for one particular predictor."""
         with self.SRmutex:
             try:
                 response = self.delete(
-                    "/ID/predictedID/{predictor}",
+                    f"/ID/predictions/{predictor}",
                     json={"user": self.user, "token": self.token},
                 )
                 response.raise_for_status()
