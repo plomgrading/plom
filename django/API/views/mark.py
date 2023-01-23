@@ -110,6 +110,7 @@ class MclaimThisTask(APIView):
         """
 
         data = request.POST
+        print(data)
         files = request.FILES
 
         # TODO: validation for uploaded files and other integrity checks
@@ -119,8 +120,7 @@ class MclaimThisTask(APIView):
 
         imgs_folder = settings.BASE_DIR / "media" / "annotation_images"
         imgs_folder.mkdir(exist_ok=True)
-        md5s_data = data["image_md5s"]
-        img_md5sum = json.loads(md5s_data)[0]["md5"]
+        img_md5sum = data["md5sum"]
         img_path = imgs_folder / f"{img_md5sum}.png"
         with open(img_path, "wb") as saved_annot_image:
             for chunk in annotation_image.chunks():
