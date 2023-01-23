@@ -407,7 +407,8 @@ class Downloader(QObject):
             it we also put the filename into ``filename``.
         """
         if self.simulate_failures:
-            fail = random.random() <= self._simulate_failure_rate / 100
+            # TODO: simulate failures here too, not just slowdowns?
+            # fail = random.random() <= self._simulate_failure_rate / 100
             a, b = self._simulate_slow_net
             # generate wait1 + wait2 \in (a, b)
             wait2 = random.random() * (b - a) + a

@@ -111,7 +111,7 @@ def texFragmentToPNG(fragment, *, dpi=225):
         #   - https://trac.sagemath.org/ticket/6022
         #   - https://www.ghostscript.com/doc/9.54.0/Use.htm
         if False:
-            convertIt2 = subprocess.run(
+            convertIt = subprocess.run(
                 [
                     "gs",
                     "-dSAFER",  # Give gs permission to modify filesystem

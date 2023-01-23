@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
@@ -475,7 +475,7 @@ def postProcessing(thedir, dest, skip_gamma=False):
         stuff = list(thedir.glob("*.png"))
         N = len(stuff)
         with Pool() as p:
-            r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
+            _ = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
         # Pool does this loop, but in parallel
         # for x in glob.glob("..."):
         #     gamma_adjust(x)
