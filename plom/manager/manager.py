@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
@@ -395,7 +395,7 @@ class Manager(QWidget):
         if server:
             self.setServer(server)
 
-        self.ui.passwordLE.setFocus(True)
+        self.ui.passwordLE.setFocus()
         self.connectButtons()
         self.ui.configTab.setEnabled(False)
         self.ui.scanningAllTab.setEnabled(False)

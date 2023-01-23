@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import (
@@ -427,7 +427,7 @@ class AddRemoveTagDialog(QDialog):
 
         buttons.accepted.connect(self.add_tag)
         buttons.rejected.connect(self.reject)
-        self.CBadd.setFocus(True)
+        self.CBadd.setFocus()
 
     def add_tag(self):
         self.return_values = ("add", self.CBadd.currentText())
