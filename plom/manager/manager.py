@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
@@ -119,7 +119,7 @@ class UserDialog(QDialog):
         self.pwLE = QLineEdit(initialpw)
         # self.pwLE.setEchoMode(QLineEdit.Password)
         self.pwLE2 = QLineEdit(initialpw)
-        self.pwLE2.setEchoMode(QLineEdit.Password)
+        # self.pwLE2.setEchoMode(QLineEdit.Password)
         self.okB = QPushButton("Accept")
         self.okB.clicked.connect(self.validate)
         self.cnB = QPushButton("Cancel")
@@ -148,8 +148,10 @@ class UserDialog(QDialog):
     def togglePWShow(self):
         if self.pwCB.isChecked():
             self.pwLE.setEchoMode(QLineEdit.Password)
+            self.pwLE2.setEchoMode(QLineEdit.Password)
         else:
             self.pwLE.setEchoMode(QLineEdit.Normal)
+            self.pwLE2.setEchoMode(QLineEdit.Normal)
 
     def newRandomPassword(self):
         newpw = simple_password()
