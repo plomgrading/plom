@@ -248,7 +248,8 @@ class Annotator(QWidget):
                 """<p>Do you want to enable experimental and/or advanced
                 options?</p>
                 <p>If you are part of a large marking team, you should
-                probably discuss enabling this option with your manager.</p>
+                probably discuss with your manager before enabling this
+                option.</p>
                 """,
             )
             # Image by liftarn, public domain, https://freesvg.org/put-your-fingers-in-the-gears
