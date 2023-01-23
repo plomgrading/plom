@@ -1883,7 +1883,9 @@ class AddRubricBox(QDialog):
             ]
             groups = [t[len("group:") :] for t in tags if t.startswith("group:")]
 
-            if len(groups) == 1:
+            if not groups and not exclusives:
+                pass
+            elif len(groups) == 1:
                 (g,) = groups
                 self.group_combobox.setCurrentText(g)
                 self.group_checkbox.setChecked(True)

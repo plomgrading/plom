@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fix rendering of parameterized rubrics.
+* Fix modifying group of initially non-grouped rubrics.
 * Misc fixes.
 
 
