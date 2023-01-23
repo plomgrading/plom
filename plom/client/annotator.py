@@ -245,10 +245,18 @@ class Annotator(QWidget):
             # popup a warning yes/no dialog
             msg = SimpleQuestion(
                 self,
-                """<p>Do you want to enable experimental/advanced options?</p>
-                <p>You should probably discuss enabling this with your team.</p>
+                """<p>Do you want to enable experimental and/or advanced
+                options?</p>
+                <p>If you are part of a large marking team, you should
+                probably discuss enabling this option with your manager.</p>
                 """,
             )
+            # Image by liftarn, public domain, https://freesvg.org/put-your-fingers-in-the-gears
+            res = resources.files(plom.client.icons) / "fingers_in_gears.svg"
+            pix = QPixmap()
+            pix.loadFromData(res.read_bytes())
+            pix = pix.scaledToHeight(200, Qt.SmoothTransformation)
+            msg.setIconPixmap(pix)
             if msg.exec() == QMessageBox.No:
                 self._experimental_mode_checkbox.setChecked(False)
                 return
