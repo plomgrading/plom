@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (C) 2020-2021 Colin B. Macdonald
+  Copyright (C) 2020-2023 Colin B. Macdonald
   Copyright (C) 2021 Óvári
 
   Copying and distribution of this file, with or without modification,
@@ -67,6 +67,7 @@
   <developer_name>Andrew Rechnitzer, Colin B. Macdonald, and others</developer_name>
   <content_rating type="oars-1.0"/>
   <releases>
+    <release date="2023-01-21" version="0.12.0"/>
     <release date="2022-11-14" version="0.11.1"/>
     <release date="2022-09-24" version="0.11.0"/>
     <release date="2022-09-08" version="0.10.1"/>

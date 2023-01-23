@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 
 """Build and populate a Plom server from a Canvas Assignment.
@@ -13,11 +13,11 @@ SpeedGrader.
 This is very much *pre-alpha*: not ready for production use, use at
 your own risk, no warranty, etc, etc.
 
-1. Create `api_secrets.py` containing
+1. Create a Canvas API key on the Canvas site, it looks something like;
    ```
-   my_key = "11224~AABBCCDDEEFF..."
+   11224~AABBCCDDEEFF...
    ```
-2. Run `python plom-server-from-canvas.py`
+2. Run `python3 plom-server-from-canvas.py`
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
 
@@ -383,9 +383,9 @@ parser.add_argument(
     action="store",
     help="""
         The API Key for talking to Canvas.
-        You can store this in a local file "api_secrets.py" as
-        a string in a variable named "my_key".
-        TODO: If blank, prompt for it?
+        You can instead set the environment variable CANVAS_API_KEY.
+        If not specified by either mechanism, you will be prompted
+        to enter it.
     """,
 )
 parser.add_argument(
@@ -466,6 +466,11 @@ parser.add_argument(
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    if hasattr(args, "api_key"):
+        args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
+        if not args.api_key:
+            args.api_key = input("Please enter the API key for Canvas: ")
+
     user = canvas_login(args.api_url, args.api_key)
 
     if args.course is None:

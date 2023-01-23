@@ -308,9 +308,16 @@ def get_parser():
         "make",
         help="Make the PDFs",
         description="""
-            Build papers and database from the test specification.  Based on the
-            spec, some of the papers may have names printed on them from the
-            classlist ("pre-named") and the remainder will be blank.""",
+            Build papers (and if necessary the database) from the test
+            specification.  Based on the classlist "paper_num" column,
+            some of the papers may have names printed on them from the
+            classlist ("pre-named") and the remainder will be blank.
+            As they are created, the prenamed papers will be inserted
+            into the prediction table with the predictor set to "prename".
+            If you want to change the prenames: (1) force upload a new
+            classlist, and (2) see the "predictions" command to erase
+            the "prename" predictor.
+        """,
     )
     spB.add_argument(
         "--no-pdf",
@@ -435,6 +442,39 @@ def get_parser():
         help="Do not upload, just create a local template file.",
     )
 
+    sp_pred = sub.add_parser(
+        "predictions",
+        help="Manipulate servers prediction lists",
+        description="""
+            Before papers are identified, there can exist various predictions
+            about which paper goes with which individual.  "Prenamed" is one
+            example, where names are pre-printed on the ID sheet.
+            Computer vision tools also make predictions based on student ID
+            numbers.
+        """,
+    )
+    group = sp_pred.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "--predictor",
+        type=str,
+        metavar="P",
+        help="Show all predictions by the predictor P.",
+    )
+    group.add_argument(
+        "--all",
+        action="store_true",
+        help="Show all predictions.",
+    )
+    group.add_argument(
+        "--erase",
+        type=str,
+        metavar="P",
+        help="""
+            Erase all predictions by the predictor P.
+            Caution: think carefully before erasing the "prename" predictor.
+        """,
+    )
+
     sp_rubric = sub.add_parser(
         "rubric",
         help="Add pre-build rubrics",
@@ -515,6 +555,7 @@ def get_parser():
         sp_class,
         sp_user,
         sp_users,
+        sp_pred,
         sp_rubric,
         sp_tags,
         sp_tag,
@@ -759,6 +800,25 @@ def main():
         else:
             print(f'Created "{f}" - edit passwords, add users as you see fit')
             print(f'Then upload with "plom-create users {f}"')
+
+    elif args.command == "predictions":
+        msgr = start_messenger(args.server, args.password)
+        try:
+            if args.predictor:
+                A = msgr.IDgetPredictionsFromPredictor(args.predictor)
+                for k, v in A.items():
+                    print(f"{k}: {v}")
+            elif args.all:
+                A = msgr.IDgetPredictions()
+                for k, v in A.items():
+                    print(f"{k}: {v}")
+            elif args.erase:
+                # TODO: send back a number: "42 predictions cleared"?
+                msgr.ID_delete_predictions_from_predictor(predictor=args.erase)
+                print(f'Erased all predictions by "{args.erase}"')
+        finally:
+            msgr.closeUser()
+            msgr.stop()
 
     elif args.command == "rubric":
         msgr = start_messenger(args.server, args.password)

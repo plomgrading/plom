@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2021 Colin B. Macdonald,
+# Copyright (C) 2021-2023 Colin B. Macdonald,
 # Copyright (C) 2021 Andrew Rechnitzer
 
 """
@@ -22,9 +22,9 @@ def McreateRubric(self, *args, **kwargs):
     return self.DB.McreateRubric(*args, **kwargs)
 
 
-def MgetRubrics(self, question_number=None):
+def MgetRubrics(self, *args, **kwargs):
     """Get all rubrics in the DB and return as list of dict. If question is specified then get only rubrics for that question."""
-    return self.DB.MgetRubrics(question_number)
+    return self.DB.MgetRubrics(*args, **kwargs)
 
 
 def MmodifyRubric(self, *args, **kwargs):

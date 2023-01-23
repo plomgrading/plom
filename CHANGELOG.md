@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* `plom-create` command line tool can list and clear paper id prediction tables.
+* Plom-Client has an "experimental" menu item: currently creates a bit of friction before using the new parameterized rubrics and absolute rubrics.
+
+### Changed
+* Possible if somewhat ill-advised to replace the prenaming after papers have been created.
+
+### Fixed
+* Fix rendering of parameterized rubrics.
+* Fix modifying group of initially non-grouped rubrics.
+* Misc fixes.
+
+
+
+## [0.12.0] - 2023-01-21
+
+### Added
 * "Tech preview" of a web-interface for configuring a Plom server.
 * Users can create "absolute rubrics" of the form "2 of 3: comment".
 * The "scope" of rubrics can be adjusted:
@@ -896,7 +912,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.11.1...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.12.0...main
+[0.12.0]: https://gitlab.com/plom/plom/-/compare/v0.11.1...v0.12.0
 [0.11.1]: https://gitlab.com/plom/plom/-/compare/v0.11.0...v0.11.1
 [0.11.0]: https://gitlab.com/plom/plom/-/compare/v0.10.1...v0.11.0
 [0.10.1]: https://gitlab.com/plom/plom/-/compare/v0.10.0...v0.10.1
