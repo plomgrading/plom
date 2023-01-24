@@ -1,4 +1,10 @@
-from django.core.management.base import BaseCommand, CommandError
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Natalie Balashov
+# Copyright (C) 2023 Colin B. Macdonald
+
+
+from django.core.management.base import BaseCommand
 
 from Preparation.services import (
     StagingClasslistCSVService,
@@ -78,12 +84,12 @@ class Command(BaseCommand):
                 "\tPrenaming is disabled, so ignoring 'paper_number' column"
             )
 
-        save_path = Path(f"classlist.csv")
+        save_path = Path("classlist.csv")
         if save_path.exists():
             self.stdout.write(f"A file exists at {save_path} - overwrite it? [y/N]")
             choice = input().lower()
             if choice != "y":
-                self.stdout.write(f"Skipping.")
+                self.stdout.write("Skipping.")
                 return
             else:
                 self.stdout.write(f"Overwriting {save_path}.")
@@ -106,10 +112,10 @@ class Command(BaseCommand):
             dest="command",
             description="Perform tasks related to uploading/downloading/deleting of a classlist.",
         )
-        sp_S = sub.add_parser("status", help="Show details of uploaded classlist")
+        sub.add_parser("status", help="Show details of uploaded classlist")
         sp_U = sub.add_parser("upload", help="Upload a classlist csv")
-        sp_D = sub.add_parser("download", help="Download the current classlist")
-        sp_R = sub.add_parser("remove", help="Remove the classlist from the server")
+        sub.add_parser("download", help="Download the current classlist")
+        sub.add_parser("remove", help="Remove the classlist from the server")
 
         sp_U.add_argument("source_csv", type=str, help="The classlist csv to upload")
         sp_U.add_argument(

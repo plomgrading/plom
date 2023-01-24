@@ -5,7 +5,7 @@
 
 import logging
 
-from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QModelIndex
+from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -16,17 +16,13 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QVBoxLayout,
     QLabel,
-    QListWidget,
     QLineEdit,
     QPushButton,
     QSizePolicy,
-    QStackedWidget,
-    QTabBar,
     QTabWidget,
     QTableView,
     QTableWidget,
     QTableWidgetItem,
-    QWidget,
 )
 
 

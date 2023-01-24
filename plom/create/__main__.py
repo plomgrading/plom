@@ -355,7 +355,7 @@ def get_parser():
             Defaults to 42.""",
     )
 
-    sp_extra = sub.add_parser(
+    sub.add_parser(
         "extra-pages",
         help="Make an extra pages PDF",
         description="""

@@ -532,8 +532,8 @@ class PageScene(QGraphicsScene):
         # after score and state are recomputed, we need to update a few things
         # the scorebox
         self.scoreBox.changeScore(self.score)
-        # TODO - this is a bit hack, but need to update the rubric-widget
-        self.parent().rubric_widget.changeMark(self.score)
+        # update the rubric-widget
+        self.parent().rubric_widget.updateLegalityOfRubrics()
         # also update the marklabel in the annotator - same text as scorebox
         self.parent().refreshDisplayedMark(self.score)
 
@@ -1675,7 +1675,7 @@ class PageScene(QGraphicsScene):
             raise ValueError("Could not unpickle whatever this is:\n  {}".format(X))
         # now make sure focus is cleared from every item
         for X in self.items():
-            X.setFocus(False)
+            X.clearFocus()
         # finish the macro
         self.undoStack.endMacro()
 
