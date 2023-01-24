@@ -555,8 +555,14 @@ class PageScene(QGraphicsScene):
             _ = m.addAction("Shift right", page_shift_func_factory(n, 1))
             if n == len(self.underImage.images):
                 _.setEnabled(False)
-            m.addAction("Rotate CCW", page_rotate_func_factory(n, -90))
-            m.addAction("Rotate CW", page_rotate_func_factory(n, 90))
+            m.addAction(
+                "\N{Anticlockwise Open Circle Arrow} Rotate CCW",
+                page_rotate_func_factory(n, -90),
+            )
+            m.addAction(
+                "\N{Clockwise Open Circle Arrow} Rotate CW",
+                page_rotate_func_factory(n, 90),
+            )
             m.addAction("Flip", page_rotate_func_factory(n, 180))
             m.addSeparator()
             m.addAction("Rearrange pages...", self.parent().rearrangePages)
