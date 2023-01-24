@@ -7,13 +7,13 @@ Backend bits n bobs to talk to the server
 """
 
 import hashlib
-from io import StringIO, BytesIO
+from io import BytesIO
 import json
 import logging
 import mimetypes
 
 import requests
-from requests_toolbelt import MultipartEncoder, MultipartDecoder
+from requests_toolbelt import MultipartEncoder
 
 from plom.baseMessenger import BaseMessenger
 from plom.scanMessenger import ScanMessenger
@@ -21,19 +21,21 @@ from plom.managerMessenger import ManagerMessenger
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
-    PlomBadTagError,
     PlomConflict,
     PlomTakenException,
-    PlomNoMoreException,
-    PlomNoSolutionException,
     PlomRangeException,
     PlomVersionMismatchException,
-    PlomLatexException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomTimeoutError,
 )
 
+
+__all__ = [
+    "Messenger",
+    "ManagerMessenger",
+    "ScanMessenger",
+]
 
 log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")

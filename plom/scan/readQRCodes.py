@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 import json
 import logging
@@ -39,7 +39,7 @@ def decode_QRs_in_image_files(where):
         stuff.extend(where.glob(f"*.{ext}"))
     N = len(stuff)
     with Pool() as p:
-        r = list(tqdm(p.imap_unordered(QRextract, stuff), total=N))
+        _ = list(tqdm(p.imap_unordered(QRextract, stuff), total=N))
     # This does the same as the following serial loop but in parallel
     # for x in glob.glob(...):
     #     QRextract(x)
@@ -204,16 +204,17 @@ def checkQRsValid(bundledir, spec):
                 msg = "Only one of three QR codes decoded."
                 # TODO: in principle could proceed, albeit dangerously
                 warnFlag = True
-                riskiness = 10
-                tgv = tgvs[0]
+                # riskiness = 10
+                # tgv = tgvs[0]
             elif len(tgvs) == 2:
                 msg = "Only two of three QR codes decoded."
                 warnFlag = True
-                riskiness = 1
-                tgv = tgvs[0]
+                # riskiness = 1
+                # tgv = tgvs[0]
             elif len(tgvs) == 3:
+                pass
                 # full consensus
-                tgv = tgvs[0]
+                # tgv = tgvs[0]
             else:  # len > 3, shouldn't be possible now
                 msg = "Too many QR codes on the page!"
                 problemFlag = True
