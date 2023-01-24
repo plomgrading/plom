@@ -62,8 +62,8 @@ def rubric_is_naked_delta(r):
     return False
 
 
-def isLegalRubric(mss, rubric, *, scene):
-    """Checks the 'legality' of the current rubric - returning one of several possible indicators
+def isLegalRubric(rubric, *, scene, version, maxMark):
+    """Checks the 'legality' of a particular rubric - returning one of several possible indicators
 
     Those states are:
     0 = incompatible - the kind of rubric is not compatible with the current state
@@ -74,22 +74,18 @@ def isLegalRubric(mss, rubric, *, scene):
     be shown (2), hidden (0, 3) and greyed out (1)
 
     Args:
-        mss (list): triple that encodes max-mark, state, and current-score.
-            "state" old unused stuff.
         rubric (dict):
 
     Keyword Args:
-        scene (PageScene):
+        scene (PageScene): we'll grab the in-use rubrics from it
+        maxMark (int):
+        version (int):
 
     Returns:
         int: 0, 1, 2, 3 as documented above.
     """
-    maxMark = mss[0]
-    score = mss[2]
-    our_version = mss[3]
-
     if rubric["versions"]:
-        if our_version not in rubric["versions"]:
+        if version not in rubric["versions"]:
             return 3
 
     if not scene:
@@ -613,9 +609,10 @@ class RubricTable(QTableWidget):
 
     def colourLegalRubric(self, r, mss):
         legal = isLegalRubric(
-            mss,
             self.selected_row_as_rubric(r),
             scene=self._parent._parent.scene,
+            version=mss[2],
+            maxMark=mss[0],
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
         colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
@@ -635,7 +632,7 @@ class RubricTable(QTableWidget):
             # self.item(r, 3).setForeground(colour_hide)
 
     def updateLegalityOfDeltas(self, mss):
-        """Style items according to their legality based on max,state and score (mss)"""
+        """Style items according to their legality"""
         for r in range(self.rowCount()):
             self.colourLegalRubric(r, mss)
 
@@ -785,7 +782,7 @@ class RubricWidget(QWidget):
 
     @property
     def mss(self):
-        return (self.maxMark, None, self.currentScore, self.version)
+        return (self.maxMark, self.currentScore, self.version)
 
     @property
     def user_tabs(self):
