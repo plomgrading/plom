@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import (
@@ -254,9 +254,7 @@ class ClientSettingsDialog(QDialog):
         flay.addWidget(moreinfo)
 
         self.checkLogFile = QCheckBox("Log to file (requires restart)")
-        self.checkLogFile.setCheckState(
-            Qt.Checked if s.get("LogToFile") else Qt.Unchecked
-        )
+        self.checkLogFile.setChecked(s.get("LogToFile", False))
         flay.addWidget(self.checkLogFile)
         flay.addWidget(QLabel("(Logs stored in {})".format(logdir)))
 
@@ -266,9 +264,7 @@ class ClientSettingsDialog(QDialog):
         flay.addRow(line)
 
         self.checkFore = QCheckBox("Force foreground upload/downloads")
-        self.checkFore.setCheckState(
-            Qt.Checked if s.get("FOREGROUND") else Qt.Unchecked
-        )
+        self.checkFore.setChecked(s.get("FOREGROUND", False))
         flay.addWidget(self.checkFore)
 
         moreinfo = QLabel(
@@ -290,12 +286,9 @@ class ClientSettingsDialog(QDialog):
         self.checkWarnMark = QCheckBox("Warn if score is inconsistent with annotations")
         flay.addWidget(self.checkWarnCom)
         flay.addWidget(self.checkWarnMark)
-        self.checkWarnCom.setCheckState(
-            Qt.Checked if s.get("CommentsWarnings") else Qt.Unchecked
-        )
-        self.checkWarnMark.setCheckState(
-            Qt.Checked if s.get("MarkWarnings") else Qt.Unchecked
-        )
+        self.checkWarnCom.setChecked(s.get("CommentsWarnings", False))
+
+        self.checkWarnMark.setChecked(s.get("MarkWarnings", False))
         if not s.get("POWERUSER"):
             self.checkWarnCom.setEnabled(False)
             self.checkWarnMark.setEnabled(False)
@@ -323,11 +316,11 @@ class ClientSettingsDialog(QDialog):
 
     def getStuff(self):
         return (
-            self.checkFore.checkState() == Qt.Checked,
+            self.checkFore.isChecked(),
             self.comboLog.currentText(),
-            self.checkLogFile.checkState() == Qt.Checked,
-            self.checkWarnCom.checkState() == Qt.Checked,
-            self.checkWarnMark.checkState() == Qt.Checked,
+            self.checkLogFile.isChecked(),
+            self.checkWarnCom.isChecked(),
+            self.checkWarnMark.isChecked(),
         )
 
 

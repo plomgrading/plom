@@ -1498,7 +1498,7 @@ class Annotator(QWidget):
             )
             if msg.exec() == QMessageBox.No:
                 return False
-            if msg.cb.checkState() == Qt.Checked:
+            if msg.cb.isChecked():
                 # Note: these are only saved if we ultimately accept
                 self.rubricWarn = False
 
@@ -1565,7 +1565,7 @@ class Annotator(QWidget):
                 )
                 if msg.exec() == QMessageBox.No:
                     return False
-                if msg.cb.checkState() == Qt.Checked:
+                if msg.cb.isChecked():
                     self.markWarn = False
         return True
 
@@ -1608,7 +1608,7 @@ class Annotator(QWidget):
                 )
                 if msg.exec() == QMessageBox.No:
                     return False
-                if msg.cb.checkState() == Qt.Checked:
+                if msg.cb.isChecked():
                     self.markWarn = False
 
         return True
