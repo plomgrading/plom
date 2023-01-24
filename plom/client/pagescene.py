@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 
+from copy import deepcopy
 from itertools import cycle
 from pathlib import Path
 import logging
@@ -306,7 +307,6 @@ class UnderlyingImages(QGraphicsItemGroup):
         """
         super().__init__()
         self.images = {}
-        self.src_img_data = image_data.copy()
         x = 0
         for n, data in enumerate(image_data):
             qir = QImageReader(str(data["filename"]))
@@ -424,8 +424,7 @@ class PageScene(QGraphicsScene):
                 example a string like "Q7", or `None` if not relevant.
         """
         super().__init__(parent)
-        # Grab filename of groupimage
-        self.src_img_data = src_img_data  # TODO: do we need this saved?
+        self.src_img_data = deepcopy(src_img_data)
         self.maxMark = maxMark
         self.score = None
         # Tool mode - initially set it to "move"
@@ -520,26 +519,26 @@ class PageScene(QGraphicsScene):
 
         def page_delete_func_factory(n):
             def page_delete():
-                data = self.underImage.src_img_data.copy()
-                data.pop(n)
-                self.parent().new_or_permuted_image_data(data)
+                self.src_img_data.pop(n)
+                # this will destroy self
+                self.parent().new_or_permuted_image_data(self.src_img_data)
 
             return page_delete
 
         def page_shift_func_factory(n, relative):
             def page_shift():
-                data = self.underImage.src_img_data.copy()
-                d = data.pop(n)
-                data.insert(n + relative, d)
-                self.parent().new_or_permuted_image_data(data)
+                d = self.src_img_data.pop(n)
+                self.src_img_data.insert(n + relative, d)
+                # this will destroy self
+                self.parent().new_or_permuted_image_data(self.src_img_data)
 
             return page_shift
 
         def page_rotate_func_factory(n, degrees):
             def page_rotate():
-                data = self.underImage.src_img_data.copy()
-                data[n]["orientation"] += degrees
-                self.parent().new_or_permuted_image_data(data)
+                self.src_img_data[n]["orientation"] += degrees
+                # this will destroy self
+                self.parent().new_or_permuted_image_data(self.src_img_data)
 
             return page_rotate
 
