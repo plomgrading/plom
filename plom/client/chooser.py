@@ -519,9 +519,9 @@ class Chooser(QDialog):
         self.ui.vDrop.setEditable(False)
         # put focus at username or password line-edit
         if len(self.ui.userLE.text()) > 0:
-            self.ui.passwordLE.setFocus(True)
+            self.ui.passwordLE.setFocus()
         else:
-            self.ui.userLE.setFocus(True)
+            self.ui.userLE.setFocus()
 
     def partial_parse_address(self):
         """If address has a port number in it, extract and move to the port box.

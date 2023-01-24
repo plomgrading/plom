@@ -1675,7 +1675,7 @@ class PageScene(QGraphicsScene):
             raise ValueError("Could not unpickle whatever this is:\n  {}".format(X))
         # now make sure focus is cleared from every item
         for X in self.items():
-            X.setFocus(False)
+            X.clearFocus()
         # finish the macro
         self.undoStack.endMacro()
 

@@ -397,7 +397,7 @@ class Manager(QWidget):
         if server:
             self.setServer(server)
 
-        self.ui.passwordLE.setFocus(True)
+        self.ui.passwordLE.setFocus()
         self.connectButtons()
         self.ui.configTab.setEnabled(False)
         self.ui.scanningAllTab.setEnabled(False)

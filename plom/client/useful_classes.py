@@ -420,7 +420,7 @@ class AddRemoveTagDialog(QDialog):
 
         buttons.accepted.connect(self.add_tag)
         buttons.rejected.connect(self.reject)
-        self.CBadd.setFocus(True)
+        self.CBadd.setFocus()
 
     def add_tag(self):
         self.return_values = ("add", self.CBadd.currentText())
