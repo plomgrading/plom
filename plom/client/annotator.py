@@ -804,7 +804,7 @@ class Annotator(QWidget):
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute
-            log.debug("adjust pages permutation output is: {}".format(perm))
+            log.debug("adjust pages permutation output is: %s", perm)
         # Workaround for memory leak Issue #1322, TODO better fix
         rearrangeView.listA.clear()
         rearrangeView.listB.clear()
@@ -831,7 +831,11 @@ class Annotator(QWidget):
                 ).strip()
                 log.error(s)
                 ErrorMsg(self, s).exec()
+        self.new_or_permuted_image_data(perm)
+        self.setEnabled(True)
 
+    def new_or_permuted_image_data(self, perm):
+        if True:
             tmp_tgv = self.tgvID
             self.closeCurrentTGV()
             stuff = self.parentMarkerUI.PermuteAndGetSamePaper(tmp_tgv, perm)
@@ -846,8 +850,6 @@ class Annotator(QWidget):
                 """
                 ErrorMsg(self, txt).exec()
             self.loadNewTGV(*stuff)
-        self.setEnabled(True)
-        return
 
     def experimental_cycle(self):
         self.scene.whichLineToDraw_next()

@@ -37,6 +37,8 @@ from PyQt5.QtWidgets import (
     QGraphicsItemGroup,
     QMessageBox,
     QUndoStack,
+    QToolButton,
+    QMenu,
 )
 from PyQt5.QtCore import Qt
 
@@ -304,6 +306,7 @@ class UnderlyingImages(QGraphicsItemGroup):
         """
         super().__init__()
         self.images = {}
+        self.src_img_data = image_data.copy()
         x = 0
         for n, data in enumerate(image_data):
             qir = QImageReader(str(data["filename"]))
@@ -443,6 +446,8 @@ class PageScene(QGraphicsScene):
         self.addItem(self.underImage)
         self.addItem(self.overMask)
 
+        self.build_page_hack_buttons()
+
         # Build scene rectangle to fit the image, and place image into it.
         self.setSceneRect(self.underImage.boundingRect())
         # initialise the undo-stack
@@ -509,6 +514,62 @@ class PageScene(QGraphicsScene):
         self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # holds the path images uploaded from annotator
         self.tempImagePath = None
+
+    def build_page_hack_buttons(self):
+        # TODO: none of these pop-up warnings if your scene is non-empty
+
+        def page_delete_func_factory(n):
+            def page_delete():
+                data = self.underImage.src_img_data.copy()
+                data.pop(n)
+                self.parent().new_or_permuted_image_data(data)
+
+            return page_delete
+
+        def page_shift_func_factory(n, relative):
+            def page_shift():
+                data = self.underImage.src_img_data.copy()
+                d = data.pop(n)
+                data.insert(n + relative, d)
+                self.parent().new_or_permuted_image_data(data)
+
+            return page_shift
+
+        def page_rotate_func_factory(n, degrees):
+            def page_rotate():
+                data = self.underImage.src_img_data.copy()
+                data[n]["orientation"] += degrees
+                self.parent().new_or_permuted_image_data(data)
+
+            return page_rotate
+
+        for n in range(len(self.underImage.images)):
+            img = self.underImage.images[n]
+            b = QToolButton(text=f"Page {n}")
+            b.setStyleSheet("background-color: #ff6666")
+            m = QMenu(b)
+            m.addAction("Remove this page", page_delete_func_factory(n))
+            _ = m.addAction("Shift left", page_shift_func_factory(n, -1))
+            if n == 0:
+                _.setEnabled(False)
+            _ = m.addAction("Shift right", page_shift_func_factory(n, 1))
+            if n == len(self.underImage.images):
+                _.setEnabled(False)
+            m.addAction("Rotate CCW", page_rotate_func_factory(n, -90))
+            m.addAction("Rotate CW", page_rotate_func_factory(n, 90))
+            m.addAction("Flip", page_rotate_func_factory(n, 180))
+            m.addSeparator()
+            m.addAction("Rearrange pages...", self.parent().rearrangePages)
+            b.setMenu(m)
+            b.setPopupMode(QToolButton.InstantPopup)
+            h = self.addWidget(b)
+            # TODO mixing pos and boundingRect: bad?
+            h.setPos(
+                img.pos().x() + img.boundingRect().width() - 100, img.pos().y() - 10
+            )
+            h.setScale(1.5)
+            # h.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+            b.setToolTip(f"Page options for page {n}")
 
     def getScore(self):
         return self.score
