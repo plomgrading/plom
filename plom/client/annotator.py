@@ -831,7 +831,7 @@ class Annotator(QWidget):
                 ).strip()
                 log.error(s)
                 ErrorMsg(self, s).exec()
-        self.new_or_permuted_image_data(perm)
+            self.new_or_permuted_image_data(perm)
         self.setEnabled(True)
 
     def new_or_permuted_image_data(self, perm):
