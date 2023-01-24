@@ -4,6 +4,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Tam Nguyen
 
 from io import BytesIO
 import logging
@@ -1092,7 +1093,7 @@ class BaseMessenger:
             return BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
             if response.status_code == 400:
-                raise PlomRangeException(response.reason) from None 
+                raise PlomRangeException(response.reason) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:

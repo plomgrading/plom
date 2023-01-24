@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2023 Tam Nguyen
 
 from aiohttp import web, MultipartReader
 
