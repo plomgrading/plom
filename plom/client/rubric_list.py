@@ -62,8 +62,8 @@ def rubric_is_naked_delta(r):
     return False
 
 
-def isLegalRubric(mss, rubric, *, scene):
-    """Checks the 'legality' of the current rubric - returning one of several possible indicators
+def isLegalRubric(rubric, *, scene, version, maxMark):
+    """Checks the 'legality' of a particular rubric - returning one of several possible indicators
 
     Those states are:
     0 = incompatible - the kind of rubric is not compatible with the current state
@@ -74,22 +74,18 @@ def isLegalRubric(mss, rubric, *, scene):
     be shown (2), hidden (0, 3) and greyed out (1)
 
     Args:
-        mss (list): triple that encodes max-mark, state, and current-score.
-            "state" old unused stuff.
         rubric (dict):
 
     Keyword Args:
-        scene (PageScene):
+        scene (PageScene): we'll grab the in-use rubrics from it
+        maxMark (int):
+        version (int):
 
     Returns:
         int: 0, 1, 2, 3 as documented above.
     """
-    maxMark = mss[0]
-    score = mss[2]
-    our_version = mss[3]
-
     if rubric["versions"]:
-        if our_version not in rubric["versions"]:
+        if version not in rubric["versions"]:
             return 3
 
     if not scene:
@@ -424,8 +420,7 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 3, QTableWidgetItem(render))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
-        # set the legality
-        self.colourLegalRubric(rc, self._parent.mss)
+        self.colourLegalRubric(rc)
         # set a tooltip over delta that tells user the type of rubric
         self.item(rc, 2).setToolTip("{}-rubric".format(rubric["kind"]))
         # set a tooltip that contains tags and meta info when someone hovers over text
@@ -611,11 +606,12 @@ class RubricTable(QTableWidget):
                 return r
         return None
 
-    def colourLegalRubric(self, r, mss):
+    def colourLegalRubric(self, r):
         legal = isLegalRubric(
-            mss,
             self.selected_row_as_rubric(r),
             scene=self._parent._parent.scene,
+            version=self._parent.version,
+            maxMark=self._parent.maxMark,
         )
         colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
         colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
@@ -634,10 +630,10 @@ class RubricTable(QTableWidget):
             # self.item(r, 2).setForeground(colour_hide)
             # self.item(r, 3).setForeground(colour_hide)
 
-    def updateLegalityOfDeltas(self, mss):
-        """Style items according to their legality based on max,state and score (mss)"""
+    def updateLegality(self):
+        """Style items according to their legality"""
         for r in range(self.rowCount()):
-            self.colourLegalRubric(r, mss)
+            self.colourLegalRubric(r)
 
     def editRow(self, tableIndex):
         r = tableIndex.row()
@@ -698,7 +694,6 @@ class RubricWidget(QWidget):
         self.username = parent.username
         self.rubrics = []
         self.maxMark = None
-        self.currentScore = None
 
         grid = QGridLayout()
         # assume our container will deal with margins
@@ -782,10 +777,6 @@ class RubricWidget(QWidget):
             self.syncB.setEnabled(True)
             # reselect the current rubric
             self.handleClick()
-
-    @property
-    def mss(self):
-        return (self.maxMark, None, self.currentScore, self.version)
 
     @property
     def user_tabs(self):
@@ -1016,7 +1007,7 @@ class RubricWidget(QWidget):
         # TODO: could add a "Open Rubric Wrangler" button to above dialog?
         # self.wrangleRubricsInteractively()
         # TODO: if adding that, it should push tabs *again* on accept but not on cancel
-        self.updateLegalityOfDeltas()
+        self.updateLegality()
 
     def wrangleRubricsInteractively(self):
         wr = RubricWrangler(
@@ -1283,6 +1274,9 @@ class RubricWidget(QWidget):
         args:
             num (int/None): the question number.
             label (str/None): the question label.
+
+        After calling this, you should call updateLegalityOfRubrics() to
+        update which rubrics are highlighted/displayed.
         """
         self.question_number = num
         self.question_label = label
@@ -1293,26 +1287,33 @@ class RubricWidget(QWidget):
         args:
             version (int/None): which version.
             maxver (int): the largest version in this assessment.
+
+        After calling this, you should call updateLegalityOfRubrics() to
+        update which rubrics are highlighted/displayed.
         """
         self.version = version
         self.max_version = maxver
 
-    def changeMark(self, currentScore, maxMark=None):
-        # Update the current and max mark and so recompute which deltas are displayed
-        if maxMark:
-            self.maxMark = maxMark
-        self.currentScore = currentScore
-        self.updateLegalityOfDeltas()
+    def setMaxMark(self, maxMark):
+        """Update the max mark.
 
-    def updateLegalityOfDeltas(self):
+        args:
+            maxMark (int):
+
+        After calling this, you should call updateLegalityOfRubrics() to
+        update which rubrics are highlighted/displayed.
+        """
+        self.maxMark = maxMark
+
+    def updateLegalityOfRubrics(self):
         """Redo the colour highlight/deemphasis in each tab"""
-        self.tabS.updateLegalityOfDeltas(self.mss)
+        self.tabS.updateLegality()
         for tab in self.get_user_tabs():
-            tab.updateLegalityOfDeltas(self.mss)
+            tab.updateLegality()
         for tab in self.get_group_tabs():
-            tab.updateLegalityOfDeltas(self.mss)
-        self.tabDeltaP.updateLegalityOfDeltas(self.mss)
-        self.tabDeltaN.updateLegalityOfDeltas(self.mss)
+            tab.updateLegality()
+        self.tabDeltaP.updateLegality()
+        self.tabDeltaN.updateLegality()
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()

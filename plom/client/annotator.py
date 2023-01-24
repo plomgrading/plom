@@ -488,9 +488,9 @@ class Annotator(QWidget):
         # update displayed score
         self.refreshDisplayedMark(self.getScore())
         # update rubrics
-        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
         self.rubric_widget.setQuestion(self.question_num, self.question_label)
         self.rubric_widget.setVersion(self.version, self.max_version)
+        self.rubric_widget.setMaxMark(self.maxMark)
         self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.
@@ -504,7 +504,7 @@ class Annotator(QWidget):
             else:  # if that rubric-mode-set fails (eg - no such rubric)
                 self.toMoveMode()
         # redo this after all the other rubric stuff initialised
-        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
+        self.rubric_widget.updateLegalityOfRubrics()
 
         # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
