@@ -114,24 +114,30 @@ class MclaimThisTask(APIView):
         plomfile = request.FILES["plomfile"]
         plomfile_data = plomfile.read().decode("utf-8")
 
-        # TODO: validation for uploaded files and other integrity checks
         try:
             mark_data, annot_data = mts.validate_and_clean_marking_data(
                 request.user, code, data, plomfile_data
             )
         except ObjectDoesNotExist as e:
-            print(e)
             raise APIException(e, code=status.HTTP_404_NOT_FOUND)
         except RuntimeError as e:
-            print(e)
             raise APIException(e, code=status.HTTP_409_CONFLICT)
         except ValidationError as e:
-            print(e)
             raise APIException(e, code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         annotation_image = files["annotation_image"]
-        img_md5sum = data["md5sum"]
-        img = mts.save_annotation_image(img_md5sum, annotation_image)
+        try:
+            img_md5sum = data["md5sum"]
+            img = mts.save_annotation_image(img_md5sum, annotation_image)
+        except FileExistsError:
+            raise APIException(
+                "Annotation image already exists.", code=status.HTTP_409_CONFLICT
+            )
+        except ValidationError:
+            raise APIException(
+                "Unsupported media type for annotation image",
+                code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            )
 
         mts.mark_task(request.user, code, mark_data["score"], img, annot_data)
 

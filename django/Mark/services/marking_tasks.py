@@ -3,6 +3,7 @@
 
 import json
 import pathlib
+import imghdr
 
 from rest_framework.exceptions import ValidationError
 
@@ -273,6 +274,12 @@ class MarkingTaskService:
             md5sum: (str) the annotation image's hash.
             annot_img: (InMemoryUploadedFlie) the annotation image file.
         """
+
+        imgtype = imghdr.what(None, h=annot_img)
+        if imgtype not in ["png", "jpg", "jpeg"]:
+            raise ValidationError(
+                f"Unsupported image type: expected png or jpg, got {imgtype}"
+            )
 
         imgs_folder = settings.BASE_DIR / "media" / "annotation_images"
         imgs_folder.mkdir(exist_ok=True)
