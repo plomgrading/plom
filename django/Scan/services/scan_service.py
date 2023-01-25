@@ -250,7 +250,7 @@ class ScanService:
         return groupings
 
     @db_task(queue="tasks")
-    def _huey_parse_qr_code(image_path):
+    def _huey_parse_qr_code(bundle, image_path):
         """
         Parse QR codes and save to database in the background
         """
@@ -259,7 +259,7 @@ class ScanService:
         code_dict = QRextract(image_path, write_to_file=False)
         page_data = scanner.parse_qr_code([code_dict])
         # error handling here
-        qr_error_checker.check_qr_codes(page_data, image_path)
+        qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
         pipr = PageImageProcessor()
         rotated = pipr.rotate_page_image(image_path, page_data)
@@ -276,7 +276,7 @@ class ScanService:
         """
         Task of parsing QR codes.
         """
-        qr_task = self._huey_parse_qr_code(image_path)
+        qr_task = self._huey_parse_qr_code(bundle, image_path)
         qr_task_obj = ParseQR(
             bundle=bundle,
             page_index=page_index,

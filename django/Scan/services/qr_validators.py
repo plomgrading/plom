@@ -12,7 +12,7 @@ from Papers.services import ImageBundleService
 
 
 class QRErrorService:
-    def check_qr_codes(self, page_data, image_path):
+    def check_qr_codes(self, page_data, image_path, bundle):
         """
         Check integrity of QR codes on a page.
         """
@@ -23,6 +23,8 @@ class QRErrorService:
         serialized_top_three_qr = self.serialize_qr_code(page_data, "top_3")
         serialized_all_qr = self.serialize_qr_code(page_data, "all")
         serialized_public_code = self.serialize_qr_code(page_data, "public_code")
+
+        self.check_image_collusion_within_bundle(img_obj, bundle)
 
         self.check_TPV_code(
             serialized_all_qr, img_obj, serialized_top_three_qr, page_data
@@ -137,6 +139,12 @@ class QRErrorService:
                     f"Magic code {public_code} did not match spec {spec_public_code}. Did you scan the wrong test?"
                 )
 
+    def check_image_collusion_within_bundle(self, image_obj, bundle):
+        all_images = StagingImage.objects.filter(bundle=bundle)
+        for img in all_images:
+            if str(img.image_hash) == str(image_obj.image_hash):
+                raise ValueError("You have duplicate page in this bundle.") 
+
     def create_error_image(self, img_obj, top_three_tpv):
         if not ErrorImage.objects.filter(hash=img_obj.image_hash).exists():
 
@@ -175,5 +183,5 @@ class QRErrorService:
             test_folder.mkdir(exist_ok=True)
             shutil.copy(img_obj.file_path, img_path)
 
-    def create_unknown_image(self, img_obj):
+    def create_unknown_image(self):
         pass
