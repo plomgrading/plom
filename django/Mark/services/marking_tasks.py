@@ -1,9 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 
+import json
+import pathlib
+
+from rest_framework.exceptions import ValidationError
+
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+
 from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
 from Papers.models import Paper
+from Rubrics.models import Rubric
 
 from Mark.models import (
     MarkingTask,
@@ -11,6 +20,7 @@ from Mark.models import (
     SurrenderMarkingTask,
     MarkAction,
     Annotation,
+    AnnotationImage,
 )
 
 
@@ -223,9 +233,6 @@ class MarkingTaskService:
         Save a user's marking attempt to the database.
         """
 
-        if not self.user_can_update_task(user, code):
-            raise RuntimeError("User cannot update task " + code)
-
         claim = self.get_latest_claim(user, code)
         editions_so_far = len(MarkAction.objects.filter(claim_action=claim))
         annotation = Annotation(
@@ -257,3 +264,81 @@ class MarkingTaskService:
         """
 
         return len(MarkingTask.objects.all())
+
+    def save_annotation_image(self, md5sum, annot_img):
+        """
+        Save an annotation image to disk and the database.
+
+        Args:
+            md5sum: (str) the annotation image's hash.
+            annot_img: (InMemoryUploadedFlie) the annotation image file.
+        """
+
+        imgs_folder = settings.BASE_DIR / "media" / "annotation_images"
+        imgs_folder.mkdir(exist_ok=True)
+        img_path = imgs_folder / f"{md5sum}.png"
+        if img_path.exists():
+            raise FileExistsError(
+                f"Annotation image with hash {md5sum} already exists."
+            )
+
+        with open(img_path, "wb") as saved_annot_image:
+            for chunk in annot_img.chunks():
+                saved_annot_image.write(chunk)
+        img = AnnotationImage(path=img_path, hash=md5sum)
+        img.save()
+
+        return img
+
+    def validate_and_clean_marking_data(self, user, code, data, plomfile):
+        """
+        Validate the incoming marking data.
+
+        Args:
+            user: reference to a User instance.
+            code (str): key of the associated task.
+            data (dict): information about the mark, rubrics, and annotation images.
+            plomfile (str): a JSON field representing annotation data.
+
+        Returns:
+            cleaned_data (dict): cleaned request data
+            annot_data (dict): annotation-image data parsed from a JSON string.
+        """
+
+        annot_data = json.loads(plomfile)
+        cleaned_data = {}
+
+        if not self.user_can_update_task(user, code):
+            raise RuntimeError("User cannot update task.")
+
+        try:
+            for val in ["pg", "ver", "score", "mtime"]:
+                elem = data[val][0]
+                cleaned_data[val] = int(elem)
+        except IndexError:
+            raise ValidationError(f"Multiple values for '{val}', expected 1.")
+        except ValueError:
+            raise ValidationError(f"Could not cast {val} as int: {elem}")
+
+        if type(data["rubrics"]) == str:
+            rubrics = [data["rubrics"]]
+        else:
+            rubrics = data["rubrics"]
+
+        for rubric_key in rubrics:
+            try:
+                rubric = Rubric.objects.get(key=rubric_key)
+            except ObjectDoesNotExist:
+                raise ValidationError(f"Invalid rubric key: {rubric_key}")
+            if "rubrics" not in cleaned_data.keys():
+                cleaned_data["rubrics"] = [rubric]
+            else:
+                cleaned_data["rubrics"].append(rubric)
+
+        all_img_data = json.loads(data["image_md5s"])
+        for image_data in all_img_data:
+            img_path = pathlib.Path(image_data["server_path"])
+            if not img_path.exists():
+                raise ValidationError("Invalid original-image in request.")
+
+        return cleaned_data, annot_data
