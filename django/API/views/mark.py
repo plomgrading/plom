@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -63,6 +63,18 @@ class QuestionMaxMark(APIView):
             exc.status_code = status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE
             exc.detail = "question out of range"
             raise exc
+
+
+class MarkingProgressCount(APIView):
+    """Responds with a list of completed/total tasks."""
+
+    def get(self, request):
+        data = request.data
+        question = data["q"]
+        version = data["v"]
+        mts = MarkingTaskService()
+        progress = mts.get_marking_progress(question, version)
+        return Response(progress, status=status.HTTP_200_OK)
 
 
 class MgetNextTask(APIView):

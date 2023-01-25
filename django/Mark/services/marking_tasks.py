@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 import json
 import pathlib
@@ -77,6 +78,30 @@ class MarkingTaskService:
         for p in all_papers:
             for i in range(1, n_questions + 1):
                 self.create_task(p, i)
+
+    def get_marking_progress(self, version, question):
+        """Send back current marking progress counts to the client.
+
+        Args:
+            question (int)
+            version (int)
+
+        Returns:
+            tuple: two integers, first the number of marked papers for
+            this question/version and the total number of papers for
+            this question/version.
+        """
+        try:
+            completed = MarkingTask.objects.filter(
+                status="complete", question_number=question, question_version=version
+            )
+            total = MarkingTask.objects.get(
+                question_number=question, question_version=version
+            )
+        except MarkingTask.DoesNotExist:
+            return (0, 0)
+
+        return (len(completed), len(total))
 
     def get_task(self, paper_number, question_number):
         """
