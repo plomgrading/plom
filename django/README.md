@@ -7,15 +7,14 @@
 
 ## Install requirements and download the repo
 
-We need to install any required python packages and get the actual webplom repo... and switch to the working branch which is "dev".
+We need to install any required python packages and get the actual webplom repo...
 
 1. Clone the WebPlom repo
-2. [Set up a virtual environment](https://docs.python.org/3/library/venv.html) 
+2. [Set up a virtual environment](https://docs.python.org/3/library/venv.html)
 3. `source env/bin/activate`
 4. Install all necessary libraries using the command below:<br>
 `pip install -r requirements.txt`
 
-5. Switch to the dev branch: `git checkout dev`
 
 ## Clean up any old migrations
 In case they cause you any headaches, you can clean up any old migrations using the
