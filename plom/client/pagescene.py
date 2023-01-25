@@ -431,27 +431,17 @@ class PageScene(QGraphicsScene):
         self._page_hack_buttons = []
         # Tool mode - initially set it to "move"
         self.mode = "move"
-        # build pixmap and graphicsitemgroup.
-        self.underImage = UnderlyingImages(self.src_img_data)
+
+        self.underImage = None
+        self.underRect = None
+        self.overMask = None
+        self.buildUnderLay()
+
         self.whichLineToDraw_init()
-        # a margin that surrounds the scanned images, with size related to the
-        # minimum dimensions of the images, but never smaller than 512 pixels
-        margin_width = max(512, 0.20 * self.underImage.min_dimension)
-        margin_rect = QRectF(self.underImage.boundingRect()).adjusted(
-            -margin_width, -margin_width, margin_width, margin_width
-        )
-        self.underRect = UnderlyingRect(margin_rect)
-        # and the overlay mask
-        self.overMask = MaskingOverlay(margin_rect, self.underImage.boundingRect())
-        self.addItem(self.underRect)
-        self.addItem(self.underImage)
-        self.addItem(self.overMask)
 
         if self.parent().is_experimental():
             self.build_page_hack_buttons()
 
-        # Build scene rectangle to fit the image, and place image into it.
-        self.setSceneRect(self.underImage.boundingRect())
         # initialise the undo-stack
         self.undoStack = QUndoStack()
 
@@ -517,6 +507,37 @@ class PageScene(QGraphicsScene):
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
+    def buildUnderLay(self):
+        if self.underImage:
+            log.debug("removing underImage")
+            self.removeItem(self.underImage)
+        if self.underRect:
+            self.removeItem(self.underRect)
+            log.debug("removing underRect")
+        if self.overMask:
+            self.removeItem(self.overMask)
+            log.debug("removing overMask")
+
+        # build pixmap and graphicsitemgroup.
+        self.underImage = UnderlyingImages(self.src_img_data)
+        # a margin that surrounds the scanned images, with size related to the
+        # minimum dimensions of the images, but never smaller than 512 pixels
+        margin_width = max(512, 0.20 * self.underImage.min_dimension)
+        margin_rect = QRectF(self.underImage.boundingRect()).adjusted(
+            -margin_width, -margin_width, margin_width, margin_width
+        )
+        self.underRect = UnderlyingRect(margin_rect)
+        # TODO: the overmask has wrong z-value on rebuild (?)
+        self.overMask = MaskingOverlay(margin_rect, self.underImage.boundingRect())
+        self.addItem(self.underRect)
+        self.addItem(self.underImage)
+        self.addItem(self.overMask)
+
+        self.build_page_hack_buttons()
+
+        # Build scene rectangle to fit the image, and place image into it.
+        self.setSceneRect(self.underImage.boundingRect())
+
     def remove_page_hack_buttons(self):
         for h in self._page_hack_buttons:
             self.removeItem(h)
@@ -534,33 +555,24 @@ class PageScene(QGraphicsScene):
                 self.src_img_data.pop(n)
                 # this will destroy self
                 self.parent().new_or_permuted_image_data(self.src_img_data)
+                # TODO: shift some existing annotations leftward before trying this:
+                # self.buildUnderLay()
 
             return page_delete
 
         def page_shift_func_factory(n, relative):
             def page_shift():
-                if self.hasAnnotations():
-                    s = "Shifting this page will clear all annotations.  Continue?"
-                    # unpleasant parent reference so Annotator parents dialog
-                    if SimpleQuestion(self.parent(), s).exec() != QMessageBox.Yes:
-                        return
                 d = self.src_img_data.pop(n)
                 self.src_img_data.insert(n + relative, d)
-                # this will destroy self
-                self.parent().new_or_permuted_image_data(self.src_img_data)
+                self.buildUnderLay()
 
             return page_shift
 
         def page_rotate_func_factory(n, degrees):
             def page_rotate():
-                if self.hasAnnotations():
-                    s = "Rotate this page will clear all annotations.  Continue?"
-                    # unpleasant parent reference so Annotator parents dialog
-                    if SimpleQuestion(self.parent(), s).exec() != QMessageBox.Yes:
-                        return
                 self.src_img_data[n]["orientation"] += degrees
-                # this will destroy self
-                self.parent().new_or_permuted_image_data(self.src_img_data)
+                # TODO: should we shift any annotations based on new page dims?
+                self.buildUnderLay()
 
             return page_rotate
 
