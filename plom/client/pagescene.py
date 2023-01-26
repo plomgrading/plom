@@ -571,7 +571,7 @@ class PageScene(QGraphicsScene):
             if n == 0:
                 _.setEnabled(False)
             _ = m.addAction("Shift right", page_shift_func_factory(n, 1))
-            if n == len(self.underImage.images):
+            if n == len(self.underImage.images) - 1:
                 _.setEnabled(False)
             m.addAction(
                 "\N{Anticlockwise Open Circle Arrow} Rotate CCW",
