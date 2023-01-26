@@ -46,6 +46,7 @@ from PyQt5.QtCore import Qt
 from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
 from plom.client.image_view_widget import mousewheel_delta_to_scale
+from plom.client.useful_classes import SimpleQuestion
 
 from .tools import (
     CrossItem,
@@ -519,6 +520,11 @@ class PageScene(QGraphicsScene):
 
         def page_delete_func_factory(n):
             def page_delete():
+                if self.hasAnnotations():
+                    s = "Removing this page will clear all annotations.  Continue?"
+                    # unpleasant parent reference so Annotator parents dialog
+                    if SimpleQuestion(self.parent(), s).exec() != QMessageBox.Yes:
+                        return
                 self.src_img_data.pop(n)
                 # this will destroy self
                 self.parent().new_or_permuted_image_data(self.src_img_data)
@@ -527,6 +533,11 @@ class PageScene(QGraphicsScene):
 
         def page_shift_func_factory(n, relative):
             def page_shift():
+                if self.hasAnnotations():
+                    s = "Shifting this page will clear all annotations.  Continue?"
+                    # unpleasant parent reference so Annotator parents dialog
+                    if SimpleQuestion(self.parent(), s).exec() != QMessageBox.Yes:
+                        return
                 d = self.src_img_data.pop(n)
                 self.src_img_data.insert(n + relative, d)
                 # this will destroy self
@@ -536,6 +547,11 @@ class PageScene(QGraphicsScene):
 
         def page_rotate_func_factory(n, degrees):
             def page_rotate():
+                if self.hasAnnotations():
+                    s = "Rotate this page will clear all annotations.  Continue?"
+                    # unpleasant parent reference so Annotator parents dialog
+                    if SimpleQuestion(self.parent(), s).exec() != QMessageBox.Yes:
+                        return
                 self.src_img_data[n]["orientation"] += degrees
                 # this will destroy self
                 self.parent().new_or_permuted_image_data(self.src_img_data)
