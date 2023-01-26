@@ -835,7 +835,7 @@ class PageScene(QGraphicsScene):
         """
         return not self.undoStack.isClean()
 
-    def areThereAnnotations(self):
+    def hasAnnotations(self):
         """
         Checks for pickleable annotations.
 

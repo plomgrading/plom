@@ -793,7 +793,7 @@ class Annotator(QWidget):
                 log.error(s)
                 ErrorMsg(self, s).exec()
 
-        has_annotations = self.scene.areThereAnnotations()
+        has_annotations = self.scene.hasAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
         rearrangeView = RearrangementViewer(
             self, testNumber, self.src_img_data, page_data, has_annotations
@@ -1423,7 +1423,7 @@ class Annotator(QWidget):
 
         """
         # do some checks before accepting things
-        if not self.scene.areThereAnnotations():
+        if not self.scene.hasAnnotations():
             msg = InfoMsg(
                 self, "Please make an annotation, even if there is no answer."
             )
