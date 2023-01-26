@@ -141,9 +141,13 @@ class QRErrorService:
 
     def check_image_collusion_within_bundle(self, image_obj, bundle):
         all_images = StagingImage.objects.filter(bundle=bundle)
+        img_hash_list = []
+        img_hash_list.append(str(image_obj.image_hash))
         for img in all_images:
-            if str(img.image_hash) == str(image_obj.image_hash):
-                raise ValueError("You have duplicate page in this bundle.") 
+            img_hash_list.append(str(image_obj.image_hash))
+        count = img_hash_list.count(str(image_obj.image_hash))
+        if count >= 3:
+            raise ValueError("You have duplicate page in this bundle.")
 
     def create_error_image(self, img_obj, top_three_tpv):
         if not ErrorImage.objects.filter(hash=img_obj.image_hash).exists():
