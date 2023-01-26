@@ -562,7 +562,10 @@ class PageScene(QGraphicsScene):
             img = self.underImage.images[n]
             b = QToolButton(text=f"Page {n}")
             b.setStyleSheet("background-color: #ff6666")
+            # parenting the menu inside the scene
             m = QMenu(b)
+            # TODO: nicer to parent by Annotr but unsupported (?) and unpredictable
+            # m = QMenu(self.parent())
             _ = m.addAction("Remove this page", page_delete_func_factory(n))
             if len(self.underImage.images) == 1:
                 _.setEnabled(False)
