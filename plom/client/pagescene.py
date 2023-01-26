@@ -563,7 +563,10 @@ class PageScene(QGraphicsScene):
             b = QToolButton(text=f"Page {n}")
             b.setStyleSheet("background-color: #ff6666")
             m = QMenu(b)
-            m.addAction("Remove this page", page_delete_func_factory(n))
+            _ = m.addAction("Remove this page", page_delete_func_factory(n))
+            if len(self.underImage.images) == 1:
+                _.setEnabled(False)
+                _.setToolTip("Cannot remove lone page")
             _ = m.addAction("Shift left", page_shift_func_factory(n, -1))
             if n == 0:
                 _.setEnabled(False)
