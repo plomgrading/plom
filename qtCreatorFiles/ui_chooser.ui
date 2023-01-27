@@ -20,7 +20,7 @@
       <bool>true</bool>
      </property>
      <property name="title">
-      <string>Server Information</string>
+      <string>Server</string>
      </property>
      <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,1,1">
       <item row="3" column="1" colspan="3">
@@ -43,7 +43,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="serverLabel">
         <property name="text">
-         <string>Server name:</string>
+         <string>Server address:</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -108,72 +108,12 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="markGBox">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="title">
-      <string>Marking information</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2" columnstretch="1,1,1,1" columnminimumwidth="0,0,0,0">
-      <item row="0" column="2">
-       <widget class="QLabel" name="vlabel">
-        <property name="text">
-         <string>Version:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <layout class="QHBoxLayout" name="pgLayout">
-        <item>
-         <widget class="QSpinBox" name="pgSB">
-          <property name="value">
-           <number>1</number>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="pgDrop"/>
-        </item>
-       </layout>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="pgLabel">
-        <property name="text">
-         <string>Question:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <layout class="QHBoxLayout" name="vLayout">
-        <item>
-         <widget class="QSpinBox" name="vSB">
-          <property name="value">
-           <number>1</number>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="vDrop"/>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
     <widget class="QGroupBox" name="userGBox">
      <property name="enabled">
       <bool>true</bool>
      </property>
      <property name="title">
-      <string>User Information</string>
+      <string>Credentials</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3" columnstretch="1,3">
       <item row="0" column="0">
@@ -205,6 +145,189 @@
          <enum>QLineEdit::Password</enum>
         </property>
        </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="markGBox">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>1</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Choose a task</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,6,2,6,2,6,1" columnstretch="3,0,0,1,0,1,1">
+      <item row="3" column="0">
+       <widget class="QPushButton" name="identifyButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>&amp;Identify</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="6">
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>32</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="pgLabel">
+        <property name="text">
+         <string>Question:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <spacer name="verticalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>4</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="4">
+       <widget class="QLabel" name="vlabel">
+        <property name="text">
+         <string>Version:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <layout class="QHBoxLayout" name="pgLayout">
+        <item>
+         <widget class="QSpinBox" name="pgSB">
+          <property name="value">
+           <number>1</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="pgDrop"/>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="5">
+       <layout class="QHBoxLayout" name="vLayout">
+        <item>
+         <widget class="QSpinBox" name="vSB">
+          <property name="value">
+           <number>1</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="vDrop"/>
+        </item>
+       </layout>
+      </item>
+      <item row="2" column="0">
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>5</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="6" column="0">
+       <spacer name="verticalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>4</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="markButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>&amp;Mark</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QPushButton" name="manageButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Manage &amp;server</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <spacer name="verticalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>5</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="1">
+       <spacer name="horizontalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>16</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </widget>
@@ -274,29 +397,30 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="taskGBox">
-     <property name="title">
-      <string>Choose task</string>
+    <widget class="QFrame" name="taskGBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,3,3,1,2">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>6</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
       <item>
-       <widget class="QPushButton" name="markButton">
+       <widget class="QPushButton" name="aboutButton">
         <property name="text">
-         <string>&amp;Mark</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="identifyButton">
-        <property name="text">
-         <string>&amp;Identify</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="manageButton">
-        <property name="text">
-         <string>Manage &amp;server</string>
+         <string>About</string>
         </property>
        </widget>
       </item>
@@ -329,15 +453,18 @@
   <tabstop>serverLE</tabstop>
   <tabstop>mportSB</tabstop>
   <tabstop>getServerInfoButton</tabstop>
+  <tabstop>userLE</tabstop>
+  <tabstop>passwordLE</tabstop>
+  <tabstop>markButton</tabstop>
   <tabstop>pgSB</tabstop>
   <tabstop>pgDrop</tabstop>
   <tabstop>vSB</tabstop>
   <tabstop>vDrop</tabstop>
-  <tabstop>userLE</tabstop>
-  <tabstop>passwordLE</tabstop>
-  <tabstop>fontSB</tabstop>
-  <tabstop>markButton</tabstop>
   <tabstop>identifyButton</tabstop>
+  <tabstop>manageButton</tabstop>
+  <tabstop>fontSB</tabstop>
+  <tabstop>optionsButton</tabstop>
+  <tabstop>aboutButton</tabstop>
   <tabstop>closeButton</tabstop>
  </tabstops>
  <resources/>
