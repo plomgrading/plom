@@ -390,6 +390,7 @@ class Manager(QWidget):
         )
         self.ui = Ui_Manager()
         self.ui.setupUi(self)
+        self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         if user:
             self.ui.userLE.setText(user)
         if password:
