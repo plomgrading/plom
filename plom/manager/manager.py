@@ -61,6 +61,7 @@ from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.useful_classes import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
 from plom.client.downloader import Downloader
+from plom.client.about_dialog import show_about_dialog
 from plom.client import ImageViewWidget
 
 from .uiFiles.ui_manager import Ui_Manager
@@ -418,6 +419,7 @@ class Manager(QWidget):
             self.downloader = Downloader(tmpdir, msgr=self.msgr)
 
     def connectButtons(self):
+        self.ui.aboutButton.clicked.connect(lambda: show_about_dialog(self))
         self.ui.loginButton.clicked.connect(self.login)
         self.ui.closeButton.clicked.connect(self.close)
         self.ui.fontSB.valueChanged.connect(self.setFont)

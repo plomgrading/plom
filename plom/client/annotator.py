@@ -64,6 +64,7 @@ from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
+from .about_dialog import show_about_dialog
 
 
 log = logging.getLogger("annotr")
@@ -202,26 +203,6 @@ class Annotator(QWidget):
         self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
         self.setToolShortCuts()
         self.setMinorShortCuts()
-
-    def show_about_dialog(self):
-        QMessageBox.about(
-            self,
-            "Plom Client",
-            dedent(
-                f"""
-                <p>Plom Client {__version__}</p>
-
-                <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
-
-                <p>Copyright &copy; 2018-2023 Andrew Rechnitzer,
-                Colin B. Macdonald, and other contributors.</p>
-
-                <p>Plom is Free Software, available under the GNU Affero
-                General Public License version 3, or at your option, any
-                later version.</p>
-                """
-            ),
-        )
 
     def getScore(self):
         return self.scene.getScore()
@@ -371,7 +352,7 @@ class Annotator(QWidget):
         (key,) = keydata["help"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"Show shortcut keys...\t{key}", self.keyPopUp)
-        m.addAction("About Plom", self.show_about_dialog)
+        m.addAction("About Plom", lambda: show_about_dialog(self))
         return m
 
     def closeCurrentTGV(self):

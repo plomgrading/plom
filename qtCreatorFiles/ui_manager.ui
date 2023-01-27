@@ -233,6 +233,13 @@
            </property>
           </spacer>
          </item>
+         <item>
+          <widget class="QPushButton" name="aboutButton">
+           <property name="text">
+            <string>About</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>
