@@ -516,8 +516,6 @@ class PageScene(QGraphicsScene):
         self.tempImagePath = None
 
     def build_page_hack_buttons(self):
-        # TODO: none of these pop-up warnings if your scene is non-empty
-
         def page_delete_func_factory(n):
             def page_delete():
                 if self.hasAnnotations():
