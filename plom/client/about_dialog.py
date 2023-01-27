@@ -19,7 +19,7 @@ def show_about_dialog(parent):
         "Plom Client",
         dedent(
             f"""
-            <h3>Plom Client {__version__}</h3>
+            <h2>Plom Client {__version__}</h2>
 
             <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
 
@@ -30,7 +30,11 @@ def show_about_dialog(parent):
             General Public License version 3, or at your option, any
             later version.</p>
 
-            <!--<h3>Contributors</h3>-->
+            <h3>Contributors</h3>
+
+            <p>Plom would not have been possible without the help of
+            <a href="https://gitlab.com/plom/plom/-/blob/main/CONTRIBUTORS">our
+            contributors</a>.</p>
 
             <h3>System info</h3>
             <p>
