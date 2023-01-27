@@ -561,6 +561,7 @@ class PageScene(QGraphicsScene):
         for n in range(len(self.underImage.images)):
             img = self.underImage.images[n]
             b = QToolButton(text=f"Page {n}")
+            # b = QToolButton(text=f"\N{Page}")
             b.setStyleSheet("background-color: #ff6666")
             # parenting the menu inside the scene
             m = QMenu(b)
@@ -590,11 +591,15 @@ class PageScene(QGraphicsScene):
             b.setMenu(m)
             b.setPopupMode(QToolButton.InstantPopup)
             h = self.addWidget(b)
-            # TODO mixing pos and boundingRect: bad?
+            h.setScale(1.8)
+            br = img.mapRectToScene(img.boundingRect())
+            wbr = h.mapRectToScene(h.boundingRect())
+            # h.setPos(br.right() - wbr.width(), br.top() - wbr.height())
+            # h.setPos(br.right() - wbr.width(), br.top())
             h.setPos(
-                img.pos().x() + img.boundingRect().width() - 100, img.pos().y() - 10
+                br.left() + br.width() / 2 - wbr.width() / 2,
+                br.top() - wbr.height() / 2,
             )
-            h.setScale(1.5)
             # h.setFlag(QGraphicsItem.ItemIgnoresTransformations)
             b.setToolTip(f"Page options for page {n}")
 
