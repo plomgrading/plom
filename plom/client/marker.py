@@ -2071,6 +2071,7 @@ class MarkerClient(QWidget):
         log.info("Rearranging image list for task {} = {}".format(task, src_img_data))
         task = "q" + task
         self.examModel.setOriginalFilesAndData(task, src_img_data)
+        # TODO, change to PageScene for single source of truth?
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
         return self.getDataForAnnotator(task)
