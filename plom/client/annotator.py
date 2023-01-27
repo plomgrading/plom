@@ -296,9 +296,11 @@ class Annotator(QWidget):
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"Show previous paper(s)\t{key}", self.show_previous)
         m.addSeparator()
-        m.addAction("View cat", self.viewCat)
-        m.addAction("View dog", self.viewNotCat)
-        m.addSeparator()
+        # TODO: bring this back, hidden behind the experimental feature
+        # if self.is_experimental():
+        # m.addAction("View cat", self.viewCat)
+        # m.addAction("View dog", self.viewNotCat)
+        # m.addSeparator()
         (key,) = keydata["show-solutions"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"View solutions\t{key}", self.viewSolutions)
