@@ -242,8 +242,7 @@ class Annotator(QWidget):
 
     def toggle_experimental(self, checked):
         if checked:
-            txt = """<p>Do you want to enable experimental and/or advanced
-                options?</p>
+            txt = """<p>Enable experimental and/or advanced options?</p>
                 <p>If you are part of a large marking team, you should
                 probably discuss with your manager before enabling.</p>
             """
