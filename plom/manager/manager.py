@@ -408,6 +408,8 @@ class Manager(QWidget):
         self.ui.reviewAllTab.setEnabled(False)
         self.ui.userAllTab.setEnabled(False)
         if self.msgr:
+            server_ver_str = self.msgr.get_server_version()
+            self.ui.infoLabel.setText(server_ver_str)
             self.initial_login()
         else:
             if password:
@@ -517,7 +519,8 @@ class Manager(QWidget):
 
         try:
             self.msgr = ManagerMessenger(server, mport)
-            self.msgr.start()
+            server_ver_str = self.msgr.start()
+            self.ui.infoLabel.setText(server_ver_str)
         except PlomBenignException as e:
             WarnMsg(self, "Could not connect to server.", info=str(e)).exec()
             self.msgr = None  # reset to avoid Issue #1622
