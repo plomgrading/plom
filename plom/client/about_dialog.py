@@ -13,6 +13,7 @@ from plom import __version__
 # TODO: requests version
 # TODO: use resources to important contributors list?
 
+
 def show_about_dialog(parent):
     QMessageBox.about(
         parent,
