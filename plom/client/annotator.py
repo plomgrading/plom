@@ -242,21 +242,30 @@ class Annotator(QWidget):
 
     def toggle_experimental(self, checked):
         if checked:
-            # popup a warning yes/no dialog
-            msg = SimpleQuestion(
-                self,
-                """<p>Do you want to enable experimental and/or advanced
+            txt = """<p>Do you want to enable experimental and/or advanced
                 options?</p>
                 <p>If you are part of a large marking team, you should
-                probably discuss with your manager before enabling this
-                option.</p>
-                """,
+                probably discuss with your manager before enabling.</p>
+            """
+            features = (
+                'None, but you can help us break stuff at <a href="https://gitlab.com/plom/plom">gitlab.com/plom/plom</a>',
             )
+            features = (
+                "Creating new absolute rubrics, such as &ldquo;2 of 3&rdquo;.",
+                "Creating new rubrics parameterized over version.",
+            )
+            info = f"""
+                <h4>Current experimental features</h4>
+                <ul>
+                  {" ".join("<li>" + x + "</li>" for x in features)}
+                </ul>
+            """
             # Image by liftarn, public domain, https://freesvg.org/put-your-fingers-in-the-gears
             res = resources.files(plom.client.icons) / "fingers_in_gears.svg"
             pix = QPixmap()
             pix.loadFromData(res.read_bytes())
-            pix = pix.scaledToHeight(200, Qt.SmoothTransformation)
+            pix = pix.scaledToHeight(256, Qt.SmoothTransformation)
+            msg = SimpleQuestion(self, txt, question=info)
             msg.setIconPixmap(pix)
             if msg.exec() == QMessageBox.No:
                 self._experimental_mode_checkbox.setChecked(False)
