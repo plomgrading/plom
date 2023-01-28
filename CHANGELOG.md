@@ -13,11 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Plom-Client has an "experimental" menu item: currently creates a bit of friction before using the new parameterized rubrics and absolute rubrics.
 
 ### Changed
-* Possible if somewhat ill-advised to replace the prenaming after papers have been created.
+* Revamp Chooser dialog, add "about" dialog.
+* Add "about" dialog and version info to Manager tool.
+* Possible (if somewhat ill-advised) to replace the prenaming after papers have been created.
+* Sadly, the "cat break" feature is currently disabled as the external service is not currently reliable.
 
 ### Fixed
 * Fix rendering of parameterized rubrics.
 * Fix modifying group of initially non-grouped rubrics.
+* Add notice to UI that macOS packaged binaries cannot reassemble, link to issue.
 * Misc fixes.
 
 
