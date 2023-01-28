@@ -28,7 +28,7 @@ lapsolver==1.1.0
 numpy==1.23.5
 opencv-python-headless==4.6.0.66
 packaging==23.0
-pandas==1.5.2
+pandas==1.5.3
 passlib==1.7.4
 peewee==3.15.4
 Pillow==9.4.0
