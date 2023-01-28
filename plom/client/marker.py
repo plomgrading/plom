@@ -1028,6 +1028,18 @@ class MarkerClient(QWidget):
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
 
+    def is_experimental(self):
+        return self.annotatorSettings["experimental"]
+
+    def set_experimental(self, x):
+        # TODO: maybe signals/slots should be used to watch for changes
+        if x:
+            log.info("Experimental/advanced mode enabled")
+            self.annotatorSettings["experimental"] = True
+        else:
+            log.info("Experimental/advanced mode disabled")
+            self.annotatorSettings["experimental"] = False
+
     def UIInitialization(self):
         """
         Startup procedure for the user interface

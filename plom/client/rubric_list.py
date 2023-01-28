@@ -1461,7 +1461,7 @@ class RubricWidget(QWidget):
             com,
             annotator_size=self._parent.size(),
             groups=self.get_group_names(),
-            experimental=self._parent.is_experimental,
+            experimental=self._parent.is_experimental(),
         )
         if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
             return
