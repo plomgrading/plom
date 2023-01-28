@@ -428,6 +428,7 @@ class PageScene(QGraphicsScene):
         self.src_img_data = deepcopy(src_img_data)
         self.maxMark = maxMark
         self.score = None
+        self._page_hack_buttons = []
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
@@ -446,7 +447,8 @@ class PageScene(QGraphicsScene):
         self.addItem(self.underImage)
         self.addItem(self.overMask)
 
-        self.build_page_hack_buttons()
+        if self.parent().is_experimental():
+            self.build_page_hack_buttons()
 
         # Build scene rectangle to fit the image, and place image into it.
         self.setSceneRect(self.underImage.boundingRect())
@@ -515,6 +517,10 @@ class PageScene(QGraphicsScene):
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
+    def remove_page_hack_buttons(self):
+        for h in self._page_hack_buttons:
+            self.removeItem(h)
+
     def build_page_hack_buttons(self):
         def page_delete_func_factory(n):
             def page_delete():
@@ -556,6 +562,7 @@ class PageScene(QGraphicsScene):
 
             return page_rotate
 
+        self.remove_page_hack_buttons()
         for n in range(len(self.underImage.images)):
             img = self.underImage.images[n]
             b = QToolButton(text=f"Page {n}")
@@ -600,6 +607,7 @@ class PageScene(QGraphicsScene):
             )
             # h.setFlag(QGraphicsItem.ItemIgnoresTransformations)
             b.setToolTip(f"Page options for page {n}")
+            self._page_hack_buttons.append(h)
 
     def getScore(self):
         return self.score

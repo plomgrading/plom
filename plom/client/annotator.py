@@ -228,6 +228,8 @@ class Annotator(QWidget):
             # TODO: some kind of signal/slot, ontoggle...
             self._cat_view_menu.setVisible(False)
             self._hold_crop_checkbox.setVisible(False)
+            if self.scene:
+                self.scene.remove_page_hack_buttons()
             return
 
         txt = """<p>Enable experimental and/or advanced options?</p>
@@ -242,6 +244,7 @@ class Annotator(QWidget):
             "Creating new rubrics parameterized over version.",
             "Persistent held region between papers.",
             "Viewing cat pics.",
+            "Page manipulation in annotator.",
         )
         info = f"""
             <h4>Current experimental features</h4>
@@ -263,6 +266,8 @@ class Annotator(QWidget):
         # TODO: some kind of signal/slot, ontoggle...
         self._cat_view_menu.setVisible(True)
         self._hold_crop_checkbox.setVisible(True)
+        if self.scene:
+            self.scene.build_page_hack_buttons()
 
     def is_experimental(self):
         return self.parentMarkerUI.is_experimental()
