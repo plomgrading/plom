@@ -226,6 +226,7 @@ class Annotator(QWidget):
             self.parentMarkerUI.set_experimental(False)
             # TODO: some kind of signal/slot, ontoggle...
             self._cat_view_menu.setVisible(False)
+            self._hold_crop_checkbox.setVisible(False)
             return
 
         txt = """<p>Enable experimental and/or advanced options?</p>
@@ -238,6 +239,7 @@ class Annotator(QWidget):
         features = (
             "Creating new absolute rubrics, such as &ldquo;2 of 3&rdquo;.",
             "Creating new rubrics parameterized over version.",
+            "Persistent held region between papers.",
             "Viewing cat pics.",
         )
         info = f"""
@@ -259,6 +261,7 @@ class Annotator(QWidget):
         self.parentMarkerUI.set_experimental(True)
         # TODO: some kind of signal/slot, ontoggle...
         self._cat_view_menu.setVisible(True)
+        self._hold_crop_checkbox.setVisible(True)
 
     def is_experimental(self):
         return self.parentMarkerUI.is_experimental()
@@ -300,10 +303,12 @@ class Annotator(QWidget):
         (key,) = keydata["crop-out"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"Uncrop\t{key}", self.uncrop_region)
-        hold_crop = m.addAction("(advanced option) Hold crop")
+        hold_crop = m.addAction("Hold crop between papers")
         hold_crop.setCheckable(True)
         hold_crop.triggered.connect(self.toggle_hold_crop)
         self._hold_crop_checkbox = hold_crop
+        if not self.is_experimental():
+            self._hold_crop_checkbox.setVisible(False)
         m.addSeparator()
         subm = m.addMenu("Tools")
         # to make these actions checkable, they need to belong to self.
