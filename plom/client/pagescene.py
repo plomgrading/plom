@@ -918,7 +918,12 @@ class PageScene(QGraphicsScene):
         returns:
             pathlib.Path: the file we just saved to, including jpg or png.
         """
+        # don't want to render these, but should we restore them after?
+        # TODO: or setVisible(False) instead of remove?
+        self.remove_page_hack_buttons()
+
         self.hideGhost()
+
         # Get the width and height of the image
         br = self.getSaveableRectangle()
         self.setSceneRect(br)
