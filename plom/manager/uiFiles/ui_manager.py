@@ -1084,6 +1084,10 @@ class Ui_Manager(object):
         self.formLayout_3.setWidget(6, QtWidgets.QFormLayout.FieldRole, self.label_27)
         spacerItem45 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.formLayout_3.setItem(7, QtWidgets.QFormLayout.FieldRole, spacerItem45)
+        self.label_31 = QtWidgets.QLabel(self.finishingTab)
+        self.label_31.setWordWrap(True)
+        self.label_31.setObjectName("label_31")
+        self.formLayout_3.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.label_31)
         self.tabWidget.addTab(self.finishingTab, "")
         self.verticalLayout_7.addWidget(self.tabWidget)
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
@@ -1289,5 +1293,6 @@ class Ui_Manager(object):
 "<p><b>Warning:</b> currently the UI will block during reassembly.  Your should be able to see a progress bar on the command-line console (if visible).</p>\n"
 "\n"
 ""))
+        self.label_31.setText(_translate("Manager", "<p>Reassembly does not work with our packaged binaries on macOS.  See <a href=\"https://gitlab.com/plom/plom/-/issues/2450\">https://gitlab.com/plom/plom/-/issues/2450</a>.</p>"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.finishingTab), _translate("Manager", "Finishing"))
         self.closeButton.setText(_translate("Manager", "&Quit"))

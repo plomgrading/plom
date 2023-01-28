@@ -2709,6 +2709,16 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </property>
         </spacer>
        </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_31">
+         <property name="text">
+          <string>&lt;p&gt;Reassembly does not work with our packaged binaries on macOS.  See &lt;a href=&quot;https://gitlab.com/plom/plom/-/issues/2450&quot;&gt;https://gitlab.com/plom/plom/-/issues/2450&lt;/a&gt;.&lt;/p&gt;</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
