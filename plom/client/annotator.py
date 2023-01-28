@@ -224,6 +224,8 @@ class Annotator(QWidget):
     def toggle_experimental(self, checked):
         if not checked:
             self.parentMarkerUI.set_experimental(False)
+            # TODO: some kind of signal/slot, ontoggle...
+            self._cat_view_menu.setVisible(False)
             return
 
         txt = """<p>Enable experimental and/or advanced options?</p>
@@ -236,6 +238,7 @@ class Annotator(QWidget):
         features = (
             "Creating new absolute rubrics, such as &ldquo;2 of 3&rdquo;.",
             "Creating new rubrics parameterized over version.",
+            "Viewing cat pics.",
         )
         info = f"""
             <h4>Current experimental features</h4>
@@ -254,6 +257,8 @@ class Annotator(QWidget):
             self._experimental_mode_checkbox.setChecked(False)
             return
         self.parentMarkerUI.set_experimental(True)
+        # TODO: some kind of signal/slot, ontoggle...
+        self._cat_view_menu.setVisible(True)
 
     def is_experimental(self):
         return self.parentMarkerUI.is_experimental()
@@ -276,8 +281,9 @@ class Annotator(QWidget):
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"Show previous paper(s)\t{key}", self.show_previous)
         m.addSeparator()
-        if self.is_experimental():
-            m.addAction("View cat", self.viewCat)
+        self._cat_view_menu = m.addAction("View cat", self.viewCat)
+        if not self.is_experimental():
+            self._cat_view_menu.setVisible(False)
         (key,) = keydata["show-solutions"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"View solutions\t{key}", self.viewSolutions)
