@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2022 Natalie Balashov
+# Copyright (C) 2022-2023 Natalie Balashov
 
 import csv
 from datetime import datetime, timezone
@@ -12,7 +12,7 @@ import subprocess
 import time
 
 from plom import specdir
-from plom.idreader.assign_prob import assemble_cost_matrix, lap_solver, greedy
+from plom.idreader.assign_prob import lap_solver, greedy
 from plom.misc_utils import datetime_to_json
 
 log = logging.getLogger("servID")
@@ -256,14 +256,9 @@ def predict_id_lap_solver(self):
             f"machine-read papers and {len(sids)} unused students."
         )
 
-    status += "\nBuilding cost matrix..."
-    t = time.process_time()
-    cost_matrix = assemble_cost_matrix(papers, sids, probabilities)
-    status += f" done in {time.process_time() - t:.02} seconds.\n"
-
     status += "\nSolving assignment problem..."
     t = time.process_time()
-    lap_predictions = lap_solver(papers, sids, cost_matrix)
+    lap_predictions = lap_solver(papers, sids, probabilities)
     status += f" done in {time.process_time() - t:.02} seconds."
 
     # temporary, for debugging/experimenting
