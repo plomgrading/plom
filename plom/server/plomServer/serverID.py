@@ -256,7 +256,7 @@ def predict_id_lap_solver(self):
             f"machine-read papers and {len(sids)} unused students."
         )
 
-    status += "\nSolving assignment problem..."
+    status += "\nBuilding cost matrix and solving assignment problem..."
     t = time.process_time()
     lap_predictions = lap_solver(papers, sids, probabilities)
     status += f" done in {time.process_time() - t:.02} seconds."

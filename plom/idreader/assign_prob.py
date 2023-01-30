@@ -72,7 +72,8 @@ def lap_solver(test_numbers, student_IDs, probabilities):
     Args:
         test_numbers (list): int, the ones we want to match.
         student_IDs (list): A list of student ID numbers.
-        cost_matrix (list): list of list of floats.
+        probabilities (dict): dict with keys that contain a test number and values that contain a probability matrix,
+        which is a list of lists of floats.
 
     Returns:
         list: triples of (`paper_number`, `student_ID`, `certainty`),
