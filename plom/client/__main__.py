@@ -169,7 +169,8 @@ def main():
         window.ui.userLE.setText(args.user)
     window.ui.passwordLE.setText(args.password)
     if args.server:
-        window.setServer(args.server)
+        window.ui.serverLE.setText(args.server)
+        window.partial_parse_address()
 
     if args.identifier:
         window.ui.identifyButton.animateClick()
