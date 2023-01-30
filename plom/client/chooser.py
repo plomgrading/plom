@@ -528,6 +528,26 @@ class Chooser(QDialog):
         else:
             self.ui.userLE.setFocus()
 
+    def _partial_parse_address_manual(self):
+        address = self.ui.serverLE.text()
+        try:
+            _addr, _port = address.split(":")
+        except ValueError:
+            return
+        if _port == "":
+            # special case handles "foo:"
+            self.ui.serverLE.setText(_addr)
+            return
+        # this special case handles "foo:1234"
+        try:
+            _port = int(_port)
+        except ValueError:
+            # special case for stuff with path "foo:1234/user"
+            self.ui.mportSB.clear()
+            return
+        self.ui.mportSB.setValue(_port)
+        self.ui.serverLE.setText(_addr)
+
     def partial_parse_address(self):
         """If address has a port number in it, extract and move to the port box.
 
@@ -539,36 +559,11 @@ class Chooser(QDialog):
         when the URL seems to have a path.
         """
         address = self.ui.serverLE.text()
-        # special case for foo:1234, which parses as a scheme for some reason
-        try:
-            _addr, _port = address.split(":")
-        except ValueError:
-            pass
-        else:
-            if "." in _addr:
-                # urlib3 handles example.com:1234
-                pass
-            elif _port == "":
-                # this special case handles "foo:"
-                self.ui.serverLE.setText(_addr)
-                return
-            else:
-                # this special case handles "foo:1234"
-                try:
-                    _port = int(_port)
-                except ValueError:
-                    # special case for stuff with path "foo:1234/user"
-                    self.ui.mportSB.clear()
-                    return
-                else:
-                    self.ui.mportSB.setValue(_port)
-                    self.ui.serverLE.setText(_addr)
-                    return
-
         try:
             parsedurl = urllib3.util.parse_url(address)
             if not parsedurl.host:
-                # don't trust any of this, e.g., "localhost:1234" parses this way
+                # "localhost:1234" parses this way: we'll do it ourselves
+                self._partial_parse_address_manual()
                 return
             if parsedurl.path:
                 # don't muck with things like "localhost:1234/base/url"
