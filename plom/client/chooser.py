@@ -138,6 +138,9 @@ class Chooser(QDialog):
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
 
+        # TODO: properly with a QValidator? maybe as part of a more general parser
+        self.ui.serverLE.editingFinished.connect(self.partial_parse_address)
+
         # set login etc from last time client ran.
         self.ui.userLE.setText(self.lastTime["user"])
         self.setServer(self.lastTime["server"])
@@ -150,13 +153,11 @@ class Chooser(QDialog):
     def setServer(self, s):
         """Set the server and port UI widgets from a string.
 
-        If port is missing, a default will be used."""
-        try:
-            s, p = s.split(":")
-        except ValueError:
-            p = Default_Port
+        If port is missing, a default will be used.  If we cannot
+        parse the url, just leave it alone.
+        """
         self.ui.serverLE.setText(s)
-        self.ui.mportSB.setValue(int(p))
+        self.partial_parse_address()
 
     def options(self):
         d = ClientSettingsDialog(
@@ -182,8 +183,7 @@ class Chooser(QDialog):
             return
 
         self.partial_parse_address()
-        server = self.ui.serverLE.text()
-        self.ui.serverLE.setText(server)
+        server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
             return
@@ -351,9 +351,11 @@ class Chooser(QDialog):
     def saveDetails(self):
         """Write the options to the config file."""
         self.lastTime["user"] = self.ui.userLE.text().strip()
-        self.lastTime["server"] = "{}:{}".format(
-            self.ui.serverLE.text().strip(), self.ui.mportSB.value()
-        )
+        server = self.ui.serverLE.text().strip()
+        port_txt = self.ui.mportSB.text()
+        if port_txt:
+            server += ":" + port_txt
+        self.lastTime["server"] = server
         self.lastTime["question"] = self.getQuestion()
         self.lastTime["v"] = self.getv()
         self.lastTime["fontSize"] = self.ui.fontSB.value()
@@ -434,8 +436,7 @@ class Chooser(QDialog):
 
     def get_server_info(self):
         self.partial_parse_address()
-        server = self.ui.serverLE.text()
-        self.ui.serverLE.setText(server)
+        server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
             return
