@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -63,6 +63,33 @@ class QuestionMaxMark(APIView):
             exc.status_code = status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE
             exc.detail = "question out of range"
             raise exc
+
+
+class MarkingProgressCount(APIView):
+    """Responds with a list of completed/total tasks.
+
+    Returns:
+        (200): returns two integers, first the number of marked papers
+            for this question/version and the total number of papers for
+            this question/version.
+        (400): malformed such as non-integers for question/version.
+        (416): question values out of range: NOT IMPLEMENTED YET.
+            (In legacy, this was thrown by the backend).
+    """
+
+    def get(self, request):
+        data = request.data
+        try:
+            question = int(data["q"])
+            version = int(data["v"])
+        except (ValueError, TypeError):
+            exc = APIException()
+            exc.status_code = status.HTTP_400_BAD_REQUEST
+            exc.detail = "question and version must be integers"
+            raise exc
+        mts = MarkingTaskService()
+        progress = mts.get_marking_progress(question, version)
+        return Response(progress, status=status.HTTP_200_OK)
 
 
 class MgetNextTask(APIView):
