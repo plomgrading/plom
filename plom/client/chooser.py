@@ -182,12 +182,12 @@ class Chooser(QDialog):
         if not pwd:
             return
 
-        self.partial_parse_address()
         server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
             return
-        port = self.ui.mportSB.value()
+        # due to special handling of blank versus default, use .text() not .value()
+        port = self.ui.mportSB.text()
 
         self.saveDetails()
 
@@ -435,12 +435,12 @@ class Chooser(QDialog):
         self.messenger = None
 
     def get_server_info(self):
-        self.partial_parse_address()
         server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
             return
-        port = self.ui.mportSB.value()
+        # due to special handling of blank versus default, use .text() not .value()
+        port = self.ui.mportSB.text()
 
         # save those settings
         # self.saveDetails()   # TODO?
@@ -534,19 +534,24 @@ class Chooser(QDialog):
         If there's a colon in the address (maybe user did not see port
         entry box or is pasting in a string), then try to extract a port
         number and put it into the entry box.
+
+        In some rare cases, we actively clear the port box, for example
+        when the URL seems to have a path.
         """
         address = self.ui.serverLE.text()
         try:
             parsedurl = urllib3.util.parse_url(address)
             if not parsedurl.host:
-                # don't trust the rest, e.g., "localhost:1234" parses this way
+                # don't trust any of this, e.g., "localhost:1234" parses this way
                 return
             if parsedurl.path:
                 # don't muck with things like "localhost:1234/base/url"
+                # activitely remove our port setting from such things
+                self.ui.mportSB.clear()
                 return
             if parsedurl.port:
                 self.ui.mportSB.setValue(int(parsedurl.port))
-            self.ui.serverLE.setText(parsedurl.host)
+                self.ui.serverLE.setText(parsedurl.host)
         except urllib3.exceptions.LocationParseError:
             return
 
