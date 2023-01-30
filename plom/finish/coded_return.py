@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Colin B. Macdonald
+# Copyright (C) 2018-2023 Colin B. Macdonald
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -68,11 +68,7 @@ def make_coded_return_webpage(use_hex, digits, salt=None, server=None, solutions
         server (str/None): server to contact or None for default
             (probably localhost).
     """
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
+    msgr = ManagerMessenger(server)
     msgr.start()
 
     spec = msgr.get_spec()

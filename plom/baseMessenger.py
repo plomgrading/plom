@@ -51,13 +51,13 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, s=None, port=Default_Port, *, verify_ssl=True, webplom=False):
+    def __init__(self, server=None, port=None, *, verify_ssl=True, webplom=False):
         """Initialize a new BaseMessenger.
 
         Args:
-            s (str/None): URL or None to default to localhost.
+            server (str/None): URL or None to default to localhost.
             port (int): What port to try to connect to.  Defaults
-                to 41984 if omitted.
+                to 41984 if omitted if there is no ":" in `server`.
 
         Keyword Arguments:
             verify_ssl (True/False/str): controls where SSL certs are
@@ -81,11 +81,13 @@ class BaseMessenger:
         self.user = None
         self.token = None
         self.default_timeout = (10, 60)
-        if s:
-            server = s
-        else:
+        if not server:
             server = "127.0.0.1"
-        self.server = "{}:{}".format(server, port)
+        if not port and ":" not in server:
+            port = Default_Port
+        if port:
+            server = f"{server}:{port}"
+        self.server = server
         self.SRmutex = threading.Lock()
         self.verify_ssl = verify_ssl
         if not self.verify_ssl:
@@ -104,8 +106,7 @@ class BaseMessenger:
         """
         log.debug("cloning a messeger, but building new session...")
         x = cls(
-            s=m.server.split(":")[0],
-            port=m.server.split(":")[1],
+            m.server,
             verify_ssl=m.verify_ssl,
             webplom=m.webplom,
         )

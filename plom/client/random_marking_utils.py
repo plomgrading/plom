@@ -303,11 +303,7 @@ def do_rando_marking(server, user, password):
     """
     global Qapp
 
-    if server and ":" in server:
-        s, p = server.split(":")
-        messenger = Messenger(s, port=p)
-    else:
-        messenger = Messenger(server)
+    messenger = Messenger(server)
     messenger.start()
 
     try:

@@ -71,11 +71,7 @@ def do_rando_identifying(server, user, password):
     returns:
         int: 0 on success, non-zero on error/unexpected.
     """
-    if server and ":" in server:
-        s, p = server.split(":")
-        messenger = Messenger(s, port=p)
-    else:
-        messenger = Messenger(server)
+    messenger = Messenger(server)
     messenger.start()
 
     try:
