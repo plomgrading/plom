@@ -132,7 +132,7 @@ class Chooser(QDialog):
         self.ui.closeButton.clicked.connect(self.close)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
-        self.ui.getServerInfoButton.clicked.connect(self.getInfo)
+        self.ui.getServerInfoButton.clicked.connect(self.get_server_info)
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
@@ -172,7 +172,7 @@ class Chooser(QDialog):
         self.lastTime["MarkWarnings"] = stuff[4]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
-    def validate(self, which_subapp):
+    def launch_task(self, which_subapp):
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
         if not user:
@@ -263,7 +263,7 @@ class Chooser(QDialog):
                 # harmless probably useless pause, in case Issue #2328 was real
                 time.sleep(0.25)
                 # try again
-                self.validate(which_subapp)
+                self.launch_task(which_subapp)
                 return
             self.messenger = None
             return
@@ -340,13 +340,13 @@ class Chooser(QDialog):
             raise RuntimeError("Invalid subapplication value")
 
     def run_marker(self):
-        self.validate("Marker")
+        self.launch_task("Marker")
 
     def run_identifier(self):
-        self.validate("Identifier")
+        self.launch_task("Identifier")
 
     def run_manager(self):
-        self.validate("Manager")
+        self.launch_task("Manager")
 
     def saveDetails(self):
         """Write the options to the config file."""
@@ -432,7 +432,7 @@ class Chooser(QDialog):
             self.messenger.stop()
         self.messenger = None
 
-    def getInfo(self):
+    def get_server_info(self):
         self.partial_parse_address()
         server = self.ui.serverLE.text()
         self.ui.serverLE.setText(server)
