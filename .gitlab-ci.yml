@@ -120,7 +120,7 @@ copyright_year:
     - echo "ensure we have the main branch for comparing"
     - git fetch origin main
     - git checkout main
-    - git checkout $CI_COMMIT_BRANCH
+    - git checkout $CI_COMMIT_BRANCH --
     - git branch -avv
   script:
     - echo "Considering the following commits to this branch (since main):"
@@ -128,6 +128,7 @@ copyright_year:
     - echo "Those commits touch the following files:"
     - git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} -- | uniq -u
     - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only origin/main..$CI_COMMIT_BRANCH --`
+    - echo "Note that there are some files that do not have/need copyright headers"
   allow_failure: true
 
 
@@ -507,6 +508,7 @@ fullworkflow:
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
     - python3 -m plom.create.exam_scribbler
+    - plom-create rubric --demo
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi

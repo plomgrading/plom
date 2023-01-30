@@ -2,6 +2,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from pathlib import Path
 
@@ -133,7 +134,7 @@ def test_get_digit_box(tmpdir):
     with working_directory(tmpdir):
         probs = compute_probabilities(id_imgs, 0.15, 0.9, 8)
         cost_matrix = assemble_cost_matrix(test_nums, ids, probs)
-        pred = lap_solver(test_nums, ids, cost_matrix)
+        pred = lap_solver(test_nums, ids, probs)
 
     for P, S in zip(pred, miniclass):
         assert P[1] == S["id"]

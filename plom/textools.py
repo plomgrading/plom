@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 
 """Tools for working with TeX"""
@@ -111,7 +111,7 @@ def texFragmentToPNG(fragment, *, dpi=225):
         #   - https://trac.sagemath.org/ticket/6022
         #   - https://www.ghostscript.com/doc/9.54.0/Use.htm
         if False:
-            convertIt2 = subprocess.run(
+            convertIt = subprocess.run(
                 [
                     "gs",
                     "-dSAFER",  # Give gs permission to modify filesystem

@@ -532,8 +532,8 @@ class PageScene(QGraphicsScene):
         # after score and state are recomputed, we need to update a few things
         # the scorebox
         self.scoreBox.changeScore(self.score)
-        # TODO - this is a bit hack, but need to update the rubric-widget
-        self.parent().rubric_widget.changeMark(self.score)
+        # update the rubric-widget
+        self.parent().rubric_widget.updateLegalityOfRubrics()
         # also update the marklabel in the annotator - same text as scorebox
         self.parent().refreshDisplayedMark(self.score)
 
@@ -1573,7 +1573,9 @@ class PageScene(QGraphicsScene):
             # self.rubricDelta = "0"
             # self.rubricKind = "neutral"
             # self.mousePressRubric(e)
-            log.error("Issue #2417: Drag-drop gave plain text but no way to add: {txt}")
+            log.error(
+                f"Issue #2417: Drag-drop gave plain text but no way to add: {txt}"
+            )
         elif e.mimeData().hasFormat(
             "application/x-qabstractitemmodeldatalist"
         ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
@@ -1673,7 +1675,7 @@ class PageScene(QGraphicsScene):
             raise ValueError("Could not unpickle whatever this is:\n  {}".format(X))
         # now make sure focus is cleared from every item
         for X in self.items():
-            X.setFocus(False)
+            X.clearFocus()
         # finish the macro
         self.undoStack.endMacro()
 
@@ -2415,7 +2417,7 @@ class PageScene(QGraphicsScene):
         rubrics.append(rubric)
 
         try:
-            N = compute_score(rubrics, self.maxMark)
+            compute_score(rubrics, self.maxMark)
         except ValueError:
             return False
         except PlomInconsistentRubric:
@@ -2428,8 +2430,9 @@ class PageScene(QGraphicsScene):
 
         Args:
             rubric (dict): must have at least the keys and values::
-                - value (str): TODO should be int/float?
-                - delta (str): a string displaying the value of the rubric.
+                - value (int):
+                - out_of (int):
+                - display_delta (str): a string displaying the value of the rubric.
                 - text (str): the text in the rubric.
                 - id (int): the id of the rubric.
                 - kind (str): ``"absolute"``, ``"neutral"``, etc.

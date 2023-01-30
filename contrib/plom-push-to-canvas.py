@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 
 """Upload reassembled Plom papers and grades to Canvas.
@@ -12,16 +12,16 @@ Overview:
   1. Finish grading
   2. Run `plom-finish csv` and `plom-finish reassemble`.
   3. Copy this script into the current directory.
-  4. Create `api_secrets.py` containing:
-     ```
-     my_key = "11224~AABBCCDDEEFF..."
-     ```
-     Place it in the current directory.
-  5. Run this script and follow the interactive menus:
+  4. Run this script and follow the interactive menus:
      ```
      ./plom-push-to-canvas.py --dry-run
      ```
      It will output what would be uploaded.
+  5. Note that you can provide command line arguments and/or
+     set environment variables to avoid the interactive prompts:
+     ```
+     ./plom-push-to-canvas.py --help
+     ```
   6. Run it again for real:
      ```
      ./plom-push-to-canvas.py --course xxxxxx --assignment xxxxxxx --no-section 2>&1 | tee push.log
@@ -40,6 +40,7 @@ the "TA Grader" role: https://gitlab.com/plom/plom/-/issues/2338
 """
 
 import argparse
+import os
 from pathlib import Path
 import random
 import string
@@ -67,7 +68,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.1.0"
+__script_version__ = "0.2.0"
 
 
 def sis_id_to_student_dict(student_list):
@@ -134,9 +135,9 @@ parser.add_argument(
     action="store",
     help="""
         The API Key for talking to Canvas.
-        You can store this in a local file "api_secrets.py" as
-        a string in a variable named "my_key".
-        TODO: If blank, prompt for it?
+        You can instead set the environment variable CANVAS_API_KEY.
+        If not specified by either mechanism, you will be prompted
+        to enter it.
     """,
 )
 parser.add_argument(
@@ -205,6 +206,11 @@ parser.add_argument(
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    if hasattr(args, "api_key"):
+        args.api_key = args.api_key or os.environ.get("CANVAS_API_KEY")
+        if not args.api_key:
+            args.api_key = input("Please enter the API key for Canvas: ")
+
     user = canvas_login(args.api_url, args.api_key)
 
     if args.course is None:

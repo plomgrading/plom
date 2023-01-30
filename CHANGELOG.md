@@ -9,10 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+
+
+
+## [0.12.0] - 2023-01-27
+
+### Added
+* `plom-create` command line tool can list and clear paper id prediction tables.
+* Plom-Client has an "experimental" menu item: currently creates a bit of friction before using the new parameterized rubrics and absolute rubrics.
+
+### Changed
+* Revamp Chooser dialog, add "about" dialog.
+* Add "about" dialog and version info to Manager tool.
+* Possible (if somewhat ill-advised) to replace the prenaming after papers have been created.
+* Sadly, the "cat break" feature is currently disabled as the external service is not currently reliable.
+
+### Fixed
+* Fix rendering of parameterized rubrics.
+* Fix modifying group of initially non-grouped rubrics.
+* Add notice to UI that macOS packaged binaries cannot reassemble, link to issue.
+* Misc fixes.
+
+
+## [0.12.0] - 2023-01-21
+
+### Added
 * "Tech preview" of a web-interface for configuring a Plom server.
-* Support for external databases.
-* Rubrics can be version-specific.
+* Users can create "absolute rubrics" of the form "2 of 3: comment".
+* The "scope" of rubrics can be adjusted:
+    - Rubrics can be version-specific.
+    - Rubrics can be parameterized using per-version textual substitutions.
+    - Rubrics can be organized into groups such as "(a)" which correspond to
+      shared tabs.
+    - Rubrics can be made "exclusive" within a group: at most one rubric can
+      be used from each exclusive group.
 * Manager can "bulk-forgive" missing do-not-mark pages.
+* Support for external databases.
 
 ### Changed
 * Server stores annotation data in the database instead of in `.plom` files.
@@ -889,7 +926,9 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.11.1...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.12.1...main
+[0.12.1]: https://gitlab.com/plom/plom/-/compare/v0.12.0...v0.12.1
+[0.12.0]: https://gitlab.com/plom/plom/-/compare/v0.11.1...v0.12.0
 [0.11.1]: https://gitlab.com/plom/plom/-/compare/v0.11.0...v0.11.1
 [0.11.0]: https://gitlab.com/plom/plom/-/compare/v0.10.1...v0.11.0
 [0.10.1]: https://gitlab.com/plom/plom/-/compare/v0.10.0...v0.10.1

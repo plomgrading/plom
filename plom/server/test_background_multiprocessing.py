@@ -2,8 +2,6 @@
 # Copyright (C) 2021-2023 Colin B. Macdonald
 
 import os
-from pathlib import Path
-from pytest import raises
 
 from plom.server import PlomLiteDemoServer
 

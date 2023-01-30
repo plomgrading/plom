@@ -64,6 +64,7 @@ from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
+from .about_dialog import show_about_dialog
 
 
 log = logging.getLogger("annotr")
@@ -203,26 +204,6 @@ class Annotator(QWidget):
         self.setToolShortCuts()
         self.setMinorShortCuts()
 
-    def show_about_dialog(self):
-        QMessageBox.about(
-            self,
-            "Plom Client",
-            dedent(
-                f"""
-                <p>Plom Client {__version__}</p>
-
-                <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
-
-                <p>Copyright &copy; 2018-2023 Andrew Rechnitzer,
-                Colin B. Macdonald, and other contributors.</p>
-
-                <p>Plom is Free Software, available under the GNU Affero
-                General Public License version 3, or at your option, any
-                later version.</p>
-                """
-            ),
-        )
-
     def getScore(self):
         return self.scene.getScore()
 
@@ -239,6 +220,43 @@ class Annotator(QWidget):
         else:
             log.debug("Released crop")
             self.held_crop_rectangle_data = None
+
+    def toggle_experimental(self, checked):
+        if checked:
+            txt = """<p>Enable experimental and/or advanced options?</p>
+                <p>If you are part of a large marking team, you should
+                probably discuss with your manager before enabling.</p>
+            """
+            features = (
+                'None, but you can help us break stuff at <a href="https://gitlab.com/plom/plom">gitlab.com/plom/plom</a>',
+            )
+            features = (
+                "Creating new absolute rubrics, such as &ldquo;2 of 3&rdquo;.",
+                "Creating new rubrics parameterized over version.",
+            )
+            info = f"""
+                <h4>Current experimental features</h4>
+                <ul>
+                  {" ".join("<li>" + x + "</li>" for x in features)}
+                </ul>
+            """
+            # Image by liftarn, public domain, https://freesvg.org/put-your-fingers-in-the-gears
+            res = resources.files(plom.client.icons) / "fingers_in_gears.svg"
+            pix = QPixmap()
+            pix.loadFromData(res.read_bytes())
+            pix = pix.scaledToHeight(256, Qt.SmoothTransformation)
+            msg = SimpleQuestion(self, txt, question=info)
+            msg.setIconPixmap(pix)
+            if msg.exec() == QMessageBox.No:
+                self._experimental_mode_checkbox.setChecked(False)
+                return
+            log.info("Experimental/advanced mode enabled")
+        else:
+            log.info("Experimental/advanced mode disabled")
+
+    @property
+    def is_experimental(self):
+        return self._experimental_mode_checkbox.isChecked()
 
     def buildHamburger(self):
         # TODO: use QAction, share with other UI?
@@ -258,9 +276,11 @@ class Annotator(QWidget):
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"Show previous paper(s)\t{key}", self.show_previous)
         m.addSeparator()
-        m.addAction("View cat", self.viewCat)
-        m.addAction("View dog", self.viewNotCat)
-        m.addSeparator()
+        # TODO: bring this back, hidden behind the experimental feature
+        # if self.is_experimental():
+        # m.addAction("View cat", self.viewCat)
+        # m.addAction("View dog", self.viewNotCat)
+        # m.addSeparator()
         (key,) = keydata["show-solutions"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"View solutions\t{key}", self.viewSolutions)
@@ -327,6 +347,10 @@ class Annotator(QWidget):
             self.change_annotation_colour,
         )
         m.addSeparator()
+        x = m.addAction("Experimental features")
+        x.setCheckable(True)
+        x.triggered.connect(self.toggle_experimental)
+        self._experimental_mode_checkbox = x
         m.addAction("Synchronise rubrics", self.refreshRubrics)
         (key,) = keydata["toggle-wide-narrow"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
@@ -338,7 +362,7 @@ class Annotator(QWidget):
         (key,) = keydata["help"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"Show shortcut keys...\t{key}", self.keyPopUp)
-        m.addAction("About Plom", self.show_about_dialog)
+        m.addAction("About Plom", lambda: show_about_dialog(self))
         return m
 
     def closeCurrentTGV(self):
@@ -455,9 +479,9 @@ class Annotator(QWidget):
         # update displayed score
         self.refreshDisplayedMark(self.getScore())
         # update rubrics
-        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
         self.rubric_widget.setQuestion(self.question_num, self.question_label)
         self.rubric_widget.setVersion(self.version, self.max_version)
+        self.rubric_widget.setMaxMark(self.maxMark)
         self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.
@@ -471,7 +495,7 @@ class Annotator(QWidget):
             else:  # if that rubric-mode-set fails (eg - no such rubric)
                 self.toMoveMode()
         # redo this after all the other rubric stuff initialised
-        self.rubric_widget.changeMark(self.getScore(), self.maxMark)
+        self.rubric_widget.updateLegalityOfRubrics()
 
         # Very last thing = unpickle scene from plomDict if there is one
         if plomDict is not None:
@@ -1465,7 +1489,7 @@ class Annotator(QWidget):
             )
             if msg.exec() == QMessageBox.No:
                 return False
-            if msg.cb.checkState() == Qt.Checked:
+            if msg.cb.isChecked():
                 # Note: these are only saved if we ultimately accept
                 self.rubricWarn = False
 
@@ -1532,7 +1556,7 @@ class Annotator(QWidget):
                 )
                 if msg.exec() == QMessageBox.No:
                     return False
-                if msg.cb.checkState() == Qt.Checked:
+                if msg.cb.isChecked():
                     self.markWarn = False
         return True
 
@@ -1575,7 +1599,7 @@ class Annotator(QWidget):
                 )
                 if msg.exec() == QMessageBox.No:
                     return False
-                if msg.cb.checkState() == Qt.Checked:
+                if msg.cb.isChecked():
                     self.markWarn = False
 
         return True
