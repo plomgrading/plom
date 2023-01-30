@@ -537,6 +537,12 @@ class Chooser(QDialog):
         address = self.ui.serverLE.text()
         try:
             parsedurl = urllib3.util.parse_url(address)
+            if not parsedurl.host:
+                # don't trust the rest, e.g., "localhost:1234" parses this way
+                return
+            if parsedurl.path:
+                # don't muck with things like "localhost:1234/base/url"
+                return
             if parsedurl.port:
                 self.ui.mportSB.setValue(int(parsedurl.port))
             self.ui.serverLE.setText(parsedurl.host)
