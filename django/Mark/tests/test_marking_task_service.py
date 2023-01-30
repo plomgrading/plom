@@ -86,7 +86,7 @@ class MarkingTaskServiceTests(TestCase):
 
     def test_get_first_filter(self):
         """
-        Test MarkingTaskService.get_first_available_task() with a specified question and verion
+        Test MarkingTaskService.get_first_available_task() with a specified question and version
         """
 
         task1 = baker.make(
