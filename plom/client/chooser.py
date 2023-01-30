@@ -187,7 +187,7 @@ class Chooser(QDialog):
         if not server:
             log.warning("No server URI")
             return
-        mport = self.ui.mportSB.value()
+        port = self.ui.mportSB.value()
 
         self.saveDetails()
 
@@ -204,9 +204,11 @@ class Chooser(QDialog):
 
         if not self.messenger:
             if which_subapp == "Manager":
-                self.messenger = ManagerMessenger(server, mport, webplom=self.webplom)
+                self.messenger = ManagerMessenger(
+                    server, port=port, webplom=self.webplom
+                )
             else:
-                self.messenger = Messenger(server, mport, webplom=self.webplom)
+                self.messenger = Messenger(server, port=port, webplom=self.webplom)
         try:
             try:
                 server_ver_str = self.messenger.start()
@@ -437,7 +439,7 @@ class Chooser(QDialog):
         if not server:
             log.warning("No server URI")
             return
-        mport = self.ui.mportSB.value()
+        port = self.ui.mportSB.value()
 
         # save those settings
         # self.saveDetails()   # TODO?
@@ -447,7 +449,7 @@ class Chooser(QDialog):
         # self.ui.infoLabel.repaint()
 
         if not self.messenger:
-            self.messenger = Messenger(server, mport, webplom=self.webplom)
+            self.messenger = Messenger(server, port=port, webplom=self.webplom)
 
         try:
             try:

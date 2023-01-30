@@ -51,7 +51,7 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, server=None, port=None, *, verify_ssl=True, webplom=False):
+    def __init__(self, server=None, *, port=None, verify_ssl=True, webplom=False):
         """Initialize a new BaseMessenger.
 
         Args:

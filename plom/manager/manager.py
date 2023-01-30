@@ -518,10 +518,10 @@ class Manager(QWidget):
         self.partial_parse_address()
         server = self.ui.serverLE.text()
         self.ui.serverLE.setText(server)
-        mport = self.ui.mportSB.value()
+        port = self.ui.mportSB.value()
 
         try:
-            self.msgr = ManagerMessenger(server, mport)
+            self.msgr = ManagerMessenger(server, port=port)
             server_ver_str = self.msgr.start()
             self.ui.infoLabel.setText(server_ver_str)
         except PlomBenignException as e:
