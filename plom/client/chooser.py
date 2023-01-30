@@ -121,6 +121,7 @@ class Chooser(QDialog):
 
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
+        self.ui.mportSB.setValue(int(Default_Port))
         # Append version to window title
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         self.ui.markButton.clicked.connect(self.run_marker)
