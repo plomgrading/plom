@@ -7,9 +7,10 @@
 
 set -e
 
-echo "Begone evil migration droppings!"
-GLOBIGNORE="__init__.py" ls **/migrations/*.py
-# GLOBIGNORE="__init__.py" rm -f **/migrations/*.py
+echo "Begone evil migration droppings:"
+ls **/migrations/*.py | grep -v __init__.py
+EVIL=`ls **/migrations/*.py | grep -v __init__.py`
+rm -rf $EVIL
 
 rm -f db.sqlite3
 rm -f huey/huey_db.*
