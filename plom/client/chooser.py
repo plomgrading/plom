@@ -211,27 +211,8 @@ class Chooser(QDialog):
                 )
             else:
                 self.messenger = Messenger(server, port=port, webplom=self.webplom)
-        try:
-            try:
-                server_ver_str = self.messenger.start()
-            except PlomSSLError as e:
-                msg = WarningQuestion(
-                    self,
-                    "SSL error: cannot verify the identity of the server.",
-                    "Do you want to disable SSL certificate verification?  Not recommended.",
-                    details=f"{e}",
-                )
-                msg.setDefaultButton(QMessageBox.No)
-                if msg.exec() == QMessageBox.No:
-                    self.messenger = None
-                    return
-                self.messenger.force_ssl_unverified()
-                server_ver_str = self.messenger.start()
-        except PlomBenignException as e:
-            WarnMsg(
-                self, "Could not connect to server:", info=f"{e}", info_pre=False
-            ).exec()
-            self.messenger = None
+
+        if not self._pre_login_connection():
             return
 
         try:
@@ -278,34 +259,6 @@ class Chooser(QDialog):
             ).exec()
             self.messenger = None
             return
-
-        try:
-            srv_ver, = re.findall(r"Plom server version (\S+)", server_ver_str)
-        except ValueError:
-            WarnMsg(
-                self,
-                "Unxpected server response on version query.",
-                details=server_ver_str.strip(),
-            ).exec()
-            self.messenger = None
-            return
-        if Version(__version__) < Version(srv_ver):
-            msg = WarningQuestion(
-                self,
-                f"Your client version {__version__} is older than the server {srv_ver}:"
-                " you may want to consider upgrading.",
-                question="Do you want to continue?",
-                details=(
-                    f"You have Plom Client {__version__} with API {self.APIVersion}"
-                    f"\nServer version string: “{server_ver_str}”\n"
-                    f"Regex-extracted server version: {srv_ver}."
-                ),
-            )
-            if msg.exec() != QMessageBox.Yes:
-                self.messenger.closeUser()
-                self.messenger.stop()
-                self.messenger = None
-                return
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
@@ -444,24 +397,7 @@ class Chooser(QDialog):
             self.messenger.stop()
         self.messenger = None
 
-    def get_server_info(self):
-        server = self.ui.serverLE.text().strip()
-        if not server:
-            log.warning("No server URI")
-            return
-        # due to special handling of blank versus default, use .text() not .value()
-        port = self.ui.mportSB.text()
-
-        # save those settings
-        # self.saveDetails()   # TODO?
-
-        # TODO: might be nice, but needs another thread?
-        # self.ui.infoLabel.setText("connecting...")
-        # self.ui.infoLabel.repaint()
-
-        if not self.messenger:
-            self.messenger = Messenger(server, port=port, webplom=self.webplom)
-
+    def _pre_login_connection(self):
         try:
             try:
                 server_ver_str = self.messenger.start()
@@ -475,7 +411,7 @@ class Chooser(QDialog):
                 msg.setDefaultButton(QMessageBox.No)
                 if msg.exec() == QMessageBox.No:
                     self.messenger = None
-                    return
+                    return False
                 self.messenger.force_ssl_unverified()
                 server_ver_str = self.messenger.start()
         except PlomBenignException as e:
@@ -483,10 +419,10 @@ class Chooser(QDialog):
                 self, "Could not connect to server:", info=f"{e}", info_pre=False
             ).exec()
             self.messenger = None
-            return
+            return False
 
         try:
-            srv_ver, = re.findall(r"Plom server version (\S+)", server_ver_str)
+            (srv_ver,) = re.findall(r"Plom server version (\S+)", server_ver_str)
         except ValueError:
             self.ui.infoLabel.setText(
                 "Unexpected response: " + server_ver_str.strip()[:15]
@@ -497,11 +433,11 @@ class Chooser(QDialog):
                 details=server_ver_str.strip(),
             ).exec()
             self.messenger = None
-            return
+            return False
         self.ui.infoLabel.setText(server_ver_str)
         if Version(__version__) < Version(srv_ver):
             self.ui.infoLabel.setText(server_ver_str + "\nWARNING: old client!")
-            WarnMsg(
+            msg = WarnMsg(
                 self,
                 f"Your client version {__version__} is older than the server {srv_ver}:"
                 " you may want to consider upgrading.",
@@ -510,7 +446,27 @@ class Chooser(QDialog):
                     f"\nServer version string: “{server_ver_str}”\n"
                     f"Regex-extracted server version: {srv_ver}."
                 ),
-            ).exec()
+            )
+            msg.exec()
+        return True
+
+    def get_server_info(self):
+        server = self.ui.serverLE.text().strip()
+        if not server:
+            log.warning("No server URI")
+            return
+        # due to special handling of blank versus default, use .text() not .value()
+        port = self.ui.mportSB.text()
+
+        # TODO: might be nice, but needs another thread?
+        # self.ui.infoLabel.setText("connecting...")
+        # self.ui.infoLabel.repaint()
+
+        if not self.messenger:
+            self.messenger = Messenger(server, port=port, webplom=self.webplom)
+
+        if not self._pre_login_connection():
+            return
 
         try:
             spec = self.messenger.get_spec()
