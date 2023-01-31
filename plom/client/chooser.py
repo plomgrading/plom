@@ -15,6 +15,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import logging
 from pathlib import Path
+import re
 import sys
 import tempfile
 import time
@@ -278,8 +279,16 @@ class Chooser(QDialog):
             self.messenger = None
             return
 
-        # fragile, use a regex?
-        srv_ver = server_ver_str.split()[3]
+        try:
+            srv_ver, = re.findall(r"Plom server version (\S+)", server_ver_str)
+        except ValueError:
+            WarnMsg(
+                self,
+                "Unxpected server response on version query.",
+                details=server_ver_str.strip(),
+            ).exec()
+            self.messenger = None
+            return
         if Version(__version__) < Version(srv_ver):
             msg = WarningQuestion(
                 self,
@@ -475,10 +484,21 @@ class Chooser(QDialog):
             ).exec()
             self.messenger = None
             return
-        self.ui.infoLabel.setText(server_ver_str)
 
-        # fragile, use a regex?
-        srv_ver = server_ver_str.split()[3]
+        try:
+            srv_ver, = re.findall(r"Plom server version (\S+)", server_ver_str)
+        except ValueError:
+            self.ui.infoLabel.setText(
+                "Unexpected response: " + server_ver_str.strip()[:15]
+            )
+            WarnMsg(
+                self,
+                "Unxpected server response on version query.",
+                details=server_ver_str.strip(),
+            ).exec()
+            self.messenger = None
+            return
+        self.ui.infoLabel.setText(server_ver_str)
         if Version(__version__) < Version(srv_ver):
             self.ui.infoLabel.setText(server_ver_str + "\nWARNING: old client!")
             WarnMsg(
