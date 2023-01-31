@@ -564,6 +564,7 @@ class PageScene(QGraphicsScene):
             def page_shift():
                 d = self.src_img_data.pop(n)
                 self.src_img_data.insert(n + relative, d)
+                self.parent().report_new_or_permuted_image_data(self.src_img_data)
                 self.buildUnderLay()
 
             return page_shift
@@ -571,6 +572,7 @@ class PageScene(QGraphicsScene):
         def page_rotate_func_factory(n, degrees):
             def page_rotate():
                 self.src_img_data[n]["orientation"] += degrees
+                self.parent().report_new_or_permuted_image_data(self.src_img_data)
                 # TODO: should we shift any annotations based on new page dims?
                 self.buildUnderLay()
 

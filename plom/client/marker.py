@@ -2058,19 +2058,27 @@ class MarkerClient(QWidget):
 
         return data
 
-    def PermuteAndGetSamePaper(self, task, src_img_data):
+    def permute_and_get_same_paper(self, task, src_img_data, *, get=True):
         """User has reorganized pages of an exam.
 
         Args:
             task (str): the task ID of the current test.
-            src_img_data (list[dict]): list of "page data" as rearranged.
+            src_img_data (list[dict]): list of "page data" as rearranged,
+                possibly including new pages.
+
+        Keyword Args:
+            get (bool): if True (default) then behave as if for a new annotation
+                new temp dir, etc.
 
         Returns:
             tuple: initialData (as described by :meth:`startTheAnnotator`.)
+            or if kwarg ``get`` is False, then return ``(None, )``
         """
         log.info("Rearranging image list for task {} = {}".format(task, src_img_data))
         task = "q" + task
         self.examModel.setOriginalFilesAndData(task, src_img_data)
+        if not get:
+            return
         # TODO, change to PageScene for single source of truth?
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
