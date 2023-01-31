@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 
 import shutil
 
@@ -24,7 +24,7 @@ class QRErrorService:
         serialized_all_qr = self.serialize_qr_code(page_data, "all")
         serialized_public_code = self.serialize_qr_code(page_data, "public_code")
 
-        self.check_image_collusion_within_bundle(img_obj, bundle)
+        # self.check_image_collision_within_bundle(img_obj, bundle, serialized_top_three_qr, page_data)
 
         self.check_TPV_code(
             serialized_all_qr, img_obj, serialized_top_three_qr, page_data
@@ -139,15 +139,19 @@ class QRErrorService:
                     f"Magic code {public_code} did not match spec {spec_public_code}. Did you scan the wrong test?"
                 )
 
-    def check_image_collusion_within_bundle(self, image_obj, bundle):
-        all_images = StagingImage.objects.filter(bundle=bundle)
-        img_hash_list = []
-        img_hash_list.append(str(image_obj.image_hash))
-        for img in all_images:
-            img_hash_list.append(str(image_obj.image_hash))
-        count = img_hash_list.count(str(image_obj.image_hash))
-        if count >= 3:
-            raise ValueError("You have duplicate page in this bundle.")
+    # def check_image_collision_within_bundle(self, image_obj, bundle, top_three_tpv, page_data):
+    #     all_images = StagingImage.objects.filter(bundle=bundle)
+    #     img_hash_list = []
+    #     img_hash_list.append(str(image_obj.image_hash))
+    #     for img in all_images:
+    #         img_hash_list.append(str(img.image_hash))
+    #     count = img_hash_list.count(str(image_obj.image_hash))
+    #     if count > 2:
+    #         self.create_error_image(image_obj, top_three_tpv)
+    #         image_obj.parsed_qr = page_data
+    #         image_obj.error = True
+    #         image_obj.save()
+    #         raise ValueError("You have duplicate page in this bundle.")
 
     def create_error_image(self, img_obj, top_three_tpv):
         if not ErrorImage.objects.filter(hash=img_obj.image_hash).exists():

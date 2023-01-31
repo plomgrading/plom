@@ -50,6 +50,24 @@ class BundleUploadForm(forms.Form):
             if scanner.check_for_duplicate_hash(hashed):
                 raise ValidationError("Bundle was already uploaded.")
 
+            # check duplicate md5sum within the same bundle
+            # TODO: need to make this faster
+            file_name = f"{hashed}.pdf"
+            file_path = pathlib.Path("media") / file_name
+            with open(file_path, "w") as file_to_check:
+                pdf_doc.save(file_to_check)
+
+            uploaded_pdf_file = fitz.Document(file_path)
+            md5sum_list = []
+            for page in range(pdf_doc.page_count):
+                transform = fitz.Matrix(4, 4)
+                pixmap = uploaded_pdf_file[page].get_pixmap(matrix=transform)
+                hash = hashlib.md5(pixmap.tobytes()).hexdigest()
+                md5sum_list.append(hash)
+            pathlib.Path.unlink(file_path) 
+            if len(md5sum_list) != len(set(md5sum_list)):
+                raise ValidationError("Duplicate pages detected.")
+
             # get slug
             filename_stem = pathlib.Path(str(pdf)).stem
             slug = slugify(filename_stem)

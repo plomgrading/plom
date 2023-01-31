@@ -42,6 +42,9 @@ class StagingImage(models.Model):
 
 
 class DiscardedStagingImage(models.Model):
+    """
+    An image of a discarded page.
+    """
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     file_name = models.TextField(default="")
