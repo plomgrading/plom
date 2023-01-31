@@ -547,16 +547,19 @@ class PageScene(QGraphicsScene):
     def build_page_hack_buttons(self):
         def page_delete_func_factory(n):
             def page_delete():
-                if self.hasAnnotations():
-                    s = "Removing this page will clear all annotations.  Continue?"
-                    # unpleasant parent reference so Annotator parents dialog
-                    if SimpleQuestion(self.parent(), s).exec() != QMessageBox.Yes:
-                        return
+                img = self.underImage.images[n]
                 self.src_img_data.pop(n)
-                # this will destroy self
-                self.parent().new_or_permuted_image_data(self.src_img_data)
-                # TODO: shift some existing annotations leftward before trying this:
-                # self.buildUnderLay()
+                br = img.mapRectToScene(img.boundingRect())
+                log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
+                # shift existing annotations leftward
+                loc = br.right()
+                if n == len(self.underImage.images) - 1:
+                    # special case when deleting right-most image
+                    loc = br.left()
+                stuff = self.find_items_right_of(loc)
+                self.move_some_items(stuff, -br.width(), 0)
+                self.parent().report_new_or_permuted_image_data(self.src_img_data)
+                self.buildUnderLay()
 
             return page_delete
 
@@ -1787,7 +1790,7 @@ class PageScene(QGraphicsScene):
         from plom.client.tools.questionMark import QMarkItem
 
         if getattr(item, "saveable", None):
-            return False
+            return True
         if item in (
             CrossItem,
             DeltaItem,
@@ -1803,11 +1806,27 @@ class PageScene(QGraphicsScene):
             PenArrowItem,
             QMarkItem,
         ):
-            return False
+            return True
         # TODO more special cases?  I notice a naked QGraphicsLineItem used in elastic box...
-        return True
+        return False
 
-    def move_some_items(self, I, dx, dy):
+    def find_items_right_of(self, x):
+        keep = []
+        log.debug(f"Searching for user-placed objects to the right of x={x}")
+        for item in self.items():
+            if not self.is_user_placed(item):
+                log.debug(f"  nonuser: {item}")
+                continue
+            br = item.mapRectToScene(item.boundingRect())
+            myx = br.left()
+            if myx > x:
+                log.debug(f"  found:   {item}: has x={myx} > {x}")
+                keep.append(item)
+            else:
+                log.debug(f"  discard: {item}: has x={myx} <= {x}")
+        return keep
+
+    def move_some_items(self, I, dx, dy, HACK=False):
         """Translate some of the objects in the scene.
 
         args:
@@ -1822,15 +1841,16 @@ class PageScene(QGraphicsScene):
         import random
         from plom.client.tools import CommandMoveItem
 
-        print(I)
-        if not I:
+        if HACK and not I:
             print("HACK: empty I input so randomly moving half the things")
             I = list(random.sample(self.items(), k=len(self.items()) // 2))
+
+        log.debug(f"Shifting {len(I)} objects by ({dx}, {dy})")
         self.undoStack.beginMacro("Speak at once while taking turns")
         for item in I:
-            if self.is_user_placed(item):
+            if not self.is_user_placed(item):
                 continue
-            print(f"got one: {item}")
+            log.debug(f"got user-placed item {item}, shifting by ({dx}, {dy})")
             command = CommandMoveItem(item, QPointF(dx, dy))
             self.undoStack.push(command)
         self.undoStack.endMacro()

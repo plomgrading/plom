@@ -900,7 +900,7 @@ class Annotator(QWidget):
         self.setToolShortCuts()
 
     def radio_friendly_unit_shifter(self):
-        self.scene.move_some_items([], -20, 0)
+        self.scene.move_some_items([], -20, 0, HACK=True)
 
     def setViewAndScene(self, src_img_data):
         """
