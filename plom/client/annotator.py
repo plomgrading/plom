@@ -123,7 +123,6 @@ class Annotator(QWidget):
 
         self.testName = None
         self.paperDir = None
-        self.src_img_data = None
         self.saveName = None
         self.maxMark = None
 
@@ -419,7 +418,6 @@ class Annotator(QWidget):
         self.testName = None
         self.setWindowTitle("Annotator")
         self.paperDir = None
-        self.src_img_data = None
         self.saveName = None
         # feels like a bit of a kludge
         self.view.setHidden(True)
@@ -478,7 +476,6 @@ class Annotator(QWidget):
         self.paperDir = paperdir
         self.saveName = Path(saveName)
         self.integrity_check = integrity_check
-        self.src_img_data = src_img_data
         self.maxMark = maxMark
         del maxMark
 
@@ -488,7 +485,7 @@ class Annotator(QWidget):
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view.setHidden(False)  # or try not hiding it...
-        self.setViewAndScene()
+        self.setViewAndScene(src_img_data)
         # TODO: see above, can we maintain our zoom b/w images?  Would anyone want that?
         # TODO: see above, don't click a different button: want to keep same tool
 
@@ -722,7 +719,8 @@ class Annotator(QWidget):
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
-        image_md5_list = [x["md5"] for x in self.src_img_data]
+        src_img_data = self.scene.get_src_img_data()
+        image_md5_list = [x["md5"] for x in src_img_data]
         # Look for duplicates by first inverting the dict
         repeats = {}
         for i, md5 in enumerate(image_md5_list):
@@ -750,7 +748,7 @@ class Annotator(QWidget):
                 info_pre=False,
                 details=(
                     f"Annotator's image_md5_list is\n  {image_md5_list}\n"
-                    f"The src_img_data is\n  {self.src_img_data}\n"
+                    f"The src_img_data is\n  {src_img_data}\n"
                     "Include this info if you think this is a bug!"
                 ),
             ).exec()
@@ -792,7 +790,7 @@ class Annotator(QWidget):
                       {}\n
                     Consider filing a bug with this info!
                     """.format(
-                        self.src_img_data, page_data
+                        src_img_data, page_data
                     )
                 ).strip()
                 log.error(s)
@@ -801,7 +799,7 @@ class Annotator(QWidget):
         has_annotations = self.scene.hasAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data, has_annotations
+            self, testNumber, src_img_data, page_data, has_annotations
         )
         # TODO: have rearrange react to new downloads
         # PC.download_finished.connect(rearrangeView.shake_things_up)
@@ -820,7 +818,7 @@ class Annotator(QWidget):
             # pylint: disable=unsubscriptable-object
             md5 = [x["md5"] for x in perm]
             # But if the input already had dupes than its not our problem
-            md5_in = [x["md5"] for x in self.src_img_data]
+            md5_in = [x["md5"] for x in src_img_data]
             if len(set(md5)) != len(md5) and len(set(md5_in)) == len(md5_in):
                 s = dedent(
                     """
@@ -831,7 +829,7 @@ class Annotator(QWidget):
                     annotr src_img_data = {}\n
                     page_data = {}
                     """.format(
-                        perm, self.src_img_data, page_data
+                        perm, src_img_data, page_data
                     )
                 ).strip()
                 log.error(s)
@@ -892,7 +890,7 @@ class Annotator(QWidget):
         ] = self.keybinding_custom_overlay
         self.setToolShortCuts()
 
-    def setViewAndScene(self):
+    def setViewAndScene(self, src_img_data):
         """
         Makes a new scene (pagescene object) and connects it to the view (pageview object).
 
@@ -907,7 +905,7 @@ class Annotator(QWidget):
         """
         self.scene = PageScene(
             self,
-            self.src_img_data,
+            src_img_data,
             self.maxMark,
             self.question_label,
         )
@@ -1518,6 +1516,8 @@ class Annotator(QWidget):
 
         aname, plomfile = self.pickleIt()
         rubric_ids = self.scene.get_rubric_ids()
+        # TODO: remove this, same data inside plomfile["base_images"]
+        src_img_data = self.scene.get_src_img_data()
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
@@ -1531,7 +1531,7 @@ class Annotator(QWidget):
             plomfile,
             rubric_ids,
             self.integrity_check,
-            self.src_img_data,
+            src_img_data,
         ]
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
@@ -1726,7 +1726,7 @@ class Annotator(QWidget):
         # TODO: consider saving colour only if not red?
         # TODO: someday src_img_data may have other images not used
         plomData = {
-            "base_images": self.src_img_data,
+            "base_images": self.scene.get_src_img_data(),
             "saveName": str(aname),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),

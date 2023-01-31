@@ -667,6 +667,9 @@ class PageScene(QGraphicsScene):
         """
         self.score = compute_score(self.get_rubrics(), self.maxMark)
 
+    def get_src_img_data(self):
+        return self.src_img_data
+
     def how_many_underlying_images_wide(self):
         """How many images wide is the bottom layer?
 
