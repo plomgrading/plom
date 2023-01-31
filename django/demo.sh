@@ -7,7 +7,9 @@
 
 set -e
 
-GLOBIGNORE="__init__.py" rm -f **migrations/*.py
+echo "Begone evil migration droppings!"
+GLOBIGNORE="__init__.py" ls **/migrations/*.py
+# GLOBIGNORE="__init__.py" rm -f **/migrations/*.py
 
 rm -f db.sqlite3
 rm -f huey/huey_db.*
