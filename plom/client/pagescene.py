@@ -520,6 +520,8 @@ class PageScene(QGraphicsScene):
     def remove_page_hack_buttons(self):
         for h in self._page_hack_buttons:
             self.removeItem(h)
+            h.deleteLater()
+        self._page_hack_buttons = []
 
     def build_page_hack_buttons(self):
         def page_delete_func_factory(n):
