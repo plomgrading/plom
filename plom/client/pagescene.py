@@ -1836,7 +1836,7 @@ class PageScene(QGraphicsScene):
             dx (float): translation delta in the horizontal direction.
             dy (float): translation delta in the vertical direction.
 
-        Wraps the movement of all objects in a compount undo item.
+        Wraps the movement of all objects in a compound undo item.
         """
         import random
         from plom.client.tools import CommandMoveItem
