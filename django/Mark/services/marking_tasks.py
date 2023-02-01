@@ -357,15 +357,13 @@ class MarkingTaskService:
         else:
             rubrics = data["rubrics"]
 
+        cleaned_data["rubrics"] = []
         for rubric_key in rubrics:
             try:
                 rubric = Rubric.objects.get(key=rubric_key)
             except ObjectDoesNotExist:
                 raise ValidationError(f"Invalid rubric key: {rubric_key}")
-            if "rubrics" not in cleaned_data.keys():
-                cleaned_data["rubrics"] = [rubric]
-            else:
-                cleaned_data["rubrics"].append(rubric)
+            cleaned_data["rubrics"] = [rubric]
 
         all_img_data = json.loads(data["image_md5s"])
         for image_data in all_img_data:
