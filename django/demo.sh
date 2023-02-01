@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Colin B. Macdonald
@@ -7,7 +7,10 @@
 
 set -e
 
-GLOBIGNORE="__init__.py" rm -f **migrations/*.py
+echo "Avoid perplexing errors by removing autogen migration droppings"
+ls **/migrations/*.py | grep -v __init__.py
+EVIL=`ls **/migrations/*.py | grep -v __init__.py`
+rm -f $EVIL
 
 rm -f db.sqlite3
 rm -f huey/huey_db.*
