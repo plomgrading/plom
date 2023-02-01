@@ -7,7 +7,7 @@
 
 set -e
 
-echo "Begone evil migration droppings:"
+echo "Avoid perplexing errors by removing autogen migration droppings"
 ls **/migrations/*.py | grep -v __init__.py
 EVIL=`ls **/migrations/*.py | grep -v __init__.py`
 rm -rf $EVIL
