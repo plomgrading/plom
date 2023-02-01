@@ -10,7 +10,7 @@ set -e
 echo "Avoid perplexing errors by removing autogen migration droppings"
 ls **/migrations/*.py | grep -v __init__.py
 EVIL=`ls **/migrations/*.py | grep -v __init__.py`
-rm -rf $EVIL
+rm -f $EVIL
 
 rm -f db.sqlite3
 rm -f huey/huey_db.*
