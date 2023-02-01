@@ -300,11 +300,12 @@ class MarkingTaskService:
             annot_img: (InMemoryUploadedFlie) the annotation image file.
         """
 
-        imgtype = imghdr.what(None, h=annot_img)
+        imgtype = imghdr.what(None, h=annot_img.read())
         if imgtype not in ["png", "jpg", "jpeg"]:
             raise ValidationError(
                 f"Unsupported image type: expected png or jpg, got {imgtype}"
             )
+        annot_img.seek(0)
 
         imgs_folder = settings.BASE_DIR / "media" / "annotation_images"
         imgs_folder.mkdir(exist_ok=True)
