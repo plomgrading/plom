@@ -46,4 +46,4 @@ xterm -e "python3 manage.py djangohuey" &
 
 # TODO: note: the server will not have any scans in it yet
 
-python3 manage.py runserver
+python3 manage.py runserver 8000
