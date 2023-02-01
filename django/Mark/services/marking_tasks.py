@@ -309,16 +309,19 @@ class MarkingTaskService:
 
         imgs_folder = settings.BASE_DIR / "media" / "annotation_images"
         imgs_folder.mkdir(exist_ok=True)
-        img_path = imgs_folder / f"{md5sum}.png"
+        img = AnnotationImage(hash=md5sum)
+        img.save()
+
+        img_path = imgs_folder / f"annotation_{img.pk}.png"
+        img.path = img_path
         if img_path.exists():
             raise FileExistsError(
-                f"Annotation image with hash {md5sum} already exists."
+                f"Annotation image with public key {img.pk} already exists."
             )
 
         with open(img_path, "wb") as saved_annot_image:
             for chunk in annot_img.chunks():
                 saved_annot_image.write(chunk)
-        img = AnnotationImage(path=img_path, hash=md5sum)
         img.save()
 
         return img
