@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 
@@ -44,4 +44,6 @@ xterm -e "python3 manage.py djangohuey" &
 # This is for production use, when Debug = False
 # python3 manage.py collectstatic
 
-python3 manage.py runserver
+# TODO: note: the server will not have any scans in it yet
+
+python3 manage.py runserver 8000

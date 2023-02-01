@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Edith Coates
+
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
@@ -90,12 +94,3 @@ class ErrorImage(Image):
     version_number = models.PositiveIntegerField()
     flagged = models.BooleanField(default=False)
     comment = models.TextField(default="", null=True)
-
-
-class AnnotationImage(Image):
-    """
-    Table to store information about annotation images: the raster
-    rendering of annotations + question page-images
-    """
-
-    pass

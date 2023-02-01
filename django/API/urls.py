@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from django.urls import path, re_path
 from rest_framework.authtoken.views import obtain_auth_token
@@ -19,6 +19,7 @@ from API.views import (
     IDprogressCount,
     IDclaimThisTask,
     IDgetImage,
+    MarkingProgressCount,
     MgetNextTask,
     MclaimThisTask,
     MgetQuestionPageData,
@@ -52,7 +53,9 @@ urlpatterns = [
     path("MK/tasks/complete", IDgetDoneTasks.as_view(), name="api_MK_get_done_tasks"),
     path("MK/tasks/available", MgetNextTask.as_view(), name="api_MK_get_next_tasks"),
     path("ID/progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
-    path("MK/progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
+    path(
+        "MK/progress", MarkingProgressCount.as_view(), name="api_marking_progress_count"
+    ),
     path("MK/tasks/<code>", MclaimThisTask.as_view(), name="api_MK_claim_task"),
     path("ID/tasks/<paper_id>", IDclaimThisTask.as_view(), name="api_ID_claim_task"),
     path(

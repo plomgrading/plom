@@ -406,6 +406,21 @@ class Messenger(BaseMessenger):
             PlomTaskDeletedError
             PlomSeriousException
         """
+
+        if self.webplom:
+            return self._MreturnMarkedTask_webplom(
+                code=code,
+                pg=pg,
+                ver=ver,
+                score=score,
+                mtime=mtime,
+                annotated_img=annotated_img,
+                plomfile=plomfile,
+                rubrics=rubrics,
+                integrity_check=integrity_check,
+                image_md5_list=json.dumps(image_md5_list),
+            )
+
         # Python <= 3.7 fails on pathlib.Path. remove `str` when we drop Python 3.7
         img_mime_type = mimetypes.guess_type(str(annotated_img))[0]
         with self.SRmutex:
@@ -443,6 +458,87 @@ class Messenger(BaseMessenger):
                     )
                 response.raise_for_status()
                 return response.json()
+            except (requests.ConnectionError, requests.Timeout) as e:
+                raise PlomTimeoutError(
+                    "Upload timeout/connect error: {}\n\n".format(e)
+                    + "Retries are NOT YET implemented: as a workaround,"
+                    + "you can re-open the Annotator on '{}'.\n\n".format(code)
+                    + "We will now process any remaining upload queue."
+                ) from None
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 406:
+                    if response.text == "integrity_fail":
+                        raise PlomConflict(
+                            "Integrity fail: can happen if manager altered task while you annotated"
+                        ) from None
+                    raise PlomSeriousException(response.text) from None
+                if response.status_code == 409:
+                    raise PlomTaskChangedError("Task ownership has changed.") from None
+                if response.status_code == 410:
+                    raise PlomTaskDeletedError(
+                        "No such task - it has been deleted from server."
+                    ) from None
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.text) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def _MreturnMarkedTask_webplom(
+        self,
+        code,
+        pg,
+        ver,
+        score,
+        mtime,
+        annotated_img,
+        plomfile,
+        rubrics,
+        integrity_check,
+        image_md5_list,
+    ):
+        """
+        Upload annotated image and associated data to a Django server, using it's built-in
+        multipart data handling.
+
+        Args:
+            see MreturnMarkedTask
+        """
+
+        # Python <= 3.7 fails on pathlib.Path. remove `str` when we drop Python 3.7
+        with self.SRmutex:
+            try:
+                with open(annotated_img, "rb") as annot_img_file, open(
+                    plomfile, "rb"
+                ) as plom_data_file:
+                    data = {
+                        "pg": str(pg),
+                        "ver": str(ver),
+                        "score": str(score),
+                        "mtime": str(mtime),
+                        "rubrics": rubrics,
+                        "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
+                        "integrity_check": integrity_check,
+                        "image_md5s": image_md5_list,
+                    }
+
+                    annot_img_file.seek(0)
+
+                    files = {
+                        "annotation_image": annot_img_file,
+                        "plomfile": plom_data_file,
+                    }
+
+                    # increase read timeout relative to default: Issue #1575
+                    timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
+                    response = self.post(
+                        f"/MK/tasks/{code}",
+                        data=data,
+                        files=files,
+                        timeout=timeout,
+                    )
+                    response.raise_for_status()
+                    return response.json()
             except (requests.ConnectionError, requests.Timeout) as e:
                 raise PlomTimeoutError(
                     "Upload timeout/connect error: {}\n\n".format(e)
