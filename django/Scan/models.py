@@ -55,6 +55,21 @@ class DiscardedStagingImage(models.Model):
     restore_class = models.TextField(null=False, default="")
 
 
+class CollisionStagingImage(models.Model):
+    """
+    An image of a collision page.
+    """
+    bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
+    bundle_order = models.PositiveIntegerField(null=True)
+    file_name = models.TextField(default="")
+    file_path = models.TextField(default="")
+    image_hash = models.CharField(max_length=64)
+    parsed_qr = models.JSONField(default=dict, null=True)
+    rotation = models.IntegerField(default=0)
+    paper_number = models.PositiveIntegerField()
+    page_number = models.PositiveIntegerField()
+    
+
 class PageToImage(HueyTask):
     """
     Convert a PDF page into an image in the background.
