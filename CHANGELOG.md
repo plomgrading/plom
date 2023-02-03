@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixed a crash when explicitly syncing rubrics.
+* "Experimental features" is now persistent during a single session.
 
 
 ## [0.12.1] - 2023-01-27
