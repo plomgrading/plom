@@ -1007,7 +1007,7 @@ class RubricWidget(QWidget):
         # TODO: could add a "Open Rubric Wrangler" button to above dialog?
         # self.wrangleRubricsInteractively()
         # TODO: if adding that, it should push tabs *again* on accept but not on cancel
-        self.updateLegality()
+        self.updateLegalityOfRubrics()
 
     def wrangleRubricsInteractively(self):
         wr = RubricWrangler(
