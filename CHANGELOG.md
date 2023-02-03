@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-## [0.12.0] - 2023-01-27
+## [0.12.1] - 2023-01-27
 
 ### Added
 * `plom-create` command line tool can list and clear paper id prediction tables.
