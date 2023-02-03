@@ -360,6 +360,7 @@ class Annotator(QWidget):
         if self.is_experimental():
             x.setChecked(True)
         x.triggered.connect(self.toggle_experimental)
+        self._experimental_mode_checkbox = x
         m.addAction("Synchronise rubrics", self.refreshRubrics)
         (key,) = keydata["toggle-wide-narrow"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
