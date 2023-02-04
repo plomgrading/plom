@@ -222,41 +222,49 @@ class Annotator(QWidget):
             self.held_crop_rectangle_data = None
 
     def toggle_experimental(self, checked):
-        if checked:
-            txt = """<p>Enable experimental and/or advanced options?</p>
-                <p>If you are part of a large marking team, you should
-                probably discuss with your manager before enabling.</p>
-            """
-            features = (
-                'None, but you can help us break stuff at <a href="https://gitlab.com/plom/plom">gitlab.com/plom/plom</a>',
-            )
-            features = (
-                "Creating new absolute rubrics, such as &ldquo;2 of 3&rdquo;.",
-                "Creating new rubrics parameterized over version.",
-            )
-            info = f"""
-                <h4>Current experimental features</h4>
-                <ul>
-                  {" ".join("<li>" + x + "</li>" for x in features)}
-                </ul>
-            """
-            # Image by liftarn, public domain, https://freesvg.org/put-your-fingers-in-the-gears
-            res = resources.files(plom.client.icons) / "fingers_in_gears.svg"
-            pix = QPixmap()
-            pix.loadFromData(res.read_bytes())
-            pix = pix.scaledToHeight(256, Qt.SmoothTransformation)
-            msg = SimpleQuestion(self, txt, question=info)
-            msg.setIconPixmap(pix)
-            if msg.exec() == QMessageBox.No:
-                self._experimental_mode_checkbox.setChecked(False)
-                return
-            log.info("Experimental/advanced mode enabled")
-        else:
-            log.info("Experimental/advanced mode disabled")
+        if not checked:
+            self.parentMarkerUI.set_experimental(False)
+            # TODO: some kind of signal/slot, ontoggle...
+            self._cat_view_menu.setVisible(False)
+            self._hold_crop_checkbox.setVisible(False)
+            return
 
-    @property
+        txt = """<p>Enable experimental and/or advanced options?</p>
+            <p>If you are part of a large marking team, you should
+            probably discuss with your manager before enabling.</p>
+        """
+        # features = (
+        #     'None, but you can help us break stuff at <a href="https://gitlab.com/plom/plom">gitlab.com/plom/plom</a>',
+        # )
+        features = (
+            "Creating new absolute rubrics, such as &ldquo;2 of 3&rdquo;.",
+            "Creating new rubrics parameterized over version.",
+            "Persistent held region between papers.",
+            "Viewing cat pics.",
+        )
+        info = f"""
+            <h4>Current experimental features</h4>
+            <ul>
+              {" ".join("<li>" + x + "</li>" for x in features)}
+            </ul>
+        """
+        # Image by liftarn, public domain, https://freesvg.org/put-your-fingers-in-the-gears
+        res = resources.files(plom.client.icons) / "fingers_in_gears.svg"
+        pix = QPixmap()
+        pix.loadFromData(res.read_bytes())
+        pix = pix.scaledToHeight(256, Qt.SmoothTransformation)
+        msg = SimpleQuestion(self, txt, question=info)
+        msg.setIconPixmap(pix)
+        if msg.exec() == QMessageBox.No:
+            self._experimental_mode_checkbox.setChecked(False)
+            return
+        self.parentMarkerUI.set_experimental(True)
+        # TODO: some kind of signal/slot, ontoggle...
+        self._cat_view_menu.setVisible(True)
+        self._hold_crop_checkbox.setVisible(True)
+
     def is_experimental(self):
-        return self._experimental_mode_checkbox.isChecked()
+        return self.parentMarkerUI.is_experimental()
 
     def buildHamburger(self):
         # TODO: use QAction, share with other UI?
@@ -276,11 +284,9 @@ class Annotator(QWidget):
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"Show previous paper(s)\t{key}", self.show_previous)
         m.addSeparator()
-        # TODO: bring this back, hidden behind the experimental feature
-        # if self.is_experimental():
-        # m.addAction("View cat", self.viewCat)
-        # m.addAction("View dog", self.viewNotCat)
-        # m.addSeparator()
+        self._cat_view_menu = m.addAction("View cat", self.viewCat)
+        if not self.is_experimental():
+            self._cat_view_menu.setVisible(False)
         (key,) = keydata["show-solutions"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"View solutions\t{key}", self.viewSolutions)
@@ -297,10 +303,12 @@ class Annotator(QWidget):
         (key,) = keydata["crop-out"]["keys"]
         key = QKeySequence(key).toString(QKeySequence.NativeText)
         m.addAction(f"Uncrop\t{key}", self.uncrop_region)
-        hold_crop = m.addAction("(advanced option) Hold crop")
+        hold_crop = m.addAction("Hold crop between papers")
         hold_crop.setCheckable(True)
         hold_crop.triggered.connect(self.toggle_hold_crop)
         self._hold_crop_checkbox = hold_crop
+        if not self.is_experimental():
+            self._hold_crop_checkbox.setVisible(False)
         m.addSeparator()
         subm = m.addMenu("Tools")
         # to make these actions checkable, they need to belong to self.
@@ -349,6 +357,8 @@ class Annotator(QWidget):
         m.addSeparator()
         x = m.addAction("Experimental features")
         x.setCheckable(True)
+        if self.is_experimental():
+            x.setChecked(True)
         x.triggered.connect(self.toggle_experimental)
         self._experimental_mode_checkbox = x
         m.addAction("Synchronise rubrics", self.refreshRubrics)
