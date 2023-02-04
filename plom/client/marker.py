@@ -1827,7 +1827,6 @@ class MarkerClient(QWidget):
         taskid = task[1:]
         question_label = get_question_label(self.exam_spec, question_num)
         integrity_check = self.examModel.getIntegrityCheck(task)
-        src_img_data = self.examModel.get_source_image_data(task)
         return (
             taskid,
             question_label,
