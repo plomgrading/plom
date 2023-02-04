@@ -1531,8 +1531,6 @@ class Annotator(QWidget):
 
         aname, plomfile = self.pickleIt()
         rubric_ids = self.scene.get_rubric_ids()
-        # TODO: remove this, same data inside plomfile["base_images"]
-        src_img_data = self.scene.get_src_img_data()
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
@@ -1546,7 +1544,6 @@ class Annotator(QWidget):
             plomfile,
             rubric_ids,
             self.integrity_check,
-            src_img_data,
         ]
         self.annotator_upload.emit(self.tgvID, stuff)
         return True

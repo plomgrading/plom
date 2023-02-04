@@ -241,7 +241,6 @@ def upload(
     ver,
     rubrics,
     integrity_check,
-    images_used,
     knownFailCallback=None,
     unknownFailCallback=None,
     successCallback=None,
@@ -259,9 +258,6 @@ def upload(
         question (int or str): the question number
         ver (int or str): the version number
         integrity_check (str): the integrity_check string of the task.
-        images_used (list[dict]): a list of dicts of the images used.
-            Must have keys ``id`` and ``md5``, other keys ignored.
-            If you have a ``src_img_data``, that should work.
         knownFailCallback: if we fail in a way that is reasonably expected,
             call this function.
         unknownFailCallback: if we fail but don't really know why or what
@@ -299,7 +295,6 @@ def upload(
             pname,
             rubrics,
             integrity_check,
-            images_used,
         )
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
@@ -1924,7 +1919,6 @@ class MarkerClient(QWidget):
                 plomFileName(str): the name of the .plom file
                 rubric(list[str]): the keys of the rubrics used
                 integrity_check(str): the integrity_check string of the task.
-                src_img_data (list[dict]): image data, md5sums, etc
 
         Returns:
             None
@@ -1937,7 +1931,6 @@ class MarkerClient(QWidget):
             plomFileName,
             rubrics,
             integrity_check,
-            src_img_data,
         ) = stuff
         if not isinstance(grade, (int, float)):
             raise RuntimeError(f"Mark {grade} type {type(grade)} is not a number")
@@ -1952,6 +1945,8 @@ class MarkerClient(QWidget):
         # stat = self.examModel.getStatusByTask(task)
 
         # Copy the mark, annotated filename and the markingtime into the table
+        # TODO: this is probably the right time to insert the modified src_img_data
+        # TODO: but it may not matter as now the plomFileName has it internally
         self.examModel.markPaperByTask(
             task, grade, aname, plomFileName, markingTime, paperDir
         )
@@ -1970,7 +1965,6 @@ class MarkerClient(QWidget):
             self.version,
             rubrics,
             integrity_check,
-            src_img_data,
         )
         if self.allowBackgroundOps:
             # the actual upload will happen in another thread
