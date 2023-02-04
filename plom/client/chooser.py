@@ -429,7 +429,7 @@ class Chooser(QDialog):
             )
             WarnMsg(
                 self,
-                "Unxpected server response on version query.",
+                "Unexpected server response on version query.",
                 details=server_ver_str.strip(),
             ).exec()
             self.messenger = None
