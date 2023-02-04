@@ -1643,7 +1643,7 @@ class MarkerClient(QWidget):
         placeholder = self.downloader.get_placeholder_path()
         while True:
             src_img_data = self.examModel.get_source_image_data(task)
-            if self.get_downloads_for_src_img_data(src_img_data, trigger=False):
+            if self.get_downloads_for_src_img_data(src_img_data):
                 break
             time.sleep(0.05)
             self.Qapp.processEvents()
