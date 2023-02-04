@@ -26,7 +26,7 @@ importlib-resources==5.10.2
 imutils==0.5.4
 lapsolver==1.1.0
 numpy==1.23.5
-opencv-python-headless==4.6.0.66
+opencv-python-headless==4.7.0.68
 packaging==23.0
 pandas==1.5.3
 passlib==1.7.4
