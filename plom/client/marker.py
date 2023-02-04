@@ -2044,6 +2044,13 @@ class MarkerClient(QWidget):
         Returns:
             tuple: initialData (as described by :meth:`startTheAnnotator`.)
             or if kwarg ``get`` is False, then return ``(None, )``
+
+        Note: this changes the Marker's storage of the original src_img_data
+        but if the Annotator later cancels than it may not be ideal to have
+        changed that!  In most cases, it would be better to manage your own
+        copy of the src_img_data and pass that back when annotating is
+        complete.  TODO: it might a good idea to try not to call this
+        function, see Issue #2509.
         """
         log.info("Rearranging image list for task {} = {}".format(task, src_img_data))
         task = "q" + task
