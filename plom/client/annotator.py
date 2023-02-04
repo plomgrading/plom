@@ -1527,7 +1527,6 @@ class Annotator(QWidget):
             plomfile,
             rubric_ids,
             self.integrity_check,
-            self.src_img_data,
         ]
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
