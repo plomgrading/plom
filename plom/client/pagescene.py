@@ -237,7 +237,7 @@ class MaskingOverlay(QGraphicsItemGroup):
         self.addToGroup(self.left_bar)
         self.addToGroup(self.right_bar)
         self.addToGroup(self.dotted_boundary)
-        self.setZValue(0)
+        self.setZValue(-1)
 
     def crop_to_focus(self, crop_rect):
         self.inner_rect = crop_rect
