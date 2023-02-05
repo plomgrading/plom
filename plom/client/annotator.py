@@ -846,29 +846,15 @@ class Annotator(QWidget):
 
     def new_or_permuted_image_data(self, src_img_data):
         """We have permuted/added/removed underlying source images, tear done and build up again."""
-        tmp_tgv = self.tgvID
-        self.close_current_question()
-        stuff = self.parentMarkerUI.permute_and_get_same_paper(tmp_tgv, src_img_data)
-        log.debug("permuted: new stuff is {}".format(stuff))
-        if not stuff:
-            txt = """
-                <p>Unexpectedly, Marker did not give us back the permuted
-                material for marking.</p>
-                <p>Something has gone wrong, maybe related to
-                <a href="https://gitlab.com/plom/plom/-/issues/1967">Issue #1967</a>.
-                </p>
-            """
-            ErrorMsg(self, txt).exec()
-        self.load_new_question(*stuff)
+        self.close_current_scene()
+        self.load_new_scene(src_img_data)
 
     def report_new_or_permuted_image_data(self, src_img_data):
         """We have permuted/added/removed underlying source images, and wish to keep going.
 
         Do whatever actions are needed to stay hip to the new reality.
         """
-        self.parentMarkerUI.permute_and_get_same_paper(
-            self.tgvID, src_img_data, get=False
-        )
+        pass
 
     def experimental_cycle(self):
         self.scene.whichLineToDraw_next()

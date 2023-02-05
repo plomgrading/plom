@@ -2023,39 +2023,6 @@ class MarkerClient(QWidget):
 
         return data
 
-    def permute_and_get_same_paper(self, task, src_img_data, *, get=True):
-        """User has reorganized pages of an exam.
-
-        Args:
-            task (str): the task ID of the current test.
-            src_img_data (list[dict]): list of "page data" as rearranged,
-                possibly including new pages.
-
-        Keyword Args:
-            get (bool): if True (default) then behave as if for a new annotation
-                new temp dir, etc.
-
-        Returns:
-            tuple: initialData (as described by :meth:`startTheAnnotator`.)
-            or if kwarg ``get`` is False, then return ``(None, )``
-
-        Note: this changes the Marker's storage of the original src_img_data
-        but if the Annotator later cancels than it may not be ideal to have
-        changed that!  In most cases, it would be better to manage your own
-        copy of the src_img_data and pass that back when annotating is
-        complete.  TODO: it might a good idea to try not to call this
-        function, see Issue #2509.
-        """
-        log.info("Rearranging image list for task {} = {}".format(task, src_img_data))
-        task = "q" + task
-        self.examModel.setOriginalFilesAndData(task, src_img_data)
-        if not get:
-            return
-        # TODO, change to PageScene for single source of truth?
-        # set the status back to untouched so that any old plom files ignored
-        self.examModel.setStatusByTask(task, "untouched")
-        return self.getDataForAnnotator(task)
-
     def backgroundUploadFinished(self, task, numDone, numtotal):
         """
         An upload has finished, do appropriate UI updates
