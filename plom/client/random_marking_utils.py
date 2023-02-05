@@ -227,7 +227,6 @@ def do_random_marking_backend(question, version, *, messenger):
                 plomfile,
                 rubrics,
                 integrity_check,
-                src_img_data,
             )
         # tag one in three papers
         if random.randrange(3) == 0:
