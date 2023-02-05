@@ -106,7 +106,7 @@ class Annotator(QWidget):
         Args:
             username (str): username of Marker
             parentMarkerUI (MarkerClient): the parent of annotator UI.
-            initialData (dict): as documented by the arguments to "loadNewTGV"
+            initialData (dict): as documented by the arguments to "load_new_question"
         """
         super().__init__()
 
@@ -174,7 +174,7 @@ class Annotator(QWidget):
         self.modeInformation = ["move"]
 
         if initialData:
-            self.loadNewTGV(*initialData)
+            self.load_new_question(*initialData)
 
         self.rubric_widget.setInitialRubrics()
 
@@ -380,19 +380,12 @@ class Annotator(QWidget):
         m.addAction("About Plom", lambda: show_about_dialog(self))
         return m
 
-    def closeCurrentTGV(self):
-        """
-        Closes the current Test Group Version (closes scene tgv and sets relevant files to None)
-
-        Notes:
-            As a result of this method, there are occasions where many instance variables will be None.
-            Be cautious of how these variables will be handled in cases where they are None.
+    def close_current_scene(self):
+        """Removes the current cene, saving some info in case we want to open a new one.
 
         Returns:
-            None: Modifies self
-
+            None: Modifies self.
         """
-
         # TODO: self.view.disconnectFrom(self.scene)
         # self.view = None
         # TODO: how to reset the scene?
@@ -414,6 +407,17 @@ class Annotator(QWidget):
         del self.scene
         self.scene = None
 
+    def close_current_question(self):
+        """Closes the current question, closes scene and clears instance vars.
+
+        Notes:
+            As a result of this method, many instance variables will be `None`.
+            Be cautious of how these variables will be handled in cases where they are None.
+
+        Returns:
+            None: Modifies self.
+        """
+        self.close_current_scene()
         self.tgvID = None
         self.testName = None
         self.setWindowTitle("Annotator")
@@ -422,7 +426,7 @@ class Annotator(QWidget):
         # feels like a bit of a kludge
         self.view.setHidden(True)
 
-    def loadNewTGV(
+    def load_new_question(
         self,
         tgvID,
         question_label,
@@ -482,6 +486,12 @@ class Annotator(QWidget):
         if plomDict:
             assert plomDict["maxMark"] == self.maxMark, "mismatch between maxMarks"
 
+        self.load_new_scene(src_img_data, plomDict=plomDict)
+
+        # reset the timer (its not needed to make a new one)
+        self.timer.start()
+
+    def load_new_scene(self, src_img_data, *, plomDict=None):
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view.setHidden(False)  # or try not hiding it...
@@ -519,9 +529,6 @@ class Annotator(QWidget):
             # if there is a held crop rectangle, then use it.
             if self.held_crop_rectangle_data:
                 self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
-
-        # reset the timer (its not needed to make a new one)
-        self.timer.start()
 
     def change_annot_scale(self, scale=None):
         """Change the scale of the annotations.
@@ -840,7 +847,7 @@ class Annotator(QWidget):
     def new_or_permuted_image_data(self, src_img_data):
         """We have permuted/added/removed underlying source images, tear done and build up again."""
         tmp_tgv = self.tgvID
-        self.closeCurrentTGV()
+        self.close_current_question()
         stuff = self.parentMarkerUI.permute_and_get_same_paper(tmp_tgv, src_img_data)
         log.debug("permuted: new stuff is {}".format(stuff))
         if not stuff:
@@ -852,7 +859,7 @@ class Annotator(QWidget):
                 </p>
             """
             ErrorMsg(self, txt).exec()
-        self.loadNewTGV(*stuff)
+        self.load_new_question(*stuff)
 
     def report_new_or_permuted_image_data(self, src_img_data):
         """We have permuted/added/removed underlying source images, and wish to keep going.
@@ -1051,7 +1058,7 @@ class Annotator(QWidget):
                 return
             log.debug("We have surrendered {}".format(self.tgvID))
             tmp_tgv = self.tgvID
-            self.closeCurrentTGV()
+            self.close_current_question()
         else:
             tmp_tgv = None
 
@@ -1075,7 +1082,7 @@ class Annotator(QWidget):
             # Not really safe to give it back? (at least we did the view...)
             return
         log.debug("saveAndGetNext: new stuff is {}".format(stuff))
-        self.loadNewTGV(*stuff)
+        self.load_new_question(*stuff)
 
     @pyqtSlot()
     def saveAndClose(self):
