@@ -46,7 +46,6 @@ from PyQt5.QtCore import Qt
 from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
 from plom.client.image_view_widget import mousewheel_delta_to_scale
-from plom.client.useful_classes import SimpleQuestion
 
 from .tools import (
     CrossItem,
