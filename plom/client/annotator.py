@@ -892,9 +892,6 @@ class Annotator(QWidget):
         ] = self.keybinding_custom_overlay
         self.setToolShortCuts()
 
-    def radio_friendly_unit_shifter(self):
-        self.scene.move_some_items([], -20, 0, HACK=True)
-
     def setViewAndScene(self, src_img_data):
         """
         Makes a new scene (pagescene object) and connects it to the view (pageview object).
@@ -1177,9 +1174,6 @@ class Annotator(QWidget):
 
         self.sekritShortCut = QShortcut(QKeySequence("Ctrl+Shift+o"), self)
         self.sekritShortCut.activated.connect(self.experimental_cycle)
-        # experimental, not for real use
-        self.sekritShortCut2 = QShortcut(QKeySequence("Ctrl+Shift+h"), self)
-        self.sekritShortCut2.activated.connect(self.radio_friendly_unit_shifter)
 
     def to_crop_mode(self):
         # can't re-crop if the crop is being held

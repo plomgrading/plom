@@ -1737,40 +1737,13 @@ class PageScene(QGraphicsScene):
         for k in range(c):
             print(k, self.undoStack.text(k))
 
-    def is_user_placed_YUCK(self, item):
-        """Tell me if the user placed it or if its some autogen junk.
-
-        Let's try to isolate this unpleasantness in one place.
-        """
-        if getattr(item, "saveable", None):
-            return False
-        # TODO: copy pasted from deleteIfLegal()
-        if item in [
-            self.underImage,
-            self.scoreBox,
-            self.delBoxItem,
-            self.ghostItem,
-            self.ghostItem.di,
-            self.ghostItem.blurb,
-            self.underRect,
-        ]:
-            return False
-        if isinstance(item, UnderlyingImages):
-            # doesn't seem to catch anything?!  Some kind of group versus object
-            return False
-        if isinstance(item, UnderlyingRect):
-            # is this any different than self.underRect?
-            return False
-        if isinstance(item, QGraphicsPixmapItem):
-            # TODO: this is probably too general, just want the underlying images
-            # TODO: how does this trap tick and cross?!  those are not pixmaps?
-            return False
-        return True
-
     def is_user_placed(self, item):
         """Tell me if the user placed it or if its some autogen junk.
 
         Let's try to isolate this unpleasantness in one place.
+
+        Returns:
+            bool: True if this is a user-generated object, False if not.
         """
         from plom.client.tools import (
             CrossItem,
@@ -1824,7 +1797,7 @@ class PageScene(QGraphicsScene):
                 log.debug(f"  discard: {item}: has x={myx} <= {x}")
         return keep
 
-    def move_some_items(self, I, dx, dy, HACK=False):
+    def move_some_items(self, I, dx, dy):
         """Translate some of the objects in the scene.
 
         args:
@@ -1836,12 +1809,7 @@ class PageScene(QGraphicsScene):
 
         Wraps the movement of all objects in a compound undo item.
         """
-        import random
         from plom.client.tools import CommandMoveItem
-
-        if HACK and not I:
-            print("HACK: empty I input so randomly moving half the things")
-            I = list(random.sample(self.items(), k=len(self.items()) // 2))
 
         log.debug(f"Shifting {len(I)} objects by ({dx}, {dy})")
         self.undoStack.beginMacro("Speak at once while taking turns")
