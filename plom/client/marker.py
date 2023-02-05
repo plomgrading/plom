@@ -1754,7 +1754,7 @@ class MarkerClient(QWidget):
         count = 0
         while True:
             if pdict:
-                log.info("Taking src_img_data from prevous plom data")
+                log.info("Taking src_img_data from previous plom data")
                 src_img_data = pdict["base_images"]
             else:
                 src_img_data = self.examModel.get_source_image_data(task)
