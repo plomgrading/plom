@@ -23,8 +23,10 @@ p2 = re.compile(".*Copyright.*")
 # but for now we can avoid hearing about them by listing globs:
 ok_no_copyright = [
     "CHANGELOG*",
+    "CONTRIBUTORS*",
     "qtCreatorFiles/*.ui",
     "*/uiFiles/ui_*.py",
+    ".mailmap",
 ]
 
 if __name__ == "__main__":
