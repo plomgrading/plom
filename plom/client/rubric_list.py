@@ -994,6 +994,15 @@ class RubricWidget(QWidget):
         log.debug('changing tab name from "%s" to "%s"', curname, s)
         tab.set_name(s)
 
+    def _sync_button_temporary_change_text(self, set=False):
+        tempstr = "Sync \N{Check Mark}"
+        if set:
+            self.syncB.setText(tempstr)
+            return
+        # don't touch if a background process has adjusted it
+        if self.syncB.text() == tempstr:
+            self.syncB.setText("Sync")
+
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
         old_rubrics = self.rubrics
@@ -1003,19 +1012,13 @@ class RubricWidget(QWidget):
         msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>\n"
         diff = set(d["id"] for d in self.rubrics) - set(d["id"] for d in old_rubrics)
         if not diff:
-            last_sync_time = datetime.now().strftime("%H:%M")
-            # change the label to show user something happened
-            self.syncB.setText("Sync \N{Check Mark}")
+            self._last_sync_time = datetime.now().strftime("%H:%M:%S")
             self.syncB.setToolTip("Rubrics recently sync'd: no new rubrics")
-            # remove the checkmark a few seconds later
+            # change the label to show user something happened
+            self._sync_button_temporary_change_text(set=True)
+            # then remove the checkmark a few seconds later
             timer = QTimer()
-            timer.singleShot(
-                2000,
-                lambda: (
-                    self.syncB.setText("Sync"),
-                    self.syncB.setToolTip(f"Rubrics last synced at {last_sync_time}"),
-                ),
-            )
+            timer.singleShot(2000, self._sync_button_temporary_change_text)
             # TODO: above doesn't report modifications, so we still need to
             self.updateLegalityOfRubrics()
             return
