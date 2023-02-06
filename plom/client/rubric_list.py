@@ -7,12 +7,12 @@
 # Copyright (C) 2021 Forest Kobayashi
 
 import html
+from datetime import datetime
 import logging
 from textwrap import shorten
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QColor, QCursor, QPalette
-
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAction,
@@ -754,7 +754,7 @@ class RubricWidget(QWidget):
         self.addB = QPushButton("&Add")  # faster debugging, could remove?
         self.filtB = QPushButton("Arrange/Filter")
         self.hideB = QPushButton("Shown/Hidden")
-        self.syncB = QToolButton()
+        self.syncB = QPushButton()
         # self.syncB.setText("\N{Rightwards Harpoon Over Leftwards Harpoon}")
         self.syncB.setText("Sync")
         self.syncB.setToolTip("Synchronise rubrics")
@@ -1003,7 +1003,22 @@ class RubricWidget(QWidget):
         msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>\n"
         diff = set(d["id"] for d in self.rubrics) - set(d["id"] for d in old_rubrics)
         if not diff:
-            msg += "<p>\N{Check Mark} No new rubrics are available.</p>\n"
+            last_sync_time = datetime.now().strftime("%H:%M")
+            # change the label to show user something happened
+            self.syncB.setText("Sync \N{Check Mark}")
+            self.syncB.setToolTip("Rubrics recently sync'd: no new rubrics")
+            # remove the checkmark a few seconds later
+            timer = QTimer()
+            timer.singleShot(
+                2000,
+                lambda: (
+                    self.syncB.setText("Sync"),
+                    self.syncB.setToolTip(f"Rubrics last synced at {last_sync_time}"),
+                ),
+            )
+            # TODO: above doesn't report modifications, so we still need to
+            self.updateLegalityOfRubrics()
+            return
         else:
             msg += f"<p>\N{Check Mark} <b>{len(diff)} new rubrics</b> have been downloaded from the server:</p>\n"
             diff = [r for r in self.rubrics for i in diff if r["id"] == i]
@@ -1034,9 +1049,6 @@ class RubricWidget(QWidget):
             QMessageBox.Ok,
             self,
         ).exec()
-        # TODO: could add a "Open Rubric Wrangler" button to above dialog?
-        # self.wrangleRubricsInteractively()
-        # TODO: if adding that, it should push tabs *again* on accept but not on cancel
         self.updateLegalityOfRubrics()
 
     def wrangleRubricsInteractively(self):
