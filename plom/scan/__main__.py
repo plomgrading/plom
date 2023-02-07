@@ -132,6 +132,7 @@ def get_parser():
         action="store_true",
         dest="extractbmp",
         help="""
+            We recommend this option if you scanned the papers youself.
             If a PDF page seems to contain exactly one bitmap image and
             nothing else, then extract that losslessly instead of rendering
             the page as a new PNG file.  This will typically give nicer
@@ -139,9 +140,10 @@ def get_parser():
             images.  But some care must be taken that the image is not
             annotated in any way and that no other markings appear on the
             page.
-            As the algorithm to decide this is NOT YET IDEAL, this is
-            currently OFF BY DEFAULT, but we anticipate it being the default
-            in a future version.
+            If the papers were produced by others, this option is NOT
+            RECOMMENDED, in case it misses markings made on top of a bitmap
+            base (e.g., from annotation software).
+            For this reason, it is not yet the default.
         """,
     )
     g.add_argument(
