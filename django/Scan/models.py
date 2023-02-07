@@ -66,8 +66,8 @@ class CollisionStagingImage(models.Model):
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)
     rotation = models.IntegerField(default=0)
-    paper_number = models.PositiveIntegerField()
-    page_number = models.PositiveIntegerField()
+    paper_number = models.PositiveIntegerField(null=True)
+    page_number = models.PositiveIntegerField(null=True)
     
 
 class PageToImage(HueyTask):

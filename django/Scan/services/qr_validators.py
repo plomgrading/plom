@@ -5,7 +5,7 @@ import shutil
 
 from django.conf import settings
 from Papers.services import SpecificationService
-from Scan.models import StagingImage
+from Scan.models import (StagingImage, CollisionStagingImage)
 from Papers.models import ErrorImage
 from collections import Counter
 from Papers.services import ImageBundleService
@@ -146,11 +146,6 @@ class QRErrorService:
             img_hash_list.append(str(img.image_hash))
         count = img_hash_list.count(str(image_obj.image_hash))
         if count > 2:
-            
-            # self.create_error_image(image_obj, top_three_tpv)
-            # image_obj.parsed_qr = page_data
-            # image_obj.error = True
-            # image_obj.save()
             self.create_collision_image(image_obj, top_three_tpv)
             image_obj.parsed_qr = page_data
             image_obj.colliding = True
@@ -197,7 +192,25 @@ class QRErrorService:
             shutil.copy(img_obj.file_path, img_path)
 
     def create_collision_image(self, img_obj, top_three_tpv):
-        pass
+        counter = Counter(top_three_tpv)
+        most_common_qr = counter.most_common(1)
+        common_qr = most_common_qr[0][0]
+
+        test_paper = common_qr[0:5]
+        page_number = common_qr[5:8]
+
+        collision_image = CollisionStagingImage(
+            bundle = img_obj.bundle,
+            bundle_order = img_obj.bundle_order,
+            file_name = img_obj.file_name,
+            file_path = img_obj.file_path,
+            image_hash = img_obj.image_hash,
+            parsed_qr = img_obj.parsed_qr,
+            rotation = img_obj.rotation,
+            paper_number = test_paper,
+            page_number = page_number,
+        )
+        collision_image.save()
 
     def create_unknown_image(self):
         pass

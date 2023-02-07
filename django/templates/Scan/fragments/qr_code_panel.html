@@ -1,11 +1,12 @@
 {% if in_progress %}
-    {% if qr_results and task_status == 'error' %}
+    {% if qr_results and task_status == 'error' and image_error %}
         <div>
             <p class="text-danger">{{ error }}</p>
             <p style="margin-bottom: 0px;">Parsed QR code:</p>
             <ul>
                 <li>Test-paper {{ error_paper_id }}</li>
                 <li>Page {{ error_page_num }}</li>
+                <li>Version {{ error_version_num }}</li>
                 <li>Version {{ error_version_num }}</li>
             </ul>
             <a 
@@ -100,6 +101,31 @@
             {% else %}
                 <p>Paper flagged to manager <i class="bi bi-check-circle text-success"></i></p>
             {% endif %}
+        </div>
+    {% elif qr_results and collision and task_status == 'error' %}
+        <div>
+            <p class="text-danger">{{ error }}</p>
+            <p style="margin-bottom: 0px;">Parsed QR code:</p>
+            <ul>
+                <li>Test-paper {{ error_paper_id }}</li>
+                <li>Page {{ error_page_num }}</li>
+                <li>Version {{ error_version_num }}</li>
+            </ul>
+            <a 
+                class="btn btn-success text-start w-100 disabled"
+                data-bs-toggle="modal"
+                data-bs-target="#"
+            >
+            <i class="bi bi-file-earmark-check"></i>
+            Keep page
+            </a><br><br>
+            <a 
+                class="btn btn-danger text-start w-100 disabled"
+                data-bs-toggle="modal"
+                data-bs-target="#"
+            >
+            Discard
+            </a><br><br>
         </div>
     {% elif qr_results %}
         <div class="d-flex vstack gap-3">
