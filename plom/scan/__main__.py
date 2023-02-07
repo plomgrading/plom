@@ -132,7 +132,7 @@ def get_parser():
         action="store_true",
         dest="extractbmp",
         help="""
-            We recommend this option if you scanned the papers youself.
+            We recommend this option if you scanned the papers yourself.
             If a PDF page seems to contain exactly one bitmap image and
             nothing else, then extract that losslessly instead of rendering
             the page as a new PNG file.  This will typically give nicer
