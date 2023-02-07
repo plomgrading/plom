@@ -163,7 +163,8 @@ class RubricTable(QTableWidget):
         self.doubleClicked.connect(self.editRow)
 
     def set_name(self, newname):
-        log.debug("tab %s changing name to %s", self.shortname, newname)
+        if self.shortname != newname:
+            log.debug("tab %s changing name to %s", self.shortname, newname)
         self.shortname = newname
         # TODO: assumes parent is TabWidget, can we do with signals/slots?
         # More like "If anybody cares, I just changed my name!"
