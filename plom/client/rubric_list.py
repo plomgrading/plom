@@ -2047,8 +2047,7 @@ class AddRubricBox(QDialog):
         s, ok = QInputDialog.getText(
             self,
             "New group for rubric",
-            "<p>New group for rubric.</p>"
-            "<p>(Currently no spaces allowed.)</p>",
+            "<p>New group for rubric.</p><p>(Currently no spaces allowed.)</p>",
             QLineEdit.Normal,
             suggested_name,
         )
