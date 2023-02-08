@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
-
+* Group names must not have spaces but client should not crash if you make one.
+* Misc fixes.
 
 
 ## [0.12.2] - 2023-02-05
