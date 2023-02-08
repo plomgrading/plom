@@ -21,6 +21,7 @@ from Scan.models import (
     PageToImage,
     ParseQR,
     DiscardedStagingImage,
+    CollisionStagingImage,
 )
 from Papers.models import ErrorImage
 
@@ -543,3 +544,19 @@ class ScanService:
         error_image.file_path = saved_image_path
         error_image.image_hash = uploaded_image_hash
         error_image.save()
+
+    @transaction.atomic
+    def get_collision_image(self, bundle, index):
+        collision_image = CollisionStagingImage.objects.get(bundle=bundle, bundle_order=index)
+        return collision_image
+
+    @transaction.atomic
+    def change_collision_image_state(self, bundle, page_index):
+        task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
+        task.status = "complete"
+        task.save()
+        staging_image = StagingImage.objects.get(bundle=bundle, bundle_order=page_index)
+        staging_image.colliding = False
+        staging_image.save()
+        collision_image_obj = self.get_collision_image(bundle, page_index)
+        collision_image_obj.delete()

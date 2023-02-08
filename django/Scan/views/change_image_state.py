@@ -11,7 +11,8 @@ from Base.base_group_views import ScannerRequiredView
 from Scan.services import ScanService
 from Papers.services import ImageBundleService
 from Scan.forms import ReplaceImageForm
-from Scan.views import UpdateQRProgressView, ManageBundleView
+from Scan.views import ManageBundleView
+from Scan.models import (StagingImage)
 
 class ChangeErrorImageState(ScannerRequiredView):
     def post(self, request, timestamp, index):
@@ -59,4 +60,21 @@ class ReplacePageImage(ManageBundleView):
             error = parsed_error.li.text[7:]
             context.update({"replace_image_error_message": error})
             return render(request, "Scan/manage_bundle.html", context)
+
+
+class ChangeCollisionImageState(ScannerRequiredView):
+    def post(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            return Http404()
+        
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, request.user)
+        scanner.change_collision_image_state(bundle, index)
+        # test = StagingImage.objects.all()
+        # print(test[27:])
+
+
+        return HttpResponseClientRefresh()
         

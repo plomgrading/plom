@@ -150,7 +150,7 @@ class QRErrorService:
             image_obj.parsed_qr = page_data
             image_obj.colliding = True
             image_obj.save()
-            raise ValueError("You have duplicate page in this bundle.")
+            raise ValueError("You have duplicate pages in this bundle.")
 
     def create_error_image(self, img_obj, top_three_tpv):
         # this is what is wrong with it
