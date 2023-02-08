@@ -13,7 +13,7 @@ else:
 
 from PyQt5.QtCore import Qt, QBuffer, QByteArray
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QKeySequence, QPainter, QPixmap, QMovie
+from PyQt5.QtGui import QFont, QKeySequence, QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -303,7 +303,7 @@ class RubricNavDiagram(QFrame):
         pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
-        sheet = "QPushButton { color : teal; font-size: 24pt;}"
+        sheet = "QPushButton { color : teal; }"
 
         def lambda_factory(w):
             return lambda: self.change_key(w)
@@ -312,6 +312,10 @@ class RubricNavDiagram(QFrame):
             key = QKeySequence(keydata[w]["keys"][0])
             b = QPushButton(key.toString(QKeySequence.NativeText))
             b.setStyleSheet(sheet)
+            # increase fontsize without hardcoding in the style sheet
+            font = b.font()
+            font.setPointSize(round(1.75*font.pointSize()))
+            b.setFont(font)
             b.setToolTip(keydata[w]["human"])
             if w in actions_with_changeable_keys:
                 b.setToolTip(b.toolTip() + "\n(click to change)")
@@ -364,7 +368,7 @@ class ToolNavDiagram(QFrame):
         def key(s):
             return keydata[s]["keys"][0]
 
-        sheet = "QPushButton { color : teal; font-size: 24pt;}"
+        sheet = "QPushButton { color : teal; }"
 
         def lambda_factory(w):
             return lambda: self.change_key(w)
@@ -373,6 +377,10 @@ class ToolNavDiagram(QFrame):
             key = QKeySequence(keydata[w]["keys"][0])
             b = QPushButton(key.toString(QKeySequence.NativeText))
             b.setStyleSheet(sheet)
+            # increase fontsize without hardcoding in the style sheet
+            font = b.font()
+            font.setPointSize(round(1.5*font.pointSize()))
+            b.setFont(font)
             b.setToolTip(keydata[w]["human"])
             if w in actions_with_changeable_keys:
                 b.setToolTip(b.toolTip() + "\n(click to change)")
