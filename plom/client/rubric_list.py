@@ -897,7 +897,23 @@ class RubricWidget(QWidget):
                 if necessary.
         """
         if not name:
-            tab_names = [x.shortname for x in self.user_tabs]
+            empties = []
+            for tab in self.get_user_tabs():
+                if tab.rowCount() == 0:
+                    empties.append(tab.shortname)
+            if len(empties) >= 2:
+                msg = SimpleQuestion(
+                    self,
+                    f"You already have {len(empties)} empty custom user tabs: "
+                    + ", ".join(f'"{x}"' for x in empties)
+                    + ".",
+                    question="Add another empty tab?",
+                )
+                if msg.exec() == QMessageBox.No:
+                    return
+
+        if not name:
+            tab_names = [x.shortname for x in self.get_user_tabs()]
             name = next_in_longest_subsequence(tab_names)
         if not name:
             syms = (
