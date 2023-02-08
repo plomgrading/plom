@@ -1384,7 +1384,7 @@ class RubricWidget(QWidget):
                     # g = t.removeprefix("group:")
                     g = t[len("group:") :]
                     groups.append(g)
-        return list(set(groups))
+        return sorted(list(set(groups)))
 
     def unhideRubricByKey(self, key):
         index = [x["id"] for x in self.rubrics].index(key)
