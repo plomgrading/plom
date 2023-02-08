@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
     QDialog,
     QFrame,
     QHBoxLayout,
-    QGraphicsItem,
+    QGraphicsPathItem,
     QGraphicsScene,
     QGraphicsView,
     QHeaderView,
@@ -282,6 +282,67 @@ class KeyHelp(QDialog):
         InfoMsg(self, txt).exec()
 
 
+def _lab(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0)):
+    from PyQt5.QtCore import QPointF
+    from PyQt5.QtGui import QPen, QPainterPath, QColor
+
+    sheet = "QPushButton { background-color : teal; }"
+    # sheet = "QPushButton { color : teal; }"
+
+    pen = QPen(QColor("teal"), 4)
+    p = QPainterPath()
+    p.moveTo(x, y)
+    p.addEllipse(QPointF(x, y), 4, 4)
+    p.moveTo(x, y)
+    for dx, dy in route:
+        x += dx
+        y += dy
+        p.lineTo(x, y)
+    p.addEllipse(QPointF(x, y), 4, 4)
+
+    pi = QGraphicsPathItem()
+    pi.setPath(p)
+    scene.addItem(pi)
+    pi.setPen(pen)
+
+    # extra gap between end and button
+    x += sep[0]
+    y += sep[1]
+
+    key = QKeySequence(keydata[w]["keys"][0])
+    b = QPushButton(key.toString(QKeySequence.NativeText))
+    b.setStyleSheet(sheet)
+    b.setToolTip(keydata[w]["human"])
+    if w in actions_with_changeable_keys:
+        b.setToolTip(b.toolTip() + "\n(click to change)")
+        b.clicked.connect(lambda_factory(w))
+    else:
+        # TODO: a downside is the tooltip does not show
+        b.setEnabled(False)
+    li = scene.addWidget(b)
+    # li.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+    li.setScale(1.33)
+    br = li.mapRectToScene(li.boundingRect())
+    label_offset = 8
+    if d == "N":
+        x -= br.width() / 2
+        y -= br.height()
+        y -= label_offset
+    elif d == "S":
+        x -= br.width() / 2
+        y += label_offset
+    elif d == "W":
+        x -= br.width()
+        x -= label_offset
+        y -= br.height() / 2
+    elif d == "E":
+        x += label_offset
+        y -= br.height() / 2
+    else:
+        raise NotImplementedError("No such direction")
+    li.setPos(x, y)
+
+
 class RubricNavDiagram(QFrame):
     wants_to_change_key = pyqtSignal(str)
 
@@ -323,34 +384,18 @@ class RubricNavDiagram(QFrame):
         pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
-        sheet = "QPushButton { color : teal; }"
-
         def lambda_factory(w):
             return lambda: self.change_key(w)
 
-        def stuff_it(w, x, y):
-            key = QKeySequence(keydata[w]["keys"][0])
-            b = QPushButton(key.toString(QKeySequence.NativeText))
-            b.setStyleSheet(sheet)
-            # increase fontsize without hardcoding in the style sheet
-            font = b.font()
-            font.setPointSize(round(1.75*font.pointSize()))
-            b.setFont(font)
-            b.setToolTip(keydata[w]["human"])
-            if w in actions_with_changeable_keys:
-                b.setToolTip(b.toolTip() + "\n(click to change)")
-                b.clicked.connect(lambda_factory(w))
-            else:
-                # TODO: a downside is the tooltip does not show
-                b.setEnabled(False)
-            li = self.scene.addWidget(b)
-            li.setPos(x, y)
-            li.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+        def lab(*args, **kwargs):
+            _lab(lambda_factory, self.scene, keydata, *args, **kwargs)
 
-        stuff_it("next-rubric", 340, 250)
-        stuff_it("prev-rubric", 340, 70)
-        stuff_it("prev-tab", -70, -10)
-        stuff_it("next-tab", 160, -10)
+        r = 12  # radius of turns
+        d = 30  # unit distance
+        lab("prev-rubric", 330, 190, ((2 * d, 0), (r, -r), (0, -d)), "N")
+        lab("next-rubric", 330, 190, ((2 * d, 0), (r, r), (0, d)), "S")
+        lab("prev-tab", 100, 58, ((0, -d / 2), (-r, -r), (-d, 0)), "W")
+        lab("next-tab", 100, 58, ((0, -d / 2), (r, -r), (d, 0)), "E")
 
 
 class ToolNavDiagram(QFrame):
@@ -394,42 +439,22 @@ class ToolNavDiagram(QFrame):
         pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
-        # little helper to extract from keydata
-        def key(s):
-            return keydata[s]["keys"][0]
-
-        sheet = "QPushButton { color : teal; }"
-
         def lambda_factory(w):
             return lambda: self.change_key(w)
 
-        def stuff_it(w, x, y):
-            key = QKeySequence(keydata[w]["keys"][0])
-            b = QPushButton(key.toString(QKeySequence.NativeText))
-            b.setStyleSheet(sheet)
-            # increase fontsize without hardcoding in the style sheet
-            font = b.font()
-            font.setPointSize(round(1.75*font.pointSize()))
-            b.setFont(font)
-            b.setToolTip(keydata[w]["human"])
-            if w in actions_with_changeable_keys:
-                b.setToolTip(b.toolTip() + "\n(click to change)")
-                b.clicked.connect(lambda_factory(w))
-            else:
-                # TODO: a downside is the tooltip does not show
-                b.setEnabled(False)
-            li = self.scene.addWidget(b)
-            li.setPos(x, y)
-            li.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+        def lab(*args, **kwargs):
+            _lab(lambda_factory, self.scene, keydata, *args, **kwargs)
 
-        stuff_it("next-tool", 240, 320)
-        stuff_it("prev-tool", 40, 320)
-        stuff_it("move", 395, 170)
-        stuff_it("undo", 120, -40)
-        stuff_it("redo", 210, -40)
-        stuff_it("help", 350, -30)
-        stuff_it("zoom", -40, 15)
-        stuff_it("delete", -40, 220)
+        r = 10  # radius of turns
+        d = 36  # unit distance
+        lab("next-tool", 266, 385, ((0, d), (r, r), (d, 0)), "E")
+        lab("prev-tool", 266, 385, ((0, d), (-r, r), (-d, 0)), "W")
+        lab("move", 560, 254, ((0, d / 2), (r, r), (2 * d, 0)), "E")
+        lab("undo", 309, 233, ((-25, 0), (-r, -r), (0, -6.5 * d)), "N", sep=(-d, 0))
+        lab("redo", 333, 233, ((25, 0), (r, -r), (0, -6.5 * d)), "N", sep=(d, 0))
+        lab("help", 630, 98, ((d, 0), (r, -r), (0, -1.5 * d)), "N", sep=(d, 0))
+        lab("zoom", 257, 150, ((-7.8 * d, 0), (-r, -r), (0, -2 * d)), "N", sep=(-d, 0))
+        lab("delete", 10, 230, ((-d, 0), (-r, r), (0, d)), "S", sep=(-d, 0))
 
 
 class ClickDragPage(QWidget):
