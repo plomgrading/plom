@@ -112,7 +112,26 @@ def render_params(template, params, ver):
 
 
 class RubricTable(QTableWidget):
-    def __init__(self, parent, shortname=None, sort=False, tabType=None):
+    """A RubricTable is presents a table of rubrics.
+
+    There are different types of tabs.  In theory this could be
+    implemented as subclasses but currently we just use a property
+    ``.tabType``.
+    """
+
+    def __init__(self, parent, shortname=None, *, sort=False, tabType=None):
+        """Initialize a new RubricTable.
+
+        Args:
+            parent:
+            shortname (str):
+
+        Keyword Args:
+            tabType (str/None): "show", "hide", "group", "delta", `None`.
+                Here `"show"` is used for the "All" tab, `None` is used
+                for custom "user tabs".
+            sort (bool):
+        """
         super().__init__(parent)
         self._parent = parent
         self.tabType = tabType  # to help set menu
@@ -665,15 +684,18 @@ class TabBarWithAddRenameRemoveContext(QTabBar):
             n = self.tabAt(point)
             if n >= 0:
                 name = self.tabText(n)
+                tabtype = self.tabData(n)
                 menu = QMenu()
-                # rename/remove will silently skip delta/shared tabs
-                # TODO: grey-out nicer but how to cleanly check `tab.is_user_tab`?
-                menu.addAction(
+                a = menu.addAction(
                     f'Rename tab "{name}"...', lambda: self.rename_tab_signal.emit(n)
                 )
-                menu.addAction(
+                if tabtype is not None:
+                    a.setEnabled(False)
+                a = menu.addAction(
                     f'Remove tab "{name}"...', lambda: self.remove_tab_signal.emit(n)
                 )
+                if tabtype is not None:
+                    a.setEnabled(False)
                 menu.addAction("Add new tab", self.add_tab_signal.emit)
                 menu.exec(self.mapToGlobal(point))
         super().mousePressEvent(mouseEvent)
@@ -713,9 +735,12 @@ class RubricWidget(QWidget):
         self.RTW.setTabBar(tb)
         self.RTW.setMovable(True)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
-        self.RTW.addTab(self.tabS, self.tabS.shortname)
-        self.RTW.addTab(self.tabDeltaP, self.tabDeltaP.shortname)
-        self.RTW.addTab(self.tabDeltaN, self.tabDeltaN.shortname)
+        self.RTW.insertTab(0, self.tabS, self.tabS.shortname)
+        self.RTW.insertTab(1, self.tabDeltaP, self.tabDeltaP.shortname)
+        self.RTW.insertTab(2, self.tabDeltaN, self.tabDeltaN.shortname)
+        self.RTW.tabBar().setTabData(0, self.tabS.tabType)
+        self.RTW.tabBar().setTabData(1, self.tabDeltaP.tabType)
+        self.RTW.tabBar().setTabData(2, self.tabDeltaN.tabType)
         b = QToolButton()
         b.setText("+")
         b.setAutoRaise(True)  # flat until hover, but not on macOS?
@@ -853,6 +878,7 @@ class RubricWidget(QWidget):
             idx = 0
         # insert tab after that
         self.RTW.insertTab(idx + 1, tab, tab.shortname)
+        self.RTW.tabBar().setTabData(idx + 1, tab.tabType)
         self.update_tab_names()
         return tab
 
@@ -900,6 +926,7 @@ class RubricWidget(QWidget):
             n = n - 1
         # insert tab after it
         self.RTW.insertTab(n + 1, tab, tab.shortname)
+        self.RTW.tabBar().setTabData(n + 1, tab.tabType)
         self.update_tab_names()
 
     def remove_current_tab(self):
