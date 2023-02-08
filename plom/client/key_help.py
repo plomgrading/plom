@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QDialog,
     QFrame,
     QHBoxLayout,
+    QGraphicsItem,
     QGraphicsScene,
     QGraphicsView,
     QHeaderView,
@@ -325,10 +326,11 @@ class RubricNavDiagram(QFrame):
                 b.setEnabled(False)
             li = self.scene.addWidget(b)
             li.setPos(x, y)
+            li.setFlag(QGraphicsItem.ItemIgnoresTransformations)
 
         stuff_it("next-rubric", 340, 250)
         stuff_it("prev-rubric", 340, 70)
-        stuff_it("prev-tab", -40, -10)
+        stuff_it("prev-tab", -70, -10)
         stuff_it("next-tab", 160, -10)
 
 
@@ -379,7 +381,7 @@ class ToolNavDiagram(QFrame):
             b.setStyleSheet(sheet)
             # increase fontsize without hardcoding in the style sheet
             font = b.font()
-            font.setPointSize(round(1.5*font.pointSize()))
+            font.setPointSize(round(1.75*font.pointSize()))
             b.setFont(font)
             b.setToolTip(keydata[w]["human"])
             if w in actions_with_changeable_keys:
@@ -390,6 +392,7 @@ class ToolNavDiagram(QFrame):
                 b.setEnabled(False)
             li = self.scene.addWidget(b)
             li.setPos(x, y)
+            li.setFlag(QGraphicsItem.ItemIgnoresTransformations)
 
         stuff_it("next-tool", 240, 320)
         stuff_it("prev-tool", 40, 320)
