@@ -938,9 +938,8 @@ class RubricWidget(QWidget):
         tab = self.RTW.widget(n)
         if not tab:
             return
-        if tab.is_shared_tab():  # no renaming the "all" tab
-            return
-        if tab.is_delta_tab():  # no renaming +/- delta tabs
+        if not tab.is_user_tab():
+            # no renaming the "all" tab, +/- delta or group tabs
             return
         curname = tab.shortname
         s = ""
