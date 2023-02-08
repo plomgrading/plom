@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Group names must not have spaces but client should not crash if you make one.
+* Remove empty tab on removal of last rubric from group.
 * Only "custom user tabs" can be renamed: fix context menus to reflect this.
 * Misc fixes.
 

@@ -1136,6 +1136,10 @@ class RubricWidget(QWidget):
 
         # TODO: order of rubrics within group tabs?
         current_group_tabs = self.get_group_tabs_dict()
+        for name, tab in current_group_tabs.items():
+            if name not in group_tab_data.keys():
+                log.info("Removing now-empty tab: group %s is now empty", name)
+                self.RTW.removeTab(self.RTW.indexOf(tab))
         for g in sorted(group_tab_data.keys()):
             idlist = group_tab_data[g]
             tab = current_group_tabs.get(g)
