@@ -13,7 +13,7 @@ else:
 
 from PyQt5.QtCore import Qt, QBuffer, QByteArray
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QFont, QKeySequence, QPainter, QPixmap, QMovie
+from PyQt5.QtGui import QKeySequence, QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QComboBox,
