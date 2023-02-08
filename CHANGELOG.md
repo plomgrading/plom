@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Rubrics: suggest new group name from existing, e.g., have (a), (b) then suggest (c).
 
 ### Fixed
 * Group names must not have spaces but client should not crash if you make one.

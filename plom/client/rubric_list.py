@@ -2040,11 +2040,17 @@ class AddRubricBox(QDialog):
         return params
 
     def add_new_group(self):
+        groups = []
+        for n in range(self.group_combobox.count()):
+            groups.append(self.group_combobox.itemText(n))
+        suggested_name = next_in_longest_subsequence(groups)
         s, ok = QInputDialog.getText(
             self,
             "New group for rubric",
             "<p>New group for rubric.</p>"
             "<p>(Currently no spaces allowed.)</p>",
+            QLineEdit.Normal,
+            suggested_name,
         )
         if not ok:
             return
