@@ -584,6 +584,7 @@ class ScanService:
         collision_image.delete()
         staging_image_list = StagingImage.objects.all()
         for staging_img_obj in staging_image_list[bundle_order:]:
-            print("hello")
+            staging_img_obj.bundle_order -= 1
+            staging_img_obj.save()
 
         pass
