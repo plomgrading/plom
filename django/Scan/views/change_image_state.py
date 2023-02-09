@@ -74,7 +74,19 @@ class ChangeCollisionImageState(ScannerRequiredView):
         scanner.change_collision_image_state(bundle, index)
         # test = StagingImage.objects.all()
         # print(test[27:])
+        return HttpResponseClientRefresh()
 
+
+class DiscardImage(ScannerRequiredView):
+    def post(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            return Http404()
+        
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, request.user)
+        scanner.discard_collision_image(bundle, request.user, timestamp, index)
 
         return HttpResponseClientRefresh()
         

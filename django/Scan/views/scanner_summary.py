@@ -20,5 +20,6 @@ class ScannerSummaryView(ScannerRequiredView):
         for i in all_obj[27:]:
             print("before", i.bundle_order)
             print(i.bundle_order - 1)
+            print(i.file_path)
         
         return HttpResponse("I am Summary initial page")

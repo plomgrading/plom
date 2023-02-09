@@ -112,20 +112,50 @@
                 <li>Version {{ error_version_num }}</li>
             </ul>
             <a 
-                class="btn btn-success text-start w-100 disabled"
+                class="btn btn-success text-start w-100"
                 data-bs-toggle="modal"
-                data-bs-target="#"
+                data-bs-target="#collisionPageChangeModal"
             >
             <i class="bi bi-file-earmark-check"></i>
             Keep page
             </a><br><br>
+            <!-- "Keep page image" Modal -->
+            <div class="modal fade" id="collisionPageChangeModal" tabindex="-1" aria-labelledby="collisionPageChangeModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="collisionPageChangeModalLabel">Are you sure you would like to keep this page?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" hx-post="{% url 'change_collision_state' timestamp index %}">Keep</button>
+                    </div>
+                </div>
+                </div>
+            </div>
             <a 
-                class="btn btn-danger text-start w-100 disabled"
+                class="btn btn-danger text-start w-100"
                 data-bs-toggle="modal"
-                data-bs-target="#"
+                data-bs-target="#discardPageModal"
             >
             Discard
             </a><br><br>
+            <!-- "Discard page image" Modal -->
+            <div class="modal fade" id="discardPageModal" tabindex="-1" aria-labelledby="discardPageModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="discardPageModalLabel">Are you sure you would like to discard this page?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" hx-post="{% url 'change_collision_state' timestamp index %}">Discard</button>
+                    </div>
+                </div>
+                </div>
+            </div>
         </div>
     {% elif qr_results %}
         <div class="d-flex vstack gap-3">

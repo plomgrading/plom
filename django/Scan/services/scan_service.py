@@ -560,3 +560,30 @@ class ScanService:
         staging_image.save()
         collision_image_obj = self.get_collision_image(bundle, page_index)
         collision_image_obj.delete()
+    
+    @transaction.atomic
+    def discard_collision_image(self, bundle_obj, user, bundle_timestamp, page_index):
+        root_folder = pathlib.Path("media") / "page_images" / "discarded_pages"
+        root_folder.mkdir(exist_ok=True)
+
+        collision_image = self.get_image(bundle_timestamp, user, page_index)
+        shutil.move(collision_image.file_path, root_folder / f"{collision_image.image_hash}.png")
+        discarded_image = DiscardedStagingImage(
+            bundle = collision_image.bundle,
+            bundle_order = collision_image.bundle_order,
+            file_name = collision_image.file_name,
+            file_path = root_folder / f"{collision_image.image_hash}.png",
+            image_hash = collision_image.image_hash,
+            parsed_qr = collision_image.parsed_qr,
+            rotation = collision_image.rotation,
+            restore_class = "replace"
+        )
+        discarded_image.save()
+
+        bundle_order = collision_image.bundle_order
+        collision_image.delete()
+        staging_image_list = StagingImage.objects.all()
+        for staging_img_obj in staging_image_list[bundle_order:]:
+            print("hello")
+
+        pass
