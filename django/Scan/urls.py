@@ -24,6 +24,7 @@ from Scan.views import (
     ChangeErrorImageState,
     ReplacePageImage,
     ChangeCollisionImageState,
+    DiscardImage,
 )
 
 
@@ -114,5 +115,10 @@ urlpatterns = [
         "change/collision_state/<timestamp>/<int:index>/",
         ChangeCollisionImageState.as_view(),
         name="change_collision_state",
+    ),
+    path(
+        "discard/<timestamp>/<int:index>/",
+        DiscardImage.as_view(),
+        name="discard_image"
     ),
 ]

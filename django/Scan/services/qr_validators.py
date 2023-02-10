@@ -86,6 +86,7 @@ class QRErrorService:
         Check number of QR codes in a given page.
         """
         if len(page_data) == 0:
+            self.create_unknown_image(img_obj)
             img_obj.unknown = True
             img_obj.save()
             raise ValueError("Unable to read QR codes.")
@@ -153,7 +154,6 @@ class QRErrorService:
             raise ValueError("You have duplicate pages in this bundle.")
 
     def create_error_image(self, img_obj, top_three_tpv):
-        # this is what is wrong with it
         if not ErrorImage.objects.filter(hash=img_obj.image_hash).exists():
 
             img_bundle_service = ImageBundleService()

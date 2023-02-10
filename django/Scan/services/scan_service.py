@@ -576,15 +576,22 @@ class ScanService:
             image_hash = collision_image.image_hash,
             parsed_qr = collision_image.parsed_qr,
             rotation = collision_image.rotation,
-            restore_class = "replace"
+            restore_class = "collision"
         )
         discarded_image.save()
 
         bundle_order = collision_image.bundle_order
         collision_image.delete()
+
+        parse_qr = ParseQR.objects.get(bundle=bundle_obj, page_index=bundle_order)
+        parse_qr.delete()
+
         staging_image_list = StagingImage.objects.all()
         for staging_img_obj in staging_image_list[bundle_order:]:
             staging_img_obj.bundle_order -= 1
             staging_img_obj.save()
-
-        pass
+        
+        parse_qr_list = ParseQR.objects.all()
+        for parse_qr_obj in parse_qr_list[bundle_order:]:
+            parse_qr_obj.page_index -= 1
+            parse_qr_obj.save()
