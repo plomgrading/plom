@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -255,23 +255,6 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     page.insert_image(BR, pixmap=fitz.Pixmap(qr_code[3]), overlay=True)
     page.draw_rect(BL, color=[0, 0, 0], width=0.5)
     page.draw_rect(BR, color=[0, 0, 0], width=0.5)
-
-
-def is_possible_to_encode_as(s, encoding):
-    """Is it possible to encode this string in this particular encoding?
-
-    Arguments:
-        s (str): a string.
-        encoding (str): Encoding type.
-
-    Returns:
-        bool
-    """
-    try:
-        s.encode(encoding)
-        return True
-    except UnicodeEncodeError:
-        return False
 
 
 def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
