@@ -321,7 +321,7 @@ def _lab(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0)):
         b.setEnabled(False)
     li = scene.addWidget(b)
     # li.setFlag(QGraphicsItem.ItemIgnoresTransformations)
-    li.setScale(1.33)
+    li.setScale(1.66)
     br = li.mapRectToScene(li.boundingRect())
     label_offset = 8
     if d == "N":
@@ -352,11 +352,13 @@ class RubricNavDiagram(QFrame):
         view = QGraphicsView()
         view.setRenderHint(QPainter.Antialiasing, True)
         view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # view.setFrameShape(QFrame.NoFrame)
+        view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
         view.setScene(self.scene)
+        # seems to effect the balance of graphic to bottom list
+        view.scale(0.6, 0.6)
         self._view = view
 
         grid = QVBoxLayout()
@@ -369,7 +371,7 @@ class RubricNavDiagram(QFrame):
 
     def resetView(self):
         self._view.fitInView(
-            self.scene.sceneRect().adjusted(-10, -10, 10, 10), Qt.KeepAspectRatio
+            self.scene.sceneRect().adjusted(-40, -10, 20, 10), Qt.KeepAspectRatio
         )
 
     def resizeEvent(self, event):
@@ -407,14 +409,13 @@ class ToolNavDiagram(QFrame):
         view = QGraphicsView()
         view.setRenderHint(QPainter.Antialiasing, True)
         view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # view.setFrameShape(QFrame.NoFrame)
+        view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
         view.setScene(self.scene)
-        view.fitInView(
-            self.scene.sceneRect().adjusted(-40, -40, 40, 40), Qt.KeepAspectRatio
-        )
+        # seems to effect the balance of graphic to bottom list
+        view.scale(0.6, 0.6)
         self._view = view
 
         grid = QVBoxLayout()
@@ -424,7 +425,7 @@ class ToolNavDiagram(QFrame):
 
     def resetView(self):
         self._view.fitInView(
-            self.scene.sceneRect().adjusted(-10, -10, 10, 10), Qt.KeepAspectRatio
+            self.scene.sceneRect().adjusted(-20, -10, 20, 10), Qt.KeepAspectRatio
         )
 
     def resizeEvent(self, event):
