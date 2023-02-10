@@ -317,6 +317,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     if signherebox:
         page.draw_rect(signature_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
 
+    # first place the name with adaptive fontsize
     fontsize = 37
     w = math.inf
     font = fitz.Font("helv")
@@ -333,6 +334,8 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
         name,
         fontsize=fontsize,
     )
+
+    # then place the student number
     fontsize = 36
     w = font.text_length(sid, fontsize=fontsize)
     tw.append(
@@ -342,6 +345,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     )
     tw.write_text(page)
 
+    # and finally the "sign here" watermark
     if not signherebox:
         return
     fontsize = 48
