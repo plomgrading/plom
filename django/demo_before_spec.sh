@@ -39,6 +39,7 @@ python3 manage.py plom_create_demo_users
 # you must do this after running demo.sh b/c demo.sh erases the huey_db file
 # Here is one option for launching it automatically:
 # xterm -e "python3 manage.py djangohuey" &
+# and here is another.
 python3 manage.py djangohuey &
 
 # This is for production use, when Debug = False
