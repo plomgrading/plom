@@ -104,6 +104,13 @@ class KeyHelp(QDialog):
         vb.addLayout(buttons)
         self.setLayout(vb)
         self.tabs.setCurrentIndex(initial_tab)
+        # do we still get flicker: this still isn't the right way to force resize?
+        self.tabs.currentChanged.connect(self._hacky_resizer)
+
+    def _hacky_resizer(self, n):
+        # on tab change, we sadly need some hacks to zoom the QGraphicViews
+        for thing in self._things_to_hack_zoom:
+            thing.resetView()
 
     def get_selected_keybinding_name(self):
         """Return the name (str) of the selected keybinding."""
@@ -184,6 +191,7 @@ class KeyHelp(QDialog):
             w.deleteLater()
             self.tabs.removeTab(1)
 
+        self._things_to_hack_zoom = []
         for label, tw in self.make_ui_tables(keydata).items():
             # special case the first 2 with graphics
             if label == "Rubrics":
@@ -194,6 +202,7 @@ class KeyHelp(QDialog):
                 wb.addWidget(d)
                 wb.addWidget(tw)
                 w.setLayout(wb)
+                self._things_to_hack_zoom.append(d)
             elif label == "Annotation":
                 w = QWidget()
                 wb = QVBoxLayout()
@@ -202,6 +211,7 @@ class KeyHelp(QDialog):
                 wb.addWidget(d)
                 wb.addWidget(tw)
                 w.setLayout(wb)
+                self._things_to_hack_zoom.append(d)
             else:
                 w = tw
             self.tabs.addTab(w, accel[label])
@@ -286,14 +296,23 @@ class RubricNavDiagram(QFrame):
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
         view.setScene(self.scene)
-        view.fitInView(
-            self.scene.sceneRect().adjusted(-40, -40, 40, 40), Qt.KeepAspectRatio
-        )
+        self._view = view
 
         grid = QVBoxLayout()
         grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(view)
         self.setLayout(grid)
+        # ugh, this bullshit again
+        # TODO: but it won't help: tab not rendered immediately :(
+        # QTimer.singleShot(500, self.resetView)
+
+    def resetView(self):
+        self._view.fitInView(
+            self.scene.sceneRect().adjusted(-10, -10, 10, 10), Qt.KeepAspectRatio
+        )
+
+    def resizeEvent(self, event):
+        self.resetView()
 
     def change_key(self, action):
         self.wants_to_change_key.emit(action)
@@ -351,11 +370,20 @@ class ToolNavDiagram(QFrame):
         view.fitInView(
             self.scene.sceneRect().adjusted(-40, -40, 40, 40), Qt.KeepAspectRatio
         )
+        self._view = view
 
         grid = QVBoxLayout()
         grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(view)
         self.setLayout(grid)
+
+    def resetView(self):
+        self._view.fitInView(
+            self.scene.sceneRect().adjusted(-10, -10, 10, 10), Qt.KeepAspectRatio
+        )
+
+    def resizeEvent(self, event):
+        self.resetView()
 
     def change_key(self, action):
         self.wants_to_change_key.emit(action)
