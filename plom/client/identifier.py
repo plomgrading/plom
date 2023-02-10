@@ -607,13 +607,11 @@ class IDClient(QWidget):
             if msg.exec() == QMessageBox.No:
                 return
         # code = self.exM.data(index[0])
-        is_clicked_predButton0 = self.ui.predButton0.sender()
-        is_clicked_predButton1 = self.ui.predButton1.sender()
 
-        if is_clicked_predButton0:
+        if self.ui.predButton0.isChecked():
             sname = self.ui.pNameLabel0.text()
             sid = self.ui.pSIDLabel0.text()
-        elif is_clicked_predButton1:
+        elif self.ui.predButton1.isChecked():
             sname = self.ui.pNameLabel1.text()
             sid = self.ui.pSIDLabel1.text()
         else:
