@@ -391,11 +391,11 @@ class RubricNavDiagram(QFrame):
             _lab(lambda_factory, self.scene, keydata, *args, **kwargs)
 
         r = 12  # radius of turns
-        d = 30  # unit distance
-        lab("prev-rubric", 330, 190, ((2 * d, 0), (r, -r), (0, -d)), "N")
-        lab("next-rubric", 330, 190, ((2 * d, 0), (r, r), (0, d)), "S")
-        lab("prev-tab", 100, 58, ((0, -d / 2), (-r, -r), (-d, 0)), "W")
-        lab("next-tab", 100, 58, ((0, -d / 2), (r, -r), (d, 0)), "E")
+        d = 38  # unit distance
+        lab("prev-rubric", 626, 215, ((2 * d, 0), (r, -r), (0, -d)), "N")
+        lab("next-rubric", 626, 215, ((2 * d, 0), (r, r), (0, d)), "S")
+        lab("prev-tab", 231, 18, ((0, -d), (-r, -r), (-d, 0)), "W")
+        lab("next-tab", 231, 18, ((0, -d), (r, -r), (d, 0)), "E")
 
 
 class ToolNavDiagram(QFrame):
