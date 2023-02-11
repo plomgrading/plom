@@ -558,7 +558,8 @@ class PageScene(QGraphicsScene):
                     loc = br.left()
                 stuff = self.find_items_right_of(loc)
                 self.move_some_items(stuff, -br.width(), 0)
-                self.parent().report_new_or_permuted_image_data(self.src_img_data)
+                # TODO: replace with emit signal (if needed)
+                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
                 self.buildUnderLay()
 
             return page_delete
@@ -567,7 +568,7 @@ class PageScene(QGraphicsScene):
             def page_shift():
                 d = self.src_img_data.pop(n)
                 self.src_img_data.insert(n + relative, d)
-                self.parent().report_new_or_permuted_image_data(self.src_img_data)
+                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
                 self.buildUnderLay()
 
             return page_shift
@@ -583,7 +584,7 @@ class PageScene(QGraphicsScene):
                 stuff = self.find_items_right_of(loc)
                 # do the rotation in metadata and rebuild
                 self.src_img_data[n]["orientation"] += degrees
-                self.parent().report_new_or_permuted_image_data(self.src_img_data)
+                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
                 self.buildUnderLay()
                 # shift previously-selected rightward annotations by diff in widths
                 img = self.underImage.images[n]

@@ -849,13 +849,6 @@ class Annotator(QWidget):
         self.close_current_scene()
         self.load_new_scene(src_img_data)
 
-    def report_new_or_permuted_image_data(self, src_img_data):
-        """We have permuted/added/removed underlying source images, and wish to keep going.
-
-        Do whatever actions are needed to stay hip to the new reality.
-        """
-        pass
-
     def experimental_cycle(self):
         self.scene.whichLineToDraw_next()
 
