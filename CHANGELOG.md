@@ -15,10 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Try to prevent the user from making lots of new tabs, filling the tab bar, and confusing new users.
 
 ### Fixed
+* Identifier client bug (#2521): "Accept Prediction" button saves the correct student ID 
 * Group names must not have spaces but client should not crash if you make one.
 * Remove empty tab on removal of last rubric from group.
 * Only "custom user tabs" can be renamed: fix context menus to reflect this.
 * Misc fixes.
+
 
 
 ## [0.12.2] - 2023-02-05
