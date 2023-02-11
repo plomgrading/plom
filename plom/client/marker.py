@@ -1471,7 +1471,7 @@ class MarkerClient(QWidget):
                 row["filename"] = PC.page_image_path(row["id"])
                 continue
             all_present = False
-            log.info("triggering download for mage id %d", row["id"])
+            log.info("triggering download for image id %d", row["id"])
             self.downloader.download_in_background_thread(row)
             row["filename"] = self.downloader.get_placeholder_path()
         return all_present
