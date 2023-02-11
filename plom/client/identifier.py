@@ -242,8 +242,8 @@ class IDClient(QWidget):
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
-        self.ui.predButton0.clicked.connect(self.acceptPrediction)
-        self.ui.predButton1.clicked.connect(self.acceptPrediction)
+        self.ui.predButton0.clicked.connect(self.acceptPrediction0)
+        self.ui.predButton1.clicked.connect(self.acceptPrediction1)
         self.ui.blankButton.clicked.connect(self.blankPaper)
         self.ui.viewButton.clicked.connect(self.viewWholePaper)
 
@@ -597,7 +597,13 @@ class IDClient(QWidget):
         self.ui.idEdit.setFocus()
         return True
 
-    def acceptPrediction(self):
+    def acceptPrediction0(self):
+        return self._acceptPrediction(which_one=0)
+
+    def acceptPrediction1(self):
+        return self._acceptPrediction(which_one=1)
+
+    def _acceptPrediction(self, which_one):
         # first check currently selected paper is unidentified - else do nothing
         index = self.ui.tableView.selectedIndexes()
         status = self.exM.data(index[1])
@@ -608,10 +614,10 @@ class IDClient(QWidget):
                 return
         # code = self.exM.data(index[0])
 
-        if self.ui.predButton0.isChecked():
+        if which_one == 0:
             sname = self.ui.pNameLabel0.text()
             sid = self.ui.pSIDLabel0.text()
-        elif self.ui.predButton1.isChecked():
+        elif which_one == 1:
             sname = self.ui.pNameLabel1.text()
             sid = self.ui.pSIDLabel1.text()
         else:
