@@ -31,12 +31,12 @@ class TestSpecPageView(ManagerRequiredView):
 
         show_alert = False
         try:
-            valid = valid_spec.get_the_spec()
+            the_valid_spec = valid_spec.get_the_spec()
+            if not spec.compare_spec(the_valid_spec):
+                show_alert = True
         except ObjectDoesNotExist:
-            valid = {}
-
-        if valid and not spec.compare_spec(valid):
-            show_alert = True
+            # no valid spec - nothing to do yet.
+            pass
 
         context.update(
             {
