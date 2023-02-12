@@ -6,7 +6,8 @@
 from copy import deepcopy
 
 from PyQt5.QtCore import QTimer, Qt, QPointF
-from PyQt5.QtGui import QPen, QColor, QBrush
+from PyQt5.QtGui import QBrush, QColor, QFont, QPen
+
 from PyQt5.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
@@ -247,6 +248,7 @@ class GhostComment(QGraphicsItemGroup):
         self.di = GhostDelta(display_delta, fontsize)
         self.rubricID = "987654"  # a dummy value
         self.kind = "relative"  # another dummy value
+        self.legal = False
         self.blurb = GhostText(txt, fontsize)
         self.changeComment(display_delta, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -274,6 +276,7 @@ class GhostComment(QGraphicsItemGroup):
         self.removeFromGroup(self.di)
         self.removeFromGroup(self.blurb)
         # change things
+        self.legal = legal
         self.di.changeDelta(display_delta, legal)
         self.blurb.changeText(txt, legal)
         # move to correct positions
@@ -289,6 +292,17 @@ class GhostComment(QGraphicsItemGroup):
         else:
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
+
+    def change_font_size(self, fontsize):
+        font = QFont("Helvetica")
+        font.setPixelSize(round(fontsize))
+        self.blurb.setFont(font)
+        font = QFont("Helvetica")
+        font.setPixelSize(round(1.25 * fontsize))
+        self.di.setFont(font)
+        self.changeComment(
+            self.di.display_delta, self.blurb.toPlainText(), legal=self.legal
+        )
 
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting

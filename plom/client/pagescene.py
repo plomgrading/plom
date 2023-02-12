@@ -625,14 +625,7 @@ class PageScene(QGraphicsScene):
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
-        font = QFont("Helvetica")
-        font.setPixelSize(round(self.fontSize))
-        self.ghostItem.blurb.setFont(font)
-        font = QFont("Helvetica")
-        font.setPixelSize(round(1.25 * self.fontSize))
-        self.ghostItem.di.setFont(font)
-        # TODO: position within dotted line, but breaks overall position
-        # self.ghostItem.tweakPositions()
+        self.ghostItem.change_font_size(self.fontSize)
 
     def set_annotation_color(self, c):
         """Set the colour of annotations.
