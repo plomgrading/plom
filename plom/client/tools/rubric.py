@@ -6,7 +6,8 @@
 from copy import deepcopy
 
 from PyQt5.QtCore import QTimer, Qt, QPointF
-from PyQt5.QtGui import QPen, QColor, QBrush
+from PyQt5.QtGui import QBrush, QColor, QFont, QPen
+
 from PyQt5.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
@@ -289,6 +290,16 @@ class GhostComment(QGraphicsItemGroup):
         else:
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
+
+    def change_font_size(self, fontsize):
+        font = QFont("Helvetica")
+        font.setPixelSize(round(fontsize))
+        self.blurb.setFont(font)
+        font = QFont("Helvetica")
+        font.setPixelSize(round(1.25 * fontsize))
+        self.di.setFont(font)
+        # TODO: position within dotted line, but breaks overall position
+        # self.tweakPositions()
 
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting
