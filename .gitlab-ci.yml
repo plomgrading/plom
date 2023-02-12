@@ -851,7 +851,7 @@ binary_upload:
       ## Installation instructions
 
       Please see [plomgrading.org](https://plomgrading.org).
-      If you're here looking for Clients, see "Compiled client" packages above.
+      If you're here looking for Clients, see "Plom Client" packages above.
 
 
       #### Changes in this release
@@ -869,10 +869,10 @@ binary_upload:
     # strip the leading v in v0.x.y: don't see how to do this without dotenv
     - export VER=${CI_COMMIT_TAG:1}
     - echo $VER
-    - export LINKNAME0="Compiled client for GNU/Linux (AppImage)"
-    - export LINKNAME1="Compiled client for Windows"
-    - export LINKNAME2="Compiled client for macOS (for macOS ≥ 11)"
-    - export LINKNAME3="Compiled client for macOS (for macOS ≥ 10.14)"
+    - export LINKNAME0="Plom Client for GNU/Linux (AppImage)"
+    - export LINKNAME1="Plom Client for Windows"
+    - export LINKNAME2="Plom Client for macOS (for macOS ≥ 11)"
+    - export LINKNAME3="Plom Client for macOS (for macOS ≥ 10.14)"
     - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
     - export FILENAME1="PlomClient-$VER.exe"
     - export FILENAME2="PlomClient-$VER-macos11.zip"
