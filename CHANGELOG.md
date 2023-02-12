@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
-
+* Ensure Client <= 0.12.2 cannot connect to servers, ensures client bug #2521 (fixed in 0.12.3) cannot mismatch IDs.
+* Misc UI fixes.
 
 
 ## [0.12.3] - 2023-02-11
