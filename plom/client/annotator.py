@@ -949,12 +949,6 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self
         """
-        # TODO: comment out or delete for efficiency!
-        if self.sender() in self.ui.frameTools.children():
-            # old unused code from pre-auto-exclusive?
-            # self.sender().setChecked(True)
-            pass
-
         if cursor is None:
             cursor = self.cursor[newMode]
 
