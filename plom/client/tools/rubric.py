@@ -136,12 +136,12 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.blurb.saveable = False
 
         # TODO: the blurb will do this anyway, but may defer this to "later",
-        # meanwhile we have tqhe wrong size for tweakPositions (Issue #1391).
+        # meanwhile we have the wrong size for tweakPositions (Issue #1391).
         # TODO: can be removed once the border adjusts automatically to resize.
         self.blurb.textToPng()
 
         # move blurb so that its top-left corner is next to top-right corner of delta.
-        self.tweakPositions(rubric["display_delta"], rubric["text"])
+        self._tweakPositions(rubric["display_delta"], rubric["text"])
         # hide delta if trivial
         if rubric["display_delta"] == ".":
             self.di.setVisible(False)
@@ -177,7 +177,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.blurb.restyle(style)
         self.di.restyle(style)
 
-    def tweakPositions(self, display_delta, text):
+    def _tweakPositions(self, display_delta, text):
         pt = self.pt
         self.blurb.setPos(pt)
         self.di.setPos(pt)
@@ -245,16 +245,17 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
 class GhostComment(QGraphicsItemGroup):
     def __init__(self, display_delta, txt, fontsize):
         super().__init__()
-        self.di = GhostDelta(display_delta, fontsize)
-        self.rubricID = "987654"  # a dummy value
-        self.kind = "relative"  # another dummy value
         self.legal = False
-        self.blurb = GhostText(txt, fontsize)
+        self.di = GhostDelta(display_delta, fontsize, legal=self.legal)
+        self.blurb = GhostText(txt, fontsize, legal=self.legal)
         self.changeComment(display_delta, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def tweakPositions(self, display_delta, txt):
-        """Adjust the positions of the delta and text depending on their size and content."""
+    def _tweakPositions(self, display_delta, txt):
+        """Adjust the positions of the delta and text depending on their size and content.
+
+        Note: does not fix up the size of the boxes, see changeComment which does.
+        """
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
@@ -280,7 +281,7 @@ class GhostComment(QGraphicsItemGroup):
         self.di.changeDelta(display_delta, legal)
         self.blurb.changeText(txt, legal)
         # move to correct positions
-        self.tweakPositions(display_delta, txt)
+        self._tweakPositions(display_delta, txt)
         if display_delta == ".":  # hide the delta
             self.di.setVisible(False)
         else:

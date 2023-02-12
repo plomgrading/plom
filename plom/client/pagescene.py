@@ -488,7 +488,7 @@ class PageScene(QGraphicsScene):
 
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)
-        self.ghostItem.setVisible(False)
+        self.hideGhost()
         self.addItem(self.ghostItem)
 
         # cache some data about the currently selected rubric
@@ -819,8 +819,7 @@ class PageScene(QGraphicsScene):
         returns:
             pathlib.Path: the file we just saved to, including jpg or png.
         """
-        # Make sure the ghostComment is hidden
-        self.ghostItem.hide()
+        self.hideGhost()
         # Get the width and height of the image
         br = self.getSaveableRectangle()
         self.setSceneRect(br)
@@ -2440,7 +2439,7 @@ class PageScene(QGraphicsScene):
         spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
         self.ghostItem.setPos(spt)
         self.setToolMode("rubric")
-        self.exposeGhost()  # unhide the ghostitem
+        self.exposeGhost()
         self.updateGhost(
             rubric["display_delta"], rubric["text"], self.isLegalRubric(rubric)
         )
