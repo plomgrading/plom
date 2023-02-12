@@ -19,7 +19,7 @@ How to create the screenshot graphics for Key Help dialog
 * Screenshot, with a few white pixel border
 
 * The buttons have hairline thicknesses that are poor with bilinear scaling in
-  QGraphicsScene so we do some extra editting:
+  QGraphicsScene so we do some extra editing:
 
 * In the future, screenshotting on a HighDPI display would be enough.
 
