@@ -10,8 +10,7 @@
                 <li>Version {{ error_version_num }}</li>
             </ul>
             <a 
-                class="btn text-start"
-                style="background-color: lightgrey;"
+                class="btn btn-success text-start disabled"
                 data-bs-toggle="modal"
                 data-bs-target="#errorPageChangeModal"
             >
@@ -34,7 +33,7 @@
                 </div>
             </div>
             <a 
-                class="btn btn-warning text-start"
+                class="btn btn-warning text-start disabled"
                 data-bs-toggle="modal"
                 data-bs-target="#replacePageImageModal"
             >
@@ -96,7 +95,7 @@
                 {% csrf_token %}
                 {{ form }}
         
-                <input type="submit" class="btn" style="background-color: lightgrey; width: 100%" value="Flag to manager"> 
+                <input type="submit" class="btn disabled" style="background-color: lightgrey; width: 100%" value="Flag to manager"> 
                 </form>
             {% else %}
                 <p>Paper flagged to manager <i class="bi bi-check-circle text-success"></i></p>
@@ -112,7 +111,7 @@
                 <li>Version {{ error_version_num }}</li>
             </ul>
             <a 
-                class="btn btn-success text-start w-100"
+                class="btn btn-success text-start w-100 disabled"
                 data-bs-toggle="modal"
                 data-bs-target="#collisionPageChangeModal"
             >
@@ -135,7 +134,7 @@
                 </div>
             </div>
             <a 
-                class="btn btn-danger text-start w-100"
+                class="btn btn-danger text-start w-100 disabled"
                 data-bs-toggle="modal"
                 data-bs-target="#discardPageModal"
             >
@@ -156,6 +155,10 @@
                 </div>
                 </div>
             </div>
+        </div>
+    {% elif unknown and task_status == 'error' %}
+        <div>
+            <p class="text-danger">{{ error }}</p>
         </div>
     {% elif qr_results %}
         <div class="d-flex vstack gap-3">

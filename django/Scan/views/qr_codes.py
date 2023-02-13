@@ -100,6 +100,13 @@ class UpdateQRProgressView(ScannerRequiredView):
                         "collision": image.colliding,
                     }
                 )
+            if task_status == "error" and image.unknown:
+                context.update(
+                    {
+                        "error": scanner.get_qr_code_error_message(bundle, index),
+                        "unknown": image.unknown,
+                    }
+                )
                 
         return context
 

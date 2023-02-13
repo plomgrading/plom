@@ -5,7 +5,7 @@ import shutil
 
 from django.conf import settings
 from Papers.services import SpecificationService
-from Scan.models import (StagingImage, CollisionStagingImage)
+from Scan.models import (StagingImage, CollisionStagingImage, UnknownStagingImage)
 from Papers.models import ErrorImage
 from collections import Counter
 from Papers.services import ImageBundleService
@@ -212,5 +212,13 @@ class QRErrorService:
         )
         collision_image.save()
 
-    def create_unknown_image(self):
-        pass
+    def create_unknown_image(self, img_obj):
+        unknown_image = UnknownStagingImage(
+                bundle=img_obj.bundle,
+                bundle_order=img_obj.bundle_order,
+                file_name=img_obj.file_name,
+                file_path = img_obj.file_path,
+                image_hash=img_obj.image_hash,
+                rotation=img_obj.rotation,
+            )
+        unknown_image.save()

@@ -68,6 +68,18 @@ class CollisionStagingImage(models.Model):
     rotation = models.IntegerField(default=0)
     paper_number = models.PositiveIntegerField(null=True)
     page_number = models.PositiveIntegerField(null=True)
+
+
+class UnknownStagingImage(models.Model):
+    """
+    An image of an unknown page.
+    """
+    bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
+    bundle_order = models.PositiveIntegerField(null=True)
+    file_name = models.TextField(default="")
+    file_path = models.TextField(default="")
+    image_hash = models.CharField(max_length=64)
+    rotation = models.IntegerField(default=0)
     
 
 class PageToImage(HueyTask):
