@@ -31,3 +31,4 @@ omit = ["*/test_*", "/usr/*", "*/config*", "django/*"]
 [tool.pytest.ini_options]
 # TODO: for now ignore the django folder
 addopts = "--ignore plom/django"
+qt_api = "pyqt5"
