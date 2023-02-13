@@ -60,6 +60,9 @@ You may also want to consider a tool like `virtualenv`.
 Ubuntu
 ------
 
+Plom requires Python 3.7, perhaps it will soon require 3.8.
+It will not work on Ubuntu 18.04.  It is time to upgrade your OS.
+
 Some stuff from the package manager:
 ```
   # sudo apt install \
@@ -82,7 +85,7 @@ Now upgrade pip (your local copy, not the system one)
   # pip3 --version
   # pip --version
 ```
-Note `python3 -m pip` uses the newly upgraded pip (necessary on Ubuntu 18.04).
+Note `python3 -m pip` is some kind of workaround for old OSes.
 On Ubuntu 20.04, you should be able to just use "pip", but inspect output to be sure.
 
 At this point `pip install --user .` from inside the Plom source tree should pull
@@ -94,18 +97,6 @@ and instead use pinned versions:
   # python3 -m pip install --user -r requirements.txt
 ```
 You may also want to consider a tool like `virtualenv`.
-
-Finally: it has been noted that ImageMagick doesn't allow hacking
-of pdf files by default, some edits are needed to
-`/etc/ImageMagick-6/policy.xml`.  Near the end of the file,
-comment out the `pattern="PDF"` part:
-```diff
-   <policy domain="coder" rights="none" pattern="EPS" />
--  <policy domain="coder" rights="none" pattern="PDF" />
-+  <!--<policy domain="coder" rights="none" pattern="PDF" />-->
-   <policy domain="coder" rights="none" pattern="XPS" />
-```
-TODO: this may not be necessary on Ubuntu 20.04 with Plom>=0.8.0?
 
 Another thing to watch out for (at least on Ubuntu 18.04) is that
 `pip install --user ...` commands will install binaries in
