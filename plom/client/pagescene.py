@@ -488,7 +488,7 @@ class PageScene(QGraphicsScene):
 
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)
-        self.ghostItem.setVisible(False)
+        self.hideGhost()
         self.addItem(self.ghostItem)
 
         # cache some data about the currently selected rubric
@@ -532,8 +532,8 @@ class PageScene(QGraphicsScene):
         # after score and state are recomputed, we need to update a few things
         # the scorebox
         self.scoreBox.changeScore(self.score)
-        # TODO - this is a bit hack, but need to update the rubric-widget
-        self.parent().rubric_widget.changeMark(self.score)
+        # update the rubric-widget
+        self.parent().rubric_widget.updateLegalityOfRubrics()
         # also update the marklabel in the annotator - same text as scorebox
         self.parent().refreshDisplayedMark(self.score)
 
@@ -625,14 +625,7 @@ class PageScene(QGraphicsScene):
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
-        font = QFont("Helvetica")
-        font.setPixelSize(round(self.fontSize))
-        self.ghostItem.blurb.setFont(font)
-        font = QFont("Helvetica")
-        font.setPixelSize(round(1.25 * self.fontSize))
-        self.ghostItem.di.setFont(font)
-        # TODO: position within dotted line, but breaks overall position
-        # self.ghostItem.tweakPositions()
+        self.ghostItem.change_font_size(self.fontSize)
 
     def set_annotation_color(self, c):
         """Set the colour of annotations.
@@ -826,8 +819,7 @@ class PageScene(QGraphicsScene):
         returns:
             pathlib.Path: the file we just saved to, including jpg or png.
         """
-        # Make sure the ghostComment is hidden
-        self.ghostItem.hide()
+        self.hideGhost()
         # Get the width and height of the image
         br = self.getSaveableRectangle()
         self.setSceneRect(br)
@@ -1573,7 +1565,9 @@ class PageScene(QGraphicsScene):
             # self.rubricDelta = "0"
             # self.rubricKind = "neutral"
             # self.mousePressRubric(e)
-            log.error("Issue #2417: Drag-drop gave plain text but no way to add: {txt}")
+            log.error(
+                f"Issue #2417: Drag-drop gave plain text but no way to add: {txt}"
+            )
         elif e.mimeData().hasFormat(
             "application/x-qabstractitemmodeldatalist"
         ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
@@ -1673,7 +1667,7 @@ class PageScene(QGraphicsScene):
             raise ValueError("Could not unpickle whatever this is:\n  {}".format(X))
         # now make sure focus is cleared from every item
         for X in self.items():
-            X.setFocus(False)
+            X.clearFocus()
         # finish the macro
         self.undoStack.endMacro()
 
@@ -2415,7 +2409,7 @@ class PageScene(QGraphicsScene):
         rubrics.append(rubric)
 
         try:
-            N = compute_score(rubrics, self.maxMark)
+            compute_score(rubrics, self.maxMark)
         except ValueError:
             return False
         except PlomInconsistentRubric:
@@ -2428,8 +2422,9 @@ class PageScene(QGraphicsScene):
 
         Args:
             rubric (dict): must have at least the keys and values::
-                - value (str): TODO should be int/float?
-                - delta (str): a string displaying the value of the rubric.
+                - value (int):
+                - out_of (int):
+                - display_delta (str): a string displaying the value of the rubric.
                 - text (str): the text in the rubric.
                 - id (int): the id of the rubric.
                 - kind (str): ``"absolute"``, ``"neutral"``, etc.
@@ -2444,7 +2439,7 @@ class PageScene(QGraphicsScene):
         spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
         self.ghostItem.setPos(spt)
         self.setToolMode("rubric")
-        self.exposeGhost()  # unhide the ghostitem
+        self.exposeGhost()
         self.updateGhost(
             rubric["display_delta"], rubric["text"], self.isLegalRubric(rubric)
         )

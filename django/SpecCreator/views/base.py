@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
 
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
@@ -27,9 +30,13 @@ class TestSpecPageView(ManagerRequiredView):
         valid_spec = SpecificationService()
 
         show_alert = False
-        valid = valid_spec.get_the_spec()
-        if valid and not spec.compare_spec(valid):
-            show_alert = True
+        try:
+            the_valid_spec = valid_spec.get_the_spec()
+            if not spec.compare_spec(the_valid_spec):
+                show_alert = True
+        except ObjectDoesNotExist:
+            # no valid spec - nothing to do yet.
+            pass
 
         context.update(
             {

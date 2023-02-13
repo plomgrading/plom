@@ -12,11 +12,11 @@ PyQt5==5.15.7
 PyQt5-sip==12.11.0
 appdirs==1.4.4
 arrow==1.2.3
-exif==1.5.0
+exif==1.6.0
 fonttools==4.38.0
 importlib-resources==5.10.2
 packaging==23.0
-pandas==1.5.2
+pandas==1.5.3
 passlib==1.7.4
 Pillow==9.4.0
 pymupdf==1.21.1

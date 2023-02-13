@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020-2022 Colin B. Macdonald
-# Copyright (C) 2022 Natalie Balashov
+# Copyright (C) 2022-2023 Natalie Balashov
 
 """
 Tools for building and solving assignment problems.
@@ -66,16 +66,18 @@ def assemble_cost_matrix(test_numbers, student_IDs, probabilities):
     return costs
 
 
-def lap_solver(test_numbers, student_IDs, costs):
+def lap_solver(test_numbers, student_IDs, probabilities):
     """Run linear assignment problem solver, return prediction results.
 
     Args:
         test_numbers (list): int, the ones we want to match.
         student_IDs (list): A list of student ID numbers.
-        cost_matrix (list): list of list of floats.
+        probabilities (dict): dict with keys that contain a test number and values that contain a probability matrix,
+        which is a list of lists of floats.
 
     Returns:
-        list: triples of (`paper_number`, `student_ID`, `certainty`), where certainty is hard-coded to 0.5
+        list: triples of (`paper_number`, `student_ID`, `certainty`),
+        where certainty is the mean of digit probabilities for the student_ID selected by LAP solver.
 
     use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
     (as implemented in the ``lapsolver`` package)
@@ -85,10 +87,21 @@ def lap_solver(test_numbers, student_IDs, costs):
     a tiny fraction of a section.  The package ``lapsolver`` itself notes
     3000x3000 in around 3 seconds.
     """
-    row_IDs, column_IDs = solve_dense(costs)
+    cost_matrix = assemble_cost_matrix(test_numbers, student_IDs, probabilities)
+
+    row_IDs, column_IDs = solve_dense(cost_matrix)
+
     predictions = []
     for r, c in zip(row_IDs, column_IDs):
-        predictions.append((test_numbers[r], student_IDs[c], 0.5))
+        test_num = test_numbers[r]
+        sid = student_IDs[c]
+
+        sum_digit_probs = 0
+        for digit in range(len(sid)):
+            sum_digit_probs += probabilities[test_num][digit][int(sid[digit])]
+        certainty = sum_digit_probs / len(sid)
+
+        predictions.append((test_num, sid, certainty))
     return predictions
 
 

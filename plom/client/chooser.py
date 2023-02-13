@@ -49,6 +49,7 @@ from plom.plom_exceptions import (
 from plom.messenger import Messenger, ManagerMessenger
 from plom.client import MarkerClient, IDClient
 from .downloader import Downloader
+from .about_dialog import show_about_dialog
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQuestion
 from .useful_classes import ClientSettingsDialog
@@ -124,6 +125,7 @@ class Chooser(QDialog):
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         self.ui.markButton.clicked.connect(self.run_marker)
         self.ui.identifyButton.clicked.connect(self.run_identifier)
+        self.ui.aboutButton.clicked.connect(lambda: show_about_dialog(self))
         # Hide button used for directly opening manager
         # self.ui.manageButton.clicked.connect(self.run_manager)
         self.ui.manageButton.setVisible(False)
@@ -410,7 +412,7 @@ class Chooser(QDialog):
             return None
 
     def ungetInfo(self):
-        self.ui.markGBox.setTitle("Marking information")
+        self.ui.markGBox.setTitle("Choose a task")
         question = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(True)
@@ -493,7 +495,7 @@ class Chooser(QDialog):
             self.messenger = None
             return
 
-        self.ui.markGBox.setTitle("Marking information for “{}”".format(spec["name"]))
+        self.ui.markGBox.setTitle("Choose a task for “{}”".format(spec["name"]))
         question = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(False)
@@ -519,9 +521,9 @@ class Chooser(QDialog):
         self.ui.vDrop.setEditable(False)
         # put focus at username or password line-edit
         if len(self.ui.userLE.text()) > 0:
-            self.ui.passwordLE.setFocus(True)
+            self.ui.passwordLE.setFocus()
         else:
-            self.ui.userLE.setFocus(True)
+            self.ui.userLE.setFocus()
 
     def partial_parse_address(self):
         """If address has a port number in it, extract and move to the port box.

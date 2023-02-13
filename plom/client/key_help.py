@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 from copy import deepcopy
 import logging
@@ -12,7 +12,7 @@ else:
     import importlib_resources as resources
 
 from PyQt5.QtCore import Qt, QBuffer, QByteArray
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QKeySequence, QPainter, QPixmap, QMovie
 from PyQt5.QtWidgets import (
     QAbstractItemView,

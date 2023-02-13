@@ -254,7 +254,7 @@ def upload(
         integrity_check (str): the integrity_check string of the task.
         images_used (list[dict]): a list of dicts of the images used.
             Must have keys ``id`` and ``md5``, other keys ignored.
-            If you have a ``img_src_data``, that should work.
+            If you have a ``src_img_data``, that should work.
         knownFailCallback: if we fail in a way that is reasonably expected,
             call this function.
         unknownFailCallback: if we fail but don't really know why or what
@@ -341,7 +341,7 @@ class ExamQuestion:
             tags (list): Tags corresponding to the exam.  We will flatten to
                 a space-separaed string.
             integrity_check (str): integrity_check = concat of md5sums of underlying images
-            src_img_metadata (list[dict]): a list of dicts of md5sums,
+            src_img_data (list[dict]): a list of dicts of md5sums,
                 filenames and other metadata of the images for the test
                 question.
 
@@ -1028,6 +1028,18 @@ class MarkerClient(QWidget):
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
 
+    def is_experimental(self):
+        return self.annotatorSettings["experimental"]
+
+    def set_experimental(self, x):
+        # TODO: maybe signals/slots should be used to watch for changes
+        if x:
+            log.info("Experimental/advanced mode enabled")
+            self.annotatorSettings["experimental"] = True
+        else:
+            log.info("Experimental/advanced mode disabled")
+            self.annotatorSettings["experimental"] = False
+
     def UIInitialization(self):
         """
         Startup procedure for the user interface
@@ -1309,14 +1321,14 @@ class MarkerClient(QWidget):
         else:
             # Colin doesn't understand this proxy: just pull task and query examModel
             task = self.prxM.getPrefix(pr)
-            img_src_data = self.examModel.get_source_image_data(task)
-            for r in img_src_data:
+            src_img_data = self.examModel.get_source_image_data(task)
+            for r in src_img_data:
                 if not r.get("filename") and not r.get("local_filename"):
                     print(r)
                     raise PlomSeriousException(
-                        f"Unexpected Issue #2327: img_src_data is {img_src_data}, task={task}"
+                        f"Unexpected Issue #2327: src_img_data is {src_img_data}, task={task}"
                     )
-            self.testImg.updateImage(img_src_data)
+            self.testImg.updateImage(src_img_data)
         # TODO: seems to behave ok without this hack: delete?
         # self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
@@ -1460,9 +1472,9 @@ class MarkerClient(QWidget):
         a more general routine would be written that does not depend on the
         `examModel` having a row for the task already.
         """
-        img_src_data = self.examModel.get_source_image_data(task)
+        src_img_data = self.examModel.get_source_image_data(task)
         placeholder = self.downloader.get_placeholder_path()
-        for row in img_src_data:
+        for row in src_img_data:
             if row["filename"] == placeholder:
                 log.info(
                     "image id %d still has placeholder, re-triggering download",
@@ -1767,8 +1779,8 @@ class MarkerClient(QWidget):
         placeholder = self.downloader.get_placeholder_path()
         while True:
             keep_waiting = False
-            img_src_data = self.examModel.get_source_image_data(task)
-            for row in img_src_data:
+            src_img_data = self.examModel.get_source_image_data(task)
+            for row in src_img_data:
                 if row["filename"] == placeholder:
                     keep_waiting = True
                     print(f">>>> row still has placeholder: {row}")
@@ -1778,7 +1790,7 @@ class MarkerClient(QWidget):
             self.Qapp.processEvents()
             count += 1
             if (count % 10) == 0:
-                log.info("waiting for downloader: {}".format(img_src_data))
+                log.info("waiting for downloader: {}".format(src_img_data))
             if count >= 40:
                 msg = SimpleQuestion(
                     self,
@@ -1790,7 +1802,7 @@ class MarkerClient(QWidget):
                 self.Qapp.processEvents()
 
         # maybe the downloader failed for some (rare) reason
-        for data in img_src_data:
+        for data in src_img_data:
             if not Path(data["filename"]).exists():
                 log.warning(
                     "some kind of downloader fail? (unexpected, but probably harmless"
@@ -2481,7 +2493,7 @@ class MarkerClient(QWidget):
         """Sets a filter tag."""
         self.prxM.setFilterString(self.ui.filterLE.text().strip())
         # check to see if invert-filter is checked
-        if self.ui.filterInvCB.checkState() == Qt.Checked:
+        if self.ui.filterInvCB.isChecked():
             self.prxM.filterTags(invert=True)
         else:
             self.prxM.filterTags()

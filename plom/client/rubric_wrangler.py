@@ -5,7 +5,7 @@
 
 import logging
 
-from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QModelIndex
+from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -16,17 +16,13 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QVBoxLayout,
     QLabel,
-    QListWidget,
     QLineEdit,
     QPushButton,
     QSizePolicy,
-    QStackedWidget,
-    QTabBar,
     QTabWidget,
     QTableView,
     QTableWidget,
     QTableWidgetItem,
-    QWidget,
 )
 
 
@@ -57,7 +53,7 @@ def deltaToInt(x):
 
 class DeleteIcon(QPushButton):
     def __init__(self):
-        super(DeleteIcon, self).__init__()
+        super().__init__()
         self.setText("Drag here\n to remove\n from tab")
         self.setAcceptDrops(True)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -76,7 +72,7 @@ class DeleteIcon(QPushButton):
 
 class RubricModel(QStandardItemModel):
     def __init__(self, data=None):
-        super(RubricModel, self).__init__()
+        super().__init__()
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(["Key", "Username", "Display Delta", "Text"])
         if data is not None:
@@ -153,7 +149,7 @@ class RubricProxyModel(QSortFilterProxyModel):
 
 class ShowTable(QTableWidget):
     def __init__(self):
-        super(ShowTable, self).__init__()
+        super().__init__()
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -290,8 +286,6 @@ class ShowTabW(QTabWidget):
         self.tabBar().setAcceptDrops(True)
         self.tabBar().setChangeCurrentOnDrag(True)
         for X in nameList:
-            if isinstance(X, dict):
-                X = X["longname"] if X["longname"] else "List {}".format(X["shortname"])
             self.addTab(ShowTable(), X)
 
     def dropEvent(self, event):
@@ -331,8 +325,6 @@ class ShowListFrame(QFrame):
         self.DI = DeleteIcon()
         vl = QVBoxLayout()
         for n, X in enumerate(nameList):
-            if isinstance(X, dict):
-                X = X["longname"] if X["longname"] else "List {}".format(X["shortname"])
             vl.addWidget(DropButton(n, X))
         hl = QHBoxLayout()
         hl.addLayout(vl)
@@ -374,8 +366,8 @@ class RubricWrangler(QDialog):
         self.rubricTable.setDragEnabled(True)
         self.rubricTable.setAcceptDrops(False)
         ##
-        self.num_user_tabs = len(wranglerState["user_tab_names"])
-        tab_names = wranglerState["user_tab_names"].copy()  # copy needed?
+        self.num_user_tabs = len(wranglerState["user_tabs"])
+        tab_names = [x["name"] for x in wranglerState["user_tabs"]]
         tab_names.append("HIDE")
         self.ST = ShowListFrame(tab_names)
         ##
@@ -402,10 +394,10 @@ class RubricWrangler(QDialog):
         # set sensible default state if rubricWidget sends state=none
         if wranglerState is None:
             wranglerState = {
-                "user_tab_names": [],
                 "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
-                "tabs": [],
+                "tab_order": [],
+                "user_tabs": [],
             }
         self.setFromWranglerState(wranglerState)
 
@@ -419,18 +411,21 @@ class RubricWrangler(QDialog):
 
     def toWranglerState(self):
         store = {
-            "user_tab_names": [],
             "shown": [],
             "hidden": [],
-            "tabs": [],
+            "tab_order": [],
+            "user_tabs": [],
         }
         for p in range(self.num_user_tabs):
-            store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
-        # TODO: this doesn't yet set the names: but they can't change in here anyway
-        # for p in range(self.num_user_tabs):
-        #     log.warning(self.ST.STW.widget(p).shortname)
-        #     store["user_tab_names"].append(...)
+            store["user_tabs"].append(
+                {
+                    "name": self.ST.STW.tabText(p),
+                    "ids": self.ST.STW.widget(p).getCurrentKeys(),
+                }
+            )
+        # the hidden tab is stored in the index *after* the last user tab
         store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
+        assert self.num_user_tabs + 1 == self.ST.STW.count()
         # anything not hidden is shown
         # columns are ["Key", "Username", "Display Delta", "Text"])
         for r in range(self.model.rowCount()):
@@ -458,7 +453,7 @@ class RubricWrangler(QDialog):
         self.model.repopulate(mainList)
         # populate the ABC lists
         for p in range(self.num_user_tabs):
-            self.ST.populate(p, self.rubrics, state["tabs"][p])
+            self.ST.populate(p, self.rubrics, state["user_tabs"][p]["ids"])
         # populate the hide-list
         idx = self.num_user_tabs
         self.ST.populate(idx, self.rubrics, state["hidden"])

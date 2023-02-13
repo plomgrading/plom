@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
-# Copyright (C) 2022 Natalie Balashov
+# Copyright (C) 2022-2023 Natalie Balashov
 
 """
 The Plom Identifier client
@@ -242,8 +242,8 @@ class IDClient(QWidget):
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
-        self.ui.predButton0.clicked.connect(self.acceptPrediction)
-        self.ui.predButton1.clicked.connect(self.acceptPrediction)
+        self.ui.predButton0.clicked.connect(self.acceptPrediction0)
+        self.ui.predButton1.clicked.connect(self.acceptPrediction1)
         self.ui.blankButton.clicked.connect(self.blankPaper)
         self.ui.viewButton.clicked.connect(self.viewWholePaper)
 
@@ -464,30 +464,38 @@ class IDClient(QWidget):
                     self.ui.predictionBox1.hide()
 
                 elif pred["predictor"] == "MLGreedy":
-                    self.ui.predictionBox1.show()
-                    self.ui.predButton1.show()
-                    self.ui.pSIDLabel1.setText(psid)
-                    self.ui.pNameLabel1.setText(pname)
-                    self.ui.predictionBox1.setTitle(
-                        f"Prediction by MLGreedy with certainty {round(pred['certainty'], 3)}"
-                    )
+                    first_pred = all_predictions_for_paper[0]
+                    second_pred = all_predictions_for_paper[1]
+                    if first_pred["student_id"] == second_pred["student_id"]:
+                        self.ui.predictionBox0.setTitle(
+                            f"{first_pred['predictor']} prediction with certainty {round(first_pred['certainty'], 3)} agrees with {second_pred['predictor']} prediction of certainty {round(second_pred['certainty'], 3)}"
+                        )
+                    else:
+                        self.ui.predictionBox1.show()
+                        self.ui.predButton1.show()
+                        self.ui.pSIDLabel1.setText(psid)
+                        self.ui.pNameLabel1.setText(pname)
+                        self.ui.predictionBox1.setTitle(
+                            f"Prediction by MLGreedy with certainty {round(pred['certainty'], 3)}"
+                        )
                     self.ui.predButton1.setText("&Accept\nPrediction")
 
-                    if (
-                        all_predictions_for_paper[0]["student_id"]
-                        != all_predictions_for_paper[1]["student_id"]
-                    ):
+                    if first_pred["student_id"] != second_pred["student_id"]:
                         self.ui.predictionBox0.setStyleSheet(
                             "background-color: #FFD700"
                         )
                         self.ui.predictionBox1.setStyleSheet(
                             "background-color: #FFD700"
+                        )
+                    elif (
+                        pred["certainty"] < 0.3
+                    ):  # inaccurate Greedy prediction tend to have certainty less than 0.3
+                        # useful to warn the user if LAP agrees with Greedy, but both have a high chance of being incorrect
+                        self.ui.predictionBox0.setStyleSheet(
+                            "background-color: #FF7F50"
                         )
                     else:
                         self.ui.predictionBox0.setStyleSheet(
-                            "background-color: #00FA9A"
-                        )
-                        self.ui.predictionBox1.setStyleSheet(
                             "background-color: #00FA9A"
                         )
                 else:
@@ -589,7 +597,13 @@ class IDClient(QWidget):
         self.ui.idEdit.setFocus()
         return True
 
-    def acceptPrediction(self):
+    def acceptPrediction0(self):
+        return self._acceptPrediction(which_one=0)
+
+    def acceptPrediction1(self):
+        return self._acceptPrediction(which_one=1)
+
+    def _acceptPrediction(self, which_one):
         # first check currently selected paper is unidentified - else do nothing
         index = self.ui.tableView.selectedIndexes()
         status = self.exM.data(index[1])
@@ -599,13 +613,11 @@ class IDClient(QWidget):
             if msg.exec() == QMessageBox.No:
                 return
         # code = self.exM.data(index[0])
-        is_clicked_predButton0 = self.ui.predButton0.sender()
-        is_clicked_predButton1 = self.ui.predButton1.sender()
 
-        if is_clicked_predButton0:
+        if which_one == 0:
             sname = self.ui.pNameLabel0.text()
             sid = self.ui.pSIDLabel0.text()
-        elif is_clicked_predButton1:
+        elif which_one == 1:
             sname = self.ui.pNameLabel1.text()
             sid = self.ui.pSIDLabel1.text()
         else:

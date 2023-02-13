@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021, 2023 Colin B. Macdonald
 
-import os
 from pytest import raises
 
 from plom.misc_utils import working_directory

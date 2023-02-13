@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import Qt
@@ -64,7 +64,7 @@ class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
 
 
 class GhostDelta(QGraphicsTextItem):
-    def __init__(self, display_delta, fontsize=10, legal=True):
+    def __init__(self, display_delta, fontsize, *, legal=True):
         super().__init__()
         self.display_delta = display_delta
         if legal:
@@ -81,7 +81,7 @@ class GhostDelta(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def changeDelta(self, display_delta, legal=True):
+    def changeDelta(self, display_delta, legal):
         self.display_delta = display_delta
         self.setPlainText(" {} ".format(self.display_delta))
         if legal:

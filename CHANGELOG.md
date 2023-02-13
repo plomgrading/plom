@@ -9,6 +9,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+* Ensure Client <= 0.12.2 cannot connect to servers, ensures client bug #2521 (fixed in 0.12.3) cannot mismatch IDs.
+* Misc UI fixes.
+
+
+## [0.12.3] - 2023-02-11
+
+### Changed
+* Rubrics: suggest new group name from existing, e.g., have (a), (b) then suggest (c).
+* Client: prevent lots of new tabs, which fills the tab bar and could be confusing.
+
+### Fixed
+* Identifier client bug #2521: "Accept Prediction" button now saves the correct student ID.
+* Group names must not have spaces, but client no longer crashes if you make one.
+* Remove empty tab on removal of last rubric from group.
+* Only "custom user tabs" can be renamed: fix context menus to reflect this.
+* Misc fixes.
+
+
+## [0.12.2] - 2023-02-05
+
+### Changed
+* Identifier displays more meaningful certainty values for the Assignment Problem predictions.
+
+### Fixed
+* Fixed a crash when explicitly syncing rubrics.
+* "Experimental features" is now persistent during a single session.
+
+
+## [0.12.1] - 2023-01-27
+
+### Added
+* `plom-create` command line tool can list and clear paper id prediction tables.
+* Plom-Client has an "experimental" menu item: currently creates a bit of friction before using the new parameterized rubrics and absolute rubrics.
+
+### Changed
+* Revamp Chooser dialog, add "about" dialog.
+* Add "about" dialog and version info to Manager tool.
+* Possible (if somewhat ill-advised) to replace the prenaming after papers have been created.
+* Sadly, the "cat break" feature is currently disabled as the external service is not currently reliable.
+
+### Fixed
+* Fix rendering of parameterized rubrics.
+* Fix modifying group of initially non-grouped rubrics.
+* Add notice to UI that macOS packaged binaries cannot reassemble, link to issue.
+* Misc fixes.
+
+
+## [0.12.0] - 2023-01-21
+
+### Added
 * "Tech preview" of a web-interface for configuring a Plom server.
 * Users can create "absolute rubrics" of the form "2 of 3: comment".
 * The "scope" of rubrics can be adjusted:
@@ -896,7 +950,11 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.11.1...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.12.3...main
+[0.12.3]: https://gitlab.com/plom/plom/-/compare/v0.12.2...v0.12.3
+[0.12.2]: https://gitlab.com/plom/plom/-/compare/v0.12.1...v0.12.2
+[0.12.1]: https://gitlab.com/plom/plom/-/compare/v0.12.0...v0.12.1
+[0.12.0]: https://gitlab.com/plom/plom/-/compare/v0.11.1...v0.12.0
 [0.11.1]: https://gitlab.com/plom/plom/-/compare/v0.11.0...v0.11.1
 [0.11.0]: https://gitlab.com/plom/plom/-/compare/v0.10.1...v0.11.0
 [0.10.1]: https://gitlab.com/plom/plom/-/compare/v0.10.0...v0.10.1

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
@@ -61,6 +61,7 @@ from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.useful_classes import AddRemoveTagDialog
 from plom.client.viewers import WholeTestView, GroupView
 from plom.client.downloader import Downloader
+from plom.client.about_dialog import show_about_dialog
 from plom.client import ImageViewWidget
 
 from .uiFiles.ui_manager import Ui_Manager
@@ -119,14 +120,14 @@ class UserDialog(QDialog):
         self.pwLE = QLineEdit(initialpw)
         # self.pwLE.setEchoMode(QLineEdit.Password)
         self.pwLE2 = QLineEdit(initialpw)
-        self.pwLE2.setEchoMode(QLineEdit.Password)
+        # self.pwLE2.setEchoMode(QLineEdit.Password)
         self.okB = QPushButton("Accept")
         self.okB.clicked.connect(self.validate)
         self.cnB = QPushButton("Cancel")
         self.cnB.clicked.connect(self.reject)
 
         self.pwCB = QCheckBox("(hide/show)")
-        self.pwCB.setCheckState(Qt.Unchecked)
+        self.pwCB.setChecked(False)
         self.pwCB.stateChanged.connect(self.togglePWShow)
         self.pwNewB = QPushButton("New rand pwd")
         self.pwNewB.clicked.connect(self.newRandomPassword)
@@ -146,10 +147,12 @@ class UserDialog(QDialog):
         self.setLayout(grid)
 
     def togglePWShow(self):
-        if self.pwCB.checkState() == Qt.Checked:
+        if self.pwCB.isChecked():
             self.pwLE.setEchoMode(QLineEdit.Password)
+            self.pwLE2.setEchoMode(QLineEdit.Password)
         else:
             self.pwLE.setEchoMode(QLineEdit.Normal)
+            self.pwLE2.setEchoMode(QLineEdit.Normal)
 
     def newRandomPassword(self):
         newpw = simple_password()
@@ -257,12 +260,12 @@ class TestStatus(QDialog):
         idCB.setAttribute(Qt.WA_TransparentForMouseEvents)
         idCB.setFocusPolicy(Qt.NoFocus)
         if status["identified"]:
-            idCB.setCheckState(Qt.Checked)
+            idCB.setChecked(True)
         mkCB = QCheckBox("Fully marked")
         mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
         mkCB.setFocusPolicy(Qt.NoFocus)
         if status["marked"]:
-            mkCB.setCheckState(Qt.Checked)
+            mkCB.setChecked(True)
 
         hb = QHBoxLayout()
         vb1 = QVBoxLayout()
@@ -388,6 +391,7 @@ class Manager(QWidget):
         )
         self.ui = Ui_Manager()
         self.ui.setupUi(self)
+        self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         if user:
             self.ui.userLE.setText(user)
         if password:
@@ -395,7 +399,7 @@ class Manager(QWidget):
         if server:
             self.setServer(server)
 
-        self.ui.passwordLE.setFocus(True)
+        self.ui.passwordLE.setFocus()
         self.connectButtons()
         self.ui.configTab.setEnabled(False)
         self.ui.scanningAllTab.setEnabled(False)
@@ -404,6 +408,8 @@ class Manager(QWidget):
         self.ui.reviewAllTab.setEnabled(False)
         self.ui.userAllTab.setEnabled(False)
         if self.msgr:
+            server_ver_str = self.msgr.get_server_version()
+            self.ui.infoLabel.setText(server_ver_str)
             self.initial_login()
         else:
             if password:
@@ -415,6 +421,7 @@ class Manager(QWidget):
             self.downloader = Downloader(tmpdir, msgr=self.msgr)
 
     def connectButtons(self):
+        self.ui.aboutButton.clicked.connect(lambda: show_about_dialog(self))
         self.ui.loginButton.clicked.connect(self.login)
         self.ui.closeButton.clicked.connect(self.close)
         self.ui.fontSB.valueChanged.connect(self.setFont)
@@ -512,7 +519,8 @@ class Manager(QWidget):
 
         try:
             self.msgr = ManagerMessenger(server, mport)
-            self.msgr.start()
+            server_ver_str = self.msgr.start()
+            self.ui.infoLabel.setText(server_ver_str)
         except PlomBenignException as e:
             WarnMsg(self, "Could not connect to server.", info=str(e)).exec()
             self.msgr = None  # reset to avoid Issue #1622
@@ -2291,7 +2299,7 @@ class Manager(QWidget):
 
     def filterReview(self):
         t0 = time()
-        markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
+        markedOnly = self.ui.markedOnlyCB.isChecked()
         # 1-based question indexing but 0th element is the any match
         qidx = self.ui.questionCB.currentIndex()
         if qidx == 0:

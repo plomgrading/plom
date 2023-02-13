@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework import status
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import FileResponse
 
@@ -14,6 +15,7 @@ from Papers.services import SpecificationService
 from Papers.models import Paper, Image
 
 from Mark.services import MarkingTaskService, PageDataService
+from Mark.models import AnnotationImage, MarkingTask
 
 
 class QuestionMaxMark_how_to_get_data(APIView):
@@ -63,6 +65,33 @@ class QuestionMaxMark(APIView):
             raise exc
 
 
+class MarkingProgressCount(APIView):
+    """Responds with a list of completed/total tasks.
+
+    Returns:
+        (200): returns two integers, first the number of marked papers
+            for this question/version and the total number of papers for
+            this question/version.
+        (400): malformed such as non-integers for question/version.
+        (416): question values out of range: NOT IMPLEMENTED YET.
+            (In legacy, this was thrown by the backend).
+    """
+
+    def get(self, request):
+        data = request.data
+        try:
+            question = int(data["q"])
+            version = int(data["v"])
+        except (ValueError, TypeError):
+            exc = APIException()
+            exc.status_code = status.HTTP_400_BAD_REQUEST
+            exc.detail = "question and version must be integers"
+            raise exc
+        mts = MarkingTaskService()
+        progress = mts.get_marking_progress(question, version)
+        return Response(progress, status=status.HTTP_200_OK)
+
+
 class MgetNextTask(APIView):
     """
     Responds with a code for the next available marking task.
@@ -84,11 +113,11 @@ class MgetNextTask(APIView):
 
 
 class MclaimThisTask(APIView):
-    """
-    Attach a user to a marking task and return the task's metadata.
-    """
-
     def patch(self, request, code, *args):
+        """
+        Attach a user to a marking task and return the task's metadata.
+        """
+
         mss = MarkingTaskService()
         the_task = mss.get_task_from_code(code)
         mss.assign_task_to_user(request.user, the_task)
@@ -99,6 +128,50 @@ class MclaimThisTask(APIView):
 
         # TODO: tags and integrity check are hardcoded for now
         return Response([question_data, [], "12345"])
+
+    def post(self, request, code, *args):
+        """
+        Accept a marker's grade and annotation for a task.
+        """
+
+        mts = MarkingTaskService()
+        data = request.POST
+        files = request.FILES
+
+        plomfile = request.FILES["plomfile"]
+        plomfile_data = plomfile.read().decode("utf-8")
+
+        try:
+            mark_data, annot_data = mts.validate_and_clean_marking_data(
+                request.user, code, data, plomfile_data
+            )
+        except ObjectDoesNotExist as e:
+            raise APIException(e, code=status.HTTP_404_NOT_FOUND)
+        except RuntimeError as e:
+            raise APIException(e, code=status.HTTP_409_CONFLICT)
+        except ValidationError as e:
+            raise APIException(e, code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        annotation_image = files["annotation_image"]
+        try:
+            img_md5sum = data["md5sum"]
+            img = mts.save_annotation_image(img_md5sum, annotation_image)
+        except FileExistsError:
+            raise APIException(
+                "Annotation image already exists.", code=status.HTTP_409_CONFLICT
+            )
+        except ValidationError:
+            raise APIException(
+                "Unsupported media type for annotation image",
+                code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            )
+
+        mts.mark_task(request.user, code, mark_data["score"], img, annot_data)
+
+        return Response(
+            [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
+            status=status.HTTP_200_OK,
+        )
 
 
 class MgetQuestionPageData(APIView):

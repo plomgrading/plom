@@ -183,7 +183,7 @@ class IDHandler:
         predictor = request.match_info["predictor"]
         return web.json_response(self.server.ID_get_predictions(predictor=predictor))
 
-    # @routes.delete("/ID/predictions/{predictor}")
+    # @routes.delete("/ID/predictions")
     @authenticate_by_token_required_fields([])
     @write_admin
     def ID_delete_all_predictions(self, data, request):
@@ -452,8 +452,6 @@ class IDHandler:
     @write_admin
     def pre_id_paper(self, data, request):
         """Set the prediction identification for a paper.
-
-        TODO: predictor data is unused!  Currently expected to be "prename" only?
 
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
