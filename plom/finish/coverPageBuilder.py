@@ -8,8 +8,6 @@
 
 from plom.misc_utils import local_now_to_simple_string
 import fitz
-import logging
-logging.basicConfig(level = logging.DEBUG)
 
 def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     """Create html page of name ID etc and table of marks.
@@ -24,7 +22,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     """
     # hide imports until needed Issue #2231.
     cover = fitz.open()
-
     hdisp = fitz.Rect(75, 0, 75, 0)
     vdisp = fitz.Rect(0, 25, 0, 25)
     align = 1 #centre 
@@ -34,7 +31,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     tw = fitz.TextWriter(page.rect)
     text = "Results: \n \u2022 Name = {} \n \u2022 ID = {} \n \u2022 Test number = {}".format(sname, sid, test_num)
     tw.append((50, 75), text, fontsize = fontsize)
-    tw.write_text(page)
 
     shape = page.new_shape()
     # Drawing the header with question, version, mark, outof
@@ -43,7 +39,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     for j in range(0, 4):
         shape.draw_rect(r[j])
         tw.fill_textbox(r[j], t[j], align = align, fontsize = fontsize)
-        tw.write_text(page)
     
     # Drawing the tab
     for i in range(0, len(tab)):
@@ -51,7 +46,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
         for j in range(0, 4):
             shape.draw_rect(r[j])
             tw.fill_textbox(r[j], str(tab[i][j]), align = align, fontsize = fontsize)
-            tw.write_text(page)
 
     # Drawing the rest
     r = [r[j] + vdisp for j in range(0,4)]
@@ -59,7 +53,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     for j in range(0, 4):
         shape.draw_rect(r[j])
         tw.fill_textbox(r[j], str(t[j]), align = align, fontsize = fontsize)
-        tw.write_text(page)
 
     shape.finish(width = 0.3, color = (0, 0, 0))
     shape.commit()
@@ -67,7 +60,8 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     # Last words
     text = "Cover page produced on {}".format(local_now_to_simple_string())
     p = fitz.Point(50, page.rect.height - 50)
-    page.insert_text(p, text,  fontname = "helv", fontsize = fontsize)
+    tw.append(p, text, fontsize = fontsize)
+    tw.write_text(page)
     
     # The following doesn't reduce storage
     # cover.subset_fonts()
