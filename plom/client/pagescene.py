@@ -488,7 +488,7 @@ class PageScene(QGraphicsScene):
 
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)
-        self.ghostItem.setVisible(False)
+        self.hideGhost()
         self.addItem(self.ghostItem)
 
         # cache some data about the currently selected rubric
@@ -625,14 +625,7 @@ class PageScene(QGraphicsScene):
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
-        font = QFont("Helvetica")
-        font.setPixelSize(round(self.fontSize))
-        self.ghostItem.blurb.setFont(font)
-        font = QFont("Helvetica")
-        font.setPixelSize(round(1.25 * self.fontSize))
-        self.ghostItem.di.setFont(font)
-        # TODO: position within dotted line, but breaks overall position
-        # self.ghostItem.tweakPositions()
+        self.ghostItem.change_font_size(self.fontSize)
 
     def set_annotation_color(self, c):
         """Set the colour of annotations.
@@ -826,8 +819,7 @@ class PageScene(QGraphicsScene):
         returns:
             pathlib.Path: the file we just saved to, including jpg or png.
         """
-        # Make sure the ghostComment is hidden
-        self.ghostItem.hide()
+        self.hideGhost()
         # Get the width and height of the image
         br = self.getSaveableRectangle()
         self.setSceneRect(br)
@@ -2447,7 +2439,7 @@ class PageScene(QGraphicsScene):
         spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
         self.ghostItem.setPos(spt)
         self.setToolMode("rubric")
-        self.exposeGhost()  # unhide the ghostitem
+        self.exposeGhost()
         self.updateGhost(
             rubric["display_delta"], rubric["text"], self.isLegalRubric(rubric)
         )

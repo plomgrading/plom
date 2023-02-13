@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -257,23 +257,6 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     page.draw_rect(BR, color=[0, 0, 0], width=0.5)
 
 
-def is_possible_to_encode_as(s, encoding):
-    """Is it possible to encode this string in this particular encoding?
-
-    Arguments:
-        s (str): a string.
-        encoding (str): Encoding type.
-
-    Returns:
-        bool
-    """
-    try:
-        s.encode(encoding)
-        return True
-    except UnicodeEncodeError:
-        return False
-
-
 def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
@@ -334,6 +317,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     if signherebox:
         page.draw_rect(signature_rect, color=(0, 0, 0), fill=(1, 1, 1), width=3)
 
+    # first place the name with adaptive fontsize
     fontsize = 37
     w = math.inf
     font = fitz.Font("helv")
@@ -350,6 +334,8 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
         name,
         fontsize=fontsize,
     )
+
+    # then place the student number
     fontsize = 36
     w = font.text_length(sid, fontsize=fontsize)
     tw.append(
@@ -359,6 +345,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     )
     tw.write_text(page)
 
+    # and finally the "sign here" watermark
     if not signherebox:
         return
     fontsize = 48

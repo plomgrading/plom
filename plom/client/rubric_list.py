@@ -112,7 +112,26 @@ def render_params(template, params, ver):
 
 
 class RubricTable(QTableWidget):
-    def __init__(self, parent, shortname=None, sort=False, tabType=None):
+    """A RubricTable is presents a table of rubrics.
+
+    There are different types of tabs.  In theory this could be
+    implemented as subclasses but currently we just use a property
+    ``.tabType``.
+    """
+
+    def __init__(self, parent, shortname=None, *, sort=False, tabType=None):
+        """Initialize a new RubricTable.
+
+        Args:
+            parent:
+            shortname (str):
+
+        Keyword Args:
+            tabType (str/None): "show", "hide", "group", "delta", `None`.
+                Here `"show"` is used for the "All" tab, `None` is used
+                for custom "user tabs".
+            sort (bool):
+        """
         super().__init__(parent)
         self._parent = parent
         self.tabType = tabType  # to help set menu
@@ -665,15 +684,18 @@ class TabBarWithAddRenameRemoveContext(QTabBar):
             n = self.tabAt(point)
             if n >= 0:
                 name = self.tabText(n)
+                tabtype = self.tabData(n)
                 menu = QMenu()
-                # rename/remove will silently skip delta/shared tabs
-                # TODO: grey-out nicer but how to cleanly check `tab.is_user_tab`?
-                menu.addAction(
+                a = menu.addAction(
                     f'Rename tab "{name}"...', lambda: self.rename_tab_signal.emit(n)
                 )
-                menu.addAction(
+                if tabtype is not None:
+                    a.setEnabled(False)
+                a = menu.addAction(
                     f'Remove tab "{name}"...', lambda: self.remove_tab_signal.emit(n)
                 )
+                if tabtype is not None:
+                    a.setEnabled(False)
                 menu.addAction("Add new tab", self.add_tab_signal.emit)
                 menu.exec(self.mapToGlobal(point))
         super().mousePressEvent(mouseEvent)
@@ -713,20 +735,24 @@ class RubricWidget(QWidget):
         self.RTW.setTabBar(tb)
         self.RTW.setMovable(True)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
-        self.RTW.addTab(self.tabS, self.tabS.shortname)
-        self.RTW.addTab(self.tabDeltaP, self.tabDeltaP.shortname)
-        self.RTW.addTab(self.tabDeltaN, self.tabDeltaN.shortname)
+        self.RTW.insertTab(0, self.tabS, self.tabS.shortname)
+        self.RTW.insertTab(1, self.tabDeltaP, self.tabDeltaP.shortname)
+        self.RTW.insertTab(2, self.tabDeltaN, self.tabDeltaN.shortname)
+        self.RTW.tabBar().setTabData(0, self.tabS.tabType)
+        self.RTW.tabBar().setTabData(1, self.tabDeltaP.tabType)
+        self.RTW.tabBar().setTabData(2, self.tabDeltaN.tabType)
         b = QToolButton()
         b.setText("+")
         b.setAutoRaise(True)  # flat until hover, but not on macOS?
-        b.clicked.connect(self.add_new_tab)
-        m = QMenu()
-        m.addAction("Add tab", self.add_new_tab)
+        # Makes it too easy to add too many tabs, Issue #2350
+        # b.clicked.connect(self.add_new_tab)
+        m = QMenu(b)
+        m.addAction("Add new tab", self.add_new_tab)
         m.addAction("Rename current tab...", self.rename_current_tab)
         m.addSeparator()
         m.addAction("Remove current tab...", self.remove_current_tab)
         b.setMenu(m)
-        # b.setPopupMode(QToolButton.MenuButtonPopup)
+        b.setPopupMode(QToolButton.InstantPopup)
         self.RTW.setCornerWidget(b)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         # connect the 'tab-change'-signal to 'handleClick' to fix #1497
@@ -853,6 +879,7 @@ class RubricWidget(QWidget):
             idx = 0
         # insert tab after that
         self.RTW.insertTab(idx + 1, tab, tab.shortname)
+        self.RTW.tabBar().setTabData(idx + 1, tab.tabType)
         self.update_tab_names()
         return tab
 
@@ -870,7 +897,23 @@ class RubricWidget(QWidget):
                 if necessary.
         """
         if not name:
-            tab_names = [x.shortname for x in self.user_tabs]
+            empties = []
+            for tab in self.get_user_tabs():
+                if tab.rowCount() == 0:
+                    empties.append(tab.shortname)
+            if len(empties) >= 2:
+                msg = SimpleQuestion(
+                    self,
+                    f"You already have {len(empties)} empty custom user tabs: "
+                    + ", ".join(f'"{x}"' for x in empties)
+                    + ".",
+                    question="Add another empty tab?",
+                )
+                if msg.exec() == QMessageBox.No:
+                    return
+
+        if not name:
+            tab_names = [x.shortname for x in self.get_user_tabs()]
             name = next_in_longest_subsequence(tab_names)
         if not name:
             syms = (
@@ -900,6 +943,7 @@ class RubricWidget(QWidget):
             n = n - 1
         # insert tab after it
         self.RTW.insertTab(n + 1, tab, tab.shortname)
+        self.RTW.tabBar().setTabData(n + 1, tab.tabType)
         self.update_tab_names()
 
     def remove_current_tab(self):
@@ -938,9 +982,8 @@ class RubricWidget(QWidget):
         tab = self.RTW.widget(n)
         if not tab:
             return
-        if tab.is_shared_tab():  # no renaming the "all" tab
-            return
-        if tab.is_delta_tab():  # no renaming +/- delta tabs
+        if not tab.is_user_tab():
+            # no renaming the "all" tab, +/- delta or group tabs
             return
         curname = tab.shortname
         s = ""
@@ -1110,6 +1153,10 @@ class RubricWidget(QWidget):
 
         # TODO: order of rubrics within group tabs?
         current_group_tabs = self.get_group_tabs_dict()
+        for name, tab in current_group_tabs.items():
+            if name not in group_tab_data.keys():
+                log.info("Removing now-empty tab: group %s is now empty", name)
+                self.RTW.removeTab(self.RTW.indexOf(tab))
         for g in sorted(group_tab_data.keys()):
             idlist = group_tab_data[g]
             tab = current_group_tabs.get(g)
@@ -1384,7 +1431,7 @@ class RubricWidget(QWidget):
                     # g = t.removeprefix("group:")
                     g = t[len("group:") :]
                     groups.append(g)
-        return list(set(groups))
+        return sorted(list(set(groups)))
 
     def unhideRubricByKey(self, key):
         index = [x["id"] for x in self.rubrics].index(key)
@@ -2040,13 +2087,23 @@ class AddRubricBox(QDialog):
         return params
 
     def add_new_group(self):
+        groups = []
+        for n in range(self.group_combobox.count()):
+            groups.append(self.group_combobox.itemText(n))
+        suggested_name = next_in_longest_subsequence(groups)
         s, ok = QInputDialog.getText(
-            self, "New group for rubric", "New group for rubric"
+            self,
+            "New group for rubric",
+            "<p>New group for rubric.</p><p>(Currently no spaces allowed.)</p>",
+            QLineEdit.Normal,
+            suggested_name,
         )
         if not ok:
             return
         s = s.strip()
         if not s:
+            return
+        if " " in s:
             return
         n = self.group_combobox.count()
         self.group_combobox.insertItem(n, s)

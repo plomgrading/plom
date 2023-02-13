@@ -132,16 +132,18 @@ def get_parser():
         action="store_true",
         dest="extractbmp",
         help="""
+            We recommend this option if you scanned the papers yourself.
             If a PDF page seems to contain exactly one bitmap image and
             nothing else, then extract that losslessly instead of rendering
-            the page as a new PNG file.  This will typically give nicer
-            images for the common scan case where pages are simply JPEG
-            images.  But some care must be taken that the image is not
-            annotated in any way and that no other markings appear on the
-            page.
-            As the algorithm to decide this is NOT YET IDEAL, this is
-            currently OFF BY DEFAULT, but we anticipate it being the default
-            in a future version.
+            the page as a new PNG file.  This will be MUCH FASTER and will
+            typically give nicer images for the common case where pages are
+            simply JPEG/PNG images embedded in a PDF file.  But some care
+            must be taken that the image is not annotated in any way and
+            that no other markings appear on the page.
+            If the papers were produced by other people, this option is NOT
+            RECOMMENDED, in case it misses markings made on top of a bitmap
+            base (e.g., from annotation software).
+            For this reason, it is not yet the default.
         """,
     )
     g.add_argument(

@@ -13,8 +13,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Ensure Client <= 0.12.2 cannot connect to servers, ensures client bug #2521 (fixed in 0.12.3) cannot mismatch IDs.
+* Misc UI fixes.
 
 
+## [0.12.3] - 2023-02-11
+
+### Changed
+* Rubrics: suggest new group name from existing, e.g., have (a), (b) then suggest (c).
+* Client: prevent lots of new tabs, which fills the tab bar and could be confusing.
+
+### Fixed
+* Identifier client bug #2521: "Accept Prediction" button now saves the correct student ID.
+* Group names must not have spaces, but client no longer crashes if you make one.
+* Remove empty tab on removal of last rubric from group.
+* Only "custom user tabs" can be renamed: fix context menus to reflect this.
+* Misc fixes.
 
 
 ## [0.12.2] - 2023-02-05
@@ -936,7 +950,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.12.2...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.12.3...main
+[0.12.3]: https://gitlab.com/plom/plom/-/compare/v0.12.2...v0.12.3
 [0.12.2]: https://gitlab.com/plom/plom/-/compare/v0.12.1...v0.12.2
 [0.12.1]: https://gitlab.com/plom/plom/-/compare/v0.12.0...v0.12.1
 [0.12.0]: https://gitlab.com/plom/plom/-/compare/v0.11.1...v0.12.0
