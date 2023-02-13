@@ -36,6 +36,7 @@ variables:
   PLOM_NO_SSL_VERIFY: 1
   MACBIN_PY_VER: 3.10.9
   WINBIN_PY_VER: 3.10.8
+  QT_QPA_PLATFORM: offscreen
 
 stages:
   - static_analysis
