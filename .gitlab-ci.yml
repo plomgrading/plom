@@ -862,6 +862,7 @@ binary_upload:
       #### md5sum of compiled clients and other artifacts
 
       *TODO* paste in pypi tar.gz file
+
       EOF
     # strip the leading v in v0.x.y: don't see how to do this without dotenv
     - export VER=${CI_COMMIT_TAG:1}
