@@ -1,0 +1,34 @@
+{% extends "base/base.html" %}
+{% block page_heading %}Miscellanea{% endblock %}
+{% block main_content %}
+  <div class="d-grid gap-2">
+    <div>
+      <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title">
+          <h4>Extra-page PDF</h4>
+	  <p>
+	    A page for students to use as extra-paper when writing assessment.
+	  </p>
+        </div>
+        <div class="card-text">
+	  {% if extra_page_present %}
+	  <a class="btn btn-secondary" href="extra_page" target="_">View</a>
+	  <button class="btn btn-danger"
+                  hx-delete="extra_page"
+                  hx-confirm="Are you sure you want to delete the extra-page pdf?"
+                  hx-target="body"
+                  hx-swap="outerHTML">Delete</button>
+	  {% else %}
+	  <button class="btn btn-primary"
+                  hx-put="extra_page"
+                  hx-target="body"
+                  hx-swap="outerHTML">Build</button>
+	  {% endif %}	  
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -69,3 +69,10 @@ class ClassicPlomServerInformation(SingletonBaseModel):
     server_name = models.TextField(null=True)
     server_port = models.PositiveIntegerField(null=True)
     server_manager_password = models.TextField(null=True)
+
+
+# ---------------------------------
+# Make a table for the extra page pdf
+
+class ExtraPagePDF(SingletonBaseModel):
+    extra_page_pdf = models.FileField(upload_to="sourceVersions/")
