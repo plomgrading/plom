@@ -107,9 +107,13 @@ def QRextract(image, write_to_file=True, try_harder=True):
     if not isinstance(image, Image.Image):
         image = Image.open(image)
 
-    qrlist = read_barcodes(
-        image, formats=(BarcodeFormat.QRCode | BarcodeFormat.MircoQRCode)
-    )
+    try:
+        micro = BarcodeFormat.MicroQRCode
+    except AttributeError:
+        # workaround github.com/zxing-cpp/zxing-cpp/issues/512
+        micro = BarcodeFormat.MircoQRCode
+
+    qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
     for qr in qrlist:
         cnr = findCorner(qr, image.size)
         if cnr in cornerQR.keys():
@@ -118,9 +122,7 @@ def QRextract(image, write_to_file=True, try_harder=True):
     if try_harder:
         # try again on smaller image: avoids random CI failures #967?
         image = image.reduce(2)
-        qrlist = read_barcodes(
-            image, formats=(BarcodeFormat.QRCode | BarcodeFormat.MircoQRCode)
-        )
+        qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
         for qr in qrlist:
             cnr = findCorner(qr, image.size)
             if cnr in cornerQR.keys():

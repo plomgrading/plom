@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+
+
+
+## [0.13.0] - 2023-02-13
+
+### Fixed
 * Ensure Client <= 0.12.2 cannot connect to servers, ensures client bug #2521 (fixed in 0.12.3) cannot mismatch IDs.
 * Misc UI fixes.
 
@@ -950,7 +957,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.12.3...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.13.0...main
+[0.13.0]: https://gitlab.com/plom/plom/-/compare/v0.12.3...v0.13.0
 [0.12.3]: https://gitlab.com/plom/plom/-/compare/v0.12.2...v0.12.3
 [0.12.2]: https://gitlab.com/plom/plom/-/compare/v0.12.1...v0.12.2
 [0.12.1]: https://gitlab.com/plom/plom/-/compare/v0.12.0...v0.12.1

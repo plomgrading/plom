@@ -165,7 +165,7 @@ class RubricTable(QTableWidget):
         self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        _col_headers = ("Key", "Username", "Display_Delta", "Text")
+        _col_headers = ("Key", "Username", "Delta", "Text")
         self.setColumnCount(len(_col_headers))
         self.setHorizontalHeaderLabels(_col_headers)
         self.hideColumn(0)
