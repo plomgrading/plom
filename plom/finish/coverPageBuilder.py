@@ -30,10 +30,14 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
 
     page = cover.new_page()
     tw = fitz.TextWriter(page.rect)
-    text = "Results: \n \u2022 Name = {} \n \u2022 ID = {} \n \u2022 Test number = {}".format(
-        sname, sid, test_num
-    )
+    text = "Results:"
     tw.append((50, 75), text, fontsize=fontsize)
+    text = "\u2022 Name = {}".format(sname)
+    tw.append((125, 75), text, fontsize=fontsize)
+    text = "\u2022 ID = {}".format(sid)
+    tw.append((125, 100), text, fontsize=fontsize)
+    text = "\u2022 Test number = {}".format(test_num)
+    tw.append((125, 125), text, fontsize=fontsize)
 
     shape = page.new_shape()
     # Drawing the header with question, version, mark, outof
@@ -71,8 +75,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     tw.append(p, text, fontsize=fontsize)
     tw.write_text(page)
 
-    # The following doesn't reduce storage
-    # cover.subset_fonts()
+    cover.subset_fonts()
 
-    cover.save(pdfname)
+    cover.save(pdfname, garbage=4, deflate=True, clean=True)
     cover.close()
