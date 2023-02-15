@@ -246,24 +246,28 @@ def render_rubric_as_html(r):
 
 
 def _diff_line(a, b):
-    # TODO: we need to html escape a and b here!
+    a = html.escape(a)
+    b = html.escape(b)
     return f"""<br />
       <tt>
-        <span style="color:#AA0000;">- {a}</span><br />
-        <span style="color:#00AA00;">+ {b}</span>
+        <span style="color:#AA0000;"><b>-</b> {a}</span><br />
+        <span style="color:#00AA00;"><b>+</b> {b}</span>
       </tt>
     """
 
 
 def _diff_compact(a, b):
+    a = html.escape(a)
+    b = html.escape(b)
     return f"""<br />
-      <span style="color:#AA0000;">{a}</span>
+      <tt>&nbsp; </tt><span style="color:#AA0000;">{a}</span>
       &rarr;
       <span style="color:#00AA00;">{b}</span>
     """
 
 
 def _context(a):
+    a = html.escape(a)
     return f"""<br />
       <tt>
         <span style="color:#777777;">&nbsp; {a}</span>
