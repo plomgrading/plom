@@ -15,6 +15,8 @@ from Scan.services import ScanService
 
 # change to valid page
 # overlay for valid or discard
+
+
 class ManageBundleView(ScannerRequiredView):
     """
     Let a user view an uploaded bundle and read its QR codes.
