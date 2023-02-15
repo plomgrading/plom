@@ -10,11 +10,11 @@ from Base.base_group_views import ManagerRequiredView
 
 class MiscExtrasView(ManagerRequiredView):
     def get(self, request):
-        eps = ExtraPageService()
+        ep_service = ExtraPageService()
         context = self.build_context()
         context.update(
             {
-                "extra_page_present": eps.is_there_an_extra_page_pdf(),
+                "extra_page_task_status": ep_service.get_extra_page_task_status(),
             }
         )
         return render(request, "Preparation/misc_extras.html", context)
@@ -22,20 +22,19 @@ class MiscExtrasView(ManagerRequiredView):
 
 class ExtraPageView(ManagerRequiredView):
     def get(self, request):
-        eps = ExtraPageService()
-        source_path = eps.get_extra_page_pdf_filepath()
+        ep_service = ExtraPageService()
         return FileResponse(
-            open(source_path, "rb"),
+            open(ep_service.get_extra_page_pdf_filepath(), "rb"),
             as_attachment=True,
             filename="extra_page.pdf",
         )
 
     def put(self, request):
-        eps = ExtraPageService()
-        eps.build_extra_page_pdf()
+        ep_service = ExtraPageService()
+        ep_service.build_extra_page_pdf()
         return HttpResponseClientRedirect(reverse("misc_extras"))
 
     def delete(self, request):
-        eps = ExtraPageService()
-        eps.delete_extra_page_pdf()
+        ep_service = ExtraPageService()
+        ep_service.delete_extra_page_pdf()
         return HttpResponseClientRedirect(reverse("misc_extras"))
