@@ -44,14 +44,14 @@ class ManageBundleView(ScannerRequiredView):
                 }
             )
             pages.append(page_dict)
-        
+
         qr_finished = scanner.is_bundle_reading_started(bundle)
 
         finished_reading_qr = False
 
         if scanner.is_bundle_reading_finished(bundle):
             finished_reading_qr = True
-        
+
         context.update(
             {
                 "slug": bundle.slug,

@@ -433,7 +433,7 @@ class ScanService:
             if not img.pushed:
                 return False
         return True
-    
+
     @transaction.atomic
     def push_bundle(self, bundle):
         bundle.pushed = True
@@ -476,7 +476,7 @@ class ScanService:
         while len(qr_code_list) < num_images:
             qr_code_list.append("unknown page")
         return qr_code_list
-    
+
     @transaction.atomic
     def get_common_qr_code(self, qr_data):
         qr_code_list = []
@@ -500,12 +500,20 @@ class ScanService:
 
     @transaction.atomic
     def get_all_staging_image_hash(self):
-        image_hash_list = StagingImage.objects.values('image_hash')
+        image_hash_list = StagingImage.objects.values("image_hash")
         return image_hash_list
 
     @transaction.atomic
-    def upload_replace_page(self, user, timestamp, time_uploaded, pdf_doc, index, uploaded_image_hash):
-        replace_pages_dir = pathlib.Path("media") / user.username / "bundles" / str(timestamp) / "replacePages"
+    def upload_replace_page(
+        self, user, timestamp, time_uploaded, pdf_doc, index, uploaded_image_hash
+    ):
+        replace_pages_dir = (
+            pathlib.Path("media")
+            / user.username
+            / "bundles"
+            / str(timestamp)
+            / "replacePages"
+        )
         replace_pages_dir.mkdir(exist_ok=True)
         replace_pages_pdf_dir = replace_pages_dir / "pdfs"
         replace_pages_pdf_dir.mkdir(exist_ok=True)
@@ -513,12 +521,22 @@ class ScanService:
         filename = f"{time_uploaded}.pdf"
         with open(replace_pages_pdf_dir / filename, "w") as f:
             pdf_doc.save(f)
-        
-        save_as_image_path = self.save_replace_page_as_image(replace_pages_dir, replace_pages_pdf_dir, filename, uploaded_image_hash)
-        self.replace_image(user, timestamp, index, save_as_image_path, uploaded_image_hash)
+
+        save_as_image_path = self.save_replace_page_as_image(
+            replace_pages_dir, replace_pages_pdf_dir, filename, uploaded_image_hash
+        )
+        self.replace_image(
+            user, timestamp, index, save_as_image_path, uploaded_image_hash
+        )
 
     @transaction.atomic
-    def save_replace_page_as_image(self, replace_pages_file_path, replace_pages_pdf_file_path, filename, uploaded_image_hash):
+    def save_replace_page_as_image(
+        self,
+        replace_pages_file_path,
+        replace_pages_pdf_file_path,
+        filename,
+        uploaded_image_hash,
+    ):
         save_replace_image_dir = replace_pages_file_path / "images"
         save_replace_image_dir.mkdir(exist_ok=True)
         save_as_image = save_replace_image_dir / f"{uploaded_image_hash}.png"
@@ -527,27 +545,31 @@ class ScanService:
         transform = fitz.Matrix(4, 4)
         pixmap = upload_pdf_file[0].get_pixmap(matrix=transform)
         pixmap.save(save_as_image)
-        
+
         return save_as_image
-    
+
     @transaction.atomic
-    def replace_image(self, user, bundle_timestamp, index, saved_image_path, uploaded_image_hash):
+    def replace_image(
+        self, user, bundle_timestamp, index, saved_image_path, uploaded_image_hash
+    ):
         # send the error image to discarded_pages folder
         root_folder = pathlib.Path("media") / "page_images" / "discarded_pages"
         root_folder.mkdir(exist_ok=True)
 
         error_image = self.get_image(bundle_timestamp, user, index)
-        shutil.move(error_image.file_path, root_folder / f"{error_image.image_hash}.png")
+        shutil.move(
+            error_image.file_path, root_folder / f"{error_image.image_hash}.png"
+        )
 
         discarded_image = DiscardedStagingImage(
-            bundle = error_image.bundle,
-            bundle_order = error_image.bundle_order,
-            file_name = error_image.file_name,
-            file_path = root_folder / f"{error_image.image_hash}.png",
-            image_hash = error_image.image_hash,
-            parsed_qr = error_image.parsed_qr,
-            rotation = error_image.rotation,
-            restore_class = "replace"
+            bundle=error_image.bundle,
+            bundle_order=error_image.bundle_order,
+            file_name=error_image.file_name,
+            file_path=root_folder / f"{error_image.image_hash}.png",
+            image_hash=error_image.image_hash,
+            parsed_qr=error_image.parsed_qr,
+            rotation=error_image.rotation,
+            restore_class="replace",
         )
         discarded_image.save()
 
@@ -557,7 +579,9 @@ class ScanService:
 
     @transaction.atomic
     def get_collision_image(self, bundle, index):
-        collision_image = CollisionStagingImage.objects.get(bundle=bundle, bundle_order=index)
+        collision_image = CollisionStagingImage.objects.get(
+            bundle=bundle, bundle_order=index
+        )
         return collision_image
 
     @transaction.atomic
@@ -570,23 +594,25 @@ class ScanService:
         staging_image.save()
         collision_image_obj = self.get_collision_image(bundle, page_index)
         collision_image_obj.delete()
-    
+
     @transaction.atomic
     def discard_collision_image(self, bundle_obj, user, bundle_timestamp, page_index):
         root_folder = pathlib.Path("media") / "page_images" / "discarded_pages"
         root_folder.mkdir(exist_ok=True)
 
         collision_image = self.get_image(bundle_timestamp, user, page_index)
-        shutil.move(collision_image.file_path, root_folder / f"{collision_image.image_hash}.png")
+        shutil.move(
+            collision_image.file_path, root_folder / f"{collision_image.image_hash}.png"
+        )
         discarded_image = DiscardedStagingImage(
-            bundle = collision_image.bundle,
-            bundle_order = collision_image.bundle_order,
-            file_name = collision_image.file_name,
-            file_path = root_folder / f"{collision_image.image_hash}.png",
-            image_hash = collision_image.image_hash,
-            parsed_qr = collision_image.parsed_qr,
-            rotation = collision_image.rotation,
-            restore_class = "collision"
+            bundle=collision_image.bundle,
+            bundle_order=collision_image.bundle_order,
+            file_name=collision_image.file_name,
+            file_path=root_folder / f"{collision_image.image_hash}.png",
+            image_hash=collision_image.image_hash,
+            parsed_qr=collision_image.parsed_qr,
+            rotation=collision_image.rotation,
+            restore_class="collision",
         )
         discarded_image.save()
 
@@ -600,7 +626,7 @@ class ScanService:
         for staging_img_obj in staging_image_list[bundle_order:]:
             staging_img_obj.bundle_order -= 1
             staging_img_obj.save()
-        
+
         parse_qr_list = ParseQR.objects.all()
         for parse_qr_obj in parse_qr_list[bundle_order:]:
             parse_qr_obj.page_index -= 1

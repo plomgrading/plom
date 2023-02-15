@@ -10,7 +10,7 @@ from Base.base_group_views import ScannerRequiredView
 
 from Papers.services import ImageBundleService
 from Scan.services import ScanService
-from Scan.forms import (FlagImageForm, ReplaceImageForm)
+from Scan.forms import FlagImageForm, ReplaceImageForm
 
 
 class ReadQRcodesView(ScannerRequiredView):
@@ -77,7 +77,7 @@ class UpdateQRProgressView(ScannerRequiredView):
                 )
                 flag_image = scanner.get_error_image(flagged_bundle, index)
                 most_common_qr = scanner.get_common_qr_code(qr_data)
-                
+
                 context.update(
                     {
                         "error": scanner.get_qr_code_error_message(bundle, index),
@@ -107,7 +107,7 @@ class UpdateQRProgressView(ScannerRequiredView):
                         "unknown": image.unknown,
                     }
                 )
-                
+
         return context
 
     def get(self, request, timestamp, index):
@@ -183,5 +183,5 @@ class BundleTableView(UpdateQRProgressView):
                 "paper_list": zip(paper_id, page_num, version_num),
             }
         )
-        
+
         return render(request, "Scan/fragments/bundle_table.html", context)

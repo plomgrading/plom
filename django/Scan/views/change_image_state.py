@@ -12,7 +12,8 @@ from Scan.services import ScanService
 from Papers.services import ImageBundleService
 from Scan.forms import ReplaceImageForm
 from Scan.views import ManageBundleView
-from Scan.models import (StagingImage)
+from Scan.models import StagingImage
+
 
 class ChangeErrorImageState(ScannerRequiredView):
     def post(self, request, timestamp, index):
@@ -20,7 +21,7 @@ class ChangeErrorImageState(ScannerRequiredView):
             timestamp = float(timestamp)
         except ValueError:
             return Http404()
-        
+
         scanner = ScanService()
         img_bundle_service = ImageBundleService()
         bundle = scanner.get_bundle(timestamp, request.user)
@@ -48,9 +49,11 @@ class ReplacePageImage(ManageBundleView):
             uploaded_pdf = data["pdf_doc"]
             time_uploaded = data["time_uploaded"]
             uploaded_image_hash = data["uploaded_image_hash"]
-            
+
             scanner = ScanService()
-            scanner.upload_replace_page(user, timestamp, time_uploaded, uploaded_pdf, index, uploaded_image_hash)
+            scanner.upload_replace_page(
+                user, timestamp, time_uploaded, uploaded_pdf, index, uploaded_image_hash
+            )
             success = "Successfully replaced image."
             context.update({"replace_image_success_message": success})
             return render(request, "Scan/manage_bundle.html", context)
@@ -68,7 +71,7 @@ class ChangeCollisionImageState(ScannerRequiredView):
             timestamp = float(timestamp)
         except ValueError:
             return Http404()
-        
+
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         scanner.change_collision_image_state(bundle, index)
@@ -83,10 +86,9 @@ class DiscardImage(ScannerRequiredView):
             timestamp = float(timestamp)
         except ValueError:
             return Http404()
-        
+
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         scanner.discard_collision_image(bundle, request.user, timestamp, index)
 
         return HttpResponseClientRefresh()
-        

@@ -5,7 +5,7 @@ import shutil
 
 from django.conf import settings
 from Papers.services import SpecificationService
-from Scan.models import (StagingImage, CollisionStagingImage, UnknownStagingImage)
+from Scan.models import StagingImage, CollisionStagingImage, UnknownStagingImage
 from Papers.models import ErrorImage
 from collections import Counter
 from Papers.services import ImageBundleService
@@ -24,7 +24,9 @@ class QRErrorService:
         serialized_all_qr = self.serialize_qr_code(page_data, "all")
         serialized_public_code = self.serialize_qr_code(page_data, "public_code")
 
-        self.check_image_collision_within_bundle(img_obj, bundle, serialized_top_three_qr, page_data)
+        self.check_image_collision_within_bundle(
+            img_obj, bundle, serialized_top_three_qr, page_data
+        )
 
         self.check_TPV_code(
             serialized_all_qr, img_obj, serialized_top_three_qr, page_data
@@ -139,7 +141,9 @@ class QRErrorService:
                     f"Magic code {public_code} did not match spec {spec_public_code}. Did you scan the wrong test?"
                 )
 
-    def check_image_collision_within_bundle(self, image_obj, bundle, top_three_tpv, page_data):
+    def check_image_collision_within_bundle(
+        self, image_obj, bundle, top_three_tpv, page_data
+    ):
         all_images = StagingImage.objects.filter(bundle=bundle)
         img_hash_list = []
         img_hash_list.append(str(image_obj.image_hash))
@@ -200,25 +204,25 @@ class QRErrorService:
         page_number = common_qr[5:8]
 
         collision_image = CollisionStagingImage(
-            bundle = img_obj.bundle,
-            bundle_order = img_obj.bundle_order,
-            file_name = img_obj.file_name,
-            file_path = img_obj.file_path,
-            image_hash = img_obj.image_hash,
-            parsed_qr = img_obj.parsed_qr,
-            rotation = img_obj.rotation,
-            paper_number = test_paper,
-            page_number = page_number,
+            bundle=img_obj.bundle,
+            bundle_order=img_obj.bundle_order,
+            file_name=img_obj.file_name,
+            file_path=img_obj.file_path,
+            image_hash=img_obj.image_hash,
+            parsed_qr=img_obj.parsed_qr,
+            rotation=img_obj.rotation,
+            paper_number=test_paper,
+            page_number=page_number,
         )
         collision_image.save()
 
     def create_unknown_image(self, img_obj):
         unknown_image = UnknownStagingImage(
-                bundle=img_obj.bundle,
-                bundle_order=img_obj.bundle_order,
-                file_name=img_obj.file_name,
-                file_path = img_obj.file_path,
-                image_hash=img_obj.image_hash,
-                rotation=img_obj.rotation,
-            )
+            bundle=img_obj.bundle,
+            bundle_order=img_obj.bundle_order,
+            file_name=img_obj.file_name,
+            file_path=img_obj.file_path,
+            image_hash=img_obj.image_hash,
+            rotation=img_obj.rotation,
+        )
         unknown_image.save()

@@ -109,7 +109,7 @@ urlpatterns = [
     path(
         "replace/<timestamp>/<int:index>",
         ReplacePageImage.as_view(),
-        name="replace_page_image"
+        name="replace_page_image",
     ),
     path(
         "change/collision_state/<timestamp>/<int:index>/",
@@ -117,8 +117,6 @@ urlpatterns = [
         name="change_collision_state",
     ),
     path(
-        "discard/<timestamp>/<int:index>/",
-        DiscardImage.as_view(),
-        name="discard_image"
+        "discard/<timestamp>/<int:index>/", DiscardImage.as_view(), name="discard_image"
     ),
 ]

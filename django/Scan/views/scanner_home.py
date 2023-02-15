@@ -96,8 +96,7 @@ class ScannerHomeView(ScannerRequiredView):
             )
             if bundle.pushed:
                 hash_pushed_bundle = True
-        
-            
+
         context.update({"bundles": bundles, "has_pushed_bundle": hash_pushed_bundle})
         return context
 

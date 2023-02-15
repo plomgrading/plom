@@ -64,7 +64,7 @@ class BundleUploadForm(forms.Form):
             #     pixmap = uploaded_pdf_file[page].get_pixmap(matrix=transform)
             #     hash = hashlib.md5(pixmap.tobytes()).hexdigest()
             #     md5sum_list.append(hash)
-            # pathlib.Path.unlink(file_path) 
+            # pathlib.Path.unlink(file_path)
             # if len(md5sum_list) != len(set(md5sum_list)):
             #     raise ValidationError("Duplicate pages detected.")
 
@@ -109,6 +109,7 @@ class ReplaceImageForm(forms.Form):
     """
     Replace an error page image form.
     """
+
     single_pdf = forms.FileField(
         allow_empty_file=False,
         max_length=100,
@@ -124,20 +125,20 @@ class ReplaceImageForm(forms.Form):
         # if single_pdf.size > settings.MAX_FILE_SIZE:
         #     readable_single_file_size = settings.MAXFILE_SIZE / 1e6
         #     raise ValidationError(f"File size limit is {readable_single_file_size} MB.")
-        
+
         try:
             scanner = ScanService()
             file_bytes = single_pdf.read()
             pdf_doc = fitz.open(stream=file_bytes)
-            
+
             # make sure it is correct format
             if "PDF" not in pdf_doc.metadata["format"]:
                 raise ValidationError("File is not a valid PDF.")
-            
+
             # make sure only 1 pdf page
             if pdf_doc.page_count > 1:
                 raise ValidationError("Only upload a single page pdf file.")
-            
+
             # turn that pdf file into page image
             timestamp = datetime.timestamp(datetime.now())
             file_name = f"{timestamp}.pdf"
@@ -147,7 +148,7 @@ class ReplaceImageForm(forms.Form):
             save_as_pdf.mkdir(exist_ok=True)
             with open(save_as_pdf / file_name, "w") as f:
                 pdf_doc.save(f)
-            
+
             save_dir = replace_dir / "images"
             save_dir.mkdir(exist_ok=True)
 
@@ -160,7 +161,7 @@ class ReplaceImageForm(forms.Form):
             save_as_image = save_dir / f"{uploaded_image_hash}.png"
             all_image_hash_list = scanner.get_all_staging_image_hash()
             for image_hash in all_image_hash_list:
-                if str(uploaded_image_hash) == str(image_hash['image_hash']):
+                if str(uploaded_image_hash) == str(image_hash["image_hash"]):
                     pathlib.Path.unlink(save_as_pdf / file_name)
                     pathlib.Path.unlink(save_as_image)
                     raise ValidationError("This page already uploaded.")

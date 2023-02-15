@@ -46,6 +46,7 @@ class DiscardedStagingImage(models.Model):
     """
     An image of a discarded page.
     """
+
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     file_name = models.TextField(default="")
@@ -60,6 +61,7 @@ class CollisionStagingImage(models.Model):
     """
     An image of a collision page.
     """
+
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     file_name = models.TextField(default="")
@@ -75,13 +77,14 @@ class UnknownStagingImage(models.Model):
     """
     An image of an unknown page.
     """
+
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     file_name = models.TextField(default="")
     file_path = models.TextField(default="")
     image_hash = models.CharField(max_length=64)
     rotation = models.IntegerField(default=0)
-    
+
 
 class PageToImage(HueyTask):
     """
