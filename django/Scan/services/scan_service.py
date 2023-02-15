@@ -433,6 +433,16 @@ class ScanService:
             if not img.pushed:
                 return False
         return True
+    
+    @transaction.atomic
+    def push_bundle(self, bundle):
+        bundle.pushed = True
+        bundle.save()
+
+    @transaction.atomic
+    def get_n_pushed_bundles(self):
+        pushed_bundles = StagingBundle.objects.filter(pushed=True)
+        return len(pushed_bundles)
 
     @transaction.atomic
     def get_error_image(self, bundle, index):

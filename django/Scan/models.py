@@ -20,6 +20,7 @@ class StagingBundle(models.Model):
     pdf_hash = models.CharField(null=False, max_length=64)
     has_page_images = models.BooleanField(default=False)
     has_qr_codes = models.BooleanField(default=False)
+    pushed = models.BooleanField(default=False)
 
 
 class StagingImage(models.Model):
