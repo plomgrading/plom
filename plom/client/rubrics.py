@@ -3,6 +3,8 @@
 
 import html
 
+import arrow
+
 from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
@@ -241,6 +243,73 @@ def render_rubric_as_html(r):
           </tr>
         </table>
     """
+
+
+def _diff_line(a, b):
+    # TODO: we need to html escape a and b here!
+    return f"""<br />
+      <tt>
+        <span style="color:#AA0000;">- {a}</span><br />
+        <span style="color:#00AA00;">+ {b}</span>
+      </tt>
+    """
+
+
+def _diff_compact(a, b):
+    return f"""<br />
+      <span style="color:#AA0000;">{a}</span>
+      &rarr;
+      <span style="color:#00AA00;">{b}</span>
+    """
+
+
+def _context(a):
+    return f"""<br />
+      <tt>
+        <span style="color:#777777;">&nbsp; {a}</span>
+      </tt>
+    """
+
+
+def diff_rubric(p, r):
+    """Are two rubrics the same, and a marked up visual representation if not.
+
+    args:
+        p (dict): a previous rubric.
+        r (dict): the current rubric.  We diff from ``p`` to ``q``.
+
+    returns:
+        tuple: True/False and an string of HTML.  True means they are
+        the same and the string is empty in this case.
+        Its theoretically possible for two rubrics to be different but
+        not visually so.  Its also possible for them to be different
+        and still get back False (e.g., differing only in modification
+        time).
+    """
+    rval = True
+    out = ""
+    if p["display_delta"] != r["display_delta"]:
+        rval = False
+        # out += _diff_helper(p["display_delta"], r["display_delta"])
+        out += _diff_compact(p["display_delta"], r["display_delta"])
+    else:
+        if r["display_delta"] != ".":
+            out += _context(r["display_delta"])
+    if p["text"] != r["text"]:
+        rval = False
+        out += _diff_line(p["text"], r["text"])
+    else:
+        out += _context(r["text"])
+    if p["tags"] != r["tags"]:
+        rval = False
+        out += _diff_line(p["tags"], r["tags"])
+    if p["versions"] != r["versions"]:
+        rval = False
+        out += _diff_line(p["versions"], r["versions"])
+    if not rval:
+        when = arrow.get(r["modified"]).humanize()
+        out = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}' + out
+    return rval, out
 
 
 def check_for_illadvised(rubrics, maxscore):
