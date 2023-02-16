@@ -9,6 +9,7 @@ from Papers.services import SpecificationService
 
 from plom.misc_utils import format_int_list_with_runs
 
+from pathlib import Path
 
 class Command(BaseCommand):
     help = (
@@ -48,6 +49,13 @@ class Command(BaseCommand):
             "--cancel-all",
             action="store_true",
             help="Cancel any incomplete but queued build tasks",
+        )
+        grp.add_argument(
+            "--download",
+            nargs=1,
+            type=int,
+            action="store",
+            help="Download  a specific test paper",
         )
 
     def enqueue_tasks(self):
@@ -111,13 +119,27 @@ class Command(BaseCommand):
     def cancel_all_tasks(self):
         bp_service = BuildPapersService()
         bp_service.cancel_all_task()
-        
+
+    def download_specific_paper(self, paper_number):
+        bp_service = BuildPapersService()
+        try:
+            (name, b) = bp_service.get_paper_path_and_bytes(paper_number)
+        except ValueError as err:
+            self.stderr.write(f"Error - {err}")
+            return
+            
+        with open(Path(name), "wb") as fh:
+            fh.write(b)
+        self.stdout.write(f"Saved paper {paper_number} as \"{name}\"")
+
     def handle(self, *args, **options):
 
         if options["enqueue"]:
             self.enqueue_tasks()
         elif options["start"]:
             self.start_specific_task(options["start"][0])
+        elif options["download"]:
+            self.download_specific_paper(options["download"][0])
         elif options["start_all"]:
             self.start_all_tasks()
         elif options["delete_all"]:
