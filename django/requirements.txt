@@ -19,3 +19,4 @@ djangorestframework
 random-username
 tomli
 tomlkit
+zipfly  # for streaming zipfile generation/download

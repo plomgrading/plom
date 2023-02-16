@@ -124,16 +124,12 @@ class BuildPapersService:
 
         make_PDF(spec=spec, papernum=index, question_versions=question_versions)
 
-    def get_pdf_zipfile(self, filename="pdf_zipfile.zip"):
-        """compress + save a zip file of all the completed PDFs"""
-        completed = PDFTask.objects.filter(status="complete")
-        temp_filename = self.papers_to_print / filename
-        with zipfile.ZipFile(temp_filename, "w") as zf:
-            for pdf in completed:
-                pdf_path = pathlib.Path(pdf.pdf_file_path)
-                zf.write(pdf_path, pdf_path.name)
-
-        return temp_filename
+    def get_completed_pdf_paths(self):
+        """Get list of paths of pdf-files of completed (built) tests papers"""
+        return [
+            pathlib.Path(pdf.pdf_file_path)
+            for pdf in PDFTask.objects.filter(status="complete")
+        ]
 
     def stage_pdf_jobs(self, n, classdict=None):
         """Create n PDFTasks, and save to the database without sending them to Huey.
