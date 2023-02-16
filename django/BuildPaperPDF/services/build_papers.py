@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import pathlib
 import zipfile
@@ -219,3 +220,11 @@ class BuildPapersService:
     def delete_all_task(self):
         self.cancel_all_task()
         PDFTask.objects.all().delete()
+
+    @transaction.atomic
+    def get_all_task_status(self):
+        """Get the status of every task and return as a dict"""
+        stat = {}
+        for task in PDFTask.objects.all():
+            stat[task.paper_number] = task.status
+        return stat
