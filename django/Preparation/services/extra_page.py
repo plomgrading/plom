@@ -29,7 +29,6 @@ class ExtraPageService:
             epp_obj.save()
             return "todo"
 
-
     @transaction.atomic()
     def get_extra_page_pdf_filepath(self):
         try:
@@ -37,13 +36,14 @@ class ExtraPageService:
         except ExtraPagePDFTask.DoesNotExist:
             return None
 
-
     @transaction.atomic()
     def delete_extra_page_pdf(self):
         # explicitly delete the file, and set status back to "todo"
         # TODO - make this a bit cleaner.
         if ExtraPagePDFTask.objects.exists():
-            Path(ExtraPagePDFTask.objects.get().extra_page_pdf.path).unlink(missing_ok=True)
+            Path(ExtraPagePDFTask.objects.get().extra_page_pdf.path).unlink(
+                missing_ok=True
+            )
             ExtraPagePDFTask.objects.filter().delete()
             # then create a new task with status = todo
             ExtraPagePDFTask.objects.create(status="todo")
@@ -53,7 +53,7 @@ class ExtraPageService:
         """Build a single test-paper"""
         from plom.create import build_extra_page_pdf
 
-        # TODO clean up the file handling here. 
+        # TODO clean up the file handling here.
         # the resulting file "extra_page.pdf" is build in cwd
         build_extra_page_pdf()
 
@@ -70,6 +70,7 @@ class ExtraPageService:
 
     @transaction.atomic()
     def build_extra_page_pdf(self):
+        """Enqueue the huey task of building the extra page pdf"""
         task_obj = ExtraPagePDFTask.objects.get()
         if task_obj.status == "complete":
             return
@@ -77,3 +78,12 @@ class ExtraPageService:
         task_obj.huey_id = pdf_build.id
         task_obj.status = "queued"
         task_obj.save()
+
+    @transaction.atomic
+    def get_extra_page_pdf_as_bytes(self):
+        epp_obj = ExtraPagePDFTask.objects.get()
+        if epp_obj.status == "complete":
+            with epp_obj.extra_page_pdf.open("rb") as fh:
+                return fh.read()
+        else:
+            raise ValueError("Extra page pdf does not yet exist")
