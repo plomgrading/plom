@@ -231,7 +231,15 @@
         <p class="fs-4 mb-0">
           7. Miscellaneous other things
 	</p>
-        <p class="fs-7">&emsp;&ensp; Create extra-page template.</p>    
+        <p class="fs-7">&emsp;&ensp; Create extra-page pdf.
+	  {% if extra_page_status == "complete" %}
+	  <i class="bi bi-check-circle text-success"></i>
+	  {% elif extra_page_status == "todo" %}
+	  
+	  {% else %}
+	  <i class="bi bi-gear text-info"></i>
+	  {% endif %}	  
+	</p>    
       </div>
       <a class="btn btn-primary float-end" href="{% url 'misc_extras' %}">
         Manage
