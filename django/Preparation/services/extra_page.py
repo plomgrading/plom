@@ -8,6 +8,7 @@ from Preparation.models import ExtraPagePDFTask
 
 import logging
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 log = logging.getLogger("ExtraPageService")
 
@@ -53,20 +54,20 @@ class ExtraPageService:
         """Build a single test-paper"""
         from plom.create import build_extra_page_pdf
 
-        # TODO clean up the file handling here.
-        # the resulting file "extra_page.pdf" is build in cwd
-        build_extra_page_pdf()
+        # build the pdf in a tempdirectory
+        # there is redundancy here because thats what build_extra_page_pdf does already...
+        # TODO - simplify build_extra_page_pdf to avoid this redundancy.
 
-        # record that task is completed in database and let it move file
-        # into place. We can look up which record via the task.id == huey_id
-        epp_obj = ExtraPagePDFTask.objects.get(huey_id=task.id)
-        epp_path = Path("extra_page.pdf")
-        with epp_path.open(mode="rb") as fh:
-            epp_obj.extra_page_pdf = File(fh, name=epp_path.name)
-            epp_obj.save()
-        # The above is a *copy* not a move, so delete the original file
-        epp_path.unlink()
-        # TODO - work out better file wrangling so we don't have to delete this leftover.
+        with TemporaryDirectory() as tmpdirname:
+            build_extra_page_pdf(destination_dir=tmpdirname)
+            # the resulting file "extra_page.pdf" is build in tmpdirname
+            # record that task is completed in database and let it move file
+            # into place. We can look up which record via the task.id == huey_id
+            epp_obj = ExtraPagePDFTask.objects.get(huey_id=task.id)
+            epp_path = Path(tmpdirname) / "extra_page.pdf"
+            with epp_path.open(mode="rb") as fh:
+                epp_obj.extra_page_pdf = File(fh, name=epp_path.name)
+                epp_obj.save()
 
     @transaction.atomic()
     def build_extra_page_pdf(self):
