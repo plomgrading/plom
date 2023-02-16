@@ -10,6 +10,8 @@ from Papers.services import SpecificationService
 from plom.misc_utils import format_int_list_with_runs
 
 from pathlib import Path
+import shutil
+
 
 class Command(BaseCommand):
     help = (
@@ -56,6 +58,11 @@ class Command(BaseCommand):
             type=int,
             action="store",
             help="Download  a specific test paper",
+        )
+        grp.add_argument(
+            "--download-all",
+            action="store_true",
+            help="Download all completed paper builds in the queue",
         )
 
     def enqueue_tasks(self):
@@ -111,7 +118,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"{state} = {format_int_list_with_runs(papers)}")
         else:
             self.stdout.write("No queued tasks.")
-            
+
     def delete_all_tasks(self):
         bp_service = BuildPapersService()
         bp_service.delete_all_task()
@@ -127,10 +134,16 @@ class Command(BaseCommand):
         except ValueError as err:
             self.stderr.write(f"Error - {err}")
             return
-            
+
         with open(Path(name), "wb") as fh:
             fh.write(b)
-        self.stdout.write(f"Saved paper {paper_number} as \"{name}\"")
+        self.stdout.write(f'Saved paper {paper_number} as "{name}"')
+
+    def download_all_papers(self):
+        bps = BuildPapersService()
+        save_path = bps.get_pdf_zipfile(filename=f"all_papers.zip")
+        shutil.move(save_path, "all_papers.zip")
+        self.stdout.write(f'All built papers saved in zip = "all_papers.zip"')
 
     def handle(self, *args, **options):
 
@@ -140,6 +153,8 @@ class Command(BaseCommand):
             self.start_specific_task(options["start"][0])
         elif options["download"]:
             self.download_specific_paper(options["download"][0])
+        elif options["download_all"]:
+            self.download_all_papers()
         elif options["start_all"]:
             self.start_all_tasks()
         elif options["delete_all"]:
