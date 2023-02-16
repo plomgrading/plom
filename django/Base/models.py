@@ -17,7 +17,7 @@ class HueyTask(PolymorphicModel):
     """
 
     huey_id = models.UUIDField(null=True)
-    status = models.CharField(max_length=20)
+    status = models.CharField(max_length=20, default="todo")
     created = models.DateTimeField(default=datetime.now, blank=True)
     message = models.TextField(default="")
 
@@ -53,7 +53,7 @@ class HueyTask(PolymorphicModel):
 
 
 class SingletonBaseModel(models.Model):
-    """We define a singleton models for the test-specification. This
+    """We define a singleton model for the test-specification. This
     abstract model ensures that any derived models have at most a single
     row."""
 
@@ -107,3 +107,24 @@ class BaseAction(PolymorphicModel):
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
     time = models.DateTimeField(default=datetime.now)
     task = models.ForeignKey(BaseTask, null=True, on_delete=models.SET_NULL)
+
+
+class SingletonHueyTask(HueyTask):
+    """We define a singleton model for singleton huey tasks, such as
+    extra-page production.
+    """
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def load(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
