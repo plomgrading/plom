@@ -24,7 +24,11 @@ class Command(BaseCommand):
         grp.add_argument(
             "--enqueue",
             action="store_true",
-            help="Enqueue the building of the test papers",
+            help="""
+                Enqueue the building of the test papers.
+                Currently tasks must be explicitly enqueud before they
+                are started, see Issue #2542.
+            """,
         )
         grp.add_argument(
             "--start",
