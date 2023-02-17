@@ -3,12 +3,12 @@
 # Copyright (C) 2022 Brennen Chiu
 
 import pathlib
+import zipfly
 
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
-from django.http import FileResponse
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse, StreamingHttpResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Preparation.services import PQVMappingService, StagingStudentService
@@ -38,9 +38,18 @@ class BuildPaperPDFs(ManagerRequiredView):
         else:
             poll = False
 
+        if bps.get_n_complete_tasks() == bps.get_n_tasks():
+            zip_disabled = False
+        else:
+            zip_disabled = True
+
         table_fragment = render_to_string(
             "BuildPaperPDF/fragments/pdf_table.html",
-            {"tasks": task_context, "poll": poll},
+            {
+                "tasks": task_context,
+                "poll": poll,
+                "zip_disabled": zip_disabled,
+            },
             request=request,
         )
 
@@ -186,20 +195,27 @@ class GetPDFFile(ManagerRequiredView):
         return FileResponse(pdf)
 
 
-class GetCompressedPDFs(ManagerRequiredView):
+class GetStreamingZipOfPDFs(ManagerRequiredView):
     """Get the completed test paper PDFs in one zip file"""
 
-    def post(self, request):
+    # using zipfly python package.  see django example here
+    # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
+    def get(self, request):
         bps = BuildPapersService()
-        shortname = StagingSpecificationService().get_short_name_slug()
-        save_path = bps.get_pdf_zipfile(filename=f"{shortname}.zip")
-        zip_file = save_path.open("rb")
-        zf = SimpleUploadedFile(
-            save_path.name, zip_file.read(), content_type="application/zip"
-        )
-        zip_file.close()
-        save_path.unlink()
-        return FileResponse(zf)
+        short_name = StagingSpecificationService().get_short_name_slug()
+        paths = [
+            {
+                "fs": pdf_path,
+                "n": pathlib.Path(f"papers_for_{short_name}") / pdf_path.name,
+            }
+            for pdf_path in bps.get_completed_pdf_paths()
+        ]
+
+        zfly = zipfly.ZipFly(paths=paths)
+        zgen = zfly.generator()
+        response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
+        response["Content-Disposition"] = f"attachment; filename={short_name}.zip"
+        return response
 
 
 class StartAllPDFs(PDFTableView):

@@ -84,11 +84,21 @@
         </tr>
     {% endfor %}
 </table>
-<form method="post" action="{% url 'zip_paperPDFs' %}" id="bottom">
-    {% csrf_token %}
-    <input type="submit" class="btn btn-primary" value="Save as zip file" {% if zip_disabled %}disabled{% endif %}>
-    <a class="btn btn-secondary" onclick="document.getElementById('top').scrollIntoView()">
-        Scroll to top
-        <i class="bi bi-chevron-up"></i>
-    </a>
-</form>
+
+<div id="bottom">
+  {% if zip_disabled %}
+  <button class="btn btn-warning" disabled>
+    Save as zip file (once build complete)
+  </button>
+  {% else %}
+  <a class="btn btn-primary" href="{% url 'zip_stream_paperPDFs' %}" download>
+    Save as zip file
+  </a>
+  {% endif %}
+<a class="btn btn-secondary" onclick="document.getElementById('top').scrollIntoView()">
+  Scroll to top
+  <i class="bi bi-chevron-up"></i>
+</a>
+</div>
+
+</class>
