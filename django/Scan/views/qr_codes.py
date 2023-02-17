@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 
 from django.shortcuts import render
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
 
 from Papers.services import ImageBundleService
 from Scan.services import ScanService
-from Scan.forms import FlagImageForm
+from Scan.forms import FlagImageForm, ReplaceImageForm
 
 
 class ReadQRcodesView(ScannerRequiredView):
@@ -40,6 +40,7 @@ class UpdateQRProgressView(ScannerRequiredView):
         context = super().build_context()
         scanner = ScanService()
         form = FlagImageForm()
+        replace_image_form = ReplaceImageForm()
         bundle = scanner.get_bundle(timestamp, user)
         task_status = scanner.get_qr_code_reading_status(bundle, index)
 
@@ -49,6 +50,7 @@ class UpdateQRProgressView(ScannerRequiredView):
                 "index": index,
                 "task_status": task_status,
                 "form": form,
+                "replace_image_form": replace_image_form,
             }
         )
 
@@ -68,17 +70,44 @@ class UpdateQRProgressView(ScannerRequiredView):
                     "version_num": code["version_num"],
                 }
                 context.update({"qr_results": qr_results})
-            if task_status == "error":
+            if task_status == "error" and image.error:
                 stagged_bundle = image.bundle
                 flagged_bundle = img_service.get_or_create_bundle(
                     stagged_bundle.slug, stagged_bundle.pdf_hash
                 )
                 flag_image = scanner.get_error_image(flagged_bundle, index)
+                most_common_qr = scanner.get_common_qr_code(qr_data)
+
                 context.update(
-                    {"error": scanner.get_qr_code_error_message(bundle, index)}
+                    {
+                        "error": scanner.get_qr_code_error_message(bundle, index),
+                        "error_paper_id": str(most_common_qr)[:5],
+                        "error_page_num": str(most_common_qr)[5:8],
+                        "error_version_num": str(most_common_qr)[8:11],
+                        "image_error": image.error,
+                    }
                 )
                 if flag_image.flagged:
                     context.update({"flagged": True})
+            if task_status == "error" and image.colliding:
+                most_common_qr = scanner.get_common_qr_code(qr_data)
+                context.update(
+                    {
+                        "error": scanner.get_qr_code_error_message(bundle, index),
+                        "error_paper_id": str(most_common_qr)[:5],
+                        "error_page_num": str(most_common_qr)[5:8],
+                        "error_version_num": str(most_common_qr)[8:11],
+                        "collision": image.colliding,
+                    }
+                )
+            if task_status == "error" and image.unknown:
+                context.update(
+                    {
+                        "error": scanner.get_qr_code_error_message(bundle, index),
+                        "unknown": image.unknown,
+                    }
+                )
+
         return context
 
     def get(self, request, timestamp, index):
@@ -123,3 +152,36 @@ class QRParsingProgressAlert(ScannerRequiredView):
         )
 
         return render(request, "Scan/fragments/qr_code_alert.html", context)
+
+
+class BundleTableView(UpdateQRProgressView):
+    def get(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+        context = self.build_context(timestamp, request.user, index)
+
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, request.user)
+        num_images = scanner.get_n_images(bundle)
+        all_images = scanner.get_all_images(bundle)
+        qr_code_list = scanner.bundle_contains_list(all_images, num_images)
+
+        paper_id = []
+        page_num = []
+        version_num = []
+        for qr_code in qr_code_list:
+            if qr_code != "unknown page":
+                paper_id.append(str(qr_code[:5]).lstrip("0"))
+                page_num.append(str(qr_code[5:8]).lstrip("0"))
+                version_num.append(str(qr_code[8:11]).lstrip("0"))
+
+        context.update(
+            {
+                "qr_reading": scanner.is_bundle_reading_ongoig(bundle),
+                "paper_list": zip(paper_id, page_num, version_num),
+            }
+        )
+
+        return render(request, "Scan/fragments/bundle_table.html", context)

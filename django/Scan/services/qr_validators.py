@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 
 import shutil
 
 from django.conf import settings
 from Papers.services import SpecificationService
-from Scan.models import StagingImage
+from Scan.models import StagingImage, CollisionStagingImage, UnknownStagingImage
 from Papers.models import ErrorImage
 from collections import Counter
 from Papers.services import ImageBundleService
 
 
 class QRErrorService:
-    def check_qr_codes(self, page_data, image_path):
+    def check_qr_codes(self, page_data, image_path, bundle):
         """
         Check integrity of QR codes on a page.
         """
@@ -24,13 +24,23 @@ class QRErrorService:
         serialized_all_qr = self.serialize_qr_code(page_data, "all")
         serialized_public_code = self.serialize_qr_code(page_data, "public_code")
 
-        self.check_TPV_code(serialized_all_qr, img_obj, serialized_top_three_qr)
+        self.check_image_collision_within_bundle(
+            img_obj, bundle, serialized_top_three_qr, page_data
+        )
+
+        self.check_TPV_code(
+            serialized_all_qr, img_obj, serialized_top_three_qr, page_data
+        )
         self.check_qr_numbers(page_data, img_obj, serialized_top_three_qr)
         self.check_qr_matching(
-            serialized_top_three_qr, img_obj, serialized_top_three_qr
+            serialized_top_three_qr, img_obj, serialized_top_three_qr, page_data
         )
         self.check_public_code(
-            serialized_public_code, spec_dictionary, img_obj, serialized_top_three_qr
+            serialized_public_code,
+            spec_dictionary,
+            img_obj,
+            serialized_top_three_qr,
+            page_data,
         )
 
     def serialize_qr_code(self, page_data, tpv_type):
@@ -61,13 +71,14 @@ class QRErrorService:
                 raise ValueError("No specific TPV type.")
         return qr_code_list
 
-    def check_TPV_code(self, qr_list, img_obj, top_three_tpv):
+    def check_TPV_code(self, qr_list, img_obj, top_three_tpv, page_data):
         """
         Check if TPV codes are 17 digits long.
         """
         for indx in qr_list:
             if len(indx) != len("TTTTTPPPVVVOCCCCC"):
                 self.create_error_image(img_obj, top_three_tpv)
+                img_obj.parsed_qr = page_data
                 img_obj.error = True
                 img_obj.save()
                 raise ValueError("Invalid QR code.")
@@ -77,24 +88,26 @@ class QRErrorService:
         Check number of QR codes in a given page.
         """
         if len(page_data) == 0:
+            self.create_unknown_image(img_obj)
             img_obj.unknown = True
             img_obj.save()
             raise ValueError("Unable to read QR codes.")
         elif len(page_data) <= 2:
-            # self.create_error_image(img_obj)
             self.create_error_image(img_obj, top_three_tpv)
+            img_obj.parsed_qr = page_data
             img_obj.error = True
             img_obj.save()
-            raise ValueError("Detect less than 3 QR codes.")
+            raise ValueError("Detected fewer than 3 QR codes.")
         elif len(page_data) == 3:
             pass
         else:
             self.create_error_image(img_obj, top_three_tpv)
+            img_obj.parsed_qr = page_data
             img_obj.error = True
             img_obj.save()
             raise ValueError("Detected more than 3 QR codes.")
 
-    def check_qr_matching(self, qr_list, img_obj, top_three_tpv):
+    def check_qr_matching(self, qr_list, img_obj, top_three_tpv, page_data):
         """
         Check if QR codes matches.
         This is to check if a page is folded.
@@ -104,11 +117,14 @@ class QRErrorService:
                 pass
             else:
                 self.create_error_image(img_obj, top_three_tpv)
+                img_obj.parsed_qr = page_data
                 img_obj.error = True
                 img_obj.save()
                 raise ValueError("QR codes do not match.")
 
-    def check_public_code(self, public_codes, spec_dictionary, img_obj, top_three_tpv):
+    def check_public_code(
+        self, public_codes, spec_dictionary, img_obj, top_three_tpv, page_data
+    ):
         """
         Check if the paper public QR code matches with spec public code.
         """
@@ -118,11 +134,28 @@ class QRErrorService:
                 pass
             else:
                 self.create_error_image(img_obj, top_three_tpv)
+                img_obj.parsed_qr = page_data
                 img_obj.error = True
                 img_obj.save()
                 raise ValueError(
                     f"Magic code {public_code} did not match spec {spec_public_code}. Did you scan the wrong test?"
                 )
+
+    def check_image_collision_within_bundle(
+        self, image_obj, bundle, top_three_tpv, page_data
+    ):
+        all_images = StagingImage.objects.filter(bundle=bundle)
+        img_hash_list = []
+        img_hash_list.append(str(image_obj.image_hash))
+        for img in all_images:
+            img_hash_list.append(str(img.image_hash))
+        count = img_hash_list.count(str(image_obj.image_hash))
+        if count > 2:
+            self.create_collision_image(image_obj, top_three_tpv)
+            image_obj.parsed_qr = page_data
+            image_obj.colliding = True
+            image_obj.save()
+            raise ValueError("You have duplicate pages in this bundle.")
 
     def create_error_image(self, img_obj, top_three_tpv):
         if not ErrorImage.objects.filter(hash=img_obj.image_hash).exists():
@@ -162,5 +195,34 @@ class QRErrorService:
             test_folder.mkdir(exist_ok=True)
             shutil.copy(img_obj.file_path, img_path)
 
+    def create_collision_image(self, img_obj, top_three_tpv):
+        counter = Counter(top_three_tpv)
+        most_common_qr = counter.most_common(1)
+        common_qr = most_common_qr[0][0]
+
+        test_paper = common_qr[0:5]
+        page_number = common_qr[5:8]
+
+        collision_image = CollisionStagingImage(
+            bundle=img_obj.bundle,
+            bundle_order=img_obj.bundle_order,
+            file_name=img_obj.file_name,
+            file_path=img_obj.file_path,
+            image_hash=img_obj.image_hash,
+            parsed_qr=img_obj.parsed_qr,
+            rotation=img_obj.rotation,
+            paper_number=test_paper,
+            page_number=page_number,
+        )
+        collision_image.save()
+
     def create_unknown_image(self, img_obj):
-        pass
+        unknown_image = UnknownStagingImage(
+            bundle=img_obj.bundle,
+            bundle_order=img_obj.bundle_order,
+            file_name=img_obj.file_name,
+            file_path=img_obj.file_path,
+            image_hash=img_obj.image_hash,
+            rotation=img_obj.rotation,
+        )
+        unknown_image.save()
