@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 import json
 from pathlib import Path
@@ -30,14 +31,14 @@ def findCorner(qr, dim):
     elif my > 0.6 * height:
         NS = "S"
     else:
-        return "??"
+        return "??", ()  # return empty tuple if no coords to save
     if mx < 0.4 * width:
         EW = "W"
     elif mx > 0.6 * width:
         EW = "E"
     else:
-        return "??"
-    return NS + EW
+        return "??", ()
+    return NS + EW, (mx, my)
 
 
 def QRextract(image, write_to_file=True, try_harder=True):
@@ -102,7 +103,10 @@ def QRextract(image, write_to_file=True, try_harder=True):
         if qrfile.exists() and qrfile.stat().st_size > 0:
             return None
 
+    # appending coords to cornerQR causes errors when processing the QRs in readQRCodes.py line 146
+    # cornerQR = {"NW": [], "NE": [], "SW": [], "SE": [], "coords": {}}
     cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
+    coordsQR = {}  # create a separate dict instead
 
     if not isinstance(image, Image.Image):
         image = Image.open(image)
@@ -115,9 +119,11 @@ def QRextract(image, write_to_file=True, try_harder=True):
 
     qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
     for qr in qrlist:
-        cnr = findCorner(qr, image.size)
+        cnr, coords = findCorner(qr, image.size)
         if cnr in cornerQR.keys():
             cornerQR[cnr].append(qr.text)
+            # cornerQR["coords"][cnr] = coords
+            coordsQR[cnr] = coords
 
     if try_harder:
         # try again on smaller image: avoids random CI failures #967?
@@ -138,4 +144,8 @@ def QRextract(image, write_to_file=True, try_harder=True):
     if write_to_file:
         with open(qrfile, "w") as fh:
             json.dump(cornerQR, fh)
+
+    for i in coordsQR:  # not saved anywhere yet, just printed
+        print(coordsQR[i])
+
     return cornerQR
