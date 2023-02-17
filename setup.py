@@ -69,6 +69,7 @@ server_install_requires = [
     "packaging",
     'importlib_resources>=5.0.0 ; python_version<"3.9"',  # until we drop 3.8
     "stdiomask>=0.0.6",
+    "zipfly",
     "zxing-cpp>=1.4.0",
 ]
 # TODO: optional dependency to enable lossless jpeg rotations
