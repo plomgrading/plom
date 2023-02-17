@@ -1,9 +1,12 @@
-from django.core.management.base import BaseCommand, CommandError
-
-from Preparation.services import ExtraPageService
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from pathlib import Path
-import shutil
+
+from django.core.management.base import BaseCommand
+
+from Preparation.services import ExtraPageService
 
 
 class Command(BaseCommand):
