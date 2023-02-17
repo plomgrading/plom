@@ -78,7 +78,6 @@ class BuildPaperPDFs(ManagerRequiredView):
         context = self.build_context()
         context.update(
             {
-                "meh": "aqrgh",
                 "message": "",
                 "zip_disabled": zip_disabled,
                 "num_pdfs": num_pdfs,
