@@ -17,10 +17,11 @@ queue = get_queue("tasks")
 
 
 class HueyTask(PolymorphicModel):
-    """A general-purpose model for handling Huey tasks. It keeps track of a huey task's ID,
-    the time created, and the status. Also, this is where we define the functions for handling
-    signals sent from the huey consumer.
-    """
+    """A general-purpose model for handling Huey tasks.
+
+    It keeps track of a huey task's ID, the time created, and the
+    status. Also, this is where we define the functions for handling
+    signals sent from the huey consumer.  """
 
     huey_id = models.UUIDField(null=True)
     status = models.CharField(max_length=20, default="todo")
@@ -59,9 +60,10 @@ class HueyTask(PolymorphicModel):
 
 
 class SingletonBaseModel(models.Model):
-    """We define a singleton model for the test-specification. This
-    abstract model ensures that any derived models have at most a single
-    row."""
+    """We define a singleton model for the test-specification.
+
+    This abstract model ensures that any derived models have at most a
+    single row."""
 
     class Meta:
         abstract = True
@@ -102,6 +104,7 @@ class BaseTask(PolymorphicModel):
 class BaseAction(PolymorphicModel):
     """
     A base class for all "actions" that pertain to marker user management.
+
     I.E., grading a question, assigning a task, assigning the task to a new user, etc
     with the goal of saving a "history" of all marking/user management actions.
 
@@ -116,8 +119,9 @@ class BaseAction(PolymorphicModel):
 
 
 class SingletonHueyTask(HueyTask):
-    """We define a singleton model for singleton huey tasks, such as
-    extra-page production.
+    """We define a singleton model for singleton huey tasks.
+
+    This will be used for jobs such as extra-page production.
     """
 
     class Meta:

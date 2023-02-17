@@ -23,8 +23,10 @@ class ExtraPageService:
 
     @transaction.atomic()
     def get_extra_page_task_status(self):
-        """Return the status of the build extra page task. If no such
-        task then create one with status 'todo'
+        """Status of the build extra page task, creating a "todo" task if it does not exist.
+
+        Return:
+        str: The status as string: "todo", "queued", "started", "error" or "complete".
 
         """
         return ExtraPagePDFTask.load().status
