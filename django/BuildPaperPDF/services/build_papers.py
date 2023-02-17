@@ -85,7 +85,7 @@ class BuildPapersService:
         PDFTask.objects.all().delete()
         if self.papers_to_print.exists():
             shutil.rmtree(self.papers_to_print)
-        self.papers_to_print.mkdir()
+        self.papers_to_print.mkdir(exist_ok=True)
 
     def build_n_papers(self, n, spec, qvmap):
         """Build multiple papers without having to sign in/out each time"""
@@ -138,6 +138,7 @@ class BuildPapersService:
 
         If there are prenamed test-papers, save that info too.
         """
+        self.papers_to_print.mkdir(exist_ok=True)
         for i in range(n):
             index = i + 1
             student_name = None
@@ -214,9 +215,14 @@ class BuildPapersService:
             task.status = "queued"
             task.save()
 
-    def delete_all_task(self):
+    @transaction.atomic
+    def reset_all_tasks(self):
         self.cancel_all_task()
-        PDFTask.objects.all().delete()
+        for task in PDFTask.objects.all():
+            pathlib.Path(task.pdf_file_path).unlink(missing_ok=True)
+            task.huey_id = None
+            task.status = "todo"
+            task.save()
 
     @transaction.atomic
     def get_all_task_status(self):

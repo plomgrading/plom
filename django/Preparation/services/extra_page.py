@@ -18,9 +18,6 @@ log = logging.getLogger("ExtraPageService")
 
 
 class ExtraPageService:
-    base_dir = settings.BASE_DIR
-    papers_to_print = base_dir / "papersToPrint"
-
     @transaction.atomic()
     def get_extra_page_task_status(self):
         """Status of the build extra page task, creating a "todo" task if it does not exist.

@@ -128,7 +128,7 @@ class SingletonHueyTask(HueyTask):
         abstract = True
 
     def save(self, *args, **kwargs):
-        self.pk = 1
+        self.__class__.objects.exclude(id=self.id).delete()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -136,5 +136,5 @@ class SingletonHueyTask(HueyTask):
 
     @classmethod
     def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
+        obj, created = cls.objects.get_or_create()
         return obj

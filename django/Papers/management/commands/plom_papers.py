@@ -1,7 +1,12 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
+
 from django.core.management.base import BaseCommand
 
 from Papers.services import PaperCreatorService, PaperInfoService
-from Preparation.services import PQVMappingService
+from Preparation.services import PQVMappingService, StagingStudentService
+from BuildPaperPDF.services import BuildPapersService
 
 
 class Command(BaseCommand):
@@ -16,8 +21,8 @@ class Command(BaseCommand):
             "status", help="Show the current state of test-papers in the database."
         )
         sp_build = sp.add_parser(
-            "build",
-            help="Populate the database with test-papers using information provided in the spec and QV-map.",
+            "build_db",
+            help="Populate the database with test-papers using information provided in the spec and QV-map. Also constructs the associate pdf-build tasks.",
         )
         sp_build = sp.add_parser("clear", help="Clear the database of test-papers.")
 
@@ -57,6 +62,12 @@ class Command(BaseCommand):
         pcs.add_all_papers_in_qv_map(qv_map, False)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
 
+        self.stdout.write("Creating associated pdf-build tasks.")
+        bp_service = BuildPapersService()
+        bp_service.stage_pdf_jobs(
+            len(qv_map), classdict=StagingStudentService().get_classdict()
+        )
+
     def clear_papers(self):
         """
         Remove all test-papers from the database.
@@ -75,7 +86,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["command"] == "status":
             self.papers_status()
-        elif options["command"] == "build":
+        elif options["command"] == "build_db":
             self.build_papers()
         elif options["command"] == "clear":
             self.clear_papers()

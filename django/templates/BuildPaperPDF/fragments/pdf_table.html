@@ -1,10 +1,10 @@
 <div>
-    <a class="btn btn-primary" hx-post="{% url 'start_all_PDFs' %}" hx-target="#pdf_table">Start All</a>
+    <a class="btn btn-primary" hx-post="{% url 'start_all_PDFs' %}" hx-target="#pdf_table">Build All PDFs</a>
     {% if pdf_errors %}
     <a class="btn btn-warning" hx-post="{% url 'retry_all_PDFs' %}" hx-target="#pdf_table">Retry All</a>
     {% endif %}
     <a class="btn btn-danger" hx-post="{% url 'cancel_all_PDFs' %}" hx-target="#pdf_table">Cancel All</a>
-    <a class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteBtnModal">Delete All</a>
+    <a class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteBtnModal">Delete All PDFs</a>
     <a class="btn btn-secondary" onclick="document.getElementById('bottom').scrollIntoView()">
         Scroll to bottom
         <i class="bi bi-chevron-down"></i>

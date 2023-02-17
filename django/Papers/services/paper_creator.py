@@ -53,6 +53,8 @@ class PaperCreatorService:
         qv_mapping (dict): Mapping from each question-number to
             version for this particular paper. Of the form {q: v}
 
+
+
         """
         paper_obj = Paper(paper_number=paper_number)
         try:

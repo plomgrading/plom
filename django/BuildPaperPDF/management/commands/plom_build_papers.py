@@ -5,7 +5,7 @@
 from django.core.management.base import BaseCommand
 
 from BuildPaperPDF.services import BuildPapersService
-from Preparation.services import PQVMappingService, StagingStudentService
+from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
 
 from plom.misc_utils import format_int_list_with_runs
@@ -15,21 +15,10 @@ import shutil
 
 
 class Command(BaseCommand):
-    help = (
-        "Allows user to enqueue building of test papers, download them and delete them."
-    )
+    help = "Allows user to build papers, download them and delete them."
 
     def add_arguments(self, parser):
         grp = parser.add_mutually_exclusive_group()
-        grp.add_argument(
-            "--enqueue",
-            action="store_true",
-            help="""
-                Enqueue the building of the test papers.
-                Currently tasks must be explicitly enqueud before they
-                are started, see Issue #2542.
-            """,
-        )
         grp.add_argument(
             "--start",
             nargs=1,
@@ -71,23 +60,6 @@ class Command(BaseCommand):
             help="Download all papers in a ZIP file",
         )
 
-    def enqueue_tasks(self):
-        bp_service = BuildPapersService()
-        n_tasks = bp_service.get_n_tasks()
-        if n_tasks > 0:
-            self.stdout.write(f"Already enqueued {n_tasks} papers.")
-            return
-
-        pqv_service = PQVMappingService()
-        num_pdfs = len(pqv_service.get_pqv_map_dict())
-
-        sstu_service = StagingStudentService()
-        classdict = sstu_service.get_classdict()
-
-        bp_service.clear_tasks()
-        bp_service.stage_pdf_jobs(num_pdfs, classdict=classdict)
-        self.stdout.write(f"Enqueued the building of {num_pdfs} papers.")
-
     def start_all_tasks(self):
         bp_service = BuildPapersService()
         spec = SpecificationService().get_the_spec()
@@ -121,7 +93,7 @@ class Command(BaseCommand):
             for (n, state) in stats.items():
                 rev_stat.setdefault(state, []).append(n)
             for (state, papers) in rev_stat.items():
-                self.stdout.write(f"\"{state}\": {format_int_list_with_runs(papers)}")
+                self.stdout.write(f'"{state}": {format_int_list_with_runs(papers)}')
         else:
             self.stdout.write("No queued tasks.")
 
@@ -147,15 +119,12 @@ class Command(BaseCommand):
 
     def download_all_papers(self):
         bps = BuildPapersService()
-        save_path = bps.get_pdf_zipfile(filename=f"all_papers.zip")
+        save_path = bps.get_pdf_zipfile(filename="all_papers.zip")
         shutil.move(save_path, "all_papers.zip")
-        self.stdout.write(f'All built papers saved in zip = "all_papers.zip"')
+        self.stdout.write('All built papers saved in zip = "all_papers.zip"')
 
     def handle(self, *args, **options):
-
-        if options["enqueue"]:
-            self.enqueue_tasks()
-        elif options["start"]:
+        if options["start"]:
             self.start_specific_task(options["start"][0])
         elif options["download"]:
             self.download_specific_paper(options["download"][0])
@@ -170,5 +139,4 @@ class Command(BaseCommand):
         elif options["status"]:
             self.show_task_status()
         else:
-            self.print_help('manage.py', 'plom_build_papers')
-
+            self.print_help("manage.py", "plom_build_papers")
