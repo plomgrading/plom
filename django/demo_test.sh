@@ -4,6 +4,7 @@
 # Copyright (C) 2022 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 # Create (but not launch) a demo server in a CI pipeline
 
@@ -24,4 +25,4 @@ python3 manage.py plom_preparation_prenaming --enable
 python3 manage.py plom_preparation_classlist upload useful_files_for_testing/cl_good.csv
 python3 manage.py plom_preparation_qvmap generate
 
-python3 manage.py plom_papers build
+python3 manage.py plom_papers build_bd
