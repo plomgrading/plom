@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand
 
@@ -57,7 +58,8 @@ class Command(BaseCommand):
             nargs=1,
             type=int,
             action="store",
-            help="Download  a specific test paper",
+            metavar="N",
+            help="Download a specific test paper",
         )
         grp.add_argument(
             "--download-all",
