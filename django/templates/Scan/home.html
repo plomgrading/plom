@@ -12,21 +12,35 @@
 {% else %}
 <div class="d-grid gap-2">
     <div class="card w-50">
-        <details class="card-body">
-            <summary>
-                Dummy help text!
-            </summary>
-            <p>
-                <ul>
-                    <li>Upload scanned tests here.</li>
-                    <li>Plom will read QR codes and find problems if there are any.</li>
-                </ul>
-            </p>
-        </details>
+        <div class="card-body" style="height: 182.5px">
+            <h5>Pushed Summary:</h5>
+            <div class="row">
+                <div class="col">
+                    <p style="color: green;">{{ completed_test_papers }} / {{ total_completed_test_papers }} completed test papers</p>
+                    <p>? / 30 un-use test papers</p>
+                    <a class="btn" style="background-color: #0F984F; color: white;" href="{% url 'scan_summary' %}">View Details</a>
+                    {% comment %} un-use for when I don't see any paper {% endcomment %}
+                    {% comment %} incomplete for missing paper {% endcomment %}
+                    {% comment %} complete is when done {% endcomment %}
+                </div>
+                <div class="col">
+                    <p style="color: red;">? / 30 incomplete test papers</p>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="card w-50">
         <div class="card-body">
             <h5 class="card-title">Upload bundle PDF</h5>
+            <details style="margin-bottom: 10px;">
+                <summary>Dummy help text!</summary>
+                <p>
+                    <ul>
+                        <li>Upload scanned tests here.</li>
+                        <li>Plom will read the QR codes and find problems if there are any.</li>
+                    </ul>
+                </p>
+            </details>
             <form
                 enctype="multipart/form-data"
                 method="post"
@@ -34,53 +48,100 @@
             >
                 {% csrf_token %}
                 {{ form }}
-                <input type="submit" class="btn btn-primary" value="Upload">
+                <input type="submit" class="btn" value="Upload" style="background-color: #0F984F; color: white;">
             </form>
         </div>
     </div>
     <br>
     <div>
-        <h5>Staged bundles</h5>
-        <div class="d-grid gap-2">
-            {% if bundles %}
-                {% for bundle in bundles %}
-                <div class="card" style="min-width: fit-content; max-width: 50%">
-                    <div class="card-body d-flex flex-row p-0">
-                        <img 
-                            src="{% url 'scan_get_image' bundle.timestamp 0 %}"
-                            class="border rounded-start"
-                            style="max-height: 12em;"
-                        >
-                        <div class="p-2">
-                            <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
-                            <p class="card-subtitle">Uploaded {{ bundle.time_uploaded }}</p>
-                            <ul class="list-unstyled">
-                                <li>Total pages: {{ bundle.pages }}</li>
-                                <li>Processed pages: {{ bundle.n_read }}</li>
-                                <li>Pushed pages: {{ bundle.n_pushed }}</li>
-                            </ul>
-                            <a 
-                                class="btn btn-primary" 
-                                href="{% url 'scan_manage_bundle' bundle.timestamp 0 %}"
-                            >
-                                View
-                            </a>
-                            <a 
-                                class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}" 
-                                hx-delete="{% url 'scan_remove_bundle' bundle.timestamp %}"
-                                hx-confirm="Are you sure?"
-                            >
-                                Remove
-                            </a>
-                        </div>
+        <div class="row" style="margin-right: 0.1px;">
+            <div class="col">
+                <div>
+                    <h5>Staged Bundles</h5>
+                    <div class="d-grid gap-2">
+                        {% if bundles %}
+                            {% for bundle in bundles %}
+                            {% if not bundle.bundle_pushed %}
+                            <div class="card" style="min-width: fit-content; max-width: 50%">
+                                <div class="card-body d-flex flex-row p-0">
+                                    <img 
+                                        src="{% url 'scan_get_image' bundle.timestamp 0 %}"
+                                        class="border rounded-start"
+                                        style="max-height: 14em;"
+                                    >
+                                    <div class="p-2">
+                                        <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
+                                        <p class="card-subtitle">Uploaded {{ bundle.time_uploaded }}</p>
+                                        <ul class="list-unstyled">
+                                            <li>Total pages: {{ bundle.pages }}</li>
+                                            <li>Valid pages: {{ bundle.n_read }}</li>
+                                            <li>Error pages: {{ bundle.n_errors}}</li>
+                                        </ul>
+                                        <a 
+                                            class="btn" 
+                                            href="{% url 'scan_manage_bundle' bundle.timestamp 0 %}"
+                                            style="background-color: #0F984F; color: white;"
+                                        >
+                                            View
+                                        </a>
+                                        <a 
+                                            class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}" 
+                                            hx-delete="{% url 'scan_remove_bundle' bundle.timestamp %}"
+                                            hx-confirm="Are you sure?"
+                                        >
+                                            Remove
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        {% else %}
+                        <h6>No bundles uploaded yet.</h6>
+                        {% endif %}
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
-            <h6>No bundles uploaded yet.</h6>
-            {% endif %}
+            </div>
+            <div class="col">
+                <div>
+                    <h5>Pushed Bundles</h5>
+                    {% if has_pushed_bundle %}
+                    {% for bundle in bundles %}
+                        {% if bundle.bundle_pushed %}
+                            <div class="card" style="min-width: fit-content; max-width: 50%">
+                                <div class="card-body d-flex flex-row p-0">
+                                    <img 
+                                        src="{% url 'scan_get_image' bundle.timestamp 0 %}"
+                                        class="border rounded-start"
+                                        style="max-height: 14em;"
+                                    >
+                                    <div class="p-2">
+                                        <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
+                                        <ul class="list-unstyled">
+                                            <li>Total pages: {{ bundle.pages }}</li>
+                                            {% comment %} <li>Valid pages: {{ bundle.n_read }}</li>
+                                            <li>Error pages: {{ bundle.n_errors}}</li> {% endcomment %}
+                                        </ul>
+                                        <a 
+                                            class="btn" 
+                                            href="{% url 'scan_manage_bundle' bundle.timestamp 0 %}"
+                                            style="background-color: #0F984F; color: white;"
+                                        >
+                                            View
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% else %}
+                        <div class="d-grid gap-2">
+                            <h6>No bundles pushed yet.</h6>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
-</div>
 {% endif %}
 {% endblock %}

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import path
 from .views import (
@@ -25,6 +26,8 @@ from .views import (
     ClassicServerURLView,
     MockExamView,
     PaperCreationView,
+    MiscExtrasView,
+    ExtraPageView,
 )
 
 urlpatterns = [
@@ -76,4 +79,6 @@ urlpatterns = [
     path("classic/", ClassicServerInfoView.as_view(), name="prep_server_info"),
     path("classic/server", ClassicServerURLView.as_view(), name="prep_server"),
     path("test_papers/", PaperCreationView.as_view(), name="prep_test_papers"),
+    path("misc/", MiscExtrasView.as_view(), name="misc_extras"),
+    path("misc/extra_page", ExtraPageView.as_view(), name="extra_page"),
 ]

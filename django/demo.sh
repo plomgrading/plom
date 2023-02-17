@@ -47,6 +47,10 @@ xterm -e "python3 manage.py djangohuey" &
 # This is for production use, when Debug = False
 # python3 manage.py collectstatic
 
+# enqueue building of the extra page pdf.
+python manage.py plom_preparation_extrapage --build 
+
+
 # TODO: note: the server will not have any scans in it yet
 
 python3 manage.py runserver 8000

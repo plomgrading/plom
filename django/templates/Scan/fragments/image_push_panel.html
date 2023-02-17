@@ -11,7 +11,7 @@
         </p>
     </div>
     {% elif not status %}
-    <a 
+    {% comment %} <a 
         class="btn text-start" 
         style="background-color: lightgrey;"
         hx-post="{% url 'scan_push_img' timestamp index %}"
@@ -19,7 +19,7 @@
     >
         <i class="bi bi-file-earmark-check"></i>
         Push page image
-    </a>
+    </a> {% endcomment %}
     {% else %}
     <div hx-get="{% url 'scan_push_update' timestamp index %}" hx-trigger="every 1s" hx-swap="outerHTML">
         <div class="d-flex justify-content-center">
@@ -31,7 +31,7 @@
     {% if not all_pushed and not in_progress %}
         {% if not status or status == 'complete' %}
         <a 
-            class="btn text-start " 
+            class="btn text-start {{ disabled }}" 
             style="background-color: lightgrey;"
             hx-post="{% url 'scan_push_all' timestamp %}"
         >

@@ -3,6 +3,122 @@
 {% block page_heading %}Manage bundle{% endblock %}
 
 {% block main_content %}
+<div style="margin: 0px 0px 16px 2.5px">
+    <div class="card w-75">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-3">
+                    <h5>Bundle Summary:</h5>
+                    <p>{{ valid_pages }} / {{ total_pages }} valid pages</p>
+                    <p>{{ error_pages }} error pages</p>
+                </div>
+                <div class="col-8">
+                    <h5>Bundle Contains:</h5>
+                    <div hx-get="{% url 'scan_bundle_table' timestamp index %}" hx-trigger="load"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% if replace_image_success_message %}
+<div class="card w-75 bg-success mb-3" style="color: white;">
+    <p style="margin: 3px 15px">{{ replace_image_success_message }}</p>
+</div>
+{% elif replace_image_error_message %}
+<div class="card w-75 bg-danger mb-3" style="color: white;">
+    <p style="margin: 3px 15px">{{ replace_image_error_message }}</p>
+</div>
+{% endif %}
+<div style="margin: 0px 0px 16px 2.5px">
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+        data-bs-toggle="collapse"
+        role="button"
+        aria-expanded="false"
+        aria-controls="pagesList"
+        href="#pages"
+    >
+        <i class="bi bi-chevron-down"></i>
+        View pages
+    </a>
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+        data-bs-toggle="tooltip"
+        data-bs-placement="top"
+        title="Not implemented yet"
+        role="button"
+        aria-expanded="false"
+        aria-controls="pagesList"
+        href="#viewValidPages"
+    >
+        <i class="bi bi-chevron-down"></i>
+        View Valid pages
+    </a>
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+        data-bs-toggle="tooltip"
+        data-bs-placement="top"
+        title="Not implemented yet"
+        role="button"
+        aria-expanded="false"
+        aria-controls="pagesList"
+        href="#viewErrorPages"
+    >
+        <i class="bi bi-chevron-down"></i>
+        View Error pages
+    </a>
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+        data-bs-toggle="tooltip"
+        data-bs-placement="top"
+        title="Not implemented yet"
+    >
+        Test Order View
+    </a>
+    <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+        data-bs-toggle="tooltip"
+        data-bs-placement="top"
+        title="Not implemented yet"
+    >
+        Bundle Order View
+    </a>
+    {% comment %} <a 
+        class="btn text-start" 
+        style="background-color: lightgrey;"
+    >
+        Push All Pages
+    </a> {% endcomment %}
+</div>
+<div style="margin: 0px 0px 16px 2.5px">
+    <div class="collapse" id="pages">
+        <div class="card" style="width: 1165px;">
+            <div style="">
+                {% for p in pages %}
+                <a
+                class="btn text-start {% if p.status == 'error' %}text-danger{% elif p.status == 'complete' %}text-success{% endif %}"
+                href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+                style="{% if forloop.counter == one_index %}background-color: black; color: white{% endif %}"
+                >
+                Page {{ forloop.counter}}
+                {% if p.pushed%}
+                <i class="bi bi-file-earmark-check"></i>
+                {% elif p.status == 'error' %}
+                <i class="bi bi-exclamation-diamond"></i>
+                {% endif %}
+                </a>
+                {% endfor%}
+            </div>
+            
+        </div>
+    </div>
+</div>
+
 <div class="container w-100 p-0 m-3">
     <div class="row">
         <div class="col shadow-sm rounded" style="background-color: lightgrey;">
@@ -42,35 +158,6 @@
                     <h5 class="card-title">{{ slug }}.pdf</h5>
                     <p class="card-subtitle">Page {{ one_index }} of {{ total_pages }}</p>
                     <div class="vstack pt-3 gap-3">
-                        <a 
-                            class="btn text-start" 
-                            style="background-color: lightgrey;"
-                            data-bs-toggle="collapse"
-                            role="button"
-                            aria-expanded="false"
-                            aria-controls="pagesList"
-                            href="#pagesList"
-                        >
-                            <i class="bi bi-chevron-down"></i>
-                            Pages
-                        </a>
-                        <div class="collapse vstack gap-2" id="pagesList">
-                            <div class="vstack gap-2">
-                                {% for p in pages %}
-                                <a
-                                    class="btn text-start {% if forloop.counter == one_index %}btn-info{% endif %} {% if p.status == 'error' %}text-danger{% elif p.status == 'complete' %}text-success{% endif %}"
-                                    href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-                                >
-                                    Page {{ forloop.counter }}
-                                    {% if p.pushed %}
-                                    <i class="bi bi-file-earmark-check"></i>
-                                    {% elif p.status == 'error' %}
-                                    <i class="bi bi-exclamation-diamond"></i>
-                                    {% endif %}
-                                </a>
-                                {% endfor %}
-                            </div>
-                        </div>
                         <a class="btn text-start" href="{% url 'scan_home' %}" style="background-color: lightgrey;">
                             <i class="bi bi-chevron-left"></i>
                             Return to upload
@@ -93,4 +180,10 @@
         </div>
     </div>
 </div>
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
 {% endblock %}
