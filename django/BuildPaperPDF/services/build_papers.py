@@ -241,5 +241,5 @@ class BuildPapersService:
             raise ValueError(f"Task {paper_number} is not complete")
 
         paper_path = pathlib.Path(task.pdf_file_path)
-        with paper_path.open('rb') as fh:
+        with paper_path.open("rb") as fh:
             return (paper_path.name, fh.read())
