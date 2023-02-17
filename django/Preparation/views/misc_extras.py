@@ -1,5 +1,8 @@
-from django.urls import reverse
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
+from django.urls import reverse
 from django.shortcuts import render
 from django.http import FileResponse
 from django_htmx.http import HttpResponseClientRedirect
