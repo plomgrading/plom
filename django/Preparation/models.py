@@ -1,6 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 from django.db import models
 
-from Base.models import SingletonBaseModel
+from Base.models import SingletonBaseModel, SingletonHueyTask
 
 
 class PaperSourcePDF(models.Model):
@@ -69,3 +74,19 @@ class ClassicPlomServerInformation(SingletonBaseModel):
     server_name = models.TextField(null=True)
     server_port = models.PositiveIntegerField(null=True)
     server_manager_password = models.TextField(null=True)
+
+
+# ---------------------------------
+# Make a table for the extra page pdf and the associated huey task
+
+
+class ExtraPagePDFTask(SingletonHueyTask):
+    """Table to store the exta page pdf huey task.  Note that this
+    inherits fields from the HueyTask table.
+
+    """
+
+    extra_page_pdf = models.FileField(upload_to="sourceVersions/")
+
+    def __str__(self):
+        return "Task Object " + str(self.paper_number)

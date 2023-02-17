@@ -1,6 +1,12 @@
-from datetime import datetime
-from huey.signals import SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_COMPLETE
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
+from datetime import datetime
+
+from huey.signals import SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_COMPLETE
 from django.db import models
 from django.contrib.auth.models import User
 from django_huey import get_queue
@@ -11,13 +17,14 @@ queue = get_queue("tasks")
 
 
 class HueyTask(PolymorphicModel):
-    """A general-purpose model for handling Huey tasks. It keeps track of a huey task's ID,
-    the time created, and the status. Also, this is where we define the functions for handling
-    signals sent from the huey consumer.
-    """
+    """A general-purpose model for handling Huey tasks.
+
+    It keeps track of a huey task's ID, the time created, and the
+    status. Also, this is where we define the functions for handling
+    signals sent from the huey consumer.  """
 
     huey_id = models.UUIDField(null=True)
-    status = models.CharField(max_length=20)
+    status = models.CharField(max_length=20, default="todo")
     created = models.DateTimeField(default=datetime.now, blank=True)
     message = models.TextField(default="")
 
@@ -53,9 +60,10 @@ class HueyTask(PolymorphicModel):
 
 
 class SingletonBaseModel(models.Model):
-    """We define a singleton models for the test-specification. This
-    abstract model ensures that any derived models have at most a single
-    row."""
+    """We define a singleton model for the test-specification.
+
+    This abstract model ensures that any derived models have at most a
+    single row."""
 
     class Meta:
         abstract = True
@@ -96,6 +104,7 @@ class BaseTask(PolymorphicModel):
 class BaseAction(PolymorphicModel):
     """
     A base class for all "actions" that pertain to marker user management.
+
     I.E., grading a question, assigning a task, assigning the task to a new user, etc
     with the goal of saving a "history" of all marking/user management actions.
 
@@ -107,3 +116,25 @@ class BaseAction(PolymorphicModel):
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
     time = models.DateTimeField(default=datetime.now)
     task = models.ForeignKey(BaseTask, null=True, on_delete=models.SET_NULL)
+
+
+class SingletonHueyTask(HueyTask):
+    """We define a singleton model for singleton huey tasks.
+
+    This will be used for jobs such as extra-page production.
+    """
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def load(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj

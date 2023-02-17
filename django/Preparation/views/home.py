@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
-
 
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRefresh
@@ -21,6 +20,7 @@ from Preparation.services import (
     StagingStudentService,
     StagingClasslistCSVService,
     PQVMappingService,
+    ExtraPageService,
 )
 
 
@@ -44,6 +44,7 @@ class PreparationLandingView(ManagerRequiredView):
             "papers_built": bps.are_all_papers_built(),
             "navbar_colour": "#AD9CFF",
             "user_group": "manager",
+            "extra_page_status": ExtraPageService().get_extra_page_task_status(),
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
