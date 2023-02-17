@@ -63,12 +63,12 @@ class Command(BaseCommand):
             type=int,
             action="store",
             metavar="N",
-            help="Download a specific test paper",
+            help="Download a specific test paper as a PDF file",
         )
         grp.add_argument(
             "--download-all",
             action="store_true",
-            help="Download all completed paper builds in the queue",
+            help="Download all papers in a ZIP file",
         )
 
     def enqueue_tasks(self):
