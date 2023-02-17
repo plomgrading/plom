@@ -1,3 +1,9 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Copyright (C) 2022-2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2022 Edith Coates -->
+<!-- Copyright (C) 2022 Brennen Chiu -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
+
 {% extends "base/base.html" %}
 {% block page_heading %}Prepare assessment{% endblock %}
 {% block main_content %}
@@ -11,7 +17,7 @@
           <i class="bi bi-check-circle text-success"></i>
           {% endif %}
         </p>
-        <p class="fs-7">&emsp;&ensp; Create a specification for your assessment.</p>    
+        <p class="fs-7">&emsp;&ensp; Create a specification for your assessment.</p>
       </div>
       {% if valid_spec and not papers_staged %}
       <a class="btn btn-success float-end" href="{% url 'spec_summary' %}">View</a>
@@ -45,7 +51,7 @@
           <i class="bi bi-check-circle text-success"></i>
           {% endif %}
         </p>
-        <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>    
+        <p class="fs-7">&emsp;&ensp; Upload source PDFs of your assessment.</p>
       </div>
       {% if uploaded_test_versions %}
       <a class="btn btn-danger float-end" hx-delete="{% url 'prep_reset_sources' %}" hx-confirm="Are you sure?">Reset</a>
@@ -64,7 +70,7 @@
         <i class="bi bi-chevron-up"></i>
       </a>
       {% endif %}
-    </div>    
+    </div>
   </li>
 
   <li class="list-group-item list-group-item-action">
@@ -140,7 +146,7 @@
           <i class="bi bi-check-circle text-success"></i>
           {% endif %}
         </p>
-        <p class="fs-7">&emsp;&ensp; Create map for test versions.</p>    
+        <p class="fs-7">&emsp;&ensp; Create map for test versions.</p>
       </div>
       {% if papers_staged %}
       <a class="btn btn-success float-end" href="{% url 'prep_qvmapping_view' %}">View</a>
@@ -204,7 +210,7 @@
           <i class="bi bi-check-circle text-success"></i>
           {% endif %}
         </p>
-        <p class="fs-7">&emsp;&ensp; Create test-papers and save to disk.</p>    
+        <p class="fs-7">&emsp;&ensp; Create test-papers and save to disk.</p>
       </div>
       {% if not all_source_tests_uploaded %}
       <a>
@@ -235,11 +241,11 @@
 	  {% if extra_page_status == "complete" %}
 	  <i class="bi bi-check-circle text-success"></i>
 	  {% elif extra_page_status == "todo" %}
-	  
+
 	  {% else %}
 	  <i class="bi bi-gear text-info"></i>
-	  {% endif %}	  
-	</p>    
+	  {% endif %}
+	</p>
       </div>
       <a class="btn btn-primary float-end" href="{% url 'misc_extras' %}">
         Manage
