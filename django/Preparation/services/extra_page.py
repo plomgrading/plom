@@ -1,14 +1,18 @@
-from django.conf import settings
-from django.core.files import File
-from django.db import transaction
-
-from django_huey import db_task
-
-from Preparation.models import ExtraPagePDFTask
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
+from django.conf import settings
+from django.core.files import File
+from django.db import transaction
+from django_huey import db_task
+
+from Preparation.models import ExtraPagePDFTask
+
 
 log = logging.getLogger("ExtraPageService")
 
@@ -44,7 +48,7 @@ class ExtraPageService:
         from plom.create import build_extra_page_pdf
 
         # build the pdf in a tempdirectory
-        # there is redundancy here because thats what build_extra_page_pdf does already...
+        # there is redundancy here because that is what build_extra_page_pdf does already...
         # TODO - simplify build_extra_page_pdf to avoid this redundancy.
 
         with TemporaryDirectory() as tmpdirname:
