@@ -25,7 +25,8 @@ RUN apt-get -y update && \
         python3-setuptools \
         python3-wheel \
         python3-pytest \
-        python3-magic
+        python3-magic && \
+    apt-get -yq autoclean
 
 # Note that git is required for pip install of zxingcpp on ubuntu 20.04
 # - see https://github.com/zxing-cpp/zxing-cpp/issues/489
@@ -42,7 +43,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Because source includes the PyQt client, we need minimal deps for Qt.
 # For example, to install PyQt and run tests
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install libglib2.0-0 libgl1-mesa-glx
+    apt-get --no-install-recommends -y install libglib2.0-0 libgl1-mesa-glx && \
+    apt-get -yq autoclean
 
 COPY . /src
 WORKDIR /src
