@@ -21,7 +21,7 @@ class HueyTask(PolymorphicModel):
 
     It keeps track of a huey task's ID, the time created, and the
     status. Also, this is where we define the functions for handling
-    signals sent from the huey consumer.  """
+    signals sent from the huey consumer."""
 
     huey_id = models.UUIDField(null=True)
     status = models.CharField(max_length=20, default="todo")

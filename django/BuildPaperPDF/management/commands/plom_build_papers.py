@@ -121,7 +121,7 @@ class Command(BaseCommand):
             for (n, state) in stats.items():
                 rev_stat.setdefault(state, []).append(n)
             for (state, papers) in rev_stat.items():
-                self.stdout.write(f"\"{state}\": {format_int_list_with_runs(papers)}")
+                self.stdout.write(f'"{state}": {format_int_list_with_runs(papers)}')
         else:
             self.stdout.write("No queued tasks.")
 
@@ -170,5 +170,4 @@ class Command(BaseCommand):
         elif options["status"]:
             self.show_task_status()
         else:
-            self.print_help('manage.py', 'plom_build_papers')
-
+            self.print_help("manage.py", "plom_build_papers")
