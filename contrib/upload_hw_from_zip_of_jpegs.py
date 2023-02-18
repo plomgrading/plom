@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2021, 2023 Colin B. Macdonald
 
 """
 Crawl a directory of zip files and upload contents to Plom.
 
-Instructions: define PLOM_SERVER and PLOM_SCANNER_PASSWORD environment
+Instructions: define PLOM_SERVER and PLOM_SCAN_PASSWORD environment
 variables.  Run this script in directory of zip files that come from
 Canvas.
 
