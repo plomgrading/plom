@@ -159,7 +159,7 @@ class AddRubricBox(QDialog):
         self.reapable_CB = QComboBox()
         self.TE = QTextEdit()
         self.hiliter = SubstitutionsHighlighter(self.TE)
-        self.SB = SignedSB(maxMark)
+        self.relative_value_SB = SignedSB(maxMark)
         self.TEtag = QLineEdit()
         self.TEmeta = QTextEdit()
         # cannot edit these
@@ -204,9 +204,9 @@ class AddRubricBox(QDialog):
         lay.addWidget(b)
         self.typeRB_relative = b
         # lay.addWidget(self.DE)
-        lay.addWidget(self.SB)
-        self.SB.valueChanged.connect(b.click)
-        # self.SB.clicked.connect(b.click)
+        lay.addWidget(self.relative_value_SB)
+        self.relative_value_SB.valueChanged.connect(b.click)
+        # self.relative_value_SB.clicked.connect(b.click)
         lay.addItem(QSpacerItem(16, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
         lay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(lay)
@@ -222,7 +222,7 @@ class AddRubricBox(QDialog):
         _.valueChanged.connect(b.click)
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
-        self.rubric_value_SB = _
+        self.abs_value_SB = _
         _ = QLabel("out of")
         _.setToolTip(abs_tooltip)
         # _.clicked.connect(b.click)
@@ -233,7 +233,7 @@ class AddRubricBox(QDialog):
         _.valueChanged.connect(b.click)
         # _.clicked.connect(b.click)
         hlay.addWidget(_)
-        self.rubric_out_of_SB = _
+        self.abs_out_of_SB = _
         # TODO: remove this notice
         hlay.addWidget(QLabel("  (experimental!)"))
         if not self.use_experimental_features:
@@ -394,11 +394,11 @@ class AddRubricBox(QDialog):
                 if com["kind"] == "neutral":
                     self.typeRB_neutral.setChecked(True)
                 elif com["kind"] == "relative":
-                    self.SB.setValue(int(com["value"]))
+                    self.relative_value_SB.setValue(int(com["value"]))
                     self.typeRB_relative.setChecked(True)
                 elif com["kind"] == "absolute":
-                    self.rubric_value_SB.setValue(int(com["value"]))
-                    self.rubric_out_of_SB.setValue(int(com["out_of"]))
+                    self.abs_value_SB.setValue(int(com["value"]))
+                    self.abs_out_of_SB.setValue(int(com["out_of"]))
                     self.typeRB_absolute.setChecked(True)
                 else:
                     raise RuntimeError(f"unexpected kind in {com}")
@@ -675,13 +675,13 @@ class AddRubricBox(QDialog):
             display_delta = "."
         elif self.typeRB_relative.isChecked():
             kind = "relative"
-            value = self.SB.value()
+            value = self.relative_value_SB.value()
             out_of = 0
             display_delta = str(value) if value < 0 else f"+{value}"
         elif self.typeRB_absolute.isChecked():
             kind = "absolute"
-            value = self.rubric_value_SB.value()
-            out_of = self.rubric_out_of_SB.value()
+            value = self.abs_value_SB.value()
+            out_of = self.abs_out_of_SB.value()
             display_delta = f"{value} of {out_of}"
         else:
             raise RuntimeError("no radio was checked")

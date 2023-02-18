@@ -13,13 +13,19 @@ def test_AddRubricBox_add_new(qtbot):
     qtbot.mouseClick(d.TE, Qt.LeftButton)
     qtbot.keyClicks(d.TE, "new rubric")
     qtbot.mouseClick(d.typeRB_relative, Qt.LeftButton)
+    # don't care what the default is but start at 2...
+    d.relative_value_SB.setValue(2)
+    # then decrement x3, should skip zero and give -2
+    qtbot.keyClick(d.relative_value_SB, Qt.Key.Key_Down)
+    qtbot.keyClick(d.relative_value_SB, Qt.Key.Key_Down)
+    qtbot.keyClick(d.relative_value_SB, Qt.Key.Key_Down)
     # path = qtbot.screenshot(d)
     # assert False, path
     d.accept()
     out = d.gimme_rubric_data()
     assert out["kind"] == "relative"
-    assert out["display_delta"] == "+1"
-    assert out["value"] == 1
+    assert out["display_delta"] == "-2"
+    assert out["value"] == -2
     assert isinstance(out["value"], int)
     assert out["text"] == "new rubric"
 
