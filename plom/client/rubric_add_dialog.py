@@ -92,8 +92,8 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
                 # print(f"matched on {s} at {match.start()} to {match.end()}!")
                 frmt = QTextCharFormat()
                 frmt.setForeground(QColor("teal"))
-                # TODO: not sure why this doesn't work?x
-                frmt.setToolTip('v2 subs: "meh"')
+                # TODO: not sure why this doesn't work?
+                # frmt.setToolTip('v2 subs: "TODO"')
                 self.setFormat(match.start(), match.end() - match.start(), frmt)
 
     def setSubs(self, subs):
@@ -654,8 +654,8 @@ class AddRubricBox(QDialog):
         tags = self.TEtag.text().strip()
         if self.group_checkbox.isChecked():
             group = self.group_combobox.currentText()
-            # quote spacs
             if " " in group:
+                # quote spaces in future?
                 group = '"' + group + '"'
                 raise NotImplementedError("groups with spaces not implemented")
             if self.group_excl.isChecked():
