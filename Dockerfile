@@ -33,9 +33,6 @@ RUN apt-get -y update && \
 
 # file-magic: https://gitlab.com/plom/plom/-/issues/1570
 
-RUN pip install --no-cache-dir --upgrade pip setuptools
-# Note: newer setuptools to avoid some cairocffi issue
-
 COPY requirements.txt /src/
 WORKDIR /src
 RUN pip install --no-cache-dir -r requirements.txt
