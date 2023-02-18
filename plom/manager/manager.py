@@ -411,9 +411,12 @@ class Manager(QWidget):
             server_ver_str = self.msgr.get_server_version()
             self.ui.infoLabel.setText(server_ver_str)
             self.initial_login()
+            self._enable_downloader()
         else:
             if password:
                 self.login()
+
+    def _enable_downloader(self):
         self.downloader = getattr(self.Qapp, "downloader", None)
         # If Qapp doesn't have a Downloader, make a new one
         if self.downloader is None:
@@ -561,6 +564,7 @@ class Manager(QWidget):
             self.msgr = None  # reset to avoid Issue #1622
             return
         self.initial_login()
+        self._enable_downloader()
 
     def initial_login(self):
         self.ui.userGBox.setEnabled(False)
