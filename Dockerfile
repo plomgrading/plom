@@ -42,7 +42,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Because source includes the PyQt client, we need minimal deps for Qt.
 # For example, to install PyQt and run tests
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install libgl1-mesa-glx
+    apt-get --no-install-recommends -y install libglib2.0-0 libgl1-mesa-glx
 
 COPY . /src
 WORKDIR /src
