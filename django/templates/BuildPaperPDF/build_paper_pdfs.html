@@ -1,6 +1,11 @@
 {% extends 'base/base.html' %}
 {% load static %}
 <!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Copyright (C) 2022 Edith Coates -->
+<!-- Copyright (C) 2022 Brennen Chiu -->
+<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -53,14 +58,14 @@
                         <li>Delete the version with the mistakes.</li>
                         <li>Upload a new version.</li>
                         <li>Click on <b>Return to assessment preparation page.</b></li>
-                        <li>Go to <b>Build test paper PDFs</b>, then click on <b>Build papers</b>.</li>   
+                        <li>Go to <b>Build test paper PDFs</b>, then click on <b>Build papers</b>.</li>
                         <li>Click <b>Submit</b>.</li>
-                    </ol>  
+                    </ol>
                     {% comment %} <p><b>Note:</b> If you forget the steps, take a picture or copy the instructions.</p> {% endcomment %}
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <a class="btn btn-danger" hx-post="{% url 'delete_all_PDFs' %}" hx-target="#top" data-bs-dismiss="modal">Delete</a>  
+                    <a class="btn btn-danger" hx-post="{% url 'delete_all_PDFs' %}" hx-target="#top" data-bs-dismiss="modal">Delete</a>
                   </div>
                 </div>
             </div>
