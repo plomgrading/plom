@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 #
 # Copying and distribution of this file, with or without modification,
@@ -26,7 +26,7 @@ RUN apt-get -y update && \
         python3-wheel \
         python3-pytest \
         python3-magic
-	
+
 # Note that git is required for pip install of zxingcpp on ubuntu 20.04
 # - see https://github.com/zxing-cpp/zxing-cpp/issues/489
 
