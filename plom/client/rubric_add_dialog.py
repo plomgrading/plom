@@ -504,6 +504,7 @@ class AddRubricBox(QDialog):
         if not self.use_experimental_features:
             s = "[disabled, experimental] " + s
         b.setToolTip(s)
+        self.addParameterButton = b
         grid.addWidget(b, nr, 0)
         nr += 1
         return grid

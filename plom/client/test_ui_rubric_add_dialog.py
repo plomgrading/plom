@@ -7,7 +7,6 @@ from plom.client.rubric_list import AddRubricBox
 
 def test_AddRubricBox_add_new(qtbot):
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, [], None)
-    d.show()
     qtbot.addWidget(d)
     assert d.windowTitle().startswith("Add")
     qtbot.mouseClick(d.TE, Qt.LeftButton)
@@ -95,3 +94,34 @@ def test_AddRubricBox_havest(qtbot):
     d.accept()
     out = d.gimme_rubric_data()
     assert out["text"] == "BBB"
+
+
+def test_AddRubricBox_parameterize(qtbot):
+    for v in (1, 2):
+        d = AddRubricBox(None, "user", 10, 1, "Q1", v, 2, [], None, experimental=True)
+        qtbot.addWidget(d)
+        qtbot.mouseClick(d.TE, Qt.LeftButton)
+        qtbot.keyClicks(d.TE, "tex: foo  $x$")
+        # move back to the middle
+        qtbot.keyClick(d.TE, Qt.Key_Left)
+        qtbot.keyClick(d.TE, Qt.Key_Left)
+        qtbot.keyClick(d.TE, Qt.Key_Left)
+        qtbot.keyClick(d.TE, Qt.Key_Left)
+        # insert param1 in the middle
+        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+        qtbot.mouseClick(d.addParameterButton, Qt.LeftButton)
+        qtbot.wait(10)
+        # highlight the "x" text and replace it with param2
+        qtbot.keyClick(d.TE, Qt.Key_End)
+        qtbot.keyClick(d.TE, Qt.Key_Left)
+        qtbot.keyClick(d.TE, Qt.Key_Left, modifier=Qt.KeyboardModifier.ShiftModifier)
+        qtbot.mouseClick(d.addParameterButton, Qt.LeftButton)
+        qtbot.wait(10)
+        # path = qtbot.screenshot(d)
+        # assert False, path
+        d.accept()
+        out = d.gimme_rubric_data()
+        assert out["text"] == "tex: foo <param1> $<param2>$"
+        # the current version is replaced with the highlighted text
+        exp = ['x', ''] if v == 1 else ['', 'x']
+        assert out["parameters"] == [['<param1>', ['', '']], ['<param2>', exp]]
