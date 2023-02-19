@@ -16,9 +16,9 @@ def test_AddRubricBox_add_new(qtbot):
     # don't care what the default is but start at 2...
     d.relative_value_SB.setValue(2)
     # then decrement x3, should skip zero and give -2
-    qtbot.keyClick(d.relative_value_SB, Qt.Key.Key_Down)
-    qtbot.keyClick(d.relative_value_SB, Qt.Key.Key_Down)
-    qtbot.keyClick(d.relative_value_SB, Qt.Key.Key_Down)
+    qtbot.keyClick(d.relative_value_SB, Qt.Key_Down)
+    qtbot.keyClick(d.relative_value_SB, Qt.Key_Down)
+    qtbot.keyClick(d.relative_value_SB, Qt.Key_Down)
     # path = qtbot.screenshot(d)
     # assert False, path
     d.accept()
