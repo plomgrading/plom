@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020, 2023 Colin B. Macdonald
 
+from pytest import raises
+
 from PyQt5.QtCore import Qt
 from plom.client.rubric_list import AddRubricBox
 
@@ -70,6 +72,30 @@ def test_AddRubricBox_modify(qtbot):
     assert out["display_delta"] == "."
     assert out["value"] == 0
     assert out["text"] == "some text-more"
+
+
+def test_AddRubricBox_modify_invalid(qtbot):
+    rub = {
+        "text": "no id, lots of missing fields",
+    }
+    with raises(KeyError):
+        AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, [], rub)
+    rub = {
+        "id": 1234,
+        "kind": "man_unkind",
+        "display_delta": "+1",
+        "value": 1,
+        "out_of": 0,
+        "text": "some text",
+        "tags": "",
+        "meta": "",
+        "username": "user",
+        "question": 1,
+        "versions": [],
+        "parameters": [],
+    }
+    with raises(RuntimeError, match="unexpected kind"):
+        AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, [], rub)
 
 
 def test_AddRubricBox_absolute_rubrics(qtbot):
