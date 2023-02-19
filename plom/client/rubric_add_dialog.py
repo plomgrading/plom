@@ -181,8 +181,7 @@ class AddRubricBox(QDialog):
         )
         lay.addWidget(QLabel("Choose text from page:"))
         lay.addWidget(self.reapable_CB)
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.reapable_CB.setSizePolicy(sizePolicy)
+        reapable_layout = lay
         flay.addRow("", lay)
 
         frame = QFrame()
@@ -232,7 +231,10 @@ class AddRubricBox(QDialog):
         # TODO: remove this notice
         hlay.addWidget(QLabel("  (experimental!)"))
         if not self.use_experimental_features:
-            self.typeRB_absolute.setEnabled(False)
+            for i in range(hlay.count()):
+                w = hlay.itemAt(i).widget()
+                if w:
+                    w.setEnabled(False)
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(hlay)
         flay.addRow("Marks", frame)
@@ -372,7 +374,10 @@ class AddRubricBox(QDialog):
             self.reapable_CB.addItem("")
             self.reapable_CB.addItems(reapable)
         else:
-            self.reapable_CB.setEnabled(False)
+            for i in range(reapable_layout.count()):
+                w = reapable_layout.itemAt(i).widget()
+                if w:
+                    w.setEnabled(False)
         # Set up TE and CB so that when CB changed, text is updated
         self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
 
