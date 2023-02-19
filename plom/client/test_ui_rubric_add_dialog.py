@@ -39,7 +39,7 @@ def test_AddRubricBox_modify(qtbot):
         "text": "some text",
         "tags": "",
         "meta": "",
-        "username": "iser",
+        "username": "user",
         "question": 1,
         "versions": [],
         "parameters": [],
@@ -138,3 +138,88 @@ def test_AddRubricBox_specific_to_version(qtbot):
         # by default, you get the current version upon clicking the checkbox
         # but users can type into the lineedit as well
         assert out["versions"] == [v, 3]
+
+
+def test_AddRubricBox_add_to_group(qtbot):
+    groups = ("(a)", "(b")
+    for group in groups:
+        d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], None, groups=groups)
+        qtbot.addWidget(d)
+        qtbot.keyClicks(d.TE, "foo")
+        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+        qtbot.mouseClick(d.group_checkbox, Qt.LeftButton)
+        qtbot.keyClicks(d.group_combobox, group)
+        d.accept()
+        out = d.gimme_rubric_data()
+        assert out["tags"] == f"group:{group}"
+
+
+def test_AddRubricBox_add_to_group_exclusive(qtbot):
+    groups = ("(a)", "(b")
+    for group in groups:
+        d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], None, groups=groups)
+        qtbot.addWidget(d)
+        qtbot.keyClicks(d.TE, "foo")
+        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+        qtbot.mouseClick(d.group_checkbox, Qt.LeftButton)
+        qtbot.keyClicks(d.group_combobox, group)
+        qtbot.mouseClick(d.group_excl, Qt.LeftButton)
+        d.accept()
+        out = d.gimme_rubric_data()
+        assert out["tags"] == f"group:{group} exclusive:{group}"
+
+
+def test_AddRubricBox_change_group_make_exclusive(qtbot):
+    rub = {
+        "id": 1234,
+        "kind": "relative",
+        "display_delta": "+1",
+        "value": 1,
+        "out_of": 0,
+        "text": "some text",
+        "tags": "group:(b)",
+        "meta": "",
+        "username": "user",
+        "question": 1,
+        "versions": [],
+        "parameters": [],
+    }
+    groups = ("(a)", "(b")
+    for group in groups:
+        d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], rub, groups=groups)
+        qtbot.addWidget(d)
+        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+        qtbot.keyClicks(d.group_combobox, group)
+        qtbot.mouseClick(d.group_excl, Qt.LeftButton)
+        d.accept()
+        out = d.gimme_rubric_data()
+        assert out["tags"] == f"group:{group} exclusive:{group}"
+
+
+def test_AddRubricBox_change_group_remove_exclusive(qtbot):
+    rub = {
+        "id": 1234,
+        "kind": "relative",
+        "display_delta": "+1",
+        "value": 1,
+        "out_of": 0,
+        "text": "some text",
+        "tags": "group:(b) exclusive:(b)",
+        "meta": "",
+        "username": "user",
+        "question": 1,
+        "versions": [],
+        "parameters": [],
+    }
+    groups = ("(a)", "(b")
+    for group in groups:
+        d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], rub, groups=groups)
+        qtbot.addWidget(d)
+        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+        assert d.group_checkbox.isChecked()
+        assert d.group_excl.isChecked()
+        qtbot.keyClicks(d.group_combobox, group)
+        qtbot.mouseClick(d.group_excl, Qt.LeftButton)
+        d.accept()
+        out = d.gimme_rubric_data()
+        assert out["tags"] == f"group:{group}"
