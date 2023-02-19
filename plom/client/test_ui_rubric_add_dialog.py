@@ -63,7 +63,6 @@ def test_AddRubricBox_modify(qtbot):
     # TODO: so instead we send it space bar
     qtbot.keyClicks(d.typeRB_neutral, " ")
 
-    qtbot.mouseClick(d.TE, Qt.LeftButton)
     qtbot.keyClicks(d.TE, "-more")
     d.accept()
     out = d.gimme_rubric_data()
@@ -100,7 +99,6 @@ def test_AddRubricBox_parameterize(qtbot):
     for v in (1, 2):
         d = AddRubricBox(None, "user", 10, 1, "Q1", v, 2, [], None, experimental=True)
         qtbot.addWidget(d)
-        qtbot.mouseClick(d.TE, Qt.LeftButton)
         qtbot.keyClicks(d.TE, "tex: foo  $x$")
         # move back to the middle
         qtbot.keyClick(d.TE, Qt.Key_Left)
@@ -131,7 +129,6 @@ def test_AddRubricBox_specific_to_version(qtbot):
     for v in (1, 2):
         d = AddRubricBox(None, "user", 10, 1, "Q1", v, 3, [], None)
         qtbot.addWidget(d)
-        qtbot.mouseClick(d.TE, Qt.LeftButton)
         qtbot.keyClicks(d.TE, "foo")
         qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
         qtbot.mouseClick(d.version_specific_cb, Qt.LeftButton)
