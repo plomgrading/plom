@@ -422,6 +422,7 @@ class AddRubricBox(QDialog):
                 self.group_checkbox.setChecked(True)
                 (g,) = groups
                 self.group_combobox.setCurrentText(g)
+                assert self.group_combobox.currentIndex() != -1, "group not in list"
             else:
                 self.group_checkbox.setCheckState(Qt.PartiallyChecked)
                 self.group_combobox.setEnabled(False)
