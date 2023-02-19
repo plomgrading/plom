@@ -114,7 +114,7 @@ def test_AddRubricBox_parameterize(qtbot):
         # highlight the "x" text and replace it with param2
         qtbot.keyClick(d.TE, Qt.Key_End)
         qtbot.keyClick(d.TE, Qt.Key_Left)
-        qtbot.keyClick(d.TE, Qt.Key_Left, modifier=Qt.KeyboardModifier.ShiftModifier)
+        qtbot.keyClick(d.TE, Qt.Key_Left, modifier=Qt.ShiftModifier)
         qtbot.mouseClick(d.addParameterButton, Qt.LeftButton)
         qtbot.wait(10)
         # path = qtbot.screenshot(d)
