@@ -293,6 +293,7 @@ class AddRubricBox(QDialog):
         # b.setEditable(True)
         # b.setDuplicatesEnabled(False)
         b.addItems(groups)
+        b.setMinimumContentsLength(5)
         # changing the group ticks the group checkbox
         b.activated.connect(lambda: self.group_checkbox.setChecked(True))
         hlay.addWidget(b)
