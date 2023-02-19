@@ -6,7 +6,6 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 
-import logging
 import re
 
 from PyQt5.QtCore import Qt
@@ -35,9 +34,6 @@ from PyQt5.QtWidgets import (
 
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import InfoMsg, WarnMsg
-
-
-log = logging.getLogger("annotr")
 
 
 class SignedSB(QSpinBox):
