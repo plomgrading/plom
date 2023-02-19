@@ -97,6 +97,15 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         self.rehighlight()
 
 
+class WideTextEdit(QTextEdit):
+    """Just like QTextEdit but with hacked sizeHint() to be wider."""
+
+    def sizeHint(self):
+        sz = super().sizeHint()
+        sz.setWidth(sz.width() * 2)
+        return sz
+
+
 class AddRubricBox(QDialog):
     def __init__(
         self,
@@ -148,7 +157,7 @@ class AddRubricBox(QDialog):
             self.setWindowTitle("Add new rubric")
 
         self.reapable_CB = QComboBox()
-        self.TE = QTextEdit()
+        self.TE = WideTextEdit()
         self.hiliter = SubstitutionsHighlighter(self.TE)
         self.relative_value_SB = SignedSB(maxMark)
         self.TEtag = QLineEdit()
@@ -167,7 +176,6 @@ class AddRubricBox(QDialog):
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setVerticalStretch(1)
         self.TEmeta.setSizePolicy(sizePolicy)
-        # TODO: make everything wider!
 
         flay = QFormLayout()
         flay.addRow("Text", self.TE)
