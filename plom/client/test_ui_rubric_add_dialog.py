@@ -125,3 +125,19 @@ def test_AddRubricBox_parameterize(qtbot):
         # the current version is replaced with the highlighted text
         exp = ['x', ''] if v == 1 else ['', 'x']
         assert out["parameters"] == [['<param1>', ['', '']], ['<param2>', exp]]
+
+
+def test_AddRubricBox_specific_to_version(qtbot):
+    for v in (1, 2):
+        d = AddRubricBox(None, "user", 10, 1, "Q1", v, 3, [], None)
+        qtbot.addWidget(d)
+        qtbot.mouseClick(d.TE, Qt.LeftButton)
+        qtbot.keyClicks(d.TE, "foo")
+        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+        qtbot.mouseClick(d.version_specific_cb, Qt.LeftButton)
+        qtbot.keyClicks(d.version_specific_le, ", 3")
+        d.accept()
+        out = d.gimme_rubric_data()
+        # by default, you get the current version upon clicking the checkbox
+        # but users can type into the lineedit as well
+        assert out["versions"] == [v, 3]
