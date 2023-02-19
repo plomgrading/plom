@@ -140,6 +140,38 @@ def test_AddRubricBox_specific_to_version(qtbot):
         assert out["versions"] == [v, 3]
 
 
+def test_AddRubricBox_change_existing_versions(qtbot):
+    rub = {
+        "id": 1234,
+        "kind": "neutral",
+        "display_delta": ".",
+        "value": 0,
+        "text": "some text",
+        "tags": "",
+        "meta": "",
+        "username": "user",
+        "question": 1,
+        "versions": [1, 3],
+        "parameters": [],
+    }
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, [], rub)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    # unchecking
+    qtbot.mouseClick(d.version_specific_cb, Qt.LeftButton)
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["versions"] == []
+
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, [], rub)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.keyClicks(d.version_specific_le, ", 2")
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert set(out["versions"]) == set([1, 2, 3])
+
+
 def test_AddRubricBox_add_to_group(qtbot):
     groups = ("(a)", "(b")
     for group in groups:
