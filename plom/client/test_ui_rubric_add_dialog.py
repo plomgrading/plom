@@ -223,3 +223,80 @@ def test_AddRubricBox_change_group_remove_exclusive(qtbot):
         d.accept()
         out = d.gimme_rubric_data()
         assert out["tags"] == f"group:{group}"
+
+
+def test_AddRubricBox_group_too_complicated(qtbot):
+    rub = {
+        "id": 1234,
+        "kind": "relative",
+        "display_delta": "+1",
+        "value": 1,
+        "out_of": 0,
+        "text": "some text",
+        "meta": "",
+        "username": "user",
+        "question": 1,
+        "versions": [],
+        "parameters": [],
+    }
+    rub["tags"] = "group:(a) group:(b)"
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], rub)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    assert d.group_checkbox.isChecked()
+    assert not d.group_excl.isChecked()
+    assert not d.group_checkbox.isEnabled()
+    assert not d.group_excl.isEnabled()
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["tags"] == rub["tags"]
+
+    rub["tags"] = "group:(a) exclusive:(b)"
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], rub)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    assert d.group_checkbox.isChecked()
+    assert d.group_excl.isChecked()
+    assert not d.group_checkbox.isEnabled()
+    assert not d.group_excl.isEnabled()
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["tags"] == rub["tags"]
+
+    rub["tags"] = "group:(a) group:(b) exclusive:(b)"
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], rub)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    assert d.group_checkbox.isChecked()
+    assert d.group_excl.isChecked()
+    assert not d.group_checkbox.isEnabled()
+    assert not d.group_excl.isEnabled()
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["tags"] == rub["tags"]
+
+    rub["tags"] = "exclusive:(b)"
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], rub)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    assert not d.group_checkbox.isChecked()
+    assert d.group_excl.isChecked()
+    assert not d.group_checkbox.isEnabled()
+    assert not d.group_excl.isEnabled()
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["tags"] == rub["tags"]
+
+    rub["tags"] = "group:(a) exclusive:(a) exclusive:(b)"
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], rub, groups=["(a)"])
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    assert d.group_checkbox.isChecked()
+    assert d.group_excl.isChecked()
+    assert not d.group_checkbox.isEnabled()
+    assert not d.group_excl.isEnabled()
+    # path = qtbot.screenshot(d)
+    # assert False, path
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["tags"] == rub["tags"]

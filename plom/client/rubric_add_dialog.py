@@ -416,27 +416,37 @@ class AddRubricBox(QDialog):
             ]
             groups = [t[len("group:") :] for t in tags if t.startswith("group:")]
 
-            if not groups and not exclusives:
-                pass
+            if len(groups) == 0:
+                self.group_checkbox.setChecked(False)
             elif len(groups) == 1:
+                self.group_checkbox.setChecked(True)
                 (g,) = groups
                 self.group_combobox.setCurrentText(g)
-                self.group_checkbox.setChecked(True)
-                if not exclusives:
-                    self.group_excl.setChecked(False)
-                    tags.remove(f"group:{g}")
-                elif len(exclusives) == 1 and exclusives[0] == g:
-                    self.group_excl.setChecked(True)
-                    tags.remove(f"exclusive:{exclusives[0]}")
-                    tags.remove(f"group:{g}")
-                else:
-                    # not UI representable: disable UI controls
-                    self.group_checkbox.setEnabled(False)
-                    self.group_excl.setEnabled(False)
-                    self.TEtag.setEnabled(True)
+            else:
+                self.group_checkbox.setCheckState(Qt.PartiallyChecked)
+                self.group_combobox.setEnabled(False)
+
+            if len(exclusives) == 0:
+                self.group_excl.setChecked(False)
+            elif len(exclusives) == 1:
+                self.group_excl.setChecked(True)
+            else:
+                self.group_excl.setCheckState(Qt.PartiallyChecked)
+
+            if not groups and not exclusives:
+                pass
+            elif len(groups) == 1 and not exclusives:
+                (g,) = groups
+                tags.remove(f"group:{g}")
+            elif len(groups) == 1 and groups == exclusives:
+                (g,) = groups
+                (excl,) = exclusives
+                tags.remove(f"exclusive:{excl}")
+                tags.remove(f"group:{g}")
             else:
                 # not UI representable: disable UI controls
                 self.group_checkbox.setEnabled(False)
+                self.group_combobox.setEnabled(False)
                 self.group_excl.setEnabled(False)
                 self.TEtag.setEnabled(True)
             # repack the tags
@@ -646,11 +656,15 @@ class AddRubricBox(QDialog):
             return
         self.accept()
 
-    def gimme_rubric_data(self):
-        txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
+    def _gimme_rubric_tags(self):
         tags = self.TEtag.text().strip()
+        if not self.group_checkbox.isEnabled():
+            # non-handled cases (such as multiple groups) disable these widgets
+            return tags
         if self.group_checkbox.isChecked():
             group = self.group_combobox.currentText()
+            if not group:
+                return tags
             if " " in group:
                 # quote spaces in future?
                 group = '"' + group + '"'
@@ -663,6 +677,11 @@ class AddRubricBox(QDialog):
                 tags = tag + " " + tags
             else:
                 tags = tag
+        return tags
+
+    def gimme_rubric_data(self):
+        txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
+        tags = self._gimme_rubric_tags()
 
         meta = self.TEmeta.toPlainText().strip()
         if self.typeRB_neutral.isChecked():
