@@ -177,7 +177,7 @@ def test_AddRubricBox_group_without_group_list(qtbot):
         "value": 1,
         "out_of": 0,
         "text": "some text",
-        "tags": "group:(b)",
+        "tags": "group:(bar)",
         "meta": "",
         "username": "user",
         "question": 1,
@@ -187,11 +187,10 @@ def test_AddRubricBox_group_without_group_list(qtbot):
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, [], rub)
     qtbot.addWidget(d)
     qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
-    qtbot.keyClicks(d.group_combobox, "(b)")
     qtbot.mouseClick(d.group_excl, Qt.LeftButton)
     d.accept()
     out = d.gimme_rubric_data()
-    assert out["tags"] == "group:(b) exclusive:(b)"
+    assert out["tags"] == "group:(bar) exclusive:(bar)"
 
 
 def test_AddRubricBox_change_group_make_exclusive(qtbot):

@@ -131,8 +131,8 @@ class AddRubricBox(QDialog):
 
         Keyword Args:
             annotator_size (QSize/None): size of the parent annotator
-            groups (list): existing group names that the rubric could be
-                added to.
+            groups (list): optional list of existing/recommended group
+                names that the rubric could be added to.
             experimental (bool): whether to enable experimental or advanced
                 features.
         """
@@ -411,37 +411,38 @@ class AddRubricBox(QDialog):
                 params = com["parameters"]
             tags = com.get("tags", "").split()
             # TODO: Python >= 3.9: t.removeprefix("exclusive:")
-            exclusives = [
+            exclusive_tags = [
                 t[len("exclusive:") :] for t in tags if t.startswith("exclusive:")
             ]
-            groups = [t[len("group:") :] for t in tags if t.startswith("group:")]
+            group_tags = [t[len("group:") :] for t in tags if t.startswith("group:")]
 
-            if len(groups) == 0:
+            if len(group_tags) == 0:
                 self.group_checkbox.setChecked(False)
-            elif len(groups) == 1:
+            elif len(group_tags) == 1:
                 self.group_checkbox.setChecked(True)
-                (g,) = groups
+                (g,) = group_tags
+                if g not in groups:
+                    self.group_combobox.insertItem(-1, g)
                 self.group_combobox.setCurrentText(g)
-                assert self.group_combobox.currentIndex() != -1, "group not in list"
             else:
                 self.group_checkbox.setCheckState(Qt.PartiallyChecked)
                 self.group_combobox.setEnabled(False)
 
-            if len(exclusives) == 0:
+            if len(exclusive_tags) == 0:
                 self.group_excl.setChecked(False)
-            elif len(exclusives) == 1:
+            elif len(exclusive_tags) == 1:
                 self.group_excl.setChecked(True)
             else:
                 self.group_excl.setCheckState(Qt.PartiallyChecked)
 
-            if not groups and not exclusives:
+            if not group_tags and not exclusive_tags:
                 pass
-            elif len(groups) == 1 and not exclusives:
-                (g,) = groups
+            elif len(group_tags) == 1 and not exclusive_tags:
+                (g,) = group_tags
                 tags.remove(f"group:{g}")
-            elif len(groups) == 1 and groups == exclusives:
-                (g,) = groups
-                (excl,) = exclusives
+            elif len(group_tags) == 1 and group_tags == exclusive_tags:
+                (g,) = group_tags
+                (excl,) = exclusive_tags
                 tags.remove(f"exclusive:{excl}")
                 tags.remove(f"group:{g}")
             else:
