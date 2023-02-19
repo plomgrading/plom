@@ -72,7 +72,38 @@ def test_AddRubricBox_modify(qtbot):
     assert out["text"] == "some text-more"
 
 
-def test_AddRubricBox_havest(qtbot):
+def test_AddRubricBox_absolute_rubrics(qtbot):
+    rub = {
+        "id": 1234,
+        "kind": "absolute",
+        "display_delta": "1 of 3",
+        "value": 1,
+        "out_of": 3,
+        "text": "some text",
+        "tags": "",
+        "meta": "",
+        "username": "user",
+        "question": 1,
+        "versions": [],
+        "parameters": [],
+    }
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, [], rub, experimental=True)
+    qtbot.addWidget(d)
+    assert not d.typeRB_neutral.isChecked()
+    assert not d.typeRB_relative.isChecked()
+    assert d.typeRB_absolute.isChecked()
+    qtbot.keyClick(d.abs_value_SB, Qt.Key_Up)
+    qtbot.keyClick(d.abs_out_of_SB, Qt.Key_Up)
+    qtbot.keyClick(d.abs_out_of_SB, Qt.Key_Up)
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["kind"] == "absolute"
+    assert out["display_delta"] == "2 of 5"
+    assert out["value"] == 2
+    assert out["out_of"] == 5
+
+
+def test_AddRubricBox_harvest(qtbot):
     rub = {
         "id": 1234,
         "kind": "relative",
