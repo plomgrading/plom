@@ -107,11 +107,11 @@ class AddRubricBox(QDialog):
         question_label,
         version,
         maxver,
-        reapable,
         com=None,
         *,
         annotator_size=None,
         groups=[],
+        reapable=[],
         experimental=False,
     ):
         """Initialize a new dialog to edit/create a comment.
@@ -124,8 +124,6 @@ class AddRubricBox(QDialog):
             question_label (str)
             version (int)
             maxver (int)
-            reapable (list): these are used to "harvest" plain 'ol text
-                annotations and morph them into comments.
             com (dict/None): if None, we're creating a new rubric.
                 Otherwise, this has the current comment data.
 
@@ -133,6 +131,8 @@ class AddRubricBox(QDialog):
             annotator_size (QSize/None): size of the parent annotator
             groups (list): optional list of existing/recommended group
                 names that the rubric could be added to.
+            reapable (list): these are used to "harvest" plain 'ol text
+                annotations and morph them into comments.
             experimental (bool): whether to enable experimental or advanced
                 features.
         """
