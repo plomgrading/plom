@@ -166,12 +166,8 @@ class AddRubricBox(QDialog):
         self.label_rubric_id = QLabel("Will be auto-assigned")
         self.Luser = QLabel()
 
-        sizePolicy = QSizePolicy(
-            QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
-        )
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
         sizePolicy.setVerticalStretch(3)
-
-        #
         self.TE.setSizePolicy(sizePolicy)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setVerticalStretch(1)
