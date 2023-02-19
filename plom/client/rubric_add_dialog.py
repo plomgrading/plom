@@ -110,7 +110,6 @@ class AddRubricBox(QDialog):
         reapable,
         com=None,
         *,
-        annotator_size=None,
         groups=[],
         experimental=False,
     ):
@@ -147,10 +146,6 @@ class AddRubricBox(QDialog):
             self.setWindowTitle("Modify rubric")
         else:
             self.setWindowTitle("Add new rubric")
-
-        # Set self to be 1/2 the size of the annotator
-        if annotator_size:
-            self.resize(annotator_size / 2)
 
         self.reapable_CB = QComboBox()
         self.TE = QTextEdit()
