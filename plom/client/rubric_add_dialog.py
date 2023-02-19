@@ -278,16 +278,11 @@ class AddRubricBox(QDialog):
         if maxver > 1:
             # TODO: coming soon notice and setEnabled(False) below
             s = "<p>By default, rubrics are shared between versions of a question.<br />"
-            s += " Experimental feature: You can also parameterize this rubric by"
-            s += " making version-specific substitutions.</p>"
+            s += "You can also parameterize using version-specific substitutions."
+            s += " &nbsp;(Experimental!)</p>"
         else:
             s = "<p>By default, rubrics are shared between versions of a question.</p>"
-        label = QLabel(s)
-        label.setWordWrap(True)
-        # label.setAlignment(Qt.AlignTop)
-        # Note: I often have problems with wordwrapped QLabels taking
-        # too much space, seems putting inside a QFrame fixed that!
-        vlay.addWidget(label)
+        vlay.addWidget(QLabel(s))
         self._param_grid = QGridLayout()  # placeholder
         vlay.addLayout(self._param_grid)
         vlay.addWidget(QLabel("<hr>"))
