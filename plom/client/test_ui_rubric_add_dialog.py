@@ -186,6 +186,23 @@ def test_AddRubricBox_parameterize(qtbot):
         assert out["parameters"] == [['<param1>', ['', '']], ['<param2>', exp]]
 
 
+def test_AddRubricBox_modify_parameterized(qtbot):
+    rub = {
+        "id": 1234,
+        "kind": "neutral",
+        "text": "some text",
+        "parameters": [["{param1}", ["x", "y"]], ["{param2}", ["a", "b"]]],
+    }
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub, experimental=True)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.addParameterButton, Qt.LeftButton)
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["text"] == rub["text"] + "{param3}"
+    assert out["parameters"] == rub["parameters"] + [["{param3}", ["", ""]]]
+
+
 def test_AddRubricBox_specific_to_version(qtbot):
     for v in (1, 2):
         d = AddRubricBox(None, "user", 10, 1, "Q1", v, 3, None)
