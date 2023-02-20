@@ -142,18 +142,18 @@ def test_AddRubricBox_optional_meta_field(qtbot):
 
 
 def test_AddRubricBox_optional_username(qtbot):
-    d = AddRubricBox(None, "userA", 10, 1, "Q1", 1, 2, None)
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, None)
     qtbot.addWidget(d)
     d.accept()
     out = d.gimme_rubric_data()
-    assert out["username"] == "userA"
+    assert out["username"] == "user"
 
-    # still owned by A if B modifies it
-    d = AddRubricBox(None, "userB", 10, 1, "Q1", 1, 2, out)
+    # still owned by original user if new users modifies it
+    d = AddRubricBox(None, "another_user", 10, 1, "Q1", 1, 2, out)
     qtbot.addWidget(d)
     d.accept()
     out = d.gimme_rubric_data()
-    assert out["username"] == "userA"
+    assert out["username"] == "user"
 
 
 def test_AddRubricBox_parameterize(qtbot):
