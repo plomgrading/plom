@@ -37,14 +37,7 @@ def test_AddRubricBox_modify(qtbot):
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
-        "out_of": 0,
         "text": "some text",
-        "tags": "",
-        "meta": "",
-        "username": "user",
-        "question": 1,
-        "versions": [],
-        "parameters": [],
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub)
     qtbot.addWidget(d)
@@ -87,12 +80,6 @@ def test_AddRubricBox_modify_invalid(qtbot):
         "value": 1,
         "out_of": 0,
         "text": "some text",
-        "tags": "",
-        "meta": "",
-        "username": "user",
-        "question": 1,
-        "versions": [],
-        "parameters": [],
     }
     with raises(RuntimeError, match="unexpected kind"):
         AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub)
@@ -106,12 +93,6 @@ def test_AddRubricBox_absolute_rubrics(qtbot):
         "value": 1,
         "out_of": 3,
         "text": "some text",
-        "tags": "",
-        "meta": "",
-        "username": "user",
-        "question": 1,
-        "versions": [],
-        "parameters": [],
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub, experimental=True)
     qtbot.addWidget(d)
@@ -135,14 +116,7 @@ def test_AddRubricBox_harvest(qtbot):
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
-        "out_of": 0,
         "text": "will be replaced",
-        "tags": "",
-        "meta": "",
-        "username": "user",
-        "question": 1,
-        "versions": [],
-        "parameters": [],
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub, reapable=["AAA", "BBB"])
     qtbot.addWidget(d)
@@ -150,6 +124,36 @@ def test_AddRubricBox_harvest(qtbot):
     d.accept()
     out = d.gimme_rubric_data()
     assert out["text"] == "BBB"
+
+
+def test_AddRubricBox_optional_meta_field(qtbot):
+    rub = {
+        "id": 1234,
+        "kind": "neutral",
+        "text": "some text",
+        "meta": "meta",
+    }
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub)
+    qtbot.addWidget(d)
+    qtbot.keyClicks(d.TEmeta, " very meta")
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["meta"] == "meta very meta"
+
+
+def test_AddRubricBox_optional_username(qtbot):
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, None)
+    qtbot.addWidget(d)
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["username"] == "user"
+
+    # still owned by original user if new users modifies it
+    d = AddRubricBox(None, "another_user", 10, 1, "Q1", 1, 2, out)
+    qtbot.addWidget(d)
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["username"] == "user"
 
 
 def test_AddRubricBox_parameterize(qtbot):
@@ -178,8 +182,25 @@ def test_AddRubricBox_parameterize(qtbot):
         out = d.gimme_rubric_data()
         assert out["text"] == "tex: foo <param1> $<param2>$"
         # the current version is replaced with the highlighted text
-        exp = ['x', ''] if v == 1 else ['', 'x']
-        assert out["parameters"] == [['<param1>', ['', '']], ['<param2>', exp]]
+        exp = ["x", ""] if v == 1 else ["", "x"]
+        assert out["parameters"] == [["<param1>", ["", ""]], ["<param2>", exp]]
+
+
+def test_AddRubricBox_modify_parameterized(qtbot):
+    rub = {
+        "id": 1234,
+        "kind": "neutral",
+        "text": "some text",
+        "parameters": [["{param1}", ["x", "y"]], ["{param2}", ["a", "b"]]],
+    }
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub, experimental=True)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.addParameterButton, Qt.LeftButton)
+    d.accept()
+    out = d.gimme_rubric_data()
+    assert out["text"] == rub["text"] + "{param3}"
+    assert out["parameters"] == rub["parameters"] + [["{param3}", ["", ""]]]
 
 
 def test_AddRubricBox_specific_to_version(qtbot):
@@ -201,15 +222,8 @@ def test_AddRubricBox_change_existing_versions(qtbot):
     rub = {
         "id": 1234,
         "kind": "neutral",
-        "display_delta": ".",
-        "value": 0,
         "text": "some text",
-        "tags": "",
-        "meta": "",
-        "username": "user",
-        "question": 1,
         "versions": [1, 3],
-        "parameters": [],
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub)
     qtbot.addWidget(d)
@@ -264,14 +278,8 @@ def test_AddRubricBox_group_without_group_list(qtbot):
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
-        "out_of": 0,
         "text": "some text",
         "tags": "unrelated_tag group:(bar)",
-        "meta": "",
-        "username": "user",
-        "question": 1,
-        "versions": [],
-        "parameters": [],
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub)
     qtbot.addWidget(d)
@@ -289,14 +297,8 @@ def test_AddRubricBox_change_group_make_exclusive(qtbot):
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
-        "out_of": 0,
         "text": "some text",
         "tags": "group:(b)",
-        "meta": "",
-        "username": "user",
-        "question": 1,
-        "versions": [],
-        "parameters": [],
     }
     groups = ("(a)", "(b")
     for group in groups:
@@ -316,14 +318,8 @@ def test_AddRubricBox_change_group_remove_exclusive(qtbot):
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
-        "out_of": 0,
         "text": "some text",
         "tags": "group:(b) exclusive:(b)",
-        "meta": "",
-        "username": "user",
-        "question": 1,
-        "versions": [],
-        "parameters": [],
     }
     groups = ("(a)", "(b")
     for group in groups:
@@ -345,13 +341,7 @@ def test_AddRubricBox_group_too_complicated(qtbot):
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
-        "out_of": 0,
         "text": "some text",
-        "meta": "",
-        "username": "user",
-        "question": 1,
-        "versions": [],
-        "parameters": [],
     }
     rub["tags"] = "group:(a) group:(b)"
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub)

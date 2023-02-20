@@ -383,9 +383,7 @@ class AddRubricBox(QDialog):
             if com["text"]:
                 self.TE.clear()
                 self.TE.insertPlainText(com["text"])
-            if com["meta"]:
-                self.TEmeta.clear()
-                self.TEmeta.insertPlainText(com["meta"])
+            self.TEmeta.insertPlainText(com.get("meta", ""))
             if com["kind"]:
                 if com["kind"] == "neutral":
                     self.typeRB_neutral.setChecked(True)
@@ -400,15 +398,13 @@ class AddRubricBox(QDialog):
                     raise RuntimeError(f"unexpected kind in {com}")
             if com["id"]:
                 self.label_rubric_id.setText(str(com["id"]))
-            if com["username"]:
-                self.Luser.setText(com["username"])
-            if com["versions"]:
+            self.Luser.setText(com.get("username", ""))
+            if com.get("versions"):
                 self.version_specific_cb.setChecked(True)
                 self.version_specific_le.setText(
                     ", ".join(str(x) for x in com["versions"])
                 )
-            if com["parameters"]:
-                params = com["parameters"]
+            params = com.get("parameters", [])
             tags = com.get("tags", "").split()
             # TODO: Python >= 3.9: t.removeprefix("exclusive:")
             exclusive_tags = [
