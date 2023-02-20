@@ -667,19 +667,21 @@ class AddRubricBox(QDialog):
             pix = QPixmap()
             pix.loadFromData(res.read_bytes())
             pix = pix.scaledToHeight(150, Qt.SmoothTransformation)
-            msg = SimpleQuestion(
-                self,
-                "<p>It looks like you might be writing some mathematics!</p",
-                """
-                   <p>I noticed more than one dollar sign in your text:
-                   do you want to render this rubric with LaTeX?</p>
-                   <p>(You can avoid seeing this dialog by prepending your
-                   rubric with &ldquo;<tt>tex:</tt>&rdquo;)</p>
-                """,
-            )
-            msg.setIconPixmap(pix)
-            if msg.exec() == QMessageBox.Yes:
-                self.TE.setText("tex: " + self.TE.toPlainText())
+            if (
+                SimpleQuestion.ask(
+                    self,
+                    "<p>It looks like you might be writing some mathematics!</p",
+                    """
+                        <p>I noticed more than one dollar sign in your text:
+                        do you want to render this rubric with LaTeX?</p>
+                        <p>(You can avoid seeing this dialog by prepending your
+                        rubric with &ldquo;<tt>tex:</tt>&rdquo;)</p>
+                    """,
+                    icon_pixmap=pix,
+                )
+                == QMessageBox.Yes
+            ):
+                self.TE.setText("tex: " + txt)
         self.accept()
 
     def _gimme_rubric_tags(self):

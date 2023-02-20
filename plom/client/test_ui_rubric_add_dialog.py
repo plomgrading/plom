@@ -4,7 +4,10 @@
 from pytest import raises
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMessageBox
+
 from plom.client.rubric_list import AddRubricBox
+from plom.client.useful_classes import SimpleQuestion
 
 
 def test_AddRubricBox_add_new(qtbot):
@@ -404,3 +407,27 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     d.accept()
     out = d.gimme_rubric_data()
     assert out["tags"] == rub["tags"]
+
+
+def test_AddRubricBox_group_too_complicated(qtbot, monkeypatch):
+    monkeypatch.setattr(SimpleQuestion, "ask", lambda *args, **kwargs: QMessageBox.Yes)
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.TE, Qt.LeftButton)
+    txt = "$y = mx + b$"
+    qtbot.keyClicks(d.TE, txt)
+    # TODO see Issue #2552: should it be just d.accept()?
+    d.validate_and_accept()
+    out = d.gimme_rubric_data()
+    assert out["text"] == "tex: " + txt
+
+    monkeypatch.setattr(SimpleQuestion, "ask", lambda *args, **kwargs: QMessageBox.No)
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    qtbot.mouseClick(d.TE, Qt.LeftButton)
+    txt = "bribe insufficient, send more $$"
+    qtbot.keyClicks(d.TE, txt)
+    # TODO see Issue #2552: should it be just d.accept()?
+    d.validate_and_accept()
+    out = d.gimme_rubric_data()
+    assert out["text"] == txt

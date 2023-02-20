@@ -86,16 +86,22 @@ class InfoMsg(ErrorMsg):
 class SimpleQuestion(QMessageBox):
     """A simple message pop-up with yes/no buttons and question icon."""
 
-    def __init__(self, parent, txt, question=None, details=None):
+    def __init__(self, parent, txt, question=None, details=None, icon_pixmap=None):
         super().__init__(parent)
         self.setText(txt)
         if details:
             self.setDetailedText(details)
         if question:
             self.setInformativeText(question)
+        if icon_pixmap:
+            self.setIconPixmap(icon_pixmap)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
         self.setIcon(QMessageBox.Question)
+
+    @classmethod
+    def ask(cls, *args, **kwargs):
+        return cls(*args, **kwargs).exec()
 
 
 class WarningQuestion(SimpleQuestion):
