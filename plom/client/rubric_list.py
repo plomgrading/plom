@@ -1493,7 +1493,6 @@ class RubricWidget(QWidget):
             self.max_version,
             reapable,
             com,
-            annotator_size=self._parent.size(),
             groups=self.get_group_names(),
             experimental=self._parent.is_experimental(),
         )

@@ -97,6 +97,15 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         self.rehighlight()
 
 
+class WideTextEdit(QTextEdit):
+    """Just like QTextEdit but with hacked sizeHint() to be wider."""
+
+    def sizeHint(self):
+        sz = super().sizeHint()
+        sz.setWidth(sz.width() * 2)
+        return sz
+
+
 class AddRubricBox(QDialog):
     def __init__(
         self,
@@ -110,7 +119,6 @@ class AddRubricBox(QDialog):
         reapable,
         com=None,
         *,
-        annotator_size=None,
         groups=[],
         experimental=False,
     ):
@@ -148,12 +156,8 @@ class AddRubricBox(QDialog):
         else:
             self.setWindowTitle("Add new rubric")
 
-        # Set self to be 1/2 the size of the annotator
-        if annotator_size:
-            self.resize(annotator_size / 2)
-
         self.reapable_CB = QComboBox()
-        self.TE = QTextEdit()
+        self.TE = WideTextEdit()
         self.hiliter = SubstitutionsHighlighter(self.TE)
         self.relative_value_SB = SignedSB(maxMark)
         self.TEtag = QLineEdit()
@@ -162,17 +166,12 @@ class AddRubricBox(QDialog):
         self.label_rubric_id = QLabel("Will be auto-assigned")
         self.Luser = QLabel()
 
-        sizePolicy = QSizePolicy(
-            QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
-        )
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
         sizePolicy.setVerticalStretch(3)
-
-        #
         self.TE.setSizePolicy(sizePolicy)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setVerticalStretch(1)
         self.TEmeta.setSizePolicy(sizePolicy)
-        # TODO: make everything wider!
 
         flay = QFormLayout()
         flay.addRow("Text", self.TE)
@@ -182,8 +181,7 @@ class AddRubricBox(QDialog):
         )
         lay.addWidget(QLabel("Choose text from page:"))
         lay.addWidget(self.reapable_CB)
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.reapable_CB.setSizePolicy(sizePolicy)
+        reapable_layout = lay
         flay.addRow("", lay)
 
         frame = QFrame()
@@ -233,7 +231,10 @@ class AddRubricBox(QDialog):
         # TODO: remove this notice
         hlay.addWidget(QLabel("  (experimental!)"))
         if not self.use_experimental_features:
-            self.typeRB_absolute.setEnabled(False)
+            for i in range(hlay.count()):
+                w = hlay.itemAt(i).widget()
+                if w:
+                    w.setEnabled(False)
         hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         vlay.addLayout(hlay)
         flay.addRow("Marks", frame)
@@ -277,16 +278,11 @@ class AddRubricBox(QDialog):
         if maxver > 1:
             # TODO: coming soon notice and setEnabled(False) below
             s = "<p>By default, rubrics are shared between versions of a question.<br />"
-            s += " Experimental feature: You can also parameterize this rubric by"
-            s += " making version-specific substitutions.</p>"
+            s += "You can also parameterize using version-specific substitutions."
+            s += " &nbsp;(Experimental!)</p>"
         else:
             s = "<p>By default, rubrics are shared between versions of a question.</p>"
-        label = QLabel(s)
-        label.setWordWrap(True)
-        # label.setAlignment(Qt.AlignTop)
-        # Note: I often have problems with wordwrapped QLabels taking
-        # too much space, seems putting inside a QFrame fixed that!
-        vlay.addWidget(label)
+        vlay.addWidget(QLabel(s))
         self._param_grid = QGridLayout()  # placeholder
         vlay.addLayout(self._param_grid)
         vlay.addWidget(QLabel("<hr>"))
@@ -297,6 +293,7 @@ class AddRubricBox(QDialog):
         # b.setEditable(True)
         # b.setDuplicatesEnabled(False)
         b.addItems(groups)
+        b.setMinimumContentsLength(5)
         # changing the group ticks the group checkbox
         b.activated.connect(lambda: self.group_checkbox.setChecked(True))
         hlay.addWidget(b)
@@ -373,7 +370,10 @@ class AddRubricBox(QDialog):
             self.reapable_CB.addItem("")
             self.reapable_CB.addItems(reapable)
         else:
-            self.reapable_CB.setEnabled(False)
+            for i in range(reapable_layout.count()):
+                w = reapable_layout.itemAt(i).widget()
+                if w:
+                    w.setEnabled(False)
         # Set up TE and CB so that when CB changed, text is updated
         self.reapable_CB.currentTextChanged.connect(self.changedReapableCB)
 
