@@ -10,7 +10,7 @@ requires = ["setuptools", "wheel"]
 line-length = 88
 target-version = ['py37']
 # this regexp is the default with the addition of "ui_*.py"
-exclude = '/(\.eggs|\.git|\.hg|\.mypy _cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/|ui_.+\.py'
+exclude = '/(\.eggs|\.git|\.hg|\.mypy _cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/|/ui_.+\.py'
 
 [tool.pylint.main]
 extension-pkg-allow-list = ["PyQt5", "cv2", "zxingcpp"]

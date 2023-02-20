@@ -182,8 +182,8 @@ def test_AddRubricBox_parameterize(qtbot):
         out = d.gimme_rubric_data()
         assert out["text"] == "tex: foo <param1> $<param2>$"
         # the current version is replaced with the highlighted text
-        exp = ['x', ''] if v == 1 else ['', 'x']
-        assert out["parameters"] == [['<param1>', ['', '']], ['<param2>', exp]]
+        exp = ["x", ""] if v == 1 else ["", "x"]
+        assert out["parameters"] == [["<param1>", ["", ""]], ["<param2>", exp]]
 
 
 def test_AddRubricBox_modify_parameterized(qtbot):
