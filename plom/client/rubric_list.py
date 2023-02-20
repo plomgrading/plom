@@ -1491,9 +1491,9 @@ class RubricWidget(QWidget):
             self.question_label,
             self.version,
             self.max_version,
-            reapable,
             com,
             groups=self.get_group_names(),
+            reapable=reapable,
             experimental=self._parent.is_experimental(),
         )
         if arb.exec() != QDialog.Accepted:  # ARB does some simple validation

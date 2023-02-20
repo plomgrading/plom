@@ -116,10 +116,10 @@ class AddRubricBox(QDialog):
         question_label,
         version,
         maxver,
-        reapable,
         com=None,
         *,
         groups=[],
+        reapable=[],
         experimental=False,
     ):
         """Initialize a new dialog to edit/create a comment.
@@ -132,15 +132,15 @@ class AddRubricBox(QDialog):
             question_label (str)
             version (int)
             maxver (int)
-            reapable (list): these are used to "harvest" plain 'ol text
-                annotations and morph them into comments.
             com (dict/None): if None, we're creating a new rubric.
                 Otherwise, this has the current comment data.
 
         Keyword Args:
             annotator_size (QSize/None): size of the parent annotator
-            groups (list): existing group names that the rubric could be
-                added to.
+            groups (list): optional list of existing/recommended group
+                names that the rubric could be added to.
+            reapable (list): these are used to "harvest" plain 'ol text
+                annotations and morph them into comments.
             experimental (bool): whether to enable experimental or advanced
                 features.
         """
@@ -383,9 +383,7 @@ class AddRubricBox(QDialog):
             if com["text"]:
                 self.TE.clear()
                 self.TE.insertPlainText(com["text"])
-            if com["meta"]:
-                self.TEmeta.clear()
-                self.TEmeta.insertPlainText(com["meta"])
+            self.TEmeta.insertPlainText(com.get("meta", ""))
             if com["kind"]:
                 if com["kind"] == "neutral":
                     self.typeRB_neutral.setChecked(True)
@@ -400,43 +398,53 @@ class AddRubricBox(QDialog):
                     raise RuntimeError(f"unexpected kind in {com}")
             if com["id"]:
                 self.label_rubric_id.setText(str(com["id"]))
-            if com["username"]:
-                self.Luser.setText(com["username"])
-            if com["versions"]:
+            self.Luser.setText(com.get("username", ""))
+            if com.get("versions"):
                 self.version_specific_cb.setChecked(True)
                 self.version_specific_le.setText(
                     ", ".join(str(x) for x in com["versions"])
                 )
-            if com["parameters"]:
-                params = com["parameters"]
+            params = com.get("parameters", [])
             tags = com.get("tags", "").split()
             # TODO: Python >= 3.9: t.removeprefix("exclusive:")
-            exclusives = [
+            exclusive_tags = [
                 t[len("exclusive:") :] for t in tags if t.startswith("exclusive:")
             ]
-            groups = [t[len("group:") :] for t in tags if t.startswith("group:")]
+            group_tags = [t[len("group:") :] for t in tags if t.startswith("group:")]
 
-            if not groups and not exclusives:
-                pass
-            elif len(groups) == 1:
-                (g,) = groups
-                self.group_combobox.setCurrentText(g)
+            if len(group_tags) == 0:
+                self.group_checkbox.setChecked(False)
+            elif len(group_tags) == 1:
                 self.group_checkbox.setChecked(True)
-                if not exclusives:
-                    self.group_excl.setChecked(False)
-                    tags.remove(f"group:{g}")
-                elif len(exclusives) == 1 and exclusives[0] == g:
-                    self.group_excl.setChecked(True)
-                    tags.remove(f"exclusive:{exclusives[0]}")
-                    tags.remove(f"group:{g}")
-                else:
-                    # not UI representable: disable UI controls
-                    self.group_checkbox.setEnabled(False)
-                    self.group_excl.setEnabled(False)
-                    self.TEtag.setEnabled(True)
+                (g,) = group_tags
+                if g not in groups:
+                    self.group_combobox.insertItem(-1, g)
+                self.group_combobox.setCurrentText(g)
+            else:
+                self.group_checkbox.setCheckState(Qt.PartiallyChecked)
+                self.group_combobox.setEnabled(False)
+
+            if len(exclusive_tags) == 0:
+                self.group_excl.setChecked(False)
+            elif len(exclusive_tags) == 1:
+                self.group_excl.setChecked(True)
+            else:
+                self.group_excl.setCheckState(Qt.PartiallyChecked)
+
+            if not group_tags and not exclusive_tags:
+                pass
+            elif len(group_tags) == 1 and not exclusive_tags:
+                (g,) = group_tags
+                tags.remove(f"group:{g}")
+            elif len(group_tags) == 1 and group_tags == exclusive_tags:
+                (g,) = group_tags
+                (excl,) = exclusive_tags
+                tags.remove(f"exclusive:{excl}")
+                tags.remove(f"group:{g}")
             else:
                 # not UI representable: disable UI controls
                 self.group_checkbox.setEnabled(False)
+                self.group_combobox.setEnabled(False)
                 self.group_excl.setEnabled(False)
                 self.TEtag.setEnabled(True)
             # repack the tags
@@ -504,6 +512,7 @@ class AddRubricBox(QDialog):
         if not self.use_experimental_features:
             s = "[disabled, experimental] " + s
         b.setToolTip(s)
+        self.addParameterButton = b
         grid.addWidget(b, nr, 0)
         nr += 1
         return grid
@@ -645,11 +654,15 @@ class AddRubricBox(QDialog):
             return
         self.accept()
 
-    def gimme_rubric_data(self):
-        txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
+    def _gimme_rubric_tags(self):
         tags = self.TEtag.text().strip()
+        if not self.group_checkbox.isEnabled():
+            # non-handled cases (such as multiple groups) disable these widgets
+            return tags
         if self.group_checkbox.isChecked():
             group = self.group_combobox.currentText()
+            if not group:
+                return tags
             if " " in group:
                 # quote spaces in future?
                 group = '"' + group + '"'
@@ -662,6 +675,11 @@ class AddRubricBox(QDialog):
                 tags = tag + " " + tags
             else:
                 tags = tag
+        return tags
+
+    def gimme_rubric_data(self):
+        txt = self.TE.toPlainText().strip()  # we know this has non-zero length.
+        tags = self._gimme_rubric_tags()
 
         meta = self.TEmeta.toPlainText().strip()
         if self.typeRB_neutral.isChecked():
