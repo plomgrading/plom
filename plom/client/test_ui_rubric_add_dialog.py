@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox
 
 from plom.client.rubric_list import AddRubricBox
-from plom.client.useful_classes import SimpleQuestion
+from plom.client.useful_classes import WarnMsg, SimpleQuestion
 
 
 def test_AddRubricBox_add_new(qtbot):
@@ -409,6 +409,29 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     d.accept()
     out = d.gimme_rubric_data()
     assert out["tags"] == rub["tags"]
+
+
+def test_AddRubricBox_empty_text_opens_dialog(qtbot, monkeypatch):
+    def _raise(*args, **kwargs):
+        raise RuntimeError()
+
+    monkeypatch.setattr(WarnMsg, "exec", _raise)
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    with raises(RuntimeError):
+        d.accept()
+
+
+def test_AddRubricBox_dot_sentinel_issue2421(qtbot, monkeypatch):
+    def _raise(*args, **kwargs):
+        raise RuntimeError()
+
+    monkeypatch.setattr(WarnMsg, "exec", _raise)
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    qtbot.keyClicks(d.TE, ".")
+    with raises(RuntimeError):
+        d.accept()
 
 
 def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
