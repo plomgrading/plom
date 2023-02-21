@@ -409,7 +409,7 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     assert out["tags"] == rub["tags"]
 
 
-def test_AddRubricBox_group_too_complicated(qtbot, monkeypatch):
+def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     monkeypatch.setattr(SimpleQuestion, "ask", lambda *args, **kwargs: QMessageBox.Yes)
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
     qtbot.addWidget(d)
