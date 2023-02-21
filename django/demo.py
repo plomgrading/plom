@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
+import csv
 import shutil
 from pathlib import Path
+from random import sample
 from shlex import split
 import subprocess
 from time import sleep
@@ -53,7 +55,7 @@ def prepare_assessment():
         "plom_preparation_test_source upload -v 1 useful_files_for_testing/test_version1.pdf",
         "plom_preparation_test_source upload -v 2 useful_files_for_testing/test_version2.pdf",
         "plom_preparation_prenaming --enable",
-        "plom_preparation_classlist upload useful_files_for_testing/cl_good.csv",
+        "plom_preparation_classlist upload useful_files_for_testing/cl_for_demo.csv",
         "plom_preparation_qvmap generate",
     ]:
         py_man_cmd = f"python manage.py {cmd}"
@@ -125,10 +127,40 @@ def wait_for_papers_to_be_ready():
             break
 
 
+def get_classlist_as_dict():
+    cmd = "python manage.py plom_preparation_classlist download"
+    classlist_file = Path("classlist.csv")
+    classlist_file.unlink(missing_ok=True)
+
+    classlist = []
+    subprocess.check_call(split(cmd))
+    with open(classlist_file) as fh:
+        red = csv.DictReader(fh, skipinitialspace=True)
+        for row in red:
+            classlist.append({"id": row["id"], "name": row["name"]})
+
+    classlist_file.unlink()
+    return classlist
+
+
+def scribble_on_exams():
+    classlist = get_classlist_as_dict()
+    classlist_length = len(classlist)
+    # There are N names on classlist.
+    # This will translate into max(N+20, N*1.1) PDFs
+    # Take (say) 0.8*N papers to actually scribble on, and discard rest.
+    number_papers_to_use = int(classlist_length * 0.9)
+    paper_list = [paper for paper in Path("papersToPrint").glob("exam*.pdf")]
+    papers_to_use = sample(paper_list, number_papers_to_use)
+    
+    print("v" * 40)
+    print(papers_to_use)
+    print("^" * 40)
+
+
 def wait_for_exit():
     while True:
-        i = input("Press Enter to quit:")
-        if not i:
+        if not input("Press Enter to quit:"):
             break
 
 
@@ -139,39 +171,52 @@ def clean_up_processes(procs):
 
 
 def main():
+
     print("*" * 40)
     remove_old_migration_files()
+
     print("*" * 40)
     remove_old_db_and_misc_user_files()
+
     print("*" * 40)
     rebuild_migrations_and_migrate()
+
     print("*" * 40)
     make_groups_and_users()
+
     print("*" * 40)
     prepare_assessment()
+
     print("*" * 40)
     huey_worker_proc = launch_huey_workers()
+
     print("*" * 40)
     build_db_via_huey()
+
     print("*" * 40)
     server_proc = launch_server()
+
     print("v" * 40)
     print("Everything is now up and running")
     print("^" * 40)
 
     wait_for_db_to_be_ready()
-
     print("*" * 40)
+
     build_papers_via_huey()
     print("*" * 40)
 
     wait_for_papers_to_be_ready()
+    print("*" * 40)
 
-    print("*" * 40)
+    scribble_on_exams()
+
     wait_for_exit()
-    print("*" * 40)
+
+    print("v" * 40)
     clean_up_processes([huey_worker_proc, server_proc])
-    print("*" * 40)
+    print("Demo complete")
+    print("^" * 40)
 
 
 if __name__ == "__main__":

@@ -670,3 +670,11 @@ def make_scribbles(basedir=Path("."), *, msgr):
     make_colliding_pages(basedir / _paperdir, outfile)
     splitFakeFile(outfile)
     outfile.unlink()
+
+
+def make_scribbles_from_supplied_classlist(papersToPrint, outdir, classlist):
+    outfile = Path(outdir) / "fake_scribbled_exams.pdf"
+    fill_in_fake_data_on_exams(papersToPrint, classlist, outfile)    
+    make_colliding_pages(papersToPrint, outfile)
+    splitFakeFile(outfile)
+    outfile.unlink(missing_ok=True)
