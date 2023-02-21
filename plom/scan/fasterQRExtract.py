@@ -138,16 +138,16 @@ def QRextract(image, write_to_file=True, try_harder=True):
         image = image.reduce(2)
         qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
         for qr in qrlist:
-            cnr = findCorner(qr, image.size)
+            cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
                 s = qr.text
-                if s not in cornerQR[cnr]:
+                if s not in cornerQR[cnr][0]:
                     # TODO: log these failures?
                     # print(
                     #     f'Found QR-code "{s}" at {cnr} on reduced image, '
                     #     "not found at original size"
                     # )
-                    cornerQR[cnr].append(s)
+                    cornerQR[cnr].append((s, x_coord, y_coord))
 
     if write_to_file:
         with open(qrfile, "w") as fh:
