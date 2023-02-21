@@ -661,7 +661,7 @@ class AddRubricBox(QDialog):
                 info_pre=False,
             ).exec()
             return
-        if not txt.casefold().startswith("tex") and txt.count("$") >= 2:
+        if not txt.casefold().startswith("tex:") and txt.count("$") >= 2:
             # Image by krzysiu, CC-PDDC, https://openclipart.org/detail/213508/crazy-paperclip
             res = resources.files(plom.client.icons) / "crazy_paperclip.svg"
             pix = QPixmap()
