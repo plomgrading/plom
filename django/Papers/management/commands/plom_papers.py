@@ -16,15 +16,14 @@ class Command(BaseCommand):
         sp = parser.add_subparsers(
             dest="command", description="Display, populate, or clear test-papers."
         )
-
-        sp_status = sp.add_parser(
+        sp.add_parser(
             "status", help="Show the current state of test-papers in the database."
         )
-        sp_build = sp.add_parser(
+        sp.add_parser(
             "build_db",
             help="Populate the database with test-papers using information provided in the spec and QV-map. Also constructs the associate pdf-build tasks.",
         )
-        sp_build = sp.add_parser("clear", help="Clear the database of test-papers.")
+        sp.add_parser("clear", help="Clear the database of test-papers.")
 
     def papers_status(self):
         """
@@ -35,10 +34,15 @@ class Command(BaseCommand):
         if not pqvs.is_there_a_pqv_map():
             self.stdout.write("Question-version map not present.")
             return
+        qv_map_len = len(pqvs.get_pqv_map_dict())
 
         paper_info = PaperInfoService()
         n_papers = paper_info.how_many_papers_in_database()
         self.stdout.write(f"{n_papers} test-papers saved to the database.")
+        if qv_map_len == n_papers:
+            self.stdout.write("Database is ready")
+        else:
+            self.stdout.write(f"Database still reqires {qv_map_len - n_papers} papers")
 
     def build_papers(self):
         """
