@@ -95,9 +95,10 @@ class SimpleQuestion(QMessageBox):
             self.setInformativeText(question)
         if icon_pixmap:
             self.setIconPixmap(icon_pixmap)
+        else:
+            self.setIcon(QMessageBox.Question)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
-        self.setIcon(QMessageBox.Question)
 
     @classmethod
     def ask(cls, *args, **kwargs):
