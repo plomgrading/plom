@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 
 from django.urls import path
 
@@ -15,10 +15,16 @@ from Scan.views import (
     RemoveBundleView,
     ReadQRcodesView,
     QRParsingProgressAlert,
+    BundleTableView,
     PushPageImage,
     PushAllPageImages,
     PagePushingUpdateView,
     FlagPageImage,
+    ScannerSummaryView,
+    ChangeErrorImageState,
+    ReplacePageImage,
+    ChangeCollisionImageState,
+    DiscardImage,
 )
 
 
@@ -70,6 +76,11 @@ urlpatterns = [
         name="scan_qr_alert",
     ),
     path(
+        "read/table/<timestamp>/<int:index>/",
+        BundleTableView.as_view(),
+        name="scan_bundle_table",
+    ),
+    path(
         "push/<timestamp>/<int:index>/",
         PushPageImage.as_view(),
         name="scan_push_img",
@@ -84,5 +95,28 @@ urlpatterns = [
         "flag/<timestamp>/<int:index>/",
         FlagPageImage.as_view(),
         name="scan_flag_img",
+    ),
+    path(
+        "summary/",
+        ScannerSummaryView.as_view(),
+        name="scan_summary",
+    ),
+    path(
+        "change/error_state/<timestamp>/<int:index>/",
+        ChangeErrorImageState.as_view(),
+        name="change_error_state",
+    ),
+    path(
+        "replace/<timestamp>/<int:index>",
+        ReplacePageImage.as_view(),
+        name="replace_page_image",
+    ),
+    path(
+        "change/collision_state/<timestamp>/<int:index>/",
+        ChangeCollisionImageState.as_view(),
+        name="change_collision_state",
+    ),
+    path(
+        "discard/<timestamp>/<int:index>/", DiscardImage.as_view(), name="discard_image"
     ),
 ]

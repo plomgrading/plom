@@ -1,5 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 from django.urls import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ManagerRequiredView
@@ -9,13 +14,14 @@ from Papers.services import (
     SpecificationService,
 )
 from Papers.models import CreatePaperTask
-from Preparation.services import PQVMappingService
+from Preparation.services import PQVMappingService, StagingStudentService
+from BuildPaperPDF.services import BuildPapersService
 
 
 class CreateTestPapers(ManagerRequiredView):
     """
     Create test-papers in the database, using the test specification, classlist,
-    and question-version map.
+    and question-version map. Also create the associated pdf build tasks.
     """
 
     def post(self, request):
@@ -27,6 +33,12 @@ class CreateTestPapers(ManagerRequiredView):
         if not status:
             print(err)
 
+        num_pdfs = len(PQVMappingService().get_pqv_map_dict())
+        classdict = StagingStudentService().get_classdict()
+        bp_service = BuildPapersService()
+        bp_service.clear_tasks()
+        bp_service.stage_pdf_jobs(num_pdfs, classdict=classdict)
+
         progress_url = reverse("papers_progress")
         return HttpResponse(
             f'<p class="card-text" hx-get="{progress_url}" hx-trigger="every 0.5s">Creating test-papers...</p>'
@@ -34,10 +46,10 @@ class CreateTestPapers(ManagerRequiredView):
 
     def delete(self, request):
         """
-        For testing purposes: delete all papers from the database.
+        For testing purposes: delete all papers from the database, and the associated build tasks.
         """
-        pcs = PaperCreatorService()
-        pcs.remove_all_papers_from_db()
+        PaperCreatorService().remove_all_papers_from_db()
+        BuildPapersService().clear_tasks()
         CreatePaperTask.objects.all().delete()
         return HttpResponseClientRefresh()
 

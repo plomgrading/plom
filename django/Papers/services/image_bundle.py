@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Brennen Chiu
 
 import shutil
 
@@ -126,6 +127,7 @@ class ImageBundleService:
             test_folder.mkdir(exist_ok=True)
             shutil.copy(staged_image.file_path, image_path)
 
+    # wrapper in the atomic
     @db_task(queue="tasks")
     def _push_staged_image(staged_image, test_paper, page_number, make_dirs=True):
         """

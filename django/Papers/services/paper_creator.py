@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
+import logging
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 from django_huey import db_task
@@ -12,7 +19,6 @@ from Papers.models import (
     CreatePaperTask,
 )
 
-import logging
 
 log = logging.getLogger("PaperCreatorService")
 
@@ -52,6 +58,8 @@ class PaperCreatorService:
         paper_number (int): The number of the paper being created
         qv_mapping (dict): Mapping from each question-number to
             version for this particular paper. Of the form {q: v}
+
+
 
         """
         paper_obj = Paper(paper_number=paper_number)

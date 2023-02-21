@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Brennen Chiu
 
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
@@ -81,8 +81,16 @@ class PagePushingUpdateView(ScannerRequiredView):
         bundle = scanner.get_bundle(timestamp, request.user)
         staging_img = scanner.get_image(timestamp, request.user, index)
         completed_images = scanner.get_all_complete_images(bundle)
-
+        n_images = scanner.get_n_images(bundle)
+        valid_pages = scanner.get_n_complete_reading_tasks(bundle)
         context = self.build_context()
+        if valid_pages != n_images:
+            context.update(
+                {
+                    "disabled": "disabled",
+                }
+            )
+
         context.update(
             {
                 "timestamp": timestamp,

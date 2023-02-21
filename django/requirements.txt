@@ -1,4 +1,10 @@
-django==4.1
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
+django==4.1.7
 django-braces
 django-reset-migrations
 pymupdf
@@ -19,3 +25,4 @@ djangorestframework
 random-username
 tomli
 tomlkit
+zipfly  # for streaming zipfile generation/download
