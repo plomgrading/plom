@@ -147,6 +147,7 @@ def test_AddRubricBox_optional_meta_field(qtbot):
 def test_AddRubricBox_optional_username(qtbot):
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, None)
     qtbot.addWidget(d)
+    qtbot.keyClicks(d.TE, "text")
     d.accept()
     out = d.gimme_rubric_data()
     assert out["username"] == "user"
@@ -154,6 +155,7 @@ def test_AddRubricBox_optional_username(qtbot):
     # still owned by original user if new users modifies it
     d = AddRubricBox(None, "another_user", 10, 1, "Q1", 1, 2, out)
     qtbot.addWidget(d)
+    qtbot.keyClicks(d.TE, "text")
     d.accept()
     out = d.gimme_rubric_data()
     assert out["username"] == "user"
@@ -416,8 +418,7 @@ def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     qtbot.mouseClick(d.TE, Qt.LeftButton)
     txt = "$y = mx + b$"
     qtbot.keyClicks(d.TE, txt)
-    # TODO see Issue #2552: should it be just d.accept()?
-    d.validate_and_accept()
+    d.accept()
     out = d.gimme_rubric_data()
     assert out["text"] == "tex: " + txt
 
@@ -427,7 +428,6 @@ def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     qtbot.mouseClick(d.TE, Qt.LeftButton)
     txt = "bribe insufficient, send more $$"
     qtbot.keyClicks(d.TE, txt)
-    # TODO see Issue #2552: should it be just d.accept()?
-    d.validate_and_accept()
+    d.accept()
     out = d.gimme_rubric_data()
     assert out["text"] == txt

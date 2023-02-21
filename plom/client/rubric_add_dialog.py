@@ -373,7 +373,7 @@ class AddRubricBox(QDialog):
         self.setLayout(vlay)
 
         # set up widgets
-        buttons.accepted.connect(self.validate_and_accept)
+        buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         if reapable:
             self.reapable_CB.addItem("")
@@ -637,7 +637,7 @@ class AddRubricBox(QDialog):
             self.scopeButton.setArrowType(Qt.RightArrow)
             self.scope_frame.setVisible(False)
 
-    def validate_and_accept(self):
+    def accept(self):
         """Make sure rubric is valid before accepting"""
         txt = self.TE.toPlainText().strip()
         if len(txt) <= 0:
@@ -682,7 +682,7 @@ class AddRubricBox(QDialog):
                 == QMessageBox.Yes
             ):
                 self.TE.setText("tex: " + txt)
-        self.accept()
+        super().accept()
 
     def _gimme_rubric_tags(self):
         tags = self.TEtag.text().strip()
