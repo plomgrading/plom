@@ -96,6 +96,8 @@ class Command(BaseCommand):
                 self.stdout.write(f'"{state}": {format_int_list_with_runs(papers)}')
         else:
             self.stdout.write("No queued tasks.")
+        if len(rev_stat.get("complete", [])) == len(stats):
+            self.stdout.write("All papers built")
 
     def delete_all_tasks(self):
         bp_service = BuildPapersService()
