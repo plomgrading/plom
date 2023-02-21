@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 from shlex import split
 import subprocess
+from time import sleep
 
 
 def remove_old_migration_files():
@@ -65,21 +66,65 @@ def launch_huey_workers():
         py_man_cmd = f"python manage.py {cmd}"
         return subprocess.Popen(split(py_man_cmd))
 
+
 def launch_server():
     print("Launching django server")
     for cmd in ["runserver 8000"]:
         py_man_cmd = f"python manage.py {cmd}"
         return subprocess.Popen(split(py_man_cmd))
 
+
 def build_db_via_huey():
-    print("Populating database")
+    print("Populating database in background")
     for cmd in ["plom_papers build_db"]:
         py_man_cmd = f"python manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
 
 
+def wait_for_db_to_be_ready():
+    py_man_cmd = "python manage.py plom_papers status"
+    while True:
+        output = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
+        if "Database is ready" in output:
+            print("Database is ready - continuing to the next step of the demo.")
+            break
+        else:
+            print("Still waiting for database to be populated. Sleeping 2 seconds.")
+            sleep(2)
 
-        
+
+def build_papers_via_huey():
+    print("Build extra-page and test-paper pdfs in background via huey")
+    for cmd in ["plom_preparation_extrapage --build", "plom_build_papers --start-all"]:
+        py_man_cmd = f"python manage.py {cmd}"
+        subprocess.Popen(split(py_man_cmd))
+
+
+def wait_for_papers_to_be_ready():
+    py_man_ep = "python manage.py plom_preparation_extrapage"
+    py_man_papers = "python manage.py plom_build_papers --status"
+    ep_todo = True
+    papers_todo = False
+    while True:
+        if ep_todo:
+            out_ep = subprocess.check_output(split(py_man_ep)).decode("utf-8")
+            if "complete" in out_ep:
+                print("Extra page is built.")
+                ep_todo = False
+        if papers_todo:
+            out_papers = subprocess.check_output(split(py_man_papers)).decode("utf-8")
+            if "All papers are now built" in out_papers:
+                print("Papers are now built.")
+                papers_todo = False
+
+        if papers_todo or ep_todo:
+            print("Still waiting for pdf production tasks. Sleeping 2 seconds.")
+            sleep(2)
+        else:
+            print("Extra page and papers all built - continuing to next step of demo.")
+            break
+
+
 def wait_for_exit():
     while True:
         i = input("Press Enter to quit:")
@@ -114,8 +159,14 @@ def main():
     print("Everything is now up and running")
     print("^" * 40)
 
+    wait_for_db_to_be_ready()
 
-    
+    print("*" * 40)
+    build_papers_via_huey()
+    print("*" * 40)
+
+    wait_for_papers_to_be_ready()
+
     print("*" * 40)
     wait_for_exit()
     print("*" * 40)

@@ -88,16 +88,16 @@ class Command(BaseCommand):
         # is a list of (paper_number, status)
         stats = bp_service.get_all_task_status()
         if len(stats):
-            self.stdout.write(f"{len(stats)} tasks.")
+            self.stdout.write(f"{len(stats)} tasks total:")
             rev_stat = {}
             for (n, state) in stats.items():
                 rev_stat.setdefault(state, []).append(n)
             for (state, papers) in rev_stat.items():
-                self.stdout.write(f'"{state}": {format_int_list_with_runs(papers)}')
+                self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
         else:
             self.stdout.write("No queued tasks.")
         if len(rev_stat.get("complete", [])) == len(stats):
-            self.stdout.write("All papers built")
+            self.stdout.write("All papers are now built")
 
     def delete_all_tasks(self):
         bp_service = BuildPapersService()
