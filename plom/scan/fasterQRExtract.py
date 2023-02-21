@@ -14,6 +14,19 @@ from PIL import Image
 
 
 def findCorner(qr, dim):
+    """Determines the x-y coordinates and relative location of the given QR code's approximate centre
+
+    Args:
+        qr (zxingcpp.Result): object containing the information stored in the QR code
+        dim (tuple): pair of ints that correspond to the dimensions of the image that contains the QR code
+
+    Return:
+        tuple: a triple ``(str, mx, my)`` where ``str`` is a 2-char string, one of
+        "NE", "NE", "SW", "SE", depending on the relative location of the QR code,
+        or "??" if the QR code cannot be detected. ``mx, my`` are either ints that correspond
+        to the (x,y) coordinates of the QR code's centre location in the image, or None
+        if the QR code is not detected and there are no coordinates to return.
+    """
     qr_polygon = [
         qr.position.top_left,
         qr.position.top_right,
