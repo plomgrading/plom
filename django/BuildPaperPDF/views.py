@@ -11,6 +11,8 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 
 from django.http import FileResponse, HttpResponse, StreamingHttpResponse
+from django_htmx.http import HttpResponseClientRedirect
+from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Preparation.services import PQVMappingService, StagingStudentService
@@ -272,40 +274,8 @@ class RetryAllPDF(PDFTableView):
         return self.render_pdf_table(request)
 
 
-class DeleteAllPDF(BuildPaperPDFs):
-    template_name = "BuildPaperPDF/delete_paper_pdfs.html"
-
+class DeleteAllPDFs(ManagerRequiredView):
     def post(self, request):
-        bps = BuildPapersService()
-        bps.delete_all_task()
-        pinfo = PaperInfoService()
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-        num_pdfs = len(qvmap)
+        BuildPapersService().reset_all_tasks()
 
-        n_tasks = bps.get_n_tasks()
-        if n_tasks > 0:
-            pdfs_staged = True
-        else:
-            pdfs_staged = False
-
-        table_fragment = self.table_fragment(request)
-
-        zip_disabled = True
-        n_completed_tasks = bps.get_n_complete_tasks()
-        if n_completed_tasks == n_tasks:
-            zip_disabled = False
-
-        context = self.build_context()
-        context.update(
-            {
-                "message": "",
-                "zip_disabled": zip_disabled,
-                "num_pdfs": num_pdfs,
-                "pdfs_staged": pdfs_staged,
-                "pdf_table": table_fragment,
-                "db_initialised": pinfo.is_paper_database_populated(),
-            }
-        )
-
-        return render(request, self.template_name, context)
+        return HttpResponseClientRedirect(reverse("create_paperPDFs"))

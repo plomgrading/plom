@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from datetime import datetime
+from django.utils import timezone
 
 from huey.signals import SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_COMPLETE
 from django.db import models
@@ -25,7 +25,7 @@ class HueyTask(PolymorphicModel):
 
     huey_id = models.UUIDField(null=True)
     status = models.CharField(max_length=20, default="todo")
-    created = models.DateTimeField(default=datetime.now, blank=True)
+    created = models.DateTimeField(default=timezone.now, blank=True)
     message = models.TextField(default="")
 
     @classmethod
@@ -114,7 +114,7 @@ class BaseAction(PolymorphicModel):
     """
 
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
-    time = models.DateTimeField(default=datetime.now)
+    time = models.DateTimeField(default=timezone.now)
     task = models.ForeignKey(BaseTask, null=True, on_delete=models.SET_NULL)
 
 
@@ -128,7 +128,7 @@ class SingletonHueyTask(HueyTask):
         abstract = True
 
     def save(self, *args, **kwargs):
-        self.pk = 1
+        self.__class__.objects.exclude(id=self.id).delete()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -136,5 +136,5 @@ class SingletonHueyTask(HueyTask):
 
     @classmethod
     def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
+        obj, created = cls.objects.get_or_create()
         return obj
