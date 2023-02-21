@@ -663,8 +663,6 @@ class AddRubricBox(QDialog):
             # print("Dialog: Ctrl-Enter event")
             event.accept()
             txt = self.TE.toPlainText().strip()
-            if not txt:
-                return
             if not txt.casefold().startswith("tex:"):
                 self.TE.setText("tex: " + self.TE.toPlainText())
             self.accept()
@@ -674,7 +672,7 @@ class AddRubricBox(QDialog):
     def accept(self):
         """Make sure rubric is valid before accepting"""
         txt = self.TE.toPlainText().strip()
-        if len(txt) <= 0:
+        if len(txt) <= 0 or txt.casefold() == "tex:":
             WarnMsg(
                 self,
                 "Your rubric must contain some text.",
