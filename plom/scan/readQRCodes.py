@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
-# Copyright (C) 2023 Natalie Balashov
 
 import json
 import logging
@@ -47,7 +46,7 @@ def decode_QRs_in_image_files(where):
 
 
 def reOrientPage(fname, qrs):
-    """Re-orient this page if needed and update QR code coordinates in fname.qr
+    """Re-orient this page if needed
 
     If a page is upright, a subset of the QR codes 1 through 4 are on
     the corners:
@@ -107,35 +106,6 @@ def reOrientPage(fname, qrs):
         return False
     match_key, v = matches.popitem()
     rotateBitmap(fname, actions[match_key])
-
-    if match_key == "rot90cw":
-        newQRCoords = {
-            "NW": [qrs.get("NE")],
-            "NE": [qrs.get("SE")],
-            "SW": [qrs.get("NW")],
-            "SE": [qrs.get("SW")],
-        }
-    elif match_key == "rot90cc":
-        newQRCoords = {
-            "NW": [qrs.get("SW")],
-            "NE": [qrs.get("NW")],
-            "SW": [qrs.get("SE")],
-            "SE": [qrs.get("NE")],
-        }
-    elif match_key == "flipped":
-        newQRCoords = {
-            "NW": [qrs.get("SE")],
-            "NE": [qrs.get("SW")],
-            "SW": [qrs.get("NE")],
-            "SE": [qrs.get("NW")],
-        }
-
-    # update the saved QR code coordinates if bitmap was rotated
-    if match_key != "upright":
-        qrfile = fname.with_suffix("{}.qr".format(fname.suffix))
-        with open(qrfile, "w") as fh:
-            json.dump(newQRCoords, fh)
-
     return True
 
 
