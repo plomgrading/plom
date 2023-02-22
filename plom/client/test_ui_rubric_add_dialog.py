@@ -454,3 +454,30 @@ def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     d.accept()
     out = d.gimme_rubric_data()
     assert out["text"] == txt
+
+
+def test_AddRubricBox_shift_enter_accepts_dialog(qtbot):
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    d.show()
+    qtbot.keyClicks(d.TE, "text")
+    # ensure we have the TE focused
+    qtbot.mouseClick(d.TE, Qt.LeftButton)
+    qtbot.wait(10)
+    qtbot.keyClick(d.TE, Qt.Key_Enter, modifier=Qt.ShiftModifier)
+    qtbot.wait(10)
+    assert not d.isVisible()
+    out = d.gimme_rubric_data()
+    assert out["text"] == "text"
+
+
+def test_AddRubricBox_ctrl_enter_adds_tex(qtbot):
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    d.show()
+    qtbot.keyClicks(d.TE, "$x$")
+    qtbot.keyClick(d.TE, Qt.Key_Enter, modifier=Qt.ControlModifier)
+    qtbot.wait(10)
+    assert not d.isVisible()
+    out = d.gimme_rubric_data()
+    assert out["text"] == "tex: $x$"
