@@ -25,7 +25,7 @@ class ExtraPageService:
         Return:
         str: The status as string: "todo", "queued", "started", "error" or "complete".
 
-        """        
+        """
         return ExtraPagePDFTask.load().status
 
     @transaction.atomic()

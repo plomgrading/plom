@@ -36,15 +36,20 @@ def remove_old_migration_files():
 def remove_old_db_and_misc_user_files():
     print("Removing old DB and any misc user-generated files")
 
-    for fname in ["db.sqlite3", "fake_bundle1.pdf", "fake_bundle2.pdf", "fake_bundle3.pdf"]:
+    for fname in [
+        "db.sqlite3",
+        "fake_bundle1.pdf",
+        "fake_bundle2.pdf",
+        "fake_bundle3.pdf",
+    ]:
         Path(fname).unlink(missing_ok=True)
-        
+
     for path in Path("huey").glob("huey_db.*"):
         path.unlink(missing_ok=True)
-        
+
     for rmdir in ["sourceVersions", "papersToPrint", "media"]:
         shutil.rmtree(rmdir, ignore_errors=True)
-        
+
     Path("media").mkdir()
 
 
@@ -222,7 +227,7 @@ def append_extra_page(pdf_doc, paper_number, student_id, extra_page_path):
 
 
 def append_garbage_page(pdf_doc):
-    print(f"Appending a garbage page")
+    print("Appending a garbage page")
     pdf_doc.insert_page(
         -1, text="This is a garbage page", fontsize=18, color=[0, 0.75, 0]
     )
@@ -260,12 +265,8 @@ def scribble_on_exams():
     with fitz.open() as all_pdf_documents:
         for paper in assigned_papers_ids:
             with fitz.open(paper["path"]) as pdf_document:
-                # first put an ID on paper unless it is prenamed.
-                if paper["prenamed"]:
-                    pass
-                    # print(f"Prenamed paper {paper['path'].stem} - no id written.")
-                else:
-                    # print(f"Writing {paper['id']} on {paper['path'].stem}")
+                # first put an ID on paper if it is not prenamed.
+                if not paper["prenamed"]:
                     scribble_name_and_id(
                         pdf_document, paper["id"], id_to_name[paper["id"]]
                     )

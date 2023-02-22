@@ -674,4 +674,3 @@ def make_scribbles(basedir=Path("."), *, msgr):
 
 def make_scribbles_django(papersToPrint, extra_page, classlist, outfile):
     pass
-
