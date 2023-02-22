@@ -17,7 +17,7 @@ from plom.tpv_utils import (
     getPosition,
 )
 from plom.scan import with_scanner_messenger
-from plom.scan import QRextract
+from plom.scan import QRextract_legacy
 from plom.scan.rotate import rotateBitmap
 from plom import PlomImageExts
 
@@ -39,10 +39,10 @@ def decode_QRs_in_image_files(where):
         stuff.extend(where.glob(f"*.{ext}"))
     N = len(stuff)
     with Pool() as p:
-        _ = list(tqdm(p.imap_unordered(QRextract, stuff), total=N))
+        _ = list(tqdm(p.imap_unordered(QRextract_legacy, stuff), total=N))
     # This does the same as the following serial loop but in parallel
     # for x in glob.glob(...):
-    #     QRextract(x)
+    #     QRextract_legacy(x)
 
 
 def reOrientPage(fname, qrs):
