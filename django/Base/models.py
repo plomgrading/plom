@@ -128,7 +128,7 @@ class SingletonHueyTask(HueyTask):
         abstract = True
 
     def save(self, *args, **kwargs):
-        self.__class__.objects.exclude(id=self.id).delete()
+        SingletonHueyTask.objects.exclude(id=self.id).delete()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):

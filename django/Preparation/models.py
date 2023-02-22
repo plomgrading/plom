@@ -4,8 +4,9 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import models
+from django.db import transaction
 
-from Base.models import SingletonBaseModel, SingletonHueyTask
+from Base.models import SingletonBaseModel, HueyTask
 
 
 class PaperSourcePDF(models.Model):
@@ -80,10 +81,22 @@ class ClassicPlomServerInformation(SingletonBaseModel):
 # Make a table for the extra page pdf and the associated huey task
 
 
-class ExtraPagePDFTask(SingletonHueyTask):
+class ExtraPagePDFTask(HueyTask):
     """Table to store the exta page pdf huey task.  Note that this
     inherits fields from the HueyTask table. It is a singleton.
 
     """
 
     extra_page_pdf = models.FileField(upload_to="sourceVersions/")
+
+    def save(self, *args, **kwargs):
+        ExtraPagePDFTask.objects.exclude(id=self.id).delete()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def load(cls):
+        obj, created = ExtraPagePDFTask.objects.get_or_create()
+        return obj
