@@ -9,6 +9,12 @@ from shlex import split
 import subprocess
 from time import sleep
 
+import sys
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 
 def remove_old_migration_files():
     print("Avoid perplexing errors by removing autogen migration droppings")
@@ -76,23 +82,11 @@ def launch_server():
         return subprocess.Popen(split(py_man_cmd))
 
 
-def build_db_via_huey():
+def build_db():
     print("Populating database in background")
     for cmd in ["plom_papers build_db"]:
         py_man_cmd = f"python manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
-
-
-def wait_for_db_to_be_ready():
-    py_man_cmd = "python manage.py plom_papers status"
-    while True:
-        output = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
-        if "Database is ready" in output:
-            print("Database is ready - continuing to the next step of the demo.")
-            break
-        else:
-            print("Still waiting for database to be populated. Sleeping 2 seconds.")
-            sleep(2)
 
 
 def build_papers_via_huey():
@@ -106,7 +100,9 @@ def wait_for_papers_to_be_ready():
     py_man_ep = "python manage.py plom_preparation_extrapage"
     py_man_papers = "python manage.py plom_build_papers --status"
     ep_todo = True
-    papers_todo = False
+    papers_todo = True
+
+    sleep(2)
     while True:
         if ep_todo:
             out_ep = subprocess.check_output(split(py_man_ep)).decode("utf-8")
@@ -118,7 +114,6 @@ def wait_for_papers_to_be_ready():
             if "All papers are now built" in out_papers:
                 print("Papers are now built.")
                 papers_todo = False
-
         if papers_todo or ep_todo:
             print("Still waiting for pdf production tasks. Sleeping 2 seconds.")
             sleep(2)
@@ -151,8 +146,8 @@ def scribble_on_exams():
     # Take (say) 0.8*N papers to actually scribble on, and discard rest.
     number_papers_to_use = int(classlist_length * 0.9)
     paper_list = [paper for paper in Path("papersToPrint").glob("exam*.pdf")]
-    papers_to_use = sample(paper_list, number_papers_to_use)
-    
+    papers_to_use = sorted(sample(paper_list, k=number_papers_to_use))
+
     print("v" * 40)
     print(papers_to_use)
     print("^" * 40)
@@ -188,10 +183,13 @@ def main():
     prepare_assessment()
 
     print("*" * 40)
-    huey_worker_proc = launch_huey_workers()
+    build_db()
 
     print("*" * 40)
-    build_db_via_huey()
+    build_papers_via_huey()
+
+    print("*" * 40)
+    huey_worker_proc = launch_huey_workers()
 
     print("*" * 40)
     server_proc = launch_server()
@@ -199,12 +197,6 @@ def main():
     print("v" * 40)
     print("Everything is now up and running")
     print("^" * 40)
-
-    wait_for_db_to_be_ready()
-    print("*" * 40)
-
-    build_papers_via_huey()
-    print("*" * 40)
 
     wait_for_papers_to_be_ready()
     print("*" * 40)

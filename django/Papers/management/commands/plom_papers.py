@@ -63,7 +63,7 @@ class Command(BaseCommand):
         self.stdout.write("Creating test-papers...")
         pcs = PaperCreatorService()
         qv_map = pqvs.get_pqv_map_dict()
-        pcs.add_all_papers_in_qv_map(qv_map, False)
+        pcs.add_all_papers_in_qv_map(qv_map, background=False)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
 
         self.stdout.write("Creating associated pdf-build tasks.")

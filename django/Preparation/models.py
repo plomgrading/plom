@@ -82,11 +82,8 @@ class ClassicPlomServerInformation(SingletonBaseModel):
 
 class ExtraPagePDFTask(SingletonHueyTask):
     """Table to store the exta page pdf huey task.  Note that this
-    inherits fields from the HueyTask table.
+    inherits fields from the HueyTask table. It is a singleton.
 
     """
 
     extra_page_pdf = models.FileField(upload_to="sourceVersions/")
-
-    def __str__(self):
-        return "Task Object " + str(self.paper_number)
