@@ -234,21 +234,20 @@ class ScanService:
         groupings = {}
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
-                if list_qr_codes[page][quadrant]:
-                    paper_id = "".join(list_qr_codes[page][quadrant])[0:5]
-                    page_num = "".join(list_qr_codes[page][quadrant])[5:8]
-                    version_num = "".join(list_qr_codes[page][quadrant])[8:11]
+                if list_qr_codes[page][quadrant].get("tpv_signature"):
+                    paper_id = "".join(list_qr_codes[page][quadrant].get("tpv_signature"))[0:5]
+                    page_num = "".join(list_qr_codes[page][quadrant].get("tpv_signature"))[5:8]
+                    version_num = "".join(list_qr_codes[page][quadrant].get("tpv_signature"))[8:11]
 
                     # grouping_key = "-".join([paper_id, page_num, version_num])
                     qr_code_dict = {
                         "paper_id": paper_id,
                         "page_num": page_num,
                         "version_num": version_num,
-                        "quadrant": "".join(list_qr_codes[page][quadrant])[11],
-                        "public_code": "".join(list_qr_codes[page][quadrant])[12:],
+                        "quadrant": "".join(list_qr_codes[page][quadrant].get("tpv_signature"))[11],
+                        "public_code": "".join(list_qr_codes[page][quadrant].get("tpv_signature"))[12:],
                     }
                     groupings[quadrant] = qr_code_dict
-
         return groupings
 
     @db_task(queue="tasks")
