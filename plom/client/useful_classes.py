@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QSpacerItem,
     QTableView,
+    QTextEdit,
     QToolButton,
     QVBoxLayout,
 )
@@ -433,3 +434,92 @@ class AddRemoveTagDialog(QDialog):
             return
         self.return_values = ("remove", tag)
         self.accept()
+
+
+class BigTextEdit(QTextEdit):
+    """Just like QTextEdit but wants to be twice as big."""
+
+    def sizeHint(self):
+        sz = super().sizeHint()
+        sz.setWidth(sz.width() * 2)
+        sz.setHeight(sz.height() * 2)
+        return sz
+
+
+class BigMessageDialog(QDialog):
+    """A dialog for showing lots of stuff, might need scrollbars.
+
+    Args:
+        parent (QWidget): who should parent this modal dialog.
+        summary (str): an text or html summary.
+
+    Keyword Args:
+        detail (str): HTML for some longer details.
+        show (bool): if True (default), the details will be shown
+            else they will start hidden.
+    """
+
+    def __init__(self, parent, summary, *, details="", show=True):
+        super().__init__(parent)
+        lay = QVBoxLayout()
+
+        _ = BigTextEdit()
+        _.setHtml(details)
+        _.setReadOnly(True)
+        self.details_TE = _
+
+        # we monkey patch the size hint width from textedit
+        sz = self.details_TE.sizeHint()
+        sz.setHeight(1)
+
+        def _hack_sizeHint():
+            return sz
+
+        s = QLabel(summary)
+        setattr(s, "sizeHint", _hack_sizeHint)
+
+        lay.addWidget(s)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        b = QToolButton(text="Details")
+        b.setCheckable(True)
+        b.clicked.connect(self.toggle_details)
+        buttons.addButton(b, QDialogButtonBox.ActionRole)
+        lay.addWidget(buttons)
+        self.setLayout(lay)
+
+        if show:
+            lay.addWidget(self._details)
+            lay.addWidget(buttons)
+            b.setChecked(True)
+            self.details_TE.setVisible(True)
+        else:
+            lay.addWidget(buttons)
+            # QMessageBox has a horizontal rule
+            line = QFrame()
+            line.setFrameShape(QFrame.HLine)
+            line.setFrameShadow(QFrame.Sunken)
+            lay.addWidget(line)
+            self._line = line
+            line.setVisible(False)
+            lay.addWidget(self.details_TE)
+            b.setChecked(False)
+            self.details_TE.setVisible(False)
+            b.setArrowType(Qt.DownArrow)
+            b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            self.toggle_button = b
+
+        buttons.accepted.connect(self.accept)
+        self.setSizeGripEnabled(True)
+
+    def toggle_details(self):
+        if self.details_TE.isVisible():
+            self._line.setVisible(False)
+            self.details_TE.setVisible(False)
+            self.toggle_button.setArrowType(Qt.DownArrow)
+            self.adjustSize()
+        else:
+            self.details_TE.setVisible(True)
+            self._line.setVisible(True)
+            self.toggle_button.setArrowType(Qt.UpArrow)
+            self.adjustSize()

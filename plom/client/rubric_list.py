@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import (
 
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import SimpleQuestion
+from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
@@ -1007,6 +1008,14 @@ class RubricWidget(QWidget):
         self.rubrics = self._parent.getRubricsFromServer()
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
         self._parent.saveTabStateToServer(self.get_tab_rubric_lists())
+        del old_rubrics[7]
+        del old_rubrics[8]
+        del old_rubrics[9]
+        print(f"deleting from new: {self.rubrics[-7]}")
+        # del self.rubrics[-7]
+        old_rubrics[5]["display_delta"] = "2 of 3"
+        old_rubrics[6]["text"] = old_rubrics[6]["text"] + " foo"
+        old_rubrics[7]["display_delta"] = "-8"
         old = {r["id"]: r for r in old_rubrics}
         new = {r["id"]: r for r in self.rubrics}
         added = []
@@ -1036,29 +1045,31 @@ class RubricWidget(QWidget):
         msg += "<p>\N{Check Mark} server: "
         msg += f"<b>{len(added)} new</b>, "
         msg += f"<b>{len(deleted)} deleted</b> rubrics.</p>\n"
-        msg += "<ul>\n"
-        for rid in added:
-            msg += "<li>\n" + render_rubric_as_html(new[rid]) + "</li>\n"
-        for rid in deleted:
-            msg += "<li><b>Deleted: </b>\n"
-            msg += render_rubric_as_html(old[rid])
-            msg += "</li>\n"
-        msg += "</ul>\n"
+        if added and deleted:
+            d = "<h3>Added/Deleted</h3>\n"
+        elif added:
+            d = "<h3>Added</h3>\n"
+        elif deleted:
+            d = "<h3>Deleted</h3>\n"
+        if added or deleted:
+            d += "<ul>\n"
+            for rid in added:
+                d += "<li>\n" + render_rubric_as_html(new[rid]) + "</li>\n"
+            for rid in deleted:
+                d += "<li><b>Deleted: </b>\n"
+                d += render_rubric_as_html(old[rid])
+                d += "</li>\n"
+            d += "</ul>\n"
         msg += "<p>\N{Check Mark} server: "
         msg += f"<b>{len(changed)} changed</b> rubrics.</p>\n"
-        msg += "<ul>\n"
-        for rid, diff in changed:
-            msg += f"<li>{diff}</li>\n"
-        msg += "</ul>\n"
+        if changed:
+            d += "<h3>Changes</h3>\n"
+            d += "<ul>\n"
+            for rid, diff in changed:
+                d += f"<li>{diff}</li>\n"
+            d += "</ul>\n"
         if added or changed or deleted:
-            # TODO: how about a big scrolling box for this HTML in case its long?
-            QMessageBox(
-                QMessageBox.Information,
-                "Finished syncing rubrics",
-                msg,
-                QMessageBox.Ok,
-                self,
-            ).exec()
+            BigMessageDialog(self, msg, details=d, show=False).exec()
         # diff_rubric is not precise, won't hurt to update display even if no changes
         self.updateLegalityOfRubrics()
 
