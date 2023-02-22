@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 """
 Plom tools associated with scanning papers
@@ -12,7 +13,7 @@ __license__ = "AGPL-3.0-or-later"
 
 from plom import __version__
 
-from .fasterQRExtract import QRextract
+from .fasterQRExtract import QRextract_legacy, QRextract
 
 from .start_messenger import start_messenger, with_scanner_messenger
 from .checkScanStatus import check_and_print_scan_status

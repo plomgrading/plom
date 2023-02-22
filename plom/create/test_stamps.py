@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from pathlib import Path
 
@@ -9,7 +10,7 @@ import fitz
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
 from plom.create.mergeAndCodePages import create_exam_and_insert_QR
-from plom.scan import QRextract
+from plom.scan import QRextract_legacy as QRextract
 from plom.scan import processFileToBitmaps
 from plom import SpecVerifier
 from plom.misc_utils import working_directory
