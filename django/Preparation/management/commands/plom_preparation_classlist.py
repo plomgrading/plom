@@ -68,14 +68,14 @@ class Command(BaseCommand):
                 )
             return
 
-    def download_classlist(self):
+    def download_classlist(self, dest_csv):
         sss = StagingStudentService()
         pss = PrenameSettingService()
 
         if not sss.are_there_students():
             self.stderr.write("There is no classlist on the server.")
             return
-        self.stdout.write("Downloading classlist to 'classlist.csv'")
+        self.stdout.write(f"Downloading classlist to '{dest_csv}'")
         prename = pss.get_prenaming_setting()
         if prename:
             self.stdout.write("\tPrenaming is enabled, so saving 'paper_number' column")
@@ -84,7 +84,7 @@ class Command(BaseCommand):
                 "\tPrenaming is disabled, so ignoring 'paper_number' column"
             )
 
-        save_path = Path("classlist.csv")
+        save_path = Path(dest_csv)
         if save_path.exists():
             self.stdout.write(f"A file exists at {save_path} - overwrite it? [y/N]")
             choice = input().lower()
@@ -114,7 +114,8 @@ class Command(BaseCommand):
         )
         sub.add_parser("status", help="Show details of uploaded classlist")
         sp_U = sub.add_parser("upload", help="Upload a classlist csv")
-        sub.add_parser("download", help="Download the current classlist")
+        sp_D = sub.add_parser("download", help="Download the current classlist")
+        
         sub.add_parser("remove", help="Remove the classlist from the server")
 
         sp_U.add_argument("source_csv", type=str, help="The classlist csv to upload")
@@ -123,6 +124,7 @@ class Command(BaseCommand):
             action="store_true",
             help="Use classlist csv even if there are warnings (not recommended).",
         )
+        sp_D.add_argument("dest_csv", nargs="?", type=str, help="Where to download to, defaults to 'classlist.csv'", default="classlist.csv")
 
     def handle(self, *args, **options):
         if options["command"] == "status":
@@ -133,7 +135,7 @@ class Command(BaseCommand):
                 ignore_warnings=options["ignore_warnings"],
             )
         elif options["command"] == "download":
-            self.download_classlist()
+            self.download_classlist(options['dest_csv'])
         elif options["command"] == "remove":
             self.remove_classlist()
         else:

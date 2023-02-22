@@ -7,6 +7,7 @@ from pathlib import Path
 import random
 from shlex import split
 import subprocess
+import tempfile
 
 from plom.create.scribble_utils import (
     scribble_name_and_id,
@@ -21,23 +22,22 @@ garbage_page_probability = 0.2
 
 def get_classlist_as_dict():
     cmd = "python manage.py plom_preparation_classlist download"
-    classlist_file = Path("classlist.csv")
-    classlist_file.unlink(missing_ok=True)
 
-    classlist = []
-    subprocess.check_call(split(cmd))
-    with open(classlist_file) as fh:
-        red = csv.DictReader(fh, skipinitialspace=True)
-        for row in red:
-            classlist.append(
-                {
-                    "id": row["id"],
-                    "name": row["name"],
-                    "paper_number": row["paper_number"],
-                }
-            )
-
-    classlist_file.unlink()
+    with tempfile.TemporaryDirectory() as td:
+        classlist_file = Path(td) / "classlist.csv"
+        classlist = []
+        subprocess.check_call(split(f"{cmd} {classlist_file}"))
+        with open(classlist_file) as fh:
+            red = csv.DictReader(fh, skipinitialspace=True)
+            for row in red:
+                classlist.append(
+                    {
+                        "id": row["id"],
+                        "name": row["name"],
+                        "paper_number": row["paper_number"],
+                    }
+                )
+    print(classlist)
     return classlist
 
 
