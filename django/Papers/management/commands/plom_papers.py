@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand
 
@@ -42,7 +43,7 @@ class Command(BaseCommand):
         if qv_map_len == n_papers:
             self.stdout.write("Database is ready")
         else:
-            self.stdout.write(f"Database still reqires {qv_map_len - n_papers} papers")
+            self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
 
     def build_papers(self):
         """
