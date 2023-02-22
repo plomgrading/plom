@@ -13,7 +13,7 @@ __license__ = "AGPL-3.0-or-later"
 
 from plom import __version__
 
-from .fasterQRExtract import QRextract_legacy, QRextract
+from .fasterQRExtract import QRextract_legacy as QRextract
 
 from .start_messenger import start_messenger, with_scanner_messenger
 from .checkScanStatus import check_and_print_scan_status
