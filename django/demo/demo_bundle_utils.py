@@ -118,9 +118,7 @@ def append_garbage_page(pdf_doc):
     )
 
 
-def _scribble_loop(
-    assigned_papers_ids, extra_page_path, out_file, deterministic=True
-):
+def _scribble_loop(assigned_papers_ids, extra_page_path, out_file, deterministic=True):
     # A complete collection of the pdfs created
     with fitz.open() as all_pdf_documents:
         for paper in assigned_papers_ids:
@@ -164,7 +162,7 @@ def scribble_on_exams(*, deterministic=True):
     assigned_papers_ids = assign_students_to_papers(
         papers_to_use, classlist, deterministic=deterministic
     )
-    number_prenamed = sum(1 for X in assigned_papers_ids if X["prenamed"])    
+    number_prenamed = sum(1 for X in assigned_papers_ids if X["prenamed"])
 
     print("v" * 40)
     print(
