@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 
 import fitz
 import shutil
@@ -104,7 +105,7 @@ class ScanServiceTests(TestCase):
         have been successfully read and parsed into the correct format.
         """
         img_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
-        codes = QRextract(img_path, write_to_file=False)
+        codes = QRextract(img_path)
         scanner = ScanService()
         parsed_codes = scanner.parse_qr_code([codes])
         print(parsed_codes)

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Natalie Balashov
 
 import pathlib
 import hashlib
@@ -257,7 +258,7 @@ class ScanService:
         """
         scanner = ScanService()
         qr_error_checker = QRErrorService()
-        code_dict = QRextract(image_path, write_to_file=False)
+        code_dict = QRextract(image_path)
         page_data = scanner.parse_qr_code([code_dict])
         # error handling here
         qr_error_checker.check_qr_codes(page_data, image_path, bundle)
