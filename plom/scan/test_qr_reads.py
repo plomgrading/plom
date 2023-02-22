@@ -18,14 +18,24 @@ import plom.scan
 from plom.scan import QRextract_legacy, QRextract
 
 
+def relative_error(x, y):
+    return abs(x - y) / abs(x)
+
+
 def test_qr_reads_from_image():
     im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
     im.load()
     q = QRextract(im)
     assert not q["NE"]  # staple
-    assert q["NW"] == {"tpv_signature": "00002806012823730", "x": 126, "y": 139}
-    assert q["SE"] == {"tpv_signature": "00002806014823730", "x": 1419, "y": 1861}
-    assert q["SW"] == {"tpv_signature": "00002806013823730", "x": 126, "y": 1861}
+    assert q["NW"]["tpv_signature"] == "00002806012823730"
+    assert relative_error(q["NW"]["x"], 126) < 0.01
+    assert relative_error(q["NW"]["y"], 139) < 0.01
+    assert q["SE"]["tpv_signature"] == "00002806014823730"
+    assert relative_error(q["SE"]["x"], 1419) < 0.001
+    assert relative_error(q["SE"]["y"], 1861) < 0.001
+    assert q["SW"]["tpv_signature"] == "00002806013823730"
+    assert relative_error(q["SW"]["x"], 126) < 0.01
+    assert relative_error(q["SW"]["y"], 1861) < 0.001
 
 
 def test_qr_reads_from_image_legacy():
@@ -44,9 +54,15 @@ def test_qr_reads_slight_rotate():
     im = im.rotate(10, expand=True)
     q = QRextract(im)
     assert not q["NE"]
-    assert q["NW"] == {"tpv_signature": "00002806012823730", "x": 148, "y": 384}
-    assert q["SE"] == {"tpv_signature": "00002806014823730", "x": 1720, "y": 1856}
-    assert q["SW"] == {"tpv_signature": "00002806013823730", "x": 447, "y": 2080}
+    assert q["NW"]["tpv_signature"] == "00002806012823730"
+    assert relative_error(q["NW"]["x"], 148) < 0.01
+    assert relative_error(q["NW"]["y"], 384) < 0.01
+    assert q["SE"]["tpv_signature"] == "00002806014823730"
+    assert relative_error(q["SE"]["x"], 1720) < 0.001
+    assert relative_error(q["SE"]["y"], 1856) < 0.001
+    assert q["SW"]["tpv_signature"] == "00002806013823730"
+    assert relative_error(q["SW"]["x"], 447) < 0.01
+    assert relative_error(q["SW"]["y"], 2080) < 0.001
 
 
 def test_qr_reads_slight_rotate_legacy():
@@ -66,9 +82,15 @@ def test_qr_reads_upside_down():
     im = im.rotate(180)
     q = QRextract(im)
     assert not q["SW"]
-    assert q["SE"] == {"tpv_signature": "00002806012823730", "x": 1420, "y": 1861}
-    assert q["NW"] == {"tpv_signature": "00002806014823730", "x": 127, "y": 139}
-    assert q["NE"] == {"tpv_signature": "00002806013823730", "x": 1420, "y": 139}
+    assert q["SE"]["tpv_signature"] == "00002806012823730"
+    assert relative_error(q["SE"]["x"], 1420) < 0.001
+    assert relative_error(q["SE"]["y"], 1861) < 0.001
+    assert q["NW"]["tpv_signature"] == "00002806014823730"
+    assert relative_error(q["NW"]["x"], 127) < 0.01
+    assert relative_error(q["NW"]["y"], 139) < 0.01
+    assert q["NE"]["tpv_signature"] == "00002806013823730"
+    assert relative_error(q["NE"]["x"], 1420) < 0.001
+    assert relative_error(q["NE"]["y"], 139) < 0.01
 
 
 def test_qr_reads_upside_down_legacy():

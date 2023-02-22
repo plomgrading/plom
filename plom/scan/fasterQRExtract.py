@@ -51,7 +51,7 @@ def findCorner(qr, dim):
         EW = "E"
     else:
         return "??", None, None
-    return NS + EW, int(mx), int(my)
+    return NS + EW, mx, my
 
 
 def QRextract(image, try_harder=True):
