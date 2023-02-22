@@ -35,4 +35,5 @@ __all__ = [
     "get_bundle_list",
     "print_bundle_list",
     "QRextract_legacy",
+    "QRextract",
 ]
