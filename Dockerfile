@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 #
 # Copying and distribution of this file, with or without modification,
@@ -25,25 +25,23 @@ RUN apt-get -y update && \
         python3-setuptools \
         python3-wheel \
         python3-pytest \
-        python3-magic
-	
+        python3-magic && \
+    apt-get -yq autoclean
+
 # Note that git is required for pip install of zxingcpp on ubuntu 20.04
 # - see https://github.com/zxing-cpp/zxing-cpp/issues/489
 
 # file-magic: https://gitlab.com/plom/plom/-/issues/1570
 
-RUN pip install --no-cache-dir --upgrade pip setuptools
-# Note: newer setuptools to avoid some cairocffi issue
-
-RUN apt-get -y install python3-pyqt5
-
 COPY requirements.txt /src/
 WORKDIR /src
 RUN pip install --no-cache-dir -r requirements.txt
 
-# client dependency: if pip installing pyqt5, likely need this
-# RUN apt-get -y update && \
-#     apt-get --no-install-recommends -y install qtbase5-dev
+# Because source includes the PyQt client, we need minimal deps for Qt.
+# For example, to install PyQt and run tests
+RUN apt-get -y update && \
+    apt-get --no-install-recommends -y install libglib2.0-0 libgl1-mesa-glx && \
+    apt-get -yq autoclean
 
 COPY . /src
 WORKDIR /src

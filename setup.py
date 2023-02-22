@@ -48,7 +48,6 @@ server_install_requires = [
     "canvasapi>=2.0.0",
     "exif>=1.2.2",
     "fonttools>=4.37.1",
-    "toml>=0.10.0",
     "tqdm",
     "numpy>=1.17.0",
     "pandas>=1.0.0",
@@ -59,6 +58,7 @@ server_install_requires = [
     "weasyprint>=52.5",
     "peewee>=3.13.3",
     "PyMySQL>=1.0.2",
+    "pytest-qt>=3.2.2",
     "imutils",
     "opencv-python-headless>=4.4.0.40",
     "scikit-learn>=0.23.1",
@@ -69,6 +69,8 @@ server_install_requires = [
     "packaging",
     'importlib_resources>=5.0.0 ; python_version<"3.9"',  # until we drop 3.8
     "stdiomask>=0.0.6",
+    'tomli>=2.0.1 ; python_version<"3.11"',  # until we drop 3.10
+    "tomlkit>=0.11.4",
     "zipfly",
     "zxing-cpp>=1.4.0",
 ]
