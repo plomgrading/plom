@@ -64,12 +64,13 @@ def QRextract(image, try_harder=True):
         try_harder (bool): Try to find QRs on a smaller resolution.
             Defaults to True.  Sometimes this seems work around high
             failure rates in the synthetic images used in CI testing.
-            Details blow.
+            Details below.
 
     returns:
-        dict/None: Keys "NW", "NE", "SW", "SE", each with a list of the
-            strings extracted from QR codes, one string per code.  The
-            list is empty if no QR codes found in that corner.
+        dict/None: Keys "NW", "NE", "SW", "SE", each with a dict containing
+            a 'tpv_signature', 'x', 'y' keys that correspond to strings extracted from
+            QR codes (one string per code) and the x-y coordinates of the QR code.
+            The dict is empty if no QR codes found in that corner.
 
     Without the `try_harder` flag, we observe high failure rates when
     the vertical resolution is near 2000 pixels (our current default).
@@ -106,7 +107,6 @@ def QRextract(image, try_harder=True):
     """
     cornerQR = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
 
-    # image = Path(image)
     if not isinstance(image, Image.Image):
         image = Image.open(image)
 
@@ -136,11 +136,9 @@ def QRextract(image, try_harder=True):
                     #     f'Found QR-code "{s}" at {cnr} on reduced image, '
                     #     "not found at original size"
                     # )
-                    cornerQR[cnr].update({"tpv_signature": s, "x": x_coord, "y": y_coord})
-
-    # debugging
-    for i in cornerQR:
-        print(f"{i}: ({i['x']}, {i['y']})")
+                    cornerQR[cnr].update(
+                        {"tpv_signature": s, "x": x_coord, "y": y_coord}
+                    )
 
     return cornerQR
 
@@ -221,7 +219,6 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
     qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
     for qr in qrlist:
         cnr = findCorner(qr, image.size)[0]
-        print(f"cnr: {cnr}")
         if cnr in cornerQR.keys():
             cornerQR[cnr].append(qr.text)
 
