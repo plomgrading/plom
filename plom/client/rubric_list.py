@@ -1023,9 +1023,9 @@ class RubricWidget(QWidget):
             same, out = diff_rubric(rold, r)
             if not same:
                 changed.append((rid, out))
+        last_sync_time = datetime.now().strftime("%H:%M")
+        self.syncB.setToolTip(f"Rubrics last synchronized at {last_sync_time}")
         if not deleted and not changed and not added:
-            self._last_sync_time = datetime.now().strftime("%H:%M:%S")
-            self.syncB.setToolTip("Rubrics recently sync'd: no new rubrics")
             # change the label to show user something happened
             self._sync_button_temporary_change_text(set=True)
             # then remove the checkmark a few seconds later
