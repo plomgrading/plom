@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -34,7 +34,7 @@ class Command(BaseCommand):
             return
         source_path = Path(source_csv)
         if not source_path.exists():
-            self.stderr.write("Cannot open {source_csv}. Stopping.")
+            self.stderr.write(f"Cannot open {source_csv}. Stopping.")
 
         scsv = StagingClasslistCSVService()
         with open(source_path, "rb") as fh:
