@@ -8,6 +8,7 @@
 
 from plom.misc_utils import local_now_to_simple_string
 import fitz
+import numpy as np
 
 
 def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
@@ -30,39 +31,52 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
 
     page = cover.new_page()
     tw = fitz.TextWriter(page.rect)
-    text = "Results:"
-    tw.append((50, 75), text, fontsize=fontsize)
+    if solution == True:
+        text = "Solutions:"
+    else:
+        text = "Results:"
+    tw.append((50, 75), text,  fontsize=fontsize)
     text = "\u2022 Name = {}".format(sname)
-    tw.append((125, 75), text, fontsize=fontsize)
+    tw.append((125, 75), text,  fontsize=fontsize)
     text = "\u2022 ID = {}".format(sid)
-    tw.append((125, 100), text, fontsize=fontsize)
+    tw.append((125, 100), text,  fontsize=fontsize)
     text = "\u2022 Test number = {}".format(test_num)
-    tw.append((125, 125), text, fontsize=fontsize)
+    tw.append((125, 125), text,  fontsize=fontsize)
 
+    # Drawing the header
+    if solution == True:
+        t = ["question", "version", "mark out of"]
+    else:
+        t = ["question", "version", "mark", "out of"]
     shape = page.new_shape()
-    # Drawing the header with question, version, mark, outof
-    r = [fitz.Rect(50, 150, 125, 175) + hdisp * j for j in range(0, 4)]
-    t = ["question", "version", "mark", "out of"]
-    for j in range(0, 4):
+
+    r = [fitz.Rect(50, 150, 125, 175) + hdisp * j for j in range(0, len(t))]
+    
+    for j in range(0, len(t)):
         shape.draw_rect(r[j])
-        tw.fill_textbox(r[j], t[j], align=align, fontsize=fontsize)
+        tw.fill_textbox(r[j], t[j], align=align,  fontsize=fontsize)
 
     # Drawing the tab
-    for i in range(0, len(tab)):
-        r = [r[j] + vdisp for j in range(0, 4)]
-        for j in range(0, 4):
-            shape.draw_rect(r[j])
-            tw.fill_textbox(r[j], str(tab[i][j]), align=align, fontsize=fontsize)
+    tab = np.array(tab)
+    if solution == True:
+        tab = tab[:,[0, 1, 3]]
+
+    for i in range(0, tab.shape[0]):
+            r = [r[j] + vdisp for j in range(0, tab.shape[1])]
+            for j in range(0, tab.shape[1]):
+                shape.draw_rect(r[j])
+                tw.fill_textbox(r[j], str(tab[i][j]), align=align, fontsize=fontsize)
 
     # Drawing the rest
-    r = [r[j] + vdisp for j in range(0, 4)]
+    r = [r[j] + vdisp for j in range(0, tab.shape[1])]
     t = [
         "total",
         ".",
-        sum([tab[i][2] for i in range(0, len(tab))]),
-        sum([tab[i][3] for i in range(0, len(tab))]),
+        sum([tab[i][2] for i in range(0, tab.shape[0])])
     ]
-    for j in range(0, 4):
+    if solution == False:
+        t.append(sum([tab[i][3] for i in range(0, tab.shape[0])]))
+    for j in range(0, tab.shape[1]):
         shape.draw_rect(r[j])
         tw.fill_textbox(r[j], str(t[j]), align=align, fontsize=fontsize)
 
