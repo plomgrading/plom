@@ -35,13 +35,13 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
         text = "Solutions:"
     else:
         text = "Results:"
-    tw.append((50, 75), text,  fontsize=fontsize)
+    tw.append((50, 75), text, fontsize=fontsize)
     text = "\u2022 Name = {}".format(sname)
-    tw.append((125, 75), text,  fontsize=fontsize)
+    tw.append((125, 75), text, fontsize=fontsize)
     text = "\u2022 ID = {}".format(sid)
-    tw.append((125, 100), text,  fontsize=fontsize)
+    tw.append((125, 100), text, fontsize=fontsize)
     text = "\u2022 Test number = {}".format(test_num)
-    tw.append((125, 125), text,  fontsize=fontsize)
+    tw.append((125, 125), text, fontsize=fontsize)
 
     # Drawing the header
     if solution == True:
@@ -51,29 +51,25 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     shape = page.new_shape()
 
     r = [fitz.Rect(50, 150, 125, 175) + hdisp * j for j in range(0, len(t))]
-    
+
     for j in range(0, len(t)):
         shape.draw_rect(r[j])
-        tw.fill_textbox(r[j], t[j], align=align,  fontsize=fontsize)
+        tw.fill_textbox(r[j], t[j], align=align, fontsize=fontsize)
 
     # Drawing the tab
     tab = np.array(tab)
     if solution == True:
-        tab = tab[:,[0, 1, 3]]
+        tab = tab[:, [0, 1, 3]]
 
     for i in range(0, tab.shape[0]):
-            r = [r[j] + vdisp for j in range(0, tab.shape[1])]
-            for j in range(0, tab.shape[1]):
-                shape.draw_rect(r[j])
-                tw.fill_textbox(r[j], str(tab[i][j]), align=align, fontsize=fontsize)
+        r = [r[j] + vdisp for j in range(0, tab.shape[1])]
+        for j in range(0, tab.shape[1]):
+            shape.draw_rect(r[j])
+            tw.fill_textbox(r[j], str(tab[i][j]), align=align, fontsize=fontsize)
 
     # Drawing the rest
     r = [r[j] + vdisp for j in range(0, tab.shape[1])]
-    t = [
-        "total",
-        ".",
-        sum([tab[i][2] for i in range(0, tab.shape[0])])
-    ]
+    t = ["total", ".", sum([tab[i][2] for i in range(0, tab.shape[0])])]
     if solution == False:
         t.append(sum([tab[i][3] for i in range(0, tab.shape[0])]))
     for j in range(0, tab.shape[1]):
