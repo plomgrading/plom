@@ -46,7 +46,7 @@ def decode_QRs_in_image_files(where):
 
 
 def reOrientPage(fname, qrs):
-    """Re-orient this page if needed
+    """Re-orient this page if needed, changing the image file on disk
 
     If a page is upright, a subset of the QR codes 1 through 4 are on
     the corners:
