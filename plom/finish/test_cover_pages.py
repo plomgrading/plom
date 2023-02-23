@@ -46,8 +46,7 @@ def test_cover_page_question_labels(tmpdir):
     assert "Exercise 3" in text
 
 
-# TODO: broken on CI, not sure why yet...
-def TEMP_DISABLE_test_cover_page_non_ascii(tmpdir):
+def test_cover_page_non_ascii(tmpdir):
     f = Path(tmpdir) / "foo.pdf"
     data = [["№1", 1, 3, 4], ["Q二", 1, 4, 6]]
     makeCover("0123", "我爱你", 12345678, data, f)
