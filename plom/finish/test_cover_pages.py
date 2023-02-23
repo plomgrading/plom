@@ -3,6 +3,7 @@
 
 from pathlib import Path
 
+from pytest import raises
 import fitz
 
 from plom.finish.coverPageBuilder import makeCover
@@ -75,6 +76,7 @@ def test_cover_page_totalling(tmpdir):
         (3, 4, [[1, 1, 3, 4]]),
         (10, 25, [[1, 1, 4, 4], [2, 1, 5, 6], [3, 2, 1, 15]]),
         (9, 25, [[1, 1, 4, 4], [2, 1, 5, 6], [3, 2, 0, 15]]),
+        (5.2, 9.4, [[1, 1, 1, 2], [2, 1, 4.2, 7.4]]),
     )
     for score, total, data in check:
         f = Path(tmpdir) / "foo.pdf"
@@ -92,3 +94,16 @@ def test_cover_page_totalling(tmpdir):
         assert str(score) in words
         assert str(total) in words
         doc.close()
+
+
+def test_cover_page_foolish_stuff_gives_errors(tmpdir):
+    # a bit of a messy test, but I want to check a few sums
+    check = (
+        (10, 25, [[1, 1, 4, "four"], [2, 1, 5, 6]]),
+        (10, 25, [[1, 1, 4, 4], [2, 1, 5, Path(tmpdir)]]),
+        (9, 25, [[1, 1, 4, 4], [2, 1, "5", 6]]),
+    )
+    for score, total, data in check:
+        f = Path(tmpdir) / "foo.pdf"
+        with raises(TypeError):
+            makeCover("0123", "A", 12345678, data, f, footer=False)
