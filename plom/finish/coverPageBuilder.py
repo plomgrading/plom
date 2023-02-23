@@ -52,46 +52,41 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
 
     # Drawing the header
     if solution:
-        t = ["question", "version", "mark out of"]
+        headers = ["question", "version", "mark out of"]
     else:
-        t = ["question", "version", "mark", "out of"]
+        headers = ["question", "version", "mark", "out of"]
+
     shape = page.new_shape()
 
-    r = [fitz.Rect(m, 150, m + w_label, 175)] + [
+    rect0 = [fitz.Rect(m, 150, m + w_label, 175)] + [
         fitz.Rect(m, 150, m + w, 175) + hdisp_label + hdisp * j
-        for j in range(len(t) - 1)
+        for j in range(len(headers) - 1)
     ]
 
-    for j in range(0, len(t)):
-        shape.draw_rect(r[j])
-        excess = tw.fill_textbox(r[j], t[j], align=align, fontsize=fontsize)
-        assert not excess, f'Table header "{t[j]}" to long to fit in associated textbox'
+    for j, (r, header) in enumerate(zip(rect0, headers)):
+        shape.draw_rect(r)
+        excess = tw.fill_textbox(r, header, align=align, fontsize=fontsize)
+        assert not excess, f'Table header "{header}" too long for box'
 
-    # Draw the table
-    tab = np.array(tab, dtype=object)
-    if solution:
-        tab = tab[:, [0, 1, 3]]
-
-    for i in range(0, tab.shape[0]):
-        r = [r[j] + vdisp for j in range(0, tab.shape[1])]
-        for j in range(0, tab.shape[1]):
-            shape.draw_rect(r[j])
-            excess = tw.fill_textbox(
-                r[j], str(tab[i][j]), align=align, fontsize=fontsize
-            )
-            assert (
-                not excess
-            ), f'Table entry "{tab[i][j]}" to long to fit in associated textbox'
+    for i, row in enumerate(tab):
+        if solution:
+            row = (row[0], row[1], row[3])
+        rects = [r + vdisp * (i + 1) for r in rect0]
+        for j, (txt, r) in enumerate(zip(row, rects)):
+            shape.draw_rect(r)
+            excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+            assert not excess, f'Table entry "{txt}" too long for box'
 
     # Draw the totals row
-    r = [r[j] + vdisp for j in range(0, tab.shape[1])]
-    t = ["total", ".", sum([tab[i][2] for i in range(0, tab.shape[0])])]
-    if not solution:
-        t.append(sum([tab[i][3] for i in range(0, tab.shape[0])]))
-    for j in range(0, tab.shape[1]):
-        shape.draw_rect(r[j])
-        excess = tw.fill_textbox(r[j], str(t[j]), align=align, fontsize=fontsize)
-        assert not excess, f'Table entry "{t[j]}" to long to fit in associated textbox'
+    rects = [r + vdisp * (len(tab) + 1) for r in rect0]
+    if solution:
+        t = ["total", ".", sum([row[3] for row in tab])]
+    else:
+        t = ["total", ".", sum([row[2] for row in tab]), sum([row[3] for row in tab])]
+    for j, (r, txt) in enumerate(zip(rects, t)):
+        shape.draw_rect(r)
+        excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+        assert not excess, f'Table entry "{txt}" too long for box'
 
     shape.finish(width=0.3, color=(0, 0, 0))
     shape.commit()

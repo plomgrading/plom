@@ -100,8 +100,7 @@ def test_cover_page_foolish_stuff_gives_errors(tmpdir):
     # a bit of a messy test, but I want to check a few sums
     check = (
         (10, 25, [[1, 1, 4, "four"], [2, 1, 5, 6]]),
-        (10, 25, [[1, 1, 4, 4], [2, 1, 5, Path(tmpdir)]]),
-        (9, 25, [[1, 1, 4, 4], [2, 1, "5", 6]]),
+        (9, 25, [[1, 1, 4, 4], [2, 1, "five", 6]]),
     )
     for score, total, data in check:
         f = Path(tmpdir) / "foo.pdf"
