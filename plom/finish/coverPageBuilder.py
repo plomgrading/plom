@@ -62,7 +62,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         tw.fill_textbox(r[j], t[j], align=align, fontsize=fontsize)
 
     # Draw the table
-    tab = np.array(tab)
+    tab = np.array(tab, dtype=object)
     if solution:
         tab = tab[:, [0, 1, 3]]
 
@@ -74,9 +74,9 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
 
     # Draw the totals row
     r = [r[j] + vdisp for j in range(0, tab.shape[1])]
-    t = ["total", ".", sum([int(tab[i][2]) for i in range(0, tab.shape[0])])]
+    t = ["total", ".", sum([tab[i][2] for i in range(0, tab.shape[0])])]
     if not solution:
-        t.append(sum([int(tab[i][3]) for i in range(0, tab.shape[0])]))
+        t.append(sum([tab[i][3] for i in range(0, tab.shape[0])]))
     for j in range(0, tab.shape[1]):
         shape.draw_rect(r[j])
         tw.fill_textbox(r[j], str(t[j]), align=align, fontsize=fontsize)
