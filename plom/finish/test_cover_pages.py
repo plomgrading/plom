@@ -78,17 +78,10 @@ def test_cover_page_totalling(tmpdir):
     )
     for score, total, data in check:
         f = Path(tmpdir) / "foo.pdf"
-        makeCover("0123", "A", 12345678, data, f)
+        makeCover("0123", "A", 12345678, data, f, footer=False)
         doc = fitz.open(f)
         pg = doc[0]
-        stuff0 = pg.get_text("words")
-        stuff = []
-        for x in stuff0:
-            if x[3] > 700:
-                # ignore the footer, rather crude
-                # maybe we should have a kwarg to not add that
-                continue
-            stuff.append(x)
+        stuff = pg.get_text("words")
         # sort by y position
         stuff.sort(key=lambda x: x[3])
         last_four = stuff[-4:]

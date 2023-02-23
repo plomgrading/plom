@@ -11,7 +11,7 @@ import fitz
 import numpy as np
 
 
-def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
+def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True):
     """Create html page of name ID etc and table of marks.
 
     Args:
@@ -20,7 +20,10 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
         sid (str): student id.
         tab (list): information about the test that should be put on the coverpage.
         pdfname (pathlib.Path): filename to save the pdf into
+
+    Keyword Args:
         solution (bool): whether or not this is a cover page for solutions
+        footer (bool): whether to print a footer with timestamp
     """
     m = 50  # margin
     w = 75  # box width
@@ -81,10 +84,12 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     shape.finish(width=0.3, color=(0, 0, 0))
     shape.commit()
 
-    # Last words
-    text = "Cover page produced on {}".format(local_now_to_simple_string())
-    p = fitz.Point(m, page.rect.height - m)
-    tw.append(p, text, fontsize=fontsize)
+    if footer:
+        # Last words
+        text = "Cover page produced on {}".format(local_now_to_simple_string())
+        p = fitz.Point(m, page.rect.height - m)
+        tw.append(p, text, fontsize=fontsize)
+
     tw.write_text(page)
 
     cover.subset_fonts()
