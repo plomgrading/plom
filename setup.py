@@ -55,7 +55,6 @@ server_install_requires = [
     "pymupdf>=1.21.0",
     "Pillow>=7.0.0",
     "aiohttp>=3.7.2",
-    "weasyprint>=52.5",
     "peewee>=3.13.3",
     "PyMySQL>=1.0.2",
     "pytest-qt>=3.2.2",
