@@ -96,6 +96,15 @@ def test_cover_page_totalling(tmpdir):
         doc.close()
 
 
+def test_cover_page_doesnt_like_negatives(tmpdir):
+    # a bit of a messy test, but I want to check a few sums
+    check = ((10, 25, [[1, 1, 4, -3], [2, 1.2, 5, 6]]),)
+    for score, total, data in check:
+        f = Path(tmpdir) / "foo.pdf"
+        with raises(AssertionError):
+            makeCover("0123", "A", 12345678, data, f, footer=False)
+
+
 def test_cover_page_foolish_stuff_gives_errors(tmpdir):
     # a bit of a messy test, but I want to check a few sums
     check = (
@@ -104,5 +113,5 @@ def test_cover_page_foolish_stuff_gives_errors(tmpdir):
     )
     for score, total, data in check:
         f = Path(tmpdir) / "foo.pdf"
-        with raises(TypeError):
+        with raises(AssertionError):
             makeCover("0123", "A", 12345678, data, f, footer=False)

@@ -25,6 +25,16 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         solution (bool): whether or not this is a cover page for solutions
         footer (bool): whether to print a footer with timestamp
     """
+    # check all table entries that should be numbers are non-negative numbers
+    for row in tab:
+        for x in row[1:]:
+            try:
+                y = float(x)
+                assert y >= 0, "Numeric data must be non-negative."
+            except ValueError:
+                raise AssertionError(f"Table data {x} should be numeric.")
+
+    
     m = 50  # margin
     w = 75  # box width
     w_label = 125  # label box width
