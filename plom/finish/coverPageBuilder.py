@@ -61,7 +61,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         for j in range(len(headers) - 1)
     ]
 
-    for j, (r, header) in enumerate(zip(rect0, headers)):
+    for r, header in zip(rect0, headers):
         shape.draw_rect(r)
         excess = tw.fill_textbox(r, header, align=align, fontsize=fontsize)
         assert not excess, f'Table header "{header}" too long for box'
@@ -70,7 +70,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         if solution:
             row = (row[0], row[1], row[3])
         rects = [r + vdisp * (i + 1) for r in rect0]
-        for j, (txt, r) in enumerate(zip(row, rects)):
+        for txt, r in zip(row, rects):
             shape.draw_rect(r)
             excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
             assert not excess, f'Table entry "{txt}" too long for box'
@@ -81,7 +81,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         t = ["total", ".", sum([row[3] for row in tab])]
     else:
         t = ["total", ".", sum([row[2] for row in tab]), sum([row[3] for row in tab])]
-    for j, (r, txt) in enumerate(zip(rects, t)):
+    for r, txt in zip(rects, t):
         shape.draw_rect(r)
         excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
         assert not excess, f'Table entry "{txt}" too long for box'
