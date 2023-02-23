@@ -111,25 +111,28 @@ class ScanServiceTests(TestCase):
         print(parsed_codes)
         code_dict = {
             "NW": {
-                "paper_id": "00006",
-                "page_num": "004",
-                "version_num": "001",
+                "paper_id": 6,
+                "page_num": 4,
+                "version_num": 1,
                 "quadrant": "2",
                 "public_code": "93849",
+                "grouping_key": "00006004001",
             },
             "SW": {
-                "paper_id": "00006",
-                "page_num": "004",
-                "version_num": "001",
+                "paper_id": 6,
+                "page_num": 4,
+                "version_num": 1,
                 "quadrant": "3",
                 "public_code": "93849",
+                "grouping_key": "00006004001",
             },
             "SE": {
-                "paper_id": "00006",
-                "page_num": "004",
-                "version_num": "001",
+                "paper_id": 6,
+                "page_num": 4,
+                "version_num": 1,
                 "quadrant": "4",
                 "public_code": "93849",
+                "grouping_key": "00006004001",
             },
         }
         self.assertEqual(parsed_codes, code_dict)
