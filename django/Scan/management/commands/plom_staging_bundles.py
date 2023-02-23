@@ -1,8 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 
+import pathlib
+import hashlib
+import fitz
+from datetime import datetime
+from django.utils.text import slugify
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User, Group
+
+from Scan.services import ScanService
 
 class Command(BaseCommand):
     """
@@ -13,14 +20,23 @@ class Command(BaseCommand):
     help = "Upload bundle pdf files to staging area"
     
     def upload_pdf(self, username=None, source_pdf=None):
-        temp_username = User.objects.filter(username__iexact=username).values()
+        temp_username = User.objects.filter(username__iexact=username)
+        scanner = ScanService()
         # False
         if not temp_username.exists():
             return self.stdout.write(f"{username} does not exist!")
         
         # True
-        self.stdout.write(f"this is the username {temp_username[0]['username']}")
-        self.stdout.write(f"this is the source path {source_pdf}.")
+        with open(source_pdf, "rb") as f:
+            file_bytes = f.read()
+            pdf_doc = fitz.open(stream=file_bytes)
+            filename_stem = pathlib.Path(str(f)).stem
+            slug = slugify(filename_stem)
+            user = temp_username[0]
+            timestamp = datetime.timestamp(datetime.now())
+            hashed = hashlib.sha256(file_bytes).hexdigest()
+
+        scanner.upload_bundle(pdf_doc=pdf_doc, slug=slug, user=user, timestamp=timestamp, pdf_hash=hashed)
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
