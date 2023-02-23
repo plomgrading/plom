@@ -22,8 +22,11 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
         pdfname (pathlib.Path): filename to save the pdf into
         solution (bool): whether or not this is a cover page for solutions
     """
+    m = 50  # margin
+    w = 75  # box width
+
     cover = fitz.open()
-    hdisp = fitz.Rect(75, 0, 75, 0)
+    hdisp = fitz.Rect(w, 0, w, 0)
     vdisp = fitz.Rect(0, 25, 0, 25)
     align = 1  # centre
     fontsize = 14
@@ -34,13 +37,13 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
         text = "Solutions:"
     else:
         text = "Results:"
-    tw.append((50, 75), text, fontsize=fontsize)
-    text = "\u2022 Name = {}".format(sname)
-    tw.append((125, 75), text, fontsize=fontsize)
-    text = "\u2022 ID = {}".format(sid)
-    tw.append((125, 100), text, fontsize=fontsize)
-    text = "\u2022 Test number = {}".format(test_num)
-    tw.append((125, 125), text, fontsize=fontsize)
+    tw.append((m, 75), text, fontsize=fontsize)
+    text = f"\N{Bullet} Name: {sname}"
+    tw.append((m + w, 75), text, fontsize=fontsize)
+    text = f"\N{Bullet} ID: {sid}"
+    tw.append((m + w, 100), text, fontsize=fontsize)
+    text = f"\N{Bullet} Test number: {test_num}"
+    tw.append((m + w, 125), text, fontsize=fontsize)
 
     # Drawing the header
     if solution:
@@ -49,13 +52,13 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
         t = ["question", "version", "mark", "out of"]
     shape = page.new_shape()
 
-    r = [fitz.Rect(50, 150, 125, 175) + hdisp * j for j in range(0, len(t))]
+    r = [fitz.Rect(m, 150, m + w, 175) + hdisp * j for j in range(len(t))]
 
     for j in range(0, len(t)):
         shape.draw_rect(r[j])
         tw.fill_textbox(r[j], t[j], align=align, fontsize=fontsize)
 
-    # Drawing the tab
+    # Draw the table
     tab = np.array(tab)
     if solution:
         tab = tab[:, [0, 1, 3]]
@@ -66,7 +69,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
             shape.draw_rect(r[j])
             tw.fill_textbox(r[j], str(tab[i][j]), align=align, fontsize=fontsize)
 
-    # Drawing the rest
+    # Draw the totals row
     r = [r[j] + vdisp for j in range(0, tab.shape[1])]
     t = ["total", ".", sum([int(tab[i][2]) for i in range(0, tab.shape[0])])]
     if not solution:
@@ -80,7 +83,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
 
     # Last words
     text = "Cover page produced on {}".format(local_now_to_simple_string())
-    p = fitz.Point(50, page.rect.height - 50)
+    p = fitz.Point(m, page.rect.height - m)
     tw.append(p, text, fontsize=fontsize)
     tw.write_text(page)
 
