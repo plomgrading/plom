@@ -10,6 +10,7 @@ from django.utils.text import slugify
 from django.core.management.base import BaseCommand
 
 from Scan.services import ScanService
+from Scan.models import StagingBundle, StagingImage
 
 class Command(BaseCommand):
     """
@@ -31,6 +32,10 @@ class Command(BaseCommand):
             hashed = hashlib.sha256(file_bytes).hexdigest()
 
         scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
+    
+    def staging_bundle_status(self):
+        scanner = ScanService()
+        scanner.staging_bundle_status_cmd()
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
@@ -38,13 +43,19 @@ class Command(BaseCommand):
             description="Upload PDF files.",
         )
 
+        # Upload
         sp_upload = sp.add_parser("upload", help="Upload a test pdf.")
         sp_upload.add_argument("username", type=str, help="Which username to upload as.")
         sp_upload.add_argument("source_pdf", type=str, help="The test pdf to upload.")
 
+        # Status
+        sp_status = sp.add_parser("status", help="Show the status of the staging bundles.")
+
     def handle(self, *args, **options):
         if options["command"] == "upload":
             self.upload_pdf(username = options["username"], source_pdf=options["source_pdf"])
+        elif options["command"] == "status":
+            self.staging_bundle_status()
         else:
             self.print_help("manage.py", "plom_staging_bundles")
         

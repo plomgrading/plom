@@ -67,15 +67,6 @@ class ScanService:
         unknown_dir = bundle_dir / "unknownPages"
         unknown_dir.mkdir(exist_ok=True)
         self.split_and_save_bundle_images(pdf_doc, bundle_db, image_dir)
-    
-    # TODO: Have to check for duplicate bundle
-    @transaction.atomic
-    def upload_bundle_cmd(self, pdf_doc, slug, username, timestamp, hashed):
-        try:
-            temp_username = User.objects.get(username__iexact=username)
-            self.upload_bundle(pdf_doc=pdf_doc, slug=slug, user=temp_username, timestamp=timestamp, pdf_hash=hashed)
-        except ObjectDoesNotExist:
-            print(f"{username} does not exist!")
 
     @transaction.atomic
     def split_and_save_bundle_images(self, pdf_doc, bundle, base_dir):
@@ -643,3 +634,20 @@ class ScanService:
         for parse_qr_obj in parse_qr_list[bundle_order:]:
             parse_qr_obj.page_index -= 1
             parse_qr_obj.save()
+
+    # TODO: Have to check for duplicate bundle
+    @transaction.atomic
+    def upload_bundle_cmd(self, pdf_doc, slug, username, timestamp, hashed):
+        try:
+            temp_username = User.objects.get(username__iexact=username)
+            self.upload_bundle(pdf_doc=pdf_doc, slug=slug, user=temp_username, timestamp=timestamp, pdf_hash=hashed)
+        except ObjectDoesNotExist:
+            print(f"{username} does not exist!")
+
+    @transaction.atomic
+    def staging_bundle_status_cmd(self):
+        test_data = StagingBundle.objects.all()
+        for i in test_data:
+            print(i.slug)
+            test2 = StagingImage.objects.filter(bundle=i)
+            print(len(test2))
