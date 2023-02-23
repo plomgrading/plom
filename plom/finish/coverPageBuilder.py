@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Andrew Rechnitzer
+# Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2020, 2022-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 # Copyright (C) 2023 Tam Nguyen
 
-from plom.misc_utils import local_now_to_simple_string
 import fitz
-import numpy as np
+
+from plom.misc_utils import local_now_to_simple_string
 
 
 def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True):
@@ -30,8 +30,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     w_label = 125  # label box width
 
     cover = fitz.open()
-    hdisp = fitz.Rect(w, 0, w, 0)
-    hdisp_label = fitz.Rect(w_label, 0, w_label, 0)
     vdisp = fitz.Rect(0, 25, 0, 25)
     align = fitz.TEXT_ALIGN_CENTER
     fontsize = 14
@@ -50,48 +48,47 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     text = f"\N{Bullet} Test number: {test_num}"
     tw.append((m + w, 125), text, fontsize=fontsize)
 
-    # Drawing the header
     if solution:
-        t = ["question", "version", "mark out of"]
+        tab = [[row[0], row[1], row[3]] for row in tab]
+        headers = ["question", "version", "mark out of"]
+        totals = ["total", ".", sum([row[2] for row in tab])]
     else:
-        t = ["question", "version", "mark", "out of"]
+        headers = ["question", "version", "mark", "out of"]
+        totals = [
+            "total",
+            ".",
+            sum([row[2] for row in tab]),
+            sum([row[3] for row in tab]),
+        ]
+
     shape = page.new_shape()
 
-    r = [fitz.Rect(m, 150, m + w_label, 175)] + [
-        fitz.Rect(m, 150, m + w, 175) + hdisp_label + hdisp * j
-        for j in range(len(t) - 1)
+    # rectangles for header that we will shift downwards as we go
+    rect0 = [fitz.Rect(m, 150, m + w_label, 175)] + [
+        fitz.Rect(m + w_label + w * j, 150, m + w_label + w * (j + 1), 175)
+        for j in range(len(headers) - 1)
     ]
 
-    for j in range(0, len(t)):
-        shape.draw_rect(r[j])
-        excess = tw.fill_textbox(r[j], t[j], align=align, fontsize=fontsize)
-        assert not excess, f'Table header "{t[j]}" to long to fit in associated textbox'
+    # Draw the header
+    for r, header in zip(rect0, headers):
+        shape.draw_rect(r)
+        excess = tw.fill_textbox(r, header, align=align, fontsize=fontsize)
+        assert not excess, f'Table header "{header}" too long for box'
 
-    # Draw the table
-    tab = np.array(tab, dtype=object)
-    if solution:
-        tab = tab[:, [0, 1, 3]]
+    # Draw the rows
+    for i, row in enumerate(tab):
+        rects = [r + vdisp * (i + 1) for r in rect0]
+        for txt, r in zip(row, rects):
+            shape.draw_rect(r)
+            excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+            assert not excess, f'Table entry "{txt}" too long for box'
 
-    for i in range(0, tab.shape[0]):
-        r = [r[j] + vdisp for j in range(0, tab.shape[1])]
-        for j in range(0, tab.shape[1]):
-            shape.draw_rect(r[j])
-            excess = tw.fill_textbox(
-                r[j], str(tab[i][j]), align=align, fontsize=fontsize
-            )
-            assert (
-                not excess
-            ), f'Table entry "{tab[i][j]}" to long to fit in associated textbox'
-
-    # Draw the totals row
-    r = [r[j] + vdisp for j in range(0, tab.shape[1])]
-    t = ["total", ".", sum([tab[i][2] for i in range(0, tab.shape[0])])]
-    if not solution:
-        t.append(sum([tab[i][3] for i in range(0, tab.shape[0])]))
-    for j in range(0, tab.shape[1]):
-        shape.draw_rect(r[j])
-        excess = tw.fill_textbox(r[j], str(t[j]), align=align, fontsize=fontsize)
-        assert not excess, f'Table entry "{t[j]}" to long to fit in associated textbox'
+    # Draw the final totals row
+    rects = [r + vdisp * (len(tab) + 1) for r in rect0]
+    for r, txt in zip(rects, totals):
+        shape.draw_rect(r)
+        excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+        assert not excess, f'Table entry "{txt}" too long for box'
 
     shape.finish(width=0.3, color=(0, 0, 0))
     shape.commit()
