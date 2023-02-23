@@ -5,9 +5,9 @@ import pathlib
 import hashlib
 import fitz
 from datetime import datetime
+from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User, Group
 
 from Scan.services import ScanService
 
@@ -27,7 +27,7 @@ class Command(BaseCommand):
             pdf_doc = fitz.open(stream=file_bytes)
             filename_stem = pathlib.Path(str(f)).stem
             slug = slugify(filename_stem)
-            timestamp = datetime.timestamp(datetime.now())
+            timestamp = datetime.timestamp(timezone.now())
             hashed = hashlib.sha256(file_bytes).hexdigest()
 
         scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)

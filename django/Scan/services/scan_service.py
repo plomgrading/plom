@@ -13,6 +13,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
+from django.utils import timezone
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
 
@@ -94,7 +95,7 @@ class ScanService:
                 bundle=bundle,
                 huey_id=page_task.id,
                 status="queued",
-                created=datetime.now(),
+                created=timezone.now(),
             )
             page_task_db.save()
 
