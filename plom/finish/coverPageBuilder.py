@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020, 2022 Colin B. Macdonald
+# Copyright (C) 2019-2020, 2022-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 # Copyright (C) 2023 Tam Nguyen
@@ -22,7 +22,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
         pdfname (pathlib.Path): filename to save the pdf into
         solution (bool): whether or not this is a cover page for solutions
     """
-    # hide imports until needed Issue #2231.
     cover = fitz.open()
     hdisp = fitz.Rect(75, 0, 75, 0)
     vdisp = fitz.Rect(0, 25, 0, 25)
@@ -31,7 +30,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
 
     page = cover.new_page()
     tw = fitz.TextWriter(page.rect)
-    if solution == True:
+    if solution:
         text = "Solutions:"
     else:
         text = "Results:"
@@ -44,7 +43,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     tw.append((125, 125), text, fontsize=fontsize)
 
     # Drawing the header
-    if solution == True:
+    if solution:
         t = ["question", "version", "mark out of"]
     else:
         t = ["question", "version", "mark", "out of"]
@@ -58,7 +57,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
 
     # Drawing the tab
     tab = np.array(tab)
-    if solution == True:
+    if solution:
         tab = tab[:, [0, 1, 3]]
 
     for i in range(0, tab.shape[0]):
@@ -70,7 +69,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     # Drawing the rest
     r = [r[j] + vdisp for j in range(0, tab.shape[1])]
     t = ["total", ".", sum([int(tab[i][2]) for i in range(0, tab.shape[0])])]
-    if solution == False:
+    if not solution:
         t.append(sum([int(tab[i][3]) for i in range(0, tab.shape[0])]))
     for j in range(0, tab.shape[1]):
         shape.draw_rect(r[j])
