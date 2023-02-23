@@ -9,6 +9,8 @@ import shutil
 from datetime import datetime
 from collections import Counter
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
 from plom.scan import QRextract
@@ -64,6 +66,15 @@ class ScanService:
         unknown_dir = bundle_dir / "unknownPages"
         unknown_dir.mkdir(exist_ok=True)
         self.split_and_save_bundle_images(pdf_doc, bundle_db, image_dir)
+    
+    # TODO: Have to check for duplicate bundle
+    @transaction.atomic
+    def upload_bundle_cmd(self, pdf_doc, slug, username, timestamp, hashed):
+        try:
+            temp_username = User.objects.get(username__iexact=username)
+            self.upload_bundle(pdf_doc=pdf_doc, slug=slug, user=temp_username, timestamp=timestamp, pdf_hash=hashed)
+        except ObjectDoesNotExist:
+            print(f"{username} does not exist!")
 
     @transaction.atomic
     def split_and_save_bundle_images(self, pdf_doc, bundle, base_dir):

@@ -20,23 +20,17 @@ class Command(BaseCommand):
     help = "Upload bundle pdf files to staging area"
     
     def upload_pdf(self, username=None, source_pdf=None):
-        temp_username = User.objects.filter(username__iexact=username)
         scanner = ScanService()
-        # False
-        if not temp_username.exists():
-            return self.stdout.write(f"{username} does not exist!")
         
-        # True
         with open(source_pdf, "rb") as f:
             file_bytes = f.read()
             pdf_doc = fitz.open(stream=file_bytes)
             filename_stem = pathlib.Path(str(f)).stem
             slug = slugify(filename_stem)
-            user = temp_username[0]
             timestamp = datetime.timestamp(datetime.now())
             hashed = hashlib.sha256(file_bytes).hexdigest()
 
-        scanner.upload_bundle(pdf_doc=pdf_doc, slug=slug, user=user, timestamp=timestamp, pdf_hash=hashed)
+        scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
