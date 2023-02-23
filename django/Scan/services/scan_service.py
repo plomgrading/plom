@@ -14,6 +14,7 @@ from django.db import transaction
 from django_huey import db_task
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
+from plom.tpv_utils import parseTPV, getPaperPageVersion
 
 from .image_process import PageImageProcessor
 from Scan.models import (
@@ -235,27 +236,19 @@ class ScanService:
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
                 if list_qr_codes[page][quadrant].get("tpv_signature"):
-                    paper_id = "".join(
+                    paper_id, page_num, version_num, public_code, corner = parseTPV(
                         list_qr_codes[page][quadrant].get("tpv_signature")
-                    )[0:5]
-                    page_num = "".join(
+                    )
+                    grouping_key = getPaperPageVersion(
                         list_qr_codes[page][quadrant].get("tpv_signature")
-                    )[5:8]
-                    version_num = "".join(
-                        list_qr_codes[page][quadrant].get("tpv_signature")
-                    )[8:11]
-
-                    # grouping_key = "-".join([paper_id, page_num, version_num])
+                    )
                     qr_code_dict = {
                         "paper_id": paper_id,
                         "page_num": page_num,
                         "version_num": version_num,
-                        "quadrant": "".join(
-                            list_qr_codes[page][quadrant].get("tpv_signature")
-                        )[11],
-                        "public_code": "".join(
-                            list_qr_codes[page][quadrant].get("tpv_signature")
-                        )[12:],
+                        "quadrant": corner,
+                        "public_code": public_code,
+                        "grouping_key": grouping_key,
                     }
                     groupings[quadrant] = qr_code_dict
         return groupings
@@ -477,10 +470,7 @@ class ScanService:
         qr_code_list = []
         for image in all_images:
             for qr_qadrant in image.parsed_qr:
-                paper_id = list(image.parsed_qr[qr_qadrant].values())[0]
-                page_num = list(image.parsed_qr[qr_qadrant].values())[1]
-                version_num = list(image.parsed_qr[qr_qadrant].values())[2]
-                qr_code_list.append(paper_id + page_num + version_num)
+                qr_code_list.append(image.parsed_qr[qr_qadrant].get("grouping_key"))
         qr_code_list.sort()
         qr_code_list = list(dict.fromkeys(qr_code_list))
         while len(qr_code_list) < num_images:
