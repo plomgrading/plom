@@ -51,24 +51,31 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     if solution:
         tab = [[row[0], row[1], row[3]] for row in tab]
         headers = ["question", "version", "mark out of"]
-        totals_row = ["total", ".", sum([row[2] for row in tab])]
+        totals = ["total", ".", sum([row[2] for row in tab])]
     else:
         headers = ["question", "version", "mark", "out of"]
-        totals_row = ["total", ".", sum([row[2] for row in tab]), sum([row[3] for row in tab])]
+        totals = [
+            "total",
+            ".",
+            sum([row[2] for row in tab]),
+            sum([row[3] for row in tab]),
+        ]
 
     shape = page.new_shape()
 
-    # Drawing the header
+    # rectangles for header that we will shift downwards as we go
     rect0 = [fitz.Rect(m, 150, m + w_label, 175)] + [
         fitz.Rect(m + w_label + w * j, 150, m + w_label + w * (j + 1), 175)
         for j in range(len(headers) - 1)
     ]
 
+    # Draw the header
     for r, header in zip(rect0, headers):
         shape.draw_rect(r)
         excess = tw.fill_textbox(r, header, align=align, fontsize=fontsize)
         assert not excess, f'Table header "{header}" too long for box'
 
+    # Draw the rows
     for i, row in enumerate(tab):
         rects = [r + vdisp * (i + 1) for r in rect0]
         for txt, r in zip(row, rects):
@@ -76,9 +83,9 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
             excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
             assert not excess, f'Table entry "{txt}" too long for box'
 
-    # Draw the totals row
+    # Draw the final totals row
     rects = [r + vdisp * (len(tab) + 1) for r in rect0]
-    for r, txt in zip(rects, totals_row):
+    for r, txt in zip(rects, totals):
         shape.draw_rect(r)
         excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
         assert not excess, f'Table entry "{txt}" too long for box'
