@@ -83,7 +83,8 @@ class ClassicPlomServerInformation(SingletonBaseModel):
 
 class ExtraPagePDFTask(HueyTask):
     """Table to store the exta page pdf huey task.  Note that this
-    inherits fields from the HueyTask table. It is a singleton.
+    inherits fields from the HueyTask table. We add extra function to
+    this to ensure there can only be one such task.
 
     """
 
