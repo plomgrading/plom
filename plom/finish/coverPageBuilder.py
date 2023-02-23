@@ -27,9 +27,11 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     """
     m = 50  # margin
     w = 75  # box width
+    w_label = 125  # label box width
 
     cover = fitz.open()
     hdisp = fitz.Rect(w, 0, w, 0)
+    hdisp_label = fitz.Rect(w_label, 0, w_label, 0)
     vdisp = fitz.Rect(0, 25, 0, 25)
     align = fitz.TEXT_ALIGN_CENTER
     fontsize = 14
@@ -55,11 +57,15 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         t = ["question", "version", "mark", "out of"]
     shape = page.new_shape()
 
-    r = [fitz.Rect(m, 150, m + w, 175) + hdisp * j for j in range(len(t))]
+    r = [fitz.Rect(m, 150, m + w_label, 175)] + [
+        fitz.Rect(m, 150, m + w, 175) + hdisp_label + hdisp * j
+        for j in range(len(t) - 1)
+    ]
 
     for j in range(0, len(t)):
         shape.draw_rect(r[j])
-        tw.fill_textbox(r[j], t[j], align=align, fontsize=fontsize)
+        excess = tw.fill_textbox(r[j], t[j], align=align, fontsize=fontsize)
+        assert not excess, f'Table header "{t[j]}" to long to fit in associated textbox'
 
     # Draw the table
     tab = np.array(tab, dtype=object)
@@ -70,7 +76,12 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         r = [r[j] + vdisp for j in range(0, tab.shape[1])]
         for j in range(0, tab.shape[1]):
             shape.draw_rect(r[j])
-            tw.fill_textbox(r[j], str(tab[i][j]), align=align, fontsize=fontsize)
+            excess = tw.fill_textbox(
+                r[j], str(tab[i][j]), align=align, fontsize=fontsize
+            )
+            assert (
+                not excess
+            ), f'Table entry "{tab[i][j]}" to long to fit in associated textbox'
 
     # Draw the totals row
     r = [r[j] + vdisp for j in range(0, tab.shape[1])]
@@ -79,7 +90,8 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         t.append(sum([tab[i][3] for i in range(0, tab.shape[0])]))
     for j in range(0, tab.shape[1]):
         shape.draw_rect(r[j])
-        tw.fill_textbox(r[j], str(t[j]), align=align, fontsize=fontsize)
+        excess = tw.fill_textbox(r[j], str(t[j]), align=align, fontsize=fontsize)
+        assert not excess, f'Table entry "{t[j]}" to long to fit in associated textbox'
 
     shape.finish(width=0.3, color=(0, 0, 0))
     shape.commit()
