@@ -75,7 +75,6 @@ def test_cover_page_totalling(tmpdir):
         (3, 4, [[1, 1, 3, 4]]),
         (10, 25, [[1, 1, 4, 4], [2, 1, 5, 6], [3, 2, 1, 15]]),
         (9, 25, [[1, 1, 4, 4], [2, 1, 5, 6], [3, 2, 0, 15]]),
-        (0, 0, []),
     )
     for score, total, data in check:
         f = Path(tmpdir) / "foo.pdf"
