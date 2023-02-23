@@ -30,8 +30,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     w_label = 125  # label box width
 
     cover = fitz.open()
-    hdisp = fitz.Rect(w, 0, w, 0)
-    hdisp_label = fitz.Rect(w_label, 0, w_label, 0)
     vdisp = fitz.Rect(0, 25, 0, 25)
     align = fitz.TEXT_ALIGN_CENTER
     fontsize = 14
@@ -59,7 +57,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     shape = page.new_shape()
 
     rect0 = [fitz.Rect(m, 150, m + w_label, 175)] + [
-        fitz.Rect(m, 150, m + w, 175) + hdisp_label + hdisp * j
+        fitz.Rect(m + w_label + w * j, 150, m + w_label + w * (j + 1), 175)
         for j in range(len(headers) - 1)
     ]
 
