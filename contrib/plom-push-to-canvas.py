@@ -47,6 +47,7 @@ import string
 import time
 
 from canvasapi.exceptions import CanvasException
+from canvasapi import __version__ as __canvasapi_version__
 import pandas
 from tqdm import tqdm
 
@@ -68,7 +69,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.2.0"
+__script_version__ = "0.2.1"
 
 
 def sis_id_to_student_dict(student_list):
@@ -120,7 +121,8 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--version",
     action="version",
-    version=f"%(prog)s {__script_version__} (using Plom version {__plom_version__})",
+    version=f"%(prog)s {__script_version__} (using Plom version {__plom_version__}, "
+    f"and canvasapi package version {__canvasapi_version__})",
 )
 parser.add_argument(
     "--api_url",
