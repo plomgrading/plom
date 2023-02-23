@@ -34,7 +34,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
             except ValueError:
                 raise AssertionError(f"Table data {x} should be numeric.")
 
-    
     m = 50  # margin
     w = 75  # box width
     w_label = 125  # label box width
