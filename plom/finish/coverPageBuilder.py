@@ -31,7 +31,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     cover = fitz.open()
     hdisp = fitz.Rect(w, 0, w, 0)
     vdisp = fitz.Rect(0, 25, 0, 25)
-    align = 1  # centre
+    align = fitz.TEXT_ALIGN_CENTER
     fontsize = 14
 
     page = cover.new_page()
