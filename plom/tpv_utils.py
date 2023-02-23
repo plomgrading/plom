@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020, 2022 Colin B. Macdonald
 # Copyright (C) 2020-2023 Andrew Rechnitzer
+# Copyright (C) 2023 Natalie Balashov
 
 """Utilities for dealing with TPV codes
 
@@ -88,6 +89,19 @@ def parseTPV(tpv):
     o = tpv[11]
     cn = tpv[12:]
     return tn, pn, vn, cn, o
+
+
+def getPaperPageVersion(tpv):
+    """Return the paper, page, version substring of a TPV string
+
+    Args: tpv (str): a TPV string of the form "TTTTTPPPVVVOCCCCC",
+       typically from a QR-code
+
+    Returns:
+       (str): a substring of the original TPV string,
+       containing the paper number, page number and version number.
+    """
+    return tpv[0:11]
 
 
 def getPosition(tpv):
