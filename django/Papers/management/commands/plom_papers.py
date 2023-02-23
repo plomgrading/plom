@@ -22,7 +22,11 @@ class Command(BaseCommand):
         )
         sp.add_parser(
             "build_db",
-            help="Populate the database with test-papers using information provided in the spec and QV-map. Also constructs the associate pdf-build tasks.",
+            help="""
+                Populate the database with test-papers using information
+                provided in the spec and QV-map.
+                Also constructs the associate pdf-build tasks.
+            """,
         )
         sp.add_parser("clear", help="Clear the database of test-papers.")
 
@@ -83,7 +87,7 @@ class Command(BaseCommand):
             self.stdout.write("No test-papers found in database - stopping.")
             return
 
-        self.stdout.write("Removing test-papers and assocaited tasks...")
+        self.stdout.write("Removing test-papers and associated tasks...")
         BuildPapersService().clear_tasks()
         PaperCreatorService().remove_all_papers_from_db()
         self.stdout.write("Database cleared of test-papers.")
