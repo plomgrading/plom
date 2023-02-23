@@ -48,14 +48,17 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     text = f"\N{Bullet} Test number: {test_num}"
     tw.append((m + w, 125), text, fontsize=fontsize)
 
-    # Drawing the header
     if solution:
+        tab = [[row[0], row[1], row[3]] for row in tab]
         headers = ["question", "version", "mark out of"]
+        totals_row = ["total", ".", sum([row[2] for row in tab])]
     else:
         headers = ["question", "version", "mark", "out of"]
+        totals_row = ["total", ".", sum([row[2] for row in tab]), sum([row[3] for row in tab])]
 
     shape = page.new_shape()
 
+    # Drawing the header
     rect0 = [fitz.Rect(m, 150, m + w_label, 175)] + [
         fitz.Rect(m + w_label + w * j, 150, m + w_label + w * (j + 1), 175)
         for j in range(len(headers) - 1)
@@ -67,8 +70,6 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         assert not excess, f'Table header "{header}" too long for box'
 
     for i, row in enumerate(tab):
-        if solution:
-            row = (row[0], row[1], row[3])
         rects = [r + vdisp * (i + 1) for r in rect0]
         for txt, r in zip(row, rects):
             shape.draw_rect(r)
@@ -77,11 +78,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
 
     # Draw the totals row
     rects = [r + vdisp * (len(tab) + 1) for r in rect0]
-    if solution:
-        t = ["total", ".", sum([row[3] for row in tab])]
-    else:
-        t = ["total", ".", sum([row[2] for row in tab]), sum([row[3] for row in tab])]
-    for r, txt in zip(rects, t):
+    for r, txt in zip(rects, totals_row):
         shape.draw_rect(r)
         excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
         assert not excess, f'Table entry "{txt}" too long for box'
