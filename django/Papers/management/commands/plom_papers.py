@@ -83,9 +83,9 @@ class Command(BaseCommand):
             self.stdout.write("No test-papers found in database - stopping.")
             return
 
-        self.stdout.write("Removing test-papers...")
-        paper_creator = PaperCreatorService()
-        paper_creator.remove_all_papers_from_db()
+        self.stdout.write("Removing test-papers and assocaited tasks...")
+        BuildPapersService().clear_tasks()
+        PaperCreatorService().remove_all_papers_from_db()
         self.stdout.write("Database cleared of test-papers.")
 
     def handle(self, *args, **options):
