@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 import csv
 import fitz
@@ -21,7 +22,7 @@ garbage_page_probability = 0.2
 
 
 def get_classlist_as_dict():
-    cmd = "python manage.py plom_preparation_classlist download"
+    cmd = "python3 manage.py plom_preparation_classlist download"
 
     with tempfile.TemporaryDirectory() as td:
         classlist_file = Path(td) / "classlist.csv"
@@ -42,7 +43,7 @@ def get_classlist_as_dict():
 
 def get_extra_page():
     # Assumes that the extra page has been generated
-    cmd = "python manage.py plom_preparation_extrapage --download papersToPrint/extra_page.pdf"
+    cmd = "python3 manage.py plom_preparation_extrapage --download papersToPrint/extra_page.pdf"
     subprocess.check_call(split(cmd))
 
 

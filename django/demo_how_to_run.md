@@ -1,7 +1,13 @@
+<!--
+__copyright__ = "Copyright (C) 2023 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2023 Colin B. Macdonald"
+__license__ = "AGPL-3.0-or-later"
+ -->
+
 To run the django demo use
 
 ```
-python -m demo
+python3 -m demo
 ```
 
 from the plom/django directory

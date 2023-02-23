@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 import shutil
 from pathlib import Path
@@ -44,14 +45,14 @@ def remove_old_db_and_misc_user_files():
 def rebuild_migrations_and_migrate():
     print("Rebuild the database migrations and migrate")
     for cmd in ["makemigrations", "migrate"]:
-        py_man_cmd = f"python manage.py {cmd}"
+        py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
 
 
 def make_groups_and_users():
     print("Create groups and users")
     for cmd in ["plom_create_groups", "plom_create_demo_users"]:
-        py_man_cmd = f"python manage.py {cmd}"
+        py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
 
 
@@ -68,21 +69,21 @@ def prepare_assessment():
         "plom_preparation_classlist upload useful_files_for_testing/cl_for_demo.csv",
         "plom_preparation_qvmap generate",
     ]:
-        py_man_cmd = f"python manage.py {cmd}"
+        py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
 
 
 def launch_huey_workers():
     print("Launching huey workers for background tasks")
     for cmd in ["djangohuey"]:
-        py_man_cmd = f"python manage.py {cmd}"
+        py_man_cmd = f"python3 manage.py {cmd}"
         return subprocess.Popen(split(py_man_cmd))
 
 
 def launch_server():
     print("Launching django server")
     for cmd in ["runserver 8000"]:
-        py_man_cmd = f"python manage.py {cmd}"
+        py_man_cmd = f"python3 manage.py {cmd}"
         return subprocess.Popen(split(py_man_cmd))
 
 
@@ -93,13 +94,13 @@ def build_db_and_papers():
         "plom_preparation_extrapage --build",
         "plom_build_papers --start-all",
     ]:
-        py_man_cmd = f"python manage.py {cmd}"
+        py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
 
 
 def wait_for_papers_to_be_ready():
-    py_man_ep = "python manage.py plom_preparation_extrapage"
-    py_man_papers = "python manage.py plom_build_papers --status"
+    py_man_ep = "python3 manage.py plom_preparation_extrapage"
+    py_man_papers = "python3 manage.py plom_build_papers --status"
     ep_todo = True
     papers_todo = True
 
