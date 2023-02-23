@@ -127,7 +127,8 @@ def wait_for_papers_to_be_ready():
 
 def wait_for_exit():
     while True:
-        if not input("Press Enter to quit:"):
+        x = input("Press type 'quit' and press Enter to quit the demo: ")
+        if x.casefold() == "quit":
             break
 
 

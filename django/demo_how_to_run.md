@@ -12,6 +12,7 @@ python3 -m demo
 
 from the plom/django directory
 
+To stop the demo type "quit" and press enter.
 
 If the demo crashes (or you force quit out of it) then you may have
 lingering huey tasks floating about that you'll need to terminate

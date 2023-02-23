@@ -31,24 +31,36 @@ class HueyTask(PolymorphicModel):
     @classmethod
     @queue.signal(SIGNAL_EXECUTING)
     def start_task(signal, task):
-        task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = "started"
-        task_obj.save()
+        try:
+            task_obj = HueyTask.objects.get(huey_id=task.id)
+            task_obj.status = "started"
+            task_obj.save()
+        except HueyTask.DoesNotExist:
+            # task has been deleted from underneath us.
+            print(f"Task {task.id} is no longer in the database.")
 
     @classmethod
     @queue.signal(SIGNAL_COMPLETE)
     def end_task(signal, task):
-        task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = "complete"
-        task_obj.save()
+        try:
+            task_obj = HueyTask.objects.get(huey_id=task.id)
+            task_obj.status = "complete"
+            task_obj.save()
+        except HueyTask.DoesNotExist:
+            # task has been deleted from underneath us.
+            print(f"Task {task.id} is no longer in the database.")
 
     @classmethod
     @queue.signal(SIGNAL_ERROR)
     def error_task(signal, task, exc):
-        task_obj = HueyTask.objects.get(huey_id=task.id)
-        task_obj.status = "error"
-        task_obj.message = exc
-        task_obj.save()
+        try:
+            task_obj = HueyTask.objects.get(huey_id=task.id)
+            task_obj.status = "error"
+            task_obj.message = exc
+            task_obj.save()
+        except HueyTask.DoesNotExist:
+            # task has been deleted from underneath us.
+            print(f"Task {task.id} is no longer in the database.")
 
 
 # ---------------------------------
