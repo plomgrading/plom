@@ -17,7 +17,7 @@ def test_cover_page(tmpdir):
     pg = doc[0]
     text = pg.get_text()
     assert "Agnesi" in text
-    assert "Test number = 0123" in text
+    assert "Test number: 0123" in text
     assert "12345678" in text
 
 
