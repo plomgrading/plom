@@ -22,6 +22,16 @@ def test_cover_page(tmpdir):
     assert "12345678" in text
 
 
+def test_cover_page_hardcoded_letter_paper(tmpdir):
+    f = Path(tmpdir) / "foo.pdf"
+    data = [[1, 1, 4, 4], [2, 1, 5, 6]]
+    makeCover("0123", "A", 12345678, data, f, solution=True)
+    doc = fitz.open(f)
+    pg = doc[0]
+    assert pg.rect.width == 612
+    assert pg.rect.height == 792
+
+
 def test_cover_page_solution(tmpdir):
     f = Path(tmpdir) / "soln.pdf"
     data = [[1, 1, 4, 4], [2, 1, 1066, 6]]
@@ -59,15 +69,24 @@ def test_cover_page_non_ascii(tmpdir):
     assert "我爱你" in text
 
 
-def test_cover_page_19_questions_one_page(tmpdir):
-    # see Issue #2519
+def test_cover_page_at_least_20_questions_one_page_issue2519(tmpdir):
     f = Path(tmpdir) / "foo.pdf"
-    N = 19
+    N = 20
     data = [[n, 1, 2, 3] for n in range(1, N + 1)]
     for tf in (True, False):
         makeCover("0123", "A", 12345678, data, f, solution=tf)
         doc = fitz.open(f)
         assert len(doc) == 1
+
+
+def test_cover_page_a_great_many_questions_multipage_issue2519(tmpdir):
+    tmpdir = Path(tmpdir)
+    N = 100
+    data = [[f"Q{n}", 1, 2, 3] for n in range(1, N + 1)]
+    for soln, f in ((False, tmpdir / "foo.pdf"), (True, tmpdir / "soln.pdf")):
+        makeCover("0123", "A", 12345678, data, f, solution=soln)
+        doc = fitz.open(f)
+        assert len(doc) >= 3
 
 
 def test_cover_page_totalling(tmpdir):
