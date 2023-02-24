@@ -106,7 +106,7 @@ class Command(BaseCommand):
 
     def delete_all_tasks(self):
         bp_service = BuildPapersService()
-        bp_service.delete_all_task()
+        bp_service.reset_all_tasks()
 
     def cancel_all_tasks(self):
         bp_service = BuildPapersService()
