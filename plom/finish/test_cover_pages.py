@@ -59,15 +59,24 @@ def test_cover_page_non_ascii(tmpdir):
     assert "我爱你" in text
 
 
-def test_cover_page_19_questions_one_page(tmpdir):
-    # see Issue #2519
+def test_cover_page_at_least_20_questions_one_page_issue2519(tmpdir):
     f = Path(tmpdir) / "foo.pdf"
-    N = 19
+    N = 20
     data = [[n, 1, 2, 3] for n in range(1, N + 1)]
     for tf in (True, False):
         makeCover("0123", "A", 12345678, data, f, solution=tf)
         doc = fitz.open(f)
         assert len(doc) == 1
+
+
+def test_cover_page_a_great_many_questions_multipage_issue2519(tmpdir):
+    tmpdir = Path(tmpdir)
+    N = 100
+    data = [[f"Q{n}", 1, 2, 3] for n in range(1, N + 1)]
+    for soln, f in ((False, "foo.pdf"), (True, "soln.pdf")):
+        makeCover("0123", "A", 12345678, data, tmpdir / f, solution=soln)
+        doc = fitz.open(f)
+        assert len(doc) >= 3
 
 
 def test_cover_page_totalling(tmpdir):

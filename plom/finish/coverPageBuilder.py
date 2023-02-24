@@ -35,27 +35,34 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
                 raise AssertionError(f"Table data {x} should be numeric.")
 
     m = 50  # margin
-    w = 75  # box width
-    w_label = 125  # label box width
+    page_top = 75
+    # leave some extra; we stretch to avoid single line on new page
+    page_bottom = 720
+    first_page_table_top = 150  # the first table starts below some info
+    extra_sep = 2  # some extra space for double hline near header
+    w = 70  # box width
+    w_label = 120  # label box width
+    deltav = 20  # how much vertical space for each row
 
     cover = fitz.open()
-    vdisp = fitz.Rect(0, 25, 0, 25)
     align = fitz.TEXT_ALIGN_CENTER
-    fontsize = 14
+    fontsize = 12
+    big_font = 14
 
     page = cover.new_page()
     tw = fitz.TextWriter(page.rect)
     if solution:
-        text = "Solutions:"
+        text = "Solutions"
     else:
-        text = "Results:"
-    tw.append((m, 75), text, fontsize=fontsize)
-    text = f"\N{Bullet} Name: {sname}"
-    tw.append((m + w, 75), text, fontsize=fontsize)
-    text = f"\N{Bullet} ID: {sid}"
-    tw.append((m + w, 100), text, fontsize=fontsize)
-    text = f"\N{Bullet} Test number: {test_num}"
-    tw.append((m + w, 125), text, fontsize=fontsize)
+        text = "Results"
+    bullet = "\N{Bullet}"
+    tw.append((m, page_top), text, fontsize=big_font)
+    text = f"{bullet} Name: {sname}"
+    tw.append((m + w, page_top), text, fontsize=big_font)
+    text = f"{bullet} ID: {sid}"
+    tw.append((m + w, page_top + 25), text, fontsize=big_font)
+    text = f"{bullet} Test number: {test_num}"
+    tw.append((m + w, page_top + 50), text, fontsize=big_font)
 
     if solution:
         tab = [[row[0], row[1], row[3]] for row in tab]
@@ -73,75 +80,54 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     shape = page.new_shape()
 
     # rectangles for header that we will shift downwards as we go
-    rect0 = [fitz.Rect(m, 150, m + w_label, 175)] + [
-        fitz.Rect(m + w_label + w * j, 150, m + w_label + w * (j + 1), 175)
-        for j in range(len(headers) - 1)
-    ]
+    def make_boxes(v1):
+        v2 = v1 + deltav
+        return [fitz.Rect(m, v1, m + w_label, v2)] + [
+            fitz.Rect(m + w_label + w * j, v1, m + w_label + w * (j + 1), v2)
+            for j in range(len(headers) - 1)
+        ]
 
-    # Draw the header
-    for r, header in zip(rect0, headers):
+    vpos = first_page_table_top
+    page_row = 0
+    for j, row in enumerate(tab):
+        if page_row == 0:
+            # Draw the header
+            for header, r in zip(headers, make_boxes(vpos)):
+                shape.draw_rect(r)
+                excess = tw.fill_textbox(r, header, align=align, fontsize=fontsize)
+                assert not excess, f'Table header "{header}" too long for box'
+            vpos += deltav + extra_sep
+            page_row += 1
+
+        for txt, r in zip(row, make_boxes(vpos)):
+            shape.draw_rect(r)
+            excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+            assert not excess, f'Table entry "{txt}" too long for box'
+        vpos += deltav
+        page_row += 1
+
+        if vpos > page_bottom and j < (len(tab) - 1):
+            # switch to new page, unless we only have the summary row left
+            # in which case stretch a little to avoid a single-line next page
+            shape.finish(width=0.3, color=(0, 0, 0))
+            shape.commit()
+            text = "Table continues on next page..."
+            p = fitz.Point(m, page.rect.height - m)
+            tw.append(p, text, fontsize=fontsize)
+            tw.write_text(page)
+            page = cover.new_page()
+            tw = fitz.TextWriter(page.rect)
+            shape = page.new_shape()
+            vpos = page_top
+            page_row = 0
+
+    # Draw the final totals row
+    for txt, r in zip(totals, make_boxes(vpos + extra_sep)):
         shape.draw_rect(r)
-        excess = tw.fill_textbox(r, header, align=align, fontsize=fontsize)
-        assert not excess, f'Table header "{header}" too long for box'
-
-    if len(tab) <= 21:  # keep on one page
-        for i, row in enumerate(tab):
-            rects = [r + vdisp * (i + 1) for r in rect0]
-            for txt, r in zip(row, rects):
-                shape.draw_rect(r)
-                excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
-                assert not excess, f'Table entry "{txt}" too long for box'
-        # Draw the final totals row
-        rects = [r + vdisp * (len(tab) + 1) for r in rect0]
-        for r, txt in zip(rects, totals):
-            shape.draw_rect(r)
-            excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
-            assert not excess, f'Table entry "{txt}" too long for box'
-        shape.finish(width=0.3, color=(0, 0, 0))
-        shape.commit()
-
-    else:  # split onto two pages
-        for i, row in enumerate(tab[:20]):
-            rects = [r + vdisp * (i + 1) for r in rect0]
-            for txt, r in zip(row, rects):
-                shape.draw_rect(r)
-                excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
-                assert not excess, f'Table entry "{txt}" too long for box'
-        shape.finish(width=0.3, color=(0, 0, 0))
-        shape.commit()
-
-        text = "Table continues on next page..."
-        p = fitz.Point(m, page.rect.height - m)
-        tw.append(p, text, fontsize=fontsize)
-        tw.write_text(page)
-
-        # now go on to page 2.
-
-        page = cover.new_page()
-        tw = fitz.TextWriter(page.rect)
-        shape = page.new_shape()
-        # Redraw the header
-        for r, header in zip(rect0, headers):
-            shape.draw_rect(r)
-            excess = tw.fill_textbox(r, header, align=align, fontsize=fontsize)
-        assert not excess, f'Table header "{header}" too long for box'
-        for i, row in enumerate(tab[20:]):
-            rects = [r + vdisp * (i + 1) for r in rect0]
-            for txt, r in zip(row, rects):
-                shape.draw_rect(r)
-                excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
-                assert not excess, f'Table entry "{txt}" too long for box'
-        # Draw the final totals row
-        rects = [r + vdisp * (len(tab) + 1) for r in rect0]
-        for r, txt in zip(rects, totals):
-            shape.draw_rect(r)
-            excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
-            assert not excess, f'Table entry "{txt}" too long for box'
-        shape.finish(width=0.3, color=(0, 0, 0))
-        shape.commit()
-
-
-
+        excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+        assert not excess, f'Table entry "{txt}" too long for box'
+    shape.finish(width=0.3, color=(0, 0, 0))
+    shape.commit()
 
     if footer:
         # Last words
