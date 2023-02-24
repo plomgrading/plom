@@ -648,14 +648,14 @@ class ScanService:
     @transaction.atomic
     def staging_bundle_status_cmd(self):
         bundles = StagingBundle.objects.all()
-        test_list = []
+        bundle_status = []
         status_header = ("Bundle name", "Total pages", "Valid pages", "Error pages", "QR read", "Pushed", "Uploaded by")
-        test_list.append(status_header)
+        bundle_status.append(status_header)
         for bundle in bundles:
             images = StagingImage.objects.filter(bundle=bundle)
             valid_images = self.get_n_complete_reading_tasks(bundle)
             all_error_images = StagingImage.objects.filter(bundle=bundle, colliding=True, unknown=True, error=True)
             bundle_data = (bundle.slug, len(images), valid_images, len(all_error_images), bundle.has_qr_codes, bundle.pushed, bundle.user)
-            test_list.append(bundle_data)
-        print(tabulate(test_list, headers='firstrow'))
+            bundle_status.append(bundle_data)
+        print(tabulate(bundle_status, headers='firstrow'))
         
