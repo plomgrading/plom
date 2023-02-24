@@ -73,8 +73,8 @@ def test_cover_page_a_great_many_questions_multipage_issue2519(tmpdir):
     tmpdir = Path(tmpdir)
     N = 100
     data = [[f"Q{n}", 1, 2, 3] for n in range(1, N + 1)]
-    for soln, f in ((False, "foo.pdf"), (True, "soln.pdf")):
-        makeCover("0123", "A", 12345678, data, tmpdir / f, solution=soln)
+    for soln, f in ((False, tmpdir / "foo.pdf"), (True, tmpdir / "soln.pdf")):
+        makeCover("0123", "A", 12345678, data, f, solution=soln)
         doc = fitz.open(f)
         assert len(doc) >= 3
 
