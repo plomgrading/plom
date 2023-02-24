@@ -27,8 +27,8 @@ def makeCover(
     Args:
         tab (list): information about the test that should be put on the
             coverpage.  A list of lists where each row is
-            ``[qlabel, ver, mark, maxPossibleMark]``.
-            ``mark`` is ignored if ``solution`` is `True`.
+            ``[qlabel, ver, mark, maxPossibleMark]`` if not solutions or
+            ``[qlabel, ver, maxPossibleMark]`` if solutions.
         pdfname (pathlib.Path): filename to save the pdf into.
 
     Keyword Args:
@@ -41,6 +41,10 @@ def makeCover(
     """
     # check all table entries that should be numbers are non-negative numbers
     for row in tab:
+        if solution:
+            assert len(row) == 3
+        else:
+            assert len(row) == 4
         for x in row[1:]:
             try:
                 y = float(x)
@@ -89,7 +93,6 @@ def makeCover(
         vpos += deltav
 
     if solution:
-        tab = [[row[0], row[1], row[3]] for row in tab]
         headers = ["question", "version", "mark out of"]
         totals = ["total", "", sum([row[2] for row in tab])]
     else:

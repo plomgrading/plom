@@ -31,7 +31,7 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     Returns:
         pathlib.Path: filename of the coverpage.
     """
-    # should be [ [sid, sname], [q,v,m,outof], [q,v,m,outof], etc]
+    # should be [ [sid, sname], [q,v,m], [q,v,m], etc]
     cpi = msgr.RgetCoverPageInfo(t)
     spec = msgr.get_spec()
     sid = cpi[0][0]
@@ -40,7 +40,11 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     arg = []
     for qvm in cpi[1:]:
         question_label = get_question_label(spec, qvm[0])
-        arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
+        if solution:
+            arg.append([question_label, qvm[1], maxMarks[str(qvm[0])]])
+        else:
+            arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
+
     covername = tmpdir / f"cover_{int(t):04}.pdf"
     makeCover(
         arg,
