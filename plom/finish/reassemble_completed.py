@@ -41,12 +41,11 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     for qvm in cpi[1:]:
         question_label = get_question_label(spec, qvm[0])
         arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
-    testnumstr = str(t).zfill(4)
-    covername = tmpdir / "cover_{}.pdf".format(testnumstr)
+    covername = tmpdir / f"cover_{int(t):04}.pdf"
     makeCover(
         arg,
         covername,
-        test_num=int(t),
+        test_num=t,
         info=(sname, sid),
         solution=solution,
         exam_name=spec["longName"],
