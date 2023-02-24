@@ -31,7 +31,10 @@ class Command(BaseCommand):
             timestamp = datetime.timestamp(timezone.now())
             hashed = hashlib.sha256(file_bytes).hexdigest()
 
-        scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
+        if scanner.check_for_duplicate_hash:
+            self.stdout.write("Upload failed - Bundle was already uploaded.")
+        else:
+            scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
     
     def staging_bundle_status(self):
         scanner = ScanService()
