@@ -8,6 +8,7 @@ import fitz
 from fitz import FileDataError
 from datetime import datetime
 
+from django.utils import timezone
 from django import forms
 from django.forms import ValidationError
 from django.utils.text import slugify
@@ -76,7 +77,7 @@ class BundleUploadForm(forms.Form):
                 {
                     "pdf_doc": pdf_doc,
                     "slug": slug,
-                    "time_uploaded": datetime.now(),
+                    "time_uploaded": timezone.now(),
                     "sha256": hashed,
                 }
             )
@@ -140,7 +141,7 @@ class ReplaceImageForm(forms.Form):
                 raise ValidationError("Only upload a single page pdf file.")
 
             # turn that pdf file into page image
-            timestamp = datetime.timestamp(datetime.now())
+            timestamp = datetime.timestamp(timezone.now())
             file_name = f"{timestamp}.pdf"
             replace_dir = pathlib.Path("media") / "replace_pages"
             replace_dir.mkdir(exist_ok=True)

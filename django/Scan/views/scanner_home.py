@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Natalie Balashov
 
 import pathlib
 from datetime import datetime
+from django.utils import timezone
 import arrow
 
 from django.shortcuts import render
@@ -72,7 +74,7 @@ class ScannerHomeView(ScannerRequiredView):
         bundles = []
         hash_pushed_bundle = False
         for bundle in user_bundles:
-            date_time = datetime.fromtimestamp(bundle.timestamp)
+            date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
             pages = scanner.get_n_images(bundle)
             n_pushed = scanner.get_n_pushed_images(bundle)
             flagged_pages = scanner.get_n_flagged_image(bundle)
