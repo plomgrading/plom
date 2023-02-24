@@ -16,6 +16,7 @@ from django_huey import db_task
 from django.utils import timezone
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
+from tabulate import tabulate
 
 from .image_process import PageImageProcessor
 from Scan.models import (
@@ -646,8 +647,15 @@ class ScanService:
 
     @transaction.atomic
     def staging_bundle_status_cmd(self):
-        test_data = StagingBundle.objects.all()
-        for i in test_data:
-            print(i.slug)
-            test2 = StagingImage.objects.filter(bundle=i)
-            print(len(test2))
+        bundles = StagingBundle.objects.all()
+        test_list = []
+        status_header = ("Bundle name", "Total pages", "Valid pages", "Error pages", "QR read", "Pushed", "Uploaded by")
+        test_list.append(status_header)
+        for bundle in bundles:
+            images = StagingImage.objects.filter(bundle=bundle)
+            valid_images = self.get_n_complete_reading_tasks(bundle)
+            all_error_images = StagingImage.objects.filter(bundle=bundle, colliding=True, unknown=True, error=True)
+            bundle_data = (bundle.slug, len(images), valid_images, len(all_error_images), bundle.has_qr_codes, bundle.pushed, bundle.user)
+            test_list.append(bundle_data)
+        print(tabulate(test_list, headers='firstrow'))
+        
