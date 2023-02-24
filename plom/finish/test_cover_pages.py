@@ -12,7 +12,7 @@ from plom.finish.coverPageBuilder import makeCover
 def test_cover_page(tmpdir):
     f = Path(tmpdir) / "foo.pdf"
     data = [[1, 1, 3, 4], [2, 1, 4, 6], [3, 2, 0, 5]]
-    makeCover("0123", "Agnesi", 12345678, data, f)
+    makeCover(data, f, test_num="0123", info=("Agnesi", 12345678))
     doc = fitz.open(f)
     assert len(doc) == 1
     pg = doc[0]
@@ -25,7 +25,7 @@ def test_cover_page(tmpdir):
 def test_cover_page_hardcoded_letter_paper(tmpdir):
     f = Path(tmpdir) / "foo.pdf"
     data = [[1, 1, 4, 4], [2, 1, 5, 6]]
-    makeCover("0123", "A", 12345678, data, f, solution=True)
+    makeCover(data, f, solution=True)
     doc = fitz.open(f)
     pg = doc[0]
     assert pg.rect.width == 612
@@ -35,7 +35,7 @@ def test_cover_page_hardcoded_letter_paper(tmpdir):
 def test_cover_page_solution(tmpdir):
     f = Path(tmpdir) / "soln.pdf"
     data = [[1, 1, 4, 4], [2, 1, 1066, 6]]
-    makeCover("0123", "A", 12345678, data, f, solution=True)
+    makeCover(data, f, solution=True)
     doc = fitz.open(f)
     assert len(doc) == 1
     pg = doc[0]
@@ -48,7 +48,7 @@ def test_cover_page_solution(tmpdir):
 def test_cover_page_question_labels(tmpdir):
     f = Path(tmpdir) / "foo.pdf"
     data = [["Q1", 1, 3, 4], ["Ex2", 1, 4, 6], ["Exercise 3", 2, 0, 5]]
-    makeCover("0123", "A", 12345678, data, f)
+    makeCover(data, f)
     doc = fitz.open(f)
     pg = doc[0]
     text = pg.get_text()
@@ -60,7 +60,7 @@ def test_cover_page_question_labels(tmpdir):
 def test_cover_page_non_ascii(tmpdir):
     f = Path(tmpdir) / "foo.pdf"
     data = [["№1", 1, 3, 4], ["Q二", 1, 4, 6]]
-    makeCover("0123", "我爱你", 12345678, data, f)
+    makeCover(data, f, test_num="0123", info=("我爱你", 12345678))
     doc = fitz.open(f)
     pg = doc[0]
     text = pg.get_text()
@@ -74,7 +74,7 @@ def test_cover_page_at_least_20_questions_one_page_issue2519(tmpdir):
     N = 20
     data = [[n, 1, 2, 3] for n in range(1, N + 1)]
     for tf in (True, False):
-        makeCover("0123", "A", 12345678, data, f, solution=tf)
+        makeCover(data, f, solution=tf, test_num="0123", info=("A", 12345678))
         doc = fitz.open(f)
         assert len(doc) == 1
 
@@ -84,7 +84,7 @@ def test_cover_page_a_great_many_questions_multipage_issue2519(tmpdir):
     N = 100
     data = [[f"Q{n}", 1, 2, 3] for n in range(1, N + 1)]
     for soln, f in ((False, tmpdir / "foo.pdf"), (True, tmpdir / "soln.pdf")):
-        makeCover("0123", "A", 12345678, data, f, solution=soln)
+        makeCover(data, f, solution=soln)
         doc = fitz.open(f)
         assert len(doc) >= 3
 
@@ -99,7 +99,7 @@ def test_cover_page_totalling(tmpdir):
     )
     for score, total, data in check:
         f = Path(tmpdir) / "foo.pdf"
-        makeCover("0123", "A", 12345678, data, f, footer=False)
+        makeCover(data, f, footer=False)
         doc = fitz.open(f)
         pg = doc[0]
         stuff = pg.get_text("words")
@@ -121,7 +121,7 @@ def test_cover_page_doesnt_like_negatives(tmpdir):
     for score, total, data in check:
         f = Path(tmpdir) / "foo.pdf"
         with raises(AssertionError):
-            makeCover("0123", "A", 12345678, data, f, footer=False)
+            makeCover(data, f)
 
 
 def test_cover_page_foolish_stuff_gives_errors(tmpdir):
@@ -133,7 +133,7 @@ def test_cover_page_foolish_stuff_gives_errors(tmpdir):
     for score, total, data in check:
         f = Path(tmpdir) / "foo.pdf"
         with raises(AssertionError):
-            makeCover("0123", "A", 12345678, data, f, footer=False)
+            makeCover(data, f)
 
 
 def test_cover_page_title(tmpdir):
@@ -141,7 +141,9 @@ def test_cover_page_title(tmpdir):
     data = [[1, 1, 3, 4], [2, 1, 4, 6], [3, 2, 0, 5]]
     s = "Math 947 Differential Sub-manifolds Quiz 7"
     for soln in (True, False):
-        makeCover("0123", "A", 12345678, data, f, exam_name=s, solution=soln)
+        makeCover(
+            data, f, exam_name=s, solution=soln, test_num="0123", info=("A", 12345678)
+        )
         doc = fitz.open(f)
         pg = doc[0]
         text = pg.get_text()

@@ -13,21 +13,28 @@ from .examReassembler import papersize_portrait
 
 
 def makeCover(
-    test_num, sname, sid, tab, pdfname, *, solution=False, footer=True, exam_name=None
+    tab,
+    pdfname,
+    *,
+    test_num=None,
+    info=None,
+    solution=False,
+    footer=True,
+    exam_name=None,
 ):
     """Create html page of name ID etc and table of marks.
 
     Args:
-        test_num (int): the test number for the test we are making the cover for.
-        sname (str): student name.
-        sid (str): student id.
         tab (list): information about the test that should be put on the coverpage.
-        pdfname (pathlib.Path): filename to save the pdf into
+        pdfname (pathlib.Path): filename to save the pdf into.
 
     Keyword Args:
         exam_name (str): the "long name" of this assessment.
-        solution (bool): whether or not this is a cover page for solutions
-        footer (bool): whether to print a footer with timestamp
+        test_num (int): the test number for which we are making a cover.
+        info (list/tuple): currently a 2-tuple/2-list of student name (str)
+            and student id (str).
+        solution (bool): whether or not this is a cover page for solutions.
+        footer (bool): whether to print a footer with timestamp.
     """
     # check all table entries that should be numbers are non-negative numbers
     for row in tab:
@@ -41,8 +48,7 @@ def makeCover(
     m = 50  # margin
     page_top = 75
     # leave some extra; we stretch to avoid single line on new page
-    page_bottom = 720
-    first_page_table_top = 160  # the first table starts below some info
+    page_bottom = 700
     extra_sep = 2  # some extra space for double hline near header
     w = 70  # box width
     w_label = 120  # label box width
@@ -55,31 +61,39 @@ def makeCover(
 
     paper_width, paper_height = papersize_portrait
     page = cover.new_page(width=paper_width, height=paper_height)
+
+    vpos = page_top
     tw = fitz.TextWriter(page.rect)
     if exam_name:
-        tw.append((m, page_top), exam_name, fontsize=big_font)
+        tw.append((m, vpos), exam_name, fontsize=big_font)
+        vpos += deltav
+        vpos += deltav // 2
     if solution:
         text = "Solutions"
     else:
         text = "Results"
+    tw.append((m, vpos), text, fontsize=big_font)
     bullet = "\N{Bullet}"
-    tw.append((m, page_top + 25), text, fontsize=big_font)
-    text = f"{bullet} Name: {sname}"
-    tw.append((m + 100, page_top + 25), text, fontsize=big_font)
-    text = f"{bullet} ID: {sid}"
-    tw.append((m + 100, page_top + 25 + deltav), text, fontsize=big_font)
-    text = f"{bullet} Test number: {test_num}"
-    tw.append((m + 100, page_top + 25 + 2 * deltav), text, fontsize=big_font)
+    if info:
+        sname, sid = info
+        tw.append((m + 100, vpos), f"{bullet} Name: {sname}", fontsize=big_font)
+        vpos += deltav
+        tw.append((m + 100, vpos), f"{bullet} ID: {sid}", fontsize=big_font)
+        vpos += deltav
+    if test_num:
+        text = f"{bullet} Test number: {test_num}"
+        tw.append((m + 100, vpos), text, fontsize=big_font)
+        vpos += deltav
 
     if solution:
         tab = [[row[0], row[1], row[3]] for row in tab]
         headers = ["question", "version", "mark out of"]
-        totals = ["total", ".", sum([row[2] for row in tab])]
+        totals = ["total", "", sum([row[2] for row in tab])]
     else:
         headers = ["question", "version", "mark", "out of"]
         totals = [
             "total",
-            ".",
+            "",
             sum([row[2] for row in tab]),
             sum([row[3] for row in tab]),
         ]
@@ -94,7 +108,6 @@ def makeCover(
             for j in range(len(headers) - 1)
         ]
 
-    vpos = first_page_table_top
     page_row = 0
     for j, row in enumerate(tab):
         if page_row == 0:

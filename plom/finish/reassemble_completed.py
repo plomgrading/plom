@@ -43,7 +43,7 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
         arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
     testnumstr = str(t).zfill(4)
     covername = tmpdir / "cover_{}.pdf".format(testnumstr)
-    makeCover(int(t), sname, sid, arg, covername, solution=solution)
+    makeCover(arg, covername, test_num=int(t), info=(sname, sid), solution=solution)
     return covername
 
 
