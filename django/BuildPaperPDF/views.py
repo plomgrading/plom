@@ -94,7 +94,7 @@ class BuildPaperPDFs(ManagerRequiredView):
         sstu = StagingStudentService()
         classdict = sstu.get_classdict()
 
-        bps.clear_tasks()
+        # bps.clear_tasks()
         bps.stage_all_pdf_jobs(classdict=classdict)
         task_context = bps.get_task_context()
 

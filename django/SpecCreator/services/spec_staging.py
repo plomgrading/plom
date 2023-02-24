@@ -626,7 +626,4 @@ class StagingSpecificationService:
         spec_copy.pop("publicCode", None)
         spec_copy.pop("privateSeed", None)
 
-        print(staged_spec_dict)
-        print(spec_copy)
-
         return staged_spec_dict == spec_copy

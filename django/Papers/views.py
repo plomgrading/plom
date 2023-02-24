@@ -25,18 +25,24 @@ class CreateTestPapers(ManagerRequiredView):
     """
 
     def post(self, request):
+        print("v" * 40)
         pcs = PaperCreatorService()
         qvs = PQVMappingService()
 
         qvmap = qvs.get_pqv_map_dict()
-        status, err = pcs.add_all_papers_in_qv_map(qvmap)
+        # by default we do not create the papers in background
+        status, err = pcs.add_all_papers_in_qv_map(qvmap, background=False)
+        # TODO - if we want to do this in the background, then we
+        # cannot build pdf tasks at the same time, since they need the
+        # classlist...  else we have to pass required classlist info
+        # to the pdf task builder one at a time.
+
         if not status:
             print(err)
-
+        # note that adding the papers does not automatically create the associated pdf build tasks
+        # for that we need the classlist, hence the following.
         classdict = StagingStudentService().get_classdict()
-        bp_service = BuildPapersService()
-        bp_service.clear_tasks()
-        bp_service.stage_all_pdf_jobs(classdict=classdict)
+        BuildPapersService().stage_all_pdf_jobs(classdict=classdict)
 
         progress_url = reverse("papers_progress")
         return HttpResponse(
@@ -48,8 +54,7 @@ class CreateTestPapers(ManagerRequiredView):
         For testing purposes: delete all papers from the database, and the associated build tasks.
         """
         PaperCreatorService().remove_all_papers_from_db()
-        BuildPapersService().clear_tasks()
-        CreatePaperTask.objects.all().delete()
+        # note - when a paper is deleted, the associated pdf-build task is deleted as well via a signal.
         return HttpResponseClientRefresh()
 
 

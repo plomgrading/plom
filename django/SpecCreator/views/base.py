@@ -50,8 +50,6 @@ class TestSpecPageView(ManagerRequiredView):
             }
         )
 
-        print(spec.get_progress_dict())
-
         return context
 
 

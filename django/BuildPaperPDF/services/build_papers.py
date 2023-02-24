@@ -82,15 +82,6 @@ class BuildPapersService:
         task.save()
         return task
 
-    @transaction.atomic()
-    def clear_tasks(self):
-        """Clear all of the build paper tasks"""
-        # TODO - improve file handling here when we fix up file handling for all pdf build tasks.
-        PDFTask.objects.all().delete()
-        if self.papers_to_print.exists():
-            shutil.rmtree(self.papers_to_print)
-        self.papers_to_print.mkdir(exist_ok=True)
-
     def build_single_paper(self, index: int, spec: dict, question_versions: dict):
         """Build a single test-paper (with huey!)"""
         pdf_build = self._build_single_paper(index, spec, question_versions)
@@ -140,7 +131,6 @@ class BuildPapersService:
         # note - classdict is a list of dicts - change this to more useful format
         prenamed = {X["paper_number"]: X for X in classdict if X["paper_number"] > 0}
 
-        print(classdict)
         self.papers_to_print.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
             paper_number = paper_obj.paper_number
@@ -150,7 +140,7 @@ class BuildPapersService:
                 student_id = prenamed[paper_number]["id"]
                 student_name = prenamed[paper_number]["studentName"]
 
-            pdf_job = self.create_task(
+            self.create_task(
                 paper_number, None, student_id=student_id, student_name=student_name
             )
 

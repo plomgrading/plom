@@ -56,7 +56,6 @@ class TestSpecCreatorVersionsRefPDFPage(TestSpecPageView):
     def post(self, request):
         context = self.build_context()
         form = forms.TestSpecVersionsRefPDFForm(request.POST, request.FILES)
-        print(form.files)
         if form.is_valid():
             data = form.cleaned_data
 

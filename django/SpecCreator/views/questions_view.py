@@ -63,7 +63,6 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
                 pqv.remove_pqv_map()
 
             marks = data["total_marks"]
-            print(marks)
             spec.set_total_marks(marks)
 
             return HttpResponseRedirect(reverse("q_detail", args=(1,)))
