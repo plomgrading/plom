@@ -7,19 +7,28 @@ import logging
 import sys
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
-from PyQt5.QtCore import Qt, QBuffer, QByteArray
+from PyQt5.QtCore import Qt, QBuffer, QByteArray, QPointF
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QKeySequence, QPainter, QPixmap, QMovie
+from PyQt5.QtGui import (
+    QColor,
+    QKeySequence,
+    QPainter,
+    QPainterPath,
+    QMovie,
+    QPen,
+    QPixmap,
+)
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QDialog,
     QFrame,
     QHBoxLayout,
+    QGraphicsPathItem,
     QGraphicsScene,
     QGraphicsView,
     QHeaderView,
@@ -103,6 +112,13 @@ class KeyHelp(QDialog):
         vb.addLayout(buttons)
         self.setLayout(vb)
         self.tabs.setCurrentIndex(initial_tab)
+        # do we still get flicker: this still isn't the right way to force resize?
+        self.tabs.currentChanged.connect(self._hacky_resizer)
+
+    def _hacky_resizer(self, n):
+        # on tab change, we sadly need some hacks to zoom the QGraphicViews
+        for thing in self._things_to_hack_zoom:
+            thing.resetView()
 
     def get_selected_keybinding_name(self):
         """Return the name (str) of the selected keybinding."""
@@ -183,6 +199,7 @@ class KeyHelp(QDialog):
             w.deleteLater()
             self.tabs.removeTab(1)
 
+        self._things_to_hack_zoom = []
         for label, tw in self.make_ui_tables(keydata).items():
             # special case the first 2 with graphics
             if label == "Rubrics":
@@ -193,6 +210,7 @@ class KeyHelp(QDialog):
                 wb.addWidget(d)
                 wb.addWidget(tw)
                 w.setLayout(wb)
+                self._things_to_hack_zoom.append(d)
             elif label == "Annotation":
                 w = QWidget()
                 wb = QVBoxLayout()
@@ -201,6 +219,7 @@ class KeyHelp(QDialog):
                 wb.addWidget(d)
                 wb.addWidget(tw)
                 w.setLayout(wb)
+                self._things_to_hack_zoom.append(d)
             else:
                 w = tw
             self.tabs.addTab(w, accel[label])
@@ -271,6 +290,68 @@ class KeyHelp(QDialog):
         InfoMsg(self, txt).exec()
 
 
+def _label(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0)):
+    # A private helper function: draw a line on scene connecting a certain
+    # point to a control, then draw a button and connect its blick to
+    # the result of a "lambda_factory" passed in.
+
+    sheet = "QPushButton { background-color : teal; }"
+    # sheet = "QPushButton { color : teal; }"
+
+    pen = QPen(QColor("teal"), 4)
+    p = QPainterPath()
+    p.moveTo(x, y)
+    p.addEllipse(QPointF(x, y), 4, 4)
+    p.moveTo(x, y)
+    for dx, dy in route:
+        x += dx
+        y += dy
+        p.lineTo(x, y)
+    p.addEllipse(QPointF(x, y), 4, 4)
+
+    pi = QGraphicsPathItem()
+    pi.setPath(p)
+    scene.addItem(pi)
+    pi.setPen(pen)
+
+    # extra gap between end and button
+    x += sep[0]
+    y += sep[1]
+
+    key = QKeySequence(keydata[w]["keys"][0])
+    b = QPushButton(key.toString(QKeySequence.NativeText))
+    b.setStyleSheet(sheet)
+    b.setToolTip(keydata[w]["human"])
+    if w in actions_with_changeable_keys:
+        b.setToolTip(b.toolTip() + "\n(click to change)")
+        b.clicked.connect(lambda_factory(w))
+    else:
+        # TODO: a downside is the tooltip does not show
+        b.setEnabled(False)
+    li = scene.addWidget(b)
+    # li.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+    li.setScale(1.66)
+    br = li.mapRectToScene(li.boundingRect())
+    label_offset = 8
+    if d == "N":
+        x -= br.width() / 2
+        y -= br.height()
+        y -= label_offset
+    elif d == "S":
+        x -= br.width() / 2
+        y += label_offset
+    elif d == "W":
+        x -= br.width()
+        x -= label_offset
+        y -= br.height() / 2
+    elif d == "E":
+        x += label_offset
+        y -= br.height() / 2
+    else:
+        raise NotImplementedError("No such direction")
+    li.setPos(x, y)
+
+
 class RubricNavDiagram(QFrame):
     wants_to_change_key = pyqtSignal(str)
 
@@ -280,19 +361,32 @@ class RubricNavDiagram(QFrame):
         view = QGraphicsView()
         view.setRenderHint(QPainter.Antialiasing, True)
         view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # view.setFrameShape(QFrame.NoFrame)
+        view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
         view.setScene(self.scene)
-        view.fitInView(
-            self.scene.sceneRect().adjusted(-40, -40, 40, 40), Qt.KeepAspectRatio
-        )
+        # seems to effect the balance of graphic to bottom list
+        view.scale(0.6, 0.6)
+        self._view = view
 
         grid = QVBoxLayout()
         grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(view)
         self.setLayout(grid)
+        # ugh, this bullshit again
+        # TODO: but it won't help: tab not rendered immediately :(
+        # QTimer.singleShot(500, self.resetView)
+
+    def resetView(self):
+        # Ensure the graphic fits in view with a border around.
+        # (asymmetric border looked better with particular locations of buttons)
+        self._view.fitInView(
+            self.scene.sceneRect().adjusted(-40, -10, 20, 10), Qt.KeepAspectRatio
+        )
+
+    def resizeEvent(self, event):
+        self.resetView()
 
     def change_key(self, action):
         self.wants_to_change_key.emit(action)
@@ -303,29 +397,21 @@ class RubricNavDiagram(QFrame):
         pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
-        sheet = "QPushButton { color : teal; font-size: 24pt;}"
-
         def lambda_factory(w):
+            # the factory returns a function to change a keybinding
             return lambda: self.change_key(w)
 
-        def stuff_it(w, x, y):
-            key = QKeySequence(keydata[w]["keys"][0])
-            b = QPushButton(key.toString(QKeySequence.NativeText))
-            b.setStyleSheet(sheet)
-            b.setToolTip(keydata[w]["human"])
-            if w in actions_with_changeable_keys:
-                b.setToolTip(b.toolTip() + "\n(click to change)")
-                b.clicked.connect(lambda_factory(w))
-            else:
-                # TODO: a downside is the tooltip does not show
-                b.setEnabled(False)
-            li = self.scene.addWidget(b)
-            li.setPos(x, y)
+        def label(*args, **kwargs):
+            # specialize the generic helper fcn to this scene and keydata
+            _label(lambda_factory, self.scene, keydata, *args, **kwargs)
 
-        stuff_it("next-rubric", 340, 250)
-        stuff_it("prev-rubric", 340, 70)
-        stuff_it("prev-tab", -40, -10)
-        stuff_it("next-tab", 160, -10)
+        # then use that helper function to label the controls in the picture
+        r = 12  # radius of turns
+        d = 38  # unit distance
+        label("prev-rubric", 626, 215, ((2 * d, 0), (r, -r), (0, -d)), "N")
+        label("next-rubric", 626, 215, ((2 * d, 0), (r, r), (0, d)), "S")
+        label("prev-tab", 231, 18, ((0, -d), (-r, -r), (-d, 0)), "W")
+        label("next-tab", 231, 18, ((0, -d), (r, -r), (d, 0)), "E")
 
 
 class ToolNavDiagram(QFrame):
@@ -337,19 +423,28 @@ class ToolNavDiagram(QFrame):
         view = QGraphicsView()
         view.setRenderHint(QPainter.Antialiasing, True)
         view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # view.setFrameShape(QFrame.NoFrame)
+        view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
         view.setScene(self.scene)
-        view.fitInView(
-            self.scene.sceneRect().adjusted(-40, -40, 40, 40), Qt.KeepAspectRatio
-        )
+        # seems to effect the balance of graphic to bottom list
+        view.scale(0.6, 0.6)
+        self._view = view
 
         grid = QVBoxLayout()
         grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(view)
         self.setLayout(grid)
+
+    def resetView(self):
+        # Ensure the graphic fits in view with a border around.
+        self._view.fitInView(
+            self.scene.sceneRect().adjusted(-20, -10, 20, 10), Qt.KeepAspectRatio
+        )
+
+    def resizeEvent(self, event):
+        self.resetView()
 
     def change_key(self, action):
         self.wants_to_change_key.emit(action)
@@ -360,37 +455,25 @@ class ToolNavDiagram(QFrame):
         pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
-        # little helper to extract from keydata
-        def key(s):
-            return keydata[s]["keys"][0]
-
-        sheet = "QPushButton { color : teal; font-size: 24pt;}"
-
         def lambda_factory(w):
+            # the factory returns a function to change a keybinding
             return lambda: self.change_key(w)
 
-        def stuff_it(w, x, y):
-            key = QKeySequence(keydata[w]["keys"][0])
-            b = QPushButton(key.toString(QKeySequence.NativeText))
-            b.setStyleSheet(sheet)
-            b.setToolTip(keydata[w]["human"])
-            if w in actions_with_changeable_keys:
-                b.setToolTip(b.toolTip() + "\n(click to change)")
-                b.clicked.connect(lambda_factory(w))
-            else:
-                # TODO: a downside is the tooltip does not show
-                b.setEnabled(False)
-            li = self.scene.addWidget(b)
-            li.setPos(x, y)
+        def lbl(*args, **kwargs):
+            # specialize the generic helper fcn to this scene and keydata
+            _label(lambda_factory, self.scene, keydata, *args, **kwargs)
 
-        stuff_it("next-tool", 240, 320)
-        stuff_it("prev-tool", 40, 320)
-        stuff_it("move", 395, 170)
-        stuff_it("undo", 120, -40)
-        stuff_it("redo", 210, -40)
-        stuff_it("help", 350, -30)
-        stuff_it("zoom", -40, 15)
-        stuff_it("delete", -40, 220)
+        # then use that helper function to label the controls in the picture
+        r = 10  # radius of turns
+        d = 36  # unit distance
+        lbl("next-tool", 266, 385, ((0, d), (r, r), (d, 0)), "E")
+        lbl("prev-tool", 266, 385, ((0, d), (-r, r), (-d, 0)), "W")
+        lbl("move", 560, 254, ((0, d / 2), (r, r), (2 * d, 0)), "E")
+        lbl("undo", 309, 233, ((-25, 0), (-r, -r), (0, -6.5 * d)), "N", sep=(-d, 0))
+        lbl("redo", 333, 233, ((25, 0), (r, -r), (0, -6.5 * d)), "N", sep=(d, 0))
+        lbl("help", 630, 98, ((d, 0), (r, -r), (0, -1.5 * d)), "N", sep=(d, 0))
+        lbl("zoom", 257, 150, ((-7.8 * d, 0), (-r, -r), (0, -2 * d)), "N", sep=(-d, 0))
+        lbl("delete", 10, 230, ((-d, 0), (-r, r), (0, d)), "S", sep=(-d, 0))
 
 
 class ClickDragPage(QWidget):

@@ -6,7 +6,7 @@ import pathlib
 import hashlib
 import fitz
 import shutil
-from datetime import datetime
+from django.utils import timezone
 from collections import Counter
 from django.conf import settings
 from django.db import transaction
@@ -83,7 +83,7 @@ class ScanService:
                 bundle=bundle,
                 huey_id=page_task.id,
                 status="queued",
-                created=datetime.now(),
+                created=timezone.now(),
             )
             page_task_db.save()
 

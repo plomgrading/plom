@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
+import html
+
 from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
@@ -218,21 +220,23 @@ compute_score = compute_score_locabs
 
 
 def render_rubric_as_html(r):
-    # sadly Qt does not seem to understand borders on spans
+    display_delta = html.escape(r["display_delta"])
+    text = html.escape(r["text"])
 
-    # This seems a little plain
+    # Sadly Qt does not seem to understand borders on spans.
+    # This seems a little plain:
     # return f"""
-    #    <span style="color:#FF0000;"><b>{r["display_delta"]}</b> {r["text"]}</span>
+    #    <span style="color:#FF0000;"><b>{display_delta}</b> {r["text"]}</span>
     # """
 
     return f"""
         <table style="color:#FF0000;">
           <tr>
             <td style="padding:2px; border-width:1px; border-style:solid; border-color:#FF0000;">
-              <b>{r["display_delta"]}</b>
+              <b>{display_delta}</b>
             </td>
             <td style="padding:2px; border-width:1px; border-style:dotted; border-color:#FF0000; border-left-style:None;">
-             {r["text"]}
+             {text}
             </td>
           </tr>
         </table>
