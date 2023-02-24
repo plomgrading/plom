@@ -7,13 +7,21 @@ import logging
 import sys
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
-from PyQt5.QtCore import Qt, QBuffer, QByteArray
+from PyQt5.QtCore import Qt, QBuffer, QByteArray, QPointF
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QKeySequence, QPainter, QPixmap, QMovie
+from PyQt5.QtGui import (
+    QColor,
+    QKeySequence,
+    QPainter,
+    QPainterPath,
+    QMovie,
+    QPen,
+    QPixmap,
+)
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -282,9 +290,10 @@ class KeyHelp(QDialog):
         InfoMsg(self, txt).exec()
 
 
-def _lab(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0)):
-    from PyQt5.QtCore import QPointF
-    from PyQt5.QtGui import QPen, QPainterPath, QColor
+def _label(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0)):
+    # A private helper function: draw a line on scene connecting a certain
+    # point to a control, then draw a button and connect its blick to
+    # the result of a "lambda_factory" passed in.
 
     sheet = "QPushButton { background-color : teal; }"
     # sheet = "QPushButton { color : teal; }"
@@ -370,6 +379,8 @@ class RubricNavDiagram(QFrame):
         # QTimer.singleShot(500, self.resetView)
 
     def resetView(self):
+        # Ensure the graphic fits in view with a border around.
+        # (asymmetric border looked better with particular locations of buttons)
         self._view.fitInView(
             self.scene.sceneRect().adjusted(-40, -10, 20, 10), Qt.KeepAspectRatio
         )
@@ -387,17 +398,20 @@ class RubricNavDiagram(QFrame):
         self.scene.addPixmap(pix)  # is at position (0,0)
 
         def lambda_factory(w):
+            # the factory returns a function to change a keybinding
             return lambda: self.change_key(w)
 
-        def lab(*args, **kwargs):
-            _lab(lambda_factory, self.scene, keydata, *args, **kwargs)
+        def label(*args, **kwargs):
+            # specialize the generic helper fcn to this scene and keydata
+            _label(lambda_factory, self.scene, keydata, *args, **kwargs)
 
+        # then use that helper function to label the controls in the picture
         r = 12  # radius of turns
         d = 38  # unit distance
-        lab("prev-rubric", 626, 215, ((2 * d, 0), (r, -r), (0, -d)), "N")
-        lab("next-rubric", 626, 215, ((2 * d, 0), (r, r), (0, d)), "S")
-        lab("prev-tab", 231, 18, ((0, -d), (-r, -r), (-d, 0)), "W")
-        lab("next-tab", 231, 18, ((0, -d), (r, -r), (d, 0)), "E")
+        label("prev-rubric", 626, 215, ((2 * d, 0), (r, -r), (0, -d)), "N")
+        label("next-rubric", 626, 215, ((2 * d, 0), (r, r), (0, d)), "S")
+        label("prev-tab", 231, 18, ((0, -d), (-r, -r), (-d, 0)), "W")
+        label("next-tab", 231, 18, ((0, -d), (r, -r), (d, 0)), "E")
 
 
 class ToolNavDiagram(QFrame):
@@ -424,6 +438,7 @@ class ToolNavDiagram(QFrame):
         self.setLayout(grid)
 
     def resetView(self):
+        # Ensure the graphic fits in view with a border around.
         self._view.fitInView(
             self.scene.sceneRect().adjusted(-20, -10, 20, 10), Qt.KeepAspectRatio
         )
@@ -441,21 +456,24 @@ class ToolNavDiagram(QFrame):
         self.scene.addPixmap(pix)  # is at position (0,0)
 
         def lambda_factory(w):
+            # the factory returns a function to change a keybinding
             return lambda: self.change_key(w)
 
-        def lab(*args, **kwargs):
-            _lab(lambda_factory, self.scene, keydata, *args, **kwargs)
+        def lbl(*args, **kwargs):
+            # specialize the generic helper fcn to this scene and keydata
+            _label(lambda_factory, self.scene, keydata, *args, **kwargs)
 
+        # then use that helper function to label the controls in the picture
         r = 10  # radius of turns
         d = 36  # unit distance
-        lab("next-tool", 266, 385, ((0, d), (r, r), (d, 0)), "E")
-        lab("prev-tool", 266, 385, ((0, d), (-r, r), (-d, 0)), "W")
-        lab("move", 560, 254, ((0, d / 2), (r, r), (2 * d, 0)), "E")
-        lab("undo", 309, 233, ((-25, 0), (-r, -r), (0, -6.5 * d)), "N", sep=(-d, 0))
-        lab("redo", 333, 233, ((25, 0), (r, -r), (0, -6.5 * d)), "N", sep=(d, 0))
-        lab("help", 630, 98, ((d, 0), (r, -r), (0, -1.5 * d)), "N", sep=(d, 0))
-        lab("zoom", 257, 150, ((-7.8 * d, 0), (-r, -r), (0, -2 * d)), "N", sep=(-d, 0))
-        lab("delete", 10, 230, ((-d, 0), (-r, r), (0, d)), "S", sep=(-d, 0))
+        lbl("next-tool", 266, 385, ((0, d), (r, r), (d, 0)), "E")
+        lbl("prev-tool", 266, 385, ((0, d), (-r, r), (-d, 0)), "W")
+        lbl("move", 560, 254, ((0, d / 2), (r, r), (2 * d, 0)), "E")
+        lbl("undo", 309, 233, ((-25, 0), (-r, -r), (0, -6.5 * d)), "N", sep=(-d, 0))
+        lbl("redo", 333, 233, ((25, 0), (r, -r), (0, -6.5 * d)), "N", sep=(d, 0))
+        lbl("help", 630, 98, ((d, 0), (r, -r), (0, -1.5 * d)), "N", sep=(d, 0))
+        lbl("zoom", 257, 150, ((-7.8 * d, 0), (-r, -r), (0, -2 * d)), "N", sep=(-d, 0))
+        lbl("delete", 10, 230, ((-d, 0), (-r, r), (0, d)), "S", sep=(-d, 0))
 
 
 class ClickDragPage(QWidget):
