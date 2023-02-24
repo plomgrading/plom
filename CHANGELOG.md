@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Manager: assigning papers to "reviewer" was broken server-side (older clients should work with 0.13.1 server).
+* Manager: re-assembling papers works again in distributed binaries on Windows and macOS platforms.
 * Rubrics should render correctly in dialogs, even if they contain HTML.
 * Misc UI fixes.
 
