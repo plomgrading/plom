@@ -73,9 +73,7 @@ class Command(BaseCommand):
 
         self.stdout.write("Creating associated pdf-build tasks.")
         bp_service = BuildPapersService()
-        bp_service.stage_pdf_jobs(
-            len(qv_map), classdict=StagingStudentService().get_classdict()
-        )
+        bp_service.stage_all_pdf_jobs(classdict=StagingStudentService().get_classdict())
 
     def clear_papers(self):
         """

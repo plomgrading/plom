@@ -33,11 +33,10 @@ class CreateTestPapers(ManagerRequiredView):
         if not status:
             print(err)
 
-        num_pdfs = len(PQVMappingService().get_pqv_map_dict())
         classdict = StagingStudentService().get_classdict()
         bp_service = BuildPapersService()
         bp_service.clear_tasks()
-        bp_service.stage_pdf_jobs(num_pdfs, classdict=classdict)
+        bp_service.stage_all_pdf_jobs(classdict=classdict)
 
         progress_url = reverse("papers_progress")
         return HttpResponse(

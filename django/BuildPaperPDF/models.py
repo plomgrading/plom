@@ -5,10 +5,11 @@
 from django.db import models
 
 from Base.models import HueyTask
+from Papers.models import Paper
 
 
 class PDFTask(HueyTask):
-    paper_number = models.IntegerField()
+    paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
     pdf_file_path = models.TextField(default="")
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)
