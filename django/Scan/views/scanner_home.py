@@ -74,7 +74,7 @@ class ScannerHomeView(ScannerRequiredView):
         bundles = []
         hash_pushed_bundle = False
         for bundle in user_bundles:
-            date_time = make_aware(datetime.fromtimestamp(bundle.timestamp))
+            date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
             pages = scanner.get_n_images(bundle)
             n_pushed = scanner.get_n_pushed_images(bundle)
             flagged_pages = scanner.get_n_flagged_image(bundle)
