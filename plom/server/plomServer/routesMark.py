@@ -835,7 +835,7 @@ class MarkHandler:
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")
-    @authenticate_by_token_required_fields(["testNumber", "questionNumber"])
+    @authenticate_by_token_required_fields(["paper_number", "question"])
     @write_admin
     def MreviewQuestion(self, data, request):
         """Confirm the question review done on plom-manager.
