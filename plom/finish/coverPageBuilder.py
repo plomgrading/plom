@@ -12,7 +12,9 @@ from plom.misc_utils import local_now_to_simple_string
 from .examReassembler import papersize_portrait
 
 
-def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True):
+def makeCover(
+    test_num, sname, sid, tab, pdfname, *, solution=False, footer=True, exam_name=None
+):
     """Create html page of name ID etc and table of marks.
 
     Args:
@@ -23,6 +25,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
         pdfname (pathlib.Path): filename to save the pdf into
 
     Keyword Args:
+        exam_name (str): the "long name" of this assessment.
         solution (bool): whether or not this is a cover page for solutions
         footer (bool): whether to print a footer with timestamp
     """
@@ -39,7 +42,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     page_top = 75
     # leave some extra; we stretch to avoid single line on new page
     page_bottom = 720
-    first_page_table_top = 150  # the first table starts below some info
+    first_page_table_top = 160  # the first table starts below some info
     extra_sep = 2  # some extra space for double hline near header
     w = 70  # box width
     w_label = 120  # label box width
@@ -53,18 +56,20 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     paper_width, paper_height = papersize_portrait
     page = cover.new_page(width=paper_width, height=paper_height)
     tw = fitz.TextWriter(page.rect)
+    if exam_name:
+        tw.append((m, page_top), exam_name, fontsize=big_font)
     if solution:
         text = "Solutions"
     else:
         text = "Results"
     bullet = "\N{Bullet}"
-    tw.append((m, page_top), text, fontsize=big_font)
+    tw.append((m, page_top + 25), text, fontsize=big_font)
     text = f"{bullet} Name: {sname}"
-    tw.append((m + w, page_top), text, fontsize=big_font)
+    tw.append((m + 100, page_top + 25), text, fontsize=big_font)
     text = f"{bullet} ID: {sid}"
-    tw.append((m + w, page_top + 25), text, fontsize=big_font)
+    tw.append((m + 100, page_top + 25 + deltav), text, fontsize=big_font)
     text = f"{bullet} Test number: {test_num}"
-    tw.append((m + w, page_top + 50), text, fontsize=big_font)
+    tw.append((m + 100, page_top + 25 + 2 * deltav), text, fontsize=big_font)
 
     if solution:
         tab = [[row[0], row[1], row[3]] for row in tab]

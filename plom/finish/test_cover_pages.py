@@ -134,3 +134,15 @@ def test_cover_page_foolish_stuff_gives_errors(tmpdir):
         f = Path(tmpdir) / "foo.pdf"
         with raises(AssertionError):
             makeCover("0123", "A", 12345678, data, f, footer=False)
+
+
+def test_cover_page_title(tmpdir):
+    f = Path(tmpdir) / "foo.pdf"
+    data = [[1, 1, 3, 4], [2, 1, 4, 6], [3, 2, 0, 5]]
+    s = "Math 947 Differential Sub-manifolds Quiz 7"
+    for soln in (True, False):
+        makeCover("0123", "A", 12345678, data, f, exam_name=s, solution=soln)
+        doc = fitz.open(f)
+        pg = doc[0]
+        text = pg.get_text()
+        assert s in text
