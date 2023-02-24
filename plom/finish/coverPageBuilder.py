@@ -25,12 +25,15 @@ def makeCover(
     """Create html page of name ID etc and table of marks.
 
     Args:
-        tab (list): information about the test that should be put on the coverpage.
+        tab (list): information about the test that should be put on the
+            coverpage.  A list of lists where each row is
+            ``[qlabel, ver, mark, maxPossibleMark]``.
+            ``mark`` is ignored if ``solution`` is `True`.
         pdfname (pathlib.Path): filename to save the pdf into.
 
     Keyword Args:
         exam_name (str): the "long name" of this assessment.
-        test_num (int): the test number for which we are making a cover.
+        test_num (int/str): the test number for which we are making a cover.
         info (list/tuple): currently a 2-tuple/2-list of student name (str)
             and student id (str).
         solution (bool): whether or not this is a cover page for solutions.
