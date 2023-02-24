@@ -4,7 +4,7 @@
 import fitz
 import shutil
 import pathlib
-from datetime import datetime
+from django.utils import timezone
 
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -37,7 +37,7 @@ class ScanServiceTests(TestCase):
         """
 
         scanner = ScanService()
-        timestamp = datetime.now().timestamp()
+        timestamp = timezone.now().timestamp()
         scanner.upload_bundle(self.pdf, "test_bundle", self.user0, timestamp, "abcde")
 
         the_bundle = StagingBundle.objects.get(user=self.user0, slug="test_bundle")
@@ -61,7 +61,7 @@ class ScanServiceTests(TestCase):
         has been removed from disk.
         """
 
-        timestamp = datetime.now().timestamp()
+        timestamp = timezone.now().timestamp()
         user_path = settings.BASE_DIR / "media" / "user0"
         user_path.mkdir(exist_ok=True)
         user_bundle_path = user_path / "bundles"
@@ -139,7 +139,7 @@ class ScanServiceTests(TestCase):
         """
         scanner = ScanService()
         bundle = baker.make(
-            StagingBundle, user=self.user0, timestamp=datetime.now().timestamp()
+            StagingBundle, user=self.user0, timestamp=timezone.now().timestamp()
         )
 
         imgs = scanner.get_all_complete_images(bundle)

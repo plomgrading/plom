@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Natalie Balashov
 
 import shutil
 import arrow
 from datetime import datetime
 
+from django.utils import timezone
 from django.db import transaction
 from django.db.models import Exists, OuterRef
 from django.conf import settings
@@ -464,7 +466,7 @@ class ManageScanService:
         for bundle in bundles:
             n_pages = len(StagingImage.objects.filter(bundle=bundle))
             n_complete = len(Image.objects.filter(bundle__hash=bundle.pdf_hash))
-            time_uploaded = datetime.fromtimestamp(bundle.timestamp)
+            time_uploaded = make_aware(datetime.fromtimestamp(bundle.timestamp))
 
             bundle_list.append(
                 {

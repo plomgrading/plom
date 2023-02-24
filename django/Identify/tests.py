@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
+from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
@@ -67,7 +68,7 @@ class IdentifyTaskTests(TestCase):
         task1 = baker.make(PaperIDTask, paper=paper)
         self.assertIsNone(its.get_latest_id_results(task=task1))
 
-        start_time = datetime.now()
+        start_time = timezone.now()
         first = baker.make(
             PaperIDAction,
             time=start_time,
