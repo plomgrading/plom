@@ -22,6 +22,16 @@ def test_cover_page(tmpdir):
     assert "12345678" in text
 
 
+def test_cover_page_hardcoded_letter_paper(tmpdir):
+    f = Path(tmpdir) / "foo.pdf"
+    data = [[1, 1, 4, 4], [2, 1, 5, 6]]
+    makeCover("0123", "A", 12345678, data, f, solution=True)
+    doc = fitz.open(f)
+    pg = doc[0]
+    assert pg.rect.width == 612
+    assert pg.rect.height == 792
+
+
 def test_cover_page_solution(tmpdir):
     f = Path(tmpdir) / "soln.pdf"
     data = [[1, 1, 4, 4], [2, 1, 1066, 6]]

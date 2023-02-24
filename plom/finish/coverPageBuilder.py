@@ -9,6 +9,7 @@
 import fitz
 
 from plom.misc_utils import local_now_to_simple_string
+from .examReassembler import papersize_portrait
 
 
 def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True):
@@ -49,7 +50,8 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
     fontsize = 12
     big_font = 14
 
-    page = cover.new_page()
+    paper_width, paper_height = papersize_portrait
+    page = cover.new_page(width=paper_width, height=paper_height)
     tw = fitz.TextWriter(page.rect)
     if solution:
         text = "Solutions"
@@ -115,7 +117,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, *, solution=False, footer=True
             p = fitz.Point(m, page.rect.height - m)
             tw.append(p, text, fontsize=fontsize)
             tw.write_text(page)
-            page = cover.new_page()
+            page = cover.new_page(width=paper_width, height=paper_height)
             tw = fitz.TextWriter(page.rect)
             shape = page.new_shape()
             vpos = page_top
