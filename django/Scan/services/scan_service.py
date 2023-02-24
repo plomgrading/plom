@@ -242,6 +242,8 @@ class ScanService:
                     grouping_key = getPaperPageVersion(
                         list_qr_codes[page][quadrant].get("tpv_signature")
                     )
+                    x_coord = list_qr_codes[page][quadrant].get("x")
+                    y_coord = list_qr_codes[page][quadrant].get("y")
                     qr_code_dict = {
                         "paper_id": paper_id,
                         "page_num": page_num,
@@ -249,6 +251,8 @@ class ScanService:
                         "quadrant": corner,
                         "public_code": public_code,
                         "grouping_key": grouping_key,
+                        "x_coord": x_coord,
+                        "y_coord": y_coord,
                     }
                     groupings[quadrant] = qr_code_dict
         return groupings

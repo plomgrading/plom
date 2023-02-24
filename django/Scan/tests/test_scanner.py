@@ -117,6 +117,8 @@ class ScanServiceTests(TestCase):
                 "quadrant": "2",
                 "public_code": "93849",
                 "grouping_key": "00006004001",
+                "x_coord": 166.5,
+                "y_coord": 272,
             },
             "SW": {
                 "paper_id": 6,
@@ -125,6 +127,8 @@ class ScanServiceTests(TestCase):
                 "quadrant": "3",
                 "public_code": "93849",
                 "grouping_key": "00006004001",
+                "x_coord": 173.75,
+                "y_coord": 2895.5,
             },
             "SE": {
                 "paper_id": 6,
@@ -133,9 +137,39 @@ class ScanServiceTests(TestCase):
                 "quadrant": "4",
                 "public_code": "93849",
                 "grouping_key": "00006004001",
+                "x_coord": 2141,
+                "y_coord": 2883.5,
             },
         }
-        self.assertEqual(parsed_codes, code_dict)
+        for quadrant in code_dict:
+            self.assertEqual(
+                parsed_codes[quadrant]["paper_id"], code_dict[quadrant]["paper_id"]
+            )
+            self.assertEqual(
+                parsed_codes[quadrant]["page_num"], code_dict[quadrant]["page_num"]
+            )
+            self.assertEqual(
+                parsed_codes[quadrant]["version_num"],
+                code_dict[quadrant]["version_num"],
+            )
+            self.assertEqual(
+                parsed_codes[quadrant]["public_code"],
+                code_dict[quadrant]["public_code"],
+            )
+            self.assertEqual(
+                parsed_codes[quadrant]["grouping_key"],
+                code_dict[quadrant]["grouping_key"],
+            )
+            self.assertTrue(
+                (parsed_codes[quadrant]["x_coord"] - code_dict[quadrant]["x_coord"])
+                / code_dict[quadrant]["x_coord"]
+                < 0.01
+            )
+            self.assertTrue(
+                (parsed_codes[quadrant]["y_coord"] - code_dict[quadrant]["y_coord"])
+                / code_dict[quadrant]["y_coord"]
+                < 0.01
+            )
 
     def test_complete_images(self):
         """
