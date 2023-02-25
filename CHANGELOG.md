@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Cover pages of returned work now include the "long name" of the exam.
 
 ### Fixed
 * Manager: assigning papers to "reviewer" was broken server-side (older clients should work with 0.13.1 server).
