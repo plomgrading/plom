@@ -138,6 +138,8 @@ def test_cover_page_foolish_stuff_gives_errors(tmpdir):
     check = (
         (10, 25, [[1, 1, 4, "four"], [2, 1, 5, 6]]),
         (9, 25, [[1, 1, 4, 4], [2, 1, "five", 6]]),
+        (42, 42, [[1, 1, None, 2], [2, 1, 2, 4]]),
+        (42, 42, [[1, 1, 0, None], [2, 1, 2, 4]]),
     )
     for score, total, data in check:
         f = Path(tmpdir) / "foo.pdf"

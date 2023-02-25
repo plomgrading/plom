@@ -49,7 +49,7 @@ def makeCover(
             try:
                 y = float(x)
                 assert y >= 0, "Numeric data must be non-negative."
-            except ValueError:
+            except (TypeError, ValueError):
                 raise AssertionError(f"Table data {x} should be numeric.")
 
     m = 50  # margin
