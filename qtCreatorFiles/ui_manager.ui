@@ -2516,14 +2516,14 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
        <string>Finishing</string>
       </attribute>
       <layout class="QFormLayout" name="formLayout_3">
-       <item row="2" column="0">
+       <item row="1" column="0">
         <widget class="QLabel" name="label_29">
          <property name="text">
           <string>Reassemble in directory</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
+       <item row="1" column="1">
         <widget class="QFrame" name="frame_13">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -2561,14 +2561,14 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </layout>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="3" column="0">
         <widget class="QLabel" name="label_30">
          <property name="text">
           <string>Reassembly</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="3" column="1">
         <widget class="QFrame" name="frame_14">
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
@@ -2629,7 +2629,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </layout>
         </widget>
        </item>
-       <item row="5" column="1">
+       <item row="4" column="1">
         <widget class="QFrame" name="frame_15">
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
@@ -2677,7 +2677,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </layout>
         </widget>
        </item>
-       <item row="6" column="1">
+       <item row="5" column="1">
         <widget class="QLabel" name="label_27">
          <property name="text">
           <string>&lt;p&gt;Papers and solutions will be reassembed as PDF files in a subfolders
@@ -2696,7 +2696,7 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
          </property>
         </widget>
        </item>
-       <item row="7" column="1">
+       <item row="6" column="1">
         <spacer name="verticalSpacer_18">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -2708,16 +2708,6 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
           </size>
          </property>
         </spacer>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="label_31">
-         <property name="text">
-          <string>&lt;p&gt;Reassembly does not work with our packaged binaries on macOS.  See &lt;a href=&quot;https://gitlab.com/plom/plom/-/issues/2450&quot;&gt;https://gitlab.com/plom/plom/-/issues/2450&lt;/a&gt;.&lt;/p&gt;</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>
