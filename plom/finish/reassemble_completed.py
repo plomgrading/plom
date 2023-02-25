@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2018-2022 Colin B. Macdonald
+# Copyright (C) 2018-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import imghdr
@@ -31,7 +31,7 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     Returns:
         pathlib.Path: filename of the coverpage.
     """
-    # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
+    # should be [ [sid, sname], [q,v,m,outof], [q,v,m,outof], etc]
     cpi = msgr.RgetCoverPageInfo(t)
     spec = msgr.get_spec()
     sid = cpi[0][0]
@@ -41,9 +41,15 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     for qvm in cpi[1:]:
         question_label = get_question_label(spec, qvm[0])
         arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
-    testnumstr = str(t).zfill(4)
-    covername = tmpdir / "cover_{}.pdf".format(testnumstr)
-    makeCover(int(t), sname, sid, arg, covername, solution=solution)
+    covername = tmpdir / f"cover_{int(t):04}.pdf"
+    makeCover(
+        arg,
+        covername,
+        test_num=t,
+        info=(sname, sid),
+        solution=solution,
+        exam_name=spec["longName"],
+    )
     return covername
 
 
