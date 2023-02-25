@@ -271,6 +271,7 @@ class ScanService:
 
         pipr = PageImageProcessor()
         rotated = pipr.rotate_page_image(image_path, page_data)
+        # TODO: need to update page_data inner dict fields "quadrant", "x_coord" and "y_coord" after rotating image
 
         # Below is to write the parsed QR code to database.
         img = StagingImage.objects.get(file_path=image_path)
