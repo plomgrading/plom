@@ -1098,7 +1098,7 @@ class Annotator(QWidget):
 
         # store the shortcuts to prevent GC
         self._store_QShortcuts = []
-        for (action, command) in actions_and_methods:
+        for action, command in actions_and_methods:
             (key,) = keydata[action]["keys"]  # enforce single item
             sc = QShortcut(QKeySequence(key), self)
             sc.activated.connect(command)
@@ -1138,7 +1138,7 @@ class Annotator(QWidget):
             ("crop-out", self.uncrop_region),
         )
         self._store_QShortcuts_minor = []
-        for (action, command) in actions_and_methods:
+        for action, command in actions_and_methods:
             for key in keydata[action]["keys"]:
                 sc = QShortcut(QKeySequence(key), self)
                 sc.activated.connect(command)

@@ -150,7 +150,7 @@ def checkQRsValid(bundledir, spec):
         # Unpack the lists of QRs, building a new dict with only the
         # the corners with exactly one QR code.
         tmp = {}
-        for (d, qr) in qrs.items():
+        for d, qr in qrs.items():
             if len(qr) == 1:
                 tmp[d] = qr[0]
         qrs = tmp

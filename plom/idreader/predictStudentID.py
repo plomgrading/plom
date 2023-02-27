@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (c) 2022 Edith Coates
 
 """
@@ -122,7 +122,6 @@ def get_digit_images(ID_box, num_digits):
     processed_digits_images_list = []
 
     for digit_index in range(num_digits):
-
         # TODO: Maybe remove magical hackery.
         # extract the kth digit box. Some magical hackery / numerology here.
         digit1 = ID_box[0:100, digit_index * 109 + 5 : (digit_index + 1) * 109 - 5]
