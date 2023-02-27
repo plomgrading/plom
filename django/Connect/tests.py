@@ -1,4 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
+
 from datetime import datetime, timedelta
+from django.utils import timezone
 from django.test import TestCase
 from model_bakery import baker
 
@@ -12,11 +18,11 @@ class CoreConnectionServiceTests(TestCase):
     def test_get_latest_init_db_task(self):
         """Test CoreConnectionService.get_latest_running_init_db_task"""
         task1 = baker.make(
-            CoreDBinitialiseTask, created=datetime.now(), status="queued"
+            CoreDBinitialiseTask, created=timezone.now(), status="queued"
         )
         task2 = baker.make(
             CoreDBinitialiseTask,
-            created=datetime.now() + timedelta(minutes=1),
+            created=timezone.now() + timedelta(minutes=1),
             status="running",
         )
 

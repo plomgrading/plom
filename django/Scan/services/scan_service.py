@@ -2,11 +2,12 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 
-import pathlib
-import hashlib
-import fitz
-import shutil
 from collections import Counter
+import fitz
+import hashlib
+import pathlib
+import shutil
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist

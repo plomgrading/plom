@@ -1,3 +1,14 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Colin B. Macdonald
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
 # Byte-compiled / optimized / DLL files:
 __pycache__/
 *.py[cod]
@@ -32,5 +43,5 @@ papersToPrint/*
 sourceVersions/*
 media/*
 
-# whitenoise static files (need to run python manage.py collectstatic)
+# whitenoise static files (need to run python3 manage.py collectstatic)
 staticfiles/

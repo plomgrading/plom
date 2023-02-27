@@ -670,3 +670,7 @@ def make_scribbles(basedir=Path("."), *, msgr):
     make_colliding_pages(basedir / _paperdir, outfile)
     splitFakeFile(outfile)
     outfile.unlink()
+
+
+def make_scribbles_django(papersToPrint, extra_page, classlist, outfile):
+    pass

@@ -187,7 +187,7 @@ class GetPDFFile(ManagerRequiredView):
         pdf_file = PDFTask.objects.get(paper_number=paper_number).pdf_file_path
         pdf_path = pathlib.Path(pdf_file)
         if not pdf_path.exists() or not pdf_path.is_file():
-            return HttpResponse(status=500)
+            return render(request, "BuildPaperPDF/cannot_find_pdf.html")
 
         pdf_file_name = RenamePDFFile().get_PDF_name(pdf_file)
         file = pdf_path.open("rb")

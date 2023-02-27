@@ -13,8 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-* Rubrics should render correctly in dialogs, even if they contain HTML.
 
+
+
+
+## [0.13.1] - 2023-02-24
+
+### Changed
+* Cover pages of returned work now include the "long name" of the exam.
+
+### Fixed
+* Manager: assigning papers to "reviewer" was broken server-side (older clients should work with 0.13.1 server).
+* Manager: re-assembling papers works again in distributed binaries on Windows and macOS platforms.
+* Rubrics should render correctly in dialogs, even if they contain HTML.
+* Misc UI fixes.
 
 
 ## [0.13.0] - 2023-02-13
@@ -957,7 +969,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.13.0...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.13.1...main
+[0.13.1]: https://gitlab.com/plom/plom/-/compare/v0.13.0...v0.13.1
 [0.13.0]: https://gitlab.com/plom/plom/-/compare/v0.12.3...v0.13.0
 [0.12.3]: https://gitlab.com/plom/plom/-/compare/v0.12.2...v0.12.3
 [0.12.2]: https://gitlab.com/plom/plom/-/compare/v0.12.1...v0.12.2
