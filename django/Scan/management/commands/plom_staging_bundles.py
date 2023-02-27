@@ -10,7 +10,6 @@ from django.utils.text import slugify
 from django.core.management.base import BaseCommand
 
 from Scan.services import ScanService
-from Scan.models import StagingBundle, StagingImage
 
 class Command(BaseCommand):
     """
@@ -25,11 +24,12 @@ class Command(BaseCommand):
         
         with open(source_pdf, "rb") as f:
             file_bytes = f.read()
-            pdf_doc = fitz.open(stream=file_bytes)
-            filename_stem = pathlib.Path(str(f)).stem
-            slug = slugify(filename_stem)
-            timestamp = datetime.timestamp(timezone.now())
-            hashed = hashlib.sha256(file_bytes).hexdigest()
+            
+        pdf_doc = fitz.open(stream=file_bytes)
+        filename_stem = pathlib.Path(source_pdf).stem
+        slug = slugify(filename_stem)
+        timestamp = datetime.timestamp(timezone.now())
+        hashed = hashlib.sha256(file_bytes).hexdigest()
 
         if scanner.check_for_duplicate_hash(hashed):
             self.stdout.write("Upload failed - Bundle was already uploaded.")
