@@ -895,10 +895,6 @@ class MarkerClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
-        uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
-        # TODO: temporary workaround
-        self.ui = self
-
         # Save the local temp directory for image files and the class list.
         if not tmpdir:
             tmpdir = tempfile.mkdtemp(prefix="plom_")
@@ -1058,6 +1054,11 @@ class MarkerClient(QWidget):
         Returns:
             None: Modifies self.ui
         """
+        # TODO: I'd rather load this in init, but the paper preview gets tiny for some reason
+        uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
+        # TODO: temporary workaround
+        self.ui = self
+
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         try:
             question_label = get_question_label(self.exam_spec, self.question)
@@ -1085,6 +1086,8 @@ class MarkerClient(QWidget):
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
         self.ui.paperBoxLayout.addWidget(self.testImg, 10)
+        # too small?
+        # self.updateGeometry()
 
         if __version__.endswith("dev"):
             self.ui.technicalButton.setChecked(True)
