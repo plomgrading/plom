@@ -641,9 +641,12 @@ class ScanService:
         # username => user_object, if in scanner group, else exception raised.
         try:
             user_obj = User.objects.get(
-                username__iexact=username, groups__name__in="scanner"
+                username__iexact=username, groups__name="scanner"
             )
         except ObjectDoesNotExist:
+            for user_obj in User.objects.all():
+                print(user_obj.username, user_obj.groups.all())
+                
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions!"
             )

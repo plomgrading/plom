@@ -45,6 +45,7 @@ class Command(BaseCommand):
 
         try:
             scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
+            self.stdout.write(f"Uploaded {source_pdf} as user {username} - processing it in the background now.")
         except ValueError as err:
             self.stderr.write(f"{err}")
 

@@ -125,9 +125,16 @@ def wait_for_papers_to_be_ready():
             break
 
 
+def upload_bundles():
+    for n in [1, 2, 3]:
+        cmd = f"plom_staging_bundles upload demoScanner{n} fake_bundle{n}.pdf"
+        py_man_cmd = f"python3 manage.py {cmd}"
+        subprocess.check_call(split(py_man_cmd))
+
+
 def wait_for_exit():
     while True:
-        x = input("Press type 'quit' and press Enter to quit the demo: ")
+        x = input("Press type 'quit' and press Enter to exit the demo: ")
         if x.casefold() == "quit":
             break
 
@@ -171,6 +178,9 @@ def main():
     print("*" * 40)
 
     scribble_on_exams()
+
+    print("*" * 40)
+    upload_bundles()
 
     wait_for_exit()
 
