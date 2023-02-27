@@ -31,8 +31,9 @@ else:
 import tomlkit
 
 import urllib3
+from PyQt5 import uic
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QDialog, QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox, QWidget
 
 from plom import __version__
 from plom import Plom_API_Version
@@ -51,7 +52,6 @@ from plom.messenger import Messenger, ManagerMessenger
 from plom.client import MarkerClient, IDClient
 from .downloader import Downloader
 from .about_dialog import show_about_dialog
-from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQuestion
 from .useful_classes import ClientSettingsDialog
 
@@ -85,10 +85,13 @@ def readLastTime():
     return lastTime
 
 
-class Chooser(QDialog):
+# TODO: was QDialog before uic, change in qtCreator?
+class Chooser(QWidget):
     def __init__(self, Qapp, webplom=False):
         self.APIVersion = Plom_API_Version
         super().__init__()
+        # TODO: resource?
+        uic.loadUi("qtCreatorFiles/ui_chooser.ui", self)
         self.Qapp = Qapp
         self.messenger = None
         self.webplom = webplom
@@ -120,9 +123,10 @@ class Chooser(QDialog):
         )
         log.info(s)
 
-        self.ui = Ui_Chooser()
-        self.ui.setupUi(self)
-        self.ui.mportSB.setValue(int(Default_Port))
+        # TODO: with uic, we don't have a .ui: can go through and remove
+        self.ui = self
+
+        self.mportSB.setValue(int(Default_Port))
         # Append version to window title
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         self.ui.markButton.clicked.connect(self.run_marker)

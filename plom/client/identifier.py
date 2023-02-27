@@ -16,6 +16,7 @@ import logging
 from pathlib import Path
 import tempfile
 
+from PyQt5 import uic
 from PyQt5.QtCore import (
     Qt,
     QAbstractTableModel,
@@ -48,7 +49,6 @@ from .image_view_widget import ImageViewWidget
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, WarningQuestion
 from .useful_classes import BlankIDBox, SNIDBox
-from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .viewers import WholeTestView
 
 
@@ -190,6 +190,12 @@ class IDClient(QWidget):
         """
         super().__init__()
         self.Qapp = Qapp
+
+        # TOOD: use resources?
+        uic.loadUi("qtCreatorFiles/ui_identify.ui", self)
+        # TODO: temporary workaround
+        self.ui = self
+
         # instance vars that get initialized later
         # Save the local temp directory for image files and the class list.
         if not tmpdir:
@@ -208,9 +214,6 @@ class IDClient(QWidget):
         self.msgr = messenger
         # List of papers we have to ID.
         self.paperList = []
-        # Fire up the interface.
-        self.ui = Ui_IdentifyWindow()
-        self.ui.setupUi(self)
         # Paste username into the GUI (TODO: but why?)
         self.ui.userLabel.setText(self.msgr.username)
         # Exam model for the table of papers - associate to table in GUI.

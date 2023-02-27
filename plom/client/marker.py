@@ -31,6 +31,7 @@ import threading
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 import platform
 
+from PyQt5 import uic
 from PyQt5.QtCore import (
     Qt,
     QSortFilterProxyModel,
@@ -69,7 +70,6 @@ from plom.messenger import Messenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
-from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 
@@ -888,6 +888,11 @@ class MarkerClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
+        # TOOD: use resources?
+        uic.loadUi("qtCreatorFiles/ui_marker.ui", self)
+        # TODO: temporary workaround
+        self.ui = self
+
         # Save the local temp directory for image files and the class list.
         if not tmpdir:
             tmpdir = tempfile.mkdtemp(prefix="plom_")
@@ -918,7 +923,7 @@ class MarkerClient(QWidget):
         self.question = None
         self.version = None
         self.exam_spec = None
-        self.ui = None
+
         self.msgr = None
         # history contains all the tgv in order of being marked except the current one.
         self.marking_history = []
@@ -1046,11 +1051,7 @@ class MarkerClient(QWidget):
 
         Returns:
             None: Modifies self.ui
-
         """
-        # Fire up the user interface
-        self.ui = Ui_MarkerWindow()
-        self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         try:
             question_label = get_question_label(self.exam_spec, self.question)
