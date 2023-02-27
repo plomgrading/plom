@@ -6,7 +6,6 @@ import pathlib
 import hashlib
 import fitz
 import shutil
-from datetime import datetime
 from collections import Counter
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -16,7 +15,6 @@ from django_huey import db_task
 from django.utils import timezone
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
-from tabulate import tabulate
 
 from .image_process import PageImageProcessor
 from Scan.models import (
@@ -641,7 +639,13 @@ class ScanService:
     def upload_bundle_cmd(self, pdf_doc, slug, username, timestamp, hashed):
         try:
             temp_username = User.objects.get(username__iexact=username)
-            self.upload_bundle(pdf_doc=pdf_doc, slug=slug, user=temp_username, timestamp=timestamp, pdf_hash=hashed)
+            self.upload_bundle(
+                pdf_doc=pdf_doc,
+                slug=slug,
+                user=temp_username,
+                timestamp=timestamp,
+                pdf_hash=hashed,
+            )
         except ObjectDoesNotExist:
             print(f"{username} does not exist!")
 
@@ -652,13 +656,30 @@ class ScanService:
             print("No bundles uploaded.")
         else:
             bundle_status = []
-            status_header = ("Bundle name", "Total pages", "Valid pages", "Error pages", "QR read", "Pushed", "Uploaded by")
+            status_header = (
+                "Bundle name",
+                "Total pages",
+                "Valid pages",
+                "Error pages",
+                "QR read",
+                "Pushed",
+                "Uploaded by",
+            )
             bundle_status.append(status_header)
             for bundle in bundles:
                 images = StagingImage.objects.filter(bundle=bundle)
                 valid_images = self.get_n_complete_reading_tasks(bundle)
-                all_error_images = StagingImage.objects.filter(bundle=bundle, colliding=True, unknown=True, error=True)
-                bundle_data = (bundle.slug, len(images), valid_images, len(all_error_images), bundle.has_qr_codes, bundle.pushed, bundle.user)
+                all_error_images = StagingImage.objects.filter(
+                    bundle=bundle, colliding=True, unknown=True, error=True
+                )
+                bundle_data = (
+                    bundle.slug,
+                    len(images),
+                    valid_images,
+                    len(all_error_images),
+                    bundle.has_qr_codes,
+                    bundle.pushed,
+                    bundle.user,
+                )
                 bundle_status.append(bundle_data)
-            print(tabulate(bundle_status, headers='firstrow'))
-        
+        return bundle_status

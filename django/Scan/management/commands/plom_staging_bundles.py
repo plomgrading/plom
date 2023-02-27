@@ -1,15 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 
-import pathlib
-import hashlib
-import fitz
 from datetime import datetime
+import fitz
+import hashlib
+import pathlib
+from tabulate import tabulate
+
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand
 
 from Scan.services import ScanService
+
 
 class Command(BaseCommand):
     """
@@ -17,14 +20,15 @@ class Command(BaseCommand):
         python3 manage.py plom_staging_bundles upload (username) (file) <- drag and drop or copy path
         python3 manage.py plom_staging_bundles status
     """
+
     help = "Upload bundle pdf files to staging area"
-    
+
     def upload_pdf(self, username=None, source_pdf=None):
         scanner = ScanService()
-        
+
         with open(source_pdf, "rb") as f:
             file_bytes = f.read()
-            
+
         pdf_doc = fitz.open(stream=file_bytes)
         filename_stem = pathlib.Path(source_pdf).stem
         slug = slugify(filename_stem)
@@ -35,10 +39,11 @@ class Command(BaseCommand):
             self.stdout.write("Upload failed - Bundle was already uploaded.")
         else:
             scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
-    
+
     def staging_bundle_status(self):
         scanner = ScanService()
-        scanner.staging_bundle_status_cmd()
+        bundle_status = scanner.staging_bundle_status_cmd()
+        print(tabulate(bundle_status, headers="firstrow"))
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
@@ -48,17 +53,20 @@ class Command(BaseCommand):
 
         # Upload
         sp_upload = sp.add_parser("upload", help="Upload a test pdf.")
-        sp_upload.add_argument("username", type=str, help="Which username to upload as.")
+        sp_upload.add_argument(
+            "username", type=str, help="Which username to upload as."
+        )
         sp_upload.add_argument("source_pdf", type=str, help="The test pdf to upload.")
 
         # Status
-        sp_status = sp.add_parser("status", help="Show the status of the staging bundles.")
+        sp.add_parser("status", help="Show the status of the staging bundles.")
 
     def handle(self, *args, **options):
         if options["command"] == "upload":
-            self.upload_pdf(username = options["username"], source_pdf=options["source_pdf"])
+            self.upload_pdf(
+                username=options["username"], source_pdf=options["source_pdf"]
+            )
         elif options["command"] == "status":
             self.staging_bundle_status()
         else:
             self.print_help("manage.py", "plom_staging_bundles")
-        
