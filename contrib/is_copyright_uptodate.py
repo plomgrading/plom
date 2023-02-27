@@ -27,7 +27,6 @@ ok_no_copyright = [
     "CONTRIBUTORS*",
     "*/README.md",
     "qtCreatorFiles/*.ui",
-    "*/uiFiles/ui_*.py",
     ".mailmap",
     "*/cl_for_demo.csv",
 ]
