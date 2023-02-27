@@ -91,8 +91,7 @@ def readLastTime():
     return lastTime
 
 
-# TODO: was QDialog before uic, change in qtCreator?
-class Chooser(QWidget):
+class Chooser(QDialog):
     def __init__(self, Qapp, webplom=False):
         self.APIVersion = Plom_API_Version
         super().__init__()
