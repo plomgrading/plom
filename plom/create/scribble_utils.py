@@ -70,20 +70,8 @@ possible_answers = [
 # some simple translations of the word "extra" into other languages courtesy of google-translate
 # and https://www.indifferentlanguages.com/words/extra
 extra_last_names = [
-    "Extra",
-    "Ekstra",
-    "Supplémentaire",
-    "Aukalega",
-    "Aparteko",
-    "Ychwanegol",
-    "A-bharrachd",
-    "Breise",
-    "Papildomai",
-    "Dodatkowy",
-    "Okwengeziwe",
-    "Tlaleletso",
-    "Ziada",
-    "Ylimääräinen",
+    "EXTRA",
+    "EKSTRA",
 ]
 # some common M/F first (latin script) names taken from the names_dataset module
 # https://pypi.org/project/names-dataset/
