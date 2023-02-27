@@ -26,7 +26,6 @@ ok_no_copyright = [
     "CHANGELOG*",
     "CONTRIBUTORS*",
     "*/README.md",
-    "*/ui_files/*.ui",
     ".mailmap",
     "*/cl_for_demo.csv",
 ]
