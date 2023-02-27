@@ -638,49 +638,53 @@ class ScanService:
     # TODO: Have to check for duplicate bundle
     @transaction.atomic
     def upload_bundle_cmd(self, pdf_doc, slug, username, timestamp, hashed):
+        # username => user_object, if in scanner group, else exception raised.
         try:
-            temp_username = User.objects.get(username__iexact=username)
-            self.upload_bundle(
-                pdf_doc=pdf_doc,
-                slug=slug,
-                user=temp_username,
-                timestamp=timestamp,
-                pdf_hash=hashed,
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name__in="scanner"
             )
         except ObjectDoesNotExist:
-            print(f"{username} does not exist!")
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        self.upload_bundle(
+            pdf_doc=pdf_doc,
+            slug=slug,
+            user=user_obj,
+            timestamp=timestamp,
+            pdf_hash=hashed,
+        )
 
     @transaction.atomic
     def staging_bundle_status_cmd(self):
         bundles = StagingBundle.objects.all()
-        if not bundles.exists():
-            print("No bundles uploaded.")
-        else:
-            bundle_status = []
-            status_header = (
-                "Bundle name",
-                "Total pages",
-                "Valid pages",
-                "Error pages",
-                "QR read",
-                "Pushed",
-                "Uploaded by",
+
+        bundle_status = []
+        status_header = (
+            "Bundle name",
+            "Total pages",
+            "Valid pages",
+            "Error pages",
+            "QR read",
+            "Pushed",
+            "Uploaded by",
+        )
+        bundle_status.append(status_header)
+        for bundle in bundles:
+            images = StagingImage.objects.filter(bundle=bundle)
+            valid_images = self.get_n_complete_reading_tasks(bundle)
+            all_error_images = StagingImage.objects.filter(
+                bundle=bundle, colliding=True, unknown=True, error=True
             )
-            bundle_status.append(status_header)
-            for bundle in bundles:
-                images = StagingImage.objects.filter(bundle=bundle)
-                valid_images = self.get_n_complete_reading_tasks(bundle)
-                all_error_images = StagingImage.objects.filter(
-                    bundle=bundle, colliding=True, unknown=True, error=True
-                )
-                bundle_data = (
-                    bundle.slug,
-                    len(images),
-                    valid_images,
-                    len(all_error_images),
-                    bundle.has_qr_codes,
-                    bundle.pushed,
-                    bundle.user,
-                )
-                bundle_status.append(bundle_data)
+            bundle_data = (
+                bundle.slug,
+                len(images),
+                valid_images,
+                len(all_error_images),
+                bundle.has_qr_codes,
+                bundle.pushed,
+                bundle.user,
+            )
+            bundle_status.append(bundle_data)
         return bundle_status

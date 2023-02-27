@@ -26,6 +26,10 @@ class Command(BaseCommand):
     def upload_pdf(self, username=None, source_pdf=None):
         scanner = ScanService()
 
+        if source_pdf is None:
+            self.stderr.write("No bundle supplied. Stopping.")
+            return
+
         with open(source_pdf, "rb") as f:
             file_bytes = f.read()
 
@@ -36,14 +40,21 @@ class Command(BaseCommand):
         hashed = hashlib.sha256(file_bytes).hexdigest()
 
         if scanner.check_for_duplicate_hash(hashed):
-            self.stdout.write("Upload failed - Bundle was already uploaded.")
-        else:
+            self.stderr.write("Upload failed - Bundle was already uploaded.")
+            return
+
+        try:
             scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
+        except ValueError as err:
+            self.stderr.write(f"{err}")
 
     def staging_bundle_status(self):
         scanner = ScanService()
         bundle_status = scanner.staging_bundle_status_cmd()
-        print(tabulate(bundle_status, headers="firstrow"))
+        self.stdout.write(tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline"))
+
+        if len(bundle_status) == 1:
+            self.stdout.write("No bundles uploaded.")
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
