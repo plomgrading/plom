@@ -18,6 +18,7 @@ from datetime import datetime
 year = datetime.utcnow().year
 p = re.compile(f".*Copyright.*{year}.*")
 p2 = re.compile(".*Copyright.*")
+re_alt = re.compile(".*creativecommons.org/licenses/.*")
 
 # Some files don't have copyright info: can consider whether this is ok,
 # but for now we can avoid hearing about them by listing globs:
@@ -47,6 +48,9 @@ if __name__ == "__main__":
             continue
         except FileNotFoundError:
             print(f"    Skipping deleted (?) file: {f}")
+            continue
+        if re_alt.match(data):
+            print(f"    File has creativecommons licence url: {f}")
             continue
         if not p2.match(data):
             print(f"[!] File without copyright header: {f}")

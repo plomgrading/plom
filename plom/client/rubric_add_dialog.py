@@ -7,9 +7,16 @@
 # Copyright (C) 2021 Forest Kobayashi
 
 import re
+import sys
+
+
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QSyntaxHighlighter, QTextCharFormat
+from PyQt5.QtGui import QColor, QPixmap, QSyntaxHighlighter, QTextCharFormat
 
 from PyQt5.QtWidgets import (
     QCheckBox,
@@ -23,6 +30,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLineEdit,
+    QMessageBox,
     QRadioButton,
     QToolButton,
     QSizePolicy,
@@ -32,8 +40,9 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
 )
 
+import plom.client.icons
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import InfoMsg, WarnMsg
+from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
 
 
 class SignedSB(QSpinBox):
@@ -80,7 +89,7 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         # reset format
         self.setFormat(0, len(txt), QTextCharFormat())
         # highlight tex: at beginning
-        if txt.startswith("tex:"):  # casefold?
+        if txt.casefold().startswith("tex:"):
             self.setFormat(0, len("tex:"), QColor("grey"))
         # highlight parametric substitutions
         for s in self.subs:
@@ -531,7 +540,7 @@ class AddRubricBox(QDialog):
             ):
                 break
             n += 1
-        if self.TE.toPlainText().startswith("tex:"):  # casefold?
+        if self.TE.toPlainText().casefold().startswith("tex:"):
             new_param = new_param_alt
 
         # we insert the new parameter at the cursor/selection
@@ -652,6 +661,27 @@ class AddRubricBox(QDialog):
                 info_pre=False,
             ).exec()
             return
+        if not txt.casefold().startswith("tex:") and txt.count("$") >= 2:
+            # Image by krzysiu, CC-PDDC, https://openclipart.org/detail/213508/crazy-paperclip
+            res = resources.files(plom.client.icons) / "crazy_paperclip.svg"
+            pix = QPixmap()
+            pix.loadFromData(res.read_bytes())
+            pix = pix.scaledToHeight(150, Qt.SmoothTransformation)
+            if (
+                SimpleQuestion.ask(
+                    self,
+                    "<p>It looks like you might be writing some mathematics!</p",
+                    """
+                        <p>I noticed more than one dollar sign in your text:
+                        do you want to render this rubric with LaTeX?</p>
+                        <p>(You can avoid seeing this dialog by prepending your
+                        rubric with &ldquo;<tt>tex:</tt>&rdquo;)</p>
+                    """,
+                    icon_pixmap=pix,
+                )
+                == QMessageBox.Yes
+            ):
+                self.TE.setText("tex: " + txt)
         self.accept()
 
     def _gimme_rubric_tags(self):
