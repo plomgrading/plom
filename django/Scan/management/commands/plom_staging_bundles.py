@@ -45,14 +45,18 @@ class Command(BaseCommand):
 
         try:
             scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
-            self.stdout.write(f"Uploaded {source_pdf} as user {username} - processing it in the background now.")
+            self.stdout.write(
+                f"Uploaded {source_pdf} as user {username} - processing it in the background now."
+            )
         except ValueError as err:
             self.stderr.write(f"{err}")
 
     def staging_bundle_status(self):
         scanner = ScanService()
         bundle_status = scanner.staging_bundle_status_cmd()
-        self.stdout.write(tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline"))
+        self.stdout.write(
+            tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
+        )
 
         if len(bundle_status) == 1:
             self.stdout.write("No bundles uploaded.")

@@ -646,7 +646,7 @@ class ScanService:
         except ObjectDoesNotExist:
             for user_obj in User.objects.all():
                 print(user_obj.username, user_obj.groups.all())
-                
+
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions!"
             )
