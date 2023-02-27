@@ -18,4 +18,3 @@ exclude = plom/*/uiFiles/ui_*.py
 extend-ignore = E203, E402, E501, W503, E741
 per-file-ignores =
     */__init__.py: F401, E402
-
