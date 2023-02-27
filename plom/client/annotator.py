@@ -50,7 +50,6 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtWidgets import QGraphicsRectItem
 
-from plom import __version__
 import plom.client.cursors
 import plom.client.icons
 from .rubric_list import RubricWidget
@@ -78,7 +77,10 @@ tipText = {
     "line": "Line: L = straight line, M/Ctrl = double-arrow, R/Shift = arrow.",
     "move": "Move object.",
     "pan": "Pan view.",
-    "pen": "Pen: L = freehand pen, M/Ctrl = pen with arrows, R/Shift = freehand highlighter.",
+    "pen": (
+        "Pen: L = freehand pen, M/Ctrl = pen with arrows, "
+        + "R/Shift = freehand highlighter."
+    ),
     "redo": "Redo: Redo last action",
     "text": "Text: Enter = newline, Shift-Enter/ESC = finish.",
     "tick": "Tick: L = checkmark, M/Ctrl = ?-mark, R/Shift = cross.",
@@ -741,9 +743,11 @@ class Annotator(QWidget):
                 "Warning: duplicate pages detected!",
                 info=info,
                 info_pre=False,
-                details=f"Annotator's image_md5_list is\n  {image_md5_list}\n"
-                f"The src_img_data is\n  {self.src_img_data}\n"
-                f"Include this info if you think this is a bug!",
+                details=(
+                    f"Annotator's image_md5_list is\n  {image_md5_list}\n"
+                    f"The src_img_data is\n  {self.src_img_data}\n"
+                    "Include this info if you think this is a bug!"
+                ),
             ).exec()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
 
@@ -761,7 +765,8 @@ class Annotator(QWidget):
         for i, row in enumerate(page_data):
             # TODO: would be nice to show the size in MiB here!
             pd.setLabelText(
-                f"Downloading additional images\nFile {i + 1} of {N}: img id {row['id']}"
+                f"Downloading additional images\nFile {i + 1} of {N}: "
+                f"img id {row['id']}"
             )
             pd.setValue(i + 1)
             self.parentMarkerUI.Qapp.processEvents()
@@ -1250,8 +1255,7 @@ class Annotator(QWidget):
             msg.setIcon(QMessageBox.Critical)
             msg.setWindowTitle("Image Too large.")
             msg.setText(
-                "Max image size (200kB) reached. Please try again "
-                "with a smaller image."
+                "Max image size (200kB) reached. Please try again with a smaller image."
             )
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
