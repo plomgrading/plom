@@ -27,6 +27,7 @@ ok_no_copyright = [
     "qtCreatorFiles/*.ui",
     "*/uiFiles/ui_*.py",
     ".mailmap",
+    "*/cl_for_demo.csv",
 ]
 
 if __name__ == "__main__":

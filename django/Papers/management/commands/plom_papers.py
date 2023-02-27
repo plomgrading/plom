@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand
 
@@ -16,15 +17,18 @@ class Command(BaseCommand):
         sp = parser.add_subparsers(
             dest="command", description="Display, populate, or clear test-papers."
         )
-
-        sp_status = sp.add_parser(
+        sp.add_parser(
             "status", help="Show the current state of test-papers in the database."
         )
-        sp_build = sp.add_parser(
+        sp.add_parser(
             "build_db",
-            help="Populate the database with test-papers using information provided in the spec and QV-map. Also constructs the associate pdf-build tasks.",
+            help="""
+                Populate the database with test-papers using information
+                provided in the spec and QV-map.
+                Also constructs the associate pdf-build tasks.
+            """,
         )
-        sp_build = sp.add_parser("clear", help="Clear the database of test-papers.")
+        sp.add_parser("clear", help="Clear the database of test-papers.")
 
     def papers_status(self):
         """
@@ -35,10 +39,15 @@ class Command(BaseCommand):
         if not pqvs.is_there_a_pqv_map():
             self.stdout.write("Question-version map not present.")
             return
+        qv_map_len = len(pqvs.get_pqv_map_dict())
 
         paper_info = PaperInfoService()
         n_papers = paper_info.how_many_papers_in_database()
         self.stdout.write(f"{n_papers} test-papers saved to the database.")
+        if qv_map_len == n_papers:
+            self.stdout.write("Database is ready")
+        else:
+            self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
 
     def build_papers(self):
         """
@@ -59,7 +68,7 @@ class Command(BaseCommand):
         self.stdout.write("Creating test-papers...")
         pcs = PaperCreatorService()
         qv_map = pqvs.get_pqv_map_dict()
-        pcs.add_all_papers_in_qv_map(qv_map, False)
+        pcs.add_all_papers_in_qv_map(qv_map, background=False)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
 
         self.stdout.write("Creating associated pdf-build tasks.")
@@ -78,9 +87,9 @@ class Command(BaseCommand):
             self.stdout.write("No test-papers found in database - stopping.")
             return
 
-        self.stdout.write("Removing test-papers...")
-        paper_creator = PaperCreatorService()
-        paper_creator.remove_all_papers_from_db()
+        self.stdout.write("Removing test-papers and associated tasks...")
+        BuildPapersService().clear_tasks()
+        PaperCreatorService().remove_all_papers_from_db()
         self.stdout.write("Database cleared of test-papers.")
 
     def handle(self, *args, **options):

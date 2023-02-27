@@ -62,6 +62,10 @@ class Command(BaseCommand):
 
     def start_all_tasks(self):
         bp_service = BuildPapersService()
+        if bp_service.get_n_tasks() == 0:
+            self.stdout.write("There are no tasks to start. Check that DB is populated.")
+            return
+                    
         spec = SpecificationService().get_the_spec()
         pqv_service = PQVMappingService()
         qvmap = pqv_service.get_pqv_map_dict()
@@ -88,18 +92,21 @@ class Command(BaseCommand):
         # is a list of (paper_number, status)
         stats = bp_service.get_all_task_status()
         if len(stats):
-            self.stdout.write(f"{len(stats)} tasks.")
+            self.stdout.write(f"{len(stats)} tasks total:")
             rev_stat = {}
             for (n, state) in stats.items():
                 rev_stat.setdefault(state, []).append(n)
             for (state, papers) in rev_stat.items():
-                self.stdout.write(f'"{state}": {format_int_list_with_runs(papers)}')
+                self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
+            if len(rev_stat.get("complete", [])) == len(stats):
+                self.stdout.write("All papers are now built")
         else:
             self.stdout.write("No queued tasks.")
 
+
     def delete_all_tasks(self):
         bp_service = BuildPapersService()
-        bp_service.delete_all_task()
+        bp_service.reset_all_tasks()
 
     def cancel_all_tasks(self):
         bp_service = BuildPapersService()

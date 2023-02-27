@@ -80,8 +80,10 @@ class BuildPapersService:
         task.save()
         return task
 
+    @transaction.atomic()
     def clear_tasks(self):
         """Clear all of the build paper tasks"""
+        # TODO - improve file handling here when we fix up file handling for all pdf build tasks.
         PDFTask.objects.all().delete()
         if self.papers_to_print.exists():
             shutil.rmtree(self.papers_to_print)
