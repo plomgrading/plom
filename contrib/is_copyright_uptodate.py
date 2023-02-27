@@ -24,6 +24,7 @@ p2 = re.compile(".*Copyright.*")
 ok_no_copyright = [
     "CHANGELOG*",
     "CONTRIBUTORS*",
+    "*/README.md",
     "qtCreatorFiles/*.ui",
     "*/uiFiles/ui_*.py",
     ".mailmap",

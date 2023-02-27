@@ -1,2 +1,11 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022 Brennen Chiu
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
 *.sqlite3
 *.sqlite3*
