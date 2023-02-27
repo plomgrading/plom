@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright 2020-2022 Colin B. Macdonald
+   Copyright 2020-2023 Colin B. Macdonald
    Copyright 2020 Andrew Rechnitzer
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -28,7 +28,7 @@ How do I change the GUI?
 ........................
 
 You need `qtcreator`.  If we want to modify the ``plom-manager`` tool,
-we use `qtcreator` to edit the ``qtCreatorFiles/ui_manager.ui`` file.
+we use `qtcreator` to edit the ``plom/client/ui_files/ui_manager.ui`` file.
 
 
 I've changed the code, how do I install it?

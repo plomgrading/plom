@@ -19,7 +19,7 @@ import sys
 from textwrap import dedent
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
@@ -125,8 +125,7 @@ class Annotator(QWidget):
         self.saveName = None
         self.maxMark = None
 
-        # TOOD: use resources?
-        uic.loadUi("qtCreatorFiles/ui_chooser.ui", self)
+        uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
         # TODO: temporary workaround
         self.ui = self
 

@@ -24,6 +24,11 @@ import appdirs
 import arrow
 from packaging.version import Version
 
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
+
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
@@ -38,6 +43,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox, QWidget
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
+import plom.client.ui_files
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomException,
@@ -90,8 +96,7 @@ class Chooser(QWidget):
     def __init__(self, Qapp, webplom=False):
         self.APIVersion = Plom_API_Version
         super().__init__()
-        # TODO: resource?
-        uic.loadUi("qtCreatorFiles/ui_chooser.ui", self)
+        uic.loadUi(resources.files(plom.client.ui_files) / "chooser.ui", self)
         self.Qapp = Qapp
         self.messenger = None
         self.webplom = webplom

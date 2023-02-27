@@ -23,10 +23,16 @@ import os
 from pathlib import Path
 import queue
 import random
+import sys
 import tempfile
 from textwrap import shorten
 import time
 import threading
+
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 import platform
@@ -52,6 +58,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom import __version__
+import plom.client.ui_files
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -888,8 +895,7 @@ class MarkerClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
-        # TOOD: use resources?
-        uic.loadUi("qtCreatorFiles/ui_marker.ui", self)
+        uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
         # TODO: temporary workaround
         self.ui = self
 

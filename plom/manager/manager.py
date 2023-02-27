@@ -18,7 +18,7 @@ import tempfile
 from time import time
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
@@ -54,6 +54,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+import plom.client.ui_files
 import plom.client.icons
 
 from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
@@ -388,8 +389,7 @@ class Manager(QWidget):
                 __version__, self.APIVersion
             )
         )
-        # TODO: use resources?
-        uic.loadUi("qtCreatorFiles/ui_manager.ui", self)
+        uic.loadUi(resources.files(plom.client.ui_files) / "manager.ui", self)
         # TODO: temporary workaround
         self.ui = self
 

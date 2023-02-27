@@ -14,7 +14,13 @@ __license__ = "AGPL-3.0-or-later"
 import imghdr
 import logging
 from pathlib import Path
+import sys
 import tempfile
+
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 from PyQt5 import uic
 from PyQt5.QtCore import (
@@ -33,6 +39,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
 )
 
+import plom.client.ui_files
 from plom.plom_exceptions import (
     PlomBenignException,
     PlomConflict,
@@ -191,8 +198,7 @@ class IDClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
-        # TOOD: use resources?
-        uic.loadUi("qtCreatorFiles/ui_identify.ui", self)
+        uic.loadUi(resources.files(plom.client.ui_files) / "identifier.ui", self)
         # TODO: temporary workaround
         self.ui = self
 

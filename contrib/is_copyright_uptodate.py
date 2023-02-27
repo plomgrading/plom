@@ -26,7 +26,7 @@ ok_no_copyright = [
     "CHANGELOG*",
     "CONTRIBUTORS*",
     "*/README.md",
-    "qtCreatorFiles/*.ui",
+    "*/ui_files/*.ui",
     ".mailmap",
     "*/cl_for_demo.csv",
 ]
