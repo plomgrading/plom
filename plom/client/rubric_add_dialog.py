@@ -107,12 +107,24 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
 
 
 class WideTextEdit(QTextEdit):
-    """Just like QTextEdit but with hacked sizeHint() to be wider."""
+    """Just like QTextEdit but with hacked sizeHint() to be wider.
+
+    Also, hacked to ignore shift-enter.
+    """
 
     def sizeHint(self):
         sz = super().sizeHint()
         sz.setWidth(sz.width() * 2)
         return sz
+
+    def keyPressEvent(self, event):
+        if event.modifiers() == Qt.ShiftModifier and (
+            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+        ):
+            # print("WideTextEdit: ignoring Shift-Enter event")
+            event.ignore()
+            return
+        return super().keyPressEvent(event)
 
 
 class AddRubricBox(QDialog):
@@ -170,7 +182,7 @@ class AddRubricBox(QDialog):
         self.hiliter = SubstitutionsHighlighter(self.TE)
         self.relative_value_SB = SignedSB(maxMark)
         self.TEtag = QLineEdit()
-        self.TEmeta = QTextEdit()
+        self.TEmeta = WideTextEdit()
         # cannot edit these
         self.label_rubric_id = QLabel("Will be auto-assigned")
         self.Luser = QLabel()
@@ -373,7 +385,7 @@ class AddRubricBox(QDialog):
         self.setLayout(vlay)
 
         # set up widgets
-        buttons.accepted.connect(self.validate_and_accept)
+        buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         if reapable:
             self.reapable_CB.addItem("")
@@ -637,10 +649,30 @@ class AddRubricBox(QDialog):
             self.scopeButton.setArrowType(Qt.RightArrow)
             self.scope_frame.setVisible(False)
 
-    def validate_and_accept(self):
+    def keyPressEvent(self, event):
+        if event.modifiers() == Qt.ShiftModifier and (
+            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+        ):
+            # print("Dialog: Shift-Enter event")
+            event.accept()
+            self.accept()
+            return
+        if event.modifiers() == Qt.ControlModifier and (
+            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+        ):
+            # print("Dialog: Ctrl-Enter event")
+            event.accept()
+            txt = self.TE.toPlainText().strip()
+            if not txt.casefold().startswith("tex:"):
+                self.TE.setText("tex: " + self.TE.toPlainText())
+            self.accept()
+            return
+        return super().keyPressEvent(event)
+
+    def accept(self):
         """Make sure rubric is valid before accepting"""
         txt = self.TE.toPlainText().strip()
-        if len(txt) <= 0:
+        if len(txt) <= 0 or txt.casefold() == "tex:":
             WarnMsg(
                 self,
                 "Your rubric must contain some text.",
@@ -682,7 +714,7 @@ class AddRubricBox(QDialog):
                 == QMessageBox.Yes
             ):
                 self.TE.setText("tex: " + txt)
-        self.accept()
+        super().accept()
 
     def _gimme_rubric_tags(self):
         tags = self.TEtag.text().strip()

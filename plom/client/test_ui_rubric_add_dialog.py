@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox
 
 from plom.client.rubric_list import AddRubricBox
-from plom.client.useful_classes import SimpleQuestion
+from plom.client.useful_classes import WarnMsg, SimpleQuestion
 
 
 def test_AddRubricBox_add_new(qtbot):
@@ -147,6 +147,7 @@ def test_AddRubricBox_optional_meta_field(qtbot):
 def test_AddRubricBox_optional_username(qtbot):
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, None)
     qtbot.addWidget(d)
+    qtbot.keyClicks(d.TE, "text")
     d.accept()
     out = d.gimme_rubric_data()
     assert out["username"] == "user"
@@ -154,6 +155,7 @@ def test_AddRubricBox_optional_username(qtbot):
     # still owned by original user if new users modifies it
     d = AddRubricBox(None, "another_user", 10, 1, "Q1", 1, 2, out)
     qtbot.addWidget(d)
+    qtbot.keyClicks(d.TE, "text")
     d.accept()
     out = d.gimme_rubric_data()
     assert out["username"] == "user"
@@ -434,6 +436,29 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     assert out["tags"] == rub["tags"]
 
 
+def test_AddRubricBox_empty_text_opens_dialog(qtbot, monkeypatch):
+    def _raise(*args, **kwargs):
+        raise RuntimeError()
+
+    monkeypatch.setattr(WarnMsg, "exec", _raise)
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    with raises(RuntimeError):
+        d.accept()
+
+
+def test_AddRubricBox_dot_sentinel_issue2421(qtbot, monkeypatch):
+    def _raise(*args, **kwargs):
+        raise RuntimeError()
+
+    monkeypatch.setattr(WarnMsg, "exec", _raise)
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    qtbot.keyClicks(d.TE, ".")
+    with raises(RuntimeError):
+        d.accept()
+
+
 def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     monkeypatch.setattr(SimpleQuestion, "ask", lambda *args, **kwargs: QMessageBox.Yes)
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
@@ -441,8 +466,7 @@ def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     qtbot.mouseClick(d.TE, Qt.LeftButton)
     txt = "$y = mx + b$"
     qtbot.keyClicks(d.TE, txt)
-    # TODO see Issue #2552: should it be just d.accept()?
-    d.validate_and_accept()
+    d.accept()
     out = d.gimme_rubric_data()
     assert out["text"] == "tex: " + txt
 
@@ -452,7 +476,33 @@ def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     qtbot.mouseClick(d.TE, Qt.LeftButton)
     txt = "bribe insufficient, send more $$"
     qtbot.keyClicks(d.TE, txt)
-    # TODO see Issue #2552: should it be just d.accept()?
-    d.validate_and_accept()
+    d.accept()
     out = d.gimme_rubric_data()
     assert out["text"] == txt
+
+
+def test_AddRubricBox_shift_enter_accepts_dialog(qtbot):
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    d.show()
+    qtbot.keyClicks(d.TE, "text")
+    # ensure we have the TE focused
+    qtbot.mouseClick(d.TE, Qt.LeftButton)
+    qtbot.wait(10)
+    qtbot.keyClick(d.TE, Qt.Key_Enter, modifier=Qt.ShiftModifier)
+    qtbot.wait(10)
+    assert not d.isVisible()
+    out = d.gimme_rubric_data()
+    assert out["text"] == "text"
+
+
+def test_AddRubricBox_ctrl_enter_adds_tex(qtbot):
+    d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
+    qtbot.addWidget(d)
+    d.show()
+    qtbot.keyClicks(d.TE, "$x$")
+    qtbot.keyClick(d.TE, Qt.Key_Enter, modifier=Qt.ControlModifier)
+    qtbot.wait(10)
+    assert not d.isVisible()
+    out = d.gimme_rubric_data()
+    assert out["text"] == "tex: $x$"
