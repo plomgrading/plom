@@ -23,8 +23,8 @@ else:
     import importlib_resources as resources
 
 import arrow
-import urllib3
 
+from PyQt5 import uic
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import (
     QBrush,
@@ -64,7 +64,6 @@ from plom.client.downloader import Downloader
 from plom.client.about_dialog import show_about_dialog
 from plom.client import ImageViewWidget
 
-from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
 from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
@@ -389,8 +388,11 @@ class Manager(QWidget):
                 __version__, self.APIVersion
             )
         )
-        self.ui = Ui_Manager()
-        self.ui.setupUi(self)
+        # TODO: use resources?
+        uic.loadUi("qtCreatorFiles/ui_manager.ui", self)
+        # TODO: temporary workaround
+        self.ui = self
+
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         if user:
             self.ui.userLE.setText(user)
