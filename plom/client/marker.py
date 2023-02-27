@@ -895,6 +895,10 @@ class MarkerClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
+        uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
+        # TODO: temporary workaround
+        self.ui = self
+
         # Save the local temp directory for image files and the class list.
         if not tmpdir:
             tmpdir = tempfile.mkdtemp(prefix="plom_")
@@ -913,9 +917,11 @@ class MarkerClient(QWidget):
         self.prxM = ProxyModel()  # set proxy for filtering and sorting
         # A view window for the papers so user can zoom in as needed.
         self.testImg = ImageViewWidget(self, has_rotate_controls=False)
-        self.annotatorSettings = defaultdict(
-            lambda: None
-        )  # settings variable for annotator settings (initially None)
+        # A view window for the papers so user can zoom in as needed.
+        self.ui.paperBoxLayout.addWidget(self.testImg, 10)
+
+        # settings variable for annotator settings (initially None)
+        self.annotatorSettings = defaultdict(lambda: None)
         self.commentCache = {}  # cache for Latex Comments
         self.backgroundUploader = None
 
@@ -1054,11 +1060,6 @@ class MarkerClient(QWidget):
         Returns:
             None: Modifies self.ui
         """
-        # TODO: I'd rather load this in init, but the paper preview gets tiny for some reason
-        uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
-        # TODO: temporary workaround
-        self.ui = self
-
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         try:
             question_label = get_question_label(self.exam_spec, self.question)
@@ -1083,11 +1084,6 @@ class MarkerClient(QWidget):
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
-        # A view window for the papers so user can zoom in as needed.
-        # Paste into appropriate location in gui.
-        self.ui.paperBoxLayout.addWidget(self.testImg, 10)
-        # too small?
-        # self.updateGeometry()
 
         if __version__.endswith("dev"):
             self.ui.technicalButton.setChecked(True)
