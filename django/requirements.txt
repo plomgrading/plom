@@ -8,7 +8,6 @@ django==4.1.7
 django-braces
 django-reset-migrations
 pymupdf
-toml
 model_bakery # for tests
 beautifulsoup4 # HTML parsing
 django-session-timeout
