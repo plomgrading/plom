@@ -21,6 +21,7 @@ class Command(BaseCommand):
     commands:
         python3 manage.py plom_staging_bundles upload (username) (file) <- drag and drop or copy path
         python3 manage.py plom_staging_bundles status
+        python3 manage.py plom_staging_bundles push
     """
 
     help = "Upload bundle pdf files to staging area"
@@ -62,6 +63,10 @@ class Command(BaseCommand):
 
         if len(bundle_status) == 1:
             self.stdout.write("No bundles uploaded.")
+
+    # TODO: work on this function, add to add_arguments, and add to handle
+    def push_staged_bundle(self):
+        pass
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
