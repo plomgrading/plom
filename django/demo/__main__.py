@@ -130,7 +130,7 @@ def download_zip():
     cmd = "plom_build_papers --download-all"
     py_man_cmd = f"python3 manage.py {cmd}"
     subprocess.check_call(split(py_man_cmd))
-    
+
 
 def upload_bundles():
     for n in [1, 2, 3]:
@@ -188,7 +188,7 @@ def main():
 
     download_zip()
     print("*" * 40)
-    
+
     scribble_on_exams()
 
     print("*" * 40)

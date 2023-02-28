@@ -249,7 +249,7 @@ class BuildPapersService:
             return (paper_path.name, fh.read())
 
     @transaction.atomic
-    def get_zipfly_generator(self, short_name, *, chunksize=1024*1024):
+    def get_zipfly_generator(self, short_name, *, chunksize=1024 * 1024):
         bps = BuildPapersService()
         paths = [
             {
@@ -261,4 +261,3 @@ class BuildPapersService:
 
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
         return zfly.generator()
-        

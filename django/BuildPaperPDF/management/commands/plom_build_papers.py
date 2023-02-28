@@ -13,6 +13,7 @@ from plom.misc_utils import format_int_list_with_runs
 
 from pathlib import Path
 
+
 class Command(BaseCommand):
     help = "Allows user to build papers, download them and delete them."
 
@@ -134,7 +135,9 @@ class Command(BaseCommand):
             for index, chunk in enumerate(zgen):
                 tot_size += len(chunk)
                 fh.write(chunk)
-                self.stdout.write(f"# chunk {index} = {tot_size//(1024*1024)}mb", ending="\r")
+                self.stdout.write(
+                    f"# chunk {index} = {tot_size//(1024*1024)}mb", ending="\r"
+                )
         self.stdout.write(f'\nAll built papers saved in zip = "{short_name}.zip"')
 
     def handle(self, *args, **options):
