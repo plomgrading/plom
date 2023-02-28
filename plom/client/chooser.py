@@ -95,7 +95,9 @@ class Chooser(QDialog):
     def __init__(self, Qapp, webplom=False):
         self.APIVersion = Plom_API_Version
         super().__init__()
-        uic.loadUi(resources.files(plom.client.ui_files) / "chooser.ui", self)
+        res = resources.files(plom.client.ui_files) / "chooser.ui"
+        with resources.as_file(res) as f:
+            uic.loadUi(f, self)
         self.Qapp = Qapp
         self.messenger = None
         self.webplom = webplom

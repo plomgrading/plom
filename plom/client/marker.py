@@ -895,7 +895,9 @@ class MarkerClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
-        uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
+        res = resources.files(plom.client.ui_files) / "marker.ui"
+        with resources.as_file(res) as f:
+            uic.loadUi(f, self)
         # TODO: temporary workaround
         self.ui = self
 

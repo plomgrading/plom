@@ -125,7 +125,9 @@ class Annotator(QWidget):
         self.saveName = None
         self.maxMark = None
 
-        uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
+        res = resources.files(plom.client.ui_files) / "annotator.ui"
+        with resources.as_file(res) as f:
+            uic.loadUi(f, self)
         # TODO: temporary workaround
         self.ui = self
 

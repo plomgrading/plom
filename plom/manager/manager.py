@@ -389,7 +389,9 @@ class Manager(QWidget):
                 __version__, self.APIVersion
             )
         )
-        uic.loadUi(resources.files(plom.client.ui_files) / "manager.ui", self)
+        res = resources.files(plom.client.ui_files) / "manager.ui"
+        with resources.as_file(res) as f:
+            uic.loadUi(f, self)
         # TODO: temporary workaround
         self.ui = self
 
