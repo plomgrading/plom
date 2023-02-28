@@ -127,7 +127,7 @@ def wait_for_papers_to_be_ready():
 
 def upload_bundles():
     for n in [1, 2, 3]:
-        cmd = f"plom_staging_bundles upload demoScanner{n} fake_bundle{n}.pdf"
+        cmd = f"plom_staging_bundles upload demoScanner1 fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
 
