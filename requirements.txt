@@ -22,7 +22,7 @@ canvasapi==3.0.0
 exif==1.6.0
 file-magic==0.4.1
 fonttools==4.38.0
-importlib-resources==5.10.2
+importlib-resources==5.12.0
 imutils==0.5.4
 lapsolver==1.1.0
 numpy==1.24.2
