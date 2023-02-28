@@ -205,18 +205,8 @@ class GetStreamingZipOfPDFs(ManagerRequiredView):
     # using zipfly python package.  see django example here
     # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
     def get(self, request):
-        bps = BuildPapersService()
         short_name = StagingSpecificationService().get_short_name_slug()
-        paths = [
-            {
-                "fs": pdf_path,
-                "n": pathlib.Path(f"papers_for_{short_name}") / pdf_path.name,
-            }
-            for pdf_path in bps.get_completed_pdf_paths()
-        ]
-
-        zfly = zipfly.ZipFly(paths=paths)
-        zgen = zfly.generator()
+        zgen = BuildPapersService().get_zipfly_generator(short_name)
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = f"attachment; filename={short_name}.zip"
         return response

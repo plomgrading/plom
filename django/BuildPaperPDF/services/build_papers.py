@@ -4,9 +4,9 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 import pathlib
-import zipfile
-import shutil
 import random
+import shutil
+import zipfly
 
 from plom.create.mergeAndCodePages import make_PDF
 
@@ -247,3 +247,18 @@ class BuildPapersService:
         paper_path = pathlib.Path(task.pdf_file_path)
         with paper_path.open("rb") as fh:
             return (paper_path.name, fh.read())
+
+    @transaction.atomic
+    def get_zipfly_generator(self, short_name, *, chunksize=1024*1024):
+        bps = BuildPapersService()
+        paths = [
+            {
+                "fs": pdf_path,
+                "n": pathlib.Path(f"papers_for_{short_name}") / pdf_path.name,
+            }
+            for pdf_path in bps.get_completed_pdf_paths()
+        ]
+
+        zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
+        return zfly.generator()
+        

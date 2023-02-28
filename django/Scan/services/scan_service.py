@@ -37,7 +37,6 @@ class ScanService:
     Functions for staging scanned test-papers.
     """
 
-    @transaction.atomic
     def upload_bundle(self, pdf_doc, slug, user, timestamp, pdf_hash):
         """
         Upload a bundle PDF and store it in the filesystem + database.
@@ -54,14 +53,15 @@ class ScanService:
         with open(bundle_dir / file_name, "w") as f:
             pdf_doc.save(f)
 
-        bundle_db = StagingBundle(
-            slug=slug,
-            file_path=bundle_dir / file_name,
-            user=user,
-            timestamp=timestamp,
-            pdf_hash=pdf_hash,
-        )
-        bundle_db.save()
+        with transaction.atomic():
+            bundle_db = StagingBundle(
+                slug=slug,
+                file_path=bundle_dir / file_name,
+                user=user,
+                timestamp=timestamp,
+                pdf_hash=pdf_hash,
+            )
+            bundle_db.save()
 
         image_dir = bundle_dir / "pageImages"
         image_dir.mkdir(exist_ok=True)

@@ -125,12 +125,20 @@ def wait_for_papers_to_be_ready():
             break
 
 
+def download_zip():
+    print("Download a zip of all the papers")
+    cmd = "plom_build_papers --download-all"
+    py_man_cmd = f"python3 manage.py {cmd}"
+    subprocess.check_call(split(py_man_cmd))
+    
+
 def upload_bundles():
     for n in [1, 2, 3]:
-        cmd = f"plom_staging_bundles upload demoScanner{n} fake_bundle{n}.pdf"
+        cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
-    print("For time being one bundle upload at a time per user. TODO = fix this")
+        print("For time being sleep 60s between bundle uploads. TODO = fix this")
+        sleep(60)
 
 
 def wait_for_exit():
@@ -178,6 +186,9 @@ def main():
     wait_for_papers_to_be_ready()
     print("*" * 40)
 
+    download_zip()
+    print("*" * 40)
+    
     scribble_on_exams()
 
     print("*" * 40)
