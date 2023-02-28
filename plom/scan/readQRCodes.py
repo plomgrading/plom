@@ -18,7 +18,7 @@ from plom.tpv_utils import (
 )
 from plom.scan import with_scanner_messenger
 from plom.scan import QRextract_legacy
-from plom.scan.rotate import rotateBitmap
+from plom.scan.rotate import rotate_bitmap
 from plom import PlomImageExts
 
 
@@ -105,7 +105,7 @@ def reOrientPage(fname, qrs):
     if len(matches) != 1:
         return False
     match_key, v = matches.popitem()
-    rotateBitmap(fname, actions[match_key])
+    rotate_bitmap(fname, actions[match_key])
     return True
 
 

@@ -25,6 +25,7 @@ from .frontend_hwscan import processHWScans, processMissing
 from .frontend_hwscan import processAllHWByQ
 from .scansToImages import processFileToBitmaps
 from .scansToImages import try_to_extract_image, render_page_to_bitmap
+from .rotate import rotate_bitmap
 
 # what you get from "from plom.scan import *"
 __all__ = [
@@ -39,4 +40,5 @@ __all__ = [
     "print_bundle_list",
     "QRextract_legacy",
     "QRextract",
+    "rotate_bitmap",
 ]

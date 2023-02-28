@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 import logging
 from pathlib import Path
-import subprocess
 
 import exif
+from PIL import Image
 
 
 log = logging.getLogger("scan")
 
 
-def rotateBitmap(fname, angle):
+def rotate_bitmap(fname, angle):
     """Rotate bitmap, possibly in metadata.
 
     args:
@@ -28,12 +28,9 @@ def rotateBitmap(fname, angle):
 
     if angle == 0:
         return
-    subprocess.run(
-        ["mogrify", "-quiet", "-rotate", str(angle), fname],
-        stderr=subprocess.STDOUT,
-        shell=False,
-        check=True,
-    )
+    img = Image.open(fname)
+    new_img = img.rotate(angle, expand=True)
+    new_img.save(fname)
 
 
 def rotate_bitmap_jpeg_exif(fname, angle):

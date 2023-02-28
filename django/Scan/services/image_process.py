@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from PIL import Image
+from plom.scan import rotate_bitmap
 
 
 class PageImageProcessor:
@@ -9,24 +11,6 @@ class PageImageProcessor:
     Functions for processing a page-image: rotation
     (TODO: gamma correction, etc?)
     """
-
-    def rotate_image(self, path, angle):
-        """
-        Return a rotated PIL image of a page.
-
-        Args:
-            path: (str/pathlib.Path) path to a page-image
-            angle: (int) 90, 180, 270, or -90
-        """
-
-        if angle not in [90, 180, 270, -90]:
-            raise ValueError(
-                f"{angle} is not a supported angle for rotating page images."
-            )
-
-        img = Image.open(path)
-        rotated_img = img.rotate(angle, expand=True)
-        return rotated_img
 
     def get_page_orientation(self, qr_code_data):
         """
@@ -163,6 +147,7 @@ class PageImageProcessor:
 
         Returns:
             int | False: rotation angle if page was rotated, False otherwise
+            TODO: I'm concerned about the lack of stable type here.
         """
         orientation = self.get_page_orientation(qr_data)
         if orientation == "upright":
@@ -175,6 +160,9 @@ class PageImageProcessor:
         else:
             rotate_angle = 180
 
-        new_img = self.rotate_image(path, rotate_angle)
-        new_img.save(path)
+        print("v " * 80)
+        print(path)
+        print(type(path))
+        print("^ " * 80)
+        rotate_bitmap(path, rotate_angle)
         return rotate_angle
