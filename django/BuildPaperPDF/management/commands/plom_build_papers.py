@@ -7,11 +7,11 @@ from django.core.management.base import BaseCommand
 from BuildPaperPDF.services import BuildPapersService
 from Preparation.services import PQVMappingService
 from Papers.services import SpecificationService
+from SpecCreator.services import StagingSpecificationService
 
 from plom.misc_utils import format_int_list_with_runs
 
 from pathlib import Path
-import shutil
 
 
 class Command(BaseCommand):
@@ -127,9 +127,18 @@ class Command(BaseCommand):
 
     def download_all_papers(self):
         bps = BuildPapersService()
-        save_path = bps.get_pdf_zipfile(filename="all_papers.zip")
-        shutil.move(save_path, "all_papers.zip")
-        self.stdout.write('All built papers saved in zip = "all_papers.zip"')
+        short_name = StagingSpecificationService().get_short_name_slug()
+        zgen = bps.get_zipfly_generator(short_name)
+        with open(f"{short_name}.zip", "wb") as fh:
+            self.stdout.write("Opening {short_name}.zip to write the zip-file")
+            tot_size = 0
+            for index, chunk in enumerate(zgen):
+                tot_size += len(chunk)
+                fh.write(chunk)
+                self.stdout.write(
+                    f"# chunk {index} = {tot_size//(1024*1024)}mb", ending="\r"
+                )
+        self.stdout.write(f'\nAll built papers saved in zip = "{short_name}.zip"')
 
     def handle(self, *args, **options):
         if options["start"]:
