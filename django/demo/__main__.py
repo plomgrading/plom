@@ -143,7 +143,7 @@ def upload_bundles():
 
 def wait_for_exit():
     while True:
-        x = input("Press type 'quit' and press Enter to exit the demo: ")
+        x = input("Type 'quit' and press Enter to exit the demo: ")
         if x.casefold() == "quit":
             break
 
