@@ -12,7 +12,6 @@ import struct
 import subprocess
 from multiprocessing import Pool
 import random
-import tempfile
 from warnings import warn
 import uuid
 
@@ -189,194 +188,264 @@ def processFileToBitmaps(
     files = []
     for p in doc:
         basename = f"{safeScan}-{(p.number + 1):03}"
-
-        ok_extract = True
-        msgs = []
-
-        # Any of these might indicate something more complicated than a scan
-        if p.get_links():
-            msgs.append("Has links")
-            ok_extract = False
-        if list(p.annots()):
-            msgs.append("Has annotations")
-            ok_extract = False
-        if list(p.widgets()):
-            msgs.append("Has fillable forms")
-            ok_extract = False
-        # TODO: which is more expensive, this or getImageList?
-        if p.get_text("text"):
-            msgs.append("Has text")
-            ok_extract = False
-
-        # TODO: Do later to get more info in prep for future change to default
-        if do_not_extract:
-            msgs.append("Disabled by flag")
-            ok_extract = False
-
-        if ok_extract:
-            r, d = extractImageFromFitzPage(p, doc)
-            if not r:
-                msgs.append(d)
-            else:
-                log.info(
-                    '%s: Extracted "%s" from single-image page %sx%s',
-                    basename,
-                    d["ext"],
-                    d["width"],
-                    d["height"],
-                )
-                if d["ext"].lower() in PlomImageExts:
-                    outname = dest / (basename + "." + d["ext"])
-                    with open(outname, "wb") as f:
-                        f.write(d["image"])
-                    if add_metadata:
-                        # watermark for Issue #1573
-                        if d["ext"].lower() == "png":
-                            add_metadata_png(outname, file_name, p.number)
-                        elif d["ext"].lower() in ".jpeg":
-                            # We write some unique metadata into the JPEG file.  We could
-                            # use the EXIF data or a JPEG comment.  The latter seems safer
-                            # as we just append some bytes to the file...?  I'm concerned
-                            # about interactions with existing EXIF: for example `exif`
-                            # library cannot write longer "user_comment" field (see tests).
-                            add_metadata_jpeg_comment(outname, file_name, p.number)
-                            # add_metadata_jpeg_exif(outname, file_name, p.number)
-                        else:
-                            # there should be no other choice until PlomImageExts is updated
-                            raise ValueError(
-                                f"No support for watermarking \"{d['ext']}\" files"
-                            )
-                    files.append(outname)
-                    continue
-                # Issue #2346: could try to convert to png, but for now just let fitz render
-                log.info(f"  {d['ext']} not in allowlist: leave for fitz render")
-                if False:
-                    log.info(f"  {d['ext']} not in allowlist: transcoding to PNG")
-                    outname = dest / (basename + ".png")
-                    # Context manager not appropriate here, Issue #1996
-                    f = Path(tempfile.NamedTemporaryFile(delete=False).name)
-                    with open(f, "wb") as fh:
-                        fh.write(d["image"])
-                    subprocess.check_call(["convert", f, outname])
-                    f.unlink()
-                    # TODO: note this image will not be watermarked!
-                    files.append(outname)
-                    continue
-
-        aspect = p.mediabox_size[0] / p.mediabox_size[1]
-        H = ScenePixelHeight
-        W = H * aspect
-        MINWIDTH = 1024
-        MAXHEIGHT = 15999
-        MAXWIDTH = 3 * ScenePixelHeight // 2
-        assert MINWIDTH < ScenePixelHeight
-        # Note logic not same between tall and wide:
-        #   * tall: "Safeway receipt", observed from "infinite paper" software
-        #   * wide: "fortune cookie", little strip cropped from regular sheet
-        # In the tall case, we use extra pixels vertically because there is
-        # actually more to resolve.  But I've never seen a wide case that was
-        # wider than a landscape sheet of paper.  Also, currently, Client's
-        # would display such a thin wide strip at too large a scale.
-        if aspect > 1:
-            if W > MAXWIDTH:
-                # TODO: warn of extreme aspect ratio?  Flag to control this?
-                W = MAXWIDTH
-                H = W / aspect
-                if H < 100:
-                    # TODO: use a context manager for doc to avoid this
-                    doc.close()
-                    raise ValueError("Scanned a strip too wide and thin?")
-        else:
-            if W < MINWIDTH:
-                W = MINWIDTH
-                H = W / aspect
-                if H > MAXHEIGHT:
-                    H = MAXHEIGHT
-                    W = H * aspect
-                    if W < 100:
-                        # TODO: use a context manager for doc to avoid this
-                        doc.close()
-                        raise ValueError("Scanned a long strip of thin paper?")
-
-        # fitz uses ceil (not round) so decrease a little bit
-        if W > H:
-            z = (float(W) - 0.0001) / p.mediabox_size[0]
-        else:
-            z = (float(H) - 0.0001) / p.mediabox_size[1]
-        # # For testing, choose widely varying random sizes
-        # z = random.uniform(1, 5)
-        log.info(
-            f"{basename}: Fitz render z={z:4.2f}. No extract b/c: " + "; ".join(msgs)
+        outname, msgs = try_to_extract_image(
+            p,
+            doc,
+            dest,
+            basename,
+            file_name,
+            do_not_extract=do_not_extract,
+            add_metadata=add_metadata,
         )
-        pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
-        if not (W == pix.width or H == pix.height):
-            _m = (
-                "Debug: some kind of rounding error in scaling image?"
-                f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
-            )
-            warn(_m)
-            log.warning(_m)
-
-        # For testing, randomly make jpegs, rotated a bit, of various qualities
-        if debug_jpeg and random.uniform(0, 1) <= 0.5:
-            outname = dest / (basename + ".jpg")
-            img = PIL.Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            angle = random.choice([90.5, 180.4, -90.3, -88, -1])
-            msgs = [f"hard-rotate {angle}"]
-            img = img.rotate(
-                angle,
-                resample=PIL.Image.BILINEAR,
-                expand=True,
-                fillcolor=(128, 128, 128, 0),
-            )
-            quality = random.choice([6, 30, 94, 94, 94])
-            msgs.append(f"quality {quality}")
-            r = random.choice([None, None, None, 3, 6, 8])
-            if r:
-                msgs.append(f"exif rotate {r}")
-            log.info("  Randomly making jpeg " + ", ".join(msgs))
-            img.save(outname, "JPEG", quality=quality, optimize=True)
-            # We write some unique metadata into the JPEG exif data to avoid Issue #1573
-            im_shell = exif.Image(outname)
-            im_shell.set("user_comment", generate_metadata_str(file_name, p.number))
-            if r:
-                im_shell.set("orientation", r)
-            with open(outname, "wb") as f:
-                f.write(im_shell.get_file())
-            # add_metadata_jpeg_comment(outname, file_name, p.number)
+        if outname is not None:
             files.append(outname)
             continue
+        log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
+        outname = render_page_to_bitmap(
+            p,
+            dest,
+            basename,
+            file_name,
+            doc,
+            debug_jpeg=debug_jpeg,
+            add_metadata=add_metadata,
+        )
+        files.append(outname)
 
-        pngname = dest / (basename + ".png")
-        jpgname = dest / (basename + ".jpg")
-        if add_metadata:
-            # We write some unique metadata into the PNG file to avoid Issue #1573
-            metadata = generate_png_metadata(file_name, p.number)
-            pix.pil_save(pngname, optimize=True, pnginfo=metadata)
-        else:
-            # pil_save 10% smaller but 2x-3x slower, Issue #1866
-            pix.save(pngname)
-
-        exy = PIL.Image.Exif()  # empty exif data
-        if add_metadata:
-            # We write some unique metadata into the JPEG exif data to avoid Issue #1573
-            assert PIL.ExifTags.TAGS[37510] == "UserComment"
-            exy[37510] = generate_metadata_str(file_name, p.number)
-        # TODO: add progressive=True?
-        # Note subsampling off to avoid mucking with red hairlines
-        pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0, exif=exy)
-
-        # Keep the jpeg if its at least a little smaller
-        if jpgname.stat().st_size < 0.9 * pngname.stat().st_size:
-            pngname.unlink()
-            files.append(jpgname)
-        else:
-            jpgname.unlink()
-            files.append(pngname)
-        # WebP here is also an option, Issue #1864.
     assert len(files) == len(doc), "Expected one image per page"
     doc.close()
     return files
+
+
+def try_to_extract_image(
+    p, doc, dest, basename, bundle_name, *, do_not_extract=False, add_metadata=True
+):
+    """If possible/desirable, extract an image from a PDF page and save to disc.
+
+    "Desirable" means there are no additional markings on the page; no
+    information will be lost by looking only at the extracted image
+    instead of the original page.
+
+    Args:
+        p (fitz.Page):
+        doc (fitz.Document):
+        dest (pathlib.Path): where to save the resulting bitmap file.
+        basename (str):
+        bundle_name (str/pathlib.Path): only used for metadata hackery
+            uniqifying pages, you can pass whatever you want.
+
+    Keyword Args:
+        do_not_extract (bool): always render, do no extract even if
+            it seems possible to do so.
+        add_metadata (bool): add invisible metadata to each image
+            including bundle name and random numbers.  Default: True.
+            If you disable this, you can get two identical images
+            (from different pages) giving identical hashes, which
+            in theory is harmless but at least in 2022 was causing
+            database/client issues.
+
+    Returns:
+        pathlib.Path/None: `None` means we could not or choose not to extract.
+        whereas a `Path` means we have extracted the image.
+    """
+    ok_extract = True
+    msgs = []
+    # Any of these might indicate something more complicated than a scan
+    if p.get_links():
+        msgs.append("Has links")
+        ok_extract = False
+    if list(p.annots()):
+        msgs.append("Has annotations")
+        ok_extract = False
+    if list(p.widgets()):
+        msgs.append("Has fillable forms")
+        ok_extract = False
+    # TODO: which is more expensive, this or getImageList?
+    if p.get_text("text"):
+        msgs.append("Has text")
+        ok_extract = False
+
+    # TODO: Do later to get more info in prep for future change to default
+    if do_not_extract:
+        msgs.append("Disabled by flag")
+        ok_extract = False
+
+    if not ok_extract:
+        return None, msgs
+
+    r, d = extractImageFromFitzPage(p, doc)
+    if not r:
+        msgs.append(d)
+        return None, msgs
+    log.info(
+        '%s: Extracted "%s" from single-image page %sx%s',
+        basename,
+        d["ext"],
+        d["width"],
+        d["height"],
+    )
+    if d["ext"].lower() not in PlomImageExts:
+        # Issue #2346: could try to convert to png, but for now just let fitz render
+        log.info(f"  {d['ext']} not in allowlist: leave for fitz render")
+        msgs.append(f'extracted image not in {"".join(PlomImageExts)}')
+        return None, msgs
+    outname = dest / (basename + "." + d["ext"])
+    with open(outname, "wb") as f:
+        f.write(d["image"])
+    if add_metadata:
+        # watermark for Issue #1573
+        if d["ext"].lower() == "png":
+            add_metadata_png(outname, bundle_name, p.number)
+        elif d["ext"].lower() in ".jpeg":
+            # We write some unique metadata into the JPEG file.  We could
+            # use the EXIF data or a JPEG comment.  The latter seems safer
+            # as we just append some bytes to the file...?  I'm concerned
+            # about interactions with existing EXIF: for example `exif`
+            # library cannot write longer "user_comment" field (see tests).
+            add_metadata_jpeg_comment(outname, bundle_name, p.number)
+            # add_metadata_jpeg_exif(outname, bundle_name, p.number)
+        else:
+            # there should be no other choice until PlomImageExts is updated
+            raise ValueError(f"No support for watermarking \"{d['ext']}\" files")
+    return outname, msgs
+
+
+def render_page_to_bitmap(
+    p, dest, basename, bundle_name, doc, debug_jpeg=False, add_metadata=True
+):
+    """Use PyMuPDF to render a PDF page to an image.
+
+    Args:
+        p (fitz.Page):
+        dest (pathlib.Path): where to save the resulting bitmap file.
+        basename (str):
+        bundle_name (str/pathlib.Path): only used for metadata hackery
+            uniqifying pages, you can pass whatever you want.
+        doc (fitz.Document): temporary, will be removed soon.
+
+    Keyword Args:
+        debug_jpeg (bool): make jpegs, randomly rotated of various
+            quality settings, for debugging or demos.  Default: False.
+        add_metadata (bool): add invisible metadata to each image
+            including bundle name and random numbers.  Default: True.
+            If you disable this, you can get two identical images
+            (from different pages) giving identical hashes, which
+            in theory is harmless but at least in 2022 was causing
+            database/client issues.
+
+    Returns:
+        pathlib.Path: the rendered image on disc.
+
+    Raises:
+        ValueError: wierd shapes
+    """
+    aspect = p.mediabox_size[0] / p.mediabox_size[1]
+    H = ScenePixelHeight
+    W = H * aspect
+    MINWIDTH = 1024
+    MAXHEIGHT = 15999
+    MAXWIDTH = 3 * ScenePixelHeight // 2
+    assert MINWIDTH < ScenePixelHeight
+    # Note logic not same between tall and wide:
+    #   * tall: "Safeway receipt", observed from "infinite paper" software
+    #   * wide: "fortune cookie", little strip cropped from regular sheet
+    # In the tall case, we use extra pixels vertically because there is
+    # actually more to resolve.  But I've never seen a wide case that was
+    # wider than a landscape sheet of paper.  Also, currently, Client's
+    # would display such a thin wide strip at too large a scale.
+    if aspect > 1:
+        if W > MAXWIDTH:
+            # TODO: warn of extreme aspect ratio?  Flag to control this?
+            W = MAXWIDTH
+            H = W / aspect
+            if H < 100:
+                # TODO: use a context manager for doc to avoid this
+                doc.close()
+                raise ValueError("Scanned a strip too wide and thin?")
+    else:
+        if W < MINWIDTH:
+            W = MINWIDTH
+            H = W / aspect
+            if H > MAXHEIGHT:
+                H = MAXHEIGHT
+                W = H * aspect
+                if W < 100:
+                    # TODO: use a context manager for doc to avoid this
+                    doc.close()
+                    raise ValueError("Scanned a long strip of thin paper?")
+
+    # fitz uses ceil (not round) so decrease a little bit
+    if W > H:
+        z = (float(W) - 0.0001) / p.mediabox_size[0]
+    else:
+        z = (float(H) - 0.0001) / p.mediabox_size[1]
+    # # For testing, choose widely varying random sizes
+    # z = random.uniform(1, 5)
+    log.info(f"{basename}: Fitz render z={z:4.2f}.")
+    pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
+    if not (W == pix.width or H == pix.height):
+        _m = (
+            "Debug: some kind of rounding error in scaling image?"
+            f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
+        )
+        warn(_m)
+        log.warning(_m)
+
+    # For testing, randomly make jpegs, rotated a bit, of various qualities
+    if debug_jpeg and random.uniform(0, 1) <= 0.5:
+        outname = dest / (basename + ".jpg")
+        img = PIL.Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        angle = random.choice([90.5, 180.4, -90.3, -88, -1])
+        msgs = [f"hard-rotate {angle}"]
+        img = img.rotate(
+            angle,
+            resample=PIL.Image.BILINEAR,
+            expand=True,
+            fillcolor=(128, 128, 128, 0),
+        )
+        quality = random.choice([6, 30, 94, 94, 94])
+        msgs.append(f"quality {quality}")
+        r = random.choice([None, None, None, 3, 6, 8])
+        if r:
+            msgs.append(f"exif rotate {r}")
+        log.info("  Randomly making jpeg " + ", ".join(msgs))
+        img.save(outname, "JPEG", quality=quality, optimize=True)
+        # We write some unique metadata into the JPEG exif data to avoid Issue #1573
+        im_shell = exif.Image(outname)
+        im_shell.set("user_comment", generate_metadata_str(bundle_name, p.number))
+        if r:
+            im_shell.set("orientation", r)
+        with open(outname, "wb") as f:
+            f.write(im_shell.get_file())
+        # add_metadata_jpeg_comment(outname, file_name, p.number)
+        return outname
+
+    pngname = dest / (basename + ".png")
+    jpgname = dest / (basename + ".jpg")
+    if add_metadata:
+        # We write some unique metadata into the PNG file to avoid Issue #1573
+        metadata = generate_png_metadata(bundle_name, p.number)
+        pix.pil_save(pngname, optimize=True, pnginfo=metadata)
+    else:
+        # pil_save 10% smaller but 2x-3x slower, Issue #1866
+        pix.save(pngname)
+
+    exy = PIL.Image.Exif()  # empty exif data
+    if add_metadata:
+        # We write some unique metadata into the JPEG exif data to avoid Issue #1573
+        assert PIL.ExifTags.TAGS[37510] == "UserComment"
+        exy[37510] = generate_metadata_str(bundle_name, p.number)
+    # TODO: add progressive=True?
+    # Note subsampling off to avoid mucking with red hairlines
+    pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0, exif=exy)
+
+    # Keep the jpeg if its at least a little smaller
+    if jpgname.stat().st_size < 0.9 * pngname.stat().st_size:
+        pngname.unlink()
+        return jpgname
+    jpgname.unlink()
+    return pngname
+    # WebP here is also an option, Issue #1864.
 
 
 def extractImageFromFitzPage(page, doc):
