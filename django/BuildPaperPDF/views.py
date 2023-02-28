@@ -5,12 +5,11 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
-import zipfly
 
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
-from django.http import FileResponse, HttpResponse, StreamingHttpResponse
+from django.http import FileResponse, StreamingHttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile

@@ -105,34 +105,71 @@ class ScanServiceTests(TestCase):
         have been successfully read and parsed into the correct format.
         """
         img_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
-        codes = QRextract(img_path, write_to_file=False)
+        codes = QRextract(img_path)
         scanner = ScanService()
         parsed_codes = scanner.parse_qr_code([codes])
         print(parsed_codes)
         code_dict = {
             "NW": {
-                "paper_id": "00006",
-                "page_num": "004",
-                "version_num": "001",
+                "paper_id": 6,
+                "page_num": 4,
+                "version_num": 1,
                 "quadrant": "2",
                 "public_code": "93849",
+                "grouping_key": "00006004001",
+                "x_coord": 166.5,
+                "y_coord": 272,
             },
             "SW": {
-                "paper_id": "00006",
-                "page_num": "004",
-                "version_num": "001",
+                "paper_id": 6,
+                "page_num": 4,
+                "version_num": 1,
                 "quadrant": "3",
                 "public_code": "93849",
+                "grouping_key": "00006004001",
+                "x_coord": 173.75,
+                "y_coord": 2895.5,
             },
             "SE": {
-                "paper_id": "00006",
-                "page_num": "004",
-                "version_num": "001",
+                "paper_id": 6,
+                "page_num": 4,
+                "version_num": 1,
                 "quadrant": "4",
                 "public_code": "93849",
+                "grouping_key": "00006004001",
+                "x_coord": 2141,
+                "y_coord": 2883.5,
             },
         }
-        self.assertEqual(parsed_codes, code_dict)
+        for quadrant in code_dict:
+            self.assertEqual(
+                parsed_codes[quadrant]["paper_id"], code_dict[quadrant]["paper_id"]
+            )
+            self.assertEqual(
+                parsed_codes[quadrant]["page_num"], code_dict[quadrant]["page_num"]
+            )
+            self.assertEqual(
+                parsed_codes[quadrant]["version_num"],
+                code_dict[quadrant]["version_num"],
+            )
+            self.assertEqual(
+                parsed_codes[quadrant]["public_code"],
+                code_dict[quadrant]["public_code"],
+            )
+            self.assertEqual(
+                parsed_codes[quadrant]["grouping_key"],
+                code_dict[quadrant]["grouping_key"],
+            )
+            self.assertTrue(
+                (parsed_codes[quadrant]["x_coord"] - code_dict[quadrant]["x_coord"])
+                / code_dict[quadrant]["x_coord"]
+                < 0.01
+            )
+            self.assertTrue(
+                (parsed_codes[quadrant]["y_coord"] - code_dict[quadrant]["y_coord"])
+                / code_dict[quadrant]["y_coord"]
+                < 0.01
+            )
 
     def test_complete_images(self):
         """
