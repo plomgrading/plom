@@ -14,7 +14,7 @@ from pathlib import Path
 
 class PDFTask(HueyTask):
     paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
-    pdf_file_path = models.TextField(default="")
+    pdf_file = models.FileField(upload_to="papersToPrint/")
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)
 
@@ -30,7 +30,10 @@ class PDFTask(HueyTask):
         print(
             f"Deleting pdf associated with paper {self.paper.paper_number} if it exists"
         )
-        Path(self.pdf_file_path).unlink(missing_ok=True)
+        self.file_path().unlink(missing_ok=True)
+
+    def file_path(self):
+        return Path(self.pdf_file.path)
 
 
 @receiver(pre_delete, sender=Paper)

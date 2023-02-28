@@ -74,7 +74,7 @@ class BuildPapersService:
         task = PDFTask(
             paper=paper,
             huey_id=huey_id,
-            pdf_file_path=str(paper_path),
+            pdf_file=str(paper_path),
             status="todo",
             student_name=student_name,
             student_id=student_id,
@@ -119,7 +119,7 @@ class BuildPapersService:
     def get_completed_pdf_paths(self):
         """Get list of paths of pdf-files of completed (built) tests papers"""
         return [
-            pathlib.Path(pdf.pdf_file_path)
+            pdf.file_path()
             for pdf in PDFTask.objects.filter(status="complete")
         ]
 
@@ -211,7 +211,7 @@ class BuildPapersService:
     def reset_all_tasks(self):
         self.cancel_all_task()
         for task in PDFTask.objects.all():
-            pathlib.Path(task.pdf_file_path).unlink(missing_ok=True)
+            task.file_path().unlink(missing_ok=True)
             task.huey_id = None
             task.status = "todo"
             task.save()
@@ -234,7 +234,7 @@ class BuildPapersService:
         if task.status != "complete":
             raise ValueError(f"Task {paper_number} is not complete")
 
-        paper_path = pathlib.Path(task.pdf_file_path)
+        paper_path = task.file_path()
         with paper_path.open("rb") as fh:
             return (paper_path.name, fh.read())
 
@@ -246,7 +246,7 @@ class BuildPapersService:
                 "paper_number": task.paper.paper_number,
                 "status": task.status,
                 "message": task.message,
-                "pdf_filename": pathlib.Path(task.pdf_file_path).name,
+                "pdf_filename": str(task.file_path().name),
             }
             for task in PDFTask.objects.all()
         ]
