@@ -114,7 +114,8 @@ class Command(BaseCommand):
                     )
 
                     # add to core server (if a valid connection exists)
-                    core.create_core_user(scanner_username, scanner_password)
+                    # TODO: deprecated, remove?
+                    # core.create_core_user(scanner_username, scanner_password)
 
                 if marker_username in exist_usernames:
                     print(f"{marker_username} already exists!")
@@ -133,7 +134,8 @@ class Command(BaseCommand):
                     )
 
                     # add to core server (if there is a valid connection)
-                    core.create_core_user(marker_username, marker_password)
+                    # TODO: Deprecated? remove?
+                    # core.create_core_user(marker_username, marker_password)
 
             # Here is print the table of demo users
             print("")
