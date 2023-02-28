@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 from pathlib import Path
 # trickery from setup.py to define __version__ without import
@@ -17,6 +17,7 @@ a = Analysis(['plom/client/__main__.py'],
                  ('plom/client/*.png', 'plom/client'),
                  ('plom/client/icons/*.svg', 'plom/client/icons'),
                  ('plom/client/cursors/*.png', 'plom/client/cursors'),
+                 ('plom/client/ui_files/*.ui', 'plom/client/ui_files'),
                  ('plom/client/help_img/nav*.png', 'plom/client/help_img'),
                  ('plom/client/help_img/click_drag.gif', 'plom/client/help_img'),
                  ('plom/*keys.toml', 'plom'),
