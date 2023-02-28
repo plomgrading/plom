@@ -40,7 +40,7 @@ class Command(BaseCommand):
             manager_info = {"Username": [], "Password": []}
             scanner_info = {"Username": [], "Password": []}
             marker_info = {"Username": [], "Password": []}
-            email = "@plom.ca"
+            email = "@example.com"
 
             admin = "demoAdmin"
             manager = "demoManager1"
