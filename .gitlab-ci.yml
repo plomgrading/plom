@@ -24,10 +24,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.22
+image: docker:20.10.23
 
 services:
-  - docker:20.10.22-dind
+  - docker:20.10.23-dind
 
 variables:
   DOCKER_DRIVER: overlay2
