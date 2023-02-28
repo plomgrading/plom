@@ -105,11 +105,7 @@ def get_and_start_scan_msgr(server=None, password=None):
             TODO: xref the force logout function once it exists.
             TODO: for now use command line tool `plom-scan clear`.
     """
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ScanMessenger(s, port=p)
-    else:
-        msgr = ScanMessenger(server)
+    msgr = ScanMessenger(server)
     msgr.start()
 
     if password is None:

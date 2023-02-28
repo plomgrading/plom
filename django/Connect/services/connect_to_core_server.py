@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 from django.db import transaction
 from django_huey import db_task, get_queue
 from plom.messenger import Messenger, ManagerMessenger
@@ -56,7 +60,7 @@ class CoreConnectionService:
 
     def validate_url(self, s: str, port: int):
         """Use the input url to get the core server's API and version"""
-        messenger = Messenger(s=s, port=port, verify_ssl=False)
+        messenger = Messenger(s, port=port, verify_ssl=False)
         version_string = messenger.start()
         messenger.stop()
         return version_string
@@ -114,7 +118,7 @@ class CoreConnectionService:
                 "Unable to find classic server details. Please test the server connection first."
             )
 
-        return Messenger(s=url, port=port, verify_ssl=False)
+        return Messenger(url, port=port, verify_ssl=False)
 
     def get_manager_messenger(self):
         """Get a manager messenger connected to the core server"""
@@ -126,7 +130,7 @@ class CoreConnectionService:
                 "Unable to find classic server details. Please test the server connection first."
             )
 
-        return ManagerMessenger(s=url, port=port, verify_ssl=False)
+        return ManagerMessenger(url, port=port, verify_ssl=False)
 
     def has_test_spec_been_sent(self):
         """Return True if the core server is reachable and has an uploaded test spec"""

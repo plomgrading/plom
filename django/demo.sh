@@ -71,7 +71,7 @@ xterm -e "python3 manage.py djangohuey" &
 
 echo "**********************************************"
 echo "Start building of the extra page template"
-python manage.py plom_preparation_extrapage --build 
+python manage.py plom_preparation_extrapage --build
 
 echo "**********************************************"
 echo "Populate the database with papers and create pdf build tasks"

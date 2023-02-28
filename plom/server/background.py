@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Forest Kobayashi
 
@@ -280,7 +280,7 @@ class PlomServer:
             bool: False if we cannot get a minimal response from the server.
         """
         m = Messenger(
-            s=self.server_info["server"],
+            self.server_info["server"],
             port=self.server_info["port"],
             verify_ssl=False,
         )

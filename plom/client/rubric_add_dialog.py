@@ -7,9 +7,16 @@
 # Copyright (C) 2021 Forest Kobayashi
 
 import re
+import sys
+
+
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QSyntaxHighlighter, QTextCharFormat
+from PyQt5.QtGui import QColor, QPixmap, QSyntaxHighlighter, QTextCharFormat
 
 from PyQt5.QtWidgets import (
     QCheckBox,
@@ -23,6 +30,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLineEdit,
+    QMessageBox,
     QRadioButton,
     QToolButton,
     QSizePolicy,
@@ -32,8 +40,9 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
 )
 
+import plom.client.icons
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import InfoMsg, WarnMsg
+from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
 
 
 class SignedSB(QSpinBox):
@@ -80,7 +89,7 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
         # reset format
         self.setFormat(0, len(txt), QTextCharFormat())
         # highlight tex: at beginning
-        if txt.startswith("tex:"):  # casefold?
+        if txt.casefold().startswith("tex:"):
             self.setFormat(0, len("tex:"), QColor("grey"))
         # highlight parametric substitutions
         for s in self.subs:
@@ -98,12 +107,24 @@ class SubstitutionsHighlighter(QSyntaxHighlighter):
 
 
 class WideTextEdit(QTextEdit):
-    """Just like QTextEdit but with hacked sizeHint() to be wider."""
+    """Just like QTextEdit but with hacked sizeHint() to be wider.
+
+    Also, hacked to ignore shift-enter.
+    """
 
     def sizeHint(self):
         sz = super().sizeHint()
         sz.setWidth(sz.width() * 2)
         return sz
+
+    def keyPressEvent(self, event):
+        if event.modifiers() == Qt.ShiftModifier and (
+            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+        ):
+            # print("WideTextEdit: ignoring Shift-Enter event")
+            event.ignore()
+            return
+        return super().keyPressEvent(event)
 
 
 class AddRubricBox(QDialog):
@@ -161,7 +182,7 @@ class AddRubricBox(QDialog):
         self.hiliter = SubstitutionsHighlighter(self.TE)
         self.relative_value_SB = SignedSB(maxMark)
         self.TEtag = QLineEdit()
-        self.TEmeta = QTextEdit()
+        self.TEmeta = WideTextEdit()
         # cannot edit these
         self.label_rubric_id = QLabel("Will be auto-assigned")
         self.Luser = QLabel()
@@ -364,7 +385,7 @@ class AddRubricBox(QDialog):
         self.setLayout(vlay)
 
         # set up widgets
-        buttons.accepted.connect(self.validate_and_accept)
+        buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         if reapable:
             self.reapable_CB.addItem("")
@@ -531,7 +552,7 @@ class AddRubricBox(QDialog):
             ):
                 break
             n += 1
-        if self.TE.toPlainText().startswith("tex:"):  # casefold?
+        if self.TE.toPlainText().casefold().startswith("tex:"):
             new_param = new_param_alt
 
         # we insert the new parameter at the cursor/selection
@@ -628,10 +649,30 @@ class AddRubricBox(QDialog):
             self.scopeButton.setArrowType(Qt.RightArrow)
             self.scope_frame.setVisible(False)
 
-    def validate_and_accept(self):
+    def keyPressEvent(self, event):
+        if event.modifiers() == Qt.ShiftModifier and (
+            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+        ):
+            # print("Dialog: Shift-Enter event")
+            event.accept()
+            self.accept()
+            return
+        if event.modifiers() == Qt.ControlModifier and (
+            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+        ):
+            # print("Dialog: Ctrl-Enter event")
+            event.accept()
+            txt = self.TE.toPlainText().strip()
+            if not txt.casefold().startswith("tex:"):
+                self.TE.setText("tex: " + self.TE.toPlainText())
+            self.accept()
+            return
+        return super().keyPressEvent(event)
+
+    def accept(self):
         """Make sure rubric is valid before accepting"""
         txt = self.TE.toPlainText().strip()
-        if len(txt) <= 0:
+        if len(txt) <= 0 or txt.casefold() == "tex:":
             WarnMsg(
                 self,
                 "Your rubric must contain some text.",
@@ -652,7 +693,28 @@ class AddRubricBox(QDialog):
                 info_pre=False,
             ).exec()
             return
-        self.accept()
+        if not txt.casefold().startswith("tex:") and txt.count("$") >= 2:
+            # Image by krzysiu, CC-PDDC, https://openclipart.org/detail/213508/crazy-paperclip
+            res = resources.files(plom.client.icons) / "crazy_paperclip.svg"
+            pix = QPixmap()
+            pix.loadFromData(res.read_bytes())
+            pix = pix.scaledToHeight(150, Qt.SmoothTransformation)
+            if (
+                SimpleQuestion.ask(
+                    self,
+                    "<p>It looks like you might be writing some mathematics!</p",
+                    """
+                        <p>I noticed more than one dollar sign in your text:
+                        do you want to render this rubric with LaTeX?</p>
+                        <p>(You can avoid seeing this dialog by prepending your
+                        rubric with &ldquo;<tt>tex:</tt>&rdquo;)</p>
+                    """,
+                    icon_pixmap=pix,
+                )
+                == QMessageBox.Yes
+            ):
+                self.TE.setText("tex: " + txt)
+        super().accept()
 
     def _gimme_rubric_tags(self):
         tags = self.TEtag.text().strip()

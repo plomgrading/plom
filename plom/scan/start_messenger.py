@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2018-2022 Colin B. Macdonald
+# Copyright (C) 2018-2023 Colin B. Macdonald
 
 import functools
 
@@ -9,11 +9,7 @@ from plom.plom_exceptions import PlomExistingLoginException
 
 
 def start_messenger(server=None, pwd=None, verify_ssl=True):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ScanMessenger(s, port=p, verify_ssl=verify_ssl)
-    else:
-        msgr = ScanMessenger(server, verify_ssl=verify_ssl)
+    msgr = ScanMessenger(server, verify_ssl=verify_ssl)
     msgr.start()
 
     try:
