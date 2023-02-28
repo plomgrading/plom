@@ -1,22 +1,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from collections import Counter
-import fitz
 import hashlib
 import pathlib
 import shutil
 
+import fitz
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
 from django.utils import timezone
+
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
-
 from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
@@ -27,7 +29,6 @@ from Scan.models import (
     CollisionStagingImage,
 )
 from Papers.models import ErrorImage
-
 from .qr_validators import QRErrorService
 
 

@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from datetime import datetime
-import fitz
 import hashlib
 import pathlib
-from tabulate import tabulate
 
+import fitz
+from tabulate import tabulate
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand
