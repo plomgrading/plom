@@ -19,6 +19,7 @@ from django_huey import db_task
 from django.utils import timezone
 
 from plom.scan import QRextract
+from plom.scan import try_to_extract_image, render_page_to_bitmap
 from plom.scan.readQRCodes import checkQRsValid
 from plom.tpv_utils import parseTPV, getPaperPageVersion
 
