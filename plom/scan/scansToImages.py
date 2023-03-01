@@ -329,7 +329,8 @@ def render_page_to_bitmap(
         pathlib.Path: the rendered image on disc.
 
     Raises:
-        ValueError: wierd shapes
+        ValueError: overly weird shapes such as too tall ("Safeway receipt")
+            or two wide ("fortune cookie").
     """
     aspect = p.mediabox_size[0] / p.mediabox_size[1]
     H = ScenePixelHeight
