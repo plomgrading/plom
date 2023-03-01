@@ -177,43 +177,38 @@ def processFileToBitmaps(
     # issue #126 - replace spaces in names with underscores for output names.
     safeScan = Path(file_name).stem.replace(" ", "_")
 
-    doc = fitz.open(file_name)
+    with fitz.open(file_name) as doc:
+        if not doc.is_pdf:
+            raise TypeError("This does not appear to be a PDF file")
+        if doc.is_repaired:
+            warn("PyMuPDF had to repair this PDF: perhaps it is damaged in some way?")
 
-    if not doc.is_pdf:
-        doc.close()
-        raise TypeError("This does not appear to be a PDF file")
-    if doc.is_repaired:
-        warn("PyMuPDF had to repair this PDF: perhaps it is damaged in some way?")
-
-    files = []
-    for p in doc:
-        basename = f"{safeScan}-{(p.number + 1):03}"
-        outname, msgs = try_to_extract_image(
-            p,
-            doc,
-            dest,
-            basename,
-            file_name,
-            do_not_extract=do_not_extract,
-            add_metadata=add_metadata,
-        )
-        if outname is not None:
+        files = []
+        for p in doc:
+            basename = f"{safeScan}-{(p.number + 1):03}"
+            outname, msgs = try_to_extract_image(
+                p,
+                doc,
+                dest,
+                basename,
+                file_name,
+                do_not_extract=do_not_extract,
+                add_metadata=add_metadata,
+            )
+            if outname is not None:
+                files.append(outname)
+                continue
+            log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
+            outname = render_page_to_bitmap(
+                p,
+                dest,
+                basename,
+                file_name,
+                debug_jpeg=debug_jpeg,
+                add_metadata=add_metadata,
+            )
             files.append(outname)
-            continue
-        log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
-        outname = render_page_to_bitmap(
-            p,
-            dest,
-            basename,
-            file_name,
-            doc,
-            debug_jpeg=debug_jpeg,
-            add_metadata=add_metadata,
-        )
-        files.append(outname)
-
-    assert len(files) == len(doc), "Expected one image per page"
-    doc.close()
+        assert len(files) == len(doc), "Expected one image per page"
     return files
 
 
@@ -311,7 +306,7 @@ def try_to_extract_image(
 
 
 def render_page_to_bitmap(
-    p, dest, basename, bundle_name, doc, debug_jpeg=False, add_metadata=True
+    p, dest, basename, bundle_name, debug_jpeg=False, add_metadata=True
 ):
     """Use PyMuPDF to render a PDF page to an image.
 
@@ -321,7 +316,6 @@ def render_page_to_bitmap(
         basename (str):
         bundle_name (str/pathlib.Path): only used for metadata hackery
             uniqifying pages, you can pass whatever you want.
-        doc (fitz.Document): temporary, will be removed soon.
 
     Keyword Args:
         debug_jpeg (bool): make jpegs, randomly rotated of various
@@ -359,8 +353,6 @@ def render_page_to_bitmap(
             W = MAXWIDTH
             H = W / aspect
             if H < 100:
-                # TODO: use a context manager for doc to avoid this
-                doc.close()
                 raise ValueError("Scanned a strip too wide and thin?")
     else:
         if W < MINWIDTH:
@@ -370,8 +362,6 @@ def render_page_to_bitmap(
                 H = MAXHEIGHT
                 W = H * aspect
                 if W < 100:
-                    # TODO: use a context manager for doc to avoid this
-                    doc.close()
                     raise ValueError("Scanned a long strip of thin paper?")
 
     # fitz uses ceil (not round) so decrease a little bit
