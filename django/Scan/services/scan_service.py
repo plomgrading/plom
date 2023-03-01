@@ -698,14 +698,22 @@ class ScanService:
             bundle_status.append(bundle_data)
         return bundle_status
 
+    # working on it
     @transaction.atomic
-    def read_bundle_qr_cmd(self, bundle):
-        pass
+    def read_bundle_qr_cmd(self, bundle_name):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        
+        if bundle_obj.has_qr_codes:
+            raise ValueError(f"QR codes for {bundle_name} has been read.")
+        else:
+            self.read_qr_codes(bundle_obj)
 
     @transaction.atomic
     def push_bundle_cmd(self, bundle_name):
         try:
-            test = StagingBundle.objects.get(slug=bundle_name)
-            print(test)
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
             print(f"This {bundle_name} does not exist.")

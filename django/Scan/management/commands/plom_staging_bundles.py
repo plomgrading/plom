@@ -12,11 +12,8 @@ from tabulate import tabulate
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand
-from django.core.exceptions import ObjectDoesNotExist
 
 from Scan.services import ScanService
-
-from Scan.models import StagingBundle
 
 class Command(BaseCommand):
     """
@@ -72,9 +69,14 @@ class Command(BaseCommand):
         scanner = ScanService()
         scanner.push_bundle_cmd(bundle_name)
 
+    # working on it
     def read_bundle_qr(self, bundle_name):
         scanner = ScanService()
-        scanner.read_bundle_qr_cmd(bundle_name)
+        try:
+            scanner.read_bundle_qr_cmd(bundle_name)
+            self.stdout.write(f"Reading {bundle_name} QR codes - processing it in the background now.")
+        except ValueError as err:
+            self.stderr.write(f"{err}")
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
