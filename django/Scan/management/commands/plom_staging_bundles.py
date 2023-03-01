@@ -69,12 +69,12 @@ class Command(BaseCommand):
 
     # TODO: work on this function, add to add_arguments, and add to handle
     def push_staged_bundle(self, bundle_name):
-        # try:
-        #     test = StagingBundle.objects.get(slug=bundle_name)
-        #     self.stdout.write(test.slug)
-        # except ObjectDoesNotExist:
-        #     self.stderr.write(f"This {bundle_name} does not exist.")
-        pass
+        scanner = ScanService()
+        scanner.push_bundle_cmd(bundle_name)
+
+    def read_bundle_qr(self, bundle_name):
+        scanner = ScanService()
+        scanner.read_bundle_qr_cmd(bundle_name)
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
@@ -96,6 +96,10 @@ class Command(BaseCommand):
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
         sp_push.add_argument("bundle_name", type=str, help="Which bundle to push.")
 
+        # Read QR codes
+        sp_read_qr = sp.add_parser("read_qr", help="Read the selected bundle QR codes.")
+        sp_read_qr.add_argument("bundle_name", type=str, help="Which bundle to read the QR codes.")
+
     def handle(self, *args, **options):
         if options["command"] == "upload":
             self.upload_pdf(
@@ -105,5 +109,7 @@ class Command(BaseCommand):
             self.staging_bundle_status()
         elif options["command"] == "push":
             self.push_staged_bundle(bundle_name=options["bundle_name"])
+        elif options["command"] == "read_qr":
+            self.read_bundle_qr(bundle_name=options["bundle_name"])
         else:
             self.print_help("manage.py", "plom_staging_bundles")

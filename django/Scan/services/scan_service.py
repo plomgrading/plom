@@ -697,3 +697,15 @@ class ScanService:
             )
             bundle_status.append(bundle_data)
         return bundle_status
+
+    @transaction.atomic
+    def read_bundle_qr_cmd(self, bundle):
+        pass
+
+    @transaction.atomic
+    def push_bundle_cmd(self, bundle_name):
+        try:
+            test = StagingBundle.objects.get(slug=bundle_name)
+            print(test)
+        except ObjectDoesNotExist:
+            print(f"This {bundle_name} does not exist.")
