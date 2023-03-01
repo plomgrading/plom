@@ -24,6 +24,7 @@ from .frontend_scan import processScans, uploadImages
 from .frontend_hwscan import processHWScans, processMissing
 from .frontend_hwscan import processAllHWByQ
 from .scansToImages import processFileToBitmaps
+from .scansToImages import try_to_extract_image, render_page_to_bitmap
 
 # what you get from "from plom.scan import *"
 __all__ = [
@@ -32,6 +33,8 @@ __all__ = [
     "processHWScans",
     "processMissing",
     "processFileToBitmaps",
+    "try_to_extract_image",
+    "render_page_to_bitmap",
     "get_bundle_list",
     "print_bundle_list",
     "QRextract_legacy",
