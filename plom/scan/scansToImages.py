@@ -240,32 +240,30 @@ def try_to_extract_image(
             database/client issues.
 
     Returns:
-        pathlib.Path/None: `None` means we could not or choose not to extract.
-        whereas a `Path` means we have extracted the image.
+        2-tuple: first entry is ``pathlib.Path`` or ``None``, where
+        ``None`` means we could not (or chose not) to extract.
+        Whereas a `Path` means we have extracted the image.
+        The second return value is ``msgs`` a list of strings, which
+        give semi-user-readable info about why we cannot/choose not
+        to extract.
     """
-    ok_extract = True
     msgs = []
     # Any of these might indicate something more complicated than a scan
     if p.get_links():
         msgs.append("Has links")
-        ok_extract = False
     if list(p.annots()):
         msgs.append("Has annotations")
-        ok_extract = False
     if list(p.widgets()):
         msgs.append("Has fillable forms")
-        ok_extract = False
     # TODO: which is more expensive, this or getImageList?
     if p.get_text("text"):
         msgs.append("Has text")
-        ok_extract = False
 
     # TODO: Do later to get more info in prep for future change to default
     if do_not_extract:
         msgs.append("Disabled by flag")
-        ok_extract = False
 
-    if not ok_extract:
+    if msgs:
         return None, msgs
 
     r, d = extractImageFromFitzPage(p, doc)
