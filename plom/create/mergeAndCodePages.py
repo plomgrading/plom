@@ -368,6 +368,7 @@ def make_PDF(
     fakepdf=False,
     xcoord=None,
     ycoord=None,
+    where=None,
 ):
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -391,14 +392,18 @@ def make_PDF(
             something like that...
         xcoord (float): horizontal positioning of the prename box.
         ycoord (float): vertical positioning of the prename box.
+        where (pathlib.Path/None): where to save the files, with some
+            default if omitted.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
     """
+    if where is None:
+        where = paperdir
     if extra:
-        save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
+        save_name = where / f"exam_{papernum:04}_{extra['id']}.pdf"
     else:
-        save_name = paperdir / f"exam_{papernum:04}.pdf"
+        save_name = where / f"exam_{papernum:04}.pdf"
 
     # make empty files instead of PDFs
     if fakepdf:
