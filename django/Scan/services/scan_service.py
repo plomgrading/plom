@@ -681,12 +681,17 @@ class ScanService:
             all_error_images = StagingImage.objects.filter(
                 bundle=bundle, colliding=True, unknown=True, error=True
             )
+            reading_qr = self.is_bundle_reading_ongoig(bundle)
+            bundle_qr_read = bundle.has_qr_codes
+            if reading_qr:
+                bundle_qr_read = "in progress"
+
             bundle_data = (
                 bundle.slug,
                 len(images),
                 valid_images,
                 len(all_error_images),
-                bundle.has_qr_codes,
+                bundle_qr_read,
                 bundle.pushed,
                 bundle.user,
             )

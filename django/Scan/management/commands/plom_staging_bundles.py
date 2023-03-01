@@ -12,16 +12,19 @@ from tabulate import tabulate
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand
+from django.core.exceptions import ObjectDoesNotExist
 
 from Scan.services import ScanService
 
+from Scan.models import StagingBundle
 
 class Command(BaseCommand):
     """
     commands:
         python3 manage.py plom_staging_bundles upload (username) (file) <- drag and drop or copy path
         python3 manage.py plom_staging_bundles status
-        python3 manage.py plom_staging_bundles push
+        python3 manage.py plom_staging_bundles read_qr (bundle name) <- can get it from status
+        python3 manage.py plom_staging_bundles push (bundle name) <- can get it from status
     """
 
     help = "Upload bundle pdf files to staging area"
@@ -65,7 +68,12 @@ class Command(BaseCommand):
             self.stdout.write("No bundles uploaded.")
 
     # TODO: work on this function, add to add_arguments, and add to handle
-    def push_staged_bundle(self):
+    def push_staged_bundle(self, bundle_name):
+        # try:
+        #     test = StagingBundle.objects.get(slug=bundle_name)
+        #     self.stdout.write(test.slug)
+        # except ObjectDoesNotExist:
+        #     self.stderr.write(f"This {bundle_name} does not exist.")
         pass
 
     def add_arguments(self, parser):
@@ -84,6 +92,10 @@ class Command(BaseCommand):
         # Status
         sp.add_parser("status", help="Show the status of the staging bundles.")
 
+        # Push
+        sp_push = sp.add_parser("push", help="Push the staged bundles.")
+        sp_push.add_argument("bundle_name", type=str, help="Which bundle to push.")
+
     def handle(self, *args, **options):
         if options["command"] == "upload":
             self.upload_pdf(
@@ -91,5 +103,7 @@ class Command(BaseCommand):
             )
         elif options["command"] == "status":
             self.staging_bundle_status()
+        elif options["command"] == "push":
+            self.push_staged_bundle(bundle_name=options["bundle_name"])
         else:
             self.print_help("manage.py", "plom_staging_bundles")
