@@ -14,7 +14,7 @@ from pathlib import Path
 
 class PDFTask(HueyTask):
     paper = models.OneToOneField(Paper, null=False, on_delete=models.CASCADE)
-    pdf_file = models.FileField(upload_to="papersToPrint/")
+    pdf_file = models.FileField(upload_to="papersToPrint/", null=True)
     student_name = models.TextField(default=None, null=True)
     student_id = models.TextField(default=None, null=True)
 

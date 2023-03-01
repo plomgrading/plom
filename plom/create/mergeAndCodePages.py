@@ -441,3 +441,5 @@ def make_PDF(
     # in the same directory that have the same name.
     exam.save(save_name, garbage=4, deflate=True, clean=True)
     exam.close()
+
+    return save_name

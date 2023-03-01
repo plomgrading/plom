@@ -6,6 +6,7 @@
 import pathlib
 import shutil
 import random
+from tempfile import TemporaryDirectory
 
 from plom.create.mergeAndCodePages import make_PDF
 
@@ -13,6 +14,7 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.db import transaction
+from django.core.files import File
 from django_huey import db_task
 from django_huey import db_task, get_queue
 
@@ -74,7 +76,6 @@ class BuildPapersService:
         task = PDFTask(
             paper=paper,
             huey_id=huey_id,
-            pdf_file=str(paper_path),
             status="todo",
             student_name=student_name,
             student_id=student_id,
@@ -93,19 +94,37 @@ class BuildPapersService:
     @db_task(queue="tasks")
     def _build_single_paper(index: int, spec: dict, question_versions: dict):
         """Build a single test-paper"""
-        make_PDF(spec=spec, papernum=index, question_versions=question_versions)
+        with TemporaryDirectory() as tempdir:
+            save_path = make_PDF(
+                spec=spec,
+                papernum=index,
+                question_versions=question_versions,
+                where=pathlib.Path(tempdir),
+            )
+
+            task = PDFTask.objects.get(paper_id=index)
+            with save_path.open("rb") as f:
+                task.pdf_file = File(f, name=save_path.name)
+                task.save()
 
     @db_task(queue="tasks")
     def _build_prenamed_paper(
         index: int, spec: dict, question_versions: dict, student_info: dict
     ):
         """Build a single test-paper and prename it"""
-        make_PDF(
-            spec=spec,
-            papernum=index,
-            question_versions=question_versions,
-            extra=student_info,
-        )
+        with TemporaryDirectory() as tempdir:
+            save_path = make_PDF(
+                spec=spec,
+                papernum=index,
+                question_versions=question_versions,
+                extra=student_info,
+                where=pathlib.Path(tempdir),
+            )
+
+            task = PDFTask.objects.get(paper_id=index)
+            with save_path.open("rb") as f:
+                task.pdf_file = File(f, name=save_path.name)
+                task.save()
 
     @db_task(queue="tasks")
     def _build_flaky_single_paper(index: int, spec: dict, question_versions: dict):
@@ -118,10 +137,7 @@ class BuildPapersService:
 
     def get_completed_pdf_paths(self):
         """Get list of paths of pdf-files of completed (built) tests papers"""
-        return [
-            pdf.file_path()
-            for pdf in PDFTask.objects.filter(status="complete")
-        ]
+        return [pdf.file_path() for pdf in PDFTask.objects.filter(status="complete")]
 
     def stage_all_pdf_jobs(self, classdict=None):
         """Create all the PDFTasks, and save to the database without sending them to Huey.
