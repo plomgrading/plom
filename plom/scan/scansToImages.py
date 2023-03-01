@@ -289,7 +289,7 @@ def try_to_extract_image(
         # watermark for Issue #1573
         if d["ext"].lower() == "png":
             add_metadata_png(outname, bundle_name, p.number)
-        elif d["ext"].lower() in ".jpeg":
+        elif d["ext"].lower() in (".jpeg", ".jpg"):
             # We write some unique metadata into the JPEG file.  We could
             # use the EXIF data or a JPEG comment.  The latter seems safer
             # as we just append some bytes to the file...?  I'm concerned
