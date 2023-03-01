@@ -85,8 +85,7 @@ class ScanService:
         """
         n_pages = pdf_doc.page_count
         for i in range(n_pages):
-            save_path = base_dir / f"page{i}.png"
-            page_task = self._get_page_image(bundle, i, save_path)
+            page_task = self._get_page_image(bundle, i, base_dir, f"page{i:05}")
             page_task_db = PageToImage(
                 bundle=bundle,
                 huey_id=page_task.id,
@@ -96,22 +95,29 @@ class ScanService:
             page_task_db.save()
 
     @db_task(queue="tasks")
-    def _get_page_image(bundle, index, save_path):
+    def _get_page_image(bundle, index, basedir, basename):
         """
         Render a page image and save to disk in the background
 
         Args:
             bundle: bundle DB object
             index: bundle order of page
-            pdf_page: fitz.Page object of a bundle page
-            save_path: str or pathlib.Path object of image disk location
+            basedir (pathlib.Path): were to put the image
+            basename (str): a basic filename without the extension
         """
-        pdf_doc = fitz.Document(bundle.file_path)
-        transform = fitz.Matrix(4, 4)
-        pixmap = pdf_doc[index].get_pixmap(matrix=transform)
-        pixmap.save(save_path)
+        with fitz.Document(bundle.file_path) as pdf_doc:
+            # TODO: debug_jpeg makes a mess of things: for demo mode only!
+            save_path = render_page_to_bitmap(
+                pdf_doc[index],
+                basedir,
+                basename,
+                bundle.file_path,
+                debug_jpeg=True,
+                add_metadata=True,
+            )
 
-        image_hash = hashlib.sha256(pixmap.tobytes()).hexdigest()
+        with open(save_path, "rb") as f:
+            image_hash = hashlib.sha256(f.read()).hexdigest()
         image_db = StagingImage(
             bundle=bundle,
             bundle_order=index,
