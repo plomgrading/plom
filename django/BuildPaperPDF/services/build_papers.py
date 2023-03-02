@@ -101,8 +101,8 @@ class BuildPapersService:
                 question_versions=question_versions,
                 where=pathlib.Path(tempdir),
             )
-
-            task = PDFTask.objects.get(paper_id=index)
+            paper = Paper.objects.get(paper_number=index)
+            task = paper.task
             with save_path.open("rb") as f:
                 task.pdf_file = File(f, name=save_path.name)
                 task.save()
@@ -121,7 +121,8 @@ class BuildPapersService:
                 where=pathlib.Path(tempdir),
             )
 
-            task = PDFTask.objects.get(paper_id=index)
+            paper = Paper.objects.get(paper_number=index)
+            task = paper.task
             with save_path.open("rb") as f:
                 task.pdf_file = File(f, name=save_path.name)
                 task.save()
