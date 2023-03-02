@@ -133,7 +133,9 @@ def download_zip():
 
 
 def upload_bundles():
-    for n in [1, 2, 3]:
+    # TODO quick hack workaround for Issue #2578
+    # for n in [1, 2, 3]:
+    for n in (1,):
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
