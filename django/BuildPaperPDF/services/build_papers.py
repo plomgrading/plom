@@ -102,7 +102,7 @@ class BuildPapersService:
                 where=pathlib.Path(tempdir),
             )
             paper = Paper.objects.get(paper_number=index)
-            task = paper.task
+            task = paper.pdftask
             with save_path.open("rb") as f:
                 task.pdf_file = File(f, name=save_path.name)
                 task.save()
@@ -122,7 +122,7 @@ class BuildPapersService:
             )
 
             paper = Paper.objects.get(paper_number=index)
-            task = paper.task
+            task = paper.pdftask
             with save_path.open("rb") as f:
                 task.pdf_file = File(f, name=save_path.name)
                 task.save()
