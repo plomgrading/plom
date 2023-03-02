@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 
 import pathlib
-import zipfile
-import shutil
 import random
+from tempfile import TemporaryDirectory
+import zipfly
 
 from plom.create.mergeAndCodePages import make_PDF
 
@@ -14,10 +14,12 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.db import transaction
+from django.core.files import File
 from django_huey import db_task
-from django_huey import db_task, get_queue
+from django_huey import get_queue
 
 from BuildPaperPDF.models import PDFTask
+from Papers.models import Paper
 
 
 class BuildPapersService:
@@ -64,35 +66,17 @@ class BuildPapersService:
 
     def create_task(self, index: int, huey_id: id, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database"""
-        if student_id:
-            paper_path = self.papers_to_print / f"exam_{index:04}_{student_id}.pdf"
-        else:
-            paper_path = self.papers_to_print / f"exam_{index:04}.pdf"
+        paper = get_object_or_404(Paper, paper_number=index)
 
         task = PDFTask(
-            paper_number=index,
+            paper=paper,
             huey_id=huey_id,
-            pdf_file_path=str(paper_path),
             status="todo",
             student_name=student_name,
             student_id=student_id,
         )
         task.save()
         return task
-
-    @transaction.atomic()
-    def clear_tasks(self):
-        """Clear all of the build paper tasks"""
-        # TODO - improve file handling here when we fix up file handling for all pdf build tasks.
-        PDFTask.objects.all().delete()
-        if self.papers_to_print.exists():
-            shutil.rmtree(self.papers_to_print)
-        self.papers_to_print.mkdir(exist_ok=True)
-
-    def build_n_papers(self, n, spec, qvmap):
-        """Build multiple papers without having to sign in/out each time"""
-        for i in range(n):
-            self.build_single_paper(i + 1, spec, qvmap[i + 1])
 
     def build_single_paper(self, index: int, spec: dict, question_versions: dict):
         """Build a single test-paper (with huey!)"""
@@ -105,19 +89,38 @@ class BuildPapersService:
     @db_task(queue="tasks")
     def _build_single_paper(index: int, spec: dict, question_versions: dict):
         """Build a single test-paper"""
-        make_PDF(spec=spec, papernum=index, question_versions=question_versions)
+        with TemporaryDirectory() as tempdir:
+            save_path = make_PDF(
+                spec=spec,
+                papernum=index,
+                question_versions=question_versions,
+                where=pathlib.Path(tempdir),
+            )
+            paper = Paper.objects.get(paper_number=index)
+            task = paper.pdftask
+            with save_path.open("rb") as f:
+                task.pdf_file = File(f, name=save_path.name)
+                task.save()
 
     @db_task(queue="tasks")
     def _build_prenamed_paper(
         index: int, spec: dict, question_versions: dict, student_info: dict
     ):
         """Build a single test-paper and prename it"""
-        make_PDF(
-            spec=spec,
-            papernum=index,
-            question_versions=question_versions,
-            extra=student_info,
-        )
+        with TemporaryDirectory() as tempdir:
+            save_path = make_PDF(
+                spec=spec,
+                papernum=index,
+                question_versions=question_versions,
+                extra=student_info,
+                where=pathlib.Path(tempdir),
+            )
+
+            paper = Paper.objects.get(paper_number=index)
+            task = paper.pdftask
+            with save_path.open("rb") as f:
+                task.pdf_file = File(f, name=save_path.name)
+                task.save()
 
     @db_task(queue="tasks")
     def _build_flaky_single_paper(index: int, spec: dict, question_versions: dict):
@@ -130,36 +133,34 @@ class BuildPapersService:
 
     def get_completed_pdf_paths(self):
         """Get list of paths of pdf-files of completed (built) tests papers"""
-        return [
-            pathlib.Path(pdf.pdf_file_path)
-            for pdf in PDFTask.objects.filter(status="complete")
-        ]
+        return [pdf.file_path() for pdf in PDFTask.objects.filter(status="complete")]
 
-    def stage_pdf_jobs(self, n, classdict=None):
-        """Create n PDFTasks, and save to the database without sending them to Huey.
+    def stage_all_pdf_jobs(self, classdict=None):
+        """Create all the PDFTasks, and save to the database without sending them to Huey.
 
         If there are prenamed test-papers, save that info too.
         """
+        # note - classdict is a list of dicts - change this to more useful format
+        prenamed = {X["paper_number"]: X for X in classdict if X["paper_number"] > 0}
+
         self.papers_to_print.mkdir(exist_ok=True)
-        for i in range(n):
-            index = i + 1
+        for paper_obj in Paper.objects.all():
+            paper_number = paper_obj.paper_number
             student_name = None
             student_id = None
-            if classdict and i < len(classdict):
-                student = classdict[i]
-                if student["paper_number"] > 0:
-                    student_id = student["id"]
-                    student_name = student["studentName"]
+            if paper_number in prenamed:
+                student_id = prenamed[paper_number]["id"]
+                student_name = prenamed[paper_number]["studentName"]
 
-            pdf_job = self.create_task(
-                index, None, student_id=student_id, student_name=student_name
+            self.create_task(
+                paper_number, None, student_id=student_id, student_name=student_name
             )
 
     def send_all_tasks(self, spec, qvmap):
         """Send all marked as todo PDF tasks to huey"""
         todo_tasks = PDFTask.objects.filter(status="todo")
         for task in todo_tasks:
-            paper_number = task.paper_number
+            paper_number = task.paper.paper_number
             if task.student_name and task.student_id:
                 info_dict = {"id": task.student_id, "name": task.student_name}
                 pdf_build = self._build_prenamed_paper(
@@ -176,7 +177,8 @@ class BuildPapersService:
 
     def send_single_task(self, paper_num, spec, qv_row):
         """Send a single todo task to Huey"""
-        task = get_object_or_404(PDFTask, paper_number=paper_num)
+        paper = get_object_or_404(Paper, paper_number=paper_num)
+        task = paper.pdftask
 
         if task.student_name and task.student_id:
             info_dict = {"id": task.student_id, "name": task.student_name}
@@ -197,9 +199,9 @@ class BuildPapersService:
             task.status = "todo"
             task.save()
 
-    def cancel_single_task(self, paper_num):
+    def cancel_single_task(self, paper_number):
         """Cancel a single queued task from Huey"""
-        task = get_object_or_404(PDFTask, paper_number=paper_num)
+        task = get_object_or_404(Paper, paper_number=paper_number).pdftask
         queue = get_queue("tasks")
         queue.revoke_by_id(task.huey_id)
         task.status = "todo"
@@ -209,7 +211,7 @@ class BuildPapersService:
         """Retry all tasks that have error status"""
         retry_tasks = PDFTask.objects.filter(status="error")
         for task in retry_tasks:
-            paper_number = task.paper_number
+            paper_number = task.paper.paper_number
             pdf_build = self._build_single_paper(
                 paper_number, spec, qvmap[paper_number]
             )
@@ -221,7 +223,7 @@ class BuildPapersService:
     def reset_all_tasks(self):
         self.cancel_all_task()
         for task in PDFTask.objects.all():
-            pathlib.Path(task.pdf_file_path).unlink(missing_ok=True)
+            task.file_path().unlink(missing_ok=True)
             task.huey_id = None
             task.status = "todo"
             task.save()
@@ -231,19 +233,45 @@ class BuildPapersService:
         """Get the status of every task and return as a dict"""
         stat = {}
         for task in PDFTask.objects.all():
-            stat[task.paper_number] = task.status
+            stat[task.paper.paper_number] = task.status
         return stat
 
     @transaction.atomic
     def get_paper_path_and_bytes(self, paper_number):
         """Get the bytes of the file generated by the given task"""
         try:
-            task = PDFTask.objects.get(paper_number=paper_number)
-        except PDFTask.DoesNotExist:
+            task = Paper.objects.get(paper_number=paper_number).pdftask
+        except (Paper.DoesNotExist, PDFTask.DoesNotExist):
             raise ValueError(f"Cannot find task {paper_number}")
         if task.status != "complete":
             raise ValueError(f"Task {paper_number} is not complete")
 
-        paper_path = pathlib.Path(task.pdf_file_path)
+        paper_path = task.file_path()
         with paper_path.open("rb") as fh:
             return (paper_path.name, fh.read())
+
+    @transaction.atomic
+    def get_task_context(self):
+        """Get information about all tasks"""
+        return [
+            {
+                "paper_number": task.paper.paper_number,
+                "status": task.status,
+                "message": task.message,
+                "pdf_filename": task.file_path().name,
+            }
+            for task in PDFTask.objects.all()
+        ]
+
+    def get_zipfly_generator(self, short_name, *, chunksize=1024 * 1024):
+        bps = BuildPapersService()
+        paths = [
+            {
+                "fs": pdf_path,
+                "n": pathlib.Path(f"papers_for_{short_name}") / pdf_path.name,
+            }
+            for pdf_path in bps.get_completed_pdf_paths()
+        ]
+
+        zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
+        return zfly.generator()

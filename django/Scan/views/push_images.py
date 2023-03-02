@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Natalie Balashov
 
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
@@ -29,8 +30,8 @@ class PushPageImage(ScannerRequiredView):
 
         # get the test-paper number from the QR dictionary
         any_qr = list(staging_image.parsed_qr.values())[0]
-        test_paper = int(any_qr["paper_id"])
-        page_number = int(any_qr["page_num"])
+        test_paper = any_qr["paper_id"]
+        page_number = any_qr["page_num"]
 
         img_service = ImageBundleService()
         img_service.push_staged_image(staging_image, test_paper, page_number)
@@ -57,8 +58,8 @@ class PushAllPageImages(ScannerRequiredView):
 
         for img in images:
             any_qr = list(img.parsed_qr.values())[0]
-            test_paper = int(any_qr["paper_id"])
-            page_number = int(any_qr["page_num"])
+            test_paper = any_qr["paper_id"]
+            page_number = any_qr["page_num"]
             img_service.push_staged_image(img, test_paper, page_number)
 
         return HttpResponseClientRefresh()

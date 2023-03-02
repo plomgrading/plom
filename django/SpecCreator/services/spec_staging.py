@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 import pathlib
 import copy
@@ -625,8 +625,5 @@ class StagingSpecificationService:
         spec_copy = copy.deepcopy(spec)
         spec_copy.pop("publicCode", None)
         spec_copy.pop("privateSeed", None)
-
-        print(staged_spec_dict)
-        print(spec_copy)
 
         return staged_spec_dict == spec_copy

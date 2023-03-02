@@ -73,9 +73,7 @@ class Command(BaseCommand):
 
         self.stdout.write("Creating associated pdf-build tasks.")
         bp_service = BuildPapersService()
-        bp_service.stage_pdf_jobs(
-            len(qv_map), classdict=StagingStudentService().get_classdict()
-        )
+        bp_service.stage_all_pdf_jobs(classdict=StagingStudentService().get_classdict())
 
     def clear_papers(self):
         """
@@ -88,7 +86,7 @@ class Command(BaseCommand):
             return
 
         self.stdout.write("Removing test-papers and associated tasks...")
-        BuildPapersService().clear_tasks()
+        # note when a paper is deleted its associated task is also deleted.
         PaperCreatorService().remove_all_papers_from_db()
         self.stdout.write("Database cleared of test-papers.")
 
