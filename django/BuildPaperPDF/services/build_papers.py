@@ -262,7 +262,7 @@ class BuildPapersService:
                 "paper_number": task.paper.paper_number,
                 "status": task.status,
                 "message": task.message,
-                "pdf_filename": str(task.file_path().name),
+                "pdf_filename": task.file_path().name,
             }
             for task in PDFTask.objects.all()
         ]
