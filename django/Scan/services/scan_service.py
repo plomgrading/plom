@@ -309,6 +309,8 @@ class ScanService:
         imgs = StagingImage.objects.filter(bundle=bundle)
         for page in imgs:
             self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
+            if self.is_bundle_reading_finished and not bundle.has_qr_codes:
+                self.qr_reading_cleanup(bundle)
 
     @transaction.atomic
     def get_qr_code_results(self, bundle, page_index):
@@ -705,8 +707,10 @@ class ScanService:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
-        
-        if bundle_obj.has_qr_codes:
+
+        if self.get_n_completed_page_rendering_tasks(bundle_obj) != self.get_n_page_rendering_tasks(bundle_obj):
+            raise ValueError(f"Please wait for {bundle_name} to upload...")
+        elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
         else:
             self.read_qr_codes(bundle_obj)
