@@ -1,14 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
 from tabulate import tabulate
-
-from Connect.services import CoreUsersService
 
 
 # -m to get number of scanners and markers
@@ -42,7 +40,7 @@ class Command(BaseCommand):
             manager_info = {"Username": [], "Password": []}
             scanner_info = {"Username": [], "Password": []}
             marker_info = {"Username": [], "Password": []}
-            email = "@plom.ca"
+            email = "@example.com"
 
             admin = "demoAdmin"
             manager = "demoManager1"
@@ -82,9 +80,6 @@ class Command(BaseCommand):
             manager_info["Username"].append("manager")
             manager_info["Password"].append("1234")
 
-            # for updating a connected core server
-            core = CoreUsersService()
-
             # Here is to create 5 scanners and markers
             for number_of_scanner_marker in range(1, range_of_scanners_markers + 1):
                 scanner_username = scanner + str(number_of_scanner_marker)
@@ -113,9 +108,6 @@ class Command(BaseCommand):
                         f"{scanner_username} created and added to {scanner_group} group!"
                     )
 
-                    # add to core server (if a valid connection exists)
-                    core.create_core_user(scanner_username, scanner_password)
-
                 if marker_username in exist_usernames:
                     print(f"{marker_username} already exists!")
                 else:
@@ -131,9 +123,6 @@ class Command(BaseCommand):
                     print(
                         f"{marker_username} created and added to {marker_group} group!"
                     )
-
-                    # add to core server (if there is a valid connection)
-                    core.create_core_user(marker_username, marker_password)
 
             # Here is print the table of demo users
             print("")

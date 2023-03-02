@@ -397,7 +397,8 @@ class Manager(QWidget):
         if password:
             self.ui.passwordLE.setText(password)
         if server:
-            self.setServer(server)
+            self.ui.serverLE.setText(server)
+        self.ui.mportLabel2.setText(f"defaults to {Default_Port} if omitted")
 
         self.ui.passwordLE.setFocus()
         self.connectButtons()
@@ -490,17 +491,6 @@ class Manager(QWidget):
             pass
         event.accept()
 
-    def setServer(self, s):
-        """Set the server and port UI widgets from a string.
-
-        If port is missing, a default will be used."""
-        try:
-            s, p = s.split(":")
-        except ValueError:
-            p = Default_Port
-        self.ui.serverLE.setText(s)
-        self.ui.mportSB.setValue(int(p))
-
     def setFont(self, n):
         fnt = self.Qapp.font()
         fnt.setPointSize(n)
@@ -515,13 +505,10 @@ class Manager(QWidget):
         if not pwd:
             return
 
-        self.partial_parse_address()
         server = self.ui.serverLE.text()
-        self.ui.serverLE.setText(server)
-        mport = self.ui.mportSB.value()
 
         try:
-            self.msgr = ManagerMessenger(server, mport)
+            self.msgr = ManagerMessenger(server)
             server_ver_str = self.msgr.start()
             self.ui.infoLabel.setText(server_ver_str)
         except PlomBenignException as e:
@@ -587,22 +574,6 @@ class Manager(QWidget):
         self.initProgressTab()
         self.initReviewTab()
         self.initSolutionTab()
-
-    def partial_parse_address(self):
-        """If address has a port number in it, extract and move to the port box.
-
-        If there's a colon in the address (maybe user did not see port
-        entry box or is pasting in a string), then try to extract a port
-        number and put it into the entry box.
-        """
-        address = self.ui.serverLE.text()
-        try:
-            parsedurl = urllib3.util.parse_url(address)
-            if parsedurl.port:
-                self.ui.mportSB.setValue(int(parsedurl.port))
-            self.ui.serverLE.setText(parsedurl.host)
-        except urllib3.exceptions.LocationParseError:
-            return
 
     # -------------------
     def getTPQV(self):

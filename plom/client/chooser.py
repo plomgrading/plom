@@ -15,6 +15,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import logging
 from pathlib import Path
+import re
 import sys
 import tempfile
 import time
@@ -121,6 +122,7 @@ class Chooser(QDialog):
 
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
+        self.ui.mportSB.setValue(int(Default_Port))
         # Append version to window title
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         self.ui.markButton.clicked.connect(self.run_marker)
@@ -132,11 +134,14 @@ class Chooser(QDialog):
         self.ui.closeButton.clicked.connect(self.close)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
-        self.ui.getServerInfoButton.clicked.connect(self.getInfo)
+        self.ui.getServerInfoButton.clicked.connect(self.get_server_info)
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
+
+        # TODO: properly with a QValidator? maybe as part of a more general parser
+        self.ui.serverLE.editingFinished.connect(self.partial_parse_address)
 
         # set login etc from last time client ran.
         self.ui.userLE.setText(self.lastTime["user"])
@@ -150,13 +155,11 @@ class Chooser(QDialog):
     def setServer(self, s):
         """Set the server and port UI widgets from a string.
 
-        If port is missing, a default will be used."""
-        try:
-            s, p = s.split(":")
-        except ValueError:
-            p = Default_Port
+        If port is missing, a default will be used.  If we cannot
+        parse the url, just leave it alone.
+        """
         self.ui.serverLE.setText(s)
-        self.ui.mportSB.setValue(int(p))
+        self.partial_parse_address()
 
     def options(self):
         d = ClientSettingsDialog(
@@ -172,7 +175,7 @@ class Chooser(QDialog):
         self.lastTime["MarkWarnings"] = stuff[4]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
-    def validate(self, which_subapp):
+    def launch_task(self, which_subapp):
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
         if not user:
@@ -181,13 +184,12 @@ class Chooser(QDialog):
         if not pwd:
             return
 
-        self.partial_parse_address()
-        server = self.ui.serverLE.text()
-        self.ui.serverLE.setText(server)
+        server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
             return
-        mport = self.ui.mportSB.value()
+        # due to special handling of blank versus default, use .text() not .value()
+        port = self.ui.mportSB.text()
 
         self.saveDetails()
 
@@ -204,30 +206,13 @@ class Chooser(QDialog):
 
         if not self.messenger:
             if which_subapp == "Manager":
-                self.messenger = ManagerMessenger(server, mport, webplom=self.webplom)
-            else:
-                self.messenger = Messenger(server, mport, webplom=self.webplom)
-        try:
-            try:
-                server_ver_str = self.messenger.start()
-            except PlomSSLError as e:
-                msg = WarningQuestion(
-                    self,
-                    "SSL error: cannot verify the identity of the server.",
-                    "Do you want to disable SSL certificate verification?  Not recommended.",
-                    details=f"{e}",
+                self.messenger = ManagerMessenger(
+                    server, port=port, webplom=self.webplom
                 )
-                msg.setDefaultButton(QMessageBox.No)
-                if msg.exec() == QMessageBox.No:
-                    self.messenger = None
-                    return
-                self.messenger.force_ssl_unverified()
-                server_ver_str = self.messenger.start()
-        except PlomBenignException as e:
-            WarnMsg(
-                self, "Could not connect to server:", info=f"{e}", info_pre=False
-            ).exec()
-            self.messenger = None
+            else:
+                self.messenger = Messenger(server, port=port, webplom=self.webplom)
+
+        if not self._pre_login_connection():
             return
 
         try:
@@ -261,7 +246,7 @@ class Chooser(QDialog):
                 # harmless probably useless pause, in case Issue #2328 was real
                 time.sleep(0.25)
                 # try again
-                self.validate(which_subapp)
+                self.launch_task(which_subapp)
                 return
             self.messenger = None
             return
@@ -274,26 +259,6 @@ class Chooser(QDialog):
             ).exec()
             self.messenger = None
             return
-
-        # fragile, use a regex?
-        srv_ver = server_ver_str.split()[3]
-        if Version(__version__) < Version(srv_ver):
-            msg = WarningQuestion(
-                self,
-                f"Your client version {__version__} is older than the server {srv_ver}:"
-                " you may want to consider upgrading.",
-                question="Do you want to continue?",
-                details=(
-                    f"You have Plom Client {__version__} with API {self.APIVersion}"
-                    f"\nServer version string: “{server_ver_str}”\n"
-                    f"Regex-extracted server version: {srv_ver}."
-                ),
-            )
-            if msg.exec() != QMessageBox.Yes:
-                self.messenger.closeUser()
-                self.messenger.stop()
-                self.messenger = None
-                return
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
@@ -338,20 +303,22 @@ class Chooser(QDialog):
             raise RuntimeError("Invalid subapplication value")
 
     def run_marker(self):
-        self.validate("Marker")
+        self.launch_task("Marker")
 
     def run_identifier(self):
-        self.validate("Identifier")
+        self.launch_task("Identifier")
 
     def run_manager(self):
-        self.validate("Manager")
+        self.launch_task("Manager")
 
     def saveDetails(self):
         """Write the options to the config file."""
         self.lastTime["user"] = self.ui.userLE.text().strip()
-        self.lastTime["server"] = "{}:{}".format(
-            self.ui.serverLE.text().strip(), self.ui.mportSB.value()
-        )
+        server = self.ui.serverLE.text().strip()
+        port_txt = self.ui.mportSB.text()
+        if port_txt:
+            server += ":" + port_txt
+        self.lastTime["server"] = server
         self.lastTime["question"] = self.getQuestion()
         self.lastTime["v"] = self.getv()
         self.lastTime["fontSize"] = self.ui.fontSB.value()
@@ -430,25 +397,7 @@ class Chooser(QDialog):
             self.messenger.stop()
         self.messenger = None
 
-    def getInfo(self):
-        self.partial_parse_address()
-        server = self.ui.serverLE.text()
-        self.ui.serverLE.setText(server)
-        if not server:
-            log.warning("No server URI")
-            return
-        mport = self.ui.mportSB.value()
-
-        # save those settings
-        # self.saveDetails()   # TODO?
-
-        # TODO: might be nice, but needs another thread?
-        # self.ui.infoLabel.setText("connecting...")
-        # self.ui.infoLabel.repaint()
-
-        if not self.messenger:
-            self.messenger = Messenger(server, mport, webplom=self.webplom)
-
+    def _pre_login_connection(self):
         try:
             try:
                 server_ver_str = self.messenger.start()
@@ -462,7 +411,7 @@ class Chooser(QDialog):
                 msg.setDefaultButton(QMessageBox.No)
                 if msg.exec() == QMessageBox.No:
                     self.messenger = None
-                    return
+                    return False
                 self.messenger.force_ssl_unverified()
                 server_ver_str = self.messenger.start()
         except PlomBenignException as e:
@@ -470,14 +419,25 @@ class Chooser(QDialog):
                 self, "Could not connect to server:", info=f"{e}", info_pre=False
             ).exec()
             self.messenger = None
-            return
-        self.ui.infoLabel.setText(server_ver_str)
+            return False
 
-        # fragile, use a regex?
-        srv_ver = server_ver_str.split()[3]
+        try:
+            (srv_ver,) = re.findall(r"Plom server version (\S+)", server_ver_str)
+        except ValueError:
+            self.ui.infoLabel.setText(
+                "Unexpected response: " + server_ver_str.strip()[:15]
+            )
+            WarnMsg(
+                self,
+                "Unexpected server response on version query.",
+                details=server_ver_str.strip(),
+            ).exec()
+            self.messenger = None
+            return False
+        self.ui.infoLabel.setText(server_ver_str)
         if Version(__version__) < Version(srv_ver):
             self.ui.infoLabel.setText(server_ver_str + "\nWARNING: old client!")
-            WarnMsg(
+            msg = WarnMsg(
                 self,
                 f"Your client version {__version__} is older than the server {srv_ver}:"
                 " you may want to consider upgrading.",
@@ -486,7 +446,27 @@ class Chooser(QDialog):
                     f"\nServer version string: “{server_ver_str}”\n"
                     f"Regex-extracted server version: {srv_ver}."
                 ),
-            ).exec()
+            )
+            msg.exec()
+        return True
+
+    def get_server_info(self):
+        server = self.ui.serverLE.text().strip()
+        if not server:
+            log.warning("No server URI")
+            return
+        # due to special handling of blank versus default, use .text() not .value()
+        port = self.ui.mportSB.text()
+
+        # TODO: might be nice, but needs another thread?
+        # self.ui.infoLabel.setText("connecting...")
+        # self.ui.infoLabel.repaint()
+
+        if not self.messenger:
+            self.messenger = Messenger(server, port=port, webplom=self.webplom)
+
+        if not self._pre_login_connection():
+            return
 
         try:
             spec = self.messenger.get_spec()
@@ -525,19 +505,51 @@ class Chooser(QDialog):
         else:
             self.ui.userLE.setFocus()
 
+    def _partial_parse_address_manual(self):
+        address = self.ui.serverLE.text()
+        try:
+            _addr, _port = address.split(":")
+        except ValueError:
+            return
+        if _port == "":
+            # special case handles "foo:"
+            self.ui.serverLE.setText(_addr)
+            return
+        # this special case handles "foo:1234"
+        try:
+            _port = int(_port)
+        except ValueError:
+            # special case for stuff with path "foo:1234/user"
+            self.ui.mportSB.clear()
+            return
+        self.ui.mportSB.setValue(_port)
+        self.ui.serverLE.setText(_addr)
+
     def partial_parse_address(self):
         """If address has a port number in it, extract and move to the port box.
 
         If there's a colon in the address (maybe user did not see port
         entry box or is pasting in a string), then try to extract a port
         number and put it into the entry box.
+
+        In some rare cases, we actively clear the port box, for example
+        when the URL seems to have a path.
         """
         address = self.ui.serverLE.text()
         try:
             parsedurl = urllib3.util.parse_url(address)
+            if not parsedurl.host:
+                # "localhost:1234" parses this way: we'll do it ourselves
+                self._partial_parse_address_manual()
+                return
+            if parsedurl.path:
+                # don't muck with things like "localhost:1234/base/url"
+                # activitely remove our port setting from such things
+                self.ui.mportSB.clear()
+                return
             if parsedurl.port:
                 self.ui.mportSB.setValue(int(parsedurl.port))
-            self.ui.serverLE.setText(parsedurl.host)
+                self.ui.serverLE.setText(parsedurl.host)
         except urllib3.exceptions.LocationParseError:
             return
 

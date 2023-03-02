@@ -1,103 +1,169 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Andrew Rechnitzer
+# Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020, 2022 Colin B. Macdonald
+# Copyright (C) 2019-2020, 2022-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
+# Copyright (C) 2023 Tam Nguyen
+
+import fitz
 
 from plom.misc_utils import local_now_to_simple_string
+from .examReassembler import papersize_portrait
 
 
-def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
+def makeCover(
+    tab,
+    pdfname,
+    *,
+    test_num=None,
+    info=None,
+    solution=False,
+    footer=True,
+    exam_name=None,
+):
     """Create html page of name ID etc and table of marks.
 
     Args:
-        test_num (int): the test number for the test we are making the cover for.
-        sname (str): student name.
-        sid (str): student id.
-        tab (list): information about the test that should be put on the coverpage.
-        pdfname (pathlib.Path): filename to save the pdf into
-        solution (bool): whether or not this is a cover page for solutions
+        tab (list): information about the test that should be put on the
+            coverpage.  A list of lists where each row is
+            ``[qlabel, ver, mark, maxPossibleMark]`` if not solutions or
+            ``[qlabel, ver, maxPossibleMark]`` if solutions.
+        pdfname (pathlib.Path): filename to save the pdf into.
+
+    Keyword Args:
+        exam_name (str): the "long name" of this assessment.
+        test_num (int/str): the test number for which we are making a cover.
+        info (list/tuple): currently a 2-tuple/2-list of student name (str)
+            and student id (str).
+        solution (bool): whether or not this is a cover page for solutions.
+        footer (bool): whether to print a footer with timestamp.
     """
-    # hide imports until needed Issue #2231.
-    from weasyprint import HTML, CSS
-
-    # A simple CSS header to style the cover page nicely.
-    css = CSS(
-        string="""
-@page {
-  size: Letter; /* Change from the default size of A4 */
-  margin: 2.5cm; /* Set margin on each page */
-}
-body {
-    font-family: sans serif;
-}
-table, th, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-    padding: 5px;
-    text-align: center;
-}
-"""
-    )
-
-    htmlText = "<html><body>\n"
-    if solution:
-        htmlText += "<h3>Solutions</h3>\n"
-    else:
-        htmlText += "<h3>Results</h3>\n"
-    htmlText += """
-<ul>
-  <li>Name = {}</li>
-  <li>ID = {}</li>
-  <li>Test number = {}</li>
-</ul>
-<table>""".format(
-        sname, sid, test_num
-    )
-    if solution:
-        htmlText += "<tr><th>question</th><th>version</th><th>mark out of</th></tr>\n"
-    else:
-        htmlText += (
-            "<tr><th>question</th><th>version</th><th>mark</th><th>out of</th></tr>\n"
-        )
-    # Start computing total mark.
-    totalMark = 0
-    maxPossible = 0
-    for y in tab:
-        totalMark += y[2] if y[2] is not None else 0
-        maxPossible += y[3]
-        # Row of mark table with Group, Version, Mark, MaxPossibleMark
-        g, v, m, x = y
-
-        if solution:  # ignore 'Mark'
-            htmlText += f"<tr><td>{g}</td><td>{v}</td><td>{x}</td></tr>\n"
+    # check all table entries that should be numbers are non-negative numbers
+    for row in tab:
+        if solution:
+            assert len(row) == 3
         else:
-            htmlText += f"<tr><td>{g}</td><td>{v}</td><td>{m}</td><td>{x}</td></tr>\n"
+            assert len(row) == 4
+        for x in row[1:]:
+            try:
+                y = float(x)
+                assert y >= 0, "Numeric data must be non-negative."
+            except (TypeError, ValueError):
+                raise AssertionError(f"Table data {x} should be numeric.")
 
-    # Final total mark out of maxPossible total mark.
+    m = 50  # margin
+    page_top = 75
+    # leave some extra; we stretch to avoid single line on new page
+    page_bottom = 700
+    extra_sep = 2  # some extra space for double hline near header
+    w = 70  # box width
+    w_label = 120  # label box width
+    deltav = 20  # how much vertical space for each row
+
+    cover = fitz.open()
+    align = fitz.TEXT_ALIGN_CENTER
+    fontsize = 12
+    big_font = 14
+
+    paper_width, paper_height = papersize_portrait
+    page = cover.new_page(width=paper_width, height=paper_height)
+
+    vpos = page_top
+    tw = fitz.TextWriter(page.rect)
+    if exam_name:
+        tw.append((m, vpos), exam_name, fontsize=big_font)
+        vpos += deltav
+        vpos += deltav // 2
     if solution:
-        htmlText += f"<tr><td>total</td><td>&middot;</td><td>{maxPossible}</td>\n"
+        text = "Solutions"
     else:
-        htmlText += (
-            "<tr><td>total</td><td>&middot;</td><td>{}</td><td>{}</td>\n".format(
-                totalMark, maxPossible
-            )
-        )
-    htmlText += """
-    </table>
-    <footer style="position:absolute; bottom:0;">
-    """
-    htmlText += """
-    Coverpage produced on {}
-    </ul>
-    </footer>
-    """.format(
-        local_now_to_simple_string()
-    )
-    htmlText += """
-</body>
-</html>"""
-    # Pipe the htmltext into weasyprint.
-    cover = HTML(string=htmlText)
-    cover.write_pdf(pdfname, stylesheets=[css])
+        text = "Results"
+    tw.append((m, vpos), text, fontsize=big_font)
+    bullet = "\N{Bullet}"
+    if info:
+        sname, sid = info
+        tw.append((m + 100, vpos), f"{bullet} Name: {sname}", fontsize=big_font)
+        vpos += deltav
+        tw.append((m + 100, vpos), f"{bullet} ID: {sid}", fontsize=big_font)
+        vpos += deltav
+    if test_num:
+        text = f"{bullet} Test number: {test_num}"
+        tw.append((m + 100, vpos), text, fontsize=big_font)
+        vpos += deltav
+
+    if solution:
+        headers = ["question", "version", "mark out of"]
+        totals = ["total", "", sum([row[2] for row in tab])]
+    else:
+        headers = ["question", "version", "mark", "out of"]
+        totals = [
+            "total",
+            "",
+            sum([row[2] for row in tab]),
+            sum([row[3] for row in tab]),
+        ]
+
+    shape = page.new_shape()
+
+    # rectangles for header that we will shift downwards as we go
+    def make_boxes(v1):
+        v2 = v1 + deltav
+        return [fitz.Rect(m, v1, m + w_label, v2)] + [
+            fitz.Rect(m + w_label + w * j, v1, m + w_label + w * (j + 1), v2)
+            for j in range(len(headers) - 1)
+        ]
+
+    page_row = 0
+    for j, row in enumerate(tab):
+        if page_row == 0:
+            # Draw the header
+            for header, r in zip(headers, make_boxes(vpos)):
+                shape.draw_rect(r)
+                excess = tw.fill_textbox(r, header, align=align, fontsize=fontsize)
+                assert not excess, f'Table header "{header}" too long for box'
+            vpos += deltav + extra_sep
+            page_row += 1
+
+        for txt, r in zip(row, make_boxes(vpos)):
+            shape.draw_rect(r)
+            excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+            assert not excess, f'Table entry "{txt}" too long for box'
+        vpos += deltav
+        page_row += 1
+
+        if vpos > page_bottom and j < (len(tab) - 1):
+            # switch to new page, unless we only have the summary row left
+            # in which case stretch a little to avoid a single-line next page
+            shape.finish(width=0.3, color=(0, 0, 0))
+            shape.commit()
+            text = "Table continues on next page..."
+            p = fitz.Point(m, page.rect.height - m)
+            tw.append(p, text, fontsize=fontsize)
+            tw.write_text(page)
+            page = cover.new_page(width=paper_width, height=paper_height)
+            tw = fitz.TextWriter(page.rect)
+            shape = page.new_shape()
+            vpos = page_top
+            page_row = 0
+
+    # Draw the final totals row
+    for txt, r in zip(totals, make_boxes(vpos + extra_sep)):
+        shape.draw_rect(r)
+        excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+        assert not excess, f'Table entry "{txt}" too long for box'
+    shape.finish(width=0.3, color=(0, 0, 0))
+    shape.commit()
+
+    if footer:
+        # Last words
+        text = "Cover page produced on {}".format(local_now_to_simple_string())
+        p = fitz.Point(m, page.rect.height - m)
+        tw.append(p, text, fontsize=fontsize)
+
+    tw.write_text(page)
+
+    cover.subset_fonts()
+
+    cover.save(pdfname, garbage=4, deflate=True, clean=True)
+    cover.close()

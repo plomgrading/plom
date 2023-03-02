@@ -9,12 +9,12 @@
 
 # These should be kept lock-step with `requirements.txt`
 PyQt5==5.15.7
-PyQt5-sip==12.11.0
+PyQt5-sip==12.11.1
 appdirs==1.4.4
 arrow==1.2.3
 exif==1.6.0
 fonttools==4.38.0
-importlib-resources==5.10.2
+importlib-resources==5.12.0
 packaging==23.0
 pandas==1.5.3
 passlib==1.7.4
@@ -29,4 +29,3 @@ tomli==2.0.1
 tomlkit==0.11.6
 tqdm==4.64.1
 urllib3==1.26.14
-weasyprint==57.2

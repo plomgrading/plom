@@ -240,6 +240,7 @@ tag_matches_ver:
     - python3 -c "exit(not 'v$VER' == '$CI_COMMIT_TAG')"
 
 
+# Should keep version same or close to that in .pre-commit-config.yaml
 black:
   stage: static_analysis
   image: python:3.11
@@ -612,7 +613,7 @@ fedora_build:
           python3-seaborn python3-aiohttp
           python3-peewee python3-pandas python3-requests-toolbelt
           python3-pip python3-wheel python3-setuptools
-          python3-tomlkit python3-weasyprint python3-pillow python3-tqdm
+          python3-tomlkit python3-pillow python3-tqdm
           python3-appdirs python3-arrow
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL

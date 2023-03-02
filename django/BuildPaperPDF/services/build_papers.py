@@ -4,9 +4,9 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 import pathlib
-import shutil
 import random
 from tempfile import TemporaryDirectory
+import zipfly
 
 from plom.create.mergeAndCodePages import make_PDF
 
@@ -16,7 +16,7 @@ from django.db.models import Q
 from django.db import transaction
 from django.core.files import File
 from django_huey import db_task
-from django_huey import db_task, get_queue
+from django_huey import get_queue
 
 from BuildPaperPDF.models import PDFTask
 from Papers.models import Paper
@@ -66,11 +66,6 @@ class BuildPapersService:
 
     def create_task(self, index: int, huey_id: id, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database"""
-        if student_id:
-            paper_path = self.papers_to_print / f"exam_{index:04}_{student_id}.pdf"
-        else:
-            paper_path = self.papers_to_print / f"exam_{index:04}.pdf"
-
         paper = get_object_or_404(Paper, paper_number=index)
 
         task = PDFTask(
@@ -267,3 +262,16 @@ class BuildPapersService:
             }
             for task in PDFTask.objects.all()
         ]
+
+    def get_zipfly_generator(self, short_name, *, chunksize=1024 * 1024):
+        bps = BuildPapersService()
+        paths = [
+            {
+                "fs": pdf_path,
+                "n": pathlib.Path(f"papers_for_{short_name}") / pdf_path.name,
+            }
+            for pdf_path in bps.get_completed_pdf_paths()
+        ]
+
+        zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
+        return zfly.generator()

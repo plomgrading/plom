@@ -1,18 +1,26 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
-import pathlib
-import hashlib
-import fitz
-import shutil
-from django.utils import timezone
 from collections import Counter
+import hashlib
+import pathlib
+import shutil
+
+import fitz
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
+from django.utils import timezone
+
 from plom.scan import QRextract
 from plom.scan.readQRCodes import checkQRsValid
+from plom.tpv_utils import parseTPV, getPaperPageVersion
 
 from .image_process import PageImageProcessor
 from Scan.models import (
@@ -24,7 +32,6 @@ from Scan.models import (
     CollisionStagingImage,
 )
 from Papers.models import ErrorImage
-
 from .qr_validators import QRErrorService
 
 
@@ -33,7 +40,6 @@ class ScanService:
     Functions for staging scanned test-papers.
     """
 
-    @transaction.atomic
     def upload_bundle(self, pdf_doc, slug, user, timestamp, pdf_hash):
         """
         Upload a bundle PDF and store it in the filesystem + database.
@@ -50,14 +56,15 @@ class ScanService:
         with open(bundle_dir / file_name, "w") as f:
             pdf_doc.save(f)
 
-        bundle_db = StagingBundle(
-            slug=slug,
-            file_path=bundle_dir / file_name,
-            user=user,
-            timestamp=timestamp,
-            pdf_hash=pdf_hash,
-        )
-        bundle_db.save()
+        with transaction.atomic():
+            bundle_db = StagingBundle(
+                slug=slug,
+                file_path=bundle_dir / file_name,
+                user=user,
+                timestamp=timestamp,
+                pdf_hash=pdf_hash,
+            )
+            bundle_db.save()
 
         image_dir = bundle_dir / "pageImages"
         image_dir.mkdir(exist_ok=True)
@@ -233,21 +240,26 @@ class ScanService:
         groupings = {}
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
-                if list_qr_codes[page][quadrant]:
-                    paper_id = "".join(list_qr_codes[page][quadrant])[0:5]
-                    page_num = "".join(list_qr_codes[page][quadrant])[5:8]
-                    version_num = "".join(list_qr_codes[page][quadrant])[8:11]
-
-                    # grouping_key = "-".join([paper_id, page_num, version_num])
+                if list_qr_codes[page][quadrant].get("tpv_signature"):
+                    paper_id, page_num, version_num, public_code, corner = parseTPV(
+                        list_qr_codes[page][quadrant].get("tpv_signature")
+                    )
+                    grouping_key = getPaperPageVersion(
+                        list_qr_codes[page][quadrant].get("tpv_signature")
+                    )
+                    x_coord = list_qr_codes[page][quadrant].get("x")
+                    y_coord = list_qr_codes[page][quadrant].get("y")
                     qr_code_dict = {
                         "paper_id": paper_id,
                         "page_num": page_num,
                         "version_num": version_num,
-                        "quadrant": "".join(list_qr_codes[page][quadrant])[11],
-                        "public_code": "".join(list_qr_codes[page][quadrant])[12:],
+                        "quadrant": corner,
+                        "public_code": public_code,
+                        "grouping_key": grouping_key,
+                        "x_coord": x_coord,
+                        "y_coord": y_coord,
                     }
                     groupings[quadrant] = qr_code_dict
-
         return groupings
 
     @db_task(queue="tasks")
@@ -257,13 +269,14 @@ class ScanService:
         """
         scanner = ScanService()
         qr_error_checker = QRErrorService()
-        code_dict = QRextract(image_path, write_to_file=False)
+        code_dict = QRextract(image_path)
         page_data = scanner.parse_qr_code([code_dict])
         # error handling here
         qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
         pipr = PageImageProcessor()
         rotated = pipr.rotate_page_image(image_path, page_data)
+        # TODO: need to update page_data inner dict fields "quadrant", "x_coord" and "y_coord" after rotating image
 
         # Below is to write the parsed QR code to database.
         img = StagingImage.objects.get(file_path=image_path)
@@ -467,10 +480,7 @@ class ScanService:
         qr_code_list = []
         for image in all_images:
             for qr_qadrant in image.parsed_qr:
-                paper_id = list(image.parsed_qr[qr_qadrant].values())[0]
-                page_num = list(image.parsed_qr[qr_qadrant].values())[1]
-                version_num = list(image.parsed_qr[qr_qadrant].values())[2]
-                qr_code_list.append(paper_id + page_num + version_num)
+                qr_code_list.append(image.parsed_qr[qr_qadrant].get("grouping_key"))
         qr_code_list.sort()
         qr_code_list = list(dict.fromkeys(qr_code_list))
         while len(qr_code_list) < num_images:
@@ -631,3 +641,56 @@ class ScanService:
         for parse_qr_obj in parse_qr_list[bundle_order:]:
             parse_qr_obj.page_index -= 1
             parse_qr_obj.save()
+
+    @transaction.atomic
+    def upload_bundle_cmd(self, pdf_doc, slug, username, timestamp, hashed):
+        # username => user_object, if in scanner group, else exception raised.
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="scanner"
+            )
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        self.upload_bundle(
+            pdf_doc=pdf_doc,
+            slug=slug,
+            user=user_obj,
+            timestamp=timestamp,
+            pdf_hash=hashed,
+        )
+
+    @transaction.atomic
+    def staging_bundle_status_cmd(self):
+        bundles = StagingBundle.objects.all()
+
+        bundle_status = []
+        status_header = (
+            "Bundle name",
+            "Total pages",
+            "Valid pages",
+            "Error pages",
+            "QR read",
+            "Pushed",
+            "Uploaded by",
+        )
+        bundle_status.append(status_header)
+        for bundle in bundles:
+            images = StagingImage.objects.filter(bundle=bundle)
+            valid_images = self.get_n_complete_reading_tasks(bundle)
+            all_error_images = StagingImage.objects.filter(
+                bundle=bundle, colliding=True, unknown=True, error=True
+            )
+            bundle_data = (
+                bundle.slug,
+                len(images),
+                valid_images,
+                len(all_error_images),
+                bundle.has_qr_codes,
+                bundle.pushed,
+                bundle.user,
+            )
+            bundle_status.append(bundle_data)
+        return bundle_status

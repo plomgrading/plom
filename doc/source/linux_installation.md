@@ -32,7 +32,7 @@ Tested on Fedora 37.  Some stuff from the package manager:
         python3-PyMuPDF python3-scikit-learn \
         python3-stdiomask python3-requests-toolbelt \
         python3-pip python3-wheel python3-setuptools \
-        python3-tomlkit python3-tqdm python3-urllib3 python3-weasyprint \
+        python3-tomlkit python3-tqdm python3-urllib3 \
         python3-pytest python3-PyMySQL \
         latexmk tex-dvipng texlive-scheme-basic \
         tex-preview tex-charter tex-exam tex-preprint \
@@ -75,7 +75,7 @@ Some stuff from the package manager:
         python3-tqdm libpango-1.0-0 libpangocairo-1.0-0 \
         python3-defusedxml python3-jsmin python3-cairosvg
 ```
-The pango stuff was (is?) needed for weasyprint.
+The pango stuff was (is?) needed for weasyprint: perhaps it can be dropped.
 
 Now upgrade pip (your local copy, not the system one)
 ```

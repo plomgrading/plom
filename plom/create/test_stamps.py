@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from pathlib import Path
 
@@ -9,7 +10,7 @@ import fitz
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
 from plom.create.mergeAndCodePages import create_exam_and_insert_QR
-from plom.scan import QRextract
+from plom.scan import QRextract_legacy
 from plom.scan import processFileToBitmaps
 from plom import SpecVerifier
 from plom.misc_utils import working_directory
@@ -71,19 +72,19 @@ def test_stamp_QRs(tmpdir):
     # Now let's try to read it back, some overlap with test_qr_reads
     files = processFileToBitmaps(out, tmpdir)
 
-    p = QRextract(files[0], write_to_file=False)
+    p = QRextract_legacy(files[0], write_to_file=False)
     for k, v in p.items():
         print(k)
         print(v)
         assert len(v) == 0
 
-    p = QRextract(files[2], write_to_file=False)
+    p = QRextract_legacy(files[2], write_to_file=False)
     assert not p["NW"]
     assert p["NE"] == ["00006003001112345"]
     assert p["SW"] == ["00006003001312345"]
     assert p["SE"] == ["00006003001412345"]
 
-    p = QRextract(files[3], write_to_file=False)
+    p = QRextract_legacy(files[3], write_to_file=False)
     assert not p["NE"]
     assert p["NW"] == ["00006004001212345"]
     assert p["SW"] == ["00006004001312345"]
