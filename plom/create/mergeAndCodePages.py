@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2023 Edith Coates
 
 import tempfile
 import math
@@ -394,6 +395,9 @@ def make_PDF(
         ycoord (float): vertical positioning of the prename box.
         where (pathlib.Path/None): where to save the files, with some
             default if omitted.
+
+    Returns:
+        pathlib.Path: the file that was just written.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
