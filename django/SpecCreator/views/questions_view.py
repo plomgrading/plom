@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from django.urls import reverse
 from django.shortcuts import render
@@ -63,7 +63,6 @@ class TestSpecCreatorQuestionsPage(TestSpecPageView):
                 pqv.remove_pqv_map()
 
             marks = data["total_marks"]
-            print(marks)
             spec.set_total_marks(marks)
 
             return HttpResponseRedirect(reverse("q_detail", args=(1,)))

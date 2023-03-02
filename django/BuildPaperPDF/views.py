@@ -29,11 +29,7 @@ class BuildPaperPDFs(ManagerRequiredView):
     def table_fragment(self, request):
         """Get the current state of the tasks, render it as an HTML table, and return"""
         bps = BuildPapersService()
-        rename = RenamePDFFile()
-
-        tasks = PDFTask.objects.all()
-        names = [rename.get_PDF_name(t.pdf_file_path) for t in tasks]
-        task_context = zip(tasks, names)
+        task_context = bps.get_task_context()
 
         running_tasks = bps.get_n_running_tasks()
         if running_tasks > 0:
@@ -94,27 +90,12 @@ class BuildPaperPDFs(ManagerRequiredView):
 
     def post(self, request):
         bps = BuildPapersService()
-        pqvs = PQVMappingService()
-        qvmap = pqvs.get_pqv_map_dict()
-        num_pdfs = len(qvmap)
         sstu = StagingStudentService()
         classdict = sstu.get_classdict()
 
-        bps.clear_tasks()
-        # print(classdict)
-        bps.stage_pdf_jobs(num_pdfs, classdict=classdict)
-
-        task_objects = PDFTask.objects.all()
-        Rename = RenamePDFFile()
-
-        tasks_paper_number = []
-        tasks_pdf_file_path = []
-        tasks_status = []
-
-        for task in task_objects:
-            tasks_paper_number.append(task.paper_number)
-            tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
-            tasks_status.append(task.status)
+        # bps.clear_tasks()
+        bps.stage_all_pdf_jobs(classdict=classdict)
+        task_context = bps.get_task_context()
 
         table_fragment = self.table_fragment(request)
 
@@ -122,7 +103,7 @@ class BuildPaperPDFs(ManagerRequiredView):
         context.update(
             {
                 "message": "",
-                "tasks": zip(task_objects, tasks_pdf_file_path),
+                "tasks": task_context,
                 "zip_disabled": True,
                 "pdfs_staged": True,
                 "pdf_table": table_fragment,
@@ -134,16 +115,11 @@ class BuildPaperPDFs(ManagerRequiredView):
 
 class PDFTableView(ManagerRequiredView):
     def render_pdf_table(self, request):
-        task_objects = PDFTask.objects.all()
         bps = BuildPapersService()
-        Rename = RenamePDFFile()
-        tasks_pdf_file_path = []
-
-        for task in task_objects:
-            tasks_pdf_file_path.append(Rename.get_PDF_name(task.pdf_file_path))
+        task_context = bps.get_task_context()
 
         n_complete = bps.get_n_complete_tasks()
-        n_total = len(task_objects)
+        n_total = len(task_context)
         if n_total > 0:
             percent_complete = n_complete / n_total * 100
         else:
@@ -161,7 +137,7 @@ class PDFTableView(ManagerRequiredView):
         context = self.build_context()
         context.update(
             {
-                "tasks": zip(task_objects, tasks_pdf_file_path),
+                "tasks": task_context,
                 "pdf_errors": bps.are_there_errors(),
                 "message": f"Progress: {n_complete} papers of {n_total} built ({percent_complete:.0f}%)",
                 "zip_disabled": zip_disabled,
@@ -183,17 +159,16 @@ class UpdatePDFTable(PDFTableView):
 
 class GetPDFFile(ManagerRequiredView):
     def get(self, request, paper_number):
-        pdf_file = PDFTask.objects.get(paper_number=paper_number).pdf_file_path
-        pdf_path = pathlib.Path(pdf_file)
-        if not pdf_path.exists() or not pdf_path.is_file():
+        try:
+            (pdf_filename, pdf_bytes) = BuildPapersService().get_paper_path_and_bytes(
+                paper_number
+            )
+        except ValueError:
             return render(request, "BuildPaperPDF/cannot_find_pdf.html")
 
-        pdf_file_name = RenamePDFFile().get_PDF_name(pdf_file)
-        file = pdf_path.open("rb")
         pdf = SimpleUploadedFile(
-            str(pdf_file_name), file.read(), content_type="application/pdf"
+            pdf_filename, pdf_bytes, content_type="application/pdf"
         )
-        file.close()
 
         return FileResponse(pdf)
 
@@ -231,7 +206,6 @@ class StartOnePDF(PDFTableView):
         qvmap = pqvs.get_pqv_map_dict()
 
         bps.send_single_task(paper_number, spec, qvmap[paper_number])
-
         return self.render_pdf_table(request)
 
 

@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2023 Edith Coates
 
 import tempfile
 import math
@@ -368,6 +369,7 @@ def make_PDF(
     fakepdf=False,
     xcoord=None,
     ycoord=None,
+    where=None,
 ):
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -391,14 +393,21 @@ def make_PDF(
             something like that...
         xcoord (float): horizontal positioning of the prename box.
         ycoord (float): vertical positioning of the prename box.
+        where (pathlib.Path/None): where to save the files, with some
+            default if omitted.
+
+    Returns:
+        pathlib.Path: the file that was just written.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
     """
+    if where is None:
+        where = paperdir
     if extra:
-        save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
+        save_name = where / f"exam_{papernum:04}_{extra['id']}.pdf"
     else:
-        save_name = paperdir / f"exam_{papernum:04}.pdf"
+        save_name = where / f"exam_{papernum:04}.pdf"
 
     # make empty files instead of PDFs
     if fakepdf:
@@ -436,3 +445,5 @@ def make_PDF(
     # in the same directory that have the same name.
     exam.save(save_name, garbage=4, deflate=True, clean=True)
     exam.close()
+
+    return save_name

@@ -39,7 +39,7 @@ class Command(BaseCommand):
         grp.add_argument(
             "--delete-all",
             action="store_true",
-            help="Delete all paper build tasks (incomplete and complete) in the queue",
+            help="Delete all PDFs that have been built",
         )
         grp.add_argument(
             "--cancel-all",
