@@ -71,6 +71,7 @@ class CollisionStagingImage(models.Model):
     rotation = models.IntegerField(default=0)
     paper_number = models.PositiveIntegerField(null=True)
     page_number = models.PositiveIntegerField(null=True)
+    version_number = models.PositiveIntegerField(null=True)
 
 
 class UnknownStagingImage(models.Model):

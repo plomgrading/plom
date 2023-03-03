@@ -236,6 +236,44 @@ class ScanService:
     def parse_qr_code(self, list_qr_codes):
         """
         Parsing QR codes into list of dictionaries
+
+        Args:
+            list_qr_codes: (list) QR codes return from QRextract() method as a dictionary
+
+        Return:
+            groupings: (dict) Group of TPV signature
+            {
+                'NE': {
+                    'paper_id': 1,
+                    'page_num': 3,
+                    'version_num': 1,
+                    'quadrant': '1',
+                    'public_code': '93849',
+                    'grouping_key': '00001003001',
+                    'x_coord': 2204,
+                    'y_coord': 279.5
+                },
+                'SW': {
+                    'paper_id': 1,
+                    'page_num': 3,
+                    'version_num': 1,
+                    'quadrant': '3',
+                    'public_code': '93849',
+                    'grouping_key': '00001003001',
+                    'x_coord': 234,
+                    'y_coord': 2909.5
+                },
+                'SE': {
+                    'paper_id': 1,
+                    'page_num': 3,
+                    'version_num': 1,
+                    'quadrant': '4',
+                    'public_code': '93849',
+                    'grouping_key': '00001003001',
+                    'x_coord': 2203,
+                    'y_coord': 2906.5
+                }
+            }
         """
         groupings = {}
         for page in range(len(list_qr_codes)):
@@ -265,12 +303,18 @@ class ScanService:
     @db_task(queue="tasks")
     def _huey_parse_qr_code(bundle, image_path):
         """
-        Parse QR codes and save to database in the background
+        Huey task of parsing QR codes, check QR errors, rotate image,
+        and save to database in the background
+
+        Args:
+            bundle: Bundle DB object
+            image_path: (str) image file path
         """
         scanner = ScanService()
         qr_error_checker = QRErrorService()
         code_dict = QRextract(image_path)
         page_data = scanner.parse_qr_code([code_dict])
+
         # error handling here
         qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
@@ -289,6 +333,11 @@ class ScanService:
     def qr_codes_tasks(self, bundle, page_index, image_path):
         """
         Task of parsing QR codes.
+
+        Args:
+            bundle: bundle DB object
+            page_index: (int) bundle index page number
+            image_path: (str) image file path
         """
         qr_task = self._huey_parse_qr_code(bundle, image_path)
         qr_task_obj = ParseQR(
@@ -300,6 +349,7 @@ class ScanService:
         )
         qr_task_obj.save()
 
+    @transaction.atomic
     def read_qr_codes(self, bundle):
         """
         Read QR codes of scanned pages in a bundle.
@@ -312,14 +362,15 @@ class ScanService:
         -              SW:  3
         -              SE:  4
         - Last five digit:  93849
+
+        Args:
+            bundle: bundle DB object
         """
         root_folder = settings.BASE_DIR / "media" / "page_images"
         root_folder.mkdir(exist_ok=True)
         imgs = StagingImage.objects.filter(bundle=bundle)
         for page in imgs:
             self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
-            if self.is_bundle_reading_finished and not bundle.has_qr_codes:
-                self.qr_reading_cleanup(bundle)
 
     @transaction.atomic
     def get_qr_code_results(self, bundle, page_index):
