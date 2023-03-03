@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
+ <author>
+  Copyright (C) 2018-2023 The Plom Project Developers
+  SPDX-License-Identifier: AGPL-3.0-or-later
+ </author>
  <class>annotator</class>
  <widget class="QWidget" name="annotator">
   <property name="windowModality">
