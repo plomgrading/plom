@@ -9,7 +9,6 @@
 
 [flake8]
 max-line-length = 88
-exclude = plom/*/uiFiles/ui_*.py
 # E203 = conflicts with black
 # E402 = seems to happen our init files - module import must be at top of file
 # E501 = we have too many long lines

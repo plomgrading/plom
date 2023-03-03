@@ -18,13 +18,13 @@ import tempfile
 from time import time
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
 import arrow
-import urllib3
 
+from PyQt5 import uic
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import (
     QBrush,
@@ -54,6 +54,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+import plom.client.ui_files
 import plom.client.icons
 
 from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
@@ -64,7 +65,6 @@ from plom.client.downloader import Downloader
 from plom.client.about_dialog import show_about_dialog
 from plom.client import ImageViewWidget
 
-from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
 from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
@@ -389,8 +389,10 @@ class Manager(QWidget):
                 __version__, self.APIVersion
             )
         )
-        self.ui = Ui_Manager()
-        self.ui.setupUi(self)
+        uic.loadUi(resources.files(plom.client.ui_files) / "manager.ui", self)
+        # TODO: temporary workaround
+        self.ui = self
+
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         if user:
             self.ui.userLE.setText(user)

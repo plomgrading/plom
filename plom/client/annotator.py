@@ -19,10 +19,11 @@ import sys
 from textwrap import dedent
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
+from PyQt5 import uic
 from PyQt5.QtCore import (
     Qt,
     QTimer,
@@ -61,7 +62,6 @@ from .pagerearranger import RearrangementViewer
 from .viewers import SolutionViewer, WholeTestView, CatViewer, PreviousPaperViewer
 from .pagescene import PageScene
 from .pageview import PageView
-from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
 from .about_dialog import show_about_dialog
@@ -125,10 +125,9 @@ class Annotator(QWidget):
         self.saveName = None
         self.maxMark = None
 
-        self.ui = Ui_annotator()
-
-        # Set up the gui.
-        self.ui.setupUi(self)
+        uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
+        # TODO: temporary workaround
+        self.ui = self
 
         # ordered list of minor mode tools, must match the UI order
         self._list_of_minor_modes = ["box", "tick", "cross", "text", "line", "pen"]

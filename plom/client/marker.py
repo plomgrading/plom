@@ -23,14 +23,21 @@ import os
 from pathlib import Path
 import queue
 import random
+import sys
 import tempfile
 from textwrap import shorten
 import time
 import threading
 
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
+
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 import platform
 
+from PyQt5 import uic
 from PyQt5.QtCore import (
     Qt,
     QSortFilterProxyModel,
@@ -51,6 +58,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom import __version__
+import plom.client.ui_files
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -69,7 +77,6 @@ from plom.messenger import Messenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectTestQuestion
-from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 
@@ -888,6 +895,10 @@ class MarkerClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
+        uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
+        # TODO: temporary workaround
+        self.ui = self
+
         # Save the local temp directory for image files and the class list.
         if not tmpdir:
             tmpdir = tempfile.mkdtemp(prefix="plom_")
@@ -906,9 +917,11 @@ class MarkerClient(QWidget):
         self.prxM = ProxyModel()  # set proxy for filtering and sorting
         # A view window for the papers so user can zoom in as needed.
         self.testImg = ImageViewWidget(self, has_rotate_controls=False)
-        self.annotatorSettings = defaultdict(
-            lambda: None
-        )  # settings variable for annotator settings (initially None)
+        # A view window for the papers so user can zoom in as needed.
+        self.ui.paperBoxLayout.addWidget(self.testImg, 10)
+
+        # settings variable for annotator settings (initially None)
+        self.annotatorSettings = defaultdict(lambda: None)
         self.commentCache = {}  # cache for Latex Comments
         self.backgroundUploader = None
 
@@ -918,7 +931,7 @@ class MarkerClient(QWidget):
         self.question = None
         self.version = None
         self.exam_spec = None
-        self.ui = None
+
         self.msgr = None
         # history contains all the tgv in order of being marked except the current one.
         self.marking_history = []
@@ -1046,11 +1059,7 @@ class MarkerClient(QWidget):
 
         Returns:
             None: Modifies self.ui
-
         """
-        # Fire up the user interface
-        self.ui = Ui_MarkerWindow()
-        self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         try:
             question_label = get_question_label(self.exam_spec, self.question)
@@ -1075,9 +1084,6 @@ class MarkerClient(QWidget):
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
-        # A view window for the papers so user can zoom in as needed.
-        # Paste into appropriate location in gui.
-        self.ui.paperBoxLayout.addWidget(self.testImg, 10)
 
         if __version__.endswith("dev"):
             self.ui.technicalButton.setChecked(True)
