@@ -15,6 +15,7 @@ from django.core.management.base import BaseCommand
 
 from Scan.services import ScanService
 
+
 class Command(BaseCommand):
     """
     commands:
@@ -74,7 +75,9 @@ class Command(BaseCommand):
         scanner = ScanService()
         try:
             scanner.read_bundle_qr_cmd(bundle_name)
-            self.stdout.write(f"Reading {bundle_name} QR codes - processing it in the background now.")
+            self.stdout.write(
+                f"Reading {bundle_name} QR codes - processing it in the background now."
+            )
         except ValueError as err:
             self.stderr.write(f"{err}")
 
@@ -100,7 +103,9 @@ class Command(BaseCommand):
 
         # Read QR codes
         sp_read_qr = sp.add_parser("read_qr", help="Read the selected bundle QR codes.")
-        sp_read_qr.add_argument("bundle_name", type=str, help="Which bundle to read the QR codes.")
+        sp_read_qr.add_argument(
+            "bundle_name", type=str, help="Which bundle to read the QR codes."
+        )
 
     def handle(self, *args, **options):
         if options["command"] == "upload":

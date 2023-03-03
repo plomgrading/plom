@@ -685,7 +685,7 @@ class ScanService:
             all_error_images = StagingImage.objects.filter(
                 bundle=bundle, colliding=True, unknown=True, error=True
             )
-            
+
             if len(images) == self.get_n_page_rendering_tasks(bundle):
                 total_pages = len(images)
             else:
@@ -716,7 +716,9 @@ class ScanService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        if self.get_n_completed_page_rendering_tasks(bundle_obj) != self.get_n_page_rendering_tasks(bundle_obj):
+        if self.get_n_completed_page_rendering_tasks(
+            bundle_obj
+        ) != self.get_n_page_rendering_tasks(bundle_obj):
             raise ValueError(f"Please wait for {bundle_name} to upload...")
         elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
