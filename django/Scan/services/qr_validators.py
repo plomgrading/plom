@@ -3,12 +3,13 @@
 
 import shutil
 
-from django.conf import settings
-from Papers.services import SpecificationService
-from Scan.models import StagingImage, CollisionStagingImage, UnknownStagingImage
-from Papers.models import ErrorImage
 from collections import Counter
-from Papers.services import ImageBundleService
+from django.conf import settings
+
+from Papers.models import ErrorImage
+from Papers.services import (ImageBundleService, SpecificationService)
+
+from Scan.models import StagingImage, CollisionStagingImage, UnknownStagingImage
 
 
 class QRErrorService:
