@@ -371,6 +371,8 @@ class ScanService:
         imgs = StagingImage.objects.filter(bundle=bundle)
         for page in imgs:
             self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
+            if self.is_bundle_reading_finished and not bundle.has_qr_codes:
+                self.qr_reading_cleanup(bundle)
 
     @transaction.atomic
     def get_qr_code_results(self, bundle, page_index):
