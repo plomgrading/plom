@@ -31,23 +31,59 @@ def relative_error_vec(x, y):
     return err2norm / x2norm
 
 
-def test_rotate_png(tmpdir):
+cw_red_pixel_data = [
+    (0, (32, 0)),
+    (90, (63, 32)),
+    (-90, (0, 32)),
+    (270, (0, 32)),
+    (180, (32, 63)),
+]
+
+
+ccw_red_pixel_data = [
+    (0, (32, 0)),
+    (90, (0, 32)),
+    (-90, (63, 32)),
+    (270, (63, 32)),
+    (180, (32, 63)),
+]
+
+
+def test_rotate_png_cw(tmpdir):
     tmpdir = Path(tmpdir)
     # tmpdir = Path(".")
     b = (resources.files(plom.scan) / "rgb.png").read_bytes()
     # angle, and place where we expect a red pixel
-    for angle, redpixel in [
-        (0, (32, 0)),
-        (90, (63, 32)),
-        (-90, (0, 32)),
-        (270, (0, 32)),
-        (180, (32, 63)),
-    ]:
+    for angle, redpixel in cw_red_pixel_data:
         # make a copy
         f = tmpdir / f"img{angle}.png"
         with open(f, "wb") as fh:
             fh.write(b)
-        rotate_bitmap(f, angle)
+        rotate_bitmap(f, angle, cw=True)
+        # now load it back and check for a red pixel in the right place
+        im = Image.open(f)
+        im.load()
+        palette = im.getpalette()
+        if not palette:
+            assert im.getpixel(redpixel) == (255, 0, 0)
+            continue
+        # if there was a palette, have to look up the colour by index
+        idx = im.getpixel(redpixel)
+        colour = palette[(3 * idx) : (3 * idx) + 3]
+        assert colour == [255, 0, 0]
+
+
+def test_rotate_png_ccw(tmpdir):
+    tmpdir = Path(tmpdir)
+    # tmpdir = Path(".")
+    b = (resources.files(plom.scan) / "rgb.png").read_bytes()
+    # angle, and place where we expect a red pixel
+    for angle, redpixel in ccw_red_pixel_data:
+        # make a copy
+        f = tmpdir / f"img{angle}.png"
+        with open(f, "wb") as fh:
+            fh.write(b)
+        rotate_bitmap(f, angle, ccw=True)
         # now load it back and check for a red pixel in the right place
         im = Image.open(f)
         im.load()
@@ -69,7 +105,7 @@ def pil_load_with_jpeg_exif_rot_applied(f):
     return im
 
 
-def test_rotate_jpeg(tmpdir):
+def test_rotate_jpeg_cw(tmpdir):
     tmpdir = Path(tmpdir)
     # tmpdir = Path(".")
 
@@ -82,18 +118,38 @@ def test_rotate_jpeg(tmpdir):
         b = fh.read()
 
     # angle, and place where we expect a red pixel
-    for angle, redpixel in [
-        (0, (32, 0)),
-        (90, (63, 32)),
-        (-90, (0, 32)),
-        (270, (0, 32)),
-        (180, (32, 63)),
-    ]:
+    for angle, redpixel in cw_red_pixel_data:
         # make a copy
         f = tmpdir / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
-        rotate_bitmap(f, angle)
+        rotate_bitmap(f, angle, cw=True)
+
+        # now load it back and check for a red pixel in the right place
+        im = pil_load_with_jpeg_exif_rot_applied(f)
+        colour = im.getpixel(redpixel)
+        assert relative_error_vec(colour, (255, 0, 0)) <= 0.1
+
+
+def test_rotate_jpeg_ccw(tmpdir):
+    tmpdir = Path(tmpdir)
+    # tmpdir = Path(".")
+
+    # make a lowish-quality jpeg and extract to bytes
+    f = tmpdir / "rgb.jpg"
+    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im.load()
+    im.save(f, "JPEG", quality=2, optimize=True)
+    with open(f, "rb") as fh:
+        b = fh.read()
+
+    # angle, and place where we expect a red pixel
+    for angle, redpixel in ccw_red_pixel_data:
+        # make a copy
+        f = tmpdir / f"img{angle}.jpg"
+        with open(f, "wb") as fh:
+            fh.write(b)
+        rotate_bitmap(f, angle, ccw=True)
 
         # now load it back and check for a red pixel in the right place
         im = pil_load_with_jpeg_exif_rot_applied(f)

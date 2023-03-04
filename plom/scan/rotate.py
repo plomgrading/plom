@@ -12,32 +12,48 @@ from PIL import Image
 log = logging.getLogger("scan")
 
 
-def rotate_bitmap(fname, angle):
+def rotate_bitmap(fname, angle, *, cw=None, ccw=None):
     """Rotate bitmap, possibly in metadata.
 
     args:
         filename (pathlib.Path/str): name of a file
-        angle (int): CW angle of ration: 0, 90, 180, 270, or -90.
+        angle (int): CW angle of rotation: 0, 90, 180, 270, or -90.
+
+    keyword args:
+        cw (bool): clockwise, currently default True, expected to change.
+        ccw (bool): counter-clockwise, currently default False, expected
+            to change!
 
     If its a jpeg, we have special handling, otherwise, we currently shell-out
     to the `mogrify` command line tool from ImageMagick.
     """
+    if cw is None and ccw is None:
+        cw = True  # TODO: change this default!
+    if cw and ccw:
+        raise RuntimeError("Cannot specify both cw and ccw")
     assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
     fname = Path(fname)
+    if ccw:
+        if angle == 90:
+            angle = -90
+        elif angle == -90 or angle == 270:
+            angle = 90
+
     if fname.suffix.lower() in (".jpg", ".jpeg"):
         return rotate_bitmap_jpeg_exif(fname, angle)
 
     if angle == 0:
         return
     if True:
+        # Issue 2585: mogrify does CW
         subprocess.run(
             ["mogrify", "-quiet", "-rotate", str(angle), fname],
             stderr=subprocess.STDOUT,
             shell=False,
             check=True,
         )
-        # TODO: new approach
         return
+    # Issue 2585, PIL does CCW, so we have minus a cw angle
     img = Image.open(fname)
     new_img = img.rotate(-angle, expand=True)
     new_img.save(fname)
@@ -48,7 +64,7 @@ def rotate_bitmap_jpeg_exif(fname, angle):
 
     args:
         filename (pathlib.Path): name of a file
-        angle (int): 0, 90, 180, 270, or -90 degree rotation.
+        angle (int): CW angle of rotation 0, 90, 180, 270, or -90.
 
     If the image already had a exif rotation tag it is ignored: the
     rotation is absolute, NOT relative to that existing transform.
