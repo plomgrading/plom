@@ -7,7 +7,7 @@ from collections import Counter
 from django.conf import settings
 
 from Papers.models import ErrorImage
-from Papers.services import (ImageBundleService, SpecificationService)
+from Papers.services import ImageBundleService, SpecificationService
 
 from Scan.models import StagingImage, CollisionStagingImage, UnknownStagingImage
 
