@@ -71,15 +71,16 @@ def pil_load_with_jpeg_exif_rot_applied(f):
 
 def test_rotate_jpeg(tmpdir):
     tmpdir = Path(tmpdir)
-    tmpdir = Path(".")
-    # make a lowish-quality jpeg
-    orig = tmpdir / "rgb.jpg"
-    with (resources.files(plom.scan) / "rgb.png") as fh:
-        im = Image.open(fh)
-        im.load()
-        im.save(orig, "JPEG", quality=2, optimize=True)
-    with open(orig, "rb") as fh:
+    # tmpdir = Path(".")
+
+    # make a lowish-quality jpeg and extract to bytes
+    f = tmpdir / "rgb.jpg"
+    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im.load()
+    im.save(f, "JPEG", quality=2, optimize=True)
+    with open(f, "rb") as fh:
         b = fh.read()
+
     # angle, and place where we expect a red pixel
     for angle, redpixel in [
         (0, (32, 0)),
@@ -93,7 +94,48 @@ def test_rotate_jpeg(tmpdir):
         with open(f, "wb") as fh:
             fh.write(b)
         rotate_bitmap(f, angle)
+
         # now load it back and check for a red pixel in the right place
         im = pil_load_with_jpeg_exif_rot_applied(f)
         colour = im.getpixel(redpixel)
         assert relative_error_vec(colour, (255, 0, 0)) <= 0.1
+
+
+def test_rotate_jpeg_lossless(tmpdir):
+    tmpdir = Path(tmpdir)
+    # tmpdir = Path(".")
+
+    # make a lowish-quality jpeg and extract to bytes
+    orig = tmpdir / "rgb.jpg"
+    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im.load()
+    im.save(orig, "JPEG", quality=2, optimize=True)
+    with open(orig, "rb") as fh:
+        b = fh.read()
+
+    for angle in (0, 90, 180, 270, -90):
+        f = tmpdir / f"img{angle}.jpg"
+        with open(f, "wb") as fh:
+            fh.write(b)
+        rotate_bitmap(f, angle)
+
+        # r = rot_angle_from_jpeg_exif_tag(f)
+        # print(("r=", r, "angle=", angle))
+        # assert angle == r
+        # TODO: Issue #2584?
+        # TODO: 270 same as -90, some modular arith check instead
+        # assert abs(r) == abs(angle)
+
+        # q = QRextract(im2)
+        # print(q)
+        # print(q["NW"])
+
+        # now load it back, rotate it back it it would make the original
+        im = pil_load_with_jpeg_exif_rot_applied(f)
+        # minus sign b/c PIL does CW (?)
+        im2 = Image.open(orig)
+        im2.load()
+        im2 = im2.rotate(-angle, expand=True)
+        diff = ImageChops.difference(im, im2)
+        # diff.save(f"diff{angle}.png")
+        assert not diff.getbbox()
