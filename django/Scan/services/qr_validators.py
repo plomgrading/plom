@@ -3,12 +3,13 @@
 
 import shutil
 
-from django.conf import settings
-from Papers.services import SpecificationService
-from Scan.models import StagingImage, CollisionStagingImage, UnknownStagingImage
-from Papers.models import ErrorImage
 from collections import Counter
-from Papers.services import ImageBundleService
+from django.conf import settings
+
+from Papers.models import ErrorImage
+from Papers.services import ImageBundleService, SpecificationService
+
+from Scan.models import StagingImage, CollisionStagingImage, UnknownStagingImage
 
 
 class QRErrorService:
@@ -16,12 +17,13 @@ class QRErrorService:
         """
         Check integrity of QR codes on a page.
         """
+
         spec_service = SpecificationService()
         spec_dictionary = spec_service.get_the_spec()
         img_obj = StagingImage.objects.get(file_path=image_path)
 
-        serialized_top_three_qr = self.serialize_qr_code(page_data, "top_3")
-        serialized_all_qr = self.serialize_qr_code(page_data, "all")
+        serialized_top_three_qr = self.serialize_qr_code(page_data, "grouping_key")
+        serialized_all_qr = self.serialize_qr_code(page_data, "TPV_code")
         serialized_public_code = self.serialize_qr_code(page_data, "public_code")
 
         self.check_image_collision_within_bundle(
@@ -47,28 +49,25 @@ class QRErrorService:
         """
         Function to serialize QR code based on tpv type.
         tpv_type:
-                  top_3:    get the top 3 tpv codes.
-                    all:    get all the tpv codes.
+           grouping_key:    get the top 3 tpv codes.
+               TPV_code:    get all the tpv codes.
             public_code:    get tpv public codes.
         """
         qr_code_list = []
-        for q in page_data:
-            paper_id = list(page_data[q].values())[0]
-            page_num = list(page_data[q].values())[1]
-            version_num = list(page_data[q].values())[2]
-            quadrant = list(page_data[q].values())[3]
-            public_code = list(page_data[q].values())[4]
+        for quadrant in page_data:
+            grouping_key = str(page_data.get(quadrant)["grouping_key"])
+            quadrant_num = str(page_data.get(quadrant)["quadrant"])
+            public_code = str(page_data.get(quadrant)["public_code"])
 
-            if tpv_type == "top_3":
-                qr_code_list.append(paper_id + page_num + version_num)
-            elif tpv_type == "all":
-                qr_code_list.append(
-                    paper_id + page_num + version_num + quadrant + public_code
-                )
+            if tpv_type == "grouping_key":
+                qr_code_list.append(grouping_key)
+            elif tpv_type == "TPV_code":
+                qr_code_list.append(grouping_key + quadrant_num + public_code)
             elif tpv_type == "public_code":
                 qr_code_list.append(public_code)
             else:
-                raise ValueError("No specific TPV type.")
+                raise ValueError("No specific TPV type found.")
+
         return qr_code_list
 
     def check_TPV_code(self, qr_list, img_obj, top_three_tpv, page_data):
@@ -202,6 +201,7 @@ class QRErrorService:
 
         test_paper = common_qr[0:5]
         page_number = common_qr[5:8]
+        version_number = common_qr[8:]
 
         collision_image = CollisionStagingImage(
             bundle=img_obj.bundle,
@@ -211,8 +211,9 @@ class QRErrorService:
             image_hash=img_obj.image_hash,
             parsed_qr=img_obj.parsed_qr,
             rotation=img_obj.rotation,
-            paper_number=test_paper,
-            page_number=page_number,
+            paper_number=int(test_paper),
+            page_number=int(page_number),
+            version_number=int(version_number),
         )
         collision_image.save()
 

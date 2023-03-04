@@ -76,27 +76,28 @@ class UpdateQRProgressView(ScannerRequiredView):
                     stagged_bundle.slug, stagged_bundle.pdf_hash
                 )
                 flag_image = scanner.get_error_image(flagged_bundle, index)
-                most_common_qr = scanner.get_common_qr_code(qr_data)
+                # most_common_qr = scanner.get_common_qr_code(qr_data)
 
                 context.update(
                     {
                         "error": scanner.get_qr_code_error_message(bundle, index),
-                        "error_paper_id": str(most_common_qr)[:5],
-                        "error_page_num": str(most_common_qr)[5:8],
-                        "error_version_num": str(most_common_qr)[8:11],
+                        "error_paper_id": flag_image.paper_number,
+                        "error_page_num": flag_image.page_number,
+                        "error_version_num": flag_image.version_number,
                         "image_error": image.error,
                     }
                 )
                 if flag_image.flagged:
                     context.update({"flagged": True})
             if task_status == "error" and image.colliding:
-                most_common_qr = scanner.get_common_qr_code(qr_data)
+                colliding_image = scanner.get_collision_image(bundle, index)
+                # most_common_qr = scanner.get_common_qr_code(qr_data)
                 context.update(
                     {
                         "error": scanner.get_qr_code_error_message(bundle, index),
-                        "error_paper_id": str(most_common_qr)[:5],
-                        "error_page_num": str(most_common_qr)[5:8],
-                        "error_version_num": str(most_common_qr)[8:11],
+                        "error_paper_id": colliding_image.paper_number,
+                        "error_page_num": colliding_image.page_number,
+                        "error_version_num": colliding_image.version_number,
                         "collision": image.colliding,
                     }
                 )
