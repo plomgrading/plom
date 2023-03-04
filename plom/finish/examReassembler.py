@@ -122,7 +122,10 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
 
 
 def rot_angle_from_jpeg_exif_tag(img_name):
-    """If we have a jpeg and it has exif orientation data, return angle.
+    """If we have a jpeg and it has exif orientation data, return the angle of that rotation.
+
+    That is, if you apply a rotation of this angle, the image will appear the same as
+    the original would in an exif-aware viewer.
 
     If not a jpeg, then return 0.
     """

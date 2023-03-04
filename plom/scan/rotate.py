@@ -3,6 +3,7 @@
 
 import logging
 from pathlib import Path
+import subprocess
 
 import exif
 from PIL import Image
@@ -16,7 +17,7 @@ def rotate_bitmap(fname, angle):
 
     args:
         filename (pathlib.Path/str): name of a file
-        angle (int): 0, 90, 180, 270, or -90 degree rotation.
+        angle (int): CW angle of ration: 0, 90, 180, 270, or -90.
 
     If its a jpeg, we have special handling, otherwise, we currently shell-out
     to the `mogrify` command line tool from ImageMagick.
@@ -28,8 +29,17 @@ def rotate_bitmap(fname, angle):
 
     if angle == 0:
         return
+    if True:
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", str(angle), fname],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+        # TODO: new approach
+        return
     img = Image.open(fname)
-    new_img = img.rotate(angle, expand=True)
+    new_img = img.rotate(-angle, expand=True)
     new_img.save(fname)
 
 
