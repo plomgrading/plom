@@ -184,7 +184,7 @@ DJANGO_HUEY = {
             "utc": True,
             "consumer": {
                 "workers": 4,
-                "worker_type": "thread",
+                "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
                 "max_delay": 10.0,
