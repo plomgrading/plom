@@ -271,7 +271,7 @@ def test_rotate_cw_xor_ccw(tmpdir):
         rotate_bitmap(f, 90, ccw=True, cw=True)
 
 
-def test_rotate_default_cw(tmpdir):
+def test_rotate_default_ccw(tmpdir):
     tmpdir = Path(tmpdir)
     # tmpdir = Path(".")
 
@@ -284,10 +284,10 @@ def test_rotate_default_cw(tmpdir):
         jpg_bytes = fh.read()
 
     for angle in (0, 90, 180, 270, -90):
-        f1 = tmpdir / f"img{angle}_cw.jpg"
+        f1 = tmpdir / f"img{angle}_ccw.jpg"
         with open(f1, "wb") as fh:
             fh.write(jpg_bytes)
-        rotate_bitmap(f1, angle, cw=True)
+        rotate_bitmap(f1, angle, ccw=True)
 
         f2 = tmpdir / f"img{angle}_default.jpg"
         with open(f2, "wb") as fh:

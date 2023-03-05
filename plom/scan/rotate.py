@@ -13,27 +13,26 @@ log = logging.getLogger("scan")
 
 
 def rotate_bitmap(fname, angle, *, cw=None, ccw=None):
-    """Rotate bitmap, possibly in metadata.
+    """Rotate bitmap counterclockwise, possibly in metadata.
 
     args:
         filename (pathlib.Path/str): name of a file
-        angle (int): CW angle of rotation: 0, 90, 180, 270, or -90.
+        angle (int): CCW angle of rotation: 0, 90, 180, 270, or -90.
 
     keyword args:
-        cw (bool): clockwise, currently default True, expected to change.
-        ccw (bool): counter-clockwise, currently default False, expected
-            to change!
+        cw (bool): clockwise, currently not default.
+        ccw (bool): counter-clockwise, currently the default..
 
     If its a jpeg, we have special handling, otherwise, we use PIL and resave
     the image.
     """
     if cw is None and ccw is None:
-        cw = True  # TODO: change this default!
+        ccw = True
     if cw and ccw:
         raise RuntimeError("Cannot specify both cw and ccw")
     assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
     fname = Path(fname)
-    if ccw:
+    if cw:
         if angle == 90:
             angle = -90
         elif angle == -90 or angle == 270:
@@ -44,18 +43,9 @@ def rotate_bitmap(fname, angle, *, cw=None, ccw=None):
 
     if angle == 0:
         return
-    if False:
-        # Issue 2585: mogrify does CW
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", str(angle), fname],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
-        return
-    # Issue 2585, PIL does CCW, so we have minus a cw angle
+    # Note PIL does CCW (Issue #2585)
     img = Image.open(fname)
-    new_img = img.rotate(-angle, expand=True)
+    new_img = img.rotate(angle, expand=True)
     new_img.save(fname)
 
 
@@ -64,7 +54,7 @@ def rotate_bitmap_jpeg_exif(fname, angle):
 
     args:
         filename (pathlib.Path): name of a file
-        angle (int): CW angle of rotation 0, 90, 180, 270, or -90.
+        angle (int): CCW angle of rotation 0, 90, 180, 270, or -90.
 
     If the image already had a exif rotation tag it is ignored: the
     rotation is absolute, NOT relative to that existing transform.
@@ -77,13 +67,13 @@ def rotate_bitmap_jpeg_exif(fname, angle):
         im = exif.Image(f)
     if im.has_exif:
         log.info(f'{fname} has exif already, orientation: {im.get("orientation")}')
-    # Notation is OrigTop_OrigLeft -> RIGHT_TOP (90 degree rot CW)
+    # Notation is OrigTop_OrigLeft -> RIGHT_TOP (-90 degree rot CCW)
     table = {
         0: exif.Orientation.TOP_LEFT,
-        90: exif.Orientation.RIGHT_TOP,
+        90: exif.Orientation.LEFT_BOTTOM,
         180: exif.Orientation.BOTTOM_RIGHT,
-        270: exif.Orientation.LEFT_BOTTOM,
-        -90: exif.Orientation.LEFT_BOTTOM,
+        -90: exif.Orientation.RIGHT_TOP,
+        270: exif.Orientation.RIGHT_TOP,
     }
     im.set("orientation", table[angle])
     with open(fname, "wb") as f:
