@@ -2,7 +2,6 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
-from PIL import Image
 from plom.scan import rotate_bitmap
 
 
@@ -142,8 +141,8 @@ class PageImageProcessor:
         data. If it isn't upright, rotate the image and replace it on disk.
 
         Args:
-            path: (str or pathlib.Path) path to image file
-            qr_data: (dict) parsed QR code data
+            path (str/pathlib.Path): path to image file
+            qr_data (dict): parsed QR code data
 
         Returns:
             int | False: rotation angle if page was rotated, False otherwise
@@ -160,9 +159,5 @@ class PageImageProcessor:
         else:
             rotate_angle = 180
 
-        print("v " * 80)
-        print(path)
-        print(type(path))
-        print("^ " * 80)
-        rotate_bitmap(path, rotate_angle)
+        rotate_bitmap(path, rotate_angle, ccw=True)
         return rotate_angle
