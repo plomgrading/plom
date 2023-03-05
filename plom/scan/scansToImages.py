@@ -144,7 +144,10 @@ def processFileToBitmaps(
 
     Keyword Args:
         do_not_extract (bool): always render, do no extract even if
-            it seems possible to do so.
+            it seems possible to do so.  This is off-by-default until
+            we are confident extracting won't miss anything.
+            See more detailed description in the user-facing command-line
+            tool `plom-scan`.
         debug_jpeg (bool): make jpegs, randomly rotated of various
             quality settings, for debugging or demos.  Default: False.
         add_metadata (bool): add invisible metadata to each image
@@ -231,7 +234,10 @@ def try_to_extract_image(
 
     Keyword Args:
         do_not_extract (bool): always render, do no extract even if
-            it seems possible to do so.
+            it seems possible to do so.  This is off-by-default until
+            we are confident extracting won't miss anything.
+            See more detailed description in the user-facing command-line
+            tool `plom-scan`.
         add_metadata (bool): add invisible metadata to each image
             including bundle name and random numbers.  Default: True.
             If you disable this, you can get two identical images
@@ -249,6 +255,11 @@ def try_to_extract_image(
     """
     msgs = []
     # Any of these might indicate something more complicated than a scan
+    # and hence we should be safe and just render the page.  We only try to
+    # extract the bitmap under very conservative circumstances.  It is not
+    # safe to assume that if there is a single image on the current page
+    # then that is the scan - e.g., student annotates pdf using xournalpp and
+    # then stamps a smiley-face `.png` there."
     if p.get_links():
         msgs.append("Has links")
     if list(p.annots()):
