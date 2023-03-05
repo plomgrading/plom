@@ -86,9 +86,9 @@ def reOrientPage(fname, qrs):
         "rot90cc": [4, 1, 2, 3],
         "flipped": [3, 4, 1, 2],
     }
-    # here the action is the rotation that will fix the rotation we observer
-    # that is, if we observe rot90cc then we need to perform a 90 cw rotation,
-    # which is -90 ccw.  The second column is thus CCW rotation to be applied.
+    # "actions" refer to the CCW rotation we apply to fixed the observed
+    # rotation.  E.g., if we observe "rot90cc" then we need to perform a
+    # 90 cw rotation, which is -90 ccw; the value of the action.
     actions = {
         "upright": 0,
         "rot90cw": 90,
