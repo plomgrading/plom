@@ -92,8 +92,9 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         offset = margin
         for img_name in dnm_images:
             rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
+            # fitz insert_image does not respect exif
             rot = rot_angle_from_jpeg_exif_tag(img_name)
-            pg.insert_image(rect, filename=img_name, rotate=rot)
+            pg.insert_image(rect, filename=img_name, rotate=rot)  # ccw
             offset += W
         if len(dnm_images) > 1:
             text = 'These pages were flagged "Do No Mark" by the instructor.'
