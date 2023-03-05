@@ -24,8 +24,8 @@ def rotate_bitmap(fname, angle, *, cw=None, ccw=None):
         ccw (bool): counter-clockwise, currently default False, expected
             to change!
 
-    If its a jpeg, we have special handling, otherwise, we currently shell-out
-    to the `mogrify` command line tool from ImageMagick.
+    If its a jpeg, we have special handling, otherwise, we use PIL and resave
+    the image.
     """
     if cw is None and ccw is None:
         cw = True  # TODO: change this default!
@@ -44,7 +44,7 @@ def rotate_bitmap(fname, angle, *, cw=None, ccw=None):
 
     if angle == 0:
         return
-    if True:
+    if False:
         # Issue 2585: mogrify does CW
         subprocess.run(
             ["mogrify", "-quiet", "-rotate", str(angle), fname],
