@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 
 if sys.version_info >= (3, 9):
-    from importlib import resources
+    import importlib.resources as resources
 else:
     import importlib_resources as resources
 
@@ -111,9 +111,8 @@ def test_rotate_jpeg_cw(tmpdir):
 
     # make a lowish-quality jpeg and extract to bytes
     f = tmpdir / "rgb.jpg"
-    with resources.as_file(resources.files(plom.scan) / "rgb.png") as _:
-        im = Image.open(_)
-        im.load()
+    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im.load()
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
         b = fh.read()
@@ -138,9 +137,8 @@ def test_rotate_jpeg_ccw(tmpdir):
 
     # make a lowish-quality jpeg and extract to bytes
     f = tmpdir / "rgb.jpg"
-    with resources.as_file(resources.files(plom.scan) / "rgb.png") as _:
-        im = Image.open(_)
-        im.load()
+    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im.load()
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
         b = fh.read()
@@ -165,9 +163,8 @@ def test_rotate_jpeg_lossless_cw(tmpdir):
 
     # make a lowish-quality jpeg and extract to bytes
     orig = tmpdir / "rgb.jpg"
-    with resources.as_file(resources.files(plom.scan) / "rgb.png") as _:
-        im = Image.open(_)
-        im.load()
+    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im.load()
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
         b = fh.read()
@@ -206,9 +203,8 @@ def test_rotate_jpeg_lossless_ccw(tmpdir):
 
     # make a lowish-quality jpeg and extract to bytes
     orig = tmpdir / "rgb.jpg"
-    with resources.as_file(resources.files(plom.scan) / "rgb.png") as _:
-        im = Image.open(_)
-        im.load()
+    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im.load()
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
         b = fh.read()
