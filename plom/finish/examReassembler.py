@@ -125,7 +125,7 @@ def rot_angle_from_jpeg_exif_tag(img_name):
     """If we have a jpeg and it has exif orientation data, return the angle of that rotation.
 
     That is, if you apply a rotation of this angle, the image will appear the same as
-    the original would in an exif-aware viewer.
+    the original would in an exif-aware viewer.  The angle is CCW.
 
     If not a jpeg, then return 0.
     """

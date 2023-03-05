@@ -14,6 +14,7 @@ else:
 
 from PIL import Image
 from PIL import ImageChops
+from pytest import raises
 
 import plom.scan
 from plom.scan import rotate_bitmap
@@ -221,5 +222,80 @@ def test_rotate_jpeg_lossless_ccw(tmpdir):
         im2.load()
         im2 = im2.rotate(angle, expand=True)
         diff = ImageChops.difference(im, im2)
+        # diff.save(f"diff{angle}.png")
+        assert not diff.getbbox()
+
+
+def test_rotate_exif_read_back(tmpdir):
+    tmpdir = Path(tmpdir)
+    # tmpdir = Path(".")
+
+    # make jpeg and extract to bytes
+    orig = tmpdir / "rgb.jpg"
+    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
+    im.load()
+    im.save(orig, "JPEG", quality=90, optimize=True)
+    with open(orig, "rb") as fh:
+        jpg_bytes = fh.read()
+    # png_bytes = (resources.files(plom.scan) / "test_rgb.png").read_bytes()
+
+    for angle in (0, 90, 180, 270, -90):
+        f = tmpdir / f"img{angle}.jpg"
+        with open(f, "wb") as fh:
+            fh.write(jpg_bytes)
+        rotate_bitmap(f, angle, ccw=True)
+
+        r = rot_angle_from_jpeg_exif_tag(f)
+        assert angle % 360 == r % 360
+
+        # doesn't really work, maybe b/c PIL keeps making png into 2-channel?
+        # f2 = tmpdir / f"img{angle}.png"
+        # with open(f2, "wb") as fh:
+        #     fh.write(png_bytes)
+        # rotate_bitmap(f2, angle, ccw=True)
+        # im1 = pil_load_with_jpeg_exif_rot_applied(f)
+        # im2 = Image.open(f2)
+        # im2.load()
+        # im2.convert("RGB")
+        # diff = ImageChops.difference(im1, im2)
+        # diff.save(f"diff{angle}.png")
+
+
+def test_rotate_cw_xor_ccw(tmpdir):
+    tmpdir = Path(tmpdir)
+    b = (resources.files(plom.scan) / "test_rgb.png").read_bytes()
+    f = tmpdir / "img.png"
+    with open(f, "wb") as fh:
+        fh.write(b)
+    with raises(RuntimeError):
+        rotate_bitmap(f, 90, ccw=True, cw=True)
+
+
+def test_rotate_default_cw(tmpdir):
+    tmpdir = Path(tmpdir)
+    # tmpdir = Path(".")
+
+    # make jpeg and extract to bytes
+    orig = tmpdir / "rgb.jpg"
+    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
+    im.load()
+    im.save(orig, "JPEG", quality=90, optimize=True)
+    with open(orig, "rb") as fh:
+        jpg_bytes = fh.read()
+
+    for angle in (0, 90, 180, 270, -90):
+        f1 = tmpdir / f"img{angle}_cw.jpg"
+        with open(f1, "wb") as fh:
+            fh.write(jpg_bytes)
+        rotate_bitmap(f1, angle, cw=True)
+
+        f2 = tmpdir / f"img{angle}_default.jpg"
+        with open(f2, "wb") as fh:
+            fh.write(jpg_bytes)
+        rotate_bitmap(f2, angle)
+
+        im1 = pil_load_with_jpeg_exif_rot_applied(f1)
+        im2 = pil_load_with_jpeg_exif_rot_applied(f2)
+        diff = ImageChops.difference(im1, im2)
         # diff.save(f"diff{angle}.png")
         assert not diff.getbbox()
