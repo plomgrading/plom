@@ -38,7 +38,7 @@ def add_popup_to_toplevel_exception_handler():
     def exception_hook(exctype, value, traceback):
         lines = tblib.format_exception(exctype, value, traceback)
         if len(lines) >= 10:
-            abbrev = "".join(["\N{Vertical Ellipsis}\n", *lines[-8:]])
+            abbrev = "".join(["\N{VERTICAL ELLIPSIS}\n", *lines[-8:]])
         else:
             abbrev = "".join(lines)
         lines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")
@@ -130,7 +130,10 @@ def get_parser():
         const="json",
         nargs="?",
         type=str,
-        help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
+        help="""
+            Run the marker. Pass either -m n:k (to run on pagegroup n, version k)
+            or -m (to run on whatever was used last time).
+        """,
     )
     return parser
 
@@ -181,7 +184,8 @@ def main():
                 window.ui.vSB.setValue(int(v))
             except ValueError:
                 print(
-                    "When you use -m, there should either be no argument, or an argument of the form n:k where n,k are integers."
+                    "When you use -m, there should either be no argument, or "
+                    " an argument of the form n:k where n,k are integers."
                 )
                 sys.exit(43)
 

@@ -305,7 +305,7 @@ class UnderlyingImages(QGraphicsItemGroup):
         super().__init__()
         self.images = {}
         x = 0
-        for (n, data) in enumerate(image_data):
+        for n, data in enumerate(image_data):
             qir = QImageReader(str(data["filename"]))
             # deal with jpeg exif rotations
             qir.setAutoTransform(True)
@@ -1730,7 +1730,6 @@ class PageScene(QGraphicsScene):
         self.currentPos = event.scenePos()
         if self.boxFlag == 2:
             if self.ellipseItem is None:
-
                 self.ellipseItem = QGraphicsEllipseItem(
                     QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
                 )

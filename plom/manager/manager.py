@@ -825,7 +825,7 @@ class Manager(QWidget):
         incomplete = self.msgr.getIncompleteTests()  # triples [p,v,true/false]
         for t in incomplete:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
-            for (p, v, s) in incomplete[t]:
+            for p, v, s in incomplete[t]:
                 if s:
                     l0.addChild(QTreeWidgetItem(["", str(p), str(v), "scanned"]))
                 else:
@@ -854,7 +854,7 @@ class Manager(QWidget):
 
         for t in scanned:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
-            for (p, v) in scanned[t]:
+            for p, v in scanned[t]:
                 l1 = QTreeWidgetItem(["", str(p), str(v)])
                 if "{}.{}".format(t, p) in cdtp.values():
                     l0.setBackground(0, QBrush(QColor(0, 255, 255, 48)))
@@ -1452,7 +1452,6 @@ class Manager(QWidget):
                         self.collideModel.item(r, 5).text(),
                     )
                 except PlomConflict as err:
-
                     WarnMsg(self, f"{err}").exec()
             else:
                 pass
@@ -2896,7 +2895,7 @@ class Manager(QWidget):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = self.msgr.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
-                for (u, n, t) in qpu[1:]:
+                for u, n, t in qpu[1:]:
                     # question, version, no marked, avg time
                     uprog[u].append([q, v, n, t, qpu[0]])
                     pb = QProgressBar()

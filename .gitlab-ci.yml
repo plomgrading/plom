@@ -244,7 +244,7 @@ black:
   stage: static_analysis
   image: python:3.11
   before_script:
-    - pip3 install "black~=22.12"
+    - pip3 install "black~=23.1"
   script:
     - black --check --diff .
   allow_failure: true

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -26,7 +26,6 @@ class GetSpecification(APIView):
     """
 
     def get(self, request):
-
         spec = SpecificationService()
         if not spec.is_there_a_spec():
             exc = APIException()

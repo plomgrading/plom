@@ -20,7 +20,6 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **options):
-
         # Check to see if there are any groups created
         exist_groups = [str(group) for group in Group.objects.all()]
         if not exist_groups:

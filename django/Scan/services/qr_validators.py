@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
-
-import shutil
+# Copyright (C) 2023 Colin B. Macdonald
 
 from collections import Counter
+import shutil
+
 from django.conf import settings
 
 from Papers.models import ErrorImage
 from Papers.services import ImageBundleService, SpecificationService
-
 from Scan.models import StagingImage, CollisionStagingImage, UnknownStagingImage
 
 
@@ -158,7 +158,6 @@ class QRErrorService:
 
     def create_error_image(self, img_obj, top_three_tpv):
         if not ErrorImage.objects.filter(hash=img_obj.image_hash).exists():
-
             img_bundle_service = ImageBundleService()
             counter = Counter(top_three_tpv)
             most_common_qr = counter.most_common(1)

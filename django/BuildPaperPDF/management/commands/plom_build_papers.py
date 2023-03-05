@@ -2,6 +2,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
+from pathlib import Path
+
 from django.core.management.base import BaseCommand
 
 from BuildPaperPDF.services import BuildPapersService
@@ -10,8 +12,6 @@ from Papers.services import SpecificationService
 from SpecCreator.services import StagingSpecificationService
 
 from plom.misc_utils import format_int_list_with_runs
-
-from pathlib import Path
 
 
 class Command(BaseCommand):
@@ -96,9 +96,9 @@ class Command(BaseCommand):
         if len(stats):
             self.stdout.write(f"{len(stats)} tasks total:")
             rev_stat = {}
-            for (n, state) in stats.items():
+            for n, state in stats.items():
                 rev_stat.setdefault(state, []).append(n)
-            for (state, papers) in rev_stat.items():
+            for state, papers in rev_stat.items():
                 self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
             if len(rev_stat.get("complete", [])) == len(stats):
                 self.stdout.write("All papers are now built")

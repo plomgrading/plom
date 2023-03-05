@@ -251,7 +251,7 @@ def build_random_rubrics(question, *, messenger):
     returns:
         None
     """
-    for (d, t) in positiveComments:
+    for d, t in positiveComments:
         com = {
             "value": int(d),
             "display_delta": d,
@@ -267,7 +267,7 @@ def build_random_rubrics(question, *, messenger):
             positiveRubrics[question].append(com)
         else:
             positiveRubrics[question] = [com]
-    for (d, t) in negativeComments:
+    for d, t in negativeComments:
         com = {
             "value": int(d),
             "display_delta": d,

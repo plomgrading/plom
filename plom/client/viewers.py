@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
@@ -262,7 +262,6 @@ class SolutionViewer(QWidget):
 
 class CatViewer(QDialog):
     def __init__(self, parent, dogAttempt=False):
-
         self.msgs = [
             "PLOM",
             "I%20can%20haz%20more%20markingz",
