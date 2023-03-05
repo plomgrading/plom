@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
@@ -18,7 +18,8 @@ from pytest import raises
 
 import plom.scan
 from plom.scan import rotate_bitmap
-from plom.finish.examReassembler import rot_angle_from_jpeg_exif_tag
+from plom.scan.rotate import pil_load_with_jpeg_exif_rot_applied
+from plom.scan.rotate import rot_angle_from_jpeg_exif_tag
 
 
 def relative_error(x, y):
@@ -96,14 +97,6 @@ def test_rotate_png_ccw(tmpdir):
         idx = im.getpixel(redpixel)
         colour = palette[(3 * idx) : (3 * idx) + 3]
         assert colour == [255, 0, 0]
-
-
-def pil_load_with_jpeg_exif_rot_applied(f):
-    im = Image.open(f)
-    im.load()
-    r = rot_angle_from_jpeg_exif_tag(f)
-    im = im.rotate(r, expand=True)
-    return im
 
 
 def test_rotate_jpeg_cw(tmpdir):

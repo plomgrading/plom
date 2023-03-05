@@ -3,7 +3,6 @@
 
 import logging
 from pathlib import Path
-import subprocess
 
 import exif
 from PIL import Image
@@ -78,3 +77,50 @@ def rotate_bitmap_jpeg_exif(fname, angle):
     im.set("orientation", table[angle])
     with open(fname, "wb") as f:
         f.write(im.get_file())
+
+
+def pil_load_with_jpeg_exif_rot_applied(f):
+    """PIL's Image load does not apply exif orientation, so provide a helper that does.
+
+    Args:
+        f (str/pathlib.Path): a path to a jpeg file.
+
+    Returns:
+        PIL.Image: with exif orientation applied.
+    """
+    im = Image.open(f)
+    im.load()
+    r = rot_angle_from_jpeg_exif_tag(f)
+    im = im.rotate(r, expand=True)
+    return im
+
+
+def rot_angle_from_jpeg_exif_tag(img_name):
+    """If we have a jpeg and it has exif orientation data, return the angle of that rotation.
+
+    That is, if you apply a rotation of this angle, the image will appear the same as
+    the original would in an exif-aware viewer.  The angle is CCW.
+
+    If not a jpeg, then return 0.
+    """
+    img_name = Path(img_name)
+    if img_name.suffix not in (".jpg", ".jpeg"):
+        return 0
+    with open(img_name, "rb") as f:
+        im = exif.Image(f)
+    if not im.has_exif:
+        return 0
+    o = im.get("orientation")
+    if o is None:
+        return 0
+    # print(f"{img_name} has exif orientation: {o}")
+    if o == exif.Orientation.TOP_LEFT:
+        return 0
+    elif o == exif.Orientation.RIGHT_TOP:
+        return -90
+    elif o == exif.Orientation.BOTTOM_RIGHT:
+        return 180
+    elif o == exif.Orientation.LEFT_BOTTOM:
+        return 90
+    else:
+        raise NotImplementedError(f"Unexpected exif orientation: {o}")
