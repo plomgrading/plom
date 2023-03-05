@@ -157,7 +157,7 @@ def test_rotate_jpeg_ccw(tmpdir):
         assert relative_error_vec(colour, (255, 0, 0)) <= 0.1
 
 
-def test_rotate_jpeg_lossless(tmpdir):
+def test_rotate_jpeg_lossless_cw(tmpdir):
     tmpdir = Path(tmpdir)
     # tmpdir = Path(".")
 
@@ -173,7 +173,7 @@ def test_rotate_jpeg_lossless(tmpdir):
         f = tmpdir / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
-        rotate_bitmap(f, angle)
+        rotate_bitmap(f, angle, cw=True)
 
         # r = rot_angle_from_jpeg_exif_tag(f)
         # print(("r=", r, "angle=", angle))
@@ -188,10 +188,38 @@ def test_rotate_jpeg_lossless(tmpdir):
 
         # now load it back, rotate it back it it would make the original
         im = pil_load_with_jpeg_exif_rot_applied(f)
-        # minus sign b/c PIL does CW (?)
         im2 = Image.open(orig)
         im2.load()
+        # minus sign b/c PIL does CCW
         im2 = im2.rotate(-angle, expand=True)
+        diff = ImageChops.difference(im, im2)
+        # diff.save(f"diff{angle}.png")
+        assert not diff.getbbox()
+
+
+def test_rotate_jpeg_lossless_ccw(tmpdir):
+    tmpdir = Path(tmpdir)
+    # tmpdir = Path(".")
+
+    # make a lowish-quality jpeg and extract to bytes
+    orig = tmpdir / "rgb.jpg"
+    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im.load()
+    im.save(orig, "JPEG", quality=2, optimize=True)
+    with open(orig, "rb") as fh:
+        b = fh.read()
+
+    for angle in (0, 90, 180, 270, -90):
+        f = tmpdir / f"img{angle}.jpg"
+        with open(f, "wb") as fh:
+            fh.write(b)
+        rotate_bitmap(f, angle, ccw=True)
+
+        # now load it back, rotate it back it it would make the original
+        im = pil_load_with_jpeg_exif_rot_applied(f)
+        im2 = Image.open(orig)
+        im2.load()
+        im2 = im2.rotate(angle, expand=True)
         diff = ImageChops.difference(im, im2)
         # diff.save(f"diff{angle}.png")
         assert not diff.getbbox()

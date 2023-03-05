@@ -86,6 +86,10 @@ def reOrientPage(fname, qrs):
         "rot90cc": [4, 1, 2, 3],
         "flipped": [3, 4, 1, 2],
     }
+    # here the action is the rotation that will fix the rotation we observer
+    # that is, if we observe rot90cc then we need to perform a 90 cw rotation,
+    # so the second column is a rotation CW (b/c the rotate_bitmap) is set to CW.
+    # TODO: revisit
     actions = {
         "upright": 0,
         "rot90cw": -90,
@@ -105,7 +109,7 @@ def reOrientPage(fname, qrs):
     if len(matches) != 1:
         return False
     match_key, v = matches.popitem()
-    rotate_bitmap(fname, actions[match_key])
+    rotate_bitmap(fname, actions[match_key], cw=True)
     return True
 
 
