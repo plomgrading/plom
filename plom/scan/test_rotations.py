@@ -52,7 +52,7 @@ ccw_red_pixel_data = [
 def test_rotate_png_cw(tmpdir):
     tmpdir = Path(tmpdir)
     # tmpdir = Path(".")
-    b = (resources.files(plom.scan) / "rgb.png").read_bytes()
+    b = (resources.files(plom.scan) / "test_rgb.png").read_bytes()
     # angle, and place where we expect a red pixel
     for angle, redpixel in cw_red_pixel_data:
         # make a copy
@@ -76,7 +76,7 @@ def test_rotate_png_cw(tmpdir):
 def test_rotate_png_ccw(tmpdir):
     tmpdir = Path(tmpdir)
     # tmpdir = Path(".")
-    b = (resources.files(plom.scan) / "rgb.png").read_bytes()
+    b = (resources.files(plom.scan) / "test_rgb.png").read_bytes()
     # angle, and place where we expect a red pixel
     for angle, redpixel in ccw_red_pixel_data:
         # make a copy
@@ -111,7 +111,7 @@ def test_rotate_jpeg_cw(tmpdir):
 
     # make a lowish-quality jpeg and extract to bytes
     f = tmpdir / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.load()
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
@@ -137,7 +137,7 @@ def test_rotate_jpeg_ccw(tmpdir):
 
     # make a lowish-quality jpeg and extract to bytes
     f = tmpdir / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.load()
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
@@ -163,7 +163,7 @@ def test_rotate_jpeg_lossless_cw(tmpdir):
 
     # make a lowish-quality jpeg and extract to bytes
     orig = tmpdir / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.load()
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
@@ -203,7 +203,7 @@ def test_rotate_jpeg_lossless_ccw(tmpdir):
 
     # make a lowish-quality jpeg and extract to bytes
     orig = tmpdir / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "rgb.png")
+    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.load()
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
