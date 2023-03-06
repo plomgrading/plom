@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
 from plom.client.chooser import Chooser
 from plom.client.useful_classes import BlankIDBox
+from plom.client.useful_classes import BigMessageDialog
 
 
 def test_BlankIDBoxDialog(qtbot):
@@ -46,3 +47,23 @@ def DISABLE_test_Chooser_again(qtbot):
     window.show()
     qtbot.addWidget(window)
     qtbot.mouseClick(window.ui.closeButton, Qt.LeftButton)
+
+
+def test_BigMessageDialog_gets_big_then_small(qtbot):
+    d = BigMessageDialog(None, "foo", details="<p>bar</p>", show=False)
+    d.show()
+    qtbot.addWidget(d)
+    w = d.geometry().width()
+    h = d.geometry().height()
+    qtbot.mouseClick(d.toggle_button, Qt.LeftButton)
+    w2 = d.geometry().width()
+    h2 = d.geometry().height()
+    # width is maintained
+    assert w2 == w
+    assert h2 > h
+    qtbot.mouseClick(d.toggle_button, Qt.LeftButton)
+    w3 = d.geometry().width()
+    h3 = d.geometry().height()
+    assert w3 == w
+    assert h3 == h
+    d.accept()

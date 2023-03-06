@@ -6,13 +6,11 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 
-import html
+from datetime import datetime
 import logging
-from textwrap import shorten
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QColor, QCursor, QPalette
-
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAction,
@@ -33,8 +31,9 @@ from PyQt5.QtWidgets import (
 
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import SimpleQuestion
+from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
-from .rubrics import compute_score
+from .rubrics import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
 from plom.plom_exceptions import PlomInconsistentRubric
 
@@ -754,7 +753,7 @@ class RubricWidget(QWidget):
         self.addB = QPushButton("&Add")  # faster debugging, could remove?
         self.filtB = QPushButton("Arrange/Filter")
         self.hideB = QPushButton("Shown/Hidden")
-        self.syncB = QToolButton()
+        self.syncB = QPushButton()
         # self.syncB.setText("\N{Rightwards Harpoon Over Leftwards Harpoon}")
         self.syncB.setText("Sync")
         self.syncB.setToolTip("Synchronise rubrics")
@@ -994,49 +993,84 @@ class RubricWidget(QWidget):
         log.debug('changing tab name from "%s" to "%s"', curname, s)
         tab.set_name(s)
 
+    def _sync_button_temporary_change_text(self, set=False):
+        tempstr = "Sync \N{Check Mark}"
+        if set:
+            self.syncB.setText(tempstr)
+            return
+        # don't touch if a background process has adjusted it
+        if self.syncB.text() == tempstr:
+            self.syncB.setText("Sync")
+
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
         old_rubrics = self.rubrics
         self.rubrics = self._parent.getRubricsFromServer()
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
         self._parent.saveTabStateToServer(self.get_tab_rubric_lists())
+        del old_rubrics[7]
+        del old_rubrics[8]
+        del old_rubrics[9]
+        print(f"deleting from new: {self.rubrics[-7]}")
+        # del self.rubrics[-7]
+        old_rubrics[5]["display_delta"] = "2 of 3"
+        old_rubrics[6]["text"] = old_rubrics[6]["text"] + " foo"
+        old_rubrics[7]["display_delta"] = "-8"
+        old = {r["id"]: r for r in old_rubrics}
+        new = {r["id"]: r for r in self.rubrics}
+        added = []
+        changed = []
+        deleted = []
+        for rid in old.keys():
+            if rid not in new.keys():
+                deleted.append(rid)
+        for rid, r in new.items():
+            rold = old.get(rid)
+            if rold is None:
+                added.append(rid)
+                continue
+            same, out = diff_rubric(rold, r)
+            if not same:
+                changed.append((rid, out))
+        last_sync_time = datetime.now().strftime("%H:%M")
+        self.syncB.setToolTip(f"Rubrics last synchronized at {last_sync_time}")
+        if not deleted and not changed and not added:
+            # change the label to show user something happened
+            self._sync_button_temporary_change_text(set=True)
+            # then remove the checkmark a few seconds later
+            timer = QTimer()
+            timer.singleShot(2000, self._sync_button_temporary_change_text)
         msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>\n"
-        diff = set(d["id"] for d in self.rubrics) - set(d["id"] for d in old_rubrics)
-        if not diff:
-            msg += "<p>\N{Check Mark} No new rubrics are available.</p>\n"
-        else:
-            msg += f"<p>\N{Check Mark} <b>{len(diff)} new rubrics</b> have been downloaded from the server:</p>\n"
-            diff = [r for r in self.rubrics for i in diff if r["id"] == i]
-            ell = "\N{HORIZONTAL ELLIPSIS}"
-            abbrev = []
-            # We truncate the list to this many
-            display_at_most = 12
-            for n, r in enumerate(diff):
-                delta = ".&nbsp;" if r["display_delta"] == "." else r["display_delta"]
-                text = html.escape(shorten(r["text"], 36, placeholder=ell))
-                render = f"<li><tt>{delta}</tt> <i>&ldquo;{text}&rdquo;</i>&nbsp; by {r['username']}</li>"
-                if n < (display_at_most - 1):
-                    abbrev.append(render)
-                elif n == (display_at_most - 1) and len(diff) == display_at_most:
-                    # include the last one if it fits...
-                    abbrev.append(render)
-                elif n == (display_at_most - 1):
-                    # otherwise ellipsize the remainder
-                    abbrev.append("<li>" + "&nbsp;" * 6 + "\N{VERTICAL ELLIPSIS}</li>")
-                    break
-            msg += '<ul style="list-style-type:none;">\n  {}\n</ul>'.format(
-                "\n  ".join(abbrev)
-            )
-        QMessageBox(
-            QMessageBox.Information,
-            "Finished syncing rubrics",
-            msg,
-            QMessageBox.Ok,
-            self,
-        ).exec()
-        # TODO: could add a "Open Rubric Wrangler" button to above dialog?
-        # self.wrangleRubricsInteractively()
-        # TODO: if adding that, it should push tabs *again* on accept but not on cancel
+        # msg += "<p>No changes to server rubrics.</p>"
+        msg += "<p>\N{Check Mark} server: "
+        msg += f"<b>{len(added)} new</b>, "
+        msg += f"<b>{len(deleted)} deleted</b> rubrics.</p>\n"
+        if added and deleted:
+            d = "<h3>Added/Deleted</h3>\n"
+        elif added:
+            d = "<h3>Added</h3>\n"
+        elif deleted:
+            d = "<h3>Deleted</h3>\n"
+        if added or deleted:
+            d += "<ul>\n"
+            for rid in added:
+                d += "<li>\n" + render_rubric_as_html(new[rid]) + "</li>\n"
+            for rid in deleted:
+                d += "<li><b>Deleted: </b>\n"
+                d += render_rubric_as_html(old[rid])
+                d += "</li>\n"
+            d += "</ul>\n"
+        msg += "<p>\N{Check Mark} server: "
+        msg += f"<b>{len(changed)} changed</b> rubrics.</p>\n"
+        if changed:
+            d += "<h3>Changes</h3>\n"
+            d += "<ul>\n"
+            for rid, diff in changed:
+                d += f"<li>{diff}</li>\n"
+            d += "</ul>\n"
+        if added or changed or deleted:
+            BigMessageDialog(self, msg, details=d, show=False).exec()
+        # diff_rubric is not precise, won't hurt to update display even if no changes
         self.updateLegalityOfRubrics()
 
     def wrangleRubricsInteractively(self):
