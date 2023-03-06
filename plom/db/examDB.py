@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Brennen Chiu
 
@@ -57,7 +57,6 @@ class PlomDB:
         db_username,
         db_password,
     ):
-
         db = None
         if self.should_connect_to_mysql(
             db_name, db_host, db_port, db_username, db_password

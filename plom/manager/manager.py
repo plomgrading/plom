@@ -18,13 +18,13 @@ import tempfile
 from time import time
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
 import arrow
-import urllib3
 
+from PyQt5 import uic
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import (
     QBrush,
@@ -54,6 +54,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+import plom.client.ui_files
 import plom.client.icons
 
 from plom.client.useful_classes import ErrorMsg, InfoMsg, WarnMsg
@@ -64,7 +65,6 @@ from plom.client.downloader import Downloader
 from plom.client.about_dialog import show_about_dialog
 from plom.client import ImageViewWidget
 
-from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
 from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
@@ -389,8 +389,10 @@ class Manager(QWidget):
                 __version__, self.APIVersion
             )
         )
-        self.ui = Ui_Manager()
-        self.ui.setupUi(self)
+        uic.loadUi(resources.files(plom.client.ui_files) / "manager.ui", self)
+        # TODO: temporary workaround
+        self.ui = self
+
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         if user:
             self.ui.userLE.setText(user)
@@ -823,7 +825,7 @@ class Manager(QWidget):
         incomplete = self.msgr.getIncompleteTests()  # triples [p,v,true/false]
         for t in incomplete:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
-            for (p, v, s) in incomplete[t]:
+            for p, v, s in incomplete[t]:
                 if s:
                     l0.addChild(QTreeWidgetItem(["", str(p), str(v), "scanned"]))
                 else:
@@ -852,7 +854,7 @@ class Manager(QWidget):
 
         for t in scanned:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
-            for (p, v) in scanned[t]:
+            for p, v in scanned[t]:
                 l1 = QTreeWidgetItem(["", str(p), str(v)])
                 if "{}.{}".format(t, p) in cdtp.values():
                     l0.setBackground(0, QBrush(QColor(0, 255, 255, 48)))
@@ -1450,7 +1452,6 @@ class Manager(QWidget):
                         self.collideModel.item(r, 5).text(),
                     )
                 except PlomConflict as err:
-
                     WarnMsg(self, f"{err}").exec()
             else:
                 pass
@@ -2894,7 +2895,7 @@ class Manager(QWidget):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = self.msgr.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
-                for (u, n, t) in qpu[1:]:
+                for u, n, t in qpu[1:]:
                     # question, version, no marked, avg time
                     uprog[u].append([q, v, n, t, qpu[0]])
                     pb = QProgressBar()

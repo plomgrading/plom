@@ -449,8 +449,11 @@ class UploadHandler:
                 reason=f'Cannot substitute ID page of test {data["test"]}'
                 " because that paper is not identified"
             )
-        if rval[1] is False:
-            raise web.HTTPNotFound(reason="unexpectedly could not find something")
+        if rval[1] == "hasonealready":
+            raise web.HTTPGone(
+                reason=f'Cannot substitute ID page of test {data["test"]}'
+                " because that paper already has an ID page"
+            )
         raise web.HTTPBadRequest(reason=f"Something has gone wrong: {str(rval)}")
 
     async def replaceMissingHWQuestion(self, request):

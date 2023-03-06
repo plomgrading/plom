@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Colin B. Macdonald
+# Copyright (C) 2018-2023 Colin B. Macdonald
 # Copyright (C) 2020 Matthew Coles
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
@@ -338,6 +338,6 @@ def canvas_csv_check_pdf(sns):
         print(
             "The following people are in the spreadsheet but do not have a pdf file; did they write?"
         )
-        for (sn, code) in sns.items():
+        for sn, code in sns.items():
             # TODO: name rank and serial number would be good
             print("  SN: {0}, code: {1}".format(sn, code))

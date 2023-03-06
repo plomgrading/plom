@@ -5,7 +5,23 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 
-"""Plom tools for scanning homework and pushing to servers."""
+"""Plom tools for dealing with student self-submitted scans.
+
+## Processing and uploading homework
+
+There are two main approaches to uploading: Test Pages and Homework Pages.
+This tool deals with "Homework Pages", self-scanned work typically
+without QR-codes that are associated with a particular known student but
+are unstructured or understructured in the their relationship to the exam
+template.
+
+If you instead are dealing with QR-coded pages where you may not yet know
+which pages belong to which student, see ``plom-scan`` instead.
+
+## Notes
+
+Most uses of this tool require that your server has a classlist.
+"""
 
 __copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -26,11 +42,8 @@ from plom.scan import processAllHWByQ
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description="Tools for dealing with student self-submitted scans.",
-        epilog="""## Processing and uploading homework
-
-        TODO: WRITE DOCS
-        """,
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(

@@ -168,7 +168,7 @@ def get_conversion_table(server_dir="."):
     conversion = {}
     with open(server_dir / "conversion.csv", "r") as csvfile:
         reader = csv.reader(csvfile, delimiter=",", quotechar='"')
-        for (i, row) in enumerate(reader):
+        for i, row in enumerate(reader):
             if i == 0:
                 continue
             else:
@@ -181,7 +181,7 @@ def get_sis_id_to_canvas_id_table(server_dir="."):
     sis_id_to_canvas = {}
     with open(server_dir / "classlist.csv", "r") as csvfile:
         reader = csv.reader(csvfile, delimiter=",", quotechar='"')
-        for (i, row) in enumerate(reader):
+        for i, row in enumerate(reader):
             if i == 0:
                 continue
             else:
@@ -223,7 +223,7 @@ def interactively_get_course(user):
     courses_teaching = get_courses_teaching(user)
     print("\nAvailable courses:")
     print("  --------------------------------------------------------------------")
-    for (i, course) in enumerate(courses_teaching):
+    for i, course in enumerate(courses_teaching):
         print(f"    {i}: {course.name}")
 
     course_chosen = False
@@ -302,7 +302,7 @@ def interactively_get_assignment(course):
     print("  --------------------------------------------------------------------")
 
     assignments = list(course.get_assignments())
-    for (i, assignment) in enumerate(assignments):
+    for i, assignment in enumerate(assignments):
         print(f"    {i}: {assignment.name}")
 
     assignment_chosen = False

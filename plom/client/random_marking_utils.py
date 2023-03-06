@@ -60,7 +60,7 @@ positiveRubrics = {}
 tag_list = ["creative", "suspicious", "needs_review", "hall_of_fame", "needs_iic"]
 
 
-class RW:
+class MockRubricWidget:
     """A dummy class needed for compatibility with pagescene."""
 
     def updateLegalityOfRubrics(self):
@@ -68,14 +68,19 @@ class RW:
 
 
 class SceneParent(QWidget):
+    """This class is a cut-down annotator for mock-testing the PageScene."""
+
     def __init__(self, question, maxMark):
         super().__init__()
         self.view = PageView(self)
         self.ink = QPen(Qt.red, 2)
         self.question = question
         self.maxMark = maxMark
-        self.rubric_widget = RW()  # a dummy class needed for compat with pagescene.
+        self.rubric_widget = MockRubricWidget()
         self.saveName = None
+
+    def is_experimental(self):
+        return False
 
     def doStuff(self, src_img_data, saveName, maxMark, markStyle):
         self.saveName = Path(saveName)
@@ -222,7 +227,6 @@ def do_random_marking_backend(question, version, *, messenger):
                 plomfile,
                 rubrics,
                 integrity_check,
-                src_img_data,
             )
         # tag one in three papers
         if random.randrange(3) == 0:
@@ -251,7 +255,7 @@ def build_random_rubrics(question, *, messenger):
     returns:
         None
     """
-    for (d, t) in positiveComments:
+    for d, t in positiveComments:
         com = {
             "value": int(d),
             "display_delta": d,
@@ -267,7 +271,7 @@ def build_random_rubrics(question, *, messenger):
             positiveRubrics[question].append(com)
         else:
             positiveRubrics[question] = [com]
-    for (d, t) in negativeComments:
+    for d, t in negativeComments:
         com = {
             "value": int(d),
             "display_delta": d,

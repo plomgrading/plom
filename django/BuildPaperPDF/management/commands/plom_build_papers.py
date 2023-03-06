@@ -2,6 +2,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
+from pathlib import Path
+
 from django.core.management.base import BaseCommand
 
 from BuildPaperPDF.services import BuildPapersService
@@ -10,8 +12,6 @@ from Papers.services import SpecificationService
 from SpecCreator.services import StagingSpecificationService
 
 from plom.misc_utils import format_int_list_with_runs
-
-from pathlib import Path
 
 
 class Command(BaseCommand):

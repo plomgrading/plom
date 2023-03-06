@@ -21,6 +21,8 @@ class Command(BaseCommand):
     commands:
         python3 manage.py plom_staging_bundles upload (username) (file) <- drag and drop or copy path
         python3 manage.py plom_staging_bundles status
+        python3 manage.py plom_staging_bundles read_qr (bundle name) <- can get it from status
+        python3 manage.py plom_staging_bundles push (bundle name) <- can get it from status
     """
 
     help = "Upload bundle pdf files to staging area"
@@ -63,6 +65,22 @@ class Command(BaseCommand):
         if len(bundle_status) == 1:
             self.stdout.write("No bundles uploaded.")
 
+    # TODO: work on this function, add to add_arguments, and add to handle
+    def push_staged_bundle(self, bundle_name):
+        scanner = ScanService()
+        scanner.push_bundle_cmd(bundle_name)
+
+    # working on it
+    def read_bundle_qr(self, bundle_name):
+        scanner = ScanService()
+        try:
+            scanner.read_bundle_qr_cmd(bundle_name)
+            self.stdout.write(
+                f"Reading {bundle_name} QR codes - processing it in the background now."
+            )
+        except ValueError as err:
+            self.stderr.write(f"{err}")
+
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
             dest="command",
@@ -79,6 +97,16 @@ class Command(BaseCommand):
         # Status
         sp.add_parser("status", help="Show the status of the staging bundles.")
 
+        # Push
+        sp_push = sp.add_parser("push", help="Push the staged bundles.")
+        sp_push.add_argument("bundle_name", type=str, help="Which bundle to push.")
+
+        # Read QR codes
+        sp_read_qr = sp.add_parser("read_qr", help="Read the selected bundle QR codes.")
+        sp_read_qr.add_argument(
+            "bundle_name", type=str, help="Which bundle to read the QR codes."
+        )
+
     def handle(self, *args, **options):
         if options["command"] == "upload":
             self.upload_pdf(
@@ -86,5 +114,9 @@ class Command(BaseCommand):
             )
         elif options["command"] == "status":
             self.staging_bundle_status()
+        elif options["command"] == "push":
+            self.push_staged_bundle(bundle_name=options["bundle_name"])
+        elif options["command"] == "read_qr":
+            self.read_bundle_qr(bundle_name=options["bundle_name"])
         else:
             self.print_help("manage.py", "plom_staging_bundles")

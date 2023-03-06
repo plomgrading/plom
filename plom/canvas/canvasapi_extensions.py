@@ -15,11 +15,11 @@ import canvasapi as capi
 # FIRST UP: Extending the canvas api classes to add some nice
 # methods for integration with plom.
 
+
 # Extend the CurrentUser class to add some helpful methods, e.g. one
 # to only fetch course
 class User(capi.current_user.CurrentUser):
     def __init__(self, capi_user):
-
         # Ensure that we got the right thing passed in
         assert isinstance(capi_user, capi.current_user.CurrentUser)
 
@@ -72,7 +72,6 @@ class User(capi.current_user.CurrentUser):
 # to fetch all students in the course
 class Course(capi.course.Course):
     def __init__(self, capi_course):
-
         # Ensure that we got the right thing passed in
         assert isinstance(capi_course, capi.course.Course)
 

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Joey Shi
@@ -14,6 +14,7 @@ import tempfile
 import uuid
 
 from plom.server import pageNotSubmitted
+from plom.rules import censorStudentNumber as censorID
 
 
 log = logging.getLogger("server")
@@ -61,11 +62,50 @@ def addTestPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
 def replaceMissingIDPage(self, test_number):
     val = self.DB.getSIDFromTest(test_number)
     if val[0] is False:
-        return [False, "unknown"]
-    sid = val[1]
-    # TODO: returns True/False/None
-    # Also: this looks broken, no student_name arg: Issue #2461
-    return self.createIDPageForHW(sid)
+        log.info("test %s had no ID, checked for preID", test_number)
+        pred_dict = self.DB.ID_get_predictions(predictor="prename")
+        match = pred_dict.get(int(test_number))
+        if match:
+            sid = match["student_id"]
+            log.info("test %s had no ID but found preID %s", test_number, censorID(sid))
+        else:
+            log.info("test %s had no ID nor preID: cannot generate ID pg", test_number)
+            return (False, "unknown")
+    else:
+        sid = val[1]
+        log.info("test %s has ID %s: can we make ID pg?", test_number, censorID(sid))
+
+    # This was broken calling createIDPageForHW with wrong args: Issue #2461
+    # quick fix, look up student number to get name from classlist, using
+    # code copy-pasted from uploadHWPage, which does similar
+    import csv
+    from plom import specdir
+
+    # load up the classlist to get the student-name from the sid.
+    # TODO - move classlist stuff into database.
+    student_name = None
+    try:
+        with open(specdir / "classlist.csv", "r") as f:
+            reader = csv.DictReader(f)
+            # extract the student-name based on the ID.
+            for row in reader:
+                if str(row["id"]) == str(sid):
+                    student_name = row["name"]
+                    break
+    except FileNotFoundError:
+        return (False, "Server has no classlist")
+    if student_name is None:
+        return (False, "Cannot find student with that ID in classlist")
+
+    # False return probably can't happen (hah!)
+    r = self.createIDPageForHW(sid, student_name)
+    # returns True/False/None
+    if r is None:
+        # None is the good case
+        return (True,)
+    if r is True:
+        return (False, "hasonealready")
+    return (False, "unexpected return from createIDPageForHW")
 
 
 def createIDPageForHW(self, sid, student_name):
