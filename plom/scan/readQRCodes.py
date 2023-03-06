@@ -108,7 +108,7 @@ def reOrientPage(fname, qrs):
     if len(matches) != 1:
         return False
     match_key, v = matches.popitem()
-    rotate_bitmap(fname, actions[match_key], ccw=True)
+    rotate_bitmap(fname, actions[match_key])
     return True
 
 

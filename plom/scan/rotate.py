@@ -11,7 +11,7 @@ from PIL import Image
 log = logging.getLogger("scan")
 
 
-def rotate_bitmap(fname, angle, *, cw=None, ccw=None):
+def rotate_bitmap(fname, angle, *, clockwise=False):
     """Rotate bitmap counterclockwise, possibly in metadata.
 
     args:
@@ -19,19 +19,17 @@ def rotate_bitmap(fname, angle, *, cw=None, ccw=None):
         angle (int): CCW angle of rotation: 0, 90, 180, 270, or -90.
 
     keyword args:
-        cw (bool): clockwise, currently not default.
-        ccw (bool): counter-clockwise, currently the default..
+        clockwise (bool): By default this is False and we do anti-clockwise
+            ("counter-clockwise") rotations.  Pass True if you want `+90`
+            to be a clockwise rotation instead.
 
-    If its a jpeg, we have special handling, otherwise, we use PIL and resave
-    the image.
+    If its a jpeg, we have special handling, otherwise, we use the Python
+    library ``PIL`` to open, rotate and then resave the image, replacing
+    the original.
     """
-    if cw is None and ccw is None:
-        ccw = True
-    if cw and ccw:
-        raise RuntimeError("Cannot specify both cw and ccw")
     assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
     fname = Path(fname)
-    if cw:
+    if clockwise:
         if angle == 90:
             angle = -90
         elif angle == -90 or angle == 270:

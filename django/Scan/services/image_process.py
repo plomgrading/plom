@@ -159,5 +159,5 @@ class PageImageProcessor:
         else:
             rotate_angle = 180
 
-        rotate_bitmap(path, rotate_angle, ccw=True)
+        rotate_bitmap(path, rotate_angle)
         return rotate_angle

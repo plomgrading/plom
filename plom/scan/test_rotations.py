@@ -61,7 +61,7 @@ def test_rotate_png_cw(tmpdir):
         f = tmpdir / f"img{angle}.png"
         with open(f, "wb") as fh:
             fh.write(b)
-        rotate_bitmap(f, angle, cw=True)
+        rotate_bitmap(f, angle, clockwise=True)
         # now load it back and check for a red pixel in the right place
         im = Image.open(f)
         im.load()
@@ -85,7 +85,7 @@ def test_rotate_png_ccw(tmpdir):
         f = tmpdir / f"img{angle}.png"
         with open(f, "wb") as fh:
             fh.write(b)
-        rotate_bitmap(f, angle, ccw=True)
+        rotate_bitmap(f, angle, clockwise=False)
         # now load it back and check for a red pixel in the right place
         im = Image.open(f)
         im.load()
@@ -117,7 +117,7 @@ def test_rotate_jpeg_cw(tmpdir):
         f = tmpdir / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
-        rotate_bitmap(f, angle, cw=True)
+        rotate_bitmap(f, angle, clockwise=True)
 
         # now load it back and check for a red pixel in the right place
         im = pil_load_with_jpeg_exif_rot_applied(f)
@@ -143,7 +143,7 @@ def test_rotate_jpeg_ccw(tmpdir):
         f = tmpdir / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
-        rotate_bitmap(f, angle, ccw=True)
+        rotate_bitmap(f, angle, clockwise=False)
 
         # now load it back and check for a red pixel in the right place
         im = pil_load_with_jpeg_exif_rot_applied(f)
@@ -167,7 +167,7 @@ def test_rotate_jpeg_lossless_cw(tmpdir):
         f = tmpdir / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
-        rotate_bitmap(f, angle, cw=True)
+        rotate_bitmap(f, angle, clockwise=True)
 
         # r = rot_angle_from_jpeg_exif_tag(f)
         # print(("r=", r, "angle=", angle))
@@ -207,7 +207,7 @@ def test_rotate_jpeg_lossless_ccw(tmpdir):
         f = tmpdir / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
-        rotate_bitmap(f, angle, ccw=True)
+        rotate_bitmap(f, angle, clockwise=False)
 
         # now load it back, rotate it back it it would make the original
         im = pil_load_with_jpeg_exif_rot_applied(f)
@@ -236,7 +236,7 @@ def test_rotate_exif_read_back(tmpdir):
         f = tmpdir / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(jpg_bytes)
-        rotate_bitmap(f, angle, ccw=True)
+        rotate_bitmap(f, angle, clockwise=False)
 
         r = rot_angle_from_jpeg_exif_tag(f)
         assert angle % 360 == r % 360
@@ -245,23 +245,13 @@ def test_rotate_exif_read_back(tmpdir):
         # f2 = tmpdir / f"img{angle}.png"
         # with open(f2, "wb") as fh:
         #     fh.write(png_bytes)
-        # rotate_bitmap(f2, angle, ccw=True)
+        # rotate_bitmap(f2, angle, clockwise=False)
         # im1 = pil_load_with_jpeg_exif_rot_applied(f)
         # im2 = Image.open(f2)
         # im2.load()
         # im2.convert("RGB")
         # diff = ImageChops.difference(im1, im2)
         # diff.save(f"diff{angle}.png")
-
-
-def test_rotate_cw_xor_ccw(tmpdir):
-    tmpdir = Path(tmpdir)
-    b = (resources.files(plom.scan) / "test_rgb.png").read_bytes()
-    f = tmpdir / "img.png"
-    with open(f, "wb") as fh:
-        fh.write(b)
-    with raises(RuntimeError):
-        rotate_bitmap(f, 90, ccw=True, cw=True)
 
 
 def test_rotate_default_ccw(tmpdir):
@@ -280,7 +270,7 @@ def test_rotate_default_ccw(tmpdir):
         f1 = tmpdir / f"img{angle}_ccw.jpg"
         with open(f1, "wb") as fh:
             fh.write(jpg_bytes)
-        rotate_bitmap(f1, angle, ccw=True)
+        rotate_bitmap(f1, angle, clockwise=False)
 
         f2 = tmpdir / f"img{angle}_default.jpg"
         with open(f2, "wb") as fh:
