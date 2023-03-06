@@ -23,12 +23,12 @@ class ScanServiceTests(TestCase):
         self.pdf = fitz.Document(
             settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
         )
-        media_folder = settings.BASE_DIR / "media"
+        media_folder = settings.MEDIA_ROOT
         media_folder.mkdir(exist_ok=True)
         return super().setUp()
 
     def tearDown(self):
-        shutil.rmtree(settings.BASE_DIR / "media" / "user0", ignore_errors=True)
+        shutil.rmtree(settings.MEDIA_ROOT / "user0", ignore_errors=True)
         return super().tearDown()
 
     def test_upload_bundle(self):
@@ -63,7 +63,7 @@ class ScanServiceTests(TestCase):
         """
 
         timestamp = timezone.now().timestamp()
-        user_path = settings.BASE_DIR / "media" / "user0"
+        user_path = settings.MEDIA_ROOT / "user0"
         user_path.mkdir(exist_ok=True)
         user_bundle_path = user_path / "bundles"
         user_bundle_path.mkdir(exist_ok=True)

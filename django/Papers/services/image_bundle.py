@@ -103,7 +103,7 @@ class ImageBundleService:
         if Image.objects.filter(hash=hash).exists():
             raise RuntimeError("An image with that hash already exists.")
 
-        root_folder = settings.BASE_DIR / "media" / "page_images" / "colliding_pages"
+        root_folder = settings.MEDIA_ROOT / "page_images" / "colliding_pages"
         test_folder = root_folder / str(test_paper)
         image_path = test_folder / f"page{page_number}_{staged_image.image_hash}.png"
 
@@ -192,7 +192,7 @@ class ImageBundleService:
         Also, create the necessary folders in the media directory
         if they don't exist.
         """
-        page_image_dir = settings.BASE_DIR / "media" / "page_images"
+        page_image_dir = settings.MEDIA_ROOT / "page_images"
         test_papers_dir = page_image_dir / "test_papers"
         paper_dir = test_papers_dir / str(test_paper)
 

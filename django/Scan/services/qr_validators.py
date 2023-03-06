@@ -167,7 +167,7 @@ class QRErrorService:
             page_number = common_qr[5:8]
             version_number = common_qr[8:]
 
-            root_folder = settings.BASE_DIR / "media" / "page_images" / "error_pages"
+            root_folder = settings.MEDIA_ROOT / "page_images" / "error_pages"
             test_folder = root_folder / str(test_paper)
             img_path = test_folder / f"page{page_number}_{img_obj.image_hash}.png"
 

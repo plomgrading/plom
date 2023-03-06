@@ -17,7 +17,7 @@ class PaperSourcePDF(models.Model):
 
     @classmethod
     def upload_to(cls):
-        return settings.BASE_DIR / "media" / cls.source_pdf.field.upload_to
+        return settings.MEDIA_ROOT / cls.source_pdf.field.upload_to
 
 
 class PrenamingSetting(SingletonBaseModel):

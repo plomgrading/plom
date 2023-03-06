@@ -27,8 +27,8 @@ from Papers.models import Paper
 class BuildPapersService:
     """Generate and stamp test-paper PDFs."""
 
-    base_dir = settings.BASE_DIR
-    papers_to_print = base_dir / "media" / "papersToPrint"
+    base_dir = settings.MEDIA_ROOT
+    papers_to_print = base_dir / "papersToPrint"
 
     @transaction.atomic
     def get_n_complete_tasks(self):
