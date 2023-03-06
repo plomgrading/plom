@@ -81,15 +81,21 @@ def pil_load_with_jpeg_exif_rot_applied(f):
     """PIL's Image load does not apply exif orientation, so provide a helper that does.
 
     Args:
-        f (str/pathlib.Path): a path to a jpeg file.
+        f (str/pathlib.Path): a path to a file.
+
+    If the input is not a jpeg, we simplify open it with ``PIL`` and
+    return with no special processing.  If its a jpeg, we apply the exif
+    rotations, then return.
 
     Returns:
         PIL.Image: with exif orientation applied.
     """
+    f = Path(f)
     im = Image.open(f)
     im.load()
-    r = rot_angle_from_jpeg_exif_tag(f)
-    im = im.rotate(r, expand=True)
+    if f.suffix.casefold() in ("jpg", "jpeg"):
+        r = rot_angle_from_jpeg_exif_tag(f)
+        im = im.rotate(r, expand=True)
     return im
 
 
