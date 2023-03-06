@@ -63,9 +63,38 @@ def replaceMissingIDPage(self, test_number):
     if val[0] is False:
         return [False, "unknown"]
     sid = val[1]
-    # TODO: returns True/False/None
-    # Also: this looks broken, no student_name arg: Issue #2461
-    return self.createIDPageForHW(sid)
+
+    # This was brokenm calling createIDPageForHW with wrong args: Issue #2461
+    # quick fix, look up student number to get name from classlist, using
+    # code copy-pasted from uploadHWPage, which does similar
+    import csv
+    from plom import specdir
+
+    # load up the classlist to get the student-name from the sid.
+    # TODO - move classlist stuff into database.
+    student_name = None
+    try:
+        with open(specdir / "classlist.csv", "r") as f:
+            reader = csv.DictReader(f)
+            # extract the student-name based on the ID.
+            for row in reader:
+                if str(row["id"]) == str(sid):
+                    student_name = row["name"]
+                    break
+    except FileNotFoundError:
+        return (False, "Server has no classlist")
+    if student_name is None:
+        return (False, "Cannot find student with that ID in classlist")
+
+    # False return probably can't happen (hah!)
+    r = self.createIDPageForHW(sid, student_name)
+    # returns True/False/None
+    if r is None:
+        # None is the good case
+        return (True,)
+    if r is True:
+        return (False, "hasonealready")
+    return (False, "unexpected return from createIDPageForHW")
 
 
 def createIDPageForHW(self, sid, student_name):

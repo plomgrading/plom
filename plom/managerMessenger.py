@@ -647,8 +647,6 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 410:
                     raise PlomUnidentifiedPaperException(response.reason) from None
-                if response.status_code == 404:
-                    raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def replaceMissingHWQuestion(self, student_id=None, test=None, question=None):
