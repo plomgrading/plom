@@ -65,12 +65,14 @@ class Command(BaseCommand):
         if len(bundle_status) == 1:
             self.stdout.write("No bundles uploaded.")
 
-    # TODO: work on this function, add to add_arguments, and add to handle
     def push_staged_bundle(self, bundle_name):
         scanner = ScanService()
-        scanner.push_bundle_cmd(bundle_name)
+        try:
+            scanner.push_bundle_cmd(bundle_name)
+            self.stdout.write(f"Pushing {bundle_name} - processing it in the background now.")
+        except ValueError as err:
+            self.stderr.write(f"{err}")
 
-    # working on it
     def read_bundle_qr(self, bundle_name):
         scanner = ScanService()
         try:

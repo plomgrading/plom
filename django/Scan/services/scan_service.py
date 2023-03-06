@@ -768,7 +768,6 @@ class ScanService:
             bundle_status.append(bundle_data)
         return bundle_status
 
-    # working on it
     @transaction.atomic
     def read_bundle_qr_cmd(self, bundle_name):
         try:
@@ -790,4 +789,4 @@ class ScanService:
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
-            print(f"This {bundle_name} does not exist.")
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
