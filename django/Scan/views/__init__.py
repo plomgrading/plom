@@ -6,6 +6,7 @@ from .scanner_home import (
     ScannerHomeView,
     RemoveBundleView,
     GetBundleView,
+    GetStagedBundleFragmentView,
 )
 
 from .bundle_splitting import (

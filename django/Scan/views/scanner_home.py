@@ -52,25 +52,12 @@ class ScannerHomeView(ScannerRequiredView):
                 "total_completed_pages": total_pages,
                 "percent_pages_completed": int(percent_pages_complete),
                 "all_test_papers": all_test_papers,
+                "form": BundleUploadForm(),
+                "bundle_splitting": False,
             }
         )
-
-        if not scanner.user_has_running_image_tasks(user):
-            context.update(
-                {
-                    "form": BundleUploadForm(),
-                    "bundle_splitting": False,
-                }
-            )
-        else:
-            splitting_bundle = scanner.get_bundle_being_split(user)
-            context.update(
-                {
-                    "bundle_splitting": True,
-                    "timestamp": splitting_bundle.timestamp,
-                }
-            )
         user_bundles = scanner.get_user_bundles(user)
+        print("UB = ", user_bundles)
         bundles = []
         hash_pushed_bundle = False
         for bundle in user_bundles:
@@ -106,13 +93,13 @@ class ScannerHomeView(ScannerRequiredView):
         context = self.build_context(request.user)
 
         # if a pdf-to-image task is fully complete, perform some cleanup
-        if context["bundle_splitting"]:
-            scanner = ScanService()
-            bundle = scanner.get_bundle(context["timestamp"], request.user)
-            n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
-            n_total = scanner.get_n_page_rendering_tasks(bundle)
-            if n_completed == n_total:
-                scanner.page_splitting_cleanup(bundle)
+        # if context["bundle_splitting"]:
+        #     scanner = ScanService()
+        #     bundle = scanner.get_bundle(context["timestamp"], request.user)
+        #     n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
+        #     n_total = scanner.get_n_page_rendering_tasks(bundle)
+        #     if n_completed == n_total:
+        #         scanner.page_splitting_cleanup(bundle)
 
         return render(request, "Scan/home.html", context)
 
@@ -177,3 +164,22 @@ class GetBundleView(ScannerRequiredView):
                 content_type="application/pdf",
             )
         return FileResponse(uploaded_file)
+
+
+class GetStagedBundleFragmentView(ScannerRequiredView):
+    """
+    Return a user-uploaded bundle PDF
+    """
+
+    def get(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+
+        bundle = scanner.get_bundle(timestamp, request.user)
+        context = {"bundle": bundle}
+        
+        return render(request, "Scan/fragments/staged_bundle_card.html", context)

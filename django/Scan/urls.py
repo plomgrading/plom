@@ -12,6 +12,7 @@ from Scan.views import (
     UpdateQRProgressView,
     GetBundleView,
     GetBundleImageView,
+    GetStagedBundleFragmentView,
     RemoveBundleView,
     ReadQRcodesView,
     QRParsingProgressAlert,
@@ -49,6 +50,11 @@ urlpatterns = [
         "bundle/<timestamp>/",
         GetBundleView.as_view(),
         name="scan_get_bundle",
+    ),
+    path(
+        "bundle_staged/<timestamp>/",
+        GetStagedBundleFragmentView.as_view(),
+        name="scan_get_staged_bundle_fragment",
     ),
     path(
         "bundle/<timestamp>/<int:index>/",

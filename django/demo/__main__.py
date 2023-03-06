@@ -44,7 +44,7 @@ def remove_old_db_and_misc_user_files():
 
 def rebuild_migrations_and_migrate():
     print("Rebuild the database migrations and migrate")
-    for cmd in ["makemigrations", "migrate"]:
+    for cmd in ["flush", "makemigrations", "migrate"]:
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
 
@@ -134,13 +134,11 @@ def download_zip():
 
 def upload_bundles():
     # TODO quick hack workaround for Issue #2578
-    # for n in [1, 2, 3]:
-    for n in (1,):
+    for n in [1, 2, 3]:
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
-        print("For time being sleep 60s between bundle uploads. TODO = fix this")
-        sleep(60)
+        sleep(5)
 
 
 def wait_for_exit():
