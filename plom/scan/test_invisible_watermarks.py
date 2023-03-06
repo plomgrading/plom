@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from pathlib import Path
 import pytest
@@ -107,15 +107,17 @@ def test_pdf_can_extract_png_and_jpeg(tmpdir):
     p = d.new_page(width=500, height=842)
     p.insert_image(rect, filename=png_file)
     d.ez_save(f)
-    processFileToBitmaps(f, tmp_path, do_not_extract=False)
+    files = processFileToBitmaps(f, tmp_path, do_not_extract=False)
 
     # was extracted: no white border and size matches input
-    im = Image.open(tmp_path / "doc-001.jpeg")
+    assert files[0].suffix.casefold() in (".jpg", ".jpeg")
+    im = Image.open(files[0])
     assert im.format == "JPEG"
     assert im.width == jpg_img.width
     assert im.getpixel((0, 0)) != white
 
-    im = Image.open(tmp_path / "doc-002.png")
+    assert files[1].suffix.casefold() == ".png"
+    im = Image.open(files[1])
     assert im.format == "PNG"
     assert im.width == png_img.width
     assert im.getpixel((0, 0)) != white
@@ -145,18 +147,18 @@ def test_pdf_no_extract_cases(tmpdir):
     processFileToBitmaps(f, tmp_path, do_not_extract=False)
 
     # do not extract small images
-    (_,) = tmp_path.glob("doc-001.*")
+    (_,) = tmp_path.glob("doc-*01.*")
     im = Image.open(_)
     assert im.getpixel((0, 0)) == white
 
     # big enough image but no extract b/c text on page
-    (_,) = tmp_path.glob("doc-002.*")
+    (_,) = tmp_path.glob("doc-*02.*")
     im = Image.open(_)
     assert im.width != jpg_img.width
     assert im.getpixel((0, 0)) == white
 
     # big enough image but no extract b/c two images
-    (_,) = tmp_path.glob("doc-003.*")
+    (_,) = tmp_path.glob("doc-*03.*")
     im = Image.open(_)
     assert im.width != jpg_img.width
     assert im.getpixel((0, 0)) == white
@@ -173,19 +175,21 @@ def test_pdf_identical_pages_render_png_made_unique(tmpdir):
     d.copy_page(0)
     d.ez_save(pdf_file)
 
-    processFileToBitmaps(pdf_file, tmp_path, add_metadata=True)
+    files = processFileToBitmaps(pdf_file, tmp_path, add_metadata=True)
 
-    im = Image.open(tmp_path / "doc-001.png")
-    im2 = Image.open(tmp_path / "doc-002.png")
+    im = Image.open(files[0])
+    im2 = Image.open(files[1])
     assert "RandomUUID" in im.text.keys()
     assert im.text["RandomUUID"] != im2.text["RandomUUID"]
 
-    processFileToBitmaps(pdf_file, tmp_path, add_metadata=False)
-    f1 = tmp_path / "doc-001.png"
-    f2 = tmp_path / "doc-002.png"
-    with open(f1, "rb") as f:
+    files = processFileToBitmaps(pdf_file, tmp_path, add_metadata=False)
+
+    for f in files:
+        assert f.suffix.casefold() == ".png"
+
+    with open(files[0], "rb") as f:
         b1 = f.read()
-    with open(f2, "rb") as f:
+    with open(files[1], "rb") as f:
         b2 = f.read()
     assert b1 == b2
 
@@ -210,21 +214,26 @@ def test_pdf_identical_pages_render_jpeg_made_unique(tmpdir):
     p.insert_image(rect2, filename=png_file)
     d.copy_page(0)
     d.ez_save(pdf_file)
-    processFileToBitmaps(pdf_file, tmp_path, add_metadata=True)
-    f1 = tmp_path / "doc-001.jpg"
-    f2 = tmp_path / "doc-002.jpg"
-    with open(f1, "rb") as f:
+
+    files = processFileToBitmaps(pdf_file, tmp_path, add_metadata=True)
+
+    for f in files:
+        assert f.suffix.casefold() in (".jpg", ".jpeg")
+
+    with open(files[0], "rb") as f:
         b1 = f.read()
-    with open(f2, "rb") as f:
+    with open(files[1], "rb") as f:
         b2 = f.read()
     assert b1 != b2
 
-    processFileToBitmaps(pdf_file, tmp_path, add_metadata=False)
-    f1 = tmp_path / "doc-001.jpg"
-    f2 = tmp_path / "doc-002.jpg"
-    with open(f1, "rb") as f:
+    files = processFileToBitmaps(pdf_file, tmp_path, add_metadata=False)
+
+    for f in files:
+        assert f.suffix.casefold() in (".jpg", ".jpeg")
+
+    with open(files[0], "rb") as f:
         b1 = f.read()
-    with open(f2, "rb") as f:
+    with open(files[1], "rb") as f:
         b2 = f.read()
     assert b1 == b2
 
@@ -246,35 +255,33 @@ def test_pdf_can_extract_png_and_jpeg_uniquified(tmpdir):
     d.copy_page(2)
     d.ez_save(pdf_file)
 
-    processFileToBitmaps(pdf_file, tmp_path, add_metadata=True)
+    files = processFileToBitmaps(pdf_file, tmp_path, add_metadata=True)
 
-    f1 = tmp_path / "doc-001.jpeg"
-    f2 = tmp_path / "doc-002.jpeg"
-    with open(f1, "rb") as f:
+    for f in files[:2]:
+        assert f.suffix.casefold() in (".jpg", ".jpeg")
+    with open(files[0], "rb") as f:
         b1 = f.read()
-    with open(f2, "rb") as f:
+    with open(files[1], "rb") as f:
         b2 = f.read()
     assert b1 != b2
 
-    im = Image.open(tmp_path / "doc-003.png")
-    im2 = Image.open(tmp_path / "doc-004.png")
+    for f in files[2:]:
+        assert f.suffix.casefold() == ".png"
+    im = Image.open(files[2])
+    im2 = Image.open(files[3])
     assert "RandomUUID" in im.text.keys()
     assert im.text["RandomUUID"] != im2.text["RandomUUID"]
 
-    processFileToBitmaps(pdf_file, tmp_path, add_metadata=False)
+    files = processFileToBitmaps(pdf_file, tmp_path, add_metadata=False)
 
-    f1 = tmp_path / "doc-001.jpeg"
-    f2 = tmp_path / "doc-002.jpeg"
-    with open(f1, "rb") as f:
+    with open(files[0], "rb") as f:
         b1 = f.read()
-    with open(f2, "rb") as f:
+    with open(files[1], "rb") as f:
         b2 = f.read()
     assert b1 == b2
 
-    f1 = tmp_path / "doc-003.png"
-    f2 = tmp_path / "doc-004.png"
-    with open(f1, "rb") as f:
+    with open(files[2], "rb") as f:
         b1 = f.read()
-    with open(f2, "rb") as f:
+    with open(files[3], "rb") as f:
         b2 = f.read()
     assert b1 == b2

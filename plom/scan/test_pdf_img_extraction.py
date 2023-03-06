@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 from pathlib import Path
 import shutil
@@ -13,14 +13,28 @@ from plom import ScenePixelHeight
 from plom.scan import processFileToBitmaps
 
 
+def test_pdf_process_file_names(tmpdir):
+    tmp_path = Path(tmpdir)
+    f = tmp_path / "mydoc-A-B.pdf"
+    d = fitz.open()
+    d.new_page()
+    d.new_page()
+    d.new_page()
+    d.save(f)
+    files = processFileToBitmaps(f, tmp_path)
+    assert files[0].name == "mydoc-A-B-00001.png"
+    assert files[1].name == "mydoc-A-B-00002.png"
+    assert files[2].name == "mydoc-A-B-00003.png"
+
+
 def test_pdf_process_img_height(tmpdir):
     tmp_path = Path(tmpdir)
     f = tmp_path / "doc.pdf"
     d = fitz.open()
     d.new_page()
     d.save(f)
-    processFileToBitmaps(f, tmp_path)
-    im = Image.open(tmp_path / "doc-001.png")
+    (onefile,) = processFileToBitmaps(f, tmp_path)
+    im = Image.open(onefile)
     assert im.height == ScenePixelHeight
 
 
@@ -33,15 +47,15 @@ def test_pdf_process_img_heights_other(tmpdir):
     d.new_page(width=100, height=842)
     d.new_page(width=400, height=100)
     d.save(f)
-    processFileToBitmaps(f, tmp_path)
-    im = Image.open(tmp_path / "doc-001.png")
+    files = processFileToBitmaps(f, tmp_path)
+    im = Image.open(files[0])
     assert im.height == ScenePixelHeight
-    im = Image.open(tmp_path / "doc-002.png")
+    im = Image.open(files[1])
     assert im.height == ScenePixelHeight
     assert im.width == ScenePixelHeight
-    im = Image.open(tmp_path / "doc-003.png")
+    im = Image.open(files[2])
     assert im.height > ScenePixelHeight
-    im = Image.open(tmp_path / "doc-004.png")
+    im = Image.open(files[3])
     assert im.height < ScenePixelHeight
 
 
