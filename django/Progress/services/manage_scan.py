@@ -181,7 +181,7 @@ class ManageScanService:
             make_dirs (optional): set to False for testing
         """
 
-        root_folder = settings.BASE_DIR / "media" / "page_images" / "discarded_pages"
+        root_folder = settings.MEDIA_ROOT / "page_images" / "discarded_pages"
         image_path = root_folder / f"{image_hash}.png"
 
         if make_dirs:
@@ -298,7 +298,7 @@ class ManageScanService:
 
         colliding_fields = discarded_image.restore_fields
 
-        root_dir = settings.BASE_DIR / "media" / "page_images" / "colliding_pages"
+        root_dir = settings.MEDIA_ROOT / "page_images" / "colliding_pages"
         test_paper_dir = root_dir / str(colliding_fields["paper_number"])
         image_path = (
             test_paper_dir

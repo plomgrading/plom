@@ -307,7 +307,7 @@ class MarkingTaskService:
             )
         annot_img.seek(0)
 
-        imgs_folder = settings.BASE_DIR / "media" / "annotation_images"
+        imgs_folder = settings.MEDIA_ROOT / "annotation_images"
         imgs_folder.mkdir(exist_ok=True)
         img = AnnotationImage(hash=md5sum)
         img.save()

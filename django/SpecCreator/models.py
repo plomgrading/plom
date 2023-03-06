@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
 
 import shutil
@@ -12,7 +12,7 @@ from Base.models import SingletonBaseModel
 
 # just a simple folder for media for now
 def temp_filename_path(instance, filename):
-    return pathlib.Path("media") / "spec_reference.pdf"
+    return pathlib.Path("spec_reference.pdf")
 
 
 class ReferencePDF(models.Model):
@@ -31,7 +31,7 @@ def pre_delete_reference_pdf(sender, instance, **kwargs):
         shutil.rmtree(thumbnail_folder)
 
     # delete pdf from disk
-    pdf_path = pathlib.Path("media") / "spec_reference.pdf"
+    pdf_path = pathlib.Path("spec_reference.pdf")
     pdf_path.unlink(missing_ok=True)
 
 

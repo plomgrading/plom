@@ -32,7 +32,7 @@ class SourceServiceTests(TestCase):
         n_sources = len(PaperSourcePDF.objects.all())
         self.assertEqual(n_sources, 1)
 
-        pdf_save_path = settings.BASE_DIR / "sourceVersions" / "version1.pdf"
+        pdf_save_path = settings.MEDIA_ROOT / "sourceVersions" / "version1.pdf"
         self.assertTrue(pdf_save_path.exists())
 
         with self.assertRaises(MultipleObjectsReturned):

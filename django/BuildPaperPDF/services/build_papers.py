@@ -18,6 +18,8 @@ from django.core.files import File
 from django_huey import db_task
 from django_huey import get_queue
 
+from Preparation.models import PaperSourcePDF
+
 from BuildPaperPDF.models import PDFTask
 from Papers.models import Paper
 
@@ -25,7 +27,7 @@ from Papers.models import Paper
 class BuildPapersService:
     """Generate and stamp test-paper PDFs."""
 
-    base_dir = settings.BASE_DIR
+    base_dir = settings.MEDIA_ROOT
     papers_to_print = base_dir / "papersToPrint"
 
     @transaction.atomic
@@ -95,6 +97,7 @@ class BuildPapersService:
                 papernum=index,
                 question_versions=question_versions,
                 where=pathlib.Path(tempdir),
+                source_versions_path=PaperSourcePDF.upload_to(),
             )
             paper = Paper.objects.get(paper_number=index)
             task = paper.pdftask
@@ -114,6 +117,7 @@ class BuildPapersService:
                 question_versions=question_versions,
                 extra=student_info,
                 where=pathlib.Path(tempdir),
+                source_versions_path=PaperSourcePDF.upload_to(),
             )
 
             paper = Paper.objects.get(paper_number=index)

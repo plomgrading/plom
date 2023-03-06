@@ -373,7 +373,7 @@ class ScanService:
         Args:
             bundle: bundle DB object
         """
-        root_folder = settings.BASE_DIR / "media" / "page_images"
+        root_folder = settings.MEDIA_ROOT / "page_images"
         root_folder.mkdir(exist_ok=True)
         imgs = StagingImage.objects.filter(bundle=bundle)
         for page in imgs:
