@@ -188,7 +188,7 @@ def processFileToBitmaps(
 
         files = []
         for p in doc:
-            basename = f"{safeScan}-{(p.number + 1):03}"
+            basename = f"{safeScan}-{(p.number + 1):05}"
             outname, msgs = try_to_extract_image(
                 p,
                 doc,

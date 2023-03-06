@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from pathlib import Path
 import sys
@@ -133,7 +133,7 @@ def extractSolutionImages(solution_spec_filename=None, *, msgr):
             for v in range(1, mxv + 1):
                 print(f"Processing solutions for Q{q} V{v}")
                 image_list = [
-                    tmp / f"solutions{v}-{p:03}.png"
+                    tmp / f"solutions{v}-{p:05}.png"
                     for p in solutionSpec["solution"][sq]["pages"]
                 ]
                 # maybe processing made jpegs
