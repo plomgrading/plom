@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import tempfile
 from pathlib import Path
 
-import exif
 import fitz
 import PIL.Image
 
-
 from plom import __version__
+from plom.scan.rotate import rot_angle_from_jpeg_exif_tag
+
 
 # hardcoded for letter, https://gitlab.com/plom/plom/issues/276
 papersize_portrait = (612, 792)
@@ -92,8 +92,9 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         offset = margin
         for img_name in dnm_images:
             rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
+            # fitz insert_image does not respect exif
             rot = rot_angle_from_jpeg_exif_tag(img_name)
-            pg.insert_image(rect, filename=img_name, rotate=rot)
+            pg.insert_image(rect, filename=img_name, rotate=rot)  # ccw
             offset += W
         if len(dnm_images) > 1:
             text = 'These pages were flagged "Do No Mark" by the instructor.'
@@ -119,30 +120,3 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     exam.save(outname, deflate=True)
     # https://gitlab.com/plom/plom/-/issues/1777
     exam.close()
-
-
-def rot_angle_from_jpeg_exif_tag(img_name):
-    """If we have a jpeg and it has exif orientation data, return angle.
-
-    If not a jpeg, then return 0.
-    """
-    if img_name.suffix not in (".jpg", ".jpeg"):
-        return 0
-    with open(img_name, "rb") as f:
-        im = exif.Image(f)
-    if not im.has_exif:
-        return 0
-    o = im.get("orientation")
-    if o is None:
-        return 0
-    # print(f"{img_name} has exif orientation: {o}")
-    if o == exif.Orientation.TOP_LEFT:
-        return 0
-    elif o == exif.Orientation.RIGHT_TOP:
-        return -90
-    elif o == exif.Orientation.BOTTOM_RIGHT:
-        return 180
-    elif o == exif.Orientation.LEFT_BOTTOM:
-        return 90
-    else:
-        raise NotImplementedError(f"Unexpected exif orientation: {o}")

@@ -18,7 +18,7 @@ from plom.tpv_utils import (
 )
 from plom.scan import with_scanner_messenger
 from plom.scan import QRextract_legacy
-from plom.scan.rotate import rotateBitmap
+from plom.scan.rotate import rotate_bitmap
 from plom import PlomImageExts
 
 
@@ -86,10 +86,13 @@ def reOrientPage(fname, qrs):
         "rot90cc": [4, 1, 2, 3],
         "flipped": [3, 4, 1, 2],
     }
+    # "actions" refer to the CCW rotation we apply to fixed the observed
+    # rotation.  E.g., if we observe "rot90cc" then we need to perform a
+    # 90 cw rotation, which is -90 ccw; the value of the action.
     actions = {
         "upright": 0,
-        "rot90cw": -90,
-        "rot90cc": 90,
+        "rot90cw": 90,
+        "rot90cc": -90,
         "flipped": 180,
     }
 
@@ -105,7 +108,7 @@ def reOrientPage(fname, qrs):
     if len(matches) != 1:
         return False
     match_key, v = matches.popitem()
-    rotateBitmap(fname, actions[match_key])
+    rotate_bitmap(fname, actions[match_key])
     return True
 
 

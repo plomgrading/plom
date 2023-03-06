@@ -1,39 +1,49 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 import logging
 from pathlib import Path
-import subprocess
 
 import exif
+from PIL import Image
 
 
 log = logging.getLogger("scan")
 
 
-def rotateBitmap(fname, angle):
-    """Rotate bitmap, possibly in metadata.
+def rotate_bitmap(fname, angle, *, clockwise=False):
+    """Rotate bitmap counterclockwise, possibly in metadata.
 
     args:
         filename (pathlib.Path/str): name of a file
-        angle (int): 0, 90, 180, 270, or -90 degree rotation.
+        angle (int): CCW angle of rotation: 0, 90, 180, 270, or -90.
 
-    If its a jpeg, we have special handling, otherwise, we currently shell-out
-    to the `mogrify` command line tool from ImageMagick.
+    keyword args:
+        clockwise (bool): By default this is False and we do anti-clockwise
+            ("counter-clockwise") rotations.  Pass True if you want `+90`
+            to be a clockwise rotation instead.
+
+    If its a jpeg, we have special handling, otherwise, we use the Python
+    library ``PIL`` to open, rotate and then resave the image, replacing
+    the original.
     """
     assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
     fname = Path(fname)
+    if clockwise:
+        if angle == 90:
+            angle = -90
+        elif angle == -90 or angle == 270:
+            angle = 90
+
     if fname.suffix.lower() in (".jpg", ".jpeg"):
         return rotate_bitmap_jpeg_exif(fname, angle)
 
     if angle == 0:
         return
-    subprocess.run(
-        ["mogrify", "-quiet", "-rotate", str(angle), fname],
-        stderr=subprocess.STDOUT,
-        shell=False,
-        check=True,
-    )
+    # Note PIL does CCW (Issue #2585)
+    img = Image.open(fname)
+    new_img = img.rotate(angle, expand=True)
+    new_img.save(fname)
 
 
 def rotate_bitmap_jpeg_exif(fname, angle):
@@ -41,7 +51,7 @@ def rotate_bitmap_jpeg_exif(fname, angle):
 
     args:
         filename (pathlib.Path): name of a file
-        angle (int): 0, 90, 180, 270, or -90 degree rotation.
+        angle (int): CCW angle of rotation 0, 90, 180, 270, or -90.
 
     If the image already had a exif rotation tag it is ignored: the
     rotation is absolute, NOT relative to that existing transform.
@@ -54,14 +64,61 @@ def rotate_bitmap_jpeg_exif(fname, angle):
         im = exif.Image(f)
     if im.has_exif:
         log.info(f'{fname} has exif already, orientation: {im.get("orientation")}')
-    # Notation is OrigTop_OrigLeft -> RIGHT_TOP (90 degree rot)
+    # Notation is OrigTop_OrigLeft -> RIGHT_TOP (-90 degree rot CCW)
     table = {
         0: exif.Orientation.TOP_LEFT,
-        90: exif.Orientation.RIGHT_TOP,
+        90: exif.Orientation.LEFT_BOTTOM,
         180: exif.Orientation.BOTTOM_RIGHT,
-        270: exif.Orientation.LEFT_BOTTOM,
-        -90: exif.Orientation.LEFT_BOTTOM,
+        -90: exif.Orientation.RIGHT_TOP,
+        270: exif.Orientation.RIGHT_TOP,
     }
     im.set("orientation", table[angle])
     with open(fname, "wb") as f:
         f.write(im.get_file())
+
+
+def pil_load_with_jpeg_exif_rot_applied(f):
+    """PIL's Image load does not apply exif orientation, so provide a helper that does.
+
+    Args:
+        f (str/pathlib.Path): a path to a jpeg file.
+
+    Returns:
+        PIL.Image: with exif orientation applied.
+    """
+    im = Image.open(f)
+    im.load()
+    r = rot_angle_from_jpeg_exif_tag(f)
+    im = im.rotate(r, expand=True)
+    return im
+
+
+def rot_angle_from_jpeg_exif_tag(img_name):
+    """If we have a jpeg and it has exif orientation data, return the angle of that rotation.
+
+    That is, if you apply a rotation of this angle, the image will appear the same as
+    the original would in an exif-aware viewer.  The angle is CCW.
+
+    If not a jpeg, then return 0.
+    """
+    img_name = Path(img_name)
+    if img_name.suffix not in (".jpg", ".jpeg"):
+        return 0
+    with open(img_name, "rb") as f:
+        im = exif.Image(f)
+    if not im.has_exif:
+        return 0
+    o = im.get("orientation")
+    if o is None:
+        return 0
+    # print(f"{img_name} has exif orientation: {o}")
+    if o == exif.Orientation.TOP_LEFT:
+        return 0
+    elif o == exif.Orientation.RIGHT_TOP:
+        return -90
+    elif o == exif.Orientation.BOTTOM_RIGHT:
+        return 180
+    elif o == exif.Orientation.LEFT_BOTTOM:
+        return 90
+    else:
+        raise NotImplementedError(f"Unexpected exif orientation: {o}")
