@@ -93,7 +93,7 @@ def pil_load_with_jpeg_exif_rot_applied(f):
     f = Path(f)
     im = Image.open(f)
     im.load()
-    if f.suffix.casefold() in ("jpg", "jpeg"):
+    if f.suffix.casefold() in (".jpg", ".jpeg"):
         r = rot_angle_from_jpeg_exif_tag(f)
         im = im.rotate(r, expand=True)
     return im
