@@ -367,7 +367,7 @@ class MarkingTaskService:
                 rubric = Rubric.objects.get(key=rubric_key)
             except ObjectDoesNotExist:
                 raise ValidationError(f"Invalid rubric key: {rubric_key}")
-            cleaned_data["rubrics"] = [rubric]
+            cleaned_data["rubrics"].append(rubric)
 
         all_img_data = json.loads(data["image_md5s"])
         for image_data in all_img_data:
