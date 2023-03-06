@@ -11,10 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Client: "sync" button doesn't pop up a dialog unless there are changes to rubrics.
+* Client: "sync" button shows "diffs" of changes to rubrics.
+* Non-user-facing changes to how images and image metadata is handled.
 
 ### Fixed
-
-
+* Client: "sync" button was not indicating changes made to existing rubrics.
+* Manager: partial fix (no more crash) when trying to create synthetic substitute ID pages.
+* Misc UI fixes.
 
 
 ## [0.13.1] - 2023-02-24
