@@ -241,7 +241,6 @@ def upload(
     ver,
     rubrics,
     integrity_check,
-    images_used,
     knownFailCallback=None,
     unknownFailCallback=None,
     successCallback=None,
@@ -259,9 +258,6 @@ def upload(
         question (int or str): the question number
         ver (int or str): the version number
         integrity_check (str): the integrity_check string of the task.
-        images_used (list[dict]): a list of dicts of the images used.
-            Must have keys ``id`` and ``md5``, other keys ignored.
-            If you have a ``src_img_data``, that should work.
         knownFailCallback: if we fail in a way that is reasonably expected,
             call this function.
         unknownFailCallback: if we fail but don't really know why or what
@@ -299,7 +295,6 @@ def upload(
             pname,
             rubrics,
             integrity_check,
-            images_used,
         )
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
@@ -444,20 +439,6 @@ class MarkerExamModel(QStandardItemModel):
             ]
         )
         return r
-
-    def _expensive_search_and_update(self, img_id, md5, filename):
-        """Yuck, just yuck.
-
-        Tested with a few hundred papers, is not noticeably slow.  So the code
-        is aethetically unpleasant but perhaps good enough.
-        TODO: we could also just refresh/check the src_img_data on later read
-        """
-        for i in range(self.rowCount()):
-            src_img_data = eval(self.data(self.index(i, 10)))
-            for x in src_img_data:
-                if x["id"] == img_id:
-                    x["filename"] = filename
-            self.setData(self.index(i, 10), repr(src_img_data))
 
     def _getPrefix(self, r):
         """
@@ -1261,7 +1242,6 @@ class MarkerClient(QWidget):
         log.info("importing source image data (orientations etc) from .plom file")
         # filenames likely stale: could have restarted client in meantime
         src_img_data = plomdata["base_images"]
-        PC = self.downloader.pagecache
         for row in src_img_data:
             # remove legacy "local_filename" if present
             f = row.pop("local_filename", None) or row.get("filename")
@@ -1269,18 +1249,9 @@ class MarkerClient(QWidget):
                 # E.g., Reannotator used to lose "server_path", keep workaround
                 # just in case, by using previous session's filename
                 row["server_path"] = f
-            # now overwrite "local_filename" from this session
-            if PC.has_page_image(row["id"]):
-                row["filename"] = PC.page_image_path(row["id"])
-            else:
-                row["filename"] = self.downloader.get_placeholder_path()
+        self.get_downloads_for_src_img_data(src_img_data)
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
-        # after putting in model, trigger downloads (prevents race)
-        for row in src_img_data:
-            if PC.has_page_image(row["id"]):
-                continue
-            self.downloader.download_in_background_thread(row)
 
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         paperdir = Path(paperdir)
@@ -1334,6 +1305,7 @@ class MarkerClient(QWidget):
                     raise PlomSeriousException(
                         f"Unexpected Issue #2327: src_img_data is {src_img_data}, task={task}"
                     )
+            self.get_downloads_for_src_img_data(src_img_data, trigger=False)
             self.testImg.updateImage(src_img_data)
         # TODO: seems to behave ok without this hack: delete?
         # self.testImg.forceRedrawOrSomeBullshit()
@@ -1471,22 +1443,38 @@ class MarkerClient(QWidget):
         if update_select:
             self.moveSelectionToTask(task)
 
-    def trigger_downloads_for_task(self, task):
-        """Make sure the images for a task are downloaded or trigger downloads.
+    def get_downloads_for_src_img_data(self, src_img_data, trigger=True):
+        """Make sure the images for some source image data are downloaded.
 
-        TODO: this routine must've already done the initial download: maybe
-        a more general routine would be written that does not depend on the
-        `examModel` having a row for the task already.
+        If an image is not yet downloaded, trigger the download again.
+
+        Args:
+            src_img_data (list): list of dicts.  Note we may modify this
+                so pass a copy if you don't want this!  Specifically,
+                the ``"filename"`` key is inserted or replaced with the
+                path to the downloaded image or the placeholder image.
+
+        Keyword Args:
+            trigger (bool): if True we trigger background jobs for any
+                that have not been downloaded.
+
+        Returns:
+            bool: True if all images have already been downloaded, False
+            if at least one was not.  In the False case, downloads have
+            been triggered; wait; process events; then call back if you
+            want.
         """
-        src_img_data = self.examModel.get_source_image_data(task)
-        placeholder = self.downloader.get_placeholder_path()
+        all_present = True
+        PC = self.downloader.pagecache
         for row in src_img_data:
-            if row["filename"] == placeholder:
-                log.info(
-                    "image id %d still has placeholder, re-triggering download",
-                    row["id"],
-                )
+            if PC.has_page_image(row["id"]):
+                row["filename"] = PC.page_image_path(row["id"])
+                continue
+            all_present = False
+            log.info("triggering download for image id %d", row["id"])
             self.downloader.download_in_background_thread(row)
+            row["filename"] = self.downloader.get_placeholder_path()
+        return all_present
 
     def claim_task_and_trigger_downloads(self, task):
         """Claim a particular task for the current user and start image downloads.
@@ -1511,14 +1499,8 @@ class MarkerClient(QWidget):
         question_idx = int(task[6:])
         assert question_idx == self.question
 
-        PC = self.downloader.pagecache
-        for row in src_img_data:
-            if PC.has_page_image(row["id"]):
-                row["filename"] = PC.page_image_path(row["id"])
-            else:
-                row["filename"] = self.downloader.get_placeholder_path()
+        self.get_downloads_for_src_img_data(src_img_data)
 
-        # potential race with the downloader so trigger downloads after table insert
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -1527,10 +1509,6 @@ class MarkerClient(QWidget):
                 integrity_check=integrity_check,
             )
         )
-
-        for row in src_img_data:
-            if row["filename"] == self.downloader.get_placeholder_path():
-                self.downloader.download_in_background_thread(row)
 
     def moveSelectionToTask(self, task):
         """Update the selection in the list of papers."""
@@ -1548,10 +1526,7 @@ class MarkerClient(QWidget):
         log.debug(f"PageCache has finished downloading {img_id} to {filename}")
         self.ui.labelTech2.setText(f"last msg: downloaded img id={img_id}")
         self.ui.labelTech2.setToolTip(f"{filename}")
-        # TODO: time this
-        self.examModel._expensive_search_and_update(img_id, md5, filename)
-        # log.debug(f"Elapsed time for potentially expensive local DB update: %g", etime)
-        # TODO
+        # TODO: not all downloads require redrawing the current row...
         # if any("placeholder" in x for x in testImg.imagenames):
         # force a redraw
         self._updateCurrentlySelectedRow()
@@ -1662,13 +1637,8 @@ class MarkerClient(QWidget):
         count = 0
         placeholder = self.downloader.get_placeholder_path()
         while True:
-            keep_waiting = False
-            foo = self.examModel.get_source_image_data(task)
-            for row in foo:
-                if row["filename"] == placeholder:
-                    keep_waiting = True
-                    print(f">>>> row still has placeholder: {row}")
-            if not keep_waiting:
+            src_img_data = self.examModel.get_source_image_data(task)
+            if self.get_downloads_for_src_img_data(src_img_data):
                 break
             time.sleep(0.05)
             self.Qapp.processEvents()
@@ -1782,15 +1752,13 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         count = 0
-        placeholder = self.downloader.get_placeholder_path()
         while True:
-            keep_waiting = False
-            src_img_data = self.examModel.get_source_image_data(task)
-            for row in src_img_data:
-                if row["filename"] == placeholder:
-                    keep_waiting = True
-                    print(f">>>> row still has placeholder: {row}")
-            if not keep_waiting:
+            if pdict:
+                log.info("Taking src_img_data from previous plom data")
+                src_img_data = pdict["base_images"]
+            else:
+                src_img_data = self.examModel.get_source_image_data(task)
+            if self.get_downloads_for_src_img_data(src_img_data):
                 break
             time.sleep(0.1)
             self.Qapp.processEvents()
@@ -1827,7 +1795,6 @@ class MarkerClient(QWidget):
         taskid = task[1:]
         question_label = get_question_label(self.exam_spec, question_num)
         integrity_check = self.examModel.getIntegrityCheck(task)
-        src_img_data = self.examModel.get_source_image_data(task)
         return (
             taskid,
             question_label,
@@ -1952,7 +1919,6 @@ class MarkerClient(QWidget):
                 plomFileName(str): the name of the .plom file
                 rubric(list[str]): the keys of the rubrics used
                 integrity_check(str): the integrity_check string of the task.
-                src_img_data (list[dict]): image data, md5sums, etc
 
         Returns:
             None
@@ -1965,7 +1931,6 @@ class MarkerClient(QWidget):
             plomFileName,
             rubrics,
             integrity_check,
-            src_img_data,
         ) = stuff
         if not isinstance(grade, (int, float)):
             raise RuntimeError(f"Mark {grade} type {type(grade)} is not a number")
@@ -1980,12 +1945,13 @@ class MarkerClient(QWidget):
         # stat = self.examModel.getStatusByTask(task)
 
         # Copy the mark, annotated filename and the markingtime into the table
+        # TODO: this is probably the right time to insert the modified src_img_data
+        # TODO: but it may not matter as now the plomFileName has it internally
         self.examModel.markPaperByTask(
             task, grade, aname, plomFileName, markingTime, paperDir
         )
         # update the markingTime to be the total marking time
         totmtime = self.examModel.getMTimeByTask(task)
-        # TODO: should examModel have src_img_data and fnames updated too?
 
         _data = (
             task,
@@ -1999,7 +1965,6 @@ class MarkerClient(QWidget):
             self.version,
             rubrics,
             integrity_check,
-            src_img_data,
         )
         if self.allowBackgroundOps:
             # the actual upload will happen in another thread
@@ -2057,23 +2022,6 @@ class MarkerClient(QWidget):
                 self.requestNextInBackgroundStart()
 
         return data
-
-    def PermuteAndGetSamePaper(self, task, src_img_data):
-        """User has reorganized pages of an exam.
-
-        Args:
-            task (str): the task ID of the current test.
-            src_img_data (list[dict]): list of "page data" as rearranged.
-
-        Returns:
-            tuple: initialData (as described by :meth:`startTheAnnotator`.)
-        """
-        log.info("Rearranging image list for task {} = {}".format(task, src_img_data))
-        task = "q" + task
-        self.examModel.setOriginalFilesAndData(task, src_img_data)
-        # set the status back to untouched so that any old plom files ignored
-        self.examModel.setStatusByTask(task, "untouched")
-        return self.getDataForAnnotator(task)
 
     def backgroundUploadFinished(self, task, numDone, numtotal):
         """
@@ -2196,7 +2144,8 @@ class MarkerClient(QWidget):
         # Note: a single selection should have length 11 all with same row: could assert
         pr = idx[0].row()
         task = self.prxM.getPrefix(pr)
-        self.trigger_downloads_for_task(task)
+        src_img_data = self.examModel.get_source_image_data(task)
+        self.get_downloads_for_src_img_data(src_img_data)
 
     def get_upload_queue_length(self):
         """How long is the upload queue?

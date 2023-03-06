@@ -106,7 +106,7 @@ class Annotator(QWidget):
         Args:
             username (str): username of Marker
             parentMarkerUI (MarkerClient): the parent of annotator UI.
-            initialData (dict): as documented by the arguments to "loadNewTGV"
+            initialData (dict): as documented by the arguments to "load_new_question"
         """
         super().__init__()
 
@@ -123,7 +123,6 @@ class Annotator(QWidget):
 
         self.testName = None
         self.paperDir = None
-        self.src_img_data = None
         self.saveName = None
         self.maxMark = None
 
@@ -175,7 +174,7 @@ class Annotator(QWidget):
         self.modeInformation = ["move"]
 
         if initialData:
-            self.loadNewTGV(*initialData)
+            self.load_new_question(*initialData)
 
         self.rubric_widget.setInitialRubrics()
 
@@ -228,6 +227,8 @@ class Annotator(QWidget):
             # TODO: some kind of signal/slot, ontoggle...
             self._cat_view_menu.setVisible(False)
             self._hold_crop_checkbox.setVisible(False)
+            if self.scene:
+                self.scene.remove_page_hack_buttons()
             return
 
         txt = """<p>Enable experimental and/or advanced options?</p>
@@ -242,6 +243,7 @@ class Annotator(QWidget):
             "Creating new rubrics parameterized over version.",
             "Persistent held region between papers.",
             "Viewing cat pics.",
+            # "Page manipulation in annotator.",  # Issue #2522 enable in pagescene.py
         )
         info = f"""
             <h4>Current experimental features</h4>
@@ -263,6 +265,8 @@ class Annotator(QWidget):
         # TODO: some kind of signal/slot, ontoggle...
         self._cat_view_menu.setVisible(True)
         self._hold_crop_checkbox.setVisible(True)
+        if self.scene:
+            self.scene.build_page_hack_buttons()
 
     def is_experimental(self):
         return self.parentMarkerUI.is_experimental()
@@ -376,19 +380,12 @@ class Annotator(QWidget):
         m.addAction("About Plom", lambda: show_about_dialog(self))
         return m
 
-    def closeCurrentTGV(self):
-        """
-        Closes the current Test Group Version (closes scene tgv and sets relevant files to None)
-
-        Notes:
-            As a result of this method, there are occasions where many instance variables will be None.
-            Be cautious of how these variables will be handled in cases where they are None.
+    def close_current_scene(self):
+        """Removes the current cene, saving some info in case we want to open a new one.
 
         Returns:
-            None: Modifies self
-
+            None: Modifies self.
         """
-
         # TODO: self.view.disconnectFrom(self.scene)
         # self.view = None
         # TODO: how to reset the scene?
@@ -410,16 +407,26 @@ class Annotator(QWidget):
         del self.scene
         self.scene = None
 
+    def close_current_question(self):
+        """Closes the current question, closes scene and clears instance vars.
+
+        Notes:
+            As a result of this method, many instance variables will be `None`.
+            Be cautious of how these variables will be handled in cases where they are None.
+
+        Returns:
+            None: Modifies self.
+        """
+        self.close_current_scene()
         self.tgvID = None
         self.testName = None
         self.setWindowTitle("Annotator")
         self.paperDir = None
-        self.src_img_data = None
         self.saveName = None
         # feels like a bit of a kludge
         self.view.setHidden(True)
 
-    def loadNewTGV(
+    def load_new_question(
         self,
         tgvID,
         question_label,
@@ -473,17 +480,22 @@ class Annotator(QWidget):
         self.paperDir = paperdir
         self.saveName = Path(saveName)
         self.integrity_check = integrity_check
-        self.src_img_data = src_img_data
         self.maxMark = maxMark
         del maxMark
 
         if plomDict:
             assert plomDict["maxMark"] == self.maxMark, "mismatch between maxMarks"
 
+        self.load_new_scene(src_img_data, plomDict=plomDict)
+
+        # reset the timer (its not needed to make a new one)
+        self.timer.start()
+
+    def load_new_scene(self, src_img_data, *, plomDict=None):
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view.setHidden(False)  # or try not hiding it...
-        self.setViewAndScene()
+        self.setViewAndScene(src_img_data)
         # TODO: see above, can we maintain our zoom b/w images?  Would anyone want that?
         # TODO: see above, don't click a different button: want to keep same tool
 
@@ -517,9 +529,6 @@ class Annotator(QWidget):
             # if there is a held crop rectangle, then use it.
             if self.held_crop_rectangle_data:
                 self.scene.crop_from_plomfile(self.held_crop_rectangle_data)
-
-        # reset the timer (its not needed to make a new one)
-        self.timer.start()
 
     def change_annot_scale(self, scale=None):
         """Change the scale of the annotations.
@@ -717,7 +726,8 @@ class Annotator(QWidget):
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
-        image_md5_list = [x["md5"] for x in self.src_img_data]
+        src_img_data = self.scene.get_src_img_data()
+        image_md5_list = [x["md5"] for x in src_img_data]
         # Look for duplicates by first inverting the dict
         repeats = {}
         for i, md5 in enumerate(image_md5_list):
@@ -745,7 +755,7 @@ class Annotator(QWidget):
                 info_pre=False,
                 details=(
                     f"Annotator's image_md5_list is\n  {image_md5_list}\n"
-                    f"The src_img_data is\n  {self.src_img_data}\n"
+                    f"The src_img_data is\n  {src_img_data}\n"
                     "Include this info if you think this is a bug!"
                 ),
             ).exec()
@@ -787,16 +797,16 @@ class Annotator(QWidget):
                       {}\n
                     Consider filing a bug with this info!
                     """.format(
-                        self.src_img_data, page_data
+                        src_img_data, page_data
                     )
                 ).strip()
                 log.error(s)
                 ErrorMsg(self, s).exec()
 
-        has_annotations = self.scene.areThereAnnotations()
+        has_annotations = self.scene.hasAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data, has_annotations
+            self, testNumber, src_img_data, page_data, has_annotations
         )
         # TODO: have rearrange react to new downloads
         # PC.download_finished.connect(rearrangeView.shake_things_up)
@@ -804,7 +814,7 @@ class Annotator(QWidget):
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec() == QDialog.Accepted:
             perm = rearrangeView.permute
-            log.debug("adjust pages permutation output is: {}".format(perm))
+            log.debug("adjust pages permutation output is: %s", perm)
         # Workaround for memory leak Issue #1322, TODO better fix
         rearrangeView.listA.clear()
         rearrangeView.listB.clear()
@@ -815,7 +825,7 @@ class Annotator(QWidget):
             # pylint: disable=unsubscriptable-object
             md5 = [x["md5"] for x in perm]
             # But if the input already had dupes than its not our problem
-            md5_in = [x["md5"] for x in self.src_img_data]
+            md5_in = [x["md5"] for x in src_img_data]
             if len(set(md5)) != len(md5) and len(set(md5_in)) == len(md5_in):
                 s = dedent(
                     """
@@ -826,28 +836,18 @@ class Annotator(QWidget):
                     annotr src_img_data = {}\n
                     page_data = {}
                     """.format(
-                        perm, self.src_img_data, page_data
+                        perm, src_img_data, page_data
                     )
                 ).strip()
                 log.error(s)
                 ErrorMsg(self, s).exec()
-
-            tmp_tgv = self.tgvID
-            self.closeCurrentTGV()
-            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(tmp_tgv, perm)
-            log.debug("permuted: new stuff is {}".format(stuff))
-            if not stuff:
-                txt = """
-                    <p>Unexpectedly, Marker did not give us back the permuted
-                    material for marking.</p>
-                    <p>Something has gone wrong, maybe related to
-                    <a href="https://gitlab.com/plom/plom/-/issues/1967">Issue #1967</a>.
-                    </p>
-                """
-                ErrorMsg(self, txt).exec()
-            self.loadNewTGV(*stuff)
+            self.new_or_permuted_image_data(perm)
         self.setEnabled(True)
-        return
+
+    def new_or_permuted_image_data(self, src_img_data):
+        """We have permuted/added/removed underlying source images, tear done and build up again."""
+        self.close_current_scene()
+        self.load_new_scene(src_img_data)
 
     def experimental_cycle(self):
         self.scene.whichLineToDraw_next()
@@ -885,7 +885,7 @@ class Annotator(QWidget):
         ] = self.keybinding_custom_overlay
         self.setToolShortCuts()
 
-    def setViewAndScene(self):
+    def setViewAndScene(self, src_img_data):
         """
         Makes a new scene (pagescene object) and connects it to the view (pageview object).
 
@@ -900,7 +900,7 @@ class Annotator(QWidget):
         """
         self.scene = PageScene(
             self,
-            self.src_img_data,
+            src_img_data,
             self.maxMark,
             self.question_label,
         )
@@ -1034,7 +1034,7 @@ class Annotator(QWidget):
                 return
             log.debug("We have surrendered {}".format(self.tgvID))
             tmp_tgv = self.tgvID
-            self.closeCurrentTGV()
+            self.close_current_question()
         else:
             tmp_tgv = None
 
@@ -1058,7 +1058,7 @@ class Annotator(QWidget):
             # Not really safe to give it back? (at least we did the view...)
             return
         log.debug("saveAndGetNext: new stuff is {}".format(stuff))
-        self.loadNewTGV(*stuff)
+        self.load_new_question(*stuff)
 
     @pyqtSlot()
     def saveAndClose(self):
@@ -1421,7 +1421,7 @@ class Annotator(QWidget):
 
         """
         # do some checks before accepting things
-        if not self.scene.areThereAnnotations():
+        if not self.scene.hasAnnotations():
             msg = InfoMsg(
                 self, "Please make an annotation, even if there is no answer."
             )
@@ -1524,7 +1524,6 @@ class Annotator(QWidget):
             plomfile,
             rubric_ids,
             self.integrity_check,
-            self.src_img_data,
         ]
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
@@ -1719,7 +1718,7 @@ class Annotator(QWidget):
         # TODO: consider saving colour only if not red?
         # TODO: someday src_img_data may have other images not used
         plomData = {
-            "base_images": self.src_img_data,
+            "base_images": self.scene.get_src_img_data(),
             "saveName": str(aname),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),

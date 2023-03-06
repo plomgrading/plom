@@ -376,7 +376,6 @@ class Messenger(BaseMessenger):
         plomfile,
         rubrics,
         integrity_check,
-        image_md5_list,
     ):
         """Upload annotated image and associated data to the server.
 
@@ -392,7 +391,6 @@ class Messenger(BaseMessenger):
             rubrics (list): list of rubric IDs used on the page.
             integrity_check (str): a blob that the server expects to get
                 back.
-            image_md5_list (list): the md5sums of the backing images.
 
         Returns:
             list: a 2-list of the form `[#done, #total]`.
@@ -406,6 +404,12 @@ class Messenger(BaseMessenger):
             PlomTaskDeletedError
             PlomSeriousException
         """
+        # can't change the legacy api during 0.12.x, which expects the src_img_data
+        # duplicated outside of plomfile.
+        # TODO: take it out of the django API, and pass `pdict` instead of file.
+        with open(plomfile, "rb") as f:
+            pdict = json.load(f)
+        image_md5_list = pdict["base_images"]
 
         if self.webplom:
             return self._MreturnMarkedTask_webplom(

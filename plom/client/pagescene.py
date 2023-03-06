@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 
+from copy import deepcopy
 from itertools import cycle
 from pathlib import Path
 import logging
@@ -37,6 +38,8 @@ from PyQt5.QtWidgets import (
     QGraphicsItemGroup,
     QMessageBox,
     QUndoStack,
+    QToolButton,
+    QMenu,
 )
 from PyQt5.QtCore import Qt
 
@@ -233,7 +236,7 @@ class MaskingOverlay(QGraphicsItemGroup):
         self.addToGroup(self.left_bar)
         self.addToGroup(self.right_bar)
         self.addToGroup(self.dotted_boundary)
-        self.setZValue(0)
+        self.setZValue(-1)
 
     def crop_to_focus(self, crop_rect):
         self.inner_rect = crop_rect
@@ -421,30 +424,20 @@ class PageScene(QGraphicsScene):
                 example a string like "Q7", or `None` if not relevant.
         """
         super().__init__(parent)
-        # Grab filename of groupimage
-        self.src_img_data = src_img_data  # TODO: do we need this saved?
+        self.src_img_data = deepcopy(src_img_data)
         self.maxMark = maxMark
         self.score = None
+        self._page_hack_buttons = []
         # Tool mode - initially set it to "move"
         self.mode = "move"
-        # build pixmap and graphicsitemgroup.
-        self.underImage = UnderlyingImages(self.src_img_data)
-        self.whichLineToDraw_init()
-        # a margin that surrounds the scanned images, with size related to the
-        # minimum dimensions of the images, but never smaller than 512 pixels
-        margin_width = max(512, 0.20 * self.underImage.min_dimension)
-        margin_rect = QRectF(self.underImage.boundingRect()).adjusted(
-            -margin_width, -margin_width, margin_width, margin_width
-        )
-        self.underRect = UnderlyingRect(margin_rect)
-        # and the overlay mask
-        self.overMask = MaskingOverlay(margin_rect, self.underImage.boundingRect())
-        self.addItem(self.underRect)
-        self.addItem(self.underImage)
-        self.addItem(self.overMask)
 
-        # Build scene rectangle to fit the image, and place image into it.
-        self.setSceneRect(self.underImage.boundingRect())
+        self.underImage = None
+        self.underRect = None
+        self.overMask = None
+        self.buildUnderLay()
+
+        self.whichLineToDraw_init()
+
         # initialise the undo-stack
         self.undoStack = QUndoStack()
 
@@ -510,6 +503,144 @@ class PageScene(QGraphicsScene):
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
+    def buildUnderLay(self):
+        if self.underImage:
+            log.debug("removing underImage")
+            self.removeItem(self.underImage)
+        if self.underRect:
+            self.removeItem(self.underRect)
+            log.debug("removing underRect")
+        if self.overMask:
+            self.removeItem(self.overMask)
+            log.debug("removing overMask")
+
+        # build pixmap and graphicsitemgroup.
+        self.underImage = UnderlyingImages(self.src_img_data)
+        # a margin that surrounds the scanned images, with size related to the
+        # minimum dimensions of the images, but never smaller than 512 pixels
+        margin_width = max(512, 0.20 * self.underImage.min_dimension)
+        margin_rect = QRectF(self.underImage.boundingRect()).adjusted(
+            -margin_width, -margin_width, margin_width, margin_width
+        )
+        self.underRect = UnderlyingRect(margin_rect)
+        # TODO: the overmask has wrong z-value on rebuild (?)
+        self.overMask = MaskingOverlay(margin_rect, self.underImage.boundingRect())
+        self.addItem(self.underRect)
+        self.addItem(self.underImage)
+        self.addItem(self.overMask)
+
+        if self.parent().is_experimental():
+            self.build_page_hack_buttons()
+
+        # Build scene rectangle to fit the image, and place image into it.
+        self.setSceneRect(self.underImage.boundingRect())
+
+    def remove_page_hack_buttons(self):
+        for h in self._page_hack_buttons:
+            self.removeItem(h)
+            h.deleteLater()
+        self._page_hack_buttons = []
+
+    def build_page_hack_buttons(self):
+        # TODO: Issue #2522 remove early return to enable this feature
+        return
+
+        def page_delete_func_factory(n):
+            def page_delete():
+                img = self.underImage.images[n]
+                self.src_img_data.pop(n)
+                br = img.mapRectToScene(img.boundingRect())
+                log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
+                # shift existing annotations leftward
+                loc = br.right()
+                if n == len(self.underImage.images) - 1:
+                    # special case when deleting right-most image
+                    loc = br.left()
+                stuff = self.find_items_right_of(loc)
+                self.move_some_items(stuff, -br.width(), 0)
+                # TODO: replace with emit signal (if needed)
+                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+                self.buildUnderLay()
+
+            return page_delete
+
+        def page_shift_func_factory(n, relative):
+            def page_shift():
+                d = self.src_img_data.pop(n)
+                self.src_img_data.insert(n + relative, d)
+                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+                self.buildUnderLay()
+
+            return page_shift
+
+        def page_rotate_func_factory(n, degrees):
+            def page_rotate():
+                # get old page width and location, select rightward objects to shift
+                img = self.underImage.images[n]
+                br = img.mapRectToScene(img.boundingRect())
+                loc = br.right()
+                w = br.width()
+                log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
+                stuff = self.find_items_right_of(loc)
+                # do the rotation in metadata and rebuild
+                self.src_img_data[n]["orientation"] += degrees
+                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+                self.buildUnderLay()
+                # shift previously-selected rightward annotations by diff in widths
+                img = self.underImage.images[n]
+                br = img.mapRectToScene(img.boundingRect())
+                log.debug(f"After rotation: old width {w} now {br.width()}")
+                self.move_some_items(stuff, br.width() - w, 0)
+
+            return page_rotate
+
+        self.remove_page_hack_buttons()
+        for n in range(len(self.underImage.images)):
+            img = self.underImage.images[n]
+            b = QToolButton(text=f"Page {n}")
+            # b = QToolButton(text=f"\N{Page}")
+            b.setStyleSheet("background-color: #ff6666")
+            # parenting the menu inside the scene
+            m = QMenu(b)
+            # TODO: nicer to parent by Annotr but unsupported (?) and unpredictable
+            # m = QMenu(self.parent())
+            _ = m.addAction("Remove this page", page_delete_func_factory(n))
+            if len(self.underImage.images) == 1:
+                _.setEnabled(False)
+                _.setToolTip("Cannot remove lone page")
+            _ = m.addAction("Shift left", page_shift_func_factory(n, -1))
+            if n == 0:
+                _.setEnabled(False)
+            _ = m.addAction("Shift right", page_shift_func_factory(n, 1))
+            if n == len(self.underImage.images) - 1:
+                _.setEnabled(False)
+            m.addAction(
+                "\N{Anticlockwise Open Circle Arrow} Rotate CCW",
+                page_rotate_func_factory(n, -90),
+            )
+            m.addAction(
+                "\N{Clockwise Open Circle Arrow} Rotate CW",
+                page_rotate_func_factory(n, 90),
+            )
+            m.addAction("Flip", page_rotate_func_factory(n, 180))
+            m.addSeparator()
+            m.addAction("Find other pages...", self.parent().rearrangePages)
+            b.setMenu(m)
+            b.setPopupMode(QToolButton.InstantPopup)
+            h = self.addWidget(b)
+            h.setScale(1.8)
+            br = img.mapRectToScene(img.boundingRect())
+            wbr = h.mapRectToScene(h.boundingRect())
+            # h.setPos(br.right() - wbr.width(), br.top() - wbr.height())
+            # h.setPos(br.right() - wbr.width(), br.top())
+            h.setPos(
+                br.left() + br.width() / 2 - wbr.width() / 2,
+                br.top() - wbr.height() / 2,
+            )
+            # h.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+            b.setToolTip(f"Page options for page {n}")
+            self._page_hack_buttons.append(h)
+
     def getScore(self):
         return self.score
 
@@ -567,6 +698,9 @@ class PageScene(QGraphicsScene):
         Note that this assumes that the rubrics are consistent as per currentMarkingState
         """
         self.score = compute_score(self.get_rubrics(), self.maxMark)
+
+    def get_src_img_data(self):
+        return self.src_img_data
 
     def how_many_underlying_images_wide(self):
         """How many images wide is the bottom layer?
@@ -769,7 +903,7 @@ class PageScene(QGraphicsScene):
         """
         return not self.undoStack.isClean()
 
-    def areThereAnnotations(self):
+    def hasAnnotations(self):
         """
         Checks for pickleable annotations.
 
@@ -819,7 +953,12 @@ class PageScene(QGraphicsScene):
         returns:
             pathlib.Path: the file we just saved to, including jpg or png.
         """
+        # don't want to render these, but should we restore them after?
+        # TODO: or setVisible(False) instead of remove?
+        self.remove_page_hack_buttons()
+
         self.hideGhost()
+
         # Get the width and height of the image
         br = self.getSaveableRectangle()
         self.setSceneRect(br)
@@ -1612,6 +1751,90 @@ class PageScene(QGraphicsScene):
         c = self.undoStack.count()
         for k in range(c):
             print(k, self.undoStack.text(k))
+
+    def is_user_placed(self, item):
+        """Tell me if the user placed it or if its some autogen junk.
+
+        Let's try to isolate this unpleasantness in one place.
+
+        Returns:
+            bool: True if this is a user-generated object, False if not.
+        """
+        from plom.client.tools import (
+            CrossItem,
+            DeltaItem,
+            ImageItem,
+            TextItem,
+            TickItem,
+        )
+        from plom.client.tools.ellipse import EllipseItem
+        from plom.client.tools.highlight import HighlightItem
+        from plom.client.tools.line import LineItem
+        from plom.client.tools.arrow import ArrowItem, ArrowDoubleItem
+        from plom.client.tools.pen import PenItem
+        from plom.client.tools.penArrow import PenArrowItem
+        from plom.client.tools.questionMark import QMarkItem
+
+        if getattr(item, "saveable", None):
+            return True
+        if item in (
+            CrossItem,
+            DeltaItem,
+            ImageItem,
+            TextItem,
+            TickItem,
+            EllipseItem,
+            HighlightItem,
+            LineItem,
+            ArrowItem,
+            ArrowDoubleItem,
+            PenItem,
+            PenArrowItem,
+            QMarkItem,
+        ):
+            return True
+        # TODO more special cases?  I notice a naked QGraphicsLineItem used in elastic box...
+        return False
+
+    def find_items_right_of(self, x):
+        keep = []
+        log.debug(f"Searching for user-placed objects to the right of x={x}")
+        for item in self.items():
+            if not self.is_user_placed(item):
+                log.debug(f"  nonuser: {item}")
+                continue
+            br = item.mapRectToScene(item.boundingRect())
+            myx = br.left()
+            if myx > x:
+                log.debug(f"  found:   {item}: has x={myx} > {x}")
+                keep.append(item)
+            else:
+                log.debug(f"  discard: {item}: has x={myx} <= {x}")
+        return keep
+
+    def move_some_items(self, I, dx, dy):
+        """Translate some of the objects in the scene.
+
+        args:
+            I (list): which objects to move.  TODO: not quite sure yet
+                what is admissible here but we will try to filter out
+                non-user-created stuff.
+            dx (float): translation delta in the horizontal direction.
+            dy (float): translation delta in the vertical direction.
+
+        Wraps the movement of all objects in a compound undo item.
+        """
+        from plom.client.tools import CommandMoveItem
+
+        log.debug(f"Shifting {len(I)} objects by ({dx}, {dy})")
+        self.undoStack.beginMacro("Speak at once while taking turns")
+        for item in I:
+            if not self.is_user_placed(item):
+                continue
+            log.debug(f"got user-placed item {item}, shifting by ({dx}, {dy})")
+            command = CommandMoveItem(item, QPointF(dx, dy))
+            self.undoStack.push(command)
+        self.undoStack.endMacro()
 
     def pickleSceneItems(self):
         """
