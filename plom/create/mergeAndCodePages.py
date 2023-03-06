@@ -98,7 +98,7 @@ def create_exam_and_insert_QR(
     # also build page to version mapping from spec and the question-version dict
     page_to_version = build_page_to_version_dict(spec, question_versions)
 
-    if source_versions_path: 
+    if source_versions_path:
         source = Path(source_versions_path)
     else:
         source = Path("sourceVersions")
