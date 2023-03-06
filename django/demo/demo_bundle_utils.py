@@ -16,6 +16,8 @@ from plom.create.scribble_utils import (
     splitFakeFile,
 )
 
+# from BuildPaperPDF.services import BuildPapersService
+
 extra_page_probability = 0.2
 extra_page_font_size = 18
 garbage_page_probability = 0.2
@@ -43,7 +45,7 @@ def get_classlist_as_dict():
 
 def get_extra_page():
     # Assumes that the extra page has been generated
-    cmd = "python3 manage.py plom_preparation_extrapage --download papersToPrint/extra_page.pdf"
+    cmd = "python3 manage.py plom_preparation_extrapage --download media/papersToPrint/extra_page.pdf"
     subprocess.check_call(split(cmd))
 
 
@@ -149,9 +151,10 @@ def _scribble_loop(assigned_papers_ids, extra_page_path, out_file, deterministic
 def scribble_on_exams(*, deterministic=True):
     classlist = get_classlist_as_dict()
     classlist_length = len(classlist)
-    paper_list = [paper for paper in Path("papersToPrint").glob("exam*.pdf")]
+    papers_to_print = Path("media/papersToPrint")
+    paper_list = [paper for paper in papers_to_print.glob("exam*.pdf")]
     get_extra_page()  # download copy of the extra-page pdf to papersToPrint subdirectory
-    extra_page_path = Path("papersToPrint") / "extra_page.pdf"
+    extra_page_path = papers_to_print / "extra_page.pdf"
 
     if deterministic:
         number_papers_to_use = classlist_length

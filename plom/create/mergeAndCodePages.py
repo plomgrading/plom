@@ -67,6 +67,7 @@ def create_exam_and_insert_QR(
     tmpdir,
     *,
     no_qr=False,
+    source_versions_path=None,
 ):
     """Creates the exam objects and insert the QR codes.
 
@@ -83,6 +84,8 @@ def create_exam_and_insert_QR(
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
             Note backward logic: False means yes to QR-codes.
+        source_versions_path (str or Pathlib.Path): location of the source versions.
+            Defaults to "./sourceVersions"
 
     Returns:
         fitz.Document: PDF document.
@@ -95,7 +98,10 @@ def create_exam_and_insert_QR(
     # also build page to version mapping from spec and the question-version dict
     page_to_version = build_page_to_version_dict(spec, question_versions)
 
-    source = Path("sourceVersions")
+    if source_versions_path: 
+        source = Path(source_versions_path)
+    else:
+        source = Path("sourceVersions")
     # dict of version (int) -> source pdf (fitz.Document)
     pdf_version = {}
     for ver in range(1, spec["numberOfVersions"] + 1):
@@ -370,6 +376,7 @@ def make_PDF(
     xcoord=None,
     ycoord=None,
     where=None,
+    source_versions_path=None,
 ):
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -395,6 +402,8 @@ def make_PDF(
         ycoord (float): vertical positioning of the prename box.
         where (pathlib.Path/None): where to save the files, with some
             default if omitted.
+        source_versions_path (pathlib.Path/str/None): location of the
+            source versions directory.
 
     Returns:
         pathlib.Path: the file that was just written.
@@ -422,6 +431,7 @@ def make_PDF(
             question_versions,
             Path(tmp_dir),
             no_qr=no_qr,
+            source_versions_path=source_versions_path,
         )
 
     # If provided with student name and id, preprint on cover

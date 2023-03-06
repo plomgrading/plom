@@ -96,9 +96,9 @@ class Command(BaseCommand):
         if len(stats):
             self.stdout.write(f"{len(stats)} tasks total:")
             rev_stat = {}
-            for (n, state) in stats.items():
+            for n, state in stats.items():
                 rev_stat.setdefault(state, []).append(n)
-            for (state, papers) in rev_stat.items():
+            for state, papers in rev_stat.items():
                 self.stdout.write(f' * "{state}": {format_int_list_with_runs(papers)}')
             if len(rev_stat.get("complete", [])) == len(stats):
                 self.stdout.write("All papers are now built")
