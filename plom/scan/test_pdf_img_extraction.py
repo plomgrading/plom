@@ -27,6 +27,21 @@ def test_pdf_process_file_names(tmpdir):
     assert files[2].name == "mydoc-A-B-00003.png"
 
 
+def test_pdf_process_also_side_effect_in_dir(tmpdir):
+    tmp_path = Path(tmpdir)
+    f = tmp_path / "mydoc.pdf"
+    where = tmp_path / "bar"
+    where.mkdir()
+    d = fitz.open()
+    d.new_page()
+    d.new_page()
+    d.new_page()
+    d.save(f)
+    files = processFileToBitmaps(f, where)
+    # no more and no less if we glob instead of using return value
+    assert set(files) == set(where.glob("*"))
+
+
 def test_pdf_process_img_height(tmpdir):
     tmp_path = Path(tmpdir)
     f = tmp_path / "doc.pdf"

@@ -106,15 +106,14 @@ class ScanService:
             basename (str): a basic filename without the extension
         """
         with fitz.Document(bundle.file_path) as pdf_doc:
-            # TODO: debug_jpeg makes a mess of things: for demo mode only!
             save_path = render_page_to_bitmap(
                 pdf_doc[index],
                 basedir,
                 basename,
                 bundle.file_path,
-                debug_jpeg=True,
                 add_metadata=True,
             )
+        # TODO: if demo, then do make_mucked_up_jpeg here
 
         with open(save_path, "rb") as f:
             image_hash = hashlib.sha256(f.read()).hexdigest()

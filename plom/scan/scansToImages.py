@@ -142,6 +142,7 @@ def processFileToBitmaps(
     Args:
         file_name (str, Path): PDF file from which to extract bitmaps.
         dest (str, Path): where to save the resulting bitmap files.
+            Must exist.
 
     Keyword Args:
         do_not_extract (bool): always render, do no extract even if
@@ -212,9 +213,9 @@ def processFileToBitmaps(
             )
             # For testing, randomly make jpegs, rotated a bit, of various qualities
             if debug_jpeg and random.uniform(0, 1) <= 0.5:
-                outname = make_mucked_up_jpeg(
-                    outname, dest / ("muck-" + basename + ".jpg")
-                )
+                _ = make_mucked_up_jpeg(outname, dest / ("muck-" + basename + ".jpg"))
+                outname.unlink()
+                outname = _
             files.append(outname)
         assert len(files) == len(doc), "Expected one image per page"
     return files
@@ -598,6 +599,8 @@ def process_scans(
 
     Returns:
         list: filenames (`pathlib.Path`) in page order, one for each page.
+        The same files will be in the directory specified by `bundle_dir`.
+        We do not add any other files to that directory.
     """
     make_bundle_dir(bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
