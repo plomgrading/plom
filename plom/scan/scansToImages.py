@@ -212,9 +212,9 @@ def processFileToBitmaps(
             )
             # For testing, randomly make jpegs, rotated a bit, of various qualities
             if debug_jpeg and random.uniform(0, 1) <= 0.5:
-                outname = make_mucked_up_jpeg(
-                    outname, dest / ("muck-" + basename + ".jpg")
-                )
+                new = make_mucked_up_jpeg(outname, dest / ("muck-" + basename + ".jpg"))
+                outname.unlink()
+                outname = new
             files.append(outname)
         assert len(files) == len(doc), "Expected one image per page"
     return files
