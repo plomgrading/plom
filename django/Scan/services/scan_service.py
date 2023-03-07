@@ -6,6 +6,7 @@
 # Copyright (C) 2023 Natalie Balashov
 
 from collections import Counter
+from statistics import mode
 import hashlib
 import pathlib
 import shutil
@@ -33,6 +34,7 @@ from Scan.models import (
     CollisionStagingImage,
 )
 from Papers.models import ErrorImage
+from Papers.services import ImageBundleService
 from .qr_validators import QRErrorService
 
 
@@ -790,3 +792,20 @@ class ScanService:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        img_service = ImageBundleService()
+
+        all_complete_images_objs = self.get_all_complete_images(bundle_obj)
+        for complete_image in all_complete_images_objs:
+            paper_id, page_num = self.get_paper_id_and_page_num(complete_image.parsed_qr)
+            img_service.push_staged_image(complete_image, paper_id, page_num)
+
+    @transaction.atomic
+    def get_paper_id_and_page_num(self, image_qr):
+            paper_id = []
+            page_num = []
+            for q in image_qr:
+                paper_id.append(image_qr.get(q)["paper_id"])
+                page_num.append(image_qr.get(q)["page_num"])
+
+            return mode(paper_id), mode(page_num)
