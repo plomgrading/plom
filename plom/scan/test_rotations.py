@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
@@ -14,7 +14,6 @@ else:
 
 from PIL import Image
 from PIL import ImageChops
-from pytest import raises
 
 import plom.scan
 from plom.scan import rotate_bitmap
@@ -187,7 +186,7 @@ def test_rotate_jpeg_lossless_cw(tmpdir):
         # minus sign b/c PIL does CCW
         im2 = im2.rotate(-angle, expand=True)
         diff = ImageChops.difference(im, im2)
-        # diff.save(f"diff{angle}.png")
+        diff.save(f"diff{angle}.png")
         assert not diff.getbbox()
 
 
@@ -215,7 +214,7 @@ def test_rotate_jpeg_lossless_ccw(tmpdir):
         im2.load()
         im2 = im2.rotate(angle, expand=True)
         diff = ImageChops.difference(im, im2)
-        # diff.save(f"diff{angle}.png")
+        diff.save(f"diff{angle}.png")
         assert not diff.getbbox()
 
 
@@ -280,5 +279,5 @@ def test_rotate_default_ccw(tmpdir):
         im1 = pil_load_with_jpeg_exif_rot_applied(f1)
         im2 = pil_load_with_jpeg_exif_rot_applied(f2)
         diff = ImageChops.difference(im1, im2)
-        # diff.save(f"diff{angle}.png")
+        diff.save(f"diff{angle}.png")
         assert not diff.getbbox()

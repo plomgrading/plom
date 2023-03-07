@@ -26,6 +26,7 @@ from plom import __version__
 from plom import PlomImageExts
 from plom import ScenePixelHeight
 from plom.scan.bundle_utils import make_bundle_dir
+from plom.scan.rotate import pil_load_with_jpeg_exif_rot_applied
 
 
 log = logging.getLogger("scan")
@@ -141,6 +142,7 @@ def processFileToBitmaps(
     Args:
         file_name (str, Path): PDF file from which to extract bitmaps.
         dest (str, Path): where to save the resulting bitmap files.
+            Must exist.
 
     Keyword Args:
         do_not_extract (bool): always render, do no extract even if
@@ -188,7 +190,7 @@ def processFileToBitmaps(
 
         files = []
         for p in doc:
-            basename = f"{safeScan}-{(p.number + 1):03}"
+            basename = f"{safeScan}-{(p.number + 1):05}"
             outname, msgs = try_to_extract_image(
                 p,
                 doc,
@@ -207,9 +209,13 @@ def processFileToBitmaps(
                 dest,
                 basename,
                 file_name,
-                debug_jpeg=debug_jpeg,
                 add_metadata=add_metadata,
             )
+            # For testing, randomly make jpegs, rotated a bit, of various qualities
+            if debug_jpeg and random.uniform(0, 1) <= 0.5:
+                _ = make_mucked_up_jpeg(outname, dest / ("muck-" + basename + ".jpg"))
+                outname.unlink()
+                outname = _
             files.append(outname)
         assert len(files) == len(doc), "Expected one image per page"
     return files
@@ -327,8 +333,6 @@ def render_page_to_bitmap(
             uniqifying pages, you can pass whatever you want.
 
     Keyword Args:
-        debug_jpeg (bool): make jpegs, randomly rotated of various
-            quality settings, for debugging or demos.  Default: False.
         add_metadata (bool): add invisible metadata to each image
             including bundle name and random numbers.  Default: True.
             If you disable this, you can get two identical images
@@ -391,35 +395,6 @@ def render_page_to_bitmap(
         warn(_m)
         log.warning(_m)
 
-    # For testing, randomly make jpegs, rotated a bit, of various qualities
-    if debug_jpeg and random.uniform(0, 1) <= 0.5:
-        outname = dest / (basename + ".jpg")
-        img = PIL.Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        angle = random.choice([90.5, 180.4, -90.3, -88, -1])
-        msgs = [f"hard-rotate {angle}"]
-        img = img.rotate(
-            angle,
-            resample=PIL.Image.BILINEAR,
-            expand=True,
-            fillcolor=(128, 128, 128, 0),
-        )
-        quality = random.choice([6, 30, 94, 94, 94])
-        msgs.append(f"quality {quality}")
-        r = random.choice([None, None, None, 3, 6, 8])
-        if r:
-            msgs.append(f"exif rotate {r}")
-        log.info("  Randomly making jpeg " + ", ".join(msgs))
-        img.save(outname, "JPEG", quality=quality, optimize=True)
-        # We write some unique metadata into the JPEG exif data to avoid Issue #1573
-        im_shell = exif.Image(outname)
-        im_shell.set("user_comment", generate_metadata_str(bundle_name, p.number))
-        if r:
-            im_shell.set("orientation", r)
-        with open(outname, "wb") as f:
-            f.write(im_shell.get_file())
-        # add_metadata_jpeg_comment(outname, file_name, p.number)
-        return outname
-
     pngname = dest / (basename + ".png")
     jpgname = dest / (basename + ".jpg")
     if add_metadata:
@@ -446,6 +421,43 @@ def render_page_to_bitmap(
     jpgname.unlink()
     return pngname
     # WebP here is also an option, Issue #1864.
+
+
+def make_mucked_up_jpeg(f, outname):
+    """
+            debug_jpeg (bool): make jpegs, randomly rotated of various
+            quality settings, for debugging or demos.  Default: False.
+
+    Args:
+        f (pathlib.Path): input
+        out (pathlib.Path): output file
+    """
+    img = pil_load_with_jpeg_exif_rot_applied(f)
+
+    angle = random.choice([90.5, 180.4, -90.3, -88, -1])
+    msgs = [f"hard-rotate {angle}"]
+    img = img.rotate(
+        angle,
+        resample=PIL.Image.BILINEAR,
+        expand=True,
+        fillcolor=(128, 128, 128, 0),
+    )
+    quality = random.choice([6, 30, 94, 94, 94])
+    msgs.append(f"quality {quality}")
+    r = random.choice([None, None, None, 3, 6, 8])
+    if r:
+        msgs.append(f"exif rotate {r}")
+    log.info("  Randomly making jpeg " + ", ".join(msgs))
+    img.save(outname, "JPEG", quality=quality, optimize=True)
+    im_shell = exif.Image(outname)
+    # debugging so maybe we don't need unique JPEG exif metadata for Issue #1573
+    # im_shell.set("user_comment", generate_metadata_str(bundle_name, p.number))
+    if r:
+        im_shell.set("orientation", r)
+    with open(outname, "wb") as f:
+        f.write(im_shell.get_file())
+    # add_metadata_jpeg_comment(outname, file_name, p.number)
+    return outname
 
 
 def extractImageFromFitzPage(page, doc):
@@ -587,6 +599,8 @@ def process_scans(
 
     Returns:
         list: filenames (`pathlib.Path`) in page order, one for each page.
+        The same files will be in the directory specified by `bundle_dir`.
+        We do not add any other files to that directory.
     """
     make_bundle_dir(bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"

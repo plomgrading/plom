@@ -11,10 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Client: "sync" button doesn't pop up a dialog unless there are changes to rubrics.
+* Client: "sync" button shows "diffs" of changes to rubrics.
+* Non-user-facing changes to how images and image metadata is handled.
 
 ### Fixed
-
-
+* Client: "sync" button was not indicating changes made to existing rubrics.
+* Manager: partial fix (no more crash) when trying to create synthetic substitute ID pages.
+* Misc UI fixes.
 
 
 ## [0.13.1] - 2023-02-24
@@ -969,7 +973,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.13.1...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.13.1...main
 [0.13.1]: https://gitlab.com/plom/plom/-/compare/v0.13.0...v0.13.1
 [0.13.0]: https://gitlab.com/plom/plom/-/compare/v0.12.3...v0.13.0
 [0.12.3]: https://gitlab.com/plom/plom/-/compare/v0.12.2...v0.12.3
