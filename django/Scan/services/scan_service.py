@@ -13,6 +13,7 @@ import shutil
 import fitz
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
@@ -41,53 +42,53 @@ class ScanService:
     Functions for staging scanned test-papers.
     """
 
-    def upload_bundle(self, pdf_doc, slug, user, timestamp, pdf_hash):
+    def upload_bundle(self, uploaded_pdf_file, slug, user, timestamp, pdf_hash, number_of_pages):
         """
         Upload a bundle PDF and store it in the filesystem + database.
         Also, split PDF into page images + store in filesystem and database.
         """
-        file_name = f"{timestamp}.pdf"
-
+        
+        # make sure the path is created
         user_dir = pathlib.Path("media") / user.username
         user_dir.mkdir(exist_ok=True)
         bundles_dir = user_dir / "bundles"
         bundles_dir.mkdir(exist_ok=True)
         bundle_dir = bundles_dir / f"{timestamp}"
         bundle_dir.mkdir(exist_ok=True)
-        with open(bundle_dir / file_name, "w") as f:
-            pdf_doc.save(f)
-
-        with transaction.atomic():
-            bundle_db = StagingBundle(
-                slug=slug,
-                file_path=bundle_dir / file_name,
-                user=user,
-                timestamp=timestamp,
-                pdf_hash=pdf_hash,
-            )
-            bundle_db.save()
+        
+        with uploaded_pdf_file.open() as fh:
+            with transaction.atomic():
+                bundle_obj = StagingBundle(
+                    slug=slug,
+                    pdf_file = File(fh, name=f"{timestamp}.pdf"),
+                    user=user,
+                    timestamp=timestamp,
+                    number_of_pages = number_of_pages,
+                    pdf_hash=pdf_hash,
+                )
+                bundle_obj.save()
 
         image_dir = bundle_dir / "pageImages"
         image_dir.mkdir(exist_ok=True)
         unknown_dir = bundle_dir / "unknownPages"
         unknown_dir.mkdir(exist_ok=True)
-        self.split_and_save_bundle_images(pdf_doc, bundle_db, image_dir)
+        self.split_and_save_bundle_images(bundle_obj, image_dir)
 
     @transaction.atomic
-    def split_and_save_bundle_images(self, pdf_doc, bundle, base_dir):
+    def split_and_save_bundle_images(self, bundle_obj, base_dir):
         """
         Read a PDF document and save page images to filesystem/database
 
         Args:
-            pdf_doc: fitz.document object of a bundle
-            bundle: StagingBundle object
+            bundle_obj: StagingBundle object
             base_dir: pathlib.Path object of path to save image files
         """
-        n_pages = pdf_doc.page_count
+
+        n_pages = bundle_obj.number_of_pages
         for i in range(n_pages):
-            page_task = self._get_page_image(bundle, i, base_dir, f"page{i:05}")
+            page_task = self._get_page_image(bundle_obj, i, base_dir, f"page{i:05}")
             page_task_db = PageToImage(
-                bundle=bundle,
+                bundle=bundle_obj,
                 huey_id=page_task.id,
                 status="queued",
                 created=timezone.now(),
@@ -105,12 +106,12 @@ class ScanService:
             basedir (pathlib.Path): were to put the image
             basename (str): a basic filename without the extension
         """
-        with fitz.Document(bundle.file_path) as pdf_doc:
+        with fitz.open(bundle.pdf_file.path) as pdf_doc:
             save_path = render_page_to_bitmap(
                 pdf_doc[index],
                 basedir,
                 basename,
-                bundle.file_path,
+                bundle.pdf_file,
                 add_metadata=True,
             )
         # TODO: if demo, then do make_mucked_up_jpeg here
@@ -192,7 +193,8 @@ class ScanService:
         """
         Return all of the staging bundles that a user uploaded
         """
-        bundles = StagingBundle.objects.filter(user=user, has_page_images=True)
+        # bundles = StagingBundle.objects.filter(user=user, has_page_images=True)
+        bundles = StagingBundle.objects.filter(user=user)
         return list(bundles)
 
     @transaction.atomic

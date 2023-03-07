@@ -107,16 +107,18 @@ class ScannerHomeView(ScannerRequiredView):
         context = self.build_context(request.user)
         form = BundleUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            data = form.cleaned_data
+            data = form.cleaned_data  # this checks the file really is a valid PDF
+            
             user = request.user
             slug = data["slug"]
             time_uploaded = data["time_uploaded"]
-            bundle_doc = data["pdf_doc"]
+            bundle_file = data["pdf"]
             pdf_hash = data["sha256"]
-
-            scanner = ScanService()
+            number_of_pages = data["number_of_pages"]
             timestamp = datetime.timestamp(time_uploaded)
-            scanner.upload_bundle(bundle_doc, slug, user, timestamp, pdf_hash)
+            
+            ScanService().upload_bundle(bundle_file, slug, user, timestamp, pdf_hash, number_of_pages)
+
             return HttpResponseRedirect(reverse("scan_home"))
         else:
             context.update({"form": form})
