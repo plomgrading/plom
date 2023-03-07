@@ -130,7 +130,7 @@ class Command(BaseCommand):
         short_name = StagingSpecificationService().get_short_name_slug()
         zgen = bps.get_zipfly_generator(short_name)
         with open(f"{short_name}.zip", "wb") as fh:
-            self.stdout.write("Opening {short_name}.zip to write the zip-file")
+            self.stdout.write(f"Opening {short_name}.zip to write the zip-file")
             tot_size = 0
             for index, chunk in enumerate(zgen):
                 tot_size += len(chunk)
