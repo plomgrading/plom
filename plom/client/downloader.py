@@ -265,7 +265,7 @@ class Downloader(QObject):
             raise RuntimeError(
                 f"Unexpectedly detected target image as placeholder: {row}"
             )
-        target_name = self.basedir / target_name
+        target_name = self.basedir / (Path(target_name).name)
 
         worker = DownloadWorker(
             self.msgr,
@@ -427,7 +427,7 @@ class Downloader(QObject):
             ), f"row has a filename which does not match cache: {row_cur} vs {cur}"
             log.info("asked to download id=%d; already in cache", row["id"])
             return row
-        f = self.basedir / row["server_path"]
+        f = self.basedir / (row["server_path"].name)
         if f.exists():
             raise RuntimeError(
                 f"asked to download {f}; unexpectedly we already have it"
