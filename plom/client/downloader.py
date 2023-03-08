@@ -427,7 +427,7 @@ class Downloader(QObject):
             ), f"row has a filename which does not match cache: {row_cur} vs {cur}"
             log.info("asked to download id=%d; already in cache", row["id"])
             return row
-        f = self.basedir / (row["server_path"].name)
+        f = self.basedir / (Path(row["server_path"]).name)
         if f.exists():
             raise RuntimeError(
                 f"asked to download {f}; unexpectedly we already have it"
