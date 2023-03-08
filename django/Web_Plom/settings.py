@@ -108,6 +108,12 @@ WSGI_APPLICATION = "Web_Plom.wsgi.application"
 
 DATABASES = {
     "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "plom_db",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+    },
+    "sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
@@ -183,7 +189,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 4,
+                "workers": 8,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,

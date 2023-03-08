@@ -778,7 +778,7 @@ class ScanService:
                 error_images,
                 bundle_qr_read,
                 bundle_pushed,
-                bundle.user,
+                bundle.user.username,
             )
             bundle_status.append(bundle_data)
         return bundle_status

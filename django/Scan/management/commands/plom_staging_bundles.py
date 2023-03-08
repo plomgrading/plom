@@ -67,15 +67,55 @@ class Command(BaseCommand):
         except ValueError as err:
             self.stderr.write(f"{err}")
 
-    def staging_bundle_status(self):
+    def staging_bundle_status(self, bundle_name=None):
         scanner = ScanService()
         bundle_status = scanner.staging_bundle_status_cmd()
-        self.stdout.write(
-            tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
-        )
-
-        if len(bundle_status) == 1:
-            self.stdout.write("No bundles uploaded.")
+        if bundle_name is None:
+            self.stdout.write(
+                tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
+            )
+            if len(bundle_status) == 1:
+                self.stderr.write("No bundles uploaded.")
+        else:
+            the_bundle = [X for X in bundle_status if X[0] == bundle_name]
+            if len(the_bundle) == 0:
+                self.stderr.write(f"Bundle '{bundle_name}' not present.")
+            elif len(the_bundle) > 1:
+                self.stderr.write(
+                    f"Multiple bundles called '{bundle_name}' are present."
+                )
+            else:
+                [
+                    num_pages,
+                    valid_pages,
+                    error_pages,
+                    qrd,
+                    pushed,
+                    username,
+                ] = the_bundle[0][1:]
+                self.stdout.write(
+                    f"Found bundle '{bundle_name}' with {num_pages} pages uploaded by {username}"
+                )
+                if pushed is True:
+                    self.stdout.write("  * bundle has been pushed")
+                    return
+                if qrd is not True:
+                    self.stdout.write("  * qr-codes not yet read")
+                    return
+                if error_pages > 0:
+                    self.stdout.write("  * error pages present, cannot push.")
+                    return
+                if valid_pages != num_pages:
+                    self.stdout.write("  * invalid pages present, cannot push.")
+                    return
+                if (
+                    (qrd is True)
+                    and (valid_pages == num_pages)
+                    and (error_pages == 0)
+                    and (pushed is not True)
+                ):
+                    self.stdout.write("  *  bundle perfect, ready to push")
+                    return
 
     def push_staged_bundle(self, bundle_name):
         scanner = ScanService()
@@ -111,7 +151,15 @@ class Command(BaseCommand):
         sp_upload.add_argument("source_pdf", type=str, help="The test pdf to upload.")
 
         # Status
-        sp.add_parser("status", help="Show the status of the staging bundles.")
+        sp_stat = sp.add_parser(
+            "status", help="Show the status of the staging bundles."
+        )
+        sp_stat.add_argument(
+            "bundle_name",
+            type=str,
+            nargs="?",
+            help="(optional) get status of specific bundle",
+        )
 
         # Push
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
@@ -129,7 +177,7 @@ class Command(BaseCommand):
                 username=options["username"], source_pdf=options["source_pdf"]
             )
         elif options["command"] == "status":
-            self.staging_bundle_status()
+            self.staging_bundle_status(bundle_name=options["bundle_name"])
         elif options["command"] == "push":
             self.push_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "read_qr":
