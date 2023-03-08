@@ -11,6 +11,27 @@ from time import sleep
 from demo import scribble_on_exams
 
 
+def recreate_postgres_db():
+    import psycopg
+
+    with psycopg.connect(user="postgres", password="postgres", autocommit=True) as conn:
+        print("Removing old database.")
+        try:
+            with conn.cursor() as curs:
+                curs.execute("DROP DATABASE plom_db;")
+        except psycopg.errors.InvalidCatalogName:
+            print("No database 'plom_db' - continuing")
+
+        print("Creating database 'plom_db'");
+        try:
+            with conn.cursor() as curs:
+                curs.execute("CREATE DATABASE plom_db;")
+        except psycopg.errors.DuplicateDatabase:
+            with conn.cursor() as curs:
+                print("We should not reach here.")
+                quit()
+
+
 def remove_old_migration_files():
     print("Avoid perplexing errors by removing autogen migration droppings")
 
@@ -133,7 +154,6 @@ def download_zip():
 
 
 def upload_bundles():
-    # TODO quick hack workaround for Issue #2578
     for n in [1, 2, 3]:
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
@@ -155,6 +175,9 @@ def clean_up_processes(procs):
 
 
 def main():
+    print("*" * 40)
+    recreate_postgres_db()
+    
     print("*" * 40)
     remove_old_migration_files()
 
