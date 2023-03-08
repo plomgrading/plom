@@ -22,7 +22,7 @@ def recreate_postgres_db():
         except psycopg.errors.InvalidCatalogName:
             print("No database 'plom_db' - continuing")
 
-        print("Creating database 'plom_db'");
+        print("Creating database 'plom_db'")
         try:
             with conn.cursor() as curs:
                 curs.execute("CREATE DATABASE plom_db;")
@@ -154,7 +154,6 @@ def download_zip():
 
 
 def upload_bundles():
-    # TODO quick hack workaround for Issue #2578
     for n in [1, 2, 3]:
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
@@ -164,25 +163,54 @@ def upload_bundles():
 
 
 def read_qr_codes():
-    # TODO quick hack workaround for Issue #2578
     todo = [1, 2, 3]
     while True:
         done = []
         for n in todo:
             cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
             py_man_cmd = f"python3 manage.py {cmd}"
-            out_qr = subprocess.check_output(split(py_man_cmd),stderr=subprocess.STDOUT).decode("utf-8")
+            out_qr = subprocess.check_output(
+                split(py_man_cmd), stderr=subprocess.STDOUT
+            ).decode("utf-8")
             if "has been read" in out_qr:
                 done.append(n)
         for n in done:
             todo.remove(n)
-        if len(todo)>0:
-            print(f"Stil waiting for {len(todo)} bundles to process - sleep between attempts")
+        if len(todo) > 0:
+            print(
+                f"Stil waiting for {len(todo)} bundles to process - sleep between attempts"
+            )
             sleep(5)
         else:
             print("QR-codes of all bundles read.")
             break
-    
+
+
+def push_if_ready():
+    todo = [1, 2, 3]
+    while True:
+        done = []
+        for n in todo:
+            cmd = f"plom_staging_bundles status fake_bundle{n}"
+            py_man_cmd = f"python3 manage.py {cmd}"
+            out_stat = subprocess.check_output(
+                split(py_man_cmd), stderr=subprocess.STDOUT
+            ).decode("utf-8")
+            if "perfect" in out_stat:
+                push_cmd = f"python3 manage.py plom_staging_bundles push fake_bundle{n}"
+                subprocess.check_call(split(push_cmd))
+                done.append(n)
+        for n in done:
+            todo.remove(n)
+        if len(todo) > 0:
+            print(
+                f"Stil waiting for {len(todo)} bundles to process - sleep between attempts"
+            )
+            sleep(5)
+        else:
+            print("All bundles pushed.")
+            break
+
 
 def wait_for_exit():
     while True:
@@ -199,7 +227,7 @@ def clean_up_processes(procs):
 
 def main():
     recreate_postgres_db()
-    
+
     print("*" * 40)
     remove_old_migration_files()
 
@@ -240,7 +268,8 @@ def main():
     upload_bundles()
     print("*" * 40)
     read_qr_codes()
-
+    print("*" * 40)
+    push_if_ready()
 
     wait_for_exit()
 
