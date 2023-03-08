@@ -824,7 +824,7 @@ class ScanService:
         elif img_service.is_image_pushing_in_progress(all_complete_images_objs):
             raise ValueError(f"{bundle_name} pushing in progress...")
         elif bundle_obj.pushed:
-            raise ValueError(f"Bundle '{bundle_name}' pushed.")
+            raise ValueError(f"Bundle '{bundle_name}' already pushed.")
         elif len(all_complete_images_objs) != len(images)  or error_images > 0:
             raise ValueError(f"Please fix all the errors in Bundle '{bundle_name}' before pushing.")
         else:
