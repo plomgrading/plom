@@ -369,8 +369,8 @@ class MarkingTaskService:
                 raise ValidationError(f"Invalid rubric key: {rubric_key}")
             cleaned_data["rubrics"].append(rubric)
 
-        all_img_data = json.loads(data["image_md5s"])
-        for image_data in all_img_data:
+        src_img_data = annot_data["base_images"]
+        for image_data in src_img_data:
             img_path = pathlib.Path(image_data["server_path"])
             if not img_path.exists():
                 raise ValidationError("Invalid original-image in request.")
