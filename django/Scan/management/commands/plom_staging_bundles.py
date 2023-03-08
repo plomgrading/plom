@@ -37,16 +37,17 @@ class Command(BaseCommand):
         try:
             with open(source_pdf, "rb") as f:
                 file_bytes = f.read()
-        except FileNotFoundError:
-            self.stderr.write(f"Cannot open '{source_pdf}' - please check filename.")
+        except OSError as e:
+            self.stderr.write(str(e))
             return
 
         try:
             pdf_doc = fitz.open(stream=file_bytes)
-        except fitz.FileDataError:
+        except fitz.FileDataError as e:
             self.stderr.write(
                 f"Cannot open '{source_pdf}' as a pdf - it might be corrupted."
             )
+            self.stderr.write(f"Error message was: {e}")
             return
 
         filename_stem = pathlib.Path(source_pdf).stem
