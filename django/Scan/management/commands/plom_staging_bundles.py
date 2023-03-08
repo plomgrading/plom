@@ -34,10 +34,21 @@ class Command(BaseCommand):
             self.stderr.write("No bundle supplied. Stopping.")
             return
 
-        with open(source_pdf, "rb") as f:
-            file_bytes = f.read()
+        try:
+            with open(source_pdf, "rb") as f:
+                file_bytes = f.read()
+        except FileNotFoundError:
+            self.stderr.write(f"Cannot open '{source_pdf}' - please check filename.")
+            return
 
-        pdf_doc = fitz.open(stream=file_bytes)
+        try:
+            pdf_doc = fitz.open(stream=file_bytes)
+        except fitz.FileDataError:
+            self.stderr.write(
+                f"Cannot open '{source_pdf}' as a pdf - it might be corrupted."
+            )
+            return
+
         filename_stem = pathlib.Path(source_pdf).stem
         slug = slugify(filename_stem)
         timestamp = datetime.timestamp(timezone.now())
@@ -69,7 +80,9 @@ class Command(BaseCommand):
         scanner = ScanService()
         try:
             scanner.push_bundle_cmd(bundle_name)
-            self.stdout.write(f"Pushing {bundle_name} - processing it in the background now.")
+            self.stdout.write(
+                f"Pushing {bundle_name} - processing it in the background now."
+            )
         except ValueError as err:
             self.stderr.write(f"{err}")
 
