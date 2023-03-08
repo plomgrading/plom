@@ -7,6 +7,7 @@
 
 from collections import Counter
 from statistics import mode
+
 import hashlib
 import pathlib
 import shutil
@@ -16,6 +17,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import Q
 from django_huey import db_task
 from django.utils import timezone
 
@@ -729,6 +731,8 @@ class ScanService:
     @transaction.atomic
     def staging_bundle_status_cmd(self):
         bundles = StagingBundle.objects.all()
+        img_service = ImageBundleService()
+        scanner = ScanService()
 
         bundle_status = []
         status_header = (
@@ -744,9 +748,15 @@ class ScanService:
         for bundle in bundles:
             images = StagingImage.objects.filter(bundle=bundle)
             valid_images = self.get_n_complete_reading_tasks(bundle)
-            all_error_images = StagingImage.objects.filter(
-                bundle=bundle, colliding=True, unknown=True, error=True
-            )
+            all_images = StagingImage.objects.filter(bundle=bundle)
+
+            error_image_list = []
+            for image in all_images:
+                if image.colliding or image.error or image.unknown:
+                    error_image_list.append(image)
+            error_images = len(error_image_list)
+
+            completed_images = scanner.get_all_complete_images(bundle)
 
             if len(images) == self.get_n_page_rendering_tasks(bundle):
                 total_pages = len(images)
@@ -758,13 +768,18 @@ class ScanService:
             if reading_qr:
                 bundle_qr_read = "in progress"
 
+            pushing_image = img_service.is_image_pushing_in_progress(completed_images)
+            bundle_pushed = bundle.pushed
+            if pushing_image:
+                bundle_pushed = "in progress"
+
             bundle_data = (
                 bundle.slug,
                 total_pages,
                 valid_images,
-                len(all_error_images),
+                error_images,
                 bundle_qr_read,
-                bundle.pushed,
+                bundle_pushed,
                 bundle.user,
             )
             bundle_status.append(bundle_data)
@@ -788,17 +803,37 @@ class ScanService:
 
     @transaction.atomic
     def push_bundle_cmd(self, bundle_name):
+        img_service = ImageBundleService()
+
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        img_service = ImageBundleService()
-
+        images = StagingImage.objects.filter(bundle=bundle_obj)
         all_complete_images_objs = self.get_all_complete_images(bundle_obj)
-        for complete_image in all_complete_images_objs:
-            paper_id, page_num = self.get_paper_id_and_page_num(complete_image.parsed_qr)
-            img_service.push_staged_image(complete_image, paper_id, page_num)
+        all_images = StagingImage.objects.filter(bundle=bundle_obj)
+        error_image_list = []
+        for image in all_images:
+            if image.colliding or image.error or image.unknown:
+                error_image_list.append(image)
+        error_images = len(error_image_list)
+        
+        if not bundle_obj.has_qr_codes or self.is_bundle_reading_ongoig(bundle_obj):
+            raise ValueError(f"Bundle '{bundle_name}' QR codes reading in progress or has not been read yet.")
+        elif img_service.is_image_pushing_in_progress(all_complete_images_objs):
+            raise ValueError(f"{bundle_name} pushing in progress...")
+        elif bundle_obj.pushed:
+            raise ValueError(f"Bundle '{bundle_name}' pushed.")
+        elif len(all_complete_images_objs) != len(images)  or error_images > 0:
+            raise ValueError(f"Please fix all the errors in Bundle '{bundle_name}' before pushing.")
+        else:
+            self.push_bundle(bundle_obj)
+            for complete_image in all_complete_images_objs:
+                paper_id, page_num = self.get_paper_id_and_page_num(complete_image.parsed_qr)
+                img_service.push_staged_image(complete_image, paper_id, page_num)
+                
+                
 
     @transaction.atomic
     def get_paper_id_and_page_num(self, image_qr):
