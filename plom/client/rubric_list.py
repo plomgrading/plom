@@ -1008,14 +1008,6 @@ class RubricWidget(QWidget):
         self.rubrics = self._parent.getRubricsFromServer()
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
         self._parent.saveTabStateToServer(self.get_tab_rubric_lists())
-        del old_rubrics[7]
-        del old_rubrics[8]
-        del old_rubrics[9]
-        print(f"deleting from new: {self.rubrics[-7]}")
-        # del self.rubrics[-7]
-        old_rubrics[5]["display_delta"] = "2 of 3"
-        old_rubrics[6]["text"] = old_rubrics[6]["text"] + " foo"
-        old_rubrics[7]["display_delta"] = "-8"
         old = {r["id"]: r for r in old_rubrics}
         new = {r["id"]: r for r in self.rubrics}
         added = []

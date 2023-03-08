@@ -61,6 +61,7 @@ class PushAllPageImages(ScannerRequiredView):
             test_paper = any_qr["paper_id"]
             page_number = any_qr["page_num"]
             img_service.push_staged_image(img, test_paper, page_number)
+        scanner.push_bundle(bundle)
 
         return HttpResponseClientRefresh()
 
