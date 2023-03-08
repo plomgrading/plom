@@ -88,7 +88,7 @@ codespell:
     - python3 -m pip install codespell
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
-    - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
+    - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv,*.json,.gitlab-ci.yml" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
   allow_failure: true
   artifacts:
     reports:

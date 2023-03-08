@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -230,7 +230,7 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
     """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column. Student names
-    must be in a *single* 'name' column. There is some flexiblity
+    must be in a *single* 'name' column. There is some flexibility
     in those titles, see
 
     - :func:`plom.create.possible_sid_fields`

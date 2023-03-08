@@ -96,7 +96,7 @@ class MarkingTaskService:
             completed = MarkingTask.objects.filter(
                 status="complete", question_number=question, question_version=version
             )
-            total = MarkingTask.objects.get(
+            total = MarkingTask.objects.filter(
                 question_number=question, question_version=version
             )
         except MarkingTask.DoesNotExist:
