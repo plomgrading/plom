@@ -42,12 +42,23 @@ class ScanService:
     Functions for staging scanned test-papers.
     """
 
-    def upload_bundle(self, uploaded_pdf_file, slug, user, timestamp, pdf_hash, number_of_pages):
+    def upload_bundle(
+        self, uploaded_pdf_file, slug, user, timestamp, pdf_hash, number_of_pages
+    ):
         """
         Upload a bundle PDF and store it in the filesystem + database.
         Also, split PDF into page images + store in filesystem and database.
+
+        Args:
+            upload_pdf_file (Django File): File-object containing the pdf (can also be a TemporaryUploadedFile or InMemoryUploadedFile)
+            slug (str): Filename slug for the pdf
+            user (Django User): the user uploading the file
+            timestamp (datetime): the datetime at which the file was uploaded
+            pdf_hash (str): the sha256 of the pdf.
+            number_of_pages (int): the number of pages in the pdf
+
         """
-        
+
         # make sure the path is created
         user_dir = pathlib.Path("media") / user.username
         user_dir.mkdir(exist_ok=True)
@@ -55,18 +66,18 @@ class ScanService:
         bundles_dir.mkdir(exist_ok=True)
         bundle_dir = bundles_dir / f"{timestamp}"
         bundle_dir.mkdir(exist_ok=True)
-        
-        with uploaded_pdf_file.open() as fh:
-            with transaction.atomic():
-                bundle_obj = StagingBundle(
-                    slug=slug,
-                    pdf_file = File(fh, name=f"{timestamp}.pdf"),
-                    user=user,
-                    timestamp=timestamp,
-                    number_of_pages = number_of_pages,
-                    pdf_hash=pdf_hash,
-                )
-                bundle_obj.save()
+
+        fh = uploaded_pdf_file.open()
+        with transaction.atomic():
+            bundle_obj = StagingBundle(
+                slug=slug,
+                pdf_file=File(fh, name=f"{timestamp}.pdf"),
+                user=user,
+                timestamp=timestamp,
+                number_of_pages=number_of_pages,
+                pdf_hash=pdf_hash,
+            )
+            bundle_obj.save()
 
         image_dir = bundle_dir / "pageImages"
         image_dir.mkdir(exist_ok=True)
@@ -74,6 +85,48 @@ class ScanService:
         unknown_dir.mkdir(exist_ok=True)
         self.split_and_save_bundle_images(bundle_obj, image_dir)
 
+    @transaction.atomic
+    def upload_bundle_cmd(
+        self, pdf_file_path, slug, username, timestamp, hashed, number_of_pages
+    ):
+        """
+        Wrapper around upload_bundle for use by the commandline bundle upload command.
+
+        Checks if the supplied username has permissions to access and upload scans.
+
+        Args:
+            pdf_file_path (pathlib.Path or str): the path to the pdf being uploaded
+            slug (str): Filename slug for the pdf
+            username (str): the username uploading the file
+            timestamp (datetime): the datetime at which the file was uploaded
+            pdf_hash (str): the sha256 of the pdf.
+            number_of_pages (int): the number of pages in the pdf
+
+        """
+        # username => user_object, if in scanner group, else exception raised.
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="scanner"
+            )
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        with open(pdf_file_path, 'rb') as fh:
+            pdf_file_thingy = File(fh)
+        
+        self.upload_bundle(
+            pdf_file_thingy,
+            slug,
+            user_obj,
+            timestamp,
+            hashed,
+            number_of_pages,
+        )
+
+
+        
     @transaction.atomic
     def split_and_save_bundle_images(self, bundle_obj, base_dir):
         """
@@ -705,25 +758,6 @@ class ScanService:
             parse_qr_obj.page_index -= 1
             parse_qr_obj.save()
 
-    @transaction.atomic
-    def upload_bundle_cmd(self, pdf_doc, slug, username, timestamp, hashed):
-        # username => user_object, if in scanner group, else exception raised.
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name="scanner"
-            )
-        except ObjectDoesNotExist:
-            raise ValueError(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
-
-        self.upload_bundle(
-            pdf_doc=pdf_doc,
-            slug=slug,
-            user=user_obj,
-            timestamp=timestamp,
-            pdf_hash=hashed,
-        )
 
     @transaction.atomic
     def staging_bundle_status_cmd(self):
