@@ -17,7 +17,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Q
 from django_huey import db_task
 from django.utils import timezone
 
@@ -818,29 +817,33 @@ class ScanService:
             if image.colliding or image.error or image.unknown:
                 error_image_list.append(image)
         error_images = len(error_image_list)
-        
+
         if not bundle_obj.has_qr_codes or self.is_bundle_reading_ongoig(bundle_obj):
-            raise ValueError(f"Bundle '{bundle_name}' QR codes reading in progress or has not been read yet.")
+            raise ValueError(
+                f"Bundle '{bundle_name}' QR codes reading in progress or has not been read yet."
+            )
         elif img_service.is_image_pushing_in_progress(all_complete_images_objs):
             raise ValueError(f"{bundle_name} pushing in progress...")
         elif bundle_obj.pushed:
             raise ValueError(f"Bundle '{bundle_name}' already pushed.")
-        elif len(all_complete_images_objs) != len(images)  or error_images > 0:
-            raise ValueError(f"Please fix all the errors in Bundle '{bundle_name}' before pushing.")
+        elif (len(all_complete_images_objs) != len(images)) or error_images > 0:
+            raise ValueError(
+                f"Please fix all the errors in Bundle '{bundle_name}' before pushing."
+            )
         else:
             self.push_bundle(bundle_obj)
             for complete_image in all_complete_images_objs:
-                paper_id, page_num = self.get_paper_id_and_page_num(complete_image.parsed_qr)
+                paper_id, page_num = self.get_paper_id_and_page_num(
+                    complete_image.parsed_qr
+                )
                 img_service.push_staged_image(complete_image, paper_id, page_num)
-                
-                
 
     @transaction.atomic
     def get_paper_id_and_page_num(self, image_qr):
-            paper_id = []
-            page_num = []
-            for q in image_qr:
-                paper_id.append(image_qr.get(q)["paper_id"])
-                page_num.append(image_qr.get(q)["page_num"])
+        paper_id = []
+        page_num = []
+        for q in image_qr:
+            paper_id.append(image_qr.get(q)["paper_id"])
+            page_num.append(image_qr.get(q)["page_num"])
 
-            return mode(paper_id), mode(page_num)
+        return mode(paper_id), mode(page_num)
