@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 """
 Tools for managing the local page cache.
@@ -36,7 +36,6 @@ class PageCache:
 
         TODO: document what happens if it doesn't exist?  Exception or None?
         """
-        print(self._image_paths)
         return self._image_paths[img_id]
 
     def set_page_image_path(self, img_id, f):
