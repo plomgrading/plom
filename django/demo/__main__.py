@@ -207,7 +207,7 @@ def read_qr_codes():
                 print("v" * 50)
                 print(str(e))
                 print("^" * 50)
-                raise ValueError("ARGH {e}")
+                raise ValueError(f"ARGH {e}")
 
             if "has been read" in out_qr:
                 done.append(n)
