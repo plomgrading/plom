@@ -242,3 +242,18 @@ class ImageBundleService:
             if status == "queued" or status == "running":
                 return True
         return False
+
+    @db_task(queue="tasks")
+    def _upload_valid_bundle(self, bundle):
+        """
+        Assuming all of the pages in the bundle are valid (i.e. have a valid page number,
+        paper number, and don't collide with any currently pushed pages) push all the pages
+        using bulk ORM calls.
+
+        1. Check that all the staging images have page numbers and test numbers
+        2. Check that no staging images collide with each other
+        3. Check that no staging images with any pushed images
+        4. Bulk-create images
+        """
+
+        pass
