@@ -422,7 +422,6 @@ class Messenger(BaseMessenger):
                 plomfile=plomfile,
                 rubrics=rubrics,
                 integrity_check=integrity_check,
-                image_md5_list=json.dumps(image_md5_list),
             )
 
         # Python <= 3.7 fails on pathlib.Path. remove `str` when we drop Python 3.7
@@ -499,7 +498,6 @@ class Messenger(BaseMessenger):
         plomfile,
         rubrics,
         integrity_check,
-        image_md5_list,
     ):
         """
         Upload annotated image and associated data to a Django server, using it's built-in
@@ -523,7 +521,6 @@ class Messenger(BaseMessenger):
                         "rubrics": rubrics,
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
                         "integrity_check": integrity_check,
-                        "image_md5s": image_md5_list,
                     }
 
                     annot_img_file.seek(0)

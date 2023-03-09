@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Chris Jin
@@ -186,7 +186,7 @@ class APage(BaseModel):
 class Rubric(BaseModel):
     # unique key - user-generated have 12 digits
     key = pw.CharField(unique=True, null=False)  # system generated + short
-    kind = pw.CharField(null=False)  # abs, neut, delt, relative - is short
+    kind = pw.CharField(null=False)  # short code for what kind of rubric
     display_delta = pw.CharField(null=False)  # is short
     # Note: designing for "value / out_of" absolute rubrics
     #   - value is also used for relative rubrics
