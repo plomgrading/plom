@@ -8,6 +8,9 @@ import shutil
 import subprocess
 from time import sleep
 
+
+from django.core.management import call_command
+
 from demo import scribble_on_exams
 
 
@@ -91,10 +94,13 @@ def sqlite_set_wal():
 
 
 def rebuild_migrations_and_migrate(engine):
-    print("Rebuild the database migrations and migrate")
-    for cmd in ["makemigrations", "migrate"]:
-        py_man_cmd = f"python3 manage.py {cmd}"
-        subprocess.check_call(split(py_man_cmd))
+    # print("Rebuild the database migrations and migrate")
+    # for cmd in ["makemigrations", "migrate"]:
+    # py_man_cmd = f"python3 manage.py {cmd}"
+    # subprocess.check_call(split(py_man_cmd))
+
+    call_command("makemigrations")
+    call_command("migrate")
 
     if engine == "sqlite":
         sqlite_set_wal()
@@ -102,9 +108,8 @@ def rebuild_migrations_and_migrate(engine):
 
 def make_groups_and_users():
     print("Create groups and users")
-    for cmd in ["plom_create_groups", "plom_create_demo_users"]:
-        py_man_cmd = f"python3 manage.py {cmd}"
-        subprocess.check_call(split(py_man_cmd))
+    call_command("plom_create_groups")
+    call_command("plom_create_demo_users")
 
 
 def prepare_assessment():
@@ -112,19 +117,33 @@ def prepare_assessment():
     print(
         "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
     )
-    for cmd in [
-        "plom_demo_spec",
-        "plom_preparation_test_source upload -v 1 useful_files_for_testing/test_version1.pdf",
-        "plom_preparation_test_source upload -v 2 useful_files_for_testing/test_version2.pdf",
-        "plom_preparation_prenaming --enable",
-        "plom_preparation_classlist upload useful_files_for_testing/cl_for_demo.csv",
-        "plom_preparation_qvmap generate",
-    ]:
-        py_man_cmd = f"python3 manage.py {cmd}"
-        subprocess.check_call(split(py_man_cmd))
+    call_command("plom_demo_spec")
+    call_command(
+        "plom_preparation_test_source",
+        "upload",
+        "-v 1",
+        "useful_files_for_testing/test_version1.pdf",
+    )
+    call_command(
+        "plom_preparation_test_source",
+        "upload",
+        "-v 2",
+        "useful_files_for_testing/test_version2.pdf",
+    )
+    call_command("plom_preparation_prenaming", enable=True)
+    call_command(
+        "plom_preparation_classlist",
+        "upload",
+        "useful_files_for_testing/cl_for_demo.csv",
+    )
+    call_command("plom_preparation_qvmap", "generate")
 
 
 def launch_huey_workers():
+    # I don't understand why, but this seems to need to be run as a sub-proc
+    # and not via call_command... maybe because it launches a bunch of background
+    # stuff?
+    
     print("Launching huey workers for background tasks")
     for cmd in ["djangohuey"]:
         py_man_cmd = f"python3 manage.py {cmd}"
@@ -133,20 +152,16 @@ def launch_huey_workers():
 
 def launch_server():
     print("Launching django server")
-    for cmd in ["runserver 8000"]:
-        py_man_cmd = f"python3 manage.py {cmd}"
-        return subprocess.Popen(split(py_man_cmd))
+    # this needs to be run in the background
+    cmd = f"python3 manage.py runserver 8000"
+    return subprocess.Popen(split(cmd))
 
 
 def build_db_and_papers():
     print("Populating database in background")
-    for cmd in [
-        "plom_papers build_db",
-        "plom_preparation_extrapage build",
-        "plom_build_papers --start-all",
-    ]:
-        py_man_cmd = f"python3 manage.py {cmd}"
-        subprocess.check_call(split(py_man_cmd))
+    call_command("plom_papers", "build_db")
+    call_command("plom_preparation_extrapage", "build")
+    call_command("plom_build_papers", "--start-all")
 
 
 def wait_for_papers_to_be_ready():
@@ -265,7 +280,17 @@ def clean_up_processes(procs):
         proc.terminate()
 
 
+def configure_django_stuff():
+    import os
+    from django import setup
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
+    setup()
+
+
 def main():
+    configure_django_stuff()
+
     engine = get_database_engine()
     print(f"You appear to be running with a {engine} DB.")
 
@@ -284,33 +309,36 @@ def main():
     print("*" * 40)
     prepare_assessment()
 
+    # launch the huey workers before building db
+    # and associated PDF-build tasks (which need huey)
+    print("*" * 40)
+    huey_worker_proc = launch_huey_workers()
+
     print("*" * 40)
     build_db_and_papers()
 
     print("*" * 40)
     server_proc = launch_server()
 
-    print("*" * 40)
-    huey_worker_proc = launch_huey_workers()
 
     print("v" * 40)
     print("Everything is now up and running")
     print("^" * 40)
+    
+    # wait_for_papers_to_be_ready()
+    # print("*" * 40)
 
-    wait_for_papers_to_be_ready()
-    print("*" * 40)
+    # download_zip()
+    # print("*" * 40)
 
-    download_zip()
-    print("*" * 40)
+    # scribble_on_exams()
 
-    scribble_on_exams()
-
-    print("*" * 40)
-    upload_bundles()
-    print("*" * 40)
-    read_qr_codes()
-    print("*" * 40)
-    push_if_ready()
+    # print("*" * 40)
+    # upload_bundles()
+    # print("*" * 40)
+    # read_qr_codes()
+    # print("*" * 40)
+    # push_if_ready()
 
     wait_for_exit()
 
