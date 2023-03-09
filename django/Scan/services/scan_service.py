@@ -18,7 +18,7 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django_huey import db_task
+from django_huey import db_task, get_queue
 from django.utils import timezone
 
 from plom.scan import QRextract
@@ -72,7 +72,7 @@ class ScanService:
 
         fh = uploaded_pdf_file.open()
         with transaction.atomic():
-            bundle_obj = StagingBundle(
+            bundle_obj = StagingBundle.objects.create(
                 slug=slug,
                 pdf_file=File(fh, name=f"{timestamp}.pdf"),
                 user=user,
@@ -80,7 +80,6 @@ class ScanService:
                 number_of_pages=number_of_pages,
                 pdf_hash=pdf_hash,
             )
-            bundle_obj.save()
 
         image_dir = bundle_dir / "pageImages"
         image_dir.mkdir(exist_ok=True)
@@ -128,7 +127,6 @@ class ScanService:
             number_of_pages,
         )
 
-    @transaction.atomic
     def split_and_save_bundle_images(self, bundle_obj, base_dir):
         """
         Read a PDF document and save page images to filesystem/database
@@ -138,16 +136,24 @@ class ScanService:
             base_dir: pathlib.Path object of path to save image files
         """
 
-        n_pages = bundle_obj.number_of_pages
-        for i in range(n_pages):
-            page_task = self._get_page_image(bundle_obj, i, base_dir, f"page{i:05}")
-            page_task_db = PageToImage(
-                bundle=bundle_obj,
-                huey_id=page_task.id,
-                status="queued",
-                created=timezone.now(),
-            )
-            page_task_db.save()
+        # create a list of all the tasks, but do not enqueue them
+        # use that list to create/insert the task-info in the database.
+        # then enqueue the tasks
+        the_queue = get_queue("tasks")
+        task_list = [
+            self._get_page_image.s(bundle_obj, pg, base_dir, f"page{pg:05}")
+            for pg in range(bundle_obj.number_of_pages)
+        ]
+        with transaction.atomic():
+            for task in task_list:
+                PageToImage.objects.create(
+                    bundle=bundle_obj,
+                    huey_id=task.id,
+                    status="queued",
+                    created=timezone.now(),
+                )
+        for task in task_list:
+            the_queue.enqueue(task)
 
     @db_task(queue="tasks")
     def _get_page_image(bundle, index, basedir, basename):
@@ -172,14 +178,15 @@ class ScanService:
 
         with open(save_path, "rb") as f:
             image_hash = hashlib.sha256(f.read()).hexdigest()
-        image_db = StagingImage(
-            bundle=bundle,
-            bundle_order=index,
-            file_name=f"page{index}.png",
-            file_path=str(save_path),
-            image_hash=image_hash,
-        )
-        image_db.save()
+
+        with transaction.atomic():
+            StagingImage.objects.create(
+                bundle=bundle,
+                bundle_order=index,
+                file_name=f"page{index}.png",
+                file_path=str(save_path),
+                image_hash=image_hash,
+            )
 
     @transaction.atomic
     def remove_bundle(self, timestamp, user):
@@ -206,11 +213,10 @@ class ScanService:
         Get a bundle from the database. To uniquely identify a bundle, we need
         its timestamp and user
         """
-        bundle = StagingBundle.objects.get(
+        return StagingBundle.objects.get(
             user=user,
             timestamp=timestamp,
         )
-        return bundle
 
     @transaction.atomic
     def get_image(self, timestamp, user, index):
@@ -219,11 +225,10 @@ class ScanService:
         (and a timestamp, and user) and a page index
         """
         bundle = self.get_bundle(timestamp, user)
-        image = StagingImage.objects.get(
+        return StagingImage.objects.get(
             bundle=bundle,
             bundle_order=index,
         )
-        return image
 
     @transaction.atomic
     def get_n_images(self, bundle):
@@ -231,16 +236,15 @@ class ScanService:
         Get the number of page images in a bundle by counting the number of
         StagingImages saved to the database
         """
-        images = StagingImage.objects.filter(bundle=bundle)
-        return len(images)
+        return StagingImage.objects.filter(bundle=bundle).count()
 
     @transaction.atomic
     def get_all_images(self, bundle):
         """
         Get all the page images in a bundle
         """
-        images = StagingImage.objects.filter(bundle=bundle)
-        return images
+
+        return StagingImage.objects.filter(bundle=bundle)
 
     @transaction.atomic
     def get_user_bundles(self, user):
@@ -248,8 +252,7 @@ class ScanService:
         Return all of the staging bundles that a user uploaded
         """
         # bundles = StagingBundle.objects.filter(user=user, has_page_images=True)
-        bundles = StagingBundle.objects.filter(user=user)
-        return list(bundles)
+        return list(StagingBundle.objects.filter(user=user))
 
     @transaction.atomic
     def user_has_running_image_tasks(self, user):
@@ -391,7 +394,6 @@ class ScanService:
             img.rotation = rotated
         img.save()
 
-    @transaction.atomic
     def qr_codes_tasks(self, bundle, page_index, image_path):
         """
         Task of parsing QR codes.
@@ -401,15 +403,18 @@ class ScanService:
             page_index: (int) bundle index page number
             image_path: (str) image file path
         """
-        qr_task = self._huey_parse_qr_code(bundle, image_path)
-        qr_task_obj = ParseQR(
-            bundle=bundle,
-            page_index=page_index,
-            file_path=image_path,
-            huey_id=qr_task.id,
-            status="queued",
-        )
-        qr_task_obj.save()
+        the_queue = get_queue("tasks")
+        # create the task, save info to DB, then enqeue it.
+        qr_task = self._huey_parse_qr_code.s(bundle, image_path)
+        with transaction.atomic():
+            ParseQR.objects.create(
+                bundle=bundle,
+                page_index=page_index,
+                file_path=image_path,
+                huey_id=qr_task.id,
+                status="queued",
+            )
+        the_queue.enqueue(qr_task)
 
     @transaction.atomic
     def read_qr_codes(self, bundle):
@@ -430,8 +435,8 @@ class ScanService:
         """
         root_folder = settings.MEDIA_ROOT / "page_images"
         root_folder.mkdir(exist_ok=True)
-        imgs = StagingImage.objects.filter(bundle=bundle)
-        for page in imgs:
+
+        for page in StagingImage.objects.filter(bundle=bundle):
             self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
             if self.is_bundle_reading_finished and not bundle.has_qr_codes:
                 self.qr_reading_cleanup(bundle)

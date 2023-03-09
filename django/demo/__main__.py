@@ -85,6 +85,7 @@ def remove_old_db_and_misc_user_files(engine):
 def sqlite_set_wal():
     import sqlite3
 
+    print("Setting journal mode WAL for sqlite database")
     conn = sqlite3.connect("db.sqlite3")
     conn.execute("pragma journal_mode=wal")
     conn.close()
@@ -92,7 +93,7 @@ def sqlite_set_wal():
 
 def rebuild_migrations_and_migrate(engine):
     print("Rebuild the database migrations and migrate")
-    for cmd in ["flush", "makemigrations", "migrate"]:
+    for cmd in ["makemigrations", "migrate"]:
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
 
@@ -189,8 +190,6 @@ def upload_bundles():
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
         print("For time being sleep between bundle uploads. TODO = fix this")
-        sleep(2)
-
 
 def read_qr_codes():
     todo = [1, 2, 3]
@@ -212,7 +211,8 @@ def read_qr_codes():
             if "has been read" in out_qr:
                 done.append(n)
             else:
-                sleep(2)
+                sleep(0)
+                
         for n in done:
             todo.remove(n)
         if len(todo) > 0:
@@ -310,10 +310,12 @@ def main():
 
     print("*" * 40)
     upload_bundles()
-    print("*" * 40)
-    read_qr_codes()
-    print("*" * 40)
-    push_if_ready()
+
+    # print("*" * 40)
+    # read_qr_codes()
+
+    # print("*" * 40)
+    # push_if_ready()
 
     wait_for_exit()
 
