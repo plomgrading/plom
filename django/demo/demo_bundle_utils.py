@@ -46,7 +46,7 @@ def get_classlist_as_dict():
 
 def get_extra_page():
     # Assumes that the extra page has been generated
-    cmd = "python3 manage.py plom_preparation_extrapage --download media/papersToPrint/extra_page.pdf"
+    cmd = "python3 manage.py plom_preparation_extrapage download media/papersToPrint/extra_page.pdf"
     subprocess.check_call(split(cmd))
 
 

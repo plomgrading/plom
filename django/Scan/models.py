@@ -10,7 +10,9 @@ from Base.models import HueyTask
 
 def staging_bundle_upload_path(instance, filename):
     # save bundle as "media/bundles/username/timestamp/filename.pdf"
-    return "{}/bundles/{}/{}".format(instance.user.username, instance.timestamp, filename)
+    return "{}/bundles/{}/{}".format(
+        instance.user.username, instance.timestamp, filename
+    )
 
 
 class StagingBundle(models.Model):

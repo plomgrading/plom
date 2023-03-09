@@ -26,9 +26,10 @@ class QRErrorService:
         serialized_all_qr = self.serialize_qr_code(page_data, "TPV_code")
         serialized_public_code = self.serialize_qr_code(page_data, "public_code")
 
-        self.check_image_collision_within_bundle(
-            img_obj, bundle, serialized_top_three_qr, page_data
-        )
+        # Disable this for the moment since it is DB intensive.
+        # self.check_image_collision_within_bundle(
+        # img_obj, bundle, serialized_top_three_qr, page_data
+        # )
 
         self.check_TPV_code(
             serialized_all_qr, img_obj, serialized_top_three_qr, page_data

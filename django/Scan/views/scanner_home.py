@@ -108,7 +108,7 @@ class ScannerHomeView(ScannerRequiredView):
         form = BundleUploadForm(request.POST, request.FILES)
         if form.is_valid():
             data = form.cleaned_data  # this checks the file really is a valid PDF
-            
+
             user = request.user
             slug = data["slug"]
             time_uploaded = data["time_uploaded"]
@@ -116,8 +116,10 @@ class ScannerHomeView(ScannerRequiredView):
             pdf_hash = data["sha256"]
             number_of_pages = data["number_of_pages"]
             timestamp = datetime.timestamp(time_uploaded)
-            
-            ScanService().upload_bundle(bundle_file, slug, user, timestamp, pdf_hash, number_of_pages)
+
+            ScanService().upload_bundle(
+                bundle_file, slug, user, timestamp, pdf_hash, number_of_pages
+            )
 
             return HttpResponseRedirect(reverse("scan_home"))
         else:
@@ -183,5 +185,5 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
 
         bundle = scanner.get_bundle(timestamp, request.user)
         context = {"bundle": bundle}
-        
+
         return render(request, "Scan/fragments/staged_bundle_card.html", context)

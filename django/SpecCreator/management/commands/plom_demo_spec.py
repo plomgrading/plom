@@ -7,7 +7,7 @@ else:
 
 import copy
 import fitz
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from plom.specVerifier import SpecVerifier
@@ -91,3 +91,4 @@ class Command(BaseCommand):
                     self.stdout.write(str(valid_spec_service.get_the_spec()))
                 except ValueError as e:
                     self.stderr.write(e)
+                    raise CommandError(e)

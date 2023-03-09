@@ -116,9 +116,9 @@ class ScanService:
                 f"User '{username}' does not exist or has wrong permissions!"
             )
 
-        with open(pdf_file_path, 'rb') as fh:
+        with open(pdf_file_path, "rb") as fh:
             pdf_file_thingy = File(fh)
-        
+
         self.upload_bundle(
             pdf_file_thingy,
             slug,
@@ -128,8 +128,6 @@ class ScanService:
             number_of_pages,
         )
 
-
-        
     @transaction.atomic
     def split_and_save_bundle_images(self, bundle_obj, base_dir):
         """
@@ -761,7 +759,6 @@ class ScanService:
             parse_qr_obj.page_index -= 1
             parse_qr_obj.save()
 
-
     @transaction.atomic
     def staging_bundle_status_cmd(self):
         bundles = StagingBundle.objects.all()
@@ -814,7 +811,7 @@ class ScanService:
                 error_images,
                 bundle_qr_read,
                 bundle_pushed,
-                bundle.user,
+                bundle.user.username,
             )
             bundle_status.append(bundle_data)
         return bundle_status
