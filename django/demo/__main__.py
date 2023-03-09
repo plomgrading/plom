@@ -189,7 +189,7 @@ def upload_bundles():
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
         print("For time being sleep between bundle uploads. TODO = fix this")
-        sleep(10)
+        sleep(2)
 
 
 def read_qr_codes():
@@ -207,17 +207,19 @@ def read_qr_codes():
                 print("v" * 50)
                 print(str(e))
                 print("^" * 50)
-                raise ValueError(f"ARGH {e}")
+                raise ValueError(e)
 
             if "has been read" in out_qr:
                 done.append(n)
+            else:
+                sleep(2)
         for n in done:
             todo.remove(n)
         if len(todo) > 0:
             print(
                 f"Stil waiting for {len(todo)} bundles to process - sleep between attempts"
             )
-            sleep(5)
+            sleep(2)
         else:
             print("QR-codes of all bundles read.")
             break
@@ -237,14 +239,14 @@ def push_if_ready():
                 push_cmd = f"python3 manage.py plom_staging_bundles push fake_bundle{n}"
                 subprocess.check_call(split(push_cmd))
                 done.append(n)
-                sleep(5)
+                sleep(2)
         for n in done:
             todo.remove(n)
         if len(todo) > 0:
             print(
                 f"Stil waiting for {len(todo)} bundles to process - sleep between attempts"
             )
-            sleep(5)
+            sleep(2)
         else:
             print("All bundles pushed.")
             break
