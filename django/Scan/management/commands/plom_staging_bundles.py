@@ -85,21 +85,21 @@ class Command(BaseCommand):
                     f"Multiple bundles called '{bundle_name}' are present."
                 )
             else:
-                [
+                (
                     num_pages,
                     valid_pages,
                     error_pages,
-                    qrd,
+                    qr_processed,
                     pushed,
                     username,
-                ] = the_bundle[0][1:]
+                ) = the_bundle[0][1:]
                 self.stdout.write(
                     f"Found bundle '{bundle_name}' with {num_pages} pages uploaded by {username}"
                 )
                 if pushed is True:
                     self.stdout.write("  * bundle has been pushed")
                     return
-                if qrd is not True:
+                if qr_processed is not True:
                     self.stdout.write("  * qr-codes not yet read")
                     return
                 if error_pages > 0:
@@ -109,13 +109,12 @@ class Command(BaseCommand):
                     self.stdout.write("  * invalid pages present, cannot push.")
                     return
                 if (
-                    (qrd is True)
+                    (qr_processed is True)
                     and (valid_pages == num_pages)
                     and (error_pages == 0)
                     and (pushed is not True)
                 ):
                     self.stdout.write("  *  bundle perfect, ready to push")
-                    return
 
     def push_staged_bundle(self, bundle_name):
         scanner = ScanService()

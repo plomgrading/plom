@@ -15,21 +15,15 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        grp = parser.add_mutually_exclusive_group()
-        grp.add_argument(
-            "--build",
-            action="store_true",
-            help="Queue the building of the extra page pdf",
-        )
-        grp.add_argument(
-            "--delete", action="store_true", help="Delete the extra page pdf"
-        )
-        grp.add_argument(
-            "--download",
+        sub = parser.add_subparsers(dest="command")
+        sub_b = sub.add_parser("build", help="Queue the building of the extra page pdf")
+        sub_del = sub.add_parser("delete", help="Delete the extra page pdf")
+        sub_dwn = sub.add_parser("download", help="Download the extra page pdf")
+        sub_dwn.add_argument(
+            "dest",
             const="extra_page.pdf",
             nargs="?",
             type=str,
-            help="Download the extra page pdf",
         )
 
     def build_extra_page(self):
@@ -65,14 +59,14 @@ class Command(BaseCommand):
             self.stdout.write(f"Extra page has not yet been built = {current_state}")
 
     def handle(self, *args, **options):
-        if options["build"]:
+        if options["command"] == "build":
             self.build_extra_page()
 
-        elif options["delete"]:
+        elif options["command"] == "delete":
             self.delete_extra_page()
 
-        elif options["download"]:
-            self.download_extra_page(options["download"])
+        elif options["command"] == "download":
+            self.download_extra_page(options["dest"])
         else:
             ep_service = ExtraPageService()
             current_state = ep_service.get_extra_page_task_status()
