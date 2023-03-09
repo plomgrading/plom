@@ -12,4 +12,4 @@ class Command(BaseCommand):
         for demo_user in User.objects.filter(groups__name="demo"):
             demo_user.delete()
 
-        print("All demo users have been deleted!")
+        self.stdout.write("All demo users have been deleted!")

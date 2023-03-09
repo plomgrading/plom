@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
 from tabulate import tabulate
@@ -23,7 +23,7 @@ class Command(BaseCommand):
         # Check to see if there are any groups created
         exist_groups = [str(group) for group in Group.objects.all()]
         if not exist_groups:
-            print(
+            self.stderr.write(
                 "\nNo groups created! Please run python manage.py plom_create_groups "
                 "to create groups first before running this command!\n"
             )
@@ -55,10 +55,15 @@ class Command(BaseCommand):
                     is_staff=True,
                     is_superuser=True,
                 ).groups.add(admin_group, demo_group)
-                print(f"{admin} created and added to {admin_group} group!")
+                self.stdout.write(f"{admin} created and added to {admin_group} group!")
 
-            except (IntegrityError, Group.DoesNotExist):
-                print(f"{admin} already exists!")
+            except IntegrityError as err:
+                self.stderr.write(f"{admin} already exists!")
+                raise CommandError(err)
+            except Group.DoesNotExist as err:
+                self.stderr.write("Admin group {admin_group} does not exist.")
+                raise CommandError(err)
+
             admin_info["Username"].append(admin)
             admin_info["Password"].append("password")
 
@@ -67,13 +72,15 @@ class Command(BaseCommand):
                 User.objects.create_user(
                     username=manager, email=manager + email, password=manager
                 ).groups.add(manager_group, demo_group)
-                print(f"{manager} created and added to {manager_group} group!")
+                self.stdout.write(f"{manager} created and added to {manager_group} group!")
                 User.objects.create_user(
                     username="manager", email="manager" + email, password="1234"
                 ).groups.add(manager_group, demo_group)
-                print(f"{manager} created and added to {manager_group} group!")
-            except IntegrityError:
-                print(f"{manager} already exists!")
+                self.stdout.write(f"{manager} created and added to {manager_group} group!")
+            except IntegrityError as err:
+                self.stderr.write(f"{manager} already exists!")
+                raise CommandError(err)
+
             manager_info["Username"].append(manager)
             manager_info["Password"].append(manager)
             manager_info["Username"].append("manager")
@@ -92,7 +99,7 @@ class Command(BaseCommand):
                 marker_info["Password"].append(marker_password)
 
                 if scanner_username in exist_usernames:
-                    print(f"{scanner_username} already exists!")
+                    self.stderr.write(f"{scanner_username} already exists!")
                 else:
                     User.objects.create_user(
                         username=scanner_username,
@@ -103,12 +110,12 @@ class Command(BaseCommand):
                     user.is_active = True
                     user.save()
 
-                    print(
+                    self.stdout.write(
                         f"{scanner_username} created and added to {scanner_group} group!"
                     )
 
                 if marker_username in exist_usernames:
-                    print(f"{marker_username} already exists!")
+                    self.stderr.write(f"{marker_username} already exists!")
                 else:
                     User.objects.create_user(
                         username=marker_username,
@@ -119,27 +126,19 @@ class Command(BaseCommand):
                     user.is_active = True
                     user.save()
 
-                    print(
+                    self.stdout.write(
                         f"{marker_username} created and added to {marker_group} group!"
                     )
 
             # Here is print the table of demo users
-            print("")
-            print("Admin")
-            print("Table: List of demo admin username and password")
-            print(tabulate(admin_info, headers="keys", tablefmt="fancy_grid"))
+            self.stdout.write("\nAdmin table: demo admin usernames and passwords")
+            self.stdout.write(str(tabulate(admin_info, headers="keys", tablefmt="fancy_grid")))
 
-            print("")
-            print("Manager")
-            print("Table: List of demo manager usernames and passwords")
-            print(tabulate(manager_info, headers="keys", tablefmt="fancy_grid"))
+            self.stdout.write("\nManager table: demo manager usernames and passwords")
+            self.stdout.write(str(tabulate(manager_info, headers="keys", tablefmt="fancy_grid")))
 
-            print("")
-            print("Scanners")
-            print("Table: List of demo scanner usernames and passwords")
-            print(tabulate(scanner_info, headers="keys", tablefmt="fancy_grid"))
+            self.stdout.write("\nScanner table: demo scanner usernames and passwords")
+            self.stdout.write(str(tabulate(scanner_info, headers="keys", tablefmt="fancy_grid")))
 
-            print("")
-            print("Markers")
-            print("Table: List of demo scanner usernames and passwords")
-            print(tabulate(marker_info, headers="keys", tablefmt="fancy_grid"))
+            self.stdout.write("\nMarker table: demo marker usernames and passwords")
+            self.stdout.write(str(tabulate(marker_info, headers="keys", tablefmt="fancy_grid")))
