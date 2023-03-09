@@ -4,7 +4,7 @@
 
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from BuildPaperPDF.services import BuildPapersService
 from Preparation.services import PQVMappingService
@@ -119,7 +119,7 @@ class Command(BaseCommand):
             (name, b) = bp_service.get_paper_path_and_bytes(paper_number)
         except ValueError as err:
             self.stderr.write(f"Error - {err}")
-            return
+            raise CommandError(err)
 
         with open(Path(name), "wb") as fh:
             fh.write(b)
