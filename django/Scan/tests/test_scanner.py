@@ -7,6 +7,7 @@ import shutil
 import pathlib
 import numpy as np
 from PIL import Image
+from os import remove
 
 from django.utils import timezone
 from django.test import TestCase
@@ -220,6 +221,8 @@ class ScanServiceTests(TestCase):
         for original, rotated in zip(xy_upright, xy_flipped):
             self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
             self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
+
+        remove(image_flipped_path)
 
     def test_complete_images(self):
         """
