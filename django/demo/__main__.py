@@ -68,6 +68,8 @@ def remove_old_db_and_misc_user_files(engine):
         Path("db.sqlite3").unlink(missing_ok=True)
     elif engine == "postgres":
         recreate_postgres_db()
+    else:
+        raise RuntimeError('Unexpected engine "{engine}"')
 
     for fname in [
         "fake_bundle1.pdf",
@@ -282,7 +284,8 @@ def main():
     print(f"You appear to be running with a {engine} DB.")
 
     print("*" * 40)
-    recreate_postgres_db()
+    if engine == "postgres":
+        recreate_postgres_db()
 
     print("*" * 40)
     remove_old_migration_files()

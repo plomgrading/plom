@@ -119,7 +119,7 @@ class Command(BaseCommand):
                 f"Pushing {bundle_name} - processing it in the background now."
             )
         except ValueError as err:
-            CommandError(err)
+            raise CommandError(err)
 
     def read_bundle_qr(self, bundle_name):
         scanner = ScanService()
@@ -129,7 +129,7 @@ class Command(BaseCommand):
                 f"Reading {bundle_name} QR codes - processing it in the background now."
             )
         except ValueError as err:
-            CommandError(err)
+            raise CommandError(err)
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
