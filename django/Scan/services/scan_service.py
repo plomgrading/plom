@@ -418,13 +418,19 @@ class ScanService:
         img.save()
         return True
 
-
     @db_task(queue="tasks")
     def read_qr_codes_parent_task(bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         # TODO - replace this by a foreign-key lookup thingy rather than another filter
         the_pages = StagingImage.objects.filter(bundle=bundle_obj)
-        arg_list = [(page.bundle_order, page.file_path, ScanService().huey_parse_qr_code(page.pk)) for page in the_pages]
+        arg_list = [
+            (
+                page.bundle_order,
+                page.file_path,
+                ScanService().huey_parse_qr_code(page.pk),
+            )
+            for page in the_pages
+        ]
 
         with transaction.atomic():
             for X in arg_list:
@@ -444,10 +450,9 @@ class ScanService:
             print("TODO do something better here.")
 
         with transaction.atomic():
-            bundle_obj.has_qr_codes=True
+            bundle_obj.has_qr_codes = True
             bundle_obj.save()
 
-        
     @transaction.atomic
     def read_qr_codes(self, bundle_pk):
         """
@@ -467,7 +472,7 @@ class ScanService:
         """
         root_folder = settings.MEDIA_ROOT / "page_images"
         root_folder.mkdir(exist_ok=True)
-        
+
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         task = self.read_qr_codes_parent_task(bundle_pk)
         with transaction.atomic():
@@ -476,11 +481,11 @@ class ScanService:
                 huey_id=task.id,
                 status="queued",
                 created=timezone.now(),
-            )       
+            )
         # for page in StagingImage.objects.filter(bundle=bundle):
-            # self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
-            # if self.is_bundle_reading_finished and not bundle.has_qr_codes:
-                # self.qr_reading_cleanup(bundle)
+        # self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
+        # if self.is_bundle_reading_finished and not bundle.has_qr_codes:
+        # self.qr_reading_cleanup(bundle)
 
     @transaction.atomic
     def get_qr_code_results(self, bundle, page_index):
