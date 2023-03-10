@@ -67,11 +67,12 @@ Some stuff from the package manager:
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
-        latexmk texlive-fonts-recommended python3-pil \
+        latexmk texlive-fonts-recommended python3-pillow \
         python3-tqdm libpango-1.0-0 libpangocairo-1.0-0 \
         python3-defusedxml python3-jsmin python3-cairosvg
 ```
-The pango stuff was (is?) needed for weasyprint: perhaps it can be dropped.
+The `pango` stuff was needed for `weasyprint`: perhaps it can be dropped (?)
+The `libjpeg` stuff can likely be dropped too (?)
 
 Now upgrade pip (your local copy, not the system one)
 ```
@@ -83,6 +84,7 @@ Now upgrade pip (your local copy, not the system one)
 ```
 Note `python3 -m pip` is some kind of workaround for old OSes.
 On Ubuntu 20.04, you should be able to just use "pip", but inspect output to be sure.
+Similarly, on new enough systems, you don't need to pip install a new `setuptools`.
 
 At this point `pip install --user .` from inside the Plom source tree should pull
 in the remaining dependencies.
