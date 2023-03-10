@@ -21,7 +21,7 @@ Fedora
 Tested on Fedora 37.  Some stuff from the package manager:
 ```
   # sudo dnf install \
-        ImageMagick openssl zbar gcc gcc-c++ cmake \
+        ImageMagick openssl gcc gcc-c++ cmake \
         turbojpeg-devel libjpeg-turbo-devel python3-cffi \
         python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
@@ -41,10 +41,6 @@ Tested on Fedora 37.  Some stuff from the package manager:
 ```
 At this point `pip install plom` (or `pip install --user .` from inside
 the Plom source tree) should pull in the remaining dependencies.
-Alternatively, you can do something like:
-```
-  # pip install --upgrade --user pyzbar
-```
 There are additional dependencies for the machine-learning-based ID Reader:
 ```
   # pip install --user imutils lapsolver opencv-python-headless
@@ -67,7 +63,7 @@ Some stuff from the package manager:
 ```
   # sudo apt install \
         cmake make imagemagick dvipng g++ openssl \
-        libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
+        libjpeg-turbo8-dev libturbojpeg0-dev \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
