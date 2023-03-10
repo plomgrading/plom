@@ -28,7 +28,7 @@ class QRErrorService:
 
         # Disable this for the moment since it is DB intensive.
         # self.check_image_collision_within_bundle(
-            # img_obj, bundle, serialized_top_three_qr, page_data
+        # img_obj, bundle, serialized_top_three_qr, page_data
         # )
 
         self.check_TPV_code(
