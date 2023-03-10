@@ -143,7 +143,7 @@ def launch_huey_workers():
     # I don't understand why, but this seems to need to be run as a sub-proc
     # and not via call_command... maybe because it launches a bunch of background
     # stuff?
-    
+
     print("Launching huey workers for background tasks")
     for cmd in ["djangohuey"]:
         py_man_cmd = f"python3 manage.py {cmd}"
@@ -320,18 +320,18 @@ def main():
     print("*" * 40)
     server_proc = launch_server()
 
-
     print("v" * 40)
     print("Everything is now up and running")
     print("^" * 40)
-    
-    # wait_for_papers_to_be_ready()
+
+    wait_for_papers_to_be_ready()
     # print("*" * 40)
 
+    # what is this for? why does scribble_on_exams work without it?
     # download_zip()
     # print("*" * 40)
 
-    # scribble_on_exams()
+    scribble_on_exams()
 
     # print("*" * 40)
     # upload_bundles()
