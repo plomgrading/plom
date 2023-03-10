@@ -5,9 +5,8 @@
 import fitz
 import shutil
 import pathlib
-import numpy as np
+import tempfile
 from PIL import Image
-from os import remove
 
 from django.utils import timezone
 from django.test import TestCase
@@ -190,22 +189,21 @@ class ScanServiceTests(TestCase):
         image_upright = Image.open(image_upright_path)
         image_upright.load()
 
-        image_flipped_path = (
-            settings.BASE_DIR / "Scan" / "tests" / "page_img_good_flipped.png"
-        )
-        image_flipped = image_upright.rotate(180)
-        image_flipped.save(image_flipped_path)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_flipped_path = pathlib.Path(tmpdir) / "flipped.png"
+            image_flipped = image_upright.rotate(180)
+            image_flipped.save(image_flipped_path)
 
-        qrs_flipped = QRextract(image_flipped_path)
-        codes_flipped = scanner.parse_qr_code([qrs_flipped])
+            qrs_flipped = QRextract(image_flipped_path)
+            codes_flipped = scanner.parse_qr_code([qrs_flipped])
 
-        pipr = PageImageProcessor()
-        has_had_rotation = pipr.rotate_page_image(image_flipped_path, codes_flipped)
-        self.assertEquals(has_had_rotation, 180)
+            pipr = PageImageProcessor()
+            has_had_rotation = pipr.rotate_page_image(image_flipped_path, codes_flipped)
+            self.assertEquals(has_had_rotation, 180)
 
-        # read QR codes a second time due to rotation of image
-        qrs_flipped = QRextract(image_flipped_path)
-        codes_flipped = scanner.parse_qr_code([qrs_flipped])
+            # read QR codes a second time due to rotation of image
+            qrs_flipped = QRextract(image_flipped_path)
+            codes_flipped = scanner.parse_qr_code([qrs_flipped])
 
         xy_upright = []
         xy_flipped = []
@@ -221,8 +219,6 @@ class ScanServiceTests(TestCase):
         for original, rotated in zip(xy_upright, xy_flipped):
             self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
             self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
-
-        remove(image_flipped_path)
 
     def test_complete_images(self):
         """
