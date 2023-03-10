@@ -321,6 +321,7 @@ class ScanService:
         """
         scanner = ScanService()
         qr_error_checker = QRErrorService()
+
         code_dict = QRextract(image_path)
         page_data = scanner.parse_qr_code([code_dict])
 
@@ -328,14 +329,18 @@ class ScanService:
         qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
         pipr = PageImageProcessor()
-        rotated = pipr.rotate_page_image(image_path, page_data)
-        # TODO: need to update page_data inner dict fields "quadrant", "x_coord" and "y_coord" after rotating image
+        has_had_rotation = pipr.rotate_page_image(image_path, page_data)
 
-        # Below is to write the parsed QR code to database.
+        # Re-read QR codes if the page image has been rotated
+        if has_had_rotation != 0:
+            code_dict = QRextract(image_path)
+            page_data = scanner.parse_qr_code([code_dict])
+            qr_error_checker.check_qr_codes(page_data, image_path, bundle)
+
+        # Write the parsed QR codes and rotation done on image to database
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data
-        if rotated:
-            img.rotation = rotated
+        img.rotation = has_had_rotation
         img.save()
 
     @transaction.atomic
