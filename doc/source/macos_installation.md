@@ -12,9 +12,7 @@ Tested on Catalina 10.15.4.
 First some stuff from a package manager, here using [Homebrew](https://brew.sh):
 
 ```
-brew install imagemagick zbar \
-             libjpeg libjpeg-turbo jpeg-turbo \
-             libffi openssl cmake pango
+brew install imagemagick libffi openssl cmake
 ```
 You will also need Python, perhaps:
 ```
