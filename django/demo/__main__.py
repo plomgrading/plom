@@ -153,7 +153,7 @@ def launch_huey_workers():
 def launch_server():
     print("Launching django server")
     # this needs to be run in the background
-    cmd = f"python3 manage.py runserver 8000"
+    cmd = "python3 manage.py runserver 8000"
     return subprocess.Popen(split(cmd))
 
 
@@ -232,7 +232,7 @@ def read_qr_codes():
             todo.remove(n)
         if len(todo) > 0:
             print(
-                f"Stil waiting for {len(todo)} bundles to process - sleep between attempts"
+                f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
             )
             sleep(2)
         else:
@@ -259,7 +259,7 @@ def push_if_ready():
             todo.remove(n)
         if len(todo) > 0:
             print(
-                f"Stil waiting for {len(todo)} bundles to process - sleep between attempts"
+                f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
             )
             sleep(2)
         else:
