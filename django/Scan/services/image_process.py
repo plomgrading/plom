@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from plom.scan import rotate_bitmap
 
@@ -145,12 +146,12 @@ class PageImageProcessor:
             qr_data (dict): parsed QR code data
 
         Returns:
-            int | False: rotation angle if page was rotated, False otherwise
-            TODO: I'm concerned about the lack of stable type here.
+            int: rotation angle by which the page was rotated.
+            If page was not rotated, rotation angle of 0 is returned.
         """
         orientation = self.get_page_orientation(qr_data)
         if orientation == "upright":
-            return False
+            return 0
 
         if orientation == "turned_right":
             rotate_angle = -90
