@@ -1,12 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 
 import shutil
+import itertools
 
 from django.db import transaction
+from django.db.models import Q, Subquery, OuterRef
 from django.conf import settings
 from django_huey import db_task
+
+from Scan.models import (
+    StagingImage,
+)
 
 from Papers.models import (
     Bundle,
@@ -244,16 +250,94 @@ class ImageBundleService:
         return False
 
     @db_task(queue="tasks")
-    def _upload_valid_bundle(self, bundle):
+    def _upload_valid_bundle(self, staged_bundle):
         """
         Assuming all of the pages in the bundle are valid (i.e. have a valid page number,
-        paper number, and don't collide with any currently pushed pages) push all the pages
+        paper number, and don't collide with any currently uploaded pages) upload all the pages
         using bulk ORM calls.
 
         1. Check that all the staging images have page numbers and test numbers
         2. Check that no staging images collide with each other
-        3. Check that no staging images with any pushed images
+        3. Check that no staging images with any uploaded images
         4. Bulk-create images
         """
 
         pass
+
+    def get_staged_img_location(self, staged_image):
+        """
+        Get the image's paper number and page number from its QR code dict
+        TODO: this same thing is implemented in ScanService. We need to choose which one stays!
+
+        Args:
+            staged_image: A StagingImage instance
+
+        Returns:
+            (int or None, int or None): paper number and page number
+        """
+
+        if not staged_image.parsed_qr:
+            return (None, None)
+
+        # The values are the same in all of the child QR dicts, so it's safe to choose any
+        any_qr = list(staging_image.parsed_qr.values())[0]
+        paper_number = any_qr["paper_id"]
+        page_number = any_qr["page_num"]
+
+        return paper_number, page_number
+
+    def all_staged_imgs_valid(self, staged_imgs):
+        """
+        Check that all staged images in the bundle are ready to be uploaded. Each image
+        must have a parsed_qr dict, a page number, and a paper number.
+
+        Args:
+            staged_imgs: QuerySet, a list of all staged images for a bundle
+
+        Returns:
+            bool: True if all images are valid, false otherwise
+        """
+
+        return not staged_imgs.exists(parsed_qr=None, paper_id=None, page_number=None)
+
+    def find_internal_collisions(self, staged_imgs):
+        """
+        Check for collisions *within* a bundle (or collection of staging images)
+
+        Args:
+            staged_imgs: QuerySet, a list of all staged images for a bundle
+
+        Returns:
+            list[list[StagingImage]]: list of collisions.
+        """
+
+        collisions = staged_imgs.annotate(
+            collision=Subquery(
+                staged_imgs.filter(
+                    paper_id=OuterRef("paper_id"), page_number=OuterRef("page_number")
+                )
+            )
+        )
+        return filter(lambda img: img.collision.count() > 0, collisions)
+
+    def find_external_collisions(self, staged_imgs):
+        """
+        Check for collisions between images in the input list and all the
+        *currently uploaded* images.
+
+        Args:
+            staged_imgs: QuerySet, a list of all staged images for a bundle
+
+        Returns:
+            list[(StagingImage, Image)]: list of collisions. No order or repetitions -
+                if (Image A, Image B) is there, there is no (Image B, Image A)
+        """
+
+        collisions = Image.objects.annotate(
+            collision=Subquery(
+                staged_imgs.filter(
+                    paper_id=OuterRef("paper_id"), page_number=OuterRef("page_number")
+                )
+            )
+        )
+        return filter(lambda img: img.collision.count() > 0, collisions)
