@@ -17,12 +17,12 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction, close_old_connections
+from django.db import transaction
 from django_huey import db_task
 from django.utils import timezone
 
 from plom.scan import QRextract
-from plom.scan import try_to_extract_image, render_page_to_bitmap
+from plom.scan import render_page_to_bitmap
 from plom.scan.readQRCodes import checkQRsValid
 from plom.tpv_utils import parseTPV, getPaperPageVersion
 
@@ -39,7 +39,6 @@ from Scan.models import (
 )
 from Papers.models import ErrorImage
 from Papers.services import ImageBundleService
-from .qr_validators import QRErrorService
 
 
 class ScanService:
@@ -151,7 +150,7 @@ class ScanService:
     def split_bundle_parent_task(bundle_pk, base_dir):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         task_list = [
-            ScanService().huey_get_page_image(bundle_pk, pg, base_dir, f"page{pg:05}")
+            ScanService().child_get_page_image(bundle_pk, pg, base_dir, f"page{pg:05}")
             for pg in range(bundle_obj.number_of_pages)
         ]
         with transaction.atomic():
@@ -163,11 +162,7 @@ class ScanService:
                     created=timezone.now(),
                 )
 
-        close_old_connections()
-
         results = [X.get(blocking=True) for X in task_list]
-
-        close_old_connections()
 
         with transaction.atomic():
             for X in results:
@@ -184,7 +179,7 @@ class ScanService:
             bundle_obj.save()
 
     @db_task(queue="tasks")
-    def huey_get_page_image(bundle_pk, index, basedir, basename):
+    def child_get_page_image(bundle_pk, index, basedir, basename):
         """
         Render a page image and save to disk in the background
 
@@ -289,43 +284,21 @@ class ScanService:
         Return True if user has a bundle with associated PageToImage tasks
         that aren't all completed
         """
-        running_bundles = StagingBundle.objects.filter(user=user, has_page_images=False)
-        return len(running_bundles) != 0
-
-    @transaction.atomic
-    def get_bundle_being_split(self, user):
-        """
-        Return the bundle that is currently being split into page images.
-        If no bundles are being split in the background for a user, raise an ObjectNotFound
-        error.
-        """
-        running_bundle = StagingBundle.objects.get(user=user, has_page_images=False)
-        return running_bundle
-
-    @transaction.atomic
-    def page_splitting_cleanup(self, bundle):
-        """
-        After all of the page images have been successfully rendered, mark
-        bundle as 'has_page_images'
-        """
-        bundle.has_page_images = True
-        bundle.save()
+        return StagingBundle.objects.filter(user=user, has_page_images=False).exists()
 
     @transaction.atomic
     def get_n_page_rendering_tasks(self, bundle):
         """
         Return the total number of PageToImage tasks for a bundle
         """
-        tasks = PageToImage.objects.filter(bundle=bundle)
-        return len(tasks)
+        return PageToImage.objects.filter(bundle=bundle).count()
 
     @transaction.atomic
     def get_n_completed_page_rendering_tasks(self, bundle):
         """
         Return the number of completed PageToImage tasks for a bundle
         """
-        completed = PageToImage.objects.filter(bundle=bundle, status="complete")
-        return len(completed)
+        return PageToImage.objects.filter(bundle=bundle, status="complete").count()
 
     def parse_qr_code(self, list_qr_codes):
         """
@@ -395,7 +368,7 @@ class ScanService:
         return groupings
 
     @db_task(queue="tasks")
-    def huey_parse_qr_code(image_pk):
+    def child_parse_qr_code(image_pk):
         """
         Huey task of parsing QR codes, check QR errors, rotate image,
         and save to database in the background
@@ -407,33 +380,28 @@ class ScanService:
         image_path = img.file_path
 
         scanner = ScanService()
-        # qr_error_checker = QRErrorService()
         code_dict = QRextract(image_path)
         page_data = scanner.parse_qr_code([code_dict])
-
-        # error handling here
-        # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
         pipr = PageImageProcessor()
         rotated = pipr.rotate_page_image(image_path, page_data)
         # TODO: need to update page_data inner dict fields "quadrant", "x_coord" and "y_coord" after rotating image
-
-        # Below is to write the parsed QR code to database.
 
         return {"image_pk": image_pk, "parsed_qr": page_data, "rotation": rotated}
 
     @db_task(queue="tasks")
     def read_qr_codes_parent_task(bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+
         # TODO - replace this by a foreign-key lookup thingy rather than another filter
-        the_pages = StagingImage.objects.filter(bundle=bundle_obj)
+        # the_pages = StagingImage.objects.filter(bundle=bundle_obj)
         arg_list = [
             (
                 page.bundle_order,
                 page.file_path,
-                ScanService().huey_parse_qr_code(page.pk),
+                ScanService().child_parse_qr_code(page.pk),
             )
-            for page in the_pages
+            for page in bundle_obj.stagingimage_set.all()
         ]
 
         with transaction.atomic():
@@ -446,11 +414,7 @@ class ScanService:
                     status="queued",
                 )
 
-        close_old_connections()
-
         results = [X[2].get(blocking=True) for X in arg_list]
-
-        close_old_connections()
 
         with transaction.atomic():
             for X in results:
@@ -503,8 +467,9 @@ class ScanService:
         Check the results of a QR code scanning task. If done, return
         the QR code data. Otherwise, return None.
         """
-        image = StagingImage.objects.get(bundle=bundle, bundle_order=page_index)
-        return image.parsed_qr
+        return StagingImage.objects.get(
+            bundle=bundle, bundle_order=page_index
+        ).parsed_qr
 
     @transaction.atomic
     def get_qr_code_reading_status(self, bundle, page_index):
@@ -512,8 +477,7 @@ class ScanService:
         Get the status of a QR code reading task. If it doesn't exist, return None.
         """
         try:
-            task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
-            return task.status
+            return ParseQR.objects.get(bundle=bundle, page_index=page_index).status
         except ParseQR.DoesNotExist:
             return None
 
@@ -522,8 +486,7 @@ class ScanService:
         """
         Get the error message of a QR code reading task.
         """
-        task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
-        return task.message
+        return ParseQR.objects.get(bundle=bundle, page_index=page_index).message
 
     @transaction.atomic
     def is_bundle_reading_started(self, bundle):
@@ -531,9 +494,7 @@ class ScanService:
         Return True if there are at least one ParseQR tasks without the status 'todo'
         """
         bundle_tasks = ParseQR.objects.filter(bundle=bundle)
-        non_todo_bundle_tasks = bundle_tasks.exclude(status="todo")
-
-        return len(bundle_tasks) > 0 and len(non_todo_bundle_tasks) > 0
+        return bundle_tasks.exists() and bundle_tasks.exclude(status="todo").exists()
 
     @transaction.atomic
     def is_bundle_reading_ongoing(self, bundle):
