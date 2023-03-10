@@ -17,7 +17,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import transaction, close_old_connections
 from django_huey import db_task, get_queue
 from django.utils import timezone
 
@@ -151,7 +151,7 @@ class ScanService:
     def split_bundle_parent_task(bundle_pk, base_dir):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         task_list = [
-            ScanService()._get_page_image(bundle_pk, pg, base_dir, f"page{pg:05}")
+            ScanService().huey_get_page_image(bundle_pk, pg, base_dir, f"page{pg:05}")
             for pg in range(bundle_obj.number_of_pages)
         ]
         with transaction.atomic():
@@ -163,19 +163,26 @@ class ScanService:
                     created=timezone.now(),
                 )
 
+        close_old_connections()
+
         results = [X.get(blocking=True) for X in task_list]
-        if all(results):
-            print("All pages read successfully")
-        else:
-            print("Some problems with page reading.")
-            print("TODO do something better here.")
 
         with transaction.atomic():
+            for X in results:
+                # TODO - check for error status here.
+                StagingImage.objects.create(
+                    bundle=bundle_obj,
+                    bundle_order=X["index"],
+                    file_name=X["file_name"],
+                    file_path=X["file_path"],
+                    image_hash=X["image_hash"],
+                )
+
             bundle_obj.has_page_images = True
             bundle_obj.save()
 
     @db_task(queue="tasks")
-    def _get_page_image(bundle_pk, index, basedir, basename):
+    def huey_get_page_image(bundle_pk, index, basedir, basename):
         """
         Render a page image and save to disk in the background
 
@@ -200,15 +207,14 @@ class ScanService:
         with open(save_path, "rb") as f:
             image_hash = hashlib.sha256(f.read()).hexdigest()
 
-        with transaction.atomic():
-            StagingImage.objects.create(
-                bundle=bundle_obj,
-                bundle_order=index,
-                file_name=f"page{index}.png",
-                file_path=str(save_path),
-                image_hash=image_hash,
-            )
-        return True
+        # TODO - return an error of some sort here if problems
+
+        return {
+            "index": index,
+            "file_name": f"page{index}.png",
+            "file_path": str(save_path),
+            "image_hash": image_hash,
+        }
 
     @transaction.atomic
     def remove_bundle(self, timestamp, user):
