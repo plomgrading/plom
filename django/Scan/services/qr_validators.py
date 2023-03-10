@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from collections import Counter
 import shutil
@@ -55,9 +56,9 @@ class QRErrorService:
         """
         qr_code_list = []
         for quadrant in page_data:
-            grouping_key = str(page_data.get(quadrant)["grouping_key"])
-            quadrant_num = str(page_data.get(quadrant)["quadrant"])
-            public_code = str(page_data.get(quadrant)["public_code"])
+            grouping_key = page_data.get(quadrant)["grouping_key"]
+            quadrant_num = page_data.get(quadrant)["quadrant"]
+            public_code = page_data.get(quadrant)["public_code"]
 
             if tpv_type == "grouping_key":
                 qr_code_list.append(grouping_key)
@@ -108,7 +109,7 @@ class QRErrorService:
 
     def check_qr_matching(self, qr_list, img_obj, top_three_tpv, page_data):
         """
-        Check if QR codes matches.
+        Check if QR codes match.
         This is to check if a page is folded.
         """
         for indx in range(1, len(qr_list)):

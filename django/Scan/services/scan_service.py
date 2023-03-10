@@ -247,7 +247,7 @@ class ScanService:
         Parsing QR codes into list of dictionaries
 
         Args:
-            list_qr_codes: (list) QR codes return from QRextract() method as a dictionary
+            list_qr_codes: (list) QR codes returned from QRextract() method as a dictionary
 
         Return:
             groupings: (dict) Group of TPV signature
@@ -321,6 +321,7 @@ class ScanService:
         """
         scanner = ScanService()
         qr_error_checker = QRErrorService()
+
         code_dict = QRextract(image_path)
         page_data = scanner.parse_qr_code([code_dict])
 
@@ -328,14 +329,18 @@ class ScanService:
         qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
         pipr = PageImageProcessor()
-        rotated = pipr.rotate_page_image(image_path, page_data)
-        # TODO: need to update page_data inner dict fields "quadrant", "x_coord" and "y_coord" after rotating image
+        has_had_rotation = pipr.rotate_page_image(image_path, page_data)
 
-        # Below is to write the parsed QR code to database.
+        # Re-read QR codes if the page image has been rotated
+        if has_had_rotation != 0:
+            code_dict = QRextract(image_path)
+            page_data = scanner.parse_qr_code([code_dict])
+            qr_error_checker.check_qr_codes(page_data, image_path, bundle)
+
+        # Write the parsed QR codes and rotation done on image to database
         img = StagingImage.objects.get(file_path=image_path)
         img.parsed_qr = page_data
-        if rotated:
-            img.rotation = rotated
+        img.rotation = has_had_rotation
         img.save()
 
     @transaction.atomic
@@ -543,8 +548,8 @@ class ScanService:
     def bundle_contains_list(self, all_images, num_images):
         qr_code_list = []
         for image in all_images:
-            for qr_qadrant in image.parsed_qr:
-                qr_code_list.append(image.parsed_qr[qr_qadrant].get("grouping_key"))
+            for qr_quadrant in image.parsed_qr:
+                qr_code_list.append(image.parsed_qr[qr_quadrant].get("grouping_key"))
         qr_code_list.sort()
         qr_code_list = list(dict.fromkeys(qr_code_list))
         while len(qr_code_list) < num_images:
@@ -554,10 +559,10 @@ class ScanService:
     @transaction.atomic
     def get_common_qr_code(self, qr_data):
         qr_code_list = []
-        for qr_qadrant in qr_data:
-            paper_id = list(qr_data[qr_qadrant].values())[0]
-            page_num = list(qr_data[qr_qadrant].values())[1]
-            version_num = list(qr_data[qr_qadrant].values())[2]
+        for qr_quadrant in qr_data:
+            paper_id = list(qr_data[qr_quadrant].values())[0]
+            page_num = list(qr_data[qr_quadrant].values())[1]
+            version_num = list(qr_data[qr_quadrant].values())[2]
             qr_code_list.append(paper_id + page_num + version_num)
         counter = Counter(qr_code_list)
         most_common_qr = counter.most_common(1)
