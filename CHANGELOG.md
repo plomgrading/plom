@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Client: "sync" button was not indicating changes made to existing rubrics.
 * Manager: partial fix (no more crash) when trying to create synthetic substitute ID pages.
+* Client: clicking "cancel" in options dialog no longer applies the options anyway.
 * Misc UI fixes.
 
 

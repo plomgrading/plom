@@ -173,14 +173,15 @@ class Chooser(QDialog):
         d = ClientSettingsDialog(
             self, self.lastTime, logdir, cfgfile, tempfile.gettempdir()
         )
-        d.exec()
+        if d.exec() != QDialog.Accepted:
+            return
         # TODO: do something more proper like QSettings
-        stuff = d.getStuff()
-        self.lastTime["FOREGROUND"] = stuff[0]
-        self.lastTime["LogLevel"] = stuff[1]
-        self.lastTime["LogToFile"] = stuff[2]
-        self.lastTime["CommentsWarnings"] = stuff[3]
-        self.lastTime["MarkWarnings"] = stuff[4]
+        opt = d.get_options_back()
+        self.lastTime["FOREGROUND"] = opt["FOREGROUND"]
+        self.lastTime["LogLevel"] = opt["LogLevel"]
+        self.lastTime["LogToFile"] = opt["LogToFile"]
+        self.lastTime["CommentsWarnings"] = opt["CommentsWarning"]
+        self.lastTime["MarkWarnings"] = opt["MarkWarnings"]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def launch_task(self, which_subapp):
