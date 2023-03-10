@@ -144,7 +144,7 @@ class QRParsingProgressAlert(ScannerRequiredView):
 
         context.update(
             {
-                "reading_ongoing": scanner.is_bundle_reading_ongoig(bundle),
+                "reading_ongoing": scanner.is_bundle_reading_ongoing(bundle),
                 "total_pages": scanner.get_n_images(bundle),
                 "total_complete": scanner.get_n_complete_reading_tasks(bundle),
                 "timestamp": timestamp,
@@ -180,7 +180,7 @@ class BundleTableView(UpdateQRProgressView):
 
         context.update(
             {
-                "qr_reading": scanner.is_bundle_reading_ongoig(bundle),
+                "qr_reading": scanner.is_bundle_reading_ongoing(bundle),
                 "paper_list": zip(paper_id, page_num, version_num),
             }
         )

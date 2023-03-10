@@ -18,7 +18,7 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, close_old_connections
-from django_huey import db_task, get_queue
+from django_huey import db_task
 from django.utils import timezone
 
 from plom.scan import QRextract
@@ -166,6 +166,8 @@ class ScanService:
         close_old_connections()
 
         results = [X.get(blocking=True) for X in task_list]
+
+        close_old_connections()
 
         with transaction.atomic():
             for X in results:
@@ -418,11 +420,7 @@ class ScanService:
 
         # Below is to write the parsed QR code to database.
 
-        img.parsed_qr = page_data
-        if rotated:
-            img.rotation = rotated
-        img.save()
-        return True
+        return {"image_pk": image_pk, "parsed_qr": page_data, "rotation": rotated}
 
     @db_task(queue="tasks")
     def read_qr_codes_parent_task(bundle_pk):
@@ -448,14 +446,20 @@ class ScanService:
                     status="queued",
                 )
 
+        close_old_connections()
+
         results = [X[2].get(blocking=True) for X in arg_list]
-        if all(results):
-            print("All page-qrs read successfully")
-        else:
-            print("Some problems with page-qr reading.")
-            print("TODO do something better here.")
+
+        close_old_connections()
 
         with transaction.atomic():
+            for X in results:
+                # TODO - check for error status here.
+                img = StagingImage.objects.get(pk=X["image_pk"])
+                img.parsed_qr = X["parsed_qr"]
+                img.rotation = X["rotation"]
+                img.save()
+
             bundle_obj.has_qr_codes = True
             bundle_obj.save()
 

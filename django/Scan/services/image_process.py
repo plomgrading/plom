@@ -145,12 +145,11 @@ class PageImageProcessor:
             qr_data (dict): parsed QR code data
 
         Returns:
-            int | False: rotation angle if page was rotated, False otherwise
-            TODO: I'm concerned about the lack of stable type here.
+            int: rotation angle if page was rotated, (0 if no rotation)
         """
         orientation = self.get_page_orientation(qr_data)
         if orientation == "upright":
-            return False
+            return 0
 
         if orientation == "turned_right":
             rotate_angle = -90

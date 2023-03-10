@@ -204,40 +204,27 @@ def upload_bundles():
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
+        sleep(2)
+
+
+def wait_for_upload():
+    for n in [1, 2, 3]:
+        cmd = f"plom_staging_bundles status fake_bundle{n}"
+        py_man_cmd = f"python3 manage.py {cmd}"
+        while True:
+            out_up = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
+            if "qr" in out_up:
+                print(f"fake_bundle{n}.pdf ready for qr-reading")
+                break
+            sleep(2)
 
 
 def read_qr_codes():
-    todo = [1, 2, 3]
-    while True:
-        done = []
-        for n in todo:
-            cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
-            py_man_cmd = f"python3 manage.py {cmd}"
-            try:
-                out_qr = subprocess.check_output(
-                    split(py_man_cmd), stderr=subprocess.STDOUT
-                ).decode("utf-8")
-            except subprocess.CalledProcessError as e:
-                print("v" * 50)
-                print(str(e))
-                print("^" * 50)
-                raise ValueError(e)
-
-            if "has been read" in out_qr:
-                done.append(n)
-            else:
-                sleep(5)
-
-        for n in done:
-            todo.remove(n)
-        if len(todo) > 0:
-            print(
-                f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
-            )
-            sleep(5)
-        else:
-            print("QR-codes of all bundles read.")
-            break
+    for n in [1, 2, 3]:
+        cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
+        py_man_cmd = f"python3 manage.py {cmd}"
+        subprocess.check_call(split(py_man_cmd))
+        sleep(5)
 
 
 def push_if_ready():
@@ -339,8 +326,10 @@ def main():
     print("*" * 40)
     upload_bundles()
 
-    # print("*" * 40)
-    # read_qr_codes()
+    wait_for_upload()
+
+    print("*" * 40)
+    read_qr_codes()
 
     # print("*" * 40)
     # push_if_ready()
