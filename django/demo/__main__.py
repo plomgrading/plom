@@ -189,7 +189,7 @@ def upload_bundles():
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
-        print("For time being sleep between bundle uploads. TODO = fix this")
+        print("For time being sleep between bundle uploads.")
 
 def read_qr_codes():
     todo = [1, 2, 3]
@@ -308,8 +308,8 @@ def main():
 
     scribble_on_exams()
 
-    print("*" * 40)
-    upload_bundles()
+    # print("*" * 40)
+    # upload_bundles()
 
     # print("*" * 40)
     # read_qr_codes()

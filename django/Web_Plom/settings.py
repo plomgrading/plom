@@ -113,11 +113,12 @@ DATABASES = {
         "USER": "postgres",
         "PASSWORD": "postgres",
     },
-    "default": {
+    "sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     },
 }
+DATABASES["default"] = DATABASES["sqlite"]
 
 
 # Password validation

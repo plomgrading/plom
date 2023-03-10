@@ -95,9 +95,25 @@ class UnknownStagingImage(models.Model):
     rotation = models.IntegerField(default=0)
 
 
+class ManagePageToImage(HueyTask):
+    """
+    Manage the background PDF page into an image tasks
+    """
+
+    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
+
+
 class PageToImage(HueyTask):
     """
     Convert a PDF page into an image in the background.
+    """
+
+    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
+
+
+class ManageParseQR(HueyTask):
+    """
+    Manage the background parse-qr tasks
     """
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
