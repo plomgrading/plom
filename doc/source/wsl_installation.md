@@ -18,7 +18,7 @@ can be used on Microsoft Windows using Windows Subsystem for Linux (WSL).
 
 ## Getting WSL
 
-Go to [https://docs.microsoft.com/en-us/windows/wsl/install](docs.microsoft.com/en-us/windows/wsl/install)
+Go to [https://docs.microsoft.com/en-us/windows/wsl/install](https://docs.microsoft.com/en-us/windows/wsl/install)
 for detailed information.
 
 
