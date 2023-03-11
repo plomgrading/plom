@@ -12,7 +12,7 @@ Tested on Catalina 10.15.4.
 First some stuff from a package manager, here using [Homebrew](https://brew.sh):
 
 ```
-brew install imagemagick libffi openssl cmake
+brew install imagemagick openssl cmake
 ```
 You will also need Python, perhaps:
 ```

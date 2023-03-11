@@ -1199,7 +1199,7 @@ macos_server:
   - brew --version
   # brew update
   # brew --version
-  - brew install cmake libffi
+  - brew install cmake
   - brew install imagemagick
   - brew install openssl
   - time brew install basictex
