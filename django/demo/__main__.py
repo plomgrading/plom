@@ -19,7 +19,9 @@ def get_database_engine():
 
     ## notes on DB installs
 
-    TODO: move this to some docs someday
+    TODO: move this to some docs someday.
+
+    I did all these with Podman on a Fedora 37 laptop.
 
     ### PostgreSQL
 
@@ -28,9 +30,17 @@ def get_database_engine():
         docker pull postgres
         docker run --name postgres_cntnr -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
 
-    I can then connect with ``psql -h 127.0.0.1 -U postgres``, although haven't
-    convinced Django to connect yet: it seems to want to use a socket instead of
-    TCP/IP (I guess?).  Actually maybe its `psycopg2` that is the problem...
+    By default, things seem to want to use a socket instead of TCP/IP to talk
+    to the database.  For testing, I can connect with
+    ``psql -h 127.0.0.1 -U postgres``
+    To make Django use TCP/IP, I put the "127.0.0.1" as the host in
+    ``settings.py``.  I also had to convince ``psycopg2`` by using
+    the ``host`` kwarg.
+
+    To stop the container::
+
+        docker stop postgre_cntnr
+        docker rm postgre_cntnr.
 
     ### MariaDB / MySQL
 
@@ -72,7 +82,11 @@ def remove_old_migration_files():
 def recreate_postgres_db():
     import psycopg2
 
-    conn = psycopg2.connect(user="postgres", password="postgres")
+    # use local "socket" thing
+    # conn = psycopg2.connect(user="postgres", password="postgres")
+    # use TCP/IP
+    conn = psycopg2.connect(user="postgres", password="postgres", host="localhost")
+
     conn.autocommit = True
     print("Removing old database.")
     try:
