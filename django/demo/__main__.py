@@ -15,6 +15,33 @@ from demo import scribble_on_exams
 
 
 def get_database_engine():
+    """Which database engine are we using?
+
+    ## notes on DB installs
+
+    TODO: move this to some docs someday
+
+    ### PostgreSQL
+
+    Start a local container::
+
+        docker pull postgres
+        docker run --name postgres_cntnr -e POSTGRES_PASSWORD=postgres -d postgres
+
+    ### MariaDB / MySQL
+
+    Start a local container::
+
+        docker pull mariadb
+        docker run --name mariadb_cntnr -e MYSQL_ROOT_PASSWORD=mypass -p 3306:3306 -d mariadb
+
+    Check that we can connect to the server::
+
+        mysql -h localhost -P 3306 --protocol=TCP -u root -p
+
+    TODO: connect this to Plom
+    """
+
     from Web_Plom import settings
 
     engine = settings.DATABASES["default"]["ENGINE"]
