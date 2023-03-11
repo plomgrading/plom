@@ -26,7 +26,11 @@ def get_database_engine():
     Start a local container::
 
         docker pull postgres
-        docker run --name postgres_cntnr -e POSTGRES_PASSWORD=postgres -d postgres
+        docker run --name postgres_cntnr -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+
+    I can then connect with ``psql -h 127.0.0.1 -U postgres``, although haven't
+    convinced Django to connect yet: it seems to want to use a socket instead of
+    TCP/IP (I guess?).  Actually maybe its `psycopg2` that is the problem...
 
     ### MariaDB / MySQL
 
