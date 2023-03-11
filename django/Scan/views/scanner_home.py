@@ -57,7 +57,6 @@ class ScannerHomeView(ScannerRequiredView):
             }
         )
         user_bundles = scanner.get_user_bundles(user)
-        print("UB = ", user_bundles)
         bundles = []
         hash_pushed_bundle = False
         for bundle in user_bundles:
@@ -184,6 +183,35 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         scanner = ScanService()
 
         bundle = scanner.get_bundle(timestamp, request.user)
-        context = {"bundle": bundle}
+        context = {
+            "timestamp": timestamp,
+            "slug": bundle.slug,
+            "when": arrow.get(timestamp).humanize(),
+            "number_of_pages": bundle.number_of_pages,
+            "has_been_processed": bundle.has_page_images,
+            "has_qr_codes": bundle.has_qr_codes,
+            "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
+        }
 
         return render(request, "Scan/fragments/staged_bundle_card.html", context)
+
+    def post(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
+        scanner.read_qr_codes(bundle.pk)
+        return HttpResponseClientRefresh()
+
+    def delete(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+        scanner.remove_bundle(timestamp, request.user)
+        return HttpResponseClientRefresh()

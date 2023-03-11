@@ -219,8 +219,7 @@ class ScanService:
         Remove a bundle PDF from the filesystem + database
         """
         bundle = self.get_bundle(timestamp, user)
-        file_path = pathlib.Path(bundle.file_path)
-        file_path.unlink()
+        pathlib.Path(bundle.pdf_file.path).unlink()
         bundle.delete()
 
     @transaction.atomic
@@ -230,6 +229,12 @@ class ScanService:
         already exists in the database.
         """
         return StagingBundle.objects.filter(pdf_hash=hash).exists()
+
+    @transaction.atomic
+    def get_bundle_from_timestamp(self, timestamp):
+        return StagingBundle.objects.get(
+            timestamp=timestamp,
+        )
 
     @transaction.atomic
     def get_bundle(self, timestamp, user):
@@ -448,6 +453,10 @@ class ScanService:
         root_folder.mkdir(exist_ok=True)
 
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        # check that the qr-codes have not been read already, or that a task has not been set
+        if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
+            return
+
         task = self.read_qr_codes_parent_task(bundle_pk)
         with transaction.atomic():
             ManageParseQR.objects.create(
@@ -456,10 +465,20 @@ class ScanService:
                 status="queued",
                 created=timezone.now(),
             )
-        # for page in StagingImage.objects.filter(bundle=bundle):
-        # self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
-        # if self.is_bundle_reading_finished and not bundle.has_qr_codes:
-        # self.qr_reading_cleanup(bundle)
+
+    @transaction.atomic
+    def is_bundle_mid_qr_read(self, bundle_pk):
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        query = ManageParseQR.objects.filter(bundle=bundle_obj)
+        if query.exists():  # have run a qr-read task previously
+            if query.exclude(
+                status="completed"
+            ).exists():  # one of these is not completed, so must be mid-run
+                return True
+            else:  # all have finished previously
+                return False
+        else:  # no such qr-reading tasks have been done
+            return False
 
     @transaction.atomic
     def get_qr_code_results(self, bundle, page_index):

@@ -57,7 +57,9 @@
                         {% if bundles %}
                         {% for bundle in bundles %}
                         <div hx-get="{% url 'scan_get_staged_bundle_fragment' bundle.timestamp %}"
-			     hw-swap="innerHTML" hx-trigger="load">
+			     hw-swap="innerHTML" hx-trigger="load"
+			     id="bundle{{bundle.slug}}"
+			     >
 			</div>
                             {% endfor %}
                         {% else %}
