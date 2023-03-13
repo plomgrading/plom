@@ -48,12 +48,15 @@ class Command(BaseCommand):
         slug = slugify(filename_stem)
         timestamp = datetime.timestamp(timezone.now())
         hashed = hashlib.sha256(file_bytes).hexdigest()
+        number_of_pages = pdf_doc.page_count
 
         if scanner.check_for_duplicate_hash(hashed):
             raise CommandError("Upload failed - Bundle was already uploaded.")
 
         try:
-            scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
+            scanner.upload_bundle_cmd(
+                source_pdf, slug, username, timestamp, hashed, number_of_pages
+            )
             self.stdout.write(
                 f"Uploaded {source_pdf} as user {username} - processing it in the background now."
             )

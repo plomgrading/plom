@@ -2,6 +2,8 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 
+import pathlib
+
 from django.shortcuts import render
 from django.http import Http404, FileResponse, HttpResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -9,6 +11,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
+
 
 # from Scan.models import StagingImage
 # from Progress.services import ManageScanService
@@ -96,6 +99,7 @@ class GetBundleImageView(ScannerRequiredView):
         scanner = ScanService()
         image = scanner.get_image(timestamp, request.user, index)
         file_path = image.file_path
+
         with open(file_path, "rb") as f:
             uploaded_file = SimpleUploadedFile(
                 f"page_{index}.png",

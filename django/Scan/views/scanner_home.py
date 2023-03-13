@@ -52,24 +52,10 @@ class ScannerHomeView(ScannerRequiredView):
                 "total_completed_pages": total_pages,
                 "percent_pages_completed": int(percent_pages_complete),
                 "all_test_papers": all_test_papers,
+                "form": BundleUploadForm(),
+                "bundle_splitting": False,
             }
         )
-
-        if not scanner.user_has_running_image_tasks(user):
-            context.update(
-                {
-                    "form": BundleUploadForm(),
-                    "bundle_splitting": False,
-                }
-            )
-        else:
-            splitting_bundle = scanner.get_bundle_being_split(user)
-            context.update(
-                {
-                    "bundle_splitting": True,
-                    "timestamp": splitting_bundle.timestamp,
-                }
-            )
         user_bundles = scanner.get_user_bundles(user)
         bundles = []
         hash_pushed_bundle = False
@@ -106,13 +92,13 @@ class ScannerHomeView(ScannerRequiredView):
         context = self.build_context(request.user)
 
         # if a pdf-to-image task is fully complete, perform some cleanup
-        if context["bundle_splitting"]:
-            scanner = ScanService()
-            bundle = scanner.get_bundle(context["timestamp"], request.user)
-            n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
-            n_total = scanner.get_n_page_rendering_tasks(bundle)
-            if n_completed == n_total:
-                scanner.page_splitting_cleanup(bundle)
+        # if context["bundle_splitting"]:
+        #     scanner = ScanService()
+        #     bundle = scanner.get_bundle(context["timestamp"], request.user)
+        #     n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
+        #     n_total = scanner.get_n_page_rendering_tasks(bundle)
+        #     if n_completed == n_total:
+        #         scanner.page_splitting_cleanup(bundle)
 
         return render(request, "Scan/home.html", context)
 
@@ -120,16 +106,20 @@ class ScannerHomeView(ScannerRequiredView):
         context = self.build_context(request.user)
         form = BundleUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            data = form.cleaned_data
+            data = form.cleaned_data  # this checks the file really is a valid PDF
+
             user = request.user
             slug = data["slug"]
             time_uploaded = data["time_uploaded"]
-            bundle_doc = data["pdf_doc"]
+            bundle_file = data["pdf"]
             pdf_hash = data["sha256"]
-
-            scanner = ScanService()
+            number_of_pages = data["number_of_pages"]
             timestamp = datetime.timestamp(time_uploaded)
-            scanner.upload_bundle(bundle_doc, slug, user, timestamp, pdf_hash)
+
+            ScanService().upload_bundle(
+                bundle_file, slug, user, timestamp, pdf_hash, number_of_pages
+            )
+
             return HttpResponseRedirect(reverse("scan_home"))
         else:
             context.update({"form": form})
@@ -177,3 +167,51 @@ class GetBundleView(ScannerRequiredView):
                 content_type="application/pdf",
             )
         return FileResponse(uploaded_file)
+
+
+class GetStagedBundleFragmentView(ScannerRequiredView):
+    """
+    Return a user-uploaded bundle PDF
+    """
+
+    def get(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+
+        bundle = scanner.get_bundle(timestamp, request.user)
+        context = {
+            "timestamp": timestamp,
+            "slug": bundle.slug,
+            "when": arrow.get(timestamp).humanize(),
+            "number_of_pages": bundle.number_of_pages,
+            "has_been_processed": bundle.has_page_images,
+            "has_qr_codes": bundle.has_qr_codes,
+            "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
+        }
+
+        return render(request, "Scan/fragments/staged_bundle_card.html", context)
+
+    def post(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+        bundle = scanner.get_bundle_from_timestamp(timestamp)
+        scanner.read_qr_codes(bundle.pk)
+        return HttpResponseClientRefresh()
+
+    def delete(self, request, timestamp):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        scanner = ScanService()
+        scanner.remove_bundle(timestamp, request.user)
+        return HttpResponseClientRefresh()

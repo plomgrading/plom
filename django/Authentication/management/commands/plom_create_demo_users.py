@@ -72,11 +72,15 @@ class Command(BaseCommand):
                 User.objects.create_user(
                     username=manager, email=manager + email, password=manager
                 ).groups.add(manager_group, demo_group)
-                self.stdout.write(f"{manager} created and added to {manager_group} group!")
+                self.stdout.write(
+                    f"{manager} created and added to {manager_group} group!"
+                )
                 User.objects.create_user(
                     username="manager", email="manager" + email, password="1234"
                 ).groups.add(manager_group, demo_group)
-                self.stdout.write(f"{manager} created and added to {manager_group} group!")
+                self.stdout.write(
+                    f"{manager} created and added to {manager_group} group!"
+                )
             except IntegrityError as err:
                 self.stderr.write(f"{manager} already exists!")
                 raise CommandError(err)
@@ -132,13 +136,21 @@ class Command(BaseCommand):
 
             # Here is print the table of demo users
             self.stdout.write("\nAdmin table: demo admin usernames and passwords")
-            self.stdout.write(str(tabulate(admin_info, headers="keys", tablefmt="fancy_grid")))
+            self.stdout.write(
+                str(tabulate(admin_info, headers="keys", tablefmt="fancy_grid"))
+            )
 
             self.stdout.write("\nManager table: demo manager usernames and passwords")
-            self.stdout.write(str(tabulate(manager_info, headers="keys", tablefmt="fancy_grid")))
+            self.stdout.write(
+                str(tabulate(manager_info, headers="keys", tablefmt="fancy_grid"))
+            )
 
             self.stdout.write("\nScanner table: demo scanner usernames and passwords")
-            self.stdout.write(str(tabulate(scanner_info, headers="keys", tablefmt="fancy_grid")))
+            self.stdout.write(
+                str(tabulate(scanner_info, headers="keys", tablefmt="fancy_grid"))
+            )
 
             self.stdout.write("\nMarker table: demo marker usernames and passwords")
-            self.stdout.write(str(tabulate(marker_info, headers="keys", tablefmt="fancy_grid")))
+            self.stdout.write(
+                str(tabulate(marker_info, headers="keys", tablefmt="fancy_grid"))
+            )

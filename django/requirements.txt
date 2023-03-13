@@ -25,3 +25,4 @@ random-username
 tomli
 tomlkit
 zipfly  # for streaming zipfile generation/download
+psycopg2  # for mucking with postgres databases

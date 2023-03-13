@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 """Output the names of files given as args that are not copyright in a given year.
 
@@ -30,6 +31,7 @@ ok_no_copyright = [
     "*/uiFiles/ui_*.py",
     ".mailmap",
     "*/cl_for_demo.csv",
+    "django/static/*.svg",
 ]
 
 if __name__ == "__main__":

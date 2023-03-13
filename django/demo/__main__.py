@@ -15,6 +15,47 @@ from demo import scribble_on_exams
 
 
 def get_database_engine():
+    """Which database engine are we using?
+
+    ## notes on DB installs
+
+    TODO: move this to some docs someday.
+
+    I did all these with Podman on a Fedora 37 laptop.
+
+    ### PostgreSQL
+
+    Start a local container::
+
+        docker pull postgres
+        docker run --name postgres_cntnr -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+
+    By default, things seem to want to use a socket instead of TCP/IP to talk
+    to the database.  For testing, I can connect with
+    ``psql -h 127.0.0.1 -U postgres``
+    To make Django use TCP/IP, I put the "127.0.0.1" as the host in
+    ``settings.py``.  I also had to convince ``psycopg2`` by using
+    the ``host`` kwarg.
+
+    To stop the container::
+
+        docker stop postgre_cntnr
+        docker rm postgre_cntnr.
+
+    ### MariaDB / MySQL
+
+    Start a local container::
+
+        docker pull mariadb
+        docker run --name mariadb_cntnr -e MYSQL_ROOT_PASSWORD=mypass -p 3306:3306 -d mariadb
+
+    Check that we can connect to the server::
+
+        mysql -h localhost -P 3306 --protocol=TCP -u root -p
+
+    TODO: connect this to Plom
+    """
+
     from Web_Plom import settings
 
     engine = settings.DATABASES["default"]["ENGINE"]
@@ -41,7 +82,11 @@ def remove_old_migration_files():
 def recreate_postgres_db():
     import psycopg2
 
-    conn = psycopg2.connect(user="postgres", password="postgres")
+    # use local "socket" thing
+    # conn = psycopg2.connect(user="postgres", password="postgres")
+    # use TCP/IP
+    conn = psycopg2.connect(user="postgres", password="postgres", host="localhost")
+
     conn.autocommit = True
     print("Removing old database.")
     try:
@@ -68,6 +113,8 @@ def remove_old_db_and_misc_user_files(engine):
         Path("db.sqlite3").unlink(missing_ok=True)
     elif engine == "postgres":
         recreate_postgres_db()
+    else:
+        raise RuntimeError('Unexpected engine "{engine}"')
 
     for fname in [
         "fake_bundle1.pdf",
@@ -88,6 +135,7 @@ def remove_old_db_and_misc_user_files(engine):
 def sqlite_set_wal():
     import sqlite3
 
+    print("Setting journal mode WAL for sqlite database")
     conn = sqlite3.connect("db.sqlite3")
     conn.execute("pragma journal_mode=wal")
     conn.close()
@@ -203,41 +251,27 @@ def upload_bundles():
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
-        print("For time being sleep between bundle uploads. TODO = fix this")
         sleep(2)
 
 
-def read_qr_codes():
-    todo = [1, 2, 3]
-    while True:
-        done = []
-        for n in todo:
-            cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
-            py_man_cmd = f"python3 manage.py {cmd}"
-            try:
-                out_qr = subprocess.check_output(
-                    split(py_man_cmd), stderr=subprocess.STDOUT
-                ).decode("utf-8")
-            except subprocess.CalledProcessError as e:
-                print("v" * 50)
-                print(str(e))
-                print("^" * 50)
-                raise ValueError(e)
-
-            if "has been read" in out_qr:
-                done.append(n)
-            else:
-                sleep(2)
-        for n in done:
-            todo.remove(n)
-        if len(todo) > 0:
-            print(
-                f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
-            )
+def wait_for_upload():
+    for n in [1, 2, 3]:
+        cmd = f"plom_staging_bundles status fake_bundle{n}"
+        py_man_cmd = f"python3 manage.py {cmd}"
+        while True:
+            out_up = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
+            if "qr" in out_up:
+                print(f"fake_bundle{n}.pdf ready for qr-reading")
+                break
             sleep(2)
-        else:
-            print("QR-codes of all bundles read.")
-            break
+
+
+def read_qr_codes():
+    for n in [1, 2, 3]:
+        cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
+        py_man_cmd = f"python3 manage.py {cmd}"
+        subprocess.check_call(split(py_man_cmd))
+        sleep(5)
 
 
 def push_if_ready():
@@ -295,6 +329,10 @@ def main():
     print(f"You appear to be running with a {engine} DB.")
 
     print("*" * 40)
+    if engine == "postgres":
+        recreate_postgres_db()
+
+    print("*" * 40)
     remove_old_migration_files()
 
     print("*" * 40)
@@ -325,18 +363,22 @@ def main():
     print("^" * 40)
 
     wait_for_papers_to_be_ready()
-    # print("*" * 40)
+    print("*" * 40)
 
     # what is this for? why does scribble_on_exams work without it?
-    # download_zip()
-    # print("*" * 40)
+    download_zip()
+    print("*" * 40)
 
     scribble_on_exams()
 
-    # print("*" * 40)
-    # upload_bundles()
-    # print("*" * 40)
-    # read_qr_codes()
+    print("*" * 40)
+    upload_bundles()
+
+    wait_for_upload()
+
+    print("*" * 40)
+    read_qr_codes()
+
     # print("*" * 40)
     # push_if_ready()
 

@@ -15,13 +15,14 @@ import shutil
 import fitz
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
 from django.utils import timezone
 
 from plom.scan import QRextract
-from plom.scan import try_to_extract_image, render_page_to_bitmap
+from plom.scan import render_page_to_bitmap
 from plom.scan.readQRCodes import checkQRsValid
 from plom.tpv_utils import parseTPV, getPaperPageVersion
 
@@ -33,10 +34,11 @@ from Scan.models import (
     ParseQR,
     DiscardedStagingImage,
     CollisionStagingImage,
+    ManagePageToImage,
+    ManageParseQR,
 )
 from Papers.models import ErrorImage
 from Papers.services import ImageBundleService
-from .qr_validators import QRErrorService
 
 
 class ScanService:
@@ -44,90 +46,172 @@ class ScanService:
     Functions for staging scanned test-papers.
     """
 
-    def upload_bundle(self, pdf_doc, slug, user, timestamp, pdf_hash):
+    def upload_bundle(
+        self, uploaded_pdf_file, slug, user, timestamp, pdf_hash, number_of_pages
+    ):
         """
         Upload a bundle PDF and store it in the filesystem + database.
         Also, split PDF into page images + store in filesystem and database.
-        """
-        file_name = f"{timestamp}.pdf"
 
+        Args:
+            upload_pdf_file (Django File): File-object containing the pdf (can also be a TemporaryUploadedFile or InMemoryUploadedFile)
+            slug (str): Filename slug for the pdf
+            user (Django User): the user uploading the file
+            timestamp (datetime): the datetime at which the file was uploaded
+            pdf_hash (str): the sha256 of the pdf.
+            number_of_pages (int): the number of pages in the pdf
+
+        """
+
+        # make sure the path is created
         user_dir = pathlib.Path("media") / user.username
         user_dir.mkdir(exist_ok=True)
         bundles_dir = user_dir / "bundles"
         bundles_dir.mkdir(exist_ok=True)
         bundle_dir = bundles_dir / f"{timestamp}"
         bundle_dir.mkdir(exist_ok=True)
-        with open(bundle_dir / file_name, "w") as f:
-            pdf_doc.save(f)
 
+        fh = uploaded_pdf_file.open()
         with transaction.atomic():
-            bundle_db = StagingBundle(
+            bundle_obj = StagingBundle.objects.create(
                 slug=slug,
-                file_path=bundle_dir / file_name,
+                pdf_file=File(fh, name=f"{timestamp}.pdf"),
                 user=user,
                 timestamp=timestamp,
+                number_of_pages=number_of_pages,
                 pdf_hash=pdf_hash,
             )
-            bundle_db.save()
 
         image_dir = bundle_dir / "pageImages"
         image_dir.mkdir(exist_ok=True)
         unknown_dir = bundle_dir / "unknownPages"
         unknown_dir.mkdir(exist_ok=True)
-        self.split_and_save_bundle_images(pdf_doc, bundle_db, image_dir)
+        self.split_and_save_bundle_images(bundle_obj.pk, image_dir)
 
     @transaction.atomic
-    def split_and_save_bundle_images(self, pdf_doc, bundle, base_dir):
+    def upload_bundle_cmd(
+        self, pdf_file_path, slug, username, timestamp, hashed, number_of_pages
+    ):
+        """
+        Wrapper around upload_bundle for use by the commandline bundle upload command.
+
+        Checks if the supplied username has permissions to access and upload scans.
+
+        Args:
+            pdf_file_path (pathlib.Path or str): the path to the pdf being uploaded
+            slug (str): Filename slug for the pdf
+            username (str): the username uploading the file
+            timestamp (datetime): the datetime at which the file was uploaded
+            pdf_hash (str): the sha256 of the pdf.
+            number_of_pages (int): the number of pages in the pdf
+
+        """
+        # username => user_object, if in scanner group, else exception raised.
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name="scanner"
+            )
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        with open(pdf_file_path, "rb") as fh:
+            pdf_file_object = File(fh)
+
+        self.upload_bundle(
+            pdf_file_object,
+            slug,
+            user_obj,
+            timestamp,
+            hashed,
+            number_of_pages,
+        )
+
+    def split_and_save_bundle_images(self, bundle_pk, base_dir):
         """
         Read a PDF document and save page images to filesystem/database
 
         Args:
-            pdf_doc: fitz.document object of a bundle
-            bundle: StagingBundle object
+            bundle_pk: StagingBundle object primary key
             base_dir: pathlib.Path object of path to save image files
         """
-        n_pages = pdf_doc.page_count
-        for i in range(n_pages):
-            page_task = self._get_page_image(bundle, i, base_dir, f"page{i:05}")
-            page_task_db = PageToImage(
-                bundle=bundle,
-                huey_id=page_task.id,
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        task = self.split_bundle_parent_task(bundle_pk, base_dir)
+        with transaction.atomic():
+            ManagePageToImage.objects.create(
+                bundle=bundle_obj,
+                huey_id=task.id,
                 status="queued",
                 created=timezone.now(),
             )
-            page_task_db.save()
 
     @db_task(queue="tasks")
-    def _get_page_image(bundle, index, basedir, basename):
+    def split_bundle_parent_task(bundle_pk, base_dir):
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        task_list = [
+            ScanService().child_get_page_image(bundle_pk, pg, base_dir, f"page{pg:05}")
+            for pg in range(bundle_obj.number_of_pages)
+        ]
+        with transaction.atomic():
+            for task in task_list:
+                PageToImage.objects.create(
+                    bundle=bundle_obj,
+                    huey_id=task.id,
+                    status="queued",
+                    created=timezone.now(),
+                )
+
+        results = [X.get(blocking=True) for X in task_list]
+
+        with transaction.atomic():
+            for X in results:
+                # TODO - check for error status here.
+                StagingImage.objects.create(
+                    bundle=bundle_obj,
+                    bundle_order=X["index"],
+                    file_name=X["file_name"],
+                    file_path=X["file_path"],
+                    image_hash=X["image_hash"],
+                )
+
+            bundle_obj.has_page_images = True
+            bundle_obj.save()
+
+    @db_task(queue="tasks")
+    def child_get_page_image(bundle_pk, index, basedir, basename):
         """
         Render a page image and save to disk in the background
 
         Args:
-            bundle: bundle DB object
+            bundle_pk: bundle DB object's primary key
             index: bundle order of page
             basedir (pathlib.Path): were to put the image
             basename (str): a basic filename without the extension
         """
-        with fitz.Document(bundle.file_path) as pdf_doc:
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+
+        with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
             save_path = render_page_to_bitmap(
                 pdf_doc[index],
                 basedir,
                 basename,
-                bundle.file_path,
+                bundle_obj.pdf_file,
                 add_metadata=True,
             )
         # TODO: if demo, then do make_mucked_up_jpeg here
 
         with open(save_path, "rb") as f:
             image_hash = hashlib.sha256(f.read()).hexdigest()
-        image_db = StagingImage(
-            bundle=bundle,
-            bundle_order=index,
-            file_name=f"page{index}.png",
-            file_path=str(save_path),
-            image_hash=image_hash,
-        )
-        image_db.save()
+
+        # TODO - return an error of some sort here if problems
+
+        return {
+            "index": index,
+            "file_name": f"page{index}.png",
+            "file_path": str(save_path),
+            "image_hash": image_hash,
+        }
 
     @transaction.atomic
     def remove_bundle(self, timestamp, user):
@@ -135,8 +219,7 @@ class ScanService:
         Remove a bundle PDF from the filesystem + database
         """
         bundle = self.get_bundle(timestamp, user)
-        file_path = pathlib.Path(bundle.file_path)
-        file_path.unlink()
+        pathlib.Path(bundle.pdf_file.path).unlink()
         bundle.delete()
 
     @transaction.atomic
@@ -145,8 +228,13 @@ class ScanService:
         Check if a PDF has already been uploaded: return True if the hash
         already exists in the database.
         """
-        duplicate_hashes = StagingBundle.objects.filter(pdf_hash=hash)
-        return len(duplicate_hashes) > 0
+        return StagingBundle.objects.filter(pdf_hash=hash).exists()
+
+    @transaction.atomic
+    def get_bundle_from_timestamp(self, timestamp):
+        return StagingBundle.objects.get(
+            timestamp=timestamp,
+        )
 
     @transaction.atomic
     def get_bundle(self, timestamp, user):
@@ -154,11 +242,10 @@ class ScanService:
         Get a bundle from the database. To uniquely identify a bundle, we need
         its timestamp and user
         """
-        bundle = StagingBundle.objects.get(
+        return StagingBundle.objects.get(
             user=user,
             timestamp=timestamp,
         )
-        return bundle
 
     @transaction.atomic
     def get_image(self, timestamp, user, index):
@@ -167,11 +254,10 @@ class ScanService:
         (and a timestamp, and user) and a page index
         """
         bundle = self.get_bundle(timestamp, user)
-        image = StagingImage.objects.get(
+        return StagingImage.objects.get(
             bundle=bundle,
             bundle_order=index,
         )
-        return image
 
     @transaction.atomic
     def get_n_images(self, bundle):
@@ -179,24 +265,23 @@ class ScanService:
         Get the number of page images in a bundle by counting the number of
         StagingImages saved to the database
         """
-        images = StagingImage.objects.filter(bundle=bundle)
-        return len(images)
+        return StagingImage.objects.filter(bundle=bundle).count()
 
     @transaction.atomic
     def get_all_images(self, bundle):
         """
         Get all the page images in a bundle
         """
-        images = StagingImage.objects.filter(bundle=bundle)
-        return images
+
+        return StagingImage.objects.filter(bundle=bundle)
 
     @transaction.atomic
     def get_user_bundles(self, user):
         """
         Return all of the staging bundles that a user uploaded
         """
-        bundles = StagingBundle.objects.filter(user=user, has_page_images=True)
-        return list(bundles)
+        # bundles = StagingBundle.objects.filter(user=user, has_page_images=True)
+        return list(StagingBundle.objects.filter(user=user))
 
     @transaction.atomic
     def user_has_running_image_tasks(self, user):
@@ -204,43 +289,21 @@ class ScanService:
         Return True if user has a bundle with associated PageToImage tasks
         that aren't all completed
         """
-        running_bundles = StagingBundle.objects.filter(user=user, has_page_images=False)
-        return len(running_bundles) != 0
-
-    @transaction.atomic
-    def get_bundle_being_split(self, user):
-        """
-        Return the bundle that is currently being split into page images.
-        If no bundles are being split in the background for a user, raise an ObjectNotFound
-        error.
-        """
-        running_bundle = StagingBundle.objects.get(user=user, has_page_images=False)
-        return running_bundle
-
-    @transaction.atomic
-    def page_splitting_cleanup(self, bundle):
-        """
-        After all of the page images have been successfully rendered, mark
-        bundle as 'has_page_images'
-        """
-        bundle.has_page_images = True
-        bundle.save()
+        return StagingBundle.objects.filter(user=user, has_page_images=False).exists()
 
     @transaction.atomic
     def get_n_page_rendering_tasks(self, bundle):
         """
         Return the total number of PageToImage tasks for a bundle
         """
-        tasks = PageToImage.objects.filter(bundle=bundle)
-        return len(tasks)
+        return PageToImage.objects.filter(bundle=bundle).count()
 
     @transaction.atomic
     def get_n_completed_page_rendering_tasks(self, bundle):
         """
         Return the number of completed PageToImage tasks for a bundle
         """
-        completed = PageToImage.objects.filter(bundle=bundle, status="complete")
-        return len(completed)
+        return PageToImage.objects.filter(bundle=bundle, status="complete").count()
 
     def parse_qr_code(self, list_qr_codes):
         """
@@ -310,56 +373,67 @@ class ScanService:
         return groupings
 
     @db_task(queue="tasks")
-    def _huey_parse_qr_code(bundle, image_path):
+    def child_parse_qr_code(image_pk):
         """
         Huey task of parsing QR codes, check QR errors, rotate image,
         and save to database in the background
 
         Args:
-            bundle: Bundle DB object
-            image_path: (str) image file path
+            image_pk: primary key of the image
         """
+        img = StagingImage.objects.get(pk=image_pk)
+        image_path = img.file_path
+
         scanner = ScanService()
-        qr_error_checker = QRErrorService()
         code_dict = QRextract(image_path)
         page_data = scanner.parse_qr_code([code_dict])
-
-        # error handling here
-        qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
         pipr = PageImageProcessor()
         rotated = pipr.rotate_page_image(image_path, page_data)
         # TODO: need to update page_data inner dict fields "quadrant", "x_coord" and "y_coord" after rotating image
 
-        # Below is to write the parsed QR code to database.
-        img = StagingImage.objects.get(file_path=image_path)
-        img.parsed_qr = page_data
-        if rotated:
-            img.rotation = rotated
-        img.save()
+        return {"image_pk": image_pk, "parsed_qr": page_data, "rotation": rotated}
+
+    @db_task(queue="tasks")
+    def read_qr_codes_parent_task(bundle_pk):
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+
+        # TODO - replace this by a foreign-key lookup thingy rather than another filter
+        # the_pages = StagingImage.objects.filter(bundle=bundle_obj)
+        arg_list = [
+            (
+                page.bundle_order,
+                page.file_path,
+                ScanService().child_parse_qr_code(page.pk),
+            )
+            for page in bundle_obj.stagingimage_set.all()
+        ]
+
+        with transaction.atomic():
+            for X in arg_list:
+                ParseQR.objects.create(
+                    bundle=bundle_obj,
+                    page_index=X[0],
+                    file_path=X[1],
+                    huey_id=X[2].id,
+                    status="queued",
+                )
+
+        results = [X[2].get(blocking=True) for X in arg_list]
+
+        with transaction.atomic():
+            for X in results:
+                # TODO - check for error status here.
+                img = StagingImage.objects.get(pk=X["image_pk"])
+                img.parsed_qr = X["parsed_qr"]
+                img.rotation = X["rotation"]
+                img.save()
+
+            bundle_obj.has_qr_codes = True
+            bundle_obj.save()
 
     @transaction.atomic
-    def qr_codes_tasks(self, bundle, page_index, image_path):
-        """
-        Task of parsing QR codes.
-
-        Args:
-            bundle: bundle DB object
-            page_index: (int) bundle index page number
-            image_path: (str) image file path
-        """
-        qr_task = self._huey_parse_qr_code(bundle, image_path)
-        qr_task_obj = ParseQR(
-            bundle=bundle,
-            page_index=page_index,
-            file_path=image_path,
-            huey_id=qr_task.id,
-            status="queued",
-        )
-        qr_task_obj.save()
-
-    @transaction.atomic
-    def read_qr_codes(self, bundle):
+    def read_qr_codes(self, bundle_pk):
         """
         Read QR codes of scanned pages in a bundle.
         QR Code:
@@ -373,15 +447,38 @@ class ScanService:
         - Last five digit:  93849
 
         Args:
-            bundle: bundle DB object
+            bundle_pk: primary key of bundle DB object
         """
         root_folder = settings.MEDIA_ROOT / "page_images"
         root_folder.mkdir(exist_ok=True)
-        imgs = StagingImage.objects.filter(bundle=bundle)
-        for page in imgs:
-            self.qr_codes_tasks(bundle, page.bundle_order, page.file_path)
-            if self.is_bundle_reading_finished and not bundle.has_qr_codes:
-                self.qr_reading_cleanup(bundle)
+
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        # check that the qr-codes have not been read already, or that a task has not been set
+        if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
+            return
+
+        task = self.read_qr_codes_parent_task(bundle_pk)
+        with transaction.atomic():
+            ManageParseQR.objects.create(
+                bundle=bundle_obj,
+                huey_id=task.id,
+                status="queued",
+                created=timezone.now(),
+            )
+
+    @transaction.atomic
+    def is_bundle_mid_qr_read(self, bundle_pk):
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        query = ManageParseQR.objects.filter(bundle=bundle_obj)
+        if query.exists():  # have run a qr-read task previously
+            if query.exclude(
+                status="completed"
+            ).exists():  # one of these is not completed, so must be mid-run
+                return True
+            else:  # all have finished previously
+                return False
+        else:  # no such qr-reading tasks have been done
+            return False
 
     @transaction.atomic
     def get_qr_code_results(self, bundle, page_index):
@@ -389,8 +486,9 @@ class ScanService:
         Check the results of a QR code scanning task. If done, return
         the QR code data. Otherwise, return None.
         """
-        image = StagingImage.objects.get(bundle=bundle, bundle_order=page_index)
-        return image.parsed_qr
+        return StagingImage.objects.get(
+            bundle=bundle, bundle_order=page_index
+        ).parsed_qr
 
     @transaction.atomic
     def get_qr_code_reading_status(self, bundle, page_index):
@@ -398,8 +496,7 @@ class ScanService:
         Get the status of a QR code reading task. If it doesn't exist, return None.
         """
         try:
-            task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
-            return task.status
+            return ParseQR.objects.get(bundle=bundle, page_index=page_index).status
         except ParseQR.DoesNotExist:
             return None
 
@@ -408,8 +505,7 @@ class ScanService:
         """
         Get the error message of a QR code reading task.
         """
-        task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
-        return task.message
+        return ParseQR.objects.get(bundle=bundle, page_index=page_index).message
 
     @transaction.atomic
     def is_bundle_reading_started(self, bundle):
@@ -417,12 +513,10 @@ class ScanService:
         Return True if there are at least one ParseQR tasks without the status 'todo'
         """
         bundle_tasks = ParseQR.objects.filter(bundle=bundle)
-        non_todo_bundle_tasks = bundle_tasks.exclude(status="todo")
-
-        return len(bundle_tasks) > 0 and len(non_todo_bundle_tasks) > 0
+        return bundle_tasks.exists() and bundle_tasks.exclude(status="todo").exists()
 
     @transaction.atomic
-    def is_bundle_reading_ongoig(self, bundle):
+    def is_bundle_reading_ongoing(self, bundle):
         """
         Return True if there are at least one ParseQR tasks without the status 'todo',
         'complete', or 'error'.
@@ -707,26 +801,6 @@ class ScanService:
             parse_qr_obj.save()
 
     @transaction.atomic
-    def upload_bundle_cmd(self, pdf_doc, slug, username, timestamp, hashed):
-        # username => user_object, if in scanner group, else exception raised.
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name="scanner"
-            )
-        except ObjectDoesNotExist:
-            raise ValueError(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
-
-        self.upload_bundle(
-            pdf_doc=pdf_doc,
-            slug=slug,
-            user=user_obj,
-            timestamp=timestamp,
-            pdf_hash=hashed,
-        )
-
-    @transaction.atomic
     def staging_bundle_status_cmd(self):
         bundles = StagingBundle.objects.all()
         img_service = ImageBundleService()
@@ -761,7 +835,7 @@ class ScanService:
             else:
                 total_pages = f"in progress - {len(images)}"
 
-            reading_qr = self.is_bundle_reading_ongoig(bundle)
+            reading_qr = self.is_bundle_reading_ongoing(bundle)
             bundle_qr_read = bundle.has_qr_codes
             if reading_qr:
                 bundle_qr_read = "in progress"
@@ -797,7 +871,7 @@ class ScanService:
         elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
         else:
-            self.read_qr_codes(bundle_obj)
+            self.read_qr_codes(bundle_obj.pk)
 
     @transaction.atomic
     def push_bundle_cmd(self, bundle_name):
