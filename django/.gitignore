@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Colin B. Macdonald
 #
@@ -37,11 +37,12 @@ db.sqlite3-journal
 !**/migrations
 !**/migrations/__init__.py
 
-# Ignore PDF folders
+# Ignore PDF folders/zipfiles
 produced_papers.csv
 papersToPrint/*
 sourceVersions/*
 media/*
+plomdemo.zip
 
 # whitenoise static files (need to run python3 manage.py collectstatic)
 staticfiles/
