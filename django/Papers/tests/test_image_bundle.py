@@ -126,3 +126,57 @@ class ImageBundleTests(TestCase):
             RuntimeError, "Page image already exists in the database."
         ):
             ibs._push_staged_image.call_local(self.staged_image, 1, 3, False)
+
+    def test_all_staged_imgs_valid(self):
+        """
+        Test ImageBundleService.all_staged_imgs_valid(). 
+        
+        If the input collection of staging images is empty, return True. 
+        If there are one or more images that don't have all three of 
+            (page number, paper number, qr dict), return False. 
+        Otherwise, return True.
+        """
+
+        ibs = ImageBundleService()
+        imgs = StagingImage.objects.all()
+        self.assertTrue(ibs.all_staged_imgs_valid(imgs))
+
+        for paper_num in range(2):
+            for page_num in range(5):
+                baker.make(
+                    StagingImage,
+                    paper_id=paper_num,
+                    page_number=page_num,
+                    parsed_qr={"NW": "Not empty!"}
+                )
+
+        imgs = StagingImage.objects.all()
+        self.assertTrue(ibs.all_staged_imgs_valid(imgs))
+
+        baker.make(StagingImage, paper_id=None, page_number=None, parsed_qr=None)
+        imgs = StagingImage.objects.all()
+        self.assertTrue(ibs.all_staged_imgs_valid(imgs))
+
+    def test_find_internal_collisions(self):
+        """
+        Test ImageBundleService.find_internal_collisions()
+        """
+
+        ibs = ImageBundleService()
+        imgs = StagingImage.objects.all()
+        res = ibs.find_internal_collisions(imgs)
+        # self.assertEqual(res, [])
+
+        baker.make(StagingImage, paper_id=1, page_number=1)
+        imgs = StagingImage.objects.all()
+        print("TOTAL:", len(imgs))
+        # self.assertEqual(res, [])
+
+        # Add one collision
+        baker.make(StagingImage, paper_id=1, page_number=1)
+        imgs = StagingImage.objects.all()
+        res = ibs.find_internal_collisions(imgs)
+        print("RESULT:", res)
+
+        imgs = StagingImage.objects.filter(paper_id=1, page_number=1)
+        print("QUERY:", imgs)

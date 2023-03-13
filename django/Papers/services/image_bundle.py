@@ -5,8 +5,14 @@
 import shutil
 import itertools
 
-from django.db import transaction
-from django.db.models import Q, Subquery, OuterRef
+from django.db import transaction 
+from django.db.models import (
+    Q,
+    Subquery,
+    OuterRef,
+    ForeignKey,
+    CASCADE
+)
 from django.conf import settings
 from django_huey import db_task
 
@@ -298,7 +304,7 @@ class ImageBundleService:
             bool: True if all images are valid, false otherwise
         """
 
-        return not staged_imgs.exists(parsed_qr=None, paper_id=None, page_number=None)
+        return not staged_imgs.filter(parsed_qr=None, paper_id=None, page_number=None).exists()
 
     def find_internal_collisions(self, staged_imgs):
         """
@@ -308,17 +314,24 @@ class ImageBundleService:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            list[list[StagingImage]]: list of collisions.
+            list [list[StagingImage]]: list of collisions.
         """
 
         collisions = staged_imgs.annotate(
             collision=Subquery(
                 staged_imgs.filter(
-                    paper_id=OuterRef("paper_id"), page_number=OuterRef("page_number")
-                )
+                    paper_id=OuterRef("paper_id"),
+                    page_number=OuterRef("page_number"),
+                    # pk=~Q(pk=OuterRef("pk")),
+                ).values_list("pk"),
+                output_field=ForeignKey(StagingImage, CASCADE)
             )
         )
-        return filter(lambda img: img.collision.count() > 0, collisions)
+        results = filter(
+            lambda img: img.collision != None, 
+            collisions
+            )
+        return list(map(lambda img: (img.pk, img.collision), collisions))
 
     def find_external_collisions(self, staged_imgs):
         """
@@ -329,15 +342,15 @@ class ImageBundleService:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            list[(StagingImage, Image)]: list of collisions. No order or repetitions -
+            Iterator [(StagingImage, Image)]: list of collisions. No order or repetitions -
                 if (Image A, Image B) is there, there is no (Image B, Image A)
         """
 
         collisions = Image.objects.annotate(
             collision=Subquery(
                 staged_imgs.filter(
-                    paper_id=OuterRef("paper_id"), page_number=OuterRef("page_number")
+                    paper_id=OuterRef("paper_id"), page_number=OuterRef("page_number"),
                 )
-            )
+            ),
         )
         return filter(lambda img: img.collision.count() > 0, collisions)
