@@ -86,6 +86,7 @@ class ScanService:
         image_dir.mkdir(exist_ok=True)
         unknown_dir = bundle_dir / "unknownPages"
         unknown_dir.mkdir(exist_ok=True)
+
         self.split_and_save_bundle_images(bundle_obj.pk, image_dir)
 
     @transaction.atomic
@@ -137,7 +138,7 @@ class ScanService:
             base_dir: pathlib.Path object of path to save image files
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        task = self.split_bundle_parent_task(bundle_pk, base_dir)
+        task = huey_parent_split_bundle_task(bundle_pk, base_dir)
         with transaction.atomic():
             ManagePageToImage.objects.create(
                 bundle=bundle_obj,
@@ -146,72 +147,22 @@ class ScanService:
                 created=timezone.now(),
             )
 
-    @db_task(queue="tasks")
-    def split_bundle_parent_task(bundle_pk, base_dir):
+    @transaction.atomic
+    def is_bundle_mid_splitting(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        task_list = [
-            ScanService().child_get_page_image(bundle_pk, pg, base_dir, f"page{pg:05}")
-            for pg in range(bundle_obj.number_of_pages)
-        ]
-        with transaction.atomic():
-            for task in task_list:
-                PageToImage.objects.create(
-                    bundle=bundle_obj,
-                    huey_id=task.id,
-                    status="queued",
-                    created=timezone.now(),
-                )
+        if bundle_obj.has_page_images:
+            return False
 
-        results = [X.get(blocking=True) for X in task_list]
-
-        with transaction.atomic():
-            for X in results:
-                # TODO - check for error status here.
-                StagingImage.objects.create(
-                    bundle=bundle_obj,
-                    bundle_order=X["index"],
-                    file_name=X["file_name"],
-                    file_path=X["file_path"],
-                    image_hash=X["image_hash"],
-                )
-
-            bundle_obj.has_page_images = True
-            bundle_obj.save()
-
-    @db_task(queue="tasks")
-    def child_get_page_image(bundle_pk, index, basedir, basename):
-        """
-        Render a page image and save to disk in the background
-
-        Args:
-            bundle_pk: bundle DB object's primary key
-            index: bundle order of page
-            basedir (pathlib.Path): were to put the image
-            basename (str): a basic filename without the extension
-        """
-        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-
-        with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
-            save_path = render_page_to_bitmap(
-                pdf_doc[index],
-                basedir,
-                basename,
-                bundle_obj.pdf_file,
-                add_metadata=True,
-            )
-        # TODO: if demo, then do make_mucked_up_jpeg here
-
-        with open(save_path, "rb") as f:
-            image_hash = hashlib.sha256(f.read()).hexdigest()
-
-        # TODO - return an error of some sort here if problems
-
-        return {
-            "index": index,
-            "file_name": f"page{index}.png",
-            "file_path": str(save_path),
-            "image_hash": image_hash,
-        }
+        query = ManagePageToImage.objects.filter(bundle=bundle_obj)
+        if query.exists():  # have run a bundle-split task previously
+            if query.exclude(
+                status="completed"
+            ).exists():  # one of these is not completed, so must be mid-run
+                return True
+            else:  # all have finished previously
+                return False
+        else:  # no such qr-reading tasks have been done
+            return False
 
     @transaction.atomic
     def remove_bundle(self, timestamp, user):
@@ -372,73 +323,6 @@ class ScanService:
                     groupings[quadrant] = qr_code_dict
         return groupings
 
-    @db_task(queue="tasks")
-    def child_parse_qr_code(image_pk):
-        """
-        Huey task of parsing QR codes, check QR errors, rotate image,
-        and save to database in the background
-
-        Args:
-            image_pk: primary key of the image
-        """
-        img = StagingImage.objects.get(pk=image_pk)
-        image_path = img.file_path
-
-        scanner = ScanService()
-        # qr_error_checker = QRErrorService()
-
-        code_dict = QRextract(image_path)
-        page_data = scanner.parse_qr_code([code_dict])
-
-        pipr = PageImageProcessor()
-        has_had_rotation = pipr.rotate_page_image(image_path, page_data)
-        # Re-read QR codes if the page image has been rotated
-        if has_had_rotation != 0:
-            code_dict = QRextract(image_path)
-            page_data = scanner.parse_qr_code([code_dict])
-            # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
-
-        # Return the parsed QR codes and rotation done for parent process to store in db
-        return {"image_pk": image_pk, "parsed_qr": page_data, "rotation": has_had_rotation}
-
-    @db_task(queue="tasks")
-    def read_qr_codes_parent_task(bundle_pk):
-        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-
-        # TODO - replace this by a foreign-key lookup thingy rather than another filter
-        # the_pages = StagingImage.objects.filter(bundle=bundle_obj)
-        arg_list = [
-            (
-                page.bundle_order,
-                page.file_path,
-                ScanService().child_parse_qr_code(page.pk),
-            )
-            for page in bundle_obj.stagingimage_set.all()
-        ]
-
-        with transaction.atomic():
-            for X in arg_list:
-                ParseQR.objects.create(
-                    bundle=bundle_obj,
-                    page_index=X[0],
-                    file_path=X[1],
-                    huey_id=X[2].id,
-                    status="queued",
-                )
-
-        results = [X[2].get(blocking=True) for X in arg_list]
-
-        with transaction.atomic():
-            for X in results:
-                # TODO - check for error status here.
-                img = StagingImage.objects.get(pk=X["image_pk"])
-                img.parsed_qr = X["parsed_qr"]
-                img.rotation = X["rotation"]
-                img.save()
-
-            bundle_obj.has_qr_codes = True
-            bundle_obj.save()
-
     @transaction.atomic
     def read_qr_codes(self, bundle_pk):
         """
@@ -461,10 +345,11 @@ class ScanService:
 
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         # check that the qr-codes have not been read already, or that a task has not been set
+
         if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
             return
 
-        task = self.read_qr_codes_parent_task(bundle_pk)
+        task = huey_parent_read_qr_codes_task(bundle_pk)
         with transaction.atomic():
             ManageParseQR.objects.create(
                 bundle=bundle_obj,
@@ -476,6 +361,9 @@ class ScanService:
     @transaction.atomic
     def is_bundle_mid_qr_read(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        if bundle_obj.has_qr_codes:
+            return False
+
         query = ManageParseQR.objects.filter(bundle=bundle_obj)
         if query.exists():  # have run a qr-read task previously
             if query.exclude(
@@ -575,7 +463,7 @@ class ScanService:
         Validate qr codes in bundle images (saved to disk) against the spec.
         """
         base_path = pathlib.Path(bundle.file_path).parent
-        print("SPEC PUBLIC CODE:", spec["publicCode"])
+        # print("SPEC PUBLIC CODE:", spec["publicCode"])
         qrs = checkQRsValid(base_path, spec)
         return qrs
 
@@ -837,14 +725,13 @@ class ScanService:
 
             completed_images = scanner.get_all_complete_images(bundle)
 
-            if len(images) == self.get_n_page_rendering_tasks(bundle):
-                total_pages = len(images)
-            else:
+            if self.is_bundle_mid_splitting(bundle.pk):
                 total_pages = f"in progress - {len(images)}"
+            else:
+                total_pages = len(images)
 
-            reading_qr = self.is_bundle_reading_ongoing(bundle)
             bundle_qr_read = bundle.has_qr_codes
-            if reading_qr:
+            if self.is_bundle_mid_qr_read(bundle.pk):
                 bundle_qr_read = "in progress"
 
             pushing_image = img_service.is_image_pushing_in_progress(completed_images)
@@ -927,3 +814,127 @@ class ScanService:
             page_num.append(image_qr.get(q)["page_num"])
 
         return mode(paper_id), mode(page_num)
+
+
+# ----------------------------------------
+# factor out the huey tasks.
+# ----------------------------------------
+
+
+@db_task(queue="tasks")
+def huey_parent_split_bundle_task(bundle_pk, base_dir):
+    bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+
+    task_list = [
+        huey_child_get_page_image(bundle_pk, pg, base_dir, f"page{pg:05}", quiet=True)
+        for pg in range(bundle_obj.number_of_pages)
+    ]
+
+    results = [X.get(blocking=True) for X in task_list]
+
+    with transaction.atomic():
+        for X in results:
+            # TODO - check for error status here.
+            StagingImage.objects.create(
+                bundle=bundle_obj,
+                bundle_order=X["index"],
+                file_name=X["file_name"],
+                file_path=X["file_path"],
+                image_hash=X["image_hash"],
+            )
+
+        bundle_obj.has_page_images = True
+        bundle_obj.save()
+
+
+@db_task(queue="tasks")
+def huey_parent_read_qr_codes_task(bundle_pk):
+    bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+
+    task_list = [
+        huey_child_parse_qr_code(page.pk, quiet=True)
+        for page in bundle_obj.stagingimage_set.all()
+    ]
+
+    results = [X.get(blocking=True) for X in task_list]
+
+    with transaction.atomic():
+        for X in results:
+            # TODO - check for error status here.
+            img = StagingImage.objects.get(pk=X["image_pk"])
+            img.parsed_qr = X["parsed_qr"]
+            img.rotation = X["rotation"]
+            img.save()
+
+        bundle_obj.has_qr_codes = True
+        bundle_obj.save()
+
+
+@db_task(queue="tasks")
+def huey_child_get_page_image(bundle_pk, index, basedir, basename, *, quiet=True):
+    """
+    Render a page image and save to disk in the background
+
+    Args:
+        bundle_pk: bundle DB object's primary key
+        index: bundle order of page
+        basedir (pathlib.Path): were to put the image
+        basename (str): a basic filename without the extension
+    """
+    bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+
+    with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
+        save_path = render_page_to_bitmap(
+            pdf_doc[index],
+            basedir,
+            basename,
+            bundle_obj.pdf_file,
+            add_metadata=True,
+        )
+    # TODO: if demo, then do make_mucked_up_jpeg here
+
+    with open(save_path, "rb") as f:
+        image_hash = hashlib.sha256(f.read()).hexdigest()
+
+    # TODO - return an error of some sort here if problems
+
+    return {
+        "index": index,
+        "file_name": f"page{index}.png",
+        "file_path": str(save_path),
+        "image_hash": image_hash,
+    }
+
+
+@db_task(queue="tasks")
+def huey_child_parse_qr_code(image_pk, *, quiet=True):
+    """
+    Huey task of parsing QR codes, check QR errors, rotate image,
+    and save to database in the background
+
+    Args:
+        image_pk: primary key of the image
+    """
+    img = StagingImage.objects.get(pk=image_pk)
+    image_path = img.file_path
+
+    scanner = ScanService()
+    # qr_error_checker = QRErrorService()
+
+    code_dict = QRextract(image_path)
+    page_data = scanner.parse_qr_code([code_dict])
+
+    pipr = PageImageProcessor()
+    has_had_rotation = pipr.rotate_page_image(image_path, page_data)
+    # Re-read QR codes if the page image has been rotated
+    if has_had_rotation != 0:
+        code_dict = QRextract(image_path)
+        page_data = scanner.parse_qr_code([code_dict])
+        # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
+
+    # Return the parsed QR codes and rotation done for parent process to store in db
+    return {
+        "image_pk": image_pk,
+        "parsed_qr": page_data,
+        "rotation": has_had_rotation,
+    }

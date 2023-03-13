@@ -26,7 +26,7 @@ class ReadQRcodesView(ScannerRequiredView):
 
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
-        scanner.read_qr_codes(bundle)
+        scanner.read_qr_codes(bundle.pk)
 
         return HttpResponseClientRefresh()
 
