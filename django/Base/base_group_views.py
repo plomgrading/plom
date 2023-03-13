@@ -44,6 +44,7 @@ class ScannerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     login_url = "login"
     navbar_colour = "#0F984F"
     raise_exception = True
+    redirect_unauthenticated_users = True
 
     def build_context(self):
         context = {

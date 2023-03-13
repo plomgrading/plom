@@ -29,6 +29,7 @@
 	  {% if has_been_processed %}
 	  <i class="bi bi-check-circle text-success"></i>
 	  {% else %}
+	  (processed {{number_of_split_pages}} of {{number_of_pages}})
 	  <i class="bi bi-gear text-info"></i>
 	  {% endif %}
 	</li>
@@ -38,7 +39,7 @@
         <li>Error pages: {{ n_errors}}</li>
 	{% else %}
 	{% if is_mid_qr_read %}
-	<li>Scanning QR - <img
+	<li>(processed {{number_of_read_pages}} of {{number_of_pages}}) <img
 	    class="shadow-sm p-3 border rounded-start"
 	    src="{% static 'ball_triangle.svg' %}"
 	    style="max-height: 4em;"

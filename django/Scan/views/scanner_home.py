@@ -192,6 +192,10 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "has_qr_codes": bundle.has_qr_codes,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
         }
+        if not context["has_been_processed"]:
+            context.update({"number_of_split_pages": scanner.get_bundle_split_completions(bundle.pk)})
+        if context["is_mid_qr_read"]:
+            context.update({"number_of_read_pages": scanner.get_bundle_qr_completions(bundle.pk)})
 
         return render(request, "Scan/fragments/staged_bundle_card.html", context)
 

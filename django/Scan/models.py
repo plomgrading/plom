@@ -101,6 +101,7 @@ class ManagePageToImage(HueyTask):
     """
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
+    completed_pages = models.PositiveIntegerField(default=0)
 
 
 class PageToImage(HueyTask):
@@ -117,6 +118,7 @@ class ManageParseQR(HueyTask):
     """
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
+    completed_pages = models.PositiveIntegerField(default=0)
 
 
 class ParseQR(HueyTask):

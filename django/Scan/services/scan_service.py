@@ -148,6 +148,11 @@ class ScanService:
             )
 
     @transaction.atomic
+    def get_bundle_split_completions(self, bundle_pk):
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        return ManagePageToImage.objects.get(bundle=bundle_obj).completed_pages
+        
+    @transaction.atomic
     def is_bundle_mid_splitting(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         if bundle_obj.has_page_images:
@@ -357,6 +362,11 @@ class ScanService:
                 status="queued",
                 created=timezone.now(),
             )
+
+    @transaction.atomic
+    def get_bundle_qr_completions(self, bundle_pk):
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        return ManageParseQR.objects.get(bundle=bundle_obj).completed_pages
 
     @transaction.atomic
     def is_bundle_mid_qr_read(self, bundle_pk):
@@ -726,13 +736,15 @@ class ScanService:
             completed_images = scanner.get_all_complete_images(bundle)
 
             if self.is_bundle_mid_splitting(bundle.pk):
-                total_pages = f"in progress - {len(images)}"
+                count = ManagePageToImage.objects.get(bundle=bundle).completed_pages
+                total_pages = f"in progress: {count} of {bundle.number_of_pages}"
             else:
                 total_pages = len(images)
 
             bundle_qr_read = bundle.has_qr_codes
             if self.is_bundle_mid_qr_read(bundle.pk):
-                bundle_qr_read = "in progress"
+                count = ManageParseQR.objects.get(bundle=bundle).completed_pages
+                bundle_qr_read = f"in progress ({count})"
 
             pushing_image = img_service.is_image_pushing_in_progress(completed_images)
             bundle_pushed = bundle.pushed
@@ -823,6 +835,8 @@ class ScanService:
 
 @db_task(queue="tasks")
 def huey_parent_split_bundle_task(bundle_pk, base_dir):
+    from time import sleep
+
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
@@ -830,7 +844,21 @@ def huey_parent_split_bundle_task(bundle_pk, base_dir):
         for pg in range(bundle_obj.number_of_pages)
     ]
 
-    results = [X.get(blocking=True) for X in task_list]
+    # results = [X.get(blocking=True) for X in task_list]
+    n_tasks = len(task_list)
+    while True:
+        results = [X.get() for X in task_list]
+        count = sum(1 for X in results if X is not None)
+
+        with transaction.atomic():
+            task_obj = ManagePageToImage.objects.get(bundle=bundle_obj)
+            task_obj.completed_pages = count
+            task_obj.save()
+
+        if count == n_tasks:
+            break
+        else:
+            sleep(1)
 
     with transaction.atomic():
         for X in results:
@@ -849,6 +877,8 @@ def huey_parent_split_bundle_task(bundle_pk, base_dir):
 
 @db_task(queue="tasks")
 def huey_parent_read_qr_codes_task(bundle_pk):
+    from time import sleep
+
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
@@ -856,7 +886,22 @@ def huey_parent_read_qr_codes_task(bundle_pk):
         for page in bundle_obj.stagingimage_set.all()
     ]
 
-    results = [X.get(blocking=True) for X in task_list]
+    # results = [X.get(blocking=True) for X in task_list]
+
+    n_tasks = len(task_list)
+    while True:
+        results = [X.get() for X in task_list]
+        count = sum(1 for X in results if X is not None)
+
+        with transaction.atomic():
+            task_obj = ManageParseQR.objects.get(bundle=bundle_obj)
+            task_obj.completed_pages = count
+            task_obj.save()
+
+        if count == n_tasks:
+            break
+        else:
+            sleep(1)
 
     with transaction.atomic():
         for X in results:
@@ -908,6 +953,8 @@ def huey_child_get_page_image(bundle_pk, index, basedir, basename, *, quiet=True
 
 @db_task(queue="tasks")
 def huey_child_parse_qr_code(image_pk, *, quiet=True):
+    from time import sleep
+    sleep(0.5)
     """
     Huey task of parsing QR codes, check QR errors, rotate image,
     and save to database in the background
