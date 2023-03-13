@@ -5,14 +5,8 @@
 import shutil
 import itertools
 
-from django.db import transaction 
-from django.db.models import (
-    Q,
-    Subquery,
-    OuterRef,
-    ForeignKey,
-    CASCADE
-)
+from django.db import transaction
+from django.db.models import F
 from django.conf import settings
 from django_huey import db_task
 
@@ -304,7 +298,35 @@ class ImageBundleService:
             bool: True if all images are valid, false otherwise
         """
 
-        return not staged_imgs.filter(parsed_qr=None, paper_id=None, page_number=None).exists()
+        return not staged_imgs.filter(
+            parsed_qr=None, paper_id=None, page_number=None
+        ).exists()
+
+    def find_collisions(self, source, target):
+        """
+        Helper function for finding collisions between two groups of images
+
+        Args:
+            source: QuerySet of StagingImages
+            target: QuerySet of StagingImages or Images
+
+        Returns:
+            list [(StagingImage, StagingImage)]: list of unordered collisions.
+        """
+
+        collisions = []
+        visited = []
+        for image in source:
+            colls = target.filter(
+                paper_id=image.paper_id,
+                page_number=image.page_number,
+            )
+            colls = list(filter(lambda i: i.pk != image.pk, colls))
+            for colliding_img in colls:
+                if not colliding_img in visited:
+                    collisions.append((image, colliding_img))
+            visited.append(image)
+        return collisions
 
     def find_internal_collisions(self, staged_imgs):
         """
@@ -314,24 +336,10 @@ class ImageBundleService:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            list [list[StagingImage]]: list of collisions.
+            list [(StagingImage, StagingImage)]: list of unordered collisions.
         """
 
-        collisions = staged_imgs.annotate(
-            collision=Subquery(
-                staged_imgs.filter(
-                    paper_id=OuterRef("paper_id"),
-                    page_number=OuterRef("page_number"),
-                    # pk=~Q(pk=OuterRef("pk")),
-                ).values_list("pk"),
-                output_field=ForeignKey(StagingImage, CASCADE)
-            )
-        )
-        results = filter(
-            lambda img: img.collision != None, 
-            collisions
-            )
-        return list(map(lambda img: (img.pk, img.collision), collisions))
+        return self.find_collisions(staged_imgs, staged_imgs)
 
     def find_external_collisions(self, staged_imgs):
         """
@@ -342,15 +350,15 @@ class ImageBundleService:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            Iterator [(StagingImage, Image)]: list of collisions. No order or repetitions -
-                if (Image A, Image B) is there, there is no (Image B, Image A)
+            list [(StagingImage, StagingImage)]: list of unordered collisions.
         """
 
-        collisions = Image.objects.annotate(
-            collision=Subquery(
-                staged_imgs.filter(
-                    paper_id=OuterRef("paper_id"), page_number=OuterRef("page_number"),
-                )
-            ),
-        )
-        return filter(lambda img: img.collision.count() > 0, collisions)
+        collisions = []
+        for image in staged_imgs:
+            colls = Image.objects.filter(
+                basepage__paper__paper_number=image.paper_id,
+                basepage__page_number=image.page_number,
+            )
+            for colliding_img in colls:
+                collisions.append((image, colliding_img))
+        return collisions

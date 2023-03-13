@@ -129,11 +129,11 @@ class ImageBundleTests(TestCase):
 
     def test_all_staged_imgs_valid(self):
         """
-        Test ImageBundleService.all_staged_imgs_valid(). 
-        
-        If the input collection of staging images is empty, return True. 
-        If there are one or more images that don't have all three of 
-            (page number, paper number, qr dict), return False. 
+        Test ImageBundleService.all_staged_imgs_valid().
+
+        If the input collection of staging images is empty, return True.
+        If there are one or more images that don't have all three of
+            (page number, paper number, qr dict), return False.
         Otherwise, return True.
         """
 
@@ -147,7 +147,7 @@ class ImageBundleTests(TestCase):
                     StagingImage,
                     paper_id=paper_num,
                     page_number=page_num,
-                    parsed_qr={"NW": "Not empty!"}
+                    parsed_qr={"NW": "Not empty!"},
                 )
 
         imgs = StagingImage.objects.all()
@@ -165,18 +165,56 @@ class ImageBundleTests(TestCase):
         ibs = ImageBundleService()
         imgs = StagingImage.objects.all()
         res = ibs.find_internal_collisions(imgs)
-        # self.assertEqual(res, [])
+        self.assertEqual(res, [])
 
-        baker.make(StagingImage, paper_id=1, page_number=1)
+        paper1 = baker.make(StagingImage, paper_id=1, page_number=1)
         imgs = StagingImage.objects.all()
-        print("TOTAL:", len(imgs))
-        # self.assertEqual(res, [])
+        self.assertEqual(res, [])
 
         # Add one collision
-        baker.make(StagingImage, paper_id=1, page_number=1)
+        paper2 = baker.make(StagingImage, paper_id=1, page_number=1)
         imgs = StagingImage.objects.all()
         res = ibs.find_internal_collisions(imgs)
-        print("RESULT:", res)
+        self.assertEqual(res, [(paper1, paper2)])
 
-        imgs = StagingImage.objects.filter(paper_id=1, page_number=1)
-        print("QUERY:", imgs)
+        # Add more collisions
+        paper3 = baker.make(StagingImage, paper_id=1, page_number=1)
+        paper4 = baker.make(StagingImage, paper_id=2, page_number=1)
+        paper5 = baker.make(StagingImage, paper_id=2, page_number=1)
+        baker.make(StagingImage, paper_id=2, page_number=4)
+
+        imgs = StagingImage.objects.all()
+        res = ibs.find_internal_collisions(imgs)
+        self.assertEqual(
+            set(res),
+            set(
+                [(paper1, paper2), (paper1, paper3), (paper2, paper3), (paper4, paper5)]
+            ),
+        )
+
+    def test_find_external_collisions(self):
+        """
+        Test ImageBundleService.find_external_collisions()
+        """
+
+        ibs = ImageBundleService()
+        res = ibs.find_external_collisions(StagingImage.objects.all())
+        self.assertEqual(res, [])
+
+        img1 = baker.make(StagingImage, paper_id=2, page_number=1)
+        img2 = baker.make(StagingImage, paper_id=2, page_number=2)
+        img3 = baker.make(StagingImage, paper_id=2, page_number=3)
+
+        img4 = baker.make(Image)
+        img5 = baker.make(Image)
+        paper2 = baker.make(Paper, paper_number=2)
+        paper3 = baker.make(Paper, paper_number=3)
+        page1 = baker.make(BasePage, paper=paper3, page_number=1, image=img4)
+        page2 = baker.make(BasePage, paper=paper3, page_number=2, image=img5)
+
+        res = ibs.find_external_collisions(StagingImage.objects.all())
+        self.assertEqual(res, [])
+
+        img6 = baker.make(StagingImage, paper_id=3, page_number=1)
+        res = ibs.find_external_collisions(StagingImage.objects.all())
+        self.assertEqual(res, [(img6, img4)])
