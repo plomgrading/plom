@@ -29,8 +29,10 @@
 	  {% if has_been_processed %}
 	  <i class="bi bi-check-circle text-success"></i>
 	  {% else %}
-	  (processed {{number_of_split_pages}} of {{number_of_pages}})
-	  <i class="bi bi-gear text-info"></i>
+	  Processing pages:
+	  <div class="progress" role="progressbar">
+	    <div class="progress-bar progress-bar-striped bg-success" style="width: {{percent_split}}%" >{{number_of_split_pages}}</div>
+	  </div>
 	  {% endif %}
 	</li>
 	{% if has_been_processed %}
@@ -39,7 +41,11 @@
         <li>Error pages: {{ n_errors}}</li>
 	{% else %}
 	{% if is_mid_qr_read %}
-	<li>(processed {{number_of_read_pages}} of {{number_of_pages}}) <img
+	<li>Reading qr-codes:
+	  <div class="progress" role="progressbar">
+	    <div class="progress-bar progress-bar-striped bg-success" style="width: {{percent_read}}%" >{{number_of_read_pages}}</div>
+	  </div>
+	  <img
 	    class="shadow-sm p-3 border rounded-start"
 	    src="{% static 'ball_triangle.svg' %}"
 	    style="max-height: 4em;"
