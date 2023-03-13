@@ -5,15 +5,17 @@
 import fitz
 import shutil
 import pathlib
-from django.utils import timezone
+import tempfile
+from PIL import Image
 
+from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.conf import settings
 from model_bakery import baker
 
 from plom.scan import QRextract
-from Scan.services import ScanService
+from Scan.services import ScanService, PageImageProcessor
 from Scan.models import StagingBundle, StagingImage
 
 
@@ -109,6 +111,7 @@ class ScanServiceTests(TestCase):
         scanner = ScanService()
         parsed_codes = scanner.parse_qr_code([codes])
         print(parsed_codes)
+        assert parsed_codes
         code_dict = {
             "NW": {
                 "paper_id": 6,
@@ -170,6 +173,52 @@ class ScanServiceTests(TestCase):
                 / code_dict[quadrant]["y_coord"]
                 < 0.01
             )
+
+    def test_parse_qr_codes_rotated_180(self):
+        """
+        Test ScanService.parse_qr_code() and assert that the QR codes
+        are read correctly after the page image is rotated.
+        """
+        scanner = ScanService()
+
+        image_upright_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+
+        qrs_upright = QRextract(image_upright_path)
+        codes_upright = scanner.parse_qr_code([qrs_upright])
+
+        image_upright = Image.open(image_upright_path)
+        image_upright.load()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_flipped_path = pathlib.Path(tmpdir) / "flipped.png"
+            image_flipped = image_upright.rotate(180)
+            image_flipped.save(image_flipped_path)
+
+            qrs_flipped = QRextract(image_flipped_path)
+            codes_flipped = scanner.parse_qr_code([qrs_flipped])
+
+            pipr = PageImageProcessor()
+            has_had_rotation = pipr.rotate_page_image(image_flipped_path, codes_flipped)
+            self.assertEquals(has_had_rotation, 180)
+
+            # read QR codes a second time due to rotation of image
+            qrs_flipped = QRextract(image_flipped_path)
+            codes_flipped = scanner.parse_qr_code([qrs_flipped])
+
+        xy_upright = []
+        xy_flipped = []
+
+        for q, p in zip(codes_upright, codes_flipped):
+            xy_upright.append(
+                [codes_upright[q]["x_coord"], codes_upright[q]["y_coord"]]
+            )
+            xy_flipped.append(
+                [codes_flipped[p]["x_coord"], codes_flipped[p]["y_coord"]]
+            )
+
+        for original, rotated in zip(xy_upright, xy_flipped):
+            self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
+            self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
     def test_complete_images(self):
         """

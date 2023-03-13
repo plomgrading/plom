@@ -8,7 +8,7 @@ from pathlib import Path
 from statistics import mean
 
 # use this to replace pyzbar - since it handles micro-qr-codes
-from zxingcpp import read_barcodes, BarcodeFormats, BarcodeFormat
+from zxingcpp import read_barcodes, BarcodeFormat
 
 from PIL import Image
 
@@ -18,13 +18,14 @@ def findCorner(qr, dim):
 
     Args:
         qr (zxingcpp.Result): object containing the information stored in the QR code
-        dim (tuple): pair of ints that correspond to the dimensions of the image that contains the QR code
+        dim (tuple): pair of ints that correspond to the dimensions of
+            the image that contains the QR code.
 
     Return:
         tuple: a triple ``(str, mx, my)`` where ``str`` is a 2-char string, one of
         "NE", "NE", "SW", "SE", depending on the relative location of the QR code,
         or "??" if the QR code cannot be detected. ``mx, my`` are either ints that correspond
-        to the (x,y) coordinates of the QR code's centre location in the image, or None
+        to the (x, y) coordinates of the QR code's centre location in the image, or None
         if the QR code is not detected and there are no coordinates to return.
     """
     qr_polygon = [
@@ -80,28 +81,6 @@ def QRextract(image, try_harder=True):
     downscale the image.  This does increase the run time (have not
     checked by how much: I assume between 25% and 50%) so if that is
     more of a concern than error rate, turn off this flag.
-
-    TODO: this issue should be reported to the ZBar project.
-
-    Here are the results of an experiment shows the failure rate without
-    this fix:
-
-    vertical dim | failure rate
-    -------------|-------------
-    1600         | 0%
-    1900         | 0%
-    1950         | 7%
-    1998         | 2%
-    1999         | 5%
-    2000         | 29%
-    2001         | 1%
-    2002         | 23%
-    2003         | 17%
-    2004         | 8%
-    2005         | 23%
-    2010         | 3%
-    2100         | 1%
-    3000         | 0%
 
     [1] https://gitlab.com/plom/plom/-/issues/967
     """
@@ -173,28 +152,6 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
     downscale the image.  This does increase the run time (have not
     checked by how much: I assume between 25% and 50%) so if that is
     more of a concern than error rate, turn off this flag.
-
-    TODO: this issue should be reported to the ZBar project.
-
-    Here are the results of an experiment shows the failure rate without
-    this fix:
-
-    vertical dim | failure rate
-    -------------|-------------
-    1600         | 0%
-    1900         | 0%
-    1950         | 7%
-    1998         | 2%
-    1999         | 5%
-    2000         | 29%
-    2001         | 1%
-    2002         | 23%
-    2003         | 17%
-    2004         | 8%
-    2005         | 23%
-    2010         | 3%
-    2100         | 1%
-    3000         | 0%
 
     [1] https://gitlab.com/plom/plom/-/issues/967
     """

@@ -21,7 +21,7 @@ Fedora
 Tested on Fedora 37.  Some stuff from the package manager:
 ```
   # sudo dnf install \
-        ImageMagick openssl zbar gcc gcc-c++ cmake \
+        ImageMagick openssl gcc gcc-c++ cmake \
         turbojpeg-devel libjpeg-turbo-devel python3-cffi \
         python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
@@ -41,10 +41,6 @@ Tested on Fedora 37.  Some stuff from the package manager:
 ```
 At this point `pip install plom` (or `pip install --user .` from inside
 the Plom source tree) should pull in the remaining dependencies.
-Alternatively, you can do something like:
-```
-  # pip install --upgrade --user pyzbar
-```
 There are additional dependencies for the machine-learning-based ID Reader:
 ```
   # pip install --user imutils lapsolver opencv-python-headless
@@ -67,15 +63,16 @@ Some stuff from the package manager:
 ```
   # sudo apt install \
         cmake make imagemagick dvipng g++ openssl \
-        libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
+        libjpeg-turbo8-dev libturbojpeg0-dev \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
-        latexmk texlive-fonts-recommended python3-pil \
+        latexmk texlive-fonts-recommended python3-pillow \
         python3-tqdm libpango-1.0-0 libpangocairo-1.0-0 \
         python3-defusedxml python3-jsmin python3-cairosvg
 ```
-The pango stuff was (is?) needed for weasyprint: perhaps it can be dropped.
+The `pango` stuff was needed for `weasyprint`: perhaps it can be dropped (?)
+The `libjpeg` stuff can likely be dropped too (?)
 
 Now upgrade pip (your local copy, not the system one)
 ```
@@ -87,6 +84,7 @@ Now upgrade pip (your local copy, not the system one)
 ```
 Note `python3 -m pip` is some kind of workaround for old OSes.
 On Ubuntu 20.04, you should be able to just use "pip", but inspect output to be sure.
+Similarly, on new enough systems, you don't need to pip install a new `setuptools`.
 
 At this point `pip install --user .` from inside the Plom source tree should pull
 in the remaining dependencies.
