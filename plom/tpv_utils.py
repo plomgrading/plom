@@ -68,6 +68,21 @@ def isValidTPV(tpv):
     return tpv.isnumeric()
 
 
+def isValidExtraPage(tpv):
+    """Is this a valid Extra page code?
+
+    Note that the pyzbar module gives codes with the prefix 'QR-Code:',
+    however the zxing-cpp module does not.
+    """
+    # string prefix is needed for pyzbar but not zxingcpp
+    tpv = tpv.lstrip("QR-Code:")
+    if len(tpv) != len("plomX9"):  # todo = remove in future.
+        return False
+    if (tpv[:5] == "plomX") and tpv[5].isnumeric():
+        return True
+    return False
+
+
 def parseTPV(tpv):
     """Parse a TPV string (typically from a QR-code)
 
@@ -89,6 +104,24 @@ def parseTPV(tpv):
     o = tpv[11]
     cn = tpv[12:]
     return tn, pn, vn, cn, o
+
+
+def parseExtraPageCode(expc):
+    """Parse an extra page code string (typically from a QR-code)
+
+    Args: expc (str): an extra page code string of the form "plomXO",
+       typically from a QR-code, possibly with the prefix "QR-Code:".
+
+    Returns:
+       o (str): the orientation code, TODO
+    """
+    # strip prefix is needed for pyzbar but not zxingcpp
+    expc = expc.lstrip("QR-Code:")  # todo = remove in future.
+    o = int(expc[5])
+    if o > 4:
+        return str(o - 4)  # todo - keep the 5-8 possibilities
+    else:
+        return str(o)
 
 
 def getPaperPageVersion(tpv):

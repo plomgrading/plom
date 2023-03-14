@@ -369,7 +369,8 @@ def main():
     download_zip()
     print("*" * 40)
 
-    scribble_on_exams()
+    scribble_on_exams(extra_page_papers=[49, 50])
+    # scribble_on_exams(extra_page_papers=[])
 
     print("*" * 40)
     upload_bundles()

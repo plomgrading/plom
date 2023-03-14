@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from collections import Counter
 import shutil
@@ -27,6 +28,8 @@ class QRErrorService:
 
         no_qr_imgs = []
         error_imgs = []
+        extra_imgs = []
+        known_imgs = []
 
         with transaction.atomic():
             images = bundle.stagingimage_set.all()
@@ -38,13 +41,20 @@ class QRErrorService:
 
                 try:
                     self.check_consistent_qr(img.parsed_qr)
-                    self.check_correct_public_code(
-                        img.parsed_qr, spec_dictionary["public_code"]
-                    )
+                    if self.check_is_extra_page(img.parsed_qr):
+                        extra_imgs.append(img.pk)
+                    else:
+                        self.check_correct_public_code(
+                            img.parsed_qr, spec_dictionary["publicCode"]
+                        )
+                        known_imgs.append(img.pk)
                 except ValueError as err:
                     error_imgs.append((img.pk, err))
 
-
+        print(f"No qr = {no_qr_imgs}")
+        print(f"Error imgs = {error_imgs}")
+        print(f"Extra imgs = {extra_imgs}")
+        print(f"Known imgs = {known_imgs}")
 
     def check_consistent_qr(self, parsed_qr_dict):
         """parsed_qr_dict is of the form
@@ -54,27 +64,31 @@ class QRErrorService:
         'SW': {'x_coord': 126.5, 'y_coord': 1861.5, 'page_num': 6, 'paper_id': 50, 'quadrant': '3', 'public_code': '22339', 'version_num': 2, 'grouping_key': '00050006002'}
         }
         """
-        # Image must either be an extra page, or consistent tpv qr-codes with same public-code
-        # TODO - handle extra-pages
-        # check public-codes are same
+        # check all grouping_keys are the same (ie 'plomX' or a valid tpv)
+        gk = set(parsed_qr_dict[x]["grouping_key"] for x in parsed_qr_dict)
+        if len(gk) > 1:
+            raise ValueError("Inconsistent qr-codes")
+        if gk.pop() == "plomX":  # then is an extra page - no further checks required
+            return True
+        # must be a tpv - so make sure public-code is consistent
         if len(set(parsed_qr_dict[x]["public_code"] for x in parsed_qr_dict)) > 1:
             raise ValueError("Inconsistent public-codes")
-        # check grouping_key
-        if len(set(parsed_qr_dict[x]["grouping_key"] for x in parsed_qr_dict)) > 1:
-            raise ValueError("Inconsistent test-page-version keys")
         return True
+
+    def check_is_extra_page(self, parsed_qr_dict):
+        # since we know the codes are consistent, it is sufficient to check just one.
+        # note - a little python hack to get **any** value from a dict
+        return next(iter(parsed_qr_dict.values()))["grouping_key"] == "plomX"
 
     def check_correct_public_code(self, parsed_qr_dict, correct_code):
         for x in parsed_qr_dict:
             if parsed_qr_dict[x]["public_code"] != correct_code:
                 raise ValueError("Public code does not match spec")
 
-    #--------------------------
-    # hacked up to here.... 
-    #--------------------------
+    # --------------------------
+    # hacked up to here....
+    # --------------------------
 
-
-        
     def check_qr_codes(self, page_data, image_path, bundle):
         """
         Check integrity of QR codes on a page.

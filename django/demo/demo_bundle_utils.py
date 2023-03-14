@@ -113,6 +113,7 @@ def append_extra_page(pdf_doc, paper_number, student_id, extra_page_path):
         )
         assert not excess, "Text didn't fit: is extra-page text too long?"
         tw.write_text(pdf_doc[-1])
+        tw.write_text(pdf_doc[-2])
 
 
 def append_garbage_page(pdf_doc):
@@ -122,7 +123,13 @@ def append_garbage_page(pdf_doc):
     )
 
 
-def _scribble_loop(assigned_papers_ids, extra_page_path, out_file, deterministic=True):
+def _scribble_loop(
+    assigned_papers_ids,
+    extra_page_path,
+    out_file,
+    deterministic=True,
+    extra_page_papers=[],
+):
     # A complete collection of the pdfs created
     with fitz.open() as all_pdf_documents:
         for paper in assigned_papers_ids:
@@ -130,7 +137,15 @@ def _scribble_loop(assigned_papers_ids, extra_page_path, out_file, deterministic
                 # first put an ID on paper if it is not prenamed.
                 if not paper["prenamed"]:
                     scribble_name_and_id(pdf_document, paper["id"], paper["name"])
-                if (not deterministic) and (random.random() < extra_page_probability):
+                if deterministic:
+                    if int(paper["paper_number"]) in extra_page_papers:
+                        append_extra_page(
+                            pdf_document,
+                            paper["paper_number"],
+                            paper["id"],
+                            extra_page_path,
+                        )
+                elif random.random() < extra_page_probability:
                     append_extra_page(
                         pdf_document,
                         paper["paper_number"],
@@ -149,7 +164,7 @@ def _scribble_loop(assigned_papers_ids, extra_page_path, out_file, deterministic
         all_pdf_documents.save(out_file)
 
 
-def scribble_on_exams(*, deterministic=True):
+def scribble_on_exams(*, deterministic=True, extra_page_papers):
     classlist = get_classlist_as_dict()
     classlist_length = len(classlist)
     papers_to_print = Path("media/papersToPrint")
@@ -182,7 +197,11 @@ def scribble_on_exams(*, deterministic=True):
     out_file = Path("fake_bundle.pdf")
 
     _scribble_loop(
-        assigned_papers_ids, extra_page_path, out_file, deterministic=deterministic
+        assigned_papers_ids,
+        extra_page_path,
+        out_file,
+        deterministic=deterministic,
+        extra_page_papers=extra_page_papers,
     )
     # take this single output pdf and split it into three, then remove it.
     splitFakeFile(out_file)

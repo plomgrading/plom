@@ -24,7 +24,13 @@ from django.utils import timezone
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
 from plom.scan.readQRCodes import checkQRsValid
-from plom.tpv_utils import parseTPV, getPaperPageVersion
+from plom.tpv_utils import (
+    parseTPV,
+    parseExtraPageCode,
+    getPaperPageVersion,
+    isValidTPV,
+    isValidExtraPageCode,
+)
 
 from .image_process import PageImageProcessor
 from Scan.models import (
@@ -305,30 +311,63 @@ class ScanService:
                     'y_coord': 2906.5
                 }
             }
+            Alternatively, if the page is an extra page, then returns a similar dict but with entries of the form
+                    'SE': {
+                    'quadrant': '4',
+                    'grouping_key': 'plomX',
+                    'x_coord': 2203,
+                    'y_coord': 2906.5
+                }
+
         """
+        # ++++++++++++++++++++++
+        # TODO - hack this to handle tpv and plomX pages.
+        # Need to add a tpv-utils method to decide if tpv or plomX and then
+        # act accordingly here.
+        # ++++++++++++++++++++++
+
         groupings = {}
+        # TODO - simplify this loop using enumerate(list) or similar.
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
-                if list_qr_codes[page][quadrant].get("tpv_signature"):
+                signature = list_qr_codes[page][quadrant].get("tpv_signature", None)
+                if signature is None:
+                    continue
+                x_coord = list_qr_codes[page][quadrant].get("x")
+                y_coord = list_qr_codes[page][quadrant].get("y")
+                qr_code_dict = {
+                    "tpv_signature": signature,
+                    "x_coord": x_coord,
+                    "y_coord": y_coord,
+                }
+
+                if isValidTPV(signature):
                     paper_id, page_num, version_num, public_code, corner = parseTPV(
-                        list_qr_codes[page][quadrant].get("tpv_signature")
+                        signature
                     )
                     grouping_key = getPaperPageVersion(
                         list_qr_codes[page][quadrant].get("tpv_signature")
                     )
-                    x_coord = list_qr_codes[page][quadrant].get("x")
-                    y_coord = list_qr_codes[page][quadrant].get("y")
-                    qr_code_dict = {
-                        "paper_id": paper_id,
-                        "page_num": page_num,
-                        "version_num": version_num,
-                        "quadrant": corner,
-                        "public_code": public_code,
-                        "grouping_key": grouping_key,
-                        "x_coord": x_coord,
-                        "y_coord": y_coord,
-                    }
-                    groupings[quadrant] = qr_code_dict
+                    qr_code_dict.update(
+                        {
+                            "paper_id": paper_id,
+                            "page_num": page_num,
+                            "version_num": version_num,
+                            "quadrant": corner,
+                            "public_code": public_code,
+                            "grouping_key": grouping_key,
+                        }
+                    )
+                elif isValidExtraPageCode(signature):
+                    corner = parseExtraPageCode(signature)
+                    qr_code_dict.update(
+                        {
+                            "quadrant": corner,
+                            "grouping_key": "plomX",
+                        }
+                    )
+
+                groupings[quadrant] = qr_code_dict
         return groupings
 
     @transaction.atomic
