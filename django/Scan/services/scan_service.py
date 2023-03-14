@@ -281,31 +281,40 @@ class ScanService:
             groupings: (dict) Group of TPV signature
             {
                 'NE': {
-                    'paper_id': 1,
-                    'page_num': 3,
-                    'version_num': 1,
+                    'page_type': 'plom_qr',
+                    'page_info': {
+                        'paper_id': 1,
+                        'page_num': 3,
+                        'version_num': 1,
+                        'public_code': '93849',
+                    }
                     'quadrant': '1',
-                    'public_code': '93849',
                     'grouping_key': '00001003001',
                     'x_coord': 2204,
                     'y_coord': 279.5
                 },
                 'SW': {
-                    'paper_id': 1,
-                    'page_num': 3,
-                    'version_num': 1,
+                    'page_type': 'plom_qr',
+                    'page_info': {
+                        'paper_id': 1,
+                        'page_num': 3,
+                        'version_num': 1,
+                        'public_code': '93849',
+                }
                     'quadrant': '3',
-                    'public_code': '93849',
                     'grouping_key': '00001003001',
                     'x_coord': 234,
                     'y_coord': 2909.5
                 },
                 'SE': {
-                    'paper_id': 1,
-                    'page_num': 3,
-                    'version_num': 1,
+                    'page_type': 'plom_qr',
+                    'page_info': {
+                        'paper_id': 1,
+                        'page_num': 3,
+                        'version_num': 1,
+                        'public_code': '93849',
+                    }
                     'quadrant': '4',
-                    'public_code': '93849',
                     'grouping_key': '00001003001',
                     'x_coord': 2203,
                     'y_coord': 2906.5
@@ -313,6 +322,7 @@ class ScanService:
             }
             Alternatively, if the page is an extra page, then returns a similar dict but with entries of the form
                     'SE': {
+                    'page_type': 'plom_extra',
                     'quadrant': '4',
                     'grouping_key': 'plomX',
                     'x_coord': 2203,
@@ -350,11 +360,14 @@ class ScanService:
                     )
                     qr_code_dict.update(
                         {
-                            "paper_id": paper_id,
-                            "page_num": page_num,
-                            "version_num": version_num,
+                            "page_type": "plom_qr",
+                            "page_info": {
+                                "paper_id": paper_id,
+                                "page_num": page_num,
+                                "version_num": version_num,
+                                "public_code": public_code,
+                            },
                             "quadrant": corner,
-                            "public_code": public_code,
                             "grouping_key": grouping_key,
                         }
                     )
@@ -362,11 +375,11 @@ class ScanService:
                     corner = parseExtraPageCode(signature)
                     qr_code_dict.update(
                         {
+                            "page_type": "plom_extra",
                             "quadrant": corner,
                             "grouping_key": "plomX",
                         }
                     )
-
                 groupings[quadrant] = qr_code_dict
         return groupings
 

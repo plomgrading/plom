@@ -193,7 +193,7 @@ def launch_huey_workers():
     # stuff?
 
     print("Launching huey workers for background tasks")
-    for cmd in ["djangohuey"]:
+    for cmd in ["djangohuey --quiet"]:  # quiet huey tasks.
         py_man_cmd = f"python3 manage.py {cmd}"
         return subprocess.Popen(split(py_man_cmd))
 
@@ -369,8 +369,8 @@ def main():
     download_zip()
     print("*" * 40)
 
-    scribble_on_exams(extra_page_papers=[49, 50])
-    # scribble_on_exams(extra_page_papers=[])
+    # scribble_on_exams(extra_page_papers=[49, 50], garbage_page_papers=[1, 2])
+    scribble_on_exams(extra_page_papers=[], garbage_page_papers=[])
 
     print("*" * 40)
     upload_bundles()

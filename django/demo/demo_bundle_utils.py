@@ -17,11 +17,7 @@ from plom.create.scribble_utils import (
     splitFakeFile,
 )
 
-# from BuildPaperPDF.services import BuildPapersService
-
-extra_page_probability = 0.2
 extra_page_font_size = 18
-garbage_page_probability = 0.2
 
 
 def get_classlist_as_dict():
@@ -50,13 +46,11 @@ def get_extra_page():
     subprocess.check_call(split(cmd))
 
 
-def assign_students_to_papers(paper_list, classlist, *, deterministic=True):
+def assign_students_to_papers(paper_list, classlist):
     # prenamed papers are "exam_XXXX_YYYYYYY" and normal are "exam_XXXX"
     all_sid = [row["id"] for row in classlist]
     id_to_name = {X["id"]: X["name"] for X in classlist}
 
-    if not deterministic:  # shuffle the IDs into random order
-        random.shuffle(all_sid)
     assignment = []
 
     for path in paper_list:
@@ -90,7 +84,6 @@ def assign_students_to_papers(paper_list, classlist, *, deterministic=True):
 
 
 def append_extra_page(pdf_doc, paper_number, student_id, extra_page_path):
-    print(f"Append an extra page for test {paper_number} and id {student_id}")
     with fitz.open(extra_page_path) as extra_pages_pdf:
         pdf_doc.insert_pdf(
             extra_pages_pdf,
@@ -117,19 +110,12 @@ def append_extra_page(pdf_doc, paper_number, student_id, extra_page_path):
 
 
 def append_garbage_page(pdf_doc):
-    print("Appending a garbage page")
     pdf_doc.insert_page(
         -1, text="This is a garbage page", fontsize=18, color=[0, 0.75, 0]
     )
 
 
-def _scribble_loop(
-    assigned_papers_ids,
-    extra_page_path,
-    out_file,
-    deterministic=True,
-    extra_page_papers=[],
-):
+def _scribble_loop(assigned_papers_ids, extra_page_path, out_file, *, extra_page_papers=[], garbage_page_papers=[]):
     # A complete collection of the pdfs created
     with fitz.open() as all_pdf_documents:
         for paper in assigned_papers_ids:
@@ -137,15 +123,7 @@ def _scribble_loop(
                 # first put an ID on paper if it is not prenamed.
                 if not paper["prenamed"]:
                     scribble_name_and_id(pdf_document, paper["id"], paper["name"])
-                if deterministic:
-                    if int(paper["paper_number"]) in extra_page_papers:
-                        append_extra_page(
-                            pdf_document,
-                            paper["paper_number"],
-                            paper["id"],
-                            extra_page_path,
-                        )
-                elif random.random() < extra_page_probability:
+                if int(paper["paper_number"]) in extra_page_papers:
                     append_extra_page(
                         pdf_document,
                         paper["paper_number"],
@@ -154,9 +132,8 @@ def _scribble_loop(
                     )
                 # scribble on the pages
                 scribble_pages(pdf_document)
-
-                # if probability dictates, add a garbage page
-                if (not deterministic) and (random.random() < garbage_page_probability):
+                # append a garbage page after the scribbling
+                if int(paper["paper_number"]) in garbage_page_papers:
                     append_garbage_page(pdf_document)
 
                 # finally, append this to the bundle
@@ -164,7 +141,7 @@ def _scribble_loop(
         all_pdf_documents.save(out_file)
 
 
-def scribble_on_exams(*, deterministic=True, extra_page_papers):
+def scribble_on_exams(*, extra_page_papers=[], garbage_page_papers=[]):
     classlist = get_classlist_as_dict()
     classlist_length = len(classlist)
     papers_to_print = Path("media/papersToPrint")
@@ -172,26 +149,18 @@ def scribble_on_exams(*, deterministic=True, extra_page_papers):
     get_extra_page()  # download copy of the extra-page pdf to papersToPrint subdirectory
     extra_page_path = papers_to_print / "extra_page.pdf"
 
-    if deterministic:
-        number_papers_to_use = classlist_length
-        papers_to_use = sorted(paper_list)[:number_papers_to_use]
-    else:  # use 90% of the papers generated
-        number_papers_to_use = int(classlist_length * 0.9)
-        papers_to_use = sorted(random.sample(paper_list, k=number_papers_to_use))
+    number_papers_to_use = classlist_length
+    papers_to_use = sorted(paper_list)[:number_papers_to_use]
 
-    assigned_papers_ids = assign_students_to_papers(
-        papers_to_use, classlist, deterministic=deterministic
-    )
+    assigned_papers_ids = assign_students_to_papers(papers_to_use, classlist)
     number_prenamed = sum(1 for X in assigned_papers_ids if X["prenamed"])
 
     print("v" * 40)
     print(
         f"Making a bundle of {len(papers_to_use)} papers, of which {number_prenamed} are prenamed"
     )
-    if deterministic:
-        print("The bundle is being built deterministically")
-    else:
-        print("The bundle is being built with some randomness")
+    print(f"\tExtra pages will be appended to papers {extra_page_papers}")
+    print(f"\tGarbage pages will be appended after papers {garbage_page_papers}")
     print("^" * 40)
 
     out_file = Path("fake_bundle.pdf")
@@ -200,8 +169,8 @@ def scribble_on_exams(*, deterministic=True, extra_page_papers):
         assigned_papers_ids,
         extra_page_path,
         out_file,
-        deterministic=deterministic,
         extra_page_papers=extra_page_papers,
+        garbage_page_papers=garbage_page_papers,
     )
     # take this single output pdf and split it into three, then remove it.
     splitFakeFile(out_file)

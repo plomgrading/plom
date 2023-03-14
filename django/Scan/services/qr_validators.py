@@ -40,13 +40,12 @@ class QRErrorService:
                     continue
 
                 try:
-                    self.check_consistent_qr(img.parsed_qr)
+                    self.check_consistent_qr(
+                        img.parsed_qr, spec_dictionary["publicCode"]
+                    )
                     if self.check_is_extra_page(img.parsed_qr):
                         extra_imgs.append(img.pk)
                     else:
-                        self.check_correct_public_code(
-                            img.parsed_qr, spec_dictionary["publicCode"]
-                        )
                         known_imgs.append(img.pk)
                 except ValueError as err:
                     error_imgs.append((img.pk, err))
@@ -56,34 +55,55 @@ class QRErrorService:
         print(f"Extra imgs = {extra_imgs}")
         print(f"Known imgs = {known_imgs}")
 
-    def check_consistent_qr(self, parsed_qr_dict):
+    def check_consistent_qr(self, parsed_qr_dict, correct_public_code):
         """parsed_qr_dict is of the form
         {
-        'NW': {'x_coord': 126.5, 'y_coord': 139.5, 'page_num': 6, 'paper_id': 50, 'quadrant': '2', 'public_code': '22339', 'version_num': 2, 'grouping_key': '00050006002'},
-        'SE': {'x_coord': 1419.5, 'y_coord': 1861.5, 'page_num': 6, 'paper_id': 50, 'quadrant': '4', 'public_code': '22339', 'version_num': 2, 'grouping_key': '00050006002'},
-        'SW': {'x_coord': 126.5, 'y_coord': 1861.5, 'page_num': 6, 'paper_id': 50, 'quadrant': '3', 'public_code': '22339', 'version_num': 2, 'grouping_key': '00050006002'}
+        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_info': {'page_num': 1, 'paper_id': 1, 'public_code': '28558', 'version_num': 1}, 'page_type': 'plom_qr', 'grouping_key': '00001001001', 'tpv_signature': '00001001001128558'},
         }
+        or potentially (if an extra page)
+        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'grouping_key': 'plomX', 'tpv_signature': 'plomX1'},
         """
-        # check all grouping_keys are the same (ie 'plomX' or a valid tpv)
-        gk = set(parsed_qr_dict[x]["grouping_key"] for x in parsed_qr_dict)
-        if len(gk) > 1:
+        # ------ helper function to test data consistency
+        def is_list_inconsistent(lst):
+            return any([X != lst[0] for X in lst])
+
+        # ------ end helper function
+
+        # check all page-types are the same
+        page_types = [parsed_qr_dict[x]["page_type"] for x in parsed_qr_dict]
+        if is_list_inconsistent(page_types):
             raise ValueError("Inconsistent qr-codes")
-        if gk.pop() == "plomX":  # then is an extra page - no further checks required
+        # if it is an extra page, then no further consistency checks
+        if page_types[0] == "plom_extra":
             return True
-        # must be a tpv - so make sure public-code is consistent
-        if len(set(parsed_qr_dict[x]["public_code"] for x in parsed_qr_dict)) > 1:
+        #  must be a normal qr-coded plom-page - so make sure public-code is consistent
+        codes = [parsed_qr_dict[x]["page_info"]["public_code"] for x in parsed_qr_dict]
+        if is_list_inconsistent(codes):
             raise ValueError("Inconsistent public-codes")
+        # and make sure it matches the spec
+        if codes[0] != correct_public_code:
+            raise ValueError("Public code does not match spec")
+        # check all the same paper_id
+        if is_list_inconsistent(
+            [parsed_qr_dict[x]["page_info"]["paper_id"] for x in parsed_qr_dict]
+        ):
+            raise ValueError("Inconsistent paper-numbers")
+        # check all the same page_number
+        if is_list_inconsistent(
+            [parsed_qr_dict[x]["page_info"]["page_num"] for x in parsed_qr_dict]
+        ):
+            raise ValueError("Inconsistent page-numbers")
+        # check all the same version_number
+        if is_list_inconsistent(
+            [parsed_qr_dict[x]["page_info"]["version_num"] for x in parsed_qr_dict]
+        ):
+            raise ValueError("Inconsistent version-numbers")
         return True
 
     def check_is_extra_page(self, parsed_qr_dict):
         # since we know the codes are consistent, it is sufficient to check just one.
         # note - a little python hack to get **any** value from a dict
-        return next(iter(parsed_qr_dict.values()))["grouping_key"] == "plomX"
-
-    def check_correct_public_code(self, parsed_qr_dict, correct_code):
-        for x in parsed_qr_dict:
-            if parsed_qr_dict[x]["public_code"] != correct_code:
-                raise ValueError("Public code does not match spec")
+        return next(iter(parsed_qr_dict.values()))["page_type"] == "plom_extra"
 
     # --------------------------
     # hacked up to here....
