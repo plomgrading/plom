@@ -1,12 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from django.test import TestCase
 from django.conf import settings
 from model_bakery import baker
 
 from Papers.services import ImageBundleService
-from Papers.models import Bundle, Image, Paper, Specification, DNMPage, BasePage
+from Papers.models import (
+    Bundle,
+    Image,
+    Paper,
+    Specification,
+    DNMPage,
+    BasePage,
+    QuestionPage,
+)
 from Scan.models import StagingImage, StagingBundle
 
 
@@ -218,3 +226,41 @@ class ImageBundleTests(TestCase):
         img6 = baker.make(StagingImage, paper_id=3, page_number=1)
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [(img6, img4)])
+
+    def test_perfect_bundle(self):
+        """
+        Test that _upload_valid_bundle() works as intended with a valid
+        staged bundle.
+        """
+
+        bundle = baker.make(StagingBundle, pdf_hash="abcdef")
+
+        paper2 = baker.make(Paper, paper_number=2)
+        paper3 = baker.make(Paper, paper_number=3)
+        page1 = baker.make(QuestionPage, paper=paper2, page_number=1)
+        page2 = baker.make(DNMPage, paper=paper3, page_number=2)
+
+        img1 = baker.make(
+            StagingImage,
+            bundle=bundle,
+            paper_id=2,
+            page_number=1,
+            parsed_qr={"NW": "abcde"},
+            image_hash="ghijk",
+        )
+        img2 = baker.make(
+            StagingImage,
+            bundle=bundle,
+            paper_id=3,
+            page_number=2,
+            parsed_qr={"NW": "abcde"},
+        )
+
+        ibs = ImageBundleService()
+        ibs._upload_valid_bundle.call_local(bundle)
+
+        self.assertEqual(Bundle.objects.all()[0].hash, bundle.pdf_hash)
+        self.assertEqual(
+            Image.objects.get(basepage__page_number=1, basepage__paper=paper2).hash,
+            img1.image_hash,
+        )

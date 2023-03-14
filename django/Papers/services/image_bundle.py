@@ -249,8 +249,26 @@ class ImageBundleService:
                 return True
         return False
 
+    def bulk_update_pages(self, staging_images, uploaded_images):
+        """
+        Helper function for bulk updating the BasePage elements. Assumes
+        staging_images and uploaded_images are both sorted.
+        """
+
+        pages = map(
+            lambda staging: BasePage.objects.get(
+                paper__paper_number=staging.paper_id,
+                page_number=staging.page_number,
+            ),
+            staging_images,
+        )
+
+        for page, img in zip(pages, uploaded_images):
+            page.image = img
+            page.save(update_fields=["image"])
+
     @db_task(queue="tasks")
-    def _upload_valid_bundle(self, staged_bundle):
+    def _upload_valid_bundle(staged_bundle):
         """
         Assuming all of the pages in the bundle are valid (i.e. have a valid page number,
         paper number, and don't collide with any currently uploaded pages) upload all the pages
@@ -258,11 +276,43 @@ class ImageBundleService:
 
         1. Check that all the staging images have page numbers and test numbers
         2. Check that no staging images collide with each other
-        3. Check that no staging images with any uploaded images
+        3. Check that no staging images collide with any uploaded images
         4. Bulk-create images
         """
 
-        pass
+        ibs = ImageBundleService()
+        bundle_images = StagingImage.objects.filter(bundle=staged_bundle).order_by(
+            "paper_id", "page_number"
+        )
+
+        if not ibs.all_staged_imgs_valid(bundle_images):
+            raise RuntimeError("Some pages in this bundle do not have QR data.")
+
+        if len(ibs.find_internal_collisions(bundle_images)) > 0:
+            raise RuntimeError("Some pages in the staged bundle collide.")
+
+        if len(ibs.find_external_collisions(bundle_images)) > 0:
+            raise RuntimeError(
+                "Some pages in the staged bundle collide with uploaded pages."
+            )
+
+        uploaded_bundle = Bundle(name=staged_bundle.slug, hash=staged_bundle.pdf_hash)
+        uploaded_bundle.save()
+
+        images = map(
+            lambda staging: Image(
+                bundle=uploaded_bundle,
+                bundle_order=staging.bundle_order,
+                original_name=staging.file_name,
+                file_name=staging.file_path,
+                hash=staging.image_hash,
+                rotation=staging.rotation,
+            ),
+            bundle_images,
+        )
+        images = Image.objects.bulk_create(images)
+
+        ibs.bulk_update_pages(bundle_images, images)
 
     def get_staged_img_location(self, staged_image):
         """
@@ -302,32 +352,6 @@ class ImageBundleService:
             parsed_qr=None, paper_id=None, page_number=None
         ).exists()
 
-    def find_collisions(self, source, target):
-        """
-        Helper function for finding collisions between two groups of images
-
-        Args:
-            source: QuerySet of StagingImages
-            target: QuerySet of StagingImages or Images
-
-        Returns:
-            list [(StagingImage, StagingImage)]: list of unordered collisions.
-        """
-
-        collisions = []
-        visited = []
-        for image in source:
-            colls = target.filter(
-                paper_id=image.paper_id,
-                page_number=image.page_number,
-            )
-            colls = list(filter(lambda i: i.pk != image.pk, colls))
-            for colliding_img in colls:
-                if not colliding_img in visited:
-                    collisions.append((image, colliding_img))
-            visited.append(image)
-        return collisions
-
     def find_internal_collisions(self, staged_imgs):
         """
         Check for collisions *within* a bundle (or collection of staging images)
@@ -339,7 +363,19 @@ class ImageBundleService:
             list [(StagingImage, StagingImage)]: list of unordered collisions.
         """
 
-        return self.find_collisions(staged_imgs, staged_imgs)
+        collisions = []
+        visited = []
+        for image in staged_imgs:
+            colls = staged_imgs.filter(
+                paper_id=image.paper_id,
+                page_number=image.page_number,
+            )
+            colls = list(filter(lambda i: i.pk != image.pk, colls))
+            for colliding_img in colls:
+                if colliding_img not in visited:
+                    collisions.append((image, colliding_img))
+            visited.append(image)
+        return collisions
 
     def find_external_collisions(self, staged_imgs):
         """
