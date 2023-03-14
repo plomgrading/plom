@@ -7,6 +7,8 @@ from collections import Counter
 import shutil
 
 from django.conf import settings
+from django.db import transaction
+
 
 from Papers.models import ErrorImage
 from Papers.services import ImageBundleService, SpecificationService
@@ -14,6 +16,65 @@ from Scan.models import StagingImage, CollisionStagingImage, UnknownStagingImage
 
 
 class QRErrorService:
+    def check_read_qr_codes(self, bundle):
+        # Steps
+        # * flag images with no qr-codes
+        # * check all images have consistent qr-codes
+        # * check all images have correct public-key
+        # * check all distinct test/page/version
+
+        spec_dictionary = SpecificationService().get_the_spec()
+
+        no_qr_imgs = []
+        error_imgs = []
+
+        with transaction.atomic():
+            images = bundle.stagingimage_set.all()
+            for img in images:
+                if len(img.parsed_qr) == 0:
+                    # no qr-codes found.
+                    no_qr_imgs.append(img.pk)
+                    continue
+
+                try:
+                    self.check_consistent_qr(img.parsed_qr)
+                    self.check_correct_public_code(
+                        img.parsed_qr, spec_dictionary["public_code"]
+                    )
+                except ValueError as err:
+                    error_imgs.append((img.pk, err))
+
+
+
+    def check_consistent_qr(self, parsed_qr_dict):
+        """parsed_qr_dict is of the form
+        {
+        'NW': {'x_coord': 126.5, 'y_coord': 139.5, 'page_num': 6, 'paper_id': 50, 'quadrant': '2', 'public_code': '22339', 'version_num': 2, 'grouping_key': '00050006002'},
+        'SE': {'x_coord': 1419.5, 'y_coord': 1861.5, 'page_num': 6, 'paper_id': 50, 'quadrant': '4', 'public_code': '22339', 'version_num': 2, 'grouping_key': '00050006002'},
+        'SW': {'x_coord': 126.5, 'y_coord': 1861.5, 'page_num': 6, 'paper_id': 50, 'quadrant': '3', 'public_code': '22339', 'version_num': 2, 'grouping_key': '00050006002'}
+        }
+        """
+        # Image must either be an extra page, or consistent tpv qr-codes with same public-code
+        # TODO - handle extra-pages
+        # check public-codes are same
+        if len(set(parsed_qr_dict[x]["public_code"] for x in parsed_qr_dict)) > 1:
+            raise ValueError("Inconsistent public-codes")
+        # check grouping_key
+        if len(set(parsed_qr_dict[x]["grouping_key"] for x in parsed_qr_dict)) > 1:
+            raise ValueError("Inconsistent test-page-version keys")
+        return True
+
+    def check_correct_public_code(self, parsed_qr_dict, correct_code):
+        for x in parsed_qr_dict:
+            if parsed_qr_dict[x]["public_code"] != correct_code:
+                raise ValueError("Public code does not match spec")
+
+    #--------------------------
+    # hacked up to here.... 
+    #--------------------------
+
+
+        
     def check_qr_codes(self, page_data, image_path, bundle):
         """
         Check integrity of QR codes on a page.

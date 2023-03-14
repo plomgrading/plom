@@ -41,6 +41,9 @@ from Papers.models import ErrorImage
 from Papers.services import ImageBundleService
 
 
+from Scan.services.qr_validators import QRErrorService
+
+
 class ScanService:
     """
     Functions for staging scanned test-papers.
@@ -850,6 +853,8 @@ def huey_parent_split_bundle_task(bundle_pk, base_dir):
         results = [X.get() for X in task_list]
         count = sum(1 for X in results if X is not None)
 
+        # TODO - check for error status here.
+
         with transaction.atomic():
             task_obj = ManagePageToImage.objects.get(bundle=bundle_obj)
             task_obj.completed_pages = count
@@ -862,7 +867,6 @@ def huey_parent_split_bundle_task(bundle_pk, base_dir):
 
     with transaction.atomic():
         for X in results:
-            # TODO - check for error status here.
             StagingImage.objects.create(
                 bundle=bundle_obj,
                 bundle_order=X["index"],
@@ -914,6 +918,8 @@ def huey_parent_read_qr_codes_task(bundle_pk):
         bundle_obj.has_qr_codes = True
         bundle_obj.save()
 
+    QRErrorService().check_read_qr_codes(bundle_obj)
+
 
 @db_task(queue="tasks")
 def huey_child_get_page_image(bundle_pk, index, basedir, basename, *, quiet=True):
@@ -953,9 +959,6 @@ def huey_child_get_page_image(bundle_pk, index, basedir, basename, *, quiet=True
 
 @db_task(queue="tasks")
 def huey_child_parse_qr_code(image_pk, *, quiet=True):
-    from time import sleep
-
-    sleep(0.5)
     """
     Huey task of parsing QR codes, check QR errors, rotate image,
     and save to database in the background
@@ -967,7 +970,6 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
     image_path = img.file_path
 
     scanner = ScanService()
-    # qr_error_checker = QRErrorService()
 
     code_dict = QRextract(image_path)
     page_data = scanner.parse_qr_code([code_dict])
