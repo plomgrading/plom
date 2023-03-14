@@ -6,7 +6,6 @@
 import csv
 import fitz
 from pathlib import Path
-import random
 from shlex import split
 import subprocess
 import tempfile
@@ -109,13 +108,29 @@ def append_extra_page(pdf_doc, paper_number, student_id, extra_page_path):
         tw.write_text(pdf_doc[-2])
 
 
+def append_duplicate_page(pdf_doc, page_number):
+    pdf_doc.fullcopy_page(page_number - 1)
+
+
 def append_garbage_page(pdf_doc):
     pdf_doc.insert_page(
         -1, text="This is a garbage page", fontsize=18, color=[0, 0.75, 0]
     )
 
 
-def _scribble_loop(assigned_papers_ids, extra_page_path, out_file, *, extra_page_papers=[], garbage_page_papers=[]):
+def _scribble_loop(
+    assigned_papers_ids,
+    extra_page_path,
+    out_file,
+    *,
+    extra_page_papers=[],
+    garbage_page_papers=[],
+    duplicate_pages={},
+):
+    # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
+    # garbage_page_papers = list of paper_numbers to which we append a garbage page
+    # duplicate_pages = dict of n:p = page-p from paper-n = to be duplicated (causing collisions)
+
     # A complete collection of the pdfs created
     with fitz.open() as all_pdf_documents:
         for paper in assigned_papers_ids:
@@ -123,17 +138,21 @@ def _scribble_loop(assigned_papers_ids, extra_page_path, out_file, *, extra_page
                 # first put an ID on paper if it is not prenamed.
                 if not paper["prenamed"]:
                     scribble_name_and_id(pdf_document, paper["id"], paper["name"])
-                if int(paper["paper_number"]) in extra_page_papers:
+                paper_number = int(paper["paper_number"])
+                if paper_number in extra_page_papers:
                     append_extra_page(
                         pdf_document,
                         paper["paper_number"],
                         paper["id"],
                         extra_page_path,
                     )
+                if paper_number in duplicate_pages:
+                    append_duplicate_page(pdf_document, duplicate_pages[paper_number])
+
                 # scribble on the pages
                 scribble_pages(pdf_document)
                 # append a garbage page after the scribbling
-                if int(paper["paper_number"]) in garbage_page_papers:
+                if paper_number in garbage_page_papers:
                     append_garbage_page(pdf_document)
 
                 # finally, append this to the bundle
@@ -141,7 +160,9 @@ def _scribble_loop(assigned_papers_ids, extra_page_path, out_file, *, extra_page
         all_pdf_documents.save(out_file)
 
 
-def scribble_on_exams(*, extra_page_papers=[], garbage_page_papers=[]):
+def scribble_on_exams(
+    *, extra_page_papers=[], garbage_page_papers=[], duplicate_pages={}
+):
     classlist = get_classlist_as_dict()
     classlist_length = len(classlist)
     papers_to_print = Path("media/papersToPrint")
@@ -159,8 +180,9 @@ def scribble_on_exams(*, extra_page_papers=[], garbage_page_papers=[]):
     print(
         f"Making a bundle of {len(papers_to_use)} papers, of which {number_prenamed} are prenamed"
     )
-    print(f"\tExtra pages will be appended to papers {extra_page_papers}")
-    print(f"\tGarbage pages will be appended after papers {garbage_page_papers}")
+    print(f"\tExtra pages will be appended to papers: {extra_page_papers}")
+    print(f"\tGarbage pages will be appended after papers: {garbage_page_papers}")
+    print(f"\tDuplicate pages will be inserted: {duplicate_pages}")
     print("^" * 40)
 
     out_file = Path("fake_bundle.pdf")
@@ -171,6 +193,7 @@ def scribble_on_exams(*, extra_page_papers=[], garbage_page_papers=[]):
         out_file,
         extra_page_papers=extra_page_papers,
         garbage_page_papers=garbage_page_papers,
+        duplicate_pages=duplicate_pages,
     )
     # take this single output pdf and split it into three, then remove it.
     splitFakeFile(out_file)

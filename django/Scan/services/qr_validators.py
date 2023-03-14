@@ -26,10 +26,14 @@ class QRErrorService:
 
         spec_dictionary = SpecificationService().get_the_spec()
 
-        no_qr_imgs = []
-        error_imgs = []
-        extra_imgs = []
-        known_imgs = []
+        # lists of various image types
+        no_qr_imgs = []  # no qr-codes could be read
+        error_imgs = []  # indicative of a serious error (eg inconsistent qr-codes)
+        extra_imgs = []  # extra-page
+        known_imgs = []  # a normal qr-coded plom page
+        # keep track of all the grouping_keys of qr-coded pages
+        # to check for internal collision
+        grouping_to_imgs = {}
 
         with transaction.atomic():
             images = bundle.stagingimage_set.all()
@@ -43,17 +47,27 @@ class QRErrorService:
                     self.check_consistent_qr(
                         img.parsed_qr, spec_dictionary["publicCode"]
                     )
-                    if self.check_is_extra_page(img.parsed_qr):
+                    grouping_key = self.get_grouping_key(img.parsed_qr)
+                    if grouping_key == "plomX":  # is an extra page
                         extra_imgs.append(img.pk)
-                    else:
+                    else:  # a normal qr-coded page
                         known_imgs.append(img.pk)
+                        # keep list of imgs with this grouping-key to check for internal collisions
+                        grouping_to_imgs.setdefault(grouping_key, []).append(img.pk)
                 except ValueError as err:
                     error_imgs.append((img.pk, err))
 
+        # now create a dict of internal collisions from the grouping_to_imgs dict
+        internal_collisions = {g: l for g, l in grouping_to_imgs.items() if len(l) > 1}
+        # a summary - until we actually process this stuff correctly
         print(f"No qr = {no_qr_imgs}")
         print(f"Error imgs = {error_imgs}")
         print(f"Extra imgs = {extra_imgs}")
         print(f"Known imgs = {known_imgs}")
+        if len(internal_collisions) > 0:
+            print(f"Internal collisions = {internal_collisions}")
+        else:
+            print("No internal collisions")
 
     def check_consistent_qr(self, parsed_qr_dict, correct_public_code):
         """parsed_qr_dict is of the form
@@ -98,12 +112,17 @@ class QRErrorService:
             [parsed_qr_dict[x]["page_info"]["version_num"] for x in parsed_qr_dict]
         ):
             raise ValueError("Inconsistent version-numbers")
+        # check all the same grouping_key - this should not be triggered because of previous checks
+        if is_list_inconsistent(
+            [parsed_qr_dict[x]["grouping_key"] for x in parsed_qr_dict]
+        ):
+            raise ValueError("Inconsistent grouping-keys")
         return True
 
-    def check_is_extra_page(self, parsed_qr_dict):
+    def get_grouping_key(self, parsed_qr_dict):
         # since we know the codes are consistent, it is sufficient to check just one.
         # note - a little python hack to get **any** value from a dict
-        return next(iter(parsed_qr_dict.values()))["page_type"] == "plom_extra"
+        return next(iter(parsed_qr_dict.values()))["grouping_key"]
 
     # --------------------------
     # hacked up to here....

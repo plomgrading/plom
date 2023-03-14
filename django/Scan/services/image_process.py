@@ -107,7 +107,7 @@ class PageImageProcessor:
             ]
             if corner
         ]
-        
+
         result_vals = set(truthy_results)
         if len(result_vals) != 1:
             raise RuntimeError("Unable to determine page orientation.")
