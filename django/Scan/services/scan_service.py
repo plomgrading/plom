@@ -151,7 +151,7 @@ class ScanService:
     def get_bundle_split_completions(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return ManagePageToImage.objects.get(bundle=bundle_obj).completed_pages
-        
+
     @transaction.atomic
     def is_bundle_mid_splitting(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -954,6 +954,7 @@ def huey_child_get_page_image(bundle_pk, index, basedir, basename, *, quiet=True
 @db_task(queue="tasks")
 def huey_child_parse_qr_code(image_pk, *, quiet=True):
     from time import sleep
+
     sleep(0.5)
     """
     Huey task of parsing QR codes, check QR errors, rotate image,

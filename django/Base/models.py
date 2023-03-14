@@ -127,6 +127,7 @@ class SingletonHueyTask(HueyTask):
 # in the database.
 # ---------------------------------
 
+
 @queue.signal(SIGNAL_EXECUTING)
 def start_task(signal, task):
     if task.kwargs.get("quiet", False):

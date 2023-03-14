@@ -194,10 +194,20 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         }
         if not context["has_been_processed"]:
             done = scanner.get_bundle_split_completions(bundle.pk)
-            context.update({"number_of_split_pages": done, "percent_split": (100*done)//context["number_of_pages"]})
+            context.update(
+                {
+                    "number_of_split_pages": done,
+                    "percent_split": (100 * done) // context["number_of_pages"],
+                }
+            )
         if context["is_mid_qr_read"]:
             done = scanner.get_bundle_qr_completions(bundle.pk)
-            context.update({"number_of_read_pages": done, "percent_read": (100*done)//context["number_of_pages"]})
+            context.update(
+                {
+                    "number_of_read_pages": done,
+                    "percent_read": (100 * done) // context["number_of_pages"],
+                }
+            )
 
         return render(request, "Scan/fragments/staged_bundle_card.html", context)
 
