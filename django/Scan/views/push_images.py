@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
 
@@ -28,12 +28,8 @@ class PushPageImage(ScannerRequiredView):
         scanner = ScanService()
         staging_image = scanner.get_image(timestamp, request.user, index)
 
-        # get the test-paper number from the QR dictionary
-        any_qr = list(staging_image.parsed_qr.values())[0]
-        test_paper = any_qr["paper_id"]
-        page_number = any_qr["page_num"]
-
         img_service = ImageBundleService()
+        test_paper, page_number = img_service.get_staged_img_location(staging_image)
         img_service.push_staged_image(staging_image, test_paper, page_number)
 
         return HttpResponseClientRefresh()

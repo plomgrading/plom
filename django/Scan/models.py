@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 
 from django.db import models
@@ -34,6 +34,8 @@ class StagingImage(models.Model):
     file_path = models.TextField(default="")
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)
+    paper_id = models.PositiveIntegerField(default=None, null=True)
+    page_number = models.PositiveIntegerField(default=None, null=True)
     rotation = models.IntegerField(default=0)
     pushed = models.BooleanField(default=False)
     colliding = models.BooleanField(default=False)
