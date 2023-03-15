@@ -89,6 +89,7 @@ class ScanService:
                 timestamp=timestamp,
                 number_of_pages=number_of_pages,
                 pdf_hash=pdf_hash,
+                pushed=False,
             )
 
         image_dir = bundle_dir / "pageImages"

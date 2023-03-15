@@ -58,8 +58,8 @@
                 <div>
                     <h5>Staged Bundles</h5>
                     <div class="d-grid gap-2">
-                        {% if bundles %}
-                        {% for bundle in bundles %}
+                        {% if staged_bundles %}
+                        {% for bundle in staged_bundles %}			
                         <div hx-get="{% url 'scan_get_staged_bundle_fragment' bundle.timestamp %}"
 			     hw-swap="innerHTML" hx-trigger="load"
 			     id="bundle{{bundle.slug}}"
@@ -75,39 +75,37 @@
             <div class="col">
                 <div>
                     <h5>Pushed Bundles</h5>
-                    {% if has_pushed_bundle %}
-                    {% for bundle in bundles %}
-                        {% if bundle.bundle_pushed %}
-                            <div class="card" style="min-width: fit-content; max-width: 50%">
-                                <div class="card-body d-flex flex-row p-0">
-                                    <img 
-                                        src="{% url 'scan_get_image' bundle.timestamp 0 %}"
-                                        class="border rounded-start"
-                                        style="max-height: 14em;"
-                                    >
-                                    <div class="p-2">
-                                        <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
-                                        <ul class="list-unstyled">
-                                            <li>Total pages: {{ bundle.pages }}</li>
-                                            {% comment %} <li>Valid pages: {{ bundle.n_read }}</li>
-                                            <li>Error pages: {{ bundle.n_errors}}</li> {% endcomment %}
-                                        </ul>
-                                        <a 
-                                            class="btn" 
-                                            href="{% url 'scan_manage_bundle' bundle.timestamp 0 %}"
-                                            style="background-color: #0F984F; color: white;"
-                                        >
-                                            View
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endif %}
+                    {% if pushed_bundle %}
+                    {% for bundle in pushed_bundles %}
+                    <div class="card" style="min-width: fit-content; max-width: 50%">
+                      <div class="card-body d-flex flex-row p-0">
+                        <img 
+                          src="{% url 'scan_get_image' bundle.timestamp 0 %}"
+                          class="border rounded-start"
+                          style="max-height: 14em;"
+                          >
+                        <div class="p-2">
+                          <h5 class="card-title">{{ bundle.slug }}.pdf</h5>
+                          <ul class="list-unstyled">
+                            <li>Total pages: {{ bundle.pages }}</li>
+                            {% comment %} <li>Valid pages: {{ bundle.n_read }}</li>
+                            <li>Error pages: {{ bundle.n_errors}}</li> {% endcomment %}
+                          </ul>
+                          <a 
+                            class="btn" 
+                            href="{% url 'scan_manage_bundle' bundle.timestamp 0 %}"
+                            style="background-color: #0F984F; color: white;"
+                            >
+                            View
+                          </a>
+                        </div>
+                      </div>
+                    </div>
                     {% endfor %}
                     {% else %}
-                        <div class="d-grid gap-2">
-                            <h6>No bundles pushed yet.</h6>
-                        </div>
+                    <div class="d-grid gap-2">
+                      <h6>No bundles pushed yet.</h6>
+                    </div>
                     {% endif %}
                 </div>
             </div>

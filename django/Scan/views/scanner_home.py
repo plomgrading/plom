@@ -57,35 +57,36 @@ class ScannerHomeView(ScannerRequiredView):
             }
         )
         user_bundles = scanner.get_user_bundles(user)
-        bundles = []
-        hash_pushed_bundle = False
+        staged_bundles = []
+        pushed_bundles = []
         for bundle in user_bundles:
             date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
             pages = scanner.get_n_images(bundle)
-            n_pushed = scanner.get_n_pushed_images(bundle)
-            flagged_pages = scanner.get_n_flagged_image(bundle)
             n_errors = scanner.get_n_error_image(bundle)
-            if n_pushed == pages:
-                scanner.push_bundle(bundle)
-
-            disable_delete = (n_pushed > 0 and n_pushed < pages) or flagged_pages > 0
-            bundles.append(
-                {
-                    "slug": bundle.slug,
-                    "timestamp": bundle.timestamp,
-                    "time_uploaded": arrow.get(date_time).humanize(),
-                    "pages": pages,
-                    "n_read": scanner.get_n_complete_reading_tasks(bundle),
-                    # "n_pushed": n_pushed,
-                    "disable_delete": disable_delete,
-                    "n_errors": n_errors,
-                    "bundle_pushed": bundle.pushed,
-                }
-            )
             if bundle.pushed:
-                hash_pushed_bundle = True
+                pushed_bundles.append(
+                    {
+                        "slug": bundle.slug,
+                        "timestamp": bundle.timestamp,
+                        "time_uploaded": arrow.get(date_time).humanize(),
+                        "pages": pages,
+                        "n_read": scanner.get_n_complete_reading_tasks(bundle),
+                        "n_errors": n_errors,
+                    }
+                )
+            else:
+                staged_bundles.append(
+                    {
+                        "slug": bundle.slug,
+                        "timestamp": bundle.timestamp,
+                        "time_uploaded": arrow.get(date_time).humanize(),
+                        "pages": pages,
+                        "n_read": scanner.get_n_complete_reading_tasks(bundle),
+                        "n_errors": n_errors,
+                    }
+                )
 
-        context.update({"bundles": bundles, "has_pushed_bundle": hash_pushed_bundle})
+        context.update({"pushed_bundles": pushed_bundles, "staged_bundles": staged_bundles})
         return context
 
     def get(self, request):
