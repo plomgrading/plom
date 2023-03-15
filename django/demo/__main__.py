@@ -365,7 +365,6 @@ def main():
     wait_for_papers_to_be_ready()
     print("*" * 40)
 
-    # what is this for? why does scribble_on_exams work without it?
     download_zip()
     print("*" * 40)
 
