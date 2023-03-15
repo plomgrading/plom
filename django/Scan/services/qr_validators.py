@@ -30,7 +30,7 @@ class QRErrorService:
         no_qr_imgs = []  # no qr-codes could be read
         error_imgs = []  # indicative of a serious error (eg inconsistent qr-codes)
         extra_imgs = []  # extra-page
-        known_imgs = []  # a normal qr-coded plom page
+        known_imgs = []  # a normal qr-coded plom page stored as (pk, partial-tpv)
         # keep track of all the grouping_keys of qr-coded pages
         # to check for internal collision
         grouping_to_imgs = {}
@@ -51,7 +51,7 @@ class QRErrorService:
                     if grouping_key == "plomX":  # is an extra page
                         extra_imgs.append(img.pk)
                     else:  # a normal qr-coded page
-                        known_imgs.append(img.pk)
+                        known_imgs.append((img.pk, grouping_key))
                         # keep list of imgs with this grouping-key to check for internal collisions
                         grouping_to_imgs.setdefault(grouping_key, []).append(img.pk)
                 except ValueError as err:
@@ -59,6 +59,8 @@ class QRErrorService:
 
         # now create a dict of internal collisions from the grouping_to_imgs dict
         internal_collisions = {g: l for g, l in grouping_to_imgs.items() if len(l) > 1}
+        # TODO - if any collisions, then those imgs need to be removed from "known_imgs"
+
         # a summary - until we actually process this stuff correctly
         print(f"No qr = {no_qr_imgs}")
         print(f"Error imgs = {error_imgs}")
@@ -68,6 +70,18 @@ class QRErrorService:
             print(f"Internal collisions = {internal_collisions}")
         else:
             print("No internal collisions")
+
+        # save the known-images so they can be pushed.
+        # TODO - update this when we update the different stagingimage types
+        # ie when we properly handle errors etc.
+        # at present this assumes the bundle is perfect
+        with transaction.atomic():
+            for (k, grouping_key) in known_imgs:
+                img = StagingImage.objects.get(pk=k)
+                test_paper, page_number = self.grouping_key_to_paper_page(grouping_key)
+                img.paper_id = test_paper
+                img.page_number = page_number
+                img.save()
 
     def check_consistent_qr(self, parsed_qr_dict, correct_public_code):
         """parsed_qr_dict is of the form
@@ -123,6 +137,19 @@ class QRErrorService:
         # since we know the codes are consistent, it is sufficient to check just one.
         # note - a little python hack to get **any** value from a dict
         return next(iter(parsed_qr_dict.values()))["grouping_key"]
+
+    def grouping_key_to_paper_page(self, grouping_key):
+        # grouping_key is either "plomX" or "XXXXXYYYVVV"
+        if len(grouping_key) != len("XXXXXYYYVVV"):
+            raise ValueError(
+                f"Cannot convert grouping-key {grouping_key} to paper and page"
+            )
+        try:
+            return int(grouping_key[:5]), int(grouping_key[5:8])
+        except ValueError:
+            raise ValueError(
+                f"Cannot convert grouping-key {grouping_key} to paper and page"
+            )
 
     # --------------------------
     # hacked up to here....
