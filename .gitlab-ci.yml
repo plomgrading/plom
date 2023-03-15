@@ -347,7 +347,7 @@ webplom_test:
 
 webplom_demo:
   services:
-    - postgres
+    - postgres:12.2-alpine
   variables:
     POSTGRES_DB: "plom_db"
     POSTGRES_USER: "postgres"
