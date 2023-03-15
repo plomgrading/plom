@@ -545,15 +545,7 @@ class ScanService:
         """
         Get all the images with completed QR code data - they can be pushed.
         """
-        complete = (
-            StagingImage.objects.filter(bundle=bundle)
-            .exclude(parsed_qr={})
-            .exclude(pushed=True)
-            .exclude(colliding=True)
-            .exclude(error=True)
-            .exclude(unknown=True)
-        )
-        return list(complete)
+        return list(bundle.stagingimage_set.filter(known=True))
 
     @transaction.atomic
     def all_complete_images_pushed(self, bundle):
@@ -565,11 +557,6 @@ class ScanService:
             if not img.pushed:
                 return False
         return True
-
-    @transaction.atomic
-    def push_bundle(self, bundle):
-        bundle.pushed = True
-        bundle.save()
 
     @transaction.atomic
     def get_n_pushed_bundles(self):
@@ -788,9 +775,10 @@ class ScanService:
             all_images = StagingImage.objects.filter(bundle=bundle)
 
             error_image_list = []
-            for image in all_images:
-                if image.colliding or image.error or image.unknown:
-                    error_image_list.append(image)
+            # TODO - fix this when we handle other image types
+            # for image in all_images:
+            # if image.colliding or image.error or image.unknown:
+            # error_image_list.append(image)
             error_images = len(error_image_list)
 
             completed_images = scanner.get_all_complete_images(bundle)
@@ -840,21 +828,22 @@ class ScanService:
             self.read_qr_codes(bundle_obj.pk)
 
     @transaction.atomic
-    def push_bundle_cmd(self, bundle_name):
-        img_service = ImageBundleService()
+    def is_bundle_perfect(self, bundle_pk):
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+        unknown_images = bundle_obj.stagingimage_set.filter(known=False)
+        return not unknown_images.exists()
 
-        try:
-            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
-
+    @transaction.atomic
+    def push_bundle_to_server(self, bundle_obj):
         if not bundle_obj.has_qr_codes:
             raise ValueError("QR codes are not all read - cannot push bundle.")
 
-        images = StagingImage.objects.filter(bundle=bundle_obj)
+        images = bundle_obj.stagingimage_set
 
         if images.filter(known=False).exists():
             raise ValueError("The bundle is imperfect, cannot push.")
+
+        img_service = ImageBundleService()
 
         # the bundle is valid so we can push it.
         img_service._upload_valid_bundle(bundle_obj)
@@ -862,6 +851,15 @@ class ScanService:
         bundle_obj.pushed = True
         bundle_obj.save()
         images.update(pushed=True)  # note that this also saves the objects.
+
+    @transaction.atomic
+    def push_bundle_cmd(self, bundle_name):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        self.push_bundle_to_server(bundle_obj)
 
     @transaction.atomic
     def get_paper_id_and_page_num(self, image_qr):

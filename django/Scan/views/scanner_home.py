@@ -86,7 +86,9 @@ class ScannerHomeView(ScannerRequiredView):
                     }
                 )
 
-        context.update({"pushed_bundles": pushed_bundles, "staged_bundles": staged_bundles})
+        context.update(
+            {"pushed_bundles": pushed_bundles, "staged_bundles": staged_bundles}
+        )
         return context
 
     def get(self, request):
@@ -192,6 +194,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
+            "is_perfect": scanner.is_bundle_perfect(bundle.pk),
         }
         if not context["has_been_processed"]:
             done = scanner.get_bundle_split_completions(bundle.pk)

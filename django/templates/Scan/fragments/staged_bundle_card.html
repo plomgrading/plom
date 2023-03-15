@@ -69,7 +69,18 @@
         >
         View
       </a>
-      {% if has_qr_codes or is_mid_qr_read %}
+      {% if has_qr_codes %}
+      {% if is_perfect %}
+      <button
+	hx-post="push/{{timestamp}}/all/"
+	class="btn btn-warning"
+	>Push!</button>
+      {% else %}
+      <span class="badge bg-danger">
+	has errors - cannot push
+      </span>
+      {% endif %}      
+      {% elif is_mid_qr_read %}
       {% else %}
       <button class="btn btn-info"
 	      hx-post="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
