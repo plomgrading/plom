@@ -6,7 +6,6 @@ import shutil
 import itertools
 
 from django.db import transaction
-from django.db.models import F
 from django.conf import settings
 from django_huey import db_task
 
@@ -249,24 +248,6 @@ class ImageBundleService:
                 return True
         return False
 
-    def bulk_update_pages(self, staging_images, uploaded_images):
-        """
-        Helper function for bulk updating the BasePage elements. Assumes
-        staging_images and uploaded_images are both sorted.
-        """
-
-        pages = map(
-            lambda staging: BasePage.objects.get(
-                paper__paper_number=staging.paper_id,
-                page_number=staging.page_number,
-            ),
-            staging_images,
-        )
-
-        for page, img in zip(pages, uploaded_images):
-            page.image = img
-            page.save(update_fields=["image"])
-
     @db_task(queue="tasks")
     def _upload_valid_bundle(staged_bundle):
         """
@@ -281,9 +262,7 @@ class ImageBundleService:
         """
 
         ibs = ImageBundleService()
-        bundle_images = StagingImage.objects.filter(bundle=staged_bundle).order_by(
-            "paper_id", "page_number"
-        )
+        bundle_images = StagingImage.objects.filter(bundle=staged_bundle)
 
         if not ibs.all_staged_imgs_valid(bundle_images):
             raise RuntimeError("Some pages in this bundle do not have QR data.")
@@ -299,20 +278,23 @@ class ImageBundleService:
         uploaded_bundle = Bundle(name=staged_bundle.slug, hash=staged_bundle.pdf_hash)
         uploaded_bundle.save()
 
-        images = map(
-            lambda staging: Image(
+        for staged in bundle_images:
+            image = Image(
                 bundle=uploaded_bundle,
-                bundle_order=staging.bundle_order,
-                original_name=staging.file_name,
-                file_name=staging.file_path,
-                hash=staging.image_hash,
-                rotation=staging.rotation,
-            ),
-            bundle_images,
-        )
-        images = Image.objects.bulk_create(images)
+                bundle_order=staged.bundle_order,
+                original_name=staged.file_name,
+                file_name=staged.file_path,
+                hash=staged.image_hash,
+                rotation=staged.rotation,
+            )
+            image.save()
 
-        ibs.bulk_update_pages(bundle_images, images)
+            page = BasePage.objects.get(
+                paper__paper_number=staged.paper_id,
+                page_number=staged.page_number,
+            )
+            page.image = image
+            page.save(update_fields=["image"])
 
     def get_staged_img_location(self, staged_image):
         """
@@ -336,6 +318,7 @@ class ImageBundleService:
 
         return paper_number, page_number
 
+    @transaction.atomic
     def all_staged_imgs_valid(self, staged_imgs):
         """
         Check that all staged images in the bundle are ready to be uploaded. Each image
@@ -352,6 +335,7 @@ class ImageBundleService:
             parsed_qr=None, paper_id=None, page_number=None
         ).exists()
 
+    @transaction.atomic
     def find_internal_collisions(self, staged_imgs):
         """
         Check for collisions *within* a bundle (or collection of staging images)
@@ -377,6 +361,7 @@ class ImageBundleService:
             visited.append(image)
         return collisions
 
+    @transaction.atomic
     def find_external_collisions(self, staged_imgs):
         """
         Check for collisions between images in the input list and all the
