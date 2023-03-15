@@ -355,11 +355,11 @@ webplom_demo:
     POSTGRES_HOST_AUTH_METHOD: trust
   stage: test
   needs: ["docker-image"]
-  image: postgres
+  image: $IM
   script:
     - pushd django
     - python3 -m pip install -r requirements.txt
-    - ./demo_test.sh
+    - python3 -m demo
     - popd
 
 
