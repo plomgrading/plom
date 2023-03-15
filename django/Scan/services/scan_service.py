@@ -572,6 +572,10 @@ class ScanService:
         return error_image
 
     @transaction.atomic
+    def get_n_known_image(self, bundle):
+        return bundle.stagingimage_set.filter(known=True).count()
+
+    @transaction.atomic
     def get_n_error_image(self, bundle):
         return 0
         # TODO - fix this function

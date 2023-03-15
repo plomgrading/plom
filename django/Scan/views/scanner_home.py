@@ -62,7 +62,6 @@ class ScannerHomeView(ScannerRequiredView):
         for bundle in user_bundles:
             date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
             pages = scanner.get_n_images(bundle)
-            n_errors = scanner.get_n_error_image(bundle)
             if bundle.pushed:
                 pushed_bundles.append(
                     {
@@ -71,7 +70,6 @@ class ScannerHomeView(ScannerRequiredView):
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
                         "n_read": scanner.get_n_complete_reading_tasks(bundle),
-                        "n_errors": n_errors,
                     }
                 )
             else:
@@ -82,7 +80,6 @@ class ScannerHomeView(ScannerRequiredView):
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
                         "n_read": scanner.get_n_complete_reading_tasks(bundle),
-                        "n_errors": n_errors,
                     }
                 )
 
@@ -186,6 +183,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         scanner = ScanService()
 
         bundle = scanner.get_bundle(timestamp, request.user)
+        n_known = scanner.get_n_known_image(bundle)
+        n_errors = scanner.get_n_error_image(bundle)
         context = {
             "timestamp": timestamp,
             "slug": bundle.slug,
@@ -195,6 +194,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "has_qr_codes": bundle.has_qr_codes,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
+            "n_known": n_known,
+            "n_errors": n_errors,
         }
         if not context["has_been_processed"]:
             done = scanner.get_bundle_split_completions(bundle.pk)
