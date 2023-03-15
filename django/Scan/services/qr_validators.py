@@ -76,7 +76,7 @@ class QRErrorService:
         # ie when we properly handle errors etc.
         # at present this assumes the bundle is perfect
         with transaction.atomic():
-            for (k, grouping_key) in known_imgs:
+            for k, grouping_key in known_imgs:
                 img = StagingImage.objects.get(pk=k)
                 test_paper, page_number = self.grouping_key_to_paper_page(grouping_key)
                 img.paper_id = test_paper
@@ -92,6 +92,7 @@ class QRErrorService:
         or potentially (if an extra page)
         'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'grouping_key': 'plomX', 'tpv_signature': 'plomX1'},
         """
+
         # ------ helper function to test data consistency
         def is_list_inconsistent(lst):
             return any([X != lst[0] for X in lst])
