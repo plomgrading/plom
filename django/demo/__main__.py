@@ -71,7 +71,7 @@ def get_database_engine():
 def remove_old_migration_files():
     print("Avoid perplexing errors by removing autogen migration droppings")
 
-    for path in Path(".").glob("**/migrations/*.py"):
+    for path in Path(".").glob("*/migrations/*.py"):
         if path.name == "__init__.py":
             continue
         else:
