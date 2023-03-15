@@ -11,7 +11,7 @@ import fitz
 from tabulate import tabulate
 from django.utils import timezone
 from django.utils.text import slugify
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from Scan.services import ScanService
 
@@ -31,51 +31,85 @@ class Command(BaseCommand):
         scanner = ScanService()
 
         if source_pdf is None:
-            self.stderr.write("No bundle supplied. Stopping.")
-            return
+            raise CommandError("No bundle supplied.")
 
         try:
             with open(source_pdf, "rb") as f:
                 file_bytes = f.read()
-        except OSError as e:
-            self.stderr.write(str(e))
-            return
+        except OSError as err:
+            raise CommandError(err)
 
         try:
             pdf_doc = fitz.open(stream=file_bytes)
-        except fitz.FileDataError as e:
-            self.stderr.write(
-                f"Cannot open '{source_pdf}' as a pdf - it might be corrupted."
-            )
-            self.stderr.write(f"Error message was: {e}")
-            return
+        except fitz.FileDataError as err:
+            raise CommandError(err)
 
         filename_stem = pathlib.Path(source_pdf).stem
         slug = slugify(filename_stem)
         timestamp = datetime.timestamp(timezone.now())
         hashed = hashlib.sha256(file_bytes).hexdigest()
+        number_of_pages = pdf_doc.page_count
 
         if scanner.check_for_duplicate_hash(hashed):
-            self.stderr.write("Upload failed - Bundle was already uploaded.")
-            return
+            raise CommandError("Upload failed - Bundle was already uploaded.")
 
         try:
-            scanner.upload_bundle_cmd(pdf_doc, slug, username, timestamp, hashed)
+            scanner.upload_bundle_cmd(
+                source_pdf, slug, username, timestamp, hashed, number_of_pages
+            )
             self.stdout.write(
                 f"Uploaded {source_pdf} as user {username} - processing it in the background now."
             )
         except ValueError as err:
-            self.stderr.write(f"{err}")
+            raise CommandError(err)
 
-    def staging_bundle_status(self):
+    def staging_bundle_status(self, bundle_name=None):
         scanner = ScanService()
         bundle_status = scanner.staging_bundle_status_cmd()
-        self.stdout.write(
-            tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
-        )
+        if bundle_name is None:
+            self.stdout.write(
+                tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
+            )
+            if len(bundle_status) == 1:
+                self.stdout.write("No bundles uploaded.")
+            return
 
-        if len(bundle_status) == 1:
-            self.stdout.write("No bundles uploaded.")
+        the_bundle = [X for X in bundle_status if X[0] == bundle_name]
+        if len(the_bundle) == 0:
+            raise CommandError(f"Bundle '{bundle_name}' not present.")
+        if len(the_bundle) > 1:
+            raise CommandError(f"Multiple bundles called '{bundle_name}' are present.")
+
+        (
+            num_pages,
+            valid_pages,
+            error_pages,
+            qr_processed,
+            pushed,
+            username,
+        ) = the_bundle[0][1:]
+        self.stdout.write(
+            f"Found bundle '{bundle_name}' with {num_pages} pages uploaded by {username}"
+        )
+        if pushed is True:
+            self.stdout.write("  * bundle has been pushed")
+            return
+        if qr_processed is not True:
+            self.stdout.write("  * qr-codes not yet read")
+            return
+        if error_pages > 0:
+            self.stdout.write("  * error pages present, cannot push.")
+            return
+        if valid_pages != num_pages:
+            self.stdout.write("  * invalid pages present, cannot push.")
+            return
+        if (
+            (qr_processed is True)
+            and (valid_pages == num_pages)
+            and (error_pages == 0)
+            and (pushed is not True)
+        ):
+            self.stdout.write("  *  bundle perfect, ready to push")
 
     def push_staged_bundle(self, bundle_name):
         scanner = ScanService()
@@ -85,7 +119,7 @@ class Command(BaseCommand):
                 f"Pushing {bundle_name} - processing it in the background now."
             )
         except ValueError as err:
-            self.stderr.write(f"{err}")
+            raise CommandError(err)
 
     def read_bundle_qr(self, bundle_name):
         scanner = ScanService()
@@ -95,7 +129,7 @@ class Command(BaseCommand):
                 f"Reading {bundle_name} QR codes - processing it in the background now."
             )
         except ValueError as err:
-            self.stderr.write(f"{err}")
+            raise CommandError(err)
 
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
@@ -111,7 +145,15 @@ class Command(BaseCommand):
         sp_upload.add_argument("source_pdf", type=str, help="The test pdf to upload.")
 
         # Status
-        sp.add_parser("status", help="Show the status of the staging bundles.")
+        sp_stat = sp.add_parser(
+            "status", help="Show the status of the staging bundles."
+        )
+        sp_stat.add_argument(
+            "bundle_name",
+            type=str,
+            nargs="?",
+            help="(optional) get status of specific bundle",
+        )
 
         # Push
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
@@ -129,7 +171,7 @@ class Command(BaseCommand):
                 username=options["username"], source_pdf=options["source_pdf"]
             )
         elif options["command"] == "status":
-            self.staging_bundle_status()
+            self.staging_bundle_status(bundle_name=options["bundle_name"])
         elif options["command"] == "push":
             self.push_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "read_qr":

@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 
@@ -12,4 +16,4 @@ class Command(BaseCommand):
         for demo_user in User.objects.filter(groups__name="demo"):
             demo_user.delete()
 
-        print("All demo users have been deleted!")
+        self.stdout.write("All demo users have been deleted!")

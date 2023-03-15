@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
+
 from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
 
@@ -44,6 +49,7 @@ class ScannerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
     login_url = "login"
     navbar_colour = "#0F984F"
     raise_exception = True
+    redirect_unauthenticated_users = True
 
     def build_context(self):
         context = {

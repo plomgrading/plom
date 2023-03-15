@@ -4,9 +4,10 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
+from huey.signals import SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_COMPLETE
+
 from django.utils import timezone
 
-from huey.signals import SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_COMPLETE
 from django.db import models
 from django.contrib.auth.models import User
 from django_huey import get_queue
@@ -27,40 +28,6 @@ class HueyTask(PolymorphicModel):
     status = models.CharField(max_length=20, default="todo")
     created = models.DateTimeField(default=timezone.now, blank=True)
     message = models.TextField(default="")
-
-    @classmethod
-    @queue.signal(SIGNAL_EXECUTING)
-    def start_task(signal, task):
-        try:
-            task_obj = HueyTask.objects.get(huey_id=task.id)
-            task_obj.status = "started"
-            task_obj.save()
-        except HueyTask.DoesNotExist:
-            # task has been deleted from underneath us.
-            print(f"Task {task.id} is no longer in the database.")
-
-    @classmethod
-    @queue.signal(SIGNAL_COMPLETE)
-    def end_task(signal, task):
-        try:
-            task_obj = HueyTask.objects.get(huey_id=task.id)
-            task_obj.status = "complete"
-            task_obj.save()
-        except HueyTask.DoesNotExist:
-            # task has been deleted from underneath us.
-            print(f"Task {task.id} is no longer in the database.")
-
-    @classmethod
-    @queue.signal(SIGNAL_ERROR)
-    def error_task(signal, task, exc):
-        try:
-            task_obj = HueyTask.objects.get(huey_id=task.id)
-            task_obj.status = "error"
-            task_obj.message = exc
-            task_obj.save()
-        except HueyTask.DoesNotExist:
-            # task has been deleted from underneath us.
-            print(f"Task {task.id} is no longer in the database.")
 
 
 # ---------------------------------
@@ -150,3 +117,53 @@ class SingletonHueyTask(HueyTask):
     def load(cls):
         obj, created = cls.objects.get_or_create()
         return obj
+
+
+# ---------------------------------
+# Define the signal handlers for huey tasks.
+# if the task has the kwarg "quiet=True" then
+# we ignore the signals
+# otherwise we use the signals to update information
+# in the database.
+# ---------------------------------
+
+
+@queue.signal(SIGNAL_EXECUTING)
+def start_task(signal, task):
+    if task.kwargs.get("quiet", False):
+        return
+
+    try:
+        task_obj = HueyTask.objects.get(huey_id=task.id)
+        task_obj.status = "started"
+        task_obj.save()
+    except HueyTask.DoesNotExist:
+        # task has been deleted from underneath us.
+        print(f"Task {task.id} is no longer in the database.")
+
+
+@queue.signal(SIGNAL_COMPLETE)
+def end_task(signal, task):
+    if task.kwargs.get("quiet", False):
+        return
+    try:
+        task_obj = HueyTask.objects.get(huey_id=task.id)
+        task_obj.status = "complete"
+        task_obj.save()
+    except HueyTask.DoesNotExist:
+        # task has been deleted from underneath us.
+        print(f"Task {task.id} is no longer in the database.")
+
+
+@queue.signal(SIGNAL_ERROR)
+def error_task(signal, task, exc):
+    if task.kwargs.get("quiet", False):
+        return
+    try:
+        task_obj = HueyTask.objects.get(huey_id=task.id)
+        task_obj.status = "error"
+        task_obj.message = exc
+        task_obj.save()
+    except HueyTask.DoesNotExist:
+        # task has been deleted from underneath us.
+        print(f"Task {task.id} is no longer in the database.")

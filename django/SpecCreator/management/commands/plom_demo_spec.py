@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
+
 import sys
 
 if sys.version_info < (3, 11):
@@ -7,7 +12,7 @@ else:
 
 import copy
 import fitz
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from plom.specVerifier import SpecVerifier
@@ -91,3 +96,4 @@ class Command(BaseCommand):
                     self.stdout.write(str(valid_spec_service.get_the_spec()))
                 except ValueError as e:
                     self.stderr.write(e)
+                    raise CommandError(e)

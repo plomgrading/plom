@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, User
 
@@ -18,17 +23,21 @@ class Command(BaseCommand):
         for group in group_list:
             if group not in exist_groups:
                 Group(name=group).save()
-                print(f"{group} has been added!")
+                self.stdout.write(f"{group} has been added!")
             else:
-                print(f"{group} exist already!")
+                self.stderr.write(f"{group} exist already!")
 
         # now get the admin group
         admin_group = Group.objects.get(name="admin")
         # get all superusers
         for user in User.objects.filter(is_superuser=True):
             if user.groups.filter(name="admin").exists():
-                print(f"Superuser {user.username} is already in the 'admin' group.")
+                self.stderr.write(
+                    f"Superuser {user.username} is already in the 'admin' group."
+                )
             else:
                 user.groups.add(admin_group)
                 user.save()
-                print(f"Added superuser {user.username} to the 'admin' group")
+                self.stdout.write(
+                    f"Added superuser {user.username} to the 'admin' group"
+                )

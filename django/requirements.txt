@@ -25,3 +25,4 @@ random-username
 tomli
 tomlkit
 zipfly  # for streaming zipfile generation/download
+psycopg2-binary  # for mucking with postgres databases - use binary so that we don't have to build

@@ -107,11 +107,20 @@ WSGI_APPLICATION = "Web_Plom.wsgi.application"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    "default": {
+    "postgres": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "plom_db",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+        "HOST": "127.0.0.1",
+        "PORT": "5432",
+    },
+    "sqlite": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
-    }
+    },
 }
+DATABASES["default"] = DATABASES["postgres"]
 
 
 # Password validation
@@ -183,7 +192,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 4,
+                "workers": 8,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,

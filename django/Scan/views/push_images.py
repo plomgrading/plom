@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
@@ -47,17 +48,8 @@ class PushAllPageImages(ScannerRequiredView):
             return Http404()
 
         scanner = ScanService()
-        img_service = ImageBundleService()
-
         bundle = scanner.get_bundle(timestamp, request.user)
-        images = scanner.get_all_complete_images(bundle)
-
-        for img in images:
-            any_qr = list(img.parsed_qr.values())[0]
-            test_paper = any_qr["paper_id"]
-            page_number = any_qr["page_num"]
-            img_service.push_staged_image(img, test_paper, page_number)
-        scanner.push_bundle(bundle)
+        scanner.push_bundle_to_server(bundle)
 
         return HttpResponseClientRefresh()
 
