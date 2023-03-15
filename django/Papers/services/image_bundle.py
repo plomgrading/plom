@@ -338,7 +338,7 @@ class ImageBundleService:
     @transaction.atomic
     def find_internal_collisions(self, staged_imgs):
         """
-        Check for collisions *within* a bundle (or collection of staging images)
+        Check for collisions *within* a bundle
 
         Args:
             staged_imgs: QuerySet, a list of all staged images for a bundle
