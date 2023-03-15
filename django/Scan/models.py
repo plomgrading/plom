@@ -45,11 +45,8 @@ class StagingImage(models.Model):
     paper_id = models.PositiveIntegerField(default=None, null=True)
     page_number = models.PositiveIntegerField(default=None, null=True)
     rotation = models.IntegerField(default=0)
+    known = models.BooleanField(default=False)
     pushed = models.BooleanField(default=False)
-    colliding = models.BooleanField(default=False)
-    unknown = models.BooleanField(default=False)
-    error = models.BooleanField(default=False)
-    flagged = models.BooleanField(default=False)
 
 
 class DiscardedStagingImage(models.Model):

@@ -81,6 +81,7 @@ class QRErrorService:
                 test_paper, page_number = self.grouping_key_to_paper_page(grouping_key)
                 img.paper_id = test_paper
                 img.page_number = page_number
+                img.known = True
                 img.save()
 
     def check_consistent_qr(self, parsed_qr_dict, correct_public_code):
