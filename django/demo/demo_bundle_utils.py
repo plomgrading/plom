@@ -117,7 +117,7 @@ def append_garbage_page(pdf_doc):
     )
 
 
-def create_page_from_another_assessment():
+def insert_page_from_another_assessment(pdf_doc):
     from plom import SpecVerifier
     from plom.create.mergeAndCodePages import create_QR_codes
 
@@ -134,13 +134,19 @@ def create_page_from_another_assessment():
             code = "99999"
         else:
             code = "00000"
-        create_QR_codes(1, 1, 1, code, Path(td))
+        qr_pngs = create_QR_codes(1, 1, 1, code, Path(td))
         # now we have qr-code pngs that we can use to make a bogus page from a different assessment.
         # these are called "qr_0001_pg1_4.png" etc.
-        for x in Path(td).glob("*"):
-            print(x)
-
-    print("^" * 50)
+        pdf_doc.new_page(-1)
+        pdf_doc[-1].insert_text(
+            (120, 200),
+            text="This is a page from a different assessment",
+            fontsize=18,
+            color=[0, 0.75, 0.75],
+        )
+        # hard-code one qr-code in top-left
+        rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
+        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
 
 
 def _scribble_loop(
@@ -182,7 +188,8 @@ def _scribble_loop(
 
                 # finally, append this to the bundle
                 all_pdf_documents.insert_pdf(pdf_document)
-        create_page_from_another_assessment()
+        # now insert a page from a different assessment to cause a "wrong public code" error
+        insert_page_from_another_assessment(all_pdf_documents)
         all_pdf_documents.save(out_file)
 
 
@@ -209,6 +216,7 @@ def scribble_on_exams(
     print(f"\tExtra pages will be appended to papers: {extra_page_papers}")
     print(f"\tGarbage pages will be appended after papers: {garbage_page_papers}")
     print(f"\tDuplicate pages will be inserted: {duplicate_pages}")
+    print("\tA page from a different assessment will be inserted as the final page")
     print("^" * 40)
 
     out_file = Path("fake_bundle.pdf")
