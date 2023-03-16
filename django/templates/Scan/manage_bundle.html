@@ -10,14 +10,20 @@
     <div class="card w-75">
         <div class="card-body">
             <div class="row">
-                <div class="col-3">
-                    <h5>Bundle Summary:</h5>
-                    <p>{{ known_pages }} / {{ total_pages }} known pages</p>
-                    <p>{{ error_pages }} error pages</p>
+                <div class="col-4">
+                  <h5>Bundle <q> {{ slug }} </q> summary</h5>
+		  <ul>
+		    <li>{{ known_pages }} / {{ total_pages }} known pages</li>
+		    {% if known_pages != total_pages %}
+		    <li>{{ unknown_pages }} unknown pages</li>
+		    <li>{{ extra_pages }} extra pages</li>
+		    <li>{{ error_pages }} error pages</li>
+		    {% endif %}
+		  </ul>
                 </div>
                 <div class="col-8">
-                    <h5>Bundle Contains:</h5>
-                    <div hx-get="{% url 'scan_bundle_table' timestamp index %}" hx-trigger="load"></div>
+                    <!-- <h5>Bundle Contains:</h5> -->
+                    <!-- <div hx-get="{% url 'scan_bundle_table' timestamp index %}" hx-trigger="load"></div> -->
                 </div>
             </div>
         </div>
@@ -33,7 +39,13 @@
 </div>
 {% endif %}
 <div style="margin: 0px 0px 16px 2.5px">
-    <a 
+  <a class="btn btn-success" href="{% url 'scan_home' %}">
+    <i class="bi bi-chevron-left"></i>
+    Return to upload
+  </a>
+</div>
+<div style="margin: 0px 0px 16px 2.5px">
+  <a 
         class="btn text-start" 
         style="background-color: lightgrey;"
         data-bs-toggle="collapse"
@@ -237,29 +249,52 @@
                 </div>
             </div>
         </div>
-        <div class="col-sm-2 pe-0">
+        <div class="col-lg-3">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">{{ slug }}.pdf</h5>
-                    <p class="card-subtitle">Page {{ one_index }} of {{ total_pages }}</p>
-                    <div class="vstack pt-3 gap-3">
-                        <a class="btn text-start" href="{% url 'scan_home' %}" style="background-color: lightgrey;">
-                            <i class="bi bi-chevron-left"></i>
-                            Return to upload
-                        </a>
-                        <!-- {% if not qr_finished %} -->
-                        <!-- <a class="btn text-start" hx-post="{% url 'scan_read_qr' timestamp %}" style="background-color: lightgrey;"> -->
-                            <!-- <i class="bi bi-qr-code-scan"></i> -->
-                            <!-- Read bundle QRs -->
-                        <!-- </a> -->
-                        <!-- {% endif %} -->
-                        <div hx-get="{% url 'scan_qr_progress' timestamp index %}" hx-trigger="load"></div>
-                        <div 
-                            hx-get="{% url 'scan_push_update' timestamp index %}" 
-                            hx-trigger="load"
-                            class="d-flex vstack gap-3">
-                        </div>
-                    </div>
+                    <h5 class="card-title">Page {{ one_index }} of {{ total_pages }}</h5>
+		    <p class="card-text">
+		      {% if current_page.status == 'known' %}
+		      <div class="alert alert-success">
+			<h6 class="alert-heading">Known</h6>
+			<ul>
+			  <li>paper: {{current_page.info.paper_number}}</li>
+			  <li>page: {{current_page.info.page_number}} </li>
+			  <li>version: {{current_page.info.version}} </li>
+			</ul>
+		      </div>
+		      {% elif current_page.status == 'extra' %}
+		      <div class="alert alert-info">
+			<h6 class="alert-heading">Extra</h6>
+			<ul>
+			  <li>paper: {{current_page.info.paper_number}}</li>
+			  <li>question: {{current_page.info.question_number}} </li>
+			</ul>
+		      </div>
+		      {% elif current_page.status == 'unknown' %}
+		      <div class="alert alert-warning">
+			<h6 class="alert-heading">Unknown</h6>
+			<ul>
+			  <li>No qr-codes read</li>
+			</ul>
+		      </div>
+		      {% elif current_page.status == 'error' %}
+		      <div class="alert alert-danger">
+			<h6 class="alert-heading">Error</h6>
+			<ul>
+			  <li>{{current_page.info.reason}}</li>
+			</ul>
+		      </div>
+		      {% elif current_page.status == 'unread' %}
+		      <div class="alert alert-dark">
+			<h6 class="alert-heading">Unread</h6>
+			<ul>
+			  <li>Haved not read qr-codes yet</li>
+			</ul>
+		      </div>
+		      
+		      {% endif %}
+		    </p>
                 </div>
             </div>
         </div>
