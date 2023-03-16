@@ -225,7 +225,12 @@ def _scribble_loop(
 
 
 def scribble_on_exams(
-        *, number_of_bundles=3, extra_page_papers=[], garbage_page_papers=[], duplicate_pages={}, duplicate_qr=[]
+    *,
+    number_of_bundles=3,
+    extra_page_papers=[],
+    garbage_page_papers=[],
+    duplicate_pages={},
+    duplicate_qr=[],
 ):
     classlist = get_classlist_as_dict()
     classlist_length = len(classlist)

@@ -256,7 +256,6 @@ def upload_bundles(number_of_bundles=3):
 
 def wait_for_upload(number_of_bundles=3):
     for n in range(1, number_of_bundles + 1):
-
         cmd = f"plom_staging_bundles status fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         while True:
@@ -269,7 +268,6 @@ def wait_for_upload(number_of_bundles=3):
 
 def read_qr_codes(number_of_bundles=3):
     for n in range(1, number_of_bundles + 1):
-
         cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
