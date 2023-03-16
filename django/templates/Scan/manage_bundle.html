@@ -144,23 +144,25 @@
           <div class="container text-center">
 	    <div class="row row-cols-8">
               {% for pg in pages %}
-	      <div class="col-1">
 		{% if pg.status == 'known' %}
+	      <div class="col-1">
 		<a class="btn m-1 btn-outline-success"
 		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
+		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
 		   >
 		  p{{pg.order}}
 		</a>
-		  {% elif pg.status == 'extra' %}
-		  <a class="btn m-1 btn-info"
+	      </div>
+	      {% elif pg.status == 'extra' %}
+	      <div class="col-1">
+		<a class="btn m-1 btn-info"
 		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Extra page"
-		     >
+		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Extra page"
+		   >
 		  p{{pg.order}}
 		</a>
-		  {% endif %}
 	      </div>
+		  {% endif %}
 	      {% endfor %}
 	    </div>
 	  </div>
@@ -172,26 +174,28 @@
     <div class="collapse" id="viewErrorPages">
         <div class="card" style="width: 66%;">
           <div class="container text-center">
-	    <div class="row row-cols-8">
+	    <div class="row row-cols-8">	      
               {% for pg in pages %}
+	      {% if pg.status == 'unknown' %}
 	      <div class="col-1">
-		  {% if pg.status == 'unknown' %}
-		  <a class="btn m-1 btn-warning"
+		<a class="btn m-1 btn-warning"
 		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
-		    >
-		    p{{pg.order}}
-		  </a>
-		  {% elif pg.status == 'error' %}
-		  <a class="btn m-1 btn-danger"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
-		     >
-		    p{{pg.order}}
-		  </a>
-		  {% endif %}
+		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
+		   >
+		  p{{pg.order}}
+		</a>
 	      </div>
-	      {% endfor %}
+	      {% elif pg.status == 'error' %}
+	      <div class="col-1">
+		<a class="btn m-1 btn-danger"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
+		   >
+		  p{{pg.order}}
+		</a>
+	      </div>
+	      {% endif %}
+	    {% endfor %}
 	    </div>
 	  </div>
 	</div>

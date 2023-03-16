@@ -37,20 +37,29 @@
 	</li>
 	{% if has_been_processed %}
 	{% if has_qr_codes %}
-        <li>Valid pages: {{ n_known }}
-	  {% if n_known == number_of_pages %}
-	  <i class="bi bi-check-circle text-success"></i>
-	  {% else %}
-	  <i class="bi bi-exclamation-diamond text-warning"></i>
+	{% if n_known == number_of_pages %}
+        <li>Known pages: all <i class="bi bi-check-circle text-success"></i></li>
+	{% else %}
+	<li>Known pages: {{ n_known }}</li>
+	<li>Extra pages:
+	  {% if n_extra %} {{ n_extra }} <i class="bi bi-dash-circle-fill text-warning"></i>
+	  {% else %} none
 	  {% endif %}
 	</li>
-        <li>Error pages: {{ n_errors}}
+	<li>Unknown pages:
+	  {% if n_unknown %} {{ n_unknown }} <i class="bi bi-question-circle-fill text-warning"></i>
+	  {% else %} none
+	  {% endif %}
+	</li>
+
+        <li>Error pages:
 	  {% if n_errors == 0 %}
-	  <i class="bi bi-check-circle text-success"></i>
+	   none  <i class="bi bi-check-circle text-success"></i>
 	  {% else %}
-	  <i class="bi bi-exclamation-diamond text-warning"></i>
+	  {{ n_errors}} <i class="bi bi-exclamation-diamond-fill text-danger"></i>
 	  {% endif %}
 	</li>
+	{% endif %}
 	{% else %}
 	{% if is_mid_qr_read %}
 	<li>Reading qr-codes:
