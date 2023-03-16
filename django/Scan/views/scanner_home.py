@@ -17,7 +17,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
-from Papers.services import ImageBundleService
 from Progress.services import ManageScanService
 from Scan.forms import BundleUploadForm
 
@@ -69,7 +68,6 @@ class ScannerHomeView(ScannerRequiredView):
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
-                        "n_read": scanner.get_n_complete_reading_tasks(bundle),
                     }
                 )
             else:
@@ -79,7 +77,6 @@ class ScannerHomeView(ScannerRequiredView):
                         "timestamp": bundle.timestamp,
                         "time_uploaded": arrow.get(date_time).humanize(),
                         "pages": pages,
-                        "n_read": scanner.get_n_complete_reading_tasks(bundle),
                     }
                 )
 
@@ -183,8 +180,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         scanner = ScanService()
 
         bundle = scanner.get_bundle(timestamp, request.user)
-        n_known = scanner.get_n_known_image(bundle)
-        n_errors = scanner.get_n_error_image(bundle)
+        n_known = scanner.get_n_known_images(bundle)
+        n_errors = scanner.get_n_error_images(bundle)
         context = {
             "timestamp": timestamp,
             "slug": bundle.slug,

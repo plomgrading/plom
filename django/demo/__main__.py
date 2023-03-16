@@ -368,12 +368,12 @@ def main():
     download_zip()
     print("*" * 40)
 
-    # scribble_on_exams(
-    # extra_page_papers=[49, 50],
-    # garbage_page_papers=[1, 2],
-    # duplicate_pages={1:3, 2:6}
-    # )
-    scribble_on_exams(extra_page_papers=[], garbage_page_papers=[])
+    scribble_on_exams(
+        extra_page_papers=[49, 50],
+        garbage_page_papers=[1, 2],
+        duplicate_pages={1: 3, 2: 6},
+    )
+    # scribble_on_exams(extra_page_papers=[], garbage_page_papers=[])
 
     print("*" * 40)
     upload_bundles()
