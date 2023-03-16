@@ -121,8 +121,6 @@ def insert_page_from_another_assessment(pdf_doc):
     from plom import SpecVerifier
     from plom.create.mergeAndCodePages import create_QR_codes
 
-    print("v" * 50)
-
     # a rather cludge way to get at the spec via commandline tools
     # really we just need the public code.
     with tempfile.TemporaryDirectory() as td:
@@ -146,7 +144,34 @@ def insert_page_from_another_assessment(pdf_doc):
         )
         # hard-code one qr-code in top-left
         rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
+        # the 2nd qr-code goes in NW corner.
         pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+
+
+def insert_qr_from_previous_page(pdf_doc, paper_number):
+    from plom import SpecVerifier
+    from plom.create.mergeAndCodePages import create_QR_codes
+
+    # a rather cludge way to get at the spec via commandline tools
+    # really we just need the public code.
+    with tempfile.TemporaryDirectory() as td:
+        spec_file = Path(td) / "the_spec.toml"
+        call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+        code = SpecVerifier.from_toml_file(spec_file).spec["publicCode"]
+
+        # take last page of paper and insert a qr-code from the page before that.
+        page_number = pdf_doc.page_count
+        # make a qr-code for this paper, but for second-last page.
+        qr_pngs = create_QR_codes(paper_number, page_number - 1, 1, code, Path(td))
+        pdf_doc[-1].insert_text(
+            (120, 200),
+            text="This is a page has a qr-code from the previous page",
+            fontsize=18,
+            color=[0, 0.75, 0.75],
+        )
+        # hard-code one qr-code in top-left
+        rect = fitz.Rect(50, 50 + 70, 50 + 70, 50 + 70 * 2)
+        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[-1]), overlay=True)
 
 
 def _scribble_loop(
@@ -157,6 +182,7 @@ def _scribble_loop(
     extra_page_papers=[],
     garbage_page_papers=[],
     duplicate_pages={},
+    duplicate_qr=[],
 ):
     # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
     # garbage_page_papers = list of paper_numbers to which we append a garbage page
@@ -182,6 +208,11 @@ def _scribble_loop(
 
                 # scribble on the pages
                 scribble_pages(pdf_document)
+
+                # insert a qr-code from a previous page after scribbling
+                if paper_number in duplicate_qr:
+                    insert_qr_from_previous_page(pdf_document, paper_number)
+
                 # append a garbage page after the scribbling
                 if paper_number in garbage_page_papers:
                     append_garbage_page(pdf_document)
@@ -194,7 +225,7 @@ def _scribble_loop(
 
 
 def scribble_on_exams(
-    *, extra_page_papers=[], garbage_page_papers=[], duplicate_pages={}
+    *, extra_page_papers=[], garbage_page_papers=[], duplicate_pages={}, duplicate_qr=[]
 ):
     classlist = get_classlist_as_dict()
     classlist_length = len(classlist)
@@ -216,6 +247,9 @@ def scribble_on_exams(
     print(f"\tExtra pages will be appended to papers: {extra_page_papers}")
     print(f"\tGarbage pages will be appended after papers: {garbage_page_papers}")
     print(f"\tDuplicate pages will be inserted: {duplicate_pages}")
+    print(
+        f"\tA qr-code from the second last page will be inserted on last page in papers: {duplicate_qr}"
+    )
     print("\tA page from a different assessment will be inserted as the final page")
     print("^" * 40)
 
@@ -228,6 +262,7 @@ def scribble_on_exams(
         extra_page_papers=extra_page_papers,
         garbage_page_papers=garbage_page_papers,
         duplicate_pages=duplicate_pages,
+        duplicate_qr=duplicate_qr,
     )
     # take this single output pdf and split it into three, then remove it.
     splitFakeFile(out_file)

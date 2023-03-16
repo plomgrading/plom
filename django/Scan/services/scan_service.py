@@ -608,6 +608,35 @@ class ScanService:
 
         return mode(paper_id), mode(page_num)
 
+    @transaction.atomic
+    def get_bundle_pages_info(self, bundle_obj):
+        pages = {}
+        for img in bundle_obj.stagingimage_set.all():
+            pages[img.bundle_order] = {"status": img.image_type, "info": {}}
+
+        for img in bundle_obj.stagingimage_set.filter(image_type="error"):
+            pages[img.bundle_order]["info"] = {
+                "reason": img.errorstagingimage.error_reason
+            }
+
+        for img in bundle_obj.stagingimage_set.filter(image_type="discard"):
+            pages[img.bundle_order]["info"] = {
+                "reason": img.discardstagingimage.error_reason
+            }
+
+        for img in bundle_obj.stagingimage_set.filter(image_type="known"):
+            pages[img.bundle_order]["info"] = {
+                "paper_number": img.knownstagingimage.paper_number,
+                "page_number": img.knownstagingimage.page_number,
+                "version": img.knownstagingimage.version,
+            }
+        for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
+            pages[img.bundle_order]["info"] = {
+                "paper_number": img.knownstagingimage.paper_number,
+                "question_number": img.knownstagingimage.page_number,
+            }
+        return pages
+
 
 # ----------------------------------------
 # factor out the huey tasks.

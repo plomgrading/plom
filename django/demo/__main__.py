@@ -372,6 +372,7 @@ def main():
         extra_page_papers=[49, 50],
         garbage_page_papers=[1, 2],
         duplicate_pages={1: 3, 2: 6},
+        duplicate_qr=[3, 4],
     )
     # scribble_on_exams(extra_page_papers=[], garbage_page_papers=[])
 

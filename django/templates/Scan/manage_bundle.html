@@ -12,7 +12,7 @@
             <div class="row">
                 <div class="col-3">
                     <h5>Bundle Summary:</h5>
-                    <p>{{ valid_pages }} / {{ total_pages }} valid pages</p>
+                    <p>{{ known_pages }} / {{ total_pages }} known pages</p>
                     <p>{{ error_pages }} error pages</p>
                 </div>
                 <div class="col-8">
@@ -104,11 +104,11 @@
             <div style="">
                 {% for p in pages %}
                 <a
-                class="btn text-start {% if p.status == 'error' %}text-danger{% elif p.status == 'complete' %}text-success{% endif %}"
+                  class="btn text-start {% if p.status == 'error' %}text-danger{% elif p.status == 'known' %}text-success{% endif %}"
                 href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
                 style="{% if forloop.counter == one_index %}background-color: black; color: white{% endif %}"
                 >
-                Page {{ forloop.counter}}
+                Page {{ forloop.counter}} 
                 {% if p.pushed%}
                 <i class="bi bi-file-earmark-check"></i>
                 {% elif p.status == 'error' %}
@@ -119,6 +119,20 @@
             </div>
             
         </div>
+
+        <div class="card" style="width: 66%;">
+          <div style="">
+            {% for pg in pages %}
+	    {% if pg.status == 'known' %}
+	    <a class="butn text-start text-success"> p{{forloop.counter}}</a>
+	    {% elif pg.status == 'unknown' %}
+	    <a class="butn text-start text-warning"> p{{forloop.counter}}</a>
+	    {% endif %}
+            {% endfor %}
+            </div>
+            
+        </div>
+
     </div>
 </div>
 
