@@ -11,6 +11,7 @@ from Scan.views import (
     ManageBundleView,
     UpdateQRProgressView,
     GetBundleView,
+    GetBundleNavFragmentView,
     GetBundleImageView,
     GetStagedBundleFragmentView,
     RemoveBundleView,
@@ -35,6 +36,11 @@ urlpatterns = [
         "<timestamp>/<int:index>/",
         ManageBundleView.as_view(),
         name="scan_manage_bundle",
+    ),
+    path(
+        "nav/<timestamp>/<int:index>/",
+        GetBundleNavFragmentView.as_view(),
+        name="scan_nav_bundle",
     ),
     path(
         "split/<timestamp>/",

@@ -2,10 +2,9 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 
-import pathlib
 
 from django.shortcuts import render
-from django.http import Http404, FileResponse, HttpResponse
+from django.http import Http404, FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ScannerRequiredView
@@ -72,6 +71,41 @@ class ManageBundleView(ScannerRequiredView):
         context = self.build_context(timestamp, request.user, index)
 
         return render(request, "Scan/manage_bundle.html", context)
+
+
+class GetBundleNavFragmentView(ScannerRequiredView):
+    def get(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        context = super().build_context()
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, request.user)
+        n_pages = scanner.get_n_images(bundle)
+        if index >= n_pages:
+            raise Http404("Bundle page does not exist.")
+        current_page = scanner.get_bundle_single_page_info(bundle, index)
+        # page_info_dict = scanner.get_bundle_pages_info(bundle)
+        # pages = [
+        #     page_info_dict[k] for k in range(len(page_info_dict))
+        # ]  # flatten into ordered list
+
+        context.update(
+            {
+                "slug": bundle.slug,
+                "timestamp": timestamp,
+                "index": index,
+                "one_index": index + 1,
+                "total_pages": n_pages,
+                "prev_idx": index - 1,
+                "next_idx": index + 1,
+                "current_page": current_page,
+            }
+        )
+
+        return render(request, "Scan/fragments/nav_bundle.html", context)
 
 
 class GetBundleImageView(ScannerRequiredView):

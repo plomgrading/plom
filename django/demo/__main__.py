@@ -251,7 +251,7 @@ def upload_bundles(number_of_bundles=3):
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
-        sleep(2)
+        sleep(1)
 
 
 def wait_for_upload(number_of_bundles=3):
@@ -263,7 +263,7 @@ def wait_for_upload(number_of_bundles=3):
             if "qr" in out_up:
                 print(f"fake_bundle{n}.pdf ready for qr-reading")
                 break
-            sleep(2)
+            sleep(1)
 
 
 def read_qr_codes(number_of_bundles=3):
@@ -271,7 +271,7 @@ def read_qr_codes(number_of_bundles=3):
         cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
-        sleep(5)
+        sleep(1)
 
 
 def push_if_ready(number_of_bundles=3):
@@ -288,14 +288,14 @@ def push_if_ready(number_of_bundles=3):
                 push_cmd = f"python3 manage.py plom_staging_bundles push fake_bundle{n}"
                 subprocess.check_call(split(push_cmd))
                 done.append(n)
-                sleep(2)
+                sleep(1)
         for n in done:
             todo.remove(n)
         if len(todo) > 0:
             print(
                 f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
             )
-            sleep(2)
+            sleep(1)
         else:
             print("All bundles pushed.")
             break

@@ -114,33 +114,48 @@
               {% for pg in pages %}
 	      <div class="col-1">
 		{% if pg.status == 'known' %}
-		<a class="btn m-1 btn-outline-success"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
-		   >
+		<button class="btn m-1 btn-outline-success"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-swap="outerHTML"
+			hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
+			>
 		  {% elif pg.status == 'extra' %}
-		  <a class="btn m-1 btn-info"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Extra page"
-		     >
-		  {% elif pg.status == 'unread' %}
-		  <a class="btn m-1 btn-outline-dark"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="qr-unread"
-		    >
-		  {% elif pg.status == 'unknown' %}
-		  <a class="btn m-1 btn-warning"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
-		    >
-		  {% elif pg.status == 'error' %}
-		  <a class="btn m-1 btn-danger"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		  <button class="btn m-1 btn-info"
+			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			  hx-swap="outerHTML"
+			  hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Extra page"
+			  >
+		    {% elif pg.status == 'unread' %}
+		    <button class="btn m-1 btn-outline-dark"
+			    hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			    hx-swap="outerHTML"
+			    hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="qr-unread"
+			    >
+		      {% elif pg.status == 'unknown' %}
+		      <button class="btn m-1 btn-warning"
+			      hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			      hx-swap="outerHTML"
+			      hx-target="#navFragment"
+			      hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
+			      >
+			{% elif pg.status == 'error' %}
+		  <button class="btn m-1 btn-danger"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-swap="outerHTML"
+			hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
 		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
 		     >
 		  {% endif %}
 		  p{{pg.order}}
-		</a>
+		</button>
 	      </div>
 	      {% endfor %}
 	    </div>
@@ -158,21 +173,27 @@
               {% for pg in pages %}
 		{% if pg.status == 'known' %}
 	      <div class="col-1">
-		<a class="btn m-1 btn-outline-success"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		<button class="btn m-1 btn-outline-success"
+			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			  hx-swap="outerHTML"
+			  hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
 		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
 		   >
 		  p{{pg.order}}
-		</a>
+		</button>
 	      </div>
 	      {% elif pg.status == 'extra' %}
 	      <div class="col-1">
-		<a class="btn m-1 btn-info"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		<button class="btn m-1 btn-info"
+			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			  hx-swap="outerHTML"
+			  hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
 		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Extra page"
 		   >
 		  p{{pg.order}}
-		</a>
+		</button>
 	      </div>
 		  {% endif %}
 	      {% endfor %}
@@ -190,21 +211,27 @@
               {% for pg in pages %}
 	      {% if pg.status == 'unknown' %}
 	      <div class="col-1">
-		<a class="btn m-1 btn-warning"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		<button class="btn m-1 btn-warning"
+			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			  hx-swap="outerHTML"
+			  hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
 		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
 		   >
 		  p{{pg.order}}
-		</a>
+		</button>
 	      </div>
 	      {% elif pg.status == 'error' %}
 	      <div class="col-1">
-		<a class="btn m-1 btn-danger"
-		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
+		<button class="btn m-1 btn-danger"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-swap="outerHTML"
+			hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
 		   >
 		  p{{pg.order}}
-		</a>
+		</button>
 	      </div>
 	      {% endif %}
 	    {% endfor %}
@@ -216,90 +243,13 @@
 
 
 
-<div class="container w-100 p-0 m-3">
-    <div class="row">
-        <div class="col shadow-sm rounded" style="background-color: lightgrey;">
-            <div hx-post="{% url 'scan_qr_alert' timestamp %}" hx-trigger="load" hx-swap="outerHTML"></div>
-            <div class="row p-0">
-                <div class="col-sm-2 p-0 d-flex justify-content-center">
-                    {% if prev_idx >= 0 %}
-                    <a 
-                        class="btn w-100 h-100 d-flex justify-content-center"
-                        href="{% url 'scan_manage_bundle' timestamp prev_idx %}"
-                    >
-                        <i class="bi bi-arrow-left fs-2 align-self-center"></i>
-                    </a>
-                    {% endif %}
-                </div>
-                <div class="col d-flex justify-content-center">
-                    <img
-                        src="{% url 'scan_get_image' timestamp index %}"
-                        class="w-100 thumbnail shadow-sm"
-                    >
-                </div>
-                <div class="col-sm-2 p-0 d-flex justify-content-center">
-                    {% if next_idx < total_pages %}
-                    <a 
-                        class="btn w-100 h-100 d-flex justify-content-center"
-                        href="{% url 'scan_manage_bundle' timestamp next_idx %}"
-                    >
-                        <i class="bi bi-arrow-right fs-2 align-self-center"></i>
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Page {{ one_index }} of {{ total_pages }}</h5>
-		    <p class="card-text">
-		      {% if current_page.status == 'known' %}
-		      <div class="alert alert-success">
-			<h6 class="alert-heading">Known</h6>
-			<ul>
-			  <li>paper: {{current_page.info.paper_number}}</li>
-			  <li>page: {{current_page.info.page_number}} </li>
-			  <li>version: {{current_page.info.version}} </li>
-			</ul>
-		      </div>
-		      {% elif current_page.status == 'extra' %}
-		      <div class="alert alert-info">
-			<h6 class="alert-heading">Extra</h6>
-			<ul>
-			  <li>paper: {{current_page.info.paper_number}}</li>
-			  <li>question: {{current_page.info.question_number}} </li>
-			</ul>
-		      </div>
-		      {% elif current_page.status == 'unknown' %}
-		      <div class="alert alert-warning">
-			<h6 class="alert-heading">Unknown</h6>
-			<ul>
-			  <li>No qr-codes read</li>
-			</ul>
-		      </div>
-		      {% elif current_page.status == 'error' %}
-		      <div class="alert alert-danger">
-			<h6 class="alert-heading">Error</h6>
-			<ul>
-			  <li>{{current_page.info.reason}}</li>
-			</ul>
-		      </div>
-		      {% elif current_page.status == 'unread' %}
-		      <div class="alert alert-dark">
-			<h6 class="alert-heading">Unread</h6>
-			<ul>
-			  <li>Haved not read qr-codes yet</li>
-			</ul>
-		      </div>
-		      
-		      {% endif %}
-		    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="container w-100 p-0 m-3" id="navFragment"
+     hx-get="{% url 'scan_nav_bundle' timestamp index %}"
+     hx-swap="outerHTML"
+     hx-trigger="load"     
+     >
 </div>
+
 <script>
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {

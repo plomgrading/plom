@@ -644,6 +644,37 @@ class ScanService:
             }
         return pages
 
+    @transaction.atomic
+    def get_bundle_single_page_info(self, bundle_obj, index):
+        # compute number of digits in longest page number to pad the page numbering
+        n_digits = len(str(bundle_obj.number_of_pages))
+
+        img = bundle_obj.stagingimage_set.get(bundle_order=index)
+        current_page = {
+            "status": img.image_type,
+            "order": f"{img.bundle_order+1}".zfill(n_digits),
+        }
+        if img.image_type == "error":
+            info = {"reason": img.errorstagingimage.error_reason}
+        elif img.image_type == "discard":
+            info = {"reason": img.discardstagingimage.error_reason}
+        elif img.image_type == "known":
+            info = {
+                "paper_number": img.knownstagingimage.paper_number,
+                "page_number": img.knownstagingimage.page_number,
+                "version": img.knownstagingimage.version,
+            }
+        elif img.image_type == "extra":
+            info = {
+                "paper_number": img.extrastagingimage.paper_number,
+                "question_number": img.extrastagingimage.question_number,
+            }
+        else:
+            info = {}
+
+        current_page.update({"info": info})
+        return current_page
+
 
 # ----------------------------------------
 # factor out the huey tasks.

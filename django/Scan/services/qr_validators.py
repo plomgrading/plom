@@ -78,8 +78,8 @@ class QRErrorService:
                         (
                             pk_bo[0],
                             ValueError(
-                                f"Image collides with images in this bundle at positions {[x[1] for x in col_list if x != pk_bo]}"
-                            ),
+                                f"Image collides with images in this bundle at positions {[x[1]+1 for x in col_list if x != pk_bo]}"
+                            ),  # add one since bundle-index starts from 0 but hoomans like to start from 1.
                         )
                     )
                     # now remove this (image_key, grouping_key) from the know-imgs list
@@ -155,10 +155,14 @@ class QRErrorService:
         #  must be a normal qr-coded plom-page - so make sure public-code is consistent
         codes = [parsed_qr_dict[x]["page_info"]["public_code"] for x in parsed_qr_dict]
         if is_list_inconsistent(codes):
-            raise ValueError("Inconsistent public-codes - was a page from a different assessment uploaded")
+            raise ValueError(
+                "Inconsistent public-codes - was a page from a different assessment uploaded"
+            )
         # and make sure it matches the spec
         if codes[0] != correct_public_code:
-            raise ValueError("Public code does not match spec - was a page from a different assessment uploaded")
+            raise ValueError(
+                "Public code does not match spec - was a page from a different assessment uploaded"
+            )
         # check all the same paper_id
         if is_list_inconsistent(
             [parsed_qr_dict[x]["page_info"]["paper_id"] for x in parsed_qr_dict]
@@ -173,7 +177,9 @@ class QRErrorService:
         if is_list_inconsistent(
             [parsed_qr_dict[x]["page_info"]["version_num"] for x in parsed_qr_dict]
         ):
-            raise ValueError("Inconsistent version-numbers - check scan for folded pages")
+            raise ValueError(
+                "Inconsistent version-numbers - check scan for folded pages"
+            )
         # check all the same grouping_key - this should not be triggered because of previous checks
         if is_list_inconsistent(
             [parsed_qr_dict[x]["grouping_key"] for x in parsed_qr_dict]
