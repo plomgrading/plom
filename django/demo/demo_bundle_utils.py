@@ -225,7 +225,7 @@ def _scribble_loop(
 
 
 def scribble_on_exams(
-    *, extra_page_papers=[], garbage_page_papers=[], duplicate_pages={}, duplicate_qr=[]
+        *, number_of_bundles=3, extra_page_papers=[], garbage_page_papers=[], duplicate_pages={}, duplicate_qr=[]
 ):
     classlist = get_classlist_as_dict()
     classlist_length = len(classlist)
@@ -264,6 +264,6 @@ def scribble_on_exams(
         duplicate_pages=duplicate_pages,
         duplicate_qr=duplicate_qr,
     )
-    # take this single output pdf and split it into three, then remove it.
-    splitFakeFile(out_file)
+    # take this single output pdf and split it into given number of bundles, then remove it.
+    splitFakeFile(out_file, parts=number_of_bundles)
     out_file.unlink(missing_ok=True)

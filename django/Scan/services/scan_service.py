@@ -610,9 +610,12 @@ class ScanService:
 
     @transaction.atomic
     def get_bundle_pages_info(self, bundle_obj):
+        # compute number of digits in longest page number to pad the page numbering
+        n_digits = len(str(bundle_obj.number_of_pages))
+        
         pages = {}
         for img in bundle_obj.stagingimage_set.all():
-            pages[img.bundle_order] = {"status": img.image_type, "info": {}}
+            pages[img.bundle_order] = {"status": img.image_type, "info": {}, "order": f"{img.bundle_order+1}".zfill(n_digits)}
 
         for img in bundle_obj.stagingimage_set.filter(image_type="error"):
             pages[img.bundle_order]["info"] = {
@@ -632,8 +635,8 @@ class ScanService:
             }
         for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
             pages[img.bundle_order]["info"] = {
-                "paper_number": img.knownstagingimage.paper_number,
-                "question_number": img.knownstagingimage.page_number,
+                "paper_number": img.extrastagingimage.paper_number,
+                "question_number": img.extrastagingimage.question_number,
             }
         return pages
 

@@ -246,16 +246,17 @@ def download_zip():
     subprocess.check_call(split(py_man_cmd))
 
 
-def upload_bundles():
-    for n in [1, 2, 3]:
+def upload_bundles(number_of_bundles=3):
+    for n in range(1, number_of_bundles + 1):
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
         sleep(2)
 
 
-def wait_for_upload():
-    for n in [1, 2, 3]:
+def wait_for_upload(number_of_bundles=3):
+    for n in range(1, number_of_bundles + 1):
+
         cmd = f"plom_staging_bundles status fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         while True:
@@ -266,16 +267,17 @@ def wait_for_upload():
             sleep(2)
 
 
-def read_qr_codes():
-    for n in [1, 2, 3]:
+def read_qr_codes(number_of_bundles=3):
+    for n in range(1, number_of_bundles + 1):
+
         cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
         sleep(5)
 
 
-def push_if_ready():
-    todo = [1, 2, 3]
+def push_if_ready(number_of_bundles=3):
+    todo = [k + 1 for k in range(number_of_bundles)]
     while True:
         done = []
         for n in todo:
@@ -323,6 +325,8 @@ def configure_django_stuff():
 
 
 def main():
+    number_of_bundles = 5
+
     configure_django_stuff()
 
     engine = get_database_engine()
@@ -369,6 +373,7 @@ def main():
     print("*" * 40)
 
     scribble_on_exams(
+        number_of_bundles=number_of_bundles,
         extra_page_papers=[49, 50],
         garbage_page_papers=[1, 2],
         duplicate_pages={1: 3, 2: 6},
@@ -377,12 +382,18 @@ def main():
     # scribble_on_exams(extra_page_papers=[], garbage_page_papers=[])
 
     print("*" * 40)
-    upload_bundles()
+    upload_bundles(
+        number_of_bundles=number_of_bundles,
+    )
 
-    wait_for_upload()
+    wait_for_upload(
+        number_of_bundles=number_of_bundles,
+    )
 
     print("*" * 40)
-    read_qr_codes()
+    read_qr_codes(
+        number_of_bundles=number_of_bundles,
+    )
 
     # print("*" * 40)
     # push_if_ready()

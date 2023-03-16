@@ -48,9 +48,7 @@
     <a 
         class="btn text-start" 
         style="background-color: lightgrey;"
-        data-bs-toggle="tooltip"
-        data-bs-placement="top"
-        title="Not implemented yet"
+        data-bs-toggle="collapse"
         role="button"
         aria-expanded="false"
         aria-controls="pagesList"
@@ -62,9 +60,7 @@
     <a 
         class="btn text-start" 
         style="background-color: lightgrey;"
-        data-bs-toggle="tooltip"
-        data-bs-placement="top"
-        title="Not implemented yet"
+        data-bs-toggle="collapse"
         role="button"
         aria-expanded="false"
         aria-controls="pagesList"
@@ -100,41 +96,109 @@
 </div>
 <div style="margin: 0px 0px 16px 2.5px">
     <div class="collapse" id="pages">
-        <div class="card" style="width: 1165px;">
-            <div style="">
-                {% for p in pages %}
-                <a
-                  class="btn text-start {% if p.status == 'error' %}text-danger{% elif p.status == 'known' %}text-success{% endif %}"
-                href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-                style="{% if forloop.counter == one_index %}background-color: black; color: white{% endif %}"
-                >
-                Page {{ forloop.counter}} 
-                {% if p.pushed%}
-                <i class="bi bi-file-earmark-check"></i>
-                {% elif p.status == 'error' %}
-                <i class="bi bi-exclamation-diamond"></i>
-                {% endif %}
-                </a>
-                {% endfor%}
-            </div>
-            
-        </div>
-
         <div class="card" style="width: 66%;">
-          <div style="">
-            {% for pg in pages %}
-	    {% if pg.status == 'known' %}
-	    <a class="butn text-start text-success"> p{{forloop.counter}}</a>
-	    {% elif pg.status == 'unknown' %}
-	    <a class="butn text-start text-warning"> p{{forloop.counter}}</a>
-	    {% endif %}
-            {% endfor %}
-            </div>
-            
-        </div>
-
+          <div class="container text-center">
+	    <div class="row row-cols-8">
+              {% for pg in pages %}
+	      <div class="col-1">
+		{% if pg.status == 'known' %}
+		<a class="btn m-1 btn-outline-success"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
+		   >
+		  {% elif pg.status == 'extra' %}
+		  <a class="btn m-1 btn-info"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Extra page"
+		     >
+		  {% elif pg.status == 'unread' %}
+		  <a class="btn m-1 btn-outline-dark"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="qr-unread"
+		    >
+		  {% elif pg.status == 'unknown' %}
+		  <a class="btn m-1 btn-warning"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
+		    >
+		  {% elif pg.status == 'error' %}
+		  <a class="btn m-1 btn-danger"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
+		     >
+		  {% endif %}
+		  p{{pg.order}}
+		</a>
+	      </div>
+	      {% endfor %}
+	    </div>
+	  </div>
+	</div>
     </div>
 </div>
+
+
+<div style="margin: 0px 0px 16px 2.5px">
+    <div class="collapse" id="viewValidPages">
+        <div class="card" style="width: 66%;">
+          <div class="container text-center">
+	    <div class="row row-cols-8">
+              {% for pg in pages %}
+	      <div class="col-1">
+		{% if pg.status == 'known' %}
+		<a class="btn m-1 btn-outline-success"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
+		   >
+		  p{{pg.order}}
+		</a>
+		  {% elif pg.status == 'extra' %}
+		  <a class="btn m-1 btn-info"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Extra page"
+		     >
+		  p{{pg.order}}
+		</a>
+		  {% endif %}
+	      </div>
+	      {% endfor %}
+	    </div>
+	  </div>
+	</div>
+    </div>
+</div>
+
+<div style="margin: 0px 0px 16px 2.5px">
+    <div class="collapse" id="viewErrorPages">
+        <div class="card" style="width: 66%;">
+          <div class="container text-center">
+	    <div class="row row-cols-8">
+              {% for pg in pages %}
+	      <div class="col-1">
+		  {% if pg.status == 'unknown' %}
+		  <a class="btn m-1 btn-warning"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
+		    >
+		    p{{pg.order}}
+		  </a>
+		  {% elif pg.status == 'error' %}
+		  <a class="btn m-1 btn-danger"
+		   href="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
+		     >
+		    p{{pg.order}}
+		  </a>
+		  {% endif %}
+	      </div>
+	      {% endfor %}
+	    </div>
+	  </div>
+	</div>
+    </div>
+</div>
+
+
 
 <div class="container w-100 p-0 m-3">
     <div class="row">
