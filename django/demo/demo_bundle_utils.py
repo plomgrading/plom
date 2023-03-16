@@ -6,9 +6,9 @@
 import csv
 import fitz
 from pathlib import Path
-from shlex import split
-import subprocess
 import tempfile
+
+from django.core.management import call_command
 
 from plom.create.scribble_utils import (
     scribble_name_and_id,
@@ -20,12 +20,10 @@ extra_page_font_size = 18
 
 
 def get_classlist_as_dict():
-    cmd = "python3 manage.py plom_preparation_classlist download"
-
     with tempfile.TemporaryDirectory() as td:
         classlist_file = Path(td) / "classlist.csv"
         classlist = []
-        subprocess.check_call(split(f"{cmd} {classlist_file}"))
+        call_command("plom_preparation_classlist", "download", f"{classlist_file}")
         with open(classlist_file) as fh:
             red = csv.DictReader(fh, skipinitialspace=True)
             for row in red:
@@ -41,8 +39,9 @@ def get_classlist_as_dict():
 
 def get_extra_page():
     # Assumes that the extra page has been generated
-    cmd = "python3 manage.py plom_preparation_extrapage download media/papersToPrint/extra_page.pdf"
-    subprocess.check_call(split(cmd))
+    call_command(
+        "plom_preparation_extrapage", "download", "media/papersToPrint/extra_page.pdf"
+    )
 
 
 def assign_students_to_papers(paper_list, classlist):
@@ -118,6 +117,32 @@ def append_garbage_page(pdf_doc):
     )
 
 
+def create_page_from_another_assessment():
+    from plom import SpecVerifier
+    from plom.create.mergeAndCodePages import create_QR_codes
+
+    print("v" * 50)
+
+    # a rather cludge way to get at the spec via commandline tools
+    # really we just need the public code.
+    with tempfile.TemporaryDirectory() as td:
+        spec_file = Path(td) / "the_spec.toml"
+        call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+        spec = SpecVerifier.from_toml_file(spec_file).spec
+        # now make a new magic code that is not the same as the spec
+        if spec["publicCode"] == "00000":
+            code = "99999"
+        else:
+            code = "00000"
+        create_QR_codes(1, 1, 1, code, Path(td))
+        # now we have qr-code pngs that we can use to make a bogus page from a different assessment.
+        # these are called "qr_0001_pg1_4.png" etc.
+        for x in Path(td).glob("*"):
+            print(x)
+
+    print("^" * 50)
+
+
 def _scribble_loop(
     assigned_papers_ids,
     extra_page_path,
@@ -157,6 +182,7 @@ def _scribble_loop(
 
                 # finally, append this to the bundle
                 all_pdf_documents.insert_pdf(pdf_document)
+        create_page_from_another_assessment()
         all_pdf_documents.save(out_file)
 
 
