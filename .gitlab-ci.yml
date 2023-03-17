@@ -325,8 +325,7 @@ flake8:
   allow_failure: true
 
 
-# TODO: some confusion about whether these tests use sqlite or postgres
-# TODO: remove `allow_failure: true` once this one is working again
+# TODO: Issue #2619: can we make these tests use sqlite?
 webplom_test:
   services:
     - postgres:12.2-alpine
@@ -338,7 +337,6 @@ webplom_test:
   stage: test
   needs: ["docker-image"]
   image: $IM
-  allow_failure: true
   script:
     - pushd django
     - python3 -m pip install coverage
