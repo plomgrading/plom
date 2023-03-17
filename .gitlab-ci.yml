@@ -359,6 +359,7 @@ webplom_demo:
   script:
     - pushd django
     - python3 -m pip install -r requirements.txt
+    - 'sed -i "s/: \"127.0.0.1/: \"postgres/" Web_Plom/settings.py'
     - python3 -m demo
     - popd
 
