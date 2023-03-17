@@ -85,7 +85,7 @@ def recreate_postgres_db():
     # use local "socket" thing
     # conn = psycopg2.connect(user="postgres", password="postgres")
     # use TCP/IP
-    conn = psycopg2.connect(user="postgres", password="postgres", host="postgres")
+    conn = psycopg2.connect(user="postgres", password="postgres", host="localhost")
 
     conn.autocommit = True
     print("Removing old database.")
