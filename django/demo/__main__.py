@@ -396,6 +396,8 @@ def main(test=False):
 
     if not test:
         wait_for_exit()
+    else:
+        sleep(1)
 
     print("v" * 40)
     clean_up_processes([huey_worker_proc, server_proc])

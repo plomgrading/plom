@@ -339,6 +339,7 @@ webplom_test:
     - pushd django
     - python3 -m pip install coverage
     - python3 -m pip install -r requirements.txt
+    # Since we're running postgres in a CI service, replace "localhost" with "postgres"
     - 'sed -i "s/: \"127.0.0.1/: \"postgres/" Web_Plom/settings.py'
     - python3 manage.py makemigrations
     - python3 manage.py migrate
@@ -367,6 +368,7 @@ webplom_demo:
   script:
     - pushd django
     - python3 -m pip install -r requirements.txt
+    # Since we're running postgres in a CI service, replace "localhost" with "postgres"
     - 'sed -i "s/: \"127.0.0.1/: \"postgres/" Web_Plom/settings.py'
     - python3 -m demo test
     - popd
