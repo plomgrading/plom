@@ -7,25 +7,12 @@
 
 """Plom script for post-grading tasks.
 
-## Overview of the "finishing" process
+See help for each subcommand or consult online documentation for an
+overview reassembling and returning work to students.
 
-  1. Use the `status` command to check on progress.
-
-  2. Use the `csv` command to produce a CSV file summarizing
-     completed papers and marks (so far, if marking is ongoing).
-
-  3. Run the `reassemble` command build PDFs of marked papers.
-
-  4. Run the `solutions` command to assemble individualised solution PDFs.
-
-  5. Run the `audit` command to produce an audit of all files used.
-
-## Digital return
-
-The reassembled PDF files can be returned to students in various ways.
-The `webpage` command builds a webpage with individualized secret codes
-to be distributed to each student e.g., via Canvas or another LMS.
-Running `webpage --solutions` includes solution return on that webpage.
+Most subcommands communicate with a server, which can be specified
+on the command line or by setting environment variables PLOM_SERVER
+and PLOM_MANAGER_PASSWORD.
 """
 
 __copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
