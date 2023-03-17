@@ -45,7 +45,7 @@ class ScanServiceTests(TestCase):
         # open the pdf-file to create a file-object to pass to the upload command.
         with open(self.pdf_path, "rb") as fh:
             pdf_file_object = File(fh)
-        
+
         scanner.upload_bundle(
             pdf_file_object, "test_bundle", self.user0, timestamp, "abcde", 28
         )
