@@ -1,60 +1,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Edith Coates
 
 from pathlib import Path
 from shlex import split
 import shutil
 import subprocess
 from time import sleep
+from sys import argv
 
 
 from django.core.management import call_command
+from django.conf import settings
 
 from demo import scribble_on_exams
 
 
 def get_database_engine():
-    """Which database engine are we using?
-
-    ## notes on DB installs
-
-    TODO: move this to some docs someday.
-
-    I did all these with Podman on a Fedora 37 laptop.
-
-    ### PostgreSQL
-
-    Start a local container::
-
-        docker pull postgres
-        docker run --name postgres_cntnr -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
-
-    By default, things seem to want to use a socket instead of TCP/IP to talk
-    to the database.  For testing, I can connect with
-    ``psql -h 127.0.0.1 -U postgres``
-    To make Django use TCP/IP, I put the "127.0.0.1" as the host in
-    ``settings.py``.  I also had to convince ``psycopg2`` by using
-    the ``host`` kwarg.
-
-    To stop the container::
-
-        docker stop postgre_cntnr
-        docker rm postgre_cntnr.
-
-    ### MariaDB / MySQL
-
-    Start a local container::
-
-        docker pull mariadb
-        docker run --name mariadb_cntnr -e MYSQL_ROOT_PASSWORD=mypass -p 3306:3306 -d mariadb
-
-    Check that we can connect to the server::
-
-        mysql -h localhost -P 3306 --protocol=TCP -u root -p
-
-    TODO: connect this to Plom
-    """
+    """Which database engine are we using?"""
 
     from Web_Plom import settings
 
@@ -85,7 +49,8 @@ def recreate_postgres_db():
     # use local "socket" thing
     # conn = psycopg2.connect(user="postgres", password="postgres")
     # use TCP/IP
-    conn = psycopg2.connect(user="postgres", password="postgres", host="localhost")
+    host = settings.DATABASES["postgres"]["HOST"]
+    conn = psycopg2.connect(user="postgres", password="postgres", host=host)
 
     conn.autocommit = True
     print("Removing old database.")
@@ -322,7 +287,11 @@ def configure_django_stuff():
     setup()
 
 
-def main():
+def main(test=False):
+    """
+    kwarg test: if true, run without waiting for user input at the end.
+    """
+
     number_of_bundles = 5
 
     configure_django_stuff()
@@ -396,7 +365,10 @@ def main():
     # print("*" * 40)
     # push_if_ready()
 
-    wait_for_exit()
+    if not test:
+        wait_for_exit()
+    else:
+        sleep(1)
 
     print("v" * 40)
     clean_up_processes([huey_worker_proc, server_proc])
@@ -405,4 +377,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(argv) > 1 and argv[1] == "test":
+        main(test=True)
+    else:
+        main()
