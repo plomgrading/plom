@@ -58,7 +58,7 @@ class QRErrorService:
                             (img.pk, img.bundle_order)  # image key and its bundle-order
                         )
                 except ValueError as err:
-                    error_imgs.append((img.pk, err))
+                    error_imgs.append((img.pk, str(err)))
 
         # now create a dict of internal collisions from the grouping_to_imgs dict
         internal_collisions = {tpv: l for tpv, l in tpv_to_imgs.items() if len(l) > 1}
@@ -77,8 +77,10 @@ class QRErrorService:
                     error_imgs.append(
                         (
                             pk_bo[0],
-                            ValueError(
-                                f"Image collides with images in this bundle at positions {[x[1]+1 for x in col_list if x != pk_bo]}"
+                            str(
+                                ValueError(
+                                    f"Image collides with images in this bundle at positions {[x[1]+1 for x in col_list if x != pk_bo]}"
+                                )
                             ),  # add one since bundle-index starts from 0 but hoomans like to start from 1.
                         )
                     )
@@ -88,10 +90,6 @@ class QRErrorService:
         else:
             print("No internal collisions")
 
-        # save the known-images so they can be pushed.
-        # TODO - update this when we update the different stagingimage types
-        # ie when we properly handle errors etc.
-        # at present this assumes the bundle is perfect
         with transaction.atomic():
             # save all the known images
             for k, tpv in known_imgs:
@@ -122,13 +120,13 @@ class QRErrorService:
                 img.image_type = "extra"
                 img.save()
                 ExtraStagingImage.objects.create(staging_image=img)
-            # save all the error-pages.
-            for k, err in error_imgs:
+            # save all the error-pages with the error string
+            for k, err_str in error_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = "error"
                 img.save()
                 ErrorStagingImage.objects.create(
-                    staging_image=img, error_reason=f"{err}"
+                    staging_image=img, error_reason=err_str
                 )
 
     def check_consistent_qr(self, parsed_qr_dict, correct_public_code):
@@ -162,12 +160,12 @@ class QRErrorService:
         codes = [parsed_qr_dict[x]["page_info"]["public_code"] for x in parsed_qr_dict]
         if is_list_inconsistent(codes):
             raise ValueError(
-                "Inconsistent public-codes - was a page from a different assessment uploaded"
+                "Inconsistent public-codes - was a page from a different assessment uploaded?"
             )
         # and make sure it matches the spec
         if codes[0] != correct_public_code:
             raise ValueError(
-                "Public code does not match spec - was a page from a different assessment uploaded"
+                "Public code does not match spec - was a page from a different assessment uploaded?"
             )
         # check all the same paper_id
         if is_list_inconsistent(
