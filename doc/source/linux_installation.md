@@ -22,7 +22,6 @@ Tested on Fedora 37.  Some stuff from the package manager:
 ```
   # sudo dnf install \
         ImageMagick openssl gcc gcc-c++ cmake \
-        turbojpeg-devel libjpeg-turbo-devel python3-cffi \
         python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
         python3-more-itertools python3-chardet \
@@ -63,16 +62,13 @@ Some stuff from the package manager:
 ```
   # sudo apt install \
         cmake make imagemagick dvipng g++ openssl \
-        libjpeg-turbo8-dev libturbojpeg0-dev \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-pillow \
-        python3-tqdm libpango-1.0-0 libpangocairo-1.0-0 \
+        python3-tqdm \
         python3-defusedxml python3-jsmin python3-cairosvg
 ```
-The `pango` stuff was needed for `weasyprint`: perhaps it can be dropped (?)
-The `libjpeg` stuff can likely be dropped too (?)
 
 Now upgrade pip (your local copy, not the system one)
 ```

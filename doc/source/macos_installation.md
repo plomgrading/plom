@@ -1,6 +1,6 @@
 <!--
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2022 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2023 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2020 Victoria Schuster"
 __license__ = "AGPL-3.0-or-later"
  -->
@@ -12,9 +12,7 @@ Tested on Catalina 10.15.4.
 First some stuff from a package manager, here using [Homebrew](https://brew.sh):
 
 ```
-brew install imagemagick zbar \
-             libjpeg libjpeg-turbo jpeg-turbo \
-             libffi openssl cmake pango
+brew install imagemagick openssl cmake
 ```
 You will also need Python, perhaps:
 ```

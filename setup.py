@@ -73,9 +73,6 @@ server_install_requires = [
     "zipfly",
     "zxing-cpp>=1.4.0",
 ]
-# TODO: optional dependency to enable lossless jpeg rotations
-#   "cffi",
-#   "jpegtran-cffi",
 # TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
 #   "file-magic || python-magic>=0.4.20",
 

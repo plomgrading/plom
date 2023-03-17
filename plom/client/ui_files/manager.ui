@@ -2686,9 +2686,11 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
   &lt;tt&gt;solutions/&lt;/tt&gt;
  of whatever folder is chosen above.&lt;/p&gt;
 
-&lt;p&gt;Any existing papers will be &lt;em&gt;skipped&lt;/em&gt;.  Delete any PDF files for which you want to force  reassembly.&lt;/p&gt;
+&lt;p&gt;Any existing papers will be &lt;em&gt;skipped&lt;/em&gt;.
+Delete any PDF files for which you want to force  reassembly.&lt;/p&gt;
 
-&lt;p&gt;&lt;b&gt;Warning:&lt;/b&gt; currently the UI will block during reassembly.  Your should be able to see a progress bar on the command-line console (if visible).&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Warning:&lt;/b&gt; currently the UI will block during reassembly.
+You should be able to see a progress bar on the command-line console (if visible).&lt;/p&gt;
 
 </string>
          </property>
