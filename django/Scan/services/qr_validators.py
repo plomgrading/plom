@@ -64,13 +64,7 @@ class QRErrorService:
         internal_collisions = {tpv: l for tpv, l in tpv_to_imgs.items() if len(l) > 1}
         # TODO - if any collisions, then those imgs need to be removed from "known_imgs"
 
-        # a summary - until we actually process this stuff correctly
-        print(f"No qr = {no_qr_imgs}")
-        print(f"Error imgs = {error_imgs}")
-        print(f"Extra imgs = {extra_imgs}")
-        print(f"Known imgs = {known_imgs}")
         if len(internal_collisions) > 0:
-            print(f"Internal collisions = {internal_collisions}")
             # move each colliding image from known_imgs to error_imgs
             for tpv, col_list in internal_collisions.items():
                 for pk_bo in col_list:
@@ -86,9 +80,6 @@ class QRErrorService:
                     )
                     # now remove this (image_key, tpv) from the know-imgs list
                     known_imgs.remove((pk_bo[0], tpv))
-
-        else:
-            print("No internal collisions")
 
         with transaction.atomic():
             # save all the known images

@@ -149,6 +149,17 @@ def insert_page_from_another_assessment(pdf_doc):
 
 
 def insert_qr_from_previous_page(pdf_doc, paper_number):
+    """Stamps a qr-code for the second-last page onto the last page,
+    in order to create a page with inconsistent qr-codes. This can
+    happen when, for example, a folded page is fed into the scanner.
+
+
+    Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
+          paper_number (int): the paper_number of that test-paper.
+
+    Returns:
+       pdf_doc (fitz.Document): the updated pdf-document with the inconsistent qr-codes on its last page.
+    """
     from plom import SpecVerifier
     from plom.create.mergeAndCodePages import create_QR_codes
 
@@ -253,7 +264,7 @@ def scribble_on_exams(
     print(f"\tGarbage pages will be appended after papers: {garbage_page_papers}")
     print(f"\tDuplicate pages will be inserted: {duplicate_pages}")
     print(
-        f"\tA qr-code from the second last page will be inserted on last page in papers: {duplicate_qr}"
+        f"\tA qr-code from the second last page of the test-paper paper will be inserted on last page of that paper; in papers: {duplicate_qr}"
     )
     print("\tA page from a different assessment will be inserted as the final page")
     print("^" * 40)
