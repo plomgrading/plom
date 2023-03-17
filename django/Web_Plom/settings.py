@@ -122,7 +122,7 @@ DATABASES = {
 }
 DATABASES["default"] = DATABASES["postgres"]
 
-# TODO: not a good long-term thing, a temporary hack to have tests run with SQLite:
+# TODO: Issue #2619: not long-term, a temporary hack to have tests run with SQLite
 if "test" in sys.argv:
     DATABASES["default"] = DATABASES["sqlite"]
 
