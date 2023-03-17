@@ -137,6 +137,24 @@ def getPaperPageVersion(tpv):
     return tpv[0:11]
 
 
+def parse_paper_page_version(ppv_key):
+    """Parse the paper-page-version string "TTTTTPPPVVV" and return a triple of the
+    the paper-number, page-number and version.
+
+    Args:  (str): a string of the form "TTTTTPPPVVV"
+
+    Returns:
+       tn (int): test number, up to 5 digits
+       pn (int): page group number, up to 3 digits
+       vn (int): version number, up to 3 digits
+    """
+    return (
+        int(ppv_key[:5]),
+        int(ppv_key[5:8]),
+        int(ppv_key[8:11]),
+    )
+
+
 def getPosition(tpv):
     return int(parseTPV(tpv)[4])
 

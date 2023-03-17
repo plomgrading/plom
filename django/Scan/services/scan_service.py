@@ -251,7 +251,7 @@ class ScanService:
             list_qr_codes: (list) QR codes returned from QRextract() method as a dictionary
 
         Return:
-            groupings: (dict) Group of TPV signature
+            groupings: (dict) Set of data from raw-qr-strings
             {
                 'NE': {
                     'page_type': 'plom_qr',
@@ -262,7 +262,7 @@ class ScanService:
                         'public_code': '93849',
                     }
                     'quadrant': '1',
-                    'grouping_key': '00001003001',
+                    'tpv': '00001003001',
                     'x_coord': 2204,
                     'y_coord': 279.5
                 },
@@ -275,7 +275,7 @@ class ScanService:
                         'public_code': '93849',
                 }
                     'quadrant': '3',
-                    'grouping_key': '00001003001',
+                    'tpv': '00001003001',
                     'x_coord': 234,
                     'y_coord': 2909.5
                 },
@@ -288,7 +288,7 @@ class ScanService:
                         'public_code': '93849',
                     }
                     'quadrant': '4',
-                    'grouping_key': '00001003001',
+                    'tpv': '00001003001',
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
@@ -297,7 +297,7 @@ class ScanService:
                     'SE': {
                     'page_type': 'plom_extra',
                     'quadrant': '4',
-                    'grouping_key': 'plomX',
+                    'tpv': 'plomX',
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
@@ -313,22 +313,24 @@ class ScanService:
         # TODO - simplify this loop using enumerate(list) or similar.
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
-                signature = list_qr_codes[page][quadrant].get("tpv_signature", None)
-                if signature is None:
+                # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVVOCCCCC" qr-string
+                # while tpv refers to "TTTTTPPPVVV"
+                raw_qr_string = list_qr_codes[page][quadrant].get("tpv_signature", None)
+                if raw_qr_string is None:
                     continue
                 x_coord = list_qr_codes[page][quadrant].get("x")
                 y_coord = list_qr_codes[page][quadrant].get("y")
                 qr_code_dict = {
-                    "tpv_signature": signature,
+                    "raw_qr_string": raw_qr_string,
                     "x_coord": x_coord,
                     "y_coord": y_coord,
                 }
 
-                if isValidTPV(signature):
+                if isValidTPV(raw_qr_string):
                     paper_id, page_num, version_num, public_code, corner = parseTPV(
-                        signature
+                        raw_qr_string
                     )
-                    grouping_key = getPaperPageVersion(
+                    tpv = getPaperPageVersion(
                         list_qr_codes[page][quadrant].get("tpv_signature")
                     )
                     qr_code_dict.update(
@@ -341,16 +343,16 @@ class ScanService:
                                 "public_code": public_code,
                             },
                             "quadrant": corner,
-                            "grouping_key": grouping_key,
+                            "tpv": tpv,
                         }
                     )
-                elif isValidExtraPageCode(signature):
-                    corner = parseExtraPageCode(signature)
+                elif isValidExtraPageCode(raw_qr_string):
+                    corner = parseExtraPageCode(raw_qr_string)
                     qr_code_dict.update(
                         {
                             "page_type": "plom_extra",
                             "quadrant": corner,
-                            "grouping_key": "plomX",
+                            "tpv": "plomX",
                         }
                     )
                 groupings[quadrant] = qr_code_dict

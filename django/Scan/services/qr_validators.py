@@ -6,7 +6,7 @@
 
 from django.db import transaction
 
-
+from plom.tpv_utils import parse_paper_page_version
 from Papers.services import SpecificationService
 from Scan.models import (
     StagingImage,
@@ -31,10 +31,10 @@ class QRErrorService:
         no_qr_imgs = []  # no qr-codes could be read
         error_imgs = []  # indicative of a serious error (eg inconsistent qr-codes)
         extra_imgs = []  # extra-page
-        known_imgs = []  # a normal qr-coded plom page stored as (pk, partial-tpv)
-        # keep track of all the grouping_keys of qr-coded pages
+        known_imgs = []  # a normal qr-coded plom page stored as (pk, tpv)
+        # keep track of all the tpv of qr-coded pages
         # to check for internal collision
-        grouping_to_imgs = {}
+        tpv_to_imgs = {}
 
         with transaction.atomic():
             images = bundle.stagingimage_set.all()
@@ -48,20 +48,20 @@ class QRErrorService:
                     self.check_consistent_qr(
                         img.parsed_qr, spec_dictionary["publicCode"]
                     )
-                    grouping_key = self.get_grouping_key(img.parsed_qr)
-                    if grouping_key == "plomX":  # is an extra page
+                    tpv = self.get_tpv(img.parsed_qr)
+                    if tpv == "plomX":  # is an extra page
                         extra_imgs.append(img.pk)
                     else:  # a normal qr-coded page
-                        known_imgs.append((img.pk, grouping_key))
-                        # keep list of imgs with this grouping-key to check for internal collisions
-                        grouping_to_imgs.setdefault(grouping_key, []).append(
+                        known_imgs.append((img.pk, tpv))
+                        # keep list of imgs with this tpv to check for internal collisions
+                        tpv_to_imgs.setdefault(tpv, []).append(
                             (img.pk, img.bundle_order)  # image key and its bundle-order
                         )
                 except ValueError as err:
                     error_imgs.append((img.pk, err))
 
         # now create a dict of internal collisions from the grouping_to_imgs dict
-        internal_collisions = {g: l for g, l in grouping_to_imgs.items() if len(l) > 1}
+        internal_collisions = {tpv: l for tpv, l in tpv_to_imgs.items() if len(l) > 1}
         # TODO - if any collisions, then those imgs need to be removed from "known_imgs"
 
         # a summary - until we actually process this stuff correctly
@@ -72,7 +72,7 @@ class QRErrorService:
         if len(internal_collisions) > 0:
             print(f"Internal collisions = {internal_collisions}")
             # move each colliding image from known_imgs to error_imgs
-            for grp, col_list in internal_collisions.items():
+            for tpv, col_list in internal_collisions.items():
                 for pk_bo in col_list:
                     error_imgs.append(
                         (
@@ -82,8 +82,8 @@ class QRErrorService:
                             ),  # add one since bundle-index starts from 0 but hoomans like to start from 1.
                         )
                     )
-                    # now remove this (image_key, grouping_key) from the know-imgs list
-                    known_imgs.remove((pk_bo[0], grp))
+                    # now remove this (image_key, tpv) from the know-imgs list
+                    known_imgs.remove((pk_bo[0], tpv))
 
         else:
             print("No internal collisions")
@@ -94,7 +94,7 @@ class QRErrorService:
         # at present this assumes the bundle is perfect
         with transaction.atomic():
             # save all the known images
-            for k, grouping_key in known_imgs:
+            for k, tpv in known_imgs:
                 img = StagingImage.objects.get(pk=k)
                 img.image_type = "known"
                 img.save()
@@ -102,7 +102,8 @@ class QRErrorService:
                     test_paper,
                     page_number,
                     version,
-                ) = self.grouping_key_to_paper_page_version(grouping_key)
+                ) = parse_paper_page_version(tpv)
+
                 KnownStagingImage.objects.create(
                     staging_image=img,
                     paper_number=test_paper,
@@ -131,12 +132,17 @@ class QRErrorService:
                 )
 
     def check_consistent_qr(self, parsed_qr_dict, correct_public_code):
-        """parsed_qr_dict is of the form
+        """Check the parsed qr-codes (typically scanned from a
+        page-image) and confirm that they are both self-consistent,
+        and that the publicCode matches that in the test
+        specification.
+
+        parsed_qr_dict is of the form
         {
-        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_info': {'page_num': 1, 'paper_id': 1, 'public_code': '28558', 'version_num': 1}, 'page_type': 'plom_qr', 'grouping_key': '00001001001', 'tpv_signature': '00001001001128558'},
+        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_info': {'page_num': 1, 'paper_id': 1, 'public_code': '28558', 'version_num': 1}, 'page_type': 'plom_qr', 'tpv': '00001001001', 'raw_qr_string': '00001001001128558'},
         }
         or potentially (if an extra page)
-        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'grouping_key': 'plomX', 'tpv_signature': 'plomX1'},
+        'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'tpv': 'plomX', 'raw_qr_string': 'plomX1'},
         """
 
         # ------ helper function to test data consistency
@@ -180,34 +186,15 @@ class QRErrorService:
             raise ValueError(
                 "Inconsistent version-numbers - check scan for folded pages"
             )
-        # check all the same grouping_key - this should not be triggered because of previous checks
-        if is_list_inconsistent(
-            [parsed_qr_dict[x]["grouping_key"] for x in parsed_qr_dict]
-        ):
-            raise ValueError("Inconsistent grouping-keys - check scan for folded pages")
+        # check all the same tpv - this should not be triggered because of previous checks
+        if is_list_inconsistent([parsed_qr_dict[x]["tpv"] for x in parsed_qr_dict]):
+            raise ValueError("Inconsistent tpv - check scan for folded pages")
         return True
 
-    def get_grouping_key(self, parsed_qr_dict):
+    def get_tpv(self, parsed_qr_dict):
         # since we know the codes are consistent, it is sufficient to check just one.
         # note - a little python hack to get **any** value from a dict
-        return next(iter(parsed_qr_dict.values()))["grouping_key"]
-
-    def grouping_key_to_paper_page_version(self, grouping_key):
-        # grouping_key is either "plomX" or "XXXXXYYYVVV"
-        if len(grouping_key) != len("XXXXXYYYVVV"):
-            raise ValueError(
-                f"Cannot convert grouping-key {grouping_key} to paper and page"
-            )
-        try:
-            return (
-                int(grouping_key[:5]),
-                int(grouping_key[5:8]),
-                int(grouping_key[9:12]),
-            )
-        except ValueError:
-            raise ValueError(
-                f"Cannot convert grouping-key {grouping_key} to paper, page and version"
-            )
+        return next(iter(parsed_qr_dict.values()))["tpv"]
 
     # --------------------------
     # hacked up to here....
