@@ -10,6 +10,7 @@ from time import sleep
 
 
 from django.core.management import call_command
+from django.conf import settings
 
 from demo import scribble_on_exams
 
@@ -85,7 +86,8 @@ def recreate_postgres_db():
     # use local "socket" thing
     # conn = psycopg2.connect(user="postgres", password="postgres")
     # use TCP/IP
-    conn = psycopg2.connect(user="postgres", password="postgres", host="localhost")
+    host = settings.DATABASES["postgres"]["HOST"]
+    conn = psycopg2.connect(user="postgres", password="postgres", host=host)
 
     conn.autocommit = True
     print("Removing old database.")
