@@ -97,8 +97,10 @@
 	class="btn btn-warning"
 	>Push!</button>
       {% else %}
-      <span class="badge bg-danger">
-	has errors - cannot push
+      <span data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Cannot push bundle containing errors">
+      <button
+	class="btn btn-warning" disabled	
+	>Push</button>
       </span>
       {% endif %}      
       {% elif is_mid_qr_read %}
@@ -118,3 +120,10 @@
     </div>
   </div>
 </div>
+
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
