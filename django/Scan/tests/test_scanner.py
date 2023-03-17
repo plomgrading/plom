@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import fitz
 import shutil
@@ -12,6 +13,7 @@ from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.core.files import File
 from model_bakery import baker
 
 from plom.scan import QRextract
@@ -22,9 +24,8 @@ from Scan.models import StagingBundle, StagingImage
 class ScanServiceTests(TestCase):
     def setUp(self):
         self.user0 = baker.make(User, username="user0")
-        self.pdf = fitz.Document(
-            settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
-        )
+        self.pdf_path = settings.BASE_DIR / "Scan" / "tests" / "test_bundle.pdf"
+        self.pdf = fitz.Document(self.pdf_path)  # has 28 pages
         media_folder = settings.MEDIA_ROOT
         media_folder.mkdir(exist_ok=True)
         return super().setUp()
@@ -41,10 +42,16 @@ class ScanServiceTests(TestCase):
 
         scanner = ScanService()
         timestamp = timezone.now().timestamp()
-        scanner.upload_bundle(self.pdf, "test_bundle", self.user0, timestamp, "abcde")
+        # open the pdf-file to create a file-object to pass to the upload command.
+        with open(self.pdf_path, "rb") as fh:
+            pdf_file_object = File(fh)
+        
+        scanner.upload_bundle(
+            pdf_file_object, "test_bundle", self.user0, timestamp, "abcde", 28
+        )
 
         the_bundle = StagingBundle.objects.get(user=self.user0, slug="test_bundle")
-        bundle_path = the_bundle.file_path
+        bundle_path = the_bundle.pdf_file.path
         self.assertTrue(
             bundle_path,
             str(
@@ -63,32 +70,29 @@ class ScanServiceTests(TestCase):
         Test ScanService.remove_bundle() and assert that the uploaded PDF file
         has been removed from disk.
         """
-
         timestamp = timezone.now().timestamp()
-        user_path = settings.MEDIA_ROOT / "user0"
-        user_path.mkdir(exist_ok=True)
-        user_bundle_path = user_path / "bundles"
-        user_bundle_path.mkdir(exist_ok=True)
-        timestamp_path = user_bundle_path / str(timestamp)
-        timestamp_path.mkdir(exist_ok=True)
-        bundle_path = timestamp_path / f"{timestamp}.pdf"
+        # make a pdf and save it to a tempfile
+        with tempfile.NamedTemporaryFile() as ntf:
+            self.pdf.save(ntf.name)
 
-        self.assertFalse(bundle_path.exists())
-
-        bundle = StagingBundle(
-            slug="test_bundle",
-            file_path=bundle_path,
-            user=self.user0,
-            timestamp=timestamp,
-            pdf_hash="abcde",
-            has_page_images=False,
-        )
-        bundle.save()
-        self.pdf.save(bundle_path)
+            # open that file to get django to save it to disk as per the models File("upload_to")
+            with ntf:
+                bundle = StagingBundle(
+                    slug="test_bundle",
+                    pdf_file=File(ntf, name=f"{timestamp}.pdf"),
+                    user=self.user0,
+                    timestamp=timestamp,
+                    pdf_hash="abcde",
+                    has_page_images=False,
+                )
+                bundle.save()
+        # the pdf should now have been saved to the upload-to of the bundle-object
+        bundle_path = pathlib.Path(bundle.pdf_file.path)
         self.assertTrue(bundle_path.exists())
-
+        # now remove it using the scan services
         scanner = ScanService()
         scanner.remove_bundle(timestamp, self.user0)
+        # that path should no longer exist, nor should the bundle
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())
 
@@ -110,35 +114,41 @@ class ScanServiceTests(TestCase):
         codes = QRextract(img_path)
         scanner = ScanService()
         parsed_codes = scanner.parse_qr_code([codes])
-        print(parsed_codes)
+
         assert parsed_codes
         code_dict = {
             "NW": {
-                "paper_id": 6,
-                "page_num": 4,
-                "version_num": 1,
+                "page_info": {
+                    "paper_id": 6,
+                    "page_num": 4,
+                    "version_num": 1,
+                    "public_code": "93849",
+                },
                 "quadrant": "2",
-                "public_code": "93849",
                 "grouping_key": "00006004001",
                 "x_coord": 166.5,
                 "y_coord": 272,
             },
             "SW": {
-                "paper_id": 6,
-                "page_num": 4,
-                "version_num": 1,
+                "page_info": {
+                    "paper_id": 6,
+                    "page_num": 4,
+                    "version_num": 1,
+                    "public_code": "93849",
+                },
                 "quadrant": "3",
-                "public_code": "93849",
                 "grouping_key": "00006004001",
                 "x_coord": 173.75,
                 "y_coord": 2895.5,
             },
             "SE": {
-                "paper_id": 6,
-                "page_num": 4,
-                "version_num": 1,
+                "page_info": {
+                    "paper_id": 6,
+                    "page_num": 4,
+                    "version_num": 1,
+                    "public_code": "93849",
+                },
                 "quadrant": "4",
-                "public_code": "93849",
                 "grouping_key": "00006004001",
                 "x_coord": 2141,
                 "y_coord": 2883.5,
@@ -146,18 +156,20 @@ class ScanServiceTests(TestCase):
         }
         for quadrant in code_dict:
             self.assertEqual(
-                parsed_codes[quadrant]["paper_id"], code_dict[quadrant]["paper_id"]
+                parsed_codes[quadrant]["page_info"]["paper_id"],
+                code_dict[quadrant]["page_info"]["paper_id"],
             )
             self.assertEqual(
-                parsed_codes[quadrant]["page_num"], code_dict[quadrant]["page_num"]
+                parsed_codes[quadrant]["page_info"]["page_num"],
+                code_dict[quadrant]["page_info"]["page_num"],
             )
             self.assertEqual(
-                parsed_codes[quadrant]["version_num"],
-                code_dict[quadrant]["version_num"],
+                parsed_codes[quadrant]["page_info"]["version_num"],
+                code_dict[quadrant]["page_info"]["version_num"],
             )
             self.assertEqual(
-                parsed_codes[quadrant]["public_code"],
-                code_dict[quadrant]["public_code"],
+                parsed_codes[quadrant]["page_info"]["public_code"],
+                code_dict[quadrant]["page_info"]["public_code"],
             )
             self.assertEqual(
                 parsed_codes[quadrant]["grouping_key"],
@@ -228,14 +240,17 @@ class ScanServiceTests(TestCase):
         bundle = baker.make(
             StagingBundle, user=self.user0, timestamp=timezone.now().timestamp()
         )
-
+        # there are no images in the bundle
         imgs = scanner.get_all_complete_images(bundle)
         self.assertEqual(imgs, [])
 
-        baker.make(StagingImage, parsed_qr={}, bundle=bundle)
+        # now make an image with no qr-codes, so known is false
+        baker.make(StagingImage, parsed_qr={}, bundle=bundle, known=False)
         imgs = scanner.get_all_complete_images(bundle)
         self.assertEqual(imgs, [])
-
-        with_data = baker.make(StagingImage, parsed_qr={"dummy": "dict"}, bundle=bundle)
+        # now make an image with a qr-code and known=true.
+        with_data = baker.make(
+            StagingImage, parsed_qr={"dummy": "dict"}, bundle=bundle, known=True
+        )
         imgs = scanner.get_all_complete_images(bundle)
         self.assertEqual(imgs, [with_data])
