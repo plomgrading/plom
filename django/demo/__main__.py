@@ -328,7 +328,7 @@ def configure_django_stuff():
 
 def main(test=False):
     """
-    kwarg test: if true, run wihtout waiting for user input at the end.
+    kwarg test: if true, run without waiting for user input at the end.
     """
 
     configure_django_stuff()
