@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Edith Coates
 
 from pathlib import Path
 from shlex import split
 import shutil
 import subprocess
 from time import sleep
+from sys import argv
 
 
 from django.core.management import call_command
@@ -324,7 +326,11 @@ def configure_django_stuff():
     setup()
 
 
-def main():
+def main(test=False):
+    """
+    kwarg test: if true, run witout waiting for user input at the end.
+    """
+
     configure_django_stuff()
 
     engine = get_database_engine()
@@ -388,7 +394,8 @@ def main():
     # print("*" * 40)
     # push_if_ready()
 
-    wait_for_exit()
+    if not test:
+        wait_for_exit()
 
     print("v" * 40)
     clean_up_processes([huey_worker_proc, server_proc])
@@ -397,4 +404,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(argv) > 1 and argv[1] == "test":
+        main(test=True)
+    else:
+        main()
