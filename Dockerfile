@@ -16,8 +16,6 @@ RUN apt-get -y update && \
         imagemagick \
         openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
-        libpango-1.0-0 libpangocairo-1.0-0 \
-        libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev \
         file \
         python3 \
         python3-dev \

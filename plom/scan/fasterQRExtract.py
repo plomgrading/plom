@@ -7,10 +7,10 @@ import json
 from pathlib import Path
 from statistics import mean
 
-# use this to replace pyzbar - since it handles micro-qr-codes
-from zxingcpp import read_barcodes, BarcodeFormat
-
 from PIL import Image
+
+# hide import inside function to prevent PlomClient depending on it
+# from zxingcpp import read_barcodes, BarcodeFormat
 
 
 def findCorner(qr, dim):
@@ -84,6 +84,9 @@ def QRextract(image, try_harder=True):
 
     [1] https://gitlab.com/plom/plom/-/issues/967
     """
+    # hide import inside function to prevent PlomClient depending on it
+    from zxingcpp import read_barcodes, BarcodeFormat
+
     cornerQR = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
 
     if not isinstance(image, Image.Image):
@@ -155,6 +158,9 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
 
     [1] https://gitlab.com/plom/plom/-/issues/967
     """
+    # hide import inside function to prevent PlomClient depending on it
+    from zxingcpp import read_barcodes, BarcodeFormat
+
     if write_to_file:
         image = Path(image)
         # foo.jpg to foo.jpg.qr
