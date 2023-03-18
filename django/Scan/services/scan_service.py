@@ -569,7 +569,7 @@ class ScanService:
         # we can assign unknowns and extra pages
         not_known_images = bundle_obj.stagingimage_set.exclude(image_type="known")
         # if there are any not-known-images then the bundle is not perfect
-        # thats a lot of double-negatives in there.
+        # that is a lot of double-negatives in there.
         return not not_known_images.exists()
 
     @transaction.atomic
