@@ -335,6 +335,7 @@ webplom_test:
     - pushd django
     - python3 -m pip install coverage
     - python3 -m pip install -r requirements.txt
+    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
     - python3 manage.py migrate
     - coverage run --source='.' manage.py test
