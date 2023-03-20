@@ -121,6 +121,8 @@ def insert_page_from_another_assessment(pdf_doc):
     from plom import SpecVerifier
     from plom.create.mergeAndCodePages import create_QR_codes
 
+    assert len(pdf_doc) % 2 == 0, "only works properly for even number of pages"
+
     # a rather cludge way to get at the spec via commandline tools
     # really we just need the public code.
     with tempfile.TemporaryDirectory() as td:
