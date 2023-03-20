@@ -24,7 +24,6 @@ class ImageBundleTests(TestCase):
     """
 
     def setUp(self):
-        self.spec = baker.make(Specification)
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
 
@@ -36,6 +35,18 @@ class ImageBundleTests(TestCase):
             file_name="page2.png",
             image_hash="abcdef",
             rotation=90,
+        )
+
+        baker.make(
+            Specification,
+            spec_dict={
+                "idPage": 1,
+                "doNotMarkPages": [2, 5],
+                "question": {
+                    "1": {"pages": [1]},
+                    "2": {"pages": [2, 3]},
+                },
+            },
         )
 
         return super().setUp()

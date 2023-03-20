@@ -6,12 +6,15 @@ import shutil
 import itertools
 
 from django.db import transaction
+from django.db.models import Count
 from django.conf import settings
 from django_huey import db_task
 
 from Scan.models import (
     StagingImage,
 )
+
+from Papers.services import SpecificationService
 
 from Papers.models import (
     Bundle,
@@ -20,6 +23,7 @@ from Papers.models import (
     CollidingImage,
     Paper,
     BasePage,
+    QuestionPage,
 )
 from .paper_creator import PaperCreatorService
 from .paper_info import PaperInfoService
@@ -296,6 +300,8 @@ class ImageBundleService:
             page.image = image
             page.save(update_fields=["image"])
 
+        ibs.get_ready_questions(uploaded_bundle)
+
     def get_staged_img_location(self, staged_image):
         """
         Get the image's paper number and page number from its QR code dict
@@ -383,3 +389,43 @@ class ImageBundleService:
             for colliding_img in colls:
                 collisions.append((image, colliding_img))
         return collisions
+
+    @transaction.atomic
+    def get_ready_questions(self, bundle):
+        """
+        Find questions across all test-papers in the database that now have
+        all of their page-images scanned. These questions are ready to be marked.
+        TODO: Extra pages could potentially make questions un-ready again.
+
+        Args:
+            bundle: a Bundle instance that has just been uploaded.
+
+        Returns:
+            dict {}: Two lists of (int, int). "ready" is the list of paper_number/question_number pairs
+            that have pages in this bundle, and are now ready to be marked. "not_ready" are
+            paper_number/question_number pairs that have pages in this bundle, but are not ready to be
+            marked yet.
+        """
+
+        question_pages = QuestionPage.objects.filter(image__bundle=bundle)
+        papers_in_bundle = question_pages.values_list(
+            "paper__paper_number", "question_number"
+        )
+        bundle_paper_status = set(papers_in_bundle)
+
+        result = {"ready": [], "not_ready": []}
+
+        for paper, question_num in bundle_paper_status:
+            n_pushed_pages = (
+                QuestionPage.objects.exclude(image__isnull=True)
+                .filter(paper__paper_number=paper, question_number=question_num)
+                .count()
+            )
+            n_pages = SpecificationService().n_pages_for_question(question_num+1)
+
+            if n_pages == n_pushed_pages:
+                result["ready"].append((paper, question_num))
+            else:
+                result["not_ready"].append((paper, question_num))
+
+        return result
