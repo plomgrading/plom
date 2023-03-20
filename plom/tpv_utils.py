@@ -148,6 +148,7 @@ def parse_paper_page_version(ppv_key):
        pn (int): page group number, up to 3 digits
        vn (int): version number, up to 3 digits
     """
+    assert len(ppv_key) == len("TTTTTPPPVVV")
     return (
         int(ppv_key[:5]),
         int(ppv_key[5:8]),

@@ -129,7 +129,6 @@ class Command(BaseCommand):
                 f"Reading {bundle_name} QR codes - processing it in the background now."
             )
         except ValueError as err:
-            self.stderr.write(f"{err}")
             raise CommandError(err)
 
     def add_arguments(self, parser):
