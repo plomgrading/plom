@@ -67,19 +67,17 @@ class QRErrorService:
         if len(internal_collisions) > 0:
             # move each colliding image from known_imgs to error_imgs
             for tpv, col_list in internal_collisions.items():
-                for pk_bo in col_list:
+                for img_keys in col_list:
                     error_imgs.append(
                         (
-                            pk_bo[0],
-                            str(
-                                ValueError(
-                                    f"Image collides with images in this bundle at positions {[x[1]+1 for x in col_list if x != pk_bo]}"
-                                )
-                            ),  # add one since bundle-index starts from 0 but hoomans like to start from 1.
+                            img_keys[0],
+                            "Image collides with images in this bundle at positions "
+                            + ", ".join(
+                                [str(x[1] + 1) for x in col_list if x != img_keys]
+                            ),
                         )
                     )
-                    # now remove this (image_key, tpv) from the know-imgs list
-                    known_imgs.remove((pk_bo[0], tpv))
+                    known_imgs.remove((img_keys[0], tpv))
 
         with transaction.atomic():
             # save all the known images
