@@ -442,11 +442,11 @@ class ScanService:
         return len(pushed)
 
     @transaction.atomic
-    def get_all_complete_images(self, bundle):
+    def get_all_known_images(self, bundle):
         """
         Get all the images with completed QR code data - they can be pushed.
         """
-        return list(bundle.stagingimage_set.filter(known=True))
+        return list(bundle.stagingimage_set.filter(image_type="known"))
 
     @transaction.atomic
     def all_complete_images_pushed(self, bundle):
