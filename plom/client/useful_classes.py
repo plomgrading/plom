@@ -322,14 +322,14 @@ class ClientSettingsDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 
-    def getStuff(self):
-        return (
-            self.checkFore.isChecked(),
-            self.comboLog.currentText(),
-            self.checkLogFile.isChecked(),
-            self.checkWarnCom.isChecked(),
-            self.checkWarnMark.isChecked(),
-        )
+    def get_options_back(self):
+        return {
+            "FOREGROUND": self.checkFore.isChecked(),
+            "LogLevel": self.comboLog.currentText(),
+            "LogToFile": self.checkLogFile.isChecked(),
+            "CommentsWarning": self.checkWarnCom.isChecked(),
+            "MarkWarnings": self.checkWarnMark.isChecked(),
+        }
 
 
 class AddRemoveTagDialog(QDialog):
