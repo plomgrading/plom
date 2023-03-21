@@ -65,23 +65,20 @@ class QRErrorService:
                 except ValueError as err:
                     error_imgs.append((img.pk, str(err)))
 
-        # now look at the known-image dict for internal collisions - ie tpv with 2 or more images
-        for tpv, col_list in known_imgs.items():
-            if len(col_list) == 1:  # this is not a collision, so skip
+        # check for internal collisions: tpv with 2 or more images
+        for tpv, img_pks in known_imgs.items():
+            if len(img_pks) == 1:  # no collisions
                 continue
-            # this tpv corresponds to multiple images, so make error images for each
-            # with error-message that tells the user which other images it collides
-            # with - to be useful this needs the bundle-order of each image.
-            for img_pk in col_list:
+            # this tpv corresponds to multiple images: record "error images"
+            # for all of them, with error messages that tell the user which
+            # other images it collides with, noting their bundle-order.
+            for img_pk in img_pks:
+                collisions = img_pks.copy().remove(img_pk)
                 error_imgs.append(
                     (
                         img_pk,
                         "Image collides with images in this bundle at positions "
-                        + ", ".join(
-                            str(img_bundle_order[x] + 1)
-                            for x in col_list
-                            if x != img_pk
-                        ),
+                        + ", ".join(str(img_bundle_order[x] + 1) for x in collisions),
                     )
                 )
 
