@@ -8,6 +8,7 @@ import hashlib
 import pathlib
 
 import fitz
+from tabulate import tabulate
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
@@ -23,7 +24,12 @@ class Command(BaseCommand):
     Or "paper-scan".  Leaning toward "paper-scan" in contrast with "bundle-scan"
     (which has its own command line tools).
 
-    Design::
+    Because upload starts a background job, we do this in two steps::
+
+        python3 manage.py hwscan foo.pdf --upload
+        python3 manage.py hwscan foo --map --papernum 1234 -q all
+
+    Original design::
 
         python3 manage.py hwscan foo.pdf --sid 12345678
         python3 manage.py hwscan foo.pdf --sid 12345678 -q "[[1],[1,2],[2,3],[4]]"
@@ -56,6 +62,13 @@ class Command(BaseCommand):
     """
 
     help = "Upload a single paper or single question or single page for a particular student"
+
+    def staging_bundle_status(self):
+        scanner = ScanService()
+        bundle_status = scanner.staging_bundle_status_cmd()
+        self.stdout.write(
+            tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
+        )
 
     # TODO: mostly just a copy paste from plom_staging_bundles
     def upload_pdf(self, source_pdf, *, username=None, questions=None):
@@ -105,6 +118,17 @@ class Command(BaseCommand):
             raise CommandError(err)
         self.stdout.write(f"Uploaded {source_pdf} as user {username}")
 
+        bundle_name = slug
+        print(f'bundle name is "{bundle_name}"')
+
+    def map_bundle_pages(self, bundle_name, *, papernum, username=None, questions=None):
+        scanner = ScanService()
+        try:
+            scanner.map_bundle_pages_cmd(
+                bundle_name, papernum=papernum, questions=questions
+            )
+        except ValueError as err:
+            raise CommandError(err)
         # We (probably) want to push directly...  is that possible?  Or can/should
         # we bipass the staging area altogether?  What could go wrong?
         # try:
@@ -115,11 +139,27 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--username", nargs=1, type=str, help="Which username to upload as."
+            "--username", type=str, action="store", help="Which username to upload as."
         )
         parser.add_argument("source_pdf", type=str, help="The test pdf to upload.")
 
-        parser.add_argument("--list", help="(TODO?) List bundles.")
+        # TODO: these are mutually exclusive, but this is not clear yet
+        parser.add_argument("--list", action="store_true", help="List bundles.")
+        parser.add_argument("--upload", action="store_true", help="TODO")
+        parser.add_argument("--map", action="store_true", help="TODO")
+
+        parser.add_argument(
+            "-t",
+            "--papernum",
+            metavar="T",
+            action="store",
+            type=int,
+            help="""
+                Which paper number to upload to.
+                It must exist; you must create it first with appropriate
+                versions.  No mechanism exposed yet to do that...
+            """,
+        )
 
         parser.add_argument(
             "-q",
@@ -142,5 +182,14 @@ class Command(BaseCommand):
             """,
         )
 
-    def handle(self, *args, **options):
-        self.print_help("manage.py", "plom_hwscan")
+    def handle(self, *args, **opt):
+        print(opt)
+        if opt["list"]:
+            self.staging_bundle_status()
+        if opt["upload"]:
+            self.upload_pdf(opt["source_pdf"], username=opt["username"])
+        if opt["map"]:
+            questions = opt["question"][0]
+            self.map_bundle_pages(
+                opt["source_pdf"], papernum=opt["papernum"], questions=questions
+            )

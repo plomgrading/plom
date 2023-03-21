@@ -35,6 +35,7 @@ from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
     StagingImage,
+    ExtraStagingImage,
     ManagePageToImage,
     ManageParseQR,
 )
@@ -438,6 +439,43 @@ class ScanService:
                 created=timezone.now(),
             )
 
+    def map_bundle_pages(self, bundle_pk, *, papernum, questions):
+        """WIP support for hwscan.
+
+        Args:
+            bundle_pk: primary key of bundle DB object
+
+        Keyword args:
+            papernum (int):
+            questions (list): doc elsehwere, but a list same length
+                as the bundle, each element is list of which questions
+                to attach that page too.
+        """
+        root_folder = settings.MEDIA_ROOT / "page_images"
+        root_folder.mkdir(exist_ok=True)
+
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+
+        print(bundle_obj)
+        with transaction.atomic():
+            # TODO: how do we walk them in order?
+            # for page_img, q in zip(bundle_obj.stagingimage_set.all(), questions):
+            for page_img in bundle_obj.stagingimage_set.all():
+                print(page_img)
+                print(page_img.rotation)
+                print(page_img.parsed_qr)
+                page_img.image_type = "extra"
+                page_img.save()
+                # TODO: not really Extra, do we need new XStagingImage?
+                # TODO: or can we use KnownStagingImage?
+                # TODO: we may need to make more than one of these for each page
+                # (e.g., questions="all" case)
+                p = ExtraStagingImage.objects.create(staging_image=page_img)
+                p.paper_number = papernum
+                # TODO: take from input
+                p.question_number = 1
+                p.save()
+
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -606,8 +644,21 @@ class ScanService:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
         elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
-        else:
-            self.read_qr_codes(bundle_obj.pk)
+        self.read_qr_codes(bundle_obj.pk)
+
+    @transaction.atomic
+    def map_bundle_pages_cmd(self, bundle_name, *, papernum, questions=None):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        if not bundle_obj.has_page_images:
+            raise ValueError(f"Please wait for {bundle_name} to upload...")
+        # elif bundle_obj.has_qr_codes:
+        #    raise ValueError(f"QR codes for {bundle_name} has been read.")
+        # TODO: ensure papernum exists, here or in the none-cmd?
+        self.map_bundle_pages(bundle_obj.pk, papernum=papernum, questions=questions)
 
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk):
