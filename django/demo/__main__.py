@@ -236,7 +236,7 @@ def wait_for_qr_read(number_of_bundles=3):
         while True:
             out_qr = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
             if "yet" in out_qr:
-                print("fake_bundle{n}.pdf still being read")
+                print(f"fake_bundle{n}.pdf still being read")
                 sleep(1)
             else:
                 print(f"fake_bundle{n}.pdf has been read")
