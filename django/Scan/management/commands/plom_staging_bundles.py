@@ -111,6 +111,14 @@ class Command(BaseCommand):
         ):
             self.stdout.write("  *  bundle perfect, ready to push")
 
+    def delete_staged_bundle(self, bundle_name):
+        scanner = ScanService()
+        try:
+            scanner.remove_bundle(bundle_name)
+        except ValueError as err:
+            raise CommandError(err)
+        self.stdout.write(f"Deleted {bundle_name}")
+
     def push_staged_bundle(self, bundle_name):
         scanner = ScanService()
         try:
@@ -153,6 +161,9 @@ class Command(BaseCommand):
             help="(optional) get status of specific bundle",
         )
 
+        sp_del = sp.add_parser("delete", help="delete a bundle.")
+        sp_del.add_argument("bundle_name", type=str, help="Which bundle to delete")
+
         # Push
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
         sp_push.add_argument("bundle_name", type=str, help="Which bundle to push.")
@@ -170,6 +181,8 @@ class Command(BaseCommand):
             )
         elif options["command"] == "status":
             self.staging_bundle_status(bundle_name=options["bundle_name"])
+        elif options["command"] == "delete":
+            self.delete_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "push":
             self.push_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "read_qr":

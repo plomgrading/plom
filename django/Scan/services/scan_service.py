@@ -182,20 +182,24 @@ class ScanService:
         self._remove_bundle(bundle.pk)
 
     @transaction.atomic
-    def remove_bundle(self, bundle_name, user):
+    def remove_bundle(self, bundle_name, *, user=None):
         """Remove a bundle PDF from the filesystem + database
 
         Args:
             bundle_name (str): which bundle.
-            user (str):
 
-        TODO: user is *not* for permissions: looks like just
-        a way to identify a bundle.
+        Keyword Args:
+            user (None/str): also filter by user.
+                TODO: user is *not* for permissions: looks like just
+                a way to identify a bundle.
         """
-        bundle = StagingBundle.objects.get(
-            user=user,
-            slug=bundle_name,
-        )
+        if user:
+            bundle = StagingBundle.objects.get(
+                user=user,
+                slug=bundle_name,
+            )
+        else:
+            bundle = StagingBundle.objects.get(slug=bundle_name)
         self._remove_bundle(bundle.pk)
 
     @transaction.atomic
