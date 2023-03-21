@@ -201,16 +201,16 @@ def download_zip():
     subprocess.check_call(split(py_man_cmd))
 
 
-def upload_bundles():
-    for n in [1, 2, 3]:
+def upload_bundles(number_of_bundles=3):
+    for n in range(1, number_of_bundles + 1):
         cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
-        sleep(2)
+        sleep(1)
 
 
-def wait_for_upload():
-    for n in [1, 2, 3]:
+def wait_for_upload(number_of_bundles=3):
+    for n in range(1, number_of_bundles + 1):
         cmd = f"plom_staging_bundles status fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         while True:
@@ -218,19 +218,33 @@ def wait_for_upload():
             if "qr" in out_up:
                 print(f"fake_bundle{n}.pdf ready for qr-reading")
                 break
-            sleep(2)
+            sleep(1)
 
 
-def read_qr_codes():
-    for n in [1, 2, 3]:
+def read_qr_codes(number_of_bundles=3):
+    for n in range(1, number_of_bundles + 1):
         cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
-        sleep(5)
+        sleep(1)
 
 
-def push_if_ready():
-    todo = [1, 2, 3]
+def wait_for_qr_read(number_of_bundles=3):
+    for n in range(1, number_of_bundles + 1):
+        cmd = f"plom_staging_bundles status fake_bundle{n}"
+        py_man_cmd = f"python3 manage.py {cmd}"
+        while True:
+            out_qr = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
+            if "yet" in out_qr:
+                print(f"fake_bundle{n}.pdf still being read")
+                sleep(1)
+            else:
+                print(f"fake_bundle{n}.pdf has been read")
+                break
+
+
+def push_if_ready(number_of_bundles=3):
+    todo = [k + 1 for k in range(number_of_bundles)]
     while True:
         done = []
         for n in todo:
@@ -243,14 +257,14 @@ def push_if_ready():
                 push_cmd = f"python3 manage.py plom_staging_bundles push fake_bundle{n}"
                 subprocess.check_call(split(push_cmd))
                 done.append(n)
-                sleep(2)
+                sleep(1)
         for n in done:
             todo.remove(n)
         if len(todo) > 0:
             print(
                 f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
             )
-            sleep(2)
+            sleep(1)
         else:
             print("All bundles pushed.")
             break
@@ -281,6 +295,8 @@ def main(test=False):
     """
     kwarg test: if true, run without waiting for user input at the end.
     """
+
+    number_of_bundles = 5
 
     configure_django_stuff()
 
@@ -327,21 +343,33 @@ def main(test=False):
     download_zip()
     print("*" * 40)
 
-    # scribble_on_exams(
-    # extra_page_papers=[49, 50],
-    # garbage_page_papers=[1, 2],
-    # duplicate_pages={1:3, 2:6}
-    # )
-    scribble_on_exams(extra_page_papers=[], garbage_page_papers=[])
+    scribble_on_exams(
+        number_of_bundles=number_of_bundles,
+        extra_page_papers=[49, 50],
+        garbage_page_papers=[1, 2],
+        duplicate_pages={1: 3, 2: 6},
+        duplicate_qr=[3, 4],
+    )
+    # scribble_on_exams(extra_page_papers=[], garbage_page_papers=[])
 
     print("*" * 40)
-    upload_bundles()
+    upload_bundles(
+        number_of_bundles=number_of_bundles,
+    )
 
-    wait_for_upload()
+    wait_for_upload(
+        number_of_bundles=number_of_bundles,
+    )
 
     print("*" * 40)
-    read_qr_codes()
+    read_qr_codes(
+        number_of_bundles=number_of_bundles,
+    )
 
+    print("*" * 40)
+    wait_for_qr_read(
+        number_of_bundles=number_of_bundles,
+    )
     # print("*" * 40)
     # push_if_ready()
 

@@ -45,53 +45,45 @@ class StagingImage(models.Model):
     paper_id = models.PositiveIntegerField(default=None, null=True)
     page_number = models.PositiveIntegerField(default=None, null=True)
     rotation = models.IntegerField(default=0)
-    known = models.BooleanField(default=False)
     pushed = models.BooleanField(default=False)
+    image_type = models.CharField(default="unread", max_length=16)
 
 
-class DiscardedStagingImage(models.Model):
-    """
-    An image of a discarded page.
-    """
-
-    bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
-    bundle_order = models.PositiveIntegerField(null=True)
-    file_name = models.TextField(default="")
-    file_path = models.TextField(default="")
-    image_hash = models.CharField(max_length=64)
-    parsed_qr = models.JSONField(default=dict, null=True)
-    rotation = models.IntegerField(default=0)
-    restore_class = models.TextField(null=False, default="")
+class KnownStagingImage(models.Model):
+    staging_image = models.OneToOneField(
+        StagingImage, primary_key=True, on_delete=models.CASCADE
+    )
+    paper_number = models.PositiveIntegerField(null=False)
+    page_number = models.PositiveIntegerField(null=False)
+    version = models.PositiveIntegerField(null=False)
 
 
-class CollisionStagingImage(models.Model):
-    """
-    An image of a collision page.
-    """
-
-    bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
-    bundle_order = models.PositiveIntegerField(null=True)
-    file_name = models.TextField(default="")
-    file_path = models.TextField(default="")
-    image_hash = models.CharField(max_length=64)
-    parsed_qr = models.JSONField(default=dict, null=True)
-    rotation = models.IntegerField(default=0)
+class ExtraStagingImage(models.Model):
+    staging_image = models.OneToOneField(
+        StagingImage, primary_key=True, on_delete=models.CASCADE
+    )
     paper_number = models.PositiveIntegerField(null=True)
-    page_number = models.PositiveIntegerField(null=True)
-    version_number = models.PositiveIntegerField(null=True)
+    question_number = models.PositiveIntegerField(null=True)
 
 
 class UnknownStagingImage(models.Model):
-    """
-    An image of an unknown page.
-    """
+    staging_image = models.OneToOneField(
+        StagingImage, primary_key=True, on_delete=models.CASCADE
+    )
 
-    bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
-    bundle_order = models.PositiveIntegerField(null=True)
-    file_name = models.TextField(default="")
-    file_path = models.TextField(default="")
-    image_hash = models.CharField(max_length=64)
-    rotation = models.IntegerField(default=0)
+
+class DiscardStagingImage(models.Model):
+    staging_image = models.OneToOneField(
+        StagingImage, primary_key=True, on_delete=models.CASCADE
+    )
+    discard_reason = models.TextField()
+
+
+class ErrorStagingImage(models.Model):
+    staging_image = models.OneToOneField(
+        StagingImage, primary_key=True, on_delete=models.CASCADE
+    )
+    error_reason = models.TextField()
 
 
 class ManagePageToImage(HueyTask):

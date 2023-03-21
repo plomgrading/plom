@@ -4,7 +4,12 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from huey.signals import SIGNAL_EXECUTING, SIGNAL_ERROR, SIGNAL_COMPLETE
+from huey.signals import (
+    SIGNAL_EXECUTING,
+    SIGNAL_ERROR,
+    SIGNAL_COMPLETE,
+    SIGNAL_INTERRUPTED,
+)
 
 from django.utils import timezone
 
@@ -157,6 +162,7 @@ def end_task(signal, task):
 
 @queue.signal(SIGNAL_ERROR)
 def error_task(signal, task, exc):
+    print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     if task.kwargs.get("quiet", False):
         return
     try:
@@ -167,3 +173,8 @@ def error_task(signal, task, exc):
     except HueyTask.DoesNotExist:
         # task has been deleted from underneath us.
         print(f"Task {task.id} is no longer in the database.")
+
+
+@queue.signal(SIGNAL_INTERRUPTED)
+def interrupt_task(signal, task):
+    print(f"Interrupt sent to task {task.id} - {task.name} {task.args}")

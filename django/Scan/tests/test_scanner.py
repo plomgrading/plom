@@ -125,7 +125,7 @@ class ScanServiceTests(TestCase):
                     "public_code": "93849",
                 },
                 "quadrant": "2",
-                "grouping_key": "00006004001",
+                "tpv": "00006004001",
                 "x_coord": 166.5,
                 "y_coord": 272,
             },
@@ -137,7 +137,7 @@ class ScanServiceTests(TestCase):
                     "public_code": "93849",
                 },
                 "quadrant": "3",
-                "grouping_key": "00006004001",
+                "tpv": "00006004001",
                 "x_coord": 173.75,
                 "y_coord": 2895.5,
             },
@@ -149,7 +149,7 @@ class ScanServiceTests(TestCase):
                     "public_code": "93849",
                 },
                 "quadrant": "4",
-                "grouping_key": "00006004001",
+                "tpv": "00006004001",
                 "x_coord": 2141,
                 "y_coord": 2883.5,
             },
@@ -172,8 +172,8 @@ class ScanServiceTests(TestCase):
                 code_dict[quadrant]["page_info"]["public_code"],
             )
             self.assertEqual(
-                parsed_codes[quadrant]["grouping_key"],
-                code_dict[quadrant]["grouping_key"],
+                parsed_codes[quadrant]["tpv"],
+                code_dict[quadrant]["tpv"],
             )
             self.assertTrue(
                 (parsed_codes[quadrant]["x_coord"] - code_dict[quadrant]["x_coord"])
@@ -232,25 +232,25 @@ class ScanServiceTests(TestCase):
             self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
             self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
-    def test_complete_images(self):
+    def test_known_images(self):
         """
-        Test ScanService.get_all_complete_images()
+        Test ScanService.get_all_known_images()
         """
         scanner = ScanService()
         bundle = baker.make(
             StagingBundle, user=self.user0, timestamp=timezone.now().timestamp()
         )
         # there are no images in the bundle
-        imgs = scanner.get_all_complete_images(bundle)
+        imgs = scanner.get_all_known_images(bundle)
         self.assertEqual(imgs, [])
 
         # now make an image with no qr-codes, so known is false
-        baker.make(StagingImage, parsed_qr={}, bundle=bundle, known=False)
-        imgs = scanner.get_all_complete_images(bundle)
+        baker.make(StagingImage, parsed_qr={}, bundle=bundle, image_type="unknown")
+        imgs = scanner.get_all_known_images(bundle)
         self.assertEqual(imgs, [])
         # now make an image with a qr-code and known=true.
         with_data = baker.make(
-            StagingImage, parsed_qr={"dummy": "dict"}, bundle=bundle, known=True
+            StagingImage, parsed_qr={"dummy": "dict"}, bundle=bundle, image_type="known"
         )
-        imgs = scanner.get_all_complete_images(bundle)
+        imgs = scanner.get_all_known_images(bundle)
         self.assertEqual(imgs, [with_data])

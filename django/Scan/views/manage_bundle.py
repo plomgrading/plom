@@ -2,10 +2,9 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 
-import pathlib
 
 from django.shortcuts import render
-from django.http import Http404, FileResponse, HttpResponse
+from django.http import Http404, FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ScannerRequiredView
@@ -30,47 +29,35 @@ class ManageBundleView(ScannerRequiredView):
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, user)
         n_pages = scanner.get_n_images(bundle)
-        valid_pages = scanner.get_n_complete_reading_tasks(bundle)
-        error_pages = scanner.get_n_error_image(bundle)
+        known_pages = scanner.get_n_known_images(bundle)
+        unknown_pages = scanner.get_n_unknown_images(bundle)
+        extra_pages = scanner.get_n_extra_images(bundle)
+        error_pages = scanner.get_n_error_images(bundle)
 
         if index >= n_pages:
             raise Http404("Bundle page does not exist.")
 
-        # pages = [scanner.get_qr_code_reading_status(bundle, i) for i in range(n_pages)]
-        pages = []
-        for i in range(n_pages):
-            page_dict = {}
-            status = scanner.get_qr_code_reading_status(bundle, i)
-            img = scanner.get_image(timestamp, user, i)
-            page_dict.update(
-                {
-                    "status": status,
-                    "pushed": img.pushed,
-                }
-            )
-            pages.append(page_dict)
-
-        qr_finished = scanner.is_bundle_reading_started(bundle)
-
-        finished_reading_qr = False
-
-        if scanner.is_bundle_reading_finished(bundle):
-            finished_reading_qr = True
+        page_info_dict = scanner.get_bundle_pages_info(bundle)
+        pages = [
+            page_info_dict[k] for k in range(len(page_info_dict))
+        ]  # flatten into ordered list
 
         context.update(
             {
                 "slug": bundle.slug,
                 "timestamp": timestamp,
                 "pages": pages,
-                "qr_finished": qr_finished,
+                "current_page": pages[index],
                 "index": index,
                 "one_index": index + 1,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
-                "valid_pages": valid_pages,
+                "known_pages": known_pages,
+                "unknown_pages": unknown_pages,
+                "extra_pages": extra_pages,
                 "error_pages": error_pages,
-                "finished_reading_qr": finished_reading_qr,
+                "finished_reading_qr": bundle.has_qr_codes,
             }
         )
         return context
@@ -82,7 +69,43 @@ class ManageBundleView(ScannerRequiredView):
             raise Http404()
 
         context = self.build_context(timestamp, request.user, index)
+
         return render(request, "Scan/manage_bundle.html", context)
+
+
+class GetBundleNavFragmentView(ScannerRequiredView):
+    def get(self, request, timestamp, index):
+        try:
+            timestamp = float(timestamp)
+        except ValueError:
+            raise Http404()
+
+        context = super().build_context()
+        scanner = ScanService()
+        bundle = scanner.get_bundle(timestamp, request.user)
+        n_pages = scanner.get_n_images(bundle)
+        if index >= n_pages:
+            raise Http404("Bundle page does not exist.")
+        current_page = scanner.get_bundle_single_page_info(bundle, index)
+        # page_info_dict = scanner.get_bundle_pages_info(bundle)
+        # pages = [
+        #     page_info_dict[k] for k in range(len(page_info_dict))
+        # ]  # flatten into ordered list
+
+        context.update(
+            {
+                "slug": bundle.slug,
+                "timestamp": timestamp,
+                "index": index,
+                "one_index": index + 1,
+                "total_pages": n_pages,
+                "prev_idx": index - 1,
+                "next_idx": index + 1,
+                "current_page": current_page,
+            }
+        )
+
+        return render(request, "Scan/fragments/nav_bundle.html", context)
 
 
 class GetBundleImageView(ScannerRequiredView):

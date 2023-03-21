@@ -150,7 +150,12 @@ class PageImageProcessor:
             int: rotation angle by which the page was rotated.
             If page was not rotated, rotation angle of 0 is returned.
         """
-        orientation = self.get_page_orientation(qr_data)
+        try:
+            orientation = self.get_page_orientation(qr_data)
+        except RuntimeError:
+            # We cannot get the page orientation, so just return 0.
+            return 0
+
         if orientation == "upright":
             return 0
 

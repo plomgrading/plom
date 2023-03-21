@@ -596,28 +596,30 @@ def make_colliding_pages(paper_dir, outfile):
     all_pdf_documents.close()
 
 
-def splitFakeFile(outfile):
-    """Split the scribble pdf into three files"""
+def splitFakeFile(outfile, *, parts=3):
+    """Split the scribble pdf into specified number of files (defaults to 3)"""
 
     outfile = Path(outfile)
-    print("Splitting PDF into 3 in order to test bundles.")
     originalPDF = fitz.open(outfile)
-    length = len(originalPDF) // 3
 
-    doc1 = fitz.open()
-    doc2 = fitz.open()
-    doc3 = fitz.open()
+    if parts < 1:
+        raise ValueError("Cannot split PDF into fewer than 1 part")
+    if parts > len(originalPDF) // 2:
+        raise ValueError("Cannot split PDF into parts of less than 1 page")
 
-    doc1.insert_pdf(originalPDF, from_page=0, to_page=length)
-    doc2.insert_pdf(originalPDF, from_page=length + 1, to_page=2 * length)
-    doc3.insert_pdf(originalPDF, from_page=2 * length + 1)
+    print(f"Splitting PDF into {parts} in order to test bundles.")
+    length = len(originalPDF) // parts
 
-    doc1.save(outfile.with_name(outfile.stem + "1.pdf"))
-    doc2.save(outfile.with_name(outfile.stem + "2.pdf"))
-    doc3.save(outfile.with_name(outfile.stem + "3.pdf"))
-    doc1.close()
-    doc2.close()
-    doc3.close()
+    for p in range(parts):
+        doc = fitz.open()
+        # be careful with last file.
+        if p != parts - 1:
+            doc.insert_pdf(originalPDF, from_page=p * length, to_page=(p + 1) * length)
+        else:
+            doc.insert_pdf(originalPDF, from_page=p * length)
+        fname = outfile.stem + f"{p+1}.pdf"
+        doc.save(outfile.with_name(fname))
+        doc.close()
     originalPDF.close()
 
 
