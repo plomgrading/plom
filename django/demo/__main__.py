@@ -229,6 +229,20 @@ def read_qr_codes(number_of_bundles=3):
         sleep(1)
 
 
+def wait_for_qr_read(number_of_bundles=3):
+    for n in range(1, number_of_bundles + 1):
+        cmd = f"plom_staging_bundles status fake_bundle{n}"
+        py_man_cmd = f"python3 manage.py {cmd}"
+        while True:
+            out_qr = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
+            if "yet" in out_qr:
+                print("fake_bundle{n}.pdf still being read")
+                sleep(1)
+            else:
+                print(f"fake_bundle{n}.pdf has been read")
+                break
+
+
 def push_if_ready(number_of_bundles=3):
     todo = [k + 1 for k in range(number_of_bundles)]
     while True:
@@ -352,6 +366,10 @@ def main(test=False):
         number_of_bundles=number_of_bundles,
     )
 
+    print("*" * 40)
+    wait_for_qr_read(
+        number_of_bundles=number_of_bundles,
+    )
     # print("*" * 40)
     # push_if_ready()
 
