@@ -15,6 +15,7 @@ from django.core.management import call_command
 from django.conf import settings
 
 from demo import scribble_on_exams
+from demo import remove_old_migration_files
 
 
 def get_database_engine():
@@ -30,17 +31,6 @@ def get_database_engine():
     else:
         return "unknown"
     # TODO = get this working with mysql too
-
-
-def remove_old_migration_files():
-    print("Avoid perplexing errors by removing autogen migration droppings")
-
-    for path in Path(".").glob("*/migrations/*.py"):
-        if path.name == "__init__.py":
-            continue
-        else:
-            print(f"Removing {path}")
-            path.unlink(missing_ok=True)
 
 
 def recreate_postgres_db():
