@@ -81,6 +81,7 @@ class Command(BaseCommand):
             raise CommandError(f"Multiple bundles called '{bundle_name}' are present.")
 
         (
+            pk,
             num_pages,
             valid_pages,
             error_pages,
@@ -89,7 +90,7 @@ class Command(BaseCommand):
             username,
         ) = the_bundle[0][1:]
         self.stdout.write(
-            f"Found bundle '{bundle_name}' with {num_pages} pages uploaded by {username}"
+            f"Found bundle '{bundle_name}' (id {pk}) with {num_pages} pages uploaded by {username}"
         )
         if pushed is True:
             self.stdout.write("  * bundle has been pushed")

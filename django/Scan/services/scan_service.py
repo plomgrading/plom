@@ -543,7 +543,8 @@ class ScanService:
         bundle_status = []
         status_header = (
             "Bundle name",
-            "Total pages",
+            "Id",
+            "Pages",
             "Known pages",
             "Error pages",
             "QR read",
@@ -569,6 +570,7 @@ class ScanService:
 
             bundle_data = (
                 bundle.slug,
+                bundle.pk,
                 total_pages,
                 n_knowns,
                 n_errors,
