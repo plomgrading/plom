@@ -66,19 +66,22 @@ class QRErrorService:
                     error_imgs.append((img.pk, str(err)))
 
         # check for internal collisions: tpv with 2 or more images
-        for tpv, img_pks in known_imgs.items():
-            if len(img_pks) == 1:  # no collisions
+        for tpv, colliding in known_imgs.items():
+            if len(colliding) == 1:  # no collisions
                 continue
             # this tpv corresponds to multiple images: record "error images"
             # for all of them, with error messages that tell the user which
             # other images it collides with, noting their bundle-order.
-            for img_pk in img_pks:
-                collisions = img_pks.copy().remove(img_pk)
+            for img_pk in colliding:
                 error_imgs.append(
                     (
                         img_pk,
                         "Image collides with images in this bundle at positions "
-                        + ", ".join(str(img_bundle_order[x] + 1) for x in collisions),
+                        + ", ".join(
+                            str(img_bundle_order[x] + 1)
+                            for x in colliding
+                            if x != img_pk
+                        ),
                     )
                 )
 
