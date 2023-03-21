@@ -146,6 +146,7 @@ def insert_page_from_another_assessment(pdf_doc):
         rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
         # the 2nd qr-code goes in NW corner.
         pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+        # (note don't care if even/odd page: is a new page, no staple indicator)
 
 
 def insert_qr_from_previous_page(pdf_doc, paper_number):
