@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
 from datetime import datetime
@@ -135,7 +136,7 @@ class RemoveBundleView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        scanner.remove_bundle(timestamp, request.user)
+        scanner.remove_bundle_DEPRECATED(timestamp, request.user)
         return HttpResponseClientRefresh()
 
 
@@ -235,5 +236,5 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        scanner.remove_bundle(timestamp, request.user)
+        scanner.remove_bundle_DEPRECATED(timestamp, request.user)
         return HttpResponseClientRefresh()

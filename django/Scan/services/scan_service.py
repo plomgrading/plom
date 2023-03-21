@@ -174,11 +174,38 @@ class ScanService:
             return False
 
     @transaction.atomic
-    def remove_bundle(self, timestamp, user):
+    def remove_bundle_DEPRECATED(self, timestamp, user):
         """
         Remove a bundle PDF from the filesystem + database
         """
         bundle = self.get_bundle(timestamp, user)
+        self._remove_bundle(bundle.pk)
+
+    @transaction.atomic
+    def remove_bundle(self, bundle_name, user):
+        """Remove a bundle PDF from the filesystem + database
+
+        Args:
+            bundle_name (str): which bundle.
+            user (str):
+
+        TODO: user is *not* for permissions: looks like just
+        a way to identify a bundle.
+        """
+        bundle = StagingBundle.objects.get(
+            user=user,
+            slug=bundle_name,
+        )
+        self._remove_bundle(bundle.pk)
+
+    @transaction.atomic
+    def _remove_bundle(self, bundle_pk):
+        """Remove a bundle PDF from the filesystem + database
+
+        Args:
+            bundle_pk: the primary key for a particular bundle.
+        """
+        bundle = StagingBundle.objects.get(pk=bundle_pk)
         pathlib.Path(bundle.pdf_file.path).unlink()
         bundle.delete()
 
