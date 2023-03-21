@@ -71,11 +71,8 @@ class QRErrorService:
                     error_imgs.append(
                         (
                             pk_bo[0],
-                            str(
-                                ValueError(
-                                    f"Image collides with images in this bundle at positions {[x[1]+1 for x in col_list if x != pk_bo]}"
-                                )
-                            ),  # add one since bundle-index starts from 0 but hoomans like to start from 1.
+                            f"Image collides with images in this bundle at positions {[x[1]+1 for x in col_list if x != pk_bo]}"
+                            # add one since bundle-index starts from 0 but hoomans like to start from 1.
                         )
                     )
                     # now remove this (image_key, tpv) from the know-imgs list
