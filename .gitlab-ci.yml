@@ -325,15 +325,8 @@ flake8:
   allow_failure: true
 
 
-# TODO: Issue #2619: can we make these tests use sqlite?
+# TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
-  services:
-    - postgres:12.2-alpine
-  variables:
-    POSTGRES_DB: "plom_db"
-    POSTGRES_USER: "postgres"
-    POSTGRES_PASSWORD: "postgres"
-    POSTGRES_HOST_AUTH_METHOD: trust
   stage: test
   needs: ["docker-image"]
   image: $IM
@@ -341,8 +334,7 @@ webplom_test:
     - pushd django
     - python3 -m pip install coverage
     - python3 -m pip install -r requirements.txt
-    # Since we're running postgres in a CI service, replace "localhost" with "postgres"
-    - 'sed -i "s/: \"127.0.0.1/: \"postgres/" Web_Plom/settings.py'
+    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
     - python3 manage.py migrate
     - coverage run --source='.' manage.py test

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
 
 """
 Django settings for Web_Plom project.
@@ -120,8 +121,11 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     },
 }
-DATABASES["default"] = DATABASES["postgres"]
-
+# Issue #2619: users can choose a database backend via env var
+default = os.environ.get("PLOM_DATABASE_BACKEND")
+if not default:
+    default = "postgres"
+DATABASES["default"] = DATABASES[default]
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
