@@ -39,7 +39,7 @@ class QRErrorService:
         known_imgs = {}
         # for each known image, also keep its bundle-order - we use that to create useful
         # error messages in case of internal collisions.
-        bundle_orders = {}
+        img_bundle_order = {}
 
         with transaction.atomic():
             images = bundle.stagingimage_set.all()
@@ -60,8 +60,7 @@ class QRErrorService:
                         # if not seen before then store as **list** [img.pk]
                         # if has been seen before then append to that list.
                         known_imgs.setdefault(tpv, []).append(img.pk)
-                        # this is roughly equiv to using defaultdict
-                        bundle_orders[img.pk] = img.bundle_order
+                        img_bundle_order[img.pk] = img.bundle_order
 
                 except ValueError as err:
                     error_imgs.append((img.pk, str(err)))
@@ -79,7 +78,9 @@ class QRErrorService:
                         img_pk,
                         "Image collides with images in this bundle at positions "
                         + ", ".join(
-                            [str(bundle_orders[x] + 1) for x in col_list if x != img_pk]
+                            str(img_bundle_order[x] + 1)
+                            for x in col_list
+                            if x != img_pk
                         ),
                     )
                 )
