@@ -31,10 +31,15 @@ class QRErrorService:
         no_qr_imgs = []  # no qr-codes could be read
         error_imgs = []  # indicative of a serious error (eg inconsistent qr-codes)
         extra_imgs = []  # extra-page
-        known_imgs = []  # a normal qr-coded plom page stored as (pk, tpv)
-        # keep track of all the tpv of qr-coded pages
-        # to check for internal collision
-        tpv_to_imgs = {}
+        # keep a dict of tpv to image_pk of known-images. is {tpv: [pk1, pk2, pk3,...]}
+        # if a given tpv shows up in a single image, then this is a normal "known" page
+        # if a given tpv corresponds to multiple images then that is
+        # an "internal collision", that is, we have multiple copies of
+        # a given page (as encoded by its tpv) inside the current bundle.
+        known_imgs = {}
+        # for each known image, also keep its bundle-order - we use that to create useful
+        # error messages in case of internal collisions.
+        bundle_orders = {}
 
         with transaction.atomic():
             images = bundle.stagingimage_set.all()
@@ -52,37 +57,40 @@ class QRErrorService:
                     if tpv == "plomX":  # is an extra page
                         extra_imgs.append(img.pk)
                     else:  # a normal qr-coded page
-                        known_imgs.append((img.pk, tpv))
-                        # keep list of imgs with this tpv to check for internal collisions
-                        tpv_to_imgs.setdefault(tpv, []).append(
-                            (img.pk, img.bundle_order)  # image key and its bundle-order
-                        )
+                        # if not seen before then store as **list** [img.pk]
+                        # if has been seen before then append to that list.
+                        known_imgs.setdefault(tpv, []).append(img.pk)
+                        # this is roughly equiv to using defaultdict
+                        bundle_orders[img.pk] = img.bundle_order
+
                 except ValueError as err:
                     error_imgs.append((img.pk, str(err)))
 
-        # now create a dict of internal collisions from the grouping_to_imgs dict
-        internal_collisions = {tpv: l for tpv, l in tpv_to_imgs.items() if len(l) > 1}
-        # TODO - if any collisions, then those imgs need to be removed from "known_imgs"
-
-        if len(internal_collisions) > 0:
-            # move each colliding image from known_imgs to error_imgs
-            for tpv, col_list in internal_collisions.items():
-                for img_keys in col_list:
-                    error_imgs.append(
-                        (
-                            img_keys[0],
-                            "Image collides with images in this bundle at positions "
-                            + ", ".join(
-                                [str(x[1] + 1) for x in col_list if x != img_keys]
-                            ),
-                        )
+        # now look at the known-image dict for internal collisions - ie tpv with 2 or more images
+        for tpv, col_list in known_imgs.items():
+            if len(col_list) == 1:  # this is not a collision, so skip
+                continue
+            # this tpv corresponds to multiple images, so make error images for each
+            # with error-message that tells the user which other images it collides
+            # with - to be useful this needs the bundle-order of each image.
+            for img_pk in col_list:
+                error_imgs.append(
+                    (
+                        img_pk,
+                        "Image collides with images in this bundle at positions "
+                        + ", ".join(
+                            [str(bundle_orders[x] + 1) for x in col_list if x != img_pk]
+                        ),
                     )
-                    known_imgs.remove((img_keys[0], tpv))
+                )
 
         with transaction.atomic():
-            # save all the known images
-            for k, tpv in known_imgs:
-                img = StagingImage.objects.get(pk=k)
+            # save all the known images that are not collisions.
+            for tpv, img_list in known_imgs.items():
+                if len(img_list) > 1:
+                    # this indicates a collision, and so handled by error-images
+                    continue
+                img = StagingImage.objects.get(pk=img_list[0])
                 img.image_type = "known"
                 img.save()
                 (
