@@ -52,6 +52,7 @@ from plom.plom_exceptions import (
     PlomAPIException,
     PlomAuthenticationException,
     PlomExistingLoginException,
+    PlomServerNotReady,
     PlomSSLError,
 )
 from plom.messenger import Messenger, ManagerMessenger
@@ -479,6 +480,16 @@ class Chooser(QDialog):
 
         try:
             spec = self.messenger.get_spec()
+        except PlomServerNotReady as e:
+            WarnMsg(
+                self,
+                "Server does not yet have a spec, nothing to mark. "
+                " Perhaps you want to login with the manager account to"
+                " configure the server.",
+                info=str(e),
+            ).exec()
+            self.messenger = None
+            return
         except PlomException as e:
             WarnMsg(self, "Could not connect to server", info=str(e)).exec()
             self.messenger = None
