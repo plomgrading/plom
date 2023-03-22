@@ -261,20 +261,19 @@ class ImageBundleService:
         4. Bulk-create images
         """
 
-        ibs = ImageBundleService()
         bundle_images = StagingImage.objects.filter(bundle=staged_bundle)
 
         # Staging has checked this - but we check again here to be very sure
-        if not ibs.all_staged_imgs_valid(bundle_images):
+        if not self.all_staged_imgs_valid(bundle_images):
             raise RuntimeError("Some pages in this bundle do not have QR data.")
 
         # Staging has checked this - but we check again here to be very sure
-        collide = ibs.find_internal_collisions(bundle_images)
+        collide = self.find_internal_collisions(bundle_images)
         if len(collide) > 0:
             raise RuntimeError(f"Some pages in the staged bundle collide - {collide}")
 
         # Staging has not checked this - we need to do it here
-        collide = ibs.find_external_collisions(bundle_images)
+        collide = self.find_external_collisions(bundle_images)
         if len(collide) > 0:
             raise RuntimeError(
                 f"Some pages in the staged bundle collide with uploaded pages - {collide}"
