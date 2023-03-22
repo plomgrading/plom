@@ -232,6 +232,45 @@ def make_last_page_with_wrong_version(pdf_doc, paper_number):
         pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[-1]), overlay=True)
 
 
+def append_out_of_range_paper_and_page(pdf_doc):
+    """Append two new pages to the pdf - one as test-1 page-999 and one as test-99999 page-1."""
+    from plom import SpecVerifier
+    from plom.create.mergeAndCodePages import create_QR_codes
+
+    # a rather cludge way to get at the spec via commandline tools
+    # really we just need the public code.
+    with tempfile.TemporaryDirectory() as td:
+        spec_file = Path(td) / "the_spec.toml"
+        call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+        code = SpecVerifier.from_toml_file(spec_file).spec["publicCode"]
+
+        qr_pngs = create_QR_codes(99999, 1, 1, code, Path(td))
+        pdf_doc.new_page(-1)
+        pdf_doc[-1].insert_text(
+            (120, 200),
+            text="This is a page from a non-existant paper",
+            fontsize=18,
+            color=[0, 0.75, 0.75],
+        )
+        # hard-code one qr-code in top-left
+        rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
+        # the 2nd qr-code goes in NW corner.
+        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+
+        qr_pngs = create_QR_codes(1, 999, 1, code, Path(td))
+        pdf_doc.new_page(-1)
+        pdf_doc[-1].insert_text(
+            (120, 200),
+            text="This is a non-existant page from an existing test",
+            fontsize=18,
+            color=[0, 0.75, 0.75],
+        )
+        # hard-code one qr-code in top-left
+        rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
+        # the 2nd qr-code goes in NW corner.
+        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+
+
 def _scribble_loop(
     assigned_papers_ids,
     extra_page_path,
@@ -285,6 +324,9 @@ def _scribble_loop(
                 all_pdf_documents.insert_pdf(pdf_document)
         # now insert a page from a different assessment to cause a "wrong public code" error
         insert_page_from_another_assessment(all_pdf_documents)
+        # append some out-of-range pages
+        append_out_of_range_paper_and_page(all_pdf_documents)
+
         all_pdf_documents.save(out_file)
 
 
@@ -323,7 +365,11 @@ def scribble_on_exams(
     print(
         f"\tA qr-code from the second last page of the test-paper paper will be inserted on last page of that paper; in papers: {duplicate_qr}"
     )
-    print("\tA page from a different assessment will be inserted as the final page")
+    print(
+        "\tA page from a different assessment will be inserted near the end of the bundles"
+    )
+    print("\tA page from a non-existant test-paper will be appended to the bundles")
+    print("\tA non-existant page from a test-paper will be appended to the bundles")
     print("^" * 40)
 
     out_file = Path("fake_bundle.pdf")

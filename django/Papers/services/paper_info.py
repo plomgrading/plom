@@ -54,6 +54,6 @@ class PaperInfoService:
             page = BasePage.objects.get(paper=paper, page_number=page_number)
         except BasePage.DoesNotExist:
             raise ValueError(
-                f"Paper-page {paper_number}-{page_number} does not exist in the database."
+                f"Page {page_number} of paper {paper_number} does not exist in the database."
             )
         return page.version
