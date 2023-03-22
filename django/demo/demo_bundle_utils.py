@@ -186,6 +186,52 @@ def insert_qr_from_previous_page(pdf_doc, paper_number):
         pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[-1]), overlay=True)
 
 
+def make_last_page_with_wrong_version(pdf_doc, paper_number):
+    """Removes the last page of the doc and replaces it with a nearly
+    blank page that contains a qr-code that is nearly valid except
+    that the version is wrong.
+
+
+    Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
+          paper_number (int): the paper_number of that test-paper.
+
+    Returns:
+       pdf_doc (fitz.Document): the updated pdf-document with replaced last page.
+
+    """
+    from plom import SpecVerifier
+    from plom.create.mergeAndCodePages import create_QR_codes
+
+    # a rather cludge way to get at the spec via commandline tools
+    # really we just need the public code.
+    with tempfile.TemporaryDirectory() as td:
+        spec_file = Path(td) / "the_spec.toml"
+        call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+        spec = SpecVerifier.from_toml_file(spec_file).spec
+        code = spec["publicCode"]
+        max_ver = spec["numberOfVersions"]
+
+        # take last page of paper and insert a qr-code from the page before that.
+        page_number = pdf_doc.page_count
+        # make a qr-code for this paper/page but with version max+1
+        qr_pngs = create_QR_codes(
+            paper_number, page_number, max_ver + 1, code, Path(td)
+        )
+        pdf_doc.delete_page()  # this defaults to the last page.
+
+        pdf_doc.new_page(-1)
+
+        pdf_doc[-1].insert_text(
+            (120, 50),
+            text="This is a page has a qr-code with the wrong version",
+            fontsize=18,
+            color=[0, 0.75, 0.75],
+        )
+        # hard-code one qr-code in top-left
+        rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
+        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[-1]), overlay=True)
+
+
 def _scribble_loop(
     assigned_papers_ids,
     extra_page_path,
@@ -195,10 +241,12 @@ def _scribble_loop(
     garbage_page_papers=[],
     duplicate_pages={},
     duplicate_qr=[],
+    wrong_version=[],
 ):
     # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
     # garbage_page_papers = list of paper_numbers to which we append a garbage page
     # duplicate_pages = dict of n:p = page-p from paper-n = to be duplicated (causing collisions)
+    # wrong_version = list of paper_numbers to which we replace last page with a blank but wrong version number.
 
     # A complete collection of the pdfs created
     with fitz.open() as all_pdf_documents:
@@ -208,6 +256,10 @@ def _scribble_loop(
                 if not paper["prenamed"]:
                     scribble_name_and_id(pdf_document, paper["id"], paper["name"])
                 paper_number = int(paper["paper_number"])
+
+                if paper_number in wrong_version:
+                    make_last_page_with_wrong_version(pdf_document, paper_number)
+
                 if paper_number in extra_page_papers:
                     append_extra_page(
                         pdf_document,
@@ -243,6 +295,7 @@ def scribble_on_exams(
     garbage_page_papers=[],
     duplicate_pages={},
     duplicate_qr=[],
+    wrong_version=[],
 ):
     classlist = get_classlist_as_dict()
     classlist_length = len(classlist)
@@ -265,6 +318,9 @@ def scribble_on_exams(
     print(f"\tGarbage pages will be appended after papers: {garbage_page_papers}")
     print(f"\tDuplicate pages will be inserted: {duplicate_pages}")
     print(
+        f"\tThe last page of papers {wrong_version} will be replaced with qr-codes with incorrect versions"
+    )
+    print(
         f"\tA qr-code from the second last page of the test-paper paper will be inserted on last page of that paper; in papers: {duplicate_qr}"
     )
     print("\tA page from a different assessment will be inserted as the final page")
@@ -280,6 +336,7 @@ def scribble_on_exams(
         garbage_page_papers=garbage_page_papers,
         duplicate_pages=duplicate_pages,
         duplicate_qr=duplicate_qr,
+        wrong_version=wrong_version,
     )
     # take this single output pdf and split it into given number of bundles, then remove it.
     splitFakeFile(out_file, parts=number_of_bundles)

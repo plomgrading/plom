@@ -7,7 +7,7 @@
 from django.db import transaction
 
 from plom.tpv_utils import parse_paper_page_version
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, PaperInfoService
 from Scan.models import (
     StagingImage,
     UnknownStagingImage,
@@ -182,9 +182,22 @@ class QRErrorService:
             raise ValueError(
                 "Inconsistent version-numbers - check scan for folded pages"
             )
-        # check all the same tpv - this should not be triggered because of previous checks
+        # check all the same tpv - this **should** not be triggered because of previous checks
         if is_list_inconsistent([parsed_qr_dict[x]["tpv"] for x in parsed_qr_dict]):
             raise ValueError("Inconsistent tpv - check scan for folded pages")
+        # check that the version in the qr-code matches the question-version-map in the system.
+
+        page_info = next(iter(parsed_qr_dict.values()))["page_info"]
+        if (
+            PaperInfoService().get_version_from_paper_page(
+                page_info["paper_id"], page_info["page_num"]
+            )
+            != page_info["version_num"]
+        ):
+            raise ValueError(
+                "Version of paper/page in qr-code does not match version in database"
+            )
+
         return True
 
     def get_tpv(self, parsed_qr_dict):

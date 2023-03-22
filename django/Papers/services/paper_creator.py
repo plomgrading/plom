@@ -70,16 +70,17 @@ class PaperCreatorService:
             raise IntegrityError(
                 f"An entry paper {paper_number} already exists in the database"
             )
-
+        # TODO - idpage and dnmpage versions might be not one in future.
+        # For time being assume that IDpage and DNMPage are always version 1.
         id_page = IDPage(
-            paper=paper_obj,
-            image=None,
-            page_number=int(spec["idPage"]),
+            paper=paper_obj, image=None, page_number=int(spec["idPage"]), version=1
         )
         id_page.save()
 
         for dnm_idx in spec["doNotMarkPages"]:
-            dnm_page = DNMPage(paper=paper_obj, image=None, page_number=int(dnm_idx))
+            dnm_page = DNMPage(
+                paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
+            )
             dnm_page.save()
 
         for q_id, question in spec["question"].items():
@@ -92,6 +93,7 @@ class PaperCreatorService:
                     page_number=int(q_page),
                     question_number=index,
                     question_version=version,
+                    version=version,  # I don't like having to double-up here, but....
                 )
                 question_page.save()
 

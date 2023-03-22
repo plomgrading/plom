@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
+
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
@@ -34,6 +38,7 @@ class BasePage(PolymorphicModel):
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
     page_number = models.PositiveIntegerField(null=False)
+    version = models.PositiveIntegerField(null=False)
 
 
 class DNMPage(BasePage):
