@@ -6,7 +6,6 @@ import shutil
 import itertools
 
 from django.db import transaction
-from django.db.models import Count
 from django.conf import settings
 from django_huey import db_task
 
@@ -14,7 +13,7 @@ from Scan.models import (
     StagingImage,
 )
 
-from Papers.services import SpecificationService
+from Mark.services import MarkingTaskService
 
 from Papers.models import (
     Bundle,
@@ -27,6 +26,7 @@ from Papers.models import (
 )
 from .paper_creator import PaperCreatorService
 from .paper_info import PaperInfoService
+from .validated_spec_service import SpecificationService
 
 
 class ImageBundleService:
@@ -300,7 +300,11 @@ class ImageBundleService:
             page.image = image
             page.save(update_fields=["image"])
 
-        ibs.get_ready_questions(uploaded_bundle)
+        mts = MarkingTaskService()
+        questions = ibs.get_ready_questions(uploaded_bundle)
+        for paper, question in questions["ready"]:
+            paper_instance = Paper.objects.get(paper_number=paper)
+            mts.create_task(paper_instance, question)
 
     def get_staged_img_location(self, staged_image):
         """
@@ -421,7 +425,7 @@ class ImageBundleService:
                 .filter(paper__paper_number=paper, question_number=question_num)
                 .count()
             )
-            n_pages = SpecificationService().n_pages_for_question(question_num+1)
+            n_pages = SpecificationService().n_pages_for_question(question_num)
 
             if n_pages == n_pushed_pages:
                 result["ready"].append((paper, question_num))
