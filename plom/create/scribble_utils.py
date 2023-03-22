@@ -614,7 +614,7 @@ def splitFakeFile(outfile, *, parts=3):
         doc = fitz.open()
         # be careful with last file.
         if p != parts - 1:
-            doc.insert_pdf(originalPDF, from_page=p * length, to_page=(p + 1) * length)
+            doc.insert_pdf(originalPDF, from_page=p * length, to_page=(p + 1) * length-1)
         else:
             doc.insert_pdf(originalPDF, from_page=p * length)
         fname = outfile.stem + f"{p+1}.pdf"

@@ -115,9 +115,7 @@ class Command(BaseCommand):
         scanner = ScanService()
         try:
             scanner.push_bundle_cmd(bundle_name)
-            self.stdout.write(
-                f"Pushing {bundle_name} - processing it in the background now."
-            )
+            self.stdout.write(f"Bundle {bundle_name} - pushed from staging.")
         except ValueError as err:
             raise CommandError(err)
 

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import shutil
 import itertools
@@ -248,8 +249,7 @@ class ImageBundleService:
                 return True
         return False
 
-    @db_task(queue="tasks")
-    def _upload_valid_bundle(staged_bundle):
+    def upload_valid_bundle(self, staged_bundle):
         """
         Assuming all of the pages in the bundle are valid (i.e. have a valid page number,
         paper number, and don't collide with any currently uploaded pages) upload all the pages
@@ -264,20 +264,25 @@ class ImageBundleService:
         ibs = ImageBundleService()
         bundle_images = StagingImage.objects.filter(bundle=staged_bundle)
 
-        if not ibs.all_staged_imgs_valid(bundle_images):
-            raise RuntimeError("Some pages in this bundle do not have QR data.")
+        # Staging has checked this so remove this test.
+        # if not ibs.all_staged_imgs_valid(bundle_images):
+        # raise RuntimeError("Some pages in this bundle do not have QR data.")
 
-        if len(ibs.find_internal_collisions(bundle_images)) > 0:
-            raise RuntimeError("Some pages in the staged bundle collide.")
+        # Staging has checked this so remove this test
+        # if len(ibs.find_internal_collisions(bundle_images)) > 0:
+        # raise RuntimeError("Some pages in the staged bundle collide.")
 
-        if len(ibs.find_external_collisions(bundle_images)) > 0:
+        # Staging has not checked this - we need to do it here
+        collide = ibs.find_external_collisions(bundle_images)
+        if len(collide) > 0:
             raise RuntimeError(
-                "Some pages in the staged bundle collide with uploaded pages."
+                f"Some pages in the staged bundle collide with uploaded pages - {collide}"
             )
 
         uploaded_bundle = Bundle(name=staged_bundle.slug, hash=staged_bundle.pdf_hash)
         uploaded_bundle.save()
 
+        # TODO - needs to handle extra pages too.
         for staged in bundle_images:
             image = Image(
                 bundle=uploaded_bundle,
@@ -289,9 +294,10 @@ class ImageBundleService:
             )
             image.save()
 
+            known = staged.knownstagingimage
             page = BasePage.objects.get(
-                paper__paper_number=staged.paper_id,
-                page_number=staged.page_number,
+                paper__paper_number=known.paper_number,
+                page_number=known.page_number,
             )
             page.image = image
             page.save(update_fields=["image"])
@@ -330,10 +336,8 @@ class ImageBundleService:
         Returns:
             bool: True if all images are valid, false otherwise
         """
-
-        return not staged_imgs.filter(
-            parsed_qr=None, paper_id=None, page_number=None
-        ).exists()
+        # Deprecated - this is done at staging.
+        return not staged_imgs.exclude(image_type="known").exists()
 
     @transaction.atomic
     def find_internal_collisions(self, staged_imgs):
@@ -346,12 +350,13 @@ class ImageBundleService:
         Returns:
             list [(StagingImage, StagingImage)]: list of unordered collisions.
         """
+        # Deprecated - this test is done at staging
 
         collisions = []
         visited = []
         for image in staged_imgs:
             colls = staged_imgs.filter(
-                paper_id=image.paper_id,
+                paper_id=image.paper_number,
                 page_number=image.page_number,
             )
             colls = list(filter(lambda i: i.pk != image.pk, colls))
@@ -371,15 +376,19 @@ class ImageBundleService:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            list [(StagingImage, StagingImage)]: list of unordered collisions.
+            list [(StagingImage, Image)]: list of unordered collisions.
         """
 
         collisions = []
+        # TODO - in future will need to also handle extra pages.
         for image in staged_imgs:
+            known = image.knownstagingimage
             colls = Image.objects.filter(
-                basepage__paper__paper_number=image.paper_id,
-                basepage__page_number=image.page_number,
+                basepage__paper__paper_number=known.paper_number,
+                basepage__page_number=known.page_number,
             )
             for colliding_img in colls:
-                collisions.append((image, colliding_img))
+                collisions.append(
+                    (image, colliding_img, known.paper_number, known.page_number)
+                )
         return collisions
