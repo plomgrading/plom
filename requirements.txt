@@ -30,7 +30,7 @@ opencv-python-headless==4.7.0.72
 packaging==23.0
 pandas==1.5.3
 passlib==1.7.4
-peewee==3.15.4
+peewee==3.16.0
 Pillow==9.4.0
 pymupdf==1.21.1
 PyMySQL==1.0.2
