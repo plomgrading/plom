@@ -1,13 +1,13 @@
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
 
 {% load static %}
-<div class="card" style="min-width: fit-content; max-width: 50%">
+<div class="card" style="min-width: fit-content; max-width: 50%; height:100%;">
   <div class="card-body d-flex flex-row p-0">
     {% if has_been_processed %}
     <img 
       src="{% url 'scan_get_image' timestamp 0 %}"
       class="border rounded-start"
-      style="max-height: 14em;"
+      style="max-height: 16em;"
       >
     {% else %}
     <!-- display an animating loading thingy and refresh after a few seconds -->
@@ -37,20 +37,29 @@
 	</li>
 	{% if has_been_processed %}
 	{% if has_qr_codes %}
-        <li>Valid pages: {{ n_known }}
-	  {% if n_known == number_of_pages %}
-	  <i class="bi bi-check-circle text-success"></i>
-	  {% else %}
-	  <i class="bi bi-exclamation-diamond text-warning"></i>
+	{% if n_known == number_of_pages %}
+        <li>Known pages: all <i class="bi bi-check-circle text-success"></i></li>
+	{% else %}
+	<li>Known pages: {{ n_known }}</li>
+	<li>Extra pages:
+	  {% if n_extra %} {{ n_extra }} <i class="bi bi-dash-circle-fill text-warning"></i>
+	  {% else %} none
 	  {% endif %}
 	</li>
-        <li>Error pages: {{ n_errors}}
+	<li>Unknown pages:
+	  {% if n_unknown %} {{ n_unknown }} <i class="bi bi-question-circle-fill text-warning"></i>
+	  {% else %} none
+	  {% endif %}
+	</li>
+
+        <li>Error pages:
 	  {% if n_errors == 0 %}
-	  <i class="bi bi-check-circle text-success"></i>
+	   none  <i class="bi bi-check-circle text-success"></i>
 	  {% else %}
-	  <i class="bi bi-exclamation-diamond text-warning"></i>
+	  {{ n_errors}} <i class="bi bi-exclamation-diamond-fill text-danger"></i>
 	  {% endif %}
 	</li>
+	{% endif %}
 	{% else %}
 	{% if is_mid_qr_read %}
 	<li>Reading qr-codes:
@@ -72,7 +81,8 @@
 	{% endif %}
 	{% endif %}
 	{% endif %}
-      </ul>
+      </ul>    
+    <footer>
       {% if has_been_processed %}
       <a 
         class="btn" 
@@ -88,8 +98,10 @@
 	class="btn btn-warning"
 	>Push!</button>
       {% else %}
-      <span class="badge bg-danger">
-	has errors - cannot push
+      <span data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Cannot push bundle containing errors">
+      <button
+	class="btn btn-warning" disabled	
+	>Push</button>
       </span>
       {% endif %}      
       {% elif is_mid_qr_read %}
@@ -106,6 +118,14 @@
         >
         Remove
       </a>
+    </footer>
     </div>
   </div>
 </div>
+
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>

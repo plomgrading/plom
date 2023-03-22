@@ -5,12 +5,10 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from collections import Counter
 from statistics import mode
 
 import hashlib
 import pathlib
-import shutil
 
 import fitz
 from django.conf import settings
@@ -36,10 +34,6 @@ from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
     StagingImage,
-    PageToImage,
-    ParseQR,
-    DiscardedStagingImage,
-    CollisionStagingImage,
     ManagePageToImage,
     ManageParseQR,
 )
@@ -249,28 +243,6 @@ class ScanService:
         # bundles = StagingBundle.objects.filter(user=user, has_page_images=True)
         return list(StagingBundle.objects.filter(user=user))
 
-    @transaction.atomic
-    def user_has_running_image_tasks(self, user):
-        """
-        Return True if user has a bundle with associated PageToImage tasks
-        that aren't all completed
-        """
-        return StagingBundle.objects.filter(user=user, has_page_images=False).exists()
-
-    @transaction.atomic
-    def get_n_page_rendering_tasks(self, bundle):
-        """
-        Return the total number of PageToImage tasks for a bundle
-        """
-        return PageToImage.objects.filter(bundle=bundle).count()
-
-    @transaction.atomic
-    def get_n_completed_page_rendering_tasks(self, bundle):
-        """
-        Return the number of completed PageToImage tasks for a bundle
-        """
-        return PageToImage.objects.filter(bundle=bundle, status="complete").count()
-
     def parse_qr_code(self, list_qr_codes):
         """
         Parsing QR codes into list of dictionaries
@@ -279,7 +251,7 @@ class ScanService:
             list_qr_codes: (list) QR codes returned from QRextract() method as a dictionary
 
         Return:
-            groupings: (dict) Group of TPV signature
+            groupings: (dict) Set of data from raw-qr-strings
             {
                 'NE': {
                     'page_type': 'plom_qr',
@@ -290,7 +262,7 @@ class ScanService:
                         'public_code': '93849',
                     }
                     'quadrant': '1',
-                    'grouping_key': '00001003001',
+                    'tpv': '00001003001',
                     'x_coord': 2204,
                     'y_coord': 279.5
                 },
@@ -303,7 +275,7 @@ class ScanService:
                         'public_code': '93849',
                 }
                     'quadrant': '3',
-                    'grouping_key': '00001003001',
+                    'tpv': '00001003001',
                     'x_coord': 234,
                     'y_coord': 2909.5
                 },
@@ -316,7 +288,7 @@ class ScanService:
                         'public_code': '93849',
                     }
                     'quadrant': '4',
-                    'grouping_key': '00001003001',
+                    'tpv': '00001003001',
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
@@ -325,7 +297,7 @@ class ScanService:
                     'SE': {
                     'page_type': 'plom_extra',
                     'quadrant': '4',
-                    'grouping_key': 'plomX',
+                    'tpv': 'plomX',
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
@@ -341,22 +313,24 @@ class ScanService:
         # TODO - simplify this loop using enumerate(list) or similar.
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
-                signature = list_qr_codes[page][quadrant].get("tpv_signature", None)
-                if signature is None:
+                # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVVOCCCCC" qr-string
+                # while tpv refers to "TTTTTPPPVVV"
+                raw_qr_string = list_qr_codes[page][quadrant].get("tpv_signature", None)
+                if raw_qr_string is None:
                     continue
                 x_coord = list_qr_codes[page][quadrant].get("x")
                 y_coord = list_qr_codes[page][quadrant].get("y")
                 qr_code_dict = {
-                    "tpv_signature": signature,
+                    "raw_qr_string": raw_qr_string,
                     "x_coord": x_coord,
                     "y_coord": y_coord,
                 }
 
-                if isValidTPV(signature):
+                if isValidTPV(raw_qr_string):
                     paper_id, page_num, version_num, public_code, corner = parseTPV(
-                        signature
+                        raw_qr_string
                     )
-                    grouping_key = getPaperPageVersion(
+                    tpv = getPaperPageVersion(
                         list_qr_codes[page][quadrant].get("tpv_signature")
                     )
                     qr_code_dict.update(
@@ -369,16 +343,16 @@ class ScanService:
                                 "public_code": public_code,
                             },
                             "quadrant": corner,
-                            "grouping_key": grouping_key,
+                            "tpv": tpv,
                         }
                     )
-                elif isValidExtraPageCode(signature):
-                    corner = parseExtraPageCode(signature)
+                elif isValidExtraPageCode(raw_qr_string):
+                    corner = parseExtraPageCode(raw_qr_string)
                     qr_code_dict.update(
                         {
                             "page_type": "plom_extra",
                             "quadrant": corner,
-                            "grouping_key": "plomX",
+                            "tpv": "plomX",
                         }
                     )
                 groupings[quadrant] = qr_code_dict
@@ -451,79 +425,6 @@ class ScanService:
             bundle=bundle, bundle_order=page_index
         ).parsed_qr
 
-    @transaction.atomic
-    def get_qr_code_reading_status(self, bundle, page_index):
-        """
-        Get the status of a QR code reading task. If it doesn't exist, return None.
-        """
-        try:
-            return ParseQR.objects.get(bundle=bundle, page_index=page_index).status
-        except ParseQR.DoesNotExist:
-            return None
-
-    @transaction.atomic
-    def get_qr_code_error_message(self, bundle, page_index):
-        """
-        Get the error message of a QR code reading task.
-        """
-        return ParseQR.objects.get(bundle=bundle, page_index=page_index).message
-
-    @transaction.atomic
-    def is_bundle_reading_started(self, bundle):
-        """
-        Return True if there are at least one ParseQR tasks without the status 'todo'
-        """
-        bundle_tasks = ParseQR.objects.filter(bundle=bundle)
-        return bundle_tasks.exists() and bundle_tasks.exclude(status="todo").exists()
-
-    @transaction.atomic
-    def is_bundle_reading_ongoing(self, bundle):
-        """
-        Return True if there are at least one ParseQR tasks without the status 'todo',
-        'complete', or 'error'.
-        """
-        bundle_tasks = ParseQR.objects.filter(bundle=bundle)
-        ongoing_tasks = bundle_tasks.filter(status="queued") | bundle_tasks.filter(
-            status="started"
-        )
-        return len(bundle_tasks) > 0 and len(ongoing_tasks) > 0
-
-    @transaction.atomic
-    def is_bundle_reading_finished(self, bundle):
-        """
-        Return True if there is at least one ParseQR task and all statuses are 'complete'
-        or 'error'.
-        """
-        bundle_tasks = ParseQR.objects.filter(bundle=bundle)
-        ended_tasks = bundle_tasks.filter(status="error") | bundle_tasks.filter(
-            status="complete"
-        )
-        return len(bundle_tasks) > 0 and len(bundle_tasks) == len(ended_tasks)
-
-    @transaction.atomic
-    def get_n_complete_reading_tasks(self, bundle):
-        """
-        Return the number of ParseQR tasks with the status 'complete'
-        """
-        complete_tasks = ParseQR.objects.filter(bundle=bundle, status="complete")
-        return len(complete_tasks)
-
-    @transaction.atomic
-    def clear_qr_tasks(self, bundle):
-        """
-        Remove all of the ParseQR tasks for this bundle.
-        """
-        bundle_tasks = ParseQR.objects.filter(bundle=bundle)
-        bundle_tasks.delete()
-
-    @transaction.atomic
-    def qr_reading_cleanup(self, bundle):
-        """
-        Mark bundle as having QR codes in the database.
-        """
-        bundle.has_qr_codes = True
-        bundle.save()
-
     def validate_qr_codes(self, bundle, spec):
         """
         Validate qr codes in bundle images (saved to disk) against the spec.
@@ -541,11 +442,11 @@ class ScanService:
         return len(pushed)
 
     @transaction.atomic
-    def get_all_complete_images(self, bundle):
+    def get_all_known_images(self, bundle):
         """
         Get all the images with completed QR code data - they can be pushed.
         """
-        return list(bundle.stagingimage_set.filter(known=True))
+        return list(bundle.stagingimage_set.filter(image_type="known"))
 
     @transaction.atomic
     def all_complete_images_pushed(self, bundle):
@@ -572,22 +473,20 @@ class ScanService:
         return error_image
 
     @transaction.atomic
-    def get_n_known_image(self, bundle):
-        return bundle.stagingimage_set.filter(known=True).count()
+    def get_n_known_images(self, bundle):
+        return bundle.stagingimage_set.filter(image_type="known").count()
 
     @transaction.atomic
-    def get_n_error_image(self, bundle):
-        return 0
-        # TODO - fix this function
-        # error_images = StagingImage.objects.filter(bundle=bundle, error=True)
-        # return len(error_images)
+    def get_n_unknown_images(self, bundle):
+        return bundle.stagingimage_set.filter(image_type="unknown").count()
 
     @transaction.atomic
-    def get_n_flagged_image(self, bundle):
-        return 0
-        # TODO - fix this function
-        # flag_images = StagingImage.objects.filter(bundle=bundle, flagged=True)
-        # return len(flag_images)
+    def get_n_extra_images(self, bundle):
+        return bundle.stagingimage_set.filter(image_type="extra").count()
+
+    @transaction.atomic
+    def get_n_error_images(self, bundle):
+        return bundle.stagingimage_set.filter(image_type="error").count()
 
     @transaction.atomic
     def bundle_contains_list(self, all_images, num_images):
@@ -602,171 +501,19 @@ class ScanService:
         return qr_code_list
 
     @transaction.atomic
-    def get_common_qr_code(self, qr_data):
-        qr_code_list = []
-        for qr_quadrant in qr_data:
-            paper_id = list(qr_data[qr_quadrant].values())[0]
-            page_num = list(qr_data[qr_quadrant].values())[1]
-            version_num = list(qr_data[qr_quadrant].values())[2]
-            qr_code_list.append(paper_id + page_num + version_num)
-        counter = Counter(qr_code_list)
-        most_common_qr = counter.most_common(1)
-        common_qr = most_common_qr[0][0]
-        return common_qr
-
-    @transaction.atomic
-    def change_error_image_state(self, bundle, page_index, img_bundle):
-        task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
-        task.status = "complete"
-        task.save()
-        error_image = self.get_error_image(img_bundle, page_index)
-        error_image.delete()
-
-    @transaction.atomic
     def get_all_staging_image_hash(self):
         image_hash_list = StagingImage.objects.values("image_hash")
         return image_hash_list
 
     @transaction.atomic
-    def upload_replace_page(
-        self, user, timestamp, time_uploaded, pdf_doc, index, uploaded_image_hash
-    ):
-        replace_pages_dir = (
-            pathlib.Path("media")
-            / user.username
-            / "bundles"
-            / str(timestamp)
-            / "replacePages"
-        )
-        replace_pages_dir.mkdir(exist_ok=True)
-        replace_pages_pdf_dir = replace_pages_dir / "pdfs"
-        replace_pages_pdf_dir.mkdir(exist_ok=True)
-
-        filename = f"{time_uploaded}.pdf"
-        with open(replace_pages_pdf_dir / filename, "w") as f:
-            pdf_doc.save(f)
-
-        save_as_image_path = self.save_replace_page_as_image(
-            replace_pages_dir, replace_pages_pdf_dir, filename, uploaded_image_hash
-        )
-        self.replace_image(
-            user, timestamp, index, save_as_image_path, uploaded_image_hash
-        )
-
-    @transaction.atomic
-    def save_replace_page_as_image(
-        self,
-        replace_pages_file_path,
-        replace_pages_pdf_file_path,
-        filename,
-        uploaded_image_hash,
-    ):
-        save_replace_image_dir = replace_pages_file_path / "images"
-        save_replace_image_dir.mkdir(exist_ok=True)
-        save_as_image = save_replace_image_dir / f"{uploaded_image_hash}.png"
-
-        upload_pdf_file = fitz.Document(replace_pages_pdf_file_path / filename)
-        transform = fitz.Matrix(4, 4)
-        pixmap = upload_pdf_file[0].get_pixmap(matrix=transform)
-        pixmap.save(save_as_image)
-
-        return save_as_image
-
-    @transaction.atomic
-    def replace_image(
-        self, user, bundle_timestamp, index, saved_image_path, uploaded_image_hash
-    ):
-        # send the error image to discarded_pages folder
-        root_folder = pathlib.Path("media") / "page_images" / "discarded_pages"
-        root_folder.mkdir(exist_ok=True)
-
-        error_image = self.get_image(bundle_timestamp, user, index)
-        shutil.move(
-            error_image.file_path, root_folder / f"{error_image.image_hash}.png"
-        )
-
-        discarded_image = DiscardedStagingImage(
-            bundle=error_image.bundle,
-            bundle_order=error_image.bundle_order,
-            file_name=error_image.file_name,
-            file_path=root_folder / f"{error_image.image_hash}.png",
-            image_hash=error_image.image_hash,
-            parsed_qr=error_image.parsed_qr,
-            rotation=error_image.rotation,
-            restore_class="replace",
-        )
-        discarded_image.save()
-
-        error_image.file_path = saved_image_path
-        error_image.image_hash = uploaded_image_hash
-        error_image.save()
-
-    @transaction.atomic
-    def get_collision_image(self, bundle, index):
-        collision_image = CollisionStagingImage.objects.get(
-            bundle=bundle, bundle_order=index
-        )
-        return collision_image
-
-    @transaction.atomic
-    def change_collision_image_state(self, bundle, page_index):
-        task = ParseQR.objects.get(bundle=bundle, page_index=page_index)
-        task.status = "complete"
-        task.save()
-        staging_image = StagingImage.objects.get(bundle=bundle, bundle_order=page_index)
-        staging_image.colliding = False
-        staging_image.save()
-        collision_image_obj = self.get_collision_image(bundle, page_index)
-        collision_image_obj.delete()
-
-    @transaction.atomic
-    def discard_collision_image(self, bundle_obj, user, bundle_timestamp, page_index):
-        root_folder = pathlib.Path("media") / "page_images" / "discarded_pages"
-        root_folder.mkdir(exist_ok=True)
-
-        collision_image = self.get_image(bundle_timestamp, user, page_index)
-        shutil.move(
-            collision_image.file_path, root_folder / f"{collision_image.image_hash}.png"
-        )
-        discarded_image = DiscardedStagingImage(
-            bundle=collision_image.bundle,
-            bundle_order=collision_image.bundle_order,
-            file_name=collision_image.file_name,
-            file_path=root_folder / f"{collision_image.image_hash}.png",
-            image_hash=collision_image.image_hash,
-            parsed_qr=collision_image.parsed_qr,
-            rotation=collision_image.rotation,
-            restore_class="collision",
-        )
-        discarded_image.save()
-
-        bundle_order = collision_image.bundle_order
-        collision_image.delete()
-
-        parse_qr = ParseQR.objects.get(bundle=bundle_obj, page_index=bundle_order)
-        parse_qr.delete()
-
-        staging_image_list = StagingImage.objects.all()
-        for staging_img_obj in staging_image_list[bundle_order:]:
-            staging_img_obj.bundle_order -= 1
-            staging_img_obj.save()
-
-        parse_qr_list = ParseQR.objects.all()
-        for parse_qr_obj in parse_qr_list[bundle_order:]:
-            parse_qr_obj.page_index -= 1
-            parse_qr_obj.save()
-
-    @transaction.atomic
     def staging_bundle_status_cmd(self):
         bundles = StagingBundle.objects.all()
-        img_service = ImageBundleService()
-        scanner = ScanService()
 
         bundle_status = []
         status_header = (
             "Bundle name",
             "Total pages",
-            "Valid pages",
+            "Known pages",
             "Error pages",
             "QR read",
             "Pushed",
@@ -775,17 +522,8 @@ class ScanService:
         bundle_status.append(status_header)
         for bundle in bundles:
             images = StagingImage.objects.filter(bundle=bundle)
-            valid_images = self.get_n_complete_reading_tasks(bundle)
-            all_images = StagingImage.objects.filter(bundle=bundle)
-
-            error_image_list = []
-            # TODO - fix this when we handle other image types
-            # for image in all_images:
-            # if image.colliding or image.error or image.unknown:
-            # error_image_list.append(image)
-            error_images = len(error_image_list)
-
-            completed_images = scanner.get_all_complete_images(bundle)
+            n_knowns = self.get_n_known_images(bundle)
+            n_errors = self.get_n_error_images(bundle)
 
             if self.is_bundle_mid_splitting(bundle.pk):
                 count = ManagePageToImage.objects.get(bundle=bundle).completed_pages
@@ -798,18 +536,13 @@ class ScanService:
                 count = ManageParseQR.objects.get(bundle=bundle).completed_pages
                 bundle_qr_read = f"in progress ({count})"
 
-            pushing_image = img_service.is_image_pushing_in_progress(completed_images)
-            bundle_pushed = bundle.pushed
-            if pushing_image:
-                bundle_pushed = "in progress"
-
             bundle_data = (
                 bundle.slug,
                 total_pages,
-                valid_images,
-                error_images,
+                n_knowns,
+                n_errors,
                 bundle_qr_read,
-                bundle_pushed,
+                bundle.pushed,
                 bundle.user.username,
             )
             bundle_status.append(bundle_data)
@@ -822,9 +555,7 @@ class ScanService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        if self.get_n_completed_page_rendering_tasks(
-            bundle_obj
-        ) != self.get_n_page_rendering_tasks(bundle_obj):
+        if not bundle_obj.has_page_images:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
         elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
@@ -834,8 +565,12 @@ class ScanService:
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        unknown_images = bundle_obj.stagingimage_set.filter(known=False)
-        return not unknown_images.exists()
+        # TODO - this will need updating in the future when
+        # we can assign unknowns and extra pages
+        not_known_images = bundle_obj.stagingimage_set.exclude(image_type="known")
+        # if there are any not-known-images then the bundle is not perfect
+        # that is a lot of double-negatives in there.
+        return not not_known_images.exists()
 
     @transaction.atomic
     def push_bundle_to_server(self, bundle_obj):
@@ -874,6 +609,73 @@ class ScanService:
             page_num.append(image_qr.get(q)["page_num"])
 
         return mode(paper_id), mode(page_num)
+
+    @transaction.atomic
+    def get_bundle_pages_info(self, bundle_obj):
+        # compute number of digits in longest page number to pad the page numbering
+        n_digits = len(str(bundle_obj.number_of_pages))
+
+        pages = {}
+        for img in bundle_obj.stagingimage_set.all():
+            pages[img.bundle_order] = {
+                "status": img.image_type,
+                "info": {},
+                "order": f"{img.bundle_order+1}".zfill(n_digits),
+            }
+
+        for img in bundle_obj.stagingimage_set.filter(image_type="error"):
+            pages[img.bundle_order]["info"] = {
+                "reason": img.errorstagingimage.error_reason
+            }
+
+        for img in bundle_obj.stagingimage_set.filter(image_type="discard"):
+            pages[img.bundle_order]["info"] = {
+                "reason": img.discardstagingimage.error_reason
+            }
+
+        for img in bundle_obj.stagingimage_set.filter(image_type="known"):
+            pages[img.bundle_order]["info"] = {
+                "paper_number": img.knownstagingimage.paper_number,
+                "page_number": img.knownstagingimage.page_number,
+                "version": img.knownstagingimage.version,
+            }
+        for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
+            pages[img.bundle_order]["info"] = {
+                "paper_number": img.extrastagingimage.paper_number,
+                "question_number": img.extrastagingimage.question_number,
+            }
+        return pages
+
+    @transaction.atomic
+    def get_bundle_single_page_info(self, bundle_obj, index):
+        # compute number of digits in longest page number to pad the page numbering
+        n_digits = len(str(bundle_obj.number_of_pages))
+
+        img = bundle_obj.stagingimage_set.get(bundle_order=index)
+        current_page = {
+            "status": img.image_type,
+            "order": f"{img.bundle_order+1}".zfill(n_digits),
+        }
+        if img.image_type == "error":
+            info = {"reason": img.errorstagingimage.error_reason}
+        elif img.image_type == "discard":
+            info = {"reason": img.discardstagingimage.error_reason}
+        elif img.image_type == "known":
+            info = {
+                "paper_number": img.knownstagingimage.paper_number,
+                "page_number": img.knownstagingimage.page_number,
+                "version": img.knownstagingimage.version,
+            }
+        elif img.image_type == "extra":
+            info = {
+                "paper_number": img.extrastagingimage.paper_number,
+                "question_number": img.extrastagingimage.question_number,
+            }
+        else:
+            info = {}
+
+        current_page.update({"info": info})
+        return current_page
 
 
 # ----------------------------------------
@@ -1020,6 +822,7 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
     page_data = scanner.parse_qr_code([code_dict])
 
     pipr = PageImageProcessor()
+
     has_had_rotation = pipr.rotate_page_image(image_path, page_data)
     # Re-read QR codes if the page image has been rotated
     if has_had_rotation != 0:

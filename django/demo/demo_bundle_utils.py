@@ -6,9 +6,9 @@
 import csv
 import fitz
 from pathlib import Path
-from shlex import split
-import subprocess
 import tempfile
+
+from django.core.management import call_command
 
 from plom.create.scribble_utils import (
     scribble_name_and_id,
@@ -20,12 +20,10 @@ extra_page_font_size = 18
 
 
 def get_classlist_as_dict():
-    cmd = "python3 manage.py plom_preparation_classlist download"
-
     with tempfile.TemporaryDirectory() as td:
         classlist_file = Path(td) / "classlist.csv"
         classlist = []
-        subprocess.check_call(split(f"{cmd} {classlist_file}"))
+        call_command("plom_preparation_classlist", "download", f"{classlist_file}")
         with open(classlist_file) as fh:
             red = csv.DictReader(fh, skipinitialspace=True)
             for row in red:
@@ -41,8 +39,9 @@ def get_classlist_as_dict():
 
 def get_extra_page():
     # Assumes that the extra page has been generated
-    cmd = "python3 manage.py plom_preparation_extrapage download media/papersToPrint/extra_page.pdf"
-    subprocess.check_call(split(cmd))
+    call_command(
+        "plom_preparation_extrapage", "download", "media/papersToPrint/extra_page.pdf"
+    )
 
 
 def assign_students_to_papers(paper_list, classlist):
@@ -118,6 +117,75 @@ def append_garbage_page(pdf_doc):
     )
 
 
+def insert_page_from_another_assessment(pdf_doc):
+    from plom import SpecVerifier
+    from plom.create.mergeAndCodePages import create_QR_codes
+
+    # a rather cludge way to get at the spec via commandline tools
+    # really we just need the public code.
+    with tempfile.TemporaryDirectory() as td:
+        spec_file = Path(td) / "the_spec.toml"
+        call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+        spec = SpecVerifier.from_toml_file(spec_file).spec
+        # now make a new magic code that is not the same as the spec
+        if spec["publicCode"] == "00000":
+            code = "99999"
+        else:
+            code = "00000"
+        qr_pngs = create_QR_codes(1, 1, 1, code, Path(td))
+        # now we have qr-code pngs that we can use to make a bogus page from a different assessment.
+        # these are called "qr_0001_pg1_4.png" etc.
+        pdf_doc.new_page(-1)
+        pdf_doc[-1].insert_text(
+            (120, 200),
+            text="This is a page from a different assessment",
+            fontsize=18,
+            color=[0, 0.75, 0.75],
+        )
+        # hard-code one qr-code in top-left
+        rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
+        # the 2nd qr-code goes in NW corner.
+        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+        # (note don't care if even/odd page: is a new page, no staple indicator)
+
+
+def insert_qr_from_previous_page(pdf_doc, paper_number):
+    """Stamps a qr-code for the second-last page onto the last page,
+    in order to create a page with inconsistent qr-codes. This can
+    happen when, for example, a folded page is fed into the scanner.
+
+
+    Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
+          paper_number (int): the paper_number of that test-paper.
+
+    Returns:
+       pdf_doc (fitz.Document): the updated pdf-document with the inconsistent qr-codes on its last page.
+    """
+    from plom import SpecVerifier
+    from plom.create.mergeAndCodePages import create_QR_codes
+
+    # a rather cludge way to get at the spec via commandline tools
+    # really we just need the public code.
+    with tempfile.TemporaryDirectory() as td:
+        spec_file = Path(td) / "the_spec.toml"
+        call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+        code = SpecVerifier.from_toml_file(spec_file).spec["publicCode"]
+
+        # take last page of paper and insert a qr-code from the page before that.
+        page_number = pdf_doc.page_count
+        # make a qr-code for this paper, but for second-last page.
+        qr_pngs = create_QR_codes(paper_number, page_number - 1, 1, code, Path(td))
+        pdf_doc[-1].insert_text(
+            (120, 200),
+            text="This is a page has a qr-code from the previous page",
+            fontsize=18,
+            color=[0, 0.75, 0.75],
+        )
+        # hard-code one qr-code in top-left
+        rect = fitz.Rect(50, 50 + 70, 50 + 70, 50 + 70 * 2)
+        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[-1]), overlay=True)
+
+
 def _scribble_loop(
     assigned_papers_ids,
     extra_page_path,
@@ -126,6 +194,7 @@ def _scribble_loop(
     extra_page_papers=[],
     garbage_page_papers=[],
     duplicate_pages={},
+    duplicate_qr=[],
 ):
     # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
     # garbage_page_papers = list of paper_numbers to which we append a garbage page
@@ -151,17 +220,29 @@ def _scribble_loop(
 
                 # scribble on the pages
                 scribble_pages(pdf_document)
+
+                # insert a qr-code from a previous page after scribbling
+                if paper_number in duplicate_qr:
+                    insert_qr_from_previous_page(pdf_document, paper_number)
+
                 # append a garbage page after the scribbling
                 if paper_number in garbage_page_papers:
                     append_garbage_page(pdf_document)
 
                 # finally, append this to the bundle
                 all_pdf_documents.insert_pdf(pdf_document)
+        # now insert a page from a different assessment to cause a "wrong public code" error
+        insert_page_from_another_assessment(all_pdf_documents)
         all_pdf_documents.save(out_file)
 
 
 def scribble_on_exams(
-    *, extra_page_papers=[], garbage_page_papers=[], duplicate_pages={}
+    *,
+    number_of_bundles=3,
+    extra_page_papers=[],
+    garbage_page_papers=[],
+    duplicate_pages={},
+    duplicate_qr=[],
 ):
     classlist = get_classlist_as_dict()
     classlist_length = len(classlist)
@@ -183,6 +264,10 @@ def scribble_on_exams(
     print(f"\tExtra pages will be appended to papers: {extra_page_papers}")
     print(f"\tGarbage pages will be appended after papers: {garbage_page_papers}")
     print(f"\tDuplicate pages will be inserted: {duplicate_pages}")
+    print(
+        f"\tA qr-code from the second last page of the test-paper paper will be inserted on last page of that paper; in papers: {duplicate_qr}"
+    )
+    print("\tA page from a different assessment will be inserted as the final page")
     print("^" * 40)
 
     out_file = Path("fake_bundle.pdf")
@@ -194,7 +279,8 @@ def scribble_on_exams(
         extra_page_papers=extra_page_papers,
         garbage_page_papers=garbage_page_papers,
         duplicate_pages=duplicate_pages,
+        duplicate_qr=duplicate_qr,
     )
-    # take this single output pdf and split it into three, then remove it.
-    splitFakeFile(out_file)
+    # take this single output pdf and split it into given number of bundles, then remove it.
+    splitFakeFile(out_file, parts=number_of_bundles)
     out_file.unlink(missing_ok=True)

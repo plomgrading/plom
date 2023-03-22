@@ -52,6 +52,7 @@ from plom.plom_exceptions import (
     PlomAPIException,
     PlomAuthenticationException,
     PlomExistingLoginException,
+    PlomServerNotReady,
     PlomSSLError,
 )
 from plom.messenger import Messenger, ManagerMessenger
@@ -173,14 +174,15 @@ class Chooser(QDialog):
         d = ClientSettingsDialog(
             self, self.lastTime, logdir, cfgfile, tempfile.gettempdir()
         )
-        d.exec()
+        if d.exec() != QDialog.Accepted:
+            return
         # TODO: do something more proper like QSettings
-        stuff = d.getStuff()
-        self.lastTime["FOREGROUND"] = stuff[0]
-        self.lastTime["LogLevel"] = stuff[1]
-        self.lastTime["LogToFile"] = stuff[2]
-        self.lastTime["CommentsWarnings"] = stuff[3]
-        self.lastTime["MarkWarnings"] = stuff[4]
+        opt = d.get_options_back()
+        self.lastTime["FOREGROUND"] = opt["FOREGROUND"]
+        self.lastTime["LogLevel"] = opt["LogLevel"]
+        self.lastTime["LogToFile"] = opt["LogToFile"]
+        self.lastTime["CommentsWarnings"] = opt["CommentsWarning"]
+        self.lastTime["MarkWarnings"] = opt["MarkWarnings"]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def launch_task(self, which_subapp):
@@ -478,6 +480,16 @@ class Chooser(QDialog):
 
         try:
             spec = self.messenger.get_spec()
+        except PlomServerNotReady as e:
+            WarnMsg(
+                self,
+                "Server does not yet have a spec, nothing to mark. "
+                " Perhaps you want to login with the manager account to"
+                " configure the server.",
+                info=str(e),
+            ).exec()
+            self.messenger = None
+            return
         except PlomException as e:
             WarnMsg(self, "Could not connect to server", info=str(e)).exec()
             self.messenger = None

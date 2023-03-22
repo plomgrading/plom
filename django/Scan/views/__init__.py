@@ -16,6 +16,7 @@ from .bundle_splitting import (
 
 from .manage_bundle import (
     ManageBundleView,
+    GetBundleNavFragmentView,
     GetBundleImageView,
 )
 

@@ -1,4 +1,8 @@
-from django.core.management.base import BaseCommand, CommandError
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
+
+from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -35,7 +39,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write("No valid test spec present")
 
-    def download_spec(self):
+    def download_spec(self, dest=None):
         speck = SpecificationService()
         spec_dict = speck.get_the_spec()
 
@@ -44,9 +48,12 @@ class Command(BaseCommand):
             return
 
         self.stdout.write(
-            "A valid test spec is present - shortname = {spec_dict['name']}"
+            f"A valid test spec is present - shortname = {spec_dict['name']}"
         )
-        fname = Path(slugify(spec_dict["name"]) + "_spec.toml")
+        if dest is None:
+            fname = Path(slugify(spec_dict["name"]) + "_spec.toml")
+        else:
+            fname = Path(dest)
         self.stdout.write(f"Writing test spec toml to {fname}")
         if fname.exists():
             self.stderr.write(f"File {fname} already present - cannot overwrite.")
@@ -146,6 +153,9 @@ class Command(BaseCommand):
         sp_D = sub.add_parser(
             "download", help="Download the current test spec (if is valid)"
         )
+        sp_D.add_argument(
+            "dest", type=str, nargs="?", help="Where to download the test spec toml"
+        )
         sp_R = sub.add_parser("remove", help="Remove the current test spec the server")
 
         sp_U.add_argument(
@@ -162,7 +172,7 @@ class Command(BaseCommand):
                 options["source_pdf"],
             )
         elif options["command"] == "download":
-            self.download_spec()
+            self.download_spec(options["dest"])
         elif options["command"] == "remove":
             self.remove_spec()
         else:
