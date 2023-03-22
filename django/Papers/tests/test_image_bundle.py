@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2022-2023 Andrew Rechnitzer
 
 from django.test import TestCase
 from django.conf import settings
@@ -15,7 +16,7 @@ from Papers.models import (
     BasePage,
     QuestionPage,
 )
-from Scan.models import StagingImage, StagingBundle
+from Scan.models import StagingImage, StagingBundle, KnownStagingImage
 
 
 class ImageBundleTests(TestCase):
@@ -24,10 +25,11 @@ class ImageBundleTests(TestCase):
     """
 
     def setUp(self):
+        # make a spec and a paper
         self.spec = baker.make(Specification)
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
-
+        # make a staged bundle with one known image.
         self.staged_bundle = baker.make(StagingBundle, pdf_hash="abcde")
         self.staged_image = baker.make(
             StagingImage,
@@ -36,6 +38,16 @@ class ImageBundleTests(TestCase):
             file_name="page2.png",
             image_hash="abcdef",
             rotation=90,
+            image_type="known",
+        )
+        # supply p,p,v to this since we will need to cast it to a short-tpv code
+        # and we don't (yet) fix maximum size of p,p,v in our models
+        self.staged_known = baker.make(
+            KnownStagingImage,
+            staging_image=self.staged_image,
+            paper_number=17,
+            page_number=2,
+            version=3,
         )
 
         return super().setUp()
@@ -140,8 +152,7 @@ class ImageBundleTests(TestCase):
         Test ImageBundleService.all_staged_imgs_valid().
 
         If the input collection of staging images is empty, return True.
-        If there are one or more images that don't have all three of
-            (page number, paper number, qr dict), return False.
+        If there are one or more images that are not "known" return False.
         Otherwise, return True.
         """
 
@@ -149,21 +160,24 @@ class ImageBundleTests(TestCase):
         imgs = StagingImage.objects.all()
         self.assertTrue(ibs.all_staged_imgs_valid(imgs))
 
+        # make some known_pages
         for paper_num in range(2):
             for page_num in range(5):
-                baker.make(
-                    StagingImage,
-                    paper_id=paper_num,
-                    page_number=page_num,
-                    parsed_qr={"NW": "Not empty!"},
+                X = baker.make(
+                    StagingImage, parsed_qr={"NW": "Not empty!"}, image_type="known"
                 )
-
+                baker.make(
+                    KnownStagingImage,
+                    staging_image=X,
+                    paper_number=paper_num,
+                    page_number=page_num,
+                )
         imgs = StagingImage.objects.all()
         self.assertTrue(ibs.all_staged_imgs_valid(imgs))
-
-        baker.make(StagingImage, paper_id=None, page_number=None, parsed_qr=None)
+        # add in an unread page
+        baker.make(StagingImage, image_type="unread")
         imgs = StagingImage.objects.all()
-        self.assertTrue(ibs.all_staged_imgs_valid(imgs))
+        self.assertFalse(ibs.all_staged_imgs_valid(imgs))
 
     def test_find_internal_collisions(self):
         """
@@ -175,28 +189,79 @@ class ImageBundleTests(TestCase):
         res = ibs.find_internal_collisions(imgs)
         self.assertEqual(res, [])
 
-        paper1 = baker.make(StagingImage, paper_id=1, page_number=1)
+        img1 = baker.make(StagingImage, image_type="known")
+        baker.make(
+            KnownStagingImage,
+            staging_image=img1,
+            paper_number=1,
+            page_number=1,
+            version=1,
+        )
         imgs = StagingImage.objects.all()
         self.assertEqual(res, [])
 
         # Add one collision
-        paper2 = baker.make(StagingImage, paper_id=1, page_number=1)
+        img2 = baker.make(StagingImage, image_type="known")
+        baker.make(
+            KnownStagingImage,
+            staging_image=img2,
+            paper_number=1,
+            page_number=1,
+            version=1,
+        )
         imgs = StagingImage.objects.all()
         res = ibs.find_internal_collisions(imgs)
-        self.assertEqual(res, [(paper1, paper2)])
+        self.assertEqual(res, [[img1.pk, img2.pk]])
 
         # Add more collisions
-        paper3 = baker.make(StagingImage, paper_id=1, page_number=1)
-        paper4 = baker.make(StagingImage, paper_id=2, page_number=1)
-        paper5 = baker.make(StagingImage, paper_id=2, page_number=1)
-        baker.make(StagingImage, paper_id=2, page_number=4)
+        img3 = baker.make(StagingImage, image_type="known")
+        baker.make(
+            KnownStagingImage,
+            staging_image=img3,
+            paper_number=1,
+            page_number=1,
+            version=1,
+        )
+
+        img4 = baker.make(StagingImage, image_type="known")
+        baker.make(
+            KnownStagingImage,
+            staging_image=img4,
+            paper_number=2,
+            page_number=1,
+            version=1,
+        )
+
+        img5 = baker.make(StagingImage, image_type="known")
+        baker.make(
+            KnownStagingImage,
+            staging_image=img5,
+            paper_number=2,
+            page_number=1,
+            version=1,
+        )
+
+        img6 = baker.make(StagingImage, image_type="known")
+        baker.make(
+            KnownStagingImage,
+            staging_image=img6,
+            paper_number=2,
+            page_number=1,
+            version=1,
+        )
 
         imgs = StagingImage.objects.all()
         res = ibs.find_internal_collisions(imgs)
+        set_res = set([frozenset(X) for X in res])
+        # Make lists into sets in order to compare in an unordered-way.
+        # need to use "frozenset" because python does not like sets of sets.
         self.assertEqual(
-            set(res),
+            set_res,
             set(
-                [(paper1, paper2), (paper1, paper3), (paper2, paper3), (paper4, paper5)]
+                [
+                    frozenset([img1.pk, img2.pk, img3.pk]),
+                    frozenset([img4.pk, img5.pk, img6.pk]),
+                ]
             ),
         )
 
@@ -209,27 +274,38 @@ class ImageBundleTests(TestCase):
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
 
-        img1 = baker.make(StagingImage, paper_id=2, page_number=1)
-        img2 = baker.make(StagingImage, paper_id=2, page_number=2)
-        img3 = baker.make(StagingImage, paper_id=2, page_number=3)
+        img1 = baker.make(StagingImage)
+        baker.make(KnownStagingImage, staging_image=img1, paper_number=2, page_number=1)
+
+        img2 = baker.make(StagingImage)
+        baker.make(KnownStagingImage, staging_image=img2, paper_number=2, page_number=2)
+
+        img3 = baker.make(StagingImage)
+        baker.make(KnownStagingImage, staging_image=img3, paper_number=2, page_number=3)
 
         img4 = baker.make(Image)
         img5 = baker.make(Image)
-        paper2 = baker.make(Paper, paper_number=2)
+
+        baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
-        page1 = baker.make(BasePage, paper=paper3, page_number=1, image=img4)
-        page2 = baker.make(BasePage, paper=paper3, page_number=2, image=img5)
+        baker.make(BasePage, paper=paper3, page_number=1, image=img4)
+        baker.make(BasePage, paper=paper3, page_number=2, image=img5)
 
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
 
-        img6 = baker.make(StagingImage, paper_id=3, page_number=1)
+        st_img6 = baker.make(StagingImage)
+        baker.make(
+            KnownStagingImage, staging_image=st_img6, paper_number=3, page_number=1
+        )
+
         res = ibs.find_external_collisions(StagingImage.objects.all())
-        self.assertEqual(res, [(img6, img4)])
+
+        self.assertEqual(res, [(st_img6, img4, 3, 1)])
 
     def test_perfect_bundle(self):
         """
-        Test that _upload_valid_bundle() works as intended with a valid
+        Test that upload_valid_bundle() works as intended with a valid
         staged bundle.
         """
 
@@ -237,27 +313,39 @@ class ImageBundleTests(TestCase):
 
         paper2 = baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
-        page1 = baker.make(QuestionPage, paper=paper2, page_number=1)
-        page2 = baker.make(DNMPage, paper=paper3, page_number=2)
+        baker.make(QuestionPage, paper=paper2, page_number=1)
+        baker.make(DNMPage, paper=paper3, page_number=2)
 
         img1 = baker.make(
             StagingImage,
             bundle=bundle,
-            paper_id=2,
-            page_number=1,
             parsed_qr={"NW": "abcde"},
             image_hash="ghijk",
+            image_type="known",
+        )
+        baker.make(
+            KnownStagingImage,
+            staging_image=img1,
+            paper_number=2,
+            page_number=1,
+            version=1,
         )
         img2 = baker.make(
             StagingImage,
             bundle=bundle,
-            paper_id=3,
-            page_number=2,
             parsed_qr={"NW": "abcde"},
+            image_type="known",
+        )
+        baker.make(
+            KnownStagingImage,
+            staging_image=img2,
+            paper_number=3,
+            page_number=2,
+            version=1,
         )
 
         ibs = ImageBundleService()
-        ibs._upload_valid_bundle.call_local(bundle)
+        ibs.upload_valid_bundle(bundle)
 
         self.assertEqual(Bundle.objects.all()[0].hash, bundle.pdf_hash)
         self.assertEqual(
