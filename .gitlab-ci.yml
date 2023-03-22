@@ -613,7 +613,6 @@ fedora_build:
   allow_failure: true
   before_script:
     - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
-          turbojpeg-devel libjpeg-turbo-devel
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
           python3-passlib python3-qt5
