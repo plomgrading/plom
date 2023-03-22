@@ -248,7 +248,7 @@ def append_out_of_range_paper_and_page(pdf_doc):
         pdf_doc.new_page(-1)
         pdf_doc[-1].insert_text(
             (120, 200),
-            text="This is a page from a non-existant paper",
+            text="This is a page from a non-existent paper",
             fontsize=18,
             color=[0, 0.75, 0.75],
         )
@@ -261,7 +261,7 @@ def append_out_of_range_paper_and_page(pdf_doc):
         pdf_doc.new_page(-1)
         pdf_doc[-1].insert_text(
             (120, 200),
-            text="This is a non-existant page from an existing test",
+            text="This is a non-existent page from an existing test",
             fontsize=18,
             color=[0, 0.75, 0.75],
         )
@@ -356,20 +356,20 @@ def scribble_on_exams(
     print(
         f"Making a bundle of {len(papers_to_use)} papers, of which {number_prenamed} are prenamed"
     )
-    print(f"\tExtra pages will be appended to papers: {extra_page_papers}")
-    print(f"\tGarbage pages will be appended after papers: {garbage_page_papers}")
-    print(f"\tDuplicate pages will be inserted: {duplicate_pages}")
+    print(f"Extra pages will be appended to papers: {extra_page_papers}")
+    print(f"Garbage pages will be appended after papers: {garbage_page_papers}")
+    print(f"Duplicate pages will be inserted: {duplicate_pages}")
     print(
-        f"\tThe last page of papers {wrong_version} will be replaced with qr-codes with incorrect versions"
+        f"The last page of papers {wrong_version} will be replaced with qr-codes with incorrect versions"
     )
     print(
-        f"\tA qr-code from the second last page of the test-paper paper will be inserted on last page of that paper; in papers: {duplicate_qr}"
+        f"A qr-code from the second last page of the test-paper paper will be inserted on last page of that paper; in papers: {duplicate_qr}"
     )
     print(
-        "\tA page from a different assessment will be inserted near the end of the bundles"
+        "A page from a different assessment will be inserted near the end of the bundles"
     )
-    print("\tA page from a non-existant test-paper will be appended to the bundles")
-    print("\tA non-existant page from a test-paper will be appended to the bundles")
+    print("A page from a non-existent test-paper will be appended to the bundles")
+    print("A non-existent page from a test-paper will be appended to the bundles")
     print("^" * 40)
 
     out_file = Path("fake_bundle.pdf")
