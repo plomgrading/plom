@@ -4,7 +4,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 import shutil
-import itertools
+
+from plom.tpv_utils import encodePaperPageVersion
 
 from django.db import transaction
 from django.conf import settings
@@ -19,7 +20,6 @@ from Papers.models import (
     Image,
     CreateImageTask,
     CollidingImage,
-    Paper,
     BasePage,
 )
 from .paper_creator import PaperCreatorService
@@ -155,7 +155,7 @@ class ImageBundleService:
             raise RuntimeError(f"Test paper {test_paper} is not in the database.")
 
         if image_bundle.image_exists(staged_image.image_hash):
-            raise RuntimeError(f"Page image already exists in the database.")
+            raise RuntimeError("Page image already exists in the database.")
 
         if info.page_has_image(test_paper, page_number):
             image_bundle.create_colliding_image(
@@ -264,13 +264,14 @@ class ImageBundleService:
         ibs = ImageBundleService()
         bundle_images = StagingImage.objects.filter(bundle=staged_bundle)
 
-        # Staging has checked this so remove this test.
-        # if not ibs.all_staged_imgs_valid(bundle_images):
-        # raise RuntimeError("Some pages in this bundle do not have QR data.")
+        # Staging has checked this - but we check again here to be very sure
+        if not ibs.all_staged_imgs_valid(bundle_images):
+            raise RuntimeError("Some pages in this bundle do not have QR data.")
 
-        # Staging has checked this so remove this test
-        # if len(ibs.find_internal_collisions(bundle_images)) > 0:
-        # raise RuntimeError("Some pages in the staged bundle collide.")
+        # Staging has checked this - but we check again here to be very sure
+        collide = ibs.find_internal_collisions(bundle_images)
+        if len(collide) > 0:
+            raise RuntimeError(f"Some pages in the staged bundle collide - {collide}")
 
         # Staging has not checked this - we need to do it here
         collide = ibs.find_external_collisions(bundle_images)
@@ -318,7 +319,7 @@ class ImageBundleService:
             return (None, None)
 
         # The values are the same in all of the child QR dicts, so it's safe to choose any
-        any_qr = list(staging_image.parsed_qr.values())[0]
+        any_qr = list(staged_image.parsed_qr.values())[0]
         paper_number = any_qr["paper_id"]
         page_number = any_qr["page_num"]
 
@@ -341,29 +342,31 @@ class ImageBundleService:
 
     @transaction.atomic
     def find_internal_collisions(self, staged_imgs):
-        """
-        Check for collisions *within* a bundle
+        """Check for collisions *within* a bundle
 
         Args:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            list [(StagingImage, StagingImage)]: list of unordered collisions.
+            list [[StagingImage1.pk, StagingImage2.pk, StagingImage3.pk]]: list
+                of unordered collisions so that in each sub-list each image (as
+                determined by its primary key) collides with others in that sub-list.
         """
-        # Deprecated - this test is done at staging
 
+        known_imgs = {}  # dict of short-tpv to list of known-images with that tpv
+        # if that list is 2 or more then that it is an internal collision.
         collisions = []
-        visited = []
-        for image in staged_imgs:
-            colls = staged_imgs.filter(
-                paper_id=image.paper_number,
-                page_number=image.page_number,
-            )
-            colls = list(filter(lambda i: i.pk != image.pk, colls))
-            for colliding_img in colls:
-                if colliding_img not in visited:
-                    collisions.append((image, colliding_img))
-            visited.append(image)
+
+        for image in staged_imgs.filter(image_type="known"):
+            knw = image.knownstagingimage
+            tpv = encodePaperPageVersion(knw.paper_number, knw.page_number, knw.version)
+            # append this image.primary-key to the list of images with that tpv
+            known_imgs.setdefault(tpv, []).append(image.pk)
+        for tpv, image_list in known_imgs.items():
+            if len(image_list) == 1:  # no collision at this tpv
+                continue
+            collisions.append(image_list)
+
         return collisions
 
     @transaction.atomic
