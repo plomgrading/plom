@@ -46,7 +46,6 @@ and were last tested in March 2023.
       - You can try `~/.local/bin/plom-demo` to see if things are working
         without messing around with such config files.
       - Probably you need to modify the `PATH` environment variable in a
-	    `bash` startup file---GIYF.
-
-TODO: Liam mentioned some IP thing is also needed?  If you dear reader
-know what this is, please file an issue.
+        `bash` startup file... something like adding
+        `export PATH=$PATH:~/.local/bin` to the file `.bash_profile`,
+        (You might need to create that file, e.g., with `nano .bash_profile`.)
