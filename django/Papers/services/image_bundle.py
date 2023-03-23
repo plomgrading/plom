@@ -305,6 +305,7 @@ class ImageBundleService:
             page.save(update_fields=["image"])
 
         from Mark.services import MarkingTaskService
+
         mts = MarkingTaskService()
         questions = self.get_ready_questions(uploaded_bundle)
         for paper, question in questions["ready"]:
