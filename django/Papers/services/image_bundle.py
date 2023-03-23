@@ -22,6 +22,7 @@ from Papers.models import (
     CollidingImage,
     BasePage,
     QuestionPage,
+    Paper,
 )
 from .paper_creator import PaperCreatorService
 from .paper_info import PaperInfoService
