@@ -27,11 +27,9 @@ class ImageBundleTests(TestCase):
 
     def setUp(self):
         # make a spec and a paper
-        self.spec = baker.make(Specification, spec_dict={
-            "question": {
-                "1": {"pages": [1]}
-            }
-        })
+        self.spec = baker.make(
+            Specification, spec_dict={"question": {"1": {"pages": [1]}}}
+        )
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
         # make a staged bundle with one known image.
