@@ -631,6 +631,7 @@ class ScanService:
                 "status": img.image_type,
                 "info": {},
                 "order": f"{img.bundle_order+1}".zfill(n_digits),
+                "rotation": img.rotation,
             }
 
         for img in bundle_obj.stagingimage_set.filter(image_type="error"):
@@ -665,6 +666,7 @@ class ScanService:
         current_page = {
             "status": img.image_type,
             "order": f"{img.bundle_order+1}".zfill(n_digits),
+            "rotation": img.rotation,
         }
         if img.image_type == "error":
             info = {"reason": img.errorstagingimage.error_reason}

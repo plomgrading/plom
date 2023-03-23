@@ -56,4 +56,4 @@ class PaperInfoService:
             raise ValueError(
                 f"Page {page_number} of paper {paper_number} does not exist in the database."
             )
-        return page.version
+        return page._version

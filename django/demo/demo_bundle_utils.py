@@ -183,7 +183,7 @@ def insert_qr_from_previous_page(pdf_doc, paper_number):
         )
         # hard-code one qr-code in top-left
         rect = fitz.Rect(50, 50 + 70, 50 + 70, 50 + 70 * 2)
-        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[-1]), overlay=True)
+        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
 
 
 def make_last_page_with_wrong_version(pdf_doc, paper_number):
@@ -229,7 +229,7 @@ def make_last_page_with_wrong_version(pdf_doc, paper_number):
         )
         # hard-code one qr-code in top-left
         rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
-        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[-1]), overlay=True)
+        pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
 
 
 def append_out_of_range_paper_and_page(pdf_doc):

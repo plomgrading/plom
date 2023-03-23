@@ -50,7 +50,8 @@ class QRErrorService:
                     continue
 
                 try:
-                    self.check_consistent_qr(
+                    self.check_consistent_qr(img.parsed_qr)
+                    self.check_qr_against_spec_and_qvmap(
                         img.parsed_qr, spec_dictionary["publicCode"]
                     )
                     tpv = self.get_tpv(img.parsed_qr)
@@ -127,7 +128,7 @@ class QRErrorService:
                     staging_image=img, error_reason=err_str
                 )
 
-    def check_consistent_qr(self, parsed_qr_dict, correct_public_code):
+    def check_consistent_qr(self, parsed_qr_dict):
         """Check the parsed qr-codes (typically scanned from a
         page-image) and confirm that they are both self-consistent,
         and that the publicCode matches that in the test
@@ -139,6 +140,8 @@ class QRErrorService:
         }
         or potentially (if an extra page)
         'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'tpv': 'plomX', 'raw_qr_string': 'plomX1'},
+
+        Returns None if all good, else raises various ValueError describing the inconsistencies.
         """
 
         # ------ helper function to test data consistency
@@ -154,16 +157,12 @@ class QRErrorService:
         # if it is an extra page, then no further consistency checks
         if page_types[0] == "plom_extra":
             return True
-        #  must be a normal qr-coded plom-page - so make sure public-code is consistent
+        # must be a normal qr-coded plom-page - so make sure public-code is consistent
+        # note - this does not check the code against that given by the spec.
         codes = [parsed_qr_dict[x]["page_info"]["public_code"] for x in parsed_qr_dict]
         if is_list_inconsistent(codes):
             raise ValueError(
                 "Inconsistent public-codes - was a page from a different assessment uploaded?"
-            )
-        # and make sure it matches the spec
-        if codes[0] != correct_public_code:
-            raise ValueError(
-                "Public code does not match spec - was a page from a different assessment uploaded?"
             )
         # check all the same paper_id
         if is_list_inconsistent(
@@ -187,15 +186,39 @@ class QRErrorService:
             raise ValueError("Inconsistent tpv - check scan for folded pages")
         # check that the version in the qr-code matches the question-version-map in the system.
 
-        page_info = next(iter(parsed_qr_dict.values()))["page_info"]
-        if (
-            PaperInfoService().get_version_from_paper_page(
-                page_info["paper_id"], page_info["page_num"]
-            )
-            != page_info["version_num"]
-        ):
+    def check_qr_against_spec_and_qvmap(self, parsed_qr_dict, correct_public_code):
+        """Check the info in the qr-code against the spec and the
+        qv-map in the database. More precisely, check that the
+        publc-code in the qr-code matches the public-code in the
+        test-specification. Then check that the (paper,page,version)
+        triple in the qr-code matches a (paper,page,version) in the
+        database - which was determined by the question-version map.
+
+        Note that
+           * this should only be called after qr-code consistency checks
+           * if the page is an extra or unknown page then this test simply returns "True".
+
+        Returns None if all good, else raises various ValueError describing the errors.
+        """
+        if len(parsed_qr_dict) == 0:
+            return True
+        qr_info = next(iter(parsed_qr_dict.values()))
+        if qr_info["page_type"] == "plom_extra":
+            return True
+
+        # make sure the public code matches that given in the spec
+        if qr_info["page_info"]["public_code"] != correct_public_code:
             raise ValueError(
-                "Version of paper/page in qr-code does not match version in database"
+                "Public code does not match spec - was a page from a different assessment uploaded?"
+            )
+
+        v_on_page = qr_info["page_info"]["version_num"]
+        v_in_db = PaperInfoService().get_version_from_paper_page(
+            qr_info["page_info"]["paper_id"], qr_info["page_info"]["page_num"]
+        )
+        if v_on_page != v_in_db:
+            raise ValueError(
+                f"Version of paper/page in qr-code = {v_on_page} does not match version in database = {v_in_db}"
             )
 
         return True
