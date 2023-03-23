@@ -574,22 +574,32 @@ class ScanService:
 
     @transaction.atomic
     def push_bundle_to_server(self, bundle_obj):
+        if bundle_obj.pushed:
+            raise ValueError("Bundle has already been pushed. Cannot push again.")
+
         if not bundle_obj.has_qr_codes:
             raise ValueError("QR codes are not all read - cannot push bundle.")
 
         images = bundle_obj.stagingimage_set
 
-        if images.filter(known=False).exists():
+        # TODO - in future this will need to handle extra pages etc.
+        # for now, we require all "known" pages
+        if images.exclude(image_type="known").exists():
             raise ValueError("The bundle is imperfect, cannot push.")
 
         img_service = ImageBundleService()
 
         # the bundle is valid so we can push it.
-        img_service._upload_valid_bundle(bundle_obj)
-        # now update the bundle and its images to say "pushed"
-        bundle_obj.pushed = True
-        bundle_obj.save()
-        images.update(pushed=True)  # note that this also saves the objects.
+        try:
+            img_service.upload_valid_bundle(bundle_obj)
+            # now update the bundle and its images to say "pushed"
+            bundle_obj.pushed = True
+            bundle_obj.save()
+            images.update(pushed=True)  # note that this also saves the objects.
+        except RuntimeError as err:
+            # todo - consider capturing this error in the future
+            # so that we can display it to the user.
+            raise err
 
     @transaction.atomic
     def push_bundle_cmd(self, bundle_name):

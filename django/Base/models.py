@@ -144,7 +144,9 @@ def start_task(signal, task):
         task_obj.save()
     except HueyTask.DoesNotExist:
         # task has been deleted from underneath us.
-        print(f"Task {task.id} is no longer in the database.")
+        print(
+            f"(Started) Task {task.id} = {task.name} {task.args} = is no longer in the database."
+        )
 
 
 @queue.signal(SIGNAL_COMPLETE)
@@ -157,7 +159,9 @@ def end_task(signal, task):
         task_obj.save()
     except HueyTask.DoesNotExist:
         # task has been deleted from underneath us.
-        print(f"Task {task.id} is no longer in the database.")
+        print(
+            f"(Completed) Task {task.id} = {task.name} {task.args} = is no longer in the database."
+        )
 
 
 @queue.signal(SIGNAL_ERROR)
@@ -172,7 +176,9 @@ def error_task(signal, task, exc):
         task_obj.save()
     except HueyTask.DoesNotExist:
         # task has been deleted from underneath us.
-        print(f"Task {task.id} is no longer in the database.")
+        print(
+            f"(Error) Task {task.id} = {task.name} {task.args} = is no longer in the database."
+        )
 
 
 @queue.signal(SIGNAL_INTERRUPTED)
