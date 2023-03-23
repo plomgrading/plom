@@ -411,6 +411,8 @@ class ImageBundleService:
         """
         Find questions across all test-papers in the database that now have
         all of their page-images scanned. These questions are ready to be marked.
+        Note: tasks are created on a per-question basis, so a test paper across multiple bundles
+        could have some "ready" and "unready" questions.
         TODO: Extra pages could potentially make questions un-ready again.
 
         Args:
