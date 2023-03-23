@@ -105,8 +105,6 @@ class MgetNextTask(APIView):
         # return Response("q0001g1")
         # TODO: find another place for populating the marking tasks table
         mts = MarkingTaskService()
-        if not mts.are_there_tasks():
-            mts.init_all_tasks()
 
         task = mts.get_first_available_task(question=question, version=version)
         return Response(task.code)

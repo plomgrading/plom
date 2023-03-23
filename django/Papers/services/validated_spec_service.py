@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
 
@@ -128,3 +128,9 @@ class SpecificationService:
         """
         spec_obj = self.get_the_spec()
         return spec_obj["question"][str(question_one_index)]["mark"]
+
+    @transaction.atomic
+    def n_pages_for_question(self, question_one_index):
+        spec_obj = self.get_the_spec()
+        pages = spec_obj["question"][str(question_one_index)]["pages"]
+        return len(pages)

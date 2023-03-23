@@ -17,6 +17,7 @@ from Papers.models import (
     QuestionPage,
 )
 from Scan.models import StagingImage, StagingBundle, KnownStagingImage
+from Preparation.models import StagingPQVMapping
 
 
 class ImageBundleTests(TestCase):
@@ -26,7 +27,9 @@ class ImageBundleTests(TestCase):
 
     def setUp(self):
         # make a spec and a paper
-        self.spec = baker.make(Specification)
+        self.spec = baker.make(
+            Specification, spec_dict={"question": {"1": {"pages": [1]}}}
+        )
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
         # make a staged bundle with one known image.
@@ -310,10 +313,10 @@ class ImageBundleTests(TestCase):
         """
 
         bundle = baker.make(StagingBundle, pdf_hash="abcdef")
-
+        qvmap = baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
         paper2 = baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
-        baker.make(QuestionPage, paper=paper2, page_number=1)
+        baker.make(QuestionPage, paper=paper2, page_number=1, question_number=1)
         baker.make(DNMPage, paper=paper3, page_number=2)
 
         img1 = baker.make(
