@@ -15,8 +15,6 @@ from Scan.models import (
     StagingImage,
 )
 
-from Mark.services import MarkingTaskService
-
 from Papers.models import (
     Bundle,
     Image,
@@ -306,8 +304,9 @@ class ImageBundleService:
             page.image = image
             page.save(update_fields=["image"])
 
+        from Mark.services import MarkingTaskService
         mts = MarkingTaskService()
-        questions = ibs.get_ready_questions(uploaded_bundle)
+        questions = self.get_ready_questions(uploaded_bundle)
         for paper, question in questions["ready"]:
             paper_instance = Paper.objects.get(paper_number=paper)
             mts.create_task(paper_instance, question)
