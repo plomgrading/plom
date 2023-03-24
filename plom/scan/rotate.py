@@ -64,6 +64,17 @@ def rotate_bitmap_jpeg_exif(fname, angle):
         im = exif.Image(f)
     if im.has_exif:
         log.info(f'{fname} has exif already, orientation: {im.get("orientation")}')
+        exif_table = {
+            exif.Orientation.TOP_LEFT: 0,
+            exif.Orientation.LEFT_BOTTOM: 90,
+            exif.Orientation.BOTTOM_RIGHT: 180,
+            exif.Orientation.RIGHT_TOP: 270,
+        }
+        angle += exif_table[im.get("orientation")]  # absolute angle of rotation
+        while True:
+            if angle < 360:
+                break
+            angle -= 360
     # Notation is OrigTop_OrigLeft -> RIGHT_TOP (-90 degree rot CCW)
     table = {
         0: exif.Orientation.TOP_LEFT,
