@@ -5,10 +5,10 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from statistics import mode
-
 import hashlib
 import pathlib
+import random
+from statistics import mode
 
 import fitz
 from django.conf import settings
@@ -21,6 +21,7 @@ from django.utils import timezone
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
+from plom.scan.scansToImages import make_mucked_up_jpeg
 from plom.scan.readQRCodes import checkQRsValid
 from plom.tpv_utils import (
     parseTPV,
@@ -781,15 +782,22 @@ def huey_parent_read_qr_codes_task(bundle_pk):
 
 
 @db_task(queue="tasks")
-def huey_child_get_page_image(bundle_pk, index, basedir, basename, *, quiet=True):
+def huey_child_get_page_image(
+    bundle_pk, index, basedir, basename, *, quiet=True, debug_jpeg=False
+):
     """
     Render a page image and save to disk in the background
 
     Args:
         bundle_pk: bundle DB object's primary key
-        index: bundle order of page
+        index (int): bundle order of page
         basedir (pathlib.Path): were to put the image
         basename (str): a basic filename without the extension
+
+    Keyword Args:
+        quiet (bool): currently unused?
+        debug_jpeg (bool): off by default.  If True then we make some rotations by
+            non-multiplies of 90, and save some low-quality jpegs.
     """
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
@@ -802,7 +810,12 @@ def huey_child_get_page_image(bundle_pk, index, basedir, basename, *, quiet=True
             add_metadata=True,
         )
     # TODO: if demo, then do make_mucked_up_jpeg here
-
+    debug_jpeg = True
+    # For testing, randomly make jpegs, rotated a bit, of various qualities
+    if debug_jpeg and random.uniform(0, 1) <= 0.5:
+        _ = make_mucked_up_jpeg(save_path, basedir / ("muck-" + basename + ".jpg"))
+        save_path.unlink()
+        save_path = _
     with open(save_path, "rb") as f:
         image_hash = hashlib.sha256(f.read()).hexdigest()
 
