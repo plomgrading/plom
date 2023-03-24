@@ -32,12 +32,10 @@ and were last tested in March 2023.
     sudo apt update
     sudo apt install \
             cmake make imagemagick dvipng g++ openssl \
-            libjpeg-turbo8-dev libturbojpeg0-dev \
             python3-passlib python3-pandas python3-pyqt5 python3-pytest \
             python3-dev python3-pip python3-setuptools python3-wheel \
             python3-requests-toolbelt texlive-latex-extra \
-            latexmk texlive-fonts-recommended python3-pillow \
-            libpango-1.0-0 libpangocairo-1.0-0
+            latexmk texlive-fonts-recommended python3-pillow
     ```
     (These may be out of date: compare to the instructions for Ubuntu elsewhere).
 2.  `python3 -m pip install --upgrade --user pip`
@@ -48,7 +46,6 @@ and were last tested in March 2023.
       - You can try `~/.local/bin/plom-demo` to see if things are working
         without messing around with such config files.
       - Probably you need to modify the `PATH` environment variable in a
-	    `bash` startup file---GIYF.
-
-TODO: Liam mentioned some IP thing is also needed?  If you dear reader
-know what this is, please file an issue.
+        `bash` startup file... something like adding
+        `export PATH=$PATH:~/.local/bin` to the file `.bash_profile`,
+        (You might need to create that file, e.g., with `nano .bash_profile`.)
