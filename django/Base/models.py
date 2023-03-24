@@ -18,6 +18,7 @@ from django.contrib.auth.models import User
 from django_huey import get_queue
 from polymorphic.models import PolymorphicModel
 
+import logging
 
 queue = get_queue("tasks")
 
@@ -166,6 +167,7 @@ def end_task(signal, task):
 
 @queue.signal(SIGNAL_ERROR)
 def error_task(signal, task, exc):
+    logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     if task.kwargs.get("quiet", False):
         return
