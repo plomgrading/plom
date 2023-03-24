@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
+
 from django.db import transaction
 from Papers.models import Paper, BasePage
 
@@ -38,3 +42,18 @@ class PaperInfoService:
         paper = Paper.objects.get(paper_number=paper_number)
         page = BasePage.objects.get(paper=paper, page_number=page_number)
         return page.image is not None
+
+    @transaction.atomic
+    def get_version_from_paper_page(self, paper_number, page_number):
+        """Given a paper_number and page_number, return the version of that page."""
+        try:
+            paper = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError(f"Paper {paper_number} does not exist in the database.")
+        try:
+            page = BasePage.objects.get(paper=paper, page_number=page_number)
+        except BasePage.DoesNotExist:
+            raise ValueError(
+                f"Page {page_number} of paper {paper_number} does not exist in the database."
+            )
+        return page._version

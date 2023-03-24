@@ -51,6 +51,7 @@
 			  <li>paper: {{current_page.info.paper_number}}</li>
 			  <li>page: {{current_page.info.page_number}} </li>
 			  <li>version: {{current_page.info.version}} </li>
+			  <li>rotation: {{current_page.rotation}}</li>
 			</ul>
 		      </div>
 		      {% elif current_page.status == 'extra' %}
@@ -59,6 +60,7 @@
 			<ul>
 			  <li>paper: {{current_page.info.paper_number}}</li>
 			  <li>question: {{current_page.info.question_number}} </li>
+			  <li>rotation: {{current_page.rotation}}</li>
 			</ul>
 		      </div>
 		      {% elif current_page.status == 'unknown' %}
@@ -73,6 +75,7 @@
 			<h6 class="alert-heading">Error</h6>
 			<ul>
 			  <li>{{current_page.info.reason}}</li>
+			  <li>rotation: {{current_page.rotation}}</li>
 			</ul>
 		      </div>
 		      {% elif current_page.status == 'unread' %}
