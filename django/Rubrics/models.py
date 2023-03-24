@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
 
 import random
 
@@ -26,11 +28,16 @@ class Rubric(PolymorphicModel):
     """
 
     key = models.TextField(null=False, default=generate_unique_key)
+    display_delta = models.TextField(null=False, default="")  # is short
+    value = models.IntegerField(null=False)
+    out_of = models.IntegerField(null=False)
     text = models.TextField(null=False, default="")  # can be long
     question = models.IntegerField(null=False, default=0)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     tags = models.TextField(null=True)  # can be long
     meta = models.TextField(null=True)  # can be long
+    versions = models.JSONField(null=True, default=list)
+    parameters = models.JSONField(null=True, default=list)
 
 
 class RelativeRubric(Rubric):
@@ -38,7 +45,15 @@ class RelativeRubric(Rubric):
     A rubric that modifies the total score by an integer value.
     """
 
-    delta = models.TextField(null=False, default="0")  # is short
+    kind = models.TextField(null=False)
+
+
+class NeutralRubric(Rubric):
+    """
+    A rubric that include a comment but does not modify the total score.
+    """
+
+    kind = models.TextField(null=False)
 
 
 class RubricPane(models.Model):
