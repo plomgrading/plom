@@ -203,7 +203,7 @@ def download_zip():
 
 def upload_bundles(number_of_bundles=3):
     for n in range(1, number_of_bundles + 1):
-        cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf"
+        cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf --demo"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
         sleep(0.2)

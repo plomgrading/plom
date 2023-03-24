@@ -150,6 +150,14 @@ class Command(BaseCommand):
             "username", type=str, help="Which username to upload as."
         )
         sp_upload.add_argument("source_pdf", type=str, help="The test pdf to upload.")
+        sp_upload.add_argument(
+            "--demo",
+            action="store_true",
+            help="""
+                Make a mess of the input, using low-quality JPEGs, rotations, etc.
+                Not for production.
+            """,
+        )
 
         # Status
         sp_stat = sp.add_parser(
@@ -177,7 +185,7 @@ class Command(BaseCommand):
             self.upload_pdf(
                 username=options["username"],
                 source_pdf=options["source_pdf"],
-                debug_jpeg=True,
+                debug_jpeg=options["demo"],
             )
         elif options["command"] == "status":
             self.staging_bundle_status(bundle_name=options["bundle_name"])
