@@ -95,6 +95,10 @@ class MarkingProgressCount(APIView):
 class MgetNextTask(APIView):
     """
     Responds with a code for the next available marking task.
+
+    Returns:
+        200: An available task exists, returns the task code as a string.
+        204: There are no available tasks.
     """
 
     def get(self, request, *args):
