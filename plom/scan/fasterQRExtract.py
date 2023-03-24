@@ -105,14 +105,17 @@ def QRextract(image, try_harder=True):
             cornerQR[cnr].update({"tpv_signature": qr.text, "x": x_coord, "y": y_coord})
 
     if try_harder:
-        # try again on smaller image: avoids random CI failures #967?
+        # Try again on smaller image: originally for pyzbar (Issue #967), but I
+        # think I've seen this find a QR-code missed by the above since
+        # switching to ZXing-cpp (Issue #2520), so we'll leave it.
         image = image.reduce(2)
         qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
         for qr in qrlist:
             cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
                 s = qr.text
-                if s not in cornerQR[cnr]["tpv_signature"]:
+                prev_tpv_signature = cornerQR[cnr].get("tpv_signature")
+                if not prev_tpv_signature:
                     # TODO: log these failures?
                     # print(
                     #     f'Found QR-code "{s}" at {cnr} on reduced image, '
@@ -121,6 +124,13 @@ def QRextract(image, try_harder=True):
                     cornerQR[cnr].update(
                         {"tpv_signature": s, "x": x_coord, "y": y_coord}
                     )
+                elif s == prev_tpv_signature:
+                    # no-op, we already read this at the previous resolution
+                    pass
+                else:
+                    # TODO: found a different QR code at lower resolution!
+                    # For now, just ignore and keep the previous hires result
+                    pass
 
     return cornerQR
 
