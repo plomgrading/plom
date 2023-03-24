@@ -148,10 +148,13 @@ class MarkingTaskService:
         Args:
             question (optional): int, requested question number
             version (optional): int, requested version number
+
+        Returns:
+            MarkingTask or None: The first available task, or None if
+                no such task exists.
         """
 
         available = MarkingTask.objects.filter(status="todo")
-        available = available.order_by("paper__paper_number")
 
         if question:
             available = available.filter(question_number=question)
@@ -159,7 +162,12 @@ class MarkingTaskService:
         if version:
             available = available.filter(question_version=version)
 
-        return available.first()
+        available = available.order_by("paper__paper_number")
+
+        if available.exists():
+            return available.first()
+        else:
+            return None
 
     def are_there_tasks(self):
         """
