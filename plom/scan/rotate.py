@@ -75,7 +75,7 @@ def rotate_bitmap_jpeg_exif(fname, angle):
         while True:
             if -90 <= angle < 360:
                 break
-            if angle > 360:
+            if angle >= 360:
                 angle -= 360
             if angle < -90:
                 angle += 360
