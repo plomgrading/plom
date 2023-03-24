@@ -107,7 +107,10 @@ class MgetNextTask(APIView):
         mts = MarkingTaskService()
 
         task = mts.get_first_available_task(question=question, version=version)
-        return Response(task.code)
+        if task:
+            return Response(task.code, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class MclaimThisTask(APIView):
