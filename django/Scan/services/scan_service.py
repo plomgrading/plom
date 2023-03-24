@@ -51,7 +51,15 @@ class ScanService:
     """
 
     def upload_bundle(
-        self, uploaded_pdf_file, slug, user, timestamp, pdf_hash, number_of_pages
+        self,
+        uploaded_pdf_file,
+        slug,
+        user,
+        timestamp,
+        pdf_hash,
+        number_of_pages,
+        *,
+        debug_jpeg=False,
     ):
         """
         Upload a bundle PDF and store it in the filesystem + database.
@@ -65,8 +73,10 @@ class ScanService:
             pdf_hash (str): the sha256 of the pdf.
             number_of_pages (int): the number of pages in the pdf
 
+        Keyword Args:
+            debug_jpeg (bool): off by default.  If True then we make some rotations by
+            non-multiplies of 90, and save some low-quality jpegs.
         """
-
         # make sure the path is created
         user_dir = pathlib.Path("media") / user.username
         user_dir.mkdir(exist_ok=True)
@@ -92,11 +102,21 @@ class ScanService:
         unknown_dir = bundle_dir / "unknownPages"
         unknown_dir.mkdir(exist_ok=True)
 
-        self.split_and_save_bundle_images(bundle_obj.pk, image_dir)
+        self.split_and_save_bundle_images(
+            bundle_obj.pk, image_dir, debug_jpeg=debug_jpeg
+        )
 
     @transaction.atomic
     def upload_bundle_cmd(
-        self, pdf_file_path, slug, username, timestamp, hashed, number_of_pages
+        self,
+        pdf_file_path,
+        slug,
+        username,
+        timestamp,
+        hashed,
+        number_of_pages,
+        *,
+        debug_jpeg=False,
     ):
         """
         Wrapper around upload_bundle for use by the commandline bundle upload command.
@@ -132,9 +152,10 @@ class ScanService:
             timestamp,
             hashed,
             number_of_pages,
+            debug_jpeg=debug_jpeg,
         )
 
-    def split_and_save_bundle_images(self, bundle_pk, base_dir):
+    def split_and_save_bundle_images(self, bundle_pk, base_dir, *, debug_jpeg=False):
         """
         Read a PDF document and save page images to filesystem/database
 
@@ -143,7 +164,7 @@ class ScanService:
             base_dir: pathlib.Path object of path to save image files
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        task = huey_parent_split_bundle_task(bundle_pk, base_dir)
+        task = huey_parent_split_bundle_task(bundle_pk, base_dir, debug_jpeg=debug_jpeg)
         with transaction.atomic():
             ManagePageToImage.objects.create(
                 bundle=bundle_obj,
@@ -697,13 +718,15 @@ class ScanService:
 
 
 @db_task(queue="tasks")
-def huey_parent_split_bundle_task(bundle_pk, base_dir):
+def huey_parent_split_bundle_task(bundle_pk, base_dir, *, debug_jpeg=False):
     from time import sleep
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
-        huey_child_get_page_image(bundle_pk, pg, base_dir, f"page{pg:05}", quiet=True)
+        huey_child_get_page_image(
+            bundle_pk, pg, base_dir, f"page{pg:05}", quiet=True, debug_jpeg=debug_jpeg
+        )
         for pg in range(bundle_obj.number_of_pages)
     ]
 
@@ -809,8 +832,6 @@ def huey_child_get_page_image(
             bundle_obj.pdf_file,
             add_metadata=True,
         )
-    # TODO: if demo, then do make_mucked_up_jpeg here
-    debug_jpeg = True
     # For testing, randomly make jpegs, rotated a bit, of various qualities
     if debug_jpeg and random.uniform(0, 1) <= 0.5:
         _ = make_mucked_up_jpeg(save_path, basedir / ("muck-" + basename + ".jpg"))

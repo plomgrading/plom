@@ -27,7 +27,7 @@ class Command(BaseCommand):
 
     help = "Upload bundle pdf files to staging area"
 
-    def upload_pdf(self, username=None, source_pdf=None):
+    def upload_pdf(self, username=None, source_pdf=None, *, debug_jpeg=False):
         scanner = ScanService()
 
         if source_pdf is None:
@@ -55,7 +55,13 @@ class Command(BaseCommand):
 
         try:
             scanner.upload_bundle_cmd(
-                source_pdf, slug, username, timestamp, hashed, number_of_pages
+                source_pdf,
+                slug,
+                username,
+                timestamp,
+                hashed,
+                number_of_pages,
+                debug_jpeg=debug_jpeg,
             )
             self.stdout.write(
                 f"Uploaded {source_pdf} as user {username} - processing it in the background now."
@@ -169,7 +175,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["command"] == "upload":
             self.upload_pdf(
-                username=options["username"], source_pdf=options["source_pdf"]
+                username=options["username"],
+                source_pdf=options["source_pdf"],
+                debug_jpeg=True,
             )
         elif options["command"] == "status":
             self.staging_bundle_status(bundle_name=options["bundle_name"])
