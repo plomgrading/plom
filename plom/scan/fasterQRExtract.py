@@ -108,8 +108,13 @@ def QRextract(image, try_harder=True):
         # Try again on smaller image: originally for pyzbar (Issue #967), but I
         # think I've seen this find a QR-code missed by the above since
         # switching to ZXing-cpp (Issue #2520), so we'll leave it.
-        image = image.reduce(2)
-        qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
+        try:
+            image = image.reduce(2)
+        except ValueError:
+            # mode-P (paletted pngs) fail to reduce, Issue #2631
+            qrlist = []
+        else:
+            qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
         for qr in qrlist:
             cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
