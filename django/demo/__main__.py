@@ -214,8 +214,12 @@ def wait_for_upload(number_of_bundles=3):
         cmd = f"plom_staging_bundles status fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         while True:
-            out_up = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
-            if "qr" in out_up:
+            print(cmd)
+            out = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
+            print("--v--" * 15)
+            print(out)
+            print("--^--" * 15)
+            if "qr-codes not yet read" in out:
                 print(f"fake_bundle{n}.pdf ready for qr-reading")
                 break
             sleep(1)
@@ -234,13 +238,19 @@ def wait_for_qr_read(number_of_bundles=3):
         cmd = f"plom_staging_bundles status fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         while True:
+            print(cmd)
             out_qr = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
+            print("--v--" * 15)
+            print(out_qr)
+            print("--^--" * 15)
             if "yet" in out_qr:
                 print(f"fake_bundle{n}.pdf still being read")
-                sleep(1)
+                sleep(0.5)
             else:
                 print(f"fake_bundle{n}.pdf has been read")
                 break
+                # TODO: try sleeping *after* reading
+                sleep(0.25)
 
 
 def push_if_ready(number_of_bundles=3):
