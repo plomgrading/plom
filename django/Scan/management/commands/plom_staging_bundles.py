@@ -92,7 +92,7 @@ class Command(BaseCommand):
             f"Found bundle '{bundle_name}' with {num_pages} pages uploaded by {username}"
         )
         if isinstance(num_pages, str) and "progress" in num_pages:
-            self.stdout.write("  * bundle still being split")
+            self.stdout.write(f"  * bundle still being split: {num_pages}")
             return
         if pushed is True:
             self.stdout.write("  * bundle has been pushed")
