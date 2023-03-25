@@ -28,6 +28,9 @@ class Command(BaseCommand):
 
         python3 manage.py hwscan foo.pdf --upload
         python3 manage.py hwscan foo --map --papernum 1234 -q all
+        python3 manage.py hwscan foo --map -t 20 -q [[1],[2],[2],[2],[3],[3]]
+
+    (currently "all" is broken and we can't share pages between questions.)
 
     Original design::
 
