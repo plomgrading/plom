@@ -23,6 +23,7 @@ from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
 from plom.scan.scansToImages import make_mucked_up_jpeg
 from plom.scan.readQRCodes import checkQRsValid
+from plom.scan.frontend_hwscan import canonicalize_question_list
 from plom.tpv_utils import (
     parseTPV,
     parseExtraPageCode,
@@ -456,25 +457,29 @@ class ScanService:
 
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
+        # TODO: assert the length of question is same as pages in bundle
+
         print(bundle_obj)
         with transaction.atomic():
             # TODO: how do we walk them in order?
-            # for page_img, q in zip(bundle_obj.stagingimage_set.all(), questions):
-            for page_img in bundle_obj.stagingimage_set.all():
+            for page_img, qlist in zip(bundle_obj.stagingimage_set.all(), questions):
                 print(page_img)
                 print(page_img.rotation)
                 print(page_img.parsed_qr)
                 page_img.image_type = "extra"
                 page_img.save()
-                # TODO: not really Extra, do we need new XStagingImage?
-                # TODO: or can we use KnownStagingImage?
-                # TODO: we may need to make more than one of these for each page
-                # (e.g., questions="all" case)
-                p = ExtraStagingImage.objects.create(staging_image=page_img)
-                p.paper_number = papernum
-                # TODO: take from input
-                p.question_number = 1
-                p.save()
+                if not qlist:
+                    print("TODO: make a discard page")
+                    continue
+                for q in qlist:
+                    # TODO: not really Extra, do we need new XStagingImage?
+                    # TODO: or can we use KnownStagingImage?
+                    # TODO: we may need to make more than one of these for each page
+                    # (e.g., questions="all" case)
+                    p = ExtraStagingImage.objects.create(staging_image=page_img)
+                    p.paper_number = papernum
+                    p.question_number = q
+                    p.save()
 
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk):
@@ -658,6 +663,12 @@ class ScanService:
         # elif bundle_obj.has_qr_codes:
         #    raise ValueError(f"QR codes for {bundle_name} has been read.")
         # TODO: ensure papernum exists, here or in the none-cmd?
+
+        # TODO: stop hardcoding
+        pages = 6
+        numquestions = 3
+        questions = canonicalize_question_list(questions, pages, numquestions)
+
         self.map_bundle_pages(bundle_obj.pk, papernum=papernum, questions=questions)
 
     @transaction.atomic

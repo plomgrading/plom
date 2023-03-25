@@ -179,6 +179,8 @@ class Command(BaseCommand):
                 question 1, pages 2-4 to question 2 and page 5 to question 3.
                 A common case is `-q [[1],[2],[3]]` to upload one page per
                 question.
+                And empty list will "discard" that particular page.
+                TODO: do we have discarded pages yet?
             """,
         )
 
