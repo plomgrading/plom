@@ -373,6 +373,8 @@ def main(test=False):
     )
     # print("*" * 40)
     # push_if_ready()
+    call_command("plom_staging_bundles", "status")
+    call_command("plom_staging_bundles", "push", "fake_bundle2")
 
     if not test:
         wait_for_exit()
