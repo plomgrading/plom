@@ -91,6 +91,8 @@ def QRextract(image, try_harder=True):
 
     if not isinstance(image, Image.Image):
         image = Image.open(image)
+    # Otherwise, zxing-cpp might hide error messages, Issue #2597
+    image.load()
 
     try:
         micro = BarcodeFormat.MicroQRCode
@@ -172,6 +174,8 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
 
     if not isinstance(image, Image.Image):
         image = Image.open(image)
+    # Otherwise, zxing-cpp might hide error messages, Issue #2597
+    image.load()
 
     try:
         micro = BarcodeFormat.MicroQRCode
