@@ -9,7 +9,7 @@ from statistics import mean
 
 from PIL import Image
 
-from plom.scan import rotate
+from .rotate import pil_load_with_jpeg_exif_rot_applied
 
 # hide import inside function to prevent PlomClient depending on it
 # from zxingcpp import read_barcodes, BarcodeFormat
@@ -92,7 +92,7 @@ def QRextract(image, try_harder=True):
     cornerQR = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
 
     if not isinstance(image, Image.Image):
-        image = rotate.pil_load_with_jpeg_exif_rot_applied(image)
+        image = pil_load_with_jpeg_exif_rot_applied(image)
 
     try:
         micro = BarcodeFormat.MicroQRCode
@@ -173,7 +173,7 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
     cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
 
     if not isinstance(image, Image.Image):
-        image = Image.open(image)
+        image = pil_load_with_jpeg_exif_rot_applied(image)
 
     try:
         micro = BarcodeFormat.MicroQRCode
