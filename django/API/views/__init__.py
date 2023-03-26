@@ -36,3 +36,7 @@ from .rubrics import (
     McreateRubric,
     MmodifyRubric,
 )
+
+from .latex import (
+    MlatexFragment,
+)

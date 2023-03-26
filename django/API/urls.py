@@ -30,6 +30,7 @@ from API.views import (
     MgetRubricPanes,
     McreateRubric,
     MmodifyRubric,
+    MlatexFragment,
 )
 
 
@@ -90,6 +91,11 @@ urlpatterns = [
         r"MK/rubric/(?P<key>[0-9]{12})$",
         MmodifyRubric.as_view(),
         name="api_MK_modify_rubric",
+    ),
+    path(
+        "MK/latex",
+        MlatexFragment.as_view(),
+        name="api_MK_latex_fragment",
     ),
 ]
 
