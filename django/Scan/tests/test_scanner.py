@@ -200,7 +200,6 @@ class ScanServiceTests(TestCase):
         codes_upright = scanner.parse_qr_code([qrs_upright])
 
         image_upright = Image.open(image_upright_path)
-        image_upright.load()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped.png"
@@ -245,7 +244,6 @@ class ScanServiceTests(TestCase):
         codes_original = scanner.parse_qr_code([qrs_original])
 
         image_original = Image.open(image_original_path)
-        image_original.load()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_no_exif.jpeg"
@@ -297,7 +295,6 @@ class ScanServiceTests(TestCase):
         codes_original = scanner.parse_qr_code([qrs_original])
 
         image_original = Image.open(image_original_path)
-        image_original.load()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_exif_180_path = pathlib.Path(tmpdir) / "upright_exif_180.jpeg"
@@ -331,7 +328,6 @@ class ScanServiceTests(TestCase):
         codes_original = scanner.parse_qr_code([qrs_original])
 
         image_original = Image.open(image_original_path)
-        image_original.load()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_exif_180.jpeg"
