@@ -376,6 +376,9 @@ def main(test=False):
     call_command("plom_staging_bundles", "status")
     call_command("plom_staging_bundles", "push", "fake_bundle2")
 
+    call_command("plom_rubrics", "init")
+    call_command("plom_rubrics", "push", "--demo")
+
     if not test:
         wait_for_exit()
     else:
