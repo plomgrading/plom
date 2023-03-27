@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
+import exif
 import fitz
 import shutil
 import pathlib
@@ -17,7 +18,7 @@ from django.conf import settings
 from django.core.files import File
 from model_bakery import baker
 
-from plom.scan import QRextract
+from plom.scan import QRextract, rotate
 from Scan.services import ScanService, PageImageProcessor
 from Scan.models import StagingBundle, StagingImage
 
@@ -187,7 +188,7 @@ class ScanServiceTests(TestCase):
                 < 0.01
             )
 
-    def test_parse_qr_codes_rotated_180(self):
+    def test_parse_qr_codes_png_rotated_180(self):
         """
         Test ScanService.parse_qr_code() and assert that the QR codes
         are read correctly after the page image is rotated.
@@ -200,7 +201,6 @@ class ScanServiceTests(TestCase):
         codes_upright = scanner.parse_qr_code([qrs_upright])
 
         image_upright = Image.open(image_upright_path)
-        image_upright.load()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped.png"
@@ -232,6 +232,142 @@ class ScanServiceTests(TestCase):
         for original, rotated in zip(xy_upright, xy_flipped):
             self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
             self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
+
+    def test_parse_qr_codes_jpeg_rotated_180_no_exif(self):
+        """
+        Test ScanService.parse_qr_code() and assert that the QR codes are read correctly
+        after an upside down jpeg page image with no exif is rotated.
+        """
+        scanner = ScanService()
+
+        image_original_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        qrs_original = QRextract(image_original_path)
+        codes_original = scanner.parse_qr_code([qrs_original])
+
+        image_original = Image.open(image_original_path)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_flipped_path = pathlib.Path(tmpdir) / "flipped_no_exif.jpeg"
+            image_flipped = image_original.rotate(180)
+            image_flipped.save(image_flipped_path)
+            with open(image_flipped_path, "rb") as f:
+                im = exif.Image(f)
+            assert not im.has_exif
+
+            qrs_flipped = QRextract(image_flipped_path)
+            codes_flipped = scanner.parse_qr_code([qrs_flipped])
+
+            pipr = PageImageProcessor()
+            has_had_rotation = pipr.rotate_page_image(image_flipped_path, codes_flipped)
+            self.assertEquals(has_had_rotation, 180)
+
+            with open(image_flipped_path, "rb") as f:
+                im = exif.Image(f)
+            self.assertEquals(im.get("orientation"), 3)
+
+            # read QR codes a second time due to rotation of image
+            qrs_flipped = QRextract(image_flipped_path)
+            codes_flipped = scanner.parse_qr_code([qrs_flipped])
+
+            xy_upright = []
+            xy_flipped = []
+
+            for q, p in zip(codes_original, codes_flipped):
+                xy_upright.append(
+                    [codes_original[q]["x_coord"], codes_original[q]["y_coord"]]
+                )
+                xy_flipped.append(
+                    [codes_flipped[p]["x_coord"], codes_flipped[p]["y_coord"]]
+                )
+
+            for upright, rotated in zip(xy_upright, xy_flipped):
+                self.assertTrue((upright[0] - rotated[0]) / rotated[0] < 0.01)
+                self.assertTrue((upright[1] - rotated[1]) / rotated[1] < 0.01)
+
+    def test_parse_qr_codes_jpeg_upright_exif_rot_180(self):
+        """
+        Test ScanService.parse_qr_code() and assert that the QR codes are read correctly
+        after an upright page image with exif rotation of 180 is rotated.
+        """
+        scanner = ScanService()
+
+        image_original_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        qrs_original = QRextract(image_original_path)
+        codes_original = scanner.parse_qr_code([qrs_original])
+
+        image_original = Image.open(image_original_path)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_exif_180_path = pathlib.Path(tmpdir) / "upright_exif_180.jpeg"
+            image_original.save(image_exif_180_path)
+            rotate.rotate_bitmap_jpeg_exif(image_exif_180_path, 180)
+            with open(image_exif_180_path, "rb") as f:
+                im = exif.Image(f)
+            self.assertEquals(im.get("orientation"), 3)
+
+            qrs_exif_180 = QRextract(image_exif_180_path)
+            codes_exif_180 = scanner.parse_qr_code([qrs_exif_180])
+
+            pipr = PageImageProcessor()
+            has_had_rotation = pipr.rotate_page_image(
+                image_exif_180_path, codes_exif_180
+            )
+            self.assertEquals(has_had_rotation, 180)
+
+            with open(image_exif_180_path, "rb") as f:
+                im = exif.Image(f)
+            self.assertEquals(im.get("orientation"), 1)
+
+    def test_parse_qr_codes_jpeg_upside_down_exif_180(self):
+        """
+        Test ScanService.parse_qr_code() when image is upside down, but exif indicates 180 rotation
+        """
+        scanner = ScanService()
+
+        image_original_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        qrs_original = QRextract(image_original_path)
+        codes_original = scanner.parse_qr_code([qrs_original])
+
+        image_original = Image.open(image_original_path)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_flipped_path = pathlib.Path(tmpdir) / "flipped_exif_180.jpeg"
+            image_flipped = image_original.rotate(180)
+            image_flipped.save(image_flipped_path)
+            rotate.rotate_bitmap_jpeg_exif(image_flipped_path, 180)
+            with open(image_flipped_path, "rb") as f:
+                im = exif.Image(f)
+            self.assertEquals(im.get("orientation"), 3)
+
+            qrs_flipped = QRextract(image_flipped_path)
+            codes_flipped = scanner.parse_qr_code([qrs_flipped])
+
+            pipr = PageImageProcessor()
+            has_had_rotation = pipr.rotate_page_image(image_flipped_path, codes_flipped)
+            self.assertEquals(has_had_rotation, 0)
+
+            with open(image_flipped_path, "rb") as f:
+                im = exif.Image(f)
+            self.assertEquals(im.get("orientation"), 3)
+
+            # read QR codes a second time due to rotation of image
+            qrs_flipped = QRextract(image_flipped_path)
+            codes_flipped = scanner.parse_qr_code([qrs_flipped])
+
+            xy_upright = []
+            xy_flipped = []
+
+            for q, p in zip(codes_original, codes_flipped):
+                xy_upright.append(
+                    [codes_original[q]["x_coord"], codes_original[q]["y_coord"]]
+                )
+                xy_flipped.append(
+                    [codes_flipped[p]["x_coord"], codes_flipped[p]["y_coord"]]
+                )
+
+            for original, rotated in zip(xy_upright, xy_flipped):
+                self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
+                self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
     def test_known_images(self):
         """

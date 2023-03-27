@@ -9,6 +9,8 @@ from statistics import mean
 
 from PIL import Image
 
+from .rotate import pil_load_with_jpeg_exif_rot_applied
+
 # hide import inside function to prevent PlomClient depending on it
 # from zxingcpp import read_barcodes, BarcodeFormat
 
@@ -90,7 +92,7 @@ def QRextract(image, try_harder=True):
     cornerQR = {"NW": {}, "NE": {}, "SW": {}, "SE": {}}
 
     if not isinstance(image, Image.Image):
-        image = Image.open(image)
+        image = pil_load_with_jpeg_exif_rot_applied(image)
 
     try:
         micro = BarcodeFormat.MicroQRCode
@@ -105,14 +107,22 @@ def QRextract(image, try_harder=True):
             cornerQR[cnr].update({"tpv_signature": qr.text, "x": x_coord, "y": y_coord})
 
     if try_harder:
-        # try again on smaller image: avoids random CI failures #967?
-        image = image.reduce(2)
-        qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
+        # Try again on smaller image: originally for pyzbar (Issue #967), but I
+        # think I've seen this find a QR-code missed by the above since
+        # switching to ZXing-cpp (Issue #2520), so we'll leave it.
+        try:
+            image = image.reduce(2)
+        except ValueError:
+            # mode-P (paletted pngs) fail to reduce, Issue #2631
+            qrlist = []
+        else:
+            qrlist = read_barcodes(image, formats=(BarcodeFormat.QRCode | micro))
         for qr in qrlist:
             cnr, x_coord, y_coord = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
                 s = qr.text
-                if s not in cornerQR[cnr]["tpv_signature"]:
+                prev_tpv_signature = cornerQR[cnr].get("tpv_signature")
+                if not prev_tpv_signature:
                     # TODO: log these failures?
                     # print(
                     #     f'Found QR-code "{s}" at {cnr} on reduced image, '
@@ -121,6 +131,13 @@ def QRextract(image, try_harder=True):
                     cornerQR[cnr].update(
                         {"tpv_signature": s, "x": x_coord, "y": y_coord}
                     )
+                elif s == prev_tpv_signature:
+                    # no-op, we already read this at the previous resolution
+                    pass
+                else:
+                    # TODO: found a different QR code at lower resolution!
+                    # For now, just ignore and keep the previous hires result
+                    pass
 
     return cornerQR
 
@@ -171,7 +188,7 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
     cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
 
     if not isinstance(image, Image.Image):
-        image = Image.open(image)
+        image = pil_load_with_jpeg_exif_rot_applied(image)
 
     try:
         micro = BarcodeFormat.MicroQRCode

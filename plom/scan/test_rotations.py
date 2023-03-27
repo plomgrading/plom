@@ -63,7 +63,6 @@ def test_rotate_png_cw(tmpdir):
         rotate_bitmap(f, angle, clockwise=True)
         # now load it back and check for a red pixel in the right place
         im = Image.open(f)
-        im.load()
         palette = im.getpalette()
         if not palette:
             assert im.getpixel(redpixel) == (255, 0, 0)
@@ -87,7 +86,6 @@ def test_rotate_png_ccw(tmpdir):
         rotate_bitmap(f, angle, clockwise=False)
         # now load it back and check for a red pixel in the right place
         im = Image.open(f)
-        im.load()
         palette = im.getpalette()
         if not palette:
             assert im.getpixel(redpixel) == (255, 0, 0)
@@ -105,7 +103,6 @@ def test_rotate_jpeg_cw(tmpdir):
     # make a lowish-quality jpeg and extract to bytes
     f = tmpdir / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
-    im.load()
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
         b = fh.read()
@@ -131,7 +128,6 @@ def test_rotate_jpeg_ccw(tmpdir):
     # make a lowish-quality jpeg and extract to bytes
     f = tmpdir / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
-    im.load()
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
         b = fh.read()
@@ -157,7 +153,6 @@ def test_rotate_jpeg_lossless_cw(tmpdir):
     # make a lowish-quality jpeg and extract to bytes
     orig = tmpdir / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
-    im.load()
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
         b = fh.read()
@@ -182,7 +177,6 @@ def test_rotate_jpeg_lossless_cw(tmpdir):
         # now load it back, rotate it back it it would make the original
         im = pil_load_with_jpeg_exif_rot_applied(f)
         im2 = Image.open(orig)
-        im2.load()
         # minus sign b/c PIL does CCW
         im2 = im2.rotate(-angle, expand=True)
         diff = ImageChops.difference(im, im2)
@@ -197,7 +191,6 @@ def test_rotate_jpeg_lossless_ccw(tmpdir):
     # make a lowish-quality jpeg and extract to bytes
     orig = tmpdir / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
-    im.load()
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
         b = fh.read()
@@ -211,7 +204,6 @@ def test_rotate_jpeg_lossless_ccw(tmpdir):
         # now load it back, rotate it back it it would make the original
         im = pil_load_with_jpeg_exif_rot_applied(f)
         im2 = Image.open(orig)
-        im2.load()
         im2 = im2.rotate(angle, expand=True)
         diff = ImageChops.difference(im, im2)
         diff.save(f"diff{angle}.png")
@@ -225,7 +217,6 @@ def test_rotate_exif_read_back(tmpdir):
     # make jpeg and extract to bytes
     orig = tmpdir / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
-    im.load()
     im.save(orig, "JPEG", quality=90, optimize=True)
     with open(orig, "rb") as fh:
         jpg_bytes = fh.read()
@@ -247,7 +238,6 @@ def test_rotate_exif_read_back(tmpdir):
         # rotate_bitmap(f2, angle, clockwise=False)
         # im1 = pil_load_with_jpeg_exif_rot_applied(f)
         # im2 = Image.open(f2)
-        # im2.load()
         # im2.convert("RGB")
         # diff = ImageChops.difference(im1, im2)
         # diff.save(f"diff{angle}.png")
@@ -260,7 +250,6 @@ def test_rotate_default_ccw(tmpdir):
     # make jpeg and extract to bytes
     orig = tmpdir / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
-    im.load()
     im.save(orig, "JPEG", quality=90, optimize=True)
     with open(orig, "rb") as fh:
         jpg_bytes = fh.read()

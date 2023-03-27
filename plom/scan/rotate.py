@@ -49,21 +49,36 @@ def rotate_bitmap(fname, angle, *, clockwise=False):
 def rotate_bitmap_jpeg_exif(fname, angle):
     """Rotate jpeg using exif metadata rotations.
 
+    Rotations are done cumulatively with any existing exif rotations.
+
     args:
         filename (pathlib.Path): name of a file
         angle (int): CCW angle of rotation 0, 90, 180, 270, or -90.
 
-    If the image already had a exif rotation tag it is ignored: the
-    rotation is absolute, NOT relative to that existing transform.
-    This is b/c the QR code reading bits earlier in the pipeline do not
-    support exif tags: perhaps they should and we revisit this decision.
+    Raises:
+        ValueError: unexpected exif rotation that we cannot handle such
+            as a mirror image.
     """
     assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
     log.info(f"Rotation of {angle:3} on JPEG {fname}: doing metadata EXIF rotations")
     with open(fname, "rb") as f:
         im = exif.Image(f)
     if im.has_exif:
-        log.info(f'{fname} has exif already, orientation: {im.get("orientation")}')
+        log.info(f'{fname} has exif already w/ orientation: {im.get("orientation")}')
+        # Note: will raise ValueError on certain exif orientation
+        existing_angle = _rot_angle_from_jpeg_exif_tag(im)
+        if existing_angle:
+            log.info(
+                f"{fname}: adding {angle} to existing non-zero exif orientation {existing_angle}"
+            )
+        angle += existing_angle
+        while True:
+            if -90 <= angle < 360:
+                break
+            if angle >= 360:
+                angle -= 360
+            if angle < -90:
+                angle += 360
     # Notation is OrigTop_OrigLeft -> RIGHT_TOP (-90 degree rot CCW)
     table = {
         0: exif.Orientation.TOP_LEFT,
@@ -92,7 +107,6 @@ def pil_load_with_jpeg_exif_rot_applied(f):
     """
     f = Path(f)
     im = Image.open(f)
-    im.load()
     if f.suffix.casefold() in (".jpg", ".jpeg"):
         r = rot_angle_from_jpeg_exif_tag(f)
         im = im.rotate(r, expand=True)
@@ -112,6 +126,13 @@ def rot_angle_from_jpeg_exif_tag(img_name):
         return 0
     with open(img_name, "rb") as f:
         im = exif.Image(f)
+    return _rot_angle_from_jpeg_exif_tag(im)
+
+
+def _rot_angle_from_jpeg_exif_tag(im):
+    # private help for the above
+    #
+    # im: the result of exif.Image(...)
     if not im.has_exif:
         return 0
     o = im.get("orientation")
