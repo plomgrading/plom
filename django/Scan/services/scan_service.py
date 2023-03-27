@@ -174,14 +174,6 @@ class ScanService:
             return False
 
     @transaction.atomic
-    def remove_bundle_DEPRECATED(self, timestamp, user):
-        """
-        Remove a bundle PDF from the filesystem + database
-        """
-        bundle = self.get_bundle(timestamp, user)
-        self._remove_bundle(bundle.pk)
-
-    @transaction.atomic
     def remove_bundle(self, bundle_name, *, user=None):
         """Remove a bundle PDF from the filesystem + database
 

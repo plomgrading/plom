@@ -136,7 +136,8 @@ class RemoveBundleView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        scanner.remove_bundle_DEPRECATED(timestamp, request.user)
+        bundle = scanner.get_bundle(timestamp, request.user)
+        scanner._remove_bundle(bundle.pk)
         return HttpResponseClientRefresh()
 
 
@@ -236,5 +237,6 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             raise Http404()
 
         scanner = ScanService()
-        scanner.remove_bundle_DEPRECATED(timestamp, request.user)
+        bundle = scanner.get_bundle(timestamp, request.user)
+        scanner._remove_bundle(bundle.pk)
         return HttpResponseClientRefresh()
