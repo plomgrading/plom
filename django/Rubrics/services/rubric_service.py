@@ -95,19 +95,22 @@ class RubricService:
 
         return rubric_instance
 
-    def get_rubrics_by_question(self, question):
+    def get_rubrics(self, *, question=None):
         """
-        Get the rubrics by question number
+        Get the rubrics, possibly filtered by question number
 
         Args:
-            question: (str) question number provided by Plom client
+            question: (None/str) question number or None for all.
 
         Returns:
             list: dictionaries, one for each rubric.
         """
-
-        neutral_rubric_list = NeutralRubric.objects.filter(question=question)
-        relative_rubric_list = RelativeRubric.objects.filter(question=question)
+        if question is None:
+            neutral_rubric_list = NeutralRubric.objects.all()
+            relative_rubric_list = RelativeRubric.objects.all()
+        else:
+            neutral_rubric_list = NeutralRubric.objects.filter(question=question)
+            relative_rubric_list = RelativeRubric.objects.filter(question=question)
         rubric_data = []
 
         for neutral_rubric in neutral_rubric_list:

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2023 Colin B. Macdonald
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,7 +14,7 @@ from Rubrics.services import RubricService
 class MgetRubricsByQuestion(APIView):
     def get(self, request, question):
         rs = RubricService()
-        all_rubric_data = rs.get_rubrics_by_question(question)
+        all_rubric_data = rs.get_rubrics(question=question)
         return Response(all_rubric_data, status=status.HTTP_200_OK)
 
 

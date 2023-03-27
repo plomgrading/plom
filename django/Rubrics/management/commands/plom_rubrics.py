@@ -107,9 +107,7 @@ class Command(BaseCommand):
             None: but saves a file as a side effect.
         """
         service = RubricService()
-        # TODO: we need a way to get all, not filtered by question
-        # TODO: maybe question=None?
-        rubrics = service.get_rubrics_by_question(question=1)
+        rubrics = service.get_rubrics()
 
         if not filename:
             self.stdout.write(tabulate(rubrics))  # headers="keys"
