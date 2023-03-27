@@ -12,7 +12,8 @@ from django.contrib.auth.models import User
 
 from Papers.services import SpecificationService
 from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer
-from Rubrics.models import NeutralRubric, RelativeRubric, RubricPane
+from Rubrics.models import Rubric, NeutralRubric, RelativeRubric
+from Rubrics.models import RubricPane
 
 
 log = logging.getLogger("RubricServer")
@@ -156,10 +157,8 @@ class RubricService:
             bool: true if initialized or False if it was already initialized.
         """
         # TODO: legacy checks for specific "no answer given" rubric, see `db_create.py`
-        rubrics1 = NeutralRubric.objects.all()
-        rubrics2 = RelativeRubric.objects.all()
-        # rubrics3 = AbsoluteRubric.objects.all()
-        if rubrics1 or rubrics2:  # or rubrics3:
+        existing_rubrics = Rubric.objects.all()
+        if existing_rubrics:
             return False
         spec = SpecificationService().get_the_spec()
         self._build_special_rubrics(spec)
@@ -262,12 +261,7 @@ class RubricService:
             int: how many rubrics were removed.
         """
         n = 0
-        neutral_rubric_list = NeutralRubric.objects.all()
-        for r in neutral_rubric_list:
-            r.delete()
-            n += 1
-        relative_rubric_list = RelativeRubric.objects.all()
-        for r in relative_rubric_list:
+        for r in Rubric.objects.all():
             r.delete()
             n += 1
         return n
