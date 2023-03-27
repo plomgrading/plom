@@ -138,6 +138,24 @@ class RubricService:
 
         return rubric_data
 
+    def erase_all_rubrics(self):
+        """
+        Remove all rubrics, permenantly deleting them.  BE CAREFUL.
+
+        Returns:
+            int: how many rubrics were removed.
+        """
+        n = 0
+        neutral_rubric_list = NeutralRubric.objects.all()
+        for r in neutral_rubric_list:
+            r.delete()
+            n += 1
+        relative_rubric_list = RelativeRubric.objects.all()
+        for r in relative_rubric_list:
+            r.delete()
+            n += 1
+        return n
+
     def get_rubric_pane(self, user, question):
         """
         Gets a rubric pane for a user.

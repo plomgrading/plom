@@ -81,6 +81,10 @@ class Command(BaseCommand):
             service.create_rubric(rubric)
         return len(rubrics)
 
+    def erase_all_rubrics_cmd(self):
+        service = RubricService()
+        return service.erase_all_rubrics()
+
     def download_rubrics_to_file(self, filename, *, verbose=True):
         """Download the rubrics from a server and save them to a file.
 
@@ -196,12 +200,16 @@ class Command(BaseCommand):
     def handle(self, *args, **opt):
         if opt["command"] == "init":
             print("TODO: init")
+
         elif opt["command"] == "wipe":
-            print("CAUTION: this will erase ALL rubrics on the server!")
+            self.stdout.write(self.style.WARNING("CAUTION: "), ending="")
+            self.stdout.write("This will erase ALL rubrics on the server!")
             if not opt["yes"]:
-                if input('  Are you sure? "y" to continue ') != "y":
+                if input('  Are you sure?  (type "yes" to continue) ') != "yes":
                     return
-            print("TODO: wipe")
+            N = self.erase_all_rubrics_cmd()
+            self.stdout.write(self.style.SUCCESS(f"{N} rubrics permenantly deleted"))
+
         elif opt["command"] == "push":
             if opt["demo"]:
                 print("uploading demo rubrics")
