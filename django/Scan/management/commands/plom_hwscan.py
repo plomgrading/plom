@@ -26,9 +26,10 @@ class Command(BaseCommand):
 
     Because upload starts a background job, we do this in two steps::
 
-        python3 manage.py hwscan foo.pdf --upload
-        python3 manage.py hwscan foo --map --papernum 1234 -q all
-        python3 manage.py hwscan foo --map -t 20 -q [[1],[2],[2],[2],[3],[3]]
+        python3 manage.py plom_staging_bundles upload foo.pdf
+        python3 manage.py plom_hwscan list_bundles
+        python3 manage.py plom_hwscan map foo --papernum 1234 --question all
+        python3 manage.py plom_hwscan map foo -t 20 -q [[1],[2],[2],[2],[3],[3]]
 
     (currently "all" is broken and we can't share pages between questions.)
 
@@ -73,56 +74,14 @@ class Command(BaseCommand):
             tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
         )
 
-    # TODO: mostly just a copy paste from plom_staging_bundles
-    def upload_pdf(self, source_pdf, *, username=None, questions=None):
-        """Upload a pdf file
+    # TODO: currently, we don't have our own push: just use "plom_staging_bundles".
+    # TODO: add a --force?  duplicates are explicitly possible for 'hw mode'
+    # although we may want to LOUDLY know about them...
 
-        Args:
-            source_pdf (str/pathlib.Path)
+    # TODO: do we need our own "push" command or can we piggy-back on "plom_staging_bundles"?
 
-        Keyword Args:
-            username (str?): TODO
-            questions (str/list): Can the be string "all" or a list of lists.
-                TODO: more detail, but generally similar to `plom.scan` tools
-                that deal with "homework pages".
-
-        Notes::
-
-        * currently opens all-at-once into bytes.  any memory concerns?
-        """
-        source_pdf = pathlib.Path(source_pdf)
-        scanner = ScanService()
-
-        try:
-            with open(source_pdf, "rb") as f:
-                file_bytes = f.read()
-        except OSError as err:
-            raise CommandError(err)
-
-        try:
-            pdf_doc = fitz.open(stream=file_bytes)
-        except fitz.FileDataError as err:
-            raise CommandError(err)
-
-        slug = slugify(source_pdf.stem)
-        timestamp = datetime.timestamp(timezone.now())
-        hashed = hashlib.sha256(file_bytes).hexdigest()
-        number_of_pages = pdf_doc.page_count
-
-        # TODO: add a --force?  duplicates are explicitly possible for 'hw mode'
-        # although we may want to LOUDLY know about them...
-        if scanner.check_for_duplicate_hash(hashed):
-            raise CommandError("Upload failed - Bundle was already uploaded.")
-        try:
-            scanner.upload_bundle_cmd(
-                source_pdf, slug, username, timestamp, hashed, number_of_pages
-            )
-        except ValueError as err:
-            raise CommandError(err)
-        self.stdout.write(f"Uploaded {source_pdf} as user {username}")
-
-        bundle_name = slug
-        print(f'bundle name is "{bundle_name}"')
+    # TODO: longer term, might be nice to have our own, even if we just call the functions
+    # from "plom_staging_bundles".
 
     def map_bundle_pages(self, bundle_name, *, papernum, username=None, questions=None):
         scanner = ScanService()
@@ -132,50 +91,53 @@ class Command(BaseCommand):
             )
         except ValueError as err:
             raise CommandError(err)
-        # We (probably) want to push directly...  is that possible?  Or can/should
-        # we bipass the staging area altogether?  What could go wrong?
-        # try:
-        #     scanner.push_bundle_cmd(bundle_name)
-        # except ValueError as err:
-        #    raise CommandError(err)
-        # self.stdout.write(f"Pushed {bundle_name}")
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--username", type=str, action="store", help="Which username to upload as."
+        sub = parser.add_subparsers(
+            dest="command",
+            description="Various tasks about rubrics.",
         )
-        parser.add_argument("source_pdf", type=str, help="The test pdf to upload.")
 
-        # TODO: these are mutually exclusive, but this is not clear yet
-        parser.add_argument("--list", action="store_true", help="List bundles.")
-        parser.add_argument("--upload", action="store_true", help="TODO")
-        parser.add_argument("--map", action="store_true", help="TODO")
+        sub.add_parser(
+            "list_bundles",
+            help="List bundles",
+            description="List all bundles on server.",
+        )
 
-        parser.add_argument(
-            "-t",
+        sp_map = sub.add_parser(
+            "map",
+            help="Assign pages of a bundle to particular questions.",
+            description="""Assign pages of a bundle to particular question(s), igoring QR-codes etc.""",
+        )
+
+        # TODO: might be more robust to work with bundle IDs as well/instead?
+        sp_map.add_argument("bundle_name", help="Which bundle")
+
+        sp_map.add_argument(
             "--papernum",
+            "-t",
             metavar="T",
-            action="store",
             type=int,
             help="""
                 Which paper number to upload to.
                 It must exist; you must create it first with appropriate
                 versions.  No mechanism exposed yet to do that...
+                TODO: argparse has this as optional but no default setting
+                for this yet: maybe it should assign to the next available
+                paper number or something like that?
             """,
         )
-
-        parser.add_argument(
+        sp_map.add_argument(
             "-q",
             "--question",
             nargs=1,
             metavar="N",
-            action="store",
             help="""
                 Which question(s) are answered in file.
                 You can pass a single integer, or a list like `-q [1,2,3]`
                 which updates each page to questions 1, 2 and 3.
                 You can also pass the special string `-q all` which uploads
-                each page to all questions.
+                each page to all questions (this is also the default).
                 If you need to specify questions per page, you can pass a list
                 of lists: each list gives the questions for each page.
                 For example, `-q [[1],[2],[2],[2],[3]]` would upload page 1 to
@@ -188,13 +150,20 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **opt):
-        print(opt)
-        if opt["list"]:
+        if opt["command"] == "list_bundles":
             self.staging_bundle_status()
-        if opt["upload"]:
-            self.upload_pdf(opt["source_pdf"], username=opt["username"])
-        if opt["map"]:
-            questions = opt["question"][0]
+
+        if opt["command"] == "map":
+            if opt["question"] is None:
+                questions = "all"
+            else:
+                questions = opt["question"][0]
+
+            if questions == "all":
+                self.stdout.write(self.style.WARNING("CAUTION: "), ending="")
+                self.stdout.write('"all" mapping not working yet!')
+            self.stdout.write("FYI: one-to-many mappings not working yet!")
+
             self.map_bundle_pages(
-                opt["source_pdf"], papernum=opt["papernum"], questions=questions
+                opt["bundle_name"], papernum=opt["papernum"], questions=questions
             )
