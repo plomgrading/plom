@@ -90,7 +90,7 @@ class Command(BaseCommand):
         service = RubricService()
         return service.erase_all_rubrics()
 
-    def download_rubrics_to_file(self, filename, *, verbose=True):
+    def download_rubrics_to_file(self, filename, *, verbose=True, question=None):
         """Download the rubrics from a server and save them to a file.
 
         Args:
@@ -102,14 +102,21 @@ class Command(BaseCommand):
 
         Keyword Args:
             verbose (bool):
+            question (int/None): download for question index
 
         Returns:
             None: but saves a file as a side effect.
         """
         service = RubricService()
-        rubrics = service.get_rubrics()
+        rubrics = service.get_rubrics(question=question)
 
         if not filename:
+            if not rubrics and question:
+                self.stdout.write(f"No rubrics for question index {question}")
+                return
+            if not rubrics:
+                self.stdout.write("No rubrics yet")
+                return
             self.stdout.write(tabulate(rubrics))  # headers="keys"
             return
 
@@ -239,6 +246,12 @@ class Command(BaseCommand):
                 Default to the stdout if no file provided.
             """,
         )
+        sp_pull.add_argument(
+            "--question",
+            type=int,
+            metavar="N",
+            help="Get rubrics only for question (index) N, or all rubrics if omitted.",
+        )
 
     def handle(self, *args, **opt):
         if opt["command"] == "init":
@@ -266,7 +279,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"Added {N} rubrics from {f}"))
 
         elif opt["command"] == "pull":
-            self.download_rubrics_to_file(opt["file"])
+            self.download_rubrics_to_file(opt["file"], question=opt["question"])
 
         else:
             self.print_help("manage.py", "plom_rubrics")
