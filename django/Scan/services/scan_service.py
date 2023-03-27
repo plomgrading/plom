@@ -467,15 +467,16 @@ class ScanService:
                 print(page_img)
                 print(page_img.rotation)
                 print(page_img.parsed_qr)
-                page_img.image_type = "extra"
-                page_img.save()
                 if not qlist:
-                    print("TODO: make a discard page")
+                    page_img.image_type = "discard"
+                    page_img.save()
                     p = DiscardStagingImage.objects.create(staging_image=page_img)
                     p.discard_reason = "map said drop this page"
                     p.save()
                     continue
                 for q in qlist:
+                    page_img.image_type = "extra"
+                    page_img.save()
                     # TODO: not really Extra, do we need new XStagingImage?
                     # TODO: or can we use KnownStagingImage?
                     # TODO: we may need to make more than one of these for each page
