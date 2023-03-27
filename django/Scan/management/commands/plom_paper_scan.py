@@ -10,23 +10,24 @@ from Scan.services import ScanService
 
 
 class Command(BaseCommand):
-    """
-    Replacement for legacy's plom-hwscan
+    """Plom Paper Scan deals with single papers, in contrast with Plom Staging Bundle.
 
-    Not keen on name "hwscan": maybe this should be called "single-scan"?
-    Or "paper-scan".  Leaning toward "paper-scan" in contrast with "bundle-scan"
-    (which has its own command line tools).
+    This is a replacement for the legacy ``plom-hwscan``, it can be used to push
+    a file to particular paper number and to one or more questions.
 
-    Because upload starts a background job, we do this in two steps::
+    Because upload starts a background job, we do this in two steps, first push a bundle::
 
         python3 manage.py plom_staging_bundles upload foo.pdf
+
+    Then we can map that bundle onto paper numbers and questions::
+
         python3 manage.py plom_hwscan list_bundles
         python3 manage.py plom_hwscan map foo --papernum 1234 --question all
         python3 manage.py plom_hwscan map foo -t 20 -q [[1],[2],[2],[2],[3],[3]]
 
     (currently "all" is broken and we can't share pages between questions.)
 
-    Original design::
+    Other design ideas, not implemented yet::
 
         python3 manage.py hwscan foo.pdf --sid 12345678
         python3 manage.py hwscan foo.pdf --sid 12345678 -q "[[1],[1,2],[2,3],[4]]"
@@ -36,10 +37,6 @@ class Command(BaseCommand):
 
         python3 manage.py hwscan q1.pdf -q 1 --sid 12345678
         python3 manage.py hwscan q2.pdf -q 2 --sid 12345678
-
-    Are there situations where we know the paper number?::
-
-        python3 manage.py hwscan foo.pdf --paper-number 1234 -q all
 
     Perhaps we should use some query command to get the paper number and require
     other commands to use that (or ``--sid`` is just a helper to do that for you).
