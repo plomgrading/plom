@@ -37,6 +37,7 @@ from Scan.models import (
     StagingBundle,
     StagingImage,
     ExtraStagingImage,
+    DiscardStagingImage,
     ManagePageToImage,
     ManageParseQR,
 )
@@ -470,6 +471,9 @@ class ScanService:
                 page_img.save()
                 if not qlist:
                     print("TODO: make a discard page")
+                    p = DiscardStagingImage.objects.create(staging_image=page_img)
+                    p.discard_reason = "map said drop this page"
+                    p.save()
                     continue
                 for q in qlist:
                     # TODO: not really Extra, do we need new XStagingImage?
