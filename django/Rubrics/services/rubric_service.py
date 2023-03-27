@@ -11,6 +11,7 @@ import logging
 from django.contrib.auth.models import User
 from rest_framework.exceptions import ValidationError
 
+from Papers.services import SpecificationService, PaperInfoService
 from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer
 from Rubrics.models import NeutralRubric, RelativeRubric, RubricPane
 
@@ -160,9 +161,7 @@ class RubricService:
         # rubrics3 = AbsoluteRubric.objects.all()
         if rubrics1 or rubrics2:  # or rubrics3:
             return False
-        # TODO: stop hardcoding!
-        spec = {"numberOfQuestions": 3}
-        spec["question"] = {"1": {"mark": 5}, "2": {"mark": 5}, "3": {"mark": 10}}
+        spec = SpecificationService().get_the_spec()
         self._build_special_rubrics(spec)
         return True
 
