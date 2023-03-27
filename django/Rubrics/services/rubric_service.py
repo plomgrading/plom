@@ -9,9 +9,8 @@
 import logging
 
 from django.contrib.auth.models import User
-from rest_framework.exceptions import ValidationError
 
-from Papers.services import SpecificationService, PaperInfoService
+from Papers.services import SpecificationService
 from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer
 from Rubrics.models import NeutralRubric, RelativeRubric, RubricPane
 
@@ -156,6 +155,7 @@ class RubricService:
         Returns:
             bool: true if initialized or False if it was already initialized.
         """
+        # TODO: legacy checks for specific "no answer given" rubric, see `db_create.py`
         rubrics1 = NeutralRubric.objects.all()
         rubrics2 = RelativeRubric.objects.all()
         # rubrics3 = AbsoluteRubric.objects.all()

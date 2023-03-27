@@ -23,6 +23,7 @@ import tomlkit
 
 from django.core.management.base import BaseCommand, CommandError
 
+from Papers.services import SpecificationService
 from Rubrics.services import RubricService
 
 
@@ -31,17 +32,20 @@ class Command(BaseCommand):
 
     help = "Manipulate rubrics"
 
-    def upload_demo_rubrics(self, *, numquestions=3):
+    def upload_demo_rubrics(self, *, numquestions=None):
         """Load some demo rubrics and upload to server.
 
         Keyword Args:
-            numquestions (int): how many questions should we build for.
-                TODO: get number of questions from the server spec if
-                omitted.
+            numquestions (None/int): how many questions should we build for.
+                Get it from the spec if omitted.
 
         The demo data is a bit sparse: we fill in missing pieces and
         multiply over questions.
         """
+        if numquestions is None:
+            spec = SpecificationService().get_the_spec()
+            numquestions = spec["numberOfQuestions"]
+
         with open(resources.files("plom") / "demo_rubrics.toml", "rb") as f:
             rubrics_in = tomllib.load(f)
         rubrics_in = rubrics_in["rubric"]
