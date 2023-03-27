@@ -688,7 +688,7 @@ class ScanService:
 
         for img in bundle_obj.stagingimage_set.filter(image_type="discard"):
             pages[img.bundle_order]["info"] = {
-                "reason": img.discardstagingimage.error_reason
+                "reason": img.discardstagingimage.discard_reason
             }
 
         for img in bundle_obj.stagingimage_set.filter(image_type="known"):
