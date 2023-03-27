@@ -21,7 +21,6 @@ else:
     import tomllib
 import tomlkit
 
-# from tabulate import tabulate
 from django.core.management.base import BaseCommand, CommandError
 
 from Rubrics.services import RubricService
@@ -136,6 +135,46 @@ class Command(BaseCommand):
             else:
                 raise CommandError(f'Don\'t know how to export to "{filename}"')
 
+    def upload_rubrics_from_file(self, filename):
+        """Load rubrics from a file and upload them to the server.
+
+        Args:
+            filename (pathlib.Path): A filename to load from.  Types  `.json`,
+                `.toml`, and `.csv` are supported.  If no suffix is included
+                we'll try to append `.toml`.
+
+        TODO: anything need done about missing fields etc?  See also Issue #2640.
+        """
+        if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
+            filename = filename.with_suffix(filename.suffix + ".toml")
+        suffix = filename.suffix
+
+        if suffix == ".json":
+            with open(filename, "r") as f:
+                rubrics = json.load(f)
+        elif suffix == ".toml":
+            with open(filename, "rb") as f:
+                rubrics = tomllib.load(f)["rubric"]
+        elif suffix == ".csv":
+            with open(filename, "r") as f:
+                try:
+                    import pandas
+                except ImportError as e:
+                    raise CommandError(f'CSV reading needs "pandas" library: {e}')
+
+                df = pandas.read_csv(f)
+                df.fillna("", inplace=True)
+                # TODO: flycheck is whining about this to_json
+                rubrics = json.loads(df.to_json(orient="records"))
+        else:
+            raise CommandError(f'Don\'t know how to import from "{filename}"')
+
+        service = RubricService()
+        for rubric in rubrics:
+            # rubric.pop("id")
+            service.create_rubric(rubric)
+        return len(rubrics)
+
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
             dest="command",
@@ -217,11 +256,12 @@ class Command(BaseCommand):
                 N = self.upload_demo_rubrics()
                 self.stdout.write(self.style.SUCCESS(f"Added {N} demo rubrics"))
                 return
-            print("TODO: push")
-            print(opt["file"])
+            f = Path(opt["file"])
+            N = self.upload_rubrics_from_file(f)
+            self.stdout.write(self.style.SUCCESS(f"Added {N} rubrics from {f}"))
 
         elif opt["command"] == "pull":
-            self.download_rubrics_to_file(opt["file"], verbose=True)
+            self.download_rubrics_to_file(opt["file"])
 
         else:
             self.print_help("manage.py", "plom_rubrics")
