@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 from io import BytesIO
 import subprocess
@@ -40,7 +40,6 @@ def test_frag_broken_tex():
 
 def test_frag_image_size():
     imgt = Image.open(resources.files(plom.server) / "target_Q_latex_plom.png")
-    imgt.load()
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
     r, imgdata = processFragment(frag)
     assert r
