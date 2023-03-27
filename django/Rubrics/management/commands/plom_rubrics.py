@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 import json
 from pathlib import Path
 import sys
 
-# avoid hard dependency: loaded on demand if user writes csv file
+# try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
 
 from tabulate import tabulate
@@ -153,6 +153,10 @@ class Command(BaseCommand):
                 we'll try to append `.toml`.
 
         TODO: anything need done about missing fields etc?  See also Issue #2640.
+
+        TODO: in legacy, there is logic about HAL vs Manager about what to upload.
+        There is also some incorrect logic about absolute rubrics being always
+        autogenerted.  See `upload_rubrics` in `push_pull_rubrics.py`.
         """
         if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
             filename = filename.with_suffix(filename.suffix + ".toml")
