@@ -82,6 +82,10 @@ class Command(BaseCommand):
             service.create_rubric(rubric)
         return len(rubrics)
 
+    def init_rubrics_cmd(self):
+        service = RubricService()
+        return service.init_rubrics()
+
     def erase_all_rubrics_cmd(self):
         service = RubricService()
         return service.erase_all_rubrics()
@@ -240,7 +244,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opt):
         if opt["command"] == "init":
-            print("TODO: init")
+            if self.init_rubrics_cmd():
+                self.stdout.write(self.style.SUCCESS("rubric system initialized"))
+            else:
+                raise CommandError("rubric system already initialized")
 
         elif opt["command"] == "wipe":
             self.stdout.write(self.style.WARNING("CAUTION: "), ending="")

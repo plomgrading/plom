@@ -1,13 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2010-2023 Colin B. Macdonald
+# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Nicholas J H Lai
+
+import logging
 
 from django.contrib.auth.models import User
 from rest_framework.exceptions import ValidationError
 
 from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer
 from Rubrics.models import NeutralRubric, RelativeRubric, RubricPane
+
+
+log = logging.getLogger("RubricServer")
 
 
 class RubricService:
@@ -137,6 +145,112 @@ class RubricService:
             rubric_data.append(relative_rubric_dict)
 
         return rubric_data
+
+    def init_rubrics(self):
+        """Add special rubrics such as deltas and per-question specific.
+
+        Returns:
+            bool: true if initialized or False if it was already initialized.
+        """
+        rubrics1 = NeutralRubric.objects.all()
+        rubrics2 = RelativeRubric.objects.all()
+        # rubrics3 = AbsoluteRubric.objects.all()
+        if rubrics1 or rubrics2:  # or rubrics3:
+            return False
+        # TODO: stop hardcoding!
+        spec = {"numberOfQuestions": 3}
+        spec["question"] = {"1": {"mark": 5}, "2": {"mark": 5}, "3": {"mark": 10}}
+        self._build_special_rubrics(spec)
+        return True
+
+    def _build_special_rubrics(self, spec):
+        log.info("Building special manager-generated rubrics")
+        # create standard manager delta-rubrics - but no 0, nor +/- max-mark
+        for q in range(1, 1 + spec["numberOfQuestions"]):
+            mx = spec["question"]["{}".format(q)]["mark"]
+            # make zero mark and full mark rubrics
+            rubric = {
+                "kind": "absolute",
+                "display_delta": f"0 of {mx}",
+                "value": "0",
+                "out_of": mx,
+                "text": "no answer given",
+                "question": q,
+                "meta": "Is this answer blank or nearly blank?  Please do not use "
+                + "if there is any possibility of relevant writing on the page.",
+                "tags": "",
+                "username": "manager",
+            }
+            try:
+                r = self.create_rubric(rubric)
+            except AssertionError:
+                print("Skippping absolute rubric, not implemented yet, Issue #2641")
+            # log.info("Built no-answer-rubric Q%s: key %s", q, r.pk)
+
+            rubric = {
+                "kind": "absolute",
+                "display_delta": f"0 of {mx}",
+                "value": "0",
+                "out_of": mx,
+                "text": "no marks",
+                "question": q,
+                "meta": "There is writing here but its not sufficient for any points.",
+                "tags": "",
+                "username": "manager",
+            }
+            try:
+                r = self.create_rubric(rubric)
+            except AssertionError:
+                print("Skippping absolute rubric, not implemented yet, Issue #2641")
+            # log.info("Built no-marks-rubric Q%s: key %s", q, r.pk)
+
+            rubric = {
+                "kind": "absolute",
+                "display_delta": f"{mx} of {mx}",
+                "value": f"{mx}",
+                "out_of": mx,
+                "text": "full marks",
+                "question": q,
+                "meta": "",
+                "tags": "",
+                "username": "manager",
+            }
+            try:
+                r = self.create_rubric(rubric)
+            except AssertionError:
+                print("Skippping absolute rubric, not implemented yet, Issue #2641")
+            # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
+
+            # now make delta-rubrics
+            for m in range(1, mx + 1):
+                # make positive delta
+                rubric = {
+                    "display_delta": "+{}".format(m),
+                    "value": m,
+                    "out_of": 0,
+                    "text": ".",
+                    "kind": "relative",
+                    "question": q,
+                    "meta": "",
+                    "tags": "",
+                    "username": "manager",
+                }
+                r = self.create_rubric(rubric)
+                log.info("Built delta-rubric +%d for Q%s: %s", m, q, r.pk)
+                # make negative delta
+                rubric = {
+                    "display_delta": "-{}".format(m),
+                    "value": -m,
+                    "out_of": 0,
+                    "text": ".",
+                    "kind": "relative",
+                    "question": q,
+                    "meta": "",
+                    "tags": "",
+                    "username": "manager",
+                }
+                r = self.create_rubric(rubric)
+                log.info("Built delta-rubric -%d for Q%s: %s", m, q, r.pk)
 
     def erase_all_rubrics(self):
         """
