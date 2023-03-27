@@ -254,7 +254,7 @@ class RubricService:
 
     def erase_all_rubrics(self):
         """
-        Remove all rubrics, permenantly deleting them.  BE CAREFUL.
+        Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
         Returns:
             int: how many rubrics were removed.

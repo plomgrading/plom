@@ -256,7 +256,7 @@ class Command(BaseCommand):
                 if input('  Are you sure?  (type "yes" to continue) ') != "yes":
                     return
             N = self.erase_all_rubrics_cmd()
-            self.stdout.write(self.style.SUCCESS(f"{N} rubrics permenantly deleted"))
+            self.stdout.write(self.style.SUCCESS(f"{N} rubrics permanently deleted"))
 
         elif opt["command"] == "push":
             if opt["demo"]:
