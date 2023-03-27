@@ -448,7 +448,7 @@ class ScanService:
 
         Keyword args:
             papernum (int):
-            questions (list): doc elsehwere, but a list same length
+            questions (list): doc elsewhere, but a list same length
                 as the bundle, each element is list of which questions
                 to attach that page too.
         """

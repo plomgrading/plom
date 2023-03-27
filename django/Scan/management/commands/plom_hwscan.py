@@ -100,7 +100,10 @@ class Command(BaseCommand):
         sp_map = sub.add_parser(
             "map",
             help="Assign pages of a bundle to particular questions.",
-            description="""Assign pages of a bundle to particular question(s), igoring QR-codes etc.""",
+            description="""
+                Assign pages of a bundle to particular question(s),
+                ignoring QR-codes etc.
+            """,
         )
 
         # TODO: might be more robust to work with bundle IDs as well/instead?
