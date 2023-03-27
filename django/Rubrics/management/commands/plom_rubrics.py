@@ -58,7 +58,9 @@ class Command(BaseCommand):
                     rub["value"] = int(rub["delta"])
                     rub["out_of"] = 0  # unused for relative
                 else:
-                    raise ValueError(f'not sure how to map "kind" for rubric:\n  {rub}')
+                    raise CommandError(
+                        f'not sure how to map "kind" for rubric:\n  {rub}'
+                    )
             rub["display_delta"] = rub["delta"]
             rub.pop("delta")
 
@@ -212,9 +214,8 @@ class Command(BaseCommand):
 
         elif opt["command"] == "push":
             if opt["demo"]:
-                print("uploading demo rubrics")
-                N = self.upload_demo_rubrics(numquestions=3)
-                print(f"added {N} rubrics")
+                N = self.upload_demo_rubrics()
+                self.stdout.write(self.style.SUCCESS(f"Added {N} demo rubrics"))
                 return
             print("TODO: push")
             print(opt["file"])
