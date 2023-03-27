@@ -143,6 +143,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **opt):
+        self.stdout.write(self.style.WARNING("** CAUTION: experimental tool **"))
+
         if opt["command"] == "list_bundles":
             self.staging_bundle_status()
 
