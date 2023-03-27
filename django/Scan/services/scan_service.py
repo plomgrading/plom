@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
+import json
 import hashlib
 import pathlib
 import random
@@ -476,15 +477,10 @@ class ScanService:
                     continue
                 page_img.image_type = "extra"
                 page_img.save()
-                for q in qlist:
-                    # TODO: not really Extra, do we need new XStagingImage?
-                    # TODO: or can we use KnownStagingImage?
-                    # TODO: we may need to make more than one of these for each page
-                    # (e.g., questions="all" case)
-                    p = ExtraStagingImage.objects.create(staging_image=page_img)
-                    p.paper_number = papernum
-                    p.question_number = q
-                    p.save()
+                p = ExtraStagingImage.objects.create(staging_image=page_img)
+                p.paper_number = papernum
+                p.question_numbers = json.dumps(qlist)
+                p.save()
 
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk):
