@@ -1,7 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Colin B. Macdonald
 
+import json
+from pathlib import Path
 import sys
+
+# avoid hard dependency: loaded on demand if user writes csv file
+# import pandas
+
+from tabulate import tabulate
 
 if sys.version_info >= (3, 9):
     import importlib.resources as resources
@@ -12,7 +19,7 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-# import tomlkit
+import tomlkit
 
 # from tabulate import tabulate
 from django.core.management.base import BaseCommand, CommandError
@@ -68,11 +75,60 @@ class Command(BaseCommand):
                     rubrics.append(r)
             else:
                 rubrics.append(rub)
-        service = RubricService()
 
+        service = RubricService()
         for rubric in rubrics:
             service.create_rubric(rubric)
         return len(rubrics)
+
+    def download_rubrics_to_file(self, filename, *, verbose=True):
+        """Download the rubrics from a server and save them to a file.
+
+        Args:
+            filename (None/str/pathlib.Path): A filename to save to.  The
+                extension is used to determine what format, supporting:
+                `.json`, `.toml`, and `.csv`.
+                If no extension is included, default to `.toml`.
+                If None, display on stdout.
+
+        Keyword Args:
+            verbose (bool):
+
+        Returns:
+            None: but saves a file as a side effect.
+        """
+        service = RubricService()
+        # TODO: we need a way to get all, not filtered by question
+        # TODO: maybe question=None?
+        rubrics = service.get_rubrics_by_question(question=1)
+
+        if not filename:
+            self.stdout.write(tabulate(rubrics))  # headers="keys"
+            return
+
+        filename = Path(filename)
+        if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
+            filename = filename.with_suffix(filename.suffix + ".toml")
+        suffix = filename.suffix
+
+        if verbose:
+            self.stdout.write(f'Saving server\'s current rubrics to "{filename}"')
+
+        with open(filename, "w") as f:
+            if suffix == ".json":
+                json.dump(rubrics, f, indent="  ")
+            elif suffix == ".toml":
+                tomlkit.dump({"rubric": rubrics}, f)
+            elif suffix == ".csv":
+                try:
+                    import pandas
+                except ImportError as e:
+                    raise CommandError(f'CSV writing needs "pandas" library: {e}')
+
+                df = pandas.json_normalize(rubrics)
+                df.to_csv(f, index=False, sep=",", encoding="utf-8")
+            else:
+                raise CommandError(f'Don\'t know how to export to "{filename}"')
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
@@ -133,7 +189,7 @@ class Command(BaseCommand):
                 Dump the current rubrics into a file,
                 which can be a .toml, .json, or .csv.
                 Defaults to .toml if no extension specified.
-                TODO: or default to the screen if no file provided?
+                Default to the stdout if no file provided.
             """,
         )
 
@@ -154,8 +210,9 @@ class Command(BaseCommand):
                 return
             print("TODO: push")
             print(opt["file"])
+
         elif opt["command"] == "pull":
-            print("TODO: pull")
-            print(opt["file"])
+            self.download_rubrics_to_file(opt["file"], verbose=True)
+
         else:
             self.print_help("manage.py", "plom_rubrics")
