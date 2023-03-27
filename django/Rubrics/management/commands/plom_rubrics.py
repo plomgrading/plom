@@ -55,9 +55,10 @@ class Command(BaseCommand):
             rub["display_delta"] = rub["delta"]
             rub.pop("delta")
 
-            # TODO: didn't need to do this on legacy
+            # TODO: didn't need to do this on legacy, Issue #2640
             rub["username"] = "manager"
             rub["tags"] = ""
+            rub["meta"] = ""
 
             # Multiply rubrics w/o question numbers, avoids repetition in demo file
             if rub.get("question") is None:
