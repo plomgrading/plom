@@ -196,11 +196,34 @@ class ScanService:
             return False
 
     @transaction.atomic
-    def remove_bundle(self, timestamp, user):
+    def remove_bundle(self, bundle_name, *, user=None):
+        """Remove a bundle PDF from the filesystem + database
+
+        Args:
+            bundle_name (str): which bundle.
+
+        Keyword Args:
+            user (None/str): also filter by user.
+                TODO: user is *not* for permissions: looks like just
+                a way to identify a bundle.
         """
-        Remove a bundle PDF from the filesystem + database
+        if user:
+            bundle = StagingBundle.objects.get(
+                user=user,
+                slug=bundle_name,
+            )
+        else:
+            bundle = StagingBundle.objects.get(slug=bundle_name)
+        self._remove_bundle(bundle.pk)
+
+    @transaction.atomic
+    def _remove_bundle(self, bundle_pk):
+        """Remove a bundle PDF from the filesystem + database
+
+        Args:
+            bundle_pk: the primary key for a particular bundle.
         """
-        bundle = self.get_bundle(timestamp, user)
+        bundle = StagingBundle.objects.get(pk=bundle_pk)
         pathlib.Path(bundle.pdf_file.path).unlink()
         bundle.delete()
 
@@ -534,7 +557,8 @@ class ScanService:
         bundle_status = []
         status_header = (
             "Bundle name",
-            "Total pages",
+            "Id",
+            "Pages",
             "Known pages",
             "Error pages",
             "QR read",
@@ -560,6 +584,7 @@ class ScanService:
 
             bundle_data = (
                 bundle.slug,
+                bundle.pk,
                 total_pages,
                 n_knowns,
                 n_errors,
