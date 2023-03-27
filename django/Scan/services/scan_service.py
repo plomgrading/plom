@@ -42,7 +42,7 @@ from Scan.models import (
 )
 from Papers.models import ErrorImage
 from Papers.services import ImageBundleService
-
+from Papers.services import SpecificationService
 
 from Scan.services.qr_validators import QRErrorService
 
@@ -664,10 +664,14 @@ class ScanService:
         #    raise ValueError(f"QR codes for {bundle_name} has been read.")
         # TODO: ensure papernum exists, here or in the none-cmd?
 
-        # TODO: stop hardcoding
-        pages = 6
-        numquestions = 3
-        questions = canonicalize_question_list(questions, pages, numquestions)
+        numpages = len(bundle_obj.stagingimage_set.all())
+        print(f"DEBUG: numpages in bundle: {numpages}")
+        spec = SpecificationService().get_the_spec()
+        numquestions = spec["numberOfQuestions"]
+
+        print(f"DEBUG: pre-canonical question:  {questions}")
+        questions = canonicalize_question_list(questions, numpages, numquestions)
+        print(f"DEBUG: canonical question list: {questions}")
 
         self.map_bundle_pages(bundle_obj.pk, papernum=papernum, questions=questions)
 
