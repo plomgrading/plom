@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
@@ -24,7 +24,6 @@ def relative_error(x, y):
 
 def test_qr_reads_from_image():
     im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im.load()
     q = QRextract(im)
     assert not q["NE"]  # staple
     assert q["NW"]["tpv_signature"] == "00002806012823730"
@@ -40,7 +39,6 @@ def test_qr_reads_from_image():
 
 def test_qr_reads_from_image_legacy():
     im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im.load()
     p = QRextract_legacy(im, write_to_file=False)
     assert not p["NE"]  # staple
     assert p["NW"] == ["00002806012823730"]
@@ -50,7 +48,6 @@ def test_qr_reads_from_image_legacy():
 
 def test_qr_reads_slight_rotate():
     im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im.load()
     im = im.rotate(10, expand=True)
     q = QRextract(im)
     assert not q["NE"]
@@ -67,7 +64,6 @@ def test_qr_reads_slight_rotate():
 
 def test_qr_reads_slight_rotate_legacy():
     im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im.load()
     im = im.rotate(10, expand=True)
     p = QRextract_legacy(im, write_to_file=False)
     assert not p["NE"]
@@ -78,7 +74,6 @@ def test_qr_reads_slight_rotate_legacy():
 
 def test_qr_reads_upside_down():
     im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im.load()
     im = im.rotate(180)
     q = QRextract(im)
     assert not q["SW"]
@@ -95,7 +90,6 @@ def test_qr_reads_upside_down():
 
 def test_qr_reads_upside_down_legacy():
     im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im.load()
     im = im.rotate(180)
     p = QRextract_legacy(im, write_to_file=False)
     assert not p["SW"]
