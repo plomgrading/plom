@@ -28,6 +28,7 @@ from .mark import (
     MgetOneImage,
     MgetAnnotations,
     MgetAnnotationImage,
+    MgetDoneTasks,
 )
 
 from .rubrics import (

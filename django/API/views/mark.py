@@ -92,6 +92,40 @@ class MarkingProgressCount(APIView):
         return Response(progress, status=status.HTTP_200_OK)
 
 
+class MgetDoneTasks(APIView):
+    """
+    Retrieve data for questions which have already been graded by the user.
+
+    Respond with status 200.
+
+    Returns:
+        200: list of [group-ids, mark, marking_time, [list_of_tag_texts], integrity_check ] for each paper.
+    """
+
+    def get(self, request, *args):
+        data = request.data
+        question = data["q"]
+        version = data["v"]
+
+        mts = MarkingTaskService()
+        marks = mts.get_user_mark_results(
+            request.user, question=question, version=version
+        )
+
+        rows = map(
+            lambda mark_action: [
+                mark_action.task.code,
+                mark_action.annotation.score,
+                mark_action.time - mark_action.claim_action.time,
+                [],  # TODO: tags are not implemented yet
+                "",  # TODO: integrity check is not implemented yet
+            ],
+            marks,
+        )
+
+        return Response(list(rows), status=status.HTTP_200_OK)
+
+
 class MgetNextTask(APIView):
     """
     Responds with a code for the next available marking task.
@@ -106,8 +140,6 @@ class MgetNextTask(APIView):
         question = data["q"]
         version = data["v"]
 
-        # return Response("q0001g1")
-        # TODO: find another place for populating the marking tasks table
         mts = MarkingTaskService()
 
         task = mts.get_first_available_task(question=question, version=version)
