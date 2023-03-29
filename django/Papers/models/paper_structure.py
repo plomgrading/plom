@@ -22,58 +22,66 @@ class Paper(models.Model):
     paper_number = models.PositiveIntegerField(null=False, unique=True)
 
 
-class BasePage(PolymorphicModel):
-    """Base table to store information about the pages within a given
-    group of pages. We then use polymorphism to define derived classes
-    of pages: IDPage, DNMPage, QuestionPage. The base class should
-    contain all info common to these classes. Searching on this base
-    class allows us to search over all pages, while searching on a
-    derived class only searches over those page types.
+class MobilePage(models.Model):
+    paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
+    question_number = models.PositiveIntegerField(null=False)
+    version = models.PositiveIntegerField(null=False)
+    # NOTE  - no ordering.
+
+
+class FixedPage(PolymorphicModel):
+    """Fixed-page table to store information about the "fixed" pages
+    within a given paper. Since very "fixed" page has a definite
+    page-number and version-number, these appear here in the base
+    class. However, only certain pages have question-numbers, so we
+    use polymorphism to put that information in various derived
+    classes.
+
+    IDPage, DNMPage = for the single IDpage and (zero or more) DNMPages, currently always v=1.
+    QuestionPage = has question-number and a non-trivial version
+
+    The base class should contain all info common to these
+    classes. Searching on this base class allows us to search over all
+    pages, while searching on a derived class only searches over those
+    page types.
 
     paper (ref to Paper): the test-paper to which this page image belongs
     image (ref to Image): the image
     page_number (int): the position of this page within the test-paper
-    _version (int): the version of this paper/page as determined by
-        the qvmap. Note that this field is temporary until we start
-        dealing with extra-pages
+    version (int): the version of this paper/page as determined by
+        the qvmap.
 
     """
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
     page_number = models.PositiveIntegerField(null=False)
-    # temporarily include the version here until we work out how to deal with
-    # extra-pages
-    _version = models.PositiveIntegerField(null=False)
+    version = models.PositiveIntegerField(null=False)
 
 
-class DNMPage(BasePage):
-    """Table to store information about the pages in DoNotMark
-    groups. At present we construct DNM pages so that they always have
-    _version=1. This may change in the future."""
+class DNMPage(FixedPage):
+    """Table to store information about the do-not-mark pages. At
+    present all DNM pages have version 1. This may change in the
+    future."""
 
     pass
 
 
-class IDPage(BasePage):
-    """Table to store information about the pages in ID groups.
-
-    Notice that at present IDGroups should only contain a single page
-    so this IDPages should always have page-number = 1.  Also note
-    that at present we construct ID pages so that they always have
-    _version=1. This may change in the future.
+class IDPage(FixedPage):
+    """Table to store information about the IDPage of the paper. At
+    present the ID page always has version 1. This may change in the
+    future.
 
     """
 
     pass
 
 
-class QuestionPage(BasePage):
+class QuestionPage(FixedPage):
     """Table to store information about the pages in Question groups.
 
     question_number (int): the question that this page belongs to.
-    question_version (int): the version of the question.
     """
 
-    question_number = models.PositiveIntegerField(null=False, default=0)
-    question_version = models.PositiveIntegerField(null=False, default=1)
+    question_number = models.PositiveIntegerField(null=False)
