@@ -482,6 +482,51 @@ class ScanService:
                 p.question_numbers = json.dumps(qlist)
                 p.save()
 
+    def surgery_unknown_to_extra(self, bundle_pk, idx, *, papernum, questions):
+        """Replace a single UnknownStagingImage with a ExtraStagingImage.
+
+        This is to identify a completely blank paper.
+
+        TODO: some other routine to identify a all-three-QRcodes-failed sheet.
+
+        TODO: not sure ExtraStagingImage is the right thing.
+        """
+        raise NotImplementedError()
+
+    def surgery_map_extra(self, bundle_name, idx, *, papernum, questions):
+        """Fill in the missing information in a ExtraStagingImage.
+
+        This is to identify which paper and question(s) are in a ExtraStagingImage.
+
+        Args:
+            bundle_name (str): TODO: can we supply ID instead?
+            idx (int): which bundle order to change?
+
+        Keyword Args:
+            papernum (int)
+            questions (list): TODO where processed?  need a
+                mini-canonicalize_question_list fcn?
+
+        TODO: can you change one with this?  sure why not?
+
+        TODO: some other routine to identify a all-three-QRcodes-failed sheet.
+
+        TODO: error handling?  esp idx out of range, and its not a ExtraStagingImage
+        """
+        bundle = StagingBundle.objects.get(slug=bundle_name)
+        # TODO: why not directly ask the ExtraStagingImages?  why all this bullshit
+        # with the superclass?
+        print(bundle)
+        img = bundle.stagingimage_set.get(bundle_order=idx)
+        print(img)
+        assert img.image_type == "extra"
+        img.extrastagingimage.paper_number = papernum
+        img.extrastagingimage.question_numbers = questions
+        # TODO: does this work?  img is StagingImage not an ExtraStagingImage
+        # TODO: burn all that subclassy stuff down and just use two tables?
+        img.save()
+        print(img.extrastagingimage.paper_number)
+
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -765,10 +810,19 @@ class ScanService:
                 "version": img.knownstagingimage.version,
             }
         for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
-            pages[img.bundle_order]["info"] = {
-                "paper_number": img.extrastagingimage.paper_number,
-                "question_number": img.extrastagingimage.question_number,
-            }
+            print(
+                f"getting extra: {img} {img.extrastagingimage.question_number} {img.extrastagingimage.question_numbers}"
+            )
+            if img.extrastagingimage.question_numbers:
+                pages[img.bundle_order]["info"] = {
+                    "paper_number": img.extrastagingimage.paper_number,
+                    "question_number": img.extrastagingimage.question_numbers,
+                }
+            else:
+                pages[img.bundle_order]["info"] = {
+                    "paper_number": img.extrastagingimage.paper_number,
+                    "question_number": img.extrastagingimage.question_number,
+                }
         return pages
 
     @transaction.atomic
