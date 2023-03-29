@@ -118,7 +118,7 @@ class MgetDoneTasks(APIView):
                 mark_action.annotation.score,
                 mark_action.time - mark_action.claim_action.time,
                 [],  # TODO: tags are not implemented yet
-                "",  # TODO: integrity check is not implemented yet
+                mark_action.task.pk,  # TODO: integrity check is not implemented yet
             ],
             marks,
         )
@@ -164,7 +164,7 @@ class MclaimThisTask(APIView):
         question_data = pds.get_question_pages_list(paper, question)
 
         # TODO: tags and integrity check are hardcoded for now
-        return Response([question_data, [], "12345"])
+        return Response([question_data, [], the_task.pk])
 
     def post(self, request, code, *args):
         """
