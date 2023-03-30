@@ -258,7 +258,23 @@ class MgetAnnotations(APIView):
     """
 
     def get(self, request, paper, question):
-        return Response({"annotation_edition": None}, status=status.HTTP_200_OK)
+        mts = MarkingTaskService()
+        annotation = mts.get_latest_annotation(paper, question)
+        annotaion_task = annotation.mark_action.task
+        annotation_data = annotation.annotation_data
+
+        latest_task = mts.get_latest_task(paper, question)
+        if latest_task != annotaion_task:
+            raise APIException(
+                detail="Integrity error: task has been modified by server.",
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        annotation_data["user"] = annotation.mark_action.user.username
+        annotation_data["annotation_edition"] = annotation.edition
+        plom_data["annotation_reference"] = annotation.pk
+
+        return Response(plom_data, status=status.HTTP_200_OK)
 
 
 class MgetAnnotationImage(APIView):
@@ -267,4 +283,22 @@ class MgetAnnotationImage(APIView):
     """
 
     def get(self, request, paper, question):
-        return Response({}, status=status.HTTP_200_OK)
+        mts = MarkingTaskService()
+        annotation = mts.get_latest_annotation(paper, question)
+        annotation_task = annotation.mark_action.task
+        annotation_image = annotation.image
+
+        latest_task = mts.get_latestLtask(paper, question)
+        if latest_task != annotation_task:
+            raise APIException(
+                detail="Integrity error: task has been modified by server.",
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        with open(annotation_image.path, "rb") as f:
+            image = SimpleUploadedFile(
+                f"{annotation_image.hash}.png",
+                f.read(),
+                content_type="image/png",
+            )
+        return FileResponse(image, status=status.HTTP_200_OK)

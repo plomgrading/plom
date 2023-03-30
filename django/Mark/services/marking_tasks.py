@@ -104,7 +104,7 @@ class MarkingTaskService:
 
         return (len(completed), len(total))
 
-    def get_task(self, paper_number, question_number):
+    def get_latest_task(self, paper_number, question_number):
         """
         Get a marking task from its paper number and question number.
 
@@ -113,7 +113,11 @@ class MarkingTaskService:
             question_number: int
         """
         paper = Paper.objects.get(paper_number=paper_number)
-        return MarkingTask.objects.get(paper=paper, question_number=question_number)
+        return (
+            MarkingTask.objects.filter(paper=paper, question_number=question_number)
+            .order_by("-time")
+            .first()
+        )
 
     def unpack_code(self, code):
         """
@@ -139,7 +143,7 @@ class MarkingTaskService:
         """
 
         paper_number, question_number = self.unpack_code(code)
-        return self.get_task(paper_number, question_number)
+        return self.get_latest_task(paper_number, question_number)
 
     def get_user_tasks(self, user, question=None, version=None):
         """
@@ -427,3 +431,17 @@ class MarkingTaskService:
                 actions = filter(lambda a: a.task.question_version == version, actions)
 
         return list(actions)
+
+    def get_latest_annotation(self, paper, question):
+        """
+        Get the latest annotation for a particular paper/question.
+
+        Args:
+            paper: int, the paper number
+            question: int, the question number
+
+        Returns:
+            Annotation: the latest annotation instance
+        """
+
+        return Annotation.objects.order_by("-time").first()
