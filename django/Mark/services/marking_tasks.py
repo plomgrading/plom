@@ -444,4 +444,4 @@ class MarkingTaskService:
             Annotation: the latest annotation instance
         """
 
-        return Annotation.objects.order_by("-time").first()
+        return Annotation.objects.order_by("-markaction__time").first()

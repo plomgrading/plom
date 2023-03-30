@@ -260,7 +260,7 @@ class MgetAnnotations(APIView):
     def get(self, request, paper, question):
         mts = MarkingTaskService()
         annotation = mts.get_latest_annotation(paper, question)
-        annotaion_task = annotation.mark_action.task
+        annotaion_task = annotation.markaction.task
         annotation_data = annotation.annotation_data
 
         latest_task = mts.get_latest_task(paper, question)
@@ -270,11 +270,11 @@ class MgetAnnotations(APIView):
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        annotation_data["user"] = annotation.mark_action.user.username
+        annotation_data["user"] = annotation.markaction.user.username
         annotation_data["annotation_edition"] = annotation.edition
-        plom_data["annotation_reference"] = annotation.pk
+        annotation_data["annotation_reference"] = annotation.pk
 
-        return Response(plom_data, status=status.HTTP_200_OK)
+        return Response(annotation_data, status=status.HTTP_200_OK)
 
 
 class MgetAnnotationImage(APIView):
@@ -282,13 +282,13 @@ class MgetAnnotationImage(APIView):
     Get an annotation-image.
     """
 
-    def get(self, request, paper, question):
+    def get(self, request, paper, question, edition):
         mts = MarkingTaskService()
         annotation = mts.get_latest_annotation(paper, question)
-        annotation_task = annotation.mark_action.task
+        annotation_task = annotation.markaction.task
         annotation_image = annotation.image
 
-        latest_task = mts.get_latestLtask(paper, question)
+        latest_task = mts.get_latest_task(paper, question)
         if latest_task != annotation_task:
             raise APIException(
                 detail="Integrity error: task has been modified by server.",
