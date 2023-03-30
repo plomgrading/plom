@@ -89,16 +89,13 @@ class ManageScanService:
             ):
                 pages = []
                 for p in page_query:
-                    if type(p) == QuestionPage:
-                        pages.append(
-                            {
-                                "image": p.image,
-                                "version": p.question_version,
-                                "number": p.page_number,
-                            }
-                        )
-                    else:
-                        pages.append({"image": p.image, "number": p.page_number})
+                    pages.append(
+                        {
+                            "image": p.image,
+                            "version": p.version,
+                            "number": p.page_number,
+                        }
+                    )
 
                 paper.update(
                     {
