@@ -11,7 +11,7 @@ from .image_bundle import Image
 class Paper(models.Model):
     """Table to store papers. Each entry corresponds to one (physical)
     test-paper that a student submits. The pages of that test-paper
-    are divided into pages - see the BasePage class.
+    are divided into pages - see the FixedPage class.
     The Paper object does not contain explicit refs to pages, but rather
     the pages will reference the paper (as is usual in a database).
 

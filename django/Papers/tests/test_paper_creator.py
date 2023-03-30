@@ -6,7 +6,7 @@ from django.db import IntegrityError
 from model_bakery import baker
 
 from Papers.services import PaperCreatorService
-from Papers.models import Paper, IDPage, DNMPage, QuestionPage, BasePage, Specification
+from Papers.models import Paper, IDPage, DNMPage, QuestionPage, FixedPage, Specification
 
 
 class PaperCreatorTests(TestCase):
@@ -34,7 +34,7 @@ class PaperCreatorTests(TestCase):
         """
 
         n_papers = len(Paper.objects.all())
-        n_pages = len(BasePage.objects.all())
+        n_pages = len(FixedPage.objects.all())
         n_id = len(IDPage.objects.all())
         n_dnm = len(DNMPage.objects.all())
         n_question = len(QuestionPage.objects.all())
@@ -62,10 +62,10 @@ class PaperCreatorTests(TestCase):
         paper = Paper.objects.get(paper_number=1)
 
         q_1 = QuestionPage.objects.get(paper=paper, question_number=1)
-        self.assertEqual(q_1.question_version, 2)
+        self.assertEqual(q_1.version, 2)
 
         q_2 = QuestionPage.objects.get(paper=paper, question_number=2)
-        self.assertEqual(q_2.question_version, 1)
+        self.assertEqual(q_2.version, 1)
 
     def test_remake_paper_raises(self):
         """

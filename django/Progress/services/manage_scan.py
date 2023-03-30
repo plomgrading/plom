@@ -13,7 +13,7 @@ from django.db.models import Exists, OuterRef
 from django.conf import settings
 
 from Papers.models import (
-    BasePage,
+    FixedPage,
     Paper,
     QuestionPage,
     CollidingImage,
@@ -36,7 +36,7 @@ class ManageScanService:
         Return the total number of pages across all test-papers in the exam.
         """
 
-        return len(BasePage.objects.all())
+        return len(FixedPage.objects.all())
 
     @transaction.atomic
     def get_scanned_pages(self):
@@ -44,7 +44,7 @@ class ManageScanService:
         Return the number of pages in the exam that have been successfully scanned and validated.
         """
 
-        scanned = BasePage.objects.exclude(image=None)
+        scanned = FixedPage.objects.exclude(image=None)
         return len(scanned)
 
     @transaction.atomic
@@ -61,7 +61,7 @@ class ManageScanService:
         Return the number of test-papers that have been completely scanned.
         """
 
-        incomplete_present = BasePage.objects.filter(paper=OuterRef("pk"), image=None)
+        incomplete_present = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
         complete_papers = Paper.objects.filter(~Exists(incomplete_present))
 
         return len(complete_papers)
@@ -81,7 +81,7 @@ class ManageScanService:
         test_papers = []
         for tp in papers:
             paper = {}
-            page_query = BasePage.objects.filter(paper=tp).order_by("page_number")
+            page_query = FixedPage.objects.filter(paper=tp).order_by("page_number")
             is_incomplete = page_query.filter(image=None).exists()
 
             if (is_incomplete and not exclude_incomplete) or (
@@ -122,7 +122,7 @@ class ManageScanService:
         """
 
         paper = Paper.objects.get(paper_number=test_paper)
-        page = BasePage.objects.get(paper=paper, page_number=index)
+        page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
     @transaction.atomic
@@ -264,7 +264,7 @@ class ManageScanService:
             rotation=colliding_image.rotation,
         )
 
-        image_page = BasePage.objects.get(image=image)
+        image_page = FixedPage.objects.get(image=image)
         image_page.image = new_image
 
         staged_image = StagingImage.objects.get(

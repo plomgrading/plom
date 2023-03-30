@@ -5,7 +5,7 @@ from model_bakery import baker
 from Papers.models import (
     Image,
     CollidingImage,
-    BasePage,
+    FixedPage,
     DNMPage,
     DiscardedImage,
     Bundle,
