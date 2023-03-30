@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.db import transaction
-from Papers.models import Paper, BasePage
+from Papers.models import Paper, FixedPage
 
 import logging
 
@@ -40,7 +40,7 @@ class PaperInfoService:
         Return True if a page has an Image associated with it.
         """
         paper = Paper.objects.get(paper_number=paper_number)
-        page = BasePage.objects.get(paper=paper, page_number=page_number)
+        page = FixedPage.objects.get(paper=paper, page_number=page_number)
         return page.image is not None
 
     @transaction.atomic
@@ -51,9 +51,9 @@ class PaperInfoService:
         except Paper.DoesNotExist:
             raise ValueError(f"Paper {paper_number} does not exist in the database.")
         try:
-            page = BasePage.objects.get(paper=paper, page_number=page_number)
-        except BasePage.DoesNotExist:
+            page = FixedPage.objects.get(paper=paper, page_number=page_number)
+        except FixedPage.DoesNotExist:
             raise ValueError(
                 f"Page {page_number} of paper {paper_number} does not exist in the database."
             )
-        return page._version
+        return page.version

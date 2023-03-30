@@ -13,7 +13,7 @@ from Papers.models import (
     Paper,
     Specification,
     DNMPage,
-    BasePage,
+    FixedPage,
     QuestionPage,
 )
 from Scan.models import StagingImage, StagingBundle, KnownStagingImage
@@ -106,7 +106,7 @@ class ImageBundleTests(TestCase):
         self.assertEqual(img.bundle.hash, "abcde")
         self.assertEqual(img.bundle_order, 1)
 
-        page = BasePage.objects.get(image=img)
+        page = FixedPage.objects.get(image=img)
         self.assertEqual(type(page), DNMPage)
         self.assertEqual(page.paper, self.paper)
         self.assertEqual(page.page_number, 2)
@@ -291,8 +291,8 @@ class ImageBundleTests(TestCase):
 
         baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
-        baker.make(BasePage, paper=paper3, page_number=1, image=img4)
-        baker.make(BasePage, paper=paper3, page_number=2, image=img5)
+        baker.make(FixedPage, paper=paper3, page_number=1, image=img4)
+        baker.make(FixedPage, paper=paper3, page_number=2, image=img5)
 
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
@@ -313,7 +313,7 @@ class ImageBundleTests(TestCase):
         """
 
         bundle = baker.make(StagingBundle, pdf_hash="abcdef")
-        qvmap = baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
+        baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
         paper2 = baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
         baker.make(QuestionPage, paper=paper2, page_number=1, question_number=1)
@@ -352,6 +352,6 @@ class ImageBundleTests(TestCase):
 
         self.assertEqual(Bundle.objects.all()[0].hash, bundle.pdf_hash)
         self.assertEqual(
-            Image.objects.get(basepage__page_number=1, basepage__paper=paper2).hash,
+            Image.objects.get(fixedpage__page_number=1, fixedpage__paper=paper2).hash,
             img1.image_hash,
         )
