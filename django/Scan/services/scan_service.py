@@ -42,7 +42,7 @@ from Scan.models import (
     ManagePageToImage,
     ManageParseQR,
 )
-from Papers.models import ErrorImage
+from Papers.models import ErrorImage, Paper
 from Papers.services import ImageBundleService
 from Papers.services import SpecificationService
 
@@ -479,7 +479,7 @@ class ScanService:
                 page_img.save()
                 p = ExtraStagingImage.objects.create(staging_image=page_img)
                 p.paper_number = papernum
-                p.question_numbers = json.dumps(qlist)
+                p.question_list = json.dumps(qlist)
                 p.save()
 
     def surgery_unknown_to_extra(self, bundle_pk, idx, *, papernum, questions):
@@ -493,18 +493,40 @@ class ScanService:
         """
         raise NotImplementedError()
 
-    def surgery_map_extra(self, bundle_name, idx, *, papernum, questions):
+    def check_question_list(self, question_list):
+        if not isinstance(question_list, list):
+            raise ValueError(
+                "Question list '{question_list}' must be a valid python list."
+            )
+        n_questions = SpecificationService().get_n_questions()
+        # check that each item in the question_list is a valid question number
+        for q in question_list:
+            if isinstance(q, int):
+                if q < 1 or q > n_questions:
+                    raise ValueError(
+                        f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
+                    )
+            else:
+                raise ValueError(
+                    f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
+                )
+        return question_list
+
+    @transaction.atomic()
+    def surgery_map_extra(
+        self, bundle_name, user_supplied_idx, *, papernum, question_list
+    ):
         """Fill in the missing information in a ExtraStagingImage.
 
         This is to identify which paper and question(s) are in a ExtraStagingImage.
 
         Args:
             bundle_name (str): TODO: can we supply ID instead?
-            idx (int): which bundle order to change?
+            user_supplied_idx (int): which bundle order to change?
 
         Keyword Args:
             papernum (int)
-            questions (list): TODO where processed?  need a
+            question_list (list): TODO where processed?  need a
                 mini-canonicalize_question_list fcn?
 
         TODO: can you change one with this?  sure why not?
@@ -513,19 +535,38 @@ class ScanService:
 
         TODO: error handling?  esp idx out of range, and its not a ExtraStagingImage
         """
+
+        # the user's bundle index is 1 greater than the internal one
+        # (ie user sees bundle orders starting from 1, while
+        # internally they start from zero)
+        idx = user_supplied_idx - 1
+
+        # get the bundle, then the image and the extra-image that stores the info.
         bundle = StagingBundle.objects.get(slug=bundle_name)
-        # TODO: why not directly ask the ExtraStagingImages?  why all this bullshit
-        # with the superclass?
-        print(bundle)
-        img = bundle.stagingimage_set.get(bundle_order=idx)
-        print(img)
-        assert img.image_type == "extra"
-        img.extrastagingimage.paper_number = papernum
-        img.extrastagingimage.question_numbers = questions
-        # TODO: does this work?  img is StagingImage not an ExtraStagingImage
-        # TODO: burn all that subclassy stuff down and just use two tables?
-        img.save()
-        print(img.extrastagingimage.paper_number)
+
+        # sorry Colin - we can do it this way, or we have to get all polymorphic.
+
+        # get the page from the bundle and throw a value-error if it does not exist.
+        try:
+            img = bundle.stagingimage_set.get(bundle_order=idx)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Page {idx} from bundle {bundle_name} does not exist")
+        # check that image is actuall an extra page
+        if img.image_type != "extra":
+            raise TypeError(
+                f"Cannot set extra-page data for a page of type {img.image_type}."
+            )
+        # check that the supplied paper-number is in the system.
+        if not Paper.objects.filter(paper_number=papernum).exists():
+            raise ValueError(f"Paper {papernum} does not exist in the database")
+
+        # validate the question list from the user - raises a value error if idiocy.
+        sane_qlist = self.check_question_list(question_list)
+
+        ex_img = img.extrastagingimage
+        ex_img.paper_number = papernum
+        ex_img.question_list = sane_qlist
+        ex_img.save()
 
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk):
@@ -810,18 +851,16 @@ class ScanService:
                 "version": img.knownstagingimage.version,
             }
         for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
-            print(
-                f"getting extra: {img} {img.extrastagingimage.question_number} {img.extrastagingimage.question_numbers}"
-            )
-            if img.extrastagingimage.question_numbers:
+            print(f"getting extra: {img} {img.extrastagingimage.question_list}")
+            if img.extrastagingimage.question_list:
                 pages[img.bundle_order]["info"] = {
                     "paper_number": img.extrastagingimage.paper_number,
-                    "question_number": img.extrastagingimage.question_numbers,
+                    "question_number": img.extrastagingimage.question_list,
                 }
             else:
                 pages[img.bundle_order]["info"] = {
                     "paper_number": img.extrastagingimage.paper_number,
-                    "question_number": img.extrastagingimage.question_number,
+                    "question_number": img.extrastagingimage.question_list,
                 }
         return pages
 
@@ -849,7 +888,7 @@ class ScanService:
         elif img.image_type == "extra":
             info = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_number": img.extrastagingimage.question_number,
+                "question_list": img.extrastagingimage.question_list,
             }
         else:
             info = {}

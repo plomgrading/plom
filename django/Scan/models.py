@@ -63,12 +63,7 @@ class ExtraStagingImage(models.Model):
         StagingImage, primary_key=True, on_delete=models.CASCADE
     )
     paper_number = models.PositiveIntegerField(null=True)
-    # TODO you probably shouldn't use both of these!
-    question_number = models.PositiveIntegerField(null=True)
-    # TODO: not sure DB would allow "set"?  But the intention here is "no dupes"
-    # there maybe other rules too, TBD once we start processing: its certainly
-    # not ANY json you'd like...
-    question_numbers = models.JSONField(default=list, null=True)
+    question_list = models.JSONField(default=list, null=True)
 
 
 class UnknownStagingImage(models.Model):
