@@ -265,8 +265,8 @@ class MgetAnnotations(APIView):
 
         latest_task = mts.get_latest_task(paper, question)
         if latest_task != annotaion_task:
-            raise APIException(
-                detail="Integrity error: task has been modified by server.",
+            return Response(
+                "Integrity error: task has been modified by server.",
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
@@ -290,8 +290,8 @@ class MgetAnnotationImage(APIView):
 
         latest_task = mts.get_latest_task(paper, question)
         if latest_task != annotation_task:
-            raise APIException(
-                detail="Integrity error: task has been modified by server.",
+            return Response(
+                "Integrity error: task has been modified by server.",
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
