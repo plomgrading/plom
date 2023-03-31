@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from rest_framework import status
 
@@ -13,7 +14,6 @@ class MlatexFragment(APIView):
 
     def get(self, request):
         print("latex not implemented yet, Issue #2639")
-        raise APIException(
-            detail="Sorry server does not support latex",
-            code=status.HTTP_406_NOT_ACCEPTABLE,
+        return Response(
+            "Sorry server does not support latex", status=status.HTTP_406_NOT_ACCEPTABLE
         )
