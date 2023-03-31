@@ -444,4 +444,9 @@ class MarkingTaskService:
             Annotation: the latest annotation instance
         """
 
-        return Annotation.objects.order_by("-markaction__time").first()
+        # return Annotation.objects.order_by("-markaction__time").first()
+        self.get_latest_task(paper, question)
+        latest_action = (
+            MarkAction.objects.filter(task=latest_task).order_by("-time").first()
+        )
+        return Annotation.objects.get(markaction=latest_action)
