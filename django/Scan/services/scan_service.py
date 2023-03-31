@@ -543,13 +543,13 @@ class ScanService:
 
         # get the bundle, then the image and the extra-image that stores the info.
         bundle = StagingBundle.objects.get(slug=bundle_name)
-
         # get the corresponding extr page from the bundle and throw a value-error if it does not exist.
         # note that this does not tell us if it is because the index is out of range
         # or if the page is not an extra-page
         # just that it does not exist
         try:
-            ex_img = ExtraStagingImage.objects.get(staging_image__bundle_order=idx)
+            # grab the extra-img with stagingimage from **both** the given bundle with the given index.
+            ex_img = ExtraStagingImage.objects.get(staging_image__bundle=bundle, staging_image__bundle_order=idx)
         except ObjectDoesNotExist:
             raise ValueError(
                 f"There is no extra page at index {user_supplied_idx} in bundle {bundle_name}."
