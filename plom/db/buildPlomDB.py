@@ -30,7 +30,7 @@ def buildSpecialRubrics(spec, db):
     for q in range(1, 1 + spec["numberOfQuestions"]):
         mx = spec["question"]["{}".format(q)]["mark"]
         # make zero mark and full mark rubrics
-        # Note: the precise "no answer given" string is repated in db_create.py
+        # Note: the precise "no answer given" string is repeated in db_create.py
         rubric = {
             "kind": "absolute",
             "display_delta": f"0 of {mx}",
