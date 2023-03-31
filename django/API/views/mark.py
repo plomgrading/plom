@@ -260,11 +260,11 @@ class MgetAnnotations(APIView):
     def get(self, request, paper, question):
         mts = MarkingTaskService()
         annotation = mts.get_latest_annotation(paper, question)
-        annotaion_task = annotation.markaction.task
+        annotation_task = annotation.markaction.task
         annotation_data = annotation.annotation_data
 
         latest_task = mts.get_latest_task(paper, question)
-        if latest_task != annotaion_task:
+        if latest_task != annotation_task:
             return Response(
                 "Integrity error: task has been modified by server.",
                 status=status.HTTP_406_NOT_ACCEPTABLE,
