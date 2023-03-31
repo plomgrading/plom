@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 import exif
 import fitz
@@ -92,7 +93,7 @@ class ScanServiceTests(TestCase):
         self.assertTrue(bundle_path.exists())
         # now remove it using the scan services
         scanner = ScanService()
-        scanner.remove_bundle(timestamp, self.user0)
+        scanner.remove_bundle("test_bundle", user=self.user0)
         # that path should no longer exist, nor should the bundle
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())

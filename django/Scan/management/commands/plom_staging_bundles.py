@@ -27,7 +27,7 @@ class Command(BaseCommand):
 
     help = "Upload bundle pdf files to staging area"
 
-    def upload_pdf(self, username=None, source_pdf=None):
+    def upload_pdf(self, username=None, source_pdf=None, *, debug_jpeg=False):
         scanner = ScanService()
 
         if source_pdf is None:
@@ -55,7 +55,13 @@ class Command(BaseCommand):
 
         try:
             scanner.upload_bundle_cmd(
-                source_pdf, slug, username, timestamp, hashed, number_of_pages
+                source_pdf,
+                slug,
+                username,
+                timestamp,
+                hashed,
+                number_of_pages,
+                debug_jpeg=debug_jpeg,
             )
             self.stdout.write(
                 f"Uploaded {source_pdf} as user {username} - processing it in the background now."
@@ -81,6 +87,7 @@ class Command(BaseCommand):
             raise CommandError(f"Multiple bundles called '{bundle_name}' are present.")
 
         (
+            pk,
             num_pages,
             valid_pages,
             error_pages,
@@ -89,8 +96,11 @@ class Command(BaseCommand):
             username,
         ) = the_bundle[0][1:]
         self.stdout.write(
-            f"Found bundle '{bundle_name}' with {num_pages} pages uploaded by {username}"
+            f"Found bundle '{bundle_name}' (id {pk}) with {num_pages} pages uploaded by {username}"
         )
+        if isinstance(num_pages, str) and "progress" in num_pages:
+            self.stdout.write(f"  * bundle still being split: {num_pages}")
+            return
         if pushed is True:
             self.stdout.write("  * bundle has been pushed")
             return
@@ -110,6 +120,14 @@ class Command(BaseCommand):
             and (pushed is not True)
         ):
             self.stdout.write("  *  bundle perfect, ready to push")
+
+    def delete_staged_bundle(self, bundle_name):
+        scanner = ScanService()
+        try:
+            scanner.remove_bundle(bundle_name)
+        except ValueError as err:
+            raise CommandError(err)
+        self.stdout.write(f"Deleted {bundle_name}")
 
     def push_staged_bundle(self, bundle_name):
         scanner = ScanService()
@@ -141,6 +159,14 @@ class Command(BaseCommand):
             "username", type=str, help="Which username to upload as."
         )
         sp_upload.add_argument("source_pdf", type=str, help="The test pdf to upload.")
+        sp_upload.add_argument(
+            "--demo",
+            action="store_true",
+            help="""
+                Make a mess of the input, using low-quality JPEGs, rotations, etc.
+                Not for production.
+            """,
+        )
 
         # Status
         sp_stat = sp.add_parser(
@@ -152,6 +178,9 @@ class Command(BaseCommand):
             nargs="?",
             help="(optional) get status of specific bundle",
         )
+
+        sp_del = sp.add_parser("delete", help="delete a bundle.")
+        sp_del.add_argument("bundle_name", type=str, help="Which bundle to delete")
 
         # Push
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
@@ -166,10 +195,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["command"] == "upload":
             self.upload_pdf(
-                username=options["username"], source_pdf=options["source_pdf"]
+                username=options["username"],
+                source_pdf=options["source_pdf"],
+                debug_jpeg=options["demo"],
             )
         elif options["command"] == "status":
             self.staging_bundle_status(bundle_name=options["bundle_name"])
+        elif options["command"] == "delete":
+            self.delete_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "push":
             self.push_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "read_qr":
