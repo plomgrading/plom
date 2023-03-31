@@ -544,26 +544,23 @@ class ScanService:
         # get the bundle, then the image and the extra-image that stores the info.
         bundle = StagingBundle.objects.get(slug=bundle_name)
 
-        # sorry Colin - we can do it this way, or we have to get all polymorphic.
-
-        # get the page from the bundle and throw a value-error if it does not exist.
+        # get the corresponding extr page from the bundle and throw a value-error if it does not exist.
+        # note that this does not tell us if it is because the index is out of range
+        # or if the page is not an extra-page
+        # just that it does not exist
         try:
-            img = bundle.stagingimage_set.get(bundle_order=idx)
+            ex_img = ExtraStagingImage.objects.get(staging_image__bundle_order=idx)
         except ObjectDoesNotExist:
-            raise ValueError(f"Page {idx} from bundle {bundle_name} does not exist")
-        # check that image is actuall an extra page
-        if img.image_type != "extra":
-            raise TypeError(
-                f"Cannot set extra-page data for a page of type {img.image_type}."
+            raise ValueError(
+                f"There is no extra page at index {user_supplied_idx} in bundle {bundle_name}."
             )
+
         # check that the supplied paper-number is in the system.
         if not Paper.objects.filter(paper_number=papernum).exists():
             raise ValueError(f"Paper {papernum} does not exist in the database")
 
-        # validate the question list from the user - raises a value error if idiocy.
         sane_qlist = self.check_question_list(question_list)
 
-        ex_img = img.extrastagingimage
         ex_img.paper_number = papernum
         ex_img.question_list = sane_qlist
         ex_img.save()
