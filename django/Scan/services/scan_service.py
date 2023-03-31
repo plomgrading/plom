@@ -852,16 +852,10 @@ class ScanService:
             }
         for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
             print(f"getting extra: {img} {img.extrastagingimage.question_list}")
-            if img.extrastagingimage.question_list:
-                pages[img.bundle_order]["info"] = {
-                    "paper_number": img.extrastagingimage.paper_number,
-                    "question_number": img.extrastagingimage.question_list,
-                }
-            else:
-                pages[img.bundle_order]["info"] = {
-                    "paper_number": img.extrastagingimage.paper_number,
-                    "question_number": img.extrastagingimage.question_list,
-                }
+            pages[img.bundle_order]["info"] = {
+                "paper_number": img.extrastagingimage.paper_number,
+                "question_list": img.extrastagingimage.question_list,
+            }
         return pages
 
     @transaction.atomic

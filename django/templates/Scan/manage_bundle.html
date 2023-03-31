@@ -122,13 +122,23 @@
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
 			>
 		  {% elif pg.status == 'extra' %}
-		  <button class="btn m-1 btn-info"
-			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
-			  hx-swap="outerHTML"
-			  hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-			  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Extra page"
-			  >
+		  <button
+		    {% if pg.info.question_list %}		
+		    class="btn m-1 btn-outline-info"
+		    {% else %}
+		    class="btn m-1 btn-info"
+		    {% endif %}
+		    hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+		    hx-swap="outerHTML"
+		    hx-target="#navFragment"
+		    hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		    data-bs-toggle="tooltip" data-bs-placement="top"
+		    {% if pg.info.question_list %}		
+		    data-bs-title="Extra page - {{pg.info.paper_number}}.{{ pg.info.question_list }}"
+		    {% else %}
+		    data-bs-title="Extra page - no data"
+		    {% endif %}
+		    >
 		    {% elif pg.status == 'unread' %}
 		    <button class="btn m-1 btn-outline-dark"
 			    hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
@@ -185,13 +195,23 @@
 	      </div>
 	      {% elif pg.status == 'extra' %}
 	      <div class="col-1">
-		<button class="btn m-1 btn-info"
-			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
-			  hx-swap="outerHTML"
-			  hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Extra page"
-		   >
+		<button
+		  {% if pg.info.question_list %}		
+		  class="btn m-1 btn-outline-info"
+		  {% else %}
+		  class="btn m-1 btn-info"
+		  {% endif %}
+		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+		  hx-swap="outerHTML"
+		  hx-target="#navFragment"
+		  hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		  data-bs-toggle="tooltip" data-bs-placement="top"
+		  {% if pg.info.question_list %}		
+		  data-bs-title="Extra page - {{pg.info.paper_number}}.{{ pg.info.question_list }}"
+		  {% else %}
+		  data-bs-title="Extra page - no data"
+		  {% endif %}
+		  >
 		  p{{pg.order}}
 		</button>
 	      </div>
