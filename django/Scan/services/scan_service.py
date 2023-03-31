@@ -464,23 +464,30 @@ class ScanService:
         print(bundle_obj)
         with transaction.atomic():
             # TODO: how do we walk them in order?
-            for page_img, qlist in zip(bundle_obj.stagingimage_set.all(), questions):
+            for page_img, qlist in zip(
+                bundle_obj.stagingimage_set.all().order_by("bundle_order"), questions
+            ):
                 print(page_img)
                 print(page_img.rotation)
                 print(page_img.parsed_qr)
                 if not qlist:
                     page_img.image_type = "discard"
                     page_img.save()
-                    p = DiscardStagingImage.objects.create(staging_image=page_img)
-                    p.discard_reason = "map said drop this page"
-                    p.save()
+                    DiscardStagingImage.objects.create(
+                        staging_image=page_img, discard_reason="map said drop this page"
+                    )
                     continue
                 page_img.image_type = "extra"
+                # TODO = update the qr-code info in the underlying image
                 page_img.save()
-                p = ExtraStagingImage.objects.create(staging_image=page_img)
-                p.paper_number = papernum
-                p.question_list = json.dumps(qlist)
-                p.save()
+                ExtraStagingImage.objects.create(
+                    staging_image=page_img,
+                    paper_number=papernum,
+                    question_list=json.dumps(qlist),
+                )
+            # finally - mark the bundle as having had its qr-codes read.
+            bundle_obj.has_qr_codes = True
+            bundle_obj.save()
 
     def surgery_unknown_to_extra(self, bundle_pk, idx, *, papernum, questions):
         """Replace a single UnknownStagingImage with a ExtraStagingImage.
@@ -549,7 +556,9 @@ class ScanService:
         # just that it does not exist
         try:
             # grab the extra-img with stagingimage from **both** the given bundle with the given index.
-            ex_img = ExtraStagingImage.objects.get(staging_image__bundle=bundle, staging_image__bundle_order=idx)
+            ex_img = ExtraStagingImage.objects.get(
+                staging_image__bundle=bundle, staging_image__bundle_order=idx
+            )
         except ObjectDoesNotExist:
             raise ValueError(
                 f"There is no extra page at index {user_supplied_idx} in bundle {bundle_name}."
@@ -748,11 +757,9 @@ class ScanService:
         #    raise ValueError(f"QR codes for {bundle_name} has been read.")
         # TODO: ensure papernum exists, here or in the none-cmd?
 
-        numpages = len(bundle_obj.stagingimage_set.all())
+        numpages = bundle_obj.number_of_pages
         print(f"DEBUG: numpages in bundle: {numpages}")
-        spec = SpecificationService().get_the_spec()
-        numquestions = spec["numberOfQuestions"]
-
+        numquestions = SpecificationService().get_n_questions()
         print(f"DEBUG: pre-canonical question:  {questions}")
         questions = canonicalize_question_list(questions, numpages, numquestions)
         print(f"DEBUG: canonical question list: {questions}")
