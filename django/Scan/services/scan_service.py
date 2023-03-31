@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
+import json
 import hashlib
 import pathlib
 import random
@@ -41,7 +42,7 @@ from Scan.models import (
     ManagePageToImage,
     ManageParseQR,
 )
-from Papers.models import ErrorImage
+from Papers.models import ErrorImage, Paper
 from Papers.services import ImageBundleService
 from Papers.services import SpecificationService
 
@@ -476,15 +477,93 @@ class ScanService:
                     continue
                 page_img.image_type = "extra"
                 page_img.save()
-                for q in qlist:
-                    # TODO: not really Extra, do we need new XStagingImage?
-                    # TODO: or can we use KnownStagingImage?
-                    # TODO: we may need to make more than one of these for each page
-                    # (e.g., questions="all" case)
-                    p = ExtraStagingImage.objects.create(staging_image=page_img)
-                    p.paper_number = papernum
-                    p.question_number = q
-                    p.save()
+                p = ExtraStagingImage.objects.create(staging_image=page_img)
+                p.paper_number = papernum
+                p.question_list = json.dumps(qlist)
+                p.save()
+
+    def surgery_unknown_to_extra(self, bundle_pk, idx, *, papernum, questions):
+        """Replace a single UnknownStagingImage with a ExtraStagingImage.
+
+        This is to identify a completely blank paper.
+
+        TODO: some other routine to identify a all-three-QRcodes-failed sheet.
+
+        TODO: not sure ExtraStagingImage is the right thing.
+        """
+        raise NotImplementedError()
+
+    def check_question_list(self, question_list):
+        if not isinstance(question_list, list):
+            raise ValueError(
+                "Question list '{question_list}' must be a valid python list."
+            )
+        n_questions = SpecificationService().get_n_questions()
+        # check that each item in the question_list is a valid question number
+        for q in question_list:
+            if isinstance(q, int):
+                if q < 1 or q > n_questions:
+                    raise ValueError(
+                        f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
+                    )
+            else:
+                raise ValueError(
+                    f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
+                )
+        return question_list
+
+    @transaction.atomic()
+    def surgery_map_extra(
+        self, bundle_name, user_supplied_idx, *, papernum, question_list
+    ):
+        """Fill in the missing information in a ExtraStagingImage.
+
+        This is to identify which paper and question(s) are in a ExtraStagingImage.
+
+        Args:
+            bundle_name (str): TODO: can we supply ID instead?
+            user_supplied_idx (int): which bundle order to change?
+
+        Keyword Args:
+            papernum (int)
+            question_list (list): TODO where processed?  need a
+                mini-canonicalize_question_list fcn?
+
+        TODO: can you change one with this?  sure why not?
+
+        TODO: some other routine to identify a all-three-QRcodes-failed sheet.
+
+        TODO: error handling?  esp idx out of range, and its not a ExtraStagingImage
+        """
+
+        # the user's bundle index is 1 greater than the internal one
+        # (ie user sees bundle orders starting from 1, while
+        # internally they start from zero)
+        idx = user_supplied_idx - 1
+
+        # get the bundle, then the image and the extra-image that stores the info.
+        bundle = StagingBundle.objects.get(slug=bundle_name)
+
+        # get the corresponding extr page from the bundle and throw a value-error if it does not exist.
+        # note that this does not tell us if it is because the index is out of range
+        # or if the page is not an extra-page
+        # just that it does not exist
+        try:
+            ex_img = ExtraStagingImage.objects.get(staging_image__bundle_order=idx)
+        except ObjectDoesNotExist:
+            raise ValueError(
+                f"There is no extra page at index {user_supplied_idx} in bundle {bundle_name}."
+            )
+
+        # check that the supplied paper-number is in the system.
+        if not Paper.objects.filter(paper_number=papernum).exists():
+            raise ValueError(f"Paper {papernum} does not exist in the database")
+
+        sane_qlist = self.check_question_list(question_list)
+
+        ex_img.paper_number = papernum
+        ex_img.question_list = sane_qlist
+        ex_img.save()
 
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk):
@@ -769,9 +848,10 @@ class ScanService:
                 "version": img.knownstagingimage.version,
             }
         for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
+            print(f"getting extra: {img} {img.extrastagingimage.question_list}")
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_number": img.extrastagingimage.question_number,
+                "question_list": img.extrastagingimage.question_list,
             }
         return pages
 
@@ -799,7 +879,7 @@ class ScanService:
         elif img.image_type == "extra":
             info = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_number": img.extrastagingimage.question_number,
+                "question_list": img.extrastagingimage.question_list,
             }
         else:
             info = {}

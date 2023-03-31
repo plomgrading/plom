@@ -63,7 +63,7 @@ class ExtraStagingImage(models.Model):
         StagingImage, primary_key=True, on_delete=models.CASCADE
     )
     paper_number = models.PositiveIntegerField(null=True)
-    question_number = models.PositiveIntegerField(null=True)
+    question_list = models.JSONField(default=list, null=True)
 
 
 class UnknownStagingImage(models.Model):
