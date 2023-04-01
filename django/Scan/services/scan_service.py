@@ -562,7 +562,7 @@ class ScanService:
         sane_qlist = self.check_question_list(question_list)
 
         ex_img.paper_number = papernum
-        ex_img.question_list = sane_qlist
+        ex_img.question_list = json.dumps(sane_qlist)
         ex_img.save()
 
     @transaction.atomic
