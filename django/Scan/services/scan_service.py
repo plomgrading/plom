@@ -538,9 +538,10 @@ class ScanService:
             question_list (list): TODO where processed?  need a
                 mini-canonicalize_question_list fcn?
 
-        TODO: some other routine to identify a all-three-QRcodes-failed sheet.
+        Raises:
+            ValueError: can't find things.
 
-        TODO: error handling?  esp idx out of range, and its not a ExtraStagingImage
+        TODO: some other routine to identify a all-three-QRcodes-failed sheet?
         """
         idx = user_supplied_idx - 1
 
@@ -551,9 +552,10 @@ class ScanService:
             ex_img = ExtraStagingImage.objects.get(
                 staging_image__bundle=bundle, staging_image__bundle_order=idx
             )
-        except ObjectDoesNotExist:
+        except ObjectDoesNotExist as e:
             raise ValueError(
-                f"There is no extra page at index {user_supplied_idx} in bundle {bundle_name}."
+                f"No extra page at index {user_supplied_idx} in "
+                f'bundle "{bundle_name}": {e}'
             )
 
         if not Paper.objects.filter(paper_number=papernum).exists():
