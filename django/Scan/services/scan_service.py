@@ -529,7 +529,8 @@ class ScanService:
 
         Args:
             bundle_name (str): TODO: can we supply ID instead?
-            user_supplied_idx (int): which bundle order to change?
+            user_supplied_idx (int): which page of the bundle to edit.
+                Note indexed from one for some reason.
 
         Keyword Args:
             papernum (int)
@@ -542,20 +543,12 @@ class ScanService:
 
         TODO: error handling?  esp idx out of range, and its not a ExtraStagingImage
         """
-
-        # the user's bundle index is 1 greater than the internal one
-        # (ie user sees bundle orders starting from 1, while
-        # internally they start from zero)
         idx = user_supplied_idx - 1
 
-        # get the bundle, then the image and the extra-image that stores the info.
         bundle = StagingBundle.objects.get(slug=bundle_name)
-        # get the corresponding extr page from the bundle and throw a value-error if it does not exist.
         # note that this does not tell us if it is because the index is out of range
-        # or if the page is not an extra-page
-        # just that it does not exist
+        # or if the page is not an extra-page, just that it does not exist
         try:
-            # grab the extra-img with stagingimage from **both** the given bundle with the given index.
             ex_img = ExtraStagingImage.objects.get(
                 staging_image__bundle=bundle, staging_image__bundle_order=idx
             )
