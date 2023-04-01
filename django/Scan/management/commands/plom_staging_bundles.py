@@ -6,7 +6,6 @@
 from datetime import datetime
 import hashlib
 import pathlib
-from ast import literal_eval
 
 import fitz
 from tabulate import tabulate
@@ -14,6 +13,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
 
+from plom.scan.question_list_utils import check_question_list
 from Scan.services import ScanService
 from Papers.services.validated_spec_service import SpecificationService
 
@@ -227,36 +227,6 @@ class Command(BaseCommand):
             """,
         )
 
-    def check_question_list(self, question_list_string):
-        # get the number of questions in the assessment
-        n_questions = SpecificationService().get_n_questions()
-
-        # the question list should be either
-        # * "all"
-        # * a string of a single positive integer
-        # * a string of a list of positive integers
-        if question_list_string == "all":
-            return [q + 1 for q in range(n_questions)]
-
-        # will throw an exception if it cannot read this
-        question_list = literal_eval(question_list_string)
-        if isinstance(question_list, int):
-            question_list = [question_list]
-        if not isinstance(question_list, list):
-            raise ValueError("The question list must be a valid python list")
-
-        for q in question_list:
-            if isinstance(q, int):
-                if q < 1 or q > n_questions:
-                    raise ValueError(
-                        f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
-                    )
-            else:
-                raise ValueError(
-                    f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
-                )
-        return question_list
-
     def handle(self, *args, **options):
         if options["command"] == "upload":
             self.upload_pdf(
@@ -274,8 +244,8 @@ class Command(BaseCommand):
             self.read_bundle_qr(bundle_name=options["bundle_name"])
         elif options["command"] == "map_extra":
             service = ScanService()
-            # do sanity checks on the supplied question list
-            question_list = self.check_question_list(options["question"][0])
+            n_questions = SpecificationService().get_n_questions()
+            question_list = check_question_list(options["question"][0], n_questions)
             # pass that to the server
             service.surgery_map_extra(
                 options["bundle_name"],

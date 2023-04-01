@@ -24,7 +24,8 @@ from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
 from plom.scan.scansToImages import make_mucked_up_jpeg
 from plom.scan.readQRCodes import checkQRsValid
-from plom.scan.frontend_hwscan import canonicalize_question_list
+from plom.scan.question_list_utils import check_question_list
+from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.tpv_utils import (
     parseTPV,
     parseExtraPageCode,
@@ -498,25 +499,6 @@ class ScanService:
         """
         raise NotImplementedError()
 
-    def check_question_list(self, question_list):
-        if not isinstance(question_list, list):
-            raise ValueError(
-                "Question list '{question_list}' must be a valid python list."
-            )
-        n_questions = SpecificationService().get_n_questions()
-        # check that each item in the question_list is a valid question number
-        for q in question_list:
-            if isinstance(q, int):
-                if q < 1 or q > n_questions:
-                    raise ValueError(
-                        f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
-                    )
-            else:
-                raise ValueError(
-                    f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
-                )
-        return question_list
-
     @transaction.atomic()
     def surgery_map_extra(
         self, bundle_name, user_supplied_idx, *, papernum, question_list
@@ -533,8 +515,7 @@ class ScanService:
 
         Keyword Args:
             papernum (int)
-            question_list (list): TODO where processed?  need a
-                mini-canonicalize_question_list fcn?
+            question_list (list)
 
         Raises:
             ValueError: can't find things.
@@ -559,7 +540,8 @@ class ScanService:
         if not Paper.objects.filter(paper_number=papernum).exists():
             raise ValueError(f"Paper {papernum} does not exist in the database")
 
-        sane_qlist = self.check_question_list(question_list)
+        n_questions = SpecificationService().get_n_questions()
+        sane_qlist = check_question_list(question_list, n_questions=n_questions)
 
         ex_img.paper_number = papernum
         ex_img.question_list = json.dumps(sane_qlist)
@@ -773,7 +755,7 @@ class ScanService:
         print(f"DEBUG: numpages in bundle: {numpages}")
         numquestions = SpecificationService().get_n_questions()
         print(f"DEBUG: pre-canonical question:  {questions}")
-        questions = canonicalize_question_list(questions, numpages, numquestions)
+        questions = canonicalize_page_question_map(questions, numpages, numquestions)
         print(f"DEBUG: canonical question list: {questions}")
 
         self.map_bundle_pages(bundle_obj.pk, papernum=papernum, questions=questions)

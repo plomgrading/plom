@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 """Plom's frontend scanning routines for self-scanned work.
 
@@ -14,7 +14,6 @@ If you instead are dealing with QR-coded pages where you may not yet know
 which pages belong to which student, see :py:module:`frontend_scan`.
 """
 
-import ast
 from collections import defaultdict
 from pathlib import Path
 
@@ -33,70 +32,10 @@ from plom.scan.bundle_utils import (
     bundle_name_and_md5_from_file,
     archiveHWBundle,
 )
+from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan.scansToImages import process_scans
 from plom.scan import with_scanner_messenger
-
-
-def _parse_questions(s):
-    if isinstance(s, str):
-        if s.casefold() == "all":
-            return "all"
-        s = ast.literal_eval(s)
-    return s
-
-
-def canonicalize_question_list(s, pages, numquestions):
-    """Make a canonical page-to-questions mapping from various shorthand inputs.
-
-    args:
-        s (str/list/tuple): the input, can be a special string "all"
-            or a string which we will parse.  Or an integer.  Or a list
-            of ints, or a list of list of ints.
-        pages (int): how many pages, used for checking input.
-        numquestins (int): how many questions total, used for checking
-            input.
-
-    returns:
-        A list of lists.
-    """
-    s = _parse_questions(s)
-    if s == "all":
-        s = range(1, numquestions + 1)
-
-    if isinstance(s, str):
-        raise ValueError('question cannot be a string, unless its "all"')
-
-    if isinstance(s, int):
-        s = [s]
-
-    if isinstance(s, dict):
-        raise NotImplementedError("a dict seems very sensible but is not implemented")
-
-    # TypeError if not iterable
-    iter(s)
-
-    # are the contents themselves iterable?
-    try:
-        iter(s[0])
-    except TypeError:
-        # if not, repeat the list for each page
-        s = [s] * pages
-
-    if len(s) != pages:
-        raise ValueError(f"list too short: need one list for each of {pages} pages")
-
-    # cast to lists
-    s = [list(qlist) for qlist in s]
-
-    # finally we should have a canonical list-of-lists-of-ints
-    for qlist in s:
-        for qnum in qlist:
-            if not isinstance(qnum, int):
-                raise ValueError(f"non-integer question value {qnum}")
-            if qnum < 1 or qnum > numquestions:
-                raise ValueError(f"question value {qnum} outside [1, {numquestions}]")
-    return s
 
 
 @with_scanner_messenger
@@ -189,7 +128,9 @@ def processHWScans(
     N = msgr.get_spec()["numberOfQuestions"]
     with fitz.open(pdf_fname) as pdf:
         num_pages = len(pdf)
-    questions = canonicalize_question_list(questions, pages=num_pages, numquestions=N)
+    questions = canonicalize_page_question_map(
+        questions, pages=num_pages, numquestions=N
+    )
 
     test_number = checkTestHasThatSID(student_id, msgr=msgr)
     if test_number is None:

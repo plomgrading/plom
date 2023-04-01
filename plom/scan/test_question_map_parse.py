@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021, 2023 Colin B. Macdonald
 
 from pytest import raises
 
-from plom.scan.frontend_hwscan import _parse_questions as parse
-from plom.scan.frontend_hwscan import canonicalize_question_list as canonicalize
+from plom.scan.question_list_utils import _parse_questions as parse
+from plom.scan.question_list_utils import canonicalize_page_question_map as canonicalize
 
 
 def test_all_to_empty():
