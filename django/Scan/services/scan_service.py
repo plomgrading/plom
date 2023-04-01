@@ -5,7 +5,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-import json
 import hashlib
 import pathlib
 import random
@@ -484,7 +483,7 @@ class ScanService:
                 ExtraStagingImage.objects.create(
                     staging_image=page_img,
                     paper_number=papernum,
-                    question_list=json.dumps(qlist),
+                    question_list=qlist,
                 )
             # finally - mark the bundle as having had its qr-codes read.
             bundle_obj.has_qr_codes = True
@@ -544,7 +543,7 @@ class ScanService:
         sane_qlist = check_question_list(question_list, n_questions=n_questions)
 
         ex_img.paper_number = papernum
-        ex_img.question_list = json.dumps(sane_qlist)
+        ex_img.question_list = sane_qlist
         ex_img.save()
 
     @transaction.atomic
@@ -851,9 +850,7 @@ class ScanService:
         for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.extrastagingimage.paper_number,
-                # TODO: why not?
-                # "question_list": json.loads(img.extrastagingimage.question_list),
-                "question_list": json.loads(img.extrastagingimage.question_list),
+                "question_list": img.extrastagingimage.question_list,
             }
         return pages
 
