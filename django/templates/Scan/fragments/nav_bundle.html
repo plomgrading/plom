@@ -70,6 +70,14 @@
 			  <li>No qr-codes could be read</li>
 			</ul>
 		      </div>
+		      {% elif current_page.status == 'discard' %}
+		      <div class="alert alert-dark">
+			<h6 class="alert-heading">Discard</h6>
+			<ul>
+			  <li>{{current_page.info.reason}}</li>
+			  <li>rotation: {{current_page.rotation}}</li>
+			</ul>
+		      </div>
 		      {% elif current_page.status == 'error' %}
 		      <div class="alert alert-danger">
 			<h6 class="alert-heading">Error</h6>

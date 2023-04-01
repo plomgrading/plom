@@ -17,6 +17,7 @@
 		    {% if known_pages != total_pages %}
 		    <li>{{ unknown_pages }} unknown pages</li>
 		    <li>{{ extra_pages }} extra pages</li>
+		    <li>{{ discard_pages }} discard pages</li>
 		    <li>{{ error_pages }} error pages</li>
 		    {% endif %}
 		  </ul>
@@ -157,6 +158,14 @@
 			      >
 			{% elif pg.status == 'error' %}
 		  <button class="btn m-1 btn-danger"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-swap="outerHTML"
+			hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
+		     >
+			{% elif pg.status == 'discard' %}
+		  <button class="btn m-1 btn-outline-dark"
 			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"

@@ -666,8 +666,29 @@ class ScanService:
         return bundle.stagingimage_set.filter(image_type="extra").count()
 
     @transaction.atomic
+    def get_n_extra_images_with_data(self, bundle):
+        # note - this assumes that we set questions and pages at same time
+        # and **never** set one without the other.
+        return bundle.stagingimage_set.filter(
+            image_type="extra", extrastagingimage__paper_number__isnull=False
+        ).count()
+
+    @transaction.atomic
+    def do_all_extra_images_have_data(self, bundle):
+        # note - this assumes that we set questions and pages at same time
+        # and **never** set one without the other.
+        return not bundle.stagingimage_set.filter(
+            image_type="extra", extrastagingimage__paper_number__isnull=True
+        ).exists()
+        # if you can find an extra page with a null paper_number then it is not ready.
+
+    @transaction.atomic
     def get_n_error_images(self, bundle):
         return bundle.stagingimage_set.filter(image_type="error").count()
+
+    @transaction.atomic
+    def get_n_discard_images(self, bundle):
+        return bundle.stagingimage_set.filter(image_type="discard").count()
 
     @transaction.atomic
     def bundle_contains_list(self, all_images, num_images):
@@ -876,7 +897,7 @@ class ScanService:
         if img.image_type == "error":
             info = {"reason": img.errorstagingimage.error_reason}
         elif img.image_type == "discard":
-            info = {"reason": img.discardstagingimage.error_reason}
+            info = {"reason": img.discardstagingimage.discard_reason}
         elif img.image_type == "known":
             info = {
                 "paper_number": img.knownstagingimage.paper_number,
