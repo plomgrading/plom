@@ -867,10 +867,11 @@ class ScanService:
                 "version": img.knownstagingimage.version,
             }
         for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
-            print(f"getting extra: {img} {img.extrastagingimage.question_list}")
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_list": img.extrastagingimage.question_list,
+                # TODO: why not?
+                # "question_list": json.loads(img.extrastagingimage.question_list),
+                "question_list": json.loads(img.extrastagingimage.question_list),
             }
         return pages
 
