@@ -110,3 +110,11 @@ def test_qlist_out_of_range():
 def test_qlist_not_int():
     with raises(ValueError):
         qlist("[1, 2.5]", 3)
+
+
+def test__no_dupes():
+    # Or decide its an error?
+    # with raises(ValueError):
+    #     qlist([2, 2, 2, 2, 1], 3)
+    assert qlist([2, 2, 2, 2, 1], 3) == [1, 2]
+    assert canonicalize([[1, 1], [2, 1, 2]], 2, 2) == [[1], [1, 2]]

@@ -52,7 +52,8 @@ def check_question_list(s, n_questions):
             raise ValueError(
                 f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
             )
-    return question_list
+    # TODO: would we like an explicit error on dupes?
+    return list(set(question_list))
 
 
 def canonicalize_page_question_map(s, pages, numquestions):
@@ -95,8 +96,8 @@ def canonicalize_page_question_map(s, pages, numquestions):
     if len(s) != pages:
         raise ValueError(f"list too short: need one list for each of {pages} pages")
 
-    # cast to lists
-    s = [list(qlist) for qlist in s]
+    # cast to lists (and pass through sets to de-dupe)
+    s = [list(set(qlist)) for qlist in s]
 
     # finally we should have a canonical list-of-lists-of-ints
     for qlist in s:
