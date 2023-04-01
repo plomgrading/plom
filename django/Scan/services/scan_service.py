@@ -526,6 +526,7 @@ class ScanService:
         """Fill in the missing information in a ExtraStagingImage.
 
         This is to identify which paper and question(s) are in a ExtraStagingImage.
+        You can call it again to update the information with new information.
 
         Args:
             bundle_name (str): TODO: can we supply ID instead?
@@ -536,8 +537,6 @@ class ScanService:
             papernum (int)
             question_list (list): TODO where processed?  need a
                 mini-canonicalize_question_list fcn?
-
-        TODO: can you change one with this?  sure why not?
 
         TODO: some other routine to identify a all-three-QRcodes-failed sheet.
 
@@ -557,7 +556,6 @@ class ScanService:
                 f"There is no extra page at index {user_supplied_idx} in bundle {bundle_name}."
             )
 
-        # check that the supplied paper-number is in the system.
         if not Paper.objects.filter(paper_number=papernum).exists():
             raise ValueError(f"Paper {papernum} does not exist in the database")
 
