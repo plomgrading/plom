@@ -29,7 +29,7 @@ def check_question_list(s, n_questions):
     """
     s = _parse_questions(s)
     if s == "all":
-        s = range(1, n_questions + 1)
+        s = list(range(1, n_questions + 1))
 
     question_list = s
     del s

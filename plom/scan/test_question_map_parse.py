@@ -5,6 +5,7 @@ from pytest import raises
 
 from plom.scan.question_list_utils import _parse_questions as parse
 from plom.scan.question_list_utils import canonicalize_page_question_map as canonicalize
+from plom.scan.question_list_utils import check_question_list as qlist
 
 
 def test_all_to_empty():
@@ -87,3 +88,25 @@ def test_canonical_tuples():
         [1, 2],
         [2, 3],
     ]
+
+
+def test_qlist():
+    assert qlist("all", 3) == [1, 2, 3]
+    assert qlist("all", 2) == [1, 2]
+
+
+def test_qlist_only_all():
+    with raises(ValueError):
+        qlist("ducks", 3)
+
+
+def test_qlist_out_of_range():
+    with raises(ValueError):
+        qlist("[1, 10]", 3)
+    with raises(ValueError):
+        qlist("[-1, 2]", 3)
+
+
+def test_qlist_not_int():
+    with raises(ValueError):
+        qlist("[1, 2.5]", 3)
