@@ -154,11 +154,6 @@ class Command(BaseCommand):
             else:
                 questions = opt["question"][0]
 
-            if questions == "all":
-                self.stdout.write(self.style.WARNING("CAUTION: "), ending="")
-                self.stdout.write('"all" mapping not working yet!')
-            self.stdout.write("FYI: one-to-many mappings not working yet!")
-
             self.map_bundle_pages(
                 opt["bundle_name"], papernum=opt["papernum"], questions=questions
             )
