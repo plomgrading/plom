@@ -494,8 +494,6 @@ class ScanService:
 
         This is to identify a completely blank paper.
 
-        TODO: some other routine to identify a all-three-QRcodes-failed sheet.
-
         TODO: not sure ExtraStagingImage is the right thing.
         """
         raise NotImplementedError()
@@ -529,7 +527,7 @@ class ScanService:
         You can call it again to update the information with new information.
 
         Args:
-            bundle_name (str): TODO: can we supply ID instead?
+            bundle_name (str)
             user_supplied_idx (int): which page of the bundle to edit.
                 Note indexed from one for some reason.
 
@@ -541,7 +539,7 @@ class ScanService:
         Raises:
             ValueError: can't find things.
 
-        TODO: some other routine to identify a all-three-QRcodes-failed sheet?
+        TODO: some other routine for a page where all three QRcodes failed?
         """
         idx = user_supplied_idx - 1
 
