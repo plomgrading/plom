@@ -253,14 +253,7 @@ def map_homework_pages(homework_bundles={}):
         print(
             f"Assigning pages in {bundle_name} to paper {paper_number} questions {question_list}"
         )
-        # note that split with mess with the question list, so append it carefully after splitting.
-        # in particular if you do "split(f"{[1,2,3]}") then this gives ["[1", "2", "3]"]
-        # so will split rest of cmd and then append the qlist.
-        cmd = f"plom_paper_scan map {bundle_name} -t {paper_number} -q"
-        py_man_cmd = f"python3 manage.py {cmd}"
-        split_cmd = split(py_man_cmd)
-        split_cmd.append(f"{question_list}")
-        subprocess.check_call(split_cmd)
+        call_command("plom_paper_scan", "map", bundle_name, "-t", paper_number, "-q", str(question_list))
         sleep(0.5)
 
 
@@ -403,7 +396,7 @@ def main(test=False):
     wait_for_upload(
         number_of_bundles=number_of_bundles,
     )
-an
+
     print("*" * 40)
     read_qr_codes(
         number_of_bundles=number_of_bundles,
