@@ -147,3 +147,15 @@ class RubricServiceTests(TestCase):
 
         # parameters
         self.assertEqual(rtdr.parameters, self.relative_rubric.parameters)
+
+    def test_modify_neutral_rubric(self):
+        pass
+
+    def test_modify_relative_rubric(self):
+        pass
+
+    def test_modify_neutral_to_relative_rubric(self):
+        pass
+
+    def test_modify_relative_to_neutral_rubric(self):
+        pass
