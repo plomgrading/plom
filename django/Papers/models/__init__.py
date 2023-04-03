@@ -11,7 +11,7 @@ from .image_bundle import (
 )
 from .paper_structure import (
     Paper,
-    BasePage,
+    FixedPage,
     DNMPage,
     IDPage,
     QuestionPage,

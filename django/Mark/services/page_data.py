@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.db import transaction
 
-from Papers.models import Paper, BasePage, QuestionPage, Image
+from Papers.models import Paper, FixedPage, QuestionPage, Image
 
 
 class PageDataService:
@@ -18,8 +19,8 @@ class PageDataService:
         if this is the 2nd page of question 5, return 2.
 
         Args:
-            page: a reference to BasePage
-            question_pages: a QuerySet of BasePages
+            page: a reference to FixedPage
+            question_pages: a QuerySet of FixedPages
         """
 
         page_number = page.page_number
@@ -84,7 +85,7 @@ class PageDataService:
 
         test_paper = Paper.objects.get(paper_number=paper)
         # TODO: all pages in the test-paper, and included=true for the question
-        paper_pages = BasePage.objects.filter(paper=test_paper)
+        paper_pages = FixedPage.objects.filter(paper=test_paper)
 
         pages_metadata = []
         for page in paper_pages:

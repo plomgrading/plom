@@ -20,7 +20,7 @@ from Papers.models import (
     Image,
     CreateImageTask,
     CollidingImage,
-    BasePage,
+    FixedPage,
     QuestionPage,
     Paper,
 )
@@ -298,7 +298,7 @@ class ImageBundleService:
             image.save()
 
             known = staged.knownstagingimage
-            page = BasePage.objects.get(
+            page = FixedPage.objects.get(
                 paper__paper_number=known.paper_number,
                 page_number=known.page_number,
             )
@@ -397,8 +397,8 @@ class ImageBundleService:
         for image in staged_imgs:
             known = image.knownstagingimage
             colls = Image.objects.filter(
-                basepage__paper__paper_number=known.paper_number,
-                basepage__page_number=known.page_number,
+                fixedpage__paper__paper_number=known.paper_number,
+                fixedpage__page_number=known.page_number,
             )
             for colliding_img in colls:
                 collisions.append(

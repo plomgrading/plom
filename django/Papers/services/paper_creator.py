@@ -12,7 +12,7 @@ from django_huey import db_task
 from Papers.models import (
     Specification,
     Paper,
-    BasePage,
+    FixedPage,
     IDPage,
     DNMPage,
     QuestionPage,
@@ -73,13 +73,13 @@ class PaperCreatorService:
         # TODO - idpage and dnmpage versions might be not one in future.
         # For time being assume that IDpage and DNMPage are always version 1.
         id_page = IDPage(
-            paper=paper_obj, image=None, page_number=int(spec["idPage"]), _version=1
+            paper=paper_obj, image=None, page_number=int(spec["idPage"]), version=1
         )
         id_page.save()
 
         for dnm_idx in spec["doNotMarkPages"]:
             dnm_page = DNMPage(
-                paper=paper_obj, image=None, page_number=int(dnm_idx), _version=1
+                paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
             )
             dnm_page.save()
 
@@ -92,8 +92,7 @@ class PaperCreatorService:
                     image=None,
                     page_number=int(q_page),
                     question_number=index,
-                    question_version=version,
-                    _version=version,  # I don't like having to double-up here, but....
+                    version=version,  # I don't like having to double-up here, but....
                 )
                 question_page.save()
 
@@ -131,7 +130,7 @@ class PaperCreatorService:
         # hopefully we don't actually need to call this outside of testing.
         # Have to use a loop because of a bug/quirk in django_polymorphic
         # see https://github.com/django-polymorphic/django-polymorphic/issues/34
-        for page in BasePage.objects.all():
+        for page in FixedPage.objects.all():
             page.delete()
         Paper.objects.all().delete()
 
@@ -146,6 +145,6 @@ class PaperCreatorService:
         """
 
         paper = Paper.objects.get(paper_number=paper_number)
-        page = BasePage.objects.get(paper=paper, page_number=page_index)
+        page = FixedPage.objects.get(paper=paper, page_number=page_index)
         page.image = image
         page.save()
