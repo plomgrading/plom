@@ -161,12 +161,13 @@ class AddRubricBox(QDialog):
             annotator_size (QSize/None): size of the parent annotator
             groups (list): optional list of existing/recommended group
                 names that the rubric could be added to.
+            add_to_group (str/None): preselect this group in the scope
+                settings when creating a new rubric.  This must be one
+                of the `groups` list above.
             reapable (list): these are used to "harvest" plain 'ol text
                 annotations and morph them into comments.
             experimental (bool): whether to enable experimental or advanced
                 features.
-            add_to_group (str/None): preselect this group in the scope
-                settings.
 
         Raises:
             none expected!
@@ -493,12 +494,11 @@ class AddRubricBox(QDialog):
             )
             self.Luser.setText(username)
             if add_to_group:
-                # quietly ignore if add_to_group is invalid (?)
-                if add_to_group in groups:
-                    self.group_checkbox.setChecked(True)
-                    self.group_combobox.setCurrentText(add_to_group)
-                    # show the user we did this by opening the scope panel
-                    self.scopeButton.animateClick()
+                assert add_to_group in groups, f"{add_to_group} not in groups={groups}"
+                self.group_checkbox.setChecked(True)
+                self.group_combobox.setCurrentText(add_to_group)
+                # show the user we did this by opening the scope panel
+                self.scopeButton.animateClick()
         self.subsRemakeGridUI(params)
         self.hiliter.setSubs([x for x, _ in params])
 
