@@ -971,7 +971,7 @@ in most cases.
 
 ## 0.1.0 - 2019-06-26
 
-This is the first release of Plom, PaperLess Open Marking.
+This is the first release of Plom, Paperless Open Marking.
 
 
 [Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.13.1...main
