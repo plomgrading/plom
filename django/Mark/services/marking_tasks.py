@@ -445,7 +445,7 @@ class MarkingTaskService:
         """
 
         # return Annotation.objects.order_by("-markaction__time").first()
-        self.get_latest_task(paper, question)
+        latest_task = self.get_latest_task(paper, question)
         latest_action = (
             MarkAction.objects.filter(task=latest_task).order_by("-time").first()
         )
