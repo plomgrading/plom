@@ -1455,7 +1455,11 @@ class RubricWidget(QWidget):
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
-        self._new_or_edit_rubric(None)
+        w = self.RTW.currentWidget()
+        if w.is_group_tab():
+            self._new_or_edit_rubric(None, add_to_group=w.shortname)
+        else:
+            self._new_or_edit_rubric(None)
 
     def edit_rubric(self, key):
         """Open a dialog to edit a rubric - from the id-key of that rubric."""
@@ -1490,17 +1494,22 @@ class RubricWidget(QWidget):
         com["username"] = self.username
         self._new_or_edit_rubric(com, edit=False)
 
-    def _new_or_edit_rubric(self, com, edit=False, index=None):
+    def _new_or_edit_rubric(self, com, *, edit=False, index=None, add_to_group=None):
         """Open a dialog to edit a comment or make a new one.
 
         args:
             com (dict/None): a comment to modify or use as a template
                 depending on next arg.  If set to None, which always
                 means create new.
+
+        keyword args:
             edit (bool): are we modifying the comment?  if False, use
                 `com` as a template for a new duplicated comment.
             index (int): the index of the comment inside the current rubric list
                 used for updating the data in the rubric list after edit (only)
+            add_to_group (str/None): if set, the user might be trying to add
+                to a group with this name.  For example, a UI could pre-select
+                that option.  Probably mutually exclusive with `edit`, `index`.
 
         Returns:
             None: does its work through side effects on the comment list.
@@ -1521,6 +1530,7 @@ class RubricWidget(QWidget):
             groups=self.get_group_names(),
             reapable=reapable,
             experimental=self._parent.is_experimental(),
+            add_to_group=add_to_group,
         )
         if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
             return
