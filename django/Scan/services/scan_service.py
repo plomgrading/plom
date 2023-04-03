@@ -23,6 +23,8 @@ from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
 from plom.scan.scansToImages import make_mucked_up_jpeg
 from plom.scan.readQRCodes import checkQRsValid
+from plom.scan.question_list_utils import check_question_list
+from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.tpv_utils import (
     parseTPV,
     parseExtraPageCode,
@@ -35,12 +37,14 @@ from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
     StagingImage,
+    ExtraStagingImage,
+    DiscardStagingImage,
     ManagePageToImage,
     ManageParseQR,
 )
-from Papers.models import ErrorImage
+from Papers.models import ErrorImage, Paper
 from Papers.services import ImageBundleService
-
+from Papers.services import SpecificationService
 
 from Scan.services.qr_validators import QRErrorService
 
@@ -196,11 +200,34 @@ class ScanService:
             return False
 
     @transaction.atomic
-    def remove_bundle(self, timestamp, user):
+    def remove_bundle(self, bundle_name, *, user=None):
+        """Remove a bundle PDF from the filesystem + database
+
+        Args:
+            bundle_name (str): which bundle.
+
+        Keyword Args:
+            user (None/str): also filter by user.
+                TODO: user is *not* for permissions: looks like just
+                a way to identify a bundle.
         """
-        Remove a bundle PDF from the filesystem + database
+        if user:
+            bundle = StagingBundle.objects.get(
+                user=user,
+                slug=bundle_name,
+            )
+        else:
+            bundle = StagingBundle.objects.get(slug=bundle_name)
+        self._remove_bundle(bundle.pk)
+
+    @transaction.atomic
+    def _remove_bundle(self, bundle_pk):
+        """Remove a bundle PDF from the filesystem + database
+
+        Args:
+            bundle_pk: the primary key for a particular bundle.
         """
-        bundle = self.get_bundle(timestamp, user)
+        bundle = StagingBundle.objects.get(pk=bundle_pk)
         pathlib.Path(bundle.pdf_file.path).unlink()
         bundle.delete()
 
@@ -415,6 +442,110 @@ class ScanService:
                 created=timezone.now(),
             )
 
+    def map_bundle_pages(self, bundle_pk, *, papernum, questions):
+        """WIP support for hwscan.
+
+        Args:
+            bundle_pk: primary key of bundle DB object
+
+        Keyword args:
+            papernum (int):
+            questions (list): doc elsewhere, but a list same length
+                as the bundle, each element is list of which questions
+                to attach that page too.
+        """
+        root_folder = settings.MEDIA_ROOT / "page_images"
+        root_folder.mkdir(exist_ok=True)
+
+        bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
+
+        # TODO: assert the length of question is same as pages in bundle
+
+        print(bundle_obj)
+        with transaction.atomic():
+            # TODO: how do we walk them in order?
+            for page_img, qlist in zip(
+                bundle_obj.stagingimage_set.all().order_by("bundle_order"), questions
+            ):
+                print(page_img)
+                print(page_img.rotation)
+                print(page_img.parsed_qr)
+                if not qlist:
+                    page_img.image_type = "discard"
+                    page_img.save()
+                    DiscardStagingImage.objects.create(
+                        staging_image=page_img, discard_reason="map said drop this page"
+                    )
+                    continue
+                page_img.image_type = "extra"
+                # TODO = update the qr-code info in the underlying image
+                page_img.save()
+                ExtraStagingImage.objects.create(
+                    staging_image=page_img,
+                    paper_number=papernum,
+                    question_list=qlist,
+                )
+            # finally - mark the bundle as having had its qr-codes read.
+            bundle_obj.has_qr_codes = True
+            bundle_obj.save()
+
+    def surgery_unknown_to_extra(self, bundle_pk, idx, *, papernum, questions):
+        """Replace a single UnknownStagingImage with a ExtraStagingImage.
+
+        This is to identify a completely blank paper.
+
+        TODO: not sure ExtraStagingImage is the right thing.
+        """
+        raise NotImplementedError()
+
+    @transaction.atomic()
+    def surgery_map_extra(
+        self, bundle_name, user_supplied_idx, *, papernum, question_list
+    ):
+        """Fill in the missing information in a ExtraStagingImage.
+
+        This is to identify which paper and question(s) are in a ExtraStagingImage.
+        You can call it again to update the information with new information.
+
+        Args:
+            bundle_name (str)
+            user_supplied_idx (int): which page of the bundle to edit.
+                Note indexed from one for some reason.
+
+        Keyword Args:
+            papernum (int)
+            question_list (list)
+
+        Raises:
+            ValueError: can't find things.
+
+        TODO: some other routine for a page where all three QRcodes failed?
+        """
+        idx = user_supplied_idx - 1
+
+        bundle = StagingBundle.objects.get(slug=bundle_name)
+        # note that this does not tell us if it is because the index is out of range
+        # or if the page is not an extra-page, just that it does not exist
+        try:
+            ex_img = ExtraStagingImage.objects.get(
+                staging_image__bundle=bundle, staging_image__bundle_order=idx
+            )
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"No extra page at index {user_supplied_idx} in "
+                f'bundle "{bundle_name}": {e}'
+            )
+
+        if not Paper.objects.filter(paper_number=papernum).exists():
+            raise ValueError(f"Paper {papernum} does not exist in the database")
+
+        n_questions = SpecificationService().get_n_questions()
+        sane_qlist = check_question_list(question_list, n_questions=n_questions)
+
+        ex_img.paper_number = papernum
+        ex_img.question_list = sane_qlist
+        ex_img.save()
+
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -507,8 +638,29 @@ class ScanService:
         return bundle.stagingimage_set.filter(image_type="extra").count()
 
     @transaction.atomic
+    def get_n_extra_images_with_data(self, bundle):
+        # note - this assumes that we set questions and pages at same time
+        # and **never** set one without the other.
+        return bundle.stagingimage_set.filter(
+            image_type="extra", extrastagingimage__paper_number__isnull=False
+        ).count()
+
+    @transaction.atomic
+    def do_all_extra_images_have_data(self, bundle):
+        # note - this assumes that we set questions and pages at same time
+        # and **never** set one without the other.
+        return not bundle.stagingimage_set.filter(
+            image_type="extra", extrastagingimage__paper_number__isnull=True
+        ).exists()
+        # if you can find an extra page with a null paper_number then it is not ready.
+
+    @transaction.atomic
     def get_n_error_images(self, bundle):
         return bundle.stagingimage_set.filter(image_type="error").count()
+
+    @transaction.atomic
+    def get_n_discard_images(self, bundle):
+        return bundle.stagingimage_set.filter(image_type="discard").count()
 
     @transaction.atomic
     def bundle_contains_list(self, all_images, num_images):
@@ -534,7 +686,8 @@ class ScanService:
         bundle_status = []
         status_header = (
             "Bundle name",
-            "Total pages",
+            "Id",
+            "Pages",
             "Known pages",
             "Error pages",
             "QR read",
@@ -560,6 +713,7 @@ class ScanService:
 
             bundle_data = (
                 bundle.slug,
+                bundle.pk,
                 total_pages,
                 n_knowns,
                 n_errors,
@@ -581,8 +735,29 @@ class ScanService:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
         elif bundle_obj.has_qr_codes:
             raise ValueError(f"QR codes for {bundle_name} has been read.")
-        else:
-            self.read_qr_codes(bundle_obj.pk)
+        self.read_qr_codes(bundle_obj.pk)
+
+    @transaction.atomic
+    def map_bundle_pages_cmd(self, bundle_name, *, papernum, questions=None):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        if not bundle_obj.has_page_images:
+            raise ValueError(f"Please wait for {bundle_name} to upload...")
+        # elif bundle_obj.has_qr_codes:
+        #    raise ValueError(f"QR codes for {bundle_name} has been read.")
+        # TODO: ensure papernum exists, here or in the none-cmd?
+
+        numpages = bundle_obj.number_of_pages
+        print(f"DEBUG: numpages in bundle: {numpages}")
+        numquestions = SpecificationService().get_n_questions()
+        print(f"DEBUG: pre-canonical question:  {questions}")
+        questions = canonicalize_page_question_map(questions, numpages, numquestions)
+        print(f"DEBUG: canonical question list: {questions}")
+
+        self.map_bundle_pages(bundle_obj.pk, papernum=papernum, questions=questions)
 
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk):
@@ -663,7 +838,7 @@ class ScanService:
 
         for img in bundle_obj.stagingimage_set.filter(image_type="discard"):
             pages[img.bundle_order]["info"] = {
-                "reason": img.discardstagingimage.error_reason
+                "reason": img.discardstagingimage.discard_reason
             }
 
         for img in bundle_obj.stagingimage_set.filter(image_type="known"):
@@ -675,7 +850,7 @@ class ScanService:
         for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_number": img.extrastagingimage.question_number,
+                "question_list": img.extrastagingimage.question_list,
             }
         return pages
 
@@ -693,7 +868,7 @@ class ScanService:
         if img.image_type == "error":
             info = {"reason": img.errorstagingimage.error_reason}
         elif img.image_type == "discard":
-            info = {"reason": img.discardstagingimage.error_reason}
+            info = {"reason": img.discardstagingimage.discard_reason}
         elif img.image_type == "known":
             info = {
                 "paper_number": img.knownstagingimage.paper_number,
@@ -703,7 +878,7 @@ class ScanService:
         elif img.image_type == "extra":
             info = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_number": img.extrastagingimage.question_number,
+                "question_list": img.extrastagingimage.question_list,
             }
         else:
             info = {}

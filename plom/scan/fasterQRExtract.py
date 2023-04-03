@@ -94,6 +94,10 @@ def QRextract(image, try_harder=True):
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
 
+    # PIL does lazy loading.  Force loading now so we see errors now.
+    # Otherwise, zxing-cpp might hide error messages, Issue #2597
+    image.load()
+
     try:
         micro = BarcodeFormat.MicroQRCode
     except AttributeError:
@@ -189,6 +193,10 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
 
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
+
+    # PIL does lazy loading.  Force loading now so we see errors now.
+    # Otherwise, zxing-cpp might hide error messages, Issue #2597
+    image.load()
 
     try:
         micro = BarcodeFormat.MicroQRCode

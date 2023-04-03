@@ -108,6 +108,11 @@ Approx: 9230 over 7 courses
 Approx: 1030 over 3 courses
 
 
+## Totals up to August 31st 2022
+
+  * Approx 61000 papers in 45 courses.
+
+
 ## 2022W1
 
 | Course  |  Tasks                           | # students |  Notes                        |
@@ -126,9 +131,26 @@ Approx: 1030 over 3 courses
 | Biol209 | Final                            | 130        | Mary Berbee                   |
 | Phys117 |                                  |            |                               |
 
-Approx: 17760 over 12 courses
+Approx: 17760 over 13 courses
+
+## 2022W2
+
+| Course  |  Tasks                           | # students |  Notes                        |
+|---------|----------------------------------|:----------:|-------------------------------|
+| Math101 | Mock final x2,                   | ~4000      | mixed-mode sync/async         |
+| Math110 | Midterm                          | 205        |                               |
+| Math300 | Test1, Test2                     | 60         |                               |
+| Math303 | Midterm1                         | 265        |                               |
+| Math317 | Midterm1                         | 160        |                               |
+| Math318 | Midterm1                         | 105        |                               |
+| Math323 | Midterm1                         | 20         |                               |
+| Math340 |                                  |            |                               |
+| BMEG220 | Quiz1, Quiz2, Midterm            | 120        |                               |
+| Elec211 | Midterm1, Midterm2               | 195        |                               |
+
+Approx: 9600 over 9 courses
 
 
-## Totals up to August 30th 2022
+## Totals up to March 31st 2023
 
-  * Approx 61000 papers in 45 courses.
+  * Approx 88000 papers in 67 courses.

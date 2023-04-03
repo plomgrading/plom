@@ -13,7 +13,9 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
 
+from plom.scan.question_list_utils import check_question_list
 from Scan.services import ScanService
+from Papers.services.validated_spec_service import SpecificationService
 
 
 class Command(BaseCommand):
@@ -87,6 +89,7 @@ class Command(BaseCommand):
             raise CommandError(f"Multiple bundles called '{bundle_name}' are present.")
 
         (
+            pk,
             num_pages,
             valid_pages,
             error_pages,
@@ -95,7 +98,7 @@ class Command(BaseCommand):
             username,
         ) = the_bundle[0][1:]
         self.stdout.write(
-            f"Found bundle '{bundle_name}' with {num_pages} pages uploaded by {username}"
+            f"Found bundle '{bundle_name}' (id {pk}) with {num_pages} pages uploaded by {username}"
         )
         if isinstance(num_pages, str) and "progress" in num_pages:
             self.stdout.write(f"  * bundle still being split: {num_pages}")
@@ -119,6 +122,14 @@ class Command(BaseCommand):
             and (pushed is not True)
         ):
             self.stdout.write("  *  bundle perfect, ready to push")
+
+    def delete_staged_bundle(self, bundle_name):
+        scanner = ScanService()
+        try:
+            scanner.remove_bundle(bundle_name)
+        except ValueError as err:
+            raise CommandError(err)
+        self.stdout.write(f"Deleted {bundle_name}")
 
     def push_staged_bundle(self, bundle_name):
         scanner = ScanService()
@@ -170,6 +181,9 @@ class Command(BaseCommand):
             help="(optional) get status of specific bundle",
         )
 
+        sp_del = sp.add_parser("delete", help="delete a bundle.")
+        sp_del.add_argument("bundle_name", type=str, help="Which bundle to delete")
+
         # Push
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
         sp_push.add_argument("bundle_name", type=str, help="Which bundle to push.")
@@ -178,6 +192,39 @@ class Command(BaseCommand):
         sp_read_qr = sp.add_parser("read_qr", help="Read the selected bundle QR codes.")
         sp_read_qr.add_argument(
             "bundle_name", type=str, help="Which bundle to read the QR codes."
+        )
+
+        sp_map = sp.add_parser(
+            "map_extra", help="Map Extra Pages to papers and questions"
+        )
+        sp_map.add_argument("bundle_name", type=str, help="Which bundle")
+        sp_map.add_argument(
+            "idx", type=int, help="index of page within the bundle, from zero"
+        )
+        sp_map.add_argument(
+            "--papernum",
+            "-t",
+            metavar="T",
+            type=int,
+            help="""
+                To which paper number shall we attach this Extra Page?
+                It must exist.
+                TODO: argparse has this as optional but no default setting
+                for this yet.
+            """,
+        )
+        sp_map.add_argument(
+            "-q",
+            "--question",
+            nargs=1,
+            metavar="N",
+            help="""
+                Which question(s) are answer on this page?
+                You can pass a single integer, or a list like `-q [1,2,3]`
+                which updates each page to questions 1, 2 and 3.
+                You can also pass the special string `-q all` which uploads
+                the page to all questions (this is also the default).
+            """,
         )
 
     def handle(self, *args, **options):
@@ -189,9 +236,22 @@ class Command(BaseCommand):
             )
         elif options["command"] == "status":
             self.staging_bundle_status(bundle_name=options["bundle_name"])
+        elif options["command"] == "delete":
+            self.delete_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "push":
             self.push_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "read_qr":
             self.read_bundle_qr(bundle_name=options["bundle_name"])
+        elif options["command"] == "map_extra":
+            service = ScanService()
+            n_questions = SpecificationService().get_n_questions()
+            question_list = check_question_list(options["question"][0], n_questions)
+            # pass that to the server
+            service.surgery_map_extra(
+                options["bundle_name"],
+                options["idx"],
+                papernum=options["papernum"],
+                question_list=question_list,
+            )
         else:
             self.print_help("manage.py", "plom_staging_bundles")

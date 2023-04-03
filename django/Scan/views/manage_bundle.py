@@ -32,6 +32,7 @@ class ManageBundleView(ScannerRequiredView):
         known_pages = scanner.get_n_known_images(bundle)
         unknown_pages = scanner.get_n_unknown_images(bundle)
         extra_pages = scanner.get_n_extra_images(bundle)
+        discard_pages = scanner.get_n_discard_images(bundle)
         error_pages = scanner.get_n_error_images(bundle)
 
         if index >= n_pages:
@@ -56,6 +57,7 @@ class ManageBundleView(ScannerRequiredView):
                 "known_pages": known_pages,
                 "unknown_pages": unknown_pages,
                 "extra_pages": extra_pages,
+                "discard_pages": discard_pages,
                 "error_pages": error_pages,
                 "finished_reading_qr": bundle.has_qr_codes,
             }

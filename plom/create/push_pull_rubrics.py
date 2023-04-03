@@ -39,7 +39,7 @@ def download_rubrics(*, msgr):
 
 @with_manager_messenger
 def download_rubrics_to_file(filename, *, msgr, verbose=True):
-    """Download the rubrics from a server and save tem to a file.
+    """Download the rubrics from a server and save them to a file.
 
     Args:
         filename (pathlib.Path): A filename to save to.  The extension is

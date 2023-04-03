@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021, 2023 Colin B. Macdonald
 
 from pytest import raises
 
-from plom.scan.frontend_hwscan import _parse_questions as parse
-from plom.scan.frontend_hwscan import canonicalize_question_list as canonicalize
+from plom.scan.question_list_utils import _parse_questions as parse
+from plom.scan.question_list_utils import canonicalize_page_question_map as canonicalize
+from plom.scan.question_list_utils import check_question_list as qlist
 
 
 def test_all_to_empty():
@@ -87,3 +88,33 @@ def test_canonical_tuples():
         [1, 2],
         [2, 3],
     ]
+
+
+def test_qlist():
+    assert qlist("all", 3) == [1, 2, 3]
+    assert qlist("all", 2) == [1, 2]
+
+
+def test_qlist_only_all():
+    with raises(ValueError):
+        qlist("ducks", 3)
+
+
+def test_qlist_out_of_range():
+    with raises(ValueError):
+        qlist("[1, 10]", 3)
+    with raises(ValueError):
+        qlist("[-1, 2]", 3)
+
+
+def test_qlist_not_int():
+    with raises(ValueError):
+        qlist("[1, 2.5]", 3)
+
+
+def test__no_dupes():
+    # Or decide its an error?
+    # with raises(ValueError):
+    #     qlist([2, 2, 2, 2, 1], 3)
+    assert qlist([2, 2, 2, 2, 1], 3) == [1, 2]
+    assert canonicalize([[1, 1], [2, 1, 2]], 2, 2) == [[1], [1, 2]]
