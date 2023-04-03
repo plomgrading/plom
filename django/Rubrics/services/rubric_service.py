@@ -9,6 +9,7 @@
 import logging
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 
 from Papers.services import SpecificationService
 from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer
@@ -80,17 +81,35 @@ class RubricService:
         kind = rubric_data["kind"]
 
         if kind == "relative":
-            rubric = RelativeRubric.objects.get(key=key)
-            serializer = RelativeRubricSerializer(rubric, data=rubric_data)
-            serializer.is_valid()
-            serializer.save()
-            rubric_instance = serializer.instance
+            try:
+                print("relative")
+                print(rubric_data)
+                rubric = RelativeRubric.objects.get(key=key)
+                serializer = RelativeRubricSerializer(rubric, data=rubric_data)
+                serializer.is_valid()
+                serializer.save()
+                rubric_instance = serializer.instance
+            except ObjectDoesNotExist:
+                rubric = NeutralRubric.objects.get(key=key)
+                serializer = RelativeRubricSerializer(rubric, data=rubric_data)
+                serializer.is_valid()
+                serializer.save()
+                rubric_instance = serializer.instance
         elif kind == "neutral":
-            rubric = NeutralRubric.objects.get(key=key)
-            serializer = NeutralRubricSerializer(rubric, data=rubric_data)
-            serializer.is_valid()
-            serializer.save()
-            rubric_instance = serializer.instance
+            try:
+                print("neutral")
+                print(rubric_data)
+                rubric = NeutralRubric.objects.get(key=key)
+                serializer = NeutralRubricSerializer(rubric, data=rubric_data)
+                serializer.is_valid()
+                serializer.save()
+                rubric_instance = serializer.instance
+            except ObjectDoesNotExist:
+                rubric = RelativeRubric.objects.get(key=key)
+                serializer = NeutralRubricSerializer(data=rubric_data)
+                serializer.is_valid()
+                serializer.save()
+                rubric_instance = serializer.instance
         else:
             assert False, "We've got a problem modifying rubric."
 
