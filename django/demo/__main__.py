@@ -14,8 +14,11 @@ from sys import argv
 from django.core.management import call_command
 from django.conf import settings
 
-from demo import scribble_on_exams
+from demo import scribble_on_exams, make_hw_bundle
 from demo import remove_old_migration_files
+
+
+homework_bundles = {61: [[1], [2], [], [2, 3], [3]], 62: [[1], [1, 2], [2], [], [3]]}
 
 
 def get_database_engine():
@@ -202,21 +205,36 @@ def download_zip():
 
 
 def upload_bundles(number_of_bundles=3):
-    for n in range(1, number_of_bundles + 1):
-        cmd = f"plom_staging_bundles upload demoScanner{1} fake_bundle{n}.pdf --demo"
+    bundle_names = [f"fake_bundle{n+1}.pdf" for n in range(number_of_bundles)]
+    # these will be messed with before upload via the --demo toggle
+    for bname in bundle_names:
+        cmd = f"plom_staging_bundles upload demoScanner{1} {bname} --demo"
+        py_man_cmd = f"python3 manage.py {cmd}"
+        subprocess.check_call(split(py_man_cmd))
+        sleep(0.2)
+    # we don't want to mess with these - just upload them
+    bundle_names = [
+        f"fake_hw_bundle_{paper_number}.pdf" for paper_number in homework_bundles
+    ]
+    for bname in bundle_names:
+        cmd = f"plom_staging_bundles upload demoScanner{1} {bname}"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
         sleep(0.2)
 
 
 def wait_for_upload(number_of_bundles=3):
-    for n in range(1, number_of_bundles + 1):
-        cmd = f"plom_staging_bundles status fake_bundle{n}"
+    bundle_names = [f"fake_bundle{n+1}" for n in range(number_of_bundles)]
+    for paper_number in homework_bundles:
+        bundle_names.append(f"fake_hw_bundle_{paper_number}")
+
+    for bname in bundle_names:
+        cmd = f"plom_staging_bundles status {bname}"
         py_man_cmd = f"python3 manage.py {cmd}"
         while True:
             out = subprocess.check_output(split(py_man_cmd)).decode("utf-8")
             if "qr-codes not yet read" in out:
-                print(f"fake_bundle{n}.pdf ready for qr-reading")
+                print(f"{bname} ready for qr-reading")
                 break
             else:
                 print(out)
@@ -228,6 +246,22 @@ def read_qr_codes(number_of_bundles=3):
         cmd = f"plom_staging_bundles read_qr fake_bundle{n}"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
+        sleep(0.5)
+
+
+def map_homework_pages():
+    print("Mapping homework pages to questions")
+    for paper_number, question_list in homework_bundles.items():
+        bundle_name = f"fake_hw_bundle_{paper_number}"
+        print(
+            f"Assinging pages in {bundle_name} to paper {paper_number} questions {question_list}"
+        )
+        # note that split with mess with the question lis, so append it carefully after splitting.
+        cmd = f"plom_paper_scan map {bundle_name} -t {paper_number} -q"
+        py_man_cmd = f"python3 manage.py {cmd}"
+        split_cmd = split(py_man_cmd)
+        split_cmd.append(f"{question_list}")
+        subprocess.check_call(split_cmd)
         sleep(0.5)
 
 
@@ -354,7 +388,8 @@ def main(test=False):
         duplicate_qr=[3, 4],
         wrong_version=[5, 6],
     )
-    # scribble_on_exams(extra_page_papers=[], garbage_page_papers=[])
+    for paper_number, question_list in homework_bundles.items():
+        make_hw_bundle(paper_number, question_list=question_list)
 
     print("*" * 40)
     upload_bundles(
@@ -369,11 +404,13 @@ def main(test=False):
     read_qr_codes(
         number_of_bundles=number_of_bundles,
     )
+    map_homework_pages()
 
     print("*" * 40)
     wait_for_qr_read(
         number_of_bundles=number_of_bundles,
     )
+
     # print("*" * 40)
     # push_if_ready()
     call_command("plom_staging_bundles", "status")

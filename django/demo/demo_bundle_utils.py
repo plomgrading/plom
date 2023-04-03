@@ -330,6 +330,31 @@ def _scribble_loop(
         all_pdf_documents.save(out_file)
 
 
+def make_hw_bundle(paper_number, *, question_list=[[1]]):
+    print(
+        f"Making a homework bundle as paper {paper_number} with question-page mapping {question_list}"
+    )
+    # question_list should be a list of lists eg [[1], [1,2], [], [2,3]]
+    out_file = Path(f"fake_hw_bundle_{paper_number}.pdf")
+    doc = fitz.Document()
+    pg = 0
+    for ql in question_list:
+        pg += 1
+        doc.new_page(-1)
+        if ql:
+            txt = f"Paper.page {paper_number}.{pg}: contains info for question(s) {ql}"
+        else:
+            txt = f"Paper.page {paper_number}.{pg}: does not contain useful info - discard it!"
+        doc[-1].insert_text(
+            (120, 50),
+            text=txt,
+            fontsize=18,
+            color=[0, 0.25, 0.25],
+        )
+
+    doc.save(out_file)
+
+
 def scribble_on_exams(
     *,
     number_of_bundles=3,
