@@ -18,9 +18,6 @@ from demo import scribble_on_exams, make_hw_bundle
 from demo import remove_old_migration_files
 
 
-homework_bundles = {61: [[1], [2], [], [2, 3], [3]], 62: [[1], [1, 2], [2], [], [3]]}
-
-
 def get_database_engine():
     """Which database engine are we using?"""
 
@@ -204,7 +201,7 @@ def download_zip():
     subprocess.check_call(split(py_man_cmd))
 
 
-def upload_bundles(number_of_bundles=3):
+def upload_bundles(number_of_bundles=3, homework_bundles={}):
     bundle_names = [f"fake_bundle{n+1}.pdf" for n in range(number_of_bundles)]
     # these will be messed with before upload via the --demo toggle
     for bname in bundle_names:
@@ -213,17 +210,17 @@ def upload_bundles(number_of_bundles=3):
         subprocess.check_call(split(py_man_cmd))
         sleep(0.2)
     # we don't want to mess with these - just upload them
-    bundle_names = [
+    hw_bundle_names = [
         f"fake_hw_bundle_{paper_number}.pdf" for paper_number in homework_bundles
     ]
-    for bname in bundle_names:
+    for bname in hw_bundle_names:
         cmd = f"plom_staging_bundles upload demoScanner{1} {bname}"
         py_man_cmd = f"python3 manage.py {cmd}"
         subprocess.check_call(split(py_man_cmd))
         sleep(0.2)
 
 
-def wait_for_upload(number_of_bundles=3):
+def wait_for_upload(number_of_bundles=3, homework_bundles={}):
     bundle_names = [f"fake_bundle{n+1}" for n in range(number_of_bundles)]
     for paper_number in homework_bundles:
         bundle_names.append(f"fake_hw_bundle_{paper_number}")
@@ -249,12 +246,12 @@ def read_qr_codes(number_of_bundles=3):
         sleep(0.5)
 
 
-def map_homework_pages():
+def map_homework_pages(homework_bundles={}):
     print("Mapping homework pages to questions")
     for paper_number, question_list in homework_bundles.items():
         bundle_name = f"fake_hw_bundle_{paper_number}"
         print(
-            f"Assinging pages in {bundle_name} to paper {paper_number} questions {question_list}"
+            f"Assigning pages in {bundle_name} to paper {paper_number} questions {question_list}"
         )
         # note that split with mess with the question lis, so append it carefully after splitting.
         cmd = f"plom_paper_scan map {bundle_name} -t {paper_number} -q"
@@ -334,6 +331,11 @@ def main(test=False):
     """
 
     number_of_bundles = 5
+    homework_bundles = {
+        61: [[1], [2], [], [2, 3], [3]],
+        62: [[1], [1, 2], [2], [], [3]],
+        63: [[1, 2], [3], []],
+    }
 
     configure_django_stuff()
 
@@ -393,7 +395,7 @@ def main(test=False):
 
     print("*" * 40)
     upload_bundles(
-        number_of_bundles=number_of_bundles,
+        number_of_bundles=number_of_bundles, homework_bundles=homework_bundles
     )
 
     wait_for_upload(
@@ -404,7 +406,7 @@ def main(test=False):
     read_qr_codes(
         number_of_bundles=number_of_bundles,
     )
-    map_homework_pages()
+    map_homework_pages(homework_bundles=homework_bundles)
 
     print("*" * 40)
     wait_for_qr_read(
