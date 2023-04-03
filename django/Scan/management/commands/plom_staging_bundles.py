@@ -13,7 +13,9 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
 
+from plom.scan.question_list_utils import check_question_list
 from Scan.services import ScanService
+from Papers.services.validated_spec_service import SpecificationService
 
 
 class Command(BaseCommand):
@@ -192,6 +194,39 @@ class Command(BaseCommand):
             "bundle_name", type=str, help="Which bundle to read the QR codes."
         )
 
+        sp_map = sp.add_parser(
+            "map_extra", help="Map Extra Pages to papers and questions"
+        )
+        sp_map.add_argument("bundle_name", type=str, help="Which bundle")
+        sp_map.add_argument(
+            "idx", type=int, help="index of page within the bundle, from zero"
+        )
+        sp_map.add_argument(
+            "--papernum",
+            "-t",
+            metavar="T",
+            type=int,
+            help="""
+                To which paper number shall we attach this Extra Page?
+                It must exist.
+                TODO: argparse has this as optional but no default setting
+                for this yet.
+            """,
+        )
+        sp_map.add_argument(
+            "-q",
+            "--question",
+            nargs=1,
+            metavar="N",
+            help="""
+                Which question(s) are answer on this page?
+                You can pass a single integer, or a list like `-q [1,2,3]`
+                which updates each page to questions 1, 2 and 3.
+                You can also pass the special string `-q all` which uploads
+                the page to all questions (this is also the default).
+            """,
+        )
+
     def handle(self, *args, **options):
         if options["command"] == "upload":
             self.upload_pdf(
@@ -207,5 +242,16 @@ class Command(BaseCommand):
             self.push_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "read_qr":
             self.read_bundle_qr(bundle_name=options["bundle_name"])
+        elif options["command"] == "map_extra":
+            service = ScanService()
+            n_questions = SpecificationService().get_n_questions()
+            question_list = check_question_list(options["question"][0], n_questions)
+            # pass that to the server
+            service.surgery_map_extra(
+                options["bundle_name"],
+                options["idx"],
+                papernum=options["papernum"],
+                question_list=question_list,
+            )
         else:
             self.print_help("manage.py", "plom_staging_bundles")

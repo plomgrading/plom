@@ -19,7 +19,9 @@ from .models import (
 # Register your models here.
 admin.site.register(StagingBundle)
 admin.site.register(StagingImage)
-admin.site.register(PageToImage)
-admin.site.register(ParseQR)
+admin.site.register(KnownStagingImage)
+admin.site.register(ExtraStagingImage)
 admin.site.register(DiscardStagingImage)
 admin.site.register(UnknownStagingImage)
+admin.site.register(PageToImage)
+admin.site.register(ParseQR)

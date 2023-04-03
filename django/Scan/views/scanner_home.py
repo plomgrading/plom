@@ -185,6 +185,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         n_known = scanner.get_n_known_images(bundle)
         n_unknown = scanner.get_n_unknown_images(bundle)
         n_extra = scanner.get_n_extra_images(bundle)
+        n_extra_w_data = scanner.get_n_extra_images_with_data(bundle)
+        n_discard = scanner.get_n_discard_images(bundle)
         n_errors = scanner.get_n_error_images(bundle)
         context = {
             "timestamp": timestamp,
@@ -198,6 +200,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "n_known": n_known,
             "n_unknown": n_unknown,
             "n_extra": n_extra,
+            "n_extra_w_data": n_extra_w_data,
+            "n_discard": n_discard,
             "n_errors": n_errors,
         }
         if not context["has_been_processed"]:

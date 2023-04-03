@@ -42,12 +42,22 @@
 	{% else %}
 	<li>Known pages: {{ n_known }}</li>
 	<li>Extra pages:
-	  {% if n_extra %} {{ n_extra }} <i class="bi bi-dash-circle-fill text-warning"></i>
+	  {% if n_extra %}
+	  {% if n_extra == n_extra_w_data %}
+	  {{ n_extra }} - all processed <i class="bi bi-check-circle text-success"></i>
+	  {% else %} 	  
+	  {{n_extra_w_data}} of {{ n_extra }} processed <i class="bi bi-dash-circle-fill text-warning"></i> 
+	  {% endif %}
 	  {% else %} none
 	  {% endif %}
 	</li>
 	<li>Unknown pages:
 	  {% if n_unknown %} {{ n_unknown }} <i class="bi bi-question-circle-fill text-warning"></i>
+	  {% else %} none <i class="bi bi-check-circle text-success"></i>
+	  {% endif %}
+	</li>
+	<li>Discard pages:
+	  {% if n_discard %} {{ n_discard }}
 	  {% else %} none
 	  {% endif %}
 	</li>
