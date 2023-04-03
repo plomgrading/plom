@@ -6,9 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
-
-### Added
+## [0.13.2] - 2023-04-03
 
 ### Changed
 * Client: "sync" button doesn't pop up a dialog unless there are changes to rubrics.
@@ -974,7 +972,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.13.1...main
+[0.13.2]: https://gitlab.com/plom/plom/-/compare/v0.13.1...v0.13.2
 [0.13.1]: https://gitlab.com/plom/plom/-/compare/v0.13.0...v0.13.1
 [0.13.0]: https://gitlab.com/plom/plom/-/compare/v0.12.3...v0.13.0
 [0.12.3]: https://gitlab.com/plom/plom/-/compare/v0.12.2...v0.12.3
