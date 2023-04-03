@@ -1238,7 +1238,7 @@ class MarkerClient(QWidget):
                 pass
             # exit with code that is not 0 or 1
             self.Qapp.exit(57)
-            log.critical("For some reason, Qapp.exit() doesn't so force quiting")
+            log.critical("Qapp.exit() may not exit immediately; force quitting...")
             raise PlomForceLogoutException("Manager changed task") from ex
 
         log.info("importing source image data (orientations etc) from .plom file")
