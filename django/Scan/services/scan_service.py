@@ -800,7 +800,8 @@ class ScanService:
         images = bundle_obj.stagingimage_set
 
         # make sure bundle is "perfect"
-        if not self.is_bundle_perfect(bundle_obj):
+        # note functin takes a bundle-pk as argument
+        if not self.is_bundle_perfect(bundle_obj.pk):
             raise ValueError("The bundle is imperfect, cannot push.")
 
         img_service = ImageBundleService()
