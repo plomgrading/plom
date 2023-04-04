@@ -5,7 +5,7 @@
 from .image_bundle import (
     Bundle,
     Image,
-    DImage,
+    DiscardImage,
 )
 
 from .paper_structure import (

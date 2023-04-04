@@ -15,7 +15,7 @@ from Scan.models import (
 from Papers.models import (
     Bundle,
     Image,
-    DImage,
+    DiscardImage,
     CreateImageTask,
     FixedPage,
     MobilePage,
@@ -204,7 +204,7 @@ class ImageBundleService:
                     )
             elif staged.image_type == "discard":
                 disc = staged.discardstagingimage
-                DImage.objects.create(image=image, discard_reason=disc.discard_reason)
+                DiscardImage.objects.create(image=image, discard_reason=disc.discard_reason)
             else:
                 raise ValueError(
                     f"Pushed images must be known, extra or discards - found {staged.image_type}"

@@ -23,9 +23,6 @@ class Bundle(models.Model):
     hash = models.CharField(null=False, max_length=64)
 
 
-# TODO - remove polymorphism here and delete older image types no longer used.
-
-
 class Image(models.Model):
     """Table to store information about an uploaded page-image.
 
@@ -50,6 +47,6 @@ class Image(models.Model):
     rotation = models.IntegerField(null=False, default=0)
 
 
-class DImage(models.Model):
+class DiscardImage(models.Model):
     image = models.ForeignKey(Image, null=True, on_delete=models.CASCADE)
     discard_reason = models.TextField()

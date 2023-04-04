@@ -19,7 +19,7 @@ from Papers.models import (
     QuestionPage,
     DNMPage,
     IDPage,
-    DImage,
+    DiscardImage,
     Image,
 )
 from Scan.models import StagingImage, StagingBundle
