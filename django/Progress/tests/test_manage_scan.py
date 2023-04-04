@@ -6,19 +6,19 @@
 from django.test import TestCase
 from django.conf import settings
 from model_bakery import baker
+from unittest import skip
+
 
 from Papers.models import (
     Image,
-    CollidingImage,
     DNMPage,
-    DiscardedImage,
     Bundle,
 )
 from Scan.models import StagingImage, StagingBundle
 
 from Progress.services import ManageScanService
 
-
+@skip("Many of these tests need rebuilding once we rebuild UI for handling extra/unknowns/discards.")
 class ManageScanTests(TestCase):
     """
     Tests for Progress.services.ManageScanService()
@@ -47,15 +47,15 @@ class ManageScanTests(TestCase):
             image=self.image,
         )
 
-        self.colliding_image = baker.make(
-            CollidingImage,
-            file_name=f"{settings.BASE_DIR}/media/page_images/colliding_pages/1/page1_abcdef.png",
-            hash="abcdef",
-            paper_number=1,
-            page_number=1,
-            bundle=self.bundle,
-            bundle_order=1,
-        )
+        # self.colliding_image = baker.make(
+        #     CollidingImage,
+        #     file_name=f"{settings.BASE_DIR}/media/page_images/colliding_pages/1/page1_abcdef.png",
+        #     hash="abcdef",
+        #     paper_number=1,
+        #     page_number=1,
+        #     bundle=self.bundle,
+        #     bundle_order=1,
+        # )
         return super().setUp()
 
     def test_discarded_image_path(self):

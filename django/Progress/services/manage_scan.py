@@ -14,12 +14,13 @@ from django.conf import settings
 
 from Papers.models import (
     FixedPage,
+    MobilePage,
     Paper,
     QuestionPage,
-    CollidingImage,
-    DiscardedImage,
+    DNMPage,
+    IDPage,
+    DImage,
     Image,
-    ErrorImage,
 )
 from Scan.models import StagingImage, StagingBundle
 
