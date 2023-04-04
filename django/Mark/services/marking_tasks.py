@@ -409,7 +409,6 @@ class MarkingTaskService:
                 except ObjectDoesNotExist:
                     raise ValidationError(f"Invalid rubric key: {rubric_key}")
                 rubrics_used.append(rubric)
-                print(f"appended rubric {rubric} from key {rubric_key}")
 
         src_img_data = annot_data["base_images"]
         for image_data in src_img_data:
