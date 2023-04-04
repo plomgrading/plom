@@ -370,8 +370,11 @@ class MarkingTaskService:
             plomfile (str): a JSON field representing annotation data.
 
         Returns:
-            cleaned_data (dict): cleaned request data
-            annot_data (dict): annotation-image data parsed from a JSON string.
+            tuple: three things in a tuple;
+            `cleaned_data (dict)`: cleaned request data.
+            `annot_data (dict)`: annotation-image data parsed from a JSON string.
+            `rubrics_used (list)`: a list of Rubric objects, extracted based on
+            keys found inside the `annot_data`.
         """
 
         annot_data = json.loads(plomfile)
@@ -381,26 +384,31 @@ class MarkingTaskService:
             raise RuntimeError("User cannot update task.")
 
         try:
-            for val in ["pg", "ver", "score", "mtime"]:
-                elem = data[val][0]
+            for val in ("pg", "ver", "score"):
+                elem = data[val]
                 cleaned_data[val] = int(elem)
         except IndexError:
             raise ValidationError(f"Multiple values for '{val}', expected 1.")
-        except ValueError:
+        except (ValueError, TypeError):
             raise ValidationError(f"Could not cast {val} as int: {elem}")
 
-        if type(data["rubrics"]) == str:
-            rubrics = [data["rubrics"]]
-        else:
-            rubrics = data["rubrics"]
+        # TODO: decide int or float
+        try:
+            cleaned_data["marking_time"] = float(data["marking_time"])
+        except (ValueError, TypeError) as e:
+            raise ValidationError(f"Could not cast 'marking_time' as float: {e}")
 
-        cleaned_data["rubrics"] = []
-        for rubric_key in rubrics:
-            try:
-                rubric = Rubric.objects.get(key=rubric_key)
-            except ObjectDoesNotExist:
-                raise ValidationError(f"Invalid rubric key: {rubric_key}")
-            cleaned_data["rubrics"].append(rubric)
+        # unpack the rubrics, potentially record which ones were used
+        annotations = annot_data["sceneItems"]
+        rubrics_used = []
+        for ann in annotations:
+            if ann[0] == "GroupDeltaText":
+                rubric_key = ann[3]
+                try:
+                    rubric = Rubric.objects.get(key=rubric_key)
+                except ObjectDoesNotExist:
+                    raise ValidationError(f"Invalid rubric key: {rubric_key}")
+                rubrics_used.append(rubric)
 
         src_img_data = annot_data["base_images"]
         for image_data in src_img_data:
@@ -408,7 +416,7 @@ class MarkingTaskService:
             if not img_path.exists():
                 raise ValidationError("Invalid original-image in request.")
 
-        return cleaned_data, annot_data
+        return cleaned_data, annot_data, rubrics_used
 
     def get_user_mark_results(self, user, question, version):
         """

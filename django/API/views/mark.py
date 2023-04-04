@@ -112,11 +112,18 @@ class MgetDoneTasks(APIView):
             request.user, question=question, version=version
         )
 
+        # TODO: 3rd entry here is marking time: in legacy, we trust the client's
+        # previously given value (which the client tracks including revisions)
+        # Currently this tries to estimate a value server-side.  Decisions?
+        # Previous code was `mark_action.time - mark_action.claim_action.time`
+        # which is a `datatime.timedelta`.  Not sure how to convert to seconds
+        # so currently using hardcoded value.
+        # TODO: legacy marking time is int, but we may decide to change to float.
         rows = map(
             lambda mark_action: [
                 mark_action.task.code,
                 mark_action.annotation.score,
-                mark_action.time - mark_action.claim_action.time,
+                42,  # TODO: hardcoded, see above
                 [],  # TODO: tags are not implemented yet
                 mark_action.task.pk,  # TODO: integrity check is not implemented yet
             ],
@@ -179,7 +186,7 @@ class MclaimThisTask(APIView):
         plomfile_data = plomfile.read().decode("utf-8")
 
         try:
-            mark_data, annot_data = mts.validate_and_clean_marking_data(
+            mark_data, annot_data, rubrics_used = mts.validate_and_clean_marking_data(
                 request.user, code, data, plomfile_data
             )
         except ObjectDoesNotExist as e:
@@ -203,6 +210,7 @@ class MclaimThisTask(APIView):
                 code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             )
 
+        # TODO: mark_data["marking_time"] is unrecorded
         mts.mark_task(request.user, code, mark_data["score"], img, annot_data)
 
         return Response(
