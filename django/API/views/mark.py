@@ -118,12 +118,12 @@ class MgetDoneTasks(APIView):
         # Previous code was `mark_action.time - mark_action.claim_action.time`
         # which is a `datatime.timedelta`.  Not sure how to convert to seconds
         # so currently using hardcoded value.
-        # TODO: legacy marking time is int, but we decide to change to float.
+        # TODO: legacy marking time is int, but we may decide to change to float.
         rows = map(
             lambda mark_action: [
                 mark_action.task.code,
                 mark_action.annotation.score,
-                42,
+                42,  # TODO: hardcoded, see above
                 [],  # TODO: tags are not implemented yet
                 mark_action.task.pk,  # TODO: integrity check is not implemented yet
             ],
