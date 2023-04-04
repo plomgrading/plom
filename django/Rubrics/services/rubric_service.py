@@ -106,7 +106,7 @@ class RubricService:
                 rubric_instance = serializer.instance
             except ObjectDoesNotExist:
                 rubric = RelativeRubric.objects.get(key=key)
-                serializer = NeutralRubricSerializer(data=rubric_data)
+                serializer = NeutralRubricSerializer(rubric, data=rubric_data)
                 serializer.is_valid()
                 serializer.save()
                 rubric_instance = serializer.instance
