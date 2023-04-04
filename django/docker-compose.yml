@@ -1,6 +1,28 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2023 Edith Coates
 
+# If you are working with VSC and wish to start up a
+# docker/django debugging server, copy + uncomment this text into
+# plom/.vscode/launch.json
+# {
+#     "version": "0.2.0",
+#     "configurations": [
+#         {
+#             "name": "Python: Django",
+#             "type": "python",
+#             "request": "attach",
+#             "pathMappings": [
+#                 {
+#                     "localRoot": "${workspaceFolder}/django",
+#                     "remoteRoot": "/code"
+#                 }
+#             ],
+#             "port": 3000,
+#             "host": "127.0.0.1"
+#         },
+#     ]
+# }
+
 services:
   web:
     build: .
