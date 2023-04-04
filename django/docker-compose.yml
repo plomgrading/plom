@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2023 Edith Coates
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    command: ./docker_run.sh
+    volumes:
+      - .:/code
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+      - "POSTGRES_DB=plom_db"
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=postgres"
+
+volumes:
+  postgres_data:
