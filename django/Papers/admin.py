@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
+
 from django.contrib import admin
 
 from Papers.models.paper_structure import (
@@ -10,11 +15,7 @@ from Papers.models.paper_structure import (
 )
 from Papers.models.specifications import Specification
 from Papers.models.background_tasks import CreatePaperTask, CreateImageTask
-from Papers.models.image_bundle import (
-    Image,
-    DImage,
-    Bundle
-)
+from Papers.models.image_bundle import Image, DImage, Bundle
 
 admin.site.register(Paper)
 admin.site.register(Specification)

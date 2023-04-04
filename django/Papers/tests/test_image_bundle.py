@@ -277,13 +277,13 @@ class ImageBundleTests(TestCase):
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
 
-        img1 = baker.make(StagingImage)
+        img1 = baker.make(StagingImage, image_type="known")
         baker.make(KnownStagingImage, staging_image=img1, paper_number=2, page_number=1)
 
-        img2 = baker.make(StagingImage)
+        img2 = baker.make(StagingImage, image_type="known")
         baker.make(KnownStagingImage, staging_image=img2, paper_number=2, page_number=2)
 
-        img3 = baker.make(StagingImage)
+        img3 = baker.make(StagingImage, image_type="known")
         baker.make(KnownStagingImage, staging_image=img3, paper_number=2, page_number=3)
 
         img4 = baker.make(Image)
@@ -297,7 +297,7 @@ class ImageBundleTests(TestCase):
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
 
-        st_img6 = baker.make(StagingImage)
+        st_img6 = baker.make(StagingImage, image_type="known")
         baker.make(
             KnownStagingImage, staging_image=st_img6, paper_number=3, page_number=1
         )

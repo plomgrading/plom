@@ -26,6 +26,7 @@ class Bundle(models.Model):
 
 # TODO - remove polymorphism here and delete older image types no longer used.
 
+
 class Image(PolymorphicModel):
     """Table to store information about an uploaded page-image.
 
@@ -54,6 +55,7 @@ class Image(PolymorphicModel):
 class DImage(models.Model):
     image = models.ForeignKey(Image, null=True, on_delete=models.CASCADE)
     discard_reason = models.TextField()
+
 
 # TODO - remove the classes below.
 

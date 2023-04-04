@@ -68,7 +68,9 @@ class PaperInfoService:
         try:
             # to find the version, find the first fixed question page of that paper with the questio-number
             # and extract the version from that. Note - use "filter" and not "get" here.
-            page = QuestionPage.objects.filter(paper=paper, question_number=question_number)[0]
+            page = QuestionPage.objects.filter(
+                paper=paper, question_number=question_number
+            )[0]
             # This will either fail with a does-not-exist or index-out-of-range
         except (QuestionPage.DoesNotExist, IndexError):
             raise ValueError(
