@@ -762,12 +762,32 @@ class ScanService:
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk):
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        # TODO - this will need updating in the future when
-        # we can assign unknowns and extra pages
-        not_known_images = bundle_obj.stagingimage_set.exclude(image_type="known")
-        # if there are any not-known-images then the bundle is not perfect
-        # that is a lot of double-negatives in there.
-        return not not_known_images.exists()
+        # a bundle is perfect if it has
+        #  * no unread pages
+        #  * no error-pages
+        #  * no unknown-pages
+        #  * all extra pages have data.
+        # this means that all pages present in bundle are
+        #  * known
+        #  * discard
+        #  * extra-page with data
+
+        # check for unread pages
+        if bundle_obj.stagingimage_set.filter(image_type="unread").exists():
+            return False
+        # check for error-pages
+        if bundle_obj.stagingimage_set.filter(image_type="error").exists():
+            return False
+        # check for unknowns
+        if bundle_obj.stagingimage_set.filter(image_type="unknown").exists():
+            return False
+        # check for extra pages without data
+        if bundle_obj.stagingimage_set.filter(
+            image_type="extra", extrastagingimage__paper_number__isnull=True
+        ).exists():
+            return False
+
+        return True
 
     @transaction.atomic
     def push_bundle_to_server(self, bundle_obj):
@@ -779,9 +799,8 @@ class ScanService:
 
         images = bundle_obj.stagingimage_set
 
-        # TODO - in future this will need to handle extra pages etc.
-        # for now, we require all "known" pages
-        if images.exclude(image_type="known").exists():
+        # make sure bundle is "perfect"
+        if not self.is_bundle_perfect(bundle_obj):
             raise ValueError("The bundle is imperfect, cannot push.")
 
         img_service = ImageBundleService()

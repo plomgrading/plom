@@ -253,7 +253,15 @@ def map_homework_pages(homework_bundles={}):
         print(
             f"Assigning pages in {bundle_name} to paper {paper_number} questions {question_list}"
         )
-        call_command("plom_paper_scan", "map", bundle_name, "-t", paper_number, "-q", str(question_list))
+        call_command(
+            "plom_paper_scan",
+            "map",
+            bundle_name,
+            "-t",
+            paper_number,
+            "-q",
+            str(question_list),
+        )
         sleep(0.5)
 
 

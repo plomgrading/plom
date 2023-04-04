@@ -27,7 +27,6 @@
       <ul class="list-unstyled">
         <li>Total pages: {{ number_of_pages }}
 	  {% if has_been_processed %}
-	  <i class="bi bi-check-circle text-success"></i>
 	  {% else %}
 	  Processing pages:
 	  <div class="progress" role="progressbar">
@@ -38,7 +37,7 @@
 	{% if has_been_processed %}
 	{% if has_qr_codes %}
 	{% if n_known == number_of_pages %}
-        <li>Known pages: all <i class="bi bi-check-circle text-success"></i></li>
+        <li>Known pages: <i class="bi bi-check-circle text-success"> all</i></li>
 	{% else %}
 	<li>Known pages: {{ n_known }}</li>
 	<li>Extra pages:
@@ -46,14 +45,14 @@
 	  {% if n_extra == n_extra_w_data %}
 	  {{ n_extra }} - all processed <i class="bi bi-check-circle text-success"></i>
 	  {% else %} 	  
-	  {{n_extra_w_data}} of {{ n_extra }} processed <i class="bi bi-dash-circle-fill text-warning"></i> 
+	  <i class="bi bi-dash-circle-fill text-warning"></i> {{n_extra_w_data}} of {{ n_extra }} processed
 	  {% endif %}
 	  {% else %} none
 	  {% endif %}
 	</li>
 	<li>Unknown pages:
 	  {% if n_unknown %} {{ n_unknown }} <i class="bi bi-question-circle-fill text-warning"></i>
-	  {% else %} none <i class="bi bi-check-circle text-success"></i>
+	  {% else %}<i class="bi bi-check-circle text-success"> none</i>
 	  {% endif %}
 	</li>
 	<li>Discard pages:
@@ -108,7 +107,7 @@
 	class="btn btn-warning"
 	>Push!</button>
       {% else %}
-      <span data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Cannot push bundle containing errors">
+      <span data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Cannot push bundle if it contains errors, unknowns, or unprocessed extra-pages">
       <button
 	class="btn btn-warning" disabled	
 	>Push</button>
