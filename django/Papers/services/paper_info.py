@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.db import transaction
-from Papers.models import Paper, FixedPage
+from Papers.models import Paper, FixedPage, QuestionPage
 
 import logging
 
@@ -55,5 +55,23 @@ class PaperInfoService:
         except FixedPage.DoesNotExist:
             raise ValueError(
                 f"Page {page_number} of paper {paper_number} does not exist in the database."
+            )
+        return page.version
+
+    @transaction.atomic
+    def get_version_from_paper_question(self, paper_number, question_number):
+        """Given a paper_number and question_number, return the version of that question."""
+        try:
+            paper = Paper.objects.get(paper_number=paper_number)
+        except Paper.DoesNotExist:
+            raise ValueError(f"Paper {paper_number} does not exist in the database.")
+        try:
+            # to find the version, find the first fixed question page of that paper with the questio-number
+            # and extract the version from that. Note - use "filter" and not "get" here.
+            page = QuestionPage.objects.filter(paper=paper, question_number=question_number)[0]
+            # This will either fail with a does-not-exist or index-out-of-range
+        except (QuestionPage.DoesNotExist, IndexError):
+            raise ValueError(
+                f"Question {question_number} of paper {paper_number} does not exist in the database."
             )
         return page.version

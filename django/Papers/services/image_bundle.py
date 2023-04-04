@@ -287,6 +287,8 @@ class ImageBundleService:
         uploaded_bundle = Bundle(name=staged_bundle.slug, hash=staged_bundle.pdf_hash)
         uploaded_bundle.save()
 
+        pi_service = PaperInfoService()
+
         # TODO - needs to handle extra pages too.
         for staged in bundle_images:
             image = Image(
@@ -299,28 +301,34 @@ class ImageBundleService:
             )
             image.save()
 
-            if staged.image_type=="known":           
+            if staged.image_type == "known":
                 known = staged.knownstagingimage
-                # TODO - update this for the "type" of each page
-                # ID, DNM or question.
+                # Note that since fixedpage is polymorphic, this will handle question, ID and DNM pages.
                 page = FixedPage.objects.get(
                     paper__paper_number=known.paper_number,
                     page_number=known.page_number,
                 )
                 page.image = image
                 page.save(update_fields=["image"])
-            elif staged.image_type=="extra":
+            elif staged.image_type == "extra":
                 # need to make one mobile page for each question in the question-list
                 extra = staged.extrastagingimage
                 paper = Paper.objects.get(paper_number=extra.paper_number)
                 for q in extra.question_list:
-                    # TODO presently hard code version to 1 - need to fix
-                    MobilePage.objects.create(paper=paper, image=image,question_number=q, version=1)
-            elif staged.image_type=="discard":
+                    # get the version from the paper/question info
+                    v = pi_service.get_version_from_paper_question(
+                        extra.paper_number, q
+                    )
+                    MobilePage.objects.create(
+                        paper=paper, image=image, question_number=q, version=v
+                    )
+            elif staged.image_type == "discard":
                 disc = staged.discardstagingimage
-                DImage.objects.create(image=image, discard_reason = disc.discard_reason)
+                DImage.objects.create(image=image, discard_reason=disc.discard_reason)
             else:
-                raise ValueError(f"Pushed images must be known, extra or discards - found {staged.image_type}")
+                raise ValueError(
+                    f"Pushed images must be known, extra or discards - found {staged.image_type}"
+                )
 
         from Mark.services import MarkingTaskService
 
@@ -369,7 +377,9 @@ class ImageBundleService:
         # while this is done by staging, we redo it here to be **very** sure.
         if staged_imgs.filter(image_type__in=["unread", "unknown", "error"]).exists():
             return False
-        if staged_imgs.filter(image_type="extra", extrastagingimage__paper_number__isnull=True).exists():
+        if staged_imgs.filter(
+            image_type="extra", extrastagingimage__paper_number__isnull=True
+        ).exists():
             return False
         # to do the complement of this search we'd need to count
         # knowns, discards and extra-with-data and make sure that

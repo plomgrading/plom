@@ -16,8 +16,10 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
 from django.utils import timezone
+
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
@@ -639,20 +641,22 @@ class ScanService:
 
     @transaction.atomic
     def get_n_extra_images_with_data(self, bundle):
-        # note - this assumes that we set questions and pages at same time
-        # and **never** set one without the other.
+        # note - we must check that we have set both questions and pages
         return bundle.stagingimage_set.filter(
-            image_type="extra", extrastagingimage__paper_number__isnull=False
+            image_type="extra",
+            extrastagingimage__paper_number__isnull=False,
+            extrastagingimage__question_list__isnull=False,
         ).count()
 
     @transaction.atomic
     def do_all_extra_images_have_data(self, bundle):
-        # note - this assumes that we set questions and pages at same time
-        # and **never** set one without the other.
-        return not bundle.stagingimage_set.filter(
-            image_type="extra", extrastagingimage__paper_number__isnull=True
+        # Make sure all question pages have both paper-number and question-lists
+        epages = bundle.stagingimage_set.filter(image_type="extra")
+        return not epages.filter(
+            Q(extrastagingimage__paper_number__isnull=True)
+            | Q(extrastagingimage__question_list__isnull=True)
         ).exists()
-        # if you can find an extra page with a null paper_number then it is not ready.
+        # if you can find an extra page with a null paper_number, or one with a null question-list then it is not ready.
 
     @transaction.atomic
     def get_n_error_images(self, bundle):
@@ -761,29 +765,26 @@ class ScanService:
 
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk):
+        """Tests if the bundle (given by its pk) is perfect. A bundle is perfect when
+          * no unread pages, no error-pages, no unknown-pages, and
+          * all extra pages have data.
+        this, in turn, means that all pages present in bundle are
+          * known or discard, or
+          * are extra-pages with data
+        """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         # a bundle is perfect if it has
-        #  * no unread pages
-        #  * no error-pages
-        #  * no unknown-pages
-        #  * all extra pages have data.
-        # this means that all pages present in bundle are
-        #  * known
-        #  * discard
-        #  * extra-page with data
 
-        # check for unread pages
-        if bundle_obj.stagingimage_set.filter(image_type="unread").exists():
-            return False
-        # check for error-pages
-        if bundle_obj.stagingimage_set.filter(image_type="error").exists():
-            return False
-        # check for unknowns
-        if bundle_obj.stagingimage_set.filter(image_type="unknown").exists():
+        # check for unread, unknown, error pages
+        if bundle_obj.stagingimage_set.filter(
+            image_type__in=["unknown", "unread", "error"]
+        ).exists():
             return False
         # check for extra pages without data
-        if bundle_obj.stagingimage_set.filter(
-            image_type="extra", extrastagingimage__paper_number__isnull=True
+        epages = bundle_obj.stagingimage_set.filter(image_type="extra")
+        if epages.filter(
+            Q(extrastagingimage__paper_number__isnull=True)
+            | Q(extrastagingimage__question_list__isnull=True)
         ).exists():
             return False
 
