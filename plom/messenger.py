@@ -421,7 +421,6 @@ class Messenger(BaseMessenger):
                 marking_time,
                 annotated_img,
                 plomfile,
-                rubrics,
                 integrity_check,
             )
 
@@ -497,7 +496,6 @@ class Messenger(BaseMessenger):
         marking_time,
         annotated_img,
         plomfile,
-        rubrics,
         integrity_check,
     ):
         """
@@ -519,7 +517,6 @@ class Messenger(BaseMessenger):
                         "ver": str(ver),
                         "score": str(score),
                         "marking_time": marking_time,
-                        "rubrics": rubrics,
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
                         "integrity_check": integrity_check,
                     }
