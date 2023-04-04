@@ -18,9 +18,11 @@ from Scan.models import (
 from Papers.models import (
     Bundle,
     Image,
+    DImage,
     CreateImageTask,
     CollidingImage,
     FixedPage,
+    MobilePage,
     QuestionPage,
     Paper,
 )
@@ -297,13 +299,28 @@ class ImageBundleService:
             )
             image.save()
 
-            known = staged.knownstagingimage
-            page = FixedPage.objects.get(
-                paper__paper_number=known.paper_number,
-                page_number=known.page_number,
-            )
-            page.image = image
-            page.save(update_fields=["image"])
+            if staged.image_type=="known":           
+                known = staged.knownstagingimage
+                # TODO - update this for the "type" of each page
+                # ID, DNM or question.
+                page = FixedPage.objects.get(
+                    paper__paper_number=known.paper_number,
+                    page_number=known.page_number,
+                )
+                page.image = image
+                page.save(update_fields=["image"])
+            elif staged.image_type=="extra":
+                # need to make one mobile page for each question in the question-list
+                extra = staged.extrastagingimage
+                paper = Paper.objects.get(paper_number=extra.paper_number)
+                for q in extra.question_list:
+                    # TODO presently hard code version to 1 - need to fix
+                    MobilePage.objects.create(paper=paper, image=image,question_number=q, version=1)
+            elif staged.image_type=="discard":
+                disc = staged.discardstagingimage
+                DImage.objects.create(image=image, discard_reason = disc.discard_reason)
+            else:
+                raise ValueError(f"Pushed images must be known, extra or discards - found {staged.image_type}")
 
         from Mark.services import MarkingTaskService
 
@@ -337,18 +354,27 @@ class ImageBundleService:
 
     @transaction.atomic
     def all_staged_imgs_valid(self, staged_imgs):
-        """
-        Check that all staged images in the bundle are ready to be uploaded. Each image
-        must have a parsed_qr dict, a page number, and a paper number.
+        """Check that all staged images in the bundle are ready to be
+        uploaded. Each image must be "known" or "discard" or be
+        "extra" with data. There can be no "unknown", "unread",
+        "error" or "extra"-without-data.
 
         Args:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
             bool: True if all images are valid, false otherwise
+
         """
-        # Deprecated - this is done at staging.
-        return not staged_imgs.exclude(image_type="known").exists()
+        # while this is done by staging, we redo it here to be **very** sure.
+        if staged_imgs.filter(image_type__in=["unread", "unknown", "error"]).exists():
+            return False
+        if staged_imgs.filter(image_type="extra", extrastagingimage__paper_number__isnull=True).exists():
+            return False
+        # to do the complement of this search we'd need to count
+        # knowns, discards and extra-with-data and make sure that
+        # total matches number of pages in the bundle.
+        return True
 
     @transaction.atomic
     def find_internal_collisions(self, staged_imgs):
@@ -367,6 +393,8 @@ class ImageBundleService:
         # if that list is 2 or more then that it is an internal collision.
         collisions = []
 
+        # note - only known-images will create collisions.
+        # extra pages and discards will never collide.
         for image in staged_imgs.filter(image_type="known"):
             knw = image.knownstagingimage
             tpv = encodePaperPageVersion(knw.paper_number, knw.page_number, knw.version)
@@ -393,8 +421,8 @@ class ImageBundleService:
         """
 
         collisions = []
-        # TODO - in future will need to also handle extra pages.
-        for image in staged_imgs:
+        # note that only known images can cause collisions
+        for image in staged_imgs.filter(image_type="known"):
             known = image.knownstagingimage
             colls = Image.objects.filter(
                 fixedpage__paper__paper_number=known.paper_number,

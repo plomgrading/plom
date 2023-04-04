@@ -5,6 +5,7 @@
 from .image_bundle import (
     Bundle,
     Image,
+    DImage,
     CollidingImage,
     DiscardedImage,
     ErrorImage,
@@ -15,6 +16,7 @@ from .paper_structure import (
     DNMPage,
     IDPage,
     QuestionPage,
+    MobilePage,
 )
 from .specifications import Specification, SolutionSpecification
 from .background_tasks import CreatePaperTask, CreateImageTask

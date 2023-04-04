@@ -24,6 +24,8 @@ class Bundle(models.Model):
     hash = models.CharField(null=False, max_length=64)
 
 
+# TODO - remove polymorphism here and delete older image types no longer used.
+
 class Image(PolymorphicModel):
     """Table to store information about an uploaded page-image.
 
@@ -48,7 +50,12 @@ class Image(PolymorphicModel):
     rotation = models.IntegerField(null=False, default=0)
 
 
-# TODO Add unknown-image, discarded-image and annotation-image
+# TODO - rename this class
+class DImage(models.Model):
+    image = models.ForeignKey(Image, null=True, on_delete=models.CASCADE)
+    discard_reason = models.TextField()
+
+# TODO - remove the classes below.
 
 
 class CollidingImage(Image):
