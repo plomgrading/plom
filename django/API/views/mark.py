@@ -203,6 +203,7 @@ class MclaimThisTask(APIView):
                 code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             )
 
+        # TODO: mark_data["marking_time"] is unrecorded
         mts.mark_task(request.user, code, mark_data["score"], img, annot_data)
 
         return Response(

@@ -381,13 +381,19 @@ class MarkingTaskService:
             raise RuntimeError("User cannot update task.")
 
         try:
-            for val in ["pg", "ver", "score", "mtime"]:
-                elem = data[val][0]
+            for val in ("pg", "ver", "score"):
+                elem = data[val]
                 cleaned_data[val] = int(elem)
         except IndexError:
             raise ValidationError(f"Multiple values for '{val}', expected 1.")
-        except ValueError:
+        except (ValueError, TypeError):
             raise ValidationError(f"Could not cast {val} as int: {elem}")
+
+        # TODO: decide int or float
+        try:
+            cleaned_data["marking_time"] = float(data["marking_time"])
+        except (ValueError, TypeError) as e:
+            raise ValidationError(f"Could not cast 'marking_time' as float: {e}")
 
         if type(data["rubrics"]) == str:
             rubrics = [data["rubrics"]]
