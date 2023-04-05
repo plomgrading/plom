@@ -78,6 +78,22 @@ class RubricServiceTests(TestCase):
             parameters=[],
         )
 
+        self.neutral_to_relative_rubric = baker.make(
+            RelativeRubric,
+            key=self.modified_neutral_rubric.key,
+            kind="relative",
+            display_delta="+2",
+            user=self.user,
+        )
+
+        self.relative_to_neutral_rubric = baker.make(
+            NeutralRubric,
+            key=self.modified_relative_rubric.key,
+            kind="neutral",
+            display_delta=".",
+            user=self.user2,
+        )
+
         return super().setUp()
 
     def test_create_neutral_rubric(self):
@@ -183,7 +199,7 @@ class RubricServiceTests(TestCase):
         key = self.modified_neutral_rubric.key
 
         simulated_user_input = {
-            "id" : key,
+            "id": key,
             "kind": "neutral",
             "display_delta": ".",
             "value": 0,
@@ -197,19 +213,87 @@ class RubricServiceTests(TestCase):
             "parameters": [],
         }
 
-        # mntdr = modified_neutral_test_data_rubric
+        # mntdr -> modified_neutral_test_data_rubric
         mntdr = rs.modify_rubric(key, simulated_user_input)
-        
+
         self.assertEqual(mntdr.key, self.modified_neutral_rubric.key)
         self.assertEqual(mntdr.kind, self.modified_neutral_rubric.kind)
-        self.assertEqual(mntdr.display_delta, self.modified_neutral_rubric.display_delta)
-        
+        self.assertEqual(
+            mntdr.display_delta, self.modified_neutral_rubric.display_delta
+        )
 
     def test_modify_relative_rubric(self):
-        pass
+        rs = RubricService()
+        key = self.modified_relative_rubric.key
+
+        simulated_user_input = {
+            "id": key,
+            "kind": "relative",
+            "display_delta": "+2",
+            "value": 2,
+            "out_of": 0,
+            "text": "qwert",
+            "tags": "",
+            "meta": "asdfg",
+            "username": "Liam",
+            "question": 1,
+            "versions": [],
+            "parameters": [],
+        }
+
+        # mrtdr -> modified_relative_test_data_rubric
+        mrtdr = rs.modify_rubric(key, simulated_user_input)
+
+        self.assertEqual(mrtdr.key, self.modified_relative_rubric.key)
+        self.assertEqual(mrtdr.kind, self.modified_relative_rubric.kind)
+        self.assertEqual(
+            mrtdr.display_delta, self.modified_relative_rubric.display_delta
+        )
 
     def test_modify_neutral_to_relative_rubric(self):
-        pass
+        rs = RubricService()
+        key = self.modified_neutral_rubric.key
+
+        simulated_user_input = {
+            "id": key,
+            "kind": "relative",
+            "display_delta": "+2",
+            "value": 2,
+            "out_of": 0,
+            "text": "qwert",
+            "tags": "",
+            "meta": "asdfg",
+            "username": "Liam",
+            "question": 1,
+            "versions": [],
+            "parameters": [],
+        }
+
+        # mntrr -> modified_neutral_to_relative_rubric
+        mntrr = rs.modify_rubric(key, simulated_user_input)
+
+        self.assertEqual(mntrr.key, self.neutral_to_relative_rubric.key)
 
     def test_modify_relative_to_neutral_rubric(self):
-        pass
+        rs = RubricService()
+        key = self.modified_relative_rubric.key
+
+        simulated_user_input = {
+            "id": key,
+            "kind": "neutral",
+            "display_delta": ".",
+            "value": 0,
+            "out_of": 0,
+            "text": "qwert",
+            "tags": "",
+            "meta": "asdfg",
+            "username": "Olivia",
+            "question": 1,
+            "versions": [],
+            "parameters": [],
+        }
+
+        # mrtnr -> modified_relative_to_neutral_rubric
+        mrtnr = rs.modify_rubric(key, simulated_user_input)
+
+        self.assertEqual(mrtnr.key, self.relative_to_neutral_rubric.key)
