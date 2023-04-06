@@ -273,6 +273,9 @@ class RubricServiceTests(TestCase):
         mntrr = rs.modify_rubric(key, simulated_user_input)
 
         self.assertEqual(mntrr.key, self.neutral_to_relative_rubric.key)
+        self.assertEqual(mntrr.kind, self.neutral_to_relative_rubric.kind)
+        self.assertEqual(mntrr.display_delta, self.neutral_to_relative_rubric.display_delta)
+        self.assertEqual(mntrr.user, self.neutral_to_relative_rubric.user)
 
     def test_modify_relative_to_neutral_rubric(self):
         rs = RubricService()
@@ -297,3 +300,6 @@ class RubricServiceTests(TestCase):
         mrtnr = rs.modify_rubric(key, simulated_user_input)
 
         self.assertEqual(mrtnr.key, self.relative_to_neutral_rubric.key)
+        self.assertEqual(mrtnr.kind, self.relative_to_neutral_rubric.kind)
+        self.assertEqual(mrtnr.display_delta, self.relative_to_neutral_rubric.display_delta)
+        self.assertEqual(mrtnr.user, self.relative_to_neutral_rubric.user)
