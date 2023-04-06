@@ -11,7 +11,7 @@ from Rubrics.services import RubricService
 
 class RubricServiceTests(TestCase):
     """
-    Tests for Rubric.service.rubric_service()
+    Tests for Rubric.service.RubricService()
     """
 
     def setUp(self):
@@ -97,6 +97,10 @@ class RubricServiceTests(TestCase):
         return super().setUp()
 
     def test_create_neutral_rubric(self):
+        """
+        Test RubricService.create_rubric() to create a neural rubric
+        """
+
         rs = RubricService()
 
         simulated_user_input = {
@@ -146,6 +150,10 @@ class RubricServiceTests(TestCase):
         self.assertEqual(ntdr.parameters, self.neutral_rubric.parameters)
 
     def test_create_relative_rubric(self):
+        """
+        Test RubricService.create_rubric() to create a relative rubric
+        """
+
         rs = RubricService()
 
         simulated_user_input = {
@@ -195,6 +203,10 @@ class RubricServiceTests(TestCase):
         self.assertEqual(rtdr.parameters, self.relative_rubric.parameters)
 
     def test_modify_neutral_rubric(self):
+        """
+        Test RubricService.modify_rubric() to modify a neural rubric
+        """
+
         rs = RubricService()
         key = self.modified_neutral_rubric.key
 
@@ -223,6 +235,10 @@ class RubricServiceTests(TestCase):
         )
 
     def test_modify_relative_rubric(self):
+        """
+        Test RubricService.modify_rubric() to modify a relative rubric
+        """
+
         rs = RubricService()
         key = self.modified_relative_rubric.key
 
@@ -251,6 +267,11 @@ class RubricServiceTests(TestCase):
         )
 
     def test_modify_neutral_to_relative_rubric(self):
+        """
+        Test RubricService.modify_rubric() to modify a neutral rubric
+        to a relative rubric
+        """
+
         rs = RubricService()
         key = self.modified_neutral_rubric.key
 
@@ -280,6 +301,11 @@ class RubricServiceTests(TestCase):
         self.assertEqual(mntrr.user, self.neutral_to_relative_rubric.user)
 
     def test_modify_relative_to_neutral_rubric(self):
+        """
+        Test RubricService.modify_rubric() to modify a relative rubric
+        to a neutral rubric
+        """
+        
         rs = RubricService()
         key = self.modified_relative_rubric.key
 
