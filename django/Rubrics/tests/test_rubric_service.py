@@ -305,7 +305,7 @@ class RubricServiceTests(TestCase):
         Test RubricService.modify_rubric() to modify a relative rubric
         to a neutral rubric
         """
-        
+
         rs = RubricService()
         key = self.modified_relative_rubric.key
 
