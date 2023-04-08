@@ -543,6 +543,7 @@ class MarkerExamModel(QStandardItemModel):
         return self.data(self.index(r, 8))
 
     def _get_marking_time(self, r):
+        # TODO: instead of packing/unpacking a string, there should be a model
         return float(self.data(self.index(r, 3)))
 
     def _set_marking_time(self, r, marking_time):
