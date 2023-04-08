@@ -90,6 +90,15 @@ if platform.system() == "Darwin":
 log = logging.getLogger("marker")
 
 
+def _marking_time_as_str(m):
+    if m < 10:
+        # show 2 sigfigs if less than 10
+        return f"{m:.2g}"
+    else:
+        # othewise show integer
+        return f"{m:.0f}"
+
+
 class BackgroundUploader(QThread):
     """Uploads exams in Background."""
 
@@ -428,7 +437,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(paper.prefix),
                 QStandardItem(paper.status),
                 QStandardItem(markstr),
-                QStandardItem(f"{paper.markingTime:.2f}"),
+                QStandardItem(_marking_time_as_str(paper.markingTime)),
                 QStandardItem(paper.tags),
                 QStandardItem("placeholder"),
                 QStandardItem(paper.annotatedFile),
@@ -537,8 +546,7 @@ class MarkerExamModel(QStandardItemModel):
         return float(self.data(self.index(r, 3)))
 
     def _set_marking_time(self, r, marking_time):
-        # TODO: is set in one other place too
-        self.setData(self.index(r, 3), f"{marking_time:.2f}")
+        self.setData(self.index(r, 3), _marking_time_as_str(marking_time))
 
     def _findTask(self, task):
         """
