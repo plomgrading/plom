@@ -361,19 +361,20 @@ def main(test=False):
     print("*" * 40)
     make_groups_and_users()
 
-    print("*" * 40)
-    prepare_assessment()
-
     # launch the huey workers before building db
     # and associated PDF-build tasks (which need huey)
     print("*" * 40)
     huey_worker_proc = launch_huey_workers()
 
+    # TODO: I get errors if I move this after launching the server...
     print("*" * 40)
-    build_db_and_papers()
+    prepare_assessment()
 
     print("*" * 40)
     server_proc = launch_server()
+
+    print("*" * 40)
+    build_db_and_papers()
 
     print("v" * 40)
     print("Everything is now up and running")
