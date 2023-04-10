@@ -103,7 +103,7 @@ class RubricServiceTests(TestCase):
 
         rs = RubricService()
 
-        simulated_user_input = {
+        simulated_client_data = {
             "kind": "neutral",
             "display_delta": ".",
             "value": 0,
@@ -118,7 +118,7 @@ class RubricServiceTests(TestCase):
         }
 
         # ntdr -> neutral_test_data_rubric
-        ntdr = rs.create_rubric(simulated_user_input)
+        ntdr = rs.create_rubric(simulated_client_data)
 
         # kind
         self.assertEqual(ntdr.kind, self.neutral_rubric.kind)
@@ -156,7 +156,7 @@ class RubricServiceTests(TestCase):
 
         rs = RubricService()
 
-        simulated_user_input = {
+        simulated_client_data = {
             "kind": "relative",
             "display_delta": "+3",
             "value": 3,
@@ -171,7 +171,7 @@ class RubricServiceTests(TestCase):
         }
 
         # rtdr -> relative_test_data_rubric
-        rtdr = rs.create_rubric(simulated_user_input)
+        rtdr = rs.create_rubric(simulated_client_data)
 
         # kind
         self.assertEqual(rtdr.kind, self.relative_rubric.kind)
@@ -210,7 +210,7 @@ class RubricServiceTests(TestCase):
         rs = RubricService()
         key = self.modified_neutral_rubric.key
 
-        simulated_user_input = {
+        simulated_client_data = {
             "id": key,
             "kind": "neutral",
             "display_delta": ".",
@@ -226,7 +226,7 @@ class RubricServiceTests(TestCase):
         }
 
         # mntdr -> modified_neutral_test_data_rubric
-        mntdr = rs.modify_rubric(key, simulated_user_input)
+        mntdr = rs.modify_rubric(key, simulated_client_data)
 
         self.assertEqual(mntdr.key, self.modified_neutral_rubric.key)
         self.assertEqual(mntdr.kind, self.modified_neutral_rubric.kind)
@@ -242,7 +242,7 @@ class RubricServiceTests(TestCase):
         rs = RubricService()
         key = self.modified_relative_rubric.key
 
-        simulated_user_input = {
+        simulated_client_data = {
             "id": key,
             "kind": "relative",
             "display_delta": "+2",
@@ -258,7 +258,7 @@ class RubricServiceTests(TestCase):
         }
 
         # mrtdr -> modified_relative_test_data_rubric
-        mrtdr = rs.modify_rubric(key, simulated_user_input)
+        mrtdr = rs.modify_rubric(key, simulated_client_data)
 
         self.assertEqual(mrtdr.key, self.modified_relative_rubric.key)
         self.assertEqual(mrtdr.kind, self.modified_relative_rubric.kind)
@@ -275,7 +275,7 @@ class RubricServiceTests(TestCase):
         rs = RubricService()
         key = self.modified_neutral_rubric.key
 
-        simulated_user_input = {
+        simulated_client_data = {
             "id": key,
             "kind": "relative",
             "display_delta": "+2",
@@ -291,7 +291,7 @@ class RubricServiceTests(TestCase):
         }
 
         # mntrr -> modified_neutral_to_relative_rubric
-        mntrr = rs.modify_rubric(key, simulated_user_input)
+        mntrr = rs.modify_rubric(key, simulated_client_data)
 
         self.assertEqual(mntrr.key, self.neutral_to_relative_rubric.key)
         self.assertEqual(mntrr.kind, self.neutral_to_relative_rubric.kind)
@@ -309,7 +309,7 @@ class RubricServiceTests(TestCase):
         rs = RubricService()
         key = self.modified_relative_rubric.key
 
-        simulated_user_input = {
+        simulated_client_data = {
             "id": key,
             "kind": "neutral",
             "display_delta": ".",
@@ -325,7 +325,7 @@ class RubricServiceTests(TestCase):
         }
 
         # mrtnr -> modified_relative_to_neutral_rubric
-        mrtnr = rs.modify_rubric(key, simulated_user_input)
+        mrtnr = rs.modify_rubric(key, simulated_client_data)
 
         self.assertEqual(mrtnr.key, self.relative_to_neutral_rubric.key)
         self.assertEqual(mrtnr.kind, self.relative_to_neutral_rubric.kind)
