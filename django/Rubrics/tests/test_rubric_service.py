@@ -16,8 +16,8 @@ class RubricServiceTests(TestCase):
     """
 
     def setUp(self):
-        self.user = baker.make(User, username="Liam")
-        self.user2 = baker.make(User, username="Olivia")
+        user1 = baker.make(User, username="Liam")
+        user2 = baker.make(User, username="Olivia")
 
         self.neutral_rubric = baker.make(
             NeutralRubric,
@@ -27,7 +27,7 @@ class RubricServiceTests(TestCase):
             out_of=0,
             text="qwert",
             question=1,
-            user=self.user,
+            user=user1,
             tags="",
             meta="asdfg",
             versions=[],
@@ -42,7 +42,7 @@ class RubricServiceTests(TestCase):
             out_of=0,
             text="yuiop",
             question=1,
-            user=self.user2,
+            user=user2,
             tags="",
             meta="hjklz",
             versions=[],
@@ -57,7 +57,7 @@ class RubricServiceTests(TestCase):
             out_of=0,
             text="yuiop",
             question=1,
-            user=self.user2,
+            user=user2,
             tags="",
             meta="hjklz",
             versions=[],
@@ -72,7 +72,7 @@ class RubricServiceTests(TestCase):
             out_of=0,
             text="qwert",
             question=1,
-            user=self.user,
+            user=user1,
             tags="",
             meta="asdfg",
             versions=[],
@@ -84,7 +84,7 @@ class RubricServiceTests(TestCase):
             key=self.modified_neutral_rubric.key,
             kind="relative",
             display_delta="+2",
-            user=self.user,
+            user=user1,
         )
 
         self.relative_to_neutral_rubric = baker.make(
@@ -92,7 +92,7 @@ class RubricServiceTests(TestCase):
             key=self.modified_relative_rubric.key,
             kind="neutral",
             display_delta=".",
-            user=self.user2,
+            user=user2,
         )
 
         return super().setUp()
