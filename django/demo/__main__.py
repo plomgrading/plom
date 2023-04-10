@@ -9,13 +9,12 @@ For testing, debugging and development.
 """
 
 import argparse
+import os
 from pathlib import Path
 from shlex import split
 import shutil
 import subprocess
 from time import sleep
-from sys import argv
-
 
 from django.core.management import call_command
 from django.conf import settings
@@ -329,7 +328,6 @@ def clean_up_processes(procs):
 
 
 def configure_django_stuff():
-    import os
     from django import setup
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
@@ -344,6 +342,14 @@ def get_parser():
     )
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
+    )
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help="""
+            Run as usual but stop immediately if everything worked.
+            Without this option, wait until "quit" is typed before exiting.
+        """,
     )
     parser.add_argument(
         "--startserver",
@@ -386,6 +392,18 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
+    huey_worker_proc, server_proc = _doit(args)
+
+    if not args.test:
+        wait_for_exit()
+    sleep(0.1)
+    print("v" * 40)
+    clean_up_processes([huey_worker_proc, server_proc])
+    print("Demo complete")
+    print("^" * 40)
+
+
+def _doit(args):
     number_of_bundles = 5
     homework_bundles = {
         61: [[1], [2], [], [2, 3], [3]],
@@ -489,13 +507,4 @@ def main():
 
 
 if __name__ == "__main__":
-    huey_worker_proc, server_proc = main()
-    if len(argv) > 1 and argv[1] == "test":
-        pass
-    else:
-        wait_for_exit()
-        sleep(1)
-        print("v" * 40)
-        clean_up_processes([huey_worker_proc, server_proc])
-        print("Demo complete")
-        print("^" * 40)
+    main()
