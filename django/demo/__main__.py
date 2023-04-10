@@ -395,6 +395,8 @@ def main():
     huey_worker_proc, server_proc = _doit(args)
 
     if not args.test:
+        sleep(2)
+        print("*" * 72)
         wait_for_exit()
     sleep(0.1)
     print("v" * 40)
