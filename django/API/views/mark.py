@@ -123,14 +123,14 @@ class MgetDoneTasks(APIView):
             lambda mark_action: [
                 mark_action.task.code,
                 mark_action.annotation.score,
-                42,  # TODO: hardcoded, see above
+                mark_action.annotation.marking_time,
                 [],  # TODO: tags are not implemented yet
                 mark_action.task.pk,  # TODO: integrity check is not implemented yet
             ],
             marks,
         )
 
-        return Response(list(rows), status=status.HTTP_200_OK)
+        return Response(rows, status=status.HTTP_200_OK)
 
 
 class MgetNextTask(APIView):
@@ -211,7 +211,7 @@ class MclaimThisTask(APIView):
             )
 
         mts.mark_task(
-            request.user, code, mark_data["score"], mark_data["mtime"], img, annot_data
+            request.user, code, mark_data["score"], mark_data["marking_time"], img, annot_data
         )
 
         return Response(
