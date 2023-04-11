@@ -1,0 +1,6 @@
+room dir name,start,how many,"spare max(5, 5%)",end
+BigRoomA,1,893,45,938
+BigRoomB,1000,432,22,1453
+SmallRm1,1500,45,5,1549
+SmallRm2,1600,91,5,1695
+SmallRm2,1700,88,5,1792
