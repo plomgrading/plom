@@ -210,7 +210,9 @@ class MclaimThisTask(APIView):
                 status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             )
 
-        mts.mark_task(request.user, code, mark_data["score"], mark_data["mtime"], img, annot_data)
+        mts.mark_task(
+            request.user, code, mark_data["score"], mark_data["mtime"], img, annot_data
+        )
 
         return Response(
             [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
