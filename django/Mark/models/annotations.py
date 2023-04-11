@@ -22,3 +22,4 @@ class Annotation(models.Model):
     score = models.IntegerField(null=True)
     image = models.OneToOneField(AnnotationImage, on_delete=models.CASCADE)
     annotation_data = models.JSONField(null=True)
+    marking_time = models.PositiveIntegerField(null=True)
