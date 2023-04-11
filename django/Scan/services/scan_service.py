@@ -44,7 +44,7 @@ from Scan.models import (
     ManagePageToImage,
     ManageParseQR,
 )
-from Papers.models import ErrorImage, Paper
+from Papers.models import Paper
 from Papers.services import ImageBundleService
 from Papers.services import SpecificationService
 
@@ -618,14 +618,6 @@ class ScanService:
     def get_n_pushed_bundles(self):
         pushed_bundles = StagingBundle.objects.filter(pushed=True)
         return len(pushed_bundles)
-
-    @transaction.atomic
-    def get_error_image(self, bundle, index):
-        error_image = ErrorImage.objects.get(
-            bundle=bundle,
-            bundle_order=index,
-        )
-        return error_image
 
     @transaction.atomic
     def get_n_known_images(self, bundle):
