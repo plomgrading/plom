@@ -90,6 +90,15 @@ if platform.system() == "Darwin":
 log = logging.getLogger("marker")
 
 
+def _marking_time_as_str(m):
+    if m < 10:
+        # show 2 sigfigs if less than 10
+        return f"{m:.2g}"
+    else:
+        # otherwise show integer
+        return f"{m:.0f}"
+
+
 class BackgroundUploader(QThread):
     """Uploads exams in Background."""
 
@@ -237,7 +246,7 @@ def upload(
     task,
     grade,
     filenames,
-    mtime,
+    marking_time,
     question,
     ver,
     rubrics,
@@ -255,7 +264,7 @@ def upload(
         grade (int): grade given to question.
         filenames (list[str]): a list containing the annotated file's name,
             the .plom file's name and the comment file's name, in that order.
-        mtime (int): the marking time (s) for this specific question.
+        marking_time (float/int): the marking time (s) for this specific question.
         question (int or str): the question number
         ver (int or str): the version number
         integrity_check (str): the integrity_check string of the task.
@@ -291,7 +300,7 @@ def upload(
             question,
             ver,
             grade,
-            mtime,
+            marking_time,
             aname,
             pname,
             rubrics,
@@ -328,7 +337,7 @@ class ExamQuestion:
         src_img_data=[],
         stat="untouched",
         mrk="-1",
-        mtime="0",
+        marking_time=0,
         tags=[],
         integrity_check="",
     ):
@@ -340,9 +349,9 @@ class ExamQuestion:
             "q1234g9" = test 1234 question 9.
             stat (str): test status.
             mrk (int): the mark of the question.
-            mtime (int): marking time spent on that page in seconds.
+            marking_time (float/int): marking time spent on that page in seconds.
             tags (list): Tags corresponding to the exam.  We will flatten to
-                a space-separaed string.
+                a space-separated string.
             integrity_check (str): integrity_check = concat of md5sums of underlying images
             src_img_data (list[dict]): a list of dicts of md5sums,
                 filenames and other metadata of the images for the test
@@ -358,7 +367,7 @@ class ExamQuestion:
         # The filename for the (future) annotated image
         self.annotatedFile = ""
         self.plomFile = ""  # The filename for the (future) plom file
-        self.markingTime = mtime
+        self.markingTime = marking_time
         self.tags = " ".join(tags)
         self.integrity_check = integrity_check
 
@@ -428,7 +437,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(paper.prefix),
                 QStandardItem(paper.status),
                 QStandardItem(markstr),
-                QStandardItem(str(paper.markingTime)),
+                QStandardItem(_marking_time_as_str(paper.markingTime)),
                 QStandardItem(paper.tags),
                 QStandardItem("placeholder"),
                 QStandardItem(paper.annotatedFile),
@@ -533,6 +542,13 @@ class MarkerExamModel(QStandardItemModel):
         """
         return self.data(self.index(r, 8))
 
+    def _get_marking_time(self, r):
+        # TODO: instead of packing/unpacking a string, there should be a model
+        return float(self.data(self.index(r, 3)))
+
+    def _set_marking_time(self, r, marking_time):
+        self.setData(self.index(r, 3), _marking_time_as_str(marking_time))
+
     def _findTask(self, task):
         """
         Return the row index of this task.
@@ -607,9 +623,10 @@ class MarkerExamModel(QStandardItemModel):
         """
         return self._setDataByTask(task, 4, " ".join(tags))
 
-    def getMTimeByTask(self, task):
-        """Return total marking time (s) for task, (task(str), return (int).)"""
-        return int(self._getDataByTask(task, 3))
+    def get_marking_time_by_task(self, task):
+        """Return total marking time (s) for task (str), return float."""
+        r = self._findTask(task)
+        return self._get_marking_time(r)
 
     def getAnnotatedFileByTask(self, task):
         """Returns the filename of the annotated image."""
@@ -660,7 +677,7 @@ class MarkerExamModel(QStandardItemModel):
         """Return integrity_check for task as string."""
         return self._getDataByTask(task, 9)
 
-    def markPaperByTask(self, task, mrk, aname, pname, mtime, tdir):
+    def markPaperByTask(self, task, mrk, aname, pname, marking_time, tdir):
         """
         Add marking data for the given task.
 
@@ -669,7 +686,7 @@ class MarkerExamModel(QStandardItemModel):
             mrk (int): the mark for this paper.
             aname (str): the annotated file name.
             pname (str): the .plom file name.
-            mtime (int): total marking time in seconds.
+            marking_time (int/float): total marking time in seconds.
             tdir (dir): the temporary directory for task to be set to.
 
         Returns:
@@ -680,9 +697,8 @@ class MarkerExamModel(QStandardItemModel):
         r = self._findTask(task)
         # When marked, set the annotated filename, the plomfile, the mark,
         # and the total marking time (in case it was annotated earlier)
-        mt = int(self.data(self.index(r, 3)))
-        # total elapsed time.
-        self.setData(self.index(r, 3), str(mtime + mt))
+        t = self._get_marking_time(r)
+        self._set_marking_time(r, marking_time + t)
         self._setStatus(r, "uploading...")
         self.setData(self.index(r, 2), str(mrk))
         self._setAnnotatedFile(r, aname, pname)
@@ -1177,7 +1193,7 @@ class MarkerClient(QWidget):
                     src_img_data=[],
                     stat="marked",
                     mrk=x[1],
-                    mtime=x[2],
+                    marking_time=x[2],
                     tags=x[3],
                     integrity_check=x[4],
                 )
@@ -1953,7 +1969,7 @@ class MarkerClient(QWidget):
             task, grade, aname, plomFileName, markingTime, paperDir
         )
         # update the markingTime to be the total marking time
-        totmtime = self.examModel.getMTimeByTask(task)
+        totmtime = self.examModel.get_marking_time_by_task(task)
 
         _data = (
             task,

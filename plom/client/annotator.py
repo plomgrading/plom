@@ -1513,7 +1513,7 @@ class Annotator(QWidget):
         rubric_ids = self.scene.get_rubric_ids()
 
         log.debug("emitting accept signal")
-        tim = self.timer.elapsed() // 1000
+        tim = self.timer.elapsed() / 1000
 
         # some things here hardcoded elsewhere too, and up in marker
         stuff = [

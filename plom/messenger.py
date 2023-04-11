@@ -436,7 +436,7 @@ class Messenger(BaseMessenger):
                         "pg": str(pg),
                         "ver": str(ver),
                         "score": str(score),
-                        "mtime": str(int(marking_time)),
+                        "mtime": str(round(marking_time)),
                         "rubrics": rubrics,
                         "md5sum": hashlib.md5(fh.read()).hexdigest(),
                         "integrity_check": integrity_check,
