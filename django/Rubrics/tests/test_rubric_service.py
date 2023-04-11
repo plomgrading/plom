@@ -120,9 +120,6 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.display_delta, self.neutral_rubric.display_delta)
         self.assertEqual(r.text, self.neutral_rubric.text)
 
-        # Issue #2661
-        # tags -> client said "mostly future use" return empty
-        self.assertFalse(r.tags)
         self.assertEqual(r.tags, self.neutral_rubric.tags)
 
         self.assertEqual(r.meta, self.neutral_rubric.meta)
@@ -155,9 +152,6 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.display_delta, self.relative_rubric.display_delta)
         self.assertEqual(r.text, self.relative_rubric.text)
 
-        # Issue #2661
-        # tags -> client said "mostly future use" return empty
-        self.assertFalse(r.tags)
         self.assertEqual(r.tags, self.relative_rubric.tags)
 
         self.assertEqual(r.meta, self.relative_rubric.meta)
