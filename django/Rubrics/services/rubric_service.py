@@ -82,8 +82,6 @@ class RubricService:
 
         if kind == "relative":
             try:
-                print("relative")
-                print(rubric_data)
                 rubric = RelativeRubric.objects.get(key=key)
                 serializer = RelativeRubricSerializer(rubric, data=rubric_data)
                 serializer.is_valid()
@@ -91,14 +89,28 @@ class RubricService:
                 rubric_instance = serializer.instance
             except ObjectDoesNotExist:
                 rubric = NeutralRubric.objects.get(key=key)
-                serializer = RelativeRubricSerializer(rubric, data=rubric_data)
+                RelativeRubric.objects.create(
+                    key=rubric.key,
+                    display_delta=rubric.display_delta,
+                    value=rubric.value,
+                    out_of=rubric.out_of,
+                    text=rubric.text,
+                    question=rubric.question,
+                    user=rubric.user,
+                    tags=rubric.tags,
+                    meta=rubric.meta,
+                    versions=rubric.versions,
+                    parameters=rubric.parameters,
+                    kind=rubric.kind,
+                    ).save()
+                relative_rubric = RelativeRubric.objects.get(key=rubric.key)
+                rubric.delete()
+                serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
                 serializer.is_valid()
                 serializer.save()
                 rubric_instance = serializer.instance
         elif kind == "neutral":
             try:
-                print("neutral")
-                print(rubric_data)
                 rubric = NeutralRubric.objects.get(key=key)
                 serializer = NeutralRubricSerializer(rubric, data=rubric_data)
                 serializer.is_valid()
@@ -106,7 +118,23 @@ class RubricService:
                 rubric_instance = serializer.instance
             except ObjectDoesNotExist:
                 rubric = RelativeRubric.objects.get(key=key)
-                serializer = NeutralRubricSerializer(rubric, data=rubric_data)
+                NeutralRubric.objects.create(
+                    key=rubric.key,
+                    display_delta=rubric.display_delta,
+                    value=rubric.value,
+                    out_of=rubric.out_of,
+                    text=rubric.text,
+                    question=rubric.question,
+                    user=rubric.user,
+                    tags=rubric.tags,
+                    meta=rubric.meta,
+                    versions=rubric.versions,
+                    parameters=rubric.parameters,
+                    kind=rubric.kind,
+                    ).save()
+                neutral_rubric = NeutralRubric.objects.get(key=rubric.key)
+                rubric.delete()
+                serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
                 serializer.is_valid()
                 serializer.save()
                 rubric_instance = serializer.instance
