@@ -66,7 +66,7 @@ class PaperInfoService:
         except Paper.DoesNotExist:
             raise ValueError(f"Paper {paper_number} does not exist in the database.")
         try:
-            # to find the version, find the first fixed question page of that paper with the questio-number
+            # to find the version, find the first fixed question page of that paper with the question-number
             # and extract the version from that. Note - use "filter" and not "get" here.
             page = QuestionPage.objects.filter(
                 paper=paper, question_number=question_number
