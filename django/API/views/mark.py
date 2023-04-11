@@ -151,27 +151,27 @@ class MclaimThisTask(APIView):
                 request.user, code, data, plomfile_data
             )
         except ObjectDoesNotExist as e:
-            raise APIException(e, code=status.HTTP_404_NOT_FOUND)
+            return Response(e, status=status.HTTP_404_NOT_FOUND)
         except RuntimeError as e:
-            raise APIException(e, code=status.HTTP_409_CONFLICT)
+            return Response(e, status=status.HTTP_409_CONFLICT)
         except ValidationError as e:
-            raise APIException(e, code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(e, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         annotation_image = files["annotation_image"]
         try:
             img_md5sum = data["md5sum"]
             img = mts.save_annotation_image(img_md5sum, annotation_image)
         except FileExistsError:
-            raise APIException(
-                "Annotation image already exists.", code=status.HTTP_409_CONFLICT
+            return Response(
+                "Annotation image already exists.", status=status.HTTP_409_CONFLICT
             )
         except ValidationError:
-            raise APIException(
+            return Response(
                 "Unsupported media type for annotation image",
-                code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             )
 
-        mts.mark_task(request.user, code, mark_data["score"], img, annot_data)
+        mts.mark_task(request.user, code, mark_data["score"], mark_data["mtime"], img, annot_data)
 
         return Response(
             [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
@@ -191,7 +191,7 @@ class MgetQuestionPageData(APIView):
             page_metadata = pds.get_question_pages_metadata(paper, question)
             return Response(page_metadata, status=status.HTTP_200_OK)
         except Paper.DoesNotExist:
-            raise APIException(
+            return Response(
                 detail="Test paper does not exist.", status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -214,7 +214,7 @@ class MgetOneImage(APIView):
                 )
             return FileResponse(image, status=status.HTTP_200_OK)
         except Image.DoesNotExist:
-            raise APIException(
+            return Response(
                 detail="Image does not exist.",
                 status=status.HTTP_400_BAD_REQUEST,
             )

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Andrew Rechnitzer
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
 django==4.1.7
@@ -13,7 +13,7 @@ beautifulsoup4 # HTML parsing
 django-session-timeout
 django-htmx
 tabulate # display table in command line
-plom
+git+https://gitlab.com/plom/plom.git@main
 reportlab
 django-huey
 django-polymorphic
@@ -26,3 +26,4 @@ tomli
 tomlkit
 zipfly  # for streaming zipfile generation/download
 psycopg2-binary  # for mucking with postgres databases - use binary so that we don't have to build
+debugpy
