@@ -287,7 +287,7 @@ class MarkingTaskService:
         latest_claim = claims.order_by("time").first()
         return latest_claim
 
-    def mark_task(self, user, code, score, image, data):
+    def mark_task(self, user, code, score, time, image, data):
         """
         Save a user's marking attempt to the database.
         """
@@ -299,6 +299,7 @@ class MarkingTaskService:
             score=score,
             image=image,
             annotation_data=data,
+            marking_time=time,
         )
         annotation.save()
 
