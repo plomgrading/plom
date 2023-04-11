@@ -31,7 +31,7 @@ SECRET_KEY = "django-insecure-2ujgq&p27afoi(#3%^98vj2(274ic+j2rxemflb#z3z9x6z=rn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]"]
+ALLOWED_HOSTS = [".localhost", "127.0.0.1", "[::1]", "0.0.0.0"]
 
 
 # Application definition
@@ -107,13 +107,20 @@ WSGI_APPLICATION = "Web_Plom.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+# set postgres hostname to "postgres" if running on docker
+in_docker = os.environ.get("PLOM_USING_DOCKER")
+if in_docker:
+    postgres_hostname = "postgres"
+else:
+    postgres_hostname = "127.0.0.1"
+
 DATABASES = {
     "postgres": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": "plom_db",
         "USER": "postgres",
         "PASSWORD": "postgres",
-        "HOST": "127.0.0.1",
+        "HOST": postgres_hostname,
         "PORT": "5432",
     },
     "sqlite": {

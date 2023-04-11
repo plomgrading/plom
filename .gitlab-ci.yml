@@ -362,8 +362,7 @@ webplom_demo:
   script:
     - pushd django
     - python3 -m pip install -r requirements.txt
-    # Since we're running postgres in a CI service, replace "localhost" with "postgres"
-    - 'sed -i "s/: \"127.0.0.1/: \"postgres/" Web_Plom/settings.py'
+    - export PLOM_USING_DOCKER=1
     - python3 -m demo --test
     - popd
 
