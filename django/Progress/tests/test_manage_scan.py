@@ -18,7 +18,10 @@ from Scan.models import StagingImage, StagingBundle
 
 from Progress.services import ManageScanService
 
-@skip("Many of these tests need rebuilding once we rebuild UI for handling extra/unknowns/discards.")
+
+@skip(
+    "Many of these tests need rebuilding once we rebuild UI for handling extra/unknowns/discards."
+)
 class ManageScanTests(TestCase):
     """
     Tests for Progress.services.ManageScanService()
