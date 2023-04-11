@@ -3,19 +3,26 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 
+"""Plom django demo.
+
+For testing, debugging and development.
+"""
+
+import argparse
+import os
 from pathlib import Path
 from shlex import split
 import shutil
 import subprocess
 from time import sleep
-from sys import argv
-
 
 from django.core.management import call_command
 from django.conf import settings
 
 from demo import scribble_on_exams, make_hw_bundle
 from demo import remove_old_migration_files
+
+from plom import __version__
 
 
 def get_database_engine():
@@ -321,18 +328,84 @@ def clean_up_processes(procs):
 
 
 def configure_django_stuff():
-    import os
     from django import setup
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
     setup()
 
 
-def main(test=False):
-    """
-    kwarg test: if true, run without waiting for user input at the end.
-    """
+def get_parser():
+    parser = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help="""
+            Run as usual but stop immediately if everything worked.
+            Without this option, wait until "quit" is typed before exiting.
+        """,
+    )
+    parser.add_argument(
+        "--startserver",
+        action="store_true",
+        help="""
+            Start the server in as minimal a configuration as possible
+            and then stop.
+            TODO: maybe not working correctly yet.
+        """,
+    )
+    parser.add_argument(
+        "--scan",
+        action="store_true",
+        help="""
+            Scan the papers to the staging error but don't push.
+        """,
+    )
+    parser.add_argument(
+        "--readqr",
+        action="store_true",
+        help="""
+            Scan the papers, read QR codes, but don't push.
+        """,
+    )
+    parser.add_argument(
+        "--push",
+        action="store_true",
+        help="""
+            Configure, scan, read QR codes, and finally push papers to
+            the server.
+            This is currently the default and should be ready for
+            grading with the client.
+        """,
+    )
 
+    return parser
+
+
+def main():
+    parser = get_parser()
+    args = parser.parse_args()
+
+    huey_worker_proc, server_proc = _doit(args)
+
+    if not args.test:
+        sleep(2)
+        print("*" * 72)
+        wait_for_exit()
+    sleep(0.1)
+    print("v" * 40)
+    clean_up_processes([huey_worker_proc, server_proc])
+    print("Demo complete")
+    print("^" * 40)
+
+
+def _doit(args):
     number_of_bundles = 5
     homework_bundles = {
         61: [[1], [2], [], [2, 3], [3]],
@@ -361,23 +434,23 @@ def main(test=False):
     print("*" * 40)
     make_groups_and_users()
 
-    print("*" * 40)
-    prepare_assessment()
-
     # launch the huey workers before building db
     # and associated PDF-build tasks (which need huey)
     print("*" * 40)
     huey_worker_proc = launch_huey_workers()
 
+    # TODO: I get errors if I move this after launching the server...
     print("*" * 40)
-    build_db_and_papers()
+    prepare_assessment()
 
     print("*" * 40)
     server_proc = launch_server()
 
-    print("v" * 40)
-    print("Everything is now up and running")
-    print("^" * 40)
+    if args.startserver:
+        return (huey_worker_proc, server_proc)
+
+    print("*" * 40)
+    build_db_and_papers()
 
     wait_for_papers_to_be_ready()
     print("*" * 40)
@@ -405,6 +478,9 @@ def main(test=False):
         number_of_bundles=number_of_bundles,
     )
 
+    if args.scan:
+        return (huey_worker_proc, server_proc)
+
     print("*" * 40)
     read_qr_codes(
         number_of_bundles=number_of_bundles,
@@ -416,6 +492,9 @@ def main(test=False):
         number_of_bundles=number_of_bundles,
     )
 
+    if args.readqr:
+        return (huey_worker_proc, server_proc)
+
     # print("*" * 40)
     # push_if_ready()
     call_command("plom_staging_bundles", "status")
@@ -424,19 +503,10 @@ def main(test=False):
     call_command("plom_rubrics", "init")
     call_command("plom_rubrics", "push", "--demo")
 
-    if not test:
-        wait_for_exit()
-    else:
-        sleep(1)
-
-    print("v" * 40)
-    clean_up_processes([huey_worker_proc, server_proc])
-    print("Demo complete")
-    print("^" * 40)
+    # if args.push:
+    #     return
+    return (huey_worker_proc, server_proc)
 
 
 if __name__ == "__main__":
-    if len(argv) > 1 and argv[1] == "test":
-        main(test=True)
-    else:
-        main()
+    main()
