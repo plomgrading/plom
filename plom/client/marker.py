@@ -95,7 +95,7 @@ def _marking_time_as_str(m):
         # show 2 sigfigs if less than 10
         return f"{m:.2g}"
     else:
-        # othewise show integer
+        # otherwise show integer
         return f"{m:.0f}"
 
 
