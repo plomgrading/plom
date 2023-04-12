@@ -17,5 +17,6 @@ class PQVMappingServiceTests(TestCase):
         pqvs = PQVMappingService()
         self.assertFalse(pqvs.is_there_a_pqv_map())
 
-        qvmap = pqvs.generate_and_set_pqvmap(1)
-        print(qvmap)
+        qvmap = pqvs.make_version_map(1)
+        self.assertEqual(len(qvmap), 1)
+        self.assertEqual(len(qvmap[1]), 3)
