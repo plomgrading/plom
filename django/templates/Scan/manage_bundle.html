@@ -23,8 +23,23 @@
 		  </ul>
                 </div>
                 <div class="col-8">
-                    <!-- <h5>Bundle Contains:</h5> -->
-                    <!-- <div hx-get="{% url 'scan_bundle_table' timestamp index %}" hx-trigger="load"></div> -->
+                  <h5>Bundle Contains:</h5>
+		  <div class="row row-cols-8">
+		    {% for paper,pages in papers_pages_list %}
+		    {% with pg=pages|dictsort:"order"|first %}
+		    <div class="col-1">
+		      <button class="btn m-1 btn-outline-success"
+			      hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
+			      hx-swap="outerHTML"
+			      hx-target="#navFragment"
+			      hx-replace-url="{% url 'scan_manage_bundle' timestamp pg.order %}"
+			      >		      
+			paper {{paper}}
+		      </button>
+		    </div>
+		    {% endwith %}
+		    {% endfor %}
+		  </div>
                 </div>
             </div>
         </div>
@@ -85,27 +100,15 @@
     <a 
         class="btn text-start" 
         style="background-color: lightgrey;"
-        data-bs-toggle="tooltip"
-        data-bs-placement="top"
-        title="Not implemented yet"
+        data-bs-toggle="collapse"
+        role="button"
+        aria-expanded="false"
+        aria-controls="pagesList"
+        href="#viewPaperOrder"
     >
-        Test Order View
+        <i class="bi bi-chevron-down"></i>
+        Paper Order View
     </a>
-    <a 
-        class="btn text-start" 
-        style="background-color: lightgrey;"
-        data-bs-toggle="tooltip"
-        data-bs-placement="top"
-        title="Not implemented yet"
-    >
-        Bundle Order View
-    </a>
-    {% comment %} <a 
-        class="btn text-start" 
-        style="background-color: lightgrey;"
-    >
-        Push All Pages
-    </a> {% endcomment %}
 </div>
 <div style="margin: 0px 0px 16px 2.5px">
     <div class="collapse" id="pages">
@@ -269,6 +272,50 @@
 	</div>
     </div>
 </div>
+
+
+<div style="margin: 0px 0px 16px 2.5px">
+    <div class="collapse" id="viewPaperOrder">
+        <div class="card" style="width: 66%;">
+          <div class="container">
+	    <ul>
+	      {% for paper,pages in papers_pages_list %}
+	      <li>
+		Paper {{paper}}:
+		<!-- put known pages page-order first  -->
+		{% for pg in pages|dictsort:"page" %}
+		{% if pg.type == "known" %}
+		  <button class="btn m-1 btn-outline-success"
+			  hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
+			  hx-swap="outerHTML"
+			  hx-target="#navFragment"
+			  hx-replace-url="{% url 'scan_manage_bundle' timestamp pg.order %}"
+			  >		      
+		    {{ pg.page }}
+		  </button>
+		{% endif %}
+		{% endfor %}
+		<!-- then extra page in bundle-order  -->
+		{% for pg in pages|dictsort:"order" %}
+		{% if pg.type == "extra" %}
+		  <button class="btn m-1 btn-outline-info"
+			  hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
+			  hx-swap="outerHTML"
+			  hx-target="#navFragment"
+			  hx-replace-url="{% url 'scan_manage_bundle' timestamp pg.order %}"
+			  >		      
+		    q{{ pg.question_list }}
+		  </button>
+		  {% endif %}
+		{% endfor %}
+	      </li>
+	      {% endfor %}
+	    </ul>
+	  </div>
+	</div>
+    </div>
+</div>
+
 
 
 
