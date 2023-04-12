@@ -877,6 +877,7 @@ class ScanService:
             "status": img.image_type,
             "order": f"{img.bundle_order+1}".zfill(n_digits),
             "rotation": img.rotation,
+            "qr_codes": img.parsed_qr,
         }
         if img.image_type == "error":
             info = {"reason": img.errorstagingimage.error_reason}
