@@ -10,6 +10,7 @@ import logging
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 
 from Papers.services import SpecificationService
 from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer
@@ -82,66 +83,98 @@ class RubricService:
 
         if kind == "relative":
             try:
-                rubric = RelativeRubric.objects.get(key=key)
-                serializer = RelativeRubricSerializer(rubric, data=rubric_data)
-                serializer.is_valid()
-                serializer.save()
-                rubric_instance = serializer.instance
+                relative_rubric = RelativeRubric.objects.get(key=key)
             except ObjectDoesNotExist:
-                rubric = NeutralRubric.objects.get(key=key)
-                RelativeRubric.objects.create(
-                    key=rubric.key,
-                    display_delta=rubric.display_delta,
-                    value=rubric.value,
-                    out_of=rubric.out_of,
-                    text=rubric.text,
-                    question=rubric.question,
-                    user=rubric.user,
-                    tags=rubric.tags,
-                    meta=rubric.meta,
-                    versions=rubric.versions,
-                    parameters=rubric.parameters,
-                    kind=rubric.kind,
-                    ).save()
-                relative_rubric = RelativeRubric.objects.get(key=rubric.key)
-                rubric.delete()
-                serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
-                serializer.is_valid()
-                serializer.save()
-                rubric_instance = serializer.instance
+                neutral_rubric_key = self.get_neutral_rubric_key(key)
+                relative_rubric = self.save_relative_rubric(neutral_rubric_key)
+            serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
+            serializer.is_valid()
+            serializer.save()
+            rubric_instance = serializer.instance
         elif kind == "neutral":
             try:
-                rubric = NeutralRubric.objects.get(key=key)
-                serializer = NeutralRubricSerializer(rubric, data=rubric_data)
-                serializer.is_valid()
-                serializer.save()
-                rubric_instance = serializer.instance
+                neutral_rubric = NeutralRubric.objects.get(key=key)
             except ObjectDoesNotExist:
-                rubric = RelativeRubric.objects.get(key=key)
-                NeutralRubric.objects.create(
-                    key=rubric.key,
-                    display_delta=rubric.display_delta,
-                    value=rubric.value,
-                    out_of=rubric.out_of,
-                    text=rubric.text,
-                    question=rubric.question,
-                    user=rubric.user,
-                    tags=rubric.tags,
-                    meta=rubric.meta,
-                    versions=rubric.versions,
-                    parameters=rubric.parameters,
-                    kind=rubric.kind,
-                    ).save()
-                neutral_rubric = NeutralRubric.objects.get(key=rubric.key)
-                rubric.delete()
-                serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
-                serializer.is_valid()
-                serializer.save()
-                rubric_instance = serializer.instance
+                relative_rubric_key = self.get_relative_rubric_key(key)
+                neutral_rubric = self.save_neutral_rubric(relative_rubric_key)
+            serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
+            serializer.is_valid()
+            serializer.save()
+            rubric_instance = serializer.instance
         else:
             assert False, "We've got a problem modifying rubric."
 
         return rubric_instance
+
+    @transaction.atomic
+    def get_neutral_rubric_key(self, key):
+        """
+        Helper function for modify_rubric(). This function is to
+        get the NeutralRubric's key and then delete the rubric,
+        because neutral rubric will convert to relative rubric.
+
+        Args:
+            key: (str) a sequence of ints representing
+
+        Returns:
+            rubric_key: (str) a sequence of ints representing
+                        neutral rubric's key
+        """
+        rubric = NeutralRubric.objects.get(key=key)
+        rubric_key = rubric.key
+        rubric.delete()
+        return rubric_key
+
+    @transaction.atomic
+    def get_relative_rubric_key(self, key):
+        """
+        Helper function for modify_rubric(). This function is to
+        get the RelativeRubric's key and then delete the rubric,
+        because relative rubric will convert to neutral rubric.
+
+        Args:
+            key: (str) a sequence of ints representing
+
+        Returns:
+            rubric_key: (str) a sequence of ints representing
+            relative rubric's key
+        """
+        rubric = RelativeRubric.objects.get(key=key)
+        rubric_key = rubric.key
+        rubric.delete()
+        return rubric_key
+
+    @transaction.atomic
+    def save_neutral_rubric(self, key):
+        """
+        Saves a neutral rubric with a specific key
+
+        Args:
+            key: (str) a sequence of ints representing
+            relative rubric's key
+
+        Returns:
+            neutral_rubric: A NeutralRubric object
+        """
+        NeutralRubric.objects.create(key=key).save()
+        neutral_rubric = NeutralRubric.objects.get(key=key)
+        return neutral_rubric
+
+    @transaction.atomic
+    def save_relative_rubric(self, key):
+        """
+        Saves a relative rubric with a specific key
+
+        Args:
+            key: (str) a sequence of ints representing
+            neutral rubric's key
+
+        Returns:
+            relative_rubric: A RelativeRubric object
+        """
+        RelativeRubric.objects.create(key=key).save()
+        relative_rubric = RelativeRubric.objects.get(key=key)
+        return relative_rubric
 
     def get_rubrics(self, *, question=None):
         """
