@@ -88,7 +88,7 @@ def remove_old_db_and_misc_user_files(engine):
     for path in Path("huey").glob("huey_db.*"):
         path.unlink(missing_ok=True)
 
-    for rmdir in ["sourceVersions", "papersToPrint", "media"]:
+    for rmdir in ["sourceVersions", "papersToPrint", "media", "fixtures"]:
         shutil.rmtree(rmdir, ignore_errors=True)
 
     Path("media").mkdir()
@@ -122,12 +122,28 @@ def make_groups_and_users():
     call_command("plom_create_demo_users")
 
 
+def save_fixture(filename):
+    """
+    Save a snapshot of the database as a JSON file to 'fixtures/filename.json'
+    """
+
+    print("Saving database snapshot...")
+
+    fixtures_dir = settings.BASE_DIR / "fixtures"
+    fixtures_dir.mkdir(exist_ok=True)
+
+    call_command("dumpdata", "--exclude=Authentication", "--natural-foreign", f"-o{fixtures_dir / filename}")
+
+
 def prepare_assessment():
     print("Prepare assessment: ")
     print(
         "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
     )
     call_command("plom_demo_spec")
+
+    save_fixture("spec_created.json")
+
     call_command(
         "plom_preparation_test_source",
         "upload",
