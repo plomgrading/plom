@@ -60,12 +60,67 @@ class ManageScanService:
     def get_completed_test_papers(self):
         """
         Return the number of test-papers that have been completely scanned.
+
+        A paper is complete when it either has **all** its fixed
+        pages, or it has no fixed pages but has some extra-pages.
         """
 
-        incomplete_present = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
-        complete_papers = Paper.objects.filter(~Exists(incomplete_present))
+        # Get fixed pages with no image
+        fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
+        # Get count of papers without fixed-page-with-no-scan
+        all_fixed_present = Paper.objects.filter(~Exists(fixed_with_no_scan))
+        # now get papers with **no** fixed page scans
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        mobile_pages = MobilePage.objects.filter(paper=OuterRef("pk"))
+        no_fixed_but_some_mobile = Paper.objects.filter(
+            ~Exists(fixed_with_scan), Exists(mobile_pages)
+        )
 
-        return len(complete_papers)
+        return all_fixed_present.count() + no_fixed_but_some_mobile.count()
+
+    @transaction.atomic
+    def get_incomplete_test_papers(self):
+        """
+        Return the number of test-papers that are not completely scanned.
+
+        A paper is not completely scanned when it has *some* but not all its fixed pages.
+        """
+
+        # Get fixed pages with no image - ie not scanned.
+        fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # Get count of papers with some but not all scanned fixed pages
+        some_but_not_all_fixed_present = Paper.objects.filter(
+            Exists(fixed_with_no_scan), Exists(fixed_with_scan)
+        )
+
+        return some_but_not_all_fixed_present.count()
+
+    @transaction.atomic
+    def get_unused_test_papers(self):
+        """
+        Return the number of test-papers that are usused.
+
+        A paper is unused when it has no fixed page images nor any mobile pages.
+        """
+
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # get mobile pages
+        mobile_pages = MobilePage.objects.filter(paper=OuterRef("pk"))
+        # Get count of papers with neither fixed-with-scan nor mobile-pages
+        no_images_at_all = Paper.objects.filter(
+            ~Exists(fixed_with_scan), ~Exists(mobile_pages)
+        )
+
+        return no_images_at_all.count()
 
     @transaction.atomic
     def get_test_paper_list(self, exclude_complete=False, exclude_incomplete=False):

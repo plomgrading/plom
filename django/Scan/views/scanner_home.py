@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import pathlib
 from datetime import datetime
@@ -34,8 +35,9 @@ class ScannerHomeView(ScannerRequiredView):
         mss = ManageScanService()
 
         total_papers = mss.get_total_test_papers()
-        completed_papers = mss.get_completed_test_papers()
-        percent_papers_complete = completed_papers / total_papers * 100
+        complete_papers = mss.get_completed_test_papers()
+        incomplete_papers = mss.get_incomplete_test_papers()
+        unused_papers = mss.get_unused_test_papers()
 
         total_pages = mss.get_total_pages()
         scanned_pages = mss.get_scanned_pages()
@@ -45,9 +47,10 @@ class ScannerHomeView(ScannerRequiredView):
 
         context.update(
             {
-                "completed_test_papers": completed_papers,
-                "total_completed_test_papers": total_papers,
-                "percent_papers_completed": int(percent_papers_complete),
+                "complete_test_papers": complete_papers,
+                "incomplete_test_papers": incomplete_papers,
+                "unused_test_papers": unused_papers,
+                "total_papers": total_papers,
                 "completed_pages": scanned_pages,
                 "total_completed_pages": total_pages,
                 "percent_pages_completed": int(percent_pages_complete),
