@@ -85,7 +85,7 @@ class RubricService:
             try:
                 relative_rubric = RelativeRubric.objects.get(key=key)
             except ObjectDoesNotExist:
-                neutral_rubric_key = self.get_neutral_rubric_key(key)
+                neutral_rubric_key = self._get_neutral_rubric_key_and_delete(key)
                 relative_rubric = self.save_relative_rubric(neutral_rubric_key)
             serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
             serializer.is_valid()
@@ -95,7 +95,7 @@ class RubricService:
             try:
                 neutral_rubric = NeutralRubric.objects.get(key=key)
             except ObjectDoesNotExist:
-                relative_rubric_key = self.get_relative_rubric_key(key)
+                relative_rubric_key = self._get_relative_rubric_key_and_delete(key)
                 neutral_rubric = self.save_neutral_rubric(relative_rubric_key)
             serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
             serializer.is_valid()
@@ -107,7 +107,7 @@ class RubricService:
         return rubric_instance
 
     @transaction.atomic
-    def get_neutral_rubric_key(self, key):
+    def _get_neutral_rubric_key_and_delete(self, key):
         """
         Helper function for modify_rubric(). This function is to
         get the NeutralRubric's key and then delete the rubric,
@@ -126,7 +126,7 @@ class RubricService:
         return rubric_key
 
     @transaction.atomic
-    def get_relative_rubric_key(self, key):
+    def _get_relative_rubric_key_and_delete(self, key):
         """
         Helper function for modify_rubric(). This function is to
         get the RelativeRubric's key and then delete the rubric,
