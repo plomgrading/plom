@@ -499,6 +499,7 @@ def _doit(args):
     # push_if_ready()
     call_command("plom_staging_bundles", "status")
     call_command("plom_staging_bundles", "push", "fake_bundle2")
+    call_command("plom_staging_bundles", "push", "fake_hw_bundle_62")
 
     call_command("plom_rubrics", "init")
     call_command("plom_rubrics", "push", "--demo")

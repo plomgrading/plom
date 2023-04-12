@@ -16,8 +16,10 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
 from django.utils import timezone
+
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
@@ -42,7 +44,7 @@ from Scan.models import (
     ManagePageToImage,
     ManageParseQR,
 )
-from Papers.models import ErrorImage, Paper
+from Papers.models import Paper
 from Papers.services import ImageBundleService
 from Papers.services import SpecificationService
 
@@ -618,14 +620,6 @@ class ScanService:
         return len(pushed_bundles)
 
     @transaction.atomic
-    def get_error_image(self, bundle, index):
-        error_image = ErrorImage.objects.get(
-            bundle=bundle,
-            bundle_order=index,
-        )
-        return error_image
-
-    @transaction.atomic
     def get_n_known_images(self, bundle):
         return bundle.stagingimage_set.filter(image_type="known").count()
 
@@ -639,20 +633,22 @@ class ScanService:
 
     @transaction.atomic
     def get_n_extra_images_with_data(self, bundle):
-        # note - this assumes that we set questions and pages at same time
-        # and **never** set one without the other.
+        # note - we must check that we have set both questions and pages
         return bundle.stagingimage_set.filter(
-            image_type="extra", extrastagingimage__paper_number__isnull=False
+            image_type="extra",
+            extrastagingimage__paper_number__isnull=False,
+            extrastagingimage__question_list__isnull=False,
         ).count()
 
     @transaction.atomic
     def do_all_extra_images_have_data(self, bundle):
-        # note - this assumes that we set questions and pages at same time
-        # and **never** set one without the other.
-        return not bundle.stagingimage_set.filter(
-            image_type="extra", extrastagingimage__paper_number__isnull=True
+        # Make sure all question pages have both paper-number and question-lists
+        epages = bundle.stagingimage_set.filter(image_type="extra")
+        return not epages.filter(
+            Q(extrastagingimage__paper_number__isnull=True)
+            | Q(extrastagingimage__question_list__isnull=True)
         ).exists()
-        # if you can find an extra page with a null paper_number then it is not ready.
+        # if you can find an extra page with a null paper_number, or one with a null question-list then it is not ready.
 
     @transaction.atomic
     def get_n_error_images(self, bundle):
@@ -761,13 +757,30 @@ class ScanService:
 
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk):
+        """Tests if the bundle (given by its pk) is perfect. A bundle is perfect when
+          * no unread pages, no error-pages, no unknown-pages, and
+          * all extra pages have data.
+        this, in turn, means that all pages present in bundle are
+          * known or discard, or
+          * are extra-pages with data
+        """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        # TODO - this will need updating in the future when
-        # we can assign unknowns and extra pages
-        not_known_images = bundle_obj.stagingimage_set.exclude(image_type="known")
-        # if there are any not-known-images then the bundle is not perfect
-        # that is a lot of double-negatives in there.
-        return not not_known_images.exists()
+        # a bundle is perfect if it has
+
+        # check for unread, unknown, error pages
+        if bundle_obj.stagingimage_set.filter(
+            image_type__in=["unknown", "unread", "error"]
+        ).exists():
+            return False
+        # check for extra pages without data
+        epages = bundle_obj.stagingimage_set.filter(image_type="extra")
+        if epages.filter(
+            Q(extrastagingimage__paper_number__isnull=True)
+            | Q(extrastagingimage__question_list__isnull=True)
+        ).exists():
+            return False
+
+        return True
 
     @transaction.atomic
     def push_bundle_to_server(self, bundle_obj):
@@ -779,9 +792,9 @@ class ScanService:
 
         images = bundle_obj.stagingimage_set
 
-        # TODO - in future this will need to handle extra pages etc.
-        # for now, we require all "known" pages
-        if images.exclude(image_type="known").exists():
+        # make sure bundle is "perfect"
+        # note function takes a bundle-pk as argument
+        if not self.is_bundle_perfect(bundle_obj.pk):
             raise ValueError("The bundle is imperfect, cannot push.")
 
         img_service = ImageBundleService()
