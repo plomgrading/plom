@@ -23,12 +23,13 @@
 		  </ul>
                 </div>
                 <div class="col-8">
-                  <h5>Bundle Contains:</h5>
+                  <h5>Bundle Contains:</h5> 
 		  <div class="row row-cols-8">
 		    {% for paper,pages in papers_pages_list %}
 		    {% with pg=pages|dictsort:"order"|first %}
 		    <div class="col-1">
-		      <button class="btn m-1 btn-outline-success"
+		      <button class="btn m-1 btn-outline-success" type="button"
+			      onclick="this.blur();"
 			      hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
 			      hx-swap="outerHTML"
 			      hx-target="#navFragment"
@@ -119,6 +120,7 @@
 	      <div class="col-1">
 		{% if pg.status == 'known' %}
 		<button class="btn m-1 btn-outline-success"
+			onclick="this.blur();"
 			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
@@ -132,6 +134,7 @@
 		    {% else %}
 		    class="btn m-1 btn-info"
 		    {% endif %}
+		    onclick="this.blur();"
 		    hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
 		    hx-swap="outerHTML"
 		    hx-target="#navFragment"
@@ -145,6 +148,7 @@
 		    >
 		    {% elif pg.status == 'unread' %}
 		    <button class="btn m-1 btn-outline-dark"
+			    onclick="this.blur();"
 			    hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
 			    hx-swap="outerHTML"
 			    hx-target="#navFragment"
@@ -153,6 +157,7 @@
 			    >
 		      {% elif pg.status == 'unknown' %}
 		      <button class="btn m-1 btn-warning"
+			      onclick="this.blur();"
 			      hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
 			      hx-swap="outerHTML"
 			      hx-target="#navFragment"
@@ -161,7 +166,8 @@
 			      >
 			{% elif pg.status == 'error' %}
 		  <button class="btn m-1 btn-danger"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			  onclick="this.blur();"
+			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
 			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
@@ -169,7 +175,8 @@
 		     >
 			{% elif pg.status == 'discard' %}
 		  <button class="btn m-1 btn-outline-dark"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			  onclick="this.blur();"
+			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
 			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
@@ -196,7 +203,8 @@
 		{% if pg.status == 'known' %}
 	      <div class="col-1">
 		<button class="btn m-1 btn-outline-success"
-			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			onclick="this.blur();"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
 			  hx-swap="outerHTML"
 			  hx-target="#navFragment"
 			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
