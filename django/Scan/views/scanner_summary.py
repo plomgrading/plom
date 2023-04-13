@@ -37,8 +37,10 @@ class ScannerSummaryView(ScannerRequiredView):
         # turn into list of tuples (key, value) ordered by key
         all_incomplete_list = [(pn, pgs) for pn, pgs in sorted(all_incomplete.items())]
 
-        all_unused_list = format_int_list_with_runs(mss.get_all_unused_test_papers()).split(",")
-                
+        all_unused_list = format_int_list_with_runs(
+            mss.get_all_unused_test_papers()
+        ).split(",")
+
         context.update(
             {
                 "complete_test_papers": complete_papers,
