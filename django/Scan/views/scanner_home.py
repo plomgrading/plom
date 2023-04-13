@@ -35,9 +35,9 @@ class ScannerHomeView(ScannerRequiredView):
         mss = ManageScanService()
 
         total_papers = mss.get_total_test_papers()
-        complete_papers = mss.get_completed_test_papers()
-        incomplete_papers = mss.get_incomplete_test_papers()
-        unused_papers = mss.get_unused_test_papers()
+        complete_papers = mss.get_number_completed_test_papers()
+        incomplete_papers = mss.get_number_incomplete_test_papers()
+        unused_papers = mss.get_number_unused_test_papers()
 
         total_pages = mss.get_total_pages()
         scanned_pages = mss.get_scanned_pages()

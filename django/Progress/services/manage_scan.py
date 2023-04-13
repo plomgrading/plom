@@ -57,14 +57,34 @@ class ManageScanService:
         return len(Paper.objects.all())
 
     @transaction.atomic
-    def get_completed_test_papers(self):
+    def get_number_completed_test_papers(self):
+        """Return a dict of completed papers and their fixed/mobile pages.
+
+        A paper is complete when it either has **all** its fixed
+        pages, or it has no fixed pages but has some extra-pages.
+        """
+        # Get fixed pages with no image
+        fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
+        # Get count of papers without fixed-page-with-no-scan
+        all_fixed_present = Paper.objects.filter(~Exists(fixed_with_no_scan))
+        # now get papers with **no** fixed page scans
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        mobile_pages = MobilePage.objects.filter(paper=OuterRef("pk"))
+        no_fixed_but_some_mobile = Paper.objects.filter(
+            ~Exists(fixed_with_scan), Exists(mobile_pages)
+        )
+        return all_fixed_present.count() + no_fixed_but_some_mobile.count()
+
+    @transaction.atomic
+    def get_all_completed_test_papers(self):
         """
         Return the number of test-papers that have been completely scanned.
 
         A paper is complete when it either has **all** its fixed
         pages, or it has no fixed pages but has some extra-pages.
         """
-
         # Get fixed pages with no image
         fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
         # Get count of papers without fixed-page-with-no-scan
@@ -78,10 +98,39 @@ class ManageScanService:
             ~Exists(fixed_with_scan), Exists(mobile_pages)
         )
 
-        return all_fixed_present.count() + no_fixed_but_some_mobile.count()
+        complete = {}
+        for paper in all_fixed_present:
+            complete[paper.paper_number] = []
+            for fp in paper.fixedpage_set.all().order_by("page_number"):
+                complete[paper.paper_number].append(
+                    {
+                        "type": "fixed",
+                        "page_number": fp.page_number,
+                        "img_pk": fp.image.pk,
+                    }
+                )
+            for mp in paper.mobilepage_set.all().order_by("question_number"):
+                complete[paper.paper_number].append(
+                    {
+                        "type": "mobile",
+                        "question_number": mp.page_number,
+                        "img_pk": mp.image.pk,
+                    }
+                )
+        for paper in no_fixed_but_some_mobile:
+            complete[paper.paper_number] = []
+            for mp in paper.mobilepage_set.all().order_by("question_number"):
+                complete[paper.paper_number].append(
+                    {
+                        "type": "mobile",
+                        "question_number": mp.question_number,
+                        "img_pk": mp.image.pk,
+                    }
+                )
+        return complete
 
     @transaction.atomic
-    def get_incomplete_test_papers(self):
+    def get_number_incomplete_test_papers(self):
         """
         Return the number of test-papers that are not completely scanned.
 
@@ -102,7 +151,7 @@ class ManageScanService:
         return some_but_not_all_fixed_present.count()
 
     @transaction.atomic
-    def get_unused_test_papers(self):
+    def get_number_unused_test_papers(self):
         """
         Return the number of test-papers that are usused.
 
@@ -534,3 +583,11 @@ class ManageScanService:
             )
 
         return bundle_list
+
+    @transaction.atomic
+    def get_pushed_image(self, img_pk):
+        try:
+            img = Image.objects.get(pk=img_pk)
+            return img.file_name
+        except Image.DoesNotExist:
+            return None

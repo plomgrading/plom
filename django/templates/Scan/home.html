@@ -11,13 +11,14 @@
 {% block main_content %}
 <div class="d-grid gap-2">
     <div class="card w-50">
-        <div class="card-body" style="height: 182.5px">
+        <div class="card-body">
             <h5>Summary of pushed papers:</h5>
             <div class="row">
                 <div class="col">
-                    <p class="text-success">{{ complete_test_papers }} / {{ total_papers }} completely scanned test papers</p>
+                  <p class="text-success">{{ complete_test_papers }} / {{ total_papers }} complete test papers</p>
+		</div>
+                <div class="col">
                     <p class="text-secondary">{{ unused_test_papers }} / {{ total_papers }} unused test papers</p>
-                    <a class="btn" style="background-color: #0F984F; color: white;" href="{% url 'scan_summary' %}">View Details</a>
                 </div>
                 <div class="col">
 		  {% if incomplete_test_papers == 0 %}
@@ -28,10 +29,14 @@
 		    {{incomplete_test_papers}} incomplete test paper(s)
 		    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
 		  </p>
-		  {% endif %}
-		  
+		  {% endif %}		  
                 </div>
             </div>
+	    <div class="row">
+                <div class="col">
+                  <a class="btn btn-success" href="{% url 'scan_summary' %}">View Details</a>
+                </div>
+	    </div>
         </div>
     </div>
     <div class="card w-50">
