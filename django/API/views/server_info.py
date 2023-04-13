@@ -63,13 +63,6 @@ class CloseUser(APIView):
         try:
             request.user.auth_token.delete()
 
-            # Tasks
-            mts = MarkingTaskService()
-            mts.surrender_all_tasks(request.user)
-
-            its = IdentifyTaskService()
-            its.surrender_all_tasks(request.user)
-
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
