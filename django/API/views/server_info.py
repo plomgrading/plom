@@ -52,7 +52,6 @@ class ServerVersion(APIView):
 class CloseUser(APIView):
     """
     Delete the user's token and log them out.
-    Todo: surrender tasks, etc.
 
     Returns:
         (200) user is logged out successfully
