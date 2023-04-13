@@ -11,7 +11,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-4">
-                  <h5>Bundle <q> {{ slug }} </q> summary</h5>
+                  <h5>Bundle <q>{{ slug }}</q> summary</h5>
 		  <ul>
 		    <li>{{ known_pages }} / {{ total_pages }} known pages</li>
 		    {% if known_pages != total_pages %}
@@ -24,10 +24,8 @@
                 </div>
                 <div class="col-8">
                   <h5>Bundle Contains:</h5> 
-		  <div class="row row-cols-8">
 		    {% for paper,pages in papers_pages_list %}
 		    {% with pg=pages|dictsort:"order"|first %}
-		    <div class="col-1">
 		      <button class="btn m-1 btn-outline-success" type="button"
 			      onclick="this.blur();"
 			      hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
@@ -37,15 +35,14 @@
 			      >		      
 			paper {{paper}}
 		      </button>
-		    </div>
 		    {% endwith %}
 		    {% endfor %}
-		  </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 {% if replace_image_success_message %}
 <div class="card w-75 bg-success mb-3" style="color: white;">
     <p style="margin: 3px 15px">{{ replace_image_success_message }}</p>
@@ -61,8 +58,6 @@
     Return to upload
   </a>
 </div>
-
-
 
 <div id="accord">
       <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
@@ -81,9 +76,9 @@
       <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accord">
 	<div class="card" style="width: 66%;">
           <div class="container text-center">
-	    <div class="row row-cols-8">
+	    <div class="row">
+	      <div class="col-12 text-start">
               {% for pg in pages %}
-	      <div class="col-1">
 		{% if pg.status == 'known' %}
 		<button class="btn m-1 btn-outline-success"
 			onclick="this.blur();"
@@ -149,8 +144,8 @@
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
 			> p{{pg.order}}</button>
 		{% endif %}
-	      </div>
 	      {% endfor %}
+	      </div>
 	    </div>
 	  </div>
 	</div>
@@ -159,10 +154,10 @@
       <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accord">
         <div class="card" style="width: 66%;">
           <div class="container text-center">
-	    <div class="row row-cols-8">
+	    <div class="row">
+	      <div class="col-12 text-start">
               {% for pg in pages %}
 		{% if pg.status == 'known' %}
-	      <div class="col-1">
 		<button class="btn m-1 btn-outline-success"
 			onclick="this.blur();"
 			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
@@ -173,9 +168,7 @@
 		   >
 		  p{{pg.order}}
 		</button>
-	      </div>
 	      {% elif pg.status == 'extra' %}
-	      <div class="col-1">
 		<button
 		  {% if pg.info.question_list %}
 		  class="btn m-1 btn-outline-info"
@@ -195,9 +188,9 @@
 		  >
 		  p{{pg.order}}
 		</button>
-	      </div>
 		  {% endif %}
 	      {% endfor %}
+	      </div>
 	    </div>
 	  </div>
 	</div>
@@ -206,10 +199,10 @@
       <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accord">
         <div class="card" style="width: 66%;">
           <div class="container text-center">
-	    <div class="row row-cols-8">
+	    <div class="row">
+	      <div class="col-12 text-start">
               {% for pg in pages %}
 	      {% if pg.status == 'unknown' %}
-	      <div class="col-1">
 		<button class="btn m-1 btn-warning"
 		  onclick="this.blur();"
 			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
@@ -220,9 +213,7 @@
 			>
 		  p{{pg.order}}
 		</button>
-	      </div>
 	      {% elif pg.status == 'error' %}
-	      <div class="col-1">
 		<button class="btn m-1 btn-danger"
 		  onclick="this.blur();"
 			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
@@ -233,9 +224,9 @@
 			>
 		  p{{pg.order}}
 		</button>
-	      </div>
 	      {% endif %}
-	      {% endfor %}
+		{% endfor %}
+	      </div>
 	    </div>
 	  </div>
 	</div>
@@ -285,18 +276,12 @@
       </div>
 </div>
 
-
-
-
-
 <div class="container w-100 p-0 m-3" id="navFragment"
      hx-get="{% url 'scan_nav_bundle' timestamp index %}"
      hx-swap="outerHTML"
      hx-trigger="load"     
      >
 </div>
-
-
 
 <script>
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
