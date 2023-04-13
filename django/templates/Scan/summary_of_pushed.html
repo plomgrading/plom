@@ -63,11 +63,9 @@
     </div>
   </div>
   
-  <div class="row" x-data="{imgsrc: ''}">
-
-
-    <div class="col">
-      <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accord">
+  <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accord">
+    <div class="row" x-data="{imgsrc: ''}">
+      <div class="col">
 	<div class="card">
 	  <div class="card-body">
 	    <div class="overflow-auto" style="max-height:50vh;">
@@ -97,7 +95,22 @@
 	  </div>
 	</div>
       </div>
-      <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accord">
+      <div class="col" id="pushedImageFragment">
+      <template x-if="imgsrc">
+	<img
+	  :src="'pushed_img/'+imgsrc"
+	  class="thumbnail shadow-sm p-4"
+	  style="max-height:50vh"
+	  >
+      </template>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accord">
+    <div class="row" x-data="{imgsrc: ''}">
+      <div class="col">
 	<div class="card">
 	  <div class="card-body">
 	    <div class="overflow-auto" style="max-height:50vh;">
@@ -134,31 +147,30 @@
 	</div>
       </div>
 
-      <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accord">
-	<div class="card">
-	  <div class="card-body">
-	    <div class="overflow-auto" style="max-height:50vh;">
-	      {% for rng in all_unused_list %}
-	      <span class="badge m-1 p-3 fs-6 bg-secondary"> {{ rng }}</span>
-	      {% endfor %}
-	    </div>
-	  </div>
-	</div>
-      </div>
-
-
-    </div>
-    <div class="col-6 p-4" id="pushedImageFragment">
+      <div class="col" id="pushedImageFragment">
       <template x-if="imgsrc">
 	<img
 	  :src="'pushed_img/'+imgsrc"
-	  class="thumbnail shadow-sm"
+	  class="thumbnail shadow-sm p-4"
 	  style="max-height:50vh"
 	  >
       </template>
+      </div>
     </div>
   </div>
 
+  <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accord">
+    <div class="card w-75">
+      <div class="card-body">
+	<div class="overflow-auto" style="max-height:50vh;">
+	  {% for rng in all_unused_list %}
+	  <span class="badge m-1 p-3 fs-6 bg-secondary"> {{ rng }}</span>
+	  {% endfor %}
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <script>
