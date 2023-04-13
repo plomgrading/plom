@@ -89,10 +89,6 @@ class GetBundleNavFragmentView(ScannerRequiredView):
         if index >= n_pages:
             raise Http404("Bundle page does not exist.")
         current_page = scanner.get_bundle_single_page_info(bundle, index)
-        # page_info_dict = scanner.get_bundle_pages_info(bundle)
-        # pages = [
-        #     page_info_dict[k] for k in range(len(page_info_dict))
-        # ]  # flatten into ordered list
 
         context.update(
             {
