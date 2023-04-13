@@ -43,11 +43,39 @@ class ManageBundleView(ScannerRequiredView):
             page_info_dict[k] for k in range(len(page_info_dict))
         ]  # flatten into ordered list
 
+        # also transform pages_info_dict into bundle-summary-info
+        # paper: [known, page_number, bundle_order], or
+        # paper: [extra, question_list, bundle_order]
+        # make sure all knowns first then extras
+        papers_pages = {}
+        for order, page in page_info_dict.items():
+            if page["status"] == "known":
+                papers_pages.setdefault(page["info"]["paper_number"], []).append(
+                    {
+                        "type": "known",
+                        "page": page["info"]["page_number"],
+                        "order": order,
+                    }
+                )
+        for order, page in page_info_dict.items():
+            if page["status"] == "extra":
+                if page["info"]["paper_number"] and page["info"]["question_list"]:
+                    papers_pages.setdefault(page["info"]["paper_number"], []).append(
+                        {
+                            "type": "extra",
+                            "question_list": page["info"]["question_list"],
+                            "order": order,
+                        }
+                    )
+        # recast paper_pages as an **ordered** list of tuples (paper, page-info)
+        papers_pages_list = [(pn, pg) for pn, pg in sorted(papers_pages.items())]
+
         context.update(
             {
                 "slug": bundle.slug,
                 "timestamp": timestamp,
                 "pages": pages,
+                "papers_pages_list": papers_pages_list,
                 "current_page": pages[index],
                 "index": index,
                 "one_index": index + 1,
@@ -89,10 +117,6 @@ class GetBundleNavFragmentView(ScannerRequiredView):
         if index >= n_pages:
             raise Http404("Bundle page does not exist.")
         current_page = scanner.get_bundle_single_page_info(bundle, index)
-        # page_info_dict = scanner.get_bundle_pages_info(bundle)
-        # pages = [
-        #     page_info_dict[k] for k in range(len(page_info_dict))
-        # ]  # flatten into ordered list
 
         context.update(
             {

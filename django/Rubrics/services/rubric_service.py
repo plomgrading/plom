@@ -9,6 +9,8 @@
 import logging
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 
 from Papers.services import SpecificationService
 from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer
@@ -59,6 +61,7 @@ class RubricService:
 
         return rubric
 
+    @transaction.atomic
     def modify_rubric(self, key, rubric_data):
         """
         Modify a rubric.
@@ -80,14 +83,26 @@ class RubricService:
         kind = rubric_data["kind"]
 
         if kind == "relative":
-            rubric = RelativeRubric.objects.get(key=key)
-            serializer = RelativeRubricSerializer(rubric, data=rubric_data)
+            try:
+                relative_rubric = RelativeRubric.objects.get(key=key)
+            except ObjectDoesNotExist:
+                rubric = NeutralRubric.objects.get(key=key)
+                neutral_rubric_key = rubric.key
+                rubric.delete()
+                relative_rubric = RelativeRubric.objects.create(key=neutral_rubric_key)
+            serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
             serializer.is_valid()
             serializer.save()
             rubric_instance = serializer.instance
         elif kind == "neutral":
-            rubric = NeutralRubric.objects.get(key=key)
-            serializer = NeutralRubricSerializer(rubric, data=rubric_data)
+            try:
+                neutral_rubric = NeutralRubric.objects.get(key=key)
+            except ObjectDoesNotExist:
+                rubric = RelativeRubric.objects.get(key=key)
+                relative_rubric_key = rubric.key
+                rubric.delete()
+                neutral_rubric = NeutralRubric.objects.create(key=relative_rubric_key)
+            serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
             serializer.is_valid()
             serializer.save()
             rubric_instance = serializer.instance

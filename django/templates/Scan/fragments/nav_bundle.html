@@ -52,6 +52,13 @@
 			  <li>page: {{current_page.info.page_number}} </li>
 			  <li>version: {{current_page.info.version}} </li>
 			  <li>rotation: {{current_page.rotation}}</li>
+			  <li>{{current_page.qr_codes|length}} qr-codes read:
+			    <ul>
+			      {% for crn, code in current_page.qr_codes.items %}
+			      <li>{{crn}}: {{code.tpv}}</li>
+			      {% endfor %}
+			    </ul>
+			  </li>
 			</ul>
 		      </div>
 		      {% elif current_page.status == 'extra' %}
@@ -61,6 +68,18 @@
 			  <li>paper: {{current_page.info.paper_number}}</li>
 			  <li>question(s): {{current_page.info.question_list}} </li>
 			  <li>rotation: {{current_page.rotation}}</li>
+			  {% if current_page.qr_codes %}
+			  <li>		    
+			    {{current_page.qr_codes|length}} qr-codes read:
+			    <ul>
+			      {% for crn, code in current_page.qr_codes.items %}
+			      <li>{{crn}}: {{code.tpv}}</li>
+			      {% endfor %}
+			    </ul>
+			  </li>
+			  {% else %}
+			  <li>No qr-codes read</li>
+			  {% endif %}
 			</ul>
 		      </div>
 		      {% elif current_page.status == 'unknown' %}
@@ -84,6 +103,13 @@
 			<ul>
 			  <li>{{current_page.info.reason}}</li>
 			  <li>rotation: {{current_page.rotation}}</li>
+			  <li>{{current_page.qr_codes|length}} qr-codes read:
+			    <ul>
+			      {% for crn, code in current_page.qr_codes.items %}
+			      <li>{{crn}}: {{code.tpv}}</li>
+			      {% endfor %}
+			    </ul>
+			  </li>
 			</ul>
 		      </div>
 		      {% elif current_page.status == 'unread' %}
