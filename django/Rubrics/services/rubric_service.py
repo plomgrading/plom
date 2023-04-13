@@ -61,6 +61,7 @@ class RubricService:
 
         return rubric
 
+    @transaction.atomic
     def modify_rubric(self, key, rubric_data):
         """
         Modify a rubric.
@@ -85,8 +86,10 @@ class RubricService:
             try:
                 relative_rubric = RelativeRubric.objects.get(key=key)
             except ObjectDoesNotExist:
-                neutral_rubric_key = self._get_neutral_rubric_key_and_delete(key)
-                relative_rubric = self.save_relative_rubric(neutral_rubric_key)
+                rubric = NeutralRubric.objects.get(key=key)
+                neutral_rubric_key = rubric.key
+                rubric.delete()
+                relative_rubric = RelativeRubric.objects.create(key=neutral_rubric_key)
             serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
             serializer.is_valid()
             serializer.save()
@@ -95,8 +98,10 @@ class RubricService:
             try:
                 neutral_rubric = NeutralRubric.objects.get(key=key)
             except ObjectDoesNotExist:
-                relative_rubric_key = self._get_relative_rubric_key_and_delete(key)
-                neutral_rubric = self.save_neutral_rubric(relative_rubric_key)
+                rubric = RelativeRubric.objects.get(key=key)
+                relative_rubric_key = rubric.key
+                rubric.delete()
+                neutral_rubric = NeutralRubric.objects.create(key=relative_rubric_key)
             serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
             serializer.is_valid()
             serializer.save()
@@ -105,76 +110,6 @@ class RubricService:
             assert False, "We've got a problem modifying rubric."
 
         return rubric_instance
-
-    @transaction.atomic
-    def _get_neutral_rubric_key_and_delete(self, key):
-        """
-        Helper function for modify_rubric(). This function is to
-        get the NeutralRubric's key and then delete the rubric,
-        because neutral rubric will convert to relative rubric.
-
-        Args:
-            key: (str) a sequence of ints representing
-
-        Returns:
-            rubric_key: (str) a sequence of ints representing
-                        neutral rubric's key
-        """
-        rubric = NeutralRubric.objects.get(key=key)
-        rubric_key = rubric.key
-        rubric.delete()
-        return rubric_key
-
-    @transaction.atomic
-    def _get_relative_rubric_key_and_delete(self, key):
-        """
-        Helper function for modify_rubric(). This function is to
-        get the RelativeRubric's key and then delete the rubric,
-        because relative rubric will convert to neutral rubric.
-
-        Args:
-            key: (str) a sequence of ints representing
-
-        Returns:
-            rubric_key: (str) a sequence of ints representing
-            relative rubric's key
-        """
-        rubric = RelativeRubric.objects.get(key=key)
-        rubric_key = rubric.key
-        rubric.delete()
-        return rubric_key
-
-    @transaction.atomic
-    def save_neutral_rubric(self, key):
-        """
-        Saves a neutral rubric with a specific key
-
-        Args:
-            key: (str) a sequence of ints representing
-            relative rubric's key
-
-        Returns:
-            neutral_rubric: A NeutralRubric object
-        """
-        NeutralRubric.objects.create(key=key).save()
-        neutral_rubric = NeutralRubric.objects.get(key=key)
-        return neutral_rubric
-
-    @transaction.atomic
-    def save_relative_rubric(self, key):
-        """
-        Saves a relative rubric with a specific key
-
-        Args:
-            key: (str) a sequence of ints representing
-            neutral rubric's key
-
-        Returns:
-            relative_rubric: A RelativeRubric object
-        """
-        RelativeRubric.objects.create(key=key).save()
-        relative_rubric = RelativeRubric.objects.get(key=key)
-        return relative_rubric
 
     def get_rubrics(self, *, question=None):
         """
