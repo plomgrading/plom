@@ -61,59 +61,25 @@
     Return to upload
   </a>
 </div>
-<div style="margin: 0px 0px 16px 2.5px">
-  <a 
-        class="btn text-start" 
-        style="background-color: lightgrey;"
-        data-bs-toggle="collapse"
-        role="button"
-        aria-expanded="false"
-        aria-controls="pagesList"
-        href="#pages"
-    >
-        <i class="bi bi-chevron-down"></i>
-        View pages
-    </a>
-    <a 
-        class="btn text-start" 
-        style="background-color: lightgrey;"
-        data-bs-toggle="collapse"
-        role="button"
-        aria-expanded="false"
-        aria-controls="pagesList"
-        href="#viewValidPages"
-    >
-        <i class="bi bi-chevron-down"></i>
-        View Valid pages
-    </a>
-    <a 
-        class="btn text-start" 
-        style="background-color: lightgrey;"
-        data-bs-toggle="collapse"
-        role="button"
-        aria-expanded="false"
-        aria-controls="pagesList"
-        href="#viewErrorPages"
-    >
-        <i class="bi bi-chevron-down"></i>
-        View Error pages
-    </a>
-    <a 
-        class="btn text-start" 
-        style="background-color: lightgrey;"
-        data-bs-toggle="collapse"
-        role="button"
-        aria-expanded="false"
-        aria-controls="pagesList"
-        href="#viewPaperOrder"
-    >
-        <i class="bi bi-chevron-down"></i>
-        Paper Order View
-    </a>
-</div>
-<div style="margin: 0px 0px 16px 2.5px">
-    <div class="collapse" id="pages">
-        <div class="card" style="width: 66%;">
+
+
+
+<div id="accord">
+      <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+        View pages <i class="bi bi-chevron-down"></i>
+      </button>
+      <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+        View valid pages <i class="bi bi-chevron-down"></i>
+      </button>
+      <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+        View error pages <i class="bi bi-chevron-down"></i>
+      </button>
+      <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
+        View pages in paper order <i class="bi bi-chevron-down"></i>
+      </button>
+
+      <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accord">
+	<div class="card" style="width: 66%;">
           <div class="container text-center">
 	    <div class="row row-cols-8">
               {% for pg in pages %}
@@ -126,76 +92,71 @@
 			hx-target="#navFragment"
 			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
-			>
-		  {% elif pg.status == 'extra' %}
-		  <button
-		    {% if pg.info.question_list %}		
-		    class="btn m-1 btn-outline-info"
-		    {% else %}
-		    class="btn m-1 btn-info"
-		    {% endif %}
-		    onclick="this.blur();"
-		    hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
-		    hx-swap="outerHTML"
-		    hx-target="#navFragment"
-		    hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		    data-bs-toggle="tooltip" data-bs-placement="top"
-		    {% if pg.info.question_list %}		
-		    data-bs-title="Extra page - {{pg.info.paper_number}}.{{ pg.info.question_list }}"
-		    {% else %}
-		    data-bs-title="Extra page - no data"
-		    {% endif %}
-		    >
-		    {% elif pg.status == 'unread' %}
-		    <button class="btn m-1 btn-outline-dark"
-			    onclick="this.blur();"
-			    hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
-			    hx-swap="outerHTML"
-			    hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-			    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="qr-unread"
-			    >
-		      {% elif pg.status == 'unknown' %}
-		      <button class="btn m-1 btn-warning"
-			      onclick="this.blur();"
-			      hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
-			      hx-swap="outerHTML"
-			      hx-target="#navFragment"
-			      hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-			      data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
-			      >
-			{% elif pg.status == 'error' %}
-		  <button class="btn m-1 btn-danger"
-			  onclick="this.blur();"
-			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
-			hx-swap="outerHTML"
-			hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
-		     >
-			{% elif pg.status == 'discard' %}
-		  <button class="btn m-1 btn-outline-dark"
-			  onclick="this.blur();"
-			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
-			hx-swap="outerHTML"
-			hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
-		     >
+			> p{{pg.order}}</button>
+		{% elif pg.status == 'extra' %}
+		<button
+		  {% if pg.info.question_list %}
+		  class="btn m-1 btn-outline-info"
+		  {% else %}
+		  class="btn m-1 btn-info"
 		  {% endif %}
-		  p{{pg.order}}
-		</button>
+		  onclick="this.blur();"
+		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+		  hx-swap="outerHTML"
+		  hx-target="#navFragment"
+		  hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		  data-bs-toggle="tooltip" data-bs-placement="top"
+		  {% if pg.info.question_list %}
+		  data-bs-title="Extra page - {{pg.info.paper_number}}.{{ pg.info.question_list }}"
+		  {% else %}
+		  data-bs-title="Extra page - no data"
+		  {% endif %}
+		  > p{{pg.order}}</button>
+		{% elif pg.status == 'unread' %}
+		<button class="btn m-1 btn-outline-dark"
+			onclick="this.blur();"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-swap="outerHTML"
+			hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="qr-unread"
+			> p{{pg.order}}</button>
+		{% elif pg.status == 'unknown' %}
+		<button class="btn m-1 btn-warning"
+			onclick="this.blur();"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-swap="outerHTML"
+			hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
+			> p{{pg.order}}</button>
+		{% elif pg.status == 'error' %}
+		<button class="btn m-1 btn-danger"
+			onclick="this.blur();"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-swap="outerHTML"
+			hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
+			> p{{pg.order}}</button>
+		{% elif pg.status == 'discard' %}
+		<button class="btn m-1 btn-outline-dark"
+			onclick="this.blur();"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-swap="outerHTML"
+			hx-target="#navFragment"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
+			> p{{pg.order}}</button>
+		{% endif %}
 	      </div>
 	      {% endfor %}
 	    </div>
 	  </div>
 	</div>
-    </div>
-</div>
+      </div>
 
-
-<div style="margin: 0px 0px 16px 2.5px">
-    <div class="collapse" id="viewValidPages">
+      <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accord">
         <div class="card" style="width: 66%;">
           <div class="container text-center">
 	    <div class="row row-cols-8">
@@ -216,7 +177,7 @@
 	      {% elif pg.status == 'extra' %}
 	      <div class="col-1">
 		<button
-		  {% if pg.info.question_list %}		
+		  {% if pg.info.question_list %}
 		  class="btn m-1 btn-outline-info"
 		  {% else %}
 		  class="btn m-1 btn-info"
@@ -226,7 +187,7 @@
 		  hx-target="#navFragment"
 		  hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
 		  data-bs-toggle="tooltip" data-bs-placement="top"
-		  {% if pg.info.question_list %}		
+		  {% if pg.info.question_list %}
 		  data-bs-title="Extra page - {{pg.info.paper_number}}.{{ pg.info.question_list }}"
 		  {% else %}
 		  data-bs-title="Extra page - no data"
@@ -240,52 +201,49 @@
 	    </div>
 	  </div>
 	</div>
-    </div>
-</div>
-
-<div style="margin: 0px 0px 16px 2.5px">
-    <div class="collapse" id="viewErrorPages">
+	
+      </div>
+      <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accord">
         <div class="card" style="width: 66%;">
           <div class="container text-center">
-	    <div class="row row-cols-8">	      
+	    <div class="row row-cols-8">
               {% for pg in pages %}
 	      {% if pg.status == 'unknown' %}
 	      <div class="col-1">
 		<button class="btn m-1 btn-warning"
-			  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
-			  hx-swap="outerHTML"
-			  hx-target="#navFragment"
+		  onclick="this.blur();"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-swap="outerHTML"
+			hx-target="#navFragment"
 			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
-		   >
+			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
+			>
 		  p{{pg.order}}
 		</button>
 	      </div>
 	      {% elif pg.status == 'error' %}
 	      <div class="col-1">
 		<button class="btn m-1 btn-danger"
+		  onclick="this.blur();"
 			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
 			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
-		   >
+			>
 		  p{{pg.order}}
 		</button>
 	      </div>
 	      {% endif %}
-	    {% endfor %}
+	      {% endfor %}
 	    </div>
 	  </div>
 	</div>
-    </div>
-</div>
-
-
-<div style="margin: 0px 0px 16px 2.5px">
-    <div class="collapse" id="viewPaperOrder">
+      </div>
+      <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#accord">
         <div class="card" style="width: 66%;">
           <div class="container">
+	    <p>Note that this only shows known and extra pages
 	    <ul>
 	      {% for paper,pages in papers_pages_list %}
 	      <li>
@@ -294,11 +252,12 @@
 		{% for pg in pages|dictsort:"page" %}
 		{% if pg.type == "known" %}
 		  <button class="btn m-1 btn-outline-success"
+		  onclick="this.blur();"
 			  hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
 			  hx-swap="outerHTML"
 			  hx-target="#navFragment"
 			  hx-replace-url="{% url 'scan_manage_bundle' timestamp pg.order %}"
-			  >		      
+			  >
 		    {{ pg.page }}
 		  </button>
 		{% endif %}
@@ -307,11 +266,12 @@
 		{% for pg in pages|dictsort:"order" %}
 		{% if pg.type == "extra" %}
 		  <button class="btn m-1 btn-outline-info"
+		  onclick="this.blur();"
 			  hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
 			  hx-swap="outerHTML"
 			  hx-target="#navFragment"
 			  hx-replace-url="{% url 'scan_manage_bundle' timestamp pg.order %}"
-			  >		      
+			  >
 		    q{{ pg.question_list }}
 		  </button>
 		  {% endif %}
@@ -319,10 +279,12 @@
 	      </li>
 	      {% endfor %}
 	    </ul>
+	    </p>
 	  </div>
 	</div>
-    </div>
+      </div>
 </div>
+
 
 
 
@@ -333,6 +295,8 @@
      hx-trigger="load"     
      >
 </div>
+
+
 
 <script>
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
