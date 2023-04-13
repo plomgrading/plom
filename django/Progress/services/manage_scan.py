@@ -80,7 +80,7 @@ class ManageScanService:
     @transaction.atomic
     def get_all_completed_test_papers(self):
         """
-        Return the number of test-papers that have been completely scanned.
+        Return dict of test-papers that have been completely scanned.
 
         A paper is complete when it either has **all** its fixed
         pages, or it has no fixed pages but has some extra-pages.
@@ -130,9 +130,56 @@ class ManageScanService:
         return complete
 
     @transaction.atomic
+    def get_all_incomplete_test_papers(self):
+        """
+        Return a dict of test-papers that are partially but not completely scanned.
+
+        A paper is not completely scanned when it has *some* but not all its fixed pages.
+        """
+
+        # Get fixed pages with no image - ie not scanned.
+        fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # Get count of papers with some but not all scanned fixed pages
+        some_but_not_all_fixed_present = Paper.objects.filter(
+            Exists(fixed_with_no_scan), Exists(fixed_with_scan)
+        )
+        incomplete = {}
+        for paper in some_but_not_all_fixed_present:
+            incomplete[paper.paper_number] = []
+            for fp in paper.fixedpage_set.all().order_by("page_number"):
+                if fp.image:
+                    incomplete[paper.paper_number].append(
+                        {
+                            "type": "fixed",
+                            "page_number": fp.page_number,
+                            "img_pk": fp.image.pk,
+                        }
+                    )
+                else:
+                    incomplete[paper.paper_number].append(
+                        {
+                            "type": "missing",
+                            "page_number": fp.page_number,
+                        }
+                    )
+            for mp in paper.mobilepage_set.all().order_by("question_number"):
+                incomplete[paper.paper_number].append(
+                    {
+                        "type": "mobile",
+                        "question_number": mp.question_number,
+                        "img_pk": mp.image.pk,
+                    }
+                )
+        return incomplete
+
+    @transaction.atomic
     def get_number_incomplete_test_papers(self):
         """
-        Return the number of test-papers that are not completely scanned.
+        Return the number of test-papers that are partially but not completely scanned.
 
         A paper is not completely scanned when it has *some* but not all its fixed pages.
         """
@@ -170,6 +217,26 @@ class ManageScanService:
         )
 
         return no_images_at_all.count()
+
+    @transaction.atomic
+    def get_all_unused_test_papers(self):
+        """
+        Return a list of test-papers (by number0 that are usused.
+
+        A paper is unused when it has no fixed page images nor any mobile pages.
+        """
+
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # get mobile pages
+        mobile_pages = MobilePage.objects.filter(paper=OuterRef("pk"))
+        # Get count of papers with neither fixed-with-scan nor mobile-pages
+        no_images_at_all = Paper.objects.filter(
+            ~Exists(fixed_with_scan), ~Exists(mobile_pages)
+        )
+        return [paper.paper_number for paper in no_images_at_all]
 
     @transaction.atomic
     def get_test_paper_list(self, exclude_complete=False, exclude_incomplete=False):
@@ -226,51 +293,6 @@ class ManageScanService:
         paper = Paper.objects.get(paper_number=test_paper)
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
-
-    @transaction.atomic
-    def get_n_colliding_pages(self):
-        """
-        Return the number of colliding images in the database.
-        """
-        colliding = CollidingImage.objects.all()
-        return len(colliding)
-
-    @transaction.atomic
-    def get_colliding_pages_list(self):
-        """
-        Return a list of colliding pages.
-        """
-
-        colliding_pages = []
-        colliding = CollidingImage.objects.all()
-
-        for page in colliding:
-            test_paper = page.paper_number
-            page_number = page.page_number
-            image_hash = page.hash
-
-            version = None
-
-            colliding_pages.append(
-                {
-                    "test_paper": test_paper,
-                    "number": page_number,
-                    "version": version,
-                    "colliding_hash": image_hash,
-                }
-            )
-
-        return colliding_pages
-
-    @transaction.atomic
-    def get_colliding_image(self, image_hash):
-        """
-        Return a colliding page.
-
-        Args:
-            image_hash: sha256 of the image.
-        """
-        return CollidingImage.objects.get(hash=image_hash)
 
     @transaction.atomic
     def get_discarded_image_path(self, image_hash, make_dirs=True):

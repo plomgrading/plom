@@ -11,6 +11,8 @@ from Base.base_group_views import ScannerRequiredView
 from Scan.services import ScanService
 from Progress.services import ManageScanService
 
+from plom.misc_utils import format_int_list_with_runs
+
 
 class ScannerSummaryView(ScannerRequiredView):
     """
@@ -30,6 +32,13 @@ class ScannerSummaryView(ScannerRequiredView):
         # turn into list of tuples (key, value) ordered by key
         all_complete_list = [(pn, pgs) for pn, pgs in sorted(all_complete.items())]
 
+        # this is a dict - key is paper_number, value = list of pages
+        all_incomplete = mss.get_all_incomplete_test_papers()
+        # turn into list of tuples (key, value) ordered by key
+        all_incomplete_list = [(pn, pgs) for pn, pgs in sorted(all_incomplete.items())]
+
+        all_unused_list = format_int_list_with_runs(mss.get_all_unused_test_papers()).split(",")
+                
         context.update(
             {
                 "complete_test_papers": complete_papers,
@@ -37,6 +46,8 @@ class ScannerSummaryView(ScannerRequiredView):
                 "unused_test_papers": unused_papers,
                 "total_papers": total_papers,
                 "all_complete_list": all_complete_list,
+                "all_incomplete_list": all_incomplete_list,
+                "all_unused_list": all_unused_list,
             }
         )
 
