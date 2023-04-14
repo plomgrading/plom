@@ -211,7 +211,12 @@ class MclaimThisTask(APIView):
             )
 
         mts.mark_task(
-            request.user, code, mark_data["score"], mark_data["marking_time"], img, annot_data
+            request.user,
+            code,
+            mark_data["score"],
+            mark_data["marking_time"],
+            img,
+            annot_data,
         )
 
         return Response(
