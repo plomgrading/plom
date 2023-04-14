@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
-from PyQt6.QtWidgets import QUndoCommand
+from PyQt6.QtGui import QUndoCommand
 
 
 class CommandCrop(QUndoCommand):

@@ -36,6 +36,7 @@ from PyQt6.QtGui import (
     QIcon,
     QKeySequence,
     QPixmap,
+    QShortcut,
 )
 from PyQt6.QtWidgets import (
     QDialog,
@@ -43,7 +44,6 @@ from PyQt6.QtWidgets import (
     QMenu,
     QMessageBox,
     QProgressDialog,
-    QShortcut,
     QToolButton,
     QFileDialog,
     QColorDialog,

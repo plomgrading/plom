@@ -11,7 +11,7 @@ import tempfile
 import urllib.request
 
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QKeySequence
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -20,7 +20,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QShortcut,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,

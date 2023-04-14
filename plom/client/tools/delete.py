@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QUndoCommand
+from PyQt6.QtGui import QUndoCommand
 
 from plom.client.tools.rubric import GroupDeltaTextItem
 from plom.client.tools import DeleteObject

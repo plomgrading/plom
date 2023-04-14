@@ -25,6 +25,7 @@ from PyQt6.QtGui import (
     QPen,
     QPixmap,
     QTransform,
+    QUndoStack,
 )
 from PyQt6.QtWidgets import (
     QGraphicsEllipseItem,
@@ -38,7 +39,6 @@ from PyQt6.QtWidgets import (
     QGraphicsView,
     QGraphicsItemGroup,
     QMessageBox,
-    QUndoStack,
     QToolButton,
     QMenu,
 )

@@ -3,12 +3,8 @@
 # Copyright (C) 2021, 2023 Colin B. Macdonald
 
 from PyQt6.QtCore import QTimer, QPropertyAnimation, pyqtProperty
-from PyQt6.QtGui import QPen, QColor, QBrush
-from PyQt6.QtWidgets import (
-    QGraphicsObject,
-    QGraphicsPathItem,
-    QUndoCommand,
-)
+from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
+from PyQt6.QtWidgets import QGraphicsObject, QGraphicsPathItem
 
 
 class CommandTool(QUndoCommand):
