@@ -14,9 +14,9 @@ def test_AddRubricBox_add_new(qtbot):
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
     qtbot.addWidget(d)
     assert d.windowTitle().startswith("Add")
-    qtbot.mouseClick(d.TE, Qt.LeftButton)
+    qtbot.mouseClick(d.TE, Qt.MouseButton.LeftButton)
     qtbot.keyClicks(d.TE, "new rubric")
-    qtbot.mouseClick(d.typeRB_relative, Qt.LeftButton)
+    qtbot.mouseClick(d.typeRB_relative, Qt.MouseButton.LeftButton)
     # don't care what the default is but start at 2...
     d.relative_value_SB.setValue(2)
     # then decrement x3, should skip zero and give -2
@@ -49,9 +49,9 @@ def test_AddRubricBox_modify(qtbot):
     assert d.typeRB_relative.isChecked()
 
     # TODO: seems clicking doesn't work to set RadioButtons:
-    qtbot.mouseClick(d.typeRB_neutral, Qt.LeftButton)
+    qtbot.mouseClick(d.typeRB_neutral, Qt.MouseButton.LeftButton)
     qtbot.wait(10)
-    qtbot.mouseClick(d.typeRB_neutral, Qt.LeftButton, delay=10)
+    qtbot.mouseClick(d.typeRB_neutral, Qt.MouseButton.LeftButton, delay=10)
     qtbot.wait(10)
     # times out after 5 seconds:
     # qtbot.waitUntil(lambda: d.typeRB_neutral.isChecked())
@@ -172,14 +172,14 @@ def test_AddRubricBox_parameterize(qtbot):
         qtbot.keyClick(d.TE, Qt.Key_Left)
         qtbot.keyClick(d.TE, Qt.Key_Left)
         # insert param1 in the middle
-        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
-        qtbot.mouseClick(d.addParameterButton, Qt.LeftButton)
+        qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
+        qtbot.mouseClick(d.addParameterButton, Qt.MouseButton.LeftButton)
         qtbot.wait(10)
         # highlight the "x" text and replace it with param2
         qtbot.keyClick(d.TE, Qt.Key_End)
         qtbot.keyClick(d.TE, Qt.Key_Left)
         qtbot.keyClick(d.TE, Qt.Key_Left, modifier=Qt.ShiftModifier)
-        qtbot.mouseClick(d.addParameterButton, Qt.LeftButton)
+        qtbot.mouseClick(d.addParameterButton, Qt.MouseButton.LeftButton)
         qtbot.wait(10)
         # path = qtbot.screenshot(d)
         # assert False, path
@@ -200,8 +200,8 @@ def test_AddRubricBox_modify_parameterized(qtbot):
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub, experimental=True)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
-    qtbot.mouseClick(d.addParameterButton, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(d.addParameterButton, Qt.MouseButton.LeftButton)
     d.accept()
     out = d.gimme_rubric_data()
     assert out["text"] == rub["text"] + "{param3}"
@@ -221,7 +221,7 @@ def test_AddRubricBox_modify_parameterized_remove(qtbot):
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub, experimental=True)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
     # remove the 2nd row (deletes param2)
     d.subsRemoveRow(1)
     # remove the 2nd row (deletes param9 )
@@ -238,8 +238,8 @@ def test_AddRubricBox_specific_to_version(qtbot):
         d = AddRubricBox(None, "user", 10, 1, "Q1", v, 3, None)
         qtbot.addWidget(d)
         qtbot.keyClicks(d.TE, "foo")
-        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
-        qtbot.mouseClick(d.version_specific_cb, Qt.LeftButton)
+        qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
+        qtbot.mouseClick(d.version_specific_cb, Qt.MouseButton.LeftButton)
         qtbot.keyClicks(d.version_specific_le, ", 3")
         d.accept()
         out = d.gimme_rubric_data()
@@ -257,16 +257,16 @@ def test_AddRubricBox_change_existing_versions(qtbot):
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
     # unchecking
-    qtbot.mouseClick(d.version_specific_cb, Qt.LeftButton)
+    qtbot.mouseClick(d.version_specific_cb, Qt.MouseButton.LeftButton)
     d.accept()
     out = d.gimme_rubric_data()
     assert out["versions"] == []
 
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
     qtbot.keyClicks(d.version_specific_le, ", 2")
     d.accept()
     out = d.gimme_rubric_data()
@@ -279,8 +279,8 @@ def test_AddRubricBox_add_to_group(qtbot):
         d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, None, groups=groups)
         qtbot.addWidget(d)
         qtbot.keyClicks(d.TE, "foo")
-        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
-        qtbot.mouseClick(d.group_checkbox, Qt.LeftButton)
+        qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
+        qtbot.mouseClick(d.group_checkbox, Qt.MouseButton.LeftButton)
         qtbot.keyClicks(d.group_combobox, group)
         d.accept()
         out = d.gimme_rubric_data()
@@ -293,10 +293,10 @@ def test_AddRubricBox_add_to_group_exclusive(qtbot):
         d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, None, groups=groups)
         qtbot.addWidget(d)
         qtbot.keyClicks(d.TE, "foo")
-        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
-        qtbot.mouseClick(d.group_checkbox, Qt.LeftButton)
+        qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
+        qtbot.mouseClick(d.group_checkbox, Qt.MouseButton.LeftButton)
         qtbot.keyClicks(d.group_combobox, group)
-        qtbot.mouseClick(d.group_excl, Qt.LeftButton)
+        qtbot.mouseClick(d.group_excl, Qt.MouseButton.LeftButton)
         d.accept()
         out = d.gimme_rubric_data()
         assert out["tags"] == f"group:{group} exclusive:{group}"
@@ -313,8 +313,8 @@ def test_AddRubricBox_group_without_group_list(qtbot):
     }
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
-    qtbot.mouseClick(d.group_excl, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(d.group_excl, Qt.MouseButton.LeftButton)
     d.accept()
     out = d.gimme_rubric_data()
     assert "unrelated_tag" in out["tags"]
@@ -334,9 +334,9 @@ def test_AddRubricBox_change_group_make_exclusive(qtbot):
     for group in groups:
         d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub, groups=groups)
         qtbot.addWidget(d)
-        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+        qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
         qtbot.keyClicks(d.group_combobox, group)
-        qtbot.mouseClick(d.group_excl, Qt.LeftButton)
+        qtbot.mouseClick(d.group_excl, Qt.MouseButton.LeftButton)
         d.accept()
         out = d.gimme_rubric_data()
         assert out["tags"] == f"group:{group} exclusive:{group}"
@@ -355,11 +355,11 @@ def test_AddRubricBox_change_group_remove_exclusive(qtbot):
     for group in groups:
         d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub, groups=groups)
         qtbot.addWidget(d)
-        qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+        qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
         assert d.group_checkbox.isChecked()
         assert d.group_excl.isChecked()
         qtbot.keyClicks(d.group_combobox, group)
-        qtbot.mouseClick(d.group_excl, Qt.LeftButton)
+        qtbot.mouseClick(d.group_excl, Qt.MouseButton.LeftButton)
         d.accept()
         out = d.gimme_rubric_data()
         assert out["tags"] == f"group:{group}"
@@ -376,7 +376,7 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     rub["tags"] = "group:(a) group:(b)"
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
     assert d.group_checkbox.isChecked()
     assert not d.group_excl.isChecked()
     assert not d.group_checkbox.isEnabled()
@@ -388,7 +388,7 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     rub["tags"] = "group:(a) exclusive:(b)"
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
     assert d.group_checkbox.isChecked()
     assert d.group_excl.isChecked()
     assert not d.group_checkbox.isEnabled()
@@ -400,7 +400,7 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     rub["tags"] = "group:(a) group:(b) exclusive:(b)"
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
     assert d.group_checkbox.isChecked()
     assert d.group_excl.isChecked()
     assert not d.group_checkbox.isEnabled()
@@ -412,7 +412,7 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     rub["tags"] = "exclusive:(b)"
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
     assert not d.group_checkbox.isChecked()
     assert d.group_excl.isChecked()
     assert not d.group_checkbox.isEnabled()
@@ -424,7 +424,7 @@ def test_AddRubricBox_group_too_complicated(qtbot):
     rub["tags"] = "group:(a) exclusive:(a) exclusive:(b)"
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 2, rub, groups=["(a)"])
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.scopeButton, Qt.LeftButton)
+    qtbot.mouseClick(d.scopeButton, Qt.MouseButton.LeftButton)
     assert d.group_checkbox.isChecked()
     assert d.group_excl.isChecked()
     assert not d.group_checkbox.isEnabled()
@@ -465,7 +465,7 @@ def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     )
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.TE, Qt.LeftButton)
+    qtbot.mouseClick(d.TE, Qt.MouseButton.LeftButton)
     txt = "$y = mx + b$"
     qtbot.keyClicks(d.TE, txt)
     d.accept()
@@ -477,7 +477,7 @@ def test_AddRubricBox_suggest_tex_on_dollar_signs(qtbot, monkeypatch):
     )
     d = AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, None)
     qtbot.addWidget(d)
-    qtbot.mouseClick(d.TE, Qt.LeftButton)
+    qtbot.mouseClick(d.TE, Qt.MouseButton.LeftButton)
     txt = "bribe insufficient, send more $$"
     qtbot.keyClicks(d.TE, txt)
     d.accept()
@@ -491,7 +491,7 @@ def test_AddRubricBox_shift_enter_accepts_dialog(qtbot):
     d.show()
     qtbot.keyClicks(d.TE, "text")
     # ensure we have the TE focused
-    qtbot.mouseClick(d.TE, Qt.LeftButton)
+    qtbot.mouseClick(d.TE, Qt.MouseButton.LeftButton)
     qtbot.wait(10)
     qtbot.keyClick(d.TE, Qt.Key_Enter, modifier=Qt.ShiftModifier)
     qtbot.wait(10)

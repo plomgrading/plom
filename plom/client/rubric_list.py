@@ -664,7 +664,7 @@ class TabBarWithAddRenameRemoveContext(QTabBar):
         super().__init__()
 
     def mousePressEvent(self, mouseEvent):
-        if mouseEvent.button() == Qt.RightButton:
+        if mouseEvent.button() == Qt.MouseButton.RightButton:
             point = mouseEvent.pos()
             n = self.tabAt(point)
             if n >= 0:

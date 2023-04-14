@@ -1320,14 +1320,14 @@ class PageScene(QGraphicsScene):
 
     def stampCrossQMarkTick(self, event, cross=True):
         pt = event.scenePos()  # Grab the click's location and create command.
-        if (event.button() == Qt.RightButton) or (
+        if (event.button() == Qt.MouseButton.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             if cross:
                 command = CommandTick(self, pt)
             else:
                 command = CommandCross(self, pt)
-        elif (event.button() == Qt.MiddleButton) or (
+        elif (event.button() == Qt.MouseButton.MiddleButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
         ):
             command = CommandQMark(self, pt)
@@ -1918,7 +1918,7 @@ class PageScene(QGraphicsScene):
         self.currentPos = self.originPos
         # If left-click then a highlight box, else an ellipse.
         # Set a flag to tell the mouseReleaseBox function which.
-        if (event.button() == Qt.RightButton) or (
+        if (event.button() == Qt.MouseButton.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             self.boxFlag = 2
@@ -2037,11 +2037,11 @@ class PageScene(QGraphicsScene):
         if self.arrowFlag != 0:
             # mid line draw so ignore press
             return
-        if (event.button() == Qt.RightButton) or (
+        if (event.button() == Qt.MouseButton.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             self.arrowFlag = 2
-        elif (event.button() == Qt.MiddleButton) or (
+        elif (event.button() == Qt.MouseButton.MiddleButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
         ):
             self.arrowFlag = 4
@@ -2133,12 +2133,12 @@ class PageScene(QGraphicsScene):
         # Else set to the highlighter or pen with arrows.
         # set penFlag so correct object created on mouse-release
         # non-zero value so we don't add to path after mouse-release
-        if (event.button() == Qt.RightButton) or (
+        if (event.button() == Qt.MouseButton.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             self.pathItem.setPen(self.highlight)
             self.penFlag = 2
-        elif (event.button() == Qt.MiddleButton) or (
+        elif (event.button() == Qt.MouseButton.MiddleButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
         ):
             # middle button is pen-path with arrows at both ends
@@ -2232,7 +2232,7 @@ class PageScene(QGraphicsScene):
         if self.zoomFlag:
             return
 
-        if (event.button() == Qt.RightButton) or (
+        if (event.button() == Qt.MouseButton.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             # sets the view rectangle and updates zoom-dropdown.

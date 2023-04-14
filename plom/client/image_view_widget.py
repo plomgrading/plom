@@ -360,7 +360,7 @@ class _ExamView(QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""
-        if (event.button() == Qt.RightButton) or (
+        if (event.button() == Qt.MouseButton.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             self.zoomOut()
