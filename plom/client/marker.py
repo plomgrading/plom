@@ -1126,7 +1126,7 @@ class MarkerClient(QWidget):
         self._prefer_above_action = a
         m.addAction(a)
         self.ui.getNextButton.setMenu(m)
-        # self.ui.getNextButton.setPopupMode(QToolButton.MenuButtonPopup)
+        # self.ui.getNextButton.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)

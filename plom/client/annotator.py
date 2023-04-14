@@ -200,7 +200,7 @@ class Annotator(QWidget):
 
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
-        self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
+        self.ui.hamMenuButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setToolShortCuts()
         self.setMinorShortCuts()
 
@@ -277,36 +277,36 @@ class Annotator(QWidget):
 
         m = QMenu()
         key = keydata["next-paper"]["keys"][0]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Next paper\t{key}", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         (key,) = keydata["cancel"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Close without saving\t{key}", self.close)
         m.addSeparator()
         (key,) = keydata["quick-show-prev-paper"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Show previous paper(s)\t{key}", self.show_previous)
         m.addSeparator()
         self._cat_view_menu = m.addAction("View cat", self.viewCat)
         if not self.is_experimental():
             self._cat_view_menu.setVisible(False)
         (key,) = keydata["show-solutions"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"View solutions\t{key}", self.viewSolutions)
         (key,) = keydata["tag-paper"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Tag paper...\t{key}", self.tag_paper)
         m.addSeparator()
         (key,) = keydata["rearrange-pages"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Adjust pages\t{key}", self.rearrangePages)
         (key,) = keydata["crop-in"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Crop to region\t{key}", self.to_crop_mode)
         (key,) = keydata["crop-out"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Uncrop\t{key}", self.uncrop_region)
         hold_crop = m.addAction("Hold crop between papers")
         hold_crop.setCheckable(True)
@@ -336,7 +336,7 @@ class Annotator(QWidget):
         subm.addAction("Zoom", self.ui.zoomButton.animateClick)
         m.addSeparator()
         (key,) = keydata["increase-annotation-scale"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(
             f"Increase annotation scale\t{key}",
             lambda: self.change_annot_scale(1.1),
@@ -349,7 +349,7 @@ class Annotator(QWidget):
         self.update_annot_scale_menu_label()
 
         (key,) = keydata["decrease-annotation-scale"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(
             f"Decrease annotation scale\t{key}",
             lambda: self.change_annot_scale(1.0 / 1.1),
@@ -368,14 +368,14 @@ class Annotator(QWidget):
         self._experimental_mode_checkbox = x
         m.addAction("Synchronise rubrics", self.refreshRubrics)
         (key,) = keydata["toggle-wide-narrow"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Compact UI\t{key}", self.narrowLayout)
         # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
         # m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
         m.addAction("Help", lambda: self.keyPopUp(tab_idx=0))
         (key,) = keydata["help"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Show shortcut keys...\t{key}", self.keyPopUp)
         m.addAction("About Plom", lambda: show_about_dialog(self))
         return m
@@ -1296,7 +1296,9 @@ class Annotator(QWidget):
         m.addSeparator()
         m.addAction("Cancel", self.close)
         self.ui.finishedButton.setMenu(m)
-        self.ui.finishedButton.setPopupMode(QToolButton.MenuButtonPopup)
+        self.ui.finishedButton.setPopupMode(
+            QToolButton.ToolButtonPopupMode.MenuButtonPopup
+        )
         self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
 
         # connect the "wide" button in the narrow-view
