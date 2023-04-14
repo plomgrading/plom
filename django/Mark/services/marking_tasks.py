@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import json
 import pathlib
@@ -49,6 +50,9 @@ class MarkingTaskService:
         question_version = pqv_map[paper.paper_number][question_number]
 
         task_code = f"q{paper.paper_number:04}g{question_number}"
+
+        # TODO - this needs to handle deprecating existing tasks
+        # eg - late uploading of extra page will recreate a task.
 
         the_task = MarkingTask(
             assigned_user=user,

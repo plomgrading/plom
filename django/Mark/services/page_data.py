@@ -4,7 +4,7 @@
 
 from django.db import transaction
 
-from Papers.models import Paper, FixedPage, QuestionPage, Image
+from Papers.models import Paper, FixedPage, QuestionPage, Image, MobilePage
 
 
 class PageDataService:
@@ -41,6 +41,9 @@ class PageDataService:
         question_pages = QuestionPage.objects.filter(
             paper=test_paper, question_number=question
         )
+        mobile_pages = MobilePage.objects.filter(
+            paper=test_paper, question_number=question
+        )
 
         page_list = []
         for page in question_pages.order_by("page_number"):
@@ -54,6 +57,22 @@ class PageDataService:
                         "server_path": image.file_name,
                         "included": True,
                         "order": page.page_number,
+                    }
+                )
+        # TODO - decide better order.
+        for page in mobile_pages:
+            image = page.image
+            if image:
+                page_list.append(
+                    {
+                        "id": image.pk,
+                        "md5": image.hash,
+                        "orientation": image.rotation,
+                        "server_path": image.file_name,
+                        "included": True,
+                        # WARNING - HACKERY HERE
+                        "order": len(page_list) + 1,
+                        # WARNING HACKERY HERE
                     }
                 )
 
