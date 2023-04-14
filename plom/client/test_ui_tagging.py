@@ -43,7 +43,9 @@ def test_tag_choices(qtbot):
 
 
 def test_tag_remove(qtbot, monkeypatch):
-    monkeypatch.setattr(QMessageBox, "question", lambda *args: QMessageBox.Yes)
+    monkeypatch.setattr(
+        QMessageBox, "question", lambda *args: QMessageBox.StandardButton.Yes
+    )
     d = AddRemoveTagDialog(None, ["tag1", "tag2", "tag3"], [])
     d.show()
     qtbot.addWidget(d)

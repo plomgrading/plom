@@ -775,7 +775,7 @@ class RearrangementViewer(QDialog):
                 "This will erase all your annotations.",
                 "Are you sure you want to save this page order?",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
 
         self.permute = []

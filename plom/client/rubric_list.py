@@ -894,7 +894,7 @@ class RubricWidget(QWidget):
                     + ".",
                     question="Add another empty tab?",
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return
 
         if not name:
@@ -951,7 +951,7 @@ class RubricWidget(QWidget):
         else:
             msg = "<p>Are you sure you want to delete the empty "
             msg += f"tab &ldquo;{tab.shortname}&rdquo;?</p>"
-        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+        if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
             return
         self.RTW.removeTab(n)
         tab.clear()
@@ -1480,7 +1480,7 @@ class RubricWidget(QWidget):
             f"(it was created by &ldquo;{com['username']}&rdquo;).</p>",
             "Do you want to make a copy and edit that instead?",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         com = com.copy()  # don't muck-up the original
         newmeta = [com["meta"]] if com["meta"] else []

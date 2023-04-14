@@ -80,7 +80,7 @@ class GroupView(QDialog):
             grid.addWidget(label)
         # some extra space before the main dialog buttons
         grid.addSpacing(6)
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         buttons.accepted.connect(self.accept)
         # keep a instance var in case a subclass wants to inject other buttons
         self._buttonBox = buttons

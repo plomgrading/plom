@@ -131,8 +131,10 @@ class SimpleQuestionCheckBox(QMessageBox):
         else:
             self.cb = QCheckBox("Don't show this message again")
         self.setText(txt)
-        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        self.setDefaultButton(QMessageBox.Yes)
+        self.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        self.setDefaultButton(QMessageBox.StandardButton.Yes)
         self.setIcon(QMessageBox.Icon.Question)
         self.setCheckBox(self.cb)
 
@@ -443,7 +445,7 @@ class AddRemoveTagDialog(QDialog):
     def remove_tag(self, tag):
         msg = f"<p>Do you want to remove tag &ldquo;{tag}&rdquo;?"
         title = f"Remove tag \u201C{tag}\u201D{self.from_label}?"
-        if QMessageBox.question(self, title, msg) != QMessageBox.Yes:
+        if QMessageBox.question(self, title, msg) != QMessageBox.StandardButton.Yes:
             return
         self.return_values = ("remove", tag)
         self.accept()
@@ -493,7 +495,7 @@ class BigMessageDialog(QDialog):
 
         lay.addWidget(s)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         b = QToolButton(text="Details")
         b.setCheckable(True)
         b.clicked.connect(self.toggle_details)

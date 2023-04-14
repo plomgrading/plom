@@ -78,8 +78,8 @@ def sigint_handler(*args):
     msg = WarningQuestion(
         None, "Caught interrupt signal!", "Do you want to force-quit?"
     )
-    msg.setDefaultButton(QMessageBox.No)
-    if msg.exec() == QMessageBox.Yes:
+    msg.setDefaultButton(QMessageBox.StandardButton.No)
+    if msg.exec() == QMessageBox.StandardButton.Yes:
         QApplication.exit(42)
 
 

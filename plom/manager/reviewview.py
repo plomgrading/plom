@@ -53,7 +53,7 @@ class ReviewViewWindow(QDialog):
         grid = QVBoxLayout()
         grid.addWidget(img, 1)
         grid.addWidget(explanation)
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         # connect the okay-button to 'accept'
         buttons.accepted.connect(self.accept)
         # construct and connect other buttons
@@ -75,7 +75,7 @@ class ReviewViewWindow(QDialog):
             review_beta_warning,
             question="Are you sure you want to flag this for review?",
         )
-        if not d.exec() == QMessageBox.Yes:
+        if not d.exec() == QMessageBox.StandardButton.Yes:
             return
         self.parent().flag_question_for_review(self.papernum, self.question, self.who)
 
@@ -94,7 +94,7 @@ class ReviewViewWindowID(QDialog):
         grid = QVBoxLayout()
         grid.addWidget(img, 1)
         grid.addWidget(explanation)
-        buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
         b = QPushButton("Yes, &flag for review")
         b.clicked.connect(self.accept)
         buttons.addButton(b, QDialogButtonBox.YesRole)

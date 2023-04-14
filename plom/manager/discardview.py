@@ -33,7 +33,7 @@ class DiscardViewWindow(QDialog):
         grid = QVBoxLayout()
         grid.addWidget(self.img, 1)
         grid.addWidget(explanation)
-        buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
         moveB = QPushButton("&Move to unknown pages")
         moveB.clicked.connect(self.accept)
         buttons.addButton(moveB, QDialogButtonBox.AcceptRole)

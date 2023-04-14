@@ -298,7 +298,7 @@ class TestStatus(QDialog):
             vb2.addWidget(G)
         vb2.addStretch(2)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         buttons.rejected.connect(self.reject)
         vb2.addWidget(buttons)
         self.setLayout(hb)
@@ -541,7 +541,7 @@ class Manager(QWidget):
                 " (and then you can try to log in again)\n\n"
                 "The other client will likely crash.",
             )
-            if msg.exec() == QMessageBox.Yes:
+            if msg.exec() == QMessageBox.StandardButton.Yes:
                 self.msgr.clearAuthorisation("manager", pwd)
                 self.msgr = None
                 self.login()
@@ -933,7 +933,7 @@ class Manager(QWidget):
                 f"Will remove the selected page {page_name} from the selected test {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
             try:
                 msg = self.msgr.removeSinglePage(test_number, page_name)
@@ -947,7 +947,7 @@ class Manager(QWidget):
                 f"Will remove all scanned pages from the selected test - test number {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
@@ -961,7 +961,7 @@ class Manager(QWidget):
             'Are you sure you want to substitute a "Missing Page" blank for '
             f"tpage {page_number} of question {question} test {test_number}?",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         s = self.msgr.replaceMissingTestPage(test_number, page_number, version)
         InfoMsg(self, "Successfully substituted.", info=s).exec()
@@ -972,7 +972,7 @@ class Manager(QWidget):
             'Are you sure you want to substitute a "Missing Page" blank for '
             f"tpage {page_number} of test {test_number} - it is a Do Not Mark page?",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
 
         try:
@@ -1005,7 +1005,7 @@ class Manager(QWidget):
                 <p>Would you like to continue substituting missing DNM pages?</p>
             """,
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
 
         incomplete = self.msgr.getIncompleteTests()  # triples [p, v, true/false]
@@ -1038,7 +1038,7 @@ class Manager(QWidget):
             f"Are you sure you want to generate an ID for test {test_number}? "
             "You can only do this for homeworks or pre-named tests.",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         try:
             rval = self.msgr.replaceMissingIDPage(test_number)
@@ -1065,7 +1065,7 @@ class Manager(QWidget):
             'Are you sure you want to substitute a "Missing Page" blank for '
             f"question {question} of test {test_number}?",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         try:
             rval = self.msgr.replaceMissingHWQuestion(
@@ -1118,7 +1118,7 @@ class Manager(QWidget):
                 f"Will remove the selected page {page_name} from the selected test {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
 
             try:
@@ -1133,7 +1133,7 @@ class Manager(QWidget):
                 f"Will remove all scanned pages from the selected test - test number {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
@@ -1607,7 +1607,7 @@ class Manager(QWidget):
             f"Will remove the selected page {page_name} from the selected test {test_number}.",
             "Are you sure you wish to do this? (not reversible)",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
 
         try:
@@ -1857,14 +1857,14 @@ class Manager(QWidget):
                 f' {timestamp.isoformat(" ", "seconds")}.',
                 question="Do you want to rerun it?",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec_() == QMessageBox.StandardButton.No:
                 return
             self.id_reader_run(ignore_timestamp=True)
 
     def id_reader_kill(self):
         if (
             SimpleQuestion(self, "Stop running process", "Are you sure?").exec_()
-            == QMessageBox.No
+            == QMessageBox.StandardButton.No
         ):
             return
         msg = self.msgr.id_reader_kill()
@@ -1891,7 +1891,7 @@ class Manager(QWidget):
             msg += f"\n\nCurrently is {sid}: {sname}"
         else:
             msg += "\n\nCan't find current ID - is likely not ID'd yet."
-        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+        if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
             return
         self.msgr.un_id_paper(test)
         self.getPredictions()
@@ -1906,7 +1906,7 @@ class Manager(QWidget):
         test = self.ui.predictionTW.item(idx.row(), 0).data(Qt.DisplayRole)
         predictor = self.ui.predictionTW.item(idx.row(), 4).data(Qt.DisplayRole)
         msg = f'Do you want to remove "{predictor}" predicted ID of test number {test}?'
-        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+        if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
             return
         if predictor == "prename":
             self.msgr.remove_pre_id(test)
@@ -2030,7 +2030,7 @@ class Manager(QWidget):
             " (note that this does not delete user-confirmed IDs or"
             " prenamed predictions)",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         # TODO: likely unnecessary?
         self.msgr.ID_delete_machine_predictions()
@@ -2371,7 +2371,7 @@ class Manager(QWidget):
             review_beta_warning,
             question=f"Are you sure you want to <b>flag {howmany}</b> for review?",
         )
-        if not d.exec() == QMessageBox.Yes:
+        if not d.exec() == QMessageBox.StandardButton.Yes:
             return
         self.ui.reviewIDTW.setSortingEnabled(False)
         for tmp in ri[::mod]:
@@ -2412,7 +2412,7 @@ class Manager(QWidget):
             revert_beta_warning,
             question=f"Are you sure you want to <b>revert {howmany}</b>?",
         )
-        if not d.exec() == QMessageBox.Yes:
+        if not d.exec() == QMessageBox.StandardButton.Yes:
             return
         self.ui.reviewIDTW.setSortingEnabled(False)
         for tmp in ri[::mod]:
@@ -2430,7 +2430,7 @@ class Manager(QWidget):
             "The data in the table is now outdated.",
             question="Do you want to refresh the table?",
         )
-        if not rf.exec() == QMessageBox.Yes:
+        if not rf.exec() == QMessageBox.StandardButton.Yes:
             return
         self.filterReview()
 
@@ -2597,7 +2597,7 @@ class Manager(QWidget):
                     self,
                     "This paper was ID'd automatically, are you sure you wish to review it?",
                 ).exec()
-                != QMessageBox.Yes
+                != QMessageBox.StandardButton.Yes
             ):
                 return
 
@@ -2698,7 +2698,7 @@ class Manager(QWidget):
                 f" question index {self.ui.solnQSB.value()}"
                 f" version {self.ui.solnVSB.value()}.",
             ).exec()
-            == QMessageBox.Yes
+            == QMessageBox.StandardButton.Yes
         ):
             self.msgr.deleteSolutionImage(
                 self.ui.solnQSB.value(), self.ui.solnVSB.value()
@@ -2797,7 +2797,7 @@ class Manager(QWidget):
                 "Are you sure you want to force-logout users {}?".format(selectedUsers)
                 # do something about this formatting, right now it's just a python list
             ).exec()
-            == QMessageBox.Yes
+            == QMessageBox.StandardButton.Yes
         ):
             for user in selectedUsers:
                 self.msgr.clearAuthorisationUser(user)
@@ -2827,7 +2827,7 @@ class Manager(QWidget):
         msg = "Are you sure you want to disable "
         msg += "users " if len(selectedUsers) > 1 else "user "
         msg += ", ".join(f'"{x}"' for x in selectedUsers)
-        if SimpleQuestion(self, msg).exec() != QMessageBox.Yes:
+        if SimpleQuestion(self, msg).exec() != QMessageBox.StandardButton.Yes:
             return
         for user in selectedUsers:
             try:

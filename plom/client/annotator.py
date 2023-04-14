@@ -258,7 +258,7 @@ class Annotator(QWidget):
         pix = pix.scaledToHeight(256, Qt.TransformationMode.SmoothTransformation)
         msg = SimpleQuestion(self, txt, question=info)
         msg.setIconPixmap(pix)
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             self._experimental_mode_checkbox.setChecked(False)
             return
         self.parentMarkerUI.set_experimental(True)
@@ -1496,7 +1496,7 @@ class Annotator(QWidget):
                 "<p>Are you sure you wish to continue?</p>",
                 "Don't ask me again this session.",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return False
             if msg.cb.isChecked():
                 # Note: these are only saved if we ultimately accept
@@ -1508,7 +1508,7 @@ class Annotator(QWidget):
         if not ok:
             # TODO: some more serious than others, may want to add
             # "don't ask me again" for only some.  For now, none.
-            if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+            if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
                 return False
 
         aname, plomfile = self.pickleIt()
@@ -1556,13 +1556,13 @@ class Annotator(QWidget):
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
                 msg = SimpleQuestion(self, msg)
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
             elif self.markWarn:
                 msg = SimpleQuestionCheckBox(
                     self, msg, "Don't ask me again this session."
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
                 if msg.cb.isChecked():
                     self.markWarn = False
@@ -1599,13 +1599,13 @@ class Annotator(QWidget):
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
                 msg = SimpleQuestion(self, msg)
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
             elif self.markWarn:
                 msg = SimpleQuestionCheckBox(
                     self, msg, "Don't ask me again this session."
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
                 if msg.cb.isChecked():
                     self.markWarn = False
@@ -1662,7 +1662,7 @@ class Annotator(QWidget):
                 "<p>There are unsaved changes to the annotations.</p>\n"
                 "<p>Do you want to discard changes and close the annotator?</p>",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 event.ignore()
                 return
 

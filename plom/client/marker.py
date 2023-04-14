@@ -1670,7 +1670,7 @@ class MarkerClient(QWidget):
                     "Do you want to wait a few more seconds?\n\n"
                     "(It is safe to choose 'no': the Annotator will simply close)",
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
                 count = 0
                 self.Qapp.processEvents()
@@ -1761,7 +1761,7 @@ class MarkerClient(QWidget):
 
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
-            if not msg.exec() == QMessageBox.Yes:
+            if not msg.exec() == QMessageBox.StandardButton.Yes:
                 return
             oldpname = self.examModel.getPlomFileByTask(task)
             with open(oldpname, "r") as fh:
@@ -1788,7 +1788,7 @@ class MarkerClient(QWidget):
                     self,
                     "Still waiting for download.  Do you want to wait a bit longer?",
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return
                 count = 0
                 self.Qapp.processEvents()
@@ -2223,7 +2223,7 @@ class MarkerClient(QWidget):
                 "Download threads are still in progress.",
                 question="Do you want to wait a little longer?",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 # TODO: do we have a force quit?
                 break
         N = self.get_upload_queue_length()
@@ -2237,12 +2237,14 @@ class MarkerClient(QWidget):
             s += "may have failed: you can quit, losing any non-uploaded "
             s += "annotations.</p>"
             msg.setInformativeText(s)
-            msg.setStandardButtons(QMessageBox.Cancel | QMessageBox.Discard)
-            msg.setDefaultButton(QMessageBox.Cancel)
-            button = msg.button(QMessageBox.Cancel)
+            msg.setStandardButtons(
+                QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Discard
+            )
+            msg.setDefaultButton(QMessageBox.StandardButton.Cancel)
+            button = msg.button(QMessageBox.StandardButton.Cancel)
             button.setText("Wait (cancel close)")
             msg.setIcon(QMessageBox.Icon.Warning)
-            if msg.exec() == QMessageBox.Cancel:
+            if msg.exec() == QMessageBox.StandardButton.Cancel:
                 event.ignore()
                 return
         if self.backgroundUploader is not None:

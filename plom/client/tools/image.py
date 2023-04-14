@@ -182,7 +182,9 @@ class ImageSettingsDialog(QDialog):
         """
         super().__init__(parent)
         self.createFormGroupBox(scalePercent, checked)
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttonBox = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
         mainLayout = QVBoxLayout()

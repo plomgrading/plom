@@ -384,7 +384,9 @@ class AddRubricBox(QDialog):
         flay.addRow("Rubric ID", self.label_rubric_id)
         flay.addRow("Created by", self.Luser)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
 
         vlay = QVBoxLayout()
         vlay.addLayout(flay)
@@ -724,7 +726,7 @@ class AddRubricBox(QDialog):
                     """,
                     icon_pixmap=pix,
                 )
-                == QMessageBox.Yes
+                == QMessageBox.StandardButton.Yes
             ):
                 self.TE.setText("tex: " + txt)
         super().accept()

@@ -623,7 +623,7 @@ class IDClient(QWidget):
         if status != "unidentified":
             msg = SimpleQuestion(self, "Do you want to change the ID?")
             # Put message popup on top-corner of idenfier window
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
         # code = self.exM.data(index[0])
 
@@ -758,7 +758,7 @@ class IDClient(QWidget):
         if status == "identified":
             msg = SimpleQuestion(self, "Do you want to change the ID?")
             # Put message popup on top-corner of idenfier window
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
             else:
                 alreadyIDd = True
@@ -776,7 +776,7 @@ class IDClient(QWidget):
                 msg.setGeometry(self.msgGeometry)
 
             # If user says "no" then just return from function.
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 self.msgGeometry = msg.geometry()
                 return
             self.msgGeometry = msg.geometry()
@@ -794,7 +794,7 @@ class IDClient(QWidget):
             # Put message popup on top-corner of idenfier window
             msg.move(self.pos())
             # If no then return from function.
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 self.msgPosition = msg.pos()
                 return
             self.msgPosition = msg.pos()
