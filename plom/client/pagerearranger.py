@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
@@ -409,8 +409,8 @@ class RearrangementViewer(QDialog):
             )
             for i in range(3):
                 f = QFrame()
-                f.setFrameShape(QFrame.HLine)
-                f.setFrameShadow(QFrame.Sunken)
+                f.setFrameShape(QFrame.Shape.HLine)
+                f.setFrameShadow(QFrame.Shadow.Sunken)
                 vb.addWidget(f)
             vb.addItem(
                 QSpacerItem(

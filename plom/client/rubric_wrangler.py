@@ -320,7 +320,7 @@ class DropButton(QPushButton):
 class ShowListFrame(QFrame):
     def __init__(self, nameList):
         super().__init__()
-        self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
         self.STW = ShowTabW(nameList)
         self.DI = DeleteIcon()
         vl = QVBoxLayout()

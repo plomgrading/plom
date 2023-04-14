@@ -267,8 +267,8 @@ class ClientSettingsDialog(QDialog):
         flay.addWidget(QLabel("(Logs stored in {})".format(logdir)))
 
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
 
         self.checkFore = QCheckBox("Force foreground upload/downloads")
@@ -284,8 +284,8 @@ class ClientSettingsDialog(QDialog):
         flay.addWidget(moreinfo)
 
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
 
         self.checkWarnCom = QCheckBox(
@@ -302,8 +302,8 @@ class ClientSettingsDialog(QDialog):
             self.checkWarnMark.setEnabled(False)
 
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
         flay.addRow("Config file:", QLabel("{}".format(cfgfile)))
         tempdir_prefix = "plom_"
@@ -404,8 +404,8 @@ class AddRemoveTagDialog(QDialog):
             QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
         )
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
         flay.addItem(
             QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
@@ -508,8 +508,8 @@ class BigMessageDialog(QDialog):
             lay.addWidget(buttons)
             # QMessageBox has a horizontal rule
             line = QFrame()
-            line.setFrameShape(QFrame.HLine)
-            line.setFrameShadow(QFrame.Sunken)
+            line.setFrameShape(QFrame.Shape.HLine)
+            line.setFrameShadow(QFrame.Shadow.Sunken)
             lay.addWidget(line)
             self._line = line
             line.setVisible(False)
