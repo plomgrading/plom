@@ -3,7 +3,7 @@
   * Plom is a system for large-scale marking by humans of handwritten work.
   * Designed for giving consistent, meaningful feedback to students.
   * [Free/Open Source Software](https://www.gnu.org/licenses/agpl-3.0.en.html)
-    written in Python using [Qt](https://pypi.org/project/PyQt5) and other
+    written in Python using [Qt](https://pypi.org/project/PyQt6) and other
     components.
 
 <img src="https://plomgrading.org/images/plomclient.png" width="800px" alt="The plom annotation client in action">

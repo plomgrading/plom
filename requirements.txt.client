@@ -8,8 +8,8 @@
 # without any warranty.
 
 # These should be kept lock-step with `requirements.txt`
-PyQt5==5.15.7
-PyQt5-sip==12.11.1
+PyQt6==6.5.0
+PyQt6-sip==13.5.0
 appdirs==1.4.4
 arrow==1.2.3
 exif==1.6.0
