@@ -22,9 +22,11 @@ class ScannerSummaryView(ScannerRequiredView):
     def get(self, request):
         context = super().build_context()
         mss = ManageScanService()
+
         total_papers = mss.get_total_test_papers()
         complete_papers = mss.get_number_completed_test_papers()
         incomplete_papers = mss.get_number_incomplete_test_papers()
+
         unused_papers = mss.get_number_unused_test_papers()
 
         # this is a dict - key is paper_number, value = list of pages
