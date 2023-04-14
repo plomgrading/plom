@@ -56,6 +56,11 @@ class NeutralRubric(Rubric):
     kind = models.TextField(null=False)
 
 
+class AbsoluteRurbic(Rubric):
+
+    kind = models.TextField(null=False)
+
+
 class RubricPane(models.Model):
     """
     A user's configuration for the 'rubrics' pane in the annotation window.

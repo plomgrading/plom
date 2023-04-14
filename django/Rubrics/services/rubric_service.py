@@ -13,8 +13,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from Papers.services import SpecificationService
-from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer
-from Rubrics.models import Rubric, NeutralRubric, RelativeRubric
+from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer, AbsoluteRubricSerializer
+from Rubrics.models import Rubric, NeutralRubric, RelativeRubric, AbsoluteRurbic
 from Rubrics.models import RubricPane
 
 
@@ -56,6 +56,11 @@ class RubricService:
             serializer.is_valid()
             serializer.save()
             rubric = serializer.instance
+        elif kind == "absolute":
+            serializer = AbsoluteRubricSerializer(data=rubric_data)
+            serializer.is_valid()
+            serializer.save()
+            rubric = serializer.instance 
         else:
             assert False, "We've got a problem creating rubric."
 
@@ -124,9 +129,11 @@ class RubricService:
         if question is None:
             neutral_rubric_list = NeutralRubric.objects.all()
             relative_rubric_list = RelativeRubric.objects.all()
+            absolute_rubric_list = AbsoluteRurbic.objects.all()
         else:
             neutral_rubric_list = NeutralRubric.objects.filter(question=question)
             relative_rubric_list = RelativeRubric.objects.filter(question=question)
+            absolute_rubric_list = AbsoluteRurbic.objects.filter(question=question)
         rubric_data = []
 
         for neutral_rubric in neutral_rubric_list:
@@ -162,6 +169,23 @@ class RubricService:
                 "parameters": relative_rubric.parameters,
             }
             rubric_data.append(relative_rubric_dict)
+        
+        for absolute_rubric in absolute_rubric_list:
+            absolute_rubric_dict = {
+                "id": absolute_rubric.key,
+                "kind": absolute_rubric.kind,
+                "display_delta": absolute_rubric.display_delta,
+                "value": absolute_rubric.value,
+                "out_of": absolute_rubric.out_of,
+                "text": absolute_rubric.text,
+                "tags": absolute_rubric.tags,
+                "meta": absolute_rubric.meta,
+                "username": absolute_rubric.user.username,
+                "question": absolute_rubric.question,
+                "versions": absolute_rubric.versions,
+                "parameters": absolute_rubric.parameters,
+            }
+            rubric_data.append(absolute_rubric_dict)
 
         return rubric_data
 
