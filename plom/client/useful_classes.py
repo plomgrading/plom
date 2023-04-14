@@ -98,8 +98,10 @@ class SimpleQuestion(QMessageBox):
             self.setIconPixmap(icon_pixmap)
         else:
             self.setIcon(QMessageBox.Icon.Question)
-        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        self.setDefaultButton(QMessageBox.Yes)
+        self.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        self.setDefaultButton(QMessageBox.StandardButton.Yes)
 
     @classmethod
     def ask(cls, *args, **kwargs):
@@ -147,8 +149,8 @@ class SimpleTableView(QTableView):
         super().__init__(parent)
         # User can sort, cannot edit, selects by rows.
         self.setSortingEnabled(True)
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         # Resize to fit the contents
         self.resizeRowsToContents()
         self.horizontalHeader().setStretchLastSection(True)

@@ -55,7 +55,7 @@ class PageView(QGraphicsView):
 
         """
         self.setScene(scene)
-        self.fitInView(self.scene().underImage, Qt.KeepAspectRatio)
+        self.fitInView(self.scene().underImage, Qt.AspectRatioMode.KeepAspectRatio)
         # the current view
         self.paperWindow = self.mapToScene(
             self.viewport().contentsRect()
@@ -225,7 +225,7 @@ class PageView(QGraphicsView):
             None
 
         """
-        self.fitInView(self.paperWindow, Qt.KeepAspectRatio)
+        self.fitInView(self.paperWindow, Qt.AspectRatioMode.KeepAspectRatio)
         self._annotr.changeCBZoom(0)
 
     def initializeZoom(self, initRect):
@@ -243,9 +243,9 @@ class PageView(QGraphicsView):
         self.scene().updateSceneRectangle()
 
         if initRect is None:
-            self.fitInView(self.scene().underImage, Qt.KeepAspectRatio)
+            self.fitInView(self.scene().underImage, Qt.AspectRatioMode.KeepAspectRatio)
         else:
-            self.fitInView(initRect, Qt.KeepAspectRatio)
+            self.fitInView(initRect, Qt.AspectRatioMode.KeepAspectRatio)
         self.setZoomSelector()
 
     def getCurrentViewRect(self):

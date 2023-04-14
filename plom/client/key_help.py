@@ -242,7 +242,7 @@ class KeyHelp(QDialog):
             tw.setAlternatingRowColors(True)
             tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
             # TODO: wire double click to omit wants_to_change_key
-            tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
+            tw.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
             # no sorting during insertation, Issue #2065
             tw.setSortingEnabled(False)
             tables[div] = tw
@@ -382,7 +382,8 @@ class RubricNavDiagram(QFrame):
         # Ensure the graphic fits in view with a border around.
         # (asymmetric border looked better with particular locations of buttons)
         self._view.fitInView(
-            self.scene.sceneRect().adjusted(-40, -10, 20, 10), Qt.KeepAspectRatio
+            self.scene.sceneRect().adjusted(-40, -10, 20, 10),
+            Qt.AspectRatioMode.KeepAspectRatio,
         )
 
     def resizeEvent(self, event):
@@ -440,7 +441,8 @@ class ToolNavDiagram(QFrame):
     def resetView(self):
         # Ensure the graphic fits in view with a border around.
         self._view.fitInView(
-            self.scene.sceneRect().adjusted(-20, -10, 20, 10), Qt.KeepAspectRatio
+            self.scene.sceneRect().adjusted(-20, -10, 20, 10),
+            Qt.AspectRatioMode.KeepAspectRatio,
         )
 
     def resizeEvent(self, event):

@@ -185,7 +185,7 @@ class IDView(QGraphicsView):
             max(1000, br.height()),
         )
         self.setScene(self.scene)
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)
 
     def deleteRect(self):
         if self.boxItem.scene() is None:
@@ -231,4 +231,4 @@ class IDView(QGraphicsView):
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)

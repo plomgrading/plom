@@ -1144,8 +1144,12 @@ class Manager(QWidget):
     def initUnknownTab(self):
         self.unknownModel = QStandardItemModel(0, 8)
         self.ui.unknownTV.setModel(self.unknownModel)
-        self.ui.unknownTV.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.unknownTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.unknownTV.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.ui.unknownTV.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
         self.unknownModel.setHorizontalHeaderLabels(
             [
                 "ID",
@@ -1360,8 +1364,12 @@ class Manager(QWidget):
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)
         self.ui.collideTV.setModel(self.collideModel)
-        self.ui.collideTV.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.collideTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.collideTV.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.ui.collideTV.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
         self.collideModel.setHorizontalHeaderLabels(
             ["FullFile", "File", "Action to be taken", "Test", "Page", "Version"]
         )
@@ -1463,8 +1471,12 @@ class Manager(QWidget):
     def initDiscardTab(self):
         self.discardModel = QStandardItemModel(0, 3)
         self.ui.discardTV.setModel(self.discardModel)
-        self.ui.discardTV.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.discardTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.discardTV.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.ui.discardTV.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
         self.discardModel.setHorizontalHeaderLabels(
             [
                 "ID",
@@ -1528,8 +1540,12 @@ class Manager(QWidget):
         self.ui.labelDanglingExplain.setWordWrap(True)
         self.danglingModel = QStandardItemModel(0, 5)
         self.ui.danglingTV.setModel(self.danglingModel)
-        self.ui.danglingTV.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.danglingTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.danglingTV.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.ui.danglingTV.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
         self.danglingModel.setHorizontalHeaderLabels(
             (
                 "Type",
@@ -1716,8 +1732,12 @@ class Manager(QWidget):
         self.ui.predictionTW.setHorizontalHeaderLabels(
             ("Test", "Student ID", "Name", "Predicted ID", "Predictor", "Certainty")
         )
-        self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.predictionTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self.ui.predictionTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         # Seemed broken so commented out
         # self.ui.predictionTW.setAlternatingRowColors(True)
         self.ui.predictionTW.activated.connect(self.viewIDPage)
@@ -2200,7 +2220,9 @@ class Manager(QWidget):
         )
         self.ui.reviewTW.setSortingEnabled(True)
         self.ui.reviewTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.reviewTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
         self.ui.viewAnnotationsButton.clicked.connect(self.reviewAnnotated)
         self.ui.changeTagsButton.clicked.connect(self.reviewChangeTags)
@@ -2526,8 +2548,12 @@ class Manager(QWidget):
             ["Test", "Username", "When", "Student ID", "Student Name"]
         )
         self.ui.reviewIDTW.setSortingEnabled(True)
-        self.ui.reviewIDTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.reviewIDTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.reviewIDTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self.ui.reviewIDTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.ui.reviewIDTW.activated.connect(self.reviewIDd)
 
         # monkey-patch in a row-insert routine
@@ -2711,7 +2737,9 @@ class Manager(QWidget):
         self.ui.userListTW.setSortingEnabled(True)
         self.ui.userListTW.resizeColumnsToContents()
         self.ui.userListTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.ui.userListTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.userListTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
 
     def initProgressQUTabs(self):
         self.ui.QPUserTW.setColumnCount(5)
@@ -2726,8 +2754,12 @@ class Manager(QWidget):
             ]
         )
         # self.ui.QPUserTW.setSortingEnabled(True)
-        self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.QPUserTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self.ui.QPUserTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         # and the other tab
         self.ui.PUQTW.setColumnCount(5)
         self.ui.PUQTW.setHeaderLabels(
@@ -2741,8 +2773,10 @@ class Manager(QWidget):
             ]
         )
         # self.ui.PUQTW.setSortingEnabled(True)
-        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.PUQTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.ui.PUQTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
 
     def forceLogout(self):
         ri = self.ui.userListTW.selectedIndexes()

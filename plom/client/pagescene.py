@@ -2306,7 +2306,9 @@ class PageScene(QGraphicsScene):
             self.views()[0].centerOn(event.scenePos())
 
         elif self.zoomFlag == 2:
-            self.views()[0].fitInView(self.zoomBoxItem, Qt.KeepAspectRatio)
+            self.views()[0].fitInView(
+                self.zoomBoxItem, Qt.AspectRatioMode.KeepAspectRatio
+            )
 
         # sets the view rectangle and updates zoom-dropdown.
         self.views()[0].setZoomSelector(True)

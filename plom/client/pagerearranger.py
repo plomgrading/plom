@@ -59,7 +59,7 @@ class SourceList(QListWidget):
         self.item_positions = {}
         self.item_files = {}
         self.item_orientation = {}
-        # self.setSelectionMode(QListView.SingleSelection)
+        # self.setSelectionMode(QListView.SelectionMode.SingleSelection)
 
     def resizeEvent(self, whatev):
         A = self.size()
@@ -164,7 +164,7 @@ class SinkList(QListWidget):
         self.item_orientation = {}
         self.item_id = {}
         self.itemDoubleClicked.connect(self.viewImage)
-        # self.setSelectionMode(QListView.SingleSelection)
+        # self.setSelectionMode(QListView.SelectionMode.SingleSelection)
 
     def resizeEvent(self, whatev):
         A = self.size()

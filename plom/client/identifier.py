@@ -176,7 +176,7 @@ class ExamModel(QAbstractTableModel):
         # Return the correct header.
         if role != Qt.ItemDataRole.DisplayRole:
             return
-        elif orientation == Qt.Horizontal:
+        elif orientation == Qt.Orientation.Horizontal:
             return self.header[c]
         return c
 
@@ -360,8 +360,8 @@ class IDClient(QWidget):
         # Build the snid-completer = substring matching and case insensitive
         snidcompleter = QCompleter()
         snidcompleter.setModel(snidlist)
-        snidcompleter.setCaseSensitivity(Qt.CaseInsensitive)
-        snidcompleter.setFilterMode(Qt.MatchContains)
+        snidcompleter.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        snidcompleter.setFilterMode(Qt.MatchFlag.MatchContains)
         # Link the ID-completer to the ID-lineedit in the gui.
         self.ui.idEdit.setCompleter(snidcompleter)
         # Make sure lineedit has little "Clear this" button.

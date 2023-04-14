@@ -91,8 +91,8 @@ class ImageViewWidget(QWidget):
         super().__init__(parent)
         # Grab an examview widget (a interactive subclass of QGraphicsView)
         self.view = _ExamView(image_data, dark_background=dark_background)
-        self.view.setRenderHint(QPainter.Antialiasing, True)
-        self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        self.view.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        self.view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
         grid = QVBoxLayout()
         if compact:
             grid.setContentsMargins(0, 0, 0, 0)
@@ -257,9 +257,9 @@ class _ExamView(QGraphicsView):
         else:
             self.setStyleSheet("background: transparent")
             self.setBackgroundBrush(BackGrid())
-        self.setRenderHint(QPainter.Antialiasing, True)
-        self.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.scene = _ExamScene()
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
@@ -356,7 +356,7 @@ class _ExamView(QGraphicsView):
             max(1000, br.height()),
         )
         self.setScene(self.scene)
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)
 
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""
@@ -380,7 +380,7 @@ class _ExamView(QGraphicsView):
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)
 
     def rotateImage(self, dTheta):
         self.rotate(dTheta)

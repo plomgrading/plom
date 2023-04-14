@@ -150,9 +150,9 @@ class RubricProxyModel(QSortFilterProxyModel):
 class ShowTable(QTableWidget):
     def __init__(self):
         super().__init__()
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.horizontalHeader().setStretchLastSection(True)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
@@ -358,8 +358,10 @@ class RubricWrangler(QDialog):
         self.rubricTable.sortByColumn(-1, Qt.AscendingOrder)
         self.rubricTable.verticalHeader().setVisible(False)
         self.rubricTable.horizontalHeader().setVisible(True)
-        self.rubricTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.rubricTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.rubricTable.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.rubricTable.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.rubricTable.resizeColumnsToContents()
         self.rubricTable.horizontalHeader().setStretchLastSection(True)
         self.rubricTable.setSortingEnabled(True)

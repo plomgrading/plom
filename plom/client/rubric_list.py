@@ -120,9 +120,9 @@ class RubricTable(QTableWidget):
         super().__init__(parent)
         self._parent = parent
         self.tabType = tabType  # to help set menu
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.horizontalHeader().setVisible(False)
         self.horizontalHeader().setStretchLastSection(True)
         # Issue #1498: use these for shortcut key indicators
