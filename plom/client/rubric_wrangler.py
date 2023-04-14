@@ -194,7 +194,7 @@ class ShowTable(QTableWidget):
         return current_keys
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Delete:
+        if event.key() == Qt.Key.Key_Delete:
             row = self.currentRow()
             self.removeRow(row)
         else:

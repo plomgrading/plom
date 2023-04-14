@@ -161,7 +161,7 @@ class SimpleTableView(QTableView):
         # If user hits enter or return, then fire off
         # the annotateSignal, else pass the event on.
         key = event.key()
-        if key == Qt.Key_Return or key == Qt.Key_Enter:
+        if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             self.annotateSignal.emit()
         else:
             super(SimpleTableView, self).keyPressEvent(event)
@@ -313,7 +313,7 @@ class ClientSettingsDialog(QDialog):
         tempdir_prefix = "plom_"
         q = QLabel('{}, in subfolders "{}*"'.format(tmpdir, tempdir_prefix))
         q.setWordWrap(True)
-        q.setAlignment(Qt.AlignTop)
+        q.setAlignment(Qt.AlignmentFlag.AlignTop)
         flay.addRow("Temporary files:", q)
 
         buttons = QDialogButtonBox(
@@ -520,8 +520,8 @@ class BigMessageDialog(QDialog):
             lay.addWidget(self.details_TE)
             b.setChecked(False)
             self.details_TE.setVisible(False)
-            b.setArrowType(Qt.DownArrow)
-            b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            b.setArrowType(Qt.ArrowType.DownArrow)
+            b.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
             self.toggle_button = b
 
         buttons.accepted.connect(self.accept)
@@ -531,10 +531,10 @@ class BigMessageDialog(QDialog):
         if self.details_TE.isVisible():
             self._line.setVisible(False)
             self.details_TE.setVisible(False)
-            self.toggle_button.setArrowType(Qt.DownArrow)
+            self.toggle_button.setArrowType(Qt.ArrowType.DownArrow)
             self.adjustSize()
         else:
             self.details_TE.setVisible(True)
             self._line.setVisible(True)
-            self.toggle_button.setArrowType(Qt.UpArrow)
+            self.toggle_button.setArrowType(Qt.ArrowType.UpArrow)
             self.adjustSize()

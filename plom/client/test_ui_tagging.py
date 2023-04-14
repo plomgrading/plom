@@ -19,7 +19,7 @@ def test_tag_cancel_dialog(qtbot):
     d = AddRemoveTagDialog(None, [], [])
     d.show()
     qtbot.addWidget(d)
-    qtbot.keyClick(d, Qt.Key_Escape)
+    qtbot.keyClick(d, Qt.Key.Key_Escape)
     assert d.return_values is None
     assert not d.isVisible()
 

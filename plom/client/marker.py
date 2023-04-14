@@ -1577,7 +1577,7 @@ class MarkerClient(QWidget):
     def show_hide_technical(self):
         if self.ui.technicalButton.isChecked():
             self.ui.technicalButton.setText("Hide technical info")
-            self.ui.technicalButton.setArrowType(Qt.DownArrow)
+            self.ui.technicalButton.setArrowType(Qt.ArrowType.DownArrow)
             self.ui.frameTechnical.setVisible(True)
             ptsz = self.ui.technicalButton.fontInfo().pointSizeF()
             self.ui.frameTechnical.setStyleSheet(
@@ -1587,7 +1587,7 @@ class MarkerClient(QWidget):
             self.ui.labelTech4.setVisible(False)
         else:
             self.ui.technicalButton.setText("Show technical info")
-            self.ui.technicalButton.setArrowType(Qt.RightArrow)
+            self.ui.technicalButton.setArrowType(Qt.ArrowType.RightArrow)
             self.ui.frameTechnical.setVisible(False)
 
     def toggle_fail_mode(self):

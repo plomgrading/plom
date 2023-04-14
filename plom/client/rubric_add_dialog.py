@@ -119,7 +119,7 @@ class WideTextEdit(QTextEdit):
 
     def keyPressEvent(self, event):
         if event.modifiers() == Qt.ShiftModifier and (
-            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+            event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
         ):
             # print("WideTextEdit: ignoring Shift-Enter event")
             event.ignore()
@@ -273,7 +273,7 @@ class AddRubricBox(QDialog):
         self.scopeButton.setChecked(False)
         self.scopeButton.setAutoRaise(True)
         self.scopeButton.setText("Scope")
-        self.scopeButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.scopeButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.scopeButton.clicked.connect(self.toggle_scope_elements)
         frame = QFrame()
         frame.setFrameStyle(QFrame.StyledPanel)
@@ -656,24 +656,24 @@ class AddRubricBox(QDialog):
 
     def toggle_scope_elements(self):
         if self.scopeButton.isChecked():
-            self.scopeButton.setArrowType(Qt.DownArrow)
+            self.scopeButton.setArrowType(Qt.ArrowType.DownArrow)
             # QFormLayout.setRowVisible but only in Qt 6.4!
             # instead we are using a QFrame
             self.scope_frame.setVisible(True)
         else:
-            self.scopeButton.setArrowType(Qt.RightArrow)
+            self.scopeButton.setArrowType(Qt.ArrowType.RightArrow)
             self.scope_frame.setVisible(False)
 
     def keyPressEvent(self, event):
         if event.modifiers() == Qt.ShiftModifier and (
-            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+            event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
         ):
             # print("Dialog: Shift-Enter event")
             event.accept()
             self.accept()
             return
         if event.modifiers() == Qt.ControlModifier and (
-            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+            event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
         ):
             # print("Dialog: Ctrl-Enter event")
             event.accept()

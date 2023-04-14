@@ -71,7 +71,7 @@ class GroupView(QDialog):
         if before_text:
             label = QLabel(before_text)
             label.setWordWrap(True)
-            # label.setAlignment(Qt.AlignTop)
+            # label.setAlignment(Qt.AlignmentFlag.AlignTop)
             grid.addWidget(label)
         grid.addWidget(self.testImg, 1)
         if after_text:

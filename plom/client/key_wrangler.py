@@ -218,7 +218,7 @@ class KeyEditDialog(QDialog):
 class SingleKeyEdit(QLineEdit):
     def __init__(self, parent, currentKey=None, legal=None):
         super().__init__(parent)
-        self.setAlignment(Qt.AlignHCenter)
+        self.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         if legal is None:
             legal = []
         self.legal = legal
@@ -232,9 +232,14 @@ class SingleKeyEdit(QLineEdit):
     def keyPressEvent(self, event):
         keyCode = event.key()
         # no modifiers please
-        if keyCode in [Qt.Key_Control, Qt.Key_Shift, Qt.Key_Alt, Qt.Key_Meta]:
+        if keyCode in (
+            Qt.Key.Key_Control,
+            Qt.Key.Key_Shift,
+            Qt.Key.Key_Alt,
+            Qt.Key.Key_Meta,
+        ):
             return
-        if keyCode in [Qt.Key_Backspace, Qt.Key_Delete]:
+        if keyCode in [Qt.Key.Key_Backspace, Qt.Key.Key_Delete]:
             self.backspace()
             self.theCode = None
             self.theKey = ""

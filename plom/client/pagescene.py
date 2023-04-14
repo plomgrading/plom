@@ -1052,14 +1052,14 @@ class PageScene(QGraphicsScene):
         }
 
         if self.mode in variableCursors:
-            if event.key() == Qt.Key_Shift:
+            if event.key() == Qt.Key.Key_Shift:
                 self.views()[0].setCursor(variableCursors.get(self.mode)[0])
-            elif event.key() == Qt.Key_Control:
+            elif event.key() == Qt.Key.Key_Control:
                 self.views()[0].setCursor(variableCursors.get(self.mode)[1])
             else:
                 pass
 
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             self.clearFocus()
             # also if in box,line,pen,rubric,text - stop mid-draw
             if self.mode in ["box", "line", "pen", "rubric", "text", "cross", "tick"]:
