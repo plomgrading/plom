@@ -115,6 +115,8 @@ class RubricService:
             serializer.is_valid()
             serializer.save()
             rubric_instance = serializer.instance
+        elif kind == "absolute":
+            raise NotImplementedError
         else:
             assert False, "We've got a problem modifying rubric."
 
