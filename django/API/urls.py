@@ -30,6 +30,7 @@ from API.views import (
     MgetRubricPanes,
     McreateRubric,
     MmodifyRubric,
+    MgetDoneTasks,
     MlatexFragment,
 )
 
@@ -51,7 +52,7 @@ urlpatterns = [
     path("ID/predictions/", GetIDPredictions.as_view(), name="api_get_predictions"),
     path("ID/tasks/complete", IDgetDoneTasks.as_view(), name="api_ID_get_done_tasks"),
     path("ID/tasks/available", IDgetNextTask.as_view(), name="api_ID_get_next_tasks"),
-    path("MK/tasks/complete", IDgetDoneTasks.as_view(), name="api_MK_get_done_tasks"),
+    path("MK/tasks/complete", MgetDoneTasks.as_view(), name="api_MK_get_done_tasks"),
     path("MK/tasks/available", MgetNextTask.as_view(), name="api_MK_get_next_tasks"),
     path("ID/progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
     path(
@@ -72,7 +73,7 @@ urlpatterns = [
         name="api_MK_annotation",
     ),
     path(
-        "annotations_image/<int:paper>/<int:question>/",
+        "annotations_image/<int:paper>/<int:question>/<int:edition>",
         MgetAnnotationImage.as_view(),
         name="api_MK_annotation_img",
     ),
