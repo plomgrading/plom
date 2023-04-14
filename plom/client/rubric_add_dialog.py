@@ -711,7 +711,7 @@ class AddRubricBox(QDialog):
             res = resources.files(plom.client.icons) / "crazy_paperclip.svg"
             pix = QPixmap()
             pix.loadFromData(res.read_bytes())
-            pix = pix.scaledToHeight(150, Qt.SmoothTransformation)
+            pix = pix.scaledToHeight(150, Qt.TransformationMode.SmoothTransformation)
             if (
                 SimpleQuestion.ask(
                     self,

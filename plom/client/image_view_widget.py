@@ -332,7 +332,7 @@ class _ExamView(QGraphicsView):
                 rot.rotate(data["orientation"])
                 pix = pix.transformed(rot)
                 pixmap = QGraphicsPixmapItem(pix)
-                pixmap.setTransformationMode(Qt.SmoothTransformation)
+                pixmap.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
                 pixmap.setPos(x, 0)
                 pixmap.setVisible(True)
                 sf = float(ScenePixelHeight) / float(pix.height())

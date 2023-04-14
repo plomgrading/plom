@@ -324,7 +324,7 @@ class UnderlyingImages(QGraphicsItemGroup):
             pix = pix.transformed(rot)
             img = QGraphicsPixmapItem(pix)
             # this gives (only) bilinear interpolation
-            img.setTransformationMode(Qt.SmoothTransformation)
+            img.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
             # works but need to adjust the origin of rotation, probably faster
             # img.setTransformOriginPoint(..., ...)
             # img.setRotation(img['orientation'])

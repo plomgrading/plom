@@ -255,7 +255,7 @@ class Annotator(QWidget):
         res = resources.files(plom.client.icons) / "fingers_in_gears.svg"
         pix = QPixmap()
         pix.loadFromData(res.read_bytes())
-        pix = pix.scaledToHeight(256, Qt.SmoothTransformation)
+        pix = pix.scaledToHeight(256, Qt.TransformationMode.SmoothTransformation)
         msg = SimpleQuestion(self, txt, question=info)
         msg.setIconPixmap(pix)
         if msg.exec() == QMessageBox.No:

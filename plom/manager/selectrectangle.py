@@ -168,7 +168,9 @@ class IDView(QGraphicsView):
                 if pix.isNull():
                     raise RuntimeError(f"Could not read an image from {fn}")
                 self.images[n] = QGraphicsPixmapItem(pix)
-                self.images[n].setTransformationMode(Qt.SmoothTransformation)
+                self.images[n].setTransformationMode(
+                    Qt.TransformationMode.SmoothTransformation
+                )
                 self.images[n].setPos(x, 0)
                 self.images[n].setVisible(True)
                 self.scene.addItem(self.images[n])
