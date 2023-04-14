@@ -129,7 +129,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     TODO: try to remove this with some future refactor?
     """
 
-    def __init__(self, pt, text, fontsize=10, color=Qt.red, _texmaker=None):
+    def __init__(self, pt, text, fontsize=10, color=QColor("red"), _texmaker=None):
         super().__init__()
         self.saveable = True
         self._texmaker = _texmaker

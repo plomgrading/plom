@@ -194,7 +194,7 @@ class UnderlyingRect(QGraphicsRectItem):
 
     def __init__(self, rect):
         super().__init__()
-        self.setPen(QPen(Qt.black, 4, style=Qt.DotLine))
+        self.setPen(QPen(QColor("black"), 4, style=Qt.DotLine))
         self.setBrush(QBrush(QColor(249, 249, 249, 255)))
         self.setRect(rect)
         self.setZValue(-10)
@@ -447,7 +447,7 @@ class PageScene(QGraphicsScene):
 
         self.scoreBox = None
         # Define standard pen, highlight, fill, light-fill
-        self.set_annotation_color(Qt.red)
+        self.set_annotation_color(QColor("red"))
         self.deleteBrush = QBrush(QColor(255, 0, 0, 16))
         self.zoomBrush = QBrush(QColor(0, 0, 255, 16))
         # Flags to indicate if drawing an arrow (vs line), highlight (vs
@@ -2335,7 +2335,7 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+        self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
@@ -2360,7 +2360,7 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
                 )
-                self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+                self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
             else:
@@ -2789,7 +2789,7 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+        self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
@@ -2814,7 +2814,7 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
                 )
-                self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+                self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
             else:

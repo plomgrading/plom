@@ -10,8 +10,8 @@ import sys
 import tempfile
 import time
 
-from PyQt5.QtCore import Qt, QPointF, QRectF
-from PyQt5.QtGui import QPainterPath, QPen
+from PyQt5.QtCore import QPointF, QRectF
+from PyQt5.QtGui import QColor, QPainterPath, QPen
 from PyQt5.QtWidgets import QApplication, QWidget
 
 from plom.plom_exceptions import PlomTakenException, PlomExistingLoginException
@@ -73,7 +73,7 @@ class SceneParent(QWidget):
     def __init__(self, question, maxMark):
         super().__init__()
         self.view = PageView(self)
-        self.ink = QPen(Qt.red, 2)
+        self.ink = QPen(QColor("red"), 2)
         self.question = question
         self.maxMark = maxMark
         self.rubric_widget = MockRubricWidget()

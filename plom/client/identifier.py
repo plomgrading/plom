@@ -108,10 +108,10 @@ class ExamModel(QAbstractTableModel):
         # Headers.
         self.header = ["Test", "Status", "ID", "Name"]
 
-    def setData(self, index, value, role=Qt.EditRole):
+    def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         # Columns are [code, status, ID and Name]
         # Put data in appropriate box when setting.
-        if role != Qt.EditRole:
+        if role != Qt.ItemDataRole.EditRole:
             return False
         if index.column() == 0:
             self.paperList[index.row()].test = value
@@ -157,10 +157,10 @@ class ExamModel(QAbstractTableModel):
     def columnCount(self, parent=None):
         return 4
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         # Columns are [code, status, ID and Name]
         # Get data from appropriate box when called.
-        if role != Qt.DisplayRole:
+        if role != Qt.ItemDataRole.DisplayRole:
             return QVariant()
         elif index.column() == 0:
             return self.paperList[index.row()].test
@@ -174,7 +174,7 @@ class ExamModel(QAbstractTableModel):
 
     def headerData(self, c, orientation, role):
         # Return the correct header.
-        if role != Qt.DisplayRole:
+        if role != Qt.ItemDataRole.DisplayRole:
             return
         elif orientation == Qt.Horizontal:
             return self.header[c]
