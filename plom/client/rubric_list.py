@@ -9,9 +9,9 @@
 from datetime import datetime
 import logging
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QColor, QCursor, QPalette
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor, QCursor, QPalette
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QAction,
     QDialog,

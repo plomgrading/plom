@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem
+from PyQt6.QtWidgets import QUndoCommand, QGraphicsItem
 
 
 class CommandMoveItem(QUndoCommand):

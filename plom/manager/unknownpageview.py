@@ -2,8 +2,8 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt, QStringListModel
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QStringListModel
+from PyQt6.QtWidgets import (
     QCheckBox,
     QCompleter,
     QDialog,

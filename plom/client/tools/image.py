@@ -3,9 +3,9 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2021-2023 Colin B. Macdonald
 
-from PyQt5.QtCore import QIODevice, QPointF, QBuffer, QByteArray
-from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QPen
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QIODevice, QPointF, QBuffer, QByteArray
+from PyQt6.QtGui import QBrush, QColor, QImage, QPixmap, QPen
+from PyQt6.QtWidgets import (
     QGraphicsItem,
     QGraphicsPixmapItem,
     QGraphicsSceneMouseEvent,

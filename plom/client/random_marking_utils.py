@@ -10,9 +10,9 @@ import sys
 import tempfile
 import time
 
-from PyQt5.QtCore import QPointF, QRectF
-from PyQt5.QtGui import QColor, QPainterPath, QPen
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt6.QtCore import QPointF, QRectF
+from PyQt6.QtGui import QColor, QPainterPath, QPen
+from PyQt6.QtWidgets import QApplication, QWidget
 
 from plom.plom_exceptions import PlomTakenException, PlomExistingLoginException
 from plom.client.pageview import PageView

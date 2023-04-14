@@ -5,9 +5,9 @@
 
 from math import sqrt
 
-from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
-from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
+from PyQt6.QtCore import Qt, QPointF
+from PyQt6.QtGui import QPen, QPainterPath, QBrush, QColor
+from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools.line import CommandLine, LineItem
 from plom.client.tools import UndoStackMoveMixin

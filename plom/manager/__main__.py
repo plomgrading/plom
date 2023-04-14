@@ -16,8 +16,8 @@ import signal
 import os
 import sys
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QStyleFactory
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QApplication, QStyleFactory
 
 from plom import Default_Port
 from plom import __version__

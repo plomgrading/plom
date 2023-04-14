@@ -3,8 +3,8 @@
 
 from pytest import raises
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMessageBox
 
 from plom.client.rubric_list import AddRubricBox
 from plom.client.useful_classes import WarnMsg, SimpleQuestion

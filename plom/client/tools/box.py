@@ -3,9 +3,9 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QRectF
-from PyQt5.QtGui import QBrush, QColor, QPen
-from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsItem
+from PyQt6.QtCore import QRectF
+from PyQt6.QtGui import QBrush, QColor, QPen
+from PyQt6.QtWidgets import QGraphicsRectItem, QGraphicsItem
 
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 

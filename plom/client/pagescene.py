@@ -11,8 +11,8 @@ import logging
 
 import PIL.Image
 
-from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, QEvent, QRectF, QLineF, QPointF
+from PyQt6.QtGui import (
     QBrush,
     QColor,
     QCursor,
@@ -26,7 +26,7 @@ from PyQt5.QtGui import (
     QPixmap,
     QTransform,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QGraphicsEllipseItem,
     QGraphicsLineItem,
     QGraphicsPathItem,
@@ -42,7 +42,6 @@ from PyQt5.QtWidgets import (
     QToolButton,
     QMenu,
 )
-from PyQt5.QtCore import Qt
 
 from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric

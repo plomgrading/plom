@@ -20,8 +20,8 @@ import sys
 import traceback as tblib
 from multiprocessing import freeze_support
 
-from PyQt5.QtCore import QTimer, PYQT_VERSION_STR, QT_VERSION_STR
-from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
+from PyQt6.QtCore import QTimer, PYQT_VERSION_STR, QT_VERSION_STR
+from PyQt6.QtWidgets import QApplication, QStyleFactory, QMessageBox
 
 from plom import __version__
 from plom import Default_Port
@@ -48,7 +48,7 @@ def add_popup_to_toplevel_exception_handler():
         <p>(You could consider filing an issue; if you do, please copy-paste
         the text under &ldquo;Show Details&rdquo;.)</p>
         <p>Plom v{__version__}<br />
-        PyQt5 {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
+        PyQt {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
         Python {platform.python_version()},
         {platform.platform()}</p>
         """

@@ -3,8 +3,8 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021-2023 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt, QPointF, QRectF
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, QPointF, QRectF
+from PyQt6.QtGui import (
     QBrush,
     QColor,
     QImageReader,
@@ -13,7 +13,7 @@ from PyQt5.QtGui import (
     QPen,
     QPixmap,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog,
     QGraphicsRectItem,
     QGraphicsPixmapItem,

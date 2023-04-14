@@ -24,9 +24,9 @@ else:
 
 import arrow
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import (
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import (
     QBrush,
     QColor,
     QIcon,
@@ -34,7 +34,7 @@ from PyQt5.QtGui import (
     QStandardItem,
     QStandardItemModel,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QDialog,

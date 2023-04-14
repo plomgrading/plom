@@ -22,8 +22,8 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt5 import uic
-from PyQt5.QtCore import (
+from PyQt6 import uic
+from PyQt6.QtCore import (
     Qt,
     QAbstractTableModel,
     QModelIndex,
@@ -32,7 +32,7 @@ from PyQt5.QtCore import (
     QVariant,
     pyqtSignal,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QCompleter,
     QDialog,
     QWidget,

@@ -5,9 +5,9 @@
 
 from math import sqrt
 
-from PyQt5.QtCore import QPointF
-from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QPointF
+from PyQt6.QtGui import QPen, QPainterPath, QBrush, QColor
+from PyQt6.QtWidgets import (
     QGraphicsItemGroup,
     QGraphicsPathItem,
     QGraphicsItem,

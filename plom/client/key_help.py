@@ -11,9 +11,9 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt5.QtCore import Qt, QBuffer, QByteArray, QPointF
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, QBuffer, QByteArray, QPointF
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import (
     QColor,
     QKeySequence,
     QPainter,
@@ -22,7 +22,7 @@ from PyQt5.QtGui import (
     QPen,
     QPixmap,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QDialog,

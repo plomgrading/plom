@@ -23,21 +23,21 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt5 import uic
-from PyQt5.QtCore import (
+from PyQt6 import uic
+from PyQt6.QtCore import (
     Qt,
     QTimer,
     QElapsedTimer,
     pyqtSlot,
     pyqtSignal,
 )
-from PyQt5.QtGui import (
+from PyQt6.QtGui import (
     QCursor,
     QIcon,
     QKeySequence,
     QPixmap,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog,
     QWidget,
     QMenu,
@@ -48,7 +48,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QColorDialog,
 )
-from PyQt5.QtWidgets import QGraphicsRectItem
+from PyQt6.QtWidgets import QGraphicsRectItem
 
 import plom.client.cursors
 import plom.client.icons

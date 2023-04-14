@@ -4,10 +4,10 @@
 
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QGuiApplication
-from PyQt5.QtGui import QBrush, QColor, QImageReader, QPainter, QPixmap, QTransform
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtGui import QBrush, QColor, QImageReader, QPainter, QPixmap, QTransform
+from PyQt6.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
     QGraphicsScene,

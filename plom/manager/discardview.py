@@ -2,7 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,

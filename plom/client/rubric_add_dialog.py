@@ -15,10 +15,10 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QPixmap, QSyntaxHighlighter, QTextCharFormat
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QPixmap, QSyntaxHighlighter, QTextCharFormat
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QCheckBox,
     QLabel,
     QComboBox,

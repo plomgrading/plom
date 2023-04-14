@@ -5,9 +5,9 @@
 
 import logging
 
-from PyQt5.QtCore import Qt, QSortFilterProxyModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QSortFilterProxyModel
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QDialog,

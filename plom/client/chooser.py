@@ -36,9 +36,9 @@ else:
 import tomlkit
 
 import urllib3
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QDialog, QMessageBox
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from plom import __version__
 from plom import Plom_API_Version

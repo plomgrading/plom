@@ -3,9 +3,9 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QGraphicsView
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPainter
+from PyQt6.QtWidgets import QGraphicsView
 from plom.client.backGrid import BackGrid
 
 

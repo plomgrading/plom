@@ -5,10 +5,9 @@
 
 from copy import deepcopy
 
-from PyQt5.QtCore import QTimer, Qt, QPointF
-from PyQt5.QtGui import QBrush, QColor, QFont, QPen
-
-from PyQt5.QtWidgets import QGraphicsItemGroup, QGraphicsItem
+from PyQt6.QtCore import QTimer, Qt, QPointF
+from PyQt6.QtGui import QBrush, QColor, QFont, QPen
+from PyQt6.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 from plom.client.tools.delta import DeltaItem, GhostDelta

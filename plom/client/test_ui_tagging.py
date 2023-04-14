@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMessageBox
 from plom.client.useful_classes import AddRemoveTagDialog
 
 

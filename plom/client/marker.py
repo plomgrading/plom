@@ -37,8 +37,8 @@ else:
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 import platform
 
-from PyQt5 import uic
-from PyQt5.QtCore import (
+from PyQt6 import uic
+from PyQt6.QtCore import (
     Qt,
     QSortFilterProxyModel,
     QTimer,
@@ -46,8 +46,8 @@ from PyQt5.QtCore import (
     pyqtSlot,
     pyqtSignal,
 )
-from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import (
+from PyQt6.QtGui import QStandardItem, QStandardItemModel
+from PyQt6.QtWidgets import (
     QAction,
     QDialog,
     QInputDialog,
@@ -83,7 +83,7 @@ from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 
 
 if platform.system() == "Darwin":
-    from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
+    from PyQt6.QtGui import qt_set_sequence_auto_mnemonic
 
     qt_set_sequence_auto_mnemonic(True)
 

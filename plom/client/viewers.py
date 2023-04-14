@@ -10,9 +10,9 @@ import random
 import tempfile
 import urllib.request
 
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QKeySequence
+from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,

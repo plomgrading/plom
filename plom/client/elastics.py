@@ -7,8 +7,8 @@
 
 import logging
 
-from PyQt5.QtCore import QRectF, QLineF, QPointF
-from PyQt5.QtGui import QPainterPath
+from PyQt6.QtCore import QRectF, QLineF, QPointF
+from PyQt6.QtGui import QPainterPath
 
 # from plom import AnnFontSizePts, ScenePixelHeight
 

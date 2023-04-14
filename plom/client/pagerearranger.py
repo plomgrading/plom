@@ -7,9 +7,9 @@
 from copy import deepcopy
 import logging
 
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QColor, QIcon, QImageReader, QPixmap, QTransform
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QBrush, QColor, QIcon, QImageReader, QPixmap, QTransform
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QFrame,

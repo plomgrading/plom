@@ -3,8 +3,8 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtGui import QPen, QColor, QBrush
-from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
+from PyQt6.QtGui import QPen, QColor, QBrush
+from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools.pen import CommandPen, PenItem
 from plom.client.tools import DeleteObject, UndoStackMoveMixin

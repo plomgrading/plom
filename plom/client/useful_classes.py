@@ -2,8 +2,8 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2019-2023 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QComboBox,
