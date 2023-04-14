@@ -57,7 +57,6 @@ class NeutralRubric(Rubric):
 
 
 class AbsoluteRurbic(Rubric):
-
     kind = models.TextField(null=False)
 
 

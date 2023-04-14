@@ -38,6 +38,7 @@ class NeutralRubricSerializer(serializers.ModelSerializer):
             },
         }
 
+
 class AbsoluteRubricSerializer(serializers.ModelSerializer):
     class Meta:
         model = AbsoluteRurbic

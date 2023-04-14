@@ -13,7 +13,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from Papers.services import SpecificationService
-from Rubrics.serializers import RelativeRubricSerializer, NeutralRubricSerializer, AbsoluteRubricSerializer
+from Rubrics.serializers import (
+    RelativeRubricSerializer,
+    NeutralRubricSerializer,
+    AbsoluteRubricSerializer,
+)
 from Rubrics.models import Rubric, NeutralRubric, RelativeRubric, AbsoluteRurbic
 from Rubrics.models import RubricPane
 
@@ -60,7 +64,7 @@ class RubricService:
             serializer = AbsoluteRubricSerializer(data=rubric_data)
             serializer.is_valid()
             serializer.save()
-            rubric = serializer.instance 
+            rubric = serializer.instance
         else:
             assert False, "We've got a problem creating rubric."
 
@@ -169,7 +173,7 @@ class RubricService:
                 "parameters": relative_rubric.parameters,
             }
             rubric_data.append(relative_rubric_dict)
-        
+
         for absolute_rubric in absolute_rubric_list:
             absolute_rubric_dict = {
                 "id": absolute_rubric.key,
