@@ -10,7 +10,7 @@ import random
 import tempfile
 import urllib.request
 
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QDialog,
@@ -228,29 +228,19 @@ class SolutionViewer(QWidget):
         self.sv = ImageViewWidget(self, fname)
         refreshButton = QPushButton("&Refresh")
         closeButton = QPushButton("&Close")
-        maxNormButton = QPushButton("&Max/Norm")
         grid.addWidget(self.sv)
         buttons = QHBoxLayout()
         buttons.addWidget(refreshButton)
-        buttons.addWidget(maxNormButton)
         buttons.addStretch(1)
         buttons.addWidget(closeButton)
         grid.addLayout(buttons)
         self.setLayout(grid)
         closeButton.clicked.connect(self.close)
-        maxNormButton.clicked.connect(self.swapMaxNorm)
         refreshButton.clicked.connect(self.refresh)
 
         self.setWindowTitle(f"Solutions - {Path(fname).stem}")
 
         self.show()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
 
     def refresh(self):
         solnfile = self._annotr.refreshSolutionImage()

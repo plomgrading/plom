@@ -164,10 +164,6 @@ class Annotator(QWidget):
 
         # Connect all the buttons to relevant functions
         self.setButtons()
-        # Make sure window has min/max buttons.
-        self.setWindowFlags(
-            self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
-        )
 
         self.timer = QElapsedTimer()
 
@@ -909,18 +905,6 @@ class Annotator(QWidget):
         # scene knows which views are connected via self.views()
         log.debug("Scene has this list of views: {}".format(self.scene.views()))
 
-    def swapMaxNorm(self):
-        """
-        Toggles the window size between max and normal.
-
-        Returns
-             None: modifies self.windowState
-        """
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
-
     def keyToChangeRubric(self, keyNumber):
         """
         Translates a the numerical key into a selection of that visible
@@ -1119,7 +1103,6 @@ class Annotator(QWidget):
         actions_and_methods = (
             ("toggle-wide-narrow", self.toggleTools),
             ("help", self.keyPopUp),
-            ("toggle-maximize-window", self.swapMaxNorm),
             ("show-whole-paper", self.viewWholePaper),
             ("show-solutions", self.viewSolutions),
             ("main-menu", self.ui.hamMenuButton.animateClick),
