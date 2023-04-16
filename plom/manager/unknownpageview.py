@@ -207,7 +207,7 @@ class UnknownViewWindow(QDialog):
 
         self.img = ImageViewWidget(self, fnames, dark_background=True)
         self.optionTW = QTabWidget()
-        self.optionTW.setTabPosition(QTabWidget.East)
+        self.optionTW.setTabPosition(QTabWidget.TabPosition.East)
 
         cancelB = QPushButton("&Cancel")
         cancelB.clicked.connect(self.reject)

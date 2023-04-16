@@ -238,7 +238,7 @@ class KeyHelp(QDialog):
             tw = QTableWidget()
             tw.setColumnCount(3)
             tw.verticalHeader().hide()
-            tw.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            tw.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
             tw.setAlternatingRowColors(True)
             tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
             # TODO: wire double click to omit wants_to_change_key
@@ -264,7 +264,9 @@ class KeyHelp(QDialog):
                     1,
                     QTableWidgetItem(
                         ", ".join(
-                            QKeySequence(k).toString(QKeySequence.NativeText)
+                            QKeySequence(k).toString(
+                                QKeySequence.SequenceFormat.NativeText
+                            )
                             for k in dat["keys"]
                         )
                     ),
@@ -319,7 +321,7 @@ def _label(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0))
     y += sep[1]
 
     key = QKeySequence(keydata[w]["keys"][0])
-    b = QPushButton(key.toString(QKeySequence.NativeText))
+    b = QPushButton(key.toString(QKeySequence.SequenceFormat.NativeText))
     b.setStyleSheet(sheet)
     b.setToolTip(keydata[w]["human"])
     if w in actions_with_changeable_keys:
@@ -329,7 +331,7 @@ def _label(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0))
         # TODO: a downside is the tooltip does not show
         b.setEnabled(False)
     li = scene.addWidget(b)
-    # li.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+    # li.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
     li.setScale(1.66)
     br = li.mapRectToScene(li.boundingRect())
     label_offset = 8
@@ -359,8 +361,8 @@ class RubricNavDiagram(QFrame):
         super().__init__()
         # self.setFrameShape(QFrame.Panel)
         view = QGraphicsView()
-        view.setRenderHint(QPainter.Antialiasing, True)
-        view.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        view.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
         view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
@@ -422,8 +424,8 @@ class ToolNavDiagram(QFrame):
         super().__init__()
         # self.setFrameShape(QFrame.Panel)
         view = QGraphicsView()
-        view.setRenderHint(QPainter.Antialiasing, True)
-        view.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        view.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
         view.setFrameShape(QFrame.NoFrame)
 
         self.scene = QGraphicsScene()
@@ -489,7 +491,7 @@ class ClickDragPage(QWidget):
         film_buffer = QBuffer(film_bytes)
         film = QMovie()
         film.setDevice(film_buffer)
-        film.setCacheMode(QMovie.CacheAll)
+        film.setCacheMode(QMovie.CacheMode.CacheAll)
 
         film_label = QLabel()
         film_label.setMovie(film)

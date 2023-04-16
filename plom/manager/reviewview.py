@@ -59,10 +59,10 @@ class ReviewViewWindow(QDialog):
         # construct and connect other buttons
         b = QPushButton("Flag for &review")
         b.clicked.connect(self.flag)
-        buttons.addButton(b, QDialogButtonBox.ActionRole)
+        buttons.addButton(b, QDialogButtonBox.ButtonRole.ActionRole)
         b = QPushButton("&Tags...")
         b.clicked.connect(self.tags)
-        buttons.addButton(b, QDialogButtonBox.ActionRole)
+        buttons.addButton(b, QDialogButtonBox.ButtonRole.ActionRole)
         grid.addWidget(buttons)
         self.setLayout(grid)
 
@@ -97,7 +97,7 @@ class ReviewViewWindowID(QDialog):
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
         b = QPushButton("Yes, &flag for review")
         b.clicked.connect(self.accept)
-        buttons.addButton(b, QDialogButtonBox.YesRole)
+        buttons.addButton(b, QDialogButtonBox.ButtonRole.YesRole)
         buttons.rejected.connect(self.reject)
         grid.addWidget(buttons)
         self.setLayout(grid)

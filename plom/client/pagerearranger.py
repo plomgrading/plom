@@ -49,9 +49,9 @@ class SourceList(QListWidget):
         self._parent = parent
         self.setViewMode(QListWidget.IconMode)
         self.setAcceptDrops(False)
-        self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.setFlow(QListView.LeftToRight)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setFlow(QListView.Flow.LeftToRight)
         self.setIconSize(QSize(320, 320))
         self.setSpacing(8)
         self.setWrapping(False)
@@ -149,12 +149,12 @@ class SinkList(QListWidget):
         super().__init__(parent)
         self._parent = parent
         self.setViewMode(QListWidget.IconMode)
-        self.setFlow(QListView.LeftToRight)
+        self.setFlow(QListView.Flow.LeftToRight)
         self.setAcceptDrops(False)
-        self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.setFlow(QListView.LeftToRight)
-        # self.setResizeMode(QListView.Adjust)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setFlow(QListView.Flow.LeftToRight)
+        # self.setResizeMode(QListView.ResizeMode.Adjust)
         self.setIconSize(QSize(320, 320))
         self.setSpacing(8)
         self.setWrapping(False)
@@ -246,7 +246,7 @@ class SinkList(QListWidget):
             self.rotateItemBy(name, angle)
         self._parent.update()
         # Issue #1164 workaround: https://www.qtcentre.org/threads/25867-Problem-with-QListWidget-Updating
-        self.setFlow(QListView.LeftToRight)
+        self.setFlow(QListView.Flow.LeftToRight)
 
     def rotateForceRefresh(self, name):
         """Force an item to visually update its rotate.
@@ -392,19 +392,32 @@ class RearrangementViewer(QDialog):
             pad = 20
             hb = QHBoxLayout()
             hb.addItem(
-                QSpacerItem(pad, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+                QSpacerItem(
+                    pad,
+                    1,
+                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.Minimum,
+                )
             )
             vb = QVBoxLayout()
             hb.addLayout(vb)
             hb.addItem(
-                QSpacerItem(pad, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+                QSpacerItem(
+                    pad,
+                    1,
+                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.Minimum,
+                )
             )
 
             vb.setContentsMargins(0, 1, 0, 1)
             vb.setSpacing(2)
             vb.addItem(
                 QSpacerItem(
-                    width, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+                    width,
+                    3,
+                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.MinimumExpanding,
                 )
             )
             for i in range(3):
@@ -414,7 +427,10 @@ class RearrangementViewer(QDialog):
                 vb.addWidget(f)
             vb.addItem(
                 QSpacerItem(
-                    width, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+                    width,
+                    3,
+                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.MinimumExpanding,
                 )
             )
             return hb
@@ -426,14 +442,20 @@ class RearrangementViewer(QDialog):
         hb.setContentsMargins(0, 0, 0, 0)
         hb.addWidget(self.rotateB_ccw)
         hb.addWidget(self.rotateB_cw)
-        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addItem(
+            QSpacerItem(16, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         hb.addWidget(self.sLeftB)
         hb.addWidget(self.sRightB)
-        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addItem(
+            QSpacerItem(16, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         hb3.addWidget(self.tools)
         hb3.addWidget(self.reverseB)
         hb3.addItem(
-            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+            QSpacerItem(
+                16, 20, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
+            )
         )
         hb3.addWidget(self.acceptB)
         hb3.addWidget(self.closeB)
@@ -447,7 +469,9 @@ class RearrangementViewer(QDialog):
         hb1.addLayout(GrippyMcGrab())
         hb = QHBoxLayout()
         hb.addWidget(self.appendB)
-        hb.addItem(QSpacerItem(64, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addItem(
+            QSpacerItem(64, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         hb.addWidget(self.removeB)
         hb1.addLayout(hb)
         hb1.addLayout(GrippyMcGrab())

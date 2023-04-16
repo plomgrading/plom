@@ -618,9 +618,13 @@ class RubricTable(QTableWidget):
             version=self._parent.version,
             maxMark=self._parent.maxMark,
         )
-        colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
-        colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
-        # colour_hide = self.palette().color(QPalette.Disabled, QPalette.Text)
+        colour_legal = self.palette().color(
+            QPalette.ColorGroup.Active, QPalette.ColorRole.Text
+        )
+        colour_illegal = self.palette().color(
+            QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text
+        )
+        # colour_hide = self.palette().color(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text)
         if legal == 2:
             self.showRow(r)
             self.item(r, 2).setForeground(colour_legal)
@@ -737,7 +741,7 @@ class RubricWidget(QWidget):
         m.addSeparator()
         m.addAction("Remove current tab...", self.remove_current_tab)
         b.setMenu(m)
-        b.setPopupMode(QToolButton.InstantPopup)
+        b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.RTW.setCornerWidget(b)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         # connect the 'tab-change'-signal to 'handleClick' to fix #1497

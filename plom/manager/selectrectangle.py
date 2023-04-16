@@ -44,7 +44,7 @@ class SelectRectangleWindow(QDialog):
     def initUI(self, fnames):
         self.setWindowTitle("Select ID Rectangle")
         self.view = IDView(self, fnames)
-        self.view.setRenderHint(QPainter.Antialiasing)
+        self.view.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         self.resetB = QPushButton("reset view")
         self.zoomB = QPushButton("zoom tool")

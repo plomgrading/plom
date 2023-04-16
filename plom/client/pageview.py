@@ -36,9 +36,9 @@ class PageView(QGraphicsView):
         self.setStyleSheet("background: transparent")
         self.setBackgroundBrush(BackGrid())
 
-        self.setRenderHint(QPainter.Antialiasing, True)
-        self.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         # the graphics view accepts drag/drop from the comment list
         self.setAcceptDrops(True)
         self.paperWindow = None

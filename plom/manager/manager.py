@@ -118,9 +118,9 @@ class UserDialog(QDialog):
             self.userLE.setEnabled(False)
         initialpw = simple_password()
         self.pwLE = QLineEdit(initialpw)
-        # self.pwLE.setEchoMode(QLineEdit.Password)
+        # self.pwLE.setEchoMode(QLineEdit.EchoMode.Password)
         self.pwLE2 = QLineEdit(initialpw)
-        # self.pwLE2.setEchoMode(QLineEdit.Password)
+        # self.pwLE2.setEchoMode(QLineEdit.EchoMode.Password)
         self.okB = QPushButton("Accept")
         self.okB.clicked.connect(self.validate)
         self.cnB = QPushButton("Cancel")
@@ -148,11 +148,11 @@ class UserDialog(QDialog):
 
     def togglePWShow(self):
         if self.pwCB.isChecked():
-            self.pwLE.setEchoMode(QLineEdit.Password)
-            self.pwLE2.setEchoMode(QLineEdit.Password)
+            self.pwLE.setEchoMode(QLineEdit.EchoMode.Password)
+            self.pwLE2.setEchoMode(QLineEdit.EchoMode.Password)
         else:
-            self.pwLE.setEchoMode(QLineEdit.Normal)
-            self.pwLE2.setEchoMode(QLineEdit.Normal)
+            self.pwLE.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.pwLE2.setEchoMode(QLineEdit.EchoMode.Normal)
 
     def newRandomPassword(self):
         newpw = simple_password()
@@ -645,7 +645,7 @@ class Manager(QWidget):
 
     def uploadSpec(self):
         # TODO: on gnome "" is not cwd... str(Path.cwd()
-        # options=QFileDialog.DontUseNativeDialog
+        # options=QFileDialog.Option.DontUseNativeDialog
         # TODO: str(Path.cwd() / "testSpec.toml")
         fname, ftype = QFileDialog.getOpenFileName(
             self, "Get server spec file", None, "TOML files (*.toml)"
@@ -728,7 +728,10 @@ class Manager(QWidget):
 
     def buildPapersChooseFolder(self):
         dur = QFileDialog.getExistingDirectory(
-            self, "Choose a directory for building PDFs", None, QFileDialog.ShowDirsOnly
+            self,
+            "Choose a directory for building PDFs",
+            None,
+            QFileDialog.Option.ShowDirsOnly,
         )
         if dur == "":
             return
@@ -2119,7 +2122,7 @@ class Manager(QWidget):
             self,
             "Choose a directory for reassembling PDFs",
             None,
-            QFileDialog.ShowDirsOnly,
+            QFileDialog.Option.ShowDirsOnly,
         )
         if dur == "":
             return
@@ -2219,7 +2222,9 @@ class Manager(QWidget):
             ]
         )
         self.ui.reviewTW.setSortingEnabled(True)
-        self.ui.reviewTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.ui.reviewTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection
+        )
         self.ui.reviewTW.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows
         )
@@ -2736,7 +2741,9 @@ class Manager(QWidget):
         )
         self.ui.userListTW.setSortingEnabled(True)
         self.ui.userListTW.resizeColumnsToContents()
-        self.ui.userListTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.ui.userListTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection
+        )
         self.ui.userListTW.setSelectionBehavior(
             QAbstractItemView.SelectionBehavior.SelectRows
         )

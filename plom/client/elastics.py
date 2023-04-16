@@ -100,16 +100,16 @@ def _get_intersection_bw_rect_line(rec, lin):
         return None
     x, y, w, h = rec.getRect()
     yes, pt = lin.intersects(QLineF(QPointF(x, y), QPointF(x + w, y)))
-    if yes == QLineF.BoundedIntersection:
+    if yes == QLineF.IntersectionType.BoundedIntersection:
         return pt
     yes, pt = lin.intersects(QLineF(QPointF(x + w, y), QPointF(x + w, y + h)))
-    if yes == QLineF.BoundedIntersection:
+    if yes == QLineF.IntersectionType.BoundedIntersection:
         return pt
     yes, pt = lin.intersects(QLineF(QPointF(x + w, y + h), QPointF(x, y + h)))
-    if yes == QLineF.BoundedIntersection:
+    if yes == QLineF.IntersectionType.BoundedIntersection:
         return pt
     yes, pt = lin.intersects(QLineF(QPointF(x, y + h), QPointF(x, y)))
-    if yes == QLineF.BoundedIntersection:
+    if yes == QLineF.IntersectionType.BoundedIntersection:
         return pt
     return None
 

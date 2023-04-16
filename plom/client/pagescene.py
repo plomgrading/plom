@@ -626,7 +626,7 @@ class PageScene(QGraphicsScene):
             m.addSeparator()
             m.addAction("Find other pages...", self.parent().rearrangePages)
             b.setMenu(m)
-            b.setPopupMode(QToolButton.InstantPopup)
+            b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
             h = self.addWidget(b)
             h.setScale(1.8)
             br = img.mapRectToScene(img.boundingRect())
@@ -637,7 +637,7 @@ class PageScene(QGraphicsScene):
                 br.left() + br.width() / 2 - wbr.width() / 2,
                 br.top() - wbr.height() / 2,
             )
-            # h.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+            # h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             b.setToolTip(f"Page options for page {n}")
             self._page_hack_buttons.append(h)
 

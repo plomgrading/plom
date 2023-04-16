@@ -385,7 +385,12 @@ class AddRemoveTagDialog(QDialog):
         else:
             flay.addRow(QLabel("Current tags:"))
             flay.addItem(
-                QSpacerItem(20, 4, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+                QSpacerItem(
+                    20,
+                    4,
+                    QSizePolicy.Policy.Minimum,
+                    QSizePolicy.Policy.MinimumExpanding,
+                )
             )
             for tag in current_tags:
                 row = QHBoxLayout()
@@ -400,19 +405,26 @@ class AddRemoveTagDialog(QDialog):
                 row.addWidget(b)
                 row.addItem(
                     QSpacerItem(
-                        48, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum
+                        48,
+                        1,
+                        QSizePolicy.Policy.MinimumExpanding,
+                        QSizePolicy.Policy.Minimum,
                     )
                 )
                 flay.addRow(row)
         flay.addItem(
-            QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+            QSpacerItem(
+                20, 8, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
+            )
         )
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
         flay.addItem(
-            QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+            QSpacerItem(
+                20, 8, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
+            )
         )
         CBadd = QComboBox()
         CBadd.setEditable(True)
@@ -422,7 +434,9 @@ class AddRemoveTagDialog(QDialog):
         self.CBadd = CBadd
 
         flay.addItem(
-            QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+            QSpacerItem(
+                20, 8, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
+            )
         )
 
         # TODO: cannot tab to OK
@@ -499,7 +513,7 @@ class BigMessageDialog(QDialog):
         b = QToolButton(text="Details")
         b.setCheckable(True)
         b.clicked.connect(self.toggle_details)
-        buttons.addButton(b, QDialogButtonBox.ActionRole)
+        buttons.addButton(b, QDialogButtonBox.ButtonRole.ActionRole)
         lay.addWidget(buttons)
         self.setLayout(lay)
 

@@ -56,7 +56,7 @@ class DeleteIcon(QPushButton):
         super().__init__()
         self.setText("Drag here\n to remove\n from tab")
         self.setAcceptDrops(True)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
 
     def dragEnterEvent(self, e):
         if isinstance(e.source(), ShowTable):
@@ -298,7 +298,7 @@ class DropButton(QPushButton):
         self.setAcceptDrops(True)
         self.index = p
         self.clicked.connect(self.payAttentionToMe)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
 
     def payAttentionToMe(self):
         self.setFocus(Qt.TabFocusReason)

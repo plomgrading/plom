@@ -126,7 +126,7 @@ class QuestionViewDialog(GroupView):
             self.marker = marker
             tagButton = QPushButton("&Tags")
             tagButton.clicked.connect(self.tags)
-            self._buttonBox.addButton(tagButton, QDialogButtonBox.ActionRole)
+            self._buttonBox.addButton(tagButton, QDialogButtonBox.ButtonRole.ActionRole)
 
     def tags(self):
         """If we have a marker parent then use it to manage tags"""
@@ -368,14 +368,14 @@ class PreviousPaperViewer(QDialog):
         buttons = QHBoxLayout()
         (key,) = keydata["quick-show-prev-paper"]["keys"]
         key = QKeySequence(key)
-        keystr = key.toString(QKeySequence.NativeText)
+        keystr = key.toString(QKeySequence.SequenceFormat.NativeText)
         self.prevTaskB = QPushButton(f"&Previous ({keystr})")
         self.prevTaskB.clicked.connect(self.previous_task)
         self.prevShortCut = QShortcut(key, self)
         self.prevShortCut.activated.connect(self.previous_task)
         (key,) = keydata["quick-show-next-paper"]["keys"]
         key = QKeySequence(key)
-        keystr = key.toString(QKeySequence.NativeText)
+        keystr = key.toString(QKeySequence.SequenceFormat.NativeText)
         self.nextTaskB = QPushButton(f"&Next ({keystr})")
         self.nextTaskB.clicked.connect(self.next_task)
         self.nextShortCut = QShortcut(key, self)
