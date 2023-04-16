@@ -267,15 +267,16 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         Shift-Return will render if the string starts with the magic
         prefix `tex:`.  Ctrl-Return adds the prefix if necessary.
         """
-        if event.modifiers() in (Qt.ShiftModifier, Qt.ControlModifier) and (
-            event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
-        ):
+        if event.modifiers() in (
+            Qt.KeyboardModifier.ShiftModifier,
+            Qt.KeyboardModifier.ControlModifier,
+        ) and (event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter):
             # Clear any highlighted text and release.
             tc = self.textCursor()
             tc.clearSelection()
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
-            if event.modifiers() == Qt.ControlModifier:
+            if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
                 self.textToPng(force=True)
             else:
                 self.textToPng()

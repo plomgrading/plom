@@ -118,7 +118,7 @@ class WideTextEdit(QTextEdit):
         return sz
 
     def keyPressEvent(self, event):
-        if event.modifiers() == Qt.ShiftModifier and (
+        if event.modifiers() == Qt.KeyboardModifier.ShiftModifier and (
             event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
         ):
             # print("WideTextEdit: ignoring Shift-Enter event")
@@ -292,7 +292,7 @@ class AddRubricBox(QDialog):
         self.scopeButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.scopeButton.clicked.connect(self.toggle_scope_elements)
         frame = QFrame()
-        frame.setFrameStyle(QFrame.StyledPanel)
+        frame.setFrameStyle(QFrame.Shape.StyledPanel)
         self.scope_frame = frame
         flay.addRow(self.scopeButton, frame)
         vlay = QVBoxLayout(frame)
@@ -475,7 +475,7 @@ class AddRubricBox(QDialog):
                     self.group_combobox.insertItem(-1, g)
                 self.group_combobox.setCurrentText(g)
             else:
-                self.group_checkbox.setCheckState(Qt.PartiallyChecked)
+                self.group_checkbox.setCheckState(Qt.CheckState.PartiallyChecked)
                 self.group_combobox.setEnabled(False)
 
             if len(exclusive_tags) == 0:
@@ -483,7 +483,7 @@ class AddRubricBox(QDialog):
             elif len(exclusive_tags) == 1:
                 self.group_excl.setChecked(True)
             else:
-                self.group_excl.setCheckState(Qt.PartiallyChecked)
+                self.group_excl.setCheckState(Qt.CheckState.PartiallyChecked)
 
             if not group_tags and not exclusive_tags:
                 pass
@@ -689,14 +689,14 @@ class AddRubricBox(QDialog):
             self.scope_frame.setVisible(False)
 
     def keyPressEvent(self, event):
-        if event.modifiers() == Qt.ShiftModifier and (
+        if event.modifiers() == Qt.KeyboardModifier.ShiftModifier and (
             event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
         ):
             # print("Dialog: Shift-Enter event")
             event.accept()
             self.accept()
             return
-        if event.modifiers() == Qt.ControlModifier and (
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier and (
             event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
         ):
             # print("Dialog: Ctrl-Enter event")

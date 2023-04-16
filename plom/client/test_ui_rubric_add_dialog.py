@@ -178,7 +178,9 @@ def test_AddRubricBox_parameterize(qtbot):
         # highlight the "x" text and replace it with param2
         qtbot.keyClick(d.TE, Qt.Key.Key_End)
         qtbot.keyClick(d.TE, Qt.Key.Key_Left)
-        qtbot.keyClick(d.TE, Qt.Key.Key_Left, modifier=Qt.ShiftModifier)
+        qtbot.keyClick(
+            d.TE, Qt.Key.Key_Left, modifier=Qt.KeyboardModifier.ShiftModifier
+        )
         qtbot.mouseClick(d.addParameterButton, Qt.MouseButton.LeftButton)
         qtbot.wait(10)
         # path = qtbot.screenshot(d)
@@ -493,7 +495,7 @@ def test_AddRubricBox_shift_enter_accepts_dialog(qtbot):
     # ensure we have the TE focused
     qtbot.mouseClick(d.TE, Qt.MouseButton.LeftButton)
     qtbot.wait(10)
-    qtbot.keyClick(d.TE, Qt.Key.Key_Enter, modifier=Qt.ShiftModifier)
+    qtbot.keyClick(d.TE, Qt.Key.Key_Enter, modifier=Qt.KeyboardModifier.ShiftModifier)
     qtbot.wait(10)
     assert not d.isVisible()
     out = d.gimme_rubric_data()
@@ -505,7 +507,7 @@ def test_AddRubricBox_ctrl_enter_adds_tex(qtbot):
     qtbot.addWidget(d)
     d.show()
     qtbot.keyClicks(d.TE, "$x$")
-    qtbot.keyClick(d.TE, Qt.Key.Key_Enter, modifier=Qt.ControlModifier)
+    qtbot.keyClick(d.TE, Qt.Key.Key_Enter, modifier=Qt.KeyboardModifier.ControlModifier)
     qtbot.wait(10)
     assert not d.isVisible()
     out = d.gimme_rubric_data()

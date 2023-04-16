@@ -254,7 +254,7 @@ class ShowTable(QTableWidget):
                         self.setItem(targetRow, col, QTableWidgetItem(rdat[col]))
                     targetRow += 1
             # # if shift-key pressed - then delete source
-            if QApplication.keyboardModifiers() == Qt.ShiftModifier:
+            if QApplication.keyboardModifiers() == Qt.KeyboardModifier.ShiftModifier:
                 sourceRows = sorted([X.row() for X in sourceInd], reverse=True)
                 # is multiple of 4
                 for r in sourceRows[0::4]:  # every 4th

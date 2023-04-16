@@ -1094,7 +1094,10 @@ class PageScene(QGraphicsScene):
             pass
 
     def wheelEvent(self, event):
-        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+        if (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
+        ):
             s = mousewheel_delta_to_scale(event.delta())
             self.views()[0].scale(s, s)
             # sets the view rectangle and updates zoom-dropdown.
@@ -1321,14 +1324,16 @@ class PageScene(QGraphicsScene):
     def stampCrossQMarkTick(self, event, cross=True):
         pt = event.scenePos()  # Grab the click's location and create command.
         if (event.button() == Qt.MouseButton.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             if cross:
                 command = CommandTick(self, pt)
             else:
                 command = CommandCross(self, pt)
         elif (event.button() == Qt.MouseButton.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
         ):
             command = CommandQMark(self, pt)
         else:
@@ -1919,7 +1924,8 @@ class PageScene(QGraphicsScene):
         # If left-click then a highlight box, else an ellipse.
         # Set a flag to tell the mouseReleaseBox function which.
         if (event.button() == Qt.MouseButton.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.boxFlag = 2
             self.ellipseItem = QGraphicsEllipseItem(
@@ -2038,11 +2044,13 @@ class PageScene(QGraphicsScene):
             # mid line draw so ignore press
             return
         if (event.button() == Qt.MouseButton.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.arrowFlag = 2
         elif (event.button() == Qt.MouseButton.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
         ):
             self.arrowFlag = 4
         else:
@@ -2134,12 +2142,14 @@ class PageScene(QGraphicsScene):
         # set penFlag so correct object created on mouse-release
         # non-zero value so we don't add to path after mouse-release
         if (event.button() == Qt.MouseButton.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.pathItem.setPen(self.highlight)
             self.penFlag = 2
         elif (event.button() == Qt.MouseButton.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
         ):
             # middle button is pen-path with arrows at both ends
             self.pathItem.setPen(self.ink)
@@ -2233,7 +2243,8 @@ class PageScene(QGraphicsScene):
             return
 
         if (event.button() == Qt.MouseButton.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].scale(0.8, 0.8)

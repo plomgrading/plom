@@ -359,11 +359,11 @@ class RubricNavDiagram(QFrame):
 
     def __init__(self, keydata):
         super().__init__()
-        # self.setFrameShape(QFrame.Panel)
+        # self.setFrameShape(QFrame.Shape.Panel)
         view = QGraphicsView()
         view.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
-        view.setFrameShape(QFrame.NoFrame)
+        view.setFrameShape(QFrame.Shape.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
@@ -422,11 +422,11 @@ class ToolNavDiagram(QFrame):
 
     def __init__(self, keydata):
         super().__init__()
-        # self.setFrameShape(QFrame.Panel)
+        # self.setFrameShape(QFrame.Shape.Panel)
         view = QGraphicsView()
         view.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
-        view.setFrameShape(QFrame.NoFrame)
+        view.setFrameShape(QFrame.Shape.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)

@@ -226,7 +226,10 @@ class _ExamScene(QGraphicsScene):
     """
 
     def wheelEvent(self, event):
-        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+        if (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
+        ):
             s = mousewheel_delta_to_scale(event.delta())
             self.views()[0].scale(s, s)
             # Unpleasant to grub in parent but want mouse events to lock zoom
@@ -361,7 +364,8 @@ class _ExamView(QGraphicsView):
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""
         if (event.button() == Qt.MouseButton.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.zoomOut()
         else:

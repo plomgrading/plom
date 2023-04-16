@@ -224,7 +224,8 @@ class IDView(QGraphicsView):
 
         """Left/right click to zoom in and out"""
         if (event.button() == Qt.MouseButton.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.scale(0.8, 0.8)
         else:
