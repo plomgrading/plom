@@ -30,8 +30,8 @@ class PageView(QGraphicsView):
         super().__init__(parent)
         self._annotr = parent
         # Set scrollbars
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         # set the area outside the groupimage to be tiled grid image
         self.setStyleSheet("background: transparent")
         self.setBackgroundBrush(BackGrid())

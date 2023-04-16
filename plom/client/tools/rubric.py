@@ -221,7 +221,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         else:
             # paint a bounding rectangle for undo/redo highlighting
             painter.setPen(
-                QPen(self.style["annot_color"], self.thick, style=Qt.DotLine)
+                QPen(self.style["annot_color"], self.thick, style=Qt.PenStyle.DotLine)
             )
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -308,7 +308,7 @@ class GhostComment(QGraphicsItemGroup):
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting
         # TODO: pen width hardcoded
-        painter.setPen(QPen(Qt.blue, 0.5, style=Qt.DotLine))
+        painter.setPen(QPen(Qt.blue, 0.5, style=Qt.PenStyle.DotLine))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)

@@ -194,7 +194,7 @@ class UnderlyingRect(QGraphicsRectItem):
 
     def __init__(self, rect):
         super().__init__()
-        self.setPen(QPen(QColor("black"), 4, style=Qt.DotLine))
+        self.setPen(QPen(QColor("black"), 4, style=Qt.PenStyle.DotLine))
         self.setBrush(QBrush(QColor(249, 249, 249, 255)))
         self.setRect(rect)
         self.setZValue(-10)
@@ -219,7 +219,7 @@ class MaskingOverlay(QGraphicsItemGroup):
         self.right_bar = QGraphicsRectItem(outer_rect)
         self.dotted_boundary = QGraphicsRectItem(inner_rect)
         transparent_paint = QBrush(QColor(249, 249, 249, 220))
-        dotted_pen = QPen(QColor(0, 0, 0, 128), 2, style=Qt.DotLine)
+        dotted_pen = QPen(QColor(0, 0, 0, 128), 2, style=Qt.PenStyle.DotLine)
         self.top_bar.setBrush(transparent_paint)
         self.bottom_bar.setBrush(transparent_paint)
         self.left_bar.setBrush(transparent_paint)
@@ -1495,7 +1495,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        self.views()[0].setCursor(Qt.ClosedHandCursor)
+        self.views()[0].setCursor(Qt.CursorShape.ClosedHandCursor)
         super().mousePressEvent(event)
 
     def mousePressPan(self, event):
@@ -1514,7 +1514,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        self.views()[0].setCursor(Qt.ClosedHandCursor)
+        self.views()[0].setCursor(Qt.CursorShape.ClosedHandCursor)
         return
 
     def mousePressText(self, event):
@@ -1627,7 +1627,7 @@ class PageScene(QGraphicsScene):
             None.
 
         """
-        self.views()[0].setCursor(Qt.OpenHandCursor)
+        self.views()[0].setCursor(Qt.CursorShape.OpenHandCursor)
         super().mouseReleaseEvent(event)
         # refresh view after moving objects
         # EXPERIMENTAL: recompute bounding box in case you move an item outside the pages
@@ -1645,7 +1645,7 @@ class PageScene(QGraphicsScene):
             None.
 
         """
-        self.views()[0].setCursor(Qt.OpenHandCursor)
+        self.views()[0].setCursor(Qt.CursorShape.OpenHandCursor)
         super().mouseReleaseEvent(event)
         self.views()[0].setZoomSelector()
 

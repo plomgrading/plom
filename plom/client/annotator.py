@@ -613,13 +613,13 @@ class Annotator(QWidget):
         cursor["Highlight"] = QCursor(_pixmap_from("highlighter.png"), 4, 4)
         cursor["arrow"] = QCursor(_pixmap_from("arrow.png"), 4, 4)
         cursor["DoubleArrow"] = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
-        cursor["text"] = Qt.IBeamCursor
-        cursor["rubric"] = Qt.IBeamCursor
-        cursor["image"] = Qt.CrossCursor
-        cursor["zoom"] = Qt.SizeFDiagCursor
-        # note Qt.ClosedHandCursor and Qt.OpenHandCursor also hardcoded in pagescene
-        cursor["pan"] = Qt.OpenHandCursor
-        cursor["move"] = Qt.OpenHandCursor
+        cursor["text"] = Qt.CursorShape.IBeamCursor
+        cursor["rubric"] = Qt.CursorShape.IBeamCursor
+        cursor["image"] = Qt.CursorShape.CrossCursor
+        cursor["zoom"] = Qt.CursorShape.SizeFDiagCursor
+        # note ClosedHandCursor and OpenHandCursor also hardcoded in pagescene
+        cursor["pan"] = Qt.CursorShape.OpenHandCursor
+        cursor["move"] = Qt.CursorShape.OpenHandCursor
 
         self.cursor = cursor
 
@@ -721,7 +721,7 @@ class Annotator(QWidget):
         """
         if not self.tgvID or not self.scene:
             return
-        self.parentMarkerUI.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.parentMarkerUI.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
@@ -768,7 +768,7 @@ class Annotator(QWidget):
         pd = QProgressDialog(
             "Downloading additional images\nStarting up...", None, 0, N, self
         )
-        pd.setWindowModality(Qt.WindowModal)
+        pd.setWindowModality(Qt.WindowModality.WindowModal)
         pd.setMinimumDuration(500)
         pd.setValue(0)
         self.parentMarkerUI.Qapp.processEvents()
@@ -998,7 +998,7 @@ class Annotator(QWidget):
         Returns:
             None: alters toolButton
         """
-        toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        toolButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))
         pm = QPixmap()
         res = resources.files(plom.client.icons) / iconfile

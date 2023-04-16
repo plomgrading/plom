@@ -127,7 +127,7 @@ class RubricTable(QTableWidget):
         self.horizontalHeader().setStretchLastSection(True)
         # Issue #1498: use these for shortcut key indicators
         self.verticalHeader().setVisible(False)
-        self.setGridStyle(Qt.DotLine)
+        self.setGridStyle(Qt.PenStyle.DotLine)
         self.setAlternatingRowColors(False)
         #  negative padding is probably b/c of fontsize changes
         self.setStyleSheet(
