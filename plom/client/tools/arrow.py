@@ -45,8 +45,8 @@ class ArrowItem(UndoStackMoveMixin, QGraphicsPathItem):
             QPen(
                 style["annot_color"],
                 style["pen_width"],
-                cap=Qt.RoundCap,
-                join=Qt.RoundJoin,
+                cap=Qt.PenCapStyle.RoundCap,
+                join=Qt.PenJoinStyle.RoundJoin,
             )
         )
         self.setBrush(QBrush(style["annot_color"]))
