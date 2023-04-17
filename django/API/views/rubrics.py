@@ -48,4 +48,6 @@ class MmodifyRubric(APIView):
             rubric = rs.modify_rubric(key, request.data["rubric"])
             return Response(rubric.key, status=status.HTTP_200_OK)
         except (ValidationError, NotImplementedError):
-            return Response("Invalid rubric data", status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response(
+                "Invalid rubric data", status=status.HTTP_406_NOT_ACCEPTABLE
+            )
