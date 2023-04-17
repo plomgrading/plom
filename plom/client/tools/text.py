@@ -65,7 +65,10 @@ class UndoStackMoveTextMixin:
     # a mixin class to avoid copy-pasting this method over many *Item classes.
     # Overrides the itemChange method.
     def itemChange(self, change, value):
-        if change == QGraphicsItem.GraphicsItemFlag.ItemPositionChange and self.scene():
+        if (
+            change == QGraphicsItem.GraphicsItemChange.ItemPositionChange
+            and self.scene()
+        ):
             command = CommandMoveText(self, value)
             self.scene().undoStack.push(command)
         return super().itemChange(change, value)
