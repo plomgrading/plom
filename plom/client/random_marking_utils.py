@@ -241,7 +241,7 @@ def do_random_marking_backend(question, version, *, messenger):
             print(f"Tagged task with: {the_tags}")
 
 
-def build_random_rubrics(question, *, messenger):
+def build_random_rubrics(question, *, username, messenger):
     """Push random rubrics into a server: only for testing/demo purposes
 
     .. caution:: Do not use on a real production server.
@@ -251,6 +251,7 @@ def build_random_rubrics(question, *, messenger):
 
     keyword args:
         messenger: a messenger object already connected to the server.
+        username (str): which username to create the rubrics.
 
     returns:
         None
@@ -265,6 +266,7 @@ def build_random_rubrics(question, *, messenger):
             "meta": "Randomness",
             "kind": "relative",
             "question": question,
+            "username": username,
         }
         com["id"] = messenger.McreateRubric(com)
         if question in positiveRubrics:
@@ -281,6 +283,7 @@ def build_random_rubrics(question, *, messenger):
             "meta": "Randomness",
             "kind": "relative",
             "question": question,
+            "username": username,
         }
         com["id"] = messenger.McreateRubric(com)
         if question in negativeRubrics:
@@ -332,7 +335,7 @@ def do_rando_marking(server, user, password):
         Qapp = QApplication(L)
 
         for q in range(1, spec["numberOfQuestions"] + 1):
-            build_random_rubrics(q, messenger=messenger)
+            build_random_rubrics(q, username=user, messenger=messenger)
             for v in range(1, spec["numberOfVersions"] + 1):
                 print("Annotating question {} version {}".format(q, v))
                 do_random_marking_backend(q, v, messenger=messenger)
