@@ -82,8 +82,8 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         self.border = border
         self.setPixmap(QPixmap.fromImage(self.qImage))
         self.setPos(pt)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         self.saveable = True
         self.setScale(scale)
         self.data = data

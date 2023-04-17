@@ -34,8 +34,8 @@ class BoxItem(UndoStackMoveMixin, QGraphicsRectItem):
         self.setRect(rect)  # don't overwrite native rect function
         self.restyle(style)
 
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def restyle(self, style):
         self.normal_thick = style["pen_width"]

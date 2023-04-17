@@ -40,8 +40,8 @@ class TickItem(UndoStackMoveMixin, QGraphicsPathItem):
         self.setPath(self.path)
         self.restyle(style)
 
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def restyle(self, style):
         self.normal_thick = 3 * style["pen_width"] / 2

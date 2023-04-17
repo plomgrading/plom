@@ -30,19 +30,27 @@ class CommandMoveText(QUndoCommand):
 
     def redo(self):
         # Temporarily disable the item emitting "I've changed" signals
-        self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+        self.xitem.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False
+        )
         # Move the object
         self.xitem.setPos(self.new_pos)
         # Re-enable the item emitting "I've changed" signals
-        self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.xitem.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True
+        )
 
     def undo(self):
         # Temporarily disable the item emitting "I've changed" signals
-        self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+        self.xitem.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False
+        )
         # Move the object back
         self.xitem.setPos(self.old_pos)
         # Re-enable the item emitting "I've changed" signals
-        self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.xitem.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True
+        )
 
     def mergeWith(self, other):
         # Most commands cannot be merged - make sure the moved items are the
@@ -57,7 +65,7 @@ class UndoStackMoveTextMixin:
     # a mixin class to avoid copy-pasting this method over many *Item classes.
     # Overrides the itemChange method.
     def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
+        if change == QGraphicsItem.GraphicsItemFlag.ItemPositionChange and self.scene():
             command = CommandMoveText(self, value)
             self.scene().undoStack.push(command)
         return super().itemChange(change, value)
@@ -138,8 +146,8 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.setFont(font)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.setPos(pt)
         # If displaying png-rendered-latex, store the original text here
@@ -311,7 +319,7 @@ class GhostText(QGraphicsTextItem):
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.setFont(font)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None

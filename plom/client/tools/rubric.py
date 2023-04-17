@@ -155,8 +155,8 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def as_rubric(self):
         """return as a rubric dict"""
@@ -249,7 +249,7 @@ class GhostComment(QGraphicsItemGroup):
         self.di = GhostDelta(display_delta, fontsize, legal=self.legal)
         self.blurb = GhostText(txt, fontsize, legal=self.legal)
         self.changeComment(display_delta, txt)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
 
     def _tweakPositions(self, display_delta, txt):
         """Adjust the positions of the delta and text depending on their size and content.

@@ -77,8 +77,8 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.pi.setPath(self.path)
         self.restyle(style)
 
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         self.addToGroup(self.pi)
         self.addToGroup(self.endi)
         self.addToGroup(self.endf)

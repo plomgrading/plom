@@ -36,8 +36,8 @@ class ArrowItem(UndoStackMoveMixin, QGraphicsPathItem):
         self.restyle(style)
 
         # The line is moveable and should signal any changes
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def restyle(self, style):
         self.normal_thick = style["pen_width"]
