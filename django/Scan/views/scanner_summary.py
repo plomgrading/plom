@@ -13,5 +13,4 @@ class ScannerSummaryView(ScannerRequiredView):
     """
 
     def get(self, request):
-
         return HttpResponse("I am Summary initial page")

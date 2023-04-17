@@ -92,6 +92,47 @@ class MarkingProgressCount(APIView):
         return Response(progress, status=status.HTTP_200_OK)
 
 
+class MgetDoneTasks(APIView):
+    """
+    Retrieve data for questions which have already been graded by the user.
+
+    Respond with status 200.
+
+    Returns:
+        200: list of [group-ids, mark, marking_time, [list_of_tag_texts], integrity_check ] for each paper.
+    """
+
+    def get(self, request, *args):
+        data = request.data
+        question = data["q"]
+        version = data["v"]
+
+        mts = MarkingTaskService()
+        marks = mts.get_user_mark_results(
+            request.user, question=question, version=version
+        )
+
+        # TODO: 3rd entry here is marking time: in legacy, we trust the client's
+        # previously given value (which the client tracks including revisions)
+        # Currently this tries to estimate a value server-side.  Decisions?
+        # Previous code was `mark_action.time - mark_action.claim_action.time`
+        # which is a `datatime.timedelta`.  Not sure how to convert to seconds
+        # so currently using hardcoded value.
+        # TODO: legacy marking time is int, but we may decide to change to float.
+        rows = map(
+            lambda mark_action: [
+                mark_action.task.code,
+                mark_action.annotation.score,
+                mark_action.annotation.marking_time,
+                [],  # TODO: tags are not implemented yet
+                mark_action.task.pk,  # TODO: integrity check is not implemented yet
+            ],
+            marks,
+        )
+
+        return Response(rows, status=status.HTTP_200_OK)
+
+
 class MgetNextTask(APIView):
     """
     Responds with a code for the next available marking task.
@@ -106,8 +147,6 @@ class MgetNextTask(APIView):
         question = data["q"]
         version = data["v"]
 
-        # return Response("q0001g1")
-        # TODO: find another place for populating the marking tasks table
         mts = MarkingTaskService()
 
         task = mts.get_first_available_task(question=question, version=version)
@@ -132,7 +171,7 @@ class MclaimThisTask(APIView):
         question_data = pds.get_question_pages_list(paper, question)
 
         # TODO: tags and integrity check are hardcoded for now
-        return Response([question_data, [], "12345"])
+        return Response([question_data, [], the_task.pk])
 
     def post(self, request, code, *args):
         """
@@ -147,7 +186,7 @@ class MclaimThisTask(APIView):
         plomfile_data = plomfile.read().decode("utf-8")
 
         try:
-            mark_data, annot_data = mts.validate_and_clean_marking_data(
+            mark_data, annot_data, rubrics_used = mts.validate_and_clean_marking_data(
                 request.user, code, data, plomfile_data
             )
         except ObjectDoesNotExist as e:
@@ -172,7 +211,12 @@ class MclaimThisTask(APIView):
             )
 
         mts.mark_task(
-            request.user, code, mark_data["score"], mark_data["mtime"], img, annot_data
+            request.user,
+            code,
+            mark_data["score"],
+            mark_data["marking_time"],
+            img,
+            annot_data,
         )
 
         return Response(
@@ -228,7 +272,23 @@ class MgetAnnotations(APIView):
     """
 
     def get(self, request, paper, question):
-        return Response({"annotation_edition": None}, status=status.HTTP_200_OK)
+        mts = MarkingTaskService()
+        annotation = mts.get_latest_annotation(paper, question)
+        annotation_task = annotation.markaction.task
+        annotation_data = annotation.annotation_data
+
+        latest_task = mts.get_latest_task(paper, question)
+        if latest_task != annotation_task:
+            return Response(
+                "Integrity error: task has been modified by server.",
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        annotation_data["user"] = annotation.markaction.user.username
+        annotation_data["annotation_edition"] = annotation.edition
+        annotation_data["annotation_reference"] = annotation.pk
+
+        return Response(annotation_data, status=status.HTTP_200_OK)
 
 
 class MgetAnnotationImage(APIView):
@@ -236,5 +296,23 @@ class MgetAnnotationImage(APIView):
     Get an annotation-image.
     """
 
-    def get(self, request, paper, question):
-        return Response({}, status=status.HTTP_200_OK)
+    def get(self, request, paper, question, edition):
+        mts = MarkingTaskService()
+        annotation = mts.get_latest_annotation(paper, question)
+        annotation_task = annotation.markaction.task
+        annotation_image = annotation.image
+
+        latest_task = mts.get_latest_task(paper, question)
+        if latest_task != annotation_task:
+            return Response(
+                "Integrity error: task has been modified by server.",
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        with open(annotation_image.path, "rb") as f:
+            image = SimpleUploadedFile(
+                f"{annotation_image.hash}.png",
+                f.read(),
+                content_type="image/png",
+            )
+        return FileResponse(image, status=status.HTTP_200_OK)
