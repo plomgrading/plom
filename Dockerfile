@@ -12,7 +12,7 @@ FROM ubuntu:22.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
-        cmake make g++ git\
+        cmake make g++ \
         imagemagick \
         openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
@@ -25,9 +25,6 @@ RUN apt-get -y update && \
         python3-pytest \
         python3-magic && \
     apt-get -yq autoclean
-
-# Note that git is required for pip install of zxingcpp on ubuntu 20.04
-# - see https://github.com/zxing-cpp/zxing-cpp/issues/489
 
 # file-magic: https://gitlab.com/plom/plom/-/issues/1570
 
