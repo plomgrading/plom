@@ -58,7 +58,7 @@ class NeutralRubric(Rubric):
 
 class AbsoluteRurbic(Rubric):
     """
-    A rubric that shows the maximum possible amount of score. 
+    A rubric that shows the maximum possible amount of score.
     E.g. "1 of 5"
     """
 
