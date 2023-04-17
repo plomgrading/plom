@@ -1,5 +1,11 @@
 #!/usr/bin/env python
+
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
+
 """Django's command-line utility for administrative tasks."""
+
 import os
 import sys
 
