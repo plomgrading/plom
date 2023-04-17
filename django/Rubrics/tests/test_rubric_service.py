@@ -134,12 +134,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.kind, self.neutral_rubric.kind)
         self.assertEqual(r.display_delta, self.neutral_rubric.display_delta)
         self.assertEqual(r.text, self.neutral_rubric.text)
-
-        # Issue #2661
-        # tags -> client said "mostly future use" return empty
-        self.assertFalse(r.tags)
         self.assertEqual(r.tags, self.neutral_rubric.tags)
-
         self.assertEqual(r.meta, self.neutral_rubric.meta)
         self.assertEqual(r.user, self.neutral_rubric.user)
         self.assertIsNot(r.user, self.relative_rubric.user)
@@ -169,12 +164,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.kind, self.relative_rubric.kind)
         self.assertEqual(r.display_delta, self.relative_rubric.display_delta)
         self.assertEqual(r.text, self.relative_rubric.text)
-
-        # Issue #2661
-        # tags -> client said "mostly future use" return empty
-        self.assertFalse(r.tags)
         self.assertEqual(r.tags, self.relative_rubric.tags)
-
         self.assertEqual(r.meta, self.relative_rubric.meta)
         self.assertEqual(r.user, self.relative_rubric.user)
         self.assertIsNot(r.user, self.neutral_rubric.user)
@@ -204,12 +194,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.kind, self.absolute_rubric.kind)
         self.assertEqual(r.display_delta, self.absolute_rubric.display_delta)
         self.assertEqual(r.text, self.absolute_rubric.text)
-
-        # Issue #2661
-        # tags -> client said "mostly future use" return empty
-        self.assertFalse(r.tags)
         self.assertEqual(r.tags, self.absolute_rubric.tags)
-
         self.assertEqual(r.meta, self.absolute_rubric.meta)
         self.assertEqual(r.user, self.absolute_rubric.user)
         self.assertIsNot(r.user, self.relative_rubric.user)
