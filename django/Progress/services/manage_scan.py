@@ -28,21 +28,32 @@ class ManageScanService:
     """
 
     @transaction.atomic
-    def get_total_pages(self):
+    def get_total_fixed_pages(self):
         """
-        Return the total number of pages across all test-papers in the exam.
+        Return the total number of fixed pages across all test-papers in the exam.
         """
 
-        return len(FixedPage.objects.all())
+        return FixedPage.objects.all().count()
 
     @transaction.atomic
-    def get_scanned_pages(self):
-        """
-        Return the number of pages in the exam that have been successfully scanned and validated.
+    def get_total_mobile_pages(self):
+        """Return the total number of mobile pages across all
+        test-papers in the exam. Note that an image used for multiple
+        questions will be counted with multiplicity.
+
         """
 
-        scanned = FixedPage.objects.exclude(image=None)
-        return len(scanned)
+        return MobilePage.objects.all().count()
+
+    @transaction.atomic
+    def get_number_of_scanned_pages(self):
+        """Return the number of pages in the exam that have been
+        successfully scanned and validated. Note that any mobile page
+        used in multiple questions is counted with multiplicity."""
+
+        scanned_fixed = FixedPage.objects.exclude(image=None)
+        mobile = MobilePage.objects.all()
+        return scanned_fixed.count() + mobile.count()
 
     @transaction.atomic
     def get_total_test_papers(self):
@@ -50,7 +61,7 @@ class ManageScanService:
         Return the total number of test-papers in the exam.
         """
 
-        return len(Paper.objects.all())
+        return Paper.objects.all().count()
 
     @transaction.atomic
     def get_number_completed_test_papers(self):
@@ -282,7 +293,7 @@ class ManageScanService:
     @transaction.atomic
     def get_all_unused_test_papers(self):
         """
-        Return a list of paper-numbers of all unused test-papers.
+        Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
 
         A paper is unused when it has no fixed page images nor any mobile pages.
         """
@@ -295,7 +306,7 @@ class ManageScanService:
         no_images_at_all = Paper.objects.filter(
             ~Exists(fixed_with_scan), mobilepage__isnull=True
         )
-        return [paper.paper_number for paper in no_images_at_all]
+        return sorted([paper.paper_number for paper in no_images_at_all])
 
     @transaction.atomic
     def get_test_paper_list(self, exclude_complete=False, exclude_incomplete=False):
