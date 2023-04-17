@@ -479,7 +479,7 @@ class AddRubricBox(QDialog):
                 'Change "Marks" below to associate a point-change.'
             )
             self.TEtag.setPlaceholderText(
-                "For any user tags you might want. (mostly future use)"
+                "Currently not user-editable, used for grouping."
             )
             self.TEmeta.setPlaceholderText(
                 "Notes about this rubric such as hints on when to use it.\n\n"

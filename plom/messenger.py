@@ -371,7 +371,7 @@ class Messenger(BaseMessenger):
         pg,
         ver,
         score,
-        mtime,
+        marking_time,
         annotated_img,
         plomfile,
         rubrics,
@@ -383,7 +383,8 @@ class Messenger(BaseMessenger):
             code (str): e.g., "q0003g1"
             pg (int): question number.
             ver (int): which version.
-            mtime (int): number of seconds spend on grading the paper.
+            marking_time (int/float): number of seconds spend on grading
+                the paper.
             annotated_img (pathlib.Path): the annotated image, either a
                 png or a jpeg.
             plomfile (pathlib.Path): machine-readable json of annotations
@@ -413,15 +414,14 @@ class Messenger(BaseMessenger):
 
         if self.webplom:
             return self._MreturnMarkedTask_webplom(
-                code=code,
-                pg=pg,
-                ver=ver,
-                score=score,
-                mtime=mtime,
-                annotated_img=annotated_img,
-                plomfile=plomfile,
-                rubrics=rubrics,
-                integrity_check=integrity_check,
+                code,
+                pg,
+                ver,
+                score,
+                marking_time,
+                annotated_img,
+                plomfile,
+                integrity_check,
             )
 
         # Python <= 3.7 fails on pathlib.Path. remove `str` when we drop Python 3.7
@@ -436,7 +436,7 @@ class Messenger(BaseMessenger):
                         "pg": str(pg),
                         "ver": str(ver),
                         "score": str(score),
-                        "mtime": str(mtime),
+                        "mtime": str(round(marking_time)),
                         "rubrics": rubrics,
                         "md5sum": hashlib.md5(fh.read()).hexdigest(),
                         "integrity_check": integrity_check,
@@ -493,10 +493,9 @@ class Messenger(BaseMessenger):
         pg,
         ver,
         score,
-        mtime,
+        marking_time,
         annotated_img,
         plomfile,
-        rubrics,
         integrity_check,
     ):
         """
@@ -517,8 +516,7 @@ class Messenger(BaseMessenger):
                         "pg": str(pg),
                         "ver": str(ver),
                         "score": str(score),
-                        "mtime": str(mtime),
-                        "rubrics": rubrics,
+                        "marking_time": marking_time,
                         "md5sum": hashlib.md5(annot_img_file.read()).hexdigest(),
                         "integrity_check": integrity_check,
                     }

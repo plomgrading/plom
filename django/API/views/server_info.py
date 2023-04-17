@@ -52,7 +52,6 @@ class ServerVersion(APIView):
 class CloseUser(APIView):
     """
     Delete the user's token and log them out.
-    Todo: surrender tasks, etc.
 
     Returns:
         (200) user is logged out successfully
@@ -62,13 +61,6 @@ class CloseUser(APIView):
     def delete(self, request):
         try:
             request.user.auth_token.delete()
-
-            # Tasks
-            mts = MarkingTaskService()
-            mts.surrender_all_tasks(request.user)
-
-            its = IdentifyTaskService()
-            its.surrender_all_tasks(request.user)
 
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
@@ -77,10 +77,10 @@ class BaseTask(PolymorphicModel):
     """
 
     # TODO: UUID for indexing
-    # TODO: created timestamp
     # TODO: out-of-date boolean field
 
     assigned_user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    time = models.DateTimeField(default=timezone.now)
     status = models.TextField(
         null=False, default="todo"
     )  # choices: 'todo', 'out', 'complete'
