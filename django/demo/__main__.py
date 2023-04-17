@@ -418,6 +418,14 @@ def get_parser():
             grading with the client.
         """,
     )
+    parser.add_argument(
+        "--randomarker",
+        action="store_true",
+        help="""
+            Randomly marker and ID papers, for testing purposes.
+            Off by default.
+        """,
+    )
 
     return parser
 
@@ -540,6 +548,13 @@ def _doit(args):
 
     # if args.push:
     #     return
+
+    if args.randomarker:
+        # TODO: hardcoded port number!
+        cmd = "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker1 -w demoMarker1"
+        print(f"RandoMarking!  calling: {cmd}")
+        subprocess.check_call(split(cmd), env=dict(os.environ, WEBPLOM="1"))
+
     return (huey_worker_proc, server_proc)
 
 
