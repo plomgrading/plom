@@ -8,7 +8,7 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
