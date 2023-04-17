@@ -56,6 +56,15 @@ class NeutralRubric(Rubric):
     kind = models.TextField(null=False)
 
 
+class AbsoluteRurbic(Rubric):
+    """
+    A rubric that shows the maximum possible amount of score.
+    E.g. "1 of 5"
+    """
+
+    kind = models.TextField(null=False)
+
+
 class RubricPane(models.Model):
     """
     A user's configuration for the 'rubrics' pane in the annotation window.

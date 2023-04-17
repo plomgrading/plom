@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from model_bakery import baker
 
-from Rubrics.models import NeutralRubric, RelativeRubric
+from Rubrics.models import NeutralRubric, RelativeRubric, AbsoluteRurbic
 from Rubrics.services import RubricService
 
 
@@ -60,6 +60,21 @@ class RubricServiceTests(TestCase):
             user=user2,
             tags="",
             meta="hjklz",
+            versions=[],
+            parameters=[],
+        )
+
+        self.absolute_rubric = baker.make(
+            AbsoluteRurbic,
+            kind="absolute",
+            display_delta="2 of 5",
+            value=2,
+            out_of=5,
+            text="mnbvc",
+            question=3,
+            user=user1,
+            tags="",
+            meta="lkjhg",
             versions=[],
             parameters=[],
         )
@@ -119,9 +134,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.kind, self.neutral_rubric.kind)
         self.assertEqual(r.display_delta, self.neutral_rubric.display_delta)
         self.assertEqual(r.text, self.neutral_rubric.text)
-
         self.assertEqual(r.tags, self.neutral_rubric.tags)
-
         self.assertEqual(r.meta, self.neutral_rubric.meta)
         self.assertEqual(r.user, self.neutral_rubric.user)
         self.assertIsNot(r.user, self.relative_rubric.user)
@@ -151,15 +164,43 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.kind, self.relative_rubric.kind)
         self.assertEqual(r.display_delta, self.relative_rubric.display_delta)
         self.assertEqual(r.text, self.relative_rubric.text)
-
         self.assertEqual(r.tags, self.relative_rubric.tags)
-
         self.assertEqual(r.meta, self.relative_rubric.meta)
         self.assertEqual(r.user, self.relative_rubric.user)
         self.assertIsNot(r.user, self.neutral_rubric.user)
         self.assertEqual(r.question, self.relative_rubric.question)
         self.assertEqual(r.versions, self.relative_rubric.versions)
         self.assertEqual(r.parameters, self.relative_rubric.parameters)
+
+    def test_create_absolute_rubric(self):
+        """
+        Test RubricService.create_rubric() to create an absolute rubric
+        """
+        simulated_client_data = {
+            "kind": "absolute",
+            "display_delta": "2 of 5",
+            "value": 2,
+            "out_of": 5,
+            "text": "mnbvc",
+            "tags": "",
+            "meta": "lkjhg",
+            "username": "Liam",
+            "question": 3,
+            "versions": [],
+            "parameters": [],
+        }
+        r = RubricService().create_rubric(simulated_client_data)
+
+        self.assertEqual(r.kind, self.absolute_rubric.kind)
+        self.assertEqual(r.display_delta, self.absolute_rubric.display_delta)
+        self.assertEqual(r.text, self.absolute_rubric.text)
+        self.assertEqual(r.tags, self.absolute_rubric.tags)
+        self.assertEqual(r.meta, self.absolute_rubric.meta)
+        self.assertEqual(r.user, self.absolute_rubric.user)
+        self.assertIsNot(r.user, self.relative_rubric.user)
+        self.assertEqual(r.question, self.absolute_rubric.question)
+        self.assertEqual(r.versions, self.absolute_rubric.versions)
+        self.assertEqual(r.parameters, self.absolute_rubric.parameters)
 
     def test_modify_neutral_rubric(self):
         """
