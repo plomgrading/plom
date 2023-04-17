@@ -31,6 +31,7 @@ ok_no_copyright = [
     "*/uiFiles/ui_*.py",
     ".mailmap",
     "*/cl_for_demo.csv",
+    "*papers_to_rooms.csv",
     "django/static/*.svg",
 ]
 
