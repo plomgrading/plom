@@ -1741,10 +1741,10 @@ class PageScene(QGraphicsScene):
 
         """
         if event.type() in [
-            QEvent.TouchBegin,
-            QEvent.TouchEnd,
-            QEvent.TouchUpdate,
-            QEvent.TouchCancel,
+            QEvent.Type.TouchBegin,
+            QEvent.Type.TouchEnd,
+            QEvent.Type.TouchUpdate,
+            QEvent.Type.TouchCancel,
         ]:
             # ignore the event
             event.accept()
