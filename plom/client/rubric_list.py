@@ -1509,7 +1509,8 @@ class RubricWidget(QWidget):
                 used for updating the data in the rubric list after edit (only)
             add_to_group (str/None): if set, the user might be trying to add
                 to a group with this name.  For example, a UI could pre-select
-                that option.  Probably mutually exclusive with `edit`, `index`.
+                that option.  Mutually exclusive with `edit`, `index`, or
+                at least ill-defined what happens if you pass those as well.
 
         Returns:
             None: does its work through side effects on the comment list.
