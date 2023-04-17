@@ -127,12 +127,17 @@ def save_fixture(filename):
     Save a snapshot of the database as a JSON file to 'fixtures/filename.json'
     """
 
-    print("Saving database snapshot...")
-
     fixtures_dir = settings.BASE_DIR / "fixtures"
     fixtures_dir.mkdir(exist_ok=True)
 
-    call_command("dumpdata", "--exclude=Authentication", "--natural-foreign", f"-o{fixtures_dir / filename}")
+    print(f"Saving database snapshot to {filename}...")
+
+    call_command(
+        "dumpdata",
+        "--exclude=Authentication",
+        "--natural-foreign",
+        f"-o{fixtures_dir / filename}",
+    )
 
 
 def prepare_assessment():
@@ -164,6 +169,8 @@ def prepare_assessment():
     )
     call_command("plom_preparation_qvmap", "generate")
 
+    save_fixture("test_prepared.json")
+
 
 def launch_huey_workers():
     # I don't understand why, but this seems to need to be run as a sub-proc
@@ -186,6 +193,9 @@ def launch_server():
 def build_db_and_papers():
     print("Populating database in background")
     call_command("plom_papers", "build_db")
+
+    save_fixture("papers_db_populated.json")
+
     call_command("plom_preparation_extrapage", "build")
     call_command("plom_build_papers", "--start-all")
 
@@ -214,6 +224,7 @@ def wait_for_papers_to_be_ready():
             sleep(1)
         else:
             print("Extra page and papers all built - continuing to next step of demo.")
+            save_fixture("papers_built.json")
             break
 
 
@@ -260,6 +271,8 @@ def wait_for_upload(number_of_bundles=3, homework_bundles={}):
                 print(out)
             sleep(0.5)
 
+    save_fixture("bundles_uploaded.json")
+
 
 def read_qr_codes(number_of_bundles=3):
     for n in range(1, number_of_bundles + 1):
@@ -302,8 +315,10 @@ def wait_for_qr_read(number_of_bundles=3):
                 print(f"fake_bundle{n}.pdf has been read")
                 break
 
+    save_fixture("qr_codes_read.json")
 
-def push_if_ready(number_of_bundles=3):
+
+def push_if_ready(number_of_bundles=3, attempts=15):
     todo = [k + 1 for k in range(number_of_bundles)]
     while True:
         done = []
@@ -320,14 +335,17 @@ def push_if_ready(number_of_bundles=3):
                 sleep(1)
         for n in done:
             todo.remove(n)
-        if len(todo) > 0:
+        if len(todo) > 0 and attempts > 0:
             print(
                 f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
             )
+            attempts -= 1
             sleep(1)
         else:
             print("All bundles pushed.")
             break
+
+    save_fixture("pushed_bundles.json")
 
 
 def wait_for_exit():
@@ -511,11 +529,11 @@ def _doit(args):
     if args.readqr:
         return (huey_worker_proc, server_proc)
 
-    # print("*" * 40)
-    # push_if_ready()
-    call_command("plom_staging_bundles", "status")
-    call_command("plom_staging_bundles", "push", "fake_bundle2")
-    call_command("plom_staging_bundles", "push", "fake_hw_bundle_62")
+    print("*" * 40)
+    push_if_ready()
+    # call_command("plom_staging_bundles", "status")
+    # call_command("plom_staging_bundles", "push", "fake_bundle2")
+    # call_command("plom_staging_bundles", "push", "fake_hw_bundle_62")
 
     call_command("plom_rubrics", "init")
     call_command("plom_rubrics", "push", "--demo")
