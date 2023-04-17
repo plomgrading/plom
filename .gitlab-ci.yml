@@ -331,6 +331,8 @@ webplom_test:
   needs: ["docker-image"]
   image: $IM
   script:
+    - export PYTHONPATH=$PWD
+    - echo $PYTHONPATH
     - pushd django
     - python3 -m pip install coverage
     - python3 -m pip install -r requirements.txt
@@ -360,6 +362,8 @@ webplom_demo:
   needs: ["docker-image"]
   image: $IM
   script:
+    - export PYTHONPATH=$PWD
+    - echo $PYTHONPATH
     - pushd django
     - python3 -m pip install -r requirements.txt
     - export PLOM_USING_DOCKER=1

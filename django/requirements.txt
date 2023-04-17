@@ -13,7 +13,6 @@ beautifulsoup4 # HTML parsing
 django-session-timeout
 django-htmx
 tabulate # display table in command line
-git+https://gitlab.com/plom/plom.git@main
 reportlab
 django-huey
 django-polymorphic
