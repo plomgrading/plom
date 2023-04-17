@@ -931,7 +931,9 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             if getattr(X, "saveable", False):
                 # now check it is inside the UnderlyingRect
-                if X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
+                if X.collidesWithItem(
+                    self.underRect, mode=Qt.ItemSelectionMode.ContainsItemShape
+                ):
                     # add a little padding around things.
                     br = br.united(
                         X.mapRectToScene(X.boundingRect()).adjusted(-16, -16, 16, 16)
@@ -1548,8 +1550,10 @@ class PageScene(QGraphicsScene):
                     self.boxLineStampState == 2
                 ):  # make sure not trying to start text on top of text
                     return
-                under.setTextInteractionFlags(Qt.TextEditorInteraction)
-                self.setFocusItem(under, Qt.MouseFocusReason)
+                under.setTextInteractionFlags(
+                    Qt.TextInteractionFlag.TextEditorInteraction
+                )
+                self.setFocusItem(under, Qt.FocusReason.MouseFocusReason)
                 super().mousePressEvent(event)
                 return
             # check if a textitem currently has focus and clear it.
@@ -1688,7 +1692,7 @@ class PageScene(QGraphicsScene):
             "application/x-qabstractitemmodeldatalist"
         ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
             # User has dragged in a rubric from the rubric-list.
-            e.setDropAction(Qt.CopyAction)
+            e.setDropAction(Qt.DropAction.CopyAction)
         else:
             e.ignore()
 
@@ -1700,7 +1704,7 @@ class PageScene(QGraphicsScene):
         """Handles drop events."""
         # all drop events should copy
         # - even if user is trying to remove rubric from rubric-list make sure is copy-action.
-        e.setDropAction(Qt.CopyAction)
+        e.setDropAction(Qt.DropActin.CopyAction)
 
         if e.mimeData().hasFormat("text/plain"):
             # Simulate a rubric click.
@@ -2463,7 +2467,7 @@ class PageScene(QGraphicsScene):
             # grab list of items in rectangle around click
             nearby = self.items(
                 QRectF(self.originPos.x() - 5, self.originPos.y() - 5, 8, 8),
-                mode=Qt.IntersectsItemShape,
+                mode=Qt.ItemSelectionMode.IntersectsItemShape,
                 deviceTransform=QTransform(),
             )
             if len(nearby) == 0:
@@ -2478,7 +2482,9 @@ class PageScene(QGraphicsScene):
             # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
             for X in self.items():
                 # make sure is not background image or the scorebox, or the delbox itself.
-                if X.collidesWithItem(self.delBoxItem, mode=Qt.ContainsItemShape):
+                if X.collidesWithItem(
+                    self.delBoxItem, mode=Qt.ItemSelectionMode.ContainsItemShape
+                ):
                     if X.group() is None:
                         self.deleteIfLegal(X)
                     else:
@@ -2548,7 +2554,9 @@ class PageScene(QGraphicsScene):
 
     def itemWithinBounds(self, item):
         """Check if given item is within the margins or not."""
-        return item.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape)
+        return item.collidesWithItem(
+            self.underRect, mode=Qt.ItemSelectionMode.ContainsItemShape
+        )
 
     def check_all_saveable_objects_inside(self):
         """
