@@ -140,7 +140,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.setPos(pt)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
@@ -199,7 +199,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         tc = self.textCursor()
         tc.clearSelection()
         self.setTextCursor(tc)
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         super().focusOutEvent(event)
 
     def textToPng(self, force=False):
@@ -275,7 +275,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
             tc = self.textCursor()
             tc.clearSelection()
             self.setTextCursor(tc)
-            self.setTextInteractionFlags(Qt.NoTextInteraction)
+            self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
             if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
                 self.textToPng(force=True)
             else:
@@ -312,7 +312,7 @@ class GhostText(QGraphicsTextItem):
         font.setPixelSize(round(fontsize))
         self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
 

@@ -114,7 +114,7 @@ class ScoreBox(QGraphicsTextItem):
         font.setPixelSize(round(1.25 * fontsize))
         self.setFont(font)
         # Not editable.
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.setPos(0, 0)
         self._update_text()
 
@@ -224,10 +224,10 @@ class MaskingOverlay(QGraphicsItemGroup):
         self.bottom_bar.setBrush(transparent_paint)
         self.left_bar.setBrush(transparent_paint)
         self.right_bar.setBrush(transparent_paint)
-        self.top_bar.setPen(QPen(Qt.NoPen))
-        self.bottom_bar.setPen(QPen(Qt.NoPen))
-        self.left_bar.setPen(QPen(Qt.NoPen))
-        self.right_bar.setPen(QPen(Qt.NoPen))
+        self.top_bar.setPen(QPen(Qt.PenStyle.NoPen))
+        self.bottom_bar.setPen(QPen(Qt.PenStyle.NoPen))
+        self.left_bar.setPen(QPen(Qt.PenStyle.NoPen))
+        self.right_bar.setPen(QPen(Qt.PenStyle.NoPen))
         self.dotted_boundary.setPen(dotted_pen)
         # now set the size correctly
         self.set_bars()

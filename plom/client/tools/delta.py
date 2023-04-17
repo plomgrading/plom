@@ -23,7 +23,7 @@ class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         font.setPixelSize(round(1.25 * fontsize))
         self.setFont(font)
         # Is not editable.
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         # centre under the mouse-click.
@@ -78,7 +78,7 @@ class GhostDelta(QGraphicsTextItem):
         font.setPixelSize(round(1.25 * fontsize))
         self.setFont(font)
         # Is not editable.
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def changeDelta(self, display_delta, legal):
