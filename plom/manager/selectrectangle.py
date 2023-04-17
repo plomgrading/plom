@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import (

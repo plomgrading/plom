@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 from PyQt5.QtCore import QIODevice, QPointF, QBuffer, QByteArray
 from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QPen
