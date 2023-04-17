@@ -35,6 +35,7 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QGraphicsSceneDragDropEvent,
     QGraphicsTextItem,
+    QGraphicsView,
     QGraphicsItemGroup,
     QMessageBox,
     QUndoStack,
@@ -817,9 +818,9 @@ class PageScene(QGraphicsScene):
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
-            self.views()[0].setDragMode(1)
+            self.views()[0].setDragMode(QGraphicsView.DragMode.NoDrag)
         else:
-            self.views()[0].setDragMode(0)
+            self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         # update the modelabels
         self.parent().setModeLabels(self.mode)
 
