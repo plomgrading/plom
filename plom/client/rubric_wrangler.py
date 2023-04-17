@@ -301,7 +301,7 @@ class DropButton(QPushButton):
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
 
     def payAttentionToMe(self):
-        self.setFocus(Qt.TabFocusReason)
+        self.setFocus(Qt.FocusReason.TabFocusReason)
         self.parent().setCurrentIndex(self.index)
 
     def dragEnterEvent(self, e):

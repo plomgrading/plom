@@ -803,7 +803,7 @@ class PageScene(QGraphicsScene):
             None
         """
         # set focus so that shift/control change cursor
-        self.views()[0].setFocus(Qt.TabFocusReason)
+        self.views()[0].setFocus(Qt.FocusReason.TabFocusReason)
 
         self.mode = mode
         # if current mode is not rubric, make sure the ghostcomment is hidden
@@ -1722,7 +1722,7 @@ class PageScene(QGraphicsScene):
         else:
             pass
         # After the drop event make sure pageview has the focus.
-        self.views()[0].setFocus(Qt.TabFocusReason)
+        self.views()[0].setFocus(Qt.FocusReason.TabFocusReason)
 
     def latexAFragment(self, *args, **kwargs):
         """Latex a fragment of text."""
