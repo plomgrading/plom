@@ -46,3 +46,6 @@ plomdemo.zip
 
 # whitenoise static files (need to run python3 manage.py collectstatic)
 staticfiles/
+
+# test fixtures
+fixtures/

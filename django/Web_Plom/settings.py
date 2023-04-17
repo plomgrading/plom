@@ -227,6 +227,9 @@ REST_FRAMEWORK = {
 # Media and user-uploaded files
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Test fixtures directory
+FIXTURE_DIRS = [BASE_DIR / "fixtures"]
+
 # Configurable variables for Web Plom
 # ----------------------------------------------
 
