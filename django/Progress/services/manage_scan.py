@@ -151,7 +151,7 @@ class ManageScanService:
             "mobilepage_set__image",
         )
         # again since we loop over the mobile pages within the paper
-        # in a specified oder, and ref the image in those mobile-pages
+        # in a specified order, and ref the image in those mobile-pages
         # we do all this prefetching.
 
         complete = {}
