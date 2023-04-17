@@ -344,7 +344,7 @@ webplom_test:
     - python3 -m pip install coverage
     - python3 -m pip install -r requirements.txt
     - export PLOM_USING_DOCKER=1
-    - python3 -m demo --test
+    - python3 -m demo --test --randomarker
     - coverage run --source='.' manage.py test
     - coverage report --precision=2
     - coverage xml -o django_coverage.xml
