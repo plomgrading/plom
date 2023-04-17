@@ -26,14 +26,26 @@ class ManageScanTests(TestCase):
             hash="qwerty",
         )
         # make 15 papers
-        # * 1,2,3,4,5 with fixed-page images  (6*5 scanned pages)
+        # * 1 has all fixed-page images  (6 scanned pages) and 1 mobile page for Q1.
+        # * 1,2,3,4 with fixed-page images  (6*4 scanned pages)
         # * 6,7 = 2 scanned fixed pages, 4 unscanned = incomplete  (2*2 scanned pages)
         # * 8,9 = completely unscanned = unused
         # * 10,11 = 2 scanned fixed pages, 4 unscanned, 2 mobile pages = incomplete  (2*2 scanned, 2*2 mobile)
         # * 12,13,14,15 = three mobile pages each (questions 1, 2, 3). (3*2 mobile)
         ord = 0
         # make the 5 complete papers
-        for paper_number in range(1, 6):
+        for paper_number in [1]:
+            paper = baker.make(Paper, paper_number=paper_number)
+            for pg in range(1, 7):
+                ord += 1
+                img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
+                baker.make(FixedPage, paper=paper, image=img, version=1, page_number=pg)
+            for qn in [1]:
+                ord += 1
+                img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
+                baker.make(MobilePage, paper=paper, question_number=qn, image=img)
+        # now make the other 4 papers, all fixed, but no mobile pages
+        for paper_number in [2, 3, 4, 5]:
             paper = baker.make(Paper, paper_number=paper_number)
             for pg in range(1, 7):
                 ord += 1
@@ -92,18 +104,20 @@ class ManageScanTests(TestCase):
 
     def test_counts(self):
         # make 15 papers
-        # * 1,2,3,4,5 with fixed-page images  (6*5 scanned pages)
+        # * 1 has all fixed-page images  (6 scanned pages) and 1 mobile page for Q1.
+        # * 1,2,3,4 with fixed-page images  (6*4 scanned pages)
         # * 6,7 = 2 scanned fixed pages, 4 unscanned = incomplete  (2*2 scanned pages)
         # * 8,9 = completely unscanned = unused
         # * 10,11 = 2 scanned fixed pages, 4 unscanned, 2 mobile pages = incomplete  (2*2 scanned, 2*2 mobile)
-        # * 12,13,14,15 = three mobile pages each (questions 1, 2, 3). (4*3 mobile)
+        # * 12,13,14,15 = three mobile pages each (questions 1, 2, 3). (3*2 mobile)
         mss = ManageScanService()
         print(mss.get_total_test_papers())
         assert mss.get_total_test_papers() == 15
         assert mss.get_total_fixed_pages() == 15 * 6
-        assert mss.get_total_mobile_pages() == 2 * 2 + 4 * 3
+        assert mss.get_total_mobile_pages() == 1 + 2 * 2 + 4 * 3
         assert (
-            mss.get_number_of_scanned_pages() == 5 * 6 + 2 * 2 + 2 * 2 + 2 * 2 + 4 * 3
+            mss.get_number_of_scanned_pages()
+            == 5 * 6 + 1 + 2 * 2 + 2 * 2 + 2 * 2 + 4 * 3
         )
         assert mss.get_number_unused_test_papers() == 2
         assert mss.get_number_completed_test_papers() == 5 + 4
@@ -171,10 +185,28 @@ class ManageScanTests(TestCase):
         mss = ManageScanService()
         mss_complete = mss.get_all_completed_test_papers()
         # should return a dict of papers and their pages
-        # papers 1,2,3,4,5 = should have all 6 fixed pages - returned in page-number order
+        # paper 1 has 6 fixed and 1 mobile.
+        # papers 2,3,4,5 = should have all 6 fixed pages - returned in page-number order
         # papers 12,13,14,15 should have 3 mobile pages (one each for q 1,2,3) - returned in question-number order
         assert len(mss_complete) == 9
-        for pn in [1, 2, 3, 4, 5]:
+
+        for pn in [1]:
+            assert pn in mss_complete
+            assert len(mss_complete[pn]) == 7
+            page_data = mss_complete[pn]
+            for pg in range(1, 7):
+                self.assertEqual(page_data[pg - 1]["type"], "fixed")
+                self.assertEqual(page_data[pg - 1]["page_number"], pg)
+                assert (
+                    "img_pk" in page_data[pg - 1]
+                )  # not testing the actual value of image_pk
+            for qn in [1]:  # is the 7th page of the test
+                self.assertEqual(page_data[6]["type"], "mobile")
+                self.assertEqual(page_data[6]["question_number"], qn)
+                assert (
+                    "img_pk" in page_data[qn - 1]
+                )  # not testing the actual value of image_pk
+        for pn in [2, 3, 4, 5]:
             assert pn in mss_complete
             assert len(mss_complete[pn]) == 6
             page_data = mss_complete[pn]

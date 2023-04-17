@@ -27,7 +27,6 @@ class ManageScanService:
     handling colliding pages, unknown pages, bundles, etc.
     """
 
-    @transaction.atomic
     def get_total_fixed_pages(self):
         """
         Return the total number of fixed pages across all test-papers in the exam.
@@ -35,7 +34,6 @@ class ManageScanService:
 
         return FixedPage.objects.all().count()
 
-    @transaction.atomic
     def get_total_mobile_pages(self):
         """Return the total number of mobile pages across all
         test-papers in the exam. Note that an image used for multiple
@@ -55,7 +53,6 @@ class ManageScanService:
         mobile = MobilePage.objects.all()
         return scanned_fixed.count() + mobile.count()
 
-    @transaction.atomic
     def get_total_test_papers(self):
         """
         Return the total number of test-papers in the exam.
@@ -171,7 +168,7 @@ class ManageScanService:
                 complete[paper.paper_number].append(
                     {
                         "type": "mobile",
-                        "question_number": mp.page_number,
+                        "question_number": mp.question_number,
                         "img_pk": mp.image.pk,
                     }
                 )
@@ -364,32 +361,12 @@ class ManageScanService:
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
-    @transaction.atomic
-    def get_discarded_image_path(self, image_hash, make_dirs=True):
-        """
-        Return a Pathlib path pointing to
-        BASE_DIR/media/page_images/discarded_pages/{paper_number}/{page_number}.png
-
-        Args:
-            image_hash: str, sha256 of the discarded page
-            make_dirs (optional): set to False for testing
-        """
-
-        root_folder = settings.MEDIA_ROOT / "page_images" / "discarded_pages"
-        image_path = root_folder / f"{image_hash}.png"
-
-        if make_dirs:
-            root_folder.mkdir(exist_ok=True)
-
-        return image_path
-
-    @transaction.atomic
     def get_n_bundles(self):
         """
         Return the number of uploaded bundles.
         """
 
-        return len(StagingBundle.objects.all())
+        return StagingBundle.objects.all().count()
 
     @transaction.atomic
     def get_bundles_list(self):
@@ -419,7 +396,6 @@ class ManageScanService:
 
         return bundle_list
 
-    @transaction.atomic
     def get_pushed_image(self, img_pk):
         try:
             img = Image.objects.get(pk=img_pk)
