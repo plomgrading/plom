@@ -304,9 +304,9 @@ class GhostText(QGraphicsTextItem):
     def __init__(self, txt, fontsize, *, legal=True):
         super().__init__()
         if legal:
-            self.setDefaultTextColor(Qt.blue)
+            self.setDefaultTextColor(QColor("blue"))
         else:
-            self.setDefaultTextColor(Qt.lightGray)
+            self.setDefaultTextColor(QColor("lightGray"))
         self.setPlainText(txt)
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
@@ -341,6 +341,6 @@ class GhostText(QGraphicsTextItem):
                 qi = QImage(fragfilename)
                 tc.insertImage(qi)
         if legal:
-            self.setDefaultTextColor(Qt.blue)
+            self.setDefaultTextColor(QColor("blue"))
         else:
-            self.setDefaultTextColor(Qt.lightGray)
+            self.setDefaultTextColor(QColor("lightGray"))

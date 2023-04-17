@@ -68,9 +68,9 @@ class GhostDelta(QGraphicsTextItem):
         super().__init__()
         self.display_delta = display_delta
         if legal:
-            self.setDefaultTextColor(Qt.blue)
+            self.setDefaultTextColor(QColor("blue"))
         else:
-            self.setDefaultTextColor(Qt.lightGray)
+            self.setDefaultTextColor(QColor("lightGray"))
 
         self.setPlainText(" {} ".format(self.display_delta))
         font = QFont("Helvetica")
@@ -85,13 +85,13 @@ class GhostDelta(QGraphicsTextItem):
         self.display_delta = display_delta
         self.setPlainText(" {} ".format(self.display_delta))
         if legal:
-            self.setDefaultTextColor(Qt.blue)
+            self.setDefaultTextColor(QColor("blue"))
         else:
-            self.setDefaultTextColor(Qt.lightGray)
+            self.setDefaultTextColor(QColor("lightGray"))
 
     def paint(self, painter, option, widget):
         # paint the background
-        painter.setPen(QPen(Qt.blue, 1))
+        painter.setPen(QPen(QColor("blue"), 1))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super().paint(painter, option, widget)

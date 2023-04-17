@@ -2258,7 +2258,7 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.zoomBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.zoomBoxItem.setPen(Qt.blue)
+        self.zoomBoxItem.setPen(QColor("blue"))
         self.zoomBoxItem.setBrush(self.zoomBrush)
         self.addItem(self.zoomBoxItem)
 
