@@ -230,7 +230,7 @@ class IDView(QGraphicsView):
             self.scale(0.8, 0.8)
         else:
             self.scale(1.25, 1.25)
-        self.centerOn(event.pos())
+        self.centerOn(event.position())
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
