@@ -916,7 +916,12 @@ def huey_parent_split_bundle_task(bundle_pk, base_dir, *, debug_jpeg=False):
     with tempfile.TemporaryDirectory() as tmpdir:
         task_list = [
             huey_child_get_page_image(
-                bundle_pk, pg, pathlib.Path(tmpdir), f"page{pg:05}", quiet=True, debug_jpeg=debug_jpeg
+                bundle_pk,
+                pg,
+                pathlib.Path(tmpdir),
+                f"page{pg:05}",
+                quiet=True,
+                debug_jpeg=debug_jpeg,
             )
             for pg in range(bundle_obj.number_of_pages)
         ]

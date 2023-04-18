@@ -169,7 +169,6 @@ class ImageBundleService:
 
         pi_service = PaperInfoService()
 
-        # TODO - needs to handle extra pages too.
         for staged in bundle_images:
             image = Image(
                 bundle=uploaded_bundle,
