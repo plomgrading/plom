@@ -203,7 +203,7 @@ class QVHistogram(QDialog):
         gp = QHBoxLayout()
         for im in range(0, mx + 1):
             pb = QProgressBar()
-            pb.setOrientation(Qt.Vertical)
+            pb.setOrientation(Qt.Orientation.Vertical)
             if im not in dist:
                 pb.setValue(0)
             else:
@@ -230,7 +230,7 @@ class QVHistogram(QDialog):
             for im in range(0, mx + 1):
                 m = str(im)
                 pb = QProgressBar()
-                pb.setOrientation(Qt.Vertical)
+                pb.setOrientation(Qt.Orientation.Vertical)
                 if m not in hist[u]:
                     pb.setValue(0)
                 else:
@@ -257,13 +257,13 @@ class TestStatus(QDialog):
         self.setWindowTitle(f'Status of Paper {status["number"]:04}')
 
         idCB = QCheckBox("Identified")
-        idCB.setAttribute(Qt.WA_TransparentForMouseEvents)
-        idCB.setFocusPolicy(Qt.NoFocus)
+        idCB.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        idCB.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         if status["identified"]:
             idCB.setChecked(True)
         mkCB = QCheckBox("Fully marked")
-        mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
-        mkCB.setFocusPolicy(Qt.NoFocus)
+        mkCB.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        mkCB.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         if status["marked"]:
             mkCB.setChecked(True)
 
@@ -710,7 +710,7 @@ class Manager(QWidget):
     def makeDataBase(self):
         from plom.create import build_database
 
-        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.Qapp.processEvents()
@@ -743,7 +743,7 @@ class Manager(QWidget):
         from plom.create import build_papers
 
         # TODO: better to display progress bar, for now tqdm appears on stdout
-        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.Qapp.processEvents()
@@ -1692,11 +1692,11 @@ class Manager(QWidget):
             self.ui.overallTW.insertRow(r)
             item = QTableWidgetItem()
             assert isinstance(t, int)
-            item.setData(Qt.DisplayRole, t)
+            item.setData(Qt.ItemDataRole.DisplayRole, t)
             self.ui.overallTW.setItem(r, 0, item)
 
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, opDict[tstr][0])
+            item.setData(Qt.ItemDataRole.DisplayRole, opDict[tstr][0])
             if opDict[tstr][0]:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 item.setToolTip("Has been scanned")
@@ -1706,7 +1706,7 @@ class Manager(QWidget):
             self.ui.overallTW.setItem(r, 1, item)
 
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, opDict[tstr][1])
+            item.setData(Qt.ItemDataRole.DisplayRole, opDict[tstr][1])
             if opDict[tstr][1]:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 item.setToolTip("Has been identified")
@@ -1714,7 +1714,7 @@ class Manager(QWidget):
 
             item = QTableWidgetItem()
             assert isinstance(opDict[tstr][2], int)
-            item.setData(Qt.DisplayRole, opDict[tstr][2])
+            item.setData(Qt.ItemDataRole.DisplayRole, opDict[tstr][2])
             if opDict[tstr][2] == self.numberOfQuestions:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 item.setToolTip("Has been marked")
@@ -1723,7 +1723,7 @@ class Manager(QWidget):
             item = QTableWidgetItem()
             assert isinstance(opDict[tstr][3], str)
             time = arrow.get(opDict[tstr][3])
-            item.setData(Qt.DisplayRole, arrowtime_to_simple_string(time))
+            item.setData(Qt.ItemDataRole.DisplayRole, arrowtime_to_simple_string(time))
             item.setToolTip(time.humanize())
             self.ui.overallTW.setItem(r, 4, item)
         self.ui.overallTW.setSortingEnabled(True)
@@ -1777,17 +1777,19 @@ class Manager(QWidget):
         idx = self.ui.predictionTW.selectedIndexes()
         if len(idx) == 0:
             return
-        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(
+            Qt.ItemDataRole.DisplayRole
+        )
         # TODO: should we populate with empty string to avoid dealing with None here?
         sid = self.ui.predictionTW.item(idx[0].row(), 1)
         if sid is not None:
-            sid = sid.data(Qt.DisplayRole)
+            sid = sid.data(Qt.ItemDataRole.DisplayRole)
         pred_sid = self.ui.predictionTW.item(idx[0].row(), 3)
         if pred_sid is not None:
-            pred_sid = pred_sid.data(Qt.DisplayRole)
+            pred_sid = pred_sid.data(Qt.ItemDataRole.DisplayRole)
         certainty = self.ui.predictionTW.item(idx[0].row(), 4)
         if certainty is not None:
-            certainty = certainty.data(Qt.DisplayRole)
+            certainty = certainty.data(Qt.ItemDataRole.DisplayRole)
         try:
             img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
@@ -1886,7 +1888,9 @@ class Manager(QWidget):
         idx = self.ui.predictionTW.selectedIndexes()
         if not idx:
             return
-        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(
+            Qt.ItemDataRole.DisplayRole
+        )
         iDict = self.msgr.getIdentified()
         msg = f"Do you want to reset the ID of test number {test}?"
         if str(test) in iDict:
@@ -1906,8 +1910,10 @@ class Manager(QWidget):
         # TODO: replace with loop over multiple row selections?
         assert len(idx) == 6
         idx = idx[0]  # they all have the same row
-        test = self.ui.predictionTW.item(idx.row(), 0).data(Qt.DisplayRole)
-        predictor = self.ui.predictionTW.item(idx.row(), 4).data(Qt.DisplayRole)
+        test = self.ui.predictionTW.item(idx.row(), 0).data(Qt.ItemDataRole.DisplayRole)
+        predictor = self.ui.predictionTW.item(idx.row(), 4).data(
+            Qt.ItemDataRole.DisplayRole
+        )
         msg = f'Do you want to remove "{predictor}" predicted ID of test number {test}?'
         if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
             return
@@ -1958,16 +1964,16 @@ class Manager(QWidget):
                 self.ui.predictionTW.insertRow(r)
                 # put in the test-number
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, int(t))
+                item.setData(Qt.ItemDataRole.DisplayRole, int(t))
                 self.ui.predictionTW.setItem(r, 0, item)
 
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, identity[0])
+                item.setData(Qt.ItemDataRole.DisplayRole, identity[0])
                 item.setToolTip("Has been identified")
                 self.ui.predictionTW.setItem(r, 1, item)
 
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, identity[1])
+                item.setData(Qt.ItemDataRole.DisplayRole, identity[1])
                 item.setToolTip("Has been identified")
                 self.ui.predictionTW.setItem(r, 2, item)
                 r += 1
@@ -1978,29 +1984,31 @@ class Manager(QWidget):
                     self.ui.predictionTW.insertRow(r)
                     # put in the test-number
                     item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, int(t))
+                    item.setData(Qt.ItemDataRole.DisplayRole, int(t))
                     self.ui.predictionTW.setItem(r, 0, item)
 
                     item0 = QTableWidgetItem()
-                    item0.setData(Qt.DisplayRole, pred["student_id"])
+                    item0.setData(Qt.ItemDataRole.DisplayRole, pred["student_id"])
                     self.ui.predictionTW.setItem(r, 3, item0)
                     item1 = QTableWidgetItem()
-                    item1.setData(Qt.DisplayRole, pred["predictor"])
+                    item1.setData(Qt.ItemDataRole.DisplayRole, pred["predictor"])
                     self.ui.predictionTW.setItem(r, 4, item1)
                     item2 = QTableWidgetItem()
                     # round certainty for display
-                    item2.setData(Qt.DisplayRole, round(pred["certainty"], 3))
+                    item2.setData(
+                        Qt.ItemDataRole.DisplayRole, round(pred["certainty"], 3)
+                    )
                     self.ui.predictionTW.setItem(r, 5, item2)
 
                     if identity:
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, identity[0])
+                        item.setData(Qt.ItemDataRole.DisplayRole, identity[0])
                         item.setToolTip("Has been identified")
                         self.ui.predictionTW.setItem(r, 1, item)
                         if hilite_id:
                             item.setBackground(QBrush(QColor(255, 0, 0, 48)))
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, identity[1])
+                        item.setData(Qt.ItemDataRole.DisplayRole, identity[1])
                         item.setToolTip("Has been identified")
                         self.ui.predictionTW.setItem(r, 2, item)
 
@@ -2086,16 +2094,16 @@ class Manager(QWidget):
             self.ui.tasksOutTW.insertRow(r)
             k = 0
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, x[k])
+            item.setData(Qt.ItemDataRole.DisplayRole, x[k])
             self.ui.tasksOutTW.setItem(r, k, item)
             k = 1
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, x[k])
+            item.setData(Qt.ItemDataRole.DisplayRole, x[k])
             self.ui.tasksOutTW.setItem(r, k, item)
             k = 2  # the time - so set a tooltip too.
             time = arrow.get(x[k])
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, arrowtime_to_simple_string(time))
+            item.setData(Qt.ItemDataRole.DisplayRole, arrowtime_to_simple_string(time))
             item.setToolTip(time.humanize())
             self.ui.tasksOutTW.setItem(r, k, item)
 
@@ -2134,7 +2142,7 @@ class Manager(QWidget):
         from plom.finish import reassemble_paper, reassemble_all_papers
 
         # TODO: better to display progress bar, for now tqdm appears on stdout
-        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.Qapp.processEvents()
@@ -2169,7 +2177,7 @@ class Manager(QWidget):
         from plom.finish import assemble_solutions
 
         # TODO: better to display progress bar, for now tqdm appears on stdout
-        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.Qapp.processEvents()
@@ -2256,7 +2264,7 @@ class Manager(QWidget):
                 # TODO: display question label, but other code expects qidx here
                 # elif k == 1:
                 #     x = self.qlabels[x - 1]
-                item.setData(Qt.DisplayRole, x)
+                item.setData(Qt.ItemDataRole.DisplayRole, x)
                 tw.setItem(i, k, item)
             if row[4] == "reviewer":
                 for k in range(N):
@@ -2497,7 +2505,9 @@ class Manager(QWidget):
             question = int(self.ui.reviewTW.item(r, 1).text())
             task = f"q{paper:04}g{question}"
             tags = self.msgr.get_tags(task)
-            self.ui.reviewTW.item(r, 7).setData(Qt.DisplayRole, ", ".join(tags))
+            self.ui.reviewTW.item(r, 7).setData(
+                Qt.ItemDataRole.DisplayRole, ", ".join(tags)
+            )
         self.ui.reviewIDTW.setSortingEnabled(True)
 
     def manage_task_tags(self, paper_num, question, parent=None):
@@ -2569,7 +2579,7 @@ class Manager(QWidget):
             tw.setSortingEnabled(False)
             for k, x in enumerate(row):
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, x)
+                item.setData(Qt.ItemDataRole.DisplayRole, x)
                 tw.setItem(i, k, item)
             if row[1] == "reviewer":
                 for k in range(5):
@@ -2877,21 +2887,21 @@ class Manager(QWidget):
         for r, (u, dat) in enumerate(uDict.items()):
             self.ui.userListTW.insertRow(r)
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, u)
+            item.setData(Qt.ItemDataRole.DisplayRole, u)
             if u in ["manager", "scanner", "reviewer"]:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
             self.ui.userListTW.setItem(r, 0, item)
 
             k = 0
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, dat[k])
+            item.setData(Qt.ItemDataRole.DisplayRole, dat[k])
             if not dat[k]:
                 item.setBackground(QBrush(QColor(255, 0, 0, 48)))
             self.ui.userListTW.setItem(r, k + 1, item)
 
             k = 1
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, dat[k])
+            item.setData(Qt.ItemDataRole.DisplayRole, dat[k])
             if dat[k]:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
             self.ui.userListTW.setItem(r, k + 1, item)
@@ -2902,13 +2912,13 @@ class Manager(QWidget):
             time.humanize()
             item = QTableWidgetItem()
             # TODO: want human-readable w/ raw tooltip but breaks sorting
-            item.setData(Qt.DisplayRole, arrowtime_to_simple_string(time))
+            item.setData(Qt.ItemDataRole.DisplayRole, arrowtime_to_simple_string(time))
             item.setToolTip(time.humanize())
             self.ui.userListTW.setItem(r, k + 1, item)
 
             for k in range(3, 6):
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, dat[k])
+                item.setData(Qt.ItemDataRole.DisplayRole, dat[k])
                 self.ui.userListTW.setItem(r, k + 1, item)
         self.ui.userListTW.setSortingEnabled(True)
 
