@@ -140,14 +140,14 @@ class IDView(QGraphicsView):
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
         self.updateImages(fnames)
-        self.setBackgroundBrush(QBrush(Qt.darkCyan))
+        self.setBackgroundBrush(QBrush(QColor("darkCyan")))
         self._parent.tool = "zoom"
 
         self.boxFlag = False
         self.originPos = QPointF(0, 0)
         self.currentPos = self.originPos
         self.boxItem = QGraphicsRectItem()
-        self.boxItem.setPen(QPen(Qt.darkCyan, 1))
+        self.boxItem.setPen(QPen(QColor("darkCyan"), 1))
         self.boxItem.setBrush(QBrush(QColor(0, 255, 0, 64)))
 
     def updateImages(self, fnames):

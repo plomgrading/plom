@@ -8,7 +8,7 @@ from copy import deepcopy
 import logging
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QImageReader, QPixmap, QTransform
+from PyQt5.QtGui import QBrush, QColor, QIcon, QImageReader, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -47,7 +47,7 @@ class SourceList(QListWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self._parent = parent
-        self.setViewMode(QListWidget.IconMode)
+        self.setViewMode(QListWidget.ViewMode.IconMode)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -84,7 +84,7 @@ class SourceList(QListWidget):
             pix = pix.transformed(rot)
         it = QListWidgetItem(QIcon(pix), name)
         if belongs:
-            it.setBackground(QBrush(Qt.darkGreen))
+            it.setBackground(QBrush(QColor("darkGreen")))
         self.addItem(it)  # item is added at current_row
         self.item_positions[name] = current_row
         self.item_files[name] = pfile
@@ -148,7 +148,7 @@ class SinkList(QListWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self._parent = parent
-        self.setViewMode(QListWidget.IconMode)
+        self.setViewMode(QListWidget.ViewMode.IconMode)
         self.setFlow(QListView.Flow.LeftToRight)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
@@ -203,7 +203,7 @@ class SinkList(QListWidget):
             raise RuntimeError(f"Could not read an image from {self.item_files[name]}")
         ci = QListWidgetItem(QIcon(pix), name)
         if self.item_belongs[name]:
-            ci.setBackground(QBrush(Qt.darkGreen))
+            ci.setBackground(QBrush(QColor("darkGreen")))
         self.addItem(ci)
         # TODO: workaround to force re-orientation on entry to Sink list
         self.rotateForceRefresh(name)
@@ -479,7 +479,7 @@ class RearrangementViewer(QDialog):
 
         vb0 = QVBoxLayout()
         s = QSplitter()
-        s.setOrientation(Qt.Vertical)
+        s.setOrientation(Qt.Orientation.Vertical)
         # s.setOpaqueResize(False)
         s.setChildrenCollapsible(False)
         # TODO: better not to hardcode, take from children?
@@ -509,7 +509,7 @@ class RearrangementViewer(QDialog):
         # TODO: Buttons inside the splitter bar, disable drag and custom cursor
         for b in (self.removeB, self.appendB, self.revertB):
             b.mouseMoveEvent = lambda *args: None
-            b.setCursor(Qt.ArrowCursor)
+            b.setCursor(Qt.CursorShape.ArrowCursor)
 
         self.setLayout(vb0)
         self.resize(

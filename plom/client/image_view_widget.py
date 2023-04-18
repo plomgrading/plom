@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QGuiApplication
-from PyQt5.QtGui import QBrush, QImageReader, QPainter, QPixmap, QTransform
+from PyQt5.QtGui import QBrush, QColor, QImageReader, QPainter, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
@@ -256,7 +256,7 @@ class _ExamView(QGraphicsView):
     def __init__(self, image_data, dark_background=False):
         super().__init__()
         if dark_background:
-            self.setBackgroundBrush(QBrush(Qt.darkCyan))
+            self.setBackgroundBrush(QBrush(QColor("darkCyan")))
         else:
             self.setStyleSheet("background: transparent")
             self.setBackgroundBrush(BackGrid())
