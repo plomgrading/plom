@@ -2,24 +2,20 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Andrew Rechnitzer
 
-import shutil
 import arrow
 from datetime import datetime
 
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Prefetch
 from django.conf import settings
 
 from Papers.models import (
     FixedPage,
     MobilePage,
     Paper,
-    QuestionPage,
-    DNMPage,
-    IDPage,
-    DiscardImage,
     Image,
 )
 from Scan.models import StagingImage, StagingBundle
@@ -31,41 +27,283 @@ class ManageScanService:
     handling colliding pages, unknown pages, bundles, etc.
     """
 
+    def get_total_fixed_pages(self):
+        """
+        Return the total number of fixed pages across all test-papers in the exam.
+        """
+
+        return FixedPage.objects.all().count()
+
+    def get_total_mobile_pages(self):
+        """Return the total number of mobile pages across all
+        test-papers in the exam. Note that an image used for multiple
+        questions will be counted with multiplicity.
+
+        """
+
+        return MobilePage.objects.all().count()
+
     @transaction.atomic
-    def get_total_pages(self):
-        """
-        Return the total number of pages across all test-papers in the exam.
-        """
+    def get_number_of_scanned_pages(self):
+        """Return the number of pages in the exam that have been
+        successfully scanned and validated. Note that any mobile page
+        used in multiple questions is counted with multiplicity."""
 
-        return len(FixedPage.objects.all())
+        scanned_fixed = FixedPage.objects.exclude(image=None)
+        mobile = MobilePage.objects.all()
+        return scanned_fixed.count() + mobile.count()
 
-    @transaction.atomic
-    def get_scanned_pages(self):
-        """
-        Return the number of pages in the exam that have been successfully scanned and validated.
-        """
-
-        scanned = FixedPage.objects.exclude(image=None)
-        return len(scanned)
-
-    @transaction.atomic
     def get_total_test_papers(self):
         """
         Return the total number of test-papers in the exam.
         """
 
-        return len(Paper.objects.all())
+        return Paper.objects.all().count()
 
     @transaction.atomic
-    def get_completed_test_papers(self):
+    def get_number_completed_test_papers(self):
+        """Return a dict of completed papers and their fixed/mobile pages.
+
+        A paper is complete when it either has **all** its fixed
+        pages, or it has no fixed pages but has some extra-pages.
         """
-        Return the number of test-papers that have been completely scanned.
+        # Get fixed pages with no image
+        fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
+        # Get papers without fixed-page-with-no-scan
+        all_fixed_present = Paper.objects.filter(~Exists(fixed_with_no_scan))
+        # now get papers with **no** fixed page scans
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # build a subquery to help us find papers which have some
+        # mobile_pages the outer-ref in the subquery allows us to
+        # match for papers that have mobile pages. This also allows us
+        # to avoid duplications since "exists" stops the query as soon
+        # as one item is found - see below
+        mobile_pages = MobilePage.objects.filter(paper=OuterRef("pk"))
+        no_fixed_but_some_mobile = Paper.objects.filter(
+            ~Exists(fixed_with_scan), Exists(mobile_pages)
+        )
+        # We can also do the above query as:
+        #
+        # no_fixed_but_some_mobile = Paper.objects.filter(
+        # ~Exists(fixed_with_scan), mobilepages_set__isnull=False
+        # ).distinct()
+        #
+        # however this returns one result for **each** mobile-page, so
+        # one needs to append the 'distinct'. This is a common problem
+        # when querying backwards across foreign key fields
+
+        return all_fixed_present.count() + no_fixed_but_some_mobile.count()
+
+    @transaction.atomic
+    def get_all_completed_test_papers(self):
+        """
+        Return dict of test-papers that have been completely scanned.
+
+        A paper is complete when it either has **all** its fixed
+        pages, or it has no fixed pages but has some extra-pages.
+        """
+        # Subquery of fixed pages with no image
+        fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
+        # Get all papers without fixed-page-with-no-scan
+        all_fixed_present = Paper.objects.filter(
+            ~Exists(fixed_with_no_scan)
+        ).prefetch_related(
+            Prefetch(
+                "fixedpage_set", queryset=FixedPage.objects.order_by("page_number")
+            ),
+            Prefetch(
+                "mobilepage_set",
+                queryset=MobilePage.objects.order_by("question_number"),
+            ),
+            "fixedpage_set__image",
+            "mobilepage_set__image",
+        )
+        # Notice all the prefetching here - this is to avoid N+1
+        # problems.  Below we loop over these papers and their pages /
+        # images we tell django to prefetch the fixed and mobile
+        # pages, and the images in the fixed and mobile pages.  Since
+        # there are many fixed/mobile pages for a given paper, these
+        # are fixedpage_set and mobilepage_set. Now because we want to
+        # loop over the fixed/mobile pages in specific orders we use
+        # the Prefetch object to specify that order at the time of
+        # prefetching.
+
+        # now subquery papers with **no** fixed page scans
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # again - we use a subquery to get mobile pages to avoid
+        # duplications when executing the main query (see the
+        # get_number_completed_test_papers function above.
+        mobile_pages = MobilePage.objects.filter(paper=OuterRef("pk"))
+        no_fixed_but_some_mobile = Paper.objects.filter(
+            ~Exists(fixed_with_scan), Exists(mobile_pages)
+        ).prefetch_related(
+            Prefetch(
+                "mobilepage_set",
+                queryset=MobilePage.objects.order_by("question_number"),
+            ),
+            "mobilepage_set__image",
+        )
+        # again since we loop over the mobile pages within the paper
+        # in a specified order, and ref the image in those mobile-pages
+        # we do all this prefetching.
+
+        complete = {}
+        for paper in all_fixed_present:
+            complete[paper.paper_number] = []
+            # notice we don't specify order or prefetch in the loops
+            # below here because we did the hard work above
+            for fp in paper.fixedpage_set.all():
+                complete[paper.paper_number].append(
+                    {
+                        "type": "fixed",
+                        "page_number": fp.page_number,
+                        "img_pk": fp.image.pk,
+                    }
+                )
+            for mp in paper.mobilepage_set.all():
+                complete[paper.paper_number].append(
+                    {
+                        "type": "mobile",
+                        "question_number": mp.question_number,
+                        "img_pk": mp.image.pk,
+                    }
+                )
+        for paper in no_fixed_but_some_mobile:
+            complete[paper.paper_number] = []
+            # again we don't specify order or prefetch here because of the work above
+            for mp in paper.mobilepage_set.all():
+                complete[paper.paper_number].append(
+                    {
+                        "type": "mobile",
+                        "question_number": mp.question_number,
+                        "img_pk": mp.image.pk,
+                    }
+                )
+        return complete
+
+    @transaction.atomic
+    def get_all_incomplete_test_papers(self):
+        """
+        Return a dict of test-papers that are partially but not completely scanned.
+
+        A paper is not completely scanned when it has *some* but not all its fixed pages.
         """
 
-        incomplete_present = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
-        complete_papers = Paper.objects.filter(~Exists(incomplete_present))
+        # Get fixed pages with no image - ie not scanned.
+        fixed_with_no_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=True
+        )
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
 
-        return len(complete_papers)
+        # Get papers with some but not all scanned fixed pages
+        some_but_not_all_fixed_present = Paper.objects.filter(
+            Exists(fixed_with_no_scan), Exists(fixed_with_scan)
+        ).prefetch_related(
+            Prefetch(
+                "fixedpage_set", queryset=FixedPage.objects.order_by("page_number")
+            ),
+            Prefetch(
+                "mobilepage_set",
+                queryset=MobilePage.objects.order_by("question_number"),
+            ),
+            "fixedpage_set__image",
+            "mobilepage_set__image",
+        )
+
+        incomplete = {}
+        for paper in some_but_not_all_fixed_present:
+            incomplete[paper.paper_number] = []
+            for fp in paper.fixedpage_set.all():
+                if fp.image:
+                    incomplete[paper.paper_number].append(
+                        {
+                            "type": "fixed",
+                            "page_number": fp.page_number,
+                            "img_pk": fp.image.pk,
+                        }
+                    )
+                else:
+                    incomplete[paper.paper_number].append(
+                        {
+                            "type": "missing",
+                            "page_number": fp.page_number,
+                        }
+                    )
+            for mp in paper.mobilepage_set.all():
+                incomplete[paper.paper_number].append(
+                    {
+                        "type": "mobile",
+                        "question_number": mp.question_number,
+                        "img_pk": mp.image.pk,
+                    }
+                )
+
+        return incomplete
+
+    @transaction.atomic
+    def get_number_incomplete_test_papers(self):
+        """
+        Return the number of test-papers that are partially but not completely scanned.
+
+        A paper is not completely scanned when it has *some* but not all its fixed pages.
+        """
+
+        # Get fixed pages with no image - ie not scanned.
+        fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # Get papers with some but not all scanned fixed pages
+        some_but_not_all_fixed_present = Paper.objects.filter(
+            Exists(fixed_with_no_scan), Exists(fixed_with_scan)
+        )
+
+        return some_but_not_all_fixed_present.count()
+
+    @transaction.atomic
+    def get_number_unused_test_papers(self):
+        """
+        Return the number of test-papers that are usused.
+
+        A paper is unused when it has no fixed page images nor any mobile pages.
+        """
+
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # Get papers with neither fixed-with-scan nor mobile-pages
+        no_images_at_all = Paper.objects.filter(
+            ~Exists(fixed_with_scan), mobilepage__isnull=True
+        )
+
+        return no_images_at_all.count()
+
+    @transaction.atomic
+    def get_all_unused_test_papers(self):
+        """
+        Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
+
+        A paper is unused when it has no fixed page images nor any mobile pages.
+        """
+
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # Get papers with neither fixed-with-scan nor mobile-pages
+        no_images_at_all = Paper.objects.filter(
+            ~Exists(fixed_with_scan), mobilepage__isnull=True
+        )
+        return sorted([paper.paper_number for paper in no_images_at_all])
 
     @transaction.atomic
     def get_test_paper_list(self, exclude_complete=False, exclude_incomplete=False):
@@ -123,334 +361,12 @@ class ManageScanService:
         page = FixedPage.objects.get(paper=paper, page_number=index)
         return page.image
 
-    @transaction.atomic
-    def get_n_colliding_pages(self):
-        """
-        Return the number of colliding images in the database.
-        """
-        colliding = CollidingImage.objects.all()
-        return len(colliding)
-
-    @transaction.atomic
-    def get_colliding_pages_list(self):
-        """
-        Return a list of colliding pages.
-        """
-
-        colliding_pages = []
-        colliding = CollidingImage.objects.all()
-
-        for page in colliding:
-            test_paper = page.paper_number
-            page_number = page.page_number
-            image_hash = page.hash
-
-            version = None
-
-            colliding_pages.append(
-                {
-                    "test_paper": test_paper,
-                    "number": page_number,
-                    "version": version,
-                    "colliding_hash": image_hash,
-                }
-            )
-
-        return colliding_pages
-
-    @transaction.atomic
-    def get_colliding_image(self, image_hash):
-        """
-        Return a colliding page.
-
-        Args:
-            image_hash: sha256 of the image.
-        """
-        return CollidingImage.objects.get(hash=image_hash)
-
-    @transaction.atomic
-    def get_discarded_image_path(self, image_hash, make_dirs=True):
-        """
-        Return a Pathlib path pointing to
-        BASE_DIR/media/page_images/discarded_pages/{paper_number}/{page_number}.png
-
-        Args:
-            image_hash: str, sha256 of the discarded page
-            make_dirs (optional): set to False for testing
-        """
-
-        root_folder = settings.MEDIA_ROOT / "page_images" / "discarded_pages"
-        image_path = root_folder / f"{image_hash}.png"
-
-        if make_dirs:
-            root_folder.mkdir(exist_ok=True)
-
-        return image_path
-
-    @transaction.atomic
-    def discard_colliding_image(self, colliding_image, make_dirs=True):
-        """
-        Discard a colliding image.
-
-        Args:
-            colliding_image: reference to a CollidingImage instance
-            make_dirs (optional): bool, set to False for testing.
-        """
-        image_path = self.get_discarded_image_path(
-            colliding_image.hash, make_dirs=make_dirs
-        )
-
-        discarded_image = DiscardedImage(
-            bundle=colliding_image.bundle,
-            bundle_order=colliding_image.bundle_order,
-            original_name=colliding_image.original_name,
-            file_name=str(image_path),
-            hash=colliding_image.hash,
-            rotation=colliding_image.rotation,
-            restore_class="Colliding page",
-            restore_fields={
-                "paper_number": colliding_image.paper_number,
-                "page_number": colliding_image.page_number,
-            },
-        )
-
-        staged_image = StagingImage.objects.get(
-            bundle__pdf_hash=colliding_image.bundle.hash,
-            bundle_order=colliding_image.bundle_order,
-        )
-        staged_image.colliding = False
-        staged_image.save()
-
-        if make_dirs:
-            shutil.move(str(colliding_image.file_name), str(image_path))
-
-        colliding_image.delete()
-        discarded_image.save()
-
-    @transaction.atomic
-    def replace_image_with_colliding(self, image, colliding_image, make_dirs=True):
-        """
-        Discard an Image instance and replace it with a colliding image.
-
-        Args:
-            image (Image): the currently accepted image
-            colliding_image (CollidingImage): another scanned image
-            make_dirs (optional): Bool, set to False for testing
-        """
-
-        discard_path = self.get_discarded_image_path(image.hash, make_dirs=make_dirs)
-        discarded_page = DiscardedImage(
-            bundle=image.bundle,
-            bundle_order=image.bundle_order,
-            original_name=image.original_name,
-            file_name=str(discard_path),
-            hash=image.hash,
-            rotation=image.rotation,
-            restore_class="Colliding page",
-            restore_fields={
-                "paper_number": colliding_image.paper_number,
-                "page_number": colliding_image.page_number,
-            },
-        )
-
-        new_image = Image(
-            bundle=colliding_image.bundle,
-            bundle_order=colliding_image.bundle_order,
-            original_name=colliding_image.original_name,
-            file_name=image.file_name,
-            hash=colliding_image.hash,
-            rotation=colliding_image.rotation,
-        )
-
-        image_page = FixedPage.objects.get(image=image)
-        image_page.image = new_image
-
-        staged_image = StagingImage.objects.get(
-            bundle__pdf_hash=colliding_image.bundle.hash,
-            bundle_order=colliding_image.bundle_order,
-        )
-        staged_image.colliding = False
-        staged_image.save()
-
-        if make_dirs:
-            shutil.move(str(image.file_name), str(discarded_page.file_name))
-            shutil.move(str(colliding_image.file_name), str(new_image.file_name))
-
-        colliding_image.delete()
-        image.delete()
-        discarded_page.save()
-        new_image.save()
-        image_page.save()
-
-    @transaction.atomic
-    def restore_colliding_image(self, discarded_image, make_dirs=True):
-        """
-        Undo the discarding of a colliding image.
-
-        Args:
-            discarded_image: reference to a DiscardedImage instance
-            make_dirs (optional): bool, set to False for testing
-        """
-        if "Colliding" not in discarded_image.restore_class:
-            raise RuntimeError("Discarded image was not originally a colliding image.")
-
-        colliding_fields = discarded_image.restore_fields
-
-        root_dir = settings.MEDIA_ROOT / "page_images" / "colliding_pages"
-        test_paper_dir = root_dir / str(colliding_fields["paper_number"])
-        image_path = (
-            test_paper_dir
-            / f"page{colliding_fields['page_number']}_{discarded_image.hash}.png"
-        )
-
-        new_colliding_image = CollidingImage(
-            bundle=discarded_image.bundle,
-            bundle_order=discarded_image.bundle_order,
-            original_name=discarded_image.original_name,
-            file_name=str(image_path),
-            hash=discarded_image.hash,
-            rotation=discarded_image.rotation,
-            paper_number=colliding_fields["paper_number"],
-            page_number=colliding_fields["page_number"],
-        )
-
-        if make_dirs:
-            root_dir.mkdir(exist_ok=True)
-            test_paper_dir.mkdir(exist_ok=True)
-            shutil.move(str(discarded_image.file_name), str(image_path))
-
-        discarded_image.delete()
-        new_colliding_image.save()
-        return new_colliding_image
-
-    @transaction.atomic
-    def get_n_discarded_pages(self):
-        """
-        Return the number of discarded images.
-        """
-
-        discarded = DiscardedImage.objects.all()
-        return len(discarded)
-
-    @transaction.atomic
-    def get_discarded_pages_list(self):
-        """
-        Return a list of discarded pages.
-        """
-
-        discarded_images = []
-        discarded = DiscardedImage.objects.all()
-
-        for image in discarded:
-            if "Colliding" in image.restore_class:
-                restore_fields = image.restore_fields
-                previous_type = f"Collision (paper {restore_fields['paper_number']}, page {restore_fields['page_number']})"
-
-            discarded_images.append(
-                {
-                    "discarded_hash": image.hash,
-                    "previous_type": previous_type,
-                }
-            )
-
-        return discarded_images
-
-    @transaction.atomic
-    def get_discarded_image(self, discarded_hash):
-        """
-        Get a discarded image from its hash.
-        """
-
-        return DiscardedImage.objects.get(hash=discarded_hash)
-
-    @transaction.atomic
-    def delete_discarded_image(self, discarded_hash):
-        """
-        Delete a discarded page-image for good.
-        """
-
-        DiscardedImage.objects.get(hash=discarded_hash).delete()
-
-    @transaction.atomic
-    def restore_discarded_image(self, discarded_hash, make_dirs=True):
-        """
-        Restore a discarded page-image.
-
-        Args:
-            discarded_hash: str, the image hash
-            make_dirs (optional): bool, set to False for testing.
-        """
-
-        image = self.get_discarded_image(discarded_hash)
-        image_class = image.restore_class
-
-        if "Colliding" in image_class:
-            self.restore_colliding_image(image, make_dirs=make_dirs)
-        # TODO: calls for unknown images, page images, error images, etc
-        else:
-            raise ValueError("Unable to determine original class of discarded image.")
-
-    @transaction.atomic
-    def get_error_pages_list(self):
-        """
-        Return a list of error pages.
-        """
-
-        error_pages = []
-        all_error_pages = ErrorImage.objects.filter(flagged=True)
-
-        for error_page in all_error_pages:
-            test_paper = error_page.paper_number
-            page_number = error_page.page_number
-            version_number = error_page.version_number
-            file_name = str(test_paper).zfill(5) + str(page_number).zfill(3) + ".png"
-            if error_page.comment:
-                error_comment = error_page.comment.split("::")
-                flagged_by = error_comment[0].lower()
-                scanner_comment = error_comment[1]
-            else:
-                flagged_by = None
-                scanner_comment = None
-            error_img_hash = str(error_page.hash)
-
-            error_pages.append(
-                {
-                    "test_paper": test_paper,
-                    "page_number": page_number,
-                    "version": version_number,
-                    "file_name": file_name,
-                    "flagged": flagged_by,
-                    "comment": scanner_comment,
-                    "error_hash": error_img_hash,
-                }
-            )
-        return error_pages
-
-    @transaction.atomic
-    def get_error_image(self, error_image_hash):
-        """
-        Return an error image object based on the hash.
-
-        Args:
-            error_image_hash: sha 256 of the image.
-        """
-        return ErrorImage.objects.get(hash=error_image_hash)
-
-    @transaction.atomic
-    def get_n_error_image(self):
-        """
-        Return number of error pages that are flagged
-        to the manager.
-        """
-        return len(ErrorImage.objects.filter(flagged=True))
-
-    @transaction.atomic
     def get_n_bundles(self):
         """
         Return the number of uploaded bundles.
         """
 
-        return len(StagingBundle.objects.all())
+        return StagingBundle.objects.all().count()
 
     @transaction.atomic
     def get_bundles_list(self):
@@ -479,3 +395,10 @@ class ManageScanService:
             )
 
         return bundle_list
+
+    def get_pushed_image(self, img_pk):
+        try:
+            img = Image.objects.get(pk=img_pk)
+            return img.file_name
+        except Image.DoesNotExist:
+            return None

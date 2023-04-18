@@ -43,15 +43,6 @@
     </div>
 </div>
 
-{% if replace_image_success_message %}
-<div class="card w-75 bg-success mb-3" style="color: white;">
-    <p style="margin: 3px 15px">{{ replace_image_success_message }}</p>
-</div>
-{% elif replace_image_error_message %}
-<div class="card w-75 bg-danger mb-3" style="color: white;">
-    <p style="margin: 3px 15px">{{ replace_image_error_message }}</p>
-</div>
-{% endif %}
 <div style="margin: 0px 0px 16px 2.5px">
   <a class="btn btn-success" href="{% url 'scan_home' %}">
     <i class="bi bi-chevron-left"></i>

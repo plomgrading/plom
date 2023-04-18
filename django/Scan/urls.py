@@ -23,6 +23,7 @@ from Scan.views import (
     PagePushingUpdateView,
     FlagPageImage,
     ScannerSummaryView,
+    ScannerPushedImageView,
     ChangeErrorImageState,
     ReplacePageImage,
     ChangeCollisionImageState,
@@ -112,6 +113,11 @@ urlpatterns = [
         "summary/",
         ScannerSummaryView.as_view(),
         name="scan_summary",
+    ),
+    path(
+        "summary/pushed_img/<int:img_pk>",
+        ScannerPushedImageView.as_view(),
+        name="scan_pushed_img",
     ),
     path(
         "change/error_state/<timestamp>/<int:index>/",
