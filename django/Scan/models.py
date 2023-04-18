@@ -38,8 +38,7 @@ class StagingImage(models.Model):
 
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
-    file_name = models.TextField(default="")
-    file_path = models.TextField(default="")
+    image_file = models.ImageField(upload_to=staging_bundle_upload_path)
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)
     paper_id = models.PositiveIntegerField(default=None, null=True)

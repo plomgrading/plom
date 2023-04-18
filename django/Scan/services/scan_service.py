@@ -1033,7 +1033,7 @@ def huey_child_get_page_image(
 
     return {
         "index": index,
-        "file_name": f"page{index}.png",
+        "file_name": save_path.name,
         "file_path": str(save_path),
         "image_hash": image_hash,
     }
