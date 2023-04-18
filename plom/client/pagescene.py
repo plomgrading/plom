@@ -818,9 +818,9 @@ class PageScene(QGraphicsScene):
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
-            self.views()[0].setDragMode(QGraphicsView.DragMode.NoDrag)
-        else:
             self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        else:
+            self.views()[0].setDragMode(QGraphicsView.DragMode.NoDrag)
         # update the modelabels
         self.parent().setModeLabels(self.mode)
 
