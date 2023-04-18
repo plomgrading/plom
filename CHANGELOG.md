@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Client: when a rubric group tab is selected, adding a new rubric defaults to that group.
 
 ### Fixed
 
