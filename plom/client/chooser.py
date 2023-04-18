@@ -174,7 +174,7 @@ class Chooser(QDialog):
         d = ClientSettingsDialog(
             self, self.lastTime, logdir, cfgfile, tempfile.gettempdir()
         )
-        if d.exec() != QDialog.Accepted:
+        if d.exec() != QDialog.DialogCode.Accepted:
             return
         # TODO: do something more proper like QSettings
         opt = d.get_options_back()

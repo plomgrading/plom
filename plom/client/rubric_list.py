@@ -1077,7 +1077,7 @@ class RubricWidget(QWidget):
             self.username,
             annotator_size=self._parent.size(),
         )
-        if wr.exec() != QDialog.Accepted:
+        if wr.exec() != QDialog.DialogCode.Accepted:
             return
         else:
             self.setRubricTabsFromState(wr.wranglerState)
@@ -1537,7 +1537,7 @@ class RubricWidget(QWidget):
             experimental=self._parent.is_experimental(),
             add_to_group=add_to_group,
         )
-        if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
+        if arb.exec() != QDialog.DialogCode.Accepted:
             return
         new_rubric = arb.gimme_rubric_data()
 

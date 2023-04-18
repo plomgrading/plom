@@ -145,7 +145,7 @@ class KeyHelp(QDialog):
         dat = self.keydata[action]
         old_key = dat["keys"][0]
         diag = KeyEditDialog(self, label=dat["human"], currentKey=old_key, info=info)
-        if diag.exec() != QDialog.Accepted:
+        if diag.exec() != QDialog.DialogCode.Accepted:
             return
         new_key = diag._keyedit.text()
         if new_key == old_key:

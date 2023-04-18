@@ -2438,7 +2438,7 @@ class MarkerClient(QWidget):
         tag_choices = [X for X in all_tags if X not in current_tags]
 
         artd = AddRemoveTagDialog(parent, current_tags, tag_choices, label=task)
-        if artd.exec() == QDialog.Accepted:
+        if artd.exec() == QDialog.DialogCode.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":
                 if new_tag:
@@ -2476,7 +2476,7 @@ class MarkerClient(QWidget):
     def view_testnum_question(self):
         """Shows a particular paper number and question."""
         tgs = SelectTestQuestion(self, self.exam_spec, self.question)
-        if tgs.exec() != QDialog.Accepted:
+        if tgs.exec() != QDialog.DialogCode.Accepted:
             return
         tn = tgs.tsb.value()
         gn = tgs.gsb.value()

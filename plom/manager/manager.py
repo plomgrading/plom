@@ -1237,7 +1237,7 @@ class Manager(QWidget):
             [self.max_papers, self.numberOfPages, self.qlabels],
             iDict,
         )
-        if uvw.exec() == QDialog.Accepted:
+        if uvw.exec() == QDialog.DialogCode.Accepted:
             # Colin hates all these hardcoded integers!
             self.unknownModel.item(r, 4).setText(uvw.action)
             self.unknownModel.item(r, 5).setText("{}".format(uvw.get_orientation()))
@@ -1434,7 +1434,7 @@ class Manager(QWidget):
         with open(f_collides, "wb") as fh:
             fh.write(vcp)
         cvw = CollideViewWindow(self, f_orig, f_collides, test, page)
-        if cvw.exec() == QDialog.Accepted:
+        if cvw.exec() == QDialog.DialogCode.Accepted:
             if cvw.action == "original":
                 pm = QPixmap()
                 res = resources.files(plom.client.icons) / "manager_discard.svg"
@@ -1519,7 +1519,7 @@ class Manager(QWidget):
         r = pvi[0].row()
         pagedata = self.discardModel.item(r, 0).data()
         pagedata = self.downloader.sync_download(pagedata)
-        if DiscardViewWindow(self, [pagedata]).exec() == QDialog.Accepted:
+        if DiscardViewWindow(self, [pagedata]).exec() == QDialog.DialogCode.Accepted:
             # Scary, nicer to require img id?
             self.msgr.discardToUnknown(pagedata["server_path"])
             self.refreshDiscardList()
@@ -1768,7 +1768,7 @@ class Manager(QWidget):
                     raise PlomSeriousException(f"Could not identify image type: {tmp}")
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
-            if srw.exec() == QDialog.Accepted:
+            if srw.exec() == QDialog.DialogCode.Accepted:
                 top, bottom = srw.top_bottom_values
                 self.ui.cropTopLE.setText(str(100 * top))
                 self.ui.cropBottomLE.setText(str(100 * bottom))
@@ -2463,7 +2463,7 @@ class Manager(QWidget):
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
         tag_choices = [X for X in all_tags if X not in tags]
         artd = AddRemoveTagDialog(self, tags, tag_choices, label=howmany)
-        if artd.exec() != QDialog.Accepted:
+        if artd.exec() != QDialog.DialogCode.Accepted:
             return
         cmd, new_tag = artd.return_values
         if cmd == "add":
@@ -2528,7 +2528,7 @@ class Manager(QWidget):
         tags = self.msgr.get_tags(task)
         tag_choices = [X for X in all_tags if X not in tags]
         artd = AddRemoveTagDialog(self, tags, tag_choices, label=task)
-        if artd.exec() == QDialog.Accepted:
+        if artd.exec() == QDialog.DialogCode.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":
                 if new_tag:
@@ -2616,7 +2616,7 @@ class Manager(QWidget):
             if not img_ext:
                 raise PlomSeriousException(f"Could not identify image type: {img_name}")
             rvw = ReviewViewWindowID(self, img_name)
-            if rvw.exec() == QDialog.Accepted:
+            if rvw.exec() == QDialog.DialogCode.Accepted:
                 # first remove auth from that user - safer.
                 if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
                     self.msgr.clearAuthorisationUser(
@@ -2856,14 +2856,14 @@ class Manager(QWidget):
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
         cpwd = UserDialog(self, f'Change password for "{user}"', name=user)
-        if cpwd.exec() == QDialog.Accepted:
+        if cpwd.exec() == QDialog.DialogCode.Accepted:
             rval = self.msgr.changeUserPassword(user, cpwd.password)
             InfoMsg(self, rval[1]).exec()
         return
 
     def createUser(self):
         cpwd = UserDialog(self, "Create new user", name=None)
-        if cpwd.exec() == QDialog.Accepted:
+        if cpwd.exec() == QDialog.DialogCode.Accepted:
             rval = self.msgr.createUser(cpwd.name, cpwd.password)
             InfoMsg(self, rval[1]).exec()
             self.refreshUserList()

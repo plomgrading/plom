@@ -812,7 +812,7 @@ class Annotator(QWidget):
         # PC.download_finished.connect(rearrangeView.shake_things_up)
         perm = []
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
-        if rearrangeView.exec() == QDialog.Accepted:
+        if rearrangeView.exec() == QDialog.DialogCode.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: %s", perm)
         # Workaround for memory leak Issue #1322, TODO better fix
@@ -869,7 +869,7 @@ class Annotator(QWidget):
             custom_overlay=self.keybinding_custom_overlay,
             initial_tab=_tab_idx,
         )
-        if diag.exec() != QDialog.Accepted:
+        if diag.exec() != QDialog.DialogCode.Accepted:
             return
         self.keybinding_name = diag.get_selected_keybinding_name()
         if self.keybinding_name == "custom":
