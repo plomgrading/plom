@@ -39,10 +39,6 @@ class ScannerHomeView(ScannerRequiredView):
         incomplete_papers = mss.get_number_incomplete_test_papers()
         unused_papers = mss.get_number_unused_test_papers()
 
-        total_pages = mss.get_total_pages()
-        scanned_pages = mss.get_scanned_pages()
-        percent_pages_complete = scanned_pages / total_pages * 100
-
         all_test_papers = mss.get_test_paper_list()
 
         context.update(
@@ -51,9 +47,6 @@ class ScannerHomeView(ScannerRequiredView):
                 "incomplete_test_papers": incomplete_papers,
                 "unused_test_papers": unused_papers,
                 "total_papers": total_papers,
-                "completed_pages": scanned_pages,
-                "total_completed_pages": total_pages,
-                "percent_pages_completed": int(percent_pages_complete),
                 "all_test_papers": all_test_papers,
                 "form": BundleUploadForm(),
                 "bundle_splitting": False,

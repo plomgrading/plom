@@ -5,7 +5,6 @@
 
 from django.shortcuts import render
 from django.http import Http404, FileResponse
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ScannerRequiredView
 
@@ -147,12 +146,6 @@ class GetBundleImageView(ScannerRequiredView):
 
         scanner = ScanService()
         image = scanner.get_image(timestamp, request.user, index)
-        file_path = image.file_path
+        file_path = image.image_file.path
 
-        with open(file_path, "rb") as f:
-            uploaded_file = SimpleUploadedFile(
-                f"page_{index}.png",
-                f.read(),
-                content_type="image/png",
-            )
-        return FileResponse(uploaded_file)
+        return FileResponse(open(file_path, 'rb'))

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -12,6 +13,13 @@ def staging_bundle_upload_path(instance, filename):
     # save bundle as "media/bundles/username/timestamp/filename.pdf"
     return "{}/bundles/{}/{}".format(
         instance.user.username, instance.timestamp, filename
+    )
+
+
+def staging_image_upload_path(instance, filename):
+    # save bundle-images as "media/bundles/username/timestamp/pageImages/filename"
+    return "{}/bundles/{}/pageImages/{}".format(
+        instance.bundle.user.username, instance.bundle.timestamp, filename
     )
 
 
@@ -38,7 +46,7 @@ class StagingImage(models.Model):
 
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
-    image_file = models.ImageField(upload_to=staging_bundle_upload_path)
+    image_file = models.ImageField(upload_to=staging_image_upload_path)
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)
     paper_id = models.PositiveIntegerField(default=None, null=True)

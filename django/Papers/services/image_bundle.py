@@ -174,8 +174,8 @@ class ImageBundleService:
             image = Image(
                 bundle=uploaded_bundle,
                 bundle_order=staged.bundle_order,
-                original_name=staged.file_name,
-                file_name=staged.file_path,
+                original_name=staged.image_file.name,
+                file_name=staged.image_file.path,
                 hash=staged.image_hash,
                 rotation=staged.rotation,
             )
