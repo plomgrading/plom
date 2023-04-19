@@ -15,6 +15,10 @@
 #
 # TODO: hopefully just temporary, until we can lift these values from setup.py
 
+# Not really server deps
+PyQt6==6.2.0
+PyQt6-sip==13.0.0
+
 appdirs==1.4.3
 aiohttp==3.7.2
 arrow==1.1.1
