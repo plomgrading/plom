@@ -1704,7 +1704,7 @@ class PageScene(QGraphicsScene):
         """Handles drop events."""
         # all drop events should copy
         # - even if user is trying to remove rubric from rubric-list make sure is copy-action.
-        e.setDropAction(Qt.DropActin.CopyAction)
+        e.setDropAction(Qt.DropAction.CopyAction)
 
         if e.mimeData().hasFormat("text/plain"):
             # Simulate a rubric click.
