@@ -211,7 +211,7 @@ class ShowTable(QTableWidget):
         _sorting_enabled = self.isSortingEnabled()
         self.setSortingEnabled(False)
         if event.source() == self:
-            event.setDropAction(Qt.CopyAction)
+            event.setDropAction(Qt.DropAction.CopyAction)
             rows = set([mi.row() for mi in self.selectedIndexes()])
             targetRow = self.indexAt(event.pos()).row()
             rows.discard(targetRow)
@@ -355,7 +355,7 @@ class RubricWrangler(QDialog):
         self.rubricTable = QTableView()
         self.proxy.setSourceModel(self.model)
         self.rubricTable.setModel(self.proxy)
-        self.rubricTable.sortByColumn(-1, Qt.AscendingOrder)
+        self.rubricTable.sortByColumn(-1, Qt.SortOrder.AscendingOrder)
         self.rubricTable.verticalHeader().setVisible(False)
         self.rubricTable.horizontalHeader().setVisible(True)
         self.rubricTable.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)

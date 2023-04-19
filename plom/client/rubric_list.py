@@ -367,7 +367,7 @@ class RubricTable(QTableWidget):
         # fixed drop event using
         # https://stackoverflow.com/questions/26227885/drag-and-drop-rows-within-qtablewidget
         if event.source() == self:
-            event.setDropAction(Qt.CopyAction)
+            event.setDropAction(Qt.DropAction.CopyAction)
             sourceRow = self.selectedIndexes()[0].row()
             targetRow = self.indexAt(event.pos()).row()
             if targetRow == -1:  # no row, so drop at end

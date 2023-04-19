@@ -170,7 +170,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
 
     def enable_interactive(self):
         """Set it as editable with the text-editor."""
-        self.setTextInteractionFlags(Qt.TextEditorInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.TextEditorInteraction)
 
     def is_rendered(self):
         """Is this TextItem displaying a rendering of LaTeX?

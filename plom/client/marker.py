@@ -2288,7 +2288,7 @@ class MarkerClient(QWidget):
 
         # Build a progress dialog to warn user
         pd = QProgressDialog("Caching latex comments", None, 0, 3 * len(clist), self)
-        pd.setWindowModality(Qt.WindowModal)
+        pd.setWindowModality(Qt.WindowModality.WindowModal)
         pd.setMinimumDuration(0)
         # Start caching.
         c = 0
