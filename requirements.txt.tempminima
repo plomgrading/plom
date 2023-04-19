@@ -17,7 +17,7 @@
 
 # Not really server deps
 PyQt6==6.2.0
-PyQt6-sip==13.0.0
+PyQt6-sip==13.1.0
 
 appdirs==1.4.3
 aiohttp==3.7.2
