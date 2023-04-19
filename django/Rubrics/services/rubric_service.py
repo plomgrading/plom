@@ -8,6 +8,8 @@
 
 import logging
 
+from operator import itemgetter
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -92,33 +94,96 @@ class RubricService:
         kind = rubric_data["kind"]
 
         if kind == "relative":
-            try:
+            if RelativeRubric.objects.filter(key=key).exists():
                 relative_rubric = RelativeRubric.objects.get(key=key)
-            except ObjectDoesNotExist:
+            elif NeutralRubric.objects.filter(key=key).exists():
                 rubric = NeutralRubric.objects.get(key=key)
                 neutral_rubric_key = rubric.key
                 rubric.delete()
                 relative_rubric = RelativeRubric.objects.create(key=neutral_rubric_key)
+            elif AbsoluteRurbic.objects.filter(key=key).exists():
+                rubric = AbsoluteRurbic.objects.get(key=key)
+                absolute_rubric_key = rubric.key
+                rubric.delete()
+                relative_rubric = RelativeRubric.objects.create(key=absolute_rubric_key)
+            else:
+                assert False, "No rubric object exists."
             serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
             serializer.is_valid()
             serializer.save()
             rubric_instance = serializer.instance
+
         elif kind == "neutral":
-            try:
+            if NeutralRubric.objects.filter(key=key).exists():
                 neutral_rubric = NeutralRubric.objects.get(key=key)
-            except ObjectDoesNotExist:
+            elif RelativeRubric.objects.filter(key=key).exists():
                 rubric = RelativeRubric.objects.get(key=key)
                 relative_rubric_key = rubric.key
                 rubric.delete()
                 neutral_rubric = NeutralRubric.objects.create(key=relative_rubric_key)
+            elif AbsoluteRurbic.objects.filter(key=key).exists():
+                rubric = AbsoluteRurbic.objects.get(key=key)
+                absolute_rubric_key = rubric.key
+                rubric.delete()
+                neutral_rubric = NeutralRubric.objects.create(key=absolute_rubric_key)
+            else:
+                assert False, "No rubric object exists."
             serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
             serializer.is_valid()
             serializer.save()
             rubric_instance = serializer.instance
+
         elif kind == "absolute":
-            raise NotImplementedError
+            if AbsoluteRurbic.objects.filter(key=key).exists():
+                absolute_rubric = AbsoluteRurbic.objects.get(key=key)
+            elif RelativeRubric.objects.filter(key=key).exists():
+                rubric = RelativeRubric.objects.get(key=key)
+                relative_rubric_key = rubric.key
+                rubric.delete()
+                absolute_rubric = AbsoluteRurbic.objects.create(key=relative_rubric_key)
+            elif NeutralRubric.objects.filter(key=key).exists():
+                rubric = NeutralRubric.objects.get(key=key)
+                neutral_rubric_key = rubric.key
+                rubric.delete()
+                absolute_rubric = AbsoluteRurbic.objects.create(key=neutral_rubric_key)
+            else:
+                assert False, "No rubric object exists."
+            serializer = AbsoluteRubricSerializer(absolute_rubric, data=rubric_data)
+            serializer.is_valid()
+            serializer.save()
+            rubric_instance = serializer.instance
+        
         else:
             assert False, "We've got a problem modifying rubric."
+
+        # if kind == "relative":
+        #     try:
+        #         relative_rubric = RelativeRubric.objects.get(key=key)
+        #     except ObjectDoesNotExist:
+        #         rubric = NeutralRubric.objects.get(key=key)
+        #         neutral_rubric_key = rubric.key
+        #         rubric.delete()
+        #         relative_rubric = RelativeRubric.objects.create(key=neutral_rubric_key)
+        #     serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
+        #     serializer.is_valid()
+        #     serializer.save()
+        #     rubric_instance = serializer.instance
+        # elif kind == "neutral":
+        #     try:
+        #         neutral_rubric = NeutralRubric.objects.get(key=key)
+        #     except ObjectDoesNotExist:
+        #         rubric = RelativeRubric.objects.get(key=key)
+        #         relative_rubric_key = rubric.key
+        #         rubric.delete()
+        #         neutral_rubric = NeutralRubric.objects.create(key=relative_rubric_key)
+        #     serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
+        #     serializer.is_valid()
+        #     serializer.save()
+        #     rubric_instance = serializer.instance
+        # elif kind == "absolute":
+        #     raise NotImplementedError
+        # else:
+        #     assert False, "We've got a problem modifying rubric."
 
         return rubric_instance
 
@@ -133,67 +198,31 @@ class RubricService:
             list: dictionaries, one for each rubric.
         """
         if question is None:
-            neutral_rubric_list = NeutralRubric.objects.all()
-            relative_rubric_list = RelativeRubric.objects.all()
-            absolute_rubric_list = AbsoluteRurbic.objects.all()
+            rubric_list = Rubric.objects.all()
         else:
-            neutral_rubric_list = NeutralRubric.objects.filter(question=question)
-            relative_rubric_list = RelativeRubric.objects.filter(question=question)
-            absolute_rubric_list = AbsoluteRurbic.objects.filter(question=question)
+            rubric_list = Rubric.objects.filter(question=question)
         rubric_data = []
 
-        for neutral_rubric in neutral_rubric_list:
-            neutral_rubric_dict = {
-                "id": neutral_rubric.key,
-                "kind": neutral_rubric.kind,
-                "display_delta": neutral_rubric.display_delta,
-                "value": neutral_rubric.value,
-                "out_of": neutral_rubric.out_of,
-                "text": neutral_rubric.text,
-                "tags": neutral_rubric.tags,
-                "meta": neutral_rubric.meta,
-                "username": neutral_rubric.user.username,
-                "question": neutral_rubric.question,
-                "versions": neutral_rubric.versions,
-                "parameters": neutral_rubric.parameters,
+        for r in rubric_list:
+            rubric_dict = {
+                "id": r.key,
+                "kind": r.kind,
+                "display_delta": r.display_delta,
+                "value": r.value,
+                "out_of": r.out_of,
+                "text": r.text,
+                "tags": r.tags,
+                "meta": r.meta,
+                "username": r.user.username,
+                "question": r.question,
+                "versions": r.versions,
+                "parameters": r.parameters,
             }
-            rubric_data.append(neutral_rubric_dict)
+            rubric_data.append(rubric_dict)
+        
+        new_rubric_data = sorted(rubric_data, key=itemgetter('kind'))
 
-        for relative_rubric in relative_rubric_list:
-            relative_rubric_dict = {
-                "id": relative_rubric.key,
-                "kind": relative_rubric.kind,
-                "display_delta": relative_rubric.display_delta,
-                "value": relative_rubric.value,
-                "out_of": relative_rubric.out_of,
-                "text": relative_rubric.text,
-                "tags": relative_rubric.tags,
-                "meta": relative_rubric.meta,
-                "username": relative_rubric.user.username,
-                "question": relative_rubric.question,
-                "versions": relative_rubric.versions,
-                "parameters": relative_rubric.parameters,
-            }
-            rubric_data.append(relative_rubric_dict)
-
-        for absolute_rubric in absolute_rubric_list:
-            absolute_rubric_dict = {
-                "id": absolute_rubric.key,
-                "kind": absolute_rubric.kind,
-                "display_delta": absolute_rubric.display_delta,
-                "value": absolute_rubric.value,
-                "out_of": absolute_rubric.out_of,
-                "text": absolute_rubric.text,
-                "tags": absolute_rubric.tags,
-                "meta": absolute_rubric.meta,
-                "username": absolute_rubric.user.username,
-                "question": absolute_rubric.question,
-                "versions": absolute_rubric.versions,
-                "parameters": absolute_rubric.parameters,
-            }
-            rubric_data.append(absolute_rubric_dict)
-
-        return rubric_data
+        return new_rubric_data
 
     def init_rubrics(self):
         """Add special rubrics such as deltas and per-question specific.
