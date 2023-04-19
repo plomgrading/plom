@@ -7,7 +7,6 @@
 django==4.1.7
 django-braces
 django-reset-migrations
-pymupdf
 model_bakery # for tests
 beautifulsoup4 # HTML parsing
 django-session-timeout
@@ -16,13 +15,14 @@ tabulate # display table in command line
 reportlab
 django-huey
 django-polymorphic
-whitenoise
 djangorestframework
+pymupdf==1.22.1
 # https://pypi.org/project/random-username/
 # https://github.com/williexu/random_username
 random-username
 tomli
 tomlkit
-zipfly  # for streaming zipfile generation/download
 psycopg2-binary  # for mucking with postgres databases - use binary so that we don't have to build
 debugpy
+whitenoise
+zipfly  # for streaming zipfile generation/download
