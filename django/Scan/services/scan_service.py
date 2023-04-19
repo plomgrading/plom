@@ -669,9 +669,12 @@ class ScanService:
         status_header = (
             "Bundle name",
             "Id",
-            "Pages",
-            "Known pages",
-            "Error pages",
+            "Total Pages",
+            "Unknowns",
+            "Knowns",
+            "Extra (w data)",
+            "Discards",
+            "Error",
             "QR read",
             "Pushed",
             "Uploaded by",
@@ -679,14 +682,17 @@ class ScanService:
         bundle_status.append(status_header)
         for bundle in bundles:
             images = StagingImage.objects.filter(bundle=bundle)
+            n_unknowns = self.get_n_unknown_images(bundle)
             n_knowns = self.get_n_known_images(bundle)
+            n_extras_w_data = self.get_n_extra_images_with_data(bundle)
+            n_discards = self.get_n_discard_images(bundle)
             n_errors = self.get_n_error_images(bundle)
 
             if self.is_bundle_mid_splitting(bundle.pk):
                 count = ManagePageToImage.objects.get(bundle=bundle).completed_pages
                 total_pages = f"in progress: {count} of {bundle.number_of_pages}"
             else:
-                total_pages = len(images)
+                total_pages = images.count()
 
             bundle_qr_read = bundle.has_qr_codes
             if self.is_bundle_mid_qr_read(bundle.pk):
@@ -697,7 +703,10 @@ class ScanService:
                 bundle.slug,
                 bundle.pk,
                 total_pages,
+                n_unknowns,
                 n_knowns,
+                n_extras_w_data,
+                n_discards,
                 n_errors,
                 bundle_qr_read,
                 bundle.pushed,

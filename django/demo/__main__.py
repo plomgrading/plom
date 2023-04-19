@@ -319,12 +319,12 @@ def wait_for_qr_read(number_of_bundles=3):
 
 
 def push_if_ready(number_of_bundles=3, homework_bundles={}, attempts=15):
+    print(
+        "Try to push all bundles - some will fail since they are not yet ready, or contain unknowns/errors etc"
+    )
     todo = [f"fake_bundle{k+1}" for k in range(number_of_bundles)]
-    # TODO = get homework bundle push working
-    # needs to realise that hw-bundle is perfect (all extra pages with data)
-    # need to update the status cmd
-    # for n in homework_bundles:
-    # todo.append(f"fake_hw_bundle_{n}")
+    for n in homework_bundles:
+        todo.append(f"fake_hw_bundle_{n}")
 
     while True:
         done = []
@@ -339,12 +339,15 @@ def push_if_ready(number_of_bundles=3, homework_bundles={}, attempts=15):
                 subprocess.check_call(split(push_cmd))
                 done.append(bundle)
                 sleep(1)
+            elif "cannot push" in out_stat:
+                print(f"Cannot push {bundle} because it contains unknowns or errors")
+                done.append(bundle)
 
         for bundle in done:
             todo.remove(bundle)
         if len(todo) > 0 and attempts > 0:
             print(
-                f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
+                f"Still waiting for bundles {todo} to process - sleep between attempts"
             )
             attempts -= 1
             sleep(1)
