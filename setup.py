@@ -58,7 +58,7 @@ server_install_requires = [
     "peewee>=3.13.3",
     "PyMySQL>=1.0.2",
     "pytest>=6.0.0",
-    "pytest-qt>=3.2.2",
+    "pytest-qt>=4.1.0",
     "imutils",
     "opencv-python-headless>=4.4.0.40",
     "scikit-learn>=0.23.1",
