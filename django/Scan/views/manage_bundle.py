@@ -146,6 +146,5 @@ class GetBundleImageView(ScannerRequiredView):
 
         scanner = ScanService()
         image = scanner.get_image(timestamp, request.user, index)
-        file_path = image.image_file.path
 
-        return FileResponse(open(file_path, "rb"))
+        return FileResponse(image.image_file)

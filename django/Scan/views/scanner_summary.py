@@ -65,5 +65,5 @@ class ScannerPushedImageView(ScannerRequiredView):
 
     def get(self, request, img_pk):
         mss = ManageScanService()
-        file_path = mss.get_pushed_image_path(img_pk)
-        return FileResponse(open(file_path, "rb"))
+        img = mss.get_pushed_image(img_pk)
+        return FileResponse(img.image_file)

@@ -9,7 +9,6 @@ import uuid
 from plom.tpv_utils import encodePaperPageVersion
 
 from django.db import transaction
-from django.conf import settings
 from django.core.files import File
 
 from Scan.models import (
@@ -154,7 +153,7 @@ class ImageBundleService:
             return prefix + str(uuid.uuid4()) + suffix
 
         for staged in bundle_images:
-            with open(staged.image_file.path, "rb") as fh:
+            with staged.image_file.open("rb") as fh:
                 image = Image(
                     bundle=uploaded_bundle,
                     bundle_order=staged.bundle_order,

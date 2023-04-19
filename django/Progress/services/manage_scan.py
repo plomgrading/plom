@@ -396,9 +396,9 @@ class ManageScanService:
 
         return bundle_list
 
-    def get_pushed_image_path(self, img_pk):
+    def get_pushed_image(self, img_pk):
         try:
             img = Image.objects.get(pk=img_pk)
-            return img.image_file.path
+            return img
         except Image.DoesNotExist:
             return None
