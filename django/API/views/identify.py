@@ -143,7 +143,7 @@ class IDgetImage(APIView):
                 code=status.HTTP_404_NOT_FOUND,
             )
 
-        img_path = id_img.file_name
+        img_path = id_img.image_file.path
         with open(img_path, "rb") as f:
             image = SimpleUploadedFile(
                 f"{paper_id}_id.png",
