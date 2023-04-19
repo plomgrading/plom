@@ -42,10 +42,10 @@ class ImageBundleTests(TestCase):
             bundle=self.staged_bundle,
             bundle_order=1,
             # image_file="page2.png",
-            _create_files=True,
             image_hash="abcdef",
             rotation=90,
             image_type="known",
+            _create_files=True,  # argument to tell baker to actually make the file
         )
 
         # supply p,p,v to this since we will need to cast it to a short-tpv code

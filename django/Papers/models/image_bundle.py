@@ -6,7 +6,20 @@ from django.db import models
 
 
 def image_upload_path(instance, filename):
-    # save bundle-images as "media/pushedImages/bundle_pk/filename"
+    """Given a image instance and a filename create a path to which
+    the assocaited file should be saved. We use this function to set
+    save-paths for pushed images rather than 'hand-coding' them
+    elsewhere.
+
+    Args:
+        instance (Image): the Image model instance whose path is being created
+        filename (str): the name of the file to be saved at the created path.
+
+    Returns: (str): The string of the path to which the image file
+        will be saved (relative to the media directory, and including the
+        actual filename)
+    """
+
     return "pushed_images/{}/{}".format(instance.bundle.pk, filename)
 
 
