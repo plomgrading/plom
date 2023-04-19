@@ -84,13 +84,6 @@ class ScanService:
             debug_jpeg (bool): off by default.  If True then we make some rotations by
             non-multiplies of 90, and save some low-quality jpegs.
         """
-        # make sure the path is created
-        user_dir = pathlib.Path("media") / user.username
-        user_dir.mkdir(exist_ok=True)
-        bundles_dir = user_dir / "bundles"
-        bundles_dir.mkdir(exist_ok=True)
-        bundle_dir = bundles_dir / f"{timestamp}"
-        bundle_dir.mkdir(exist_ok=True)
 
         fh = uploaded_pdf_file.open()
         with transaction.atomic():
@@ -104,14 +97,7 @@ class ScanService:
                 pushed=False,
             )
 
-        image_dir = bundle_dir / "pageImages"
-        image_dir.mkdir(exist_ok=True)
-        unknown_dir = bundle_dir / "unknownPages"
-        unknown_dir.mkdir(exist_ok=True)
-
-        self.split_and_save_bundle_images(
-            bundle_obj.pk, image_dir, debug_jpeg=debug_jpeg
-        )
+        self.split_and_save_bundle_images(bundle_obj.pk, debug_jpeg=debug_jpeg)
 
     @transaction.atomic
     def upload_bundle_cmd(
@@ -162,16 +148,15 @@ class ScanService:
             debug_jpeg=debug_jpeg,
         )
 
-    def split_and_save_bundle_images(self, bundle_pk, base_dir, *, debug_jpeg=False):
+    def split_and_save_bundle_images(self, bundle_pk, *, debug_jpeg=False):
         """
         Read a PDF document and save page images to filesystem/database
 
         Args:
             bundle_pk: StagingBundle object primary key
-            base_dir: pathlib.Path object of path to save image files
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        task = huey_parent_split_bundle_task(bundle_pk, base_dir, debug_jpeg=debug_jpeg)
+        task = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
         with transaction.atomic():
             ManagePageToImage.objects.create(
                 bundle=bundle_obj,
@@ -908,7 +893,7 @@ class ScanService:
 
 
 @db_task(queue="tasks")
-def huey_parent_split_bundle_task(bundle_pk, base_dir, *, debug_jpeg=False):
+def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
     from time import sleep
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)

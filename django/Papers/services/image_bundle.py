@@ -3,10 +3,14 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 
+import pathlib
+import uuid
+
 from plom.tpv_utils import encodePaperPageVersion
 
 from django.db import transaction
 from django.conf import settings
+from django.core.files import File
 
 from Scan.models import (
     StagingImage,
@@ -56,26 +60,6 @@ class ImageBundleService:
             return self.create_bundle(name, hash)
         else:
             return self.get_bundle(hash)
-
-    def create_image(
-        self, bundle, bundle_order, original_name, file_name, hash, rotation
-    ):
-        """
-        Create an image.
-        """
-
-        if Image.objects.filter(hash=hash).exists():
-            raise RuntimeError("An image with that hash already exists.")
-        image = Image(
-            bundle=bundle,
-            bundle_order=bundle_order,
-            original_name=original_name,
-            file_name=file_name,
-            hash=hash,
-            rotation=rotation,
-        )
-        image.save()
-        return image
 
     def get_page_image_path(self, test_paper, file_name, make_dirs=True):
         """
@@ -169,16 +153,34 @@ class ImageBundleService:
 
         pi_service = PaperInfoService()
 
+        def image_save_name(staged):
+            if staged.image_type == "known":
+                known = staged.knownstagingimage
+                prefix = f"known_{known.paper_number}_{known.page_number}_"
+            elif staged.image_type == "extra":
+                extra = staged.extrastagingimage
+                prefix = f"extra_{extra.paper_number}_"
+                for q in extra.question_list:
+                    prefix += f"{q}_"
+            elif staged.image_type == "discard":
+                prefix = "discard_"
+            else:
+                prefix = ""
+
+            suffix = pathlib.Path(staged.image_file.name).suffix
+            return prefix + str(uuid.uuid4()) + suffix
+
         for staged in bundle_images:
-            image = Image(
-                bundle=uploaded_bundle,
-                bundle_order=staged.bundle_order,
-                original_name=staged.image_file.name,
-                file_name=staged.image_file.path,
-                hash=staged.image_hash,
-                rotation=staged.rotation,
-            )
-            image.save()
+            with open(staged.image_file.path, "rb") as fh:
+                image = Image(
+                    bundle=uploaded_bundle,
+                    bundle_order=staged.bundle_order,
+                    original_name=staged.image_file.name,
+                    image_file=File(fh, name=image_save_name(staged)),
+                    hash=staged.image_hash,
+                    rotation=staged.rotation,
+                )
+                image.save()
 
             if staged.image_type == "known":
                 known = staged.knownstagingimage

@@ -5,6 +5,11 @@
 from django.db import models
 
 
+def image_upload_path(instance, filename):
+    # save bundle-images as "media/pushedImages/bundle_pk/filename"
+    return "pushed_images/{}/{}".format(instance.bundle.pk, filename)
+
+
 class Bundle(models.Model):
     """Table to store information on the bundle (pdf) that a given
     uploaded image comes from.
@@ -32,7 +37,7 @@ class Image(models.Model):
     original_name (str): the name of the image-file when it was extracted
         from the bundle. Typically, this will be something like "foo-7.png",
         which also indicates that it was page-7 from the bundle foo.pdf"
-    file_name (Path): the path to where the image is stored by the server.
+    image_file (ImageField): the django-imagefield storing the image for the server.
         In the future this could be a url to some cloud storage.
     hash (str): the sha256 hash of the image.
     rotation (int): the angle to rotate the original image in order to give
@@ -42,7 +47,7 @@ class Image(models.Model):
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    file_name = models.TextField(null=False)
+    image_file = models.ImageField(null=False, upload_to=image_upload_path)
     hash = models.CharField(null=True, max_length=64)
     rotation = models.IntegerField(null=False, default=0)
 

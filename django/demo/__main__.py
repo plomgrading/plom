@@ -318,23 +318,30 @@ def wait_for_qr_read(number_of_bundles=3):
     save_fixture("qr_codes_read.json")
 
 
-def push_if_ready(number_of_bundles=3, attempts=15):
-    todo = [k + 1 for k in range(number_of_bundles)]
+def push_if_ready(number_of_bundles=3, homework_bundles={}, attempts=15):
+    todo = [f"fake_bundle{k+1}" for k in range(number_of_bundles)]
+    # TODO = get homework bundle push working
+    # needs to realise that hw-bundle is perfect (all extra pages with data)
+    # need to update the status cmd
+    # for n in homework_bundles:
+    # todo.append(f"fake_hw_bundle_{n}")
+
     while True:
         done = []
-        for n in todo:
-            cmd = f"plom_staging_bundles status fake_bundle{n}"
+        for bundle in todo:
+            cmd = f"plom_staging_bundles status {bundle}"
             py_man_cmd = f"python3 manage.py {cmd}"
             out_stat = subprocess.check_output(
                 split(py_man_cmd), stderr=subprocess.STDOUT
             ).decode("utf-8")
             if "perfect" in out_stat:
-                push_cmd = f"python3 manage.py plom_staging_bundles push fake_bundle{n}"
+                push_cmd = f"python3 manage.py plom_staging_bundles push {bundle}"
                 subprocess.check_call(split(push_cmd))
-                done.append(n)
+                done.append(bundle)
                 sleep(1)
-        for n in done:
-            todo.remove(n)
+
+        for bundle in done:
+            todo.remove(bundle)
         if len(todo) > 0 and attempts > 0:
             print(
                 f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
@@ -538,7 +545,9 @@ def _doit(args):
         return (huey_worker_proc, server_proc)
 
     print("*" * 40)
-    push_if_ready()
+    push_if_ready(
+        number_of_bundles=number_of_bundles, homework_bundles=homework_bundles
+    )
     # call_command("plom_staging_bundles", "status")
     # call_command("plom_staging_bundles", "push", "fake_bundle2")
     # call_command("plom_staging_bundles", "push", "fake_hw_bundle_62")

@@ -10,14 +10,16 @@ from Base.models import HueyTask
 
 
 def staging_bundle_upload_path(instance, filename):
-    # save bundle as "media/bundles/username/bundle_pk/filename.pdf"
-    return "{}/bundles/{}/{}".format(instance.user.username, instance.pk, filename)
+    # save bundle as "//media/staging/bundles/username/bundle-timestamp/filename"
+    return "staging/bundles/{}/{}/{}".format(
+        instance.user.username, instance.timestamp, filename
+    )
 
 
 def staging_image_upload_path(instance, filename):
-    # save bundle-images as "media/bundles/username/bundle_pk/pageImages/filename"
-    return "{}/bundles/{}/pageImages/{}".format(
-        instance.bundle.user.username, instance.bundle.pk, filename
+    # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
+    return "staging/bundles/{}/{}/page_images/{}".format(
+        instance.bundle.user.username, instance.bundle.timestamp, filename
     )
 
 
