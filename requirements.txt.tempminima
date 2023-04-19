@@ -28,6 +28,8 @@ pandas==1.0.0
 peewee==3.13.3
 pymupdf==1.21.0
 PyMySQL==1.0.2
+pytest==6.0.0
+pytest-qt==4.1.0
 scikit-learn==0.23.1
 stdiomask==0.0.6
 tomli==2.0.1
