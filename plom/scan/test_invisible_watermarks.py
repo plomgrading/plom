@@ -96,8 +96,8 @@ def test_png_metadata(tmpdir):
 def test_pdf_can_extract_png_and_jpeg(tmpdir):
     tmp_path = Path(tmpdir)
 
-    jpg_file, jpg_img = make_jpeg(tmpdir)
-    png_file, png_img = make_png(tmpdir)
+    jpg_file, jpg_img = make_jpeg(tmp_path)
+    png_file, png_img = make_png(tmp_path)
 
     f = tmp_path / "doc.pdf"
     d = fitz.open()
