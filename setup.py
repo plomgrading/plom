@@ -57,6 +57,7 @@ server_install_requires = [
     "aiohttp>=3.7.2",
     "peewee>=3.13.3",
     "PyMySQL>=1.0.2",
+    "pytest>=6.0.0",
     "pytest-qt>=3.2.2",
     "imutils",
     "opencv-python-headless>=4.4.0.40",
