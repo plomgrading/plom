@@ -754,7 +754,6 @@ oldOS_mindeps:
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
-      python3-pytest python3-pytestqt
       python3 python3-dev
       python3-pip python3-setuptools python3-wheel
       python3-passlib python3-pandas
@@ -770,7 +769,7 @@ oldOS_mindeps:
     - python3 -m pip install -r requirements.txt.tempminima
     - python3 -m pip install .
     # First, run the unit tests
-    - pytest-3 -l --pyargs plom
+    - pytest -l --pyargs plom
     # Build tests
     - mkdir play
     - pushd play
