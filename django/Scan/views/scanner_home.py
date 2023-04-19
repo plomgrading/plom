@@ -39,22 +39,12 @@ class ScannerHomeView(ScannerRequiredView):
         incomplete_papers = mss.get_number_incomplete_test_papers()
         unused_papers = mss.get_number_unused_test_papers()
 
-        total_pages = mss.get_total_pages()
-        scanned_pages = mss.get_scanned_pages()
-        percent_pages_complete = scanned_pages / total_pages * 100
-
-        all_test_papers = mss.get_test_paper_list()
-
         context.update(
             {
                 "complete_test_papers": complete_papers,
                 "incomplete_test_papers": incomplete_papers,
                 "unused_test_papers": unused_papers,
                 "total_papers": total_papers,
-                "completed_pages": scanned_pages,
-                "total_completed_pages": total_pages,
-                "percent_pages_completed": int(percent_pages_complete),
-                "all_test_papers": all_test_papers,
                 "form": BundleUploadForm(),
                 "bundle_splitting": False,
             }
@@ -91,15 +81,6 @@ class ScannerHomeView(ScannerRequiredView):
 
     def get(self, request):
         context = self.build_context(request.user)
-
-        # if a pdf-to-image task is fully complete, perform some cleanup
-        # if context["bundle_splitting"]:
-        #     scanner = ScanService()
-        #     bundle = scanner.get_bundle(context["timestamp"], request.user)
-        #     n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
-        #     n_total = scanner.get_n_page_rendering_tasks(bundle)
-        #     if n_completed == n_total:
-        #         scanner.page_splitting_cleanup(bundle)
 
         return render(request, "Scan/home.html", context)
 

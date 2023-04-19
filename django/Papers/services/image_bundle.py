@@ -146,7 +146,11 @@ class ImageBundleService:
         4. Bulk-create images
         """
 
-        bundle_images = StagingImage.objects.filter(bundle=staged_bundle)
+        bundle_images = StagingImage.objects.filter(
+            bundle=staged_bundle
+        ).prefetch_related(
+            "knownstagingimage", "extrastagingimage", "discardstagingimage"
+        )
 
         # Staging has checked this - but we check again here to be very sure
         if not self.all_staged_imgs_valid(bundle_images):
