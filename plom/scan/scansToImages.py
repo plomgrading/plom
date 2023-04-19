@@ -297,7 +297,7 @@ def try_to_extract_image(
     if d["ext"].lower() not in PlomImageExts:
         # Issue #2346: could try to convert to png, but for now just let fitz render
         log.info(f"  {d['ext']} not in allowlist: leave for fitz render")
-        msgs.append(f'extracted image not in {"".join(PlomImageExts)}')
+        msgs.append(f'extracted image is not {", ".join(PlomImageExts)}')
         return None, msgs
     outname = dest / (basename + "." + d["ext"])
     with open(outname, "wb") as f:
