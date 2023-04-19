@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -252,13 +253,7 @@ class MgetOneImage(APIView):
 
         try:
             img_path = pds.get_image_path(pk, hash)
-            with open(img_path, "rb") as f:
-                image = SimpleUploadedFile(
-                    f"{hash}.png",
-                    f.read(),
-                    content_type="image/png",
-                )
-            return FileResponse(image, status=status.HTTP_200_OK)
+            return FileResponse(open(img_path, "rb"), status=status.HTTP_200_OK)
         except Image.DoesNotExist:
             return Response(
                 detail="Image does not exist.",
@@ -309,10 +304,6 @@ class MgetAnnotationImage(APIView):
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        with open(annotation_image.path, "rb") as f:
-            image = SimpleUploadedFile(
-                f"{annotation_image.hash}.png",
-                f.read(),
-                content_type="image/png",
-            )
-        return FileResponse(image, status=status.HTTP_200_OK)
+        return FileResponse(
+            open(annotation_image.path, "rb"), status=status.HTTP_200_OK
+        )

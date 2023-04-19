@@ -61,23 +61,6 @@ class ImageBundleService:
         else:
             return self.get_bundle(hash)
 
-    def get_page_image_path(self, test_paper, file_name, make_dirs=True):
-        """
-        Return a save path for a test-paper page image.
-        Also, create the necessary folders in the media directory
-        if they don't exist.
-        """
-        page_image_dir = settings.MEDIA_ROOT / "page_images"
-        test_papers_dir = page_image_dir / "test_papers"
-        paper_dir = test_papers_dir / str(test_paper)
-
-        if make_dirs:
-            page_image_dir.mkdir(exist_ok=True)
-            test_papers_dir.mkdir(exist_ok=True)
-            paper_dir.mkdir(exist_ok=True)
-
-        return str(paper_dir / file_name)
-
     def image_exists(self, hash):
         """
         Return True if a page image with the input hash exists in the database.

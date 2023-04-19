@@ -80,23 +80,6 @@ class ImageBundleTests(TestCase):
         n_bundles = len(Bundle.objects.all())
         self.assertEqual(n_bundles, 1)
 
-    def test_get_path(self):
-        """
-        Test ImageBundleService.get_page_image_path()
-        """
-
-        ibs = ImageBundleService()
-        image_path = ibs.get_page_image_path(1, "page1.png", False)
-        gold_path = (
-            settings.BASE_DIR
-            / "media"
-            / "page_images"
-            / "test_papers"
-            / "1"
-            / "page1.png"
-        )
-        self.assertEqual(str(gold_path), image_path)
-
     def test_all_staged_imgs_valid(self):
         """
         Test ImageBundleService.all_staged_imgs_valid().
