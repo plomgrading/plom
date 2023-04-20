@@ -1294,7 +1294,7 @@ winpyinst:
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
   - c:\python310\python -m pip install pyinstaller==5.10.1
   - refreshenv
-  # c:\python310\python -m plom.client -h
+  - c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec
   - $VER = &"c:\python310\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
