@@ -10,7 +10,6 @@ from datetime import datetime
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
-from django.conf import settings
 
 from Papers.models import (
     FixedPage,
@@ -304,48 +303,6 @@ class ManageScanService:
             ~Exists(fixed_with_scan), mobilepage__isnull=True
         )
         return sorted([paper.paper_number for paper in no_images_at_all])
-
-    @transaction.atomic
-    def get_test_paper_list(self, exclude_complete=False, exclude_incomplete=False):
-        """
-        Return a list of test-papers and their scanning completion status.
-
-        Args:
-            exclude_complete (bool): if True, filter complete test-papers from the list.
-            exclude_incomplete (bool): if True, filter incomplete test-papers from the list.
-        """
-
-        papers = Paper.objects.all()
-
-        test_papers = []
-        for tp in papers:
-            paper = {}
-            page_query = FixedPage.objects.filter(paper=tp).order_by("page_number")
-            is_incomplete = page_query.filter(image=None).exists()
-
-            if (is_incomplete and not exclude_incomplete) or (
-                not is_incomplete and not exclude_complete
-            ):
-                pages = []
-                for p in page_query:
-                    pages.append(
-                        {
-                            "image": p.image,
-                            "version": p.version,
-                            "number": p.page_number,
-                        }
-                    )
-
-                paper.update(
-                    {
-                        "paper_number": f"{tp.paper_number:04}",
-                        "pages": list(pages),
-                        "complete": not is_incomplete,
-                    }
-                )
-                test_papers.append(paper)
-
-        return test_papers
 
     @transaction.atomic
     def get_page_image(self, test_paper, index):

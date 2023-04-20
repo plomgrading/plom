@@ -26,3 +26,7 @@ psycopg2-binary  # for mucking with postgres databases - use binary so that we d
 debugpy
 whitenoise
 zipfly  # for streaming zipfile generation/download
+
+
+#---------- for dev / debug work - comment out unless using it.
+# nplusone==1.0.0  # for hunting down potential n+1 query problems
