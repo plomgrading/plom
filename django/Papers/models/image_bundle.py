@@ -7,7 +7,7 @@ from django.db import models
 
 def image_upload_path(instance, filename):
     """Given a image instance and a filename create a path to which
-    the assocaited file should be saved. We use this function to set
+    the associated file should be saved. We use this function to set
     save-paths for pushed images rather than 'hand-coding' them
     elsewhere.
 
