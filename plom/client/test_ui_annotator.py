@@ -36,6 +36,9 @@ def test_annotr_open(qtbot):
     a.show()
     qtbot.addWidget(a)
     # path = qtbot.screenshot(a)
+    # wait before closing: annotator has some buggy QTimer stuff...
+    qtbot.wait(100)
+    qtbot.wait(100)
     a.close()
     # clicking would do "next-paper": not prepared to test that yet
     # qtbot.mouseClick(a.finishedButton, Qt.MouseButton.LeftButton)

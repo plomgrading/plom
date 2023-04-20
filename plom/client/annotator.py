@@ -1340,11 +1340,11 @@ class Annotator(QWidget):
 
         # if zoom-state is none, set it to index 1 (fit page) - but delay.
         if self.parentMarkerUI.annotatorSettings["zoomState"] is None:
-            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+            QTimer.singleShot(100, lambda: self.ui.zoomCB.setCurrentIndex(1))
         elif self.parentMarkerUI.annotatorSettings["zoomState"] == 0:
             # is set to "user", so set the view-rectangle
             if self.parentMarkerUI.annotatorSettings["viewRectangle"] is not None:
-                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
+                QTimer.singleShot(100, lambda: self.ui.zoomCB.setCurrentIndex(0))
                 QTimer.singleShot(
                     200,
                     lambda: self.view.initializeZoom(
@@ -1353,10 +1353,10 @@ class Annotator(QWidget):
                 )
             else:
                 # no view-rectangle, so set to "fit-page"
-                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+                QTimer.singleShot(100, lambda: self.ui.zoomCB.setCurrentIndex(1))
         else:
             QTimer.singleShot(
-                200,
+                100,
                 lambda: self.ui.zoomCB.setCurrentIndex(
                     self.parentMarkerUI.annotatorSettings["zoomState"]
                 ),
@@ -1807,6 +1807,8 @@ class Annotator(QWidget):
             None: Modifies self.ui
 
         """
+        if not self.scene:
+            return
         if self.ui.zoomCB.currentText() == "Fit page":
             self.view.zoomFitPage()
         elif self.ui.zoomCB.currentText() == "Fit width":
