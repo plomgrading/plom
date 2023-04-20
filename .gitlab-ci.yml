@@ -1284,7 +1284,6 @@ macos_server:
 
 # Build Windows client binaries
 # This section written in PowerShell
-# TODO: currently has PyQt6 pinned at a lower version
 winpyinst:
   extends:
   - .shared_windows_runners
@@ -1297,12 +1296,11 @@ winpyinst:
   - c:\python310\python -m pip --version
   - c:\python310\python -m pip install --user --upgrade setuptools wheel
   script:
-  - c:\python310\python -m pip install PyQt6==6.4.2
   - c:\python310\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
   - c:\python310\python -m pip install pyinstaller==5.10.1
   - refreshenv
-  - c:\python310\python -m plom.client -h
+  # c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec
   - $VER = &"c:\python310\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
