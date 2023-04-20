@@ -171,8 +171,7 @@ class Annotator(QWidget):
 
         if initialData:
             self.load_new_question(*initialData)
-
-        self.rubric_widget.setInitialRubrics()
+            self.rubric_widget.setInitialRubrics()
 
         # Grab window settings from parent
         self.loadWindowSettings()
