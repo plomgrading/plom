@@ -93,6 +93,7 @@ class RubricService:
 
         kind = rubric_data["kind"]
 
+        # TODO: try to use Rubric.objects instead to optimize
         if kind == "relative":
             if RelativeRubric.objects.filter(key=key).exists():
                 relative_rubric = RelativeRubric.objects.get(key=key)
