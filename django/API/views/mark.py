@@ -120,12 +120,12 @@ class MgetDoneTasks(APIView):
         # so currently using hardcoded value.
         # TODO: legacy marking time is int, but we may decide to change to float.
         rows = map(
-            lambda mark_action: [
-                mark_action.task.code,
-                mark_action.annotation.score,
-                mark_action.annotation.marking_time,
+            lambda annotation: [
+                annotation.task.code,
+                annotation.score,
+                annotation.marking_time,
                 [],  # TODO: tags are not implemented yet
-                mark_action.task.pk,  # TODO: integrity check is not implemented yet
+                annotation.task.pk,  # TODO: integrity check is not implemented yet
             ],
             marks,
         )
@@ -218,6 +218,7 @@ class MclaimThisTask(APIView):
             img,
             annot_data,
         )
+        mts.mark_task_as_complete(code)
 
         return Response(
             [mts.get_n_marked_tasks(), mts.get_n_total_tasks()],
@@ -274,7 +275,7 @@ class MgetAnnotations(APIView):
     def get(self, request, paper, question):
         mts = MarkingTaskService()
         annotation = mts.get_latest_annotation(paper, question)
-        annotation_task = annotation.markaction.task
+        annotation_task = annotation.task
         annotation_data = annotation.annotation_data
 
         latest_task = mts.get_latest_task(paper, question)
@@ -284,7 +285,7 @@ class MgetAnnotations(APIView):
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
 
-        annotation_data["user"] = annotation.markaction.user.username
+        annotation_data["user"] = annotation.user.username
         annotation_data["annotation_edition"] = annotation.edition
         annotation_data["annotation_reference"] = annotation.pk
 
@@ -299,7 +300,7 @@ class MgetAnnotationImage(APIView):
     def get(self, request, paper, question, edition):
         mts = MarkingTaskService()
         annotation = mts.get_latest_annotation(paper, question)
-        annotation_task = annotation.markaction.task
+        annotation_task = annotation.task
         annotation_image = annotation.image
 
         latest_task = mts.get_latest_task(paper, question)

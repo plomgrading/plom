@@ -9,7 +9,7 @@ from Preparation.models import StagingPQVMapping
 from Papers.models import Paper
 
 from Mark.services import MarkingTaskService
-from Mark.models import MarkingTask, ClaimMarkingTask
+from Mark.models import MarkingTask
 
 
 class MarkingTaskServiceTests(TestCase):
@@ -215,24 +215,3 @@ class MarkingTaskServiceTests(TestCase):
         self.assertFalse(mts.user_can_update_task(user, "q0003g1"))
         self.assertTrue(mts.user_can_update_task(user, "q0004g1"))
         self.assertFalse(mts.user_can_update_task(user, "q0005g1"))
-
-    def test_get_latest_claim(self):
-        """
-        test MarkingTaskService.get_latest_claim()
-        """
-        user1 = baker.make(User)
-        user2 = baker.make(User)
-        paper = baker.make(Paper, paper_number=1)
-        task = baker.make(
-            MarkingTask,
-            paper=paper,
-            code="q0001g1",
-            assigned_user=user1,
-            question_number=1,
-        )
-        claim1 = baker.make(ClaimMarkingTask, user=user2, task=task)
-        claim2 = baker.make(ClaimMarkingTask, user=user1, task=task)
-
-        mts = MarkingTaskService()
-        self.assertEqual(mts.get_latest_claim(user2, "q0001g1"), claim1)
-        self.assertEqual(mts.get_latest_claim(user1, "q0001g1"), claim2)
