@@ -39,14 +39,14 @@ class Image(models.Model):
         it the correct orientation.
     """
 
-    def _image_upload_path(instance, filename):
+    def _image_upload_path(self, filename):
         """Given a image instance and a filename create a path to which
         the associated file should be saved. We use this function to set
         save-paths for pushed images rather than 'hand-coding' them
         elsewhere.
 
         Args:
-            instance (Image): the Image model instance whose path is being created
+            self (Image): the Image model instance whose path is being created
             filename (str): the name of the file to be saved at the created path.
 
         Returns: (str): The string of the path to which the image file
@@ -54,7 +54,7 @@ class Image(models.Model):
             actual filename)
         """
 
-        return "pushed_images/{}/{}".format(instance.bundle.pk, filename)
+        return f"pushed_images/{self.bundle.pk:05}/{filename}"
 
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)

@@ -250,7 +250,8 @@ class MgetOneImage(APIView):
 
     def get(self, request, pk, hash):
         pds = PageDataService()
-
+        # TODO - replace this fileresponse(open(file)) with fileresponse(filefield)
+        # so that we don't have explicit file-path handling.
         try:
             img_path = pds.get_image_path(pk, hash)
             return FileResponse(open(img_path, "rb"), status=status.HTTP_200_OK)
