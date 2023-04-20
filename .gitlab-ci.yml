@@ -943,9 +943,15 @@ linux_client_appimage:
     expire_in: 16 days
 
 
+# TODO: broken by the upgrade to PyQt6, currently set to manual
 # TODO: has PyQt6 pinned on lower version
 linuxbin_ubuntu2004:
   stage: packaging
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
   image: ubuntu:20.04
   before_script:
     - apt-get update
