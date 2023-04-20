@@ -9,27 +9,19 @@ from django.contrib.auth.models import User
 from Base.models import HueyTask
 
 
-def staging_bundle_upload_path(instance, filename):
-    # save bundle as "//media/staging/bundles/username/bundle-timestamp/filename"
-    return "staging/bundles/{}/{}/{}".format(
-        instance.user.username, instance.timestamp, filename
-    )
-
-
-def staging_image_upload_path(instance, filename):
-    # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
-    return "staging/bundles/{}/{}/page_images/{}".format(
-        instance.bundle.user.username, instance.bundle.timestamp, filename
-    )
-
-
 class StagingBundle(models.Model):
     """
     A user-uploaded bundle that isn't validated.
     """
 
+    def _staging_bundle_upload_path(self, filename):
+        # save bundle as "//media/staging/bundles/username/bundle-timestamp/filename"
+        return "staging/bundles/{}/{}/{}".format(
+            self.user.username, self.timestamp, filename
+        )
+
     slug = models.TextField(default="")
-    pdf_file = models.FileField(upload_to=staging_bundle_upload_path)
+    pdf_file = models.FileField(upload_to=_staging_bundle_upload_path)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     timestamp = models.FloatField(default=0)
     pdf_hash = models.CharField(null=False, max_length=64)
@@ -44,9 +36,15 @@ class StagingImage(models.Model):
     An image of a scanned page that isn't validated.
     """
 
+    def _staging_image_upload_path(self, filename):
+        # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
+        return "staging/bundles/{}/{}/page_images/{}".format(
+            self.bundle.user.username, self.bundle.timestamp, filename
+        )
+
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
-    image_file = models.ImageField(upload_to=staging_image_upload_path)
+    image_file = models.ImageField(upload_to=_staging_image_upload_path)
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)
     paper_id = models.PositiveIntegerField(default=None, null=True)

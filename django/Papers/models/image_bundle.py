@@ -5,24 +5,6 @@
 from django.db import models
 
 
-def image_upload_path(instance, filename):
-    """Given a image instance and a filename create a path to which
-    the associated file should be saved. We use this function to set
-    save-paths for pushed images rather than 'hand-coding' them
-    elsewhere.
-
-    Args:
-        instance (Image): the Image model instance whose path is being created
-        filename (str): the name of the file to be saved at the created path.
-
-    Returns: (str): The string of the path to which the image file
-        will be saved (relative to the media directory, and including the
-        actual filename)
-    """
-
-    return "pushed_images/{}/{}".format(instance.bundle.pk, filename)
-
-
 class Bundle(models.Model):
     """Table to store information on the bundle (pdf) that a given
     uploaded image comes from.
@@ -57,10 +39,27 @@ class Image(models.Model):
         it the correct orientation.
     """
 
+    def _image_upload_path(instance, filename):
+        """Given a image instance and a filename create a path to which
+        the associated file should be saved. We use this function to set
+        save-paths for pushed images rather than 'hand-coding' them
+        elsewhere.
+
+        Args:
+            instance (Image): the Image model instance whose path is being created
+            filename (str): the name of the file to be saved at the created path.
+
+        Returns: (str): The string of the path to which the image file
+            will be saved (relative to the media directory, and including the
+            actual filename)
+        """
+
+        return "pushed_images/{}/{}".format(instance.bundle.pk, filename)
+
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    image_file = models.ImageField(null=False, upload_to=image_upload_path)
+    image_file = models.ImageField(null=False, upload_to=_image_upload_path)
     hash = models.CharField(null=True, max_length=64)
     rotation = models.IntegerField(null=False, default=0)
 
