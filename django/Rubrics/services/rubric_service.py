@@ -152,38 +152,9 @@ class RubricService:
             serializer.is_valid()
             serializer.save()
             rubric_instance = serializer.instance
-        
+
         else:
             assert False, "We've got a problem modifying rubric."
-
-        # if kind == "relative":
-        #     try:
-        #         relative_rubric = RelativeRubric.objects.get(key=key)
-        #     except ObjectDoesNotExist:
-        #         rubric = NeutralRubric.objects.get(key=key)
-        #         neutral_rubric_key = rubric.key
-        #         rubric.delete()
-        #         relative_rubric = RelativeRubric.objects.create(key=neutral_rubric_key)
-        #     serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
-        #     serializer.is_valid()
-        #     serializer.save()
-        #     rubric_instance = serializer.instance
-        # elif kind == "neutral":
-        #     try:
-        #         neutral_rubric = NeutralRubric.objects.get(key=key)
-        #     except ObjectDoesNotExist:
-        #         rubric = RelativeRubric.objects.get(key=key)
-        #         relative_rubric_key = rubric.key
-        #         rubric.delete()
-        #         neutral_rubric = NeutralRubric.objects.create(key=relative_rubric_key)
-        #     serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
-        #     serializer.is_valid()
-        #     serializer.save()
-        #     rubric_instance = serializer.instance
-        # elif kind == "absolute":
-        #     raise NotImplementedError
-        # else:
-        #     assert False, "We've got a problem modifying rubric."
 
         return rubric_instance
 
@@ -219,8 +190,8 @@ class RubricService:
                 "parameters": r.parameters,
             }
             rubric_data.append(rubric_dict)
-        
-        new_rubric_data = sorted(rubric_data, key=itemgetter('kind'))
+
+        new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
         return new_rubric_data
 
