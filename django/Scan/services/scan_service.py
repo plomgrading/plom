@@ -9,6 +9,7 @@ import hashlib
 import pathlib
 import random
 from statistics import mode
+import tempfile
 
 import fitz
 from django.conf import settings
@@ -83,13 +84,6 @@ class ScanService:
             debug_jpeg (bool): off by default.  If True then we make some rotations by
             non-multiplies of 90, and save some low-quality jpegs.
         """
-        # make sure the path is created
-        user_dir = pathlib.Path("media") / user.username
-        user_dir.mkdir(exist_ok=True)
-        bundles_dir = user_dir / "bundles"
-        bundles_dir.mkdir(exist_ok=True)
-        bundle_dir = bundles_dir / f"{timestamp}"
-        bundle_dir.mkdir(exist_ok=True)
 
         fh = uploaded_pdf_file.open()
         with transaction.atomic():
@@ -103,14 +97,7 @@ class ScanService:
                 pushed=False,
             )
 
-        image_dir = bundle_dir / "pageImages"
-        image_dir.mkdir(exist_ok=True)
-        unknown_dir = bundle_dir / "unknownPages"
-        unknown_dir.mkdir(exist_ok=True)
-
-        self.split_and_save_bundle_images(
-            bundle_obj.pk, image_dir, debug_jpeg=debug_jpeg
-        )
+        self.split_and_save_bundle_images(bundle_obj.pk, debug_jpeg=debug_jpeg)
 
     @transaction.atomic
     def upload_bundle_cmd(
@@ -161,16 +148,15 @@ class ScanService:
             debug_jpeg=debug_jpeg,
         )
 
-    def split_and_save_bundle_images(self, bundle_pk, base_dir, *, debug_jpeg=False):
+    def split_and_save_bundle_images(self, bundle_pk, *, debug_jpeg=False):
         """
         Read a PDF document and save page images to filesystem/database
 
         Args:
             bundle_pk: StagingBundle object primary key
-            base_dir: pathlib.Path object of path to save image files
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        task = huey_parent_split_bundle_task(bundle_pk, base_dir, debug_jpeg=debug_jpeg)
+        task = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
         with transaction.atomic():
             ManagePageToImage.objects.create(
                 bundle=bundle_obj,
@@ -683,9 +669,12 @@ class ScanService:
         status_header = (
             "Bundle name",
             "Id",
-            "Pages",
-            "Known pages",
-            "Error pages",
+            "Total Pages",
+            "Unknowns",
+            "Knowns",
+            "Extra (w data)",
+            "Discards",
+            "Error",
             "QR read",
             "Pushed",
             "Uploaded by",
@@ -693,14 +682,17 @@ class ScanService:
         bundle_status.append(status_header)
         for bundle in bundles:
             images = StagingImage.objects.filter(bundle=bundle)
+            n_unknowns = self.get_n_unknown_images(bundle)
             n_knowns = self.get_n_known_images(bundle)
+            n_extras_w_data = self.get_n_extra_images_with_data(bundle)
+            n_discards = self.get_n_discard_images(bundle)
             n_errors = self.get_n_error_images(bundle)
 
             if self.is_bundle_mid_splitting(bundle.pk):
                 count = ManagePageToImage.objects.get(bundle=bundle).completed_pages
                 total_pages = f"in progress: {count} of {bundle.number_of_pages}"
             else:
-                total_pages = len(images)
+                total_pages = images.count()
 
             bundle_qr_read = bundle.has_qr_codes
             if self.is_bundle_mid_qr_read(bundle.pk):
@@ -711,7 +703,10 @@ class ScanService:
                 bundle.slug,
                 bundle.pk,
                 total_pages,
+                n_unknowns,
                 n_knowns,
+                n_extras_w_data,
+                n_discards,
                 n_errors,
                 bundle_qr_read,
                 bundle.pushed,
@@ -907,48 +902,54 @@ class ScanService:
 
 
 @db_task(queue="tasks")
-def huey_parent_split_bundle_task(bundle_pk, base_dir, *, debug_jpeg=False):
+def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
     from time import sleep
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
-    task_list = [
-        huey_child_get_page_image(
-            bundle_pk, pg, base_dir, f"page{pg:05}", quiet=True, debug_jpeg=debug_jpeg
-        )
-        for pg in range(bundle_obj.number_of_pages)
-    ]
+    with tempfile.TemporaryDirectory() as tmpdir:
+        task_list = [
+            huey_child_get_page_image(
+                bundle_pk,
+                pg,
+                pathlib.Path(tmpdir),
+                f"page{pg:05}",
+                quiet=True,
+                debug_jpeg=debug_jpeg,
+            )
+            for pg in range(bundle_obj.number_of_pages)
+        ]
 
-    # results = [X.get(blocking=True) for X in task_list]
-    n_tasks = len(task_list)
-    while True:
-        results = [X.get() for X in task_list]
-        count = sum(1 for X in results if X is not None)
+        # results = [X.get(blocking=True) for X in task_list]
+        n_tasks = len(task_list)
+        while True:
+            results = [X.get() for X in task_list]
+            count = sum(1 for X in results if X is not None)
 
-        # TODO - check for error status here.
+            # TODO - check for error status here.
+
+            with transaction.atomic():
+                task_obj = ManagePageToImage.objects.get(bundle=bundle_obj)
+                task_obj.completed_pages = count
+                task_obj.save()
+
+            if count == n_tasks:
+                break
+            else:
+                sleep(1)
 
         with transaction.atomic():
-            task_obj = ManagePageToImage.objects.get(bundle=bundle_obj)
-            task_obj.completed_pages = count
-            task_obj.save()
+            for X in results:
+                with open(X["file_path"], "rb") as fh:
+                    StagingImage.objects.create(
+                        bundle=bundle_obj,
+                        bundle_order=X["index"],
+                        image_file=File(fh, name=X["file_name"]),
+                        image_hash=X["image_hash"],
+                    )
 
-        if count == n_tasks:
-            break
-        else:
-            sleep(1)
-
-    with transaction.atomic():
-        for X in results:
-            StagingImage.objects.create(
-                bundle=bundle_obj,
-                bundle_order=X["index"],
-                file_name=X["file_name"],
-                file_path=X["file_path"],
-                image_hash=X["image_hash"],
-            )
-
-        bundle_obj.has_page_images = True
-        bundle_obj.save()
+            bundle_obj.has_page_images = True
+            bundle_obj.save()
 
 
 @db_task(queue="tasks")
@@ -1033,7 +1034,7 @@ def huey_child_get_page_image(
 
     return {
         "index": index,
-        "file_name": f"page{index}.png",
+        "file_name": save_path.name,
         "file_path": str(save_path),
         "image_hash": image_hash,
     }
@@ -1049,7 +1050,7 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
         image_pk: primary key of the image
     """
     img = StagingImage.objects.get(pk=image_pk)
-    image_path = img.file_path
+    image_path = img.image_file.path
 
     scanner = ScanService()
 

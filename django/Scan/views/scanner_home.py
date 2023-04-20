@@ -141,15 +141,9 @@ class GetBundleView(ScannerRequiredView):
         # TODO: scanner users can only access their own bundles.
         # The manager should be able to access all the scanner users' bundles?
         bundle = scanner.get_bundle(timestamp, request.user)
-        file_name = f"{timestamp}.pdf"
-        file_path = pathlib.Path("media") / bundle.user.username / "bundles" / file_name
-        with open(file_path, "rb") as f:
-            uploaded_file = SimpleUploadedFile(
-                f"{bundle.slug}.pdf",
-                f.read(),
-                content_type="application/pdf",
-            )
-        return FileResponse(uploaded_file)
+        return FileResponse(
+            bundle.pdf_file, filename=f"{bundle.slug}.pdf", as_attachment=True
+        )
 
 
 class GetStagedBundleFragmentView(ScannerRequiredView):

@@ -356,6 +356,6 @@ class ManageScanService:
     def get_pushed_image(self, img_pk):
         try:
             img = Image.objects.get(pk=img_pk)
-            return img.file_name
+            return img
         except Image.DoesNotExist:
             return None

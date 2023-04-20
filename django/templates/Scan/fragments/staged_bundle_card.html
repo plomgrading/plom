@@ -119,7 +119,14 @@
 	      hx-post="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
 	      >Read QR</button>
       {% endif %}
-	{% endif %}
+      {% endif %}
+      <a 
+        class="btn btn-secondary"
+	target="_"
+	href="{% url 'scan_get_bundle' timestamp %}"
+        >
+        Download
+      </a>
       <a 
         class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}" 
 	hx-delete="{% url 'scan_get_staged_bundle_fragment' timestamp %}"
