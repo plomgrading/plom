@@ -72,11 +72,11 @@ class RubricService:
             key: (str) a sequence of ints representing
             rubric_data: (dict) data for a rubric submitted by a web request.
 
-        Exceptions:
-            ValueError: wrong "kind" or invalid rubric data
-
         Returns:
             Rubric: the modified rubric instance.
+
+        Exceptions:
+            ValueError: wrong "kind" or invalid rubric data
         """
 
         username = rubric_data.pop("username")
