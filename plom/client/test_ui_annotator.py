@@ -35,10 +35,34 @@ def test_annotr_open(qtbot):
     a = Annotator("some_user", MockMarker())
     a.show()
     qtbot.addWidget(a)
-    # path = qtbot.screenshot(a)
     # wait before closing: annotator has some buggy QTimer stuff...
     qtbot.wait(100)
     qtbot.wait(100)
+
+    # mash some buttons
+    for b in (
+        a.boxButton,
+        a.crossButton,
+        a.deleteButton,
+        a.lineButton,
+        a.moveButton,
+        a.panButton,
+        a.penButton,
+        a.textButton,
+        a.tickButton,
+        a.zoomButton,
+    ):
+        qtbot.mouseClick(b, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(a.undoButton, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(a.redoButton, Qt.MouseButton.LeftButton)
+
+    # narrow mode, then reopen with UI button
+    qtbot.keyClick(a, Qt.Key.Key_Home)
+    qtbot.mouseClick(a.wideButton, Qt.MouseButton.LeftButton)
+    qtbot.wait(10)
+    # path = qtbot.screenshot(a)
+    # assert False, path
+
     a.close()
     # clicking would do "next-paper": not prepared to test that yet
     # qtbot.mouseClick(a.finishedButton, Qt.MouseButton.LeftButton)
