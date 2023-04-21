@@ -130,7 +130,6 @@ class MgetDoneTasks(APIView):
             ],
             marks,
         )
-
         return Response(rows, status=status.HTTP_200_OK)
 
 

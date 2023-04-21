@@ -60,6 +60,7 @@ class PageDataService:
                     }
                 )
         # TODO - decide better order.
+        # Also - do not repeat mobile pages if can avoid it.
         for page in mobile_pages:
             image = page.image
             if image:
@@ -68,7 +69,7 @@ class PageDataService:
                         "id": image.pk,
                         "md5": image.hash,
                         "orientation": image.rotation,
-                        "server_path": image.file_name,
+                        "server_path": image.image_file.path,
                         "included": True,
                         # WARNING - HACKERY HERE
                         "order": len(page_list) + 1,
