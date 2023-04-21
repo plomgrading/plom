@@ -18,6 +18,8 @@ from Papers.models import Paper, Image
 from Mark.services import MarkingTaskService, PageDataService
 from Mark.models import AnnotationImage, MarkingTask
 
+import logging
+
 
 class QuestionMaxMark_how_to_get_data(APIView):
     """

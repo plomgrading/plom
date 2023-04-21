@@ -4,7 +4,17 @@
 
 from django.db import transaction
 
-from Papers.models import Paper, FixedPage, QuestionPage, Image, MobilePage
+from Papers.models import (
+    Paper,
+    FixedPage,
+    IDPage,
+    DNMPage,
+    QuestionPage,
+    Image,
+    MobilePage,
+)
+
+import logging
 
 
 class PageDataService:
@@ -80,14 +90,17 @@ class PageDataService:
         return page_list
 
     @transaction.atomic
-    def get_question_pages_metadata(self, paper, question):
+    def get_question_pages_metadata(
+        self, paper, question, *, include_idpage=False, include_dnmpages=True
+    ):
         """
-        Return a list of metadata for all pages in a
-        particular paper.
+        Return a list of metadata for all pages in a particular paper - excluding the ID page.
 
         Args:
             paper (int): test-paper number
             question (int): question number
+            include_idpage (bool): whether to include ID pages in this request (default = no)
+            include_dnpages (bool): whether to include any dnm pages in this request (default = yes)
 
         Returns:
             list, e.g. [
@@ -104,24 +117,52 @@ class PageDataService:
         """
 
         test_paper = Paper.objects.get(paper_number=paper)
-        # TODO: all pages in the test-paper, and included=true for the question
-        paper_pages = FixedPage.objects.filter(paper=test_paper)
-
         pages_metadata = []
-        for page in paper_pages:
-            if page.image:
-                pages_metadata.append(
-                    {
-                        "pagename": f"t{page.page_number}",
-                        "md5": page.image.hash,
-                        "included": type(page) == QuestionPage,
-                        "order": page.page_number,
-                        "id": page.image.pk,
-                        "orientation": page.image.rotation,
-                        "server_path": str(page.image.image_file.path),
-                    }
-                )
-                # TODO: handle extra + homework pages
+
+        # get all the fixed pages of the test that have images - prefetch the related image
+        fixed = FixedPage.objects.filter(
+            paper=test_paper, image__isnull=False
+        ).prefetch_related("image")
+
+        if not include_idpage:
+            fixed = fixed.not_instance_of(IDPage)
+        if not include_dnmpages:
+            fixed = fixed.not_instance_of(DNMPage)
+        for page in fixed:
+            dat = {
+                "pagename": f"t{page.page_number}",
+                "md5": page.image.hash,
+                "included": False,  # false by default, unless this is a question-page of the right question
+                "order": page.page_number,
+                "id": page.image.pk,
+                "orientation": page.image.rotation,
+                "server_path": str(page.image.image_file.path),
+            }
+            # update 'included' if it is a question page of the right question.
+            if isinstance(page, QuestionPage):
+                if page.question_number == question:
+                    dat["included"] = True
+            pages_metadata.append(dat)
+
+        # add mobile-pages in pk order (is creation order)
+        for page in (
+            MobilePage.objects.filter(paper=test_paper)
+            .order_by("pk")
+            .prefetch_related("image")
+        ):
+            pages_metadata.append(
+                {
+                    "pagename": f"t{page.question_number}",
+                    "md5": page.image.hash,
+                    "included": page.question_number == question,
+                    # WARNING - HACKERY HERE
+                    "order": len(pages_metadata) + 1,
+                    # WARNING HACKERY HERE
+                    "id": page.image.pk,
+                    "orientation": page.image.rotation,
+                    "server_path": str(page.image.image_file.path),
+                }
+            )
 
         return pages_metadata
 
