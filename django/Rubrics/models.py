@@ -7,7 +7,6 @@ import random
 
 from django.db import models
 from django.contrib.auth.models import User
-# from polymorphic.models import PolymorphicModel
 
 
 def generate_key():
@@ -39,31 +38,6 @@ class Rubric(models.Model):
     meta = models.TextField(null=True)  # can be long
     versions = models.JSONField(null=True, default=list)
     parameters = models.JSONField(null=True, default=list)
-
-
-# class RelativeRubric(Rubric):
-#     """
-#     A rubric that modifies the total score by an integer value.
-#     """
-
-#     kind = models.TextField(null=False)
-
-
-# class NeutralRubric(Rubric):
-#     """
-#     A rubric that include a comment but does not modify the total score.
-#     """
-
-#     kind = models.TextField(null=False)
-
-
-# class AbsoluteRurbic(Rubric):
-#     """
-#     A rubric that shows the maximum possible amount of score.
-#     E.g. "1 of 5"
-#     """
-
-#     kind = models.TextField(null=False)
 
 
 class RubricPane(models.Model):

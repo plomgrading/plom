@@ -7,6 +7,4 @@ from Rubrics.models import Rubric, RubricPane
 
 
 admin.site.register(Rubric)
-# admin.site.register(RelativeRubric)
-# admin.site.register(NeutralRubric)
 admin.site.register(RubricPane)

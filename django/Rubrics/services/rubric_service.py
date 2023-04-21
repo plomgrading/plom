@@ -59,25 +59,7 @@ class RubricService:
             serializer.save()
             rubric = serializer.instance
         else:
-            assert False, "We've got a problem creating rubric."
-
-        # if kind == "relative":
-        #     serializer = RelativeRubricSerializer(data=rubric_data)
-        #     serializer.is_valid()
-        #     serializer.save()
-        #     rubric = serializer.instance
-        # elif kind == "neutral":
-        #     serializer = NeutralRubricSerializer(data=rubric_data)
-        #     serializer.is_valid()
-        #     serializer.save()
-        #     rubric = serializer.instance
-        # elif kind == "absolute":
-        #     serializer = AbsoluteRubricSerializer(data=rubric_data)
-        #     serializer.is_valid()
-        #     serializer.save()
-        #     rubric = serializer.instance
-        # else:
-        #     assert False, "We've got a problem creating rubric."
+            raise ValidationError("We've got a problem creating rubric.")
 
         return rubric
 
@@ -112,70 +94,8 @@ class RubricService:
                 rubric_instance = serializer.instance
             except ObjectDoesNotExist:
                 raise ValidationError("No rubric exists.")
-            
-        # TODO: try to use Rubric.objects instead to optimize
-        # if kind == "relative":
-        #     if RelativeRubric.objects.filter(key=key).exists():
-        #         relative_rubric = RelativeRubric.objects.get(key=key)
-        #     elif NeutralRubric.objects.filter(key=key).exists():
-        #         rubric = NeutralRubric.objects.get(key=key)
-        #         neutral_rubric_key = rubric.key
-        #         rubric.delete()
-        #         relative_rubric = RelativeRubric.objects.create(key=neutral_rubric_key)
-        #     elif AbsoluteRurbic.objects.filter(key=key).exists():
-        #         rubric = AbsoluteRurbic.objects.get(key=key)
-        #         absolute_rubric_key = rubric.key
-        #         rubric.delete()
-        #         relative_rubric = RelativeRubric.objects.create(key=absolute_rubric_key)
-        #     else:
-        #         assert False, "No rubric object exists."
-        #     serializer = RelativeRubricSerializer(relative_rubric, data=rubric_data)
-        #     serializer.is_valid()
-        #     serializer.save()
-        #     rubric_instance = serializer.instance
-
-        # elif kind == "neutral":
-        #     if NeutralRubric.objects.filter(key=key).exists():
-        #         neutral_rubric = NeutralRubric.objects.get(key=key)
-        #     elif RelativeRubric.objects.filter(key=key).exists():
-        #         rubric = RelativeRubric.objects.get(key=key)
-        #         relative_rubric_key = rubric.key
-        #         rubric.delete()
-        #         neutral_rubric = NeutralRubric.objects.create(key=relative_rubric_key)
-        #     elif AbsoluteRurbic.objects.filter(key=key).exists():
-        #         rubric = AbsoluteRurbic.objects.get(key=key)
-        #         absolute_rubric_key = rubric.key
-        #         rubric.delete()
-        #         neutral_rubric = NeutralRubric.objects.create(key=absolute_rubric_key)
-        #     else:
-        #         assert False, "No rubric object exists."
-        #     serializer = NeutralRubricSerializer(neutral_rubric, data=rubric_data)
-        #     serializer.is_valid()
-        #     serializer.save()
-        #     rubric_instance = serializer.instance
-
-        # elif kind == "absolute":
-        #     if AbsoluteRurbic.objects.filter(key=key).exists():
-        #         absolute_rubric = AbsoluteRurbic.objects.get(key=key)
-        #     elif RelativeRubric.objects.filter(key=key).exists():
-        #         rubric = RelativeRubric.objects.get(key=key)
-        #         relative_rubric_key = rubric.key
-        #         rubric.delete()
-        #         absolute_rubric = AbsoluteRurbic.objects.create(key=relative_rubric_key)
-        #     elif NeutralRubric.objects.filter(key=key).exists():
-        #         rubric = NeutralRubric.objects.get(key=key)
-        #         neutral_rubric_key = rubric.key
-        #         rubric.delete()
-        #         absolute_rubric = AbsoluteRurbic.objects.create(key=neutral_rubric_key)
-        #     else:
-        #         assert False, "No rubric object exists."
-        #     serializer = AbsoluteRubricSerializer(absolute_rubric, data=rubric_data)
-        #     serializer.is_valid()
-        #     serializer.save()
-        #     rubric_instance = serializer.instance
-
         else:
-            assert False, "We've got a problem modifying rubric."
+            raise ValidationError("We've got a problem modifying rubric.")
 
         return rubric_instance
 
