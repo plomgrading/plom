@@ -169,6 +169,7 @@ class Annotator(QWidget):
 
         self.modeInformation = ["move"]
 
+        # unit tests might pass None to avoid mocking support code
         if initialData:
             self.load_new_question(*initialData)
             self.rubric_widget.setInitialRubrics()

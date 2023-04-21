@@ -905,6 +905,8 @@ class MarkerClient(QWidget):
         self.maxMark = -1  # temp value
         self.downloader = self.Qapp.downloader
         if self.downloader:
+            # for unit tests, we might mockup Qapp.downloader as None
+            # (Marker will not be functional without a downloader)
             self.downloader.download_finished.connect(self.background_download_finished)
             self.downloader.download_failed.connect(self.background_download_failed)
             self.downloader.download_queue_changed.connect(self.update_technical_stats)
