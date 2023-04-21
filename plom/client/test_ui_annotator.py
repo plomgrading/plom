@@ -63,7 +63,6 @@ def test_annotr_open(qtbot):
     # path = qtbot.screenshot(a)
     # assert False, path
 
-    a.close()
     # clicking would do "next-paper": not prepared to test that yet
     # qtbot.mouseClick(a.finishedButton, Qt.MouseButton.LeftButton)
     qtbot.keyClick(a, Qt.Key.Key_C, modifier=Qt.KeyboardModifier.ControlModifier)
