@@ -53,7 +53,7 @@ class RubricService:
         kind = rubric_data["kind"]
         kind_list = ["absolute", "neutral", "relative"]
 
-        if kind in kind_list:
+        if kind in kind_list and kind is not None:
             serializer = RubricSerializer(data=rubric_data)
             serializer.is_valid()
             serializer.save()
@@ -88,7 +88,7 @@ class RubricService:
         kind = rubric_data["kind"]
         kind_list = ["absolute", "neutral", "relative"]
 
-        if kind in kind_list:
+        if kind in kind_list and kind is not None:
             try:
                 rubric = Rubric.objects.get(key=key)
                 serializer = RubricSerializer(rubric, data=rubric_data)
