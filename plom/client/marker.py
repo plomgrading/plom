@@ -904,9 +904,10 @@ class MarkerClient(QWidget):
 
         self.maxMark = -1  # temp value
         self.downloader = self.Qapp.downloader
-        self.downloader.download_finished.connect(self.background_download_finished)
-        self.downloader.download_failed.connect(self.background_download_failed)
-        self.downloader.download_queue_changed.connect(self.update_technical_stats)
+        if self.downloader:
+            self.downloader.download_finished.connect(self.background_download_finished)
+            self.downloader.download_failed.connect(self.background_download_failed)
+            self.downloader.download_queue_changed.connect(self.update_technical_stats)
 
         self.examModel = (
             MarkerExamModel()

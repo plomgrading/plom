@@ -3,6 +3,7 @@
 
 from PyQt6.QtCore import Qt
 from plom.client.annotator import Annotator
+from plom.client.marker import MarkerClient
 
 
 class MockMarker:
@@ -66,3 +67,14 @@ def test_annotr_open(qtbot):
     # clicking would do "next-paper": not prepared to test that yet
     # qtbot.mouseClick(a.finishedButton, Qt.MouseButton.LeftButton)
     qtbot.keyClick(a, Qt.Key.Key_C, modifier=Qt.KeyboardModifier.ControlModifier)
+
+
+class MockQApp:
+    downloader = None
+
+
+def test_marker_open(qtbot):
+    w = MarkerClient(MockQApp())
+    # path = qtbot.screenshot(w)
+    # assert False, path
+    qtbot.mouseClick(w.closeButton, Qt.MouseButton.LeftButton)
