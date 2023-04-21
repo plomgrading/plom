@@ -59,7 +59,7 @@ class RubricService:
             serializer.save()
             rubric = serializer.instance
         else:
-            raise ValidationError("We've got a problem creating rubric.")
+            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
 
         return rubric
 
@@ -71,6 +71,9 @@ class RubricService:
         Args:
             key: (str) a sequence of ints representing
             rubric_data: (dict) data for a rubric submitted by a web request.
+
+        Exceptions:
+            ValueError: wrong "kind" or invalid rubric data
 
         Returns:
             Rubric: the modified rubric instance.
