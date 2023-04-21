@@ -91,7 +91,10 @@ class Command(BaseCommand):
         (
             pk,
             num_pages,
-            valid_pages,
+            unknown_pages,
+            known_pages,
+            extra_pages,
+            discard_pages,
             error_pages,
             qr_processed,
             pushed,
@@ -100,6 +103,9 @@ class Command(BaseCommand):
         self.stdout.write(
             f"Found bundle '{bundle_name}' (id {pk}) with {num_pages} pages uploaded by {username}"
         )
+
+        valid_pages = known_pages + extra_pages + discard_pages
+
         if isinstance(num_pages, str) and "progress" in num_pages:
             self.stdout.write(f"  * bundle still being split: {num_pages}")
             return
@@ -108,6 +114,9 @@ class Command(BaseCommand):
             return
         if qr_processed is not True:
             self.stdout.write("  * qr-codes not yet read")
+            return
+        if unknown_pages > 0:
+            self.stdout.write("  * unknown pages present, cannot push.")
             return
         if error_pages > 0:
             self.stdout.write("  * error pages present, cannot push.")

@@ -250,14 +250,6 @@ black:
   allow_failure: true
 
 
-# basic:
-#   stage: test
-#   needs: ["docker-image"]
-#   image: $IM
-#   script:
-#     - plom-init
-
-
 unittests:
   stage: test
   needs: ["docker-image"]
@@ -327,30 +319,6 @@ flake8:
 
 # TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
-  stage: test
-  needs: ["docker-image"]
-  image: $IM
-  script:
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd django
-    - python3 -m pip install coverage
-    - python3 -m pip install -r requirements.txt
-    - export PLOM_DATABASE_BACKEND=sqlite
-    - python3 manage.py makemigrations
-    - python3 manage.py migrate
-    - coverage run --source='.' manage.py test
-    - coverage report --precision=2
-    - coverage xml -o django_coverage.xml
-    - popd
-  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: django/django_coverage.xml
-
-webplom_demo:
   services:
     - postgres:12.2-alpine
   variables:
@@ -365,10 +333,20 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd django
+    - python3 -m pip install coverage
     - python3 -m pip install -r requirements.txt
     - export PLOM_USING_DOCKER=1
-    - python3 -m demo --test
+    - python3 -m demo --test --randomarker
+    - coverage run --source='.' manage.py test
+    - coverage report --precision=2
+    - coverage xml -o django_coverage.xml
     - popd
+  coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: django/django_coverage.xml
 
 
 demoserver:

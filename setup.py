@@ -114,8 +114,6 @@ setup(
             "plom-client=plom.client.__main__:main",
             "plom-demo=plom.demo.__main__:main",
             "plom-hwdemo=plom.scripts.hwdemo:main",
-            "plom-init=plom.scripts.plominit:main",
-            "plom-build=plom.scripts.build_stub:main",
             "plom-create=plom.create.__main__:main",
             "plom-server=plom.server.__main__:main",
             "plom-scan=plom.scan.__main__:main",

@@ -54,7 +54,7 @@ class PageDataService:
                         "id": image.pk,
                         "md5": image.hash,
                         "orientation": image.rotation,
-                        "server_path": image.file_name,
+                        "server_path": image.image_file.path,
                         "included": True,
                         "order": page.page_number,
                     }
@@ -117,7 +117,7 @@ class PageDataService:
                         "order": page.page_number,
                         "id": page.image.pk,
                         "orientation": page.image.rotation,
-                        "server_path": str(page.image.file_name),
+                        "server_path": str(page.image.image_file.path),
                     }
                 )
                 # TODO: handle extra + homework pages
@@ -135,4 +135,4 @@ class PageDataService:
         """
 
         image = Image.objects.get(pk=pk, hash=img_hash)
-        return image.file_name
+        return image.image_file.path

@@ -2,6 +2,9 @@
 # Copyright (C) 2023 Edith Coates
 
 from django.db import models
+from django.contrib.auth.models import User
+
+from Mark.models.tasks import MarkingTask
 
 
 class AnnotationImage(models.Model):
@@ -23,3 +26,5 @@ class Annotation(models.Model):
     image = models.OneToOneField(AnnotationImage, on_delete=models.CASCADE)
     annotation_data = models.JSONField(null=True)
     marking_time = models.PositiveIntegerField(null=True)
+    task = models.ForeignKey(MarkingTask, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)

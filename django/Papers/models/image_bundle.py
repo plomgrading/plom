@@ -32,17 +32,34 @@ class Image(models.Model):
     original_name (str): the name of the image-file when it was extracted
         from the bundle. Typically, this will be something like "foo-7.png",
         which also indicates that it was page-7 from the bundle foo.pdf"
-    file_name (Path): the path to where the image is stored by the server.
+    image_file (ImageField): the django-imagefield storing the image for the server.
         In the future this could be a url to some cloud storage.
     hash (str): the sha256 hash of the image.
     rotation (int): the angle to rotate the original image in order to give
         it the correct orientation.
     """
 
+    def _image_upload_path(self, filename):
+        """Given a image instance and a filename create a path to which
+        the associated file should be saved. We use this function to set
+        save-paths for pushed images rather than 'hand-coding' them
+        elsewhere.
+
+        Args:
+            self (Image): the Image model instance whose path is being created
+            filename (str): the name of the file to be saved at the created path.
+
+        Returns: (str): The string of the path to which the image file
+            will be saved (relative to the media directory, and including the
+            actual filename)
+        """
+
+        return f"pushed_images/{self.bundle.pk:05}/{filename}"
+
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    file_name = models.TextField(null=False)
+    image_file = models.ImageField(null=False, upload_to=_image_upload_path)
     hash = models.CharField(null=True, max_length=64)
     rotation = models.IntegerField(null=False, default=0)
 

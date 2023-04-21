@@ -3,10 +3,13 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 
+import pathlib
+import uuid
+
 from plom.tpv_utils import encodePaperPageVersion
 
 from django.db import transaction
-from django.conf import settings
+from django.core.files import File
 
 from Scan.models import (
     StagingImage,
@@ -56,43 +59,6 @@ class ImageBundleService:
             return self.create_bundle(name, hash)
         else:
             return self.get_bundle(hash)
-
-    def create_image(
-        self, bundle, bundle_order, original_name, file_name, hash, rotation
-    ):
-        """
-        Create an image.
-        """
-
-        if Image.objects.filter(hash=hash).exists():
-            raise RuntimeError("An image with that hash already exists.")
-        image = Image(
-            bundle=bundle,
-            bundle_order=bundle_order,
-            original_name=original_name,
-            file_name=file_name,
-            hash=hash,
-            rotation=rotation,
-        )
-        image.save()
-        return image
-
-    def get_page_image_path(self, test_paper, file_name, make_dirs=True):
-        """
-        Return a save path for a test-paper page image.
-        Also, create the necessary folders in the media directory
-        if they don't exist.
-        """
-        page_image_dir = settings.MEDIA_ROOT / "page_images"
-        test_papers_dir = page_image_dir / "test_papers"
-        paper_dir = test_papers_dir / str(test_paper)
-
-        if make_dirs:
-            page_image_dir.mkdir(exist_ok=True)
-            test_papers_dir.mkdir(exist_ok=True)
-            paper_dir.mkdir(exist_ok=True)
-
-        return str(paper_dir / file_name)
 
     def image_exists(self, hash):
         """
@@ -146,7 +112,11 @@ class ImageBundleService:
         4. Bulk-create images
         """
 
-        bundle_images = StagingImage.objects.filter(bundle=staged_bundle)
+        bundle_images = StagingImage.objects.filter(
+            bundle=staged_bundle
+        ).prefetch_related(
+            "knownstagingimage", "extrastagingimage", "discardstagingimage"
+        )
 
         # Staging has checked this - but we check again here to be very sure
         if not self.all_staged_imgs_valid(bundle_images):
@@ -169,17 +139,34 @@ class ImageBundleService:
 
         pi_service = PaperInfoService()
 
-        # TODO - needs to handle extra pages too.
+        def image_save_name(staged):
+            if staged.image_type == "known":
+                known = staged.knownstagingimage
+                prefix = f"known_{known.paper_number}_{known.page_number}_"
+            elif staged.image_type == "extra":
+                extra = staged.extrastagingimage
+                prefix = f"extra_{extra.paper_number}_"
+                for q in extra.question_list:
+                    prefix += f"{q}_"
+            elif staged.image_type == "discard":
+                prefix = "discard_"
+            else:
+                prefix = ""
+
+            suffix = pathlib.Path(staged.image_file.name).suffix
+            return prefix + str(uuid.uuid4()) + suffix
+
         for staged in bundle_images:
-            image = Image(
-                bundle=uploaded_bundle,
-                bundle_order=staged.bundle_order,
-                original_name=staged.file_name,
-                file_name=staged.file_path,
-                hash=staged.image_hash,
-                rotation=staged.rotation,
-            )
-            image.save()
+            with staged.image_file.open("rb") as fh:
+                image = Image(
+                    bundle=uploaded_bundle,
+                    bundle_order=staged.bundle_order,
+                    original_name=staged.image_file.name,
+                    image_file=File(fh, name=image_save_name(staged)),
+                    hash=staged.image_hash,
+                    rotation=staged.rotation,
+                )
+                image.save()
 
             if staged.image_type == "known":
                 known = staged.knownstagingimage

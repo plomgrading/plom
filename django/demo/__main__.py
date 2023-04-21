@@ -88,7 +88,7 @@ def remove_old_db_and_misc_user_files(engine):
     for path in Path("huey").glob("huey_db.*"):
         path.unlink(missing_ok=True)
 
-    for rmdir in ["sourceVersions", "papersToPrint", "media"]:
+    for rmdir in ["sourceVersions", "papersToPrint", "media", "fixtures"]:
         shutil.rmtree(rmdir, ignore_errors=True)
 
     Path("media").mkdir()
@@ -122,12 +122,33 @@ def make_groups_and_users():
     call_command("plom_create_demo_users")
 
 
+def save_fixture(filename):
+    """
+    Save a snapshot of the database as a JSON file to 'fixtures/filename.json'
+    """
+
+    fixtures_dir = settings.BASE_DIR / "fixtures"
+    fixtures_dir.mkdir(exist_ok=True)
+
+    print(f"Saving database snapshot to {filename}...")
+
+    call_command(
+        "dumpdata",
+        "--exclude=Authentication",
+        "--natural-foreign",
+        f"-o{fixtures_dir / filename}",
+    )
+
+
 def prepare_assessment():
     print("Prepare assessment: ")
     print(
         "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
     )
     call_command("plom_demo_spec")
+
+    save_fixture("spec_created.json")
+
     call_command(
         "plom_preparation_test_source",
         "upload",
@@ -147,6 +168,8 @@ def prepare_assessment():
         "useful_files_for_testing/cl_for_demo.csv",
     )
     call_command("plom_preparation_qvmap", "generate")
+
+    save_fixture("test_prepared.json")
 
 
 def launch_huey_workers():
@@ -170,6 +193,9 @@ def launch_server():
 def build_db_and_papers():
     print("Populating database in background")
     call_command("plom_papers", "build_db")
+
+    save_fixture("papers_db_populated.json")
+
     call_command("plom_preparation_extrapage", "build")
     call_command("plom_build_papers", "--start-all")
 
@@ -198,6 +224,7 @@ def wait_for_papers_to_be_ready():
             sleep(1)
         else:
             print("Extra page and papers all built - continuing to next step of demo.")
+            save_fixture("papers_built.json")
             break
 
 
@@ -244,6 +271,8 @@ def wait_for_upload(number_of_bundles=3, homework_bundles={}):
                 print(out)
             sleep(0.5)
 
+    save_fixture("bundles_uploaded.json")
+
 
 def read_qr_codes(number_of_bundles=3):
     for n in range(1, number_of_bundles + 1):
@@ -286,32 +315,47 @@ def wait_for_qr_read(number_of_bundles=3):
                 print(f"fake_bundle{n}.pdf has been read")
                 break
 
+    save_fixture("qr_codes_read.json")
 
-def push_if_ready(number_of_bundles=3):
-    todo = [k + 1 for k in range(number_of_bundles)]
+
+def push_if_ready(number_of_bundles=3, homework_bundles={}, attempts=15):
+    print(
+        "Try to push all bundles - some will fail since they are not yet ready, or contain unknowns/errors etc"
+    )
+    todo = [f"fake_bundle{k+1}" for k in range(number_of_bundles)]
+    for n in homework_bundles:
+        todo.append(f"fake_hw_bundle_{n}")
+
     while True:
         done = []
-        for n in todo:
-            cmd = f"plom_staging_bundles status fake_bundle{n}"
+        for bundle in todo:
+            cmd = f"plom_staging_bundles status {bundle}"
             py_man_cmd = f"python3 manage.py {cmd}"
             out_stat = subprocess.check_output(
                 split(py_man_cmd), stderr=subprocess.STDOUT
             ).decode("utf-8")
             if "perfect" in out_stat:
-                push_cmd = f"python3 manage.py plom_staging_bundles push fake_bundle{n}"
+                push_cmd = f"python3 manage.py plom_staging_bundles push {bundle}"
                 subprocess.check_call(split(push_cmd))
-                done.append(n)
+                done.append(bundle)
                 sleep(1)
-        for n in done:
-            todo.remove(n)
-        if len(todo) > 0:
+            elif "cannot push" in out_stat:
+                print(f"Cannot push {bundle} because it contains unknowns or errors")
+                done.append(bundle)
+
+        for bundle in done:
+            todo.remove(bundle)
+        if len(todo) > 0 and attempts > 0:
             print(
-                f"Still waiting for {len(todo)} bundles to process - sleep between attempts"
+                f"Still waiting for bundles {todo} to process - sleep between attempts"
             )
+            attempts -= 1
             sleep(1)
         else:
             print("All bundles pushed.")
             break
+
+    save_fixture("pushed_bundles.json")
 
 
 def wait_for_exit():
@@ -382,6 +426,14 @@ def get_parser():
             the server.
             This is currently the default and should be ready for
             grading with the client.
+        """,
+    )
+    parser.add_argument(
+        "--randomarker",
+        action="store_true",
+        help="""
+            Randomly marker and ID papers, for testing purposes.
+            Off by default.
         """,
     )
 
@@ -495,17 +547,26 @@ def _doit(args):
     if args.readqr:
         return (huey_worker_proc, server_proc)
 
-    # print("*" * 40)
-    # push_if_ready()
-    call_command("plom_staging_bundles", "status")
-    call_command("plom_staging_bundles", "push", "fake_bundle2")
-    call_command("plom_staging_bundles", "push", "fake_hw_bundle_62")
+    print("*" * 40)
+    push_if_ready(
+        number_of_bundles=number_of_bundles, homework_bundles=homework_bundles
+    )
+    # call_command("plom_staging_bundles", "status")
+    # call_command("plom_staging_bundles", "push", "fake_bundle2")
+    # call_command("plom_staging_bundles", "push", "fake_hw_bundle_62")
 
     call_command("plom_rubrics", "init")
     call_command("plom_rubrics", "push", "--demo")
 
     # if args.push:
     #     return
+
+    if args.randomarker:
+        # TODO: hardcoded port number!
+        cmd = "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker1 -w demoMarker1"
+        print(f"RandoMarking!  calling: {cmd}")
+        subprocess.check_call(split(cmd), env=dict(os.environ, WEBPLOM="1"))
+
     return (huey_worker_proc, server_proc)
 
 

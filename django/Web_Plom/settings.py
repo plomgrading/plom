@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
+import logging
 import os
 from pathlib import Path
 
@@ -227,6 +228,9 @@ REST_FRAMEWORK = {
 # Media and user-uploaded files
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Test fixtures directory
+FIXTURE_DIRS = [BASE_DIR / "fixtures"]
+
 # Configurable variables for Web Plom
 # ----------------------------------------------
 
@@ -235,3 +239,33 @@ MAX_BUNDLE_SIZE = 1e9
 
 # Max file size for a single file upload (1 MB for now)
 # MAX_FILE_SIZE = 1e6
+
+
+LOGGING = {
+    "version": 1,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {},
+}
+
+# When hunting down n-plus-1 query problems make use of the nplusone package
+# https://github.com/jmcarp/nplusone
+
+hunting_n_plus_one = False
+
+if hunting_n_plus_one:
+    INSTALLED_APPS.append("nplusone.ext.django")
+    MIDDLEWARE.append("nplusone.ext.django.NPlusOneMiddleware")
+    LOGGING["loggers"].update(
+        {
+            "nplusone": {
+                "handlers": ["console"],
+                "level": "WARN",
+            }
+        }
+    )
+    NPLUSONE_LOGGER = logging.getLogger("nplusone")
+    NPLUSONE_LOG_LEVEL = logging.WARN

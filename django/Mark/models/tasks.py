@@ -5,7 +5,6 @@ from django.db import models
 
 from Base.models import BaseTask, BaseAction
 from Papers.models import Paper
-from Mark.models import Annotation
 
 
 class MarkingTask(BaseTask):
@@ -22,28 +21,3 @@ class MarkingTask(BaseTask):
     code = models.TextField(default="", unique=True)
     question_number = models.PositiveIntegerField(null=False, default=0)
     question_version = models.PositiveIntegerField(null=False, default=0)
-
-
-class ClaimMarkingTask(BaseAction):
-    """
-    Represents a marker client claiming a marking task.
-    """
-
-    pass
-
-
-class SurrenderMarkingTask(BaseAction):
-    """
-    Represents a marker client surrendering a marking task.
-    """
-
-    pass
-
-
-class MarkAction(BaseAction):
-    """
-    Represents a marker client submitting an annotation and a mark.
-    """
-
-    claim_action = models.ForeignKey(ClaimMarkingTask, on_delete=models.CASCADE)
-    annotation = models.OneToOneField(Annotation, null=True, on_delete=models.SET_NULL)

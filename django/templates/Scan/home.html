@@ -11,21 +11,32 @@
 {% block main_content %}
 <div class="d-grid gap-2">
     <div class="card w-50">
-        <div class="card-body" style="height: 182.5px">
-            <h5>Pushed Summary:</h5>
+        <div class="card-body">
+            <h5>Summary of pushed papers:</h5>
             <div class="row">
                 <div class="col">
-                    <p style="color: green;">{{ completed_test_papers }} / {{ total_completed_test_papers }} completed test papers</p>
-                    <p>? / 30 un-use test papers</p>
-                    <a class="btn" style="background-color: #0F984F; color: white;" href="{% url 'scan_summary' %}">View Details</a>
-                    {% comment %} un-use for when I don't see any paper {% endcomment %}
-                    {% comment %} incomplete for missing paper {% endcomment %}
-                    {% comment %} complete is when done {% endcomment %}
+                  <p class="text-success">{{ complete_test_papers }} / {{ total_papers }} complete test papers</p>
+		</div>
+                <div class="col">
+                    <p class="text-secondary">{{ unused_test_papers }} / {{ total_papers }} unused test papers</p>
                 </div>
                 <div class="col">
-                    <p style="color: red;">? / 30 incomplete test papers</p>
+		  {% if incomplete_test_papers == 0 %}
+		  <p class="text-success"> all used papers complete </p>
+		  {% else %}
+                  <p class="text-danger">
+		    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+		    {{incomplete_test_papers}} incomplete test paper(s)
+		    <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+		  </p>
+		  {% endif %}		  
                 </div>
             </div>
+	    <div class="row">
+                <div class="col">
+                  <a class="btn btn-success" href="{% url 'scan_summary' %}">View Details</a>
+                </div>
+	    </div>
         </div>
     </div>
     <div class="card w-50">
@@ -54,9 +65,9 @@
     <br>
     <div>
         <div class="row" style="margin-right: 0.1px;">
-            <div class="col border">
+            <div class="col-4 border">
                 <div>
-                    <h5>Staged Bundles</h5>
+                    <h5>{{ staged_bundles|length}} Staged Bundles</h5>
                     <div class="d-grid gap-2">
                         {% if staged_bundles %}
                         {% for bundle in staged_bundles %}			
@@ -72,12 +83,13 @@
                     </div>
                 </div>
             </div>
-            <div class="col">
+            <div class="col-4 border">
                 <div>
-                    <h5>Pushed Bundles</h5>
-                    {% if pushed_bundles %}
-                    {% for bundle in pushed_bundles %}
-                    <div class="card" style="min-width: fit-content; max-width: 50%">
+                  <h5>{{ pushed_bundles|length }} Pushed Bundles</h5>
+                  {% if pushed_bundles %}
+                  <div class="d-grid gap-2">
+                  {% for bundle in pushed_bundles %}
+		    <div class="card" style="min-width: fit-content; max-width: 90%; height:100%;">
                       <div class="card-body d-flex flex-row p-0">
                         <img 
                           src="{% url 'scan_get_image' bundle.timestamp 0 %}"
@@ -96,18 +108,26 @@
                             >
                             View
                           </a>
+			  <a 
+			    class="btn btn-secondary"
+			    target="_"
+			    href="{% url 'scan_get_bundle' bundle.timestamp %}"
+			    >
+			    Download
+			  </a>
                         </div>
                       </div>
                     </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="d-grid gap-2">
-                      <h6>No bundles pushed yet.</h6>
-                    </div>
-                    {% endif %}
+                  {% endfor %}
+		  </div>
+                  {% else %}
+                  <div class="d-grid gap-2">
+                    <h6>No bundles pushed yet.</h6>
+                  </div>
+                  {% endif %}
                 </div>
             </div>
         </div>
     </div>
-{% endblock %}
+    {% endblock %}
 

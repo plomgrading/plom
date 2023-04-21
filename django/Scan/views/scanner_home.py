@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import pathlib
 from datetime import datetime
@@ -34,24 +35,16 @@ class ScannerHomeView(ScannerRequiredView):
         mss = ManageScanService()
 
         total_papers = mss.get_total_test_papers()
-        completed_papers = mss.get_completed_test_papers()
-        percent_papers_complete = completed_papers / total_papers * 100
-
-        total_pages = mss.get_total_pages()
-        scanned_pages = mss.get_scanned_pages()
-        percent_pages_complete = scanned_pages / total_pages * 100
-
-        all_test_papers = mss.get_test_paper_list()
+        complete_papers = mss.get_number_completed_test_papers()
+        incomplete_papers = mss.get_number_incomplete_test_papers()
+        unused_papers = mss.get_number_unused_test_papers()
 
         context.update(
             {
-                "completed_test_papers": completed_papers,
-                "total_completed_test_papers": total_papers,
-                "percent_papers_completed": int(percent_papers_complete),
-                "completed_pages": scanned_pages,
-                "total_completed_pages": total_pages,
-                "percent_pages_completed": int(percent_pages_complete),
-                "all_test_papers": all_test_papers,
+                "complete_test_papers": complete_papers,
+                "incomplete_test_papers": incomplete_papers,
+                "unused_test_papers": unused_papers,
+                "total_papers": total_papers,
                 "form": BundleUploadForm(),
                 "bundle_splitting": False,
             }
@@ -88,15 +81,6 @@ class ScannerHomeView(ScannerRequiredView):
 
     def get(self, request):
         context = self.build_context(request.user)
-
-        # if a pdf-to-image task is fully complete, perform some cleanup
-        # if context["bundle_splitting"]:
-        #     scanner = ScanService()
-        #     bundle = scanner.get_bundle(context["timestamp"], request.user)
-        #     n_completed = scanner.get_n_completed_page_rendering_tasks(bundle)
-        #     n_total = scanner.get_n_page_rendering_tasks(bundle)
-        #     if n_completed == n_total:
-        #         scanner.page_splitting_cleanup(bundle)
 
         return render(request, "Scan/home.html", context)
 
@@ -157,15 +141,9 @@ class GetBundleView(ScannerRequiredView):
         # TODO: scanner users can only access their own bundles.
         # The manager should be able to access all the scanner users' bundles?
         bundle = scanner.get_bundle(timestamp, request.user)
-        file_name = f"{timestamp}.pdf"
-        file_path = pathlib.Path("media") / bundle.user.username / "bundles" / file_name
-        with open(file_path, "rb") as f:
-            uploaded_file = SimpleUploadedFile(
-                f"{bundle.slug}.pdf",
-                f.read(),
-                content_type="application/pdf",
-            )
-        return FileResponse(uploaded_file)
+        return FileResponse(
+            bundle.pdf_file, filename=f"{bundle.slug}.pdf", as_attachment=True
+        )
 
 
 class GetStagedBundleFragmentView(ScannerRequiredView):

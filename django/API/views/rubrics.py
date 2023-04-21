@@ -38,9 +38,7 @@ class McreateRubric(APIView):
             rubric = rs.create_rubric(request.data["rubric"])
             return Response(rubric.key, status=status.HTTP_200_OK)
         except (ValidationError, NotImplementedError):
-            raise APIException(
-                detail="Invalid rubric", code=status.HTTP_406_NOT_ACCEPTABLE
-            )
+            return Response("Invalid rubric", status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class MmodifyRubric(APIView):
@@ -50,6 +48,6 @@ class MmodifyRubric(APIView):
             rubric = rs.modify_rubric(key, request.data["rubric"])
             return Response(rubric.key, status=status.HTTP_200_OK)
         except (ValidationError, NotImplementedError):
-            raise APIException(
-                detail="Invalid rubric data", code=status.HTTP_406_NOT_ACCEPTABLE
+            return Response(
+                "Invalid rubric data", status=status.HTTP_406_NOT_ACCEPTABLE
             )

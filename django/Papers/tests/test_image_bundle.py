@@ -6,6 +6,8 @@ from django.test import TestCase
 from django.conf import settings
 from model_bakery import baker
 
+from django.contrib.auth.models import User
+
 from Papers.services import ImageBundleService
 from Papers.models import (
     Bundle,
@@ -30,19 +32,22 @@ class ImageBundleTests(TestCase):
         self.spec = baker.make(
             Specification, spec_dict={"question": {"1": {"pages": [1]}}}
         )
+        self.user = baker.make(User, username="testScanner")
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
         # make a staged bundle with one known image.
-        self.staged_bundle = baker.make(StagingBundle, pdf_hash="abcde")
+        self.staged_bundle = baker.make(StagingBundle, pdf_hash="abcde", user=self.user)
         self.staged_image = baker.make(
             StagingImage,
             bundle=self.staged_bundle,
             bundle_order=1,
-            file_name="page2.png",
+            # image_file="page2.png",
             image_hash="abcdef",
             rotation=90,
             image_type="known",
+            _create_files=True,  # argument to tell baker to actually make the file
         )
+
         # supply p,p,v to this since we will need to cast it to a short-tpv code
         # and we don't (yet) fix maximum size of p,p,v in our models
         self.staged_known = baker.make(
@@ -75,23 +80,6 @@ class ImageBundleTests(TestCase):
         n_bundles = len(Bundle.objects.all())
         self.assertEqual(n_bundles, 1)
 
-    def test_get_path(self):
-        """
-        Test ImageBundleService.get_page_image_path()
-        """
-
-        ibs = ImageBundleService()
-        image_path = ibs.get_page_image_path(1, "page1.png", False)
-        gold_path = (
-            settings.BASE_DIR
-            / "media"
-            / "page_images"
-            / "test_papers"
-            / "1"
-            / "page1.png"
-        )
-        self.assertEqual(str(gold_path), image_path)
-
     def test_all_staged_imgs_valid(self):
         """
         Test ImageBundleService.all_staged_imgs_valid().
@@ -109,7 +97,11 @@ class ImageBundleTests(TestCase):
         for paper_num in range(2):
             for page_num in range(5):
                 X = baker.make(
-                    StagingImage, parsed_qr={"NW": "Not empty!"}, image_type="known"
+                    StagingImage,
+                    parsed_qr={"NW": "Not empty!"},
+                    image_type="known",
+                    bundle=self.staged_bundle,
+                    _create_files=True,
                 )
                 baker.make(
                     KnownStagingImage,
@@ -120,7 +112,12 @@ class ImageBundleTests(TestCase):
         imgs = StagingImage.objects.all()
         self.assertTrue(ibs.all_staged_imgs_valid(imgs))
         # add in an unread page
-        baker.make(StagingImage, image_type="unread")
+        baker.make(
+            StagingImage,
+            image_type="unread",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         imgs = StagingImage.objects.all()
         self.assertFalse(ibs.all_staged_imgs_valid(imgs))
 
@@ -134,7 +131,12 @@ class ImageBundleTests(TestCase):
         res = ibs.find_internal_collisions(imgs)
         self.assertEqual(res, [])
 
-        img1 = baker.make(StagingImage, image_type="known")
+        img1 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(
             KnownStagingImage,
             staging_image=img1,
@@ -146,7 +148,12 @@ class ImageBundleTests(TestCase):
         self.assertEqual(res, [])
 
         # Add one collision
-        img2 = baker.make(StagingImage, image_type="known")
+        img2 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(
             KnownStagingImage,
             staging_image=img2,
@@ -159,7 +166,12 @@ class ImageBundleTests(TestCase):
         self.assertEqual(res, [[img1.pk, img2.pk]])
 
         # Add more collisions
-        img3 = baker.make(StagingImage, image_type="known")
+        img3 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(
             KnownStagingImage,
             staging_image=img3,
@@ -168,7 +180,12 @@ class ImageBundleTests(TestCase):
             version=1,
         )
 
-        img4 = baker.make(StagingImage, image_type="known")
+        img4 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(
             KnownStagingImage,
             staging_image=img4,
@@ -177,7 +194,12 @@ class ImageBundleTests(TestCase):
             version=1,
         )
 
-        img5 = baker.make(StagingImage, image_type="known")
+        img5 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(
             KnownStagingImage,
             staging_image=img5,
@@ -186,7 +208,12 @@ class ImageBundleTests(TestCase):
             version=1,
         )
 
-        img6 = baker.make(StagingImage, image_type="known")
+        img6 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(
             KnownStagingImage,
             staging_image=img6,
@@ -219,13 +246,28 @@ class ImageBundleTests(TestCase):
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
 
-        img1 = baker.make(StagingImage, image_type="known")
+        img1 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(KnownStagingImage, staging_image=img1, paper_number=2, page_number=1)
 
-        img2 = baker.make(StagingImage, image_type="known")
+        img2 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(KnownStagingImage, staging_image=img2, paper_number=2, page_number=2)
 
-        img3 = baker.make(StagingImage, image_type="known")
+        img3 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(KnownStagingImage, staging_image=img3, paper_number=2, page_number=3)
 
         img4 = baker.make(Image)
@@ -239,7 +281,12 @@ class ImageBundleTests(TestCase):
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
 
-        st_img6 = baker.make(StagingImage, image_type="known")
+        st_img6 = baker.make(
+            StagingImage,
+            image_type="known",
+            bundle=self.staged_bundle,
+            _create_files=True,
+        )
         baker.make(
             KnownStagingImage, staging_image=st_img6, paper_number=3, page_number=1
         )
@@ -254,7 +301,7 @@ class ImageBundleTests(TestCase):
         staged bundle.
         """
 
-        bundle = baker.make(StagingBundle, pdf_hash="abcdef")
+        bundle = baker.make(StagingBundle, pdf_hash="abcdef", user=self.user)
         baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
         paper2 = baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
@@ -267,6 +314,7 @@ class ImageBundleTests(TestCase):
             parsed_qr={"NW": "abcde"},
             image_hash="ghijk",
             image_type="known",
+            _create_files=True,
         )
         baker.make(
             KnownStagingImage,
@@ -280,6 +328,7 @@ class ImageBundleTests(TestCase):
             bundle=bundle,
             parsed_qr={"NW": "abcde"},
             image_type="known",
+            _create_files=True,
         )
         baker.make(
             KnownStagingImage,

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -143,7 +144,7 @@ class IDgetImage(APIView):
                 code=status.HTTP_404_NOT_FOUND,
             )
 
-        img_path = id_img.file_name
+        img_path = id_img.image_file.path
         with open(img_path, "rb") as f:
             image = SimpleUploadedFile(
                 f"{paper_id}_id.png",
