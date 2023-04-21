@@ -35,7 +35,7 @@ client_install_requires = [
     "packaging",
     "passlib",
     "Pillow>=7.0.0",
-    "PyQt6",
+    "PyQt6>=6.2.0",
     "requests",
     "requests-toolbelt",
     "stdiomask>=0.0.6",
