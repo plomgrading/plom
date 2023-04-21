@@ -26,7 +26,7 @@ By default, this will launch the demo server.
 
 .. TODO
    document the demo?
-   also: fix references to plom-build -> plom-create
+
 
 The data for the test is in `/exam` inside the Docker image.  You can use your
 own local directory with `-v`::
@@ -38,7 +38,7 @@ own local directory with `-v`::
 
 You can override the default command, for example::
 
-    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-build new --demo
+    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-create new --demo
     docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-server init
     docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-server users --demo
     docker run -it --rm -P -v $PWD/my_test:/exam plomgrading/server plom-server launch
@@ -46,7 +46,7 @@ You can override the default command, for example::
 Alternatively you can get a shell and work inside the image::
 
     docker run -it --rm plomgrading/server /bin/bash
-    plom-build new --demo
+    plom-create new --demo
 
 
 You can also connect a shell to a *running image* using `exec`::
