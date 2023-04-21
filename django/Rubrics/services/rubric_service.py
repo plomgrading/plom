@@ -98,7 +98,7 @@ class RubricService:
             except ObjectDoesNotExist:
                 raise ValidationError("No rubric exists.")
         else:
-            raise ValidationError("We've got a problem modifying rubric.")
+            raise ValidationError(f"Cannot modify rubric of kind '{kind}'.")
 
         return rubric_instance
 
