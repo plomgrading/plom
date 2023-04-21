@@ -41,7 +41,6 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         ndelta = delta / el
         northog = QPointF(-ndelta.y(), ndelta.x())
         arBase = ptf - 16 * ndelta
-        # arTip = ptf + 8 * ndelta
         arLeft = arBase - 10 * northog - 4 * ndelta
         arRight = arBase + 10 * northog - 4 * ndelta
         self.ari = QPainterPath()
@@ -62,7 +61,6 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         ndelta = delta / el
         northog = QPointF(-ndelta.y(), ndelta.x())
         arBase = ptf - 16 * ndelta
-        # arTip = ptf + 8 * ndelta
         arLeft = arBase - 10 * northog - 4 * ndelta
         arRight = arBase + 10 * northog - 4 * ndelta
         self.arf = QPainterPath()
