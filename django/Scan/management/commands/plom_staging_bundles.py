@@ -25,6 +25,7 @@ class Command(BaseCommand):
         python3 manage.py plom_staging_bundles status
         python3 manage.py plom_staging_bundles read_qr (bundle name) <- can get it from status
         python3 manage.py plom_staging_bundles push (bundle name) <- can get it from status
+        python3 manage.py plom_staging_bundles pages bundle name
     """
 
     help = "Upload bundle pdf files to staging area"
@@ -158,6 +159,34 @@ class Command(BaseCommand):
         except ValueError as err:
             raise CommandError(err)
 
+    def show_bundle_pages(self, bundle_name):
+        scanner = ScanService()
+        bundle_page_dict = scanner.get_bundle_pages_info_cmd(bundle_name)
+        bundle_page_list = [["order", "status", "info", "rotation"]]
+        for ord, page in bundle_page_dict.items():
+            dat = [page["order"], page["status"]]
+            if page["status"] == "unknown":
+                dat.append(" - ")
+            elif page["status"] == "known":
+                dat.append(
+                    f"{page['info']['paper_number']} - p{page['info']['page_number']} - v{page['info']['version']}"
+                )
+            elif page["status"] == "extra":
+                if page["info"]["paper_number"] and page["info"]["question_list"]:
+                    dat.append(
+                        f"{page['info']['paper_number']} - q{page['info']['question_list']}"
+                    )
+                else:
+                    dat.append("extra page without data")
+            elif page["status"] in ["error", "discard"]:
+                dat.append(page["info"]["reason"])
+            dat.append(page["rotation"])
+            bundle_page_list.append(dat)
+
+        self.stdout.write(
+            tabulate(bundle_page_list, headers="firstrow", tablefmt="simple_outline")
+        )
+
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
             dest="command",
@@ -235,6 +264,13 @@ class Command(BaseCommand):
                 the page to all questions (this is also the default).
             """,
         )
+        # pages
+        sp_page = sp.add_parser("pages", help="Show the pages within the given bundle.")
+        sp_page.add_argument(
+            "bundle_name",
+            type=str,
+            help="get status of pages within this bundle",
+        )
 
     def handle(self, *args, **options):
         if options["command"] == "upload":
@@ -251,6 +287,8 @@ class Command(BaseCommand):
             self.push_staged_bundle(bundle_name=options["bundle_name"])
         elif options["command"] == "read_qr":
             self.read_bundle_qr(bundle_name=options["bundle_name"])
+        elif options["command"] == "pages":
+            self.show_bundle_pages(bundle_name=options["bundle_name"])
         elif options["command"] == "map_extra":
             service = ScanService()
             n_questions = SpecificationService().get_n_questions()
