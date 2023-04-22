@@ -26,6 +26,8 @@ from Rubrics.models import RubricPane
 
 log = logging.getLogger("RubricServer")
 
+valid_kinds = ("absolute", "neutral", "relative")
+
 
 class RubricService:
     """
@@ -51,15 +53,14 @@ class RubricService:
         rubric_data["user"] = user.pk
 
         kind = rubric_data["kind"]
-        kind_list = ["absolute", "neutral", "relative"]
 
-        if kind in kind_list and kind is not None:
-            serializer = RubricSerializer(data=rubric_data)
-            serializer.is_valid()
-            serializer.save()
-            rubric = serializer.instance
-        else:
+        if kind not in valid_kinds:
             raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
+
+        serializer = RubricSerializer(data=rubric_data)
+        serializer.is_valid()
+        serializer.save()
+        rubric = serializer.instance
 
         return rubric
 
@@ -86,19 +87,18 @@ class RubricService:
         rubric_data["user"] = user.pk
 
         kind = rubric_data["kind"]
-        kind_list = ["absolute", "neutral", "relative"]
 
-        if kind in kind_list and kind is not None:
-            try:
-                rubric = Rubric.objects.get(key=key)
-                serializer = RubricSerializer(rubric, data=rubric_data)
-                serializer.is_valid()
-                serializer.save()
-                rubric_instance = serializer.instance
-            except ObjectDoesNotExist:
-                raise ValidationError("No rubric exists.")
-        else:
-            raise ValidationError(f"Cannot modify rubric of kind '{kind}'.")
+        if kind not in valid_kinds:
+            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
+
+        try:
+            rubric = Rubric.objects.get(key=key)
+            serializer = RubricSerializer(rubric, data=rubric_data)
+            serializer.is_valid()
+            serializer.save()
+            rubric_instance = serializer.instance
+        except ObjectDoesNotExist:
+            raise ValidationError("No rubric exists.")
 
         return rubric_instance
 
