@@ -10,6 +10,17 @@ from Rubrics.models import Rubric
 from Rubrics.services import RubricService
 
 
+# helper function: extract a rubric dict from Rubric model
+def _rubric_to_dict(x):
+    # convert to dict and discard hidden underscore fields
+    d = {k: v for k, v in x.__dict__.items() if not k.startswith("_")}
+    d.pop("user_id")
+    # overwrite id with key: client uses "id" not "key"
+    d.pop("id")
+    d["id"] = d.pop("key")
+    return d
+
+
 class RubricServiceTests(TestCase):
     """
     Tests for Rubric.service.RubricService()
@@ -64,21 +75,6 @@ class RubricServiceTests(TestCase):
             parameters=[],
         )
 
-        self.modified_relative_rubric = baker.make(
-            Rubric,
-            kind="relative",
-            display_delta="+2",
-            value=2,
-            out_of=0,
-            text="qwert",
-            question=1,
-            user=user1,
-            tags="",
-            meta="asdfg",
-            versions=[],
-            parameters=[],
-        )
-
         self.absolute_rubric = baker.make(
             Rubric,
             kind="absolute",
@@ -93,22 +89,6 @@ class RubricServiceTests(TestCase):
             versions=[],
             parameters=[],
         )
-
-        # self.neutral_to_relative_rubric = baker.make(
-        #     Rubric,
-        #     key=self.modified_neutral_rubric.key,
-        #     kind="relative",
-        #     display_delta="+2",
-        #     user=user1,
-        # )
-
-        # self.relative_to_neutral_rubric = baker.make(
-        #     Rubric,
-        #     key=self.modified_relative_rubric.key,
-        #     kind="neutral",
-        #     display_delta=".",
-        #     user=user2,
-        # )
 
         return super().setUp()
 
@@ -229,82 +209,51 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.kind, self.modified_neutral_rubric.kind)
         self.assertEqual(r.display_delta, self.modified_neutral_rubric.display_delta)
 
-    def test_modify_relative_rubric(self):
+    def test_modify_rubric_change_kind(self):
         """
-        Test RubricService.modify_rubric() to modify a relative rubric
+        Test RubricService.modify_rubric(), can change the "kind" of rubrics.
+
+        For each of the three kinds of rubric, we ensure we can change them
+        into the other three kinds.  The key should not change.
         """
-        key = self.modified_relative_rubric.key
-        simulated_client_data = {
-            "id": key,
-            "kind": "relative",
-            "display_delta": "+2",
-            "value": 2,
-            "out_of": 0,
-            "text": "qwert",
-            "tags": "",
-            "meta": "asdfg",
-            "username": "Liam",
-            "question": 1,
-            "versions": [],
-            "parameters": [],
-        }
-        r = RubricService().modify_rubric(key, simulated_client_data)
+        user = baker.make(User)
+        username = str(user)  # probably not the proper way to extract the username?
 
-        self.assertEqual(r.key, self.modified_relative_rubric.key)
-        self.assertEqual(r.kind, self.modified_relative_rubric.kind)
-        self.assertEqual(r.display_delta, self.modified_relative_rubric.display_delta)
+        for kind in ("absolute", "relative", "neutral"):
+            # TODO: why doesn't baker add text?
+            rubric = baker.make(Rubric, user=user, text="qwert", kind=kind)
+            key = rubric.key
+            d = _rubric_to_dict(rubric)
 
-    # def test_modify_neutral_to_relative_rubric(self):
-    #     """
-    #     Test RubricService.modify_rubric() to modify a neutral rubric
-    #     to a relative rubric
-    #     """
-    #     key = self.neutral_rubric.key
-    #     simulated_client_data = {
-    #         "id": key,
-    #         "kind": "relative",
-    #         "display_delta": "+2",
-    #         "value": 2,
-    #         "out_of": 0,
-    #         "text": "qwert",
-    #         "tags": "",
-    #         "meta": "asdfg",
-    #         "username": "Liam",
-    #         "question": 1,
-    #         "versions": [],
-    #         "parameters": [],
-    #     }
-    #     r = RubricService().modify_rubric(key, simulated_client_data)
+            d["kind"] = "neutral"
+            d["display_delta"] = "."
+            d["username"] = username
 
-    #     self.assertEqual(r.key, self.neutral_to_relative_rubric.key)
-    #     self.assertEqual(r.kind, self.neutral_to_relative_rubric.kind)
-    #     self.assertEqual(r.display_delta, self.neutral_to_relative_rubric.display_delta)
-    #     self.assertEqual(r.user, self.neutral_to_relative_rubric.user)
+            r = RubricService().modify_rubric(key, d)
+            self.assertEqual(r.key, rubric.key)
+            self.assertEqual(r.kind, d["kind"])
+            self.assertEqual(r.display_delta, d["display_delta"])
 
-    # def test_modify_relative_to_neutral_rubric(self):
-    #     """
-    #     Test RubricService.modify_rubric() to modify a relative rubric
-    #     to a neutral rubric
-    #     """
-    #     key = self.modified_relative_rubric.key
-    #     simulated_client_data = {
-    #         "id": key,
-    #         "kind": "neutral",
-    #         "display_delta": ".",
-    #         "value": 0,
-    #         "out_of": 0,
-    #         "text": "qwert",
-    #         "tags": "",
-    #         "meta": "asdfg",
-    #         "username": "Olivia",
-    #         "question": 1,
-    #         "versions": [],
-    #         "parameters": [],
-    #     }
-    #     r = RubricService().modify_rubric(key, simulated_client_data)
+            d["kind"] = "relative"
+            d["display_delta"] = "+2"
+            d["value"] = 2
+            d["username"] = username
 
-    #     self.assertEqual(r.key, self.relative_to_neutral_rubric.key)
-    #     self.assertEqual(r.kind, self.relative_to_neutral_rubric.kind)
-    #     self.assertEqual(r.display_delta, self.relative_to_neutral_rubric.display_delta)
-    #     self.assertEqual(r.user, self.relative_to_neutral_rubric.user)
-    #     pass
+            r = RubricService().modify_rubric(key, d)
+            self.assertEqual(r.key, rubric.key)
+            self.assertEqual(r.kind, d["kind"])
+            self.assertEqual(r.display_delta, d["display_delta"])
+            self.assertEqual(r.value, d["value"])
+
+            d["kind"] = "absolute"
+            d["display_delta"] = "2 of 3"
+            d["value"] = 2
+            d["out_of"] = 3
+            d["username"] = username
+
+            r = RubricService().modify_rubric(key, d)
+            self.assertEqual(r.key, rubric.key)
+            self.assertEqual(r.kind, d["kind"])
+            self.assertEqual(r.display_delta, d["display_delta"])
+            self.assertEqual(r.value, d["value"])
+            self.assertEqual(r.out_of, d["out_of"])
