@@ -159,29 +159,34 @@ class Command(BaseCommand):
         except ValueError as err:
             raise CommandError(err)
 
-    def show_bundle_pages(self, bundle_name):
+    def show_bundle_pages(self, bundle_name, *, show="all"):
         scanner = ScanService()
         bundle_page_dict = scanner.get_bundle_pages_info_cmd(bundle_name)
         bundle_page_list = [["order", "status", "info", "rotation"]]
-        for ord, page in bundle_page_dict.items():
+        for ord in sorted(bundle_page_dict.keys()):
+            page = bundle_page_dict[ord]
             dat = [page["order"], page["status"]]
             if page["status"] == "unknown":
                 dat.append(" - ")
             elif page["status"] == "known":
                 dat.append(
-                    f"{page['info']['paper_number']} - p{page['info']['page_number']} - v{page['info']['version']}"
+                    f"paper {page['info']['paper_number']}: p.{page['info']['page_number']} v.{page['info']['version']}"
                 )
             elif page["status"] == "extra":
                 if page["info"]["paper_number"] and page["info"]["question_list"]:
                     dat.append(
-                        f"{page['info']['paper_number']} - q{page['info']['question_list']}"
+                        f"paper {page['info']['paper_number']}: q{page['info']['question_list']}"
                     )
                 else:
                     dat.append("extra page without data")
             elif page["status"] in ["error", "discard"]:
                 dat.append(page["info"]["reason"])
+
             dat.append(page["rotation"])
-            bundle_page_list.append(dat)
+
+            # filter out required pages
+            if show == "all" or page["status"] == show:
+                bundle_page_list.append(dat)
 
         self.stdout.write(
             tabulate(bundle_page_list, headers="firstrow", tablefmt="simple_outline")
@@ -271,6 +276,13 @@ class Command(BaseCommand):
             type=str,
             help="get status of pages within this bundle",
         )
+        sp_page.add_argument(
+            "--show",
+            type=str,
+            help="Show only pages with indicated status",
+            choices=["all", "unknown", "known", "extra", "discard", "error"],
+            default="all",
+        )
 
     def handle(self, *args, **options):
         if options["command"] == "upload":
@@ -288,7 +300,10 @@ class Command(BaseCommand):
         elif options["command"] == "read_qr":
             self.read_bundle_qr(bundle_name=options["bundle_name"])
         elif options["command"] == "pages":
-            self.show_bundle_pages(bundle_name=options["bundle_name"])
+            print(options)
+            self.show_bundle_pages(
+                bundle_name=options["bundle_name"], show=options["show"]
+            )
         elif options["command"] == "map_extra":
             service = ScanService()
             n_questions = SpecificationService().get_n_questions()
