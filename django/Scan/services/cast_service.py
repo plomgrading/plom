@@ -3,7 +3,7 @@
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 from Scan.models import (
     StagingBundle,
@@ -26,8 +26,8 @@ class ScanCastService:
         self, user_obj, bundle_obj, bundle_order, image_type
     ):
         if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - cannot modify it.")
-        
+            raise ValueError("This bundle has been pushed - it cannot be modified.")
+
         if image_type == "discard":
             raise ValueError("Trying to discard an already discarded bundle image.")
         if image_type not in ["unknown", "known", "extra", "error"]:
@@ -73,7 +73,7 @@ class ScanCastService:
                 username__iexact=username, groups__name__in=["scanner", "manager"]
             )
         except ObjectDoesNotExist:
-            raise ValueError(
+            raise PermissionDenied(
                 f"User '{username}' does not exist or has wrong permissions!"
             )
 
@@ -91,7 +91,7 @@ class ScanCastService:
         self, user_obj, bundle_obj, bundle_order, image_type
     ):
         if bundle_obj.pushed:
-            raise ValueError("This bundle has been pushed - cannot modify it.")
+            raise ValueError("This bundle has been pushed - it cannot be modified.")
 
         if image_type == "unknown":
             raise ValueError(
@@ -142,7 +142,7 @@ class ScanCastService:
                 username__iexact=username, groups__name__in=["scanner", "manager"]
             )
         except ObjectDoesNotExist:
-            raise ValueError(
+            raise PermissionDenied(
                 f"User '{username}' does not exist or has wrong permissions!"
             )
 
