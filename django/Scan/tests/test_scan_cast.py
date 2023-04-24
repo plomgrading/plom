@@ -184,7 +184,9 @@ class ScanCastServiceTests(TestCase):
             .bundle_order
         )
         with self.assertRaises(ValueError):
-            ScanCastService().discard_image_type_from_bundle_cmd("user0", "testbundle", ord, "discard")
+            ScanCastService().discard_image_type_from_bundle_cmd(
+                "user0", "testbundle", ord, "discard"
+            )
 
     def test_attempt_unknowify_unknown(self):
         ord = (
@@ -193,19 +195,23 @@ class ScanCastServiceTests(TestCase):
             .bundle_order
         )
         with self.assertRaises(ValueError):
-            ScanCastService().unknowify_image_type_from_bundle_cmd("user0", "testbundle", ord, "unknown")
+            ScanCastService().unknowify_image_type_from_bundle_cmd(
+                "user0", "testbundle", ord, "unknown"
+            )
 
     def test_attempt_modify_pushed(self):
         # set the bundle to "pushed"
-        self.bundle.pushed=True
+        self.bundle.pushed = True
         self.bundle.save()
         # now grab an error page and attempt to modify it
         ord = (
-            self.bundle.stagingimage_set.filter(image_type="error")
-            .first()
-            .bundle_order
+            self.bundle.stagingimage_set.filter(image_type="error").first().bundle_order
         )
         with self.assertRaises(ValueError):
-            ScanCastService().discard_image_type_from_bundle_cmd("user0", "testbundle", ord, "error")
+            ScanCastService().discard_image_type_from_bundle_cmd(
+                "user0", "testbundle", ord, "error"
+            )
         with self.assertRaises(ValueError):
-            ScanCastService().unknowify_image_type_from_bundle_cmd("user0", "testbundle", ord, "error")
+            ScanCastService().unknowify_image_type_from_bundle_cmd(
+                "user0", "testbundle", ord, "error"
+            )
