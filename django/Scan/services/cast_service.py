@@ -25,6 +25,9 @@ class ScanCastService:
     def discard_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, image_type
     ):
+        if bundle_obj.pushed:
+            raise ValueError("This bundle has been pushed - cannot modify it.")
+        
         if image_type == "discard":
             raise ValueError("Trying to discard an already discarded bundle image.")
         if image_type not in ["unknown", "known", "extra", "error"]:
@@ -87,6 +90,9 @@ class ScanCastService:
     def unknowify_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, image_type
     ):
+        if bundle_obj.pushed:
+            raise ValueError("This bundle has been pushed - cannot modify it.")
+
         if image_type == "unknown":
             raise ValueError(
                 "Trying to cast 'unknown' image to and already 'unknown' bundle image."
