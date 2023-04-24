@@ -138,7 +138,7 @@
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
 			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
-			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
+			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="discard: {{pg.info.reason}}"
 			> p{{pg.order}}</button>
 		{% endif %}
 	      {% endfor %}
