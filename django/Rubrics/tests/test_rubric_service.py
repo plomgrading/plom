@@ -220,8 +220,7 @@ class RubricServiceTests(TestCase):
         username = user.username
 
         for kind in ("absolute", "relative", "neutral"):
-            # TODO: why doesn't baker add text?
-            rubric = baker.make(Rubric, user=user, text="qwert", kind=kind)
+            rubric = baker.make(Rubric, user=user, kind=kind)
             key = rubric.key
             d = _rubric_to_dict(rubric)
 

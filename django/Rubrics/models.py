@@ -31,7 +31,7 @@ class Rubric(models.Model):
     display_delta = models.TextField(null=False, default="")  # is short
     value = models.IntegerField(null=False, default=0)
     out_of = models.IntegerField(null=False, default=0)
-    text = models.TextField(null=False, default="")  # can be long
+    text = models.TextField(null=False)  # can be long
     question = models.IntegerField(null=False, default=0)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     tags = models.TextField(null=True)  # can be long
