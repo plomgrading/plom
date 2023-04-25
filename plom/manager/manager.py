@@ -1512,6 +1512,7 @@ class Manager(QWidget):
     def initDanglingTab(self):
         self.ui.labelDanglingExplain.setText(
             """
+            <p><center><b>--- CURRENTLY DISABLED IN THIS BUILD ---</b></center></p>
             <p>A page which is part of a test that is not yet completely
             scanned and uploaded will show up here as a
             <em>dangling page</em>.
