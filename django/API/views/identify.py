@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
@@ -132,7 +132,7 @@ class IDgetImage(APIView):
         id_img = its.get_id_page(paper_id)
 
         if not id_img:
-            return Resonse(
+            return Response(
                 f"ID page-image not found for paper {paper_id}",
                 status=status.HTTP_404_NOT_FOUND,
             )

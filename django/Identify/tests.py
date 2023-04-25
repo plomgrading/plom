@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
 from datetime import timedelta
@@ -136,7 +136,6 @@ class IdentifyTaskTests(TestCase):
 
         self.assertEqual(task.status, "out")
         self.assertEqual(task.assigned_user, self.marker0)
-
 
     def test_out_claim_task(self):
         """

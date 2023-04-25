@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from Identify.models import (
     PaperIDTask,
@@ -20,7 +20,6 @@ class IdentifyTaskService:
         """
 
         return PaperIDTask.objects.exists()
-
 
     def create_task(self, paper):
         """
