@@ -12,8 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Client: when a rubric group tab is selected, adding a new rubric defaults to that group.
+* Manager: the Dangling Pages tab must be manually refreshed.
 
 ### Fixed
+* Manager: no longer checks for "Dangling Pages" on start-up b/c this was very slow on large servers.
 
 
 
