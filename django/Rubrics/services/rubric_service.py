@@ -26,13 +26,13 @@ from Rubrics.models import RubricPane
 
 log = logging.getLogger("RubricServer")
 
-valid_kinds = ("absolute", "neutral", "relative")
-
 
 class RubricService:
     """
     Class to encapsulate functions for creating and modifying rubrics.
     """
+
+    __valid_kinds = ("absolute", "neutral", "relative")
 
     def create_rubric(self, rubric_data):
         """
@@ -54,7 +54,7 @@ class RubricService:
 
         kind = rubric_data["kind"]
 
-        if kind not in valid_kinds:
+        if kind not in RubricService.__valid_kinds:
             raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
 
         serializer = RubricSerializer(data=rubric_data)
@@ -88,7 +88,7 @@ class RubricService:
 
         kind = rubric_data["kind"]
 
-        if kind not in valid_kinds:
+        if kind not in RubricService.__valid_kinds:
             raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
 
         try:
