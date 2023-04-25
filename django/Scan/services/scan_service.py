@@ -871,6 +871,32 @@ class ScanService:
         return self.get_bundle_pages_info(bundle_obj)
 
     @transaction.atomic
+    def get_bundle_extra_pages_info(self, bundle_obj):
+        # compute number of digits in longest page number to pad the page numbering
+        n_digits = len(str(bundle_obj.number_of_pages))
+
+        pages = {}
+        for img in bundle_obj.stagingimage_set.filter(image_type="extra").all():
+            pages[img.bundle_order] = {
+                "status": img.image_type,
+                "info": {
+                    "paper_number": img.extrastagingimage.paper_number,
+                    "question_list": img.extrastagingimage.question_list,
+                },
+                "order": f"{img.bundle_order+1}".zfill(n_digits),
+                "rotation": img.rotation,
+            }
+        return pages
+
+    @transaction.atomic
+    def get_bundle_extra_pages_info_cmd(self, bundle_name):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        return self.get_bundle_extra_pages_info(bundle_obj)
+
+    @transaction.atomic
     def get_bundle_single_page_info(self, bundle_obj, index):
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
@@ -902,6 +928,33 @@ class ScanService:
 
         current_page.update({"info": info})
         return current_page
+
+    @transaction.atomic
+    def get_bundle_paper_numbers(self, bundle_obj):
+        """Return a sorted list of paper-numbers in the given bundle
+        as determined by known and extra pages."""
+        paper_list = []
+        for img in bundle_obj.stagingimage_set.filter(
+            image_type="known"
+        ).prefetch_related("knownstagingimage"):
+            paper_list.append(img.knownstagingimage.paper_number)
+        for img in bundle_obj.stagingimage_set.filter(
+            image_type="extra"
+        ).prefetch_related("extrastagingimage"):
+            if (
+                img.extrastagingimage.paper_number
+                and img.extrastagingimage.question_list
+            ):
+                paper_list.append(img.extrastagingimage.paper_number)
+        return sorted(list(set(paper_list)))
+
+    @transaction.atomic
+    def get_bundle_paper_numbers_cmd(self, bundle_name):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        return self.get_bundle_paper_numbers(bundle_obj)
 
 
 # ----------------------------------------
