@@ -403,8 +403,6 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
     def getDanglingPages(self):
-        # Disable this feature to save server timeouts
-        return {}
         self.SRmutex.acquire()
         timeout = (self.default_timeout[0], 5 * self.default_timeout[1])
         try:
