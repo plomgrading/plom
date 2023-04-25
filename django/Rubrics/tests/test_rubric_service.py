@@ -75,6 +75,14 @@ class RubricServiceTests(TestCase):
             parameters=[],
         )
 
+        self.modified_relative_rubric = baker.make(
+            Rubric,
+            kind="relative",
+            display_delta="+3",
+            value=3,
+            user=user2,
+        )
+
         self.absolute_rubric = baker.make(
             Rubric,
             kind="absolute",
@@ -88,6 +96,15 @@ class RubricServiceTests(TestCase):
             meta="lkjhg",
             versions=[],
             parameters=[],
+        )
+
+        self.modified_absolute_rubric = baker.make(
+            Rubric,
+            kind="absolute",
+            display_delta="3 of 5",
+            value=3,
+            out_of=5,
+            user=user2,
         )
 
         return super().setUp()
@@ -208,6 +225,65 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.key, self.modified_neutral_rubric.key)
         self.assertEqual(r.kind, self.modified_neutral_rubric.kind)
         self.assertEqual(r.display_delta, self.modified_neutral_rubric.display_delta)
+
+    def test_modify_relative_rubric(self):
+        """
+        Test RubricService.modify_rubric() to modify a relative rubric
+        """
+        service = RubricService()
+        key = self.modified_relative_rubric.key
+
+        simulated_client_data = {
+            "id": key,
+            "kind": "relative",
+            "display_delta": "+3",
+            "value": 3,
+            "out_of": 0,
+            "text": "yuiop",
+            "tags": "",
+            "meta": "hjklz",
+            "username": "Olivia",
+            "question": 1,
+            "versions": [],
+            "parameters": [],
+        }
+        r = service.modify_rubric(key, simulated_client_data)
+
+        self.assertEqual(r.key, self.modified_relative_rubric.key)
+        self.assertEqual(r.kind, self.modified_relative_rubric.kind)
+        self.assertEqual(r.display_delta, self.modified_relative_rubric.display_delta)
+        self.assertEqual(r.value, self.modified_relative_rubric.value)
+        self.assertEqual(r.user, self.modified_relative_rubric.user)
+
+    def test_modify_relative_rubric(self):
+        """
+        Test RubricService.modify_rubric() to modify a relative rubric
+        """
+        service = RubricService()
+        key = self.modified_absolute_rubric.key
+
+        simulated_client_data = {
+            "id": key,
+            "kind": "absolute",
+            "display_delta": "3 of 5",
+            "value": 3,
+            "out_of": 5,
+            "text": "yuiop",
+            "tags": "",
+            "meta": "hjklz",
+            "username": "Olivia",
+            "question": 1,
+            "versions": [],
+            "parameters": [],
+        }
+        r = service.modify_rubric(key, simulated_client_data)
+
+        self.assertEqual(r.key, self.modified_absolute_rubric.key)
+        self.assertEqual(r.kind, self.modified_absolute_rubric.kind)
+        self.assertEqual(r.display_delta, self.modified_absolute_rubric.display_delta)
+        self.assertEqual(r.value, self.modified_absolute_rubric.value)
+        self.assertEqual(r.out_of, self.modified_absolute_rubric.out_of)
+        self.assertEqual(r.user, self.modified_absolute_rubric.user)
 
     def test_modify_rubric_change_kind(self):
         """
