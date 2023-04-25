@@ -300,7 +300,6 @@ class Command(BaseCommand):
         elif options["command"] == "read_qr":
             self.read_bundle_qr(bundle_name=options["bundle_name"])
         elif options["command"] == "pages":
-            print(options)
             self.show_bundle_pages(
                 bundle_name=options["bundle_name"], show=options["show"]
             )
