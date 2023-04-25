@@ -161,7 +161,10 @@ class Command(BaseCommand):
 
     def show_bundle_pages(self, bundle_name, *, show="all"):
         scanner = ScanService()
-        bundle_page_dict = scanner.get_bundle_pages_info_cmd(bundle_name)
+        try:
+            bundle_page_dict = scanner.get_bundle_pages_info_cmd(bundle_name)
+        except ValueError as err:
+            raise CommandError(err)
         bundle_page_list = [["order", "status", "info", "rotation"]]
         for ord in sorted(bundle_page_dict.keys()):
             page = bundle_page_dict[ord]
