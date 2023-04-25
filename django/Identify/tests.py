@@ -14,9 +14,7 @@ from Papers.models import Paper
 from Identify.services import IdentifyTaskService
 from Identify.models import (
     PaperIDTask,
-    PaperIDClaim,
     PaperIDAction,
-    SurrenderPaperIDTask,
 )
 
 
@@ -139,8 +137,6 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(task.status, "out")
         self.assertEqual(task.assigned_user, self.marker0)
 
-        claim = PaperIDClaim.objects.get(user=self.marker0)
-        self.assertEqual(claim.task, task)
 
     def test_out_claim_task(self):
         """

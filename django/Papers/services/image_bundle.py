@@ -200,12 +200,17 @@ class ImageBundleService:
                 )
 
         from Mark.services import MarkingTaskService
+        from Identify.services import IdentifyTaskService
 
         mts = MarkingTaskService()
+        its = IdentifyTaskService()
         questions = self.get_ready_questions(uploaded_bundle)
         for paper, question in questions["ready"]:
             paper_instance = Paper.objects.get(paper_number=paper)
             mts.create_task(paper_instance, question)
+
+            if not its.id_task_exists(paper_instance):
+                its.create_task(paper_instance)
 
     def get_staged_img_location(self, staged_image):
         """
