@@ -56,6 +56,16 @@ def get_parser():
         help="How's progress?",
         description="List progress and which tests that have been completed.",
     )
+    spCheck.add_argument(
+        "--dangling-check",
+        action="store_true",
+        help="""
+            Check for "dangling pages" that are attached papers that are
+            not completely scanned.
+            This can be slow for 1000s of papers so is disabled by
+            default.
+        """,
+    )
     spCSV = sub.add_parser(
         "csv",
         help="CSV file with marks/progress info",
@@ -244,7 +254,9 @@ def main():
 
     # Note: some of these commands use exit() directly
     if args.command == "status":
-        plom.finish.check_completed.main(args.server, args.password)
+        plom.finish.check_completed.main(
+            args.server, args.password, args.dangling_check
+        )
     elif args.command == "csv":
         pull_spreadsheet(msgr=(args.server, args.password))
     elif args.command == "reassemble":
