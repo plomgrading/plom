@@ -466,6 +466,7 @@ class Manager(QWidget):
         self.ui.forgiveAllDNMButton.clicked.connect(self.substituteAllDNMPages)
         self.ui.removePartScanB.clicked.connect(self.removePagesFromPartScan)
         self.ui.removeDanglingB.clicked.connect(self.removeDanglingPage)
+        self.ui.refreshDanglingB.clicked.connect(self.refreshDangList)
 
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
@@ -794,7 +795,8 @@ class Manager(QWidget):
         self.refreshUnknownList()
         self.refreshCList()
         self.refreshDiscardList()
-        self.refreshDangList()
+        # too slow on large servers, causing timeouts
+        # self.refreshDangList()
 
     def initScanStatusTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
@@ -1512,6 +1514,18 @@ class Manager(QWidget):
     def initDanglingTab(self):
         self.ui.labelDanglingExplain.setText(
             """
+            <hr />
+            <p>
+              <center>
+                <b>Caution:</b>
+                Refreshing this can interfere with other users.
+              </center>
+            </p>
+            <p>When there are a lot of papers (say 1000 or more) the API
+            call that backs the feature is slow.  It would be best to use
+            this feature only when your server is otherwise idle (no active
+            scanning uploads and minimal marking activity).</p>
+            <hr />
             <p>A page which is part of a test that is not yet completely
             scanned and uploaded will show up here as a
             <em>dangling page</em>.
@@ -1542,7 +1556,8 @@ class Manager(QWidget):
             )
         )
         self.ui.danglingTV.activated.connect(self.viewDanglingPage)
-        self.refreshDangList()
+        # Too slow on large servers, causing timeouts
+        # self.refreshDangList()
 
     def refreshDangList(self):
         self.danglingModel.removeRows(0, self.danglingModel.rowCount())
