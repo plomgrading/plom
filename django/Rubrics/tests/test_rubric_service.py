@@ -217,7 +217,7 @@ class RubricServiceTests(TestCase):
         into the other three kinds.  The key should not change.
         """
         user = baker.make(User)
-        username = str(user)  # probably not the proper way to extract the username?
+        username = user.username
 
         for kind in ("absolute", "relative", "neutral"):
             # TODO: why doesn't baker add text?
