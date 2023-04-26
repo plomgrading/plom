@@ -370,7 +370,10 @@ class ImageBundleService:
         initialize ID tasks.
 
         Args:
-            bundle: a Bundle instance that has just been uploaded.
+            bundle: a Bundle instance
+
+        Returns:
+            QuerySet [IDPage]: a query of only the ID pages in the input bundle
         """
 
         return IDPage.objects.filter(image__bundle=bundle)

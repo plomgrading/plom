@@ -109,7 +109,7 @@ class IDclaimThisTask(APIView):
             its.claim_task(request.user, paper_id)
             return Response(status=status.HTTP_200_OK)
         except RuntimeError:
-            return Response("ID task already claimed.", status=status.HTTP_409_CONFLICT)
+            return Response(f"ID task {paper_id} already claimed.", status=status.HTTP_409_CONFLICT)
 
     def put(self, request, paper_id):
         """Assigns a name and a student ID to the paper."""
