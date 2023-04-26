@@ -2,8 +2,8 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2019-2023 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QComboBox,
@@ -63,9 +63,9 @@ class ErrorMsg(QMessageBox):
                 )
             else:
                 self.setInformativeText(f"<small>{info}</small>")
-        self.setStandardButtons(QMessageBox.Ok)
-        self.setDefaultButton(QMessageBox.Ok)
-        self.setIcon(QMessageBox.Critical)
+        self.setStandardButtons(QMessageBox.StandardButton.Ok)
+        self.setDefaultButton(QMessageBox.StandardButton.Ok)
+        self.setIcon(QMessageBox.Icon.Critical)
 
 
 class WarnMsg(ErrorMsg):
@@ -73,7 +73,7 @@ class WarnMsg(ErrorMsg):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setIcon(QMessageBox.Warning)
+        self.setIcon(QMessageBox.Icon.Warning)
 
 
 class InfoMsg(ErrorMsg):
@@ -81,7 +81,7 @@ class InfoMsg(ErrorMsg):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setIcon(QMessageBox.Information)
+        self.setIcon(QMessageBox.Icon.Information)
 
 
 class SimpleQuestion(QMessageBox):
@@ -97,9 +97,11 @@ class SimpleQuestion(QMessageBox):
         if icon_pixmap:
             self.setIconPixmap(icon_pixmap)
         else:
-            self.setIcon(QMessageBox.Question)
-        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        self.setDefaultButton(QMessageBox.Yes)
+            self.setIcon(QMessageBox.Icon.Question)
+        self.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        self.setDefaultButton(QMessageBox.StandardButton.Yes)
 
     @classmethod
     def ask(cls, *args, **kwargs):
@@ -111,7 +113,7 @@ class WarningQuestion(SimpleQuestion):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setIcon(QMessageBox.Warning)
+        self.setIcon(QMessageBox.Icon.Warning)
 
 
 class SimpleQuestionCheckBox(QMessageBox):
@@ -129,9 +131,11 @@ class SimpleQuestionCheckBox(QMessageBox):
         else:
             self.cb = QCheckBox("Don't show this message again")
         self.setText(txt)
-        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        self.setDefaultButton(QMessageBox.Yes)
-        self.setIcon(QMessageBox.Question)
+        self.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        self.setDefaultButton(QMessageBox.StandardButton.Yes)
+        self.setIcon(QMessageBox.Icon.Question)
         self.setCheckBox(self.cb)
 
 
@@ -147,8 +151,8 @@ class SimpleTableView(QTableView):
         super().__init__(parent)
         # User can sort, cannot edit, selects by rows.
         self.setSortingEnabled(True)
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         # Resize to fit the contents
         self.resizeRowsToContents()
         self.horizontalHeader().setStretchLastSection(True)
@@ -157,7 +161,7 @@ class SimpleTableView(QTableView):
         # If user hits enter or return, then fire off
         # the annotateSignal, else pass the event on.
         key = event.key()
-        if key == Qt.Key_Return or key == Qt.Key_Enter:
+        if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             self.annotateSignal.emit()
         else:
             super(SimpleTableView, self).keyPressEvent(event)
@@ -267,8 +271,8 @@ class ClientSettingsDialog(QDialog):
         flay.addWidget(QLabel("(Logs stored in {})".format(logdir)))
 
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
 
         self.checkFore = QCheckBox("Force foreground upload/downloads")
@@ -284,8 +288,8 @@ class ClientSettingsDialog(QDialog):
         flay.addWidget(moreinfo)
 
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
 
         self.checkWarnCom = QCheckBox(
@@ -302,17 +306,19 @@ class ClientSettingsDialog(QDialog):
             self.checkWarnMark.setEnabled(False)
 
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
         flay.addRow("Config file:", QLabel("{}".format(cfgfile)))
         tempdir_prefix = "plom_"
         q = QLabel('{}, in subfolders "{}*"'.format(tmpdir, tempdir_prefix))
         q.setWordWrap(True)
-        q.setAlignment(Qt.AlignTop)
+        q.setAlignment(Qt.AlignmentFlag.AlignTop)
         flay.addRow("Temporary files:", q)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
 
         vlay = QVBoxLayout()
         vlay.addLayout(flay)
@@ -379,7 +385,12 @@ class AddRemoveTagDialog(QDialog):
         else:
             flay.addRow(QLabel("Current tags:"))
             flay.addItem(
-                QSpacerItem(20, 4, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+                QSpacerItem(
+                    20,
+                    4,
+                    QSizePolicy.Policy.Minimum,
+                    QSizePolicy.Policy.MinimumExpanding,
+                )
             )
             for tag in current_tags:
                 row = QHBoxLayout()
@@ -394,19 +405,26 @@ class AddRemoveTagDialog(QDialog):
                 row.addWidget(b)
                 row.addItem(
                     QSpacerItem(
-                        48, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum
+                        48,
+                        1,
+                        QSizePolicy.Policy.MinimumExpanding,
+                        QSizePolicy.Policy.Minimum,
                     )
                 )
                 flay.addRow(row)
         flay.addItem(
-            QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+            QSpacerItem(
+                20, 8, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
+            )
         )
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         flay.addRow(line)
         flay.addItem(
-            QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+            QSpacerItem(
+                20, 8, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
+            )
         )
         CBadd = QComboBox()
         CBadd.setEditable(True)
@@ -416,11 +434,15 @@ class AddRemoveTagDialog(QDialog):
         self.CBadd = CBadd
 
         flay.addItem(
-            QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+            QSpacerItem(
+                20, 8, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
+            )
         )
 
         # TODO: cannot tab to OK
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         vlay = QVBoxLayout()
         vlay.addLayout(flay)
         vlay.addWidget(buttons)
@@ -437,7 +459,7 @@ class AddRemoveTagDialog(QDialog):
     def remove_tag(self, tag):
         msg = f"<p>Do you want to remove tag &ldquo;{tag}&rdquo;?"
         title = f"Remove tag \u201C{tag}\u201D{self.from_label}?"
-        if QMessageBox.question(self, title, msg) != QMessageBox.Yes:
+        if QMessageBox.question(self, title, msg) != QMessageBox.StandardButton.Yes:
             return
         self.return_values = ("remove", tag)
         self.accept()
@@ -487,11 +509,11 @@ class BigMessageDialog(QDialog):
 
         lay.addWidget(s)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         b = QToolButton(text="Details")
         b.setCheckable(True)
         b.clicked.connect(self.toggle_details)
-        buttons.addButton(b, QDialogButtonBox.ActionRole)
+        buttons.addButton(b, QDialogButtonBox.ButtonRole.ActionRole)
         lay.addWidget(buttons)
         self.setLayout(lay)
 
@@ -504,16 +526,16 @@ class BigMessageDialog(QDialog):
             lay.addWidget(buttons)
             # QMessageBox has a horizontal rule
             line = QFrame()
-            line.setFrameShape(QFrame.HLine)
-            line.setFrameShadow(QFrame.Sunken)
+            line.setFrameShape(QFrame.Shape.HLine)
+            line.setFrameShadow(QFrame.Shadow.Sunken)
             lay.addWidget(line)
             self._line = line
             line.setVisible(False)
             lay.addWidget(self.details_TE)
             b.setChecked(False)
             self.details_TE.setVisible(False)
-            b.setArrowType(Qt.DownArrow)
-            b.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            b.setArrowType(Qt.ArrowType.DownArrow)
+            b.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
             self.toggle_button = b
 
         buttons.accepted.connect(self.accept)
@@ -523,10 +545,10 @@ class BigMessageDialog(QDialog):
         if self.details_TE.isVisible():
             self._line.setVisible(False)
             self.details_TE.setVisible(False)
-            self.toggle_button.setArrowType(Qt.DownArrow)
+            self.toggle_button.setArrowType(Qt.ArrowType.DownArrow)
             self.adjustSize()
         else:
             self.details_TE.setVisible(True)
             self._line.setVisible(True)
-            self.toggle_button.setArrowType(Qt.UpArrow)
+            self.toggle_button.setArrowType(Qt.ArrowType.UpArrow)
             self.adjustSize()

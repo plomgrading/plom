@@ -23,32 +23,32 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt5 import uic
-from PyQt5.QtCore import (
+from PyQt6 import uic
+from PyQt6.QtCore import (
     Qt,
     QTimer,
     QElapsedTimer,
     pyqtSlot,
     pyqtSignal,
 )
-from PyQt5.QtGui import (
+from PyQt6.QtGui import (
     QCursor,
     QIcon,
     QKeySequence,
     QPixmap,
+    QShortcut,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog,
     QWidget,
     QMenu,
     QMessageBox,
     QProgressDialog,
-    QShortcut,
     QToolButton,
     QFileDialog,
     QColorDialog,
 )
-from PyQt5.QtWidgets import QGraphicsRectItem
+from PyQt6.QtWidgets import QGraphicsRectItem
 
 import plom.client.cursors
 import plom.client.icons
@@ -164,19 +164,15 @@ class Annotator(QWidget):
 
         # Connect all the buttons to relevant functions
         self.setButtons()
-        # Make sure window has min/max buttons.
-        self.setWindowFlags(
-            self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
-        )
 
         self.timer = QElapsedTimer()
 
         self.modeInformation = ["move"]
 
+        # unit tests might pass None to avoid mocking support code
         if initialData:
             self.load_new_question(*initialData)
-
-        self.rubric_widget.setInitialRubrics()
+            self.rubric_widget.setInitialRubrics()
 
         # Grab window settings from parent
         self.loadWindowSettings()
@@ -200,7 +196,7 @@ class Annotator(QWidget):
 
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
-        self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
+        self.ui.hamMenuButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setToolShortCuts()
         self.setMinorShortCuts()
 
@@ -255,10 +251,10 @@ class Annotator(QWidget):
         res = resources.files(plom.client.icons) / "fingers_in_gears.svg"
         pix = QPixmap()
         pix.loadFromData(res.read_bytes())
-        pix = pix.scaledToHeight(256, Qt.SmoothTransformation)
+        pix = pix.scaledToHeight(256, Qt.TransformationMode.SmoothTransformation)
         msg = SimpleQuestion(self, txt, question=info)
         msg.setIconPixmap(pix)
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             self._experimental_mode_checkbox.setChecked(False)
             return
         self.parentMarkerUI.set_experimental(True)
@@ -277,36 +273,36 @@ class Annotator(QWidget):
 
         m = QMenu()
         key = keydata["next-paper"]["keys"][0]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Next paper\t{key}", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         (key,) = keydata["cancel"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Close without saving\t{key}", self.close)
         m.addSeparator()
         (key,) = keydata["quick-show-prev-paper"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Show previous paper(s)\t{key}", self.show_previous)
         m.addSeparator()
         self._cat_view_menu = m.addAction("View cat", self.viewCat)
         if not self.is_experimental():
             self._cat_view_menu.setVisible(False)
         (key,) = keydata["show-solutions"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"View solutions\t{key}", self.viewSolutions)
         (key,) = keydata["tag-paper"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Tag paper...\t{key}", self.tag_paper)
         m.addSeparator()
         (key,) = keydata["rearrange-pages"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Adjust pages\t{key}", self.rearrangePages)
         (key,) = keydata["crop-in"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Crop to region\t{key}", self.to_crop_mode)
         (key,) = keydata["crop-out"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Uncrop\t{key}", self.uncrop_region)
         hold_crop = m.addAction("Hold crop between papers")
         hold_crop.setCheckable(True)
@@ -336,7 +332,7 @@ class Annotator(QWidget):
         subm.addAction("Zoom", self.ui.zoomButton.animateClick)
         m.addSeparator()
         (key,) = keydata["increase-annotation-scale"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(
             f"Increase annotation scale\t{key}",
             lambda: self.change_annot_scale(1.1),
@@ -349,7 +345,7 @@ class Annotator(QWidget):
         self.update_annot_scale_menu_label()
 
         (key,) = keydata["decrease-annotation-scale"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(
             f"Decrease annotation scale\t{key}",
             lambda: self.change_annot_scale(1.0 / 1.1),
@@ -368,14 +364,14 @@ class Annotator(QWidget):
         self._experimental_mode_checkbox = x
         m.addAction("Synchronise rubrics", self.refreshRubrics)
         (key,) = keydata["toggle-wide-narrow"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Compact UI\t{key}", self.narrowLayout)
         # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
         # m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
         m.addAction("Help", lambda: self.keyPopUp(tab_idx=0))
         (key,) = keydata["help"]["keys"]
-        key = QKeySequence(key).toString(QKeySequence.NativeText)
+        key = QKeySequence(key).toString(QKeySequence.SequenceFormat.NativeText)
         m.addAction(f"Show shortcut keys...\t{key}", self.keyPopUp)
         m.addAction("About Plom", lambda: show_about_dialog(self))
         return m
@@ -613,13 +609,13 @@ class Annotator(QWidget):
         cursor["Highlight"] = QCursor(_pixmap_from("highlighter.png"), 4, 4)
         cursor["arrow"] = QCursor(_pixmap_from("arrow.png"), 4, 4)
         cursor["DoubleArrow"] = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
-        cursor["text"] = Qt.IBeamCursor
-        cursor["rubric"] = Qt.IBeamCursor
-        cursor["image"] = Qt.CrossCursor
-        cursor["zoom"] = Qt.SizeFDiagCursor
-        # note Qt.ClosedHandCursor and Qt.OpenHandCursor also hardcoded in pagescene
-        cursor["pan"] = Qt.OpenHandCursor
-        cursor["move"] = Qt.OpenHandCursor
+        cursor["text"] = Qt.CursorShape.IBeamCursor
+        cursor["rubric"] = Qt.CursorShape.IBeamCursor
+        cursor["image"] = Qt.CursorShape.CrossCursor
+        cursor["zoom"] = Qt.CursorShape.SizeFDiagCursor
+        # note ClosedHandCursor and OpenHandCursor also hardcoded in pagescene
+        cursor["pan"] = Qt.CursorShape.OpenHandCursor
+        cursor["move"] = Qt.CursorShape.OpenHandCursor
 
         self.cursor = cursor
 
@@ -721,7 +717,7 @@ class Annotator(QWidget):
         """
         if not self.tgvID or not self.scene:
             return
-        self.parentMarkerUI.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.parentMarkerUI.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
@@ -768,7 +764,7 @@ class Annotator(QWidget):
         pd = QProgressDialog(
             "Downloading additional images\nStarting up...", None, 0, N, self
         )
-        pd.setWindowModality(Qt.WindowModal)
+        pd.setWindowModality(Qt.WindowModality.WindowModal)
         pd.setMinimumDuration(500)
         pd.setValue(0)
         self.parentMarkerUI.Qapp.processEvents()
@@ -812,7 +808,7 @@ class Annotator(QWidget):
         # PC.download_finished.connect(rearrangeView.shake_things_up)
         perm = []
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
-        if rearrangeView.exec() == QDialog.Accepted:
+        if rearrangeView.exec() == QDialog.DialogCode.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: %s", perm)
         # Workaround for memory leak Issue #1322, TODO better fix
@@ -869,7 +865,7 @@ class Annotator(QWidget):
             custom_overlay=self.keybinding_custom_overlay,
             initial_tab=_tab_idx,
         )
-        if diag.exec() != QDialog.Accepted:
+        if diag.exec() != QDialog.DialogCode.Accepted:
             return
         self.keybinding_name = diag.get_selected_keybinding_name()
         if self.keybinding_name == "custom":
@@ -908,18 +904,6 @@ class Annotator(QWidget):
         self.view.connectScene(self.scene)
         # scene knows which views are connected via self.views()
         log.debug("Scene has this list of views: {}".format(self.scene.views()))
-
-    def swapMaxNorm(self):
-        """
-        Toggles the window size between max and normal.
-
-        Returns
-             None: modifies self.windowState
-        """
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
 
     def keyToChangeRubric(self, keyNumber):
         """
@@ -998,7 +982,7 @@ class Annotator(QWidget):
         Returns:
             None: alters toolButton
         """
-        toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        toolButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))
         pm = QPixmap()
         res = resources.files(plom.client.icons) / iconfile
@@ -1119,7 +1103,6 @@ class Annotator(QWidget):
         actions_and_methods = (
             ("toggle-wide-narrow", self.toggleTools),
             ("help", self.keyPopUp),
-            ("toggle-maximize-window", self.swapMaxNorm),
             ("show-whole-paper", self.viewWholePaper),
             ("show-solutions", self.viewSolutions),
             ("main-menu", self.ui.hamMenuButton.animateClick),
@@ -1252,7 +1235,7 @@ class Annotator(QWidget):
             return
         if os.path.getsize(fileName) > 200000:
             msg = QMessageBox()
-            msg.setIcon(QMessageBox.Critical)
+            msg.setIcon(QMessageBox.Icon.Critical)
             msg.setWindowTitle("Image Too large.")
             msg.setText(
                 "Max image size (200kB) reached. Please try again with a smaller image."
@@ -1296,7 +1279,9 @@ class Annotator(QWidget):
         m.addSeparator()
         m.addAction("Cancel", self.close)
         self.ui.finishedButton.setMenu(m)
-        self.ui.finishedButton.setPopupMode(QToolButton.MenuButtonPopup)
+        self.ui.finishedButton.setPopupMode(
+            QToolButton.ToolButtonPopupMode.MenuButtonPopup
+        )
         self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
 
         # connect the "wide" button in the narrow-view
@@ -1356,11 +1341,11 @@ class Annotator(QWidget):
 
         # if zoom-state is none, set it to index 1 (fit page) - but delay.
         if self.parentMarkerUI.annotatorSettings["zoomState"] is None:
-            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+            QTimer.singleShot(100, lambda: self.ui.zoomCB.setCurrentIndex(1))
         elif self.parentMarkerUI.annotatorSettings["zoomState"] == 0:
             # is set to "user", so set the view-rectangle
             if self.parentMarkerUI.annotatorSettings["viewRectangle"] is not None:
-                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
+                QTimer.singleShot(100, lambda: self.ui.zoomCB.setCurrentIndex(0))
                 QTimer.singleShot(
                     200,
                     lambda: self.view.initializeZoom(
@@ -1369,10 +1354,10 @@ class Annotator(QWidget):
                 )
             else:
                 # no view-rectangle, so set to "fit-page"
-                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+                QTimer.singleShot(100, lambda: self.ui.zoomCB.setCurrentIndex(1))
         else:
             QTimer.singleShot(
-                200,
+                100,
                 lambda: self.ui.zoomCB.setCurrentIndex(
                     self.parentMarkerUI.annotatorSettings["zoomState"]
                 ),
@@ -1494,7 +1479,7 @@ class Annotator(QWidget):
                 "<p>Are you sure you wish to continue?</p>",
                 "Don't ask me again this session.",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return False
             if msg.cb.isChecked():
                 # Note: these are only saved if we ultimately accept
@@ -1506,7 +1491,7 @@ class Annotator(QWidget):
         if not ok:
             # TODO: some more serious than others, may want to add
             # "don't ask me again" for only some.  For now, none.
-            if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+            if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
                 return False
 
         aname, plomfile = self.pickleIt()
@@ -1554,13 +1539,13 @@ class Annotator(QWidget):
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
                 msg = SimpleQuestion(self, msg)
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
             elif self.markWarn:
                 msg = SimpleQuestionCheckBox(
                     self, msg, "Don't ask me again this session."
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
                 if msg.cb.isChecked():
                     self.markWarn = False
@@ -1597,13 +1582,13 @@ class Annotator(QWidget):
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
                 msg = SimpleQuestion(self, msg)
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
             elif self.markWarn:
                 msg = SimpleQuestionCheckBox(
                     self, msg, "Don't ask me again this session."
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
                 if msg.cb.isChecked():
                     self.markWarn = False
@@ -1660,7 +1645,7 @@ class Annotator(QWidget):
                 "<p>There are unsaved changes to the annotations.</p>\n"
                 "<p>Do you want to discard changes and close the annotator?</p>",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 event.ignore()
                 return
 
@@ -1823,6 +1808,8 @@ class Annotator(QWidget):
             None: Modifies self.ui
 
         """
+        if not self.scene:
+            return
         if self.ui.zoomCB.currentText() == "Fit page":
             self.view.zoomFitPage()
         elif self.ui.zoomCB.currentText() == "Fit width":

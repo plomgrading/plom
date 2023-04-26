@@ -2,8 +2,8 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt, QStringListModel
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QStringListModel
+from PyQt6.QtWidgets import (
     QCheckBox,
     QCompleter,
     QDialog,
@@ -91,8 +91,8 @@ class HWTab(QWidget):
         self.sidlist = QStringListModel()
         self.sidlist.setStringList([x for x in self.sidTestDict])
         self.sidcompleter = QCompleter()
-        self.sidcompleter.setCaseSensitivity(Qt.CaseInsensitive)
-        self.sidcompleter.setFilterMode(Qt.MatchContains)
+        self.sidcompleter.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.sidcompleter.setFilterMode(Qt.MatchFlag.MatchContains)
         self.sidcompleter.setModel(self.sidlist)
         self.sidle.setCompleter(self.sidcompleter)
         qgb = QGroupBox("&Assign to questions:")
@@ -207,7 +207,7 @@ class UnknownViewWindow(QDialog):
 
         self.img = ImageViewWidget(self, fnames, dark_background=True)
         self.optionTW = QTabWidget()
-        self.optionTW.setTabPosition(QTabWidget.East)
+        self.optionTW.setTabPosition(QTabWidget.TabPosition.East)
 
         cancelB = QPushButton("&Cancel")
         cancelB.clicked.connect(self.reject)

@@ -15,10 +15,10 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QPixmap, QSyntaxHighlighter, QTextCharFormat
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QPixmap, QSyntaxHighlighter, QTextCharFormat
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QCheckBox,
     QLabel,
     QComboBox,
@@ -118,8 +118,8 @@ class WideTextEdit(QTextEdit):
         return sz
 
     def keyPressEvent(self, event):
-        if event.modifiers() == Qt.ShiftModifier and (
-            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+        if event.modifiers() == Qt.KeyboardModifier.ShiftModifier and (
+            event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
         ):
             # print("WideTextEdit: ignoring Shift-Enter event")
             event.ignore()
@@ -194,10 +194,14 @@ class AddRubricBox(QDialog):
         self.label_rubric_id = QLabel("Will be auto-assigned")
         self.Luser = QLabel()
 
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
+        sizePolicy = QSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding
+        )
         sizePolicy.setVerticalStretch(3)
         self.TE.setSizePolicy(sizePolicy)
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy = QSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         sizePolicy.setVerticalStretch(1)
         self.TEmeta.setSizePolicy(sizePolicy)
 
@@ -205,7 +209,9 @@ class AddRubricBox(QDialog):
         flay.addRow("Text", self.TE)
         lay = QHBoxLayout()
         lay.addItem(
-            QSpacerItem(32, 10, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+            QSpacerItem(
+                32, 10, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
+            )
         )
         lay.addWidget(QLabel("Choose text from page:"))
         lay.addWidget(self.reapable_CB)
@@ -229,8 +235,14 @@ class AddRubricBox(QDialog):
         lay.addWidget(self.relative_value_SB)
         self.relative_value_SB.valueChanged.connect(b.click)
         # self.relative_value_SB.clicked.connect(b.click)
-        lay.addItem(QSpacerItem(16, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        lay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        lay.addItem(
+            QSpacerItem(16, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
+        lay.addItem(
+            QSpacerItem(
+                48, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+            )
+        )
         vlay.addLayout(lay)
         hlay = QHBoxLayout()
         b = QRadioButton("absolute")
@@ -263,7 +275,11 @@ class AddRubricBox(QDialog):
                 w = hlay.itemAt(i).widget()
                 if w:
                     w.setEnabled(False)
-        hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        hlay.addItem(
+            QSpacerItem(
+                48, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+            )
+        )
         vlay.addLayout(hlay)
         flay.addRow("Marks", frame)
 
@@ -273,10 +289,10 @@ class AddRubricBox(QDialog):
         self.scopeButton.setChecked(False)
         self.scopeButton.setAutoRaise(True)
         self.scopeButton.setText("Scope")
-        self.scopeButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.scopeButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.scopeButton.clicked.connect(self.toggle_scope_elements)
         frame = QFrame()
-        frame.setFrameStyle(QFrame.StyledPanel)
+        frame.setFrameStyle(QFrame.Shape.StyledPanel)
         self.scope_frame = frame
         flay.addRow(self.scopeButton, frame)
         vlay = QVBoxLayout(frame)
@@ -299,7 +315,9 @@ class AddRubricBox(QDialog):
         le = QLineEdit()
         lay.addWidget(le)
         self.version_specific_le = le
-        space = QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        space = QSpacerItem(
+            48, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
         self.version_specific_space = space
         lay.addItem(space)
         vlay.addLayout(lay)
@@ -336,7 +354,11 @@ class AddRubricBox(QDialog):
         # b.setToolTip("Delete currently-selected group")
         # b.setAutoRaise(True)
         # hlay.addWidget(b)
-        hlay.addItem(QSpacerItem(48, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        hlay.addItem(
+            QSpacerItem(
+                48, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+            )
+        )
         b = QToolButton(text="What are groups?")
         b.setAutoRaise(True)
         msg = """<p>Groups are intended for multi-part questions.
@@ -358,7 +380,9 @@ class AddRubricBox(QDialog):
         hlay.addWidget(b)
         vlay.addLayout(hlay)
         hlay = QHBoxLayout()
-        hlay.addItem(QSpacerItem(24, 10, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hlay.addItem(
+            QSpacerItem(24, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         # TODO: note default for absolute rubrics?  (once it is the default)
         c = QCheckBox("Exclusive in this group (at most one such rubric can be placed)")
         hlay.addWidget(c)
@@ -384,7 +408,9 @@ class AddRubricBox(QDialog):
         flay.addRow("Rubric ID", self.label_rubric_id)
         flay.addRow("Created by", self.Luser)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
 
         vlay = QVBoxLayout()
         vlay.addLayout(flay)
@@ -449,7 +475,7 @@ class AddRubricBox(QDialog):
                     self.group_combobox.insertItem(-1, g)
                 self.group_combobox.setCurrentText(g)
             else:
-                self.group_checkbox.setCheckState(Qt.PartiallyChecked)
+                self.group_checkbox.setCheckState(Qt.CheckState.PartiallyChecked)
                 self.group_combobox.setEnabled(False)
 
             if len(exclusive_tags) == 0:
@@ -457,7 +483,7 @@ class AddRubricBox(QDialog):
             elif len(exclusive_tags) == 1:
                 self.group_excl.setChecked(True)
             else:
-                self.group_excl.setCheckState(Qt.PartiallyChecked)
+                self.group_excl.setCheckState(Qt.CheckState.PartiallyChecked)
 
             if not group_tags and not exclusive_tags:
                 pass
@@ -622,7 +648,7 @@ class AddRubricBox(QDialog):
             self,
             "New group for rubric",
             "<p>New group for rubric.</p><p>(Currently no spaces allowed.)</p>",
-            QLineEdit.Normal,
+            QLineEdit.EchoMode.Normal,
             suggested_name,
         )
         if not ok:
@@ -654,24 +680,24 @@ class AddRubricBox(QDialog):
 
     def toggle_scope_elements(self):
         if self.scopeButton.isChecked():
-            self.scopeButton.setArrowType(Qt.DownArrow)
+            self.scopeButton.setArrowType(Qt.ArrowType.DownArrow)
             # QFormLayout.setRowVisible but only in Qt 6.4!
             # instead we are using a QFrame
             self.scope_frame.setVisible(True)
         else:
-            self.scopeButton.setArrowType(Qt.RightArrow)
+            self.scopeButton.setArrowType(Qt.ArrowType.RightArrow)
             self.scope_frame.setVisible(False)
 
     def keyPressEvent(self, event):
-        if event.modifiers() == Qt.ShiftModifier and (
-            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+        if event.modifiers() == Qt.KeyboardModifier.ShiftModifier and (
+            event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
         ):
             # print("Dialog: Shift-Enter event")
             event.accept()
             self.accept()
             return
-        if event.modifiers() == Qt.ControlModifier and (
-            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier and (
+            event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter
         ):
             # print("Dialog: Ctrl-Enter event")
             event.accept()
@@ -711,7 +737,7 @@ class AddRubricBox(QDialog):
             res = resources.files(plom.client.icons) / "crazy_paperclip.svg"
             pix = QPixmap()
             pix.loadFromData(res.read_bytes())
-            pix = pix.scaledToHeight(150, Qt.SmoothTransformation)
+            pix = pix.scaledToHeight(150, Qt.TransformationMode.SmoothTransformation)
             if (
                 SimpleQuestion.ask(
                     self,
@@ -724,7 +750,7 @@ class AddRubricBox(QDialog):
                     """,
                     icon_pixmap=pix,
                 )
-                == QMessageBox.Yes
+                == QMessageBox.StandardButton.Yes
             ):
                 self.TE.setText("tex: " + txt)
         super().accept()

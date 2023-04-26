@@ -15,6 +15,10 @@
 #
 # TODO: hopefully just temporary, until we can lift these values from setup.py
 
+# Not really server deps
+PyQt6==6.2.0
+PyQt6-sip==13.1.0
+
 appdirs==1.4.3
 aiohttp==3.7.2
 arrow==1.1.1
@@ -28,6 +32,8 @@ pandas==1.0.0
 peewee==3.13.3
 pymupdf==1.21.0
 PyMySQL==1.0.2
+pytest==6.0.0
+pytest-qt==4.1.0
 scikit-learn==0.23.1
 stdiomask==0.0.6
 tomli==2.0.1

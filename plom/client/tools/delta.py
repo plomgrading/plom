@@ -3,9 +3,9 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QPen, QColor, QBrush
-from PyQt5.QtWidgets import QGraphicsTextItem, QGraphicsItem
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QPen, QColor, QBrush
+from PyQt6.QtWidgets import QGraphicsTextItem, QGraphicsItem
 
 from plom.client.tools.text import UndoStackMoveTextMixin
 
@@ -23,9 +23,9 @@ class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         font.setPixelSize(round(1.25 * fontsize))
         self.setFont(font)
         # Is not editable.
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         # centre under the mouse-click.
         self.setPos(pt)
         cr = self.boundingRect()
@@ -68,9 +68,9 @@ class GhostDelta(QGraphicsTextItem):
         super().__init__()
         self.display_delta = display_delta
         if legal:
-            self.setDefaultTextColor(Qt.blue)
+            self.setDefaultTextColor(QColor("blue"))
         else:
-            self.setDefaultTextColor(Qt.lightGray)
+            self.setDefaultTextColor(QColor("lightGray"))
 
         self.setPlainText(" {} ".format(self.display_delta))
         font = QFont("Helvetica")
@@ -78,20 +78,20 @@ class GhostDelta(QGraphicsTextItem):
         font.setPixelSize(round(1.25 * fontsize))
         self.setFont(font)
         # Is not editable.
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
 
     def changeDelta(self, display_delta, legal):
         self.display_delta = display_delta
         self.setPlainText(" {} ".format(self.display_delta))
         if legal:
-            self.setDefaultTextColor(Qt.blue)
+            self.setDefaultTextColor(QColor("blue"))
         else:
-            self.setDefaultTextColor(Qt.lightGray)
+            self.setDefaultTextColor(QColor("lightGray"))
 
     def paint(self, painter, option, widget):
         # paint the background
-        painter.setPen(QPen(Qt.blue, 1))
+        painter.setPen(QPen(QColor("blue"), 1))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super().paint(painter, option, widget)
