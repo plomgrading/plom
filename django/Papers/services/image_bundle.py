@@ -23,6 +23,7 @@ from Papers.models import (
     FixedPage,
     MobilePage,
     QuestionPage,
+    IDPage,
     Paper,
 )
 from .paper_info import PaperInfoService
@@ -209,8 +210,10 @@ class ImageBundleService:
             paper_instance = Paper.objects.get(paper_number=paper)
             mts.create_task(paper_instance, question)
 
-            if not its.id_task_exists(paper_instance):
-                its.create_task(paper_instance)
+        for id_page in self.get_id_pages_in_bundle(uploaded_bundle):
+            paper = id_page.paper
+            if not its.id_task_exists(paper):
+                its.create_task(paper)
 
     def get_staged_img_location(self, staged_image):
         """
@@ -359,3 +362,15 @@ class ImageBundleService:
                 result["not_ready"].append((paper, question_num))
 
         return result
+
+    @transaction.atomic
+    def get_id_pages_in_bundle(self, bundle):
+        """
+        Get all of the ID pages in an uploaded bundle, in order to
+        initialize ID tasks.
+
+        Args:
+            bundle: a Bundle instance that has just been uploaded.
+        """
+
+        return IDPage.objects.filter(image__bundle=bundle)
