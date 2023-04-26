@@ -17,8 +17,8 @@ class PageImageProcessor:
         Return a string representing a page orientation. The choices are:
             upright: page doesn't need to be rotated
             upside_down: page should be rotated 180 degrees
-            turned_left: page should be rotated 90 degrees
-            turned_right: page should be rotated -90 degrees
+            turned_left: page should be rotated -90 degrees
+            turned_right: page should be rotated 90 degrees
 
         The "expected" quadrants are the "quadrant" values in qr_code_data,
         and are labelled 1-4. The "actual" quadrants are the keys in qr_code_data,
@@ -160,9 +160,9 @@ class PageImageProcessor:
             return 0
 
         if orientation == "turned_right":
-            rotate_angle = -90
-        elif orientation == "turned_left":
             rotate_angle = 90
+        elif orientation == "turned_left":
+            rotate_angle = -90
         else:
             rotate_angle = 180
 
