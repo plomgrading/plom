@@ -184,6 +184,10 @@ class Command(BaseCommand):
                     dat.append("extra page without data")
             elif page["status"] in ["error", "discard"]:
                 dat.append(page["info"]["reason"])
+            else:
+                raise CommandError(
+                    "Expected page with status: known, unknown, extra, discard, error, but got {page['status']}"
+                )
 
             dat.append(page["rotation"])
 
