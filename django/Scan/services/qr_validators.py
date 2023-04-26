@@ -79,11 +79,7 @@ class QRErrorService:
                         img_pk,
                         "Image collides with images in this bundle at positions "
                         + ", ".join(
-                            str(
-                                img_bundle_order[x]
-                            )  # bundle_order starts from 1 not zero.
-                            for x in colliding
-                            if x != img_pk
+                            str(img_bundle_order[x]) for x in colliding if x != img_pk
                         ),
                     )
                 )

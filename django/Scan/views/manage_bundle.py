@@ -78,7 +78,7 @@ class ManageBundleView(ScannerRequiredView):
                 "papers_pages_list": papers_pages_list,
                 "current_page": pages[
                     index - 1
-                ],  # since index starts from 1 but list starts from zero
+                ],  # since we 1-index but the list is 0-indexed
                 "index": index,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,

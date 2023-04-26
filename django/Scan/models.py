@@ -35,7 +35,7 @@ class StagingImage(models.Model):
     """
     An image of a scanned page that isn't validated.
 
-    Note that bundle_order is the position of the image with the pdf. This order starts from 1 rather than zero.
+    Note that bundle_order is the 1-indexed position of the image with the pdf. This contrasts with pymupdf (for example) for which pages are 0-indexed.
     """
 
     def _staging_image_upload_path(self, filename):
