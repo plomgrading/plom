@@ -863,6 +863,14 @@ class ScanService:
         return pages
 
     @transaction.atomic
+    def get_bundle_pages_info_cmd(self, bundle_name):
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+        return self.get_bundle_pages_info(bundle_obj)
+
+    @transaction.atomic
     def get_bundle_single_page_info(self, bundle_obj, index):
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
