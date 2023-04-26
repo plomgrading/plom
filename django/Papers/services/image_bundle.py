@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Natalie Balashov
 
 import pathlib
 import uuid
@@ -164,7 +165,6 @@ class ImageBundleService:
                     original_name=staged.image_file.name,
                     image_file=File(fh, name=image_save_name(staged)),
                     hash=staged.image_hash,
-                    rotation=staged.rotation,
                 )
                 image.save()
 
