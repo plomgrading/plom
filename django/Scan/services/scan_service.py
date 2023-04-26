@@ -509,7 +509,7 @@ class ScanService:
 
         TODO: some other routine for a page where all three QRcodes failed?
         """
-        idx = user_supplied_idx - 1
+        idx = user_supplied_idx  # internal bundle-order starts from 1 not zero.
 
         bundle = StagingBundle.objects.get(slug=bundle_name)
         # note that this does not tell us if it is because the index is out of range
@@ -835,7 +835,9 @@ class ScanService:
             pages[img.bundle_order] = {
                 "status": img.image_type,
                 "info": {},
-                "order": f"{img.bundle_order+1}".zfill(n_digits),
+                "order": f"{img.bundle_order}".zfill(
+                    n_digits
+                ),  # order starts from 1 not zero
                 "rotation": img.rotation,
             }
 
@@ -870,7 +872,9 @@ class ScanService:
         img = bundle_obj.stagingimage_set.get(bundle_order=index)
         current_page = {
             "status": img.image_type,
-            "order": f"{img.bundle_order+1}".zfill(n_digits),
+            "order": f"{img.bundle_order}".zfill(
+                n_digits
+            ),  # order starts from 1 not zero
             "rotation": img.rotation,
             "qr_codes": img.parsed_qr,
         }
@@ -907,17 +911,20 @@ def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
+    # note that we want to index bundle images from 1 not zero,
+    # so we have to offset the index when we pass it to pymupdf
+    # in the actual huey-task
     with tempfile.TemporaryDirectory() as tmpdir:
         task_list = [
             huey_child_get_page_image(
                 bundle_pk,
-                pg,
+                pg,  # note pg starts from one not zero
                 pathlib.Path(tmpdir),
-                f"page{pg:05}",
+                f"page{pg:05}",  # filename matches our index (starts from 1)
                 quiet=True,
                 debug_jpeg=debug_jpeg,
             )
-            for pg in range(bundle_obj.number_of_pages)
+            for pg in range(1, bundle_obj.number_of_pages + 1)
         ]
 
         # results = [X.get(blocking=True) for X in task_list]
@@ -1003,7 +1010,7 @@ def huey_child_get_page_image(
 
     Args:
         bundle_pk: bundle DB object's primary key
-        index (int): bundle order of page
+        index (int): bundle order of page - starting from 1 not zero
         basedir (pathlib.Path): were to put the image
         basename (str): a basic filename without the extension
 
@@ -1014,9 +1021,11 @@ def huey_child_get_page_image(
     """
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
+    # Pymupdf indexes pages from zero not one, so when we grab the page with **our** index N,
+    # we ask pymupdf for its page with index N-1.
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
         save_path = render_page_to_bitmap(
-            pdf_doc[index],
+            pdf_doc[index - 1],  # pymupdf index starts from zero, not 1; we start at 1.
             basedir,
             basename,
             bundle_obj.pdf_file,

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 
 from django.shortcuts import render
@@ -34,12 +35,12 @@ class ManageBundleView(ScannerRequiredView):
         discard_pages = scanner.get_n_discard_images(bundle)
         error_pages = scanner.get_n_error_images(bundle)
 
-        if index >= n_pages:
+        if index < 1 or index > n_pages:
             raise Http404("Bundle page does not exist.")
 
         page_info_dict = scanner.get_bundle_pages_info(bundle)
         pages = [
-            page_info_dict[k] for k in range(len(page_info_dict))
+            page_info_dict[k] for k in sorted(page_info_dict.keys())
         ]  # flatten into ordered list
 
         # also transform pages_info_dict into bundle-summary-info
@@ -75,9 +76,10 @@ class ManageBundleView(ScannerRequiredView):
                 "timestamp": timestamp,
                 "pages": pages,
                 "papers_pages_list": papers_pages_list,
-                "current_page": pages[index],
+                "current_page": pages[
+                    index - 1
+                ],  # since index starts from 1 but list starts from zero
                 "index": index,
-                "one_index": index + 1,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
@@ -113,7 +115,7 @@ class GetBundleNavFragmentView(ScannerRequiredView):
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         n_pages = scanner.get_n_images(bundle)
-        if index >= n_pages:
+        if index < 0 or index > n_pages:
             raise Http404("Bundle page does not exist.")
         current_page = scanner.get_bundle_single_page_info(bundle, index)
 
@@ -122,7 +124,6 @@ class GetBundleNavFragmentView(ScannerRequiredView):
                 "slug": bundle.slug,
                 "timestamp": timestamp,
                 "index": index,
-                "one_index": index + 1,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
