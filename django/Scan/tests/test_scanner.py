@@ -369,6 +369,56 @@ class ScanServiceTests(TestCase):
                 self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
                 self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
+    def test_parse_qr_codes_jpeg_exif_90(self):
+        """
+        Test ScanService.parse_qr_code() when image exif indicates 90 counterclockwise rotation
+        """
+        scanner = ScanService()
+
+        image_original_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        qrs_original = QRextract(image_original_path)
+        codes_original = scanner.parse_qr_code([qrs_original])
+
+        image_original = Image.open(image_original_path)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            image_exif_90_path = pathlib.Path(tmpdir) / "rot_exif_90.jpeg"
+            image_original.save(image_exif_90_path)
+            rotate.rotate_bitmap_jpeg_exif(image_exif_90_path, 90)
+            with open(image_exif_90_path, "rb") as f:
+                im = exif.Image(f)
+            self.assertEquals(im.get("orientation"), 8)
+
+            qrs_90_rot = QRextract(image_exif_90_path)
+            codes_90_rot = scanner.parse_qr_code([qrs_90_rot])
+
+            pipr = PageImageProcessor()
+            has_had_rotation = pipr.rotate_page_image(image_exif_90_path, codes_90_rot)
+            self.assertEquals(has_had_rotation, -90)
+
+            with open(image_exif_90_path, "rb") as f:
+                im = exif.Image(f)
+            self.assertEquals(im.get("orientation"), 1)
+
+            # read QR codes a second time due to rotation of image
+            qrs_90_rot = QRextract(image_exif_90_path)
+            codes_90_rot = scanner.parse_qr_code([qrs_90_rot])
+
+            xy_upright = []
+            xy_90_rot = []
+
+            for q, p in zip(codes_original, codes_90_rot):
+                xy_upright.append(
+                    [codes_original[q]["x_coord"], codes_original[q]["y_coord"]]
+                )
+                xy_90_rot.append(
+                    [codes_90_rot[p]["x_coord"], codes_90_rot[p]["y_coord"]]
+                )
+
+            for original, rotated in zip(xy_upright, xy_90_rot):
+                self.assertTrue((original[0] - rotated[0]) / rotated[0] < 0.01)
+                self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
+
     def test_known_images(self):
         """
         Test ScanService.get_all_known_images()
