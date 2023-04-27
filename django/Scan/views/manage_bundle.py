@@ -25,6 +25,13 @@ class ManageBundleView(ScannerRequiredView):
     """
 
     def build_context(self, timestamp, user, index):
+        """Build a context for a particular page of a bundle.
+
+        Args:
+             timestamps (float): select a bundle by its timestamp.
+             user (todo): which user.
+             index (int): 1-indexed.
+        """
         context = super().build_context()
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, user)
@@ -39,9 +46,8 @@ class ManageBundleView(ScannerRequiredView):
             raise Http404("Bundle page does not exist.")
 
         page_info_dict = scanner.get_bundle_pages_info(bundle)
-        pages = [
-            page_info_dict[k] for k in sorted(page_info_dict.keys())
-        ]  # flatten into ordered list
+        # flatten into ordered list
+        pages = [page_info_dict[k] for k in sorted(page_info_dict.keys())]
 
         # also transform pages_info_dict into bundle-summary-info
         # paper: [known, page_number, bundle_order], or
@@ -76,9 +82,7 @@ class ManageBundleView(ScannerRequiredView):
                 "timestamp": timestamp,
                 "pages": pages,
                 "papers_pages_list": papers_pages_list,
-                "current_page": pages[
-                    index - 1
-                ],  # since we 1-index but the list is 0-indexed
+                "current_page": pages[index - 1],  # list is 0-indexed
                 "index": index,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,

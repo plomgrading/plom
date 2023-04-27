@@ -907,9 +907,7 @@ def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
-    # note that we want to index bundle images from 1 not zero,
-    # so we have to offset the index when we pass it to pymupdf
-    # in the actual huey-task
+    # note that we index bundle images from 1 not zero,
     with tempfile.TemporaryDirectory() as tmpdir:
         task_list = [
             huey_child_get_page_image(
@@ -1017,11 +1015,9 @@ def huey_child_get_page_image(
     """
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
-    # Pymupdf 0-indexes pages and **not** 1-index, so when we grab the page with **our** index N,
-    # we ask pymupdf for its page with index N-1.
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
         save_path = render_page_to_bitmap(
-            pdf_doc[index - 1],  # pymupdf is 0-indexed; we use a 1-index.
+            pdf_doc[index - 1],  # PyMuPDF is 0-indexed
             basedir,
             basename,
             bundle_obj.pdf_file,
