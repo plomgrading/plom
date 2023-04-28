@@ -71,12 +71,18 @@ class MarkingTaskServiceTests(TestCase):
         task1 = baker.make(
             MarkingTask, status=MarkingTask.COMPLETE, paper__paper_number=1, code="1"
         )
-        task2 = baker.make(MarkingTask, status=MarkingTask.OUT, paper__paper_number=2, code="2")
-        task3 = baker.make(MarkingTask, status=MarkingTask.TO_DO, paper__paper_number=3, code="3")
+        task2 = baker.make(
+            MarkingTask, status=MarkingTask.OUT, paper__paper_number=2, code="2"
+        )
+        task3 = baker.make(
+            MarkingTask, status=MarkingTask.TO_DO, paper__paper_number=3, code="3"
+        )
         task4 = baker.make(
             MarkingTask, status=MarkingTask.COMPLETE, paper__paper_number=4, code="4"
         )
-        task5 = baker.make(MarkingTask, status=MarkingTask.TO_DO, paper__paper_number=5, code="5")
+        task5 = baker.make(
+            MarkingTask, status=MarkingTask.TO_DO, paper__paper_number=5, code="5"
+        )
 
         mts = MarkingTaskService()
         task = mts.get_first_available_task()

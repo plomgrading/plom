@@ -158,6 +158,8 @@ class IdentifyTaskService:
             user: reference to a User instance
         """
 
-        user_tasks = PaperIDTask.objects.filter(assigned_user=user, status=PaperIDTask.OUT)
+        user_tasks = PaperIDTask.objects.filter(
+            assigned_user=user, status=PaperIDTask.OUT
+        )
         for task in user_tasks:
             self.surrender_task(user, task)

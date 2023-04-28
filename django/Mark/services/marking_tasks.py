@@ -91,7 +91,9 @@ class MarkingTaskService:
         """
         try:
             completed = MarkingTask.objects.filter(
-                status=MarkingTask.COMPLETE, question_number=question, question_version=version
+                status=MarkingTask.COMPLETE,
+                question_number=question,
+                question_version=version,
             )
             total = MarkingTask.objects.filter(
                 question_number=question, question_version=version
@@ -237,7 +239,9 @@ class MarkingTaskService:
             user: reference to a User instance
         """
 
-        user_tasks = MarkingTask.objects.filter(assigned_user=user, status=MarkingTask.OUT)
+        user_tasks = MarkingTask.objects.filter(
+            assigned_user=user, status=MarkingTask.OUT
+        )
         for task in user_tasks:
             self.surrender_task(user, task)
 
@@ -257,7 +261,10 @@ class MarkingTaskService:
         if the_task.assigned_user and the_task.assigned_user != user:
             return False
 
-        if the_task.status != MarkingTask.OUT and the_task.status != MarkingTask.COMPLETE:
+        if (
+            the_task.status != MarkingTask.OUT
+            and the_task.status != MarkingTask.COMPLETE
+        ):
             return False
 
         return True
