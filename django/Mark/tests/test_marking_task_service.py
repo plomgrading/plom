@@ -69,19 +69,19 @@ class MarkingTaskServiceTests(TestCase):
         """
 
         task1 = baker.make(
-            MarkingTask, status="complete", paper__paper_number=1, code="1"
+            MarkingTask, status=MarkingTask.COMPLETE, paper__paper_number=1, code="1"
         )
-        task2 = baker.make(MarkingTask, status="out", paper__paper_number=2, code="2")
-        task3 = baker.make(MarkingTask, status="todo", paper__paper_number=3, code="3")
+        task2 = baker.make(MarkingTask, status=MarkingTask.OUT, paper__paper_number=2, code="2")
+        task3 = baker.make(MarkingTask, status=MarkingTask.TO_DO, paper__paper_number=3, code="3")
         task4 = baker.make(
-            MarkingTask, status="complete", paper__paper_number=4, code="4"
+            MarkingTask, status=MarkingTask.COMPLETE, paper__paper_number=4, code="4"
         )
-        task5 = baker.make(MarkingTask, status="todo", paper__paper_number=5, code="5")
+        task5 = baker.make(MarkingTask, status=MarkingTask.TO_DO, paper__paper_number=5, code="5")
 
         mts = MarkingTaskService()
         task = mts.get_first_available_task()
         self.assertEqual(task, task3)
-        task3.status = "out"
+        task3.status = MarkingTask.OUT
         task3.save()
 
         next_task = mts.get_first_available_task()
@@ -94,7 +94,7 @@ class MarkingTaskServiceTests(TestCase):
 
         task1 = baker.make(
             MarkingTask,
-            status="todo",
+            status=MarkingTask.TO_DO,
             question_number=1,
             question_version=1,
             paper__paper_number=1,
@@ -102,7 +102,7 @@ class MarkingTaskServiceTests(TestCase):
         )
         task2 = baker.make(
             MarkingTask,
-            status="todo",
+            status=MarkingTask.TO_DO,
             question_number=1,
             question_version=2,
             paper__paper_number=2,
@@ -110,7 +110,7 @@ class MarkingTaskServiceTests(TestCase):
         )
         task3 = baker.make(
             MarkingTask,
-            status="todo",
+            status=MarkingTask.TO_DO,
             question_number=2,
             question_version=2,
             paper__paper_number=3,
@@ -128,12 +128,12 @@ class MarkingTaskServiceTests(TestCase):
 
         user1 = baker.make(User)
         user2 = baker.make(User)
-        task = baker.make(MarkingTask, status="todo")
+        task = baker.make(MarkingTask, status=MarkingTask.TO_DO)
 
         mts = MarkingTaskService()
         mts.assign_task_to_user(user1, task)
         task.refresh_from_db()
-        self.assertEqual(task.status, "out")
+        self.assertEqual(task.status, MarkingTask.OUT)
         self.assertEqual(task.assigned_user, user1)
 
         with self.assertRaisesMessage(RuntimeError, "Task is currently assigned."):
@@ -148,12 +148,12 @@ class MarkingTaskServiceTests(TestCase):
         """
 
         user = baker.make(User)
-        task = baker.make(MarkingTask, status="out")
+        task = baker.make(MarkingTask, status=MarkingTask.OUT)
         mts = MarkingTaskService()
 
         mts.surrender_task(user, task)
         task.refresh_from_db()
-        self.assertEqual(task.status, "todo")
+        self.assertEqual(task.status, MarkingTask.TO_DO)
 
     def test_user_can_update_task(self):
         """
@@ -171,7 +171,7 @@ class MarkingTaskServiceTests(TestCase):
         baker.make(
             MarkingTask,
             code="q0001g1",
-            status="out",
+            status=MarkingTask.OUT,
             assigned_user=user,
             paper=paper1,
             question_number=1,
@@ -179,7 +179,7 @@ class MarkingTaskServiceTests(TestCase):
         baker.make(
             MarkingTask,
             code="q0002g1",
-            status="todo",
+            status=MarkingTask.TO_DO,
             assigned_user=None,
             paper=paper2,
             question_number=1,
@@ -187,7 +187,7 @@ class MarkingTaskServiceTests(TestCase):
         baker.make(
             MarkingTask,
             code="q0003g1",
-            status="out",
+            status=MarkingTask.OUT,
             assigned_user=other_user,
             paper=paper3,
             question_number=1,
@@ -195,7 +195,7 @@ class MarkingTaskServiceTests(TestCase):
         baker.make(
             MarkingTask,
             code="q0004g1",
-            status="complete",
+            status=MarkingTask.COMPLETE,
             assigned_user=user,
             paper=paper4,
             question_number=1,
@@ -203,7 +203,7 @@ class MarkingTaskServiceTests(TestCase):
         baker.make(
             MarkingTask,
             code="q0005g1",
-            status="complete",
+            status=MarkingTask.COMPLETE,
             assigned_user=other_user,
             paper=paper5,
             question_number=1,

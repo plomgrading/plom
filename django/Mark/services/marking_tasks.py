@@ -91,7 +91,7 @@ class MarkingTaskService:
         """
         try:
             completed = MarkingTask.objects.filter(
-                status="complete", question_number=question, question_version=version
+                status=MarkingTask.COMPLETE, question_number=question, question_version=version
             )
             total = MarkingTask.objects.filter(
                 question_number=question, question_version=version
@@ -176,7 +176,7 @@ class MarkingTaskService:
                 no such task exists.
         """
 
-        available = MarkingTask.objects.filter(status="todo")
+        available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
 
         if question:
             available = available.filter(question_number=question)
@@ -208,11 +208,11 @@ class MarkingTaskService:
             task: reference to a MarkingTask instance
         """
 
-        if task.status == "out":
+        if task.status == MarkingTask.OUT:
             raise RuntimeError("Task is currently assigned.")
 
         task.assigned_user = user
-        task.status = "out"
+        task.status = MarkingTask.OUT
         task.save()
 
     def surrender_task(self, user, task):
@@ -226,7 +226,7 @@ class MarkingTaskService:
         """
 
         task.assigned_user = None
-        task.status = "todo"
+        task.status = MarkingTask.TO_DO
         task.save()
 
     def surrender_all_tasks(self, user):
@@ -237,7 +237,7 @@ class MarkingTaskService:
             user: reference to a User instance
         """
 
-        user_tasks = MarkingTask.objects.filter(assigned_user=user, status="out")
+        user_tasks = MarkingTask.objects.filter(assigned_user=user, status=MarkingTask.OUT)
         for task in user_tasks:
             self.surrender_task(user, task)
 
@@ -257,7 +257,7 @@ class MarkingTaskService:
         if the_task.assigned_user and the_task.assigned_user != user:
             return False
 
-        if the_task.status != "out" and the_task.status != "complete":
+        if the_task.status != MarkingTask.OUT and the_task.status != MarkingTask.COMPLETE:
             return False
 
         return True
@@ -285,7 +285,7 @@ class MarkingTaskService:
         Return the number of marking tasks that are completed.
         """
 
-        return len(MarkingTask.objects.filter(status="complete"))
+        return len(MarkingTask.objects.filter(status=MarkingTask.COMPLETE))
 
     def get_n_total_tasks(self):
         """
@@ -300,7 +300,7 @@ class MarkingTaskService:
         """
 
         task = self.get_task_from_code(code)
-        task.status = "complete"
+        task.status = MarkingTask.COMPLETE
         task.save()
 
     def save_annotation_image(self, md5sum, annot_img):
@@ -411,7 +411,7 @@ class MarkingTaskService:
         """
 
         complete_tasks = MarkingTask.objects.filter(
-            assigned_user=user, status="complete"
+            assigned_user=user, status=MarkingTask.COMPLETE
         )
         if question:
             complete_tasks = complete_tasks.filter(question_number=question)
