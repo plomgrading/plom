@@ -71,6 +71,10 @@ class BaseTask(PolymorphicModel):
     A base class for all "tasks" that are sent from the server to
     the PyQT client.
 
+    Status is represented by a choice kwarg, see
+    https://docs.djangoproject.com/en/4.2/ref/models/fields/#choices
+    for more info
+
     assigned_user: reference to User, the user currently attached to the task.
                    Can be null, can change over time.
     status: str, represents the status of the task: not started, sent to a client, completed
