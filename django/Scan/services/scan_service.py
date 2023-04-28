@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
+from collections import defaultdict
 import hashlib
 import pathlib
 import random
@@ -18,6 +19,7 @@ from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
+from django.db.models import Prefetch
 from django_huey import db_task
 from django.utils import timezone
 
@@ -40,6 +42,7 @@ from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
     StagingImage,
+    KnownStagingImage,
     ExtraStagingImage,
     DiscardStagingImage,
     ManagePageToImage,
@@ -826,12 +829,32 @@ class ScanService:
         return mode(paper_id), mode(page_num)
 
     @transaction.atomic
-    def get_bundle_pages_info(self, bundle_obj):
+    def get_bundle_pages_info_list(self, bundle_obj):
+        """Returns an of the pages within the given bundle ordered by
+        their bundle-order.  Each item in the list is a dict
+        containing the image-type, bundle-order, rotation, and info.
+        The info value is itself a dict containing different items
+        depending on the image-type. For error-pages and discard-pages
+        it contains the "reason" while for known pages it contains
+        paper_number, page_number and version. Finally for extra-pages
+        it contains paper_number, and question_list.
+
+        """
+
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
 
+        # We compute the list in two steps.
+        # First we compute a dict of (key, value) (bundle_order, page_information)
+        # Second we flatten that dict into an ordered list.
+
+        # To do build the dict, we loop over all images and set up the
+        # dict entries, and then loop over each separate image-type in
+        # order to populate the information-field. This allows us to
+        # prefetch the required information and so avoid any N+1 query
+        # problems.
         pages = {}
-        for img in bundle_obj.stagingimage_set.all():
+        for img in bundle_obj.stagingimage_set.all().order_by("bundle_order"):
             pages[img.bundle_order] = {
                 "status": img.image_type,
                 "info": {},
@@ -839,28 +862,78 @@ class ScanService:
                 "rotation": img.rotation,
             }
 
-        for img in bundle_obj.stagingimage_set.filter(image_type="error"):
+        for img in bundle_obj.stagingimage_set.filter(
+            image_type="error"
+        ).prefetch_related("errorstagingimage"):
             pages[img.bundle_order]["info"] = {
                 "reason": img.errorstagingimage.error_reason
             }
 
-        for img in bundle_obj.stagingimage_set.filter(image_type="discard"):
+        for img in bundle_obj.stagingimage_set.filter(
+            image_type="discard"
+        ).prefetch_related("discardstagingimage"):
             pages[img.bundle_order]["info"] = {
                 "reason": img.discardstagingimage.discard_reason
             }
 
-        for img in bundle_obj.stagingimage_set.filter(image_type="known"):
+        for img in bundle_obj.stagingimage_set.filter(
+            image_type="known"
+        ).prefetch_related("knownstagingimage"):
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.knownstagingimage.paper_number,
                 "page_number": img.knownstagingimage.page_number,
                 "version": img.knownstagingimage.version,
             }
-        for img in bundle_obj.stagingimage_set.filter(image_type="extra"):
+        for img in bundle_obj.stagingimage_set.filter(
+            image_type="extra"
+        ).prefetch_related("extrastagingimage"):
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.extrastagingimage.paper_number,
                 "question_list": img.extrastagingimage.question_list,
             }
-        return pages
+
+        # now build an ordered list by running the keys (which are bundle-order) of the pages-dict in order.
+        return [pages[ord] for ord in sorted(pages.keys())]
+
+    @transaction.atomic
+    def get_bundle_papers_pages_list(self, bundle_obj):
+        """Returns an ordered list of papers and their known/extra
+        pages in the given bundle.  Each item in the list is a pair
+        (paper_number, page-info). The page-info is itself a ordered
+        list of dicts. Each dict contains information about a page in
+        the given paper in the given bundle.
+        """
+
+        # We build the ordered list in two steps. First build a dict of lists indexed by paper-number.
+        papers = {}
+        # Loop over the known-images first and then the extra-pages.
+        for known in (
+            KnownStagingImage.objects.filter(staging_image__bundle=bundle_obj)
+            .order_by("paper_number", "page_number")
+            .prefetch_related("staging_image")
+        ):
+            papers.setdefault(known.paper_number, []).append(
+                {
+                    "type": "known",
+                    "page": known.page_number,
+                    "order": known.staging_image.bundle_order,
+                }
+            )
+        # Now loop over the extra pages
+        for extra in (
+            ExtraStagingImage.objects.filter(staging_image__bundle=bundle_obj)
+            .order_by("paper_number", "question_list")
+            .prefetch_related("staging_image")
+        ):
+            papers.setdefault(extra.paper_number, []).append(
+                {
+                    "type": "extra",
+                    "question_list": extra.question_list,
+                    "order": extra.staging_image.bundle_order,
+                }
+            )
+        # # recast paper_pages as an **ordered** list of tuples (paper, page-info)
+        return [(paper_number, page_info) for paper_number, page_info in sorted(papers.items())]
 
     @transaction.atomic
     def get_bundle_pages_info_cmd(self, bundle_name):
@@ -868,7 +941,7 @@ class ScanService:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
-        return self.get_bundle_pages_info(bundle_obj)
+        return self.get_bundle_pages_info_list(bundle_obj)
 
     @transaction.atomic
     def get_bundle_single_page_info(self, bundle_obj, index):
