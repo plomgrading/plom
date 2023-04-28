@@ -1066,9 +1066,10 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
         page_data = scanner.parse_qr_code([code_dict])
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
-    # Return the parsed QR codes and rotation done for parent process to store in db
+    # Return the parsed QR codes for parent process to store in db
+    # Zero rotation returned because rotate_page_image() modifies the image
     return {
         "image_pk": image_pk,
         "parsed_qr": page_data,
-        "rotation": has_had_rotation,
+        "rotation": 0,
     }
