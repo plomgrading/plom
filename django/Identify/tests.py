@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
 from datetime import timedelta
@@ -14,9 +14,7 @@ from Papers.models import Paper
 from Identify.services import IdentifyTaskService
 from Identify.models import (
     PaperIDTask,
-    PaperIDClaim,
     PaperIDAction,
-    SurrenderPaperIDTask,
 )
 
 
@@ -138,9 +136,6 @@ class IdentifyTaskTests(TestCase):
 
         self.assertEqual(task.status, "out")
         self.assertEqual(task.assigned_user, self.marker0)
-
-        claim = PaperIDClaim.objects.get(user=self.marker0)
-        self.assertEqual(claim.task, task)
 
     def test_out_claim_task(self):
         """

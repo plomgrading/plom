@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from Identify.models import (
     PaperIDTask,
     PaperIDAction,
-    PaperIDClaim,
-    SurrenderPaperIDTask,
 )
 from Papers.models import Paper, IDPage
 
@@ -23,15 +21,23 @@ class IdentifyTaskService:
 
         return PaperIDTask.objects.exists()
 
-    def init_id_tasks(self):
+    def create_task(self, paper):
         """
-        Placeholder method: init 10 ID tasks.
+        Create an identification task for a paper.
+
+        Args:
+            paper: a Paper instance
         """
 
-        for i in range(1, 11):
-            paper = Paper.objects.get(paper_number=i)
-            task = PaperIDTask(paper=paper)
-            task.save()
+        task = PaperIDTask(paper=paper)
+        task.save()
+
+    def id_task_exists(self, paper):
+        """
+        Return true if an ID tasks exists for a particular paper.
+        """
+
+        return PaperIDTask.objects.filter(paper=paper).exists()
 
     def get_latest_id_results(self, task):
         """
@@ -103,9 +109,6 @@ class IdentifyTaskService:
         task.status = "out"
         task.save()
 
-        action = PaperIDClaim(user=user, task=task)
-        action.save()
-
     def get_id_page(self, paper_number):
         """
         Return the ID page image of a certain test-paper.
@@ -146,12 +149,6 @@ class IdentifyTaskService:
         task.assigned_user = None
         task.status = "todo"
         task.save()
-
-        action = SurrenderPaperIDTask(
-            user=user,
-            task=task,
-        )
-        action.save()
 
     def surrender_all_tasks(self, user):
         """
