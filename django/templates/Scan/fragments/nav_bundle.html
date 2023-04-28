@@ -67,20 +67,6 @@
 				   data-bs-target="#discardImageModal">
 				   Discard
 				</a>
-				<div class="modal fade" id="discardImageModal" tabindex="-1" aria-labelledby="discardImageModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="modal-header">
-						<h5 class="modal-title" id="discardImageModalLabel">We don't recommend you to do this. Are you sure you want to discard this image?</h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-						</div>
-						<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-						<button type="button" class="btn btn-danger" hx-post="#">Discard</button>
-						</div>
-					</div>
-					</div>
-				</div>
 			  </div>
 		      {% elif current_page.status == 'extra' %}
 		      <div class="alert alert-info">
@@ -106,23 +92,9 @@
 			  <div>
 				<a class="btn btn-danger text-center w-100 mb-3" 
 				   data-bs-toggle="modal"
-				   data-bs-target="#discardImageModal">
+				   data-bs-target="#discardExtraImageModal">
 				   Discard
 				</a>
-				<div class="modal fade" id="discardImageModal" tabindex="-1" aria-labelledby="discardImageModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="modal-header">
-						<h5 class="modal-title" id="discardImageModalLabel">We don't recommend you to do this. Are you sure you want to discard this image?</h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-						</div>
-						<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-						<button type="button" class="btn btn-danger" hx-post="#">Discard</button>
-						</div>
-					</div>
-					</div>
-				</div>
 			  </div>
 		      {% elif current_page.status == 'unknown' %}
 		      <div class="alert alert-warning">
@@ -134,23 +106,9 @@
 			  <div>
 				<a class="btn btn-danger text-center w-100 mb-3" 
 				   data-bs-toggle="modal"
-				   data-bs-target="#discardImageModal">
+				   data-bs-target="#discardUnknownImageModal">
 				   Discard
 				</a>
-				<div class="modal fade" id="discardImageModal" tabindex="-1" aria-labelledby="discardImageModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="modal-header">
-						<h5 class="modal-title" id="discardImageModalLabel">We don't recommend you to do this. Are you sure you want to discard this image?</h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-						</div>
-						<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-						<button type="button" class="btn btn-danger" hx-post="#">Discard</button>
-						</div>
-					</div>
-					</div>
-				</div>
 			  </div>
 		      {% elif current_page.status == 'discard' %}
 		      <div class="alert alert-dark">
@@ -181,20 +139,6 @@
 				   data-bs-target="#discardImageModal">
 				   Discard
 				</a>
-				<div class="modal fade" id="discardImageModal" tabindex="-1" aria-labelledby="discardImageModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="modal-header">
-						<h5 class="modal-title" id="discardImageModalLabel">We don't recommend you to do this. Are you sure you want to discard this image?</h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-						</div>
-						<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-						<button type="button" class="btn btn-danger" hx-post="#">Discard</button>
-						</div>
-					</div>
-					</div>
-				</div>
 			  </div>
 		      {% elif current_page.status == 'unread' %}
 		      <div class="alert alert-dark">
@@ -210,4 +154,18 @@
             </div>
         </div>
     </div>
+</div>
+<div class="modal fade" id="discardImageModal" tabindex="-1" aria-labelledby="discardImageModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+	<div class="modal-content">
+		<div class="modal-header">
+		<h5 class="modal-title" id="discardImageModalLabel">We don't recommend you to do this. Are you sure you want to discard this image?</h5>
+		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+		</div>
+		<div class="modal-footer">
+		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+		<button type="button" class="btn btn-danger" hx-post="{% url 'discard_image' timestamp index %}">Discard</button>
+		</div>
+	</div>
+	</div>
 </div>

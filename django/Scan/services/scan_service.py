@@ -15,7 +15,7 @@ import fitz
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
@@ -243,6 +243,17 @@ class ScanService:
             user=user,
             timestamp=timestamp,
         )
+
+    @transaction.atomic
+    def get_img_obj(self, bundle_obj, bundle_order):
+        """
+        Get an image from the database based on a bundle and the page index.
+        """
+        try:
+            img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find an image at order {bundle_order}")
+        return img_obj
 
     @transaction.atomic
     def get_image(self, timestamp, user, index):
