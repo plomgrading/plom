@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from rest_framework.views import APIView
@@ -35,11 +35,15 @@ class GetClasslist(APIView):
 
 class GetIDPredictions(APIView):
     """
-    Get predictions for test-paper identification. TODO: not implemented in Django
-    For now, just return all the pre-named papers
+    Get predictions for test-paper identification.
+
+    TODO: not implemented in Django, Issue #2672.
+    For now, just return all the pre-named papers.
     """
 
-    def get(self, request):
+    def get(self, request, *, predictor=None):
+        # TODO: Issue #2672
+        assert predictor is None or predictor == "prename"
         sstu = StagingStudentService()
         if sstu.are_there_students():
             predictions = {}
@@ -110,7 +114,7 @@ class IDclaimThisTask(APIView):
             return Response(status=status.HTTP_200_OK)
         except RuntimeError:
             return Response(
-                f"ID task {paper_id} already claimed.", status=status.HTTP_409_CONFLICT
+                f"ID task {paper_id} already claimed", status=status.HTTP_409_CONFLICT
             )
 
     def put(self, request, paper_id):
