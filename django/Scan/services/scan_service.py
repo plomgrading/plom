@@ -933,7 +933,10 @@ class ScanService:
                 }
             )
         # # recast paper_pages as an **ordered** list of tuples (paper, page-info)
-        return [(paper_number, page_info) for paper_number, page_info in sorted(papers.items())]
+        return [
+            (paper_number, page_info)
+            for paper_number, page_info in sorted(papers.items())
+        ]
 
     @transaction.atomic
     def get_bundle_pages_info_cmd(self, bundle_name):

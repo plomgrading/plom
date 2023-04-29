@@ -49,7 +49,7 @@ class ManageBundleView(ScannerRequiredView):
         bundle_page_info_list = scanner.get_bundle_pages_info_list(bundle)
         # and get an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
         bundle_papers_pages_list = scanner.get_bundle_papers_pages_list(bundle)
-        
+
         context.update(
             {
                 "slug": bundle.slug,
