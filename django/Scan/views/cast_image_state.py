@@ -9,7 +9,9 @@ from Scan.services import ScanCastService, ScanService
 
 
 class DiscardImageType(ScannerRequiredView):
-    """ """
+    """
+    Discard a particular StagingImage type.
+    """
 
     def post(self, request, timestamp, index):
         user_obj = request.user
