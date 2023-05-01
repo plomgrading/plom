@@ -34,6 +34,8 @@ class StagingBundle(models.Model):
 class StagingImage(models.Model):
     """
     An image of a scanned page that isn't validated.
+
+    Note that bundle_order is the 1-indexed position of the image with the pdf. This contrasts with pymupdf (for example) for which pages are 0-indexed.
     """
 
     def _staging_image_upload_path(self, filename):
@@ -43,7 +45,7 @@ class StagingImage(models.Model):
         )
 
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
-    bundle_order = models.PositiveIntegerField(null=True)
+    bundle_order = models.PositiveIntegerField(null=True)  # starts from 1 not zero.
     image_file = models.ImageField(upload_to=_staging_image_upload_path)
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)

@@ -6,7 +6,7 @@
         <div class="col shadow-sm rounded" style="background-color: lightgrey;">
             <div class="row p-0">
                 <div class="col-sm-2 p-0 d-flex justify-content-center">
-                    {% if prev_idx >= 0 %}
+                    {% if prev_idx >= 1 %}
                     <button
                       class="btn w-100 h-100 d-flex justify-content-center"
                       hx-get="{% url 'scan_nav_bundle' timestamp prev_idx %}"
@@ -25,7 +25,7 @@
                     >
                 </div>
                 <div class="col-sm-2 p-0 d-flex justify-content-center">
-                    {% if next_idx < total_pages %}
+                    {% if next_idx <= total_pages %}
                     <button
                       class="btn w-100 h-100 d-flex justify-content-center"
 		      hx-get="{% url 'scan_nav_bundle' timestamp next_idx %}"
@@ -42,7 +42,7 @@
         <div class="col-lg-3">
             <div class="card h-100">
                 <div class="card-body">
-                  <h5 class="card-title">Page {{ one_index }} of {{ total_pages }}</h5>
+                  <h5 class="card-title">Page {{ index }} of {{ total_pages }}</h5>
 		    <p class="card-text">
 		      {% if current_page.status == 'known' %}
 		      <div class="alert alert-success">
