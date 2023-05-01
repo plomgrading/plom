@@ -245,24 +245,6 @@ class ScanService:
         )
 
     @transaction.atomic
-    def get_img_obj(self, bundle_obj, bundle_order):
-        """
-        Get an image from the database based on the bundle and the page index.
-
-        Args:
-            bundle_obj: (obj) An instance of a StagingBundle model class.
-            bundle_order: (int) Bundle order of a page.
-
-        Returns:
-            img_obj: (obj) An instance of a StagingImage model class.
-        """
-        try:
-            img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find an image at order {bundle_order}")
-        return img_obj
-
-    @transaction.atomic
     def get_image(self, timestamp, user, index):
         """
         Get an image from the database. To uniquely identify an image, we need a bundle
