@@ -82,11 +82,11 @@ class BaseTask(PolymorphicModel):
 
     # TODO: UUID for indexing
 
-    TO_DO = 1
-    OUT = 2
-    COMPLETE = 3
-    OUT_OF_DATE = 4
     StatusChoices = models.IntegerChoices("Status", "TO_DO OUT COMPLETE OUT_OF_DATE")
+    TO_DO = StatusChoices.TO_DO
+    OUT = StatusChoices.OUT
+    COMPLETE = StatusChoices.COMPLETE
+    OUT_OF_DATE = StatusChoices.OUT_OF_DATE
 
     assigned_user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time = models.DateTimeField(default=timezone.now)
