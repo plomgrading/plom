@@ -67,6 +67,8 @@ AppDir:
       # python3-dev
       # TODO: not sure if needed
       # python3-pkg-resources
+      # Otherwise QT_WPA_PLATFORM=xcb fails
+      - libxcb-cursor0
     exclude: []
 
   runtime:
