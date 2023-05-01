@@ -4,6 +4,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -935,11 +936,9 @@ linux_client_appimage:
     expire_in: 16 days
 
 
-# TODO: broken by the upgrade to PyQt6, currently set to manual
 # TODO: has PyQt6 pinned on lower version
 linuxbin_ubuntu2004:
   stage: packaging
-  when: manual
   allow_failure: true
   image: ubuntu:20.04
   before_script:
@@ -947,7 +946,7 @@ linuxbin_ubuntu2004:
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
     - apt-get --no-install-recommends --yes install iproute2 psmisc file binutils
       python3 python3-dev python3-wheel python3-setuptools python3-pip
-    - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
+    - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
     - pip install --upgrade pip
     - pip install PyQt6==6.4.2
     - pip install pyinstaller
@@ -977,7 +976,7 @@ linuxbin_ubuntu2204:
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
     - apt-get --no-install-recommends --yes install iproute2 psmisc file binutils
       python3 python3-dev python3-wheel python3-setuptools python3-pip
-    - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
+    - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
     - pip install --upgrade pip
     - pip install pyinstaller
   script:
