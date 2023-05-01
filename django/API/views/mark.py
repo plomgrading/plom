@@ -293,7 +293,7 @@ class MgetAnnotationImage(APIView):
     Get an annotation-image.
     """
 
-    def get(self, request, paper, question, edition):
+    def get(self, request, paper, question, edition=None):
         mts = MarkingTaskService()
         annotation = mts.get_latest_annotation(paper, question)
         annotation_task = annotation.task
