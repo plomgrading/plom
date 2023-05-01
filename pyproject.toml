@@ -30,3 +30,7 @@ omit = ["*/test_*", "/usr/*", "*/config*", "django/*"]
 # TODO: for now ignore the django folder
 addopts = "--ignore plom/django"
 qt_api = "pyqt6"
+
+[tool.djlint]
+ignore="H021,H023,H006,H013,H025"
+# TODO: many of these should be fixed instead of ignored!
