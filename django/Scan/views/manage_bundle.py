@@ -56,7 +56,6 @@ class ManageBundleView(ScannerRequiredView):
                 "timestamp": timestamp,
                 "pages": bundle_page_info_list,
                 "papers_pages_list": bundle_papers_pages_list,
-                "current_page": bundle_page_info_list[index - 1],  # list is 0-indexed
                 "index": index,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
