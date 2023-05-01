@@ -828,15 +828,22 @@ class ScanService:
 
     @transaction.atomic
     def get_bundle_pages_info_list(self, bundle_obj):
-        """Returns an of the pages within the given bundle ordered by
-        their bundle-order.  Each item in the list is a dict
-        containing the image-type, bundle-order, rotation, and info.
-        The info value is itself a dict containing different items
-        depending on the image-type. For error-pages and discard-pages
-        it contains the "reason" while for known pages it contains
-        paper_number, page_number and version. Finally for extra-pages
-        it contains paper_number, and question_list.
+        """List of info about the pages in a bundle in bundle order.
 
+        Args:
+            bundle_obj (todo): the pk reference to a bundle.
+
+        Returns:
+            list: the pages within the given bundle ordered by their
+            bundle-order.  Each item in the list is a dict with keys
+            ``status`` (the image type), ``order``, ``rotation``,
+            and ``info``.
+            The latter value is itself a dict containing different
+            items depending on the image-type.  For error-pages and
+            discard-pages, it contains the ``reason`` while for
+            known-pages it contains ``paper_number``, ``page_number``
+            and ``version``.  Finally for extra-pages, it contains
+            ``paper_number``, and ``question_list``.
         """
 
         # compute number of digits in longest page number to pad the page numbering
