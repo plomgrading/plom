@@ -936,7 +936,7 @@ linux_client_appimage:
     expire_in: 16 days
 
 
-# TODO: has PyQt6 pinned on lower version
+# TODO: broken by the upgrade to PyQt6, currently set to manual
 linuxbin_ubuntu2004:
   stage: packaging
   allow_failure: true
@@ -948,7 +948,6 @@ linuxbin_ubuntu2004:
       python3 python3-dev python3-wheel python3-setuptools python3-pip
     - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
     - pip install --upgrade pip
-    - pip install PyQt6==6.4.2
     - pip install pyinstaller
   script:
     - pip install -r requirements.txt.client
