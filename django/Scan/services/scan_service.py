@@ -5,7 +5,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from collections import defaultdict
 import hashlib
 import pathlib
 import random
@@ -22,7 +21,6 @@ from django.db.models import Q  # for queries involving "or", "and"
 from django.db.models import Prefetch
 from django_huey import db_task
 from django.utils import timezone
-
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap

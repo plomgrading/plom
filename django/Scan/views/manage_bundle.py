@@ -28,9 +28,9 @@ class ManageBundleView(ScannerRequiredView):
         """Build a context for a particular page of a bundle.
 
         Args:
-             timestamps (float): select a bundle by its timestamp.
-             user (todo): which user.
-             index (int): 1-indexed.
+            timestamps (float): select a bundle by its timestamp.
+            user (todo): which user.
+            index (int): 1-indexed.
         """
         context = super().build_context()
         scanner = ScanService()
