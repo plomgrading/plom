@@ -939,6 +939,7 @@ linux_client_appimage:
 # TODO: broken by the upgrade to PyQt6, currently set to manual
 linuxbin_ubuntu2004:
   stage: packaging
+  when: manual
   allow_failure: true
   image: ubuntu:20.04
   before_script:
