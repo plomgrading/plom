@@ -106,7 +106,7 @@
 						<div>
 							<a class="btn btn-danger text-center w-100 mb-3" 
 							   hx-post="{% url 'discard_image' timestamp index %}"
-							   hx-confirm="Are you sure you wish to discard this extra page?">
+							   hx-confirm="Are you sure you wish to discard this unknown page?">
 							Discard
 							</a>
 						</div>
@@ -135,8 +135,8 @@
 						</div>
 						<div>
 							<a class="btn btn-danger text-center w-100 mb-3" 
-							hx-post="{% url 'discard_image' timestamp index %}"
-							hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
+							   hx-post="{% url 'discard_image' timestamp index %}"
+							   hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
 							Discard
 							</a>
 						</div>
