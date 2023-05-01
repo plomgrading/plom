@@ -28,9 +28,9 @@ class ManageBundleView(ScannerRequiredView):
         """Build a context for a particular page of a bundle.
 
         Args:
-             timestamps (float): select a bundle by its timestamp.
-             user (todo): which user.
-             index (int): 1-indexed.
+            timestamps (float): select a bundle by its timestamp.
+            user (todo): which user.
+            index (int): 1-indexed.
         """
         context = super().build_context()
         scanner = ScanService()
@@ -45,7 +45,7 @@ class ManageBundleView(ScannerRequiredView):
         if index < 1 or index > n_pages:
             raise ValueError("Requested page outside range.")
 
-        # get an ordered list of bundle-page-info (ie info about each page-image in the bundle in bundle-order)
+        # list of dicts of page info, in bundle order
         bundle_page_info_list = scanner.get_bundle_pages_info_list(bundle)
         # and get an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
         bundle_papers_pages_list = scanner.get_bundle_papers_pages_list(bundle)

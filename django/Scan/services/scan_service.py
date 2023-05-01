@@ -5,7 +5,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from collections import defaultdict
 import hashlib
 import pathlib
 import random
@@ -22,7 +21,6 @@ from django.db.models import Q  # for queries involving "or", "and"
 from django.db.models import Prefetch
 from django_huey import db_task
 from django.utils import timezone
-
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
@@ -830,15 +828,22 @@ class ScanService:
 
     @transaction.atomic
     def get_bundle_pages_info_list(self, bundle_obj):
-        """Returns an of the pages within the given bundle ordered by
-        their bundle-order.  Each item in the list is a dict
-        containing the image-type, bundle-order, rotation, and info.
-        The info value is itself a dict containing different items
-        depending on the image-type. For error-pages and discard-pages
-        it contains the "reason" while for known pages it contains
-        paper_number, page_number and version. Finally for extra-pages
-        it contains paper_number, and question_list.
+        """List of info about the pages in a bundle in bundle order.
 
+        Args:
+            bundle_obj (todo): the pk reference to a bundle.
+
+        Returns:
+            list: the pages within the given bundle ordered by their
+            bundle-order.  Each item in the list is a dict with keys
+            ``status`` (the image type), ``order``, ``rotation``,
+            and ``info``.
+            The latter value is itself a dict containing different
+            items depending on the image-type.  For error-pages and
+            discard-pages, it contains the ``reason`` while for
+            known-pages it contains ``paper_number``, ``page_number``
+            and ``version``.  Finally for extra-pages, it contains
+            ``paper_number``, and ``question_list``.
         """
 
         # compute number of digits in longest page number to pad the page numbering
