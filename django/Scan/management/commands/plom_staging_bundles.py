@@ -160,11 +160,17 @@ class Command(BaseCommand):
             raise CommandError(err)
 
     def show_bundle_pages(self, bundle_name, *, show="all"):
-        scanner = ScanService()
-        bundle_page_dict = scanner.get_bundle_pages_info_cmd(bundle_name)
+        # For the table construct a list of lists
         bundle_page_list = [["order", "status", "info", "rotation"]]
-        for ord in sorted(bundle_page_dict.keys()):
-            page = bundle_page_dict[ord]
+
+        scanner = ScanService()
+        try:
+            bundle_page_info_list = scanner.get_bundle_pages_info_cmd(bundle_name)
+        except ValueError as err:
+            raise CommandError(err)
+
+        # Now for each entry in this data from the server, parse out the fields we want for the table.
+        for page in bundle_page_info_list:
             dat = [page["order"], page["status"]]
             if page["status"] == "unknown":
                 dat.append(" - ")
@@ -181,6 +187,10 @@ class Command(BaseCommand):
                     dat.append("extra page without data")
             elif page["status"] in ["error", "discard"]:
                 dat.append(page["info"]["reason"])
+            else:
+                raise CommandError(
+                    "Expected page with status: known, unknown, extra, discard, error, but got {page['status']}"
+                )
 
             dat.append(page["rotation"])
 
@@ -300,7 +310,6 @@ class Command(BaseCommand):
         elif options["command"] == "read_qr":
             self.read_bundle_qr(bundle_name=options["bundle_name"])
         elif options["command"] == "pages":
-            print(options)
             self.show_bundle_pages(
                 bundle_name=options["bundle_name"], show=options["show"]
             )

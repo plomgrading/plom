@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import APIException
 from rest_framework import status
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -36,11 +35,15 @@ class GetClasslist(APIView):
 
 class GetIDPredictions(APIView):
     """
-    Get predictions for test-paper identification. TODO: not implemented in Django
-    For now, just return all the pre-named papers
+    Get predictions for test-paper identification.
+
+    TODO: not implemented in Django, Issue #2672.
+    For now, just return all the pre-named papers.
     """
 
-    def get(self, request):
+    def get(self, request, *, predictor=None):
+        # TODO: Issue #2672
+        assert predictor is None or predictor == "prename"
         sstu = StagingStudentService()
         if sstu.are_there_students():
             predictions = {}
@@ -62,10 +65,6 @@ class IDgetDoneTasks(APIView):
     def get(self, request):
         its = IdentifyTaskService()
         tasks = its.get_done_tasks(request.user)
-
-        # TODO: placeholder, create ID tasks if there are none
-        if not its.are_there_id_tasks():
-            its.init_id_tasks()
 
         return Response(tasks, status=status.HTTP_200_OK)
 
@@ -114,8 +113,8 @@ class IDclaimThisTask(APIView):
             its.claim_task(request.user, paper_id)
             return Response(status=status.HTTP_200_OK)
         except RuntimeError:
-            raise APIException(
-                detail="ID task already claimed.", code=status.HTTP_409_CONFLICT
+            return Response(
+                f"ID task {paper_id} already claimed", status=status.HTTP_409_CONFLICT
             )
 
     def put(self, request, paper_id):
@@ -139,9 +138,9 @@ class IDgetImage(APIView):
         id_img = its.get_id_page(paper_id)
 
         if not id_img:
-            raise APIException(
-                detail="ID page-image not found for this test.",
-                code=status.HTTP_404_NOT_FOUND,
+            return Response(
+                f"ID page-image not found for paper {paper_id}",
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         img_path = id_img.image_file.path

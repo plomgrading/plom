@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import Http404, FileResponse
 
 from Base.base_group_views import ScannerRequiredView
@@ -24,6 +25,13 @@ class ManageBundleView(ScannerRequiredView):
     """
 
     def build_context(self, timestamp, user, index):
+        """Build a context for a particular page of a bundle.
+
+        Args:
+            timestamps (float): select a bundle by its timestamp.
+            user (todo): which user.
+            index (int): 1-indexed.
+        """
         context = super().build_context()
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, user)
@@ -34,50 +42,21 @@ class ManageBundleView(ScannerRequiredView):
         discard_pages = scanner.get_n_discard_images(bundle)
         error_pages = scanner.get_n_error_images(bundle)
 
-        if index >= n_pages:
-            raise Http404("Bundle page does not exist.")
+        if index < 1 or index > n_pages:
+            raise ValueError("Requested page outside range.")
 
-        page_info_dict = scanner.get_bundle_pages_info(bundle)
-        pages = [
-            page_info_dict[k] for k in range(len(page_info_dict))
-        ]  # flatten into ordered list
-
-        # also transform pages_info_dict into bundle-summary-info
-        # paper: [known, page_number, bundle_order], or
-        # paper: [extra, question_list, bundle_order]
-        # make sure all knowns first then extras
-        papers_pages = {}
-        for order, page in page_info_dict.items():
-            if page["status"] == "known":
-                papers_pages.setdefault(page["info"]["paper_number"], []).append(
-                    {
-                        "type": "known",
-                        "page": page["info"]["page_number"],
-                        "order": order,
-                    }
-                )
-        for order, page in page_info_dict.items():
-            if page["status"] == "extra":
-                if page["info"]["paper_number"] and page["info"]["question_list"]:
-                    papers_pages.setdefault(page["info"]["paper_number"], []).append(
-                        {
-                            "type": "extra",
-                            "question_list": page["info"]["question_list"],
-                            "order": order,
-                        }
-                    )
-        # recast paper_pages as an **ordered** list of tuples (paper, page-info)
-        papers_pages_list = [(pn, pg) for pn, pg in sorted(papers_pages.items())]
+        # list of dicts of page info, in bundle order
+        bundle_page_info_list = scanner.get_bundle_pages_info_list(bundle)
+        # and get an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
+        bundle_papers_pages_list = scanner.get_bundle_papers_pages_list(bundle)
 
         context.update(
             {
                 "slug": bundle.slug,
                 "timestamp": timestamp,
-                "pages": pages,
-                "papers_pages_list": papers_pages_list,
-                "current_page": pages[index],
+                "pages": bundle_page_info_list,
+                "papers_pages_list": bundle_papers_pages_list,
                 "index": index,
-                "one_index": index + 1,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
@@ -97,7 +76,10 @@ class ManageBundleView(ScannerRequiredView):
         except ValueError:
             raise Http404()
 
-        context = self.build_context(timestamp, request.user, index)
+        try:
+            context = self.build_context(timestamp, request.user, index)
+        except ValueError:
+            return redirect("scan_manage_bundle", timestamp=timestamp, index=1)
 
         return render(request, "Scan/manage_bundle.html", context)
 
@@ -113,8 +95,9 @@ class GetBundleNavFragmentView(ScannerRequiredView):
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         n_pages = scanner.get_n_images(bundle)
-        if index >= n_pages:
+        if index < 0 or index > n_pages:
             raise Http404("Bundle page does not exist.")
+
         current_page = scanner.get_bundle_single_page_info(bundle, index)
 
         context.update(
@@ -122,7 +105,6 @@ class GetBundleNavFragmentView(ScannerRequiredView):
                 "slug": bundle.slug,
                 "timestamp": timestamp,
                 "index": index,
-                "one_index": index + 1,
                 "total_pages": n_pages,
                 "prev_idx": index - 1,
                 "next_idx": index + 1,

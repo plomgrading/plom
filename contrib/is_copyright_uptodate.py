@@ -26,7 +26,7 @@ re_alt = re.compile(".*creativecommons.org/licenses/.*")
 ok_no_copyright = [
     "CHANGELOG*",
     "CONTRIBUTORS*",
-    "*/README.md",
+    "*README.md",
     "qtCreatorFiles/*.ui",
     "*/uiFiles/ui_*.py",
     ".mailmap",

@@ -20,8 +20,8 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtCore import QThreadPool, QRunnable
+from PyQt6.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QThreadPool, QRunnable
 
 from plom.messenger import Messenger
 from plom.plom_exceptions import PlomException
@@ -281,10 +281,12 @@ class Downloader(QObject):
         )
         worker.signals.download_succeed.connect(self._worker_delivers)
         worker.signals.download_fail.connect(self._worker_failed)
+        # TODO: Getting TypeError, try on more recent PyQt6...?
+        # (QRunnable, priority: int = 0): argument 2 has unexpected type 'Priority'
         if priority:
-            self.threadpool.start(worker, priority=QThread.HighPriority)
+            self.threadpool.start(worker)  # , QThread.Priority.HighPriority)
         else:
-            self.threadpool.start(worker, priority=QThread.LowPriority)
+            self.threadpool.start(worker)  # , QThread.Priority.LowPriority)
         # keep track of which img_ids are in progress
         # todo: semaphore around this and .start?
         self._in_progress[row["id"]] = True

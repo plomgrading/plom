@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QGuiApplication
-from PyQt5.QtGui import QBrush, QImageReader, QPainter, QPixmap, QTransform
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtGui import QBrush, QColor, QImageReader, QPainter, QPixmap, QTransform
+from PyQt6.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
     QGraphicsScene,
@@ -91,8 +91,8 @@ class ImageViewWidget(QWidget):
         super().__init__(parent)
         # Grab an examview widget (a interactive subclass of QGraphicsView)
         self.view = _ExamView(image_data, dark_background=dark_background)
-        self.view.setRenderHint(QPainter.Antialiasing, True)
-        self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        self.view.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        self.view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
         grid = QVBoxLayout()
         if compact:
             grid.setContentsMargins(0, 0, 0, 0)
@@ -226,7 +226,10 @@ class _ExamScene(QGraphicsScene):
     """
 
     def wheelEvent(self, event):
-        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+        if (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
+        ):
             s = mousewheel_delta_to_scale(event.delta())
             self.views()[0].scale(s, s)
             # Unpleasant to grub in parent but want mouse events to lock zoom
@@ -253,13 +256,13 @@ class _ExamView(QGraphicsView):
     def __init__(self, image_data, dark_background=False):
         super().__init__()
         if dark_background:
-            self.setBackgroundBrush(QBrush(Qt.darkCyan))
+            self.setBackgroundBrush(QBrush(QColor("darkCyan")))
         else:
             self.setStyleSheet("background: transparent")
             self.setBackgroundBrush(BackGrid())
-        self.setRenderHint(QPainter.Antialiasing, True)
-        self.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.scene = _ExamScene()
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
@@ -332,7 +335,7 @@ class _ExamView(QGraphicsView):
                 rot.rotate(data["orientation"])
                 pix = pix.transformed(rot)
                 pixmap = QGraphicsPixmapItem(pix)
-                pixmap.setTransformationMode(Qt.SmoothTransformation)
+                pixmap.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
                 pixmap.setPos(x, 0)
                 pixmap.setVisible(True)
                 sf = float(ScenePixelHeight) / float(pix.height())
@@ -356,17 +359,18 @@ class _ExamView(QGraphicsView):
             max(1000, br.height()),
         )
         self.setScene(self.scene)
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)
 
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        if (event.button() == Qt.MouseButton.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.zoomOut()
         else:
             self.zoomIn()
-        self.centerOn(event.pos())
+        self.centerOn(event.position())
         # Unpleasant to grub in parent but want mouse events to lock zoom
         # TODO: instead use a signal/slot mechanism
         self.parent().zoomLockSetOn()
@@ -380,7 +384,7 @@ class _ExamView(QGraphicsView):
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)
 
     def rotateImage(self, dTheta):
         self.rotate(dTheta)

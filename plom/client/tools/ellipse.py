@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QRectF
-from PyQt5.QtGui import QPen, QBrush, QColor
-from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
+from PyQt6.QtCore import QRectF
+from PyQt6.QtGui import QPen, QBrush, QColor
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
 
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 
@@ -35,8 +35,8 @@ class EllipseItem(UndoStackMoveMixin, QGraphicsEllipseItem):
         self.setRect(self.rect)
         self.restyle(style)
 
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def restyle(self, style):
         self.normal_thick = style["pen_width"]

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 from copy import deepcopy
 import logging
@@ -16,9 +16,9 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QKeySequence
+from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,
@@ -206,7 +206,9 @@ class KeyEditDialog(QDialog):
             label = QLabel(info)
             label.setWordWrap(True)
             vb.addWidget(label)
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         vb.addWidget(buttons)
@@ -216,7 +218,7 @@ class KeyEditDialog(QDialog):
 class SingleKeyEdit(QLineEdit):
     def __init__(self, parent, currentKey=None, legal=None):
         super().__init__(parent)
-        self.setAlignment(Qt.AlignHCenter)
+        self.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         if legal is None:
             legal = []
         self.legal = legal
@@ -230,9 +232,14 @@ class SingleKeyEdit(QLineEdit):
     def keyPressEvent(self, event):
         keyCode = event.key()
         # no modifiers please
-        if keyCode in [Qt.Key_Control, Qt.Key_Shift, Qt.Key_Alt, Qt.Key_Meta]:
+        if keyCode in (
+            Qt.Key.Key_Control,
+            Qt.Key.Key_Shift,
+            Qt.Key.Key_Alt,
+            Qt.Key.Key_Meta,
+        ):
             return
-        if keyCode in [Qt.Key_Backspace, Qt.Key_Delete]:
+        if keyCode in [Qt.Key.Key_Backspace, Qt.Key.Key_Delete]:
             self.backspace()
             self.theCode = None
             self.theKey = ""

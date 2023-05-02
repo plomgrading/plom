@@ -1386,6 +1386,13 @@ The produced papers will appear in the &quot;papersToPrint&quot; subdirectory.&l
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_22">
              <item>
+              <widget class="QPushButton" name="refreshDanglingB">
+               <property name="text">
+                <string>Refresh Dangling Pages tab (caution, read note above)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="horizontalSpacer_16">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
