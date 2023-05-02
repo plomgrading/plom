@@ -22,7 +22,6 @@ from API.views import (
     MarkingProgressCount,
     MgetNextTask,
     MclaimThisTask,
-    MgetPageData,
     MgetPageDataQuestionInContext,
     MgetOneImage,
     MgetAnnotations,
@@ -68,7 +67,7 @@ urlpatterns = [
     path("ID/tasks/<paper_id>", IDclaimThisTask.as_view(), name="api_ID_claim_task"),
     path(
         "pagedata/<int:paper>",
-        MgetPageData.as_view(),
+        MgetPageDataQuestionInContext.as_view(),
         name="api_pagedata",
     ),
     path(

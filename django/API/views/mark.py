@@ -227,29 +227,12 @@ class MclaimThisTask(APIView):
         )
 
 
-class MgetPageData(APIView):
-    """
-    Get page metadata for a particular test-paper.
-    """
-
-    def get(self, request, paper, *args):
-        service = PageDataService()
-
-        try:
-            page_metadata = service.get_question_pages_metadata(paper)
-            return Response(page_metadata, status=status.HTTP_200_OK)
-        except Paper.DoesNotExist:
-            return Response(
-                detail="Test paper does not exist.", status=status.HTTP_400_BAD_REQUEST
-            )
-
-
 class MgetPageDataQuestionInContext(APIView):
     """
     Get page metadata for a particular test-paper with a question highlighted.
     """
 
-    def get(self, request, paper, question, *args):
+    def get(self, request, paper, question=None):
         service = PageDataService()
 
         try:
