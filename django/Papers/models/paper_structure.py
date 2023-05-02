@@ -32,7 +32,7 @@ class MobilePage(models.Model):
 
 class FixedPage(PolymorphicModel):
     """Fixed-page table to store information about the "fixed" pages
-    within a given paper. Since very "fixed" page has a definite
+    within a given paper. Since every "fixed" page has a definite
     page-number and version-number, these appear here in the base
     class. However, only certain pages have question-numbers, so we
     use polymorphism to put that information in various derived
