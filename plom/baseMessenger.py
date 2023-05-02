@@ -1081,9 +1081,7 @@ class BaseMessenger:
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
-                raise PlomNoPaper(
-                    "Cannot find image file for {}.".format(num)
-                ) from None
+                raise PlomNoPaper(response.reason) from None
             elif response.status_code == 406:
                 raise PlomTaskChangedError(
                     "Task {} has been changed by manager.".format(num)

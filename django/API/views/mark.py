@@ -379,6 +379,11 @@ class MgetAnnotationImage(APIView):
     def get(self, request, paper, question, edition=None):
         mts = MarkingTaskService()
         annotation = mts.get_latest_annotation(paper, question)
+        if not annotation:
+            return Response(
+                f"No annotations for paper {paper} question {question}",
+                status=status.HTTP_404_NOT_FOUND,
+            )
         annotation_task = annotation.task
         annotation_image = annotation.image
 
