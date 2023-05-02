@@ -60,21 +60,22 @@ class PageDataService:
         return page_list
 
     @transaction.atomic
-    def get_question_pages_metadata(self, paper, question):
+    def get_question_pages_metadata(self, paper, question=None):
         """
-        Return a list of metadata for all pages in a
-        particular paper.
+        Return a list of metadata for all pages in a particular paper, optionally highlighting a question.
 
         Args:
             paper (int): test-paper number
-            question (int): question number
+            question (int/None): question number, if not None.
+
+        The ``included`` key is not meaningful if ``question`` was not passed.
 
         Returns:
             list, e.g. [
                 {
                     'pagename': (str) 't{page_number}' for test-pages, 'e{page_number}' for extra pages, etc,
                     'md5': (str) image hash,
-                    'included' (bool) did the server originally have this image?,
+                    'included' (bool) was this included in the original question?,
                     'order' (int) order within a question,
                     'id' (int) image public key,
                     'orientation' (int) image orientation,
@@ -84,17 +85,22 @@ class PageDataService:
         """
 
         test_paper = Paper.objects.get(paper_number=paper)
-        # TODO: all pages in the test-paper, and included=true for the question
         paper_pages = FixedPage.objects.filter(paper=test_paper)
 
         pages_metadata = []
         for page in paper_pages:
             if page.image:
+                if question is None:
+                    # TODO: or is it better to not include this key?  That's likely
+                    # what the legacy server does...
+                    included = True
+                else:
+                    included = page.question == question
                 pages_metadata.append(
                     {
                         "pagename": f"t{page.page_number}",
                         "md5": page.image.hash,
-                        "included": type(page) == QuestionPage,
+                        "included": included,
                         "order": page.page_number,
                         "id": page.image.pk,
                         "orientation": page.image.rotation,
