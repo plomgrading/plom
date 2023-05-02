@@ -62,6 +62,7 @@ from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomBadTagError,
+    PlomBenignException,
     PlomForceLogoutException,
     PlomRangeException,
     PlomVersionMismatchException,
@@ -2489,6 +2490,10 @@ class MarkerClient(QWidget):
                 annotated_image = self.msgr.get_annotations_image(tn, q)
             except PlomNoPaper:
                 pass
+            except PlomBenignException as e:
+                s = f"Could not get annotation image: {e}"
+                s += "\nWill try to get the original images next..."
+                WarnMsg(self, s).exec()
             else:
                 im_type = imghdr.what(None, h=annotated_image)
                 if not im_type:
@@ -2506,7 +2511,11 @@ class MarkerClient(QWidget):
                 s = f"Annotations for paper {tn:04} question index {q}"
 
         if stuff is None:
-            pagedata = self.msgr.get_pagedata_context_question(tn, q)
+            try:
+                pagedata = self.msgr.get_pagedata_context_question(tn, q)
+            except PlomBenignException as e:
+                WarnMsg(self, f"Could not get page data: {e}").exec()
+                return
             # also, discard the non-included pages
             pagedata = [x for x in pagedata if x["included"]]
             # don't cache this pagedata: "q" might not be our question number
