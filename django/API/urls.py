@@ -72,11 +72,6 @@ urlpatterns = [
         name="api_pagedata",
     ),
     path(
-        "pagedata/<int:paper>/<int:question>",
-        MgetPageDataQuestionInContext.as_view(),
-        name="api_pagedata_question",
-    ),
-    path(
         "pagedata/<int:paper>/context/<int:question>",
         MgetPageDataQuestionInContext.as_view(),
         name="api_pagedata_context_question",

@@ -2496,7 +2496,9 @@ class MarkerClient(QWidget):
             fh.write(annotated_image)
         print(f"TODO: debugging: annot image: {aname}")
 
-        pagedata = self.msgr.get_pagedata_question(tn, gn)
+        pagedata = self.msgr.get_pagedata_context_question(tn, gn)
+        # also, discard the non-included pages
+        pagedata = [x for x in pagedata if x["included"]]
         # don't cache this pagedata: "gn" might not be our question number
         # (but the images are cacheable)
         pagedata = self.downloader.sync_downloads(pagedata)
