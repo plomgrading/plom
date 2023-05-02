@@ -229,7 +229,90 @@ class MclaimThisTask(APIView):
 
 class MgetPageDataQuestionInContext(APIView):
     """
-    Get page metadata for a particular test-paper with a question highlighted.
+    Get page metadata for a particular test-paper optionally with a question highlighted.
+
+    This API returns a JSON response with a list of dicts.
+    where each dict has keys: `pagename`, `md5`, `included`,
+    `order`, `id`, `orientation`, `server_path` as documented below.
+
+    TODO: 409 versus 400?  Legacy used 409...
+    A 400 is returned with an explanation if paper number not found.
+
+    The list of dicts (we think of them as rows) have the keys:
+
+    `pagename`
+        A string something like `"t2"`.  Reasonable to use
+        as a thumbnail label for the image or in other cases where
+        a very short string label is required.
+
+    `md5`
+        A string of the md5sum of the image.
+
+    `id`
+        an integer like 19.  This is the key in the database to
+        the image of this page.  It is (I think) possible to have
+        two pages pointing to the same image, in which case the md5
+        and the id could be repeated.  TODO: determine if this only
+        happens b/c of bugs/upload issues or if its a reasonably
+        normal state.
+
+    `order`
+        None or an integer specifying the relative ordering of
+        pages within a question.  As with `included`,
+        this information only reflects the initial (typically
+        scan-time) ordering of the images.  If its None, server has
+        no info about what order might be appropriate, for example
+        because this image is not thought to belong in `question`.
+
+    `orientation`
+        relative to the natural orientation of the image.
+        This is an integer for the degrees of rotation.  Probably
+        only multiples of 90 work and perhaps only [0, 90, 180, 270]
+        but could/should (TODO) be generalized for arbitrary
+        rotations.  This should be applied *after* any metadata
+        rotations from inside the file instead (such as jpeg exif
+        orientation).  As with `included` and `order`, this is only
+        the initial state.  Clients may rotate images and that
+        information belongs their annotation.
+
+    `server_path`
+        a string of a path and filename where the server
+        might have the file stored, such as
+        `"pages/originalPages/t0004p02v1.86784dd1.png"`.
+        This is guaranteed unique (such as by the random bit before
+        `.png`).  It is *not* guaranteed that the server actually
+        stores the file in this location, although the current
+        implementation does.
+
+    `included`
+        boolean, did the server *originally* have this page
+        included in question number `question`?.  Note that clients
+        may pull other pages into their annotating; you can only
+        rely on this information for initializing a new annotating
+        session.  If you're e.g., editing an existing annotation,
+        you should rely on the info from that existing annotation
+        instead of this.
+
+    Example::
+
+        [
+          {'pagename': 't2',
+           'md5': 'e4e131f476bfd364052f2e1d866533ea',
+           'included': False,
+           'order': None,
+           'id': 19',
+           'orientation': 0
+           'server_path': 'pages/originalPages/t0004p02v1.86784dd1.png',
+          },
+          {'pagename': 't3',
+           'md5': 'a896cb05f2616cb101df175a94c2ef95',
+           'included': True,
+           'order': 1,
+           'id': 20,
+           'orientation': 270
+           'server_path': 'pages/originalPages/t0004p03v2.ef7f9754.png',
+          }
+        ]
     """
 
     def get(self, request, paper, question=None):
