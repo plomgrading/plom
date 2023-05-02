@@ -2502,8 +2502,10 @@ class MarkerClient(QWidget):
         # don't cache this pagedata: "gn" might not be our question number
         # (but the images are cacheable)
         pagedata = self.downloader.sync_downloads(pagedata)
-        qvmap = self.msgr.getQuestionVersionMap(tn)
-        ver = qvmap[gn]
+        print("HARDCODING VERISION=1, TODO: Issue #2695")
+        ver = 1
+        # qvmap = self.msgr.getQuestionVersionMap(tn)
+        # ver = qvmap[gn]
         d = QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self)
         # TODO: future-proofing this a bit for live download updates
         # PC.download_finished.connect(d.shake_things_up)
