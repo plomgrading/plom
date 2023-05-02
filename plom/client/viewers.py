@@ -115,9 +115,10 @@ class QuestionViewDialog(GroupView):
             tagging.
     """
 
-    def __init__(self, parent, fnames, tgv, marker=None, title=None):
+    def __init__(self, parent, fnames, papernum, q, marker=None, title=None):
         super().__init__(parent, fnames)
-        self.tgv = tgv
+        self.papernum = papernum
+        self.question_index = q
         if title:
             self.setWindowTitle(title)
         if marker:
@@ -129,7 +130,7 @@ class QuestionViewDialog(GroupView):
     def tags(self):
         """If we have a marker parent then use it to manage tags"""
         if self.marker:
-            task = f"q{self.tgv[0]:04}g{self.tgv[1]}"
+            task = f"q{self.papernum:04}g{self.question_index}"
             self.marker.manage_task_tags(task, parent=self)
 
 

@@ -2505,11 +2505,12 @@ class MarkerClient(QWidget):
             pagedata = self.downloader.sync_downloads(pagedata)
             s = f"Original ungraded images for paper {tn:04} question index {q}"
 
-        print("HARDCODING VERISION=1, TODO: Issue #2695")
-        ver = 1
+        # TODO: Restore appending version to the title by fixing Issue #2695
         # qvmap = self.msgr.getQuestionVersionMap(tn)
         # ver = qvmap[q]
-        d = QuestionViewDialog(self, pagedata, (tn, q, ver), marker=self, title=s)
+        # s += f" (ver {ver})"
+
+        d = QuestionViewDialog(self, pagedata, tn, q, marker=self, title=s)
         # TODO: future-proofing this a bit for live download updates
         # PC.download_finished.connect(d.shake_things_up)
         d.exec()
