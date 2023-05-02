@@ -252,7 +252,13 @@ class ImageBundleService:
 
         """
         # while this is done by staging, we redo it here to be **very** sure.
-        if staged_imgs.filter(image_type__in=[StagingImage.UNREAD, StagingImage.UNKNOWN, StagingImage.ERROR]).exists():
+        if staged_imgs.filter(
+            image_type__in=[
+                StagingImage.UNREAD,
+                StagingImage.UNKNOWN,
+                StagingImage.ERROR,
+            ]
+        ).exists():
             return False
         if staged_imgs.filter(
             image_type=StagingImage.EXTRA, extrastagingimage__paper_number__isnull=True

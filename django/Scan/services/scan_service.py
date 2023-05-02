@@ -765,7 +765,11 @@ class ScanService:
 
         # check for unread, unknown, error pages
         if bundle_obj.stagingimage_set.filter(
-            image_type__in=[StagingImage.UNKNOWN, StagingImage.UNREAD, StagingImage.ERROR]
+            image_type__in=[
+                StagingImage.UNKNOWN,
+                StagingImage.UNREAD,
+                StagingImage.ERROR,
+            ]
         ).exists():
             return False
         # check for extra pages without data
