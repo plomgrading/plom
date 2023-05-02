@@ -31,19 +31,19 @@ class ScanCastServiceTests(TestCase):
             bundle_order=number_of_pages,
             image_type=image_type,
         )
-        # casefold the image type
-        image_type = image_type.casefold()
 
-        if image_type == "unknown":
+        if image_type == StagingImage.UNKNOWN:
             baker.make(UnknownStagingImage, staging_image=img)
-        elif image_type == "known":
+        elif image_type == StagingImage.KNOWN:
             baker.make(KnownStagingImage, staging_image=img)
-        elif image_type == "extra":
+        elif image_type == StagingImage.EXTRA:
             baker.make(ExtraStagingImage, staging_image=img)
-        elif image_type == "discard":
+        elif image_type == StagingImage.DISCARD:
             baker.make(DiscardStagingImage, staging_image=img)
-        elif image_type == "error":
+        elif image_type == StagingImage.ERROR:
             baker.make(ErrorStagingImage, staging_image=img)
+        else:
+            raise RuntimeError(f"Do not recognise image type '{image_type}'")
 
     def setUp(self):
         # make scan-group, two users, one with permissions and the other not.
@@ -85,15 +85,15 @@ class ScanCastServiceTests(TestCase):
 
         with self.assertRaises(PermissionDenied):
             scs.discard_image_type_from_bundle_cmd(
-                "user1", "testbundle", ord, image_type="error"
+                "user1", "testbundle", ord, image_type=StagingImage.ERROR
             )
         with self.assertRaises(PermissionDenied):
             scs.unknowify_image_type_from_bundle_cmd(
-                "user1", "testbundle", ord, image_type="error"
+                "user1", "testbundle", ord, image_type=StagingImage.ERROR
             )
 
         scs.discard_image_type_from_bundle_cmd(
-            "user0", "testbundle", ord, image_type="error"
+            "user0", "testbundle", ord, image_type=StagingImage.ERROR
         )
         # get the ord of another error page from the bundle
         ord = (
@@ -102,7 +102,7 @@ class ScanCastServiceTests(TestCase):
             .bundle_order
         )
         scs.unknowify_image_type_from_bundle_cmd(
-            "user0", "testbundle", ord, image_type="error"
+            "user0", "testbundle", ord, image_type=StagingImage.ERROR
         )
 
     def test_cast_to_discard(self):
@@ -138,6 +138,7 @@ class ScanCastServiceTests(TestCase):
                 .first()
                 .bundle_order
             )
+
             # grab the corresponding staging_image
             stimg = StagingImage.objects.get(bundle=self.bundle, bundle_order=ord)
             self.assertIsNotNone(getattr(stimg, typestr))
@@ -198,7 +199,7 @@ class ScanCastServiceTests(TestCase):
         )
         with self.assertRaises(ValueError):
             ScanCastService().discard_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, image_type="discard"
+                "user0", "testbundle", ord, image_type=StagingImage.DISCARD
             )
 
     def test_attempt_unknowify_unknown(self):
@@ -209,7 +210,7 @@ class ScanCastServiceTests(TestCase):
         )
         with self.assertRaises(ValueError):
             ScanCastService().unknowify_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, image_type="unknown"
+                "user0", "testbundle", ord, image_type=StagingImage.UNKNOWN
             )
 
     def test_attempt_modify_pushed(self):
@@ -224,9 +225,9 @@ class ScanCastServiceTests(TestCase):
         )
         with self.assertRaises(ValueError):
             ScanCastService().discard_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, image_type="error"
+                "user0", "testbundle", ord, image_type=StagingImage.ERROR
             )
         with self.assertRaises(ValueError):
             ScanCastService().unknowify_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, image_type="error"
+                "user0", "testbundle", ord, image_type=StagingImage.ERROR
             )

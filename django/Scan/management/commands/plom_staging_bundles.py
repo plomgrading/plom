@@ -171,7 +171,6 @@ class Command(BaseCommand):
 
         # Now for each entry in this data from the server, parse out the fields we want for the table.
         for page in bundle_page_info_list:
-            print("Got dat", page)
             dat = [page["order"], page["status"]]
             if page["status"] == "unknown":
                 dat.append(" - ")

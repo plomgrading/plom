@@ -1,24 +1,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from Scan.services import ScanCastService
 
 
 def unknowify_image_type_from_bundle(username, bundle_name, order, *, image_type=None):
-    # TODO - put in an "Are you sure" here for error pages?
+    scs = ScanCastService()
 
     if image_type is None:
         print(
             f"Unknowify image at position {order} from bundle {bundle_name} as user {username} without type check."
         )
-    elif image_type in ["discard", "error", "extra", "knowno"]:
+    else:
+        image_type = scs.string_to_staging_image_type(image_type)
         print(
             f"Attempting to unknowify image of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
         )
-    else:
-        raise CommandError("Invalid check type")
 
     ScanCastService().unknowify_image_type_from_bundle_cmd(
         username, bundle_name, order, image_type=image_type
