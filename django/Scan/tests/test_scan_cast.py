@@ -31,15 +31,18 @@ class ScanCastServiceTests(TestCase):
             bundle_order=number_of_pages,
             image_type=image_type,
         )
+        # casefold the image type
+        image_type = image_type.casefold()
+
         if image_type == "unknown":
             baker.make(UnknownStagingImage, staging_image=img)
         elif image_type == "known":
             baker.make(KnownStagingImage, staging_image=img)
-        if image_type == "extra":
+        elif image_type == "extra":
             baker.make(ExtraStagingImage, staging_image=img)
-        if image_type == "discard":
+        elif image_type == "discard":
             baker.make(DiscardStagingImage, staging_image=img)
-        if image_type == "error":
+        elif image_type == "error":
             baker.make(ErrorStagingImage, staging_image=img)
 
     def setUp(self):
@@ -53,16 +56,16 @@ class ScanCastServiceTests(TestCase):
         self.bundle = baker.make(StagingBundle, user=self.user0, slug="testbundle")
         # make some pages
         for img in [
-            "unknown",
-            "unknown",
-            "known",
-            "known",
-            "extra",
-            "extra",
-            "discard",
-            "discard",
-            "error",
-            "error",
+            StagingImage.UNKNOWN,
+            StagingImage.UNKNOWN,
+            StagingImage.KNOWN,
+            StagingImage.KNOWN,
+            StagingImage.EXTRA,
+            StagingImage.EXTRA,
+            StagingImage.DISCARD,
+            StagingImage.DISCARD,
+            StagingImage.ERROR,
+            StagingImage.ERROR,
         ]:
             self.make_image(img)
 
@@ -75,45 +78,55 @@ class ScanCastServiceTests(TestCase):
         scs = ScanCastService()
         # get the ord of an error page from the bundle
         ord = (
-            self.bundle.stagingimage_set.filter(image_type="error").first().bundle_order
+            self.bundle.stagingimage_set.filter(image_type=StagingImage.ERROR)
+            .first()
+            .bundle_order
         )
 
         with self.assertRaises(PermissionDenied):
-            scs.discard_image_type_from_bundle_cmd("user1", "testbundle", ord, "error")
+            scs.discard_image_type_from_bundle_cmd(
+                "user1", "testbundle", ord, image_type="error"
+            )
         with self.assertRaises(PermissionDenied):
             scs.unknowify_image_type_from_bundle_cmd(
-                "user1", "testbundle", ord, "error"
+                "user1", "testbundle", ord, image_type="error"
             )
 
-        scs.discard_image_type_from_bundle_cmd("user0", "testbundle", ord, "error")
+        scs.discard_image_type_from_bundle_cmd(
+            "user0", "testbundle", ord, image_type="error"
+        )
         # get the ord of another error page from the bundle
         ord = (
-            self.bundle.stagingimage_set.filter(image_type="error").first().bundle_order
+            self.bundle.stagingimage_set.filter(image_type=StagingImage.ERROR)
+            .first()
+            .bundle_order
         )
-        scs.unknowify_image_type_from_bundle_cmd("user0", "testbundle", ord, "error")
+        scs.unknowify_image_type_from_bundle_cmd(
+            "user0", "testbundle", ord, image_type="error"
+        )
 
     def test_cast_to_discard(self):
         for img_type, typemodel, typestr, reason in [
             (
-                "error",
+                StagingImage.ERROR,
                 ErrorStagingImage,
                 "errorstagingimage",
                 "Error page discarded by user0",
             ),
             (
-                "extra",
+                StagingImage.EXTRA,
                 ExtraStagingImage,
                 "extrastagingimage",
                 "Extra page discarded by user0",
             ),
             (
-                "known",
+                StagingImage.KNOWN,
                 KnownStagingImage,
                 "knownstagingimage",
                 "Known page discarded by user0",
             ),
             (
-                "unknown",
+                StagingImage.UNKNOWN,
                 UnknownStagingImage,
                 "unknownstagingimage",
                 "Unknown page discarded by user0",
@@ -133,7 +146,7 @@ class ScanCastServiceTests(TestCase):
                 DiscardStagingImage.objects.get(staging_image=stimg)
             # cast it to a discard
             ScanCastService().discard_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, img_type
+                "user0", "testbundle", ord, image_type=img_type
             )
             # verify that no error image remains and that a discard image now exists
             stimg.refresh_from_db()
@@ -149,10 +162,10 @@ class ScanCastServiceTests(TestCase):
 
     def test_cast_to_unknown(self):
         for img_type, typemodel, typestr in [
-            ("error", ErrorStagingImage, "errorstagingimage"),
-            ("extra", ExtraStagingImage, "extrastagingimage"),
-            ("known", KnownStagingImage, "knownstagingimage"),
-            ("discard", DiscardStagingImage, "discardstagingimage"),
+            (StagingImage.ERROR, ErrorStagingImage, "errorstagingimage"),
+            (StagingImage.EXTRA, ExtraStagingImage, "extrastagingimage"),
+            (StagingImage.KNOWN, KnownStagingImage, "knownstagingimage"),
+            (StagingImage.DISCARD, DiscardStagingImage, "discardstagingimage"),
         ]:
             # get the order of an page from the bundle
             ord = (
@@ -168,7 +181,7 @@ class ScanCastServiceTests(TestCase):
                 UnknownStagingImage.objects.get(staging_image=stimg)
             # cast it to a discard
             ScanCastService().unknowify_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, img_type
+                "user0", "testbundle", ord, image_type=img_type
             )
             # verify that no error image remains and that a discard image now exists
             stimg.refresh_from_db()
@@ -179,24 +192,24 @@ class ScanCastServiceTests(TestCase):
 
     def test_attempt_discard_discard(self):
         ord = (
-            self.bundle.stagingimage_set.filter(image_type="discard")
+            self.bundle.stagingimage_set.filter(image_type=StagingImage.DISCARD)
             .first()
             .bundle_order
         )
         with self.assertRaises(ValueError):
             ScanCastService().discard_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, "discard"
+                "user0", "testbundle", ord, image_type="discard"
             )
 
     def test_attempt_unknowify_unknown(self):
         ord = (
-            self.bundle.stagingimage_set.filter(image_type="unknown")
+            self.bundle.stagingimage_set.filter(image_type=StagingImage.UNKNOWN)
             .first()
             .bundle_order
         )
         with self.assertRaises(ValueError):
             ScanCastService().unknowify_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, "unknown"
+                "user0", "testbundle", ord, image_type="unknown"
             )
 
     def test_attempt_modify_pushed(self):
@@ -205,13 +218,15 @@ class ScanCastServiceTests(TestCase):
         self.bundle.save()
         # now grab an error page and attempt to modify it
         ord = (
-            self.bundle.stagingimage_set.filter(image_type="error").first().bundle_order
+            self.bundle.stagingimage_set.filter(image_type=StagingImage.ERROR)
+            .first()
+            .bundle_order
         )
         with self.assertRaises(ValueError):
             ScanCastService().discard_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, "error"
+                "user0", "testbundle", ord, image_type="error"
             )
         with self.assertRaises(ValueError):
             ScanCastService().unknowify_image_type_from_bundle_cmd(
-                "user0", "testbundle", ord, "error"
+                "user0", "testbundle", ord, image_type="error"
             )

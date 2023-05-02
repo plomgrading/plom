@@ -29,8 +29,7 @@ def discard_image_type_from_bundle(username, bundle_name, order, *, image_type=N
 
 class Command(BaseCommand):
     """
-    commands:
-        python3 manage.py plom_staging_discard unknown (bundle name) (bundle_order)
+    python3 manage.py plom_staging_discard (username) (bundle name) (bundle_order)
     """
 
     help = "Discard a page from the given bundle at the given order"

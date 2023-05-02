@@ -1,43 +1,39 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from Scan.services import ScanCastService
 
 
-def unknowify_image_type_from_bundle(username, bundle_name, order, image_type):
+def unknowify_image_type_from_bundle(username, bundle_name, order, *, image_type=None):
     # TODO - put in an "Are you sure" here for error pages?
 
-    print(
-        f"Attempting to cast to unknown image of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
-    )
-    # Notice that user-visible orders start from 1 (like page numbers)
-    # while in the db they start from zero, so we must deduct 1 when
-    # we pass it to the scan-cast-service
+    if image_type is None:
+        print(
+            f"Unknowify image at position {order} from bundle {bundle_name} as user {username} without type check."
+        )
+    elif image_type in ["discard", "error", "extra", "knowno"]:
+        print(
+            f"Attempting to unknowify image of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
+        )
+    else:
+        raise CommandError("Invalid check type")
+
     ScanCastService().unknowify_image_type_from_bundle_cmd(
-        username, bundle_name, order - 1, image_type
+        username, bundle_name, order, image_type=image_type
     )
+    print("Action completed")
 
 
 class Command(BaseCommand):
     """
-    commands:
-        python3 manage.py plom_staging_unknowify_page discard (bundle name) (bundle_order)
+    python3 manage.py plom_staging_unknowify (username) (bundle name) (bundle_order)
     """
 
     help = "Cast to unknown a page from the given bundle at the given order"
 
     def add_arguments(self, parser):
-        sp = parser.add_subparsers(
-            dest="command",
-            description="Unknowify page from given bundle.",
-        )
-
-        sp.add_parser("discard", help="Unknowify a discard page.")
-        sp.add_parser("known", help="Unknowify an known page.")
-        sp.add_parser("extra", help="Unknowify an extra page.")
-        sp.add_parser("error", help="Unknowify an error page (discouraged).")
         parser.add_argument(
             "username", type=str, help="Which user is performing this operation"
         )
@@ -51,14 +47,16 @@ class Command(BaseCommand):
             type=int,
             help="The order of the page",
         )
+        parser.add_argument(
+            "--check-type",
+            choices=["discard", "error", "extra", "known"],
+            help="When present, the system checks that the page to be unknowified is of this type.",
+        )
 
     def handle(self, *args, **options):
-        if options["command"] in ["discard", "known", "extra", "error"]:
-            unknowify_image_type_from_bundle(
-                options["username"],
-                options["bundle"],
-                options["order"],
-                options["command"],
-            )
-        else:
-            self.print_help("manage.py", "plom_staging_discard")
+        unknowify_image_type_from_bundle(
+            options["username"],
+            options["bundle"],
+            options["order"],
+            image_type=options["check_type"],
+        )
