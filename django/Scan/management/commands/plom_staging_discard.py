@@ -1,23 +1,30 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from Scan.services import ScanCastService
 
 
-def discard_image_type_from_bundle(username, bundle_name, order, image_type):
+def discard_image_type_from_bundle(username, bundle_name, order, *, image_type=None):
     # TODO - put in an "Are you sure" here for error pages?
 
-    print(
-        f"Attempting to discardimage of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
-    )
-    # Notice that user-visible orders start from 1 (like page numbers)
-    # while in the db they start from zero, so we must deduct 1 when
-    # we pass it to the scan-cast-service
+    if image_type is None:
+        print(
+            f"Discarding image at position {order} from bundle {bundle_name} as user {username} without type check."
+        )
+    elif image_type in ["error", "extra", "knowno", "unknown"]:
+        print(
+            f"Attempting to discardimage of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
+        )
+    else:
+        raise CommandError("Invalid check type")
+    # Notice that both user-visible and DB-stored bundle indices are 1-indexed
+    # so we **do not** have to add/subtract one when doing these operations.
     ScanCastService().discard_image_type_from_bundle_cmd(
-        username, bundle_name, order - 1, image_type
+        username, bundle_name, order, image_type=image_type
     )
+    print("Action completed")
 
 
 class Command(BaseCommand):
@@ -29,15 +36,6 @@ class Command(BaseCommand):
     help = "Discard a page from the given bundle at the given order"
 
     def add_arguments(self, parser):
-        sp = parser.add_subparsers(
-            dest="command",
-            description="Discard page from given bundle.",
-        )
-
-        sp.add_parser("unknown", help="Discard an unknown page.")
-        sp.add_parser("known", help="Discard a known page.")
-        sp.add_parser("extra", help="Discard an extra page.")
-        sp.add_parser("error", help="Discard an error page (discouraged).")
         parser.add_argument(
             "username", type=str, help="Which user is performing this operation"
         )
@@ -51,14 +49,16 @@ class Command(BaseCommand):
             type=int,
             help="The order of the page",
         )
+        parser.add_argument(
+            "--check-type",
+            choices=["error", "extra", "known", "unknown"],
+            help="When present, the system checks that the page to be discarded is of this type.",
+        )
 
     def handle(self, *args, **options):
-        if options["command"] in ["unknown", "known", "extra", "error"]:
-            discard_image_type_from_bundle(
-                options["username"],
-                options["bundle"],
-                options["order"],
-                options["command"],
-            )
-        else:
-            self.print_help("manage.py", "plom_staging_discard")
+        discard_image_type_from_bundle(
+            options["username"],
+            options["bundle"],
+            options["order"],
+            image_type=options["check_type"],
+        )

@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 from Scan.models import (
     StagingBundle,
+    StagingImage,
     DiscardStagingImage,
     UnknownStagingImage,
 )
@@ -54,31 +55,40 @@ class ScanCastService:
 
     @transaction.atomic
     def discard_image_type_from_bundle(
-        self, user_obj, bundle_obj, bundle_order, image_type
+        self, user_obj, bundle_obj, bundle_order, *, image_type=None
     ):
+        # Notice that image_type is a lower-case string and so not directly comparable to
+        # the staging_image image_type enum choices (which are either ints or upper-case strings)
+        # so care must be taken at comparison time.
+        
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
-
-        if image_type == "discard":
-            raise ValueError("Trying to discard an already discarded bundle image.")
-        if image_type not in ["unknown", "known", "extra", "error"]:
-            raise ValueError(f"Image type '{image_type}' not recognised.")
 
         try:
             img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 
-        if img.image_type != image_type:
+        if image_type is None:  # Compute the type of the image at that position and use that.
+            image_type = img.image_type.lower()
+            # Notice that we can still trigger the "you are discarding a discard" error.
+
+        if image_type == "discard":
+            raise ValueError("Trying to discard an already discarded bundle image.")
+        if image_type not in ["unknown", "known", "extra", "error"]:
+            raise ValueError(f"Image type '{image_type}' not recognised.")
+        if image_type and (img.image_type.lower() != image_type):
             raise ValueError(
-                f"Image at position {bundle_order} is not an {'source_type'}, it is type '{img.image_type}'"
+                f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
             )
 
         # Be very careful to update the image type when doing this sort of operation.
-        img.image_type = "discard"
-        # delete the old type information
+        img.image_type = StagingImage.DISCARD
+
+        # Now delete the old type information
         # TODO - keep more detailed history so easier to undo.
         # Hence we have this branching for time being.
+
         if image_type == "unknown":
             img.unknownstagingimage.delete()
             reason = f"Unknown page discarded by {user_obj.username}"
@@ -91,13 +101,15 @@ class ScanCastService:
         elif image_type == "error":
             img.errorstagingimage.delete()
             reason = f"Error page discarded by {user_obj.username}"
+        else:
+            raise RuntimeError(f"Should not be here! {image_type}")
 
         DiscardStagingImage.objects.create(staging_image=img, discard_reason=reason)
         img.save()
 
     @transaction.atomic
     def discard_image_type_from_bundle_cmd(
-        self, username, bundle_name, bundle_order, image_type
+        self, username, bundle_name, bundle_order, *, image_type=None
     ):
         try:
             user_obj = User.objects.get(
@@ -114,7 +126,7 @@ class ScanCastService:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
         self.discard_image_type_from_bundle(
-            user_obj, bundle_obj, bundle_order, image_type
+            user_obj, bundle_obj, bundle_order, image_type=None
         )
 
     @transaction.atomic
