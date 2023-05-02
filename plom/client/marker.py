@@ -1136,7 +1136,7 @@ class MarkerClient(QWidget):
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
-        self.ui.viewButton.clicked.connect(self.view_testnum_question)
+        self.ui.viewButton.clicked.connect(self.view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
@@ -2475,7 +2475,7 @@ class MarkerClient(QWidget):
         else:
             self.prxM.filterTags()
 
-    def view_testnum_question(self):
+    def view_other(self):
         """Shows a particular paper number and question."""
         tgs = SelectTestQuestion(self, self.exam_spec, self.question)
         if tgs.exec() != QDialog.DialogCode.Accepted:
