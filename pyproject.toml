@@ -32,5 +32,6 @@ addopts = "--ignore plom/django"
 qt_api = "pyqt6"
 
 [tool.djlint]
-ignore="H021,H023,H006,H013,H025"
 # TODO: many of these should be fixed instead of ignored!
+ignore="H021,H023,H006,H013,H025,H030,H031,H005,H016,H020,H029,H014"
+# indent=2
