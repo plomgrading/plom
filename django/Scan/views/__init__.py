@@ -48,3 +48,7 @@ from .change_image_state import (
     ChangeCollisionImageState,
     DiscardImage,
 )
+
+from .cast_image_state import (
+    DiscardImageType,
+)
