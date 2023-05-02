@@ -1,3 +1,6 @@
+<!-- Copyright (C) 2022 Brennen Chiu -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
+
 {% extends 'base/base.html' %}
 {% load static %}
 <!DOCTYPE html>
@@ -9,7 +12,7 @@
 <body>
     {% block main_content %}
     <h1>Manager Sign Up</h1>
-    <form method="POST" action="">
+    <form method="post" action="">
         {% csrf_token %}
         {{ form.username.label }}
         {{ form.username }}
