@@ -140,7 +140,7 @@ djlint:
   before_script:
     - pip install djlint
   script:
-    - djlint django/templates/Scan/fragments/*.html django/templates/Scan/*.html
+    - djlint django/templates/**/*.html django/templates/**/**/*.html
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
