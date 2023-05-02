@@ -95,7 +95,10 @@ class PageDataService:
                     # what the legacy server does...
                     included = True
                 else:
-                    included = page.question == question
+                    if type(page) == QuestionPage:
+                        included = page.question_number == question
+                    else:
+                        included = False
                 pages_metadata.append(
                     {
                         "pagename": f"t{page.page_number}",
