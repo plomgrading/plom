@@ -2482,19 +2482,21 @@ class MarkerClient(QWidget):
             return
         tn = tgs.tsb.value()
         gn = tgs.gsb.value()
+        get_annotated = False
 
-        annotated_image = self.msgr.get_annotations_image(tn, gn)
-        im_type = imghdr.what(None, h=annotated_image)
-        if not im_type:
-            msg = f"Failed to identify extension of {len(annotated_image)} bytes"
-            msg += f" of image data for previously annotated {tn} {gn}"
-            log.error(msg)
-            raise PlomSeriousException(msg)
-        # TODO: nonunique if we ask again
-        aname = self.workingDirectory / f"annot_{tn}_{gn}.{im_type}"
-        with open(aname, "wb") as fh:
-            fh.write(annotated_image)
-        print(f"TODO: debugging: annot image: {aname}")
+        if get_annotated:
+            annotated_image = self.msgr.get_annotations_image(tn, gn)
+            im_type = imghdr.what(None, h=annotated_image)
+            if not im_type:
+                msg = f"Failed to identify extension of {len(annotated_image)} bytes"
+                msg += f" of image data for previously annotated {tn} {gn}"
+                log.error(msg)
+                raise PlomSeriousException(msg)
+            # TODO: nonunique if we ask again
+            aname = self.workingDirectory / f"annot_{tn}_{gn}.{im_type}"
+            with open(aname, "wb") as fh:
+                fh.write(annotated_image)
+            print(f"TODO: debugging: annot image: {aname}")
 
         pagedata = self.msgr.get_pagedata_context_question(tn, gn)
         # also, discard the non-included pages
