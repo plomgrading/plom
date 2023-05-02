@@ -432,12 +432,17 @@ class ScanServiceTests(TestCase):
         self.assertEqual(imgs, [])
 
         # now make an image with no qr-codes, so known is false
-        baker.make(StagingImage, parsed_qr={}, bundle=bundle, image_type="unknown")
+        baker.make(
+            StagingImage, parsed_qr={}, bundle=bundle, image_type=StagingImage.UNKNOWN
+        )
         imgs = scanner.get_all_known_images(bundle)
         self.assertEqual(imgs, [])
         # now make an image with a qr-code and known=true.
         with_data = baker.make(
-            StagingImage, parsed_qr={"dummy": "dict"}, bundle=bundle, image_type="known"
+            StagingImage,
+            parsed_qr={"dummy": "dict"},
+            bundle=bundle,
+            image_type=StagingImage.KNOWN,
         )
         imgs = scanner.get_all_known_images(bundle)
         self.assertEqual(imgs, [with_data])

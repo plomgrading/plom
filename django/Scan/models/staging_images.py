@@ -4,31 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.db import models
-from django.contrib.auth.models import User
-
-from Base.models import HueyTask
-
-
-class StagingBundle(models.Model):
-    """
-    A user-uploaded bundle that isn't validated.
-    """
-
-    def _staging_bundle_upload_path(self, filename):
-        # save bundle as "//media/staging/bundles/username/bundle-timestamp/filename"
-        return "staging/bundles/{}/{}/{}".format(
-            self.user.username, self.timestamp, filename
-        )
-
-    slug = models.TextField(default="")
-    pdf_file = models.FileField(upload_to=_staging_bundle_upload_path)
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    timestamp = models.FloatField(default=0)
-    pdf_hash = models.CharField(null=False, max_length=64)
-    number_of_pages = models.PositiveIntegerField(null=True)
-    has_page_images = models.BooleanField(default=False)
-    has_qr_codes = models.BooleanField(default=False)
-    pushed = models.BooleanField(default=False)
+from Scan.models import StagingBundle
 
 
 class StagingImage(models.Model):
@@ -37,6 +13,16 @@ class StagingImage(models.Model):
 
     Note that bundle_order is the 1-indexed position of the image with the pdf. This contrasts with pymupdf (for example) for which pages are 0-indexed.
     """
+
+    ImageTypeChoices = models.TextChoices(
+        "ImageType", "UNREAD KNOWN UNKNOWN EXTRA DISCARD ERROR"
+    )
+    UNREAD = ImageTypeChoices.UNREAD
+    KNOWN = ImageTypeChoices.KNOWN
+    UNKNOWN = ImageTypeChoices.UNKNOWN
+    EXTRA = ImageTypeChoices.EXTRA
+    DISCARD = ImageTypeChoices.DISCARD
+    ERROR = ImageTypeChoices.ERROR
 
     def _staging_image_upload_path(self, filename):
         # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
@@ -53,7 +39,7 @@ class StagingImage(models.Model):
     page_number = models.PositiveIntegerField(default=None, null=True)
     rotation = models.IntegerField(default=0)
     pushed = models.BooleanField(default=False)
-    image_type = models.CharField(default="unread", max_length=16)
+    image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)
 
 
 class KnownStagingImage(models.Model):
@@ -96,39 +82,3 @@ class ErrorStagingImage(models.Model):
         StagingImage, primary_key=True, on_delete=models.CASCADE
     )
     error_reason = models.TextField()
-
-
-class ManagePageToImage(HueyTask):
-    """
-    Manage the background PDF page into an image tasks
-    """
-
-    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
-    completed_pages = models.PositiveIntegerField(default=0)
-
-
-class PageToImage(HueyTask):
-    """
-    Convert a PDF page into an image in the background.
-    """
-
-    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
-
-
-class ManageParseQR(HueyTask):
-    """
-    Manage the background parse-qr tasks
-    """
-
-    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
-    completed_pages = models.PositiveIntegerField(default=0)
-
-
-class ParseQR(HueyTask):
-    """
-    Parse a page of QR codes in the background.
-    """
-
-    file_path = models.TextField(default="")
-    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
-    page_index = models.PositiveIntegerField(null=True)
