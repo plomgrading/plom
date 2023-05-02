@@ -52,6 +52,7 @@ class ManageBundleView(ScannerRequiredView):
 
         context.update(
             {
+                "is_pushed": bundle.pushed,
                 "slug": bundle.slug,
                 "timestamp": timestamp,
                 "pages": bundle_page_info_list,
@@ -102,6 +103,7 @@ class GetBundleNavFragmentView(ScannerRequiredView):
 
         context.update(
             {
+                "is_pushed": bundle.pushed,
                 "slug": bundle.slug,
                 "timestamp": timestamp,
                 "index": index,

@@ -64,13 +64,16 @@
 			</li>
 		      </ul>
 		    </div>
+		    {% if is_pushed %}
+		    {% else %}
 		    <div>
 		      <a class="btn btn-danger text-center w-100 mb-3" 
 			 hx-post="{% url 'discard_image' timestamp index %}"
 			 hx-confirm="Are you sure you wish to discard this known page?">
-			Discard
+			Discard 
 		      </a>
 		    </div>
+		    {% endif %}
 		    {% elif current_page.status == 'extra' %}
 		    <div class="alert alert-info">
 		      <h6 class="alert-heading">Extra</h6>
@@ -92,6 +95,8 @@
 			{% endif %}
 		      </ul>
 		    </div>
+		    {% if is_pushed %}
+		    {% else %}
 		    <div>
 		      <a class="btn btn-danger text-center w-100 mb-3" 
 			 hx-post="{% url 'discard_image' timestamp index %}"
@@ -99,6 +104,7 @@
 			Discard
 		      </a>
 		    </div>
+		    {% endif %}
 		    {% elif current_page.status == 'unknown' %}
 		    <div class="alert alert-warning">
 		      <h6 class="alert-heading">Unknown</h6>
@@ -106,6 +112,8 @@
 			<li>No qr-codes could be read</li>
 		      </ul>
 		    </div>
+		    {% if is_pushed %}
+		    {% else %}
 		    <div>
 		      <a class="btn btn-danger text-center w-100 mb-3" 
 			 hx-post="{% url 'discard_image' timestamp index %}"
@@ -113,6 +121,7 @@
 			Discard
 		      </a>
 		    </div>
+		    {% endif %}
 		    {% elif current_page.status == 'discard' %}
 		    <div class="alert alert-dark">
 		      <h6 class="alert-heading">Discard</h6>
@@ -136,6 +145,8 @@
 			</li>
 		      </ul>
 		    </div>
+		    {% if is_pushed %}
+		    {% else %}
 		    <div>
 		      <a class="btn btn-danger text-center w-100 mb-3" 
 			 hx-post="{% url 'discard_image' timestamp index %}"
@@ -143,6 +154,7 @@
 			Discard
 		      </a>
 		    </div>
+		    {% endif %}
 		    {% elif current_page.status == 'unread' %}
 		    <div class="alert alert-dark">
 		      <h6 class="alert-heading">Unread</h6>

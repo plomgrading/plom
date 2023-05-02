@@ -12,6 +12,12 @@
             <div class="row">
                 <div class="col-4">
                   <h5>Bundle <q>{{ slug }}</q> summary</h5>
+		  {% if is_pushed %}
+                  <div class="alert alert-success">Pushed <i class="bi bi-check-circle text-success"></i>
+		  {% else %}
+                  <div class="alert alert-info">
+		  {% endif %}
+
 		  <ul>
 		    <li>{{ known_pages }} / {{ total_pages }} known pages</li>
 		    {% if known_pages != total_pages %}
@@ -21,6 +27,7 @@
 		    <li>{{ error_pages }} error pages</li>
 		    {% endif %}
 		  </ul>
+                  </div>
                 </div>
                 <div class="col-8">
                   <h5>Bundle Contains:</h5> 

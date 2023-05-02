@@ -50,7 +50,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
         self.discard_image_type_from_bundle(
-            user_obj, bundle_obj, bundle_order, img_obj.image_type
+            user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
         )
 
     @transaction.atomic
