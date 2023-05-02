@@ -934,13 +934,15 @@ class ScanService:
             .order_by("paper_number", "question_list")
             .prefetch_related("staging_image")
         ):
-            papers.setdefault(extra.paper_number, []).append(
-                {
-                    "type": "extra",
-                    "question_list": extra.question_list,
-                    "order": extra.staging_image.bundle_order,
-                }
-            )
+            # we can skip those without data
+            if extra.paper_number and extra.question_list:
+                papers.setdefault(extra.paper_number, []).append(
+                    {
+                        "type": "extra",
+                        "question_list": extra.question_list,
+                        "order": extra.staging_image.bundle_order,
+                    }
+                )
         # # recast paper_pages as an **ordered** list of tuples (paper, page-info)
         return [
             (paper_number, page_info)
