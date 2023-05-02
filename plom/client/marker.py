@@ -2480,35 +2480,36 @@ class MarkerClient(QWidget):
         tgs = SelectTestQuestion(self, self.exam_spec, self.question)
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
-        tn = tgs.tsb.value()
-        gn = tgs.gsb.value()
-        get_annotated = False
+        tn, q, get_annotated = tgs.get_results()
 
         if get_annotated:
-            annotated_image = self.msgr.get_annotations_image(tn, gn)
+            annotated_image = self.msgr.get_annotations_image(tn, q)
             im_type = imghdr.what(None, h=annotated_image)
             if not im_type:
                 msg = f"Failed to identify extension of {len(annotated_image)} bytes"
-                msg += f" of image data for previously annotated {tn} {gn}"
+                msg += f" of image data for previously annotated {tn} {q}"
                 log.error(msg)
                 raise PlomSeriousException(msg)
-            # TODO: nonunique if we ask again
-            aname = self.workingDirectory / f"annot_{tn}_{gn}.{im_type}"
+            # TODO: nonunique if we ask again: no caching here
+            aname = self.workingDirectory / f"annot_{tn}_{q}.{im_type}"
             with open(aname, "wb") as fh:
                 fh.write(annotated_image)
-            print(f"TODO: debugging: annot image: {aname}")
+            pagedata = [aname]
+            s = f"Annotations for paper {tn:04} question index {q}"
+        else:
+            pagedata = self.msgr.get_pagedata_context_question(tn, q)
+            # also, discard the non-included pages
+            pagedata = [x for x in pagedata if x["included"]]
+            # don't cache this pagedata: "q" might not be our question number
+            # (but the images are cacheable)
+            pagedata = self.downloader.sync_downloads(pagedata)
+            s = f"Original ungraded images for paper {tn:04} question index {q}"
 
-        pagedata = self.msgr.get_pagedata_context_question(tn, gn)
-        # also, discard the non-included pages
-        pagedata = [x for x in pagedata if x["included"]]
-        # don't cache this pagedata: "gn" might not be our question number
-        # (but the images are cacheable)
-        pagedata = self.downloader.sync_downloads(pagedata)
         print("HARDCODING VERISION=1, TODO: Issue #2695")
         ver = 1
         # qvmap = self.msgr.getQuestionVersionMap(tn)
-        # ver = qvmap[gn]
-        d = QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self)
+        # ver = qvmap[q]
+        d = QuestionViewDialog(self, pagedata, (tn, q, ver), marker=self, title=s)
         # TODO: future-proofing this a bit for live download updates
         # PC.download_finished.connect(d.shake_things_up)
         d.exec()
