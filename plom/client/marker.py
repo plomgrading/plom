@@ -71,6 +71,7 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
+    PlomNoPaper,
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
@@ -2482,27 +2483,36 @@ class MarkerClient(QWidget):
             return
         tn, q, get_annotated = tgs.get_results()
 
+        stuff = None
         if get_annotated:
-            annotated_image = self.msgr.get_annotations_image(tn, q)
-            im_type = imghdr.what(None, h=annotated_image)
-            if not im_type:
-                msg = f"Failed to identify extension of {len(annotated_image)} bytes"
-                msg += f" of image data for previously annotated {tn} {q}"
-                log.error(msg)
-                raise PlomSeriousException(msg)
-            # TODO: nonunique if we ask again: no caching here
-            aname = self.workingDirectory / f"annot_{tn}_{q}.{im_type}"
-            with open(aname, "wb") as fh:
-                fh.write(annotated_image)
-            pagedata = [aname]
-            s = f"Annotations for paper {tn:04} question index {q}"
-        else:
+            try:
+                annotated_image = self.msgr.get_annotations_image(tn, q)
+            except PlomNoPaper:
+                pass
+            else:
+                im_type = imghdr.what(None, h=annotated_image)
+                if not im_type:
+                    msg = (
+                        f"Failed to identify extension of {len(annotated_image)} bytes"
+                    )
+                    msg += f" of image data for previously annotated {tn} {q}"
+                    log.error(msg)
+                    raise PlomSeriousException(msg)
+                # TODO: nonunique if we ask again: no caching here
+                aname = self.workingDirectory / f"annot_{tn}_{q}.{im_type}"
+                with open(aname, "wb") as fh:
+                    fh.write(annotated_image)
+                stuff = [aname]
+                s = f"Annotations for paper {tn:04} question index {q}"
+
+        if stuff is None:
             pagedata = self.msgr.get_pagedata_context_question(tn, q)
             # also, discard the non-included pages
             pagedata = [x for x in pagedata if x["included"]]
             # don't cache this pagedata: "q" might not be our question number
             # (but the images are cacheable)
             pagedata = self.downloader.sync_downloads(pagedata)
+            stuff = pagedata
             s = f"Original ungraded images for paper {tn:04} question index {q}"
 
         # TODO: Restore appending version to the title by fixing Issue #2695
@@ -2510,7 +2520,7 @@ class MarkerClient(QWidget):
         # ver = qvmap[q]
         # s += f" (ver {ver})"
 
-        d = QuestionViewDialog(self, pagedata, tn, q, marker=self, title=s)
+        d = QuestionViewDialog(self, stuff, tn, q, marker=self, title=s)
         # TODO: future-proofing this a bit for live download updates
         # PC.download_finished.connect(d.shake_things_up)
         d.exec()
