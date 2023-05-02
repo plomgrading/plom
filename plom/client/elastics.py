@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """Elastic band options for connecting rubrics to labels."""
 
 import logging
 
-from PyQt5.QtCore import QRectF, QLineF, QPointF
-from PyQt5.QtGui import QPainterPath
+from PyQt6.QtCore import QRectF, QLineF, QPointF
+from PyQt6.QtGui import QPainterPath
 
 # from plom import AnnFontSizePts, ScenePixelHeight
 
@@ -100,16 +100,16 @@ def _get_intersection_bw_rect_line(rec, lin):
         return None
     x, y, w, h = rec.getRect()
     yes, pt = lin.intersects(QLineF(QPointF(x, y), QPointF(x + w, y)))
-    if yes == QLineF.BoundedIntersection:
+    if yes == QLineF.IntersectionType.BoundedIntersection:
         return pt
     yes, pt = lin.intersects(QLineF(QPointF(x + w, y), QPointF(x + w, y + h)))
-    if yes == QLineF.BoundedIntersection:
+    if yes == QLineF.IntersectionType.BoundedIntersection:
         return pt
     yes, pt = lin.intersects(QLineF(QPointF(x + w, y + h), QPointF(x, y + h)))
-    if yes == QLineF.BoundedIntersection:
+    if yes == QLineF.IntersectionType.BoundedIntersection:
         return pt
     yes, pt = lin.intersects(QLineF(QPointF(x, y + h), QPointF(x, y)))
-    if yes == QLineF.BoundedIntersection:
+    if yes == QLineF.IntersectionType.BoundedIntersection:
         return pt
     return None
 

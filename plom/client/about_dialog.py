@@ -4,8 +4,8 @@
 import platform
 from textwrap import dedent
 
-from PyQt5.QtCore import PYQT_VERSION_STR, QT_VERSION_STR
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtCore import PYQT_VERSION_STR, QT_VERSION_STR
+from PyQt6.QtWidgets import QMessageBox
 
 from plom import __version__
 
@@ -39,7 +39,7 @@ def show_about_dialog(parent):
 
             <h3>System info</h3>
             <p>
-            PyQt5 {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
+            PyQt {PYQT_VERSION_STR} (Qt {QT_VERSION_STR})<br />
             Python {platform.python_version()}<br />
             {platform.platform()}</p>
             """

@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
 
-from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
-from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
+from PyQt6.QtCore import Qt, QPointF
+from PyQt6.QtGui import QPen, QPainterPath, QBrush, QColor
+from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools.line import CommandLine, LineItem
 from plom.client.tools import UndoStackMoveMixin
@@ -36,8 +36,8 @@ class ArrowItem(UndoStackMoveMixin, QGraphicsPathItem):
         self.restyle(style)
 
         # The line is moveable and should signal any changes
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def restyle(self, style):
         self.normal_thick = style["pen_width"]
@@ -45,8 +45,8 @@ class ArrowItem(UndoStackMoveMixin, QGraphicsPathItem):
             QPen(
                 style["annot_color"],
                 style["pen_width"],
-                cap=Qt.RoundCap,
-                join=Qt.RoundJoin,
+                cap=Qt.PenCapStyle.RoundCap,
+                join=Qt.PenJoinStyle.RoundJoin,
             )
         )
         self.setBrush(QBrush(style["annot_color"]))
@@ -62,8 +62,6 @@ class ArrowItem(UndoStackMoveMixin, QGraphicsPathItem):
         northog = QPointF(-ndelta.y(), ndelta.x())
         # base of arrowhead
         self.arBase = ptf - 16 * ndelta
-        # point of arrowhead
-        self.arTip = ptf + 8 * ndelta
         # left-barb of the arrowhead
         self.arLeft = self.arBase - 10 * northog - 4 * ndelta
         # right-barb of the arrowhead
@@ -114,7 +112,6 @@ class ArrowDoubleItem(ArrowItem):
         northog = QPointF(-ndelta.y(), ndelta.x())
         # build arrow
         arBase = pti + 16 * ndelta
-        arTip = pti - 8 * ndelta
         arLeft = arBase + 10 * northog + 4 * ndelta
         arRight = arBase - 10 * northog + 4 * ndelta
         # draw first arrow.
@@ -127,7 +124,6 @@ class ArrowDoubleItem(ArrowItem):
         path.lineTo(ptf)
         # other arrowhead
         arBase = ptf - 16 * ndelta
-        arTip = ptf + 8 * ndelta
         arLeft = arBase - 10 * northog - 4 * ndelta
         arRight = arBase + 10 * northog - 4 * ndelta
         # line to left-barb then to base of arrowhead, then to right barb

@@ -5,9 +5,9 @@
 
 import logging
 
-from PyQt5.QtCore import Qt, QSortFilterProxyModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QSortFilterProxyModel
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QDialog,
@@ -56,7 +56,7 @@ class DeleteIcon(QPushButton):
         super().__init__()
         self.setText("Drag here\n to remove\n from tab")
         self.setAcceptDrops(True)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
 
     def dragEnterEvent(self, e):
         if isinstance(e.source(), ShowTable):
@@ -150,9 +150,9 @@ class RubricProxyModel(QSortFilterProxyModel):
 class ShowTable(QTableWidget):
     def __init__(self):
         super().__init__()
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.horizontalHeader().setStretchLastSection(True)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
@@ -194,7 +194,7 @@ class ShowTable(QTableWidget):
         return current_keys
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Delete:
+        if event.key() == Qt.Key.Key_Delete:
             row = self.currentRow()
             self.removeRow(row)
         else:
@@ -211,7 +211,7 @@ class ShowTable(QTableWidget):
         _sorting_enabled = self.isSortingEnabled()
         self.setSortingEnabled(False)
         if event.source() == self:
-            event.setDropAction(Qt.CopyAction)
+            event.setDropAction(Qt.DropAction.CopyAction)
             rows = set([mi.row() for mi in self.selectedIndexes()])
             targetRow = self.indexAt(event.pos()).row()
             rows.discard(targetRow)
@@ -254,7 +254,7 @@ class ShowTable(QTableWidget):
                         self.setItem(targetRow, col, QTableWidgetItem(rdat[col]))
                     targetRow += 1
             # # if shift-key pressed - then delete source
-            if QApplication.keyboardModifiers() == Qt.ShiftModifier:
+            if QApplication.keyboardModifiers() == Qt.KeyboardModifier.ShiftModifier:
                 sourceRows = sorted([X.row() for X in sourceInd], reverse=True)
                 # is multiple of 4
                 for r in sourceRows[0::4]:  # every 4th
@@ -298,10 +298,10 @@ class DropButton(QPushButton):
         self.setAcceptDrops(True)
         self.index = p
         self.clicked.connect(self.payAttentionToMe)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
 
     def payAttentionToMe(self):
-        self.setFocus(Qt.TabFocusReason)
+        self.setFocus(Qt.FocusReason.TabFocusReason)
         self.parent().setCurrentIndex(self.index)
 
     def dragEnterEvent(self, e):
@@ -320,7 +320,7 @@ class DropButton(QPushButton):
 class ShowListFrame(QFrame):
     def __init__(self, nameList):
         super().__init__()
-        self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
         self.STW = ShowTabW(nameList)
         self.DI = DeleteIcon()
         vl = QVBoxLayout()
@@ -355,11 +355,13 @@ class RubricWrangler(QDialog):
         self.rubricTable = QTableView()
         self.proxy.setSourceModel(self.model)
         self.rubricTable.setModel(self.proxy)
-        self.rubricTable.sortByColumn(-1, Qt.AscendingOrder)
+        self.rubricTable.sortByColumn(-1, Qt.SortOrder.AscendingOrder)
         self.rubricTable.verticalHeader().setVisible(False)
         self.rubricTable.horizontalHeader().setVisible(True)
-        self.rubricTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.rubricTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.rubricTable.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.rubricTable.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.rubricTable.resizeColumnsToContents()
         self.rubricTable.horizontalHeader().setStretchLastSection(True)
         self.rubricTable.setSortingEnabled(True)

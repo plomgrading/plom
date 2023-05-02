@@ -4,44 +4,12 @@
 
 from rest_framework import serializers
 
-from Rubrics.models import RelativeRubric, NeutralRubric, AbsoluteRurbic
+from Rubrics.models import Rubric
 
 
-class RelativeRubricSerializer(serializers.ModelSerializer):
+class RubricSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RelativeRubric
-        fields = "__all__"
-        extra_kwargs = {
-            "tags": {
-                "required": False,
-                "allow_blank": True,
-            },
-            "meta": {
-                "required": False,
-                "allow_blank": True,
-            },
-        }
-
-
-class NeutralRubricSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = NeutralRubric
-        fields = "__all__"
-        extra_kwargs = {
-            "tags": {
-                "required": False,
-                "allow_blank": True,
-            },
-            "meta": {
-                "required": False,
-                "allow_blank": True,
-            },
-        }
-
-
-class AbsoluteRubricSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AbsoluteRurbic
+        model = Rubric
         fields = "__all__"
         extra_kwargs = {
             "tags": {

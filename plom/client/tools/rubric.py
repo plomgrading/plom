@@ -5,10 +5,9 @@
 
 from copy import deepcopy
 
-from PyQt5.QtCore import QTimer, Qt, QPointF
-from PyQt5.QtGui import QBrush, QColor, QFont, QPen
-
-from PyQt5.QtWidgets import QGraphicsItemGroup, QGraphicsItem
+from PyQt6.QtCore import QTimer, Qt, QPointF
+from PyQt6.QtGui import QBrush, QColor, QFont, QPen
+from PyQt6.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 from plom.client.tools.delta import DeltaItem, GhostDelta
@@ -155,8 +154,8 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def as_rubric(self):
         """return as a rubric dict"""
@@ -221,7 +220,7 @@ class GroupDeltaTextItem(UndoStackMoveMixin, QGraphicsItemGroup):
         else:
             # paint a bounding rectangle for undo/redo highlighting
             painter.setPen(
-                QPen(self.style["annot_color"], self.thick, style=Qt.DotLine)
+                QPen(self.style["annot_color"], self.thick, style=Qt.PenStyle.DotLine)
             )
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -249,7 +248,7 @@ class GhostComment(QGraphicsItemGroup):
         self.di = GhostDelta(display_delta, fontsize, legal=self.legal)
         self.blurb = GhostText(txt, fontsize, legal=self.legal)
         self.changeComment(display_delta, txt)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
 
     def _tweakPositions(self, display_delta, txt):
         """Adjust the positions of the delta and text depending on their size and content.
@@ -308,7 +307,7 @@ class GhostComment(QGraphicsItemGroup):
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting
         # TODO: pen width hardcoded
-        painter.setPen(QPen(Qt.blue, 0.5, style=Qt.DotLine))
+        painter.setPen(QPen(QColor("blue"), 0.5, style=Qt.PenStyle.DotLine))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)

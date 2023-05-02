@@ -4,6 +4,7 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -589,14 +590,14 @@ docs_sphinx:
 fedora_build:
   stage: alt_build
   needs: []
-  image: fedora:37
+  image: fedora:38
   when: manual
   allow_failure: true
   before_script:
     - dnf install -y ImageMagick openssl gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
-          python3-passlib python3-qt5
+          python3-passlib python3-pyqt6
           python3-jsmin python3-defusedxml python3-yaml
           python3-urllib3 python3-more-itertools
           python3-seaborn python3-aiohttp
@@ -675,7 +676,7 @@ newOS_newdeps:
     - apt-get --no-install-recommends --yes install
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
-      libgl1-mesa-glx libsm6 libxrender1
+      libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
       python3-pytest python3-dev
       python3-pip python3-setuptools python3-wheel
       iproute2 psmisc file python3-magic
@@ -746,11 +747,10 @@ oldOS_mindeps:
     - apt-get --no-install-recommends --yes install
       cmake make g++ imagemagick openssl
       dvipng latexmk texlive-latex-extra texlive-fonts-recommended
-      libgl1-mesa-glx libsm6 libxrender1
-      python3-pytest python3-pytestqt
+      libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
       python3 python3-dev
       python3-pip python3-setuptools python3-wheel
-      python3-passlib python3-pandas python3-pyqt5
+      python3-passlib python3-pandas
       python3-requests-toolbelt python3-pil python3-tqdm
       python3-defusedxml python3-jsmin python3-packaging
       iproute2 psmisc file python3-magic
@@ -763,7 +763,7 @@ oldOS_mindeps:
     - python3 -m pip install -r requirements.txt.tempminima
     - python3 -m pip install .
     # First, run the unit tests
-    - pytest-3 -l --pyargs plom
+    - pytest -l --pyargs plom
     # Build tests
     - mkdir play
     - pushd play
@@ -816,7 +816,7 @@ minpy_mindeps:
     - apt-get --no-install-recommends --yes install
       cmake make imagemagick dvipng g++ openssl
       texlive-latex-extra latexmk texlive-fonts-recommended
-      libgl1-mesa-glx libsm6 libxrender1
+      libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
     - pip install pytest
   script:
     - pip install -r requirements.txt.tempminima
@@ -936,15 +936,18 @@ linux_client_appimage:
     expire_in: 16 days
 
 
+# TODO: broken by the upgrade to PyQt6, currently set to manual
 linuxbin_ubuntu2004:
   stage: packaging
+  when: manual
+  allow_failure: true
   image: ubuntu:20.04
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
     - apt-get --no-install-recommends --yes install iproute2 psmisc file binutils
       python3 python3-dev python3-wheel python3-setuptools python3-pip
-    - apt-get install -y libglib2.0 libgl1-mesa-glx
+    - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
     - pip install --upgrade pip
     - pip install pyinstaller
   script:
@@ -953,6 +956,35 @@ linuxbin_ubuntu2004:
     - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-ubuntu2004.bin
+    - mv dist/PlomClient*.bin $NAME
+    - chmod 755 $NAME
+    - md5sum $NAME > md5sum
+    - ls $NAME
+    - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.bin
+    - md5sum
+    expire_in: 16 days
+
+
+linuxbin_ubuntu2204:
+  stage: packaging
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file binutils
+      python3 python3-dev python3-wheel python3-setuptools python3-pip
+    - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
+    - pip install --upgrade pip
+    - pip install pyinstaller
+  script:
+    - pip install -r requirements.txt.client
+    - pyinstaller client.linux.spec
+    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - echo "Extracted version string '$VER'"
+    - export NAME=PlomClient-$VER-linux-ubuntu2204.bin
     - mv dist/PlomClient*.bin $NAME
     - chmod 755 $NAME
     - md5sum $NAME > md5sum
@@ -1254,9 +1286,9 @@ winpyinst:
   script:
   - c:\python310\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python310\python -m pip install pyinstaller==5.8.0
+  - c:\python310\python -m pip install pyinstaller==5.10.1
   - refreshenv
-  - c:\python310\python -m plom.client -h
+  # c:\python310\python -m plom.client -h
   - c:\python310\scripts\pyinstaller client.windows.spec
   - $VER = &"c:\python310\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"

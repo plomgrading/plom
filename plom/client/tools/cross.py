@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QPointF
-from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
-from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
+from PyQt6.QtCore import QPointF
+from PyQt6.QtGui import QPen, QPainterPath, QColor, QBrush
+from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools import CommandTool, DeleteObject, UndoStackMoveMixin
 
@@ -41,8 +41,8 @@ class CrossItem(UndoStackMoveMixin, QGraphicsPathItem):
         self.setPath(self.path)
         self.restyle(style)
 
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def restyle(self, style):
         self.normal_thick = 3 * style["pen_width"] / 2

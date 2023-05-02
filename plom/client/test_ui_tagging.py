@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMessageBox
 from plom.client.useful_classes import AddRemoveTagDialog
 
 
@@ -19,7 +19,7 @@ def test_tag_cancel_dialog(qtbot):
     d = AddRemoveTagDialog(None, [], [])
     d.show()
     qtbot.addWidget(d)
-    qtbot.keyClick(d, Qt.Key_Escape)
+    qtbot.keyClick(d, Qt.Key.Key_Escape)
     assert d.return_values is None
     assert not d.isVisible()
 
@@ -43,7 +43,9 @@ def test_tag_choices(qtbot):
 
 
 def test_tag_remove(qtbot, monkeypatch):
-    monkeypatch.setattr(QMessageBox, "question", lambda *args: QMessageBox.Yes)
+    monkeypatch.setattr(
+        QMessageBox, "question", lambda *args: QMessageBox.StandardButton.Yes
+    )
     d = AddRemoveTagDialog(None, ["tag1", "tag2", "tag3"], [])
     d.show()
     qtbot.addWidget(d)

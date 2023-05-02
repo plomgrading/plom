@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
 
-from PyQt5.QtCore import QPointF
-from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QPointF
+from PyQt6.QtGui import QPen, QPainterPath, QBrush, QColor
+from PyQt6.QtWidgets import (
     QGraphicsItemGroup,
     QGraphicsPathItem,
     QGraphicsItem,
@@ -41,7 +41,6 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         ndelta = delta / el
         northog = QPointF(-ndelta.y(), ndelta.x())
         arBase = ptf - 16 * ndelta
-        arTip = ptf + 8 * ndelta
         arLeft = arBase - 10 * northog - 4 * ndelta
         arRight = arBase + 10 * northog - 4 * ndelta
         self.ari = QPainterPath()
@@ -62,7 +61,6 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         ndelta = delta / el
         northog = QPointF(-ndelta.y(), ndelta.x())
         arBase = ptf - 16 * ndelta
-        arTip = ptf + 8 * ndelta
         arLeft = arBase - 10 * northog - 4 * ndelta
         arRight = arBase + 10 * northog - 4 * ndelta
         self.arf = QPainterPath()
@@ -77,8 +75,8 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.pi.setPath(self.path)
         self.restyle(style)
 
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         self.addToGroup(self.pi)
         self.addToGroup(self.endi)
         self.addToGroup(self.endf)
