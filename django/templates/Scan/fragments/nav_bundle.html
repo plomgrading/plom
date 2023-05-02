@@ -1,5 +1,6 @@
 <!-- Copyright (C) 2022-2023 Brennen Chiu -->
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023 Natalie Balashov -->
 
 <div class="container w-100 p-0 m-3" id="navFragment">
     <div class="row">
@@ -22,6 +23,7 @@
                     <img
                         src="{% url 'scan_get_image' timestamp index %}"
                         class="w-100 thumbnail shadow-sm"
+                        style="transform:rotate(calc(-1 * {{current_page.rotation}}deg))"
                     >
                 </div>
                 <div class="col-sm-2 p-0 d-flex justify-content-center">
