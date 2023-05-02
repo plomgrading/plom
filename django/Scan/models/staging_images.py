@@ -14,6 +14,16 @@ class StagingImage(models.Model):
     Note that bundle_order is the 1-indexed position of the image with the pdf. This contrasts with pymupdf (for example) for which pages are 0-indexed.
     """
 
+    ImageTypeChoices = models.TextChoices(
+        "ImageType", "UNREAD KNOWN UNKNOWN EXTRA DISCARD ERROR"
+    )
+    UNREAD = ImageTypeChoices.UNREAD
+    KNOWN = ImageTypeChoices.KNOWN
+    UNKNOWN = ImageTypeChoices.UNKNOWN
+    EXTRA = ImageTypeChoices.EXTRA
+    DISCARD = ImageTypeChoices.DISCARD
+    ERROR = ImageTypeChoices.ERROR
+
     def _staging_image_upload_path(self, filename):
         # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
         return "staging/bundles/{}/{}/page_images/{}".format(
@@ -29,7 +39,7 @@ class StagingImage(models.Model):
     page_number = models.PositiveIntegerField(default=None, null=True)
     rotation = models.IntegerField(default=0)
     pushed = models.BooleanField(default=False)
-    image_type = models.CharField(default="unread", max_length=16)
+    image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)
 
 
 class KnownStagingImage(models.Model):

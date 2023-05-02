@@ -460,13 +460,13 @@ class ScanService:
                 print(page_img.rotation)
                 print(page_img.parsed_qr)
                 if not qlist:
-                    page_img.image_type = "discard"
+                    page_img.image_type = StagingImage.DISCARD
                     page_img.save()
                     DiscardStagingImage.objects.create(
                         staging_image=page_img, discard_reason="map said drop this page"
                     )
                     continue
-                page_img.image_type = "extra"
+                page_img.image_type = StagingImage.EXTRA
                 # TODO = update the qr-code info in the underlying image
                 page_img.save()
                 ExtraStagingImage.objects.create(
@@ -588,7 +588,7 @@ class ScanService:
         """
         Get all the images with completed QR code data - they can be pushed.
         """
-        return list(bundle.stagingimage_set.filter(image_type="known"))
+        return list(bundle.stagingimage_set.filter(image_type=StagingImage.KNOWN))
 
     @transaction.atomic
     def all_complete_images_pushed(self, bundle):
@@ -608,21 +608,21 @@ class ScanService:
 
     @transaction.atomic
     def get_n_known_images(self, bundle):
-        return bundle.stagingimage_set.filter(image_type="known").count()
+        return bundle.stagingimage_set.filter(image_type=StagingImage.KNOWN).count()
 
     @transaction.atomic
     def get_n_unknown_images(self, bundle):
-        return bundle.stagingimage_set.filter(image_type="unknown").count()
+        return bundle.stagingimage_set.filter(image_type=StagingImage.UNKNOWN).count()
 
     @transaction.atomic
     def get_n_extra_images(self, bundle):
-        return bundle.stagingimage_set.filter(image_type="extra").count()
+        return bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA).count()
 
     @transaction.atomic
     def get_n_extra_images_with_data(self, bundle):
         # note - we must check that we have set both questions and pages
         return bundle.stagingimage_set.filter(
-            image_type="extra",
+            image_type=StagingImage.EXTRA,
             extrastagingimage__paper_number__isnull=False,
             extrastagingimage__question_list__isnull=False,
         ).count()
@@ -630,7 +630,7 @@ class ScanService:
     @transaction.atomic
     def do_all_extra_images_have_data(self, bundle):
         # Make sure all question pages have both paper-number and question-lists
-        epages = bundle.stagingimage_set.filter(image_type="extra")
+        epages = bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA)
         return not epages.filter(
             Q(extrastagingimage__paper_number__isnull=True)
             | Q(extrastagingimage__question_list__isnull=True)
@@ -639,11 +639,11 @@ class ScanService:
 
     @transaction.atomic
     def get_n_error_images(self, bundle):
-        return bundle.stagingimage_set.filter(image_type="error").count()
+        return bundle.stagingimage_set.filter(image_type=StagingImage.ERROR).count()
 
     @transaction.atomic
     def get_n_discard_images(self, bundle):
-        return bundle.stagingimage_set.filter(image_type="discard").count()
+        return bundle.stagingimage_set.filter(image_type=StagingImage.DISCARD).count()
 
     @transaction.atomic
     def bundle_contains_list(self, all_images, num_images):
@@ -765,11 +765,11 @@ class ScanService:
 
         # check for unread, unknown, error pages
         if bundle_obj.stagingimage_set.filter(
-            image_type__in=["unknown", "unread", "error"]
+            image_type__in=[StagingImage.UNKNOWN, StagingImage.UNREAD, StagingImage.ERROR]
         ).exists():
             return False
         # check for extra pages without data
-        epages = bundle_obj.stagingimage_set.filter(image_type="extra")
+        epages = bundle_obj.stagingimage_set.filter(image_type=StagingImage.EXTRA)
         if epages.filter(
             Q(extrastagingimage__paper_number__isnull=True)
             | Q(extrastagingimage__question_list__isnull=True)
@@ -861,28 +861,28 @@ class ScanService:
         pages = {}
         for img in bundle_obj.stagingimage_set.all().order_by("bundle_order"):
             pages[img.bundle_order] = {
-                "status": img.image_type,
+                "status": img.image_type.lower(),
                 "info": {},
                 "order": f"{img.bundle_order}".zfill(n_digits),  # order is 1-indexed
                 "rotation": img.rotation,
             }
 
         for img in bundle_obj.stagingimage_set.filter(
-            image_type="error"
+            image_type=StagingImage.ERROR
         ).prefetch_related("errorstagingimage"):
             pages[img.bundle_order]["info"] = {
                 "reason": img.errorstagingimage.error_reason
             }
 
         for img in bundle_obj.stagingimage_set.filter(
-            image_type="discard"
+            image_type=StagingImage.DISCARD
         ).prefetch_related("discardstagingimage"):
             pages[img.bundle_order]["info"] = {
                 "reason": img.discardstagingimage.discard_reason
             }
 
         for img in bundle_obj.stagingimage_set.filter(
-            image_type="known"
+            image_type=StagingImage.KNOWN
         ).prefetch_related("knownstagingimage"):
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.knownstagingimage.paper_number,
@@ -890,7 +890,7 @@ class ScanService:
                 "version": img.knownstagingimage.version,
             }
         for img in bundle_obj.stagingimage_set.filter(
-            image_type="extra"
+            image_type=StagingImage.EXTRA
         ).prefetch_related("extrastagingimage"):
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.extrastagingimage.paper_number,
@@ -958,22 +958,22 @@ class ScanService:
 
         img = bundle_obj.stagingimage_set.get(bundle_order=index)
         current_page = {
-            "status": img.image_type,
+            "status": img.image_type.lower(),
             "order": f"{img.bundle_order}".zfill(n_digits),  # order is 1-indexed
             "rotation": img.rotation,
             "qr_codes": img.parsed_qr,
         }
-        if img.image_type == "error":
+        if img.image_type == StagingImage.ERROR:
             info = {"reason": img.errorstagingimage.error_reason}
-        elif img.image_type == "discard":
+        elif img.image_type == StagingImage.DISCARD:
             info = {"reason": img.discardstagingimage.discard_reason}
-        elif img.image_type == "known":
+        elif img.image_type == StagingImage.KNOWN:
             info = {
                 "paper_number": img.knownstagingimage.paper_number,
                 "page_number": img.knownstagingimage.page_number,
                 "version": img.knownstagingimage.version,
             }
-        elif img.image_type == "extra":
+        elif img.image_type == StagingImage.EXTRA:
             info = {
                 "paper_number": img.extrastagingimage.paper_number,
                 "question_list": img.extrastagingimage.question_list,

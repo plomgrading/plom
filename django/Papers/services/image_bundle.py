@@ -141,15 +141,15 @@ class ImageBundleService:
         pi_service = PaperInfoService()
 
         def image_save_name(staged):
-            if staged.image_type == "known":
+            if staged.image_type == StagingImage.KNOWN:
                 known = staged.knownstagingimage
                 prefix = f"known_{known.paper_number}_{known.page_number}_"
-            elif staged.image_type == "extra":
+            elif staged.image_type == StagingImage.EXTRA:
                 extra = staged.extrastagingimage
                 prefix = f"extra_{extra.paper_number}_"
                 for q in extra.question_list:
                     prefix += f"{q}_"
-            elif staged.image_type == "discard":
+            elif staged.image_type == StagingImage.DISCARD:
                 prefix = "discard_"
             else:
                 prefix = ""
@@ -169,7 +169,7 @@ class ImageBundleService:
                 )
                 image.save()
 
-            if staged.image_type == "known":
+            if staged.image_type == StagingImage.KNOWN:
                 known = staged.knownstagingimage
                 # Note that since fixedpage is polymorphic, this will handle question, ID and DNM pages.
                 page = FixedPage.objects.get(
@@ -178,7 +178,7 @@ class ImageBundleService:
                 )
                 page.image = image
                 page.save(update_fields=["image"])
-            elif staged.image_type == "extra":
+            elif staged.image_type == StagingImage.EXTRA:
                 # need to make one mobile page for each question in the question-list
                 extra = staged.extrastagingimage
                 paper = Paper.objects.get(paper_number=extra.paper_number)
@@ -190,7 +190,7 @@ class ImageBundleService:
                     MobilePage.objects.create(
                         paper=paper, image=image, question_number=q, version=v
                     )
-            elif staged.image_type == "discard":
+            elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
                 DiscardImage.objects.create(
                     image=image, discard_reason=disc.discard_reason
@@ -252,10 +252,10 @@ class ImageBundleService:
 
         """
         # while this is done by staging, we redo it here to be **very** sure.
-        if staged_imgs.filter(image_type__in=["unread", "unknown", "error"]).exists():
+        if staged_imgs.filter(image_type__in=[StagingImage.UNREAD, StagingImage.UNKNOWN, StagingImage.ERROR]).exists():
             return False
         if staged_imgs.filter(
-            image_type="extra", extrastagingimage__paper_number__isnull=True
+            image_type=StagingImage.EXTRA, extrastagingimage__paper_number__isnull=True
         ).exists():
             return False
         # to do the complement of this search we'd need to count
@@ -282,7 +282,7 @@ class ImageBundleService:
 
         # note - only known-images will create collisions.
         # extra pages and discards will never collide.
-        for image in staged_imgs.filter(image_type="known"):
+        for image in staged_imgs.filter(image_type=StagingImage.KNOWN):
             knw = image.knownstagingimage
             tpv = encodePaperPageVersion(knw.paper_number, knw.page_number, knw.version)
             # append this image.primary-key to the list of images with that tpv
@@ -309,7 +309,7 @@ class ImageBundleService:
 
         collisions = []
         # note that only known images can cause collisions
-        for image in staged_imgs.filter(image_type="known"):
+        for image in staged_imgs.filter(image_type=StagingImage.KNOWN):
             known = image.knownstagingimage
             colls = Image.objects.filter(
                 fixedpage__paper__paper_number=known.paper_number,
