@@ -4,7 +4,8 @@
 
 from django.db import transaction
 
-from Papers.models import Paper, FixedPage, QuestionPage, Image
+from Papers.models import Paper, FixedPage, Image
+from Papers.models import DNMPage, IDPage, QuestionPage
 
 
 class PageDataService:
@@ -100,9 +101,17 @@ class PageDataService:
                     included = page.question_number == question
                 else:
                     included = False
+            if type(page) == QuestionPage:
+                prefix = "t"
+            elif type(page) == IDPage:
+                prefix = "id"
+            elif type(page) == DNMPage:
+                prefix = "dnm"
+            else:
+                raise NotImplementedError(f"Page type {type(page)} not handled")
             pages_metadata.append(
                 {
-                    "pagename": f"t{page.page_number}",
+                    "pagename": f"{prefix}{page.page_number}",
                     "md5": page.image.hash,
                     "included": included,
                     "order": page.page_number,
