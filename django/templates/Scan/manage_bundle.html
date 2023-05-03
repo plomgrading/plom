@@ -79,10 +79,10 @@
 		{% if pg.status == 'known' %}
 		<button class="btn m-1 btn-outline-success"
 			onclick="this.blur();"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
 			> p{{pg.order}}</button>
 		{% elif pg.status == 'extra' %}
@@ -93,10 +93,10 @@
 		  class="btn m-1 btn-info"
 		  {% endif %}
 		  onclick="this.blur();"
-		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 		  hx-swap="outerHTML"
 		  hx-target="#navFragment"
-		  hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		  hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 		  data-bs-toggle="tooltip" data-bs-placement="top"
 		  {% if pg.info.question_list %}
 		  data-bs-title="Extra page - {{pg.info.paper_number}}.{{ pg.info.question_list }}"
@@ -107,37 +107,37 @@
 		{% elif pg.status == 'unread' %}
 		<button class="btn m-1 btn-outline-dark"
 			onclick="this.blur();"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="qr-unread"
 			> p{{pg.order}}</button>
 		{% elif pg.status == 'unknown' %}
 		<button class="btn m-1 btn-warning"
 			onclick="this.blur();"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
 			> p{{pg.order}}</button>
 		{% elif pg.status == 'error' %}
 		<button class="btn m-1 btn-danger"
 			onclick="this.blur();"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
 			> p{{pg.order}}</button>
 		{% elif pg.status == 'discard' %}
 		<button class="btn m-1 btn-outline-dark"
 			onclick="this.blur();"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
 			> p{{pg.order}}</button>
 		{% endif %}
@@ -157,10 +157,10 @@
 		{% if pg.status == 'known' %}
 		<button class="btn m-1 btn-outline-success"
 			onclick="this.blur();"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 			  hx-swap="outerHTML"
 			  hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 		   data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="paper-{{pg.info.paper_number}}.{{pg.info.page_number}}"
 		   >
 		  p{{pg.order}}
@@ -172,10 +172,10 @@
 		  {% else %}
 		  class="btn m-1 btn-info"
 		  {% endif %}
-		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 		  hx-swap="outerHTML"
 		  hx-target="#navFragment"
-		  hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+		  hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 		  data-bs-toggle="tooltip" data-bs-placement="top"
 		  {% if pg.info.question_list %}
 		  data-bs-title="Extra page - {{pg.info.paper_number}}.{{ pg.info.question_list }}"
@@ -202,10 +202,10 @@
 	      {% if pg.status == 'unknown' %}
 		<button class="btn m-1 btn-warning"
 		  onclick="this.blur();"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unknown page"
 			>
 		  p{{pg.order}}
@@ -213,10 +213,10 @@
 	      {% elif pg.status == 'error' %}
 		<button class="btn m-1 btn-danger"
 		  onclick="this.blur();"
-			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter0 %}"
+			hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 			hx-swap="outerHTML"
 			hx-target="#navFragment"
-			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter0 %}"
+			hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
 			data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="error: {{pg.info.reason}}"
 			>
 		  p{{pg.order}}

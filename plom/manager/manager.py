@@ -24,9 +24,9 @@ else:
 
 import arrow
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import (
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import (
     QBrush,
     QColor,
     QIcon,
@@ -34,7 +34,7 @@ from PyQt5.QtGui import (
     QStandardItem,
     QStandardItemModel,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QDialog,
@@ -118,9 +118,9 @@ class UserDialog(QDialog):
             self.userLE.setEnabled(False)
         initialpw = simple_password()
         self.pwLE = QLineEdit(initialpw)
-        # self.pwLE.setEchoMode(QLineEdit.Password)
+        # self.pwLE.setEchoMode(QLineEdit.EchoMode.Password)
         self.pwLE2 = QLineEdit(initialpw)
-        # self.pwLE2.setEchoMode(QLineEdit.Password)
+        # self.pwLE2.setEchoMode(QLineEdit.EchoMode.Password)
         self.okB = QPushButton("Accept")
         self.okB.clicked.connect(self.validate)
         self.cnB = QPushButton("Cancel")
@@ -148,11 +148,11 @@ class UserDialog(QDialog):
 
     def togglePWShow(self):
         if self.pwCB.isChecked():
-            self.pwLE.setEchoMode(QLineEdit.Password)
-            self.pwLE2.setEchoMode(QLineEdit.Password)
+            self.pwLE.setEchoMode(QLineEdit.EchoMode.Password)
+            self.pwLE2.setEchoMode(QLineEdit.EchoMode.Password)
         else:
-            self.pwLE.setEchoMode(QLineEdit.Normal)
-            self.pwLE2.setEchoMode(QLineEdit.Normal)
+            self.pwLE.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.pwLE2.setEchoMode(QLineEdit.EchoMode.Normal)
 
     def newRandomPassword(self):
         newpw = simple_password()
@@ -203,7 +203,7 @@ class QVHistogram(QDialog):
         gp = QHBoxLayout()
         for im in range(0, mx + 1):
             pb = QProgressBar()
-            pb.setOrientation(Qt.Vertical)
+            pb.setOrientation(Qt.Orientation.Vertical)
             if im not in dist:
                 pb.setValue(0)
             else:
@@ -230,7 +230,7 @@ class QVHistogram(QDialog):
             for im in range(0, mx + 1):
                 m = str(im)
                 pb = QProgressBar()
-                pb.setOrientation(Qt.Vertical)
+                pb.setOrientation(Qt.Orientation.Vertical)
                 if m not in hist[u]:
                     pb.setValue(0)
                 else:
@@ -257,13 +257,13 @@ class TestStatus(QDialog):
         self.setWindowTitle(f'Status of Paper {status["number"]:04}')
 
         idCB = QCheckBox("Identified")
-        idCB.setAttribute(Qt.WA_TransparentForMouseEvents)
-        idCB.setFocusPolicy(Qt.NoFocus)
+        idCB.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        idCB.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         if status["identified"]:
             idCB.setChecked(True)
         mkCB = QCheckBox("Fully marked")
-        mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
-        mkCB.setFocusPolicy(Qt.NoFocus)
+        mkCB.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        mkCB.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         if status["marked"]:
             mkCB.setChecked(True)
 
@@ -298,7 +298,7 @@ class TestStatus(QDialog):
             vb2.addWidget(G)
         vb2.addStretch(2)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         buttons.rejected.connect(self.reject)
         vb2.addWidget(buttons)
         self.setLayout(hb)
@@ -466,6 +466,7 @@ class Manager(QWidget):
         self.ui.forgiveAllDNMButton.clicked.connect(self.substituteAllDNMPages)
         self.ui.removePartScanB.clicked.connect(self.removePagesFromPartScan)
         self.ui.removeDanglingB.clicked.connect(self.removeDanglingPage)
+        self.ui.refreshDanglingB.clicked.connect(self.refreshDangList)
 
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
@@ -541,7 +542,7 @@ class Manager(QWidget):
                 " (and then you can try to log in again)\n\n"
                 "The other client will likely crash.",
             )
-            if msg.exec() == QMessageBox.Yes:
+            if msg.exec() == QMessageBox.StandardButton.Yes:
                 self.msgr.clearAuthorisation("manager", pwd)
                 self.msgr = None
                 self.login()
@@ -645,7 +646,7 @@ class Manager(QWidget):
 
     def uploadSpec(self):
         # TODO: on gnome "" is not cwd... str(Path.cwd()
-        # options=QFileDialog.DontUseNativeDialog
+        # options=QFileDialog.Option.DontUseNativeDialog
         # TODO: str(Path.cwd() / "testSpec.toml")
         fname, ftype = QFileDialog.getOpenFileName(
             self, "Get server spec file", None, "TOML files (*.toml)"
@@ -710,7 +711,7 @@ class Manager(QWidget):
     def makeDataBase(self):
         from plom.create import build_database
 
-        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.Qapp.processEvents()
@@ -728,7 +729,10 @@ class Manager(QWidget):
 
     def buildPapersChooseFolder(self):
         dur = QFileDialog.getExistingDirectory(
-            self, "Choose a directory for building PDFs", None, QFileDialog.ShowDirsOnly
+            self,
+            "Choose a directory for building PDFs",
+            None,
+            QFileDialog.Option.ShowDirsOnly,
         )
         if dur == "":
             return
@@ -740,7 +744,7 @@ class Manager(QWidget):
         from plom.create import build_papers
 
         # TODO: better to display progress bar, for now tqdm appears on stdout
-        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.Qapp.processEvents()
@@ -794,7 +798,8 @@ class Manager(QWidget):
         self.refreshUnknownList()
         self.refreshCList()
         self.refreshDiscardList()
-        self.refreshDangList()
+        # too slow on large servers, causing timeouts
+        # self.refreshDangList()
 
     def initScanStatusTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
@@ -933,7 +938,7 @@ class Manager(QWidget):
                 f"Will remove the selected page {page_name} from the selected test {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
             try:
                 msg = self.msgr.removeSinglePage(test_number, page_name)
@@ -947,7 +952,7 @@ class Manager(QWidget):
                 f"Will remove all scanned pages from the selected test - test number {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
@@ -961,7 +966,7 @@ class Manager(QWidget):
             'Are you sure you want to substitute a "Missing Page" blank for '
             f"tpage {page_number} of question {question} test {test_number}?",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         s = self.msgr.replaceMissingTestPage(test_number, page_number, version)
         InfoMsg(self, "Successfully substituted.", info=s).exec()
@@ -972,7 +977,7 @@ class Manager(QWidget):
             'Are you sure you want to substitute a "Missing Page" blank for '
             f"tpage {page_number} of test {test_number} - it is a Do Not Mark page?",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
 
         try:
@@ -1005,7 +1010,7 @@ class Manager(QWidget):
                 <p>Would you like to continue substituting missing DNM pages?</p>
             """,
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
 
         incomplete = self.msgr.getIncompleteTests()  # triples [p, v, true/false]
@@ -1038,7 +1043,7 @@ class Manager(QWidget):
             f"Are you sure you want to generate an ID for test {test_number}? "
             "You can only do this for homeworks or pre-named tests.",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         try:
             rval = self.msgr.replaceMissingIDPage(test_number)
@@ -1065,7 +1070,7 @@ class Manager(QWidget):
             'Are you sure you want to substitute a "Missing Page" blank for '
             f"question {question} of test {test_number}?",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         try:
             rval = self.msgr.replaceMissingHWQuestion(
@@ -1118,7 +1123,7 @@ class Manager(QWidget):
                 f"Will remove the selected page {page_name} from the selected test {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
 
             try:
@@ -1133,7 +1138,7 @@ class Manager(QWidget):
                 f"Will remove all scanned pages from the selected test - test number {test_number}.",
                 "Are you sure you wish to do this? (not reversible)",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
 
             rval = self.msgr.removeAllScannedPages(test_number)
@@ -1144,8 +1149,12 @@ class Manager(QWidget):
     def initUnknownTab(self):
         self.unknownModel = QStandardItemModel(0, 8)
         self.ui.unknownTV.setModel(self.unknownModel)
-        self.ui.unknownTV.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.unknownTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.unknownTV.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.ui.unknownTV.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
         self.unknownModel.setHorizontalHeaderLabels(
             [
                 "ID",
@@ -1179,13 +1188,13 @@ class Manager(QWidget):
             pm.loadFromData(res.read_bytes())
             it0.setIcon(QIcon(pm))
             it1 = QStandardItem("?")
-            it1.setTextAlignment(Qt.AlignCenter)
+            it1.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             it2 = QStandardItem(str(u["orientation"]))
-            it2.setTextAlignment(Qt.AlignCenter)
+            it2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             it3 = QStandardItem("")
-            it3.setTextAlignment(Qt.AlignCenter)
+            it3.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             it4 = QStandardItem("")
-            it4.setTextAlignment(Qt.AlignCenter)
+            it4.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             # the displayed value in first column:
             raw = QStandardItem(str(u["id"]))
             # but store entire dict in first entry, may need wrapped in QVariant
@@ -1230,7 +1239,7 @@ class Manager(QWidget):
             [self.max_papers, self.numberOfPages, self.qlabels],
             iDict,
         )
-        if uvw.exec() == QDialog.Accepted:
+        if uvw.exec() == QDialog.DialogCode.Accepted:
             # Colin hates all these hardcoded integers!
             self.unknownModel.item(r, 4).setText(uvw.action)
             self.unknownModel.item(r, 5).setText("{}".format(uvw.get_orientation()))
@@ -1360,8 +1369,12 @@ class Manager(QWidget):
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)
         self.ui.collideTV.setModel(self.collideModel)
-        self.ui.collideTV.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.collideTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.collideTV.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.ui.collideTV.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
         self.collideModel.setHorizontalHeaderLabels(
             ["FullFile", "File", "Action to be taken", "Test", "Page", "Version"]
         )
@@ -1382,13 +1395,13 @@ class Manager(QWidget):
             pm.loadFromData(res.read_bytes())
             it1.setIcon(QIcon(pm))
             it2 = QStandardItem("?")
-            it2.setTextAlignment(Qt.AlignCenter)
+            it2.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             it3 = QStandardItem("{}".format(colDict[u][0]))
-            it3.setTextAlignment(Qt.AlignCenter)
+            it3.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             it4 = QStandardItem("{}".format(colDict[u][1]))
-            it4.setTextAlignment(Qt.AlignCenter)
+            it4.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             it5 = QStandardItem("{}".format(colDict[u][2]))
-            it5.setTextAlignment(Qt.AlignCenter)
+            it5.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.collideModel.insertRow(r, [QStandardItem(u), it1, it2, it3, it4, it5])
             r += 1
         self.ui.collideTV.resizeRowsToContents()
@@ -1423,7 +1436,7 @@ class Manager(QWidget):
         with open(f_collides, "wb") as fh:
             fh.write(vcp)
         cvw = CollideViewWindow(self, f_orig, f_collides, test, page)
-        if cvw.exec() == QDialog.Accepted:
+        if cvw.exec() == QDialog.DialogCode.Accepted:
             if cvw.action == "original":
                 pm = QPixmap()
                 res = resources.files(plom.client.icons) / "manager_discard.svg"
@@ -1463,8 +1476,12 @@ class Manager(QWidget):
     def initDiscardTab(self):
         self.discardModel = QStandardItemModel(0, 3)
         self.ui.discardTV.setModel(self.discardModel)
-        self.ui.discardTV.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.discardTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.discardTV.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.ui.discardTV.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
         self.discardModel.setHorizontalHeaderLabels(
             [
                 "ID",
@@ -1504,7 +1521,7 @@ class Manager(QWidget):
         r = pvi[0].row()
         pagedata = self.discardModel.item(r, 0).data()
         pagedata = self.downloader.sync_download(pagedata)
-        if DiscardViewWindow(self, [pagedata]).exec() == QDialog.Accepted:
+        if DiscardViewWindow(self, [pagedata]).exec() == QDialog.DialogCode.Accepted:
             # Scary, nicer to require img id?
             self.msgr.discardToUnknown(pagedata["server_path"])
             self.refreshDiscardList()
@@ -1512,6 +1529,18 @@ class Manager(QWidget):
     def initDanglingTab(self):
         self.ui.labelDanglingExplain.setText(
             """
+            <hr />
+            <p>
+              <center>
+                <b>Caution:</b>
+                Refreshing this can interfere with other users.
+              </center>
+            </p>
+            <p>When there are a lot of papers (say 1000 or more) the API
+            call that backs the feature is slow.  It would be best to use
+            this feature only when your server is otherwise idle (no active
+            scanning uploads and minimal marking activity).</p>
+            <hr />
             <p>A page which is part of a test that is not yet completely
             scanned and uploaded will show up here as a
             <em>dangling page</em>.
@@ -1528,8 +1557,12 @@ class Manager(QWidget):
         self.ui.labelDanglingExplain.setWordWrap(True)
         self.danglingModel = QStandardItemModel(0, 5)
         self.ui.danglingTV.setModel(self.danglingModel)
-        self.ui.danglingTV.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.danglingTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.danglingTV.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.ui.danglingTV.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
         self.danglingModel.setHorizontalHeaderLabels(
             (
                 "Type",
@@ -1542,7 +1575,8 @@ class Manager(QWidget):
             )
         )
         self.ui.danglingTV.activated.connect(self.viewDanglingPage)
-        self.refreshDangList()
+        # Too slow on large servers, causing timeouts
+        # self.refreshDangList()
 
     def refreshDangList(self):
         self.danglingModel.removeRows(0, self.danglingModel.rowCount())
@@ -1591,7 +1625,7 @@ class Manager(QWidget):
             f"Will remove the selected page {page_name} from the selected test {test_number}.",
             "Are you sure you wish to do this? (not reversible)",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
 
         try:
@@ -1673,11 +1707,11 @@ class Manager(QWidget):
             self.ui.overallTW.insertRow(r)
             item = QTableWidgetItem()
             assert isinstance(t, int)
-            item.setData(Qt.DisplayRole, t)
+            item.setData(Qt.ItemDataRole.DisplayRole, t)
             self.ui.overallTW.setItem(r, 0, item)
 
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, opDict[tstr][0])
+            item.setData(Qt.ItemDataRole.DisplayRole, opDict[tstr][0])
             if opDict[tstr][0]:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 item.setToolTip("Has been scanned")
@@ -1687,7 +1721,7 @@ class Manager(QWidget):
             self.ui.overallTW.setItem(r, 1, item)
 
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, opDict[tstr][1])
+            item.setData(Qt.ItemDataRole.DisplayRole, opDict[tstr][1])
             if opDict[tstr][1]:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 item.setToolTip("Has been identified")
@@ -1695,7 +1729,7 @@ class Manager(QWidget):
 
             item = QTableWidgetItem()
             assert isinstance(opDict[tstr][2], int)
-            item.setData(Qt.DisplayRole, opDict[tstr][2])
+            item.setData(Qt.ItemDataRole.DisplayRole, opDict[tstr][2])
             if opDict[tstr][2] == self.numberOfQuestions:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
                 item.setToolTip("Has been marked")
@@ -1704,7 +1738,7 @@ class Manager(QWidget):
             item = QTableWidgetItem()
             assert isinstance(opDict[tstr][3], str)
             time = arrow.get(opDict[tstr][3])
-            item.setData(Qt.DisplayRole, arrowtime_to_simple_string(time))
+            item.setData(Qt.ItemDataRole.DisplayRole, arrowtime_to_simple_string(time))
             item.setToolTip(time.humanize())
             self.ui.overallTW.setItem(r, 4, item)
         self.ui.overallTW.setSortingEnabled(True)
@@ -1716,8 +1750,12 @@ class Manager(QWidget):
         self.ui.predictionTW.setHorizontalHeaderLabels(
             ("Test", "Student ID", "Name", "Predicted ID", "Predictor", "Certainty")
         )
-        self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.predictionTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self.ui.predictionTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         # Seemed broken so commented out
         # self.ui.predictionTW.setAlternatingRowColors(True)
         self.ui.predictionTW.activated.connect(self.viewIDPage)
@@ -1745,7 +1783,7 @@ class Manager(QWidget):
                     raise PlomSeriousException(f"Could not identify image type: {tmp}")
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
-            if srw.exec() == QDialog.Accepted:
+            if srw.exec() == QDialog.DialogCode.Accepted:
                 top, bottom = srw.top_bottom_values
                 self.ui.cropTopLE.setText(str(100 * top))
                 self.ui.cropBottomLE.setText(str(100 * bottom))
@@ -1754,17 +1792,19 @@ class Manager(QWidget):
         idx = self.ui.predictionTW.selectedIndexes()
         if len(idx) == 0:
             return
-        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(
+            Qt.ItemDataRole.DisplayRole
+        )
         # TODO: should we populate with empty string to avoid dealing with None here?
         sid = self.ui.predictionTW.item(idx[0].row(), 1)
         if sid is not None:
-            sid = sid.data(Qt.DisplayRole)
+            sid = sid.data(Qt.ItemDataRole.DisplayRole)
         pred_sid = self.ui.predictionTW.item(idx[0].row(), 3)
         if pred_sid is not None:
-            pred_sid = pred_sid.data(Qt.DisplayRole)
+            pred_sid = pred_sid.data(Qt.ItemDataRole.DisplayRole)
         certainty = self.ui.predictionTW.item(idx[0].row(), 4)
         if certainty is not None:
-            certainty = certainty.data(Qt.DisplayRole)
+            certainty = certainty.data(Qt.ItemDataRole.DisplayRole)
         try:
             img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
@@ -1837,14 +1877,14 @@ class Manager(QWidget):
                 f' {timestamp.isoformat(" ", "seconds")}.',
                 question="Do you want to rerun it?",
             )
-            if msg.exec_() == QMessageBox.No:
+            if msg.exec_() == QMessageBox.StandardButton.No:
                 return
             self.id_reader_run(ignore_timestamp=True)
 
     def id_reader_kill(self):
         if (
             SimpleQuestion(self, "Stop running process", "Are you sure?").exec_()
-            == QMessageBox.No
+            == QMessageBox.StandardButton.No
         ):
             return
         msg = self.msgr.id_reader_kill()
@@ -1863,7 +1903,9 @@ class Manager(QWidget):
         idx = self.ui.predictionTW.selectedIndexes()
         if not idx:
             return
-        test = self.ui.predictionTW.item(idx[0].row(), 0).data(Qt.DisplayRole)
+        test = self.ui.predictionTW.item(idx[0].row(), 0).data(
+            Qt.ItemDataRole.DisplayRole
+        )
         iDict = self.msgr.getIdentified()
         msg = f"Do you want to reset the ID of test number {test}?"
         if str(test) in iDict:
@@ -1871,7 +1913,7 @@ class Manager(QWidget):
             msg += f"\n\nCurrently is {sid}: {sname}"
         else:
             msg += "\n\nCan't find current ID - is likely not ID'd yet."
-        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+        if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
             return
         self.msgr.un_id_paper(test)
         self.getPredictions()
@@ -1883,10 +1925,12 @@ class Manager(QWidget):
         # TODO: replace with loop over multiple row selections?
         assert len(idx) == 6
         idx = idx[0]  # they all have the same row
-        test = self.ui.predictionTW.item(idx.row(), 0).data(Qt.DisplayRole)
-        predictor = self.ui.predictionTW.item(idx.row(), 4).data(Qt.DisplayRole)
+        test = self.ui.predictionTW.item(idx.row(), 0).data(Qt.ItemDataRole.DisplayRole)
+        predictor = self.ui.predictionTW.item(idx.row(), 4).data(
+            Qt.ItemDataRole.DisplayRole
+        )
         msg = f'Do you want to remove "{predictor}" predicted ID of test number {test}?'
-        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+        if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
             return
         if predictor == "prename":
             self.msgr.remove_pre_id(test)
@@ -1935,16 +1979,16 @@ class Manager(QWidget):
                 self.ui.predictionTW.insertRow(r)
                 # put in the test-number
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, int(t))
+                item.setData(Qt.ItemDataRole.DisplayRole, int(t))
                 self.ui.predictionTW.setItem(r, 0, item)
 
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, identity[0])
+                item.setData(Qt.ItemDataRole.DisplayRole, identity[0])
                 item.setToolTip("Has been identified")
                 self.ui.predictionTW.setItem(r, 1, item)
 
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, identity[1])
+                item.setData(Qt.ItemDataRole.DisplayRole, identity[1])
                 item.setToolTip("Has been identified")
                 self.ui.predictionTW.setItem(r, 2, item)
                 r += 1
@@ -1955,29 +1999,31 @@ class Manager(QWidget):
                     self.ui.predictionTW.insertRow(r)
                     # put in the test-number
                     item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, int(t))
+                    item.setData(Qt.ItemDataRole.DisplayRole, int(t))
                     self.ui.predictionTW.setItem(r, 0, item)
 
                     item0 = QTableWidgetItem()
-                    item0.setData(Qt.DisplayRole, pred["student_id"])
+                    item0.setData(Qt.ItemDataRole.DisplayRole, pred["student_id"])
                     self.ui.predictionTW.setItem(r, 3, item0)
                     item1 = QTableWidgetItem()
-                    item1.setData(Qt.DisplayRole, pred["predictor"])
+                    item1.setData(Qt.ItemDataRole.DisplayRole, pred["predictor"])
                     self.ui.predictionTW.setItem(r, 4, item1)
                     item2 = QTableWidgetItem()
                     # round certainty for display
-                    item2.setData(Qt.DisplayRole, round(pred["certainty"], 3))
+                    item2.setData(
+                        Qt.ItemDataRole.DisplayRole, round(pred["certainty"], 3)
+                    )
                     self.ui.predictionTW.setItem(r, 5, item2)
 
                     if identity:
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, identity[0])
+                        item.setData(Qt.ItemDataRole.DisplayRole, identity[0])
                         item.setToolTip("Has been identified")
                         self.ui.predictionTW.setItem(r, 1, item)
                         if hilite_id:
                             item.setBackground(QBrush(QColor(255, 0, 0, 48)))
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, identity[1])
+                        item.setData(Qt.ItemDataRole.DisplayRole, identity[1])
                         item.setToolTip("Has been identified")
                         self.ui.predictionTW.setItem(r, 2, item)
 
@@ -2010,7 +2056,7 @@ class Manager(QWidget):
             " (note that this does not delete user-confirmed IDs or"
             " prenamed predictions)",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         # TODO: likely unnecessary?
         self.msgr.ID_delete_machine_predictions()
@@ -2063,16 +2109,16 @@ class Manager(QWidget):
             self.ui.tasksOutTW.insertRow(r)
             k = 0
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, x[k])
+            item.setData(Qt.ItemDataRole.DisplayRole, x[k])
             self.ui.tasksOutTW.setItem(r, k, item)
             k = 1
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, x[k])
+            item.setData(Qt.ItemDataRole.DisplayRole, x[k])
             self.ui.tasksOutTW.setItem(r, k, item)
             k = 2  # the time - so set a tooltip too.
             time = arrow.get(x[k])
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, arrowtime_to_simple_string(time))
+            item.setData(Qt.ItemDataRole.DisplayRole, arrowtime_to_simple_string(time))
             item.setToolTip(time.humanize())
             self.ui.tasksOutTW.setItem(r, k, item)
 
@@ -2099,7 +2145,7 @@ class Manager(QWidget):
             self,
             "Choose a directory for reassembling PDFs",
             None,
-            QFileDialog.ShowDirsOnly,
+            QFileDialog.Option.ShowDirsOnly,
         )
         if dur == "":
             return
@@ -2111,7 +2157,7 @@ class Manager(QWidget):
         from plom.finish import reassemble_paper, reassemble_all_papers
 
         # TODO: better to display progress bar, for now tqdm appears on stdout
-        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.Qapp.processEvents()
@@ -2146,7 +2192,7 @@ class Manager(QWidget):
         from plom.finish import assemble_solutions
 
         # TODO: better to display progress bar, for now tqdm appears on stdout
-        self.Qapp.setOverrideCursor(Qt.WaitCursor)
+        self.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
         self.Qapp.processEvents()
@@ -2199,8 +2245,12 @@ class Manager(QWidget):
             ]
         )
         self.ui.reviewTW.setSortingEnabled(True)
-        self.ui.reviewTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.reviewTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection
+        )
+        self.ui.reviewTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.ui.reviewTW.activated.connect(self.reviewAnnotated)
         self.ui.viewAnnotationsButton.clicked.connect(self.reviewAnnotated)
         self.ui.changeTagsButton.clicked.connect(self.reviewChangeTags)
@@ -2229,7 +2279,7 @@ class Manager(QWidget):
                 # TODO: display question label, but other code expects qidx here
                 # elif k == 1:
                 #     x = self.qlabels[x - 1]
-                item.setData(Qt.DisplayRole, x)
+                item.setData(Qt.ItemDataRole.DisplayRole, x)
                 tw.setItem(i, k, item)
             if row[4] == "reviewer":
                 for k in range(N):
@@ -2349,7 +2399,7 @@ class Manager(QWidget):
             review_beta_warning,
             question=f"Are you sure you want to <b>flag {howmany}</b> for review?",
         )
-        if not d.exec() == QMessageBox.Yes:
+        if not d.exec() == QMessageBox.StandardButton.Yes:
             return
         self.ui.reviewIDTW.setSortingEnabled(False)
         for tmp in ri[::mod]:
@@ -2390,7 +2440,7 @@ class Manager(QWidget):
             revert_beta_warning,
             question=f"Are you sure you want to <b>revert {howmany}</b>?",
         )
-        if not d.exec() == QMessageBox.Yes:
+        if not d.exec() == QMessageBox.StandardButton.Yes:
             return
         self.ui.reviewIDTW.setSortingEnabled(False)
         for tmp in ri[::mod]:
@@ -2408,7 +2458,7 @@ class Manager(QWidget):
             "The data in the table is now outdated.",
             question="Do you want to refresh the table?",
         )
-        if not rf.exec() == QMessageBox.Yes:
+        if not rf.exec() == QMessageBox.StandardButton.Yes:
             return
         self.filterReview()
 
@@ -2436,7 +2486,7 @@ class Manager(QWidget):
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
         tag_choices = [X for X in all_tags if X not in tags]
         artd = AddRemoveTagDialog(self, tags, tag_choices, label=howmany)
-        if artd.exec() != QDialog.Accepted:
+        if artd.exec() != QDialog.DialogCode.Accepted:
             return
         cmd, new_tag = artd.return_values
         if cmd == "add":
@@ -2470,7 +2520,9 @@ class Manager(QWidget):
             question = int(self.ui.reviewTW.item(r, 1).text())
             task = f"q{paper:04}g{question}"
             tags = self.msgr.get_tags(task)
-            self.ui.reviewTW.item(r, 7).setData(Qt.DisplayRole, ", ".join(tags))
+            self.ui.reviewTW.item(r, 7).setData(
+                Qt.ItemDataRole.DisplayRole, ", ".join(tags)
+            )
         self.ui.reviewIDTW.setSortingEnabled(True)
 
     def manage_task_tags(self, paper_num, question, parent=None):
@@ -2501,7 +2553,7 @@ class Manager(QWidget):
         tags = self.msgr.get_tags(task)
         tag_choices = [X for X in all_tags if X not in tags]
         artd = AddRemoveTagDialog(self, tags, tag_choices, label=task)
-        if artd.exec() == QDialog.Accepted:
+        if artd.exec() == QDialog.DialogCode.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":
                 if new_tag:
@@ -2526,8 +2578,12 @@ class Manager(QWidget):
             ["Test", "Username", "When", "Student ID", "Student Name"]
         )
         self.ui.reviewIDTW.setSortingEnabled(True)
-        self.ui.reviewIDTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.reviewIDTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.reviewIDTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self.ui.reviewIDTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         self.ui.reviewIDTW.activated.connect(self.reviewIDd)
 
         # monkey-patch in a row-insert routine
@@ -2538,7 +2594,7 @@ class Manager(QWidget):
             tw.setSortingEnabled(False)
             for k, x in enumerate(row):
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, x)
+                item.setData(Qt.ItemDataRole.DisplayRole, x)
                 tw.setItem(i, k, item)
             if row[1] == "reviewer":
                 for k in range(5):
@@ -2571,7 +2627,7 @@ class Manager(QWidget):
                     self,
                     "This paper was ID'd automatically, are you sure you wish to review it?",
                 ).exec()
-                != QMessageBox.Yes
+                != QMessageBox.StandardButton.Yes
             ):
                 return
 
@@ -2585,7 +2641,7 @@ class Manager(QWidget):
             if not img_ext:
                 raise PlomSeriousException(f"Could not identify image type: {img_name}")
             rvw = ReviewViewWindowID(self, img_name)
-            if rvw.exec() == QDialog.Accepted:
+            if rvw.exec() == QDialog.DialogCode.Accepted:
                 # first remove auth from that user - safer.
                 if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
                     self.msgr.clearAuthorisationUser(
@@ -2672,7 +2728,7 @@ class Manager(QWidget):
                 f" question index {self.ui.solnQSB.value()}"
                 f" version {self.ui.solnVSB.value()}.",
             ).exec()
-            == QMessageBox.Yes
+            == QMessageBox.StandardButton.Yes
         ):
             self.msgr.deleteSolutionImage(
                 self.ui.solnQSB.value(), self.ui.solnVSB.value()
@@ -2710,8 +2766,12 @@ class Manager(QWidget):
         )
         self.ui.userListTW.setSortingEnabled(True)
         self.ui.userListTW.resizeColumnsToContents()
-        self.ui.userListTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.ui.userListTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.userListTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection
+        )
+        self.ui.userListTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
 
     def initProgressQUTabs(self):
         self.ui.QPUserTW.setColumnCount(5)
@@ -2726,8 +2786,12 @@ class Manager(QWidget):
             ]
         )
         # self.ui.QPUserTW.setSortingEnabled(True)
-        self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.QPUserTW.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self.ui.QPUserTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
         # and the other tab
         self.ui.PUQTW.setColumnCount(5)
         self.ui.PUQTW.setHeaderLabels(
@@ -2741,8 +2805,10 @@ class Manager(QWidget):
             ]
         )
         # self.ui.PUQTW.setSortingEnabled(True)
-        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.PUQTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.ui.PUQTW.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
 
     def forceLogout(self):
         ri = self.ui.userListTW.selectedIndexes()
@@ -2763,7 +2829,7 @@ class Manager(QWidget):
                 "Are you sure you want to force-logout users {}?".format(selectedUsers)
                 # do something about this formatting, right now it's just a python list
             ).exec()
-            == QMessageBox.Yes
+            == QMessageBox.StandardButton.Yes
         ):
             for user in selectedUsers:
                 self.msgr.clearAuthorisationUser(user)
@@ -2793,7 +2859,7 @@ class Manager(QWidget):
         msg = "Are you sure you want to disable "
         msg += "users " if len(selectedUsers) > 1 else "user "
         msg += ", ".join(f'"{x}"' for x in selectedUsers)
-        if SimpleQuestion(self, msg).exec() != QMessageBox.Yes:
+        if SimpleQuestion(self, msg).exec() != QMessageBox.StandardButton.Yes:
             return
         for user in selectedUsers:
             try:
@@ -2815,14 +2881,14 @@ class Manager(QWidget):
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
         cpwd = UserDialog(self, f'Change password for "{user}"', name=user)
-        if cpwd.exec() == QDialog.Accepted:
+        if cpwd.exec() == QDialog.DialogCode.Accepted:
             rval = self.msgr.changeUserPassword(user, cpwd.password)
             InfoMsg(self, rval[1]).exec()
         return
 
     def createUser(self):
         cpwd = UserDialog(self, "Create new user", name=None)
-        if cpwd.exec() == QDialog.Accepted:
+        if cpwd.exec() == QDialog.DialogCode.Accepted:
             rval = self.msgr.createUser(cpwd.name, cpwd.password)
             InfoMsg(self, rval[1]).exec()
             self.refreshUserList()
@@ -2836,21 +2902,21 @@ class Manager(QWidget):
         for r, (u, dat) in enumerate(uDict.items()):
             self.ui.userListTW.insertRow(r)
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, u)
+            item.setData(Qt.ItemDataRole.DisplayRole, u)
             if u in ["manager", "scanner", "reviewer"]:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
             self.ui.userListTW.setItem(r, 0, item)
 
             k = 0
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, dat[k])
+            item.setData(Qt.ItemDataRole.DisplayRole, dat[k])
             if not dat[k]:
                 item.setBackground(QBrush(QColor(255, 0, 0, 48)))
             self.ui.userListTW.setItem(r, k + 1, item)
 
             k = 1
             item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, dat[k])
+            item.setData(Qt.ItemDataRole.DisplayRole, dat[k])
             if dat[k]:
                 item.setBackground(QBrush(QColor(0, 255, 0, 48)))
             self.ui.userListTW.setItem(r, k + 1, item)
@@ -2861,13 +2927,13 @@ class Manager(QWidget):
             time.humanize()
             item = QTableWidgetItem()
             # TODO: want human-readable w/ raw tooltip but breaks sorting
-            item.setData(Qt.DisplayRole, arrowtime_to_simple_string(time))
+            item.setData(Qt.ItemDataRole.DisplayRole, arrowtime_to_simple_string(time))
             item.setToolTip(time.humanize())
             self.ui.userListTW.setItem(r, k + 1, item)
 
             for k in range(3, 6):
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, dat[k])
+                item.setData(Qt.ItemDataRole.DisplayRole, dat[k])
                 self.ui.userListTW.setItem(r, k + 1, item)
         self.ui.userListTW.setSortingEnabled(True)
 

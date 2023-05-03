@@ -404,7 +404,8 @@ class ManagerMessenger(BaseMessenger):
 
     def getDanglingPages(self):
         self.SRmutex.acquire()
-        timeout = (self.default_timeout[0], 5 * self.default_timeout[1])
+        # Note: long timeout, slow for large (1000s) of papers
+        timeout = (self.default_timeout[0], 10 * self.default_timeout[1])
         try:
             response = self.get(
                 "/REP/dangling",

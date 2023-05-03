@@ -1,3 +1,6 @@
+<!-- Copyright (C) 2022 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
+
 {% extends "base/base.html" %}
 
 {% block page_heading %}Question-version mapping upload{% endblock %}
@@ -16,7 +19,7 @@
             hx-swap="outerHTML">
       use
     </button>
-    
+
     <button class="btn btn-warning"
             hx-delete="."
             hx-target="body"
@@ -51,6 +54,5 @@
   </tr>
   {% endfor %}
 </table>
-
 
 {% endblock %}

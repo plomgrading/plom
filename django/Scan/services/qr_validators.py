@@ -79,9 +79,7 @@ class QRErrorService:
                         img_pk,
                         "Image collides with images in this bundle at positions "
                         + ", ".join(
-                            str(img_bundle_order[x] + 1)
-                            for x in colliding
-                            if x != img_pk
+                            str(img_bundle_order[x]) for x in colliding if x != img_pk
                         ),
                     )
                 )
@@ -93,7 +91,7 @@ class QRErrorService:
                     # this indicates a collision, and so handled by error-images
                     continue
                 img = StagingImage.objects.get(pk=img_list[0])
-                img.image_type = "known"
+                img.image_type = StagingImage.KNOWN
                 img.save()
                 (
                     test_paper,
@@ -110,19 +108,19 @@ class QRErrorService:
             # save all the images with no-qrs.
             for k in no_qr_imgs:
                 img = StagingImage.objects.get(pk=k)
-                img.image_type = "unknown"
+                img.image_type = StagingImage.UNKNOWN
                 img.save()
                 UnknownStagingImage.objects.create(staging_image=img)
             # save all the extra-pages.
             for k in extra_imgs:
                 img = StagingImage.objects.get(pk=k)
-                img.image_type = "extra"
+                img.image_type = StagingImage.EXTRA
                 img.save()
                 ExtraStagingImage.objects.create(staging_image=img)
             # save all the error-pages with the error string
             for k, err_str in error_imgs:
                 img = StagingImage.objects.get(pk=k)
-                img.image_type = "error"
+                img.image_type = StagingImage.ERROR
                 img.save()
                 ErrorStagingImage.objects.create(
                     staging_image=img, error_reason=err_str
