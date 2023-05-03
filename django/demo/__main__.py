@@ -301,6 +301,32 @@ def map_homework_pages(homework_bundles={}):
         sleep(0.5)
 
 
+def map_extra_pages_to_bundle4():
+    """
+    Map the extra pages generated in fake_bundle4.
+
+    TODO: This function is very hardcoded.
+    """
+
+    extra_pages = {31: [2, 3], 32: [10, 11], 33: [18, 19]}
+
+    for paper_number, pages in extra_pages.items():
+        print(
+            f"Assigning extra pages to test {paper_number} in fake bundle 4"
+        )
+        for question, page in enumerate(pages):
+            call_command(
+                "plom_staging_bundles",
+                "map_extra",
+                "fake_bundle4",
+                page,
+                "-t",
+                paper_number,
+                "-q",
+                question + 1,
+            )
+
+
 def wait_for_qr_read(number_of_bundles=3):
     for n in range(1, number_of_bundles + 1):
         cmd = f"plom_staging_bundles status fake_bundle{n}"
@@ -512,7 +538,7 @@ def _doit(args):
 
     scribble_on_exams(
         number_of_bundles=number_of_bundles,
-        extra_page_papers=[49, 50],
+        extra_page_papers=[31, 32, 33, 49, 50],  # The first three papers in fake_bundle4 have extra pages.
         garbage_page_papers=[1, 2],
         duplicate_pages={1: 3, 2: 6},
         duplicate_qr=[3, 4],
@@ -538,6 +564,7 @@ def _doit(args):
         number_of_bundles=number_of_bundles,
     )
     map_homework_pages(homework_bundles=homework_bundles)
+    map_extra_pages_to_bundle4()
 
     print("*" * 40)
     wait_for_qr_read(
