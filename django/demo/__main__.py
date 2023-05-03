@@ -311,9 +311,7 @@ def map_extra_pages_to_bundle4():
     extra_pages = {31: [2, 3], 32: [10, 11], 33: [18, 19]}
 
     for paper_number, pages in extra_pages.items():
-        print(
-            f"Assigning extra pages to test {paper_number} in fake bundle 4"
-        )
+        print(f"Assigning extra pages to test {paper_number} in fake bundle 4")
         for question, page in enumerate(pages):
             call_command(
                 "plom_staging_bundles",
@@ -538,7 +536,13 @@ def _doit(args):
 
     scribble_on_exams(
         number_of_bundles=number_of_bundles,
-        extra_page_papers=[31, 32, 33, 49, 50],  # The first three papers in fake_bundle4 have extra pages.
+        extra_page_papers=[
+            31,
+            32,
+            33,
+            49,
+            50,
+        ],  # The first three papers in fake_bundle4 have extra pages.
         garbage_page_papers=[1, 2],
         duplicate_pages={1: 3, 2: 6},
         duplicate_qr=[3, 4],
