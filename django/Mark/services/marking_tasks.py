@@ -48,8 +48,11 @@ class MarkingTaskService:
 
         task_code = f"q{paper.paper_number:04}g{question_number}"
 
-        # TODO - this needs to handle deprecating existing tasks
-        # eg - late uploading of extra page will recreate a task.
+        # mark other tasks with this code as 'out of date'
+        previous_tasks = MarkingTask.objects.filter(code=task_code)
+        for old_task in previous_tasks:
+            old_task.status = MarkingTask.OUT_OF_DATE
+            old_task.save()
 
         the_task = MarkingTask(
             assigned_user=user,
