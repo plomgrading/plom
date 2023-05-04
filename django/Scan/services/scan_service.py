@@ -15,7 +15,7 @@ import fitz
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
 from django.db.models import Prefetch
@@ -934,13 +934,15 @@ class ScanService:
             .order_by("paper_number", "question_list")
             .prefetch_related("staging_image")
         ):
-            papers.setdefault(extra.paper_number, []).append(
-                {
-                    "type": "extra",
-                    "question_list": extra.question_list,
-                    "order": extra.staging_image.bundle_order,
-                }
-            )
+            # we can skip those without data
+            if extra.paper_number and extra.question_list:
+                papers.setdefault(extra.paper_number, []).append(
+                    {
+                        "type": "extra",
+                        "question_list": extra.question_list,
+                        "order": extra.staging_image.bundle_order,
+                    }
+                )
         # # recast paper_pages as an **ordered** list of tuples (paper, page-info)
         return [
             (paper_number, page_info)
