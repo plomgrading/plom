@@ -26,8 +26,9 @@ class ScanCastService:
     def discard_image_type_from_bundle_timestamp_and_order(
         self, user_obj, bundle_timestamp, bundle_order
     ):
-        """A wrapper around the discard_image_type_from_bundle
-        command. The main difference is that it that takes a
+        """A wrapper around discard_image_type_from_bundle cmd.
+
+        The main difference is that it that takes a
         bundle-timestamp instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
@@ -175,6 +176,8 @@ class ScanCastService:
             img.extrastagingimage.delete()
         elif image_type == StagingImage.ERROR:
             img.errorstagingimage.delete()
+        else:
+            raise RuntimeError("Cannot recognise image type")
 
         UnknownStagingImage.objects.create(
             staging_image=img,
@@ -206,7 +209,6 @@ class ScanCastService:
     def string_to_staging_image_type(self, img_str):
         """A helper function to translate from string to the staging image enum type"""
 
-        # casefold the string.
         img_str = img_str.casefold()
         if img_str.casefold() == "discard":
             return StagingImage.DISCARD
