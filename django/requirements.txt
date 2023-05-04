@@ -6,14 +6,14 @@
 
 beautifulsoup4==4.12.2
 django==4.1.9
-django-braces
-django-reset-migrations
-django-session-timeout
+django-braces==1.15.0
 django-htmx==1.14.0
 django-huey==1.1.1
-django-polymorphic
-djangorestframework
-model_bakery # for tests
+django-polymorphic==3.1.0
+django-reset-migrations
+django-session-timeout
+djangorestframework==3.14.0
+model_bakery==1.11.0
 pymupdf==1.22.1
 # https://pypi.org/project/random-username/
 # https://github.com/williexu/random_username
