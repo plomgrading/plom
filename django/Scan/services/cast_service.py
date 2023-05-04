@@ -10,6 +10,7 @@ from Scan.models import (
     StagingBundle,
     StagingImage,
     DiscardStagingImage,
+    ExtraStagingImage,
     UnknownStagingImage,
 )
 
@@ -18,6 +19,31 @@ class ScanCastService:
     """
     Functions for casting staging images to different types
     """
+
+    # ----------------------------------------
+    # Page casting helper function
+    # ----------------------------------------
+
+    def string_to_staging_image_type(self, img_str):
+        """A helper function to translate from string to the staging image enum type"""
+
+        img_str = img_str.casefold()
+        if img_str.casefold() == "discard":
+            return StagingImage.DISCARD
+
+        elif img_str.casefold() == "extra":
+            return StagingImage.EXTRA
+
+        elif img_str.casefold() == "error":
+            return StagingImage.ERROR
+
+        elif img_str.casefold() == "known":
+            return StagingImage.KNOWN
+
+        elif img_str.casefold() == "unknown":
+            return StagingImage.UNKNOWN
+        else:
+            raise ValueError(f"Unrecognisable image type '{img_str}'")
 
     # ----------------------------------------
     # Page casting
@@ -150,7 +176,7 @@ class ScanCastService:
 
         if image_type == StagingImage.UNKNOWN:
             raise ValueError(
-                "Trying to cast 'unknown' image to and already 'unknown' bundle image."
+                "Trying to 'unknowify' and already 'unknown' bundle image."
             )
         if image_type not in [
             StagingImage.DISCARD,
@@ -293,23 +319,75 @@ class ScanCastService:
 
         self.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
-    def string_to_staging_image_type(self, img_str):
-        """A helper function to translate from string to the staging image enum type"""
+    @transaction.atomic
+    def extralise_image_type_from_bundle(
+        self, user_obj, bundle_obj, bundle_order, *, image_type=None
+    ):
+        if bundle_obj.pushed:
+            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        try:
+            img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find an image at order {bundle_order}")
 
-        img_str = img_str.casefold()
-        if img_str.casefold() == "discard":
-            return StagingImage.DISCARD
+        if (
+            image_type is None
+        ):  # Compute the type of the image at that position and use that.
+            image_type = img.image_type
 
-        elif img_str.casefold() == "extra":
-            return StagingImage.EXTRA
+        if image_type == StagingImage.EXTRA:
+            raise ValueError("Trying to 'extralise' and already 'extra' bundle image.")
+        if image_type not in [
+            StagingImage.DISCARD,
+            StagingImage.KNOWN,
+            StagingImage.UNKNOWN,
+            StagingImage.ERROR,
+        ]:
+            raise ValueError(f"Image type '{image_type}' not recognised.")
+        if img.image_type != image_type:
+            raise ValueError(
+                f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
+            )
 
-        elif img_str.casefold() == "error":
-            return StagingImage.ERROR
-
-        elif img_str.casefold() == "known":
-            return StagingImage.KNOWN
-
-        elif img_str.casefold() == "unknown":
-            return StagingImage.UNKNOWN
+        # Be very careful to update the image type when doing this sort of operation.
+        img.image_type = StagingImage.EXTRA
+        # delete the old type information
+        # TODO - keep more detailed history so easier to undo.
+        # Hence we have this branching for time being.
+        if image_type == StagingImage.DISCARD:
+            img.discardstagingimage.delete()
+        elif image_type == StagingImage.KNOWN:
+            img.knownstagingimage.delete()
+        elif image_type == StagingImage.UNKNOWN:
+            img.unknownstagingimage.delete()
+        elif image_type == StagingImage.ERROR:
+            img.errorstagingimage.delete()
         else:
-            raise ValueError(f"Unrecognisable image type '{img_str}'")
+            raise RuntimeError("Cannot recognise image type")
+
+        ExtraStagingImage.objects.create(
+            staging_image=img,
+        )
+        img.save()
+
+    @transaction.atomic
+    def extralise_image_type_from_bundle_cmd(
+        self, username, bundle_name, bundle_order, *, image_type=None
+    ):
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name__in=["scanner", "manager"]
+            )
+        except ObjectDoesNotExist:
+            raise PermissionDenied(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        self.extralise_image_type_from_bundle(
+            user_obj, bundle_obj, bundle_order, image_type=image_type
+        )

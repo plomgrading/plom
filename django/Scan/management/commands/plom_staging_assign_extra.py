@@ -15,7 +15,9 @@ class Command(BaseCommand):
         python3 manage.py plom_staging_unknowify_page discard (bundle name) (bundle_order)
     """
 
-    help = "Assign an extra page to a paper and question(s)"
+    help = """Assign an extra page to a paper and question(s). Note that
+    this command cannot cast a page to the 'extra'-type, instead one
+    should use the plom_staging_extralise command."""
 
     def list_paper_numbers(self, bundle_name):
         scanner = ScanService()
@@ -42,7 +44,7 @@ class Command(BaseCommand):
                     [
                         page["order"],
                         page["status"],
-                        f"extra page without data",
+                        "extra page without data",
                         page["rotation"],
                     ]
                 )

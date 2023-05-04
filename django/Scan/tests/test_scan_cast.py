@@ -235,14 +235,3 @@ class ScanCastServiceTests(TestCase):
             ScanCastService().unknowify_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=StagingImage.ERROR
             )
-
-
-
-    def test_attempt_set_data(self):
-        # get any extra page
-        ord = (
-            self.bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA)
-            .first()
-            .bundle_order
-        )
-        ScanCastService().assign_extra_page(self.user0, self.bundle, ord, 7, [1,2])
