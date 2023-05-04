@@ -10,6 +10,7 @@ from django.http import Http404, FileResponse
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
+from Papers.services import SpecificationService
 
 
 # from Scan.models import StagingImage
@@ -96,6 +97,17 @@ class GetBundleNavFragmentView(ScannerRequiredView):
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         n_pages = scanner.get_n_images(bundle)
+
+        # TODO - we really need a list of question-labels.
+        # This is a hack to be fixed vvvvvvvvvvvv
+        question_labels = [
+            f"Q.{n+1}" for n in range(SpecificationService().get_n_questions())
+        ]
+        # TODO - make less hack
+        paper_numbers = [
+            n + 1 for n in range(SpecificationService().get_n_to_produce())
+        ]
+
         if index < 0 or index > n_pages:
             raise Http404("Bundle page does not exist.")
 
@@ -111,6 +123,8 @@ class GetBundleNavFragmentView(ScannerRequiredView):
                 "prev_idx": index - 1,
                 "next_idx": index + 1,
                 "current_page": current_page,
+                "question_labels": question_labels,
+                "paper_numbers": paper_numbers,
             }
         )
 

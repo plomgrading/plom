@@ -104,6 +104,40 @@
 			Discard
 		      </a>
 		    </div>
+		    {% if current_page.info.paper_number and current_page.info.question_list %}
+		    <div>
+		      <a class="btn btn-danger text-center w-100 mb-3" 
+			 hx-delete="{% url 'extralise_image' timestamp index %}"
+			 hx-confirm="Are you sure you wish to clear the extra page information?">
+			Clear information
+		      </a>
+		    </div>
+		    {% else %}
+		    <div class="alert alert-secondary">
+		      <h6>
+			Set extra page information
+		      </h6>
+		      <div>
+			Paper:
+			<select class="form-select" aria-label="Default select example">
+			  <option selected>Choose which paper</option>
+			  {% for pn in paper_numbers %}
+			  <option value="{{pn}}">{{pn}}</option>
+			  {% endfor %}
+			</select>
+			
+			Questions:
+			{% for ql in question_labels %}
+			<div class="form-check">
+			  <input class="form-check-input" type="checkbox" value="" id="{{ql}}">
+			  <label class="form-check-label" for="{{ql}}">
+			    {{ ql }}
+			  </label>
+			</div>
+			{% endfor %}
+		      </div>
+		    </div>
+		    {% endif %}
 		    {% endif %}
 		    {% elif current_page.status == 'unknown' %}
 		    <div class="alert alert-warning">

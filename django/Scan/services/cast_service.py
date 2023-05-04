@@ -285,6 +285,32 @@ class ScanCastService:
         )
 
     @transaction.atomic
+    def clear_extra_page_info_from_bundle_timestamp_and_order(
+        self, user_obj, bundle_timestamp, bundle_order
+    ):
+        """A wrapper around clear_image_type
+
+        The main difference is that it that takes a
+        bundle-timestamp instead of a bundle-object itself. Further,
+        it infers the image-type from the bundle and the bundle-order
+        rather than requiring it explicitly.
+
+        Args:
+            user_obj: (obj) An instead of a django user
+            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_order: (int) Bundle order of a page.
+
+        Returns:
+            None.
+
+        """
+
+        bundle_obj = StagingBundle.objects.get(
+            timestamp=bundle_timestamp,
+        )
+        self.clear_extra_page(user_obj, bundle_obj, bundle_order)
+
+    @transaction.atomic
     def clear_extra_page(self, user_obj, bundle_obj, bundle_order):
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
