@@ -179,8 +179,6 @@ class PageDataService:
                 }
             )
 
-        pages_metadata = []
-
         return pages_metadata
 
     @transaction.atomic
