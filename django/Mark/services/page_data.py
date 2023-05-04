@@ -90,7 +90,7 @@ class PageDataService:
 
     @transaction.atomic
     def get_question_pages_metadata(
-        self, paper, *, question=None, include_idpage=False, include_dnmpages=True
+        self, paper, *, question=None, include_idpage=True, include_dnmpages=True
     ):
         """
         Return a list of metadata for all pages in a particular paper - excluding the ID page.
@@ -98,8 +98,10 @@ class PageDataService:
         Args:
             paper (int): test-paper number
             question (int/None): question number, if not None.
-            include_idpage (bool): whether to include ID pages in this request (default = no)
-            include_dnpages (bool): whether to include any dnm pages in this request (default = yes)
+            include_idpage (bool): whether to include ID pages in this
+                request (default: True)
+            include_dnmpages (bool): whether to include any DNM pages in
+                this request (default: True)
 
         The ``included`` key is not meaningful if ``question`` was not passed.
 
