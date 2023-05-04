@@ -4,7 +4,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
-django==4.1.7
+django==4.2.1
 django-braces
 django-reset-migrations
 model_bakery # for tests
