@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2023 Tam Nguyen
@@ -736,6 +736,9 @@ class MarkHandler:
 
         Respond with status 200/409.
 
+        Some deprecated: use `get_pagedata_context_question` instead and filter
+        out those with ``included=False``.
+
         Args:
             data (dict): A dictionary having the user/token.
             request (aiohttp.web_request.Request):
@@ -889,6 +892,7 @@ class MarkHandler:
         router.add_delete("/tags/{task}", self.remove_tag)
         router.add_patch("/tags", self.create_new_tag)
         router.add_get("/pagedata/{number}", self.get_pagedata)
+        # some deprecated: use the /context one instead:
         router.add_get("/pagedata/{number}/{question}", self.get_pagedata_question)
         router.add_get(
             "/pagedata/{number}/context/{question}",
