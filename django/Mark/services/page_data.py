@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import transaction
 
@@ -13,8 +14,6 @@ from Papers.models import (
     Image,
     MobilePage,
 )
-
-import logging
 
 
 class PageDataService:
@@ -91,23 +90,25 @@ class PageDataService:
 
     @transaction.atomic
     def get_question_pages_metadata(
-        self, paper, question, *, include_idpage=False, include_dnmpages=True
+        self, paper, *, question=None, include_idpage=False, include_dnmpages=True
     ):
         """
         Return a list of metadata for all pages in a particular paper - excluding the ID page.
 
         Args:
             paper (int): test-paper number
-            question (int): question number
+            question (int/None): question number, if not None.
             include_idpage (bool): whether to include ID pages in this request (default = no)
             include_dnpages (bool): whether to include any dnm pages in this request (default = yes)
+
+        The ``included`` key is not meaningful if ``question`` was not passed.
 
         Returns:
             list, e.g. [
                 {
                     'pagename': (str) 't{page_number}' for test-pages, 'e{page_number}' for extra pages, etc,
                     'md5': (str) image hash,
-                    'included' (bool) did the server originally have this image?,
+                    'included' (bool) was this included in the original question?,
                     'order' (int) order within a question,
                     'id' (int) image public key,
                     'orientation' (int) image orientation,
@@ -129,20 +130,34 @@ class PageDataService:
         if not include_dnmpages:
             fixed = fixed.not_instance_of(DNMPage)
         for page in fixed:
-            dat = {
-                "pagename": f"t{page.page_number}",
-                "md5": page.image.hash,
-                "included": False,  # false by default, unless this is a question-page of the right question
-                "order": page.page_number,
-                "id": page.image.pk,
-                "orientation": page.image.rotation,
-                "server_path": str(page.image.image_file.path),
-            }
-            # update 'included' if it is a question page of the right question.
-            if isinstance(page, QuestionPage):
-                if page.question_number == question:
-                    dat["included"] = True
-            pages_metadata.append(dat)
+            if question is None:
+                # TODO: or is it better to not include this key?  That's likely
+                # what the legacy server does...
+                included = True
+            else:
+                if type(page) == QuestionPage:
+                    included = page.question_number == question
+                else:
+                    included = False
+            if type(page) == QuestionPage:
+                prefix = "t"
+            elif type(page) == IDPage:
+                prefix = "id"
+            elif type(page) == DNMPage:
+                prefix = "dnm"
+            else:
+                raise NotImplementedError(f"Page type {type(page)} not handled")
+            pages_metadata.append(
+                {
+                    "pagename": f"{prefix}{page.page_number}",
+                    "md5": page.image.hash,
+                    "included": included,
+                    "order": page.page_number,
+                    "id": page.image.pk,
+                    "orientation": page.image.rotation,
+                    "server_path": str(page.image.image_file.path),
+                }
+            )
 
         # add mobile-pages in pk order (is creation order)
         for page in (
@@ -155,14 +170,16 @@ class PageDataService:
                     "pagename": f"t{page.question_number}",
                     "md5": page.image.hash,
                     "included": page.question_number == question,
-                    # WARNING - HACKERY HERE
+                    # WARNING - HACKERY HERE vvvvvvvv
                     "order": len(pages_metadata) + 1,
-                    # WARNING HACKERY HERE
+                    # WARNING - HACKERY HERE ^^^^^^^^
                     "id": page.image.pk,
                     "orientation": page.image.rotation,
                     "server_path": str(page.image.image_file.path),
                 }
             )
+
+        pages_metadata = []
 
         return pages_metadata
 

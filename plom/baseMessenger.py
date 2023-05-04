@@ -858,23 +858,6 @@ class BaseMessenger:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_pagedata_question(self, code, questionNumber):
-        """Get metadata about the images in this paper and question."""
-        with self.SRmutex:
-            try:
-                response = self.get(
-                    f"/pagedata/{code}/{questionNumber}",
-                    json={"user": self.user, "token": self.token},
-                )
-                response.raise_for_status()
-                return response.json()
-            except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException(response.reason) from None
-                if response.status_code == 409:
-                    raise PlomConflict(response.reason) from None
-                raise PlomSeriousException(f"Some other sort of error {e}") from None
-
     def get_pagedata_context_question(self, code, questionNumber):
         """Get metadata about all non-ID page images in this paper, as related to a question.
 
@@ -1098,9 +1081,7 @@ class BaseMessenger:
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
-                raise PlomNoPaper(
-                    "Cannot find image file for {}.".format(num)
-                ) from None
+                raise PlomNoPaper(response.reason) from None
             elif response.status_code == 406:
                 raise PlomTaskChangedError(
                     "Task {} has been changed by manager.".format(num)

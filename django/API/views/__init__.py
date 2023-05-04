@@ -24,7 +24,7 @@ from .mark import (
     MarkingProgressCount,
     MgetNextTask,
     MclaimThisTask,
-    MgetQuestionPageData,
+    MgetPageDataQuestionInContext,
     MgetOneImage,
     MgetAnnotations,
     MgetAnnotationImage,

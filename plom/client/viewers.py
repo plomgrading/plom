@@ -13,6 +13,7 @@ import urllib.request
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
@@ -99,7 +100,7 @@ class GroupView(QDialog):
 
 
 class QuestionViewDialog(GroupView):
-    """View the raw scans from a particular question, optionally with tagging.
+    """View the pages for a particular question, optionally with tagging.
 
     Args:
         parent: the parent of this dialog
@@ -114,13 +115,12 @@ class QuestionViewDialog(GroupView):
             tagging.
     """
 
-    def __init__(self, parent, fnames, testnum, questnum, ver=None, marker=None):
+    def __init__(self, parent, fnames, papernum, q, marker=None, title=None):
         super().__init__(parent, fnames)
-        s = f"Original ungraded images for test {testnum:04} question {questnum}"
-        if ver:
-            s += f" (ver {ver})"
-        self.setWindowTitle(s)
-        self.tgv = (testnum, questnum, ver)
+        self.papernum = papernum
+        self.question_index = q
+        if title:
+            self.setWindowTitle(title)
         if marker:
             self.marker = marker
             tagButton = QPushButton("&Tags")
@@ -130,7 +130,7 @@ class QuestionViewDialog(GroupView):
     def tags(self):
         """If we have a marker parent then use it to manage tags"""
         if self.marker:
-            task = f"q{self.tgv[0]:04}g{self.tgv[1]}"
+            task = f"q{self.papernum:04}g{self.question_index}"
             self.marker.manage_task_tags(task, parent=self)
 
 
@@ -183,32 +183,34 @@ class WholeTestView(QDialog):
 
 
 class SelectTestQuestion(QDialog):
-    def __init__(self, parent, info, gn=None):
+    def __init__(self, parent, info, question_index):
         super().__init__(parent)
-        self.setWindowTitle("View another test")
-        self.iL = QLabel("From which test do you wish to view the current question?")
-        self.ab = QPushButton("&Accept")
-        self.ab.clicked.connect(self.accept)
-        self.cb = QPushButton("&Cancel")
-        self.cb.clicked.connect(self.reject)
-
-        fg = QFormLayout()
+        self.setWindowTitle("View another paper")
+        flay = QFormLayout()
         self.tsb = QSpinBox()
         self.tsb.setRange(1, info["numberToProduce"])
         self.tsb.setValue(1)
-        fg.addRow("Select test:", self.tsb)
-        if gn is not None:
-            self.gsb = QSpinBox()
-            self.gsb.setRange(1, info["numberOfQuestions"])
-            self.gsb.setValue(gn)
-            fg.addRow("Select question:", self.gsb)
-            self.iL.setText("Which test/group do you wish to view?")
-        grid = QGridLayout()
-        grid.addWidget(self.iL, 0, 1, 1, 3)
-        grid.addLayout(fg, 1, 1, 3, 3)
-        grid.addWidget(self.ab, 4, 1)
-        grid.addWidget(self.cb, 4, 3)
-        self.setLayout(grid)
+        flay.addRow("Select paper:", self.tsb)
+        self.gsb = QSpinBox()
+        self.gsb.setRange(1, info["numberOfQuestions"])
+        self.gsb.setValue(question_index)
+        flay.addRow("Select question:", self.gsb)
+        self.annotations = QCheckBox("Show annotations")
+        self.annotations.setChecked(True)
+        flay.addWidget(self.annotations)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        vlay = QVBoxLayout()
+        vlay.addWidget(QLabel("Which paper and question do you wish to view?"))
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+    def get_results(self):
+        return (self.tsb.value(), self.gsb.value(), self.annotations.isChecked())
 
 
 class SolutionViewer(QWidget):

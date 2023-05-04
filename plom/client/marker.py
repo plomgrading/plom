@@ -62,6 +62,7 @@ from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomBadTagError,
+    PlomBenignException,
     PlomForceLogoutException,
     PlomRangeException,
     PlomVersionMismatchException,
@@ -71,6 +72,7 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
+    PlomNoPaper,
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
@@ -1136,7 +1138,7 @@ class MarkerClient(QWidget):
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
-        self.ui.viewButton.clicked.connect(self.view_testnum_question)
+        self.ui.viewButton.clicked.connect(self.view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
 
@@ -2475,21 +2477,59 @@ class MarkerClient(QWidget):
         else:
             self.prxM.filterTags()
 
-    def view_testnum_question(self):
+    def view_other(self):
         """Shows a particular paper number and question."""
         tgs = SelectTestQuestion(self, self.exam_spec, self.question)
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
-        tn = tgs.tsb.value()
-        gn = tgs.gsb.value()
+        tn, q, get_annotated = tgs.get_results()
 
-        pagedata = self.msgr.get_pagedata_question(tn, gn)
-        # don't cache this pagedata: "gn" might not be our question number
-        # (but the images are cacheable)
-        pagedata = self.downloader.sync_downloads(pagedata)
-        qvmap = self.msgr.getQuestionVersionMap(tn)
-        ver = qvmap[gn]
-        d = QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self)
+        stuff = None
+        if get_annotated:
+            try:
+                annotated_image = self.msgr.get_annotations_image(tn, q)
+            except PlomNoPaper:
+                pass
+            except PlomBenignException as e:
+                s = f"Could not get annotation image: {e}"
+                s += "\nWill try to get the original images next..."
+                WarnMsg(self, s).exec()
+            else:
+                im_type = imghdr.what(None, h=annotated_image)
+                if not im_type:
+                    msg = (
+                        f"Failed to identify extension of {len(annotated_image)} bytes"
+                    )
+                    msg += f" of image data for previously annotated {tn} {q}"
+                    log.error(msg)
+                    raise PlomSeriousException(msg)
+                # TODO: nonunique if we ask again: no caching here
+                aname = self.workingDirectory / f"annot_{tn}_{q}.{im_type}"
+                with open(aname, "wb") as fh:
+                    fh.write(annotated_image)
+                stuff = [aname]
+                s = f"Annotations for paper {tn:04} question index {q}"
+
+        if stuff is None:
+            try:
+                pagedata = self.msgr.get_pagedata_context_question(tn, q)
+            except PlomBenignException as e:
+                WarnMsg(self, f"Could not get page data: {e}").exec()
+                return
+            # also, discard the non-included pages
+            pagedata = [x for x in pagedata if x["included"]]
+            # don't cache this pagedata: "q" might not be our question number
+            # (but the images are cacheable)
+            pagedata = self.downloader.sync_downloads(pagedata)
+            stuff = pagedata
+            s = f"Original ungraded images for paper {tn:04} question index {q}"
+
+        # TODO: Restore appending version to the title by fixing Issue #2695
+        # qvmap = self.msgr.getQuestionVersionMap(tn)
+        # ver = qvmap[q]
+        # s += f" (ver {ver})"
+
+        d = QuestionViewDialog(self, stuff, tn, q, marker=self, title=s)
         # TODO: future-proofing this a bit for live download updates
         # PC.download_finished.connect(d.shake_things_up)
         d.exec()
