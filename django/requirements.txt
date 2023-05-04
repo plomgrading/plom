@@ -12,7 +12,6 @@ beautifulsoup4==4.12.2
 django-session-timeout
 django-htmx
 tabulate # display table in command line
-reportlab==3.6.13
 django-huey
 django-polymorphic
 djangorestframework
@@ -26,9 +25,6 @@ psycopg2-binary  # for mucking with postgres databases - use binary so that we d
 debugpy
 whitenoise
 zipfly  # for streaming zipfile generation/download
-
-# indirect deps?  Fix #2702
-freetype-py==2.3.0
 
 
 #---------- for dev / debug work - comment out unless using it.
