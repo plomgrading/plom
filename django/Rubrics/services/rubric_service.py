@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2010-2023 Colin B. Macdonald
-# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 
@@ -112,13 +112,14 @@ class RubricService:
         Returns:
             list: dictionaries, one for each rubric.
         """
+
         if question is None:
             rubric_list = Rubric.objects.all()
         else:
             rubric_list = Rubric.objects.filter(question=question)
         rubric_data = []
 
-        for r in rubric_list:
+        for r in rubric_list.prefetch_related("user"):
             rubric_dict = {
                 "id": r.key,
                 "kind": r.kind,

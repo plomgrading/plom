@@ -49,15 +49,15 @@ class PageDataService:
         test_paper = Paper.objects.get(paper_number=paper)
         question_pages = QuestionPage.objects.filter(
             paper=test_paper, question_number=question
-        )
+        ).prefetch_related("image")
         mobile_pages = MobilePage.objects.filter(
             paper=test_paper, question_number=question
-        )
+        ).prefetch_related("image")
 
         page_list = []
         for page in question_pages.order_by("page_number"):
             image = page.image
-            if image:
+            if image:  # fixed pages might not have image if yet to be scanned.
                 page_list.append(
                     {
                         "id": image.pk,
@@ -72,19 +72,19 @@ class PageDataService:
         # Also - do not repeat mobile pages if can avoid it.
         for page in mobile_pages:
             image = page.image
-            if image:
-                page_list.append(
-                    {
-                        "id": image.pk,
-                        "md5": image.hash,
-                        "orientation": image.rotation,
-                        "server_path": image.image_file.path,
-                        "included": True,
-                        # WARNING - HACKERY HERE
-                        "order": len(page_list) + 1,
-                        # WARNING HACKERY HERE
-                    }
-                )
+            assert image is not None  # mobile pages will always have images
+            page_list.append(
+                {
+                    "id": image.pk,
+                    "md5": image.hash,
+                    "orientation": image.rotation,
+                    "server_path": image.image_file.path,
+                    "included": True,
+                    # WARNING - HACKERY HERE
+                    "order": len(page_list) + 1,
+                    # WARNING HACKERY HERE
+                }
+            )
 
         return page_list
 
