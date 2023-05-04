@@ -27,8 +27,9 @@ class ScanCastService:
     def discard_image_type_from_bundle_timestamp_and_order(
         self, user_obj, bundle_timestamp, bundle_order
     ):
-        """A wrapper around the discard_image_type_from_bundle
-        command. The main difference is that it that takes a
+        """A wrapper around discard_image_type_from_bundle cmd.
+
+        The main difference is that it that takes a
         bundle-timestamp instead of a bundle-object itself. Further,
         it infers the image-type from the bundle and the bundle-order
         rather than requiring it explicitly.
@@ -58,10 +59,6 @@ class ScanCastService:
     def discard_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, *, image_type=None
     ):
-        # Notice that image_type is a lower-case string and so not directly comparable to
-        # the staging_image image_type enum choices (which are either ints or upper-case strings)
-        # so care must be taken at comparison time.
-
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
 
@@ -70,20 +67,20 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 
-        if (
-            image_type is None
-        ):  # Compute the type of the image at that position and use that.
-            image_type = img.image_type.lower()
+        if image_type is None:
+            image_type = img.image_type
             # Notice that we can still trigger the "you are discarding a discard" error.
 
-        # casefold the image_type string
-        image_type = image_type.casefold()
-
-        if image_type == "discard":
+        if image_type == StagingImage.DISCARD:
             raise ValueError("Trying to discard an already discarded bundle image.")
-        if image_type not in ["unknown", "known", "extra", "error"]:
+        if image_type not in [
+            StagingImage.UNKNOWN,
+            StagingImage.KNOWN,
+            StagingImage.EXTRA,
+            StagingImage.ERROR,
+        ]:
             raise ValueError(f"Image type '{image_type}' not recognised.")
-        if img.image_type.casefold() != image_type:
+        if img.image_type != image_type:
             raise ValueError(
                 f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
             )
@@ -95,16 +92,16 @@ class ScanCastService:
         # TODO - keep more detailed history so easier to undo.
         # Hence we have this branching for time being.
 
-        if image_type == "unknown":
+        if image_type == StagingImage.UNKNOWN:
             img.unknownstagingimage.delete()
             reason = f"Unknown page discarded by {user_obj.username}"
-        elif image_type == "known":
+        elif image_type == StagingImage.KNOWN:
             img.knownstagingimage.delete()
             reason = f"Known page discarded by {user_obj.username}"
-        elif image_type == "extra":
+        elif image_type == StagingImage.EXTRA:
             img.extrastagingimage.delete()
             reason = f"Extra page discarded by {user_obj.username}"
-        elif image_type == "error":
+        elif image_type == StagingImage.ERROR:
             img.errorstagingimage.delete()
             reason = f"Error page discarded by {user_obj.username}"
         else:
@@ -132,7 +129,7 @@ class ScanCastService:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
         self.discard_image_type_from_bundle(
-            user_obj, bundle_obj, bundle_order, image_type=None
+            user_obj, bundle_obj, bundle_order, image_type=image_type
         )
 
     @transaction.atomic
@@ -149,18 +146,20 @@ class ScanCastService:
         if (
             image_type is None
         ):  # Compute the type of the image at that position and use that.
-            image_type = img.image_type.lower()
+            image_type = img.image_type
 
-        # casefold the image_type string
-        image_type = image_type.casefold()
-
-        if image_type == "unknown":
+        if image_type == StagingImage.UNKNOWN:
             raise ValueError(
                 "Trying to cast 'unknown' image to and already 'unknown' bundle image."
             )
-        if image_type.casefold() not in ["discard", "known", "extra", "error"]:
+        if image_type not in [
+            StagingImage.DISCARD,
+            StagingImage.KNOWN,
+            StagingImage.EXTRA,
+            StagingImage.ERROR,
+        ]:
             raise ValueError(f"Image type '{image_type}' not recognised.")
-        if img.image_type.casefold() != image_type:
+        if img.image_type != image_type:
             raise ValueError(
                 f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
             )
@@ -170,14 +169,16 @@ class ScanCastService:
         # delete the old type information
         # TODO - keep more detailed history so easier to undo.
         # Hence we have this branching for time being.
-        if image_type == "discard":
+        if image_type == StagingImage.DISCARD:
             img.discardstagingimage.delete()
-        elif image_type == "known":
+        elif image_type == StagingImage.KNOWN:
             img.knownstagingimage.delete()
-        elif image_type == "extra":
+        elif image_type == StagingImage.EXTRA:
             img.extrastagingimage.delete()
-        elif image_type == "error":
+        elif image_type == StagingImage.ERROR:
             img.errorstagingimage.delete()
+        else:
+            raise RuntimeError("Cannot recognise image type")
 
         UnknownStagingImage.objects.create(
             staging_image=img,
@@ -291,3 +292,24 @@ class ScanCastService:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
         self.clear_extra_page(user_obj, bundle_obj, bundle_order)
+
+    def string_to_staging_image_type(self, img_str):
+        """A helper function to translate from string to the staging image enum type"""
+
+        img_str = img_str.casefold()
+        if img_str.casefold() == "discard":
+            return StagingImage.DISCARD
+
+        elif img_str.casefold() == "extra":
+            return StagingImage.EXTRA
+
+        elif img_str.casefold() == "error":
+            return StagingImage.ERROR
+
+        elif img_str.casefold() == "known":
+            return StagingImage.KNOWN
+
+        elif img_str.casefold() == "unknown":
+            return StagingImage.UNKNOWN
+        else:
+            raise ValueError(f"Unrecognisable image type '{img_str}'")

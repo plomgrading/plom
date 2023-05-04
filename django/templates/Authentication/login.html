@@ -1,3 +1,6 @@
+<!-- Copyright (C) 2022 Brennen Chiu -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -35,7 +38,7 @@
                                 <h3 class="fw-bold mb-2 text-uppercase">Login</h3>
                                 <p class="text-dark-50 mb-5">Please enter your login and password!</p>
 
-                                <form method="POST" action="">
+                                <form method="post" action="">
                                     {% csrf_token %}
                                     <div class="form-outline form-black mb-4">
                                         <input type="text" class="form-control form-control-lg" name="username"/>

@@ -134,6 +134,25 @@ copyright_year:
   allow_failure: true
 
 
+djlint:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - pip install djlint
+  script:
+    - djlint django/templates/*/*.html django/templates/*/*/*.html
+
+
+# TODO: remove --warn to make these errors, Issue #2666
+djlint-check:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - pip install djlint
+  script:
+    - djlint django/templates/*/*.html django/templates/*/*/*.html --check --warn
+
+
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
 docker-tag-latest:
   stage: packaging

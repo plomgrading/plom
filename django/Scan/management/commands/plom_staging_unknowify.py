@@ -6,32 +6,34 @@ from django.core.management.base import BaseCommand, CommandError
 from Scan.services import ScanCastService
 
 
-def unknowify_image_type_from_bundle(username, bundle_name, order, *, image_type=None):
-    # TODO - put in an "Are you sure" here for error pages?
-
-    if image_type is None:
-        print(
-            f"Unknowify image at position {order} from bundle {bundle_name} as user {username} without type check."
-        )
-    elif image_type in ["discard", "error", "extra", "knowno"]:
-        print(
-            f"Attempting to unknowify image of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
-        )
-    else:
-        raise CommandError("Invalid check type")
-
-    ScanCastService().unknowify_image_type_from_bundle_cmd(
-        username, bundle_name, order, image_type=image_type
-    )
-    print("Action completed")
-
-
 class Command(BaseCommand):
     """
     python3 manage.py plom_staging_unknowify (username) (bundle name) (bundle_order)
     """
 
     help = "Cast to unknown a page from the given bundle at the given order"
+
+    def unknowify_image_type_from_bundle(
+        self, username, bundle_name, order, *, image_type=None
+    ):
+        scs = ScanCastService()
+
+        if image_type is None:
+            self.stdout.write(
+                f"Unknowify image at position {order} from bundle {bundle_name} as user {username} without type check."
+            )
+        else:
+            image_type = scs.string_to_staging_image_type(image_type)
+            self.stdout.write(
+                f"Attempting to unknowify image of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
+            )
+        try:
+            ScanCastService().unknowify_image_type_from_bundle_cmd(
+                username, bundle_name, order, image_type=image_type
+            )
+        except ValueError as err:
+            raise CommandError(err)
+        self.stdout.write("Action completed")
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -54,7 +56,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        unknowify_image_type_from_bundle(
+        self.unknowify_image_type_from_bundle(
             options["username"],
             options["bundle"],
             options["order"],

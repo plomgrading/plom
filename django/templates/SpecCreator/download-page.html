@@ -1,3 +1,6 @@
+<!-- Copyright (C) 2022 Edith Coates -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
+
 {% extends 'SpecCreator/base-spec-2col.html' %}
 
 {% block title %} Create Specification - Save {% endblock %}
@@ -10,9 +13,9 @@
         <p>Once saved, upload the specfile to the PLOM manager client.</p>
         <label for="write-filename" class="form-label">Filename</label>
         <input type="text" class="form-control" id="write-filename" x-bind:value="filename" x-model="filename">
-        <a 
-            type="button" 
-            class="btn btn-primary btn-lg" 
+        <a
+            type="button"
+            class="btn btn-primary btn-lg"
             href="{% url 'generate_spec' %}"
             x-bind:download="filename"
         >
@@ -24,6 +27,5 @@
         <a class="btn btn-primary btn-lg" href="{% url 'prep_landing' %}">Return to test creator</a>
     </div>
 </div>
-
 
 {% endblock %}

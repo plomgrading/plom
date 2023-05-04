@@ -22,7 +22,7 @@ from API.views import (
     MarkingProgressCount,
     MgetNextTask,
     MclaimThisTask,
-    MgetQuestionPageData,
+    MgetPageDataQuestionInContext,
     MgetOneImage,
     MgetAnnotations,
     MgetAnnotationImage,
@@ -66,9 +66,14 @@ urlpatterns = [
     path("MK/tasks/<code>", MclaimThisTask.as_view(), name="api_MK_claim_task"),
     path("ID/tasks/<paper_id>", IDclaimThisTask.as_view(), name="api_ID_claim_task"),
     path(
+        "pagedata/<int:paper>",
+        MgetPageDataQuestionInContext.as_view(),
+        name="api_pagedata",
+    ),
+    path(
         "pagedata/<int:paper>/context/<int:question>",
-        MgetQuestionPageData.as_view(),
-        name="api_question_data",
+        MgetPageDataQuestionInContext.as_view(),
+        name="api_pagedata_context_question",
     ),
     path("MK/images/<int:pk>/<hash>/", MgetOneImage.as_view(), name="api_MK_one_image"),
     path("ID/image/<paper_id>/", IDgetImage.as_view(), name="api_ID_get_image"),
@@ -79,6 +84,11 @@ urlpatterns = [
     ),
     path(
         "annotations_image/<int:paper>/<int:question>/<int:edition>",
+        MgetAnnotationImage.as_view(),
+        name="api_MK_annotation_img_with_edition",
+    ),
+    path(
+        "annotations_image/<int:paper>/<int:question>",
         MgetAnnotationImage.as_view(),
         name="api_MK_annotation_img",
     ),
