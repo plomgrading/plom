@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 import json
 
@@ -13,6 +13,7 @@ def audit(*, msgr):
     audit["tests"] = msgr.getFilesInAllTests()
     audit["unknowns"] = msgr.getUnknownPages()
     audit["discards"] = msgr.getDiscardedPages()
+    print("Warning: calling potentially-slow getDanglingPages API...")
     audit["dangling"] = msgr.getDanglingPages()
     audit["collisions"] = msgr.getCollidingPageNames()
 

@@ -1,14 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021, 2023 Colin B. Macdonald
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty
-from PyQt5.QtGui import QPen, QColor, QBrush
-from PyQt5.QtWidgets import (
-    QGraphicsObject,
-    QGraphicsPathItem,
-    QUndoCommand,
-)
+from PyQt6.QtCore import QTimer, QPropertyAnimation, pyqtProperty
+from PyQt6.QtGui import QBrush, QColor, QPen, QUndoCommand
+from PyQt6.QtWidgets import QGraphicsObject, QGraphicsPathItem
 
 
 class CommandTool(QUndoCommand):

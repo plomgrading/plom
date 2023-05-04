@@ -14,7 +14,7 @@ import plom.create
 from plom.tpv_utils import encodeExtraPageCode
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
@@ -45,3 +45,7 @@ def build_extra_page_pdf(destination_dir=None):
             stdout=subprocess.DEVNULL,
         )
         shutil.copy(tmp_path / "extra_page.pdf", destination_dir)
+
+
+if __name__ == "__main__":
+    build_extra_page_pdf()

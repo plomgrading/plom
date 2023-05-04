@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Forest Kobayashi
 # Copyright (C) 2022 Joey Shi
@@ -122,7 +122,7 @@ def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
                 print(f"  Test no.: {testnum}\tID: {s[0]}\tName: {s[1]}")
 
 
-def main(server=None, password=None):
+def main(server=None, password=None, dangling_check=False):
     msgr = start_messenger(server, password)
     try:
         spec = msgr.get_spec()
@@ -171,7 +171,13 @@ def main(server=None, password=None):
     print("")
     print_still_out(outToDo)
     print("")
-    print_dangling(dangling)
+    if dangling_check:
+        print_dangling(dangling)
+    else:
+        print("************************************")
+        print("** Dangling Pages check: disabled **")
+        print("This is disabled by default, see command-line help")
+        print()
 
     if len(partMarked) > numberComplete:
         s = "Warning: {} papers incomplete (part-marked or unidentified).".format(

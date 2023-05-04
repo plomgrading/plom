@@ -1,3 +1,7 @@
+<!-- Copyright (C) 2022 Edith Coates -->
+<!-- Copyright (C) 2023 Brennen Chiu -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
+
 {% if qr_finished and qr_status != 'error' %}
     {% if status == 'error' %}
     <div class="d-flex vstack gap-3">
@@ -11,8 +15,8 @@
         </p>
     </div>
     {% elif not status %}
-    {% comment %} <a 
-        class="btn text-start" 
+    {% comment %} <a
+        class="btn text-start"
         style="background-color: lightgrey;"
         hx-post="{% url 'scan_push_img' timestamp index %}"
         hx-swap="outerHTML"
@@ -30,8 +34,8 @@
 
     {% if not all_pushed and not in_progress %}
         {% if not status or status == 'complete' %}
-        <a 
-            class="btn text-start {{ disabled }}" 
+        <a
+            class="btn text-start {{ disabled }}"
             style="background-color: lightgrey;"
             hx-post="{% url 'scan_push_all' timestamp %}"
         >
@@ -41,5 +45,7 @@
     {% endif %}
 
 {% else %}
-<div></div>
+<div>
+  <!-- no content -->
+</div>
 {% endif %}

@@ -71,19 +71,28 @@ class BaseTask(PolymorphicModel):
     A base class for all "tasks" that are sent from the server to
     the PyQT client.
 
+    Status is represented by a choice kwarg, see
+    https://docs.djangoproject.com/en/4.2/ref/models/fields/#choices
+    for more info
+
     assigned_user: reference to User, the user currently attached to the task.
                    Can be null, can change over time.
     status: str, represents the status of the task: not started, sent to a client, completed
     """
 
     # TODO: UUID for indexing
-    # TODO: out-of-date boolean field
+
+    StatusChoices = models.IntegerChoices("Status", "TO_DO OUT COMPLETE OUT_OF_DATE")
+    TO_DO = StatusChoices.TO_DO
+    OUT = StatusChoices.OUT
+    COMPLETE = StatusChoices.COMPLETE
+    OUT_OF_DATE = StatusChoices.OUT_OF_DATE
 
     assigned_user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time = models.DateTimeField(default=timezone.now)
-    status = models.TextField(
-        null=False, default="todo"
-    )  # choices: 'todo', 'out', 'complete'
+    status = models.IntegerField(
+        null=False, choices=StatusChoices.choices, default=TO_DO
+    )
 
 
 class BaseAction(PolymorphicModel):

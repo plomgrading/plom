@@ -11,8 +11,8 @@ import logging
 
 import PIL.Image
 
-from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, QEvent, QRectF, QLineF, QPointF
+from PyQt6.QtGui import (
     QBrush,
     QColor,
     QCursor,
@@ -25,8 +25,9 @@ from PyQt5.QtGui import (
     QPen,
     QPixmap,
     QTransform,
+    QUndoStack,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QGraphicsEllipseItem,
     QGraphicsLineItem,
     QGraphicsPathItem,
@@ -35,13 +36,12 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QGraphicsSceneDragDropEvent,
     QGraphicsTextItem,
+    QGraphicsView,
     QGraphicsItemGroup,
     QMessageBox,
-    QUndoStack,
     QToolButton,
     QMenu,
 )
-from PyQt5.QtCore import Qt
 
 from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
@@ -114,7 +114,7 @@ class ScoreBox(QGraphicsTextItem):
         font.setPixelSize(round(1.25 * fontsize))
         self.setFont(font)
         # Not editable.
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.setPos(0, 0)
         self._update_text()
 
@@ -194,7 +194,7 @@ class UnderlyingRect(QGraphicsRectItem):
 
     def __init__(self, rect):
         super().__init__()
-        self.setPen(QPen(Qt.black, 4, style=Qt.DotLine))
+        self.setPen(QPen(QColor("black"), 4, style=Qt.PenStyle.DotLine))
         self.setBrush(QBrush(QColor(249, 249, 249, 255)))
         self.setRect(rect)
         self.setZValue(-10)
@@ -219,15 +219,15 @@ class MaskingOverlay(QGraphicsItemGroup):
         self.right_bar = QGraphicsRectItem(outer_rect)
         self.dotted_boundary = QGraphicsRectItem(inner_rect)
         transparent_paint = QBrush(QColor(249, 249, 249, 220))
-        dotted_pen = QPen(QColor(0, 0, 0, 128), 2, style=Qt.DotLine)
+        dotted_pen = QPen(QColor(0, 0, 0, 128), 2, style=Qt.PenStyle.DotLine)
         self.top_bar.setBrush(transparent_paint)
         self.bottom_bar.setBrush(transparent_paint)
         self.left_bar.setBrush(transparent_paint)
         self.right_bar.setBrush(transparent_paint)
-        self.top_bar.setPen(QPen(Qt.NoPen))
-        self.bottom_bar.setPen(QPen(Qt.NoPen))
-        self.left_bar.setPen(QPen(Qt.NoPen))
-        self.right_bar.setPen(QPen(Qt.NoPen))
+        self.top_bar.setPen(QPen(Qt.PenStyle.NoPen))
+        self.bottom_bar.setPen(QPen(Qt.PenStyle.NoPen))
+        self.left_bar.setPen(QPen(Qt.PenStyle.NoPen))
+        self.right_bar.setPen(QPen(Qt.PenStyle.NoPen))
         self.dotted_boundary.setPen(dotted_pen)
         # now set the size correctly
         self.set_bars()
@@ -324,7 +324,7 @@ class UnderlyingImages(QGraphicsItemGroup):
             pix = pix.transformed(rot)
             img = QGraphicsPixmapItem(pix)
             # this gives (only) bilinear interpolation
-            img.setTransformationMode(Qt.SmoothTransformation)
+            img.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
             # works but need to adjust the origin of rotation, probably faster
             # img.setTransformOriginPoint(..., ...)
             # img.setRotation(img['orientation'])
@@ -447,7 +447,7 @@ class PageScene(QGraphicsScene):
 
         self.scoreBox = None
         # Define standard pen, highlight, fill, light-fill
-        self.set_annotation_color(Qt.red)
+        self.set_annotation_color(QColor("red"))
         self.deleteBrush = QBrush(QColor(255, 0, 0, 16))
         self.zoomBrush = QBrush(QColor(0, 0, 255, 16))
         # Flags to indicate if drawing an arrow (vs line), highlight (vs
@@ -626,7 +626,7 @@ class PageScene(QGraphicsScene):
             m.addSeparator()
             m.addAction("Find other pages...", self.parent().rearrangePages)
             b.setMenu(m)
-            b.setPopupMode(QToolButton.InstantPopup)
+            b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
             h = self.addWidget(b)
             h.setScale(1.8)
             br = img.mapRectToScene(img.boundingRect())
@@ -637,7 +637,7 @@ class PageScene(QGraphicsScene):
                 br.left() + br.width() / 2 - wbr.width() / 2,
                 br.top() - wbr.height() / 2,
             )
-            # h.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+            # h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             b.setToolTip(f"Page options for page {n}")
             self._page_hack_buttons.append(h)
 
@@ -803,7 +803,7 @@ class PageScene(QGraphicsScene):
             None
         """
         # set focus so that shift/control change cursor
-        self.views()[0].setFocus(Qt.TabFocusReason)
+        self.views()[0].setFocus(Qt.FocusReason.TabFocusReason)
 
         self.mode = mode
         # if current mode is not rubric, make sure the ghostcomment is hidden
@@ -817,9 +817,9 @@ class PageScene(QGraphicsScene):
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
-            self.views()[0].setDragMode(1)
+            self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         else:
-            self.views()[0].setDragMode(0)
+            self.views()[0].setDragMode(QGraphicsView.DragMode.NoDrag)
         # update the modelabels
         self.parent().setModeLabels(self.mode)
 
@@ -930,7 +930,9 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             if getattr(X, "saveable", False):
                 # now check it is inside the UnderlyingRect
-                if X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
+                if X.collidesWithItem(
+                    self.underRect, mode=Qt.ItemSelectionMode.ContainsItemShape
+                ):
                     # add a little padding around things.
                     br = br.united(
                         X.mapRectToScene(X.boundingRect()).adjusted(-16, -16, 16, 16)
@@ -1052,14 +1054,14 @@ class PageScene(QGraphicsScene):
         }
 
         if self.mode in variableCursors:
-            if event.key() == Qt.Key_Shift:
+            if event.key() == Qt.Key.Key_Shift:
                 self.views()[0].setCursor(variableCursors.get(self.mode)[0])
-            elif event.key() == Qt.Key_Control:
+            elif event.key() == Qt.Key.Key_Control:
                 self.views()[0].setCursor(variableCursors.get(self.mode)[1])
             else:
                 pass
 
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             self.clearFocus()
             # also if in box,line,pen,rubric,text - stop mid-draw
             if self.mode in ["box", "line", "pen", "rubric", "text", "cross", "tick"]:
@@ -1094,7 +1096,10 @@ class PageScene(QGraphicsScene):
             pass
 
     def wheelEvent(self, event):
-        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+        if (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
+        ):
             s = mousewheel_delta_to_scale(event.delta())
             self.views()[0].scale(s, s)
             # sets the view rectangle and updates zoom-dropdown.
@@ -1320,15 +1325,17 @@ class PageScene(QGraphicsScene):
 
     def stampCrossQMarkTick(self, event, cross=True):
         pt = event.scenePos()  # Grab the click's location and create command.
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        if (event.button() == Qt.MouseButton.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             if cross:
                 command = CommandTick(self, pt)
             else:
                 command = CommandCross(self, pt)
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        elif (event.button() == Qt.MouseButton.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
         ):
             command = CommandQMark(self, pt)
         else:
@@ -1490,7 +1497,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        self.views()[0].setCursor(Qt.ClosedHandCursor)
+        self.views()[0].setCursor(Qt.CursorShape.ClosedHandCursor)
         super().mousePressEvent(event)
 
     def mousePressPan(self, event):
@@ -1509,7 +1516,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        self.views()[0].setCursor(Qt.ClosedHandCursor)
+        self.views()[0].setCursor(Qt.CursorShape.ClosedHandCursor)
         return
 
     def mousePressText(self, event):
@@ -1542,8 +1549,10 @@ class PageScene(QGraphicsScene):
                     self.boxLineStampState == 2
                 ):  # make sure not trying to start text on top of text
                     return
-                under.setTextInteractionFlags(Qt.TextEditorInteraction)
-                self.setFocusItem(under, Qt.MouseFocusReason)
+                under.setTextInteractionFlags(
+                    Qt.TextInteractionFlag.TextEditorInteraction
+                )
+                self.setFocusItem(under, Qt.FocusReason.MouseFocusReason)
                 super().mousePressEvent(event)
                 return
             # check if a textitem currently has focus and clear it.
@@ -1622,7 +1631,7 @@ class PageScene(QGraphicsScene):
             None.
 
         """
-        self.views()[0].setCursor(Qt.OpenHandCursor)
+        self.views()[0].setCursor(Qt.CursorShape.OpenHandCursor)
         super().mouseReleaseEvent(event)
         # refresh view after moving objects
         # EXPERIMENTAL: recompute bounding box in case you move an item outside the pages
@@ -1640,7 +1649,7 @@ class PageScene(QGraphicsScene):
             None.
 
         """
-        self.views()[0].setCursor(Qt.OpenHandCursor)
+        self.views()[0].setCursor(Qt.CursorShape.OpenHandCursor)
         super().mouseReleaseEvent(event)
         self.views()[0].setZoomSelector()
 
@@ -1665,7 +1674,7 @@ class PageScene(QGraphicsScene):
             self.parent().toMoveMode()
 
             msg = QMessageBox(self.parent())
-            msg.setIcon(QMessageBox.Information)
+            msg.setIcon(QMessageBox.Icon.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
                 "You can double-click on an Image to modify its scale and border."
@@ -1682,7 +1691,7 @@ class PageScene(QGraphicsScene):
             "application/x-qabstractitemmodeldatalist"
         ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
             # User has dragged in a rubric from the rubric-list.
-            e.setDropAction(Qt.CopyAction)
+            e.setDropAction(Qt.DropAction.CopyAction)
         else:
             e.ignore()
 
@@ -1694,7 +1703,7 @@ class PageScene(QGraphicsScene):
         """Handles drop events."""
         # all drop events should copy
         # - even if user is trying to remove rubric from rubric-list make sure is copy-action.
-        e.setDropAction(Qt.CopyAction)
+        e.setDropAction(Qt.DropAction.CopyAction)
 
         if e.mimeData().hasFormat("text/plain"):
             # Simulate a rubric click.
@@ -1717,7 +1726,7 @@ class PageScene(QGraphicsScene):
         else:
             pass
         # After the drop event make sure pageview has the focus.
-        self.views()[0].setFocus(Qt.TabFocusReason)
+        self.views()[0].setFocus(Qt.FocusReason.TabFocusReason)
 
     def latexAFragment(self, *args, **kwargs):
         """Latex a fragment of text."""
@@ -1735,10 +1744,10 @@ class PageScene(QGraphicsScene):
 
         """
         if event.type() in [
-            QEvent.TouchBegin,
-            QEvent.TouchEnd,
-            QEvent.TouchUpdate,
-            QEvent.TouchCancel,
+            QEvent.Type.TouchBegin,
+            QEvent.Type.TouchEnd,
+            QEvent.Type.TouchUpdate,
+            QEvent.Type.TouchCancel,
         ]:
             # ignore the event
             event.accept()
@@ -1918,8 +1927,9 @@ class PageScene(QGraphicsScene):
         self.currentPos = self.originPos
         # If left-click then a highlight box, else an ellipse.
         # Set a flag to tell the mouseReleaseBox function which.
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        if (event.button() == Qt.MouseButton.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.boxFlag = 2
             self.ellipseItem = QGraphicsEllipseItem(
@@ -2037,12 +2047,14 @@ class PageScene(QGraphicsScene):
         if self.arrowFlag != 0:
             # mid line draw so ignore press
             return
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        if (event.button() == Qt.MouseButton.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.arrowFlag = 2
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        elif (event.button() == Qt.MouseButton.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
         ):
             self.arrowFlag = 4
         else:
@@ -2133,13 +2145,15 @@ class PageScene(QGraphicsScene):
         # Else set to the highlighter or pen with arrows.
         # set penFlag so correct object created on mouse-release
         # non-zero value so we don't add to path after mouse-release
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        if (event.button() == Qt.MouseButton.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.pathItem.setPen(self.highlight)
             self.penFlag = 2
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        elif (event.button() == Qt.MouseButton.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ControlModifier
         ):
             # middle button is pen-path with arrows at both ends
             self.pathItem.setPen(self.ink)
@@ -2232,8 +2246,9 @@ class PageScene(QGraphicsScene):
         if self.zoomFlag:
             return
 
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        if (event.button() == Qt.MouseButton.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].scale(0.8, 0.8)
@@ -2247,7 +2262,7 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.zoomBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.zoomBoxItem.setPen(Qt.blue)
+        self.zoomBoxItem.setPen(QColor("blue"))
         self.zoomBoxItem.setBrush(self.zoomBrush)
         self.addItem(self.zoomBoxItem)
 
@@ -2306,7 +2321,9 @@ class PageScene(QGraphicsScene):
             self.views()[0].centerOn(event.scenePos())
 
         elif self.zoomFlag == 2:
-            self.views()[0].fitInView(self.zoomBoxItem, Qt.KeepAspectRatio)
+            self.views()[0].fitInView(
+                self.zoomBoxItem, Qt.AspectRatioMode.KeepAspectRatio
+            )
 
         # sets the view rectangle and updates zoom-dropdown.
         self.views()[0].setZoomSelector(True)
@@ -2335,7 +2352,7 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+        self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
@@ -2360,7 +2377,7 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
                 )
-                self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+                self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
             else:
@@ -2449,7 +2466,7 @@ class PageScene(QGraphicsScene):
             # grab list of items in rectangle around click
             nearby = self.items(
                 QRectF(self.originPos.x() - 5, self.originPos.y() - 5, 8, 8),
-                mode=Qt.IntersectsItemShape,
+                mode=Qt.ItemSelectionMode.IntersectsItemShape,
                 deviceTransform=QTransform(),
             )
             if len(nearby) == 0:
@@ -2464,7 +2481,9 @@ class PageScene(QGraphicsScene):
             # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
             for X in self.items():
                 # make sure is not background image or the scorebox, or the delbox itself.
-                if X.collidesWithItem(self.delBoxItem, mode=Qt.ContainsItemShape):
+                if X.collidesWithItem(
+                    self.delBoxItem, mode=Qt.ItemSelectionMode.ContainsItemShape
+                ):
                     if X.group() is None:
                         self.deleteIfLegal(X)
                     else:
@@ -2534,7 +2553,9 @@ class PageScene(QGraphicsScene):
 
     def itemWithinBounds(self, item):
         """Check if given item is within the margins or not."""
-        return item.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape)
+        return item.collidesWithItem(
+            self.underRect, mode=Qt.ItemSelectionMode.ContainsItemShape
+        )
 
     def check_all_saveable_objects_inside(self):
         """
@@ -2789,7 +2810,7 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+        self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
@@ -2814,7 +2835,7 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
                 )
-                self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
+                self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
             else:

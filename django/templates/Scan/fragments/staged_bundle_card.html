@@ -5,7 +5,7 @@
   <div class="card-body d-flex flex-row p-0">
     {% if has_been_processed %}
     <img 
-      src="{% url 'scan_get_image' timestamp 0 %}"
+      src="{% url 'scan_get_image' timestamp 1 %}"
       class="border rounded-start"
       style="max-height: 16em;"
       >
@@ -95,7 +95,7 @@
       {% if has_been_processed %}
       <a 
         class="btn" 
-        href="{% url 'scan_manage_bundle' timestamp 0 %}"
+        href="{% url 'scan_manage_bundle' timestamp 1 %}"
         style="background-color: #0F984F; color: white;"
         >
         View

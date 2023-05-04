@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020, 2022 Colin B. Macdonald
+# Copyright (C) 2020, 2022-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QUndoCommand
+from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import QUndoCommand
 
 from plom.client.tools.rubric import GroupDeltaTextItem
 from plom.client.tools import DeleteObject

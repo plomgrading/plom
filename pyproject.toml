@@ -11,7 +11,7 @@ line-length = 88
 target-version = ['py37']
 
 [tool.pylint.main]
-extension-pkg-allow-list = ["PyQt5", "cv2", "zxingcpp"]
+extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
 generated-members = ["pandas", "cv2.*"]
 # order matters: need errors-only before disable
 errors-only = true
@@ -29,4 +29,9 @@ omit = ["*/test_*", "/usr/*", "*/config*", "django/*"]
 [tool.pytest.ini_options]
 # TODO: for now ignore the django folder
 addopts = "--ignore plom/django"
-qt_api = "pyqt5"
+qt_api = "pyqt6"
+
+[tool.djlint]
+# TODO: many of these should be fixed instead of ignored!
+ignore="H021,H023,H006,H013,H025,H030,H031,H005,H016,H020"
+# indent=2

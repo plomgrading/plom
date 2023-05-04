@@ -37,8 +37,8 @@ else:
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 import platform
 
-from PyQt5 import uic
-from PyQt5.QtCore import (
+from PyQt6 import uic
+from PyQt6.QtCore import (
     Qt,
     QSortFilterProxyModel,
     QTimer,
@@ -46,9 +46,8 @@ from PyQt5.QtCore import (
     pyqtSlot,
     pyqtSignal,
 )
-from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import (
-    QAction,
+from PyQt6.QtGui import QAction, QStandardItem, QStandardItemModel
+from PyQt6.QtWidgets import (
     QDialog,
     QInputDialog,
     QMessageBox,
@@ -83,7 +82,7 @@ from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 
 
 if platform.system() == "Darwin":
-    from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
+    from PyQt6.QtGui import qt_set_sequence_auto_mnemonic
 
     qt_set_sequence_auto_mnemonic(True)
 
@@ -905,9 +904,12 @@ class MarkerClient(QWidget):
 
         self.maxMark = -1  # temp value
         self.downloader = self.Qapp.downloader
-        self.downloader.download_finished.connect(self.background_download_finished)
-        self.downloader.download_failed.connect(self.background_download_failed)
-        self.downloader.download_queue_changed.connect(self.update_technical_stats)
+        if self.downloader:
+            # for unit tests, we might mockup Qapp.downloader as None
+            # (Marker will not be functional without a downloader)
+            self.downloader.download_finished.connect(self.background_download_finished)
+            self.downloader.download_failed.connect(self.background_download_failed)
+            self.downloader.download_queue_changed.connect(self.update_technical_stats)
 
         self.examModel = (
             MarkerExamModel()
@@ -1126,7 +1128,7 @@ class MarkerClient(QWidget):
         self._prefer_above_action = a
         m.addAction(a)
         self.ui.getNextButton.setMenu(m)
-        # self.ui.getNextButton.setPopupMode(QToolButton.MenuButtonPopup)
+        # self.ui.getNextButton.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
@@ -1577,7 +1579,7 @@ class MarkerClient(QWidget):
     def show_hide_technical(self):
         if self.ui.technicalButton.isChecked():
             self.ui.technicalButton.setText("Hide technical info")
-            self.ui.technicalButton.setArrowType(Qt.DownArrow)
+            self.ui.technicalButton.setArrowType(Qt.ArrowType.DownArrow)
             self.ui.frameTechnical.setVisible(True)
             ptsz = self.ui.technicalButton.fontInfo().pointSizeF()
             self.ui.frameTechnical.setStyleSheet(
@@ -1587,7 +1589,7 @@ class MarkerClient(QWidget):
             self.ui.labelTech4.setVisible(False)
         else:
             self.ui.technicalButton.setText("Show technical info")
-            self.ui.technicalButton.setArrowType(Qt.RightArrow)
+            self.ui.technicalButton.setArrowType(Qt.ArrowType.RightArrow)
             self.ui.frameTechnical.setVisible(False)
 
     def toggle_fail_mode(self):
@@ -1670,7 +1672,7 @@ class MarkerClient(QWidget):
                     "Do you want to wait a few more seconds?\n\n"
                     "(It is safe to choose 'no': the Annotator will simply close)",
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return False
                 count = 0
                 self.Qapp.processEvents()
@@ -1761,7 +1763,7 @@ class MarkerClient(QWidget):
 
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
-            if not msg.exec() == QMessageBox.Yes:
+            if not msg.exec() == QMessageBox.StandardButton.Yes:
                 return
             oldpname = self.examModel.getPlomFileByTask(task)
             with open(oldpname, "r") as fh:
@@ -1788,7 +1790,7 @@ class MarkerClient(QWidget):
                     self,
                     "Still waiting for download.  Do you want to wait a bit longer?",
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return
                 count = 0
                 self.Qapp.processEvents()
@@ -2223,7 +2225,7 @@ class MarkerClient(QWidget):
                 "Download threads are still in progress.",
                 question="Do you want to wait a little longer?",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 # TODO: do we have a force quit?
                 break
         N = self.get_upload_queue_length()
@@ -2237,12 +2239,14 @@ class MarkerClient(QWidget):
             s += "may have failed: you can quit, losing any non-uploaded "
             s += "annotations.</p>"
             msg.setInformativeText(s)
-            msg.setStandardButtons(QMessageBox.Cancel | QMessageBox.Discard)
-            msg.setDefaultButton(QMessageBox.Cancel)
-            button = msg.button(QMessageBox.Cancel)
+            msg.setStandardButtons(
+                QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Discard
+            )
+            msg.setDefaultButton(QMessageBox.StandardButton.Cancel)
+            button = msg.button(QMessageBox.StandardButton.Cancel)
             button.setText("Wait (cancel close)")
-            msg.setIcon(QMessageBox.Warning)
-            if msg.exec() == QMessageBox.Cancel:
+            msg.setIcon(QMessageBox.Icon.Warning)
+            if msg.exec() == QMessageBox.StandardButton.Cancel:
                 event.ignore()
                 return
         if self.backgroundUploader is not None:
@@ -2286,7 +2290,7 @@ class MarkerClient(QWidget):
 
         # Build a progress dialog to warn user
         pd = QProgressDialog("Caching latex comments", None, 0, 3 * len(clist), self)
-        pd.setWindowModality(Qt.WindowModal)
+        pd.setWindowModality(Qt.WindowModality.WindowModal)
         pd.setMinimumDuration(0)
         # Start caching.
         c = 0
@@ -2436,7 +2440,7 @@ class MarkerClient(QWidget):
         tag_choices = [X for X in all_tags if X not in current_tags]
 
         artd = AddRemoveTagDialog(parent, current_tags, tag_choices, label=task)
-        if artd.exec() == QDialog.Accepted:
+        if artd.exec() == QDialog.DialogCode.Accepted:
             cmd, new_tag = artd.return_values
             if cmd == "add":
                 if new_tag:
@@ -2474,7 +2478,7 @@ class MarkerClient(QWidget):
     def view_testnum_question(self):
         """Shows a particular paper number and question."""
         tgs = SelectTestQuestion(self, self.exam_spec, self.question)
-        if tgs.exec() != QDialog.Accepted:
+        if tgs.exec() != QDialog.DialogCode.Accepted:
             return
         tn = tgs.tsb.value()
         gn = tgs.gsb.value()

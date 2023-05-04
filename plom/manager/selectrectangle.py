@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt, QPointF, QRectF
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, QPointF, QRectF
+from PyQt6.QtGui import (
     QBrush,
     QColor,
     QImageReader,
@@ -13,7 +13,7 @@ from PyQt5.QtGui import (
     QPen,
     QPixmap,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog,
     QGraphicsRectItem,
     QGraphicsPixmapItem,
@@ -44,7 +44,7 @@ class SelectRectangleWindow(QDialog):
     def initUI(self, fnames):
         self.setWindowTitle("Select ID Rectangle")
         self.view = IDView(self, fnames)
-        self.view.setRenderHint(QPainter.Antialiasing)
+        self.view.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         self.resetB = QPushButton("reset view")
         self.zoomB = QPushButton("zoom tool")
@@ -140,14 +140,14 @@ class IDView(QGraphicsView):
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
         self.updateImages(fnames)
-        self.setBackgroundBrush(QBrush(Qt.darkCyan))
+        self.setBackgroundBrush(QBrush(QColor("darkCyan")))
         self._parent.tool = "zoom"
 
         self.boxFlag = False
         self.originPos = QPointF(0, 0)
         self.currentPos = self.originPos
         self.boxItem = QGraphicsRectItem()
-        self.boxItem.setPen(QPen(Qt.darkCyan, 1))
+        self.boxItem.setPen(QPen(QColor("darkCyan"), 1))
         self.boxItem.setBrush(QBrush(QColor(0, 255, 0, 64)))
 
     def updateImages(self, fnames):
@@ -168,7 +168,9 @@ class IDView(QGraphicsView):
                 if pix.isNull():
                     raise RuntimeError(f"Could not read an image from {fn}")
                 self.images[n] = QGraphicsPixmapItem(pix)
-                self.images[n].setTransformationMode(Qt.SmoothTransformation)
+                self.images[n].setTransformationMode(
+                    Qt.TransformationMode.SmoothTransformation
+                )
                 self.images[n].setPos(x, 0)
                 self.images[n].setVisible(True)
                 self.scene.addItem(self.images[n])
@@ -185,7 +187,7 @@ class IDView(QGraphicsView):
             max(1000, br.height()),
         )
         self.setScene(self.scene)
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)
 
     def deleteRect(self):
         if self.boxItem.scene() is None:
@@ -221,14 +223,15 @@ class IDView(QGraphicsView):
             return
 
         """Left/right click to zoom in and out"""
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        if (event.button() == Qt.MouseButton.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers()
+            == Qt.KeyboardModifier.ShiftModifier
         ):
             self.scale(0.8, 0.8)
         else:
             self.scale(1.25, 1.25)
-        self.centerOn(event.pos())
+        self.centerOn(event.position())
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)

@@ -8,11 +8,11 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
-        cmake make g++ git\
+        cmake make g++ \
         imagemagick \
         openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
@@ -26,9 +26,6 @@ RUN apt-get -y update && \
         python3-magic && \
     apt-get -yq autoclean
 
-# Note that git is required for pip install of zxingcpp on ubuntu 20.04
-# - see https://github.com/zxing-cpp/zxing-cpp/issues/489
-
 # file-magic: https://gitlab.com/plom/plom/-/issues/1570
 
 COPY requirements.txt /src/
@@ -38,7 +35,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Because source includes the PyQt client, we need minimal deps for Qt.
 # For example, to install PyQt and run tests
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install libglib2.0-0 libgl1-mesa-glx && \
+    apt-get --no-install-recommends -y install libglib2.0-0 libgl1-mesa-glx \
+    libegl1 libxkbcommon0 libdbus-1-3 && \
     apt-get -yq autoclean
 
 COPY . /src

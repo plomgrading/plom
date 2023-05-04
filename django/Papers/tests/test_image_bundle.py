@@ -44,7 +44,7 @@ class ImageBundleTests(TestCase):
             # image_file="page2.png",
             image_hash="abcdef",
             rotation=90,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             _create_files=True,  # argument to tell baker to actually make the file
         )
 
@@ -99,7 +99,7 @@ class ImageBundleTests(TestCase):
                 X = baker.make(
                     StagingImage,
                     parsed_qr={"NW": "Not empty!"},
-                    image_type="known",
+                    image_type=StagingImage.KNOWN,
                     bundle=self.staged_bundle,
                     _create_files=True,
                 )
@@ -114,7 +114,7 @@ class ImageBundleTests(TestCase):
         # add in an unread page
         baker.make(
             StagingImage,
-            image_type="unread",
+            image_type=StagingImage.UNREAD,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -133,7 +133,7 @@ class ImageBundleTests(TestCase):
 
         img1 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -150,7 +150,7 @@ class ImageBundleTests(TestCase):
         # Add one collision
         img2 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -168,7 +168,7 @@ class ImageBundleTests(TestCase):
         # Add more collisions
         img3 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -182,7 +182,7 @@ class ImageBundleTests(TestCase):
 
         img4 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -196,7 +196,7 @@ class ImageBundleTests(TestCase):
 
         img5 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -210,7 +210,7 @@ class ImageBundleTests(TestCase):
 
         img6 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -248,7 +248,7 @@ class ImageBundleTests(TestCase):
 
         img1 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -256,7 +256,7 @@ class ImageBundleTests(TestCase):
 
         img2 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -264,7 +264,7 @@ class ImageBundleTests(TestCase):
 
         img3 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -283,7 +283,7 @@ class ImageBundleTests(TestCase):
 
         st_img6 = baker.make(
             StagingImage,
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             bundle=self.staged_bundle,
             _create_files=True,
         )
@@ -313,7 +313,7 @@ class ImageBundleTests(TestCase):
             bundle=bundle,
             parsed_qr={"NW": "abcde"},
             image_hash="ghijk",
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             _create_files=True,
         )
         baker.make(
@@ -327,7 +327,7 @@ class ImageBundleTests(TestCase):
             StagingImage,
             bundle=bundle,
             parsed_qr={"NW": "abcde"},
-            image_type="known",
+            image_type=StagingImage.KNOWN,
             _create_files=True,
         )
         baker.make(

@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
-from PyQt5.QtCore import QIODevice, QPointF, QBuffer, QByteArray
-from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QPen
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QIODevice, QPointF, QBuffer, QByteArray
+from PyQt6.QtGui import QBrush, QColor, QImage, QPixmap, QPen
+from PyQt6.QtWidgets import (
     QGraphicsItem,
     QGraphicsPixmapItem,
     QGraphicsSceneMouseEvent,
@@ -82,8 +82,8 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         self.border = border
         self.setPixmap(QPixmap.fromImage(self.qImage))
         self.setPos(pt)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         self.saveable = True
         self.setScale(scale)
         self.data = data
@@ -182,7 +182,9 @@ class ImageSettingsDialog(QDialog):
         """
         super().__init__(parent)
         self.createFormGroupBox(scalePercent, checked)
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttonBox = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
         mainLayout = QVBoxLayout()

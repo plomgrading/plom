@@ -2,6 +2,7 @@
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2023 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2019-2020 Matthew Coles"
+__copyright__ = "Copyright (C) 2023  Natalie Balashov"
 __license__ = "AGPL-3.0-or-later"
  -->
 
@@ -67,8 +68,11 @@ Some stuff from the package manager:
         python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-pillow \
         python3-tqdm \
-        python3-defusedxml python3-jsmin python3-cairosvg
+        python3-defusedxml python3-jsmin python3-cairosvg \
+        libxcb-cursor0
 ```
+
+`libxcb-cursor0` is needed to prevent the Plom client from crashing when [loading plugins for PyQt6](https://stackoverflow.com/questions/68036484/qt6-qt-qpa-plugin-could-not-load-the-qt-platform-plugin-xcb-in-even-thou/75941575#75941575).
 
 Now upgrade pip (your local copy, not the system one)
 ```

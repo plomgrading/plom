@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
 from datetime import timedelta
@@ -14,9 +14,7 @@ from Papers.models import Paper
 from Identify.services import IdentifyTaskService
 from Identify.models import (
     PaperIDTask,
-    PaperIDClaim,
     PaperIDAction,
-    SurrenderPaperIDTask,
 )
 
 
@@ -50,7 +48,7 @@ class IdentifyTaskTests(TestCase):
         self.assertEqual(its.get_done_tasks(user=self.marker0), [])
 
         paper = baker.make(Paper, paper_number=1)
-        task = baker.make(PaperIDTask, paper=paper, status="complete")
+        task = baker.make(PaperIDTask, paper=paper, status=PaperIDTask.COMPLETE)
         baker.make(
             PaperIDAction,
             user=self.marker0,
@@ -95,9 +93,9 @@ class IdentifyTaskTests(TestCase):
         its = IdentifyTaskService()
         self.assertEqual(its.get_id_progress(), [0, 0])
 
-        baker.make(PaperIDTask, status="complete")
-        baker.make(PaperIDTask, status="todo")
-        baker.make(PaperIDTask, status="out")
+        baker.make(PaperIDTask, status=PaperIDTask.COMPLETE)
+        baker.make(PaperIDTask, status=PaperIDTask.TO_DO)
+        baker.make(PaperIDTask, status=PaperIDTask.OUT)
         self.assertEqual(its.get_id_progress(), [1, 3])
 
     def test_get_next_task(self):
@@ -113,10 +111,10 @@ class IdentifyTaskTests(TestCase):
         p3 = baker.make(Paper, paper_number=3)
         p4 = baker.make(Paper, paper_number=4)
 
-        baker.make(PaperIDTask, status="out", paper=p1)
-        t2 = baker.make(PaperIDTask, status="todo", paper=p2)
-        baker.make(PaperIDTask, status="out", paper=p3)
-        baker.make(PaperIDTask, status="todo", paper=p4)
+        baker.make(PaperIDTask, status=PaperIDTask.OUT, paper=p1)
+        t2 = baker.make(PaperIDTask, status=PaperIDTask.TO_DO, paper=p2)
+        baker.make(PaperIDTask, status=PaperIDTask.OUT, paper=p3)
+        baker.make(PaperIDTask, status=PaperIDTask.TO_DO, paper=p4)
 
         claimed = its.get_next_task()
         self.assertEqual(claimed, t2)
@@ -136,11 +134,8 @@ class IdentifyTaskTests(TestCase):
         its.claim_task(self.marker0, 1)
         task.refresh_from_db()
 
-        self.assertEqual(task.status, "out")
+        self.assertEqual(task.status, PaperIDTask.OUT)
         self.assertEqual(task.assigned_user, self.marker0)
-
-        claim = PaperIDClaim.objects.get(user=self.marker0)
-        self.assertEqual(claim.task, task)
 
     def test_out_claim_task(self):
         """
@@ -150,7 +145,7 @@ class IdentifyTaskTests(TestCase):
 
         its = IdentifyTaskService()
         p1 = baker.make(Paper, paper_number=1)
-        baker.make(PaperIDTask, paper=p1, status="out")
+        baker.make(PaperIDTask, paper=p1, status=PaperIDTask.OUT)
 
         with self.assertRaises(RuntimeError):
             its.claim_task(self.marker0, 1)
@@ -166,13 +161,13 @@ class IdentifyTaskTests(TestCase):
 
         p1 = baker.make(Paper, paper_number=1)
         task = baker.make(
-            PaperIDTask, paper=p1, status="out", assigned_user=self.marker0
+            PaperIDTask, paper=p1, status=PaperIDTask.OUT, assigned_user=self.marker0
         )
 
         its.identify_paper(self.marker0, 1, "1", "A")
         task.refresh_from_db()
 
-        self.assertEqual(task.status, "complete")
+        self.assertEqual(task.status, PaperIDTask.COMPLETE)
         self.assertEqual(
             task.assigned_user, self.marker0
         )  # Assumption: user keeps task after ID'ing
