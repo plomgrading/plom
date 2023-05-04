@@ -1,30 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from Scan.services import ScanCastService
-
-
-def discard_image_type_from_bundle(username, bundle_name, order, *, image_type=None):
-    scs = ScanCastService()
-
-    if image_type is None:
-        print(
-            f"Discarding image at position {order} from bundle {bundle_name} as user {username} without type check."
-        )
-    else:
-        image_type = scs.string_to_staging_image_type(image_type)
-        print(
-            f"Attempting to discardimage of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
-        )
-
-    # Notice that both user-visible and DB-stored bundle indices are 1-indexed
-    # so we **do not** have to add/subtract one when doing these operations.
-    ScanCastService().discard_image_type_from_bundle_cmd(
-        username, bundle_name, order, image_type=image_type
-    )
-    print("Action completed")
 
 
 class Command(BaseCommand):
@@ -33,6 +12,31 @@ class Command(BaseCommand):
     """
 
     help = "Discard a page from the given bundle at the given order"
+
+    def discard_image_type_from_bundle(
+        self, username, bundle_name, order, *, image_type=None
+    ):
+        scs = ScanCastService()
+
+        if image_type is None:
+            self.stdout.write(
+                f"Discarding image at position {order} from bundle {bundle_name} as user {username} without type check."
+            )
+        else:
+            image_type = scs.string_to_staging_image_type(image_type)
+            self.stdout.write(
+                f"Attempting to discardimage of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
+            )
+
+        # Notice that both user-visible and DB-stored bundle indices are 1-indexed
+        # so we **do not** have to add/subtract one when doing these operations.
+        try:
+            ScanCastService().discard_image_type_from_bundle_cmd(
+                username, bundle_name, order, image_type=image_type
+            )
+        except ValueError as err:
+            raise CommandError(err)
+        self.stdout.write("Action completed")
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -55,7 +59,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        discard_image_type_from_bundle(
+        self.discard_image_type_from_bundle(
             options["username"],
             options["bundle"],
             options["order"],
