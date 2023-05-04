@@ -93,7 +93,7 @@ class PageDataService:
         self, paper, *, question=None, include_idpage=False, include_dnmpages=True
     ):
         """
-        Return a list of metadata for all pages in a particular paper - excluding the ID page.
+        Return a list of metadata for all pages in a particular paper - except ID page (by default).
 
         Args:
             paper (int): test-paper number
@@ -163,15 +163,27 @@ class PageDataService:
                 }
             )
 
+        # make a dict which counts how many mobile pages for each
+        # question as we iterate through the list. We use this so that
+        # we can "name" each mobile page according to both its
+        # question number, and its order within the mobiles pages for
+        # that question. Hence mobile pages for question 2 would be named as
+        # e2.1, e2.2, e2.3, and so on.
+        # but since those pages are not necessarily in order in the system we
+        # need to keep count as we go.
+        question_mobile_page_count = {}
+
         # add mobile-pages in pk order (is creation order)
         for page in (
             MobilePage.objects.filter(paper=test_paper)
             .order_by("pk")
             .prefetch_related("image")
         ):
+            question_mobile_page_count.setdefault(page.question_number, 0)
+            question_mobile_page_count[page.question_number] += 1
             pages_metadata.append(
                 {
-                    "pagename": f"t{page.question_number}",
+                    "pagename": f"e{page.question_number}.{question_mobile_page_count[page.question_number]}",
                     "md5": page.image.hash,
                     "included": page.question_number == question,
                     # WARNING - HACKERY HERE vvvvvvvv
