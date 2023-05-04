@@ -320,7 +320,9 @@ class MgetPageDataQuestionInContext(APIView):
         service = PageDataService()
 
         try:
-            page_metadata = service.get_question_pages_metadata(paper, question)
+            page_metadata = service.get_question_pages_metadata(
+                paper, question=question
+            )
             return Response(page_metadata, status=status.HTTP_200_OK)
         except Paper.DoesNotExist:
             return Response(
