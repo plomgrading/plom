@@ -226,7 +226,7 @@ class ScanCastService:
         # at this point the paper-number and question-list are valid, so get the image at that bundle-order.
         try:
             img = bundle_obj.stagingimage_set.get(
-                bundle_order=bundle_order, image_type="extra"
+                bundle_order=bundle_order, image_type=StagingImage.EXTRA
             )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an extra-page at order {bundle_order}")
@@ -265,7 +265,7 @@ class ScanCastService:
 
         try:
             img = bundle_obj.stagingimage_set.get(
-                bundle_order=bundle_order, image_type="extra"
+                bundle_order=bundle_order, image_type=StagingImage.EXTRA
             )
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an extra-page at order {bundle_order}")

@@ -80,7 +80,7 @@ class Command(BaseCommand):
         )
         spa.add_argument("username", type=str, help="username doing the assigning.")
         spa.add_argument(
-            "-i" "--index", type=int, help="index of page within the bundle, from zero"
+            "-i" "--index", type=int, help="index of page within the bundle (from one)"
         )
         spa.add_argument(
             "-p", "--paper", type=int, help="the paper-number of the extra-page"
@@ -104,7 +104,7 @@ class Command(BaseCommand):
         )
         spc.add_argument("username", type=str, help="username doing the clearing.")
         spc.add_argument(
-            "-i", "--index", type=int, help="index of page within the bundle, from zero"
+            "-i", "--index", type=int, help="index of page within the bundle (from one)"
         )
 
     def handle(self, *args, **options):
