@@ -9,11 +9,10 @@
 from datetime import datetime
 import logging
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QColor, QCursor, QPalette
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QAction, QColor, QCursor, QPalette
+from PyQt6.QtWidgets import (
     QAbstractItemView,
-    QAction,
     QDialog,
     QInputDialog,
     QGridLayout,
@@ -120,14 +119,14 @@ class RubricTable(QTableWidget):
         super().__init__(parent)
         self._parent = parent
         self.tabType = tabType  # to help set menu
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.horizontalHeader().setVisible(False)
         self.horizontalHeader().setStretchLastSection(True)
         # Issue #1498: use these for shortcut key indicators
         self.verticalHeader().setVisible(False)
-        self.setGridStyle(Qt.DotLine)
+        self.setGridStyle(Qt.PenStyle.DotLine)
         self.setAlternatingRowColors(False)
         #  negative padding is probably b/c of fontsize changes
         self.setStyleSheet(
@@ -367,7 +366,7 @@ class RubricTable(QTableWidget):
         # fixed drop event using
         # https://stackoverflow.com/questions/26227885/drag-and-drop-rows-within-qtablewidget
         if event.source() == self:
-            event.setDropAction(Qt.CopyAction)
+            event.setDropAction(Qt.DropAction.CopyAction)
             sourceRow = self.selectedIndexes()[0].row()
             targetRow = self.indexAt(event.pos()).row()
             if targetRow == -1:  # no row, so drop at end
@@ -618,9 +617,13 @@ class RubricTable(QTableWidget):
             version=self._parent.version,
             maxMark=self._parent.maxMark,
         )
-        colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
-        colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
-        # colour_hide = self.palette().color(QPalette.Disabled, QPalette.Text)
+        colour_legal = self.palette().color(
+            QPalette.ColorGroup.Active, QPalette.ColorRole.Text
+        )
+        colour_illegal = self.palette().color(
+            QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text
+        )
+        # colour_hide = self.palette().color(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text)
         if legal == 2:
             self.showRow(r)
             self.item(r, 2).setForeground(colour_legal)
@@ -664,7 +667,7 @@ class TabBarWithAddRenameRemoveContext(QTabBar):
         super().__init__()
 
     def mousePressEvent(self, mouseEvent):
-        if mouseEvent.button() == Qt.RightButton:
+        if mouseEvent.button() == Qt.MouseButton.RightButton:
             point = mouseEvent.pos()
             n = self.tabAt(point)
             if n >= 0:
@@ -737,7 +740,7 @@ class RubricWidget(QWidget):
         m.addSeparator()
         m.addAction("Remove current tab...", self.remove_current_tab)
         b.setMenu(m)
-        b.setPopupMode(QToolButton.InstantPopup)
+        b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.RTW.setCornerWidget(b)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         # connect the 'tab-change'-signal to 'handleClick' to fix #1497
@@ -894,7 +897,7 @@ class RubricWidget(QWidget):
                     + ".",
                     question="Add another empty tab?",
                 )
-                if msg.exec() == QMessageBox.No:
+                if msg.exec() == QMessageBox.StandardButton.No:
                     return
 
         if not name:
@@ -951,7 +954,7 @@ class RubricWidget(QWidget):
         else:
             msg = "<p>Are you sure you want to delete the empty "
             msg += f"tab &ldquo;{tab.shortname}&rdquo;?</p>"
-        if SimpleQuestion(self, msg).exec() == QMessageBox.No:
+        if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
             return
         self.RTW.removeTab(n)
         tab.clear()
@@ -1073,7 +1076,7 @@ class RubricWidget(QWidget):
             self.username,
             annotator_size=self._parent.size(),
         )
-        if wr.exec() != QDialog.Accepted:
+        if wr.exec() != QDialog.DialogCode.Accepted:
             return
         else:
             self.setRubricTabsFromState(wr.wranglerState)
@@ -1480,7 +1483,7 @@ class RubricWidget(QWidget):
             f"(it was created by &ldquo;{com['username']}&rdquo;).</p>",
             "Do you want to make a copy and edit that instead?",
         )
-        if msg.exec() == QMessageBox.No:
+        if msg.exec() == QMessageBox.StandardButton.No:
             return
         com = com.copy()  # don't muck-up the original
         newmeta = [com["meta"]] if com["meta"] else []
@@ -1533,7 +1536,7 @@ class RubricWidget(QWidget):
             experimental=self._parent.is_experimental(),
             add_to_group=add_to_group,
         )
-        if arb.exec() != QDialog.Accepted:  # ARB does some simple validation
+        if arb.exec() != QDialog.DialogCode.Accepted:
             return
         new_rubric = arb.gimme_rubric_data()
 

@@ -593,9 +593,12 @@ def _doit(args):
     #     return
 
     if args.randomarker:
-        # TODO: hardcoded port number!
+        # TODO: hardcoded port numbers!
         cmd = "python3 -m plom.client.randoMarker -s localhost:8000 -u demoMarker1 -w demoMarker1"
         print(f"RandoMarking!  calling: {cmd}")
+        subprocess.check_call(split(cmd), env=dict(os.environ, WEBPLOM="1"))
+        cmd = "python3 -m plom.client.randoIDer -s localhost:8000 -u demoMarker1 -w demoMarker1"
+        print(f"RandoIDing!  calling: {cmd}")
         subprocess.check_call(split(cmd), env=dict(os.environ, WEBPLOM="1"))
 
     return (huey_worker_proc, server_proc)

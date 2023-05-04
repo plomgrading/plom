@@ -50,6 +50,11 @@ urlpatterns = [
     path("maxmark/<int:question>", QuestionMaxMark.as_view(), name="api_question_mark"),
     path("ID/classlist/", GetClasslist.as_view(), name="api_get_classlist"),
     path("ID/predictions/", GetIDPredictions.as_view(), name="api_get_predictions"),
+    path(
+        "ID/predictions/<predictor>",
+        GetIDPredictions.as_view(),
+        name="api_get_predictions_from_predictor",
+    ),
     path("ID/tasks/complete", IDgetDoneTasks.as_view(), name="api_ID_get_done_tasks"),
     path("ID/tasks/available", IDgetNextTask.as_view(), name="api_ID_get_next_tasks"),
     path("MK/tasks/complete", MgetDoneTasks.as_view(), name="api_MK_get_done_tasks"),

@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
 from copy import deepcopy
 import logging
 
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QImageReader, QPixmap, QTransform
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QBrush, QColor, QIcon, QImageReader, QPixmap, QTransform
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QFrame,
@@ -47,11 +47,11 @@ class SourceList(QListWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self._parent = parent
-        self.setViewMode(QListWidget.IconMode)
+        self.setViewMode(QListWidget.ViewMode.IconMode)
         self.setAcceptDrops(False)
-        self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.setFlow(QListView.LeftToRight)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setFlow(QListView.Flow.LeftToRight)
         self.setIconSize(QSize(320, 320))
         self.setSpacing(8)
         self.setWrapping(False)
@@ -59,7 +59,7 @@ class SourceList(QListWidget):
         self.item_positions = {}
         self.item_files = {}
         self.item_orientation = {}
-        # self.setSelectionMode(QListView.SingleSelection)
+        # self.setSelectionMode(QListView.SelectionMode.SingleSelection)
 
     def resizeEvent(self, whatev):
         A = self.size()
@@ -84,7 +84,7 @@ class SourceList(QListWidget):
             pix = pix.transformed(rot)
         it = QListWidgetItem(QIcon(pix), name)
         if belongs:
-            it.setBackground(QBrush(Qt.darkGreen))
+            it.setBackground(QBrush(QColor("darkGreen")))
         self.addItem(it)  # item is added at current_row
         self.item_positions[name] = current_row
         self.item_files[name] = pfile
@@ -148,13 +148,13 @@ class SinkList(QListWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self._parent = parent
-        self.setViewMode(QListWidget.IconMode)
-        self.setFlow(QListView.LeftToRight)
+        self.setViewMode(QListWidget.ViewMode.IconMode)
+        self.setFlow(QListView.Flow.LeftToRight)
         self.setAcceptDrops(False)
-        self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.setFlow(QListView.LeftToRight)
-        # self.setResizeMode(QListView.Adjust)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setFlow(QListView.Flow.LeftToRight)
+        # self.setResizeMode(QListView.ResizeMode.Adjust)
         self.setIconSize(QSize(320, 320))
         self.setSpacing(8)
         self.setWrapping(False)
@@ -164,7 +164,7 @@ class SinkList(QListWidget):
         self.item_orientation = {}
         self.item_id = {}
         self.itemDoubleClicked.connect(self.viewImage)
-        # self.setSelectionMode(QListView.SingleSelection)
+        # self.setSelectionMode(QListView.SelectionMode.SingleSelection)
 
     def resizeEvent(self, whatev):
         A = self.size()
@@ -203,7 +203,7 @@ class SinkList(QListWidget):
             raise RuntimeError(f"Could not read an image from {self.item_files[name]}")
         ci = QListWidgetItem(QIcon(pix), name)
         if self.item_belongs[name]:
-            ci.setBackground(QBrush(Qt.darkGreen))
+            ci.setBackground(QBrush(QColor("darkGreen")))
         self.addItem(ci)
         # TODO: workaround to force re-orientation on entry to Sink list
         self.rotateForceRefresh(name)
@@ -246,7 +246,7 @@ class SinkList(QListWidget):
             self.rotateItemBy(name, angle)
         self._parent.update()
         # Issue #1164 workaround: https://www.qtcentre.org/threads/25867-Problem-with-QListWidget-Updating
-        self.setFlow(QListView.LeftToRight)
+        self.setFlow(QListView.Flow.LeftToRight)
 
     def rotateForceRefresh(self, name):
         """Force an item to visually update its rotate.
@@ -360,20 +360,20 @@ class RearrangementViewer(QDialog):
         self.appendB = QToolButton()
         # TODO: move &A here and use alt-Enter to Accept dialog?
         self.appendB.setText("Add &Page(s)")
-        self.appendB.setArrowType(Qt.DownArrow)
-        self.appendB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.appendB.setArrowType(Qt.ArrowType.DownArrow)
+        self.appendB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.removeB = QToolButton()
-        self.removeB.setArrowType(Qt.UpArrow)
+        self.removeB.setArrowType(Qt.ArrowType.UpArrow)
         self.removeB.setText("&Remove Page(s)")
-        self.removeB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.removeB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.sLeftB = QToolButton()
-        self.sLeftB.setArrowType(Qt.LeftArrow)
+        self.sLeftB.setArrowType(Qt.ArrowType.LeftArrow)
         self.sLeftB.setText("Shift Left")
-        self.sLeftB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.sLeftB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.sRightB = QToolButton()
-        self.sRightB.setArrowType(Qt.RightArrow)
+        self.sRightB.setArrowType(Qt.ArrowType.RightArrow)
         self.sRightB.setText("Shift Right")
-        self.sRightB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.sRightB.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.reverseB = QPushButton("Reverse Order")
         self.revertB = QPushButton("Revert to original state")
         self.revertB.clicked.connect(self.populateListOriginal)
@@ -392,29 +392,45 @@ class RearrangementViewer(QDialog):
             pad = 20
             hb = QHBoxLayout()
             hb.addItem(
-                QSpacerItem(pad, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+                QSpacerItem(
+                    pad,
+                    1,
+                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.Minimum,
+                )
             )
             vb = QVBoxLayout()
             hb.addLayout(vb)
             hb.addItem(
-                QSpacerItem(pad, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+                QSpacerItem(
+                    pad,
+                    1,
+                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.Minimum,
+                )
             )
 
             vb.setContentsMargins(0, 1, 0, 1)
             vb.setSpacing(2)
             vb.addItem(
                 QSpacerItem(
-                    width, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+                    width,
+                    3,
+                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.MinimumExpanding,
                 )
             )
             for i in range(3):
                 f = QFrame()
-                f.setFrameShape(QFrame.HLine)
-                f.setFrameShadow(QFrame.Sunken)
+                f.setFrameShape(QFrame.Shape.HLine)
+                f.setFrameShadow(QFrame.Shadow.Sunken)
                 vb.addWidget(f)
             vb.addItem(
                 QSpacerItem(
-                    width, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+                    width,
+                    3,
+                    QSizePolicy.Policy.MinimumExpanding,
+                    QSizePolicy.Policy.MinimumExpanding,
                 )
             )
             return hb
@@ -426,14 +442,20 @@ class RearrangementViewer(QDialog):
         hb.setContentsMargins(0, 0, 0, 0)
         hb.addWidget(self.rotateB_ccw)
         hb.addWidget(self.rotateB_cw)
-        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addItem(
+            QSpacerItem(16, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         hb.addWidget(self.sLeftB)
         hb.addWidget(self.sRightB)
-        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addItem(
+            QSpacerItem(16, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         hb3.addWidget(self.tools)
         hb3.addWidget(self.reverseB)
         hb3.addItem(
-            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+            QSpacerItem(
+                16, 20, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
+            )
         )
         hb3.addWidget(self.acceptB)
         hb3.addWidget(self.closeB)
@@ -447,7 +469,9 @@ class RearrangementViewer(QDialog):
         hb1.addLayout(GrippyMcGrab())
         hb = QHBoxLayout()
         hb.addWidget(self.appendB)
-        hb.addItem(QSpacerItem(64, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addItem(
+            QSpacerItem(64, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         hb.addWidget(self.removeB)
         hb1.addLayout(hb)
         hb1.addLayout(GrippyMcGrab())
@@ -455,7 +479,7 @@ class RearrangementViewer(QDialog):
 
         vb0 = QVBoxLayout()
         s = QSplitter()
-        s.setOrientation(Qt.Vertical)
+        s.setOrientation(Qt.Orientation.Vertical)
         # s.setOpaqueResize(False)
         s.setChildrenCollapsible(False)
         # TODO: better not to hardcode, take from children?
@@ -485,7 +509,7 @@ class RearrangementViewer(QDialog):
         # TODO: Buttons inside the splitter bar, disable drag and custom cursor
         for b in (self.removeB, self.appendB, self.revertB):
             b.mouseMoveEvent = lambda *args: None
-            b.setCursor(Qt.ArrowCursor)
+            b.setCursor(Qt.CursorShape.ArrowCursor)
 
         self.setLayout(vb0)
         self.resize(
@@ -775,7 +799,7 @@ class RearrangementViewer(QDialog):
                 "This will erase all your annotations.",
                 "Are you sure you want to save this page order?",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
 
         self.permute = []

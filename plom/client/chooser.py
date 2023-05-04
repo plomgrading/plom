@@ -36,9 +36,9 @@ else:
 import tomlkit
 
 import urllib3
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QDialog, QMessageBox
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from plom import __version__
 from plom import Plom_API_Version
@@ -174,7 +174,7 @@ class Chooser(QDialog):
         d = ClientSettingsDialog(
             self, self.lastTime, logdir, cfgfile, tempfile.gettempdir()
         )
-        if d.exec() != QDialog.Accepted:
+        if d.exec() != QDialog.DialogCode.Accepted:
             return
         # TODO: do something more proper like QSettings
         opt = d.get_options_back()
@@ -209,7 +209,7 @@ class Chooser(QDialog):
                 "<p>You are not allowed to mark or ID papers while logged-in as &ldquo;manager&rdquo;.</p>",
                 "Would you instead like to run the Server Management tool?",
             )
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
             which_subapp = "Manager"
             self.messenger = None
@@ -251,7 +251,7 @@ class Chooser(QDialog):
                 " (and then you can try to log in again)\n\n"
                 "The other client will likely crash.",
             )
-            if msg.exec() == QMessageBox.Yes:
+            if msg.exec() == QMessageBox.StandardButton.Yes:
                 self.messenger.clearAuthorisation(user, pwd)
                 # harmless probably useless pause, in case Issue #2328 was real
                 time.sleep(0.25)
@@ -418,8 +418,8 @@ class Chooser(QDialog):
                     "Do you want to disable SSL certificate verification?  Not recommended.",
                     details=f"{e}",
                 )
-                msg.setDefaultButton(QMessageBox.No)
-                if msg.exec() == QMessageBox.No:
+                msg.setDefaultButton(QMessageBox.StandardButton.No)
+                if msg.exec() == QMessageBox.StandardButton.No:
                     self.messenger = None
                     return False
                 self.messenger.force_ssl_unverified()

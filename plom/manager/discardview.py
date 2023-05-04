@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,
@@ -33,10 +33,10 @@ class DiscardViewWindow(QDialog):
         grid = QVBoxLayout()
         grid.addWidget(self.img, 1)
         grid.addWidget(explanation)
-        buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
         moveB = QPushButton("&Move to unknown pages")
         moveB.clicked.connect(self.accept)
-        buttons.addButton(moveB, QDialogButtonBox.AcceptRole)
+        buttons.addButton(moveB, QDialogButtonBox.ButtonRole.AcceptRole)
         buttons.rejected.connect(self.reject)
         grid.addWidget(buttons)
         self.setLayout(grid)

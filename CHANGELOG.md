@@ -11,10 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-* Client: when a rubric group tab is selected, adding a new rubric defaults to that group.
 
 ### Fixed
 
+
+
+
+## [0.13.3] - 2023-04-25
+
+### Changed
+* Client: when a rubric group tab is selected, adding a new rubric defaults to that group.
+* Manager: the Dangling Pages tab must be manually refreshed.
+
+### Fixed
+* Manager: no longer checks for "Dangling Pages" on start-up b/c this was very slow on large servers.
 
 
 ## [0.13.2] - 2023-04-03
@@ -983,7 +993,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.13.2...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.13.3...main
+[0.13.3]: https://gitlab.com/plom/plom/-/compare/v0.13.2...v0.13.3
 [0.13.2]: https://gitlab.com/plom/plom/-/compare/v0.13.1...v0.13.2
 [0.13.1]: https://gitlab.com/plom/plom/-/compare/v0.13.0...v0.13.1
 [0.13.0]: https://gitlab.com/plom/plom/-/compare/v0.12.3...v0.13.0

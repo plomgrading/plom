@@ -3,9 +3,9 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import Qt, QPointF, QTimer
-from PyQt5.QtGui import QFont, QImage, QPen, QColor, QBrush
-from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem, QGraphicsTextItem
+from PyQt6.QtCore import Qt, QPointF, QTimer
+from PyQt6.QtGui import QBrush, QColor, QFont, QImage, QPen, QUndoCommand
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
 from plom.client.tools import CommandTool, DeleteObject
 from plom.client.tools import log
@@ -30,19 +30,27 @@ class CommandMoveText(QUndoCommand):
 
     def redo(self):
         # Temporarily disable the item emitting "I've changed" signals
-        self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+        self.xitem.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False
+        )
         # Move the object
         self.xitem.setPos(self.new_pos)
         # Re-enable the item emitting "I've changed" signals
-        self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.xitem.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True
+        )
 
     def undo(self):
         # Temporarily disable the item emitting "I've changed" signals
-        self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+        self.xitem.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False
+        )
         # Move the object back
         self.xitem.setPos(self.old_pos)
         # Re-enable the item emitting "I've changed" signals
-        self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.xitem.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True
+        )
 
     def mergeWith(self, other):
         # Most commands cannot be merged - make sure the moved items are the
@@ -57,7 +65,10 @@ class UndoStackMoveTextMixin:
     # a mixin class to avoid copy-pasting this method over many *Item classes.
     # Overrides the itemChange method.
     def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
+        if (
+            change == QGraphicsItem.GraphicsItemChange.ItemPositionChange
+            and self.scene()
+        ):
             command = CommandMoveText(self, value)
             self.scene().undoStack.push(command)
         return super().itemChange(change, value)
@@ -129,7 +140,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     TODO: try to remove this with some future refactor?
     """
 
-    def __init__(self, pt, text, fontsize=10, color=Qt.red, _texmaker=None):
+    def __init__(self, pt, text, fontsize=10, color=QColor("red"), _texmaker=None):
         super().__init__()
         self.saveable = True
         self._texmaker = _texmaker
@@ -138,9 +149,9 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.setFont(font)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.setPos(pt)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
@@ -159,7 +170,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
 
     def enable_interactive(self):
         """Set it as editable with the text-editor."""
-        self.setTextInteractionFlags(Qt.TextEditorInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.TextEditorInteraction)
 
     def is_rendered(self):
         """Is this TextItem displaying a rendering of LaTeX?
@@ -199,7 +210,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         tc = self.textCursor()
         tc.clearSelection()
         self.setTextCursor(tc)
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         super().focusOutEvent(event)
 
     def textToPng(self, force=False):
@@ -267,15 +278,16 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         Shift-Return will render if the string starts with the magic
         prefix `tex:`.  Ctrl-Return adds the prefix if necessary.
         """
-        if event.modifiers() in (Qt.ShiftModifier, Qt.ControlModifier) and (
-            event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter
-        ):
+        if event.modifiers() in (
+            Qt.KeyboardModifier.ShiftModifier,
+            Qt.KeyboardModifier.ControlModifier,
+        ) and (event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter):
             # Clear any highlighted text and release.
             tc = self.textCursor()
             tc.clearSelection()
             self.setTextCursor(tc)
-            self.setTextInteractionFlags(Qt.NoTextInteraction)
-            if event.modifiers() == Qt.ControlModifier:
+            self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+            if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
                 self.textToPng(force=True)
             else:
                 self.textToPng()
@@ -303,15 +315,15 @@ class GhostText(QGraphicsTextItem):
     def __init__(self, txt, fontsize, *, legal=True):
         super().__init__()
         if legal:
-            self.setDefaultTextColor(Qt.blue)
+            self.setDefaultTextColor(QColor("blue"))
         else:
-            self.setDefaultTextColor(Qt.lightGray)
+            self.setDefaultTextColor(QColor("lightGray"))
         self.setPlainText(txt)
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.setFont(font)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
 
@@ -340,6 +352,6 @@ class GhostText(QGraphicsTextItem):
                 qi = QImage(fragfilename)
                 tc.insertImage(qi)
         if legal:
-            self.setDefaultTextColor(Qt.blue)
+            self.setDefaultTextColor(QColor("blue"))
         else:
-            self.setDefaultTextColor(Qt.lightGray)
+            self.setDefaultTextColor(QColor("lightGray"))

@@ -22,8 +22,8 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt5 import uic
-from PyQt5.QtCore import (
+from PyQt6 import uic
+from PyQt6.QtCore import (
     Qt,
     QAbstractTableModel,
     QModelIndex,
@@ -32,7 +32,7 @@ from PyQt5.QtCore import (
     QVariant,
     pyqtSignal,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QCompleter,
     QDialog,
     QWidget,
@@ -108,10 +108,10 @@ class ExamModel(QAbstractTableModel):
         # Headers.
         self.header = ["Test", "Status", "ID", "Name"]
 
-    def setData(self, index, value, role=Qt.EditRole):
+    def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         # Columns are [code, status, ID and Name]
         # Put data in appropriate box when setting.
-        if role != Qt.EditRole:
+        if role != Qt.ItemDataRole.EditRole:
             return False
         if index.column() == 0:
             self.paperList[index.row()].test = value
@@ -157,10 +157,10 @@ class ExamModel(QAbstractTableModel):
     def columnCount(self, parent=None):
         return 4
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         # Columns are [code, status, ID and Name]
         # Get data from appropriate box when called.
-        if role != Qt.DisplayRole:
+        if role != Qt.ItemDataRole.DisplayRole:
             return QVariant()
         elif index.column() == 0:
             return self.paperList[index.row()].test
@@ -174,9 +174,9 @@ class ExamModel(QAbstractTableModel):
 
     def headerData(self, c, orientation, role):
         # Return the correct header.
-        if role != Qt.DisplayRole:
+        if role != Qt.ItemDataRole.DisplayRole:
             return
-        elif orientation == Qt.Horizontal:
+        elif orientation == Qt.Orientation.Horizontal:
             return self.header[c]
         return c
 
@@ -360,8 +360,8 @@ class IDClient(QWidget):
         # Build the snid-completer = substring matching and case insensitive
         snidcompleter = QCompleter()
         snidcompleter.setModel(snidlist)
-        snidcompleter.setCaseSensitivity(Qt.CaseInsensitive)
-        snidcompleter.setFilterMode(Qt.MatchContains)
+        snidcompleter.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        snidcompleter.setFilterMode(Qt.MatchFlag.MatchContains)
         # Link the ID-completer to the ID-lineedit in the gui.
         self.ui.idEdit.setCompleter(snidcompleter)
         # Make sure lineedit has little "Clear this" button.
@@ -623,7 +623,7 @@ class IDClient(QWidget):
         if status != "unidentified":
             msg = SimpleQuestion(self, "Do you want to change the ID?")
             # Put message popup on top-corner of idenfier window
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
         # code = self.exM.data(index[0])
 
@@ -758,7 +758,7 @@ class IDClient(QWidget):
         if status == "identified":
             msg = SimpleQuestion(self, "Do you want to change the ID?")
             # Put message popup on top-corner of idenfier window
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
             else:
                 alreadyIDd = True
@@ -776,7 +776,7 @@ class IDClient(QWidget):
                 msg.setGeometry(self.msgGeometry)
 
             # If user says "no" then just return from function.
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 self.msgGeometry = msg.geometry()
                 return
             self.msgGeometry = msg.geometry()
@@ -794,13 +794,13 @@ class IDClient(QWidget):
             # Put message popup on top-corner of idenfier window
             msg.move(self.pos())
             # If no then return from function.
-            if msg.exec() == QMessageBox.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 self.msgPosition = msg.pos()
                 return
             self.msgPosition = msg.pos()
             # Otherwise get an id and name from the user (and the okay)
             snidbox = SNIDBox(self, self.ui.idEdit.text())
-            if snidbox.exec() != QDialog.Accepted:
+            if snidbox.exec() != QDialog.DialogCode.Accepted:
                 return
             sid = snidbox.sid.strip()
             sname = snidbox.sname.strip()

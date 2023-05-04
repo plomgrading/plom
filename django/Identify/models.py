@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from django.db import models
 
@@ -15,14 +15,6 @@ class PaperIDTask(BaseTask):
     paper = models.OneToOneField(Paper, on_delete=models.CASCADE)
 
 
-class PaperIDClaim(BaseAction):
-    """
-    Represents a client claiming a test-paper to identify.
-    """
-
-    pass
-
-
 class PaperIDAction(BaseAction):
     """
     Represents an identification of a test-paper.
@@ -30,11 +22,3 @@ class PaperIDAction(BaseAction):
 
     student_name = models.TextField(default="")
     student_id = models.TextField(default="")
-
-
-class SurrenderPaperIDTask(BaseAction):
-    """
-    Represents a client surrendering an ID task without completing it.
-    """
-
-    pass

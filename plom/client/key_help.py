@@ -11,9 +11,9 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt5.QtCore import Qt, QBuffer, QByteArray, QPointF
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, QBuffer, QByteArray, QPointF
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import (
     QColor,
     QKeySequence,
     QPainter,
@@ -22,7 +22,7 @@ from PyQt5.QtGui import (
     QPen,
     QPixmap,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QDialog,
@@ -145,7 +145,7 @@ class KeyHelp(QDialog):
         dat = self.keydata[action]
         old_key = dat["keys"][0]
         diag = KeyEditDialog(self, label=dat["human"], currentKey=old_key, info=info)
-        if diag.exec() != QDialog.Accepted:
+        if diag.exec() != QDialog.DialogCode.Accepted:
             return
         new_key = diag._keyedit.text()
         if new_key == old_key:
@@ -238,11 +238,11 @@ class KeyHelp(QDialog):
             tw = QTableWidget()
             tw.setColumnCount(3)
             tw.verticalHeader().hide()
-            tw.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            tw.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
             tw.setAlternatingRowColors(True)
             tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
             # TODO: wire double click to omit wants_to_change_key
-            tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
+            tw.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
             # no sorting during insertation, Issue #2065
             tw.setSortingEnabled(False)
             tables[div] = tw
@@ -264,7 +264,9 @@ class KeyHelp(QDialog):
                     1,
                     QTableWidgetItem(
                         ", ".join(
-                            QKeySequence(k).toString(QKeySequence.NativeText)
+                            QKeySequence(k).toString(
+                                QKeySequence.SequenceFormat.NativeText
+                            )
                             for k in dat["keys"]
                         )
                     ),
@@ -319,7 +321,7 @@ def _label(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0))
     y += sep[1]
 
     key = QKeySequence(keydata[w]["keys"][0])
-    b = QPushButton(key.toString(QKeySequence.NativeText))
+    b = QPushButton(key.toString(QKeySequence.SequenceFormat.NativeText))
     b.setStyleSheet(sheet)
     b.setToolTip(keydata[w]["human"])
     if w in actions_with_changeable_keys:
@@ -329,7 +331,7 @@ def _label(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0))
         # TODO: a downside is the tooltip does not show
         b.setEnabled(False)
     li = scene.addWidget(b)
-    # li.setFlag(QGraphicsItem.ItemIgnoresTransformations)
+    # li.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
     li.setScale(1.66)
     br = li.mapRectToScene(li.boundingRect())
     label_offset = 8
@@ -357,11 +359,11 @@ class RubricNavDiagram(QFrame):
 
     def __init__(self, keydata):
         super().__init__()
-        # self.setFrameShape(QFrame.Panel)
+        # self.setFrameShape(QFrame.Shape.Panel)
         view = QGraphicsView()
-        view.setRenderHint(QPainter.Antialiasing, True)
-        view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        view.setFrameShape(QFrame.NoFrame)
+        view.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        view.setFrameShape(QFrame.Shape.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
@@ -382,7 +384,8 @@ class RubricNavDiagram(QFrame):
         # Ensure the graphic fits in view with a border around.
         # (asymmetric border looked better with particular locations of buttons)
         self._view.fitInView(
-            self.scene.sceneRect().adjusted(-40, -10, 20, 10), Qt.KeepAspectRatio
+            self.scene.sceneRect().adjusted(-40, -10, 20, 10),
+            Qt.AspectRatioMode.KeepAspectRatio,
         )
 
     def resizeEvent(self, event):
@@ -419,11 +422,11 @@ class ToolNavDiagram(QFrame):
 
     def __init__(self, keydata):
         super().__init__()
-        # self.setFrameShape(QFrame.Panel)
+        # self.setFrameShape(QFrame.Shape.Panel)
         view = QGraphicsView()
-        view.setRenderHint(QPainter.Antialiasing, True)
-        view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        view.setFrameShape(QFrame.NoFrame)
+        view.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        view.setFrameShape(QFrame.Shape.NoFrame)
 
         self.scene = QGraphicsScene()
         self.put_stuff(keydata)
@@ -440,7 +443,8 @@ class ToolNavDiagram(QFrame):
     def resetView(self):
         # Ensure the graphic fits in view with a border around.
         self._view.fitInView(
-            self.scene.sceneRect().adjusted(-20, -10, 20, 10), Qt.KeepAspectRatio
+            self.scene.sceneRect().adjusted(-20, -10, 20, 10),
+            Qt.AspectRatioMode.KeepAspectRatio,
         )
 
     def resizeEvent(self, event):
@@ -487,7 +491,7 @@ class ClickDragPage(QWidget):
         film_buffer = QBuffer(film_bytes)
         film = QMovie()
         film.setDevice(film_buffer)
-        film.setCacheMode(QMovie.CacheAll)
+        film.setCacheMode(QMovie.CacheMode.CacheAll)
 
         film_label = QLabel()
         film_label.setMovie(film)

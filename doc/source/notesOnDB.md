@@ -152,6 +152,6 @@ The IDPage needs to connect an image to an IDGroup, but it also needs to know in
   * image = points to the "parent" image
   * order = in what order should the images be displayed to the user.
 
-Notice the IPage has two "parents" - I hope I've handled this structure correctly.
+Notice the IDPage has two "parents" - I hope I've handled this structure correctly.
 
 The DNMPage and APage are very similar except that instead of pointing to an IDGroup, they point to a DNMGroup and Annotation respectively.
