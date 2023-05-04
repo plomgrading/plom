@@ -121,15 +121,17 @@ class PageDataService:
         pages_metadata = []
 
         # get all the fixed pages of the test that have images - prefetch the related image
-        fixed = FixedPage.objects.filter(
+        fixed_pages = FixedPage.objects.filter(
             paper=test_paper, image__isnull=False
         ).prefetch_related("image")
 
+        # possibly filter out ID and DNM pages
         if not include_idpage:
-            fixed = fixed.not_instance_of(IDPage)
+            fixed_pages = fixed_pages.not_instance_of(IDPage)
         if not include_dnmpages:
-            fixed = fixed.not_instance_of(DNMPage)
-        for page in fixed:
+            fixed_pages = fixed_pages.not_instance_of(DNMPage)
+
+        for page in fixed_pages:
             if question is None:
                 # TODO: or is it better to not include this key?  That's likely
                 # what the legacy server does...
