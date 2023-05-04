@@ -4,21 +4,21 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 
+beautifulsoup4==4.12.2
 django==4.1.9
 django-braces
 django-reset-migrations
-model_bakery # for tests
-beautifulsoup4==4.12.2
 django-session-timeout
-django-htmx
-tabulate # display table in command line
-django-huey
+django-htmx==1.14.0
+django-huey==1.1.1
 django-polymorphic
 djangorestframework
+model_bakery # for tests
 pymupdf==1.22.1
 # https://pypi.org/project/random-username/
 # https://github.com/williexu/random_username
 random-username
+tabulate==0.9.0
 tomli
 tomlkit
 psycopg2-binary  # for mucking with postgres databases - use binary so that we don't have to build
