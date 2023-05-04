@@ -568,12 +568,13 @@ def _doit(args):
         number_of_bundles=number_of_bundles,
     )
     map_homework_pages(homework_bundles=homework_bundles)
-    map_extra_pages_to_bundle4()
 
     print("*" * 40)
     wait_for_qr_read(
         number_of_bundles=number_of_bundles,
     )
+
+    map_extra_pages_to_bundle4()
 
     if args.readqr:
         return (huey_worker_proc, server_proc)
