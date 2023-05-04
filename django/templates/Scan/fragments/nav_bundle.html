@@ -121,6 +121,13 @@
 			Discard
 		      </a>
 		    </div>
+		    <div>
+		      <a class="btn btn-warning text-center w-100 mb-3" 
+			 hx-post="{% url 'extralise_image' timestamp index %}"
+			 hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
+			Cast to extra page
+		      </a>
+		    </div>
 		    {% endif %}
 		    {% elif current_page.status == 'discard' %}
 		    <div class="alert alert-dark">
@@ -130,6 +137,16 @@
 			<li>rotation: {{current_page.rotation}}</li>
 		      </ul>
 		    </div>
+		    {% if is_pushed %}
+		    {% else %}
+		    <div>
+		      <a class="btn btn-warning text-center w-100 mb-3" 
+			 hx-post="{% url 'extralise_image' timestamp index %}"
+			 hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
+			Cast to extra page
+		      </a>
+		    </div>
+		    {% endif %}
 		    {% elif current_page.status == 'error' %}
 		    <div class="alert alert-danger">
 		      <h6 class="alert-heading">Error</h6>

@@ -320,6 +320,38 @@ class ScanCastService:
         self.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
     @transaction.atomic
+    def extralise_image_type_from_bundle_timestamp_and_order(
+        self, user_obj, bundle_timestamp, bundle_order
+    ):
+        """A wrapper around extralise_image_type_from_bundle cmd.
+
+        The main difference is that it that takes a
+        bundle-timestamp instead of a bundle-object itself. Further,
+        it infers the image-type from the bundle and the bundle-order
+        rather than requiring it explicitly.
+
+        Args:
+            user_obj: (obj) An instead of a django user
+            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_order: (int) Bundle order of a page.
+
+        Returns:
+            None.
+
+        """
+
+        bundle_obj = StagingBundle.objects.get(
+            timestamp=bundle_timestamp,
+        )
+        try:
+            img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find an image at order {bundle_order}")
+        self.extralise_image_type_from_bundle(
+            user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
+        )
+
+    @transaction.atomic
     def extralise_image_type_from_bundle(
         self, user_obj, bundle_obj, bundle_order, *, image_type=None
     ):
