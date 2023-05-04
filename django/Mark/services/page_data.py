@@ -90,7 +90,7 @@ class PageDataService:
 
     @transaction.atomic
     def get_question_pages_metadata(
-        self, paper, *, question=None, include_idpage=True, include_dnmpages=True
+        self, paper, *, question=None, include_idpage=False, include_dnmpages=True
     ):
         """
         Return a list of metadata for all pages in a particular paper - excluding the ID page.
@@ -99,7 +99,7 @@ class PageDataService:
             paper (int): test-paper number
             question (int/None): question number, if not None.
             include_idpage (bool): whether to include ID pages in this
-                request (default: True)
+                request (default: False)
             include_dnmpages (bool): whether to include any DNM pages in
                 this request (default: True)
 

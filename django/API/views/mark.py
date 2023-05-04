@@ -321,7 +321,7 @@ class MgetPageDataQuestionInContext(APIView):
 
         try:
             page_metadata = service.get_question_pages_metadata(
-                paper, question=question
+                paper, question=question, include_idpage=True, include_dnmpages=True
             )
             return Response(page_metadata, status=status.HTTP_200_OK)
         except Paper.DoesNotExist:
