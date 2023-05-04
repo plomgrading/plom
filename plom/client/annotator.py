@@ -705,6 +705,10 @@ class Annotator(QWidget):
         log.debug("wholePage: downloading files for testnum %s", testnum)
         dl = self.parentMarkerUI.Qapp.downloader
         pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
+        # Issue #1553, we crudely filter ID page out
+        pagedata = [
+            x for x in pagedata if not x["pagename"].casefold().startswith("id")
+        ]
         pagedata = dl.sync_downloads(pagedata)
         labels = [x["pagename"] for x in pagedata]
         WholeTestView(testnum, pagedata, labels, parent=self).exec()
@@ -758,9 +762,13 @@ class Annotator(QWidget):
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
 
         dl = self.parentMarkerUI.Qapp.downloader
-        page_data = dl.msgr.get_pagedata_context_question(testNumber, self.question_num)
+        pagedata = dl.msgr.get_pagedata_context_question(testNumber, self.question_num)
+        # Issue #1553, we crudely filter ID page out
+        pagedata = [
+            x for x in pagedata if not x["pagename"].casefold().startswith("id")
+        ]
         # TODO: eventually want dialog to open during loading, Issue #2355
-        N = len(page_data)
+        N = len(pagedata)
         pd = QProgressDialog(
             "Downloading additional images\nStarting up...", None, 0, N, self
         )
@@ -768,7 +776,7 @@ class Annotator(QWidget):
         pd.setMinimumDuration(500)
         pd.setValue(0)
         self.parentMarkerUI.Qapp.processEvents()
-        for i, row in enumerate(page_data):
+        for i, row in enumerate(pagedata):
             # TODO: would be nice to show the size in MiB here!
             pd.setLabelText(
                 f"Downloading additional images\nFile {i + 1} of {N}: "
@@ -781,7 +789,7 @@ class Annotator(QWidget):
 
         #
         for x in image_md5_list:
-            if x not in [p["md5"] for p in page_data]:
+            if x not in [p["md5"] for p in pagedata]:
                 s = dedent(
                     """
                     Unexpectedly situation!\n
@@ -789,20 +797,20 @@ class Annotator(QWidget):
                     the server's page data.  Probably that is not allowed(?)
                     How did it happen?\n
                     Annotator's src img data is: {}\n
-                    Server page_data is:
+                    Server pagedata is:
                       {}\n
                     Consider filing a bug with this info!
                     """.format(
-                        src_img_data, page_data
+                        src_img_data, pagedata
                     )
                 ).strip()
                 log.error(s)
                 ErrorMsg(self, s).exec()
 
         has_annotations = self.scene.hasAnnotations()
-        log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
+        log.debug("pagedata is\n  {}".format("\n  ".join([str(x) for x in pagedata])))
         rearrangeView = RearrangementViewer(
-            self, testNumber, src_img_data, page_data, has_annotations
+            self, testNumber, src_img_data, pagedata, has_annotations
         )
         # TODO: have rearrange react to new downloads
         # PC.download_finished.connect(rearrangeView.shake_things_up)
@@ -830,9 +838,9 @@ class Annotator(QWidget):
                     Please file an issue with this info!\n
                     perm = {}\n
                     annotr src_img_data = {}\n
-                    page_data = {}
+                    pagedata = {}
                     """.format(
-                        perm, src_img_data, page_data
+                        perm, src_img_data, pagedata
                     )
                 ).strip()
                 log.error(s)

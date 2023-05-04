@@ -4,7 +4,8 @@
 
 from django.db import transaction
 
-from Papers.models import Paper, FixedPage, QuestionPage, Image
+from Papers.models import Paper, FixedPage, Image
+from Papers.models import DNMPage, IDPage, QuestionPage
 
 
 class PageDataService:
@@ -89,28 +90,37 @@ class PageDataService:
 
         pages_metadata = []
         for page in paper_pages:
-            if page.image:
-                if question is None:
-                    # TODO: or is it better to not include this key?  That's likely
-                    # what the legacy server does...
-                    included = True
+            if not page.image:
+                continue
+            if question is None:
+                # TODO: or is it better to not include this key?  That's likely
+                # what the legacy server does...
+                included = True
+            else:
+                if type(page) == QuestionPage:
+                    included = page.question_number == question
                 else:
-                    if type(page) == QuestionPage:
-                        included = page.question_number == question
-                    else:
-                        included = False
-                pages_metadata.append(
-                    {
-                        "pagename": f"t{page.page_number}",
-                        "md5": page.image.hash,
-                        "included": included,
-                        "order": page.page_number,
-                        "id": page.image.pk,
-                        "orientation": page.image.rotation,
-                        "server_path": str(page.image.image_file.path),
-                    }
-                )
-                # TODO: handle extra + homework pages
+                    included = False
+            if type(page) == QuestionPage:
+                prefix = "t"
+            elif type(page) == IDPage:
+                prefix = "id"
+            elif type(page) == DNMPage:
+                prefix = "dnm"
+            else:
+                raise NotImplementedError(f"Page type {type(page)} not handled")
+            pages_metadata.append(
+                {
+                    "pagename": f"{prefix}{page.page_number}",
+                    "md5": page.image.hash,
+                    "included": included,
+                    "order": page.page_number,
+                    "id": page.image.pk,
+                    "orientation": page.image.rotation,
+                    "server_path": str(page.image.image_file.path),
+                }
+            )
+            # TODO: handle extra + homework pages
 
         return pages_metadata
 
