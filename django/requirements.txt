@@ -27,6 +27,9 @@ debugpy
 whitenoise
 zipfly  # for streaming zipfile generation/download
 
+# indirect deps?  Fix #2702
+freetype-py==2.3.0
+
 
 #---------- for dev / debug work - comment out unless using it.
 # nplusone==1.0.0  # for hunting down potential n+1 query problems
