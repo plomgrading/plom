@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 from datetime import datetime
 import hashlib
@@ -24,6 +25,7 @@ class Command(BaseCommand):
     python3 manage.py plom_staging_bundles read_qr (bundle name) <- can get it from status
     python3 manage.py plom_staging_bundles push (bundle name) <- can get it from status
     python3 manage.py plom_staging_bundles pages bundle name
+    python3 manage.py plom_staging_bundles get_id_box bundle name
     """
 
     help = "Upload bundle pdf files to staging area"
@@ -200,6 +202,14 @@ class Command(BaseCommand):
             tabulate(bundle_page_list, headers="firstrow", tablefmt="simple_outline")
         )
 
+    def get_id_box(self, bundle_name):
+        scanner = ScanService()
+        try:
+            scanner.get_id_box_cmd(bundle_name)
+            self.stdout.write(f"Getting the ID box from all ID pages in {bundle_name}")
+        except ValueError as err:
+            raise CommandError(err)
+
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
             dest="command",
@@ -259,6 +269,14 @@ class Command(BaseCommand):
             default="all",
         )
 
+        sp_id = sp.add_parser(
+            "get_id_box", help="Extract the ID box from all ID pages."
+        )
+        sp_stat.add_argument(
+            "bundle_name",
+            type=str,
+        )
+
     def handle(self, *args, **options):
         if options["command"] == "upload":
             self.upload_pdf(
@@ -278,5 +296,18 @@ class Command(BaseCommand):
             self.show_bundle_pages(
                 bundle_name=options["bundle_name"], show=options["show"]
             )
+        elif options["command"] == "map_extra":
+            service = ScanService()
+            n_questions = SpecificationService().get_n_questions()
+            question_list = check_question_list(options["question"][0], n_questions)
+            # pass that to the server
+            service.surgery_map_extra(
+                options["bundle_name"],
+                options["idx"],
+                papernum=options["papernum"],
+                question_list=question_list,
+            )
+        elif options["command"] == "get_id_box":
+            self.get_id_box(bundle_name=options["bundle_name"])
         else:
             self.print_help("manage.py", "plom_staging_bundles")
