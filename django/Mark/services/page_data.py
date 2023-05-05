@@ -93,7 +93,7 @@ class PageDataService:
         self, paper, *, question=None, include_idpage=False, include_dnmpages=True
     ):
         """
-        Return a list of metadata for all pages in a particular paper - except ID page (by default).
+        Return a list of metadata for all pages in a paper.
 
         Args:
             paper (int): test-paper number
