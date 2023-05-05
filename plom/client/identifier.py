@@ -791,7 +791,7 @@ class IDClient(QWidget):
                 f'Student "{self.ui.idEdit.text()}" not found in classlist.',
                 "Do you want to input the ID and name manually?",
             )
-            # Put message popup on top-corner of idenfier window
+            # Put message popup on top-corner of identifer window
             msg.move(self.pos())
             # If no then return from function.
             if msg.exec() == QMessageBox.StandardButton.No:
