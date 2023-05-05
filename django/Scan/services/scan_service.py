@@ -979,6 +979,27 @@ class ScanService:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
         return self.get_bundle_paper_numbers(bundle_obj)
 
+    @transaction.atomic
+    def get_id_box_cmd(self, bundle_name):
+        id_box_folder = settings.MEDIA_ROOT / "id_box_images"
+        id_box_folder.mkdir(exist_ok=True)
+
+        pipr = PageImageProcessor()
+        id_pages = KnownStagingImage.objects.filter(
+            staging_image__bundle=bundle_obj, staging_image__page_number=1
+        )
+
+        counter = 0  # temporary way to create file names for saved images
+        for id_img in id_pages:
+            img_path = id_img.image_file.path
+            orientation = id_img.rotation
+            qr_data = id_img.parsed_qr
+            id_box = pipr.get_rectangular_region(
+                img_path, orientation, qr_data, (0.2, 0.2), (0.6, 0.6)
+            )  # TODO: corner values are arbitrary
+            id_box.save(id_box_folder / f"id_box_{counter}")
+            counter += 1
+
 
 # ----------------------------------------
 # factor out the huey tasks.
