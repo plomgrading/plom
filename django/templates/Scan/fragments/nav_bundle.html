@@ -117,25 +117,67 @@
 		      <h6>
 			Set extra page information
 		      </h6>
-		      <div>
+		      <form hx-post="{% url 'extralise_image' timestamp index %}">
+			{% csrf_token %}
+			<div class="input-group p-3">
+		      <div x-data="{bundlepapers: true}">
 			Paper:
-			<select class="form-select" aria-label="Default select example">
-			  <option selected>Choose which paper</option>
-			  {% for pn in paper_numbers %}
-			  <option value="{{pn}}">{{pn}}</option>
-			  {% endfor %}
-			</select>
+			<div class="form-check form-switch">
+			  <input name="bundleOrArbitrary" class="form-check-input" type="checkbox" x-bind:value="bundlepapers" id="bundlepapers" x-model="bundlepapers">
+			  <label class="form-check-label" for="bundlepapers">
+			    <template x-if="bundlepapers">
+			      <span>from this bundle</span>
+			    </template>
+			    <template x-if="!bundlepapers">
+			      <span>arbitrary</span>
+			    </template>
+			  </label>
+			</div>
+			<div x-show="bundlepapers">			
+			  <select name="bundlePaper" class="form-select" aria-label="Default select example">
+			    <option selected>Paper from bundle</option>
+			    {% for pn in bundle_paper_numbers %}
+			    <option value="{{pn}}">{{pn}}</option>
+			    {% endfor %}
+			  </select>
+			</div>
+			<div x-show="!bundlepapers">			
+			  <select name="arbitraryPaper" class="form-select" aria-label="Default select example">
+			    <option selected>any produced paper</option>
+			    {% for pn in all_paper_numbers %}
+			    <option value="{{pn}}">{{pn}}</option>
+			    {% endfor %}
+			  </select>
+			</div>
 			
 			Questions:
+			<div x-data="{allq: false}">
+			<div class="form-check form-switch">
+			  <input name="questionAll" value="all" class="form-check-input" type="checkbox" id="questionall" x-model="allq">
+			  <label class="form-check-label" for="questionall">
+			    <template x-if="allq">
+			      <span>All questions</span>
+			    </template>
+			    <template x-if="!allq">
+			      <span>subset of questions</span>
+			    </template>
+			  </label>
+			</div>
+			<div x-show="!allq" x-transition>
 			{% for ql in question_labels %}
-			<div class="form-check">
-			  <input class="form-check-input" type="checkbox" value="" id="{{ql}}">
+			<div class="form-check form-switch">
+			  <input name="{{ql}}" class="form-check-input" type="checkbox" value="{{forloop.counter}}" id="{{ql}}">
 			  <label class="form-check-label" for="{{ql}}">
-			    {{ ql }}
+			    Index: {{ ql }}
 			  </label>
 			</div>
 			{% endfor %}
+			</div>
+			</div>
 		      </div>
+		      </div>
+		      <button class="btn btn-primary" type="submit">Set data</button>
+		      </form>
 		    </div>
 		    {% endif %}
 		    {% endif %}
@@ -175,7 +217,7 @@
 		    {% else %}
 		    <div>
 		      <a class="btn btn-warning text-center w-100 mb-3" 
-			 hx-post="{% url 'extralise_image' timestamp index %}"
+			 hx-put="{% url 'extralise_image' timestamp index %}"
 			 hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
 			Cast to extra page
 		      </a>

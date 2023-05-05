@@ -905,6 +905,23 @@ class ScanService:
         return [pages[ord] for ord in sorted(pages.keys())]
 
     @transaction.atomic
+    def get_bundle_paper_numbers_list(self, bundle_obj):
+        """Gives ordered list of paper-numbers in the given bundle."""
+        known_papers = [
+            known.paper_number
+            for known in KnownStagingImage.objects.filter(
+                staging_image__bundle=bundle_obj
+            )
+        ]
+        extra_papers = [
+            extra.paper_number
+            for extra in ExtraStagingImage.objects.filter(
+                paper_number__isnull=False, staging_image__bundle=bundle_obj
+            )
+        ]
+        return sorted(list(set(known_papers + extra_papers)))
+
+    @transaction.atomic
     def get_bundle_papers_pages_list(self, bundle_obj):
         """Returns an ordered list of papers and their known/extra
         pages in the given bundle.  Each item in the list is a pair
