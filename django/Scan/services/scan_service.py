@@ -985,9 +985,9 @@ class ScanService:
         id_box_folder.mkdir(exist_ok=True)
 
         pipr = PageImageProcessor()
-        id_pages = KnownStagingImage.objects.filter(
-            staging_image__bundle=bundle_obj, staging_image__page_number=1
-        )
+        # id_pages = StagingImage.objects.filter(bundle=bundle_obj)
+        id_pages = Paper.objects.filter(page_number=1)
+        print(id_pages)
 
         counter = 0  # temporary way to create file names for saved images
         for id_img in id_pages:

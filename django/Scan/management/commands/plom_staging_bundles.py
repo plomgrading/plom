@@ -272,9 +272,10 @@ class Command(BaseCommand):
         sp_id = sp.add_parser(
             "get_id_box", help="Extract the ID box from all ID pages."
         )
-        sp_stat.add_argument(
+        sp_id.add_argument(
             "bundle_name",
             type=str,
+            help="Extract ID boxes and save them to a subdir in media/",
         )
 
     def handle(self, *args, **options):

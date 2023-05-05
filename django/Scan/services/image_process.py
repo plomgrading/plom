@@ -5,7 +5,7 @@
 
 import numpy as np
 from PIL import Image, ImageDraw
-from plom.scan import rotate_bitmap, pil_load_with_jpeg_exif_rot_applied
+from plom.scan import rotate_bitmap, rotate
 
 
 class PageImageProcessor:
@@ -170,7 +170,7 @@ class PageImageProcessor:
         rotate_bitmap(path, rotate_angle)
         return rotate_angle
 
-    def get_rotation_angle_from_qrs(qr_dict):
+    def get_rotation_angle_from_qrs(self, qr_dict):
         """
         Determine the correction rotation angle for an image calculated from the qr_data
 
@@ -208,7 +208,7 @@ class PageImageProcessor:
             return 0
         return np.arcsin(-leg / hyp)
 
-    def determine_qr_boundary(qr_info):
+    def determine_qr_boundary(self, qr_info):
         """
         Determine the corners of the L-shape defined by the QR centre coordinates
 
@@ -235,7 +235,7 @@ class PageImageProcessor:
 
         return (top_left, top_right, bottom_left, bottom_right)
 
-    def draw_qr_boundary(image_path, top, left, bottom, right):
+    def draw_qr_boundary(self, image_path, top, left, bottom, right):
         """
         Draw a rectangle on the image file (modifying on disk) for debugging purposes
 
@@ -251,7 +251,7 @@ class PageImageProcessor:
         out_img.rectangle(box_location, outline="blue", width=10)
         img.save(img_path)
 
-    def apply_coord_transformation(coord_tuple, angle, img_width, img_height):
+    def apply_coord_transformation(self, coord_tuple, angle, img_width, img_height):
         """
         Given an the corner coordinates, apply an affine transformation to correct them
 
@@ -262,7 +262,7 @@ class PageImageProcessor:
             img_height (int): height of the image that was rotated
 
         Returns:
-            tuple of tuples: the resulting coordinates after the affine tranformation was applied
+            tuple of tuples: the resulting coordinates after the affine transformation was applied
         """
         move_to_origin = np.array(
             [[1, 0, img_width / 2.0], [0, 1, img_height / 2.0], [0, 0, 1]]
@@ -289,7 +289,7 @@ class PageImageProcessor:
         return tuple(new_coords)
 
     def get_rectangular_region(
-        image_path, orientation, qr_dict, top_left, bottom_right
+        self, image_path, orientation, qr_dict, top_left, bottom_right
     ):
         """
         Given an image, get a particular subset of it, after applying an affine transformation to correct it
@@ -304,16 +304,16 @@ class PageImageProcessor:
         Returns:
             PIL.Image: the requested subsection of the original image
         """
-        img = pil_load_with_jpeg_exif_rot_applied(image_path)
+        img = rotate.pil_load_with_jpeg_exif_rot_applied(image_path)
         img.rotate(orientation)
 
-        angle = get_rotation_angle_from_qrs(qr_dict)
+        angle = self.get_rotation_angle_from_qrs(qr_dict)
         new_img = img.rotate(
             angle, center=(img.width / 2.0, img.height / 2.0), resample=Image.BILINEAR
         )
 
-        coord_tuples = determine_qr_boundary(qr_dict)
-        new_coords = apply_coord_transformation(
+        coord_tuples = self.determine_qr_boundary(qr_dict)
+        new_coords = self.apply_coord_transformation(
             coord_tuples, angle, img.width, img.height
         )
 
