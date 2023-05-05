@@ -525,7 +525,7 @@ class IDClient(QWidget):
             self.ui.predictionBox1.hide()
 
         # now update the snid entry line-edit.
-        # if test is already identified then populate the idlinedit accordingly
+        # if test is already identified then populate the ID-lineedit accordingly
         if self.exM.paperList[r].status == "identified":
             snid = "{}: {}".format(
                 self.exM.paperList[r].sid, self.exM.paperList[r].sname
@@ -622,7 +622,7 @@ class IDClient(QWidget):
         status = self.exM.data(index[1])
         if status != "unidentified":
             msg = SimpleQuestion(self, "Do you want to change the ID?")
-            # Put message popup on top-corner of idenfier window
+            # Put message popup on top-corner of identifier window
             if msg.exec() == QMessageBox.StandardButton.No:
                 return
         # code = self.exM.data(index[0])
@@ -757,7 +757,7 @@ class IDClient(QWidget):
         # change it - set the alreadyIDd flag to true.
         if status == "identified":
             msg = SimpleQuestion(self, "Do you want to change the ID?")
-            # Put message popup on top-corner of idenfier window
+            # Put message popup on top-corner of identifier window
             if msg.exec() == QMessageBox.StandardButton.No:
                 return
             else:
@@ -791,7 +791,7 @@ class IDClient(QWidget):
                 f'Student "{self.ui.idEdit.text()}" not found in classlist.',
                 "Do you want to input the ID and name manually?",
             )
-            # Put message popup on top-corner of identifer window
+            # Put message popup on top-corner of identifier window
             msg.move(self.pos())
             # If no then return from function.
             if msg.exec() == QMessageBox.StandardButton.No:
