@@ -146,7 +146,7 @@ class Tag(models.Model):
     text: the text contents of the tag
     """
 
-    user = models.ForeignKey(User, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time = models.DateField(default=timezone.now)
     text = models.TextField(null=False)
 
