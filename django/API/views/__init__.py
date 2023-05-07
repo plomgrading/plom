@@ -30,6 +30,13 @@ from .mark import (
     MgetDoneTasks,
 )
 
+from .report import (
+    REPspreadsheet,
+    REPidentified,
+    REPcompletionStatus,
+    REPcoverPageInfo,
+)
+
 from .rubrics import (
     MgetRubricsByQuestion,
     MgetRubricPanes,
