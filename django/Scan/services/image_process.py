@@ -183,22 +183,22 @@ class PageImageProcessor:
             that this angle is around 5 degrees.
             If there is not enough QR data to determine the angle, return 0.
         """
-        if qr_dict["SW"] and qr_dict["SE"]:
+        if ("SW" and "SE") in qr_dict:
             leg = qr_dict["SW"]["y_coord"] - qr_dict["SE"]["y_coord"]
             hyp = np.sqrt(
                 leg**2 + (qr_dict["SW"]["x_coord"] - qr_dict["SE"]["x_coord"]) ** 2
             )
-        elif qr_dict["SE"] and qr_dict["NE"]:
+        elif ("SE" and "NE") in qr_dict:
             leg = qr_dict["SE"]["x_coord"] - qr_dict["NE"]["x_coord"]
             hyp = np.sqrt(
                 leg**2 + (qr_dict["SE"]["y_coord"] - qr_dict["NE"]["y_coord"]) ** 2
             )
-        elif qr_dict["NW"] and qr_dict["SW"]:
+        elif ("NW" and "SW") in qr_dict:
             leg = qr_dict["SW"]["x_coord"] - qr_dict["NW"]["x_coord"]
             hyp = np.sqrt(
                 leg**2 + (qr_dict["SW"]["y_coord"] - qr_dict["NW"]["x_coord"]) ** 2
             )
-        elif qr_dict["NE"] and qr_dict["NW"]:
+        elif ("NE" and "NW") in qr_dict:
             leg = qr_dict["NW"]["y_coord"] - qr_dict["NE"]["y_coord"]
             hyp = np.sqrt(
                 leg**2 + (qr_dict["NW"]["x_coord"] - qr_dict["NE"]["x_coord"]) ** 2
@@ -220,12 +220,12 @@ class PageImageProcessor:
             (x, y) pairs that describe the corresponding bounds of the rectangle defined by the QR
             coordinates. Returns None for the stapled corner which is missing a QR.
         """
-        if "NW" in qr_info.keys():
+        if "NW" in qr_info:
             top_left = (qr_info["NW"]["x_coord"], qr_info["NW"]["y_coord"])
         else:
             top_left = None
 
-        if "NE" in qr_info.keys():
+        if "NE" in qr_info:
             top_right = (qr_info["NE"]["x_coord"], qr_info["NE"]["y_coord"])
         else:
             top_right = None
@@ -282,9 +282,11 @@ class PageImageProcessor:
         new_coords = list()
         for point in coord_tuple:
             if point is not None:
-                p = np.array([point[0]], [point[1]], [0])
-                result = aff_tranf @ p
-                new_coords.append((result[0], result[1]))
+                p = np.array([[point[0]], [point[1]], [0]])
+                result = aff_transf @ p
+                new_coords.append((result[0][0], result[1][0]))
+            else:
+                new_coords.append(None)
 
         return tuple(new_coords)
 
@@ -317,12 +319,21 @@ class PageImageProcessor:
             coord_tuples, angle, img.width, img.height
         )
 
-        region_width = new_coords[3][0] - new_coords[0][0]
-        region_height = new_coords[3][1] - new_coords[0][1]
+        try:
+            region_width = new_coords[3][0] - new_coords[2][0]
+            region_height = new_coords[3][1] - new_coords[2][1]
 
-        left = new_coords[0][0] + top_left[0] * region_width
-        top = new_coords[0][1] + top_left[1] * region_height
-        right = new_coords[0][0] + bottom_right[0] * region_width
-        bottom = new_coords[0][1] + bottom_right[1] * region_height
+            left = new_coords[2][0] + top_left[0] * region_width
+            top = new_coords[1][1] + top_left[1] * region_height
+            right = new_coords[1][0] + bottom_right[0] * region_width
+            bottom = new_coords[2][1] + bottom_right[1] * region_height
+        except:
+            region_width = new_coords[3][0] - new_coords[2][0]
+            region_height = new_coords[3][1] - new_coords[2][1]
+
+            left = new_coords[2][0] + top_left[0] * region_width
+            top = new_coords[0][1] + top_left[1] * region_height
+            right = new_coords[0][0] + bottom_right[0] * region_width
+            bottom = new_coords[2][1] + bottom_right[1] * region_height
 
         return img.crop((left, top, right, bottom))

@@ -985,8 +985,9 @@ class ScanService:
         id_box_folder.mkdir(exist_ok=True)
 
         pipr = PageImageProcessor()
-        # id_pages = StagingImage.objects.filter(bundle=bundle_obj)
-        id_pages = Paper.objects.filter(page_number=1)
+        id_pages = StagingImage.objects.filter(bundle=bundle_obj)
+        # id_pages = KnownStagingImage.objects.filter(page_number=1)
+        # id_pages = Image.objects.filter(id=True)
         print(id_pages)
 
         counter = 0  # temporary way to create file names for saved images
@@ -994,11 +995,12 @@ class ScanService:
             img_path = id_img.image_file.path
             orientation = id_img.rotation
             qr_data = id_img.parsed_qr
-            id_box = pipr.get_rectangular_region(
-                img_path, orientation, qr_data, (0.2, 0.2), (0.6, 0.6)
-            )  # TODO: corner values are arbitrary
-            id_box.save(id_box_folder / f"id_box_{counter}")
-            counter += 1
+            if len(qr_data) == 3:
+                id_box = pipr.get_rectangular_region(
+                    img_path, orientation, qr_data, (0.2, 0.2), (0.6, 0.6)
+                )  # TODO: corner values are arbitrary
+                id_box.save(id_box_folder / f"id_box_{counter}.png")
+                counter += 1
 
 
 # ----------------------------------------
