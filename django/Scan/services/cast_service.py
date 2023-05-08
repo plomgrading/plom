@@ -263,6 +263,17 @@ class ScanCastService:
         eximg.save()
 
     @transaction.atomic
+    def assign_extra_page_from_bundle_timestamp_and_order(
+        self, user_obj, timestamp, bundle_order, paper_number, question_list
+    ):
+        bundle_obj = StagingBundle.objects.get(
+            timestamp=timestamp,
+        )
+        self.assign_extra_page(
+            user_obj, bundle_obj, bundle_order, paper_number, question_list
+        )
+
+    @transaction.atomic
     def assign_extra_page_cmd(
         self, username, bundle_name, bundle_order, paper_number, question_list
     ):

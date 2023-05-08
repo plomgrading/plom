@@ -3,10 +3,11 @@
 # Copyright (C) 2023 Andrew Rechntizer
 
 from django_htmx.http import HttpResponseClientRefresh
-
+from django.http import HttpResponse
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanCastService
+from Papers.services import SpecificationService
 
 
 class DiscardImageType(ScannerRequiredView):
@@ -28,26 +29,38 @@ class ExtraliseImageType(ScannerRequiredView):
     """
 
     def post(self, request, timestamp, index):
-        # TODO - decrapify this form processing
+        # TODO - improve this form processing
 
         extra_page_data = request.POST
-        print(">" * 20, extra_page_data)
+
         if extra_page_data.get("bundleOrArbitrary", "off") == "on":
             paper_number = extra_page_data.get("bundlePaper", None)
         else:
             paper_number = extra_page_data.get("arbitraryPaper", None)
-        if paper_number.isnumeric():
+
+        try:
             paper_number = int(paper_number)
-            print(f"Set to paper_number {paper_number}")
-        else:
-            # invalid paper number
-            print(f"Invalid paper_number {paper_number}")
-            return HttpResponseClientRefresh()
+        except ValueError:
+            return HttpResponse(
+                """<span class="alert alert-danger">Invalid paper number</span>"""
+            )
 
         if extra_page_data.get("questionAll", "off") == "all":
-            print("Set all question")
+            # set all the questions
+            question_list = [
+                n + 1 for n in range(SpecificationService().get_n_questions())
+            ]
         else:
-            pass
+            if len(extra_page_data.get("questions", [])):
+                question_list = [int(q) for q in extra_page_data["questions"]]
+            else:
+                return HttpResponse(
+                    """<span class="alert alert-danger">At least one question</span>"""
+                )
+
+        ScanCastService().assign_extra_page_from_bundle_timestamp_and_order(
+            request.user, timestamp, index, paper_number, question_list
+        )
 
         return HttpResponseClientRefresh()
 
