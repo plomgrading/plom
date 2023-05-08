@@ -205,6 +205,8 @@ class UserInitHandler:
     async def InfoShortName(self, request):
         """The short name of the exam.
 
+        DEPRECATED 0.14.0: no modern callers, only for old clients.
+
         Returns:
             aiohttp.Response: 200 and the short name or 400 if the
             server has no spec.
