@@ -1,0 +1,80 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022-2023 Colin B. Macdonald
+
+from django.urls import path
+
+from API.views import (
+    IDprogressCount,
+    IDgetDoneTasks,
+    IDgetNextTask,
+    IDclaimThisTask,
+    IDgetImage,
+    GetIDPredictions,
+    GetClasslist,
+)
+
+
+class IdURLPatterns:
+    """
+    URLs for handling ID'ing tasks and interacting with the client.
+
+    All of these patterns are under the route "ID", so the pattern
+    "progress" will become "ID/progress"
+    """
+
+    prefix = "ID/"
+
+    @staticmethod
+    def get_patterns():
+        id_patterns = []
+
+        # Get overall ID progress
+        progress = [
+            path("progress", IDprogressCount.as_view(), name="api_ID_progress_count"),
+        ]
+        id_patterns += progress
+
+        # ID task management
+        tasks = [
+            path(
+                "tasks/complete", IDgetDoneTasks.as_view(), name="api_ID_get_done_tasks"
+            ),
+            path(
+                "tasks/available", IDgetNextTask.as_view(), name="api_ID_get_next_tasks"
+            ),
+            path(
+                "tasks/<paper_id>", IDclaimThisTask.as_view(), name="api_ID_claim_task"
+            ),
+        ]
+        id_patterns += tasks
+
+        # get ID page images from server
+        images = [
+            path("image/<paper_id>/", IDgetImage.as_view(), name="api_ID_get_image"),
+        ]
+        id_patterns += images
+
+        # get ID'er predictions
+        predictions = [
+            path(
+                "predictions/", GetIDPredictions.as_view(), name="api_get_predictions"
+            ),
+            path(
+                "predictions/<predictor>",
+                GetIDPredictions.as_view(),
+                name="api_get_predictions_from_predictor",
+            ),
+        ]
+        id_patterns += predictions
+
+        # Get classlist
+        classlist = [
+            path("classlist/", GetClasslist.as_view(), name="api_get_classlist"),
+        ]
+        id_patterns += classlist
+
+        return id_patterns
+
+    patterns = get_patterns()
