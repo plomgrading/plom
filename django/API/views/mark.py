@@ -18,6 +18,8 @@ from Papers.models import Paper, Image
 from Mark.services import MarkingTaskService, PageDataService
 from Mark.models import AnnotationImage, MarkingTask
 
+import logging
+
 
 class QuestionMaxMark_how_to_get_data(APIView):
     """
@@ -130,7 +132,6 @@ class MgetDoneTasks(APIView):
             ],
             marks,
         )
-
         return Response(rows, status=status.HTTP_200_OK)
 
 
@@ -231,9 +232,12 @@ class MgetPageDataQuestionInContext(APIView):
     """
     Get page metadata for a particular test-paper optionally with a question highlighted.
 
-    This API returns a JSON response with a list of dicts.
-    where each dict has keys: `pagename`, `md5`, `included`,
+    APIs backed by this routine return a JSON response with a list of
+    dicts, where each dict has keys: `pagename`, `md5`, `included`,
     `order`, `id`, `orientation`, `server_path` as documented below.
+
+    This routine returns all pages, including ID pages, DNM pages and
+    various sorts of extra pages.
 
     TODO: 409 versus 400?  Legacy used 409...
     A 400 is returned with an explanation if paper number not found.
@@ -255,6 +259,8 @@ class MgetPageDataQuestionInContext(APIView):
         and the id could be repeated.  TODO: determine if this only
         happens b/c of bugs/upload issues or if its a reasonably
         normal state.
+        Note this is nothing to do with "the ID page", that is the page
+        where assessment writers put their name and other info.
 
     `order`
         None or an integer specifying the relative ordering of
@@ -319,7 +325,14 @@ class MgetPageDataQuestionInContext(APIView):
         service = PageDataService()
 
         try:
-            page_metadata = service.get_question_pages_metadata(paper, question)
+            # we need include_idpage here b/c this APIView Class serves two different
+            # API calls: one of which wants all pages.  Its also documented above that
+            # callers who don't want to see the ID page (generally b/c Plom does
+            # anonymous grading) should filter this out.  This is the current behaviour
+            # of the Plom Client UI tool.
+            page_metadata = service.get_question_pages_metadata(
+                paper, question=question, include_idpage=True, include_dnmpages=True
+            )
             return Response(page_metadata, status=status.HTTP_200_OK)
         except Paper.DoesNotExist:
             return Response(

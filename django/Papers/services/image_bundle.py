@@ -329,12 +329,13 @@ class ImageBundleService:
 
     @transaction.atomic
     def get_ready_questions(self, bundle):
-        """
-        Find questions across all test-papers in the database that now have
-        all of their page-images scanned. These questions are ready to be marked.
+        """Find questions across all test-papers in the database that
+        now ready.  A question is ready when either it has all of its
+        fixed-pages, or it has no fixed-pages but has some
+        mobile-pages.
+
         Note: tasks are created on a per-question basis, so a test paper across multiple bundles
         could have some "ready" and "unready" questions.
-        TODO: Extra pages could potentially make questions un-ready again.
 
         Args:
             bundle: a Bundle instance that has just been uploaded.
@@ -344,28 +345,51 @@ class ImageBundleService:
             that have pages in this bundle, and are now ready to be marked. "not_ready" are
             paper_number/question_number pairs that have pages in this bundle, but are not ready to be
             marked yet.
+
         """
 
+        # find all question-pages (ie fixed pages) that attach to images in the current bundle.
         question_pages = QuestionPage.objects.filter(image__bundle=bundle)
-        papers_in_bundle = question_pages.values_list(
-            "paper__paper_number", "question_number"
-        )
-        bundle_paper_status = set(papers_in_bundle)
+        # find all mobile pages (extra pages) that attach to images in the current bundle
+        extras = MobilePage.objects.filter(image__bundle=bundle)
+
+        # now make list of all papers/questions updated by this bundle
+        # note that values_list does not return a list, it returns a "query-set"
+        papers_in_bundle = list(
+            question_pages.values_list("paper__paper_number", "question_number")
+        ) + list(extras.values_list("paper__paper_number", "question_number"))
+        # remove duplicates by casting to a set
+        papers_questions_updated_by_bundle = set(papers_in_bundle)
+
+        # for each paper/question that has been updated, check if has either
+        # all fixed pages, or no fixed pages but some mobile-pages.
+        # if some, but not all, fixed pages then is not ready.
 
         result = {"ready": [], "not_ready": []}
 
-        for paper, question_num in bundle_paper_status:
-            n_pushed_pages = (
-                QuestionPage.objects.exclude(image__isnull=True)
-                .filter(paper__paper_number=paper, question_number=question_num)
-                .count()
+        for paper_number, question_number in papers_questions_updated_by_bundle:
+            q_pages = QuestionPage.objects.filter(
+                paper__paper_number=paper_number, question_number=question_number
             )
-            n_pages = SpecificationService().n_pages_for_question(question_num)
-
-            if n_pages == n_pushed_pages:
-                result["ready"].append((paper, question_num))
-            else:
-                result["not_ready"].append((paper, question_num))
+            pages_no_img = q_pages.filter(image__isnull=True).count()
+            if pages_no_img == 0:  # all fixed pages have images
+                result["ready"].append((paper_number, question_number))
+                continue
+            # question has some images
+            pages_with_img = q_pages.filter(image__isnull=False).count()
+            if (
+                pages_with_img > 0
+            ):  # question has some pages with and some without images - not ready
+                result["not_ready"].append((paper_number, question_number))
+                continue
+            # all fixed pages without images - check if has any mobile pages
+            if (
+                MobilePage.objects.filter(
+                    paper__paper_number=paper_number, question_number=question_number
+                ).count()
+                > 0
+            ):
+                result["ready"].append((paper_number, question_number))
 
         return result
 
