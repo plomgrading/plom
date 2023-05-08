@@ -25,7 +25,7 @@ class Command(BaseCommand):
     python3 manage.py plom_staging_bundles read_qr (bundle name) <- can get it from status
     python3 manage.py plom_staging_bundles push (bundle name) <- can get it from status
     python3 manage.py plom_staging_bundles pages bundle name
-    python3 manage.py plom_staging_bundles get_id_box bundle name
+    python3 manage.py plom_staging_bundles get_id_box
     """
 
     help = "Upload bundle pdf files to staging area"
@@ -202,11 +202,11 @@ class Command(BaseCommand):
             tabulate(bundle_page_list, headers="firstrow", tablefmt="simple_outline")
         )
 
-    def get_id_box(self, bundle_name):
+    def get_id_box(self):
         scanner = ScanService()
         try:
-            scanner.get_id_box_cmd(bundle_name)
-            self.stdout.write(f"Getting the ID box from all ID pages in {bundle_name}")
+            scanner.get_id_box_cmd()
+            self.stdout.write(f"Getting the ID box from all ID pages")
         except ValueError as err:
             raise CommandError(err)
 
@@ -272,11 +272,6 @@ class Command(BaseCommand):
         sp_id = sp.add_parser(
             "get_id_box", help="Extract the ID box from all ID pages."
         )
-        sp_id.add_argument(
-            "bundle_name",
-            type=str,
-            help="Extract ID boxes and save them to a subdir in media/",
-        )
 
     def handle(self, *args, **options):
         if options["command"] == "upload":
@@ -309,6 +304,6 @@ class Command(BaseCommand):
                 question_list=question_list,
             )
         elif options["command"] == "get_id_box":
-            self.get_id_box(bundle_name=options["bundle_name"])
+            self.get_id_box()
         else:
             self.print_help("manage.py", "plom_staging_bundles")

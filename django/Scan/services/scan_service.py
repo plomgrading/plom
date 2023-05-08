@@ -980,21 +980,19 @@ class ScanService:
         return self.get_bundle_paper_numbers(bundle_obj)
 
     @transaction.atomic
-    def get_id_box_cmd(self, bundle_name):
+    def get_id_box_cmd(self):
         id_box_folder = settings.MEDIA_ROOT / "id_box_images"
         id_box_folder.mkdir(exist_ok=True)
 
         pipr = PageImageProcessor()
-        id_pages = StagingImage.objects.filter(bundle=bundle_obj)
-        # id_pages = KnownStagingImage.objects.filter(page_number=1)
-        # id_pages = Image.objects.filter(id=True)
+        id_pages = KnownStagingImage.objects.filter(page_number=1)
         print(id_pages)
 
         counter = 0  # temporary way to create file names for saved images
         for id_img in id_pages:
-            img_path = id_img.image_file.path
-            orientation = id_img.rotation
-            qr_data = id_img.parsed_qr
+            img_path = id_img.staging_image.image_file.path
+            orientation = id_img.staging_image.rotation
+            qr_data = id_img.staging_image.parsed_qr
             if len(qr_data) == 3:
                 id_box = pipr.get_rectangular_region(
                     img_path, orientation, qr_data, (0.2, 0.2), (0.6, 0.6)
