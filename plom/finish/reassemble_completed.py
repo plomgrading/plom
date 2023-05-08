@@ -93,16 +93,17 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         marked_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
-    dnm_image_blobs = msgr.request_donotmark_images(t)
+    pagedata = msgr.get_pagedata(t)
     dnm_pages = []
-    for i, obj in enumerate(dnm_image_blobs):
-        im_type = imghdr.what(None, h=obj)
-        filename = tmpdir / f"img_{int(t):04}_dnm{i:02}.{im_type}"
-        if not im_type:
-            raise PlomSeriousException(f"Could not identify image type: {filename}")
-        dnm_pages.append(filename)
-        with open(filename, "wb") as f:
-            f.write(obj)
+    for row in pagedata:
+        # Issue #2707: better use a image-type key
+        if row["pagename"].casefold().startswith("dnm"):
+            obj = msgr.get_image(row["id"], row["md5"])
+            ext = Path(row["server_path"]).suffix
+            filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
+            with open(filename, "wb") as f:
+                f.write(obj)
+            dnm_pages.append(filename)
     # return id-page inside a list since then the 3 different page types
     # are returned consistently inside lists.
     return (id_pages, marked_pages, dnm_pages)

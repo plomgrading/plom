@@ -963,7 +963,13 @@ class BaseMessenger:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def request_donotmark_images(self, papernum):
-        """Get the various Do Not Mark images for a paper."""
+        """Get the various Do Not Mark images for a paper.
+
+        Deprecated: only implmented by legacy servers.
+        """
+        if self.webplom:
+            # TODO: hardcoded to return empty
+            return []
         self.SRmutex.acquire()
         try:
             response = self.get(
