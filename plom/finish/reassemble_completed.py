@@ -70,18 +70,20 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     Returns:
        tuple: (id_page_files, marked_page_files, dnm_page_files)
     """
-    # empty list if no ID-page (return None) - eg for hw.
+    pagedata = msgr.get_pagedata(t)
+
     id_pages = []
-    id_image_blob = msgr.request_ID_image(t)
-    if id_image_blob:
-        # TODO: imghdr is deprecated
-        im_type = imghdr.what(None, h=id_image_blob)
-        id_page = tmpdir / f"img_{int(t):04}_id0.{im_type}"
-        if not im_type:
-            raise PlomSeriousException(f"Could not identify image type: {id_page}")
-        with open(id_page, "wb") as f:
-            f.write(id_image_blob)
-        id_pages = [id_page]
+    for row in pagedata:
+        # Issue #2707: better use a image-type key
+        if not row["pagename"].casefold().startswith("id"):
+            continue
+        ext = Path(row["server_path"]).suffix
+        filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
+        img_bytes = msgr.get_image(row["id"], row["md5"])
+        with open(filename, "wb") as f:
+            f.write(img_bytes)
+        id_pages.append(filename)
+
     marked_pages = []
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
@@ -93,7 +95,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         marked_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
-    pagedata = msgr.get_pagedata(t)
+
     dnm_pages = []
     for row in pagedata:
         # Issue #2707: better use a image-type key
