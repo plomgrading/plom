@@ -97,15 +97,15 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     dnm_pages = []
     for row in pagedata:
         # Issue #2707: better use a image-type key
-        if row["pagename"].casefold().startswith("dnm"):
-            obj = msgr.get_image(row["id"], row["md5"])
-            ext = Path(row["server_path"]).suffix
-            filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
-            with open(filename, "wb") as f:
-                f.write(obj)
-            dnm_pages.append(filename)
-    # return id-page inside a list since then the 3 different page types
-    # are returned consistently inside lists.
+        if not row["pagename"].casefold().startswith("dnm"):
+            continue
+        ext = Path(row["server_path"]).suffix
+        filename = tmpdir / f'img_{int(t):04}_{row["pagename"]}{ext}'
+        img_bytes = msgr.get_image(row["id"], row["md5"])
+        with open(filename, "wb") as f:
+            f.write(img_bytes)
+        dnm_pages.append(filename)
+
     return (id_pages, marked_pages, dnm_pages)
 
 
