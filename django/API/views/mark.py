@@ -410,3 +410,22 @@ class MgetAnnotationImage(APIView):
         return FileResponse(
             open(annotation_image.path, "rb"), status=status.HTTP_200_OK
         )
+
+
+class MarkingTaskTagsView(APIView):
+    """
+    Handle getting and setting tags for marking tasks.
+    """
+
+    def get(self, request, code):
+        mts = MarkingTaskService()
+        try:
+            mts.get_tags_for_task(code)
+        except ValueError as e:
+            return Response(
+                str(e), status=status.HTTP_400_BAD_REQUEST
+            )
+        except RuntimeError as e:
+            return Response(
+                str(e), status=status.HTTP_404_NOT_FOUND
+            )

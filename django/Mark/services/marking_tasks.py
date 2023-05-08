@@ -148,8 +148,13 @@ class MarkingTaskService:
             code: str, a unique string that includes the paper number and question number.
         """
 
-        paper_number, question_number = self.unpack_code(code)
-        return self.get_latest_task(paper_number, question_number)
+        try:
+            paper_number, question_number = self.unpack_code(code)
+            return self.get_latest_task(paper_number, question_number)
+        except AssertionError:
+            raise ValueError(f"{code} is not a valid task code.")
+        except MarkingTask.DoesNotExist:
+            raise RuntimeError(f"Task {code} does not exist.")
 
     def get_user_tasks(self, user, question=None, version=None):
         """
@@ -455,3 +460,17 @@ class MarkingTaskService:
 
         task = self.get_latest_task(paper, question)
         return Annotation.objects.filter(task=task).order_by("-edition").first()
+
+    def get_tags_for_task(self, code):
+        """
+        Get a list of tags assigned to this marking task.
+
+        Args:
+            code: str, the question/paper code for a task
+
+        Returns:
+            list[str]: the text of all tags for this task.
+        """
+
+        task = self.get_task_from_code(code)  # TODO: what if the client has an OOD task with the same code?
+        return [tag.text for tag in task.tag_set]
