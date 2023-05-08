@@ -962,42 +962,6 @@ class BaseMessenger:
                     raise PlomTakenException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def request_donotmark_images(self, papernum):
-        """Get the various Do Not Mark images for a paper.
-
-        Deprecated: only implmented by legacy servers.
-        """
-        if self.webplom:
-            # TODO: hardcoded to return empty
-            return []
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/ID/donotmark_images/{papernum}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            if response.status_code == 204:
-                return []  # 204 is empty list
-            return [
-                BytesIO(img.content).getvalue()
-                for img in MultipartDecoder.from_response(response).parts
-            ]
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomNoPaper(
-                    f"Cannot find DNW image files for {papernum}."
-                ) from None
-            elif response.status_code == 410:
-                raise PlomBenignException(
-                    f"The DNM group of {papernum} has not been scanned."
-                ) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def get_annotations(self, num, question, edition=None, integrity=None):
         """Download the latest annotations (or a particular set of annotations).
 
