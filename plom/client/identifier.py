@@ -206,7 +206,7 @@ class IDClient(QWidget):
         # Save the local temp directory for image files and the class list.
         if not tmpdir:
             tmpdir = tempfile.mkdtemp(prefix="plom_")
-        self.workingDirectory = Path(tmpdir)
+        self.workdir = Path(tmpdir)
         self.msgr = None
 
     def setup(self, messenger):
@@ -404,28 +404,20 @@ class IDClient(QWidget):
         if self.exM.paperList[r].originalFile is not None:
             return
         # else try to grab it from server
-        try:
-            imageDat = self.msgr.request_ID_image(test)
-        except PlomBenignException as e:
-            log.error("Somewhat unexpected error getting image for %s: %s", test, e)
-            WarnMsg(self, f'Unexpected but benign exception:\n"{e}"').exec()
-            # self.exM.removePaper(r)
-            return
-
-        if imageDat is None:  # means no image
-            imageName = None
-        else:
-            image_ext = imghdr.what(None, h=imageDat)
-            if not image_ext:
-                msg = f"Failed to identify extension of {len(imageDat)} bytes"
-                msg += f" of image data for test {test}"
-                log.error(msg)
-                WarnMsg(self, msg).exec()
-                imageName = None
-            else:
-                imageName = self.workingDirectory / f"i{test}.0.{image_ext}"
-                with open(imageName, "wb") as fh:
-                    fh.write(imageDat)
+        pagedata = self.msgr.get_pagedata(test)
+        id_pages = []
+        for row in pagedata:
+            # Issue #2707: better use a image-type key
+            if not row["pagename"].casefold().startswith("id"):
+                continue
+            img_bytes = self.msgr.get_image(row["id"], row["md5"])
+            ext = Path(row["server_path"]).suffix
+            filename = self.workdir / f'img_{int(test):04}_{row["pagename"]}{ext}'
+            with open(filename, "wb") as fh:
+                fh.write(img_bytes)
+            id_pages.append(filename)
+        assert len(id_pages) == 1, "Expected exactly one ID page"
+        (imageName,) = id_pages
 
         self.exM.paperList[r].originalFile = imageName
 
@@ -590,16 +582,20 @@ class IDClient(QWidget):
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        img_bytes = self.msgr.request_ID_image(test)
-        img_ext = imghdr.what(None, h=img_bytes)
-        if not img_ext:
-            msg = f"Failed to identify extension of {len(img_bytes)} bytes"
-            msg += f" of image data for test {test}"
-            log.error(msg)
-            raise PlomSeriousException(msg)
-        filename = self.workingDirectory / f"i{test}.0.{img_ext}"
-        with open(filename, "wb") as fh:
-            fh.write(img_bytes)
+        pagedata = self.msgr.get_pagedata(test)
+        id_pages = []
+        for row in pagedata:
+            # Issue #2707: better use a image-type key
+            if not row["pagename"].casefold().startswith("id"):
+                continue
+            img_bytes = self.msgr.get_image(row["id"], row["md5"])
+            ext = Path(row["server_path"]).suffix
+            filename = self.workdir / f'img_{int(test):04}_{row["pagename"]}{ext}'
+            with open(filename, "wb") as fh:
+                fh.write(img_bytes)
+            id_pages.append(filename)
+        assert len(id_pages) == 1, "Expected exactly one ID page"
+        (filename,) = id_pages
 
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, filename))
