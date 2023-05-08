@@ -18,7 +18,6 @@ from API.views import (
     IDgetNextTask,
     IDprogressCount,
     IDclaimThisTask,
-    IDgetImage,
     MarkingProgressCount,
     MgetNextTask,
     MclaimThisTask,
@@ -76,7 +75,6 @@ urlpatterns = [
         name="api_pagedata_context_question",
     ),
     path("MK/images/<int:pk>/<hash>/", MgetOneImage.as_view(), name="api_MK_one_image"),
-    path("ID/image/<paper_id>/", IDgetImage.as_view(), name="api_ID_get_image"),
     path(
         "annotations/<int:paper>/<int:question>/",
         MgetAnnotations.as_view(),

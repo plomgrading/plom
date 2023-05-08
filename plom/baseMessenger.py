@@ -923,6 +923,8 @@ class BaseMessenger:
     def request_ID_image(self, papernum):
         """Download an image of the ID page for a particular paper.
 
+        DEPRECATED: only legacy series implement this.
+
         args:
             papernum (int/str): from which paper number do we want the
                 ID page?
