@@ -920,50 +920,6 @@ class BaseMessenger:
             self.SRmutex.release()
         return image
 
-    def request_ID_image(self, papernum):
-        """Download an image of the ID page for a particular paper.
-
-        DEPRECATED: only legacy series implement this.
-
-        args:
-            papernum (int/str): from which paper number do we want the
-                ID page?
-
-        return:
-            None/bytes: png/jpeg or whatever as bytes.  There is a special
-            case indicated by `None`: the paper is identified but not
-            scanned.  This can happen with HW uploads (or maybe could in
-            the past).
-
-        Errors/Exceptions
-            PlomAuthenticationException:
-            PlomUnscannedPaper: In some special cases, you could get `None`
-                instead, see note above.
-            PlomTakenException: someone else has it and we're not manager.
-            PlomNoPaper: no such paper.
-            PlomSeriousException: Other errors.
-        """
-        with self.SRmutex:
-            try:
-                response = self.get(
-                    f"/ID/image/{papernum}",
-                    json={"user": self.user, "token": self.token},
-                )
-                response.raise_for_status()
-                if response.status_code == 204:
-                    return None  # 204 means no image
-                return BytesIO(response.content).getvalue()
-            except requests.HTTPError as e:
-                if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                elif response.status_code == 404:
-                    raise PlomNoPaper(response.reason) from None
-                elif response.status_code == 410:
-                    raise PlomUnscannedPaper(response.reason) from None
-                elif response.status_code == 409:
-                    raise PlomTakenException(response.reason) from None
-                raise PlomSeriousException(f"Some other sort of error {e}") from None
-
     def get_annotations(self, num, question, edition=None, integrity=None):
         """Download the latest annotations (or a particular set of annotations).
 
