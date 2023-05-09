@@ -32,8 +32,8 @@ services:
       - web
   web:
     build:
-      context: django/
-      dockerfile: ../Containerfile.django
+      context: ./
+      dockerfile: Containerfile.django
     ports:
       - 8000:8000
       - 3000:3000
