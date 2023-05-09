@@ -213,7 +213,7 @@ class ShowTable(QTableWidget):
         if event.source() == self:
             event.setDropAction(Qt.DropAction.CopyAction)
             rows = set([mi.row() for mi in self.selectedIndexes()])
-            targetRow = self.indexAt(event.pos()).row()
+            targetRow = self.indexAt(event.position().toPoint()).row()
             rows.discard(targetRow)
             rows = sorted(rows)
             if not rows:
@@ -236,7 +236,7 @@ class ShowTable(QTableWidget):
                 self.removeRow(row)
             event.accept()
         elif isinstance(event.source(), ShowTable):  # move between lists
-            targetRow = self.indexAt(event.pos()).row()
+            targetRow = self.indexAt(event.position().toPoint()).row()
             sourceInd = event.source().selectedIndexes()
             sourceRowCount = len(sourceInd) // 4
             # just before you drop - make a list of keys already in table
@@ -260,7 +260,7 @@ class ShowTable(QTableWidget):
                 for r in sourceRows[0::4]:  # every 4th
                     event.source().removeRow(r)
         else:
-            targetRow = self.indexAt(event.pos()).row()
+            targetRow = self.indexAt(event.position().toPoint()).row()
             sourceInd = event.source().selectedIndexes()
             sourceRowCount = len(sourceInd) // 4
             # before you drop - make a list of keys already in table
