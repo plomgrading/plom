@@ -10,10 +10,21 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK 1
 ENV PYTHONUNBUFFERED 1
 ENV PLOM_USING_DOCKER 1
 
+# base OS dependencies
+RUN apt-get -y update && \
+    apt-get --no-install-recommends -y install cmake gcc latexmk texlive-pictures build-essential git && \
+    apt-get -yq autoclean
+
+# Set work directory
+WORKDIR /src
+# COPY ./requirements.txt .
+# RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install .
+COPY . /src
+RUN pip install --no-deps .
+
 # Set work directory
 WORKDIR /code
-
-RUN apt update -y && apt install -y cmake gcc latexmk texlive-pictures build-essential git
 
 # Install dependencies
 COPY ./requirements.txt.django .
