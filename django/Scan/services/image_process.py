@@ -4,7 +4,8 @@
 # Copyright (C) 2023 Natalie Balashov
 
 import numpy as np
-from PIL import Image, ImageDraw
+import cv2 as cv
+from PIL import Image
 from plom.scan import rotate_bitmap, rotate
 
 
@@ -13,6 +14,17 @@ class PageImageProcessor:
 
     (TODO: gamma correction, etc?)
     """
+
+    # values used for QR code centre locations
+    # see pdf_page_add_labels_QRs() in plom/create/mergeAndCode.py
+    TOP = 55
+    BOTTOM = 737
+    RIGHT = 562
+    LEFT = 50
+
+    # dimensions of the QR-bounded region
+    WIDTH = RIGHT - LEFT
+    HEIGHT = BOTTOM - TOP
 
     def get_page_orientation(self, qr_code_data):
         """Return a string representing a page orientation.
@@ -170,170 +182,89 @@ class PageImageProcessor:
         rotate_bitmap(path, rotate_angle)
         return rotate_angle
 
-    def get_rotation_angle_from_qrs(self, qr_dict):
+    def apply_image_transformation(self, image, qr_dict):
         """
-        Determine the correction rotation angle for an image calculated from the qr_data
+        Given an image, apply an affine transformation to correct its orientation based on QR coordinates
 
         Args:
-            qr_data (dict): parsed QR code data
+            image (numpy.ndarray): the image which will be unskewed
+            qr_dict (dict): the QR information for the image
 
         Returns:
-            float: rotation angle (in radians) by which the page needs to be rotated CCW
-            in order to correct the page's skewness. It is anticipated
-            that this angle is around 5 degrees.
-            If there is not enough QR data to determine the angle, return 0.
+            numpy.ndarray: the image after an affine transformation has been applied
         """
-        if ("SW" and "SE") in qr_dict:
-            leg = qr_dict["SW"]["y_coord"] - qr_dict["SE"]["y_coord"]
-            hyp = np.sqrt(
-                leg**2 + (qr_dict["SW"]["x_coord"] - qr_dict["SE"]["x_coord"]) ** 2
+        if "NW" in qr_dict:
+            dest_three_points = np.float32(
+                [
+                    [self.LEFT, self.TOP],
+                    [self.LEFT, self.BOTTOM],
+                    [self.RIGHT, self.BOTTOM],
+                ]
             )
-        elif ("SE" and "NE") in qr_dict:
-            leg = qr_dict["SE"]["x_coord"] - qr_dict["NE"]["x_coord"]
-            hyp = np.sqrt(
-                leg**2 + (qr_dict["SE"]["y_coord"] - qr_dict["NE"]["y_coord"]) ** 2
+            src_three_points = np.float32(
+                [
+                    [qr_dict["NW"]["x_coord"], qr_dict["NW"]["y_coord"]],
+                    [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
+                    [qr_dict["SE"]["x_coord"], qr_dict["SW"]["y_coord"]],
+                ]
             )
-        elif ("NW" and "SW") in qr_dict:
-            leg = qr_dict["SW"]["x_coord"] - qr_dict["NW"]["x_coord"]
-            hyp = np.sqrt(
-                leg**2 + (qr_dict["SW"]["y_coord"] - qr_dict["NW"]["x_coord"]) ** 2
+        elif "NE" in qr_dict:
+            dest_three_points = np.float32(
+                [
+                    [self.RIGHT, self.TOP],
+                    [self.LEFT, self.BOTTOM],
+                    [self.RIGHT, self.BOTTOM],
+                ]
             )
-        elif ("NE" and "NW") in qr_dict:
-            leg = qr_dict["NW"]["y_coord"] - qr_dict["NE"]["y_coord"]
-            hyp = np.sqrt(
-                leg**2 + (qr_dict["NW"]["x_coord"] - qr_dict["NE"]["x_coord"]) ** 2
+            src_three_points = np.float32(
+                [
+                    [qr_dict["NE"]["x_coord"], qr_dict["NE"]["y_coord"]],
+                    [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
+                    [qr_dict["SE"]["x_coord"], qr_dict["SW"]["y_coord"]],
+                ]
             )
         else:
-            # not enough QR coordinates: cannot determine angle of rotation
-            return 0
-        return np.arcsin(-leg / hyp)
+            return image
 
-    def determine_qr_boundary(self, qr_info):
+        affine_matrix = cv.getAffineTransform(src_three_points, dest_three_points)
+        return cv.warpAffine(
+            image,
+            affine_matrix,
+            (image.shape[1], image.shape[0]),
+            flags=cv.INTER_LINEAR,
+        )
+
+    def extract_rectangular_region(
+        self, image_path, orientation, qr_dict, top, bottom, left, right
+    ):
         """
-        Determine the corners of the L-shape defined by the QR centre coordinates
-
-        Args:
-            qr_data (dict): parsed QR code data, assumed to include (NE, SW, SE) or (NW, SW, SE)
-
-        Returns:
-            tuple (tuple of floats): extracts the (top_left, top_right, bottom_left, bottom_right)
-            (x, y) pairs that describe the corresponding bounds of the rectangle defined by the QR
-            coordinates. Returns None for the stapled corner which is missing a QR.
-        """
-        if "NW" in qr_info:
-            top_left = (qr_info["NW"]["x_coord"], qr_info["NW"]["y_coord"])
-        else:
-            top_left = None
-
-        if "NE" in qr_info:
-            top_right = (qr_info["NE"]["x_coord"], qr_info["NE"]["y_coord"])
-        else:
-            top_right = None
-
-        bottom_left = (qr_info["SW"]["x_coord"], qr_info["SW"]["y_coord"])
-        bottom_right = (qr_info["SE"]["x_coord"], qr_info["SE"]["y_coord"])
-
-        return (top_left, top_right, bottom_left, bottom_right)
-
-    def draw_qr_boundary(self, image_path, top, left, bottom, right):
-        """
-        Draw a rectangle on the image file (modifying on disk) for debugging purposes
+        Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it
 
         Args:
             img_path (str/pathlib.Path): path to image file
-        """
-        box_location = [
-            (left, top),
-            (right, bottom),
-        ]
-        img = Image.open(img_path)
-        out_img = ImageDraw.Draw(img)
-        out_img.rectangle(box_location, outline="blue", width=10)
-        img.save(img_path)
-
-    def apply_coord_transformation(self, coord_tuple, angle, img_width, img_height):
-        """
-        Given an the corner coordinates, apply an affine transformation to correct them
-
-        Args:
-            coord_tuple (tuple of tuples): original coordinate values prior to transformation
-            angle (float): angle that the image was rotated (in radians)
-            img_width (int): width of the image that was rotated
-            img_height (int): height of the image that was rotated
-
-        Returns:
-            tuple of tuples: the resulting coordinates after the affine transformation was applied
-        """
-        move_to_origin = np.array(
-            [[1, 0, img_width / 2.0], [0, 1, img_height / 2.0], [0, 0, 1]]
-        )
-        rotation = np.array(
-            [
-                [np.cos(angle), np.sin(angle), 0],
-                [-np.sin(angle), np.cos(angle), 0],
-                [0, 0, 1],
-            ]
-        )
-        move_back = np.array(
-            [[1, 0, -img_width / 2.0], [0, 1, -img_height / 2.0], [0, 0, 1]]
-        )
-        aff_transf = move_to_origin @ rotation @ move_back
-
-        new_coords = list()
-        for point in coord_tuple:
-            if point is not None:
-                p = np.array([[point[0]], [point[1]], [0]])
-                result = aff_transf @ p
-                new_coords.append((result[0][0], result[1][0]))
-            else:
-                new_coords.append(None)
-
-        return tuple(new_coords)
-
-    def get_rectangular_region(
-        self, image_path, orientation, qr_dict, top_left, bottom_right
-    ):
-        """
-        Given an image, get a particular subset of it, after applying an affine transformation to correct it
-
-        Args:
-            img_path (PIL.Image): image object that will be transformed
             qr_data (dict): parsed QR code data
-            top_left (tuple): fractional values in [0, 1] which define the top left corner
-                              of the desired subsection of the image
-            bottom_right (tuple): same as top_left, but for the bottom right corner
+            top (float): fractional value in [0, 1] which define the top boundary of the desired subsection of the image
+            left (float): same as top, defining the left boundary
+            bottom (float): same as top, defining the bottom boundary
+            right (float): same as top, defining the right boundary
 
         Returns:
             PIL.Image: the requested subsection of the original image
         """
-        img = rotate.pil_load_with_jpeg_exif_rot_applied(image_path)
-        img.rotate(orientation)
+        pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(image_path)
+        pil_img.rotate(orientation)
 
-        angle = self.get_rotation_angle_from_qrs(qr_dict)
-        new_img = img.rotate(
-            angle, center=(img.width / 2.0, img.height / 2.0), resample=Image.BILINEAR
-        )
+        # convert the PIL.Image to OpenCV format
+        opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)
 
-        coord_tuples = self.determine_qr_boundary(qr_dict)
-        new_coords = self.apply_coord_transformation(
-            coord_tuples, angle, img.width, img.height
-        )
+        righted_img = self.apply_image_transformation(opencv_img, qr_dict)
 
-        try:
-            region_width = new_coords[3][0] - new_coords[2][0]
-            region_height = new_coords[3][1] - new_coords[2][1]
+        top = round(self.TOP + top * self.HEIGHT)
+        bottom = round(self.TOP + bottom * self.HEIGHT)
+        left = round(self.LEFT + left * self.WIDTH)
+        right = round(self.LEFT + right * self.WIDTH)
 
-            left = new_coords[2][0] + top_left[0] * region_width
-            top = new_coords[1][1] + top_left[1] * region_height
-            right = new_coords[1][0] + bottom_right[0] * region_width
-            bottom = new_coords[2][1] + bottom_right[1] * region_height
-        except:
-            region_width = new_coords[3][0] - new_coords[2][0]
-            region_height = new_coords[3][1] - new_coords[2][1]
+        cropped_img = righted_img[top:bottom, left:right]
 
-            left = new_coords[2][0] + top_left[0] * region_width
-            top = new_coords[0][1] + top_left[1] * region_height
-            right = new_coords[0][0] + bottom_right[0] * region_width
-            bottom = new_coords[2][1] + bottom_right[1] * region_height
-
-        return img.crop((left, top, right, bottom))
+        # convert the result to a PIL.Image
+        return Image.fromarray(cv.cvtColor(cropped_img, cv.COLOR_BGR2RGB))

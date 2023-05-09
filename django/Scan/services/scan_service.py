@@ -986,19 +986,16 @@ class ScanService:
 
         pipr = PageImageProcessor()
         id_pages = KnownStagingImage.objects.filter(page_number=1)
-        print(id_pages)
 
-        counter = 0  # temporary way to create file names for saved images
         for id_img in id_pages:
             img_path = id_img.staging_image.image_file.path
             orientation = id_img.staging_image.rotation
             qr_data = id_img.staging_image.parsed_qr
             if len(qr_data) == 3:
-                id_box = pipr.get_rectangular_region(
-                    img_path, orientation, qr_data, (0.2, 0.2), (0.6, 0.6)
-                )  # TODO: corner values are arbitrary
-                id_box.save(id_box_folder / f"id_box_{counter}.png")
-                counter += 1
+                id_box = pipr.extract_rectangular_region(
+                    img_path, orientation, qr_data, 0.28, 0.58, 0.09, 0.91
+                )
+                id_box.save(id_box_folder / f"id_box_{id_img.paper_number}.png")
 
 
 # ----------------------------------------

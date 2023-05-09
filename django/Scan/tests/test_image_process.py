@@ -1,7 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 
 from django.test import TestCase
+from django.conf import settings
+
+import pathlib
+import tempfile
+import cv2 as cv
+from PIL import Image
 
 from Scan.services import PageImageProcessor
 
@@ -63,6 +70,22 @@ class PageImageProcessorTests(TestCase):
             "SE": {"quadrant": "2"},
             "SW": {"quadrant": "1"},
         }
+
+        self.qr_dict = {
+            "NW": {
+                "x_coord": 181.0,
+                "y_coord": 387.5,
+            },
+            "SW": {
+                "x_coord": 325.75,
+                "y_coord": 3006.75,
+            },
+            "SE": {
+                "x_coord": 2289.5,
+                "y_coord": 2892.5,
+            },
+        }
+
         return super().setUp()
 
     def test_check_corner(self):
@@ -110,3 +133,61 @@ class PageImageProcessorTests(TestCase):
 
         with self.assertRaises(RuntimeError):
             pipr.get_page_orientation({})
+
+    def test_apply_image_transformation(self):
+        """
+        Test PageImageProcessor.apply_image_transformation()
+        """
+        pipr = PageImageProcessor()
+        img_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+        test_img = Image.open(img_path)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            img_rot_path = pathlib.Path(tmpdir) / "rot_3_deg_img.png"
+            img_rot = test_img.rotate(3, expand=True)
+            img_rot.save(img_rot_path)
+
+            img_cv = cv.imread(str(img_rot_path))
+            transformed_img = pipr.apply_image_transformation(img_cv, self.qr_dict)
+            img_pil = Image.fromarray(cv.cvtColor(transformed_img, cv.COLOR_BGR2RGB))
+
+            self.assertTrue(
+                abs(img_pil.height - test_img.height) / test_img.height < 0.1
+            )
+            self.assertTrue(abs(img_pil.width - test_img.width) / test_img.height < 0.1)
+
+    def test_extract_rectangular_region(self):
+        """
+        Test PageImageProcessor.extract_rectangular_region()
+        """
+        pipr = PageImageProcessor()
+        in_top = 0.1
+        in_bottom = 0.3
+        in_left = 0.2
+        in_right = 0.5
+        img_path = settings.BASE_DIR / "Scan" / "tests" / "page_img_good.png"
+
+        test_img = Image.open(img_path)
+        cropped_img = test_img.crop(
+            (
+                round(pipr.LEFT + in_left * pipr.WIDTH),
+                round(pipr.TOP + in_top * pipr.HEIGHT),
+                round(pipr.LEFT + in_right * pipr.WIDTH),
+                round(pipr.TOP + in_bottom * pipr.HEIGHT),
+            )
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            img_rot_path = pathlib.Path(tmpdir) / "rot_93_deg_img.png"
+            img_rot = test_img.rotate(93, expand=True)
+            img_rot.save(img_rot_path)
+
+            output_img = pipr.extract_rectangular_region(
+                img_rot_path, -90, self.qr_dict, in_top, in_bottom, in_left, in_right
+            )
+            self.assertTrue(
+                abs(cropped_img.height - output_img.height) / cropped_img.height < 0.1
+            )
+            self.assertTrue(
+                abs(cropped_img.width - output_img.width) / cropped_img.height < 0.1
+            )
