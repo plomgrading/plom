@@ -21,9 +21,8 @@ class Command(BaseCommand):
         grp = parser.add_mutually_exclusive_group()
         grp.add_argument(
             "--start",
-            nargs=1,
             type=int,
-            action="store",
+            metavar="N",
             help="Start building a specific test paper in the queue",
         )
         grp.add_argument(
@@ -48,9 +47,7 @@ class Command(BaseCommand):
         )
         grp.add_argument(
             "--download",
-            nargs=1,
             type=int,
-            action="store",
             metavar="N",
             help="Download a specific test paper as a PDF file",
         )
@@ -142,9 +139,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["start"]:
-            self.start_specific_task(options["start"][0])
+            self.start_specific_task(options["start"])
         elif options["download"]:
-            self.download_specific_paper(options["download"][0])
+            self.download_specific_paper(options["download"])
         elif options["download_all"]:
             self.download_all_papers()
         elif options["start_all"]:
