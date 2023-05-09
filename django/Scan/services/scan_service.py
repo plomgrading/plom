@@ -11,7 +11,6 @@ import random
 from statistics import mode
 import tempfile
 
-import fitz
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
@@ -40,6 +39,7 @@ from .image_process import PageImageProcessor
 from Scan.models import (
     StagingBundle,
     StagingImage,
+    StagingThumbnail,
     KnownStagingImage,
     ExtraStagingImage,
     DiscardStagingImage,
@@ -51,6 +51,8 @@ from Papers.services import ImageBundleService
 from Papers.services import SpecificationService
 
 from Scan.services.qr_validators import QRErrorService
+
+import logging
 
 
 class ScanService:
@@ -1037,11 +1039,15 @@ def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
         with transaction.atomic():
             for X in results:
                 with open(X["file_path"], "rb") as fh:
-                    StagingImage.objects.create(
+                    img = StagingImage.objects.create(
                         bundle=bundle_obj,
                         bundle_order=X["index"],
                         image_file=File(fh, name=X["file_name"]),
                         image_hash=X["image_hash"],
+                    )
+                with open(X["thumb_path"], "rb") as fh:
+                    StagingThumbnail.objects.create(
+                        stagingimage=img, image_file=File(fh, X["thumb_name"])
                     )
 
             bundle_obj.has_page_images = True
@@ -1108,6 +1114,9 @@ def huey_child_get_page_image(
         debug_jpeg (bool): off by default.  If True then we make some rotations by
             non-multiplies of 90, and save some low-quality jpegs.
     """
+    import fitz
+    from PIL import Image
+
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
@@ -1126,6 +1135,12 @@ def huey_child_get_page_image(
     with open(save_path, "rb") as f:
         image_hash = hashlib.sha256(f.read()).hexdigest()
 
+    with Image.open(save_path) as img:
+        size = 256, 256
+        img.thumbnail(size, Image.Resampling.LANCZOS)
+        thumb_path = basedir / ("thumb-" + basename + ".png")
+        img.save(thumb_path)
+
     # TODO - return an error of some sort here if problems
 
     return {
@@ -1133,6 +1148,8 @@ def huey_child_get_page_image(
         "file_name": save_path.name,
         "file_path": str(save_path),
         "image_hash": image_hash,
+        "thumb_name": thumb_path.name,
+        "thumb_path": str(thumb_path),
     }
 
 
@@ -1147,6 +1164,8 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
     """
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path
+    thumb = img.stagingthumbnail
+    thumb_path = thumb.image_file.path
 
     scanner = ScanService()
 
@@ -1161,6 +1180,13 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
         code_dict = QRextract(image_path)
         page_data = scanner.parse_qr_code([code_dict])
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
+
+        # now fix up the thumbnail
+        from PIL import Image
+
+        tn_img = Image.open(thumb_path)
+        tn_rotated = tn_img.rotate(angle=-has_had_rotation, expand=True)
+        tn_rotated.save(thumb_path)
 
     # Return the parsed QR codes for parent process to store in db
     # Zero rotation returned because rotate_page_image() modifies the image

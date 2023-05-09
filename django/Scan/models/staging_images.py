@@ -6,6 +6,8 @@
 from django.db import models
 from Scan.models import StagingBundle
 
+import logging
+
 
 class StagingImage(models.Model):
     """
@@ -40,6 +42,21 @@ class StagingImage(models.Model):
     rotation = models.IntegerField(default=0)
     pushed = models.BooleanField(default=False)
     image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)
+
+
+class StagingThumbnail(models.Model):
+    def _staging_thumbnail_upload_path(self, filename):
+        # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
+        return "staging/bundles/{}/{}/page_images/{}".format(
+            self.stagingimage.bundle.user.username,
+            self.stagingimage.bundle.timestamp,
+            filename,
+        )
+
+    stagingimage = models.OneToOneField(
+        StagingImage, on_delete=models.CASCADE, primary_key=True
+    )
+    image_file = models.ImageField(upload_to=_staging_thumbnail_upload_path)
 
 
 class KnownStagingImage(models.Model):
