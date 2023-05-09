@@ -93,7 +93,7 @@ class Command(BaseCommand):
             nargs=1,
             metavar="N",
             help="""
-                Which question(s) are answer on this page?
+                Which question(s) are answered on this page?
                 You can pass a single integer, or a list like `[1,2,3]`
                 which updates each page to questions 1, 2 and 3.
                 You can also pass the special string `all` which uploads
