@@ -7,6 +7,14 @@
 
 """Plom tools for scanning tests and pushing to servers.
 
+See help for each subcommand or consult online documentation for an
+overview of the steps in setting up a server.
+
+Most subcommands communicate with a server, which can be specified
+on the command line or by setting environment variables PLOM\_SERVER
+and PLOM\_MANAGER\_PASSWORD.
+ 
+
 ## Overview of the scanning process
 
   1. Decide on a working directory for your scans, copy your PDFs into
