@@ -122,7 +122,7 @@ class GetBundleNavFragmentView(ScannerRequiredView):
             question_labels = [
                 f"Q.{n+1}" for n in range(SpecificationService().get_n_questions())
             ]
-            paper_numbers = scanner.get_bundle_paper_numbers_list(bundle)
+            paper_numbers = scanner.get_bundle_paper_numbers(bundle)
             all_paper_numbers = [
                 n + 1 for n in range(SpecificationService().get_n_to_produce())
             ]

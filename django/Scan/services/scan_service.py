@@ -905,23 +905,6 @@ class ScanService:
         return [pages[ord] for ord in sorted(pages.keys())]
 
     @transaction.atomic
-    def get_bundle_paper_numbers_list(self, bundle_obj):
-        """Gives ordered list of paper-numbers in the given bundle."""
-        known_papers = [
-            known.paper_number
-            for known in KnownStagingImage.objects.filter(
-                staging_image__bundle=bundle_obj
-            )
-        ]
-        extra_papers = [
-            extra.paper_number
-            for extra in ExtraStagingImage.objects.filter(
-                paper_number__isnull=False, staging_image__bundle=bundle_obj
-            )
-        ]
-        return sorted(list(set(known_papers + extra_papers)))
-
-    @transaction.atomic
     def get_bundle_papers_pages_list(self, bundle_obj):
         """Returns an ordered list of papers and their known/extra
         pages in the given bundle.  Each item in the list is a pair
@@ -980,7 +963,9 @@ class ScanService:
         n_digits = len(str(bundle_obj.number_of_pages))
 
         pages = {}
-        for img in bundle_obj.stagingimage_set.filter(image_type="extra").all():
+        for img in bundle_obj.stagingimage_set.filter(
+            image_type=StagingImage.EXTRA
+        ).all():
             pages[img.bundle_order] = {
                 "status": img.image_type,
                 "info": {
@@ -1039,11 +1024,12 @@ class ScanService:
         as determined by known and extra pages."""
         paper_list = []
         for img in bundle_obj.stagingimage_set.filter(
-            image_type="known"
+            image_type=StagingImage.KNOWN
         ).prefetch_related("knownstagingimage"):
             paper_list.append(img.knownstagingimage.paper_number)
+
         for img in bundle_obj.stagingimage_set.filter(
-            image_type="extra"
+            image_type=StagingImage.EXTRA
         ).prefetch_related("extrastagingimage"):
             if (
                 img.extrastagingimage.paper_number

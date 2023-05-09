@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def list_paper_numbers(self, bundle_name):
         scanner = ScanService()
         paper_numbers = scanner.get_bundle_paper_numbers_cmd(bundle_name)
-        print(f"Papers in bundle {bundle_name}: {paper_numbers}")
+        self.stdout.write(f"Papers in bundle {bundle_name}: {paper_numbers}")
 
     def list_extra_pages(self, bundle_name):
         scanner = ScanService()
@@ -82,7 +82,7 @@ class Command(BaseCommand):
         )
         spa.add_argument("username", type=str, help="username doing the assigning.")
         spa.add_argument(
-            "-i" "--index", type=int, help="index of page within the bundle (from one)"
+            "-i", "--index", type=int, help="index of page within the bundle (from one)"
         )
         spa.add_argument(
             "-p", "--paper", type=int, help="the paper-number of the extra-page"
