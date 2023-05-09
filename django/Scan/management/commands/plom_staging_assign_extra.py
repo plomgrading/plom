@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from tabulate import tabulate
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from Scan.services import ScanCastService, ScanService
 from Papers.services.validated_spec_service import SpecificationService
 from plom.scan.question_list_utils import check_question_list
@@ -57,9 +58,12 @@ class Command(BaseCommand):
         self, username, bundle_name, index, paper_number, question_list
     ):
         scs = ScanCastService()
-        scs.assign_extra_page_cmd(
-            username, bundle_name, index, paper_number, question_list
-        )
+        try:
+            scs.assign_extra_page_cmd(
+                username, bundle_name, index, paper_number, question_list
+            )
+        except ValueError as e:
+            raise CommandError(e)
 
     def clear_extra_page_data(self, username, bundle_name, index):
         scs = ScanCastService()
