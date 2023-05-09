@@ -269,7 +269,7 @@ class Command(BaseCommand):
         sp_map.add_argument(
             "-q",
             "--question",
-            nargs=1,
+            nargs="?",
             metavar="N",
             help="""
                 Which question(s) are answered on this page?
@@ -315,8 +315,10 @@ class Command(BaseCommand):
             )
         elif options["command"] == "map_extra":
             service = ScanService()
+            if options["question"] is None:
+                options["question"] = "all"
             n_questions = SpecificationService().get_n_questions()
-            question_list = check_question_list(options["question"][0], n_questions)
+            question_list = check_question_list(options["question"], n_questions)
             # pass that to the server
             service.surgery_map_extra(
                 options["bundle_name"],

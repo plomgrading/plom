@@ -94,7 +94,7 @@ class Command(BaseCommand):
         spa.add_argument(
             "-q",
             "--question",
-            nargs=1,
+            nargs="?",
             metavar="N",
             help="""
                 Which question(s) are answered on this page?
@@ -119,8 +119,10 @@ class Command(BaseCommand):
         elif options["command"] == "papers":
             self.list_paper_numbers(options["bundle"])
         elif options["command"] == "assign":
+            if options["question"] is None:
+                options["question"] = "all"
             n_questions = SpecificationService().get_n_questions()
-            question_list = check_question_list(options["question"][0], n_questions)
+            question_list = check_question_list(options["question"], n_questions)
             self.assign_extra_page(
                 options["username"],
                 options["bundle"],
