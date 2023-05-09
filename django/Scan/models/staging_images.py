@@ -48,12 +48,12 @@ class StagingThumbnail(models.Model):
     def _staging_thumbnail_upload_path(self, filename):
         # save bundle as "//media/staging/bundles/username/bundle-timestamp/page_images/filename"
         return "staging/bundles/{}/{}/page_images/{}".format(
-            self.stagingimage.bundle.user.username,
-            self.stagingimage.bundle.timestamp,
+            self.staging_image.bundle.user.username,
+            self.staging_image.bundle.timestamp,
             filename,
         )
 
-    stagingimage = models.OneToOneField(
+    staging_image = models.OneToOneField(
         StagingImage, on_delete=models.CASCADE, primary_key=True
     )
     image_file = models.ImageField(upload_to=_staging_thumbnail_upload_path)

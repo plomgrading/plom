@@ -6,6 +6,18 @@
 {% block page_heading %}Manage bundle{% endblock %}
 
 {% block main_content %}
+
+<div style="margin: 0px 0px 16px 2.5px">
+  <a class="btn btn-success" href="{% url 'scan_home' %}">
+    <i class="bi bi-chevron-left"></i>
+    Return to upload
+  </a>
+  <a class="btn btn-info" href="{% url 'scan_bundle_thumbnails' timestamp %}">
+    <i class="bi bi-chevron-left"></i>
+    Return to thumbnails
+  </a>
+</div>
+
 <div style="margin: 0px 0px 16px 2.5px">
     <div class="card w-75">
         <div class="card-body">
@@ -50,12 +62,6 @@
     </div>
 </div>
 
-<div style="margin: 0px 0px 16px 2.5px">
-  <a class="btn btn-success" href="{% url 'scan_home' %}">
-    <i class="bi bi-chevron-left"></i>
-    Return to upload
-  </a>
-</div>
 
 <div id="accord">
       <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">

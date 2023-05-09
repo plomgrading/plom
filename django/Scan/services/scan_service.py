@@ -14,10 +14,9 @@ import tempfile
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
-from django.db.models import Prefetch
 from django_huey import db_task
 from django.utils import timezone
 
@@ -51,8 +50,6 @@ from Papers.services import ImageBundleService
 from Papers.services import SpecificationService
 
 from Scan.services.qr_validators import QRErrorService
-
-import logging
 
 
 class ScanService:
@@ -258,6 +255,16 @@ class ScanService:
             bundle=bundle,
             bundle_order=index,
         )
+
+    @transaction.atomic
+    def get_thumbnail_image(self, timestamp, user, index):
+        """
+        Get a thubnail image from the database. To uniquely identify an image, we need a bundle
+        (and a timestamp, and user) and a page index
+        """
+        bundle_obj = self.get_bundle(timestamp, user)
+        img = StagingImage.objects.get(bundle=bundle_obj, bundle_order=index)
+        return img.stagingthumbnail
 
     @transaction.atomic
     def get_n_images(self, bundle):
@@ -1047,7 +1054,7 @@ def huey_parent_split_bundle_task(bundle_pk, *, debug_jpeg=False):
                     )
                 with open(X["thumb_path"], "rb") as fh:
                     StagingThumbnail.objects.create(
-                        stagingimage=img, image_file=File(fh, X["thumb_name"])
+                        staging_image=img, image_file=File(fh, X["thumb_name"])
                     )
 
             bundle_obj.has_page_images = True
@@ -1184,8 +1191,8 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
         # now fix up the thumbnail
         from PIL import Image
 
-        tn_img = Image.open(thumb_path)
-        tn_rotated = tn_img.rotate(angle=-has_had_rotation, expand=True)
+        with Image.open(thumb_path) as tn_img:
+            tn_rotated = tn_img.rotate(angle=has_had_rotation, expand=True)
         tn_rotated.save(thumb_path)
 
     # Return the parsed QR codes for parent process to store in db
