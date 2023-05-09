@@ -28,10 +28,9 @@ class GetSpecification(APIView):
     def get(self, request):
         spec = SpecificationService()
         if not spec.is_there_a_spec():
-            exc = APIException()
-            exc.status_code = status.HTTP_400_BAD_REQUEST
-            exc.detail = "Server does not have a spec."
-            raise exc
+            return Response(
+                "Server does not have a spec", status=status.HTTP_400_BAD_REQUEST
+            )
 
         the_spec = spec.get_the_spec()
         the_spec.pop("privateSeed", None)
