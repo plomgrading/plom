@@ -1,11 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import transaction
 
-from Papers.models import Paper, FixedPage, Image
-from Papers.models import DNMPage, IDPage, QuestionPage
+from Papers.models import (
+    Paper,
+    FixedPage,
+    IDPage,
+    DNMPage,
+    QuestionPage,
+    Image,
+    MobilePage,
+)
 
 
 class PageDataService:
@@ -41,12 +49,15 @@ class PageDataService:
         test_paper = Paper.objects.get(paper_number=paper)
         question_pages = QuestionPage.objects.filter(
             paper=test_paper, question_number=question
-        )
+        ).prefetch_related("image")
+        mobile_pages = MobilePage.objects.filter(
+            paper=test_paper, question_number=question
+        ).prefetch_related("image")
 
         page_list = []
         for page in question_pages.order_by("page_number"):
             image = page.image
-            if image:
+            if image:  # fixed pages might not have image if yet to be scanned.
                 page_list.append(
                     {
                         "id": image.pk,
@@ -57,17 +68,40 @@ class PageDataService:
                         "order": page.page_number,
                     }
                 )
+        # TODO - decide better order.
+        # Also - do not repeat mobile pages if can avoid it.
+        for page in mobile_pages:
+            image = page.image
+            assert image is not None  # mobile pages will always have images
+            page_list.append(
+                {
+                    "id": image.pk,
+                    "md5": image.hash,
+                    "orientation": image.rotation,
+                    "server_path": image.image_file.path,
+                    "included": True,
+                    # WARNING - HACKERY HERE
+                    "order": len(page_list) + 1,
+                    # WARNING HACKERY HERE
+                }
+            )
 
         return page_list
 
     @transaction.atomic
-    def get_question_pages_metadata(self, paper, question=None):
+    def get_question_pages_metadata(
+        self, paper, *, question=None, include_idpage=False, include_dnmpages=True
+    ):
         """
-        Return a list of metadata for all pages in a particular paper, optionally highlighting a question.
+        Return a list of metadata for all pages in a paper.
 
         Args:
             paper (int): test-paper number
             question (int/None): question number, if not None.
+            include_idpage (bool): whether to include ID pages in this
+                request (default: False)
+            include_dnmpages (bool): whether to include any DNM pages in
+                this request (default: True)
 
         The ``included`` key is not meaningful if ``question`` was not passed.
 
@@ -86,12 +120,20 @@ class PageDataService:
         """
 
         test_paper = Paper.objects.get(paper_number=paper)
-        paper_pages = FixedPage.objects.filter(paper=test_paper)
-
         pages_metadata = []
-        for page in paper_pages:
-            if not page.image:
-                continue
+
+        # get all the fixed pages of the test that have images - prefetch the related image
+        fixed_pages = FixedPage.objects.filter(
+            paper=test_paper, image__isnull=False
+        ).prefetch_related("image")
+
+        # possibly filter out ID and DNM pages
+        if not include_idpage:
+            fixed_pages = fixed_pages.not_instance_of(IDPage)
+        if not include_dnmpages:
+            fixed_pages = fixed_pages.not_instance_of(DNMPage)
+
+        for page in fixed_pages:
             if question is None:
                 # TODO: or is it better to not include this key?  That's likely
                 # what the legacy server does...
@@ -120,7 +162,38 @@ class PageDataService:
                     "server_path": str(page.image.image_file.path),
                 }
             )
-            # TODO: handle extra + homework pages
+
+        # make a dict which counts how many mobile pages for each
+        # question as we iterate through the list. We use this so that
+        # we can "name" each mobile page according to both its
+        # question number, and its order within the mobiles pages for
+        # that question. Hence mobile pages for question 2 would be named as
+        # e2.1, e2.2, e2.3, and so on.
+        # but since those pages are not necessarily in order in the system we
+        # need to keep count as we go.
+        question_mobile_page_count = {}
+
+        # add mobile-pages in pk order (is creation order)
+        for page in (
+            MobilePage.objects.filter(paper=test_paper)
+            .order_by("pk")
+            .prefetch_related("image")
+        ):
+            question_mobile_page_count.setdefault(page.question_number, 0)
+            question_mobile_page_count[page.question_number] += 1
+            pages_metadata.append(
+                {
+                    "pagename": f"e{page.question_number}.{question_mobile_page_count[page.question_number]}",
+                    "md5": page.image.hash,
+                    "included": page.question_number == question,
+                    # WARNING - HACKERY HERE vvvvvvvv
+                    "order": len(pages_metadata) + 1,
+                    # WARNING - HACKERY HERE ^^^^^^^^
+                    "id": page.image.pk,
+                    "orientation": page.image.rotation,
+                    "server_path": str(page.image.image_file.path),
+                }
+            )
 
         return pages_metadata
 

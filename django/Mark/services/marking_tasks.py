@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import json
 import pathlib
@@ -46,6 +47,12 @@ class MarkingTaskService:
         question_version = pqv_map[paper.paper_number][question_number]
 
         task_code = f"q{paper.paper_number:04}g{question_number}"
+
+        # mark other tasks with this code as 'out of date'
+        previous_tasks = MarkingTask.objects.filter(code=task_code)
+        for old_task in previous_tasks:
+            old_task.status = MarkingTask.OUT_OF_DATE
+            old_task.save()
 
         the_task = MarkingTask(
             assigned_user=user,

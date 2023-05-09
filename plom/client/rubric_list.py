@@ -368,7 +368,7 @@ class RubricTable(QTableWidget):
         if event.source() == self:
             event.setDropAction(Qt.DropAction.CopyAction)
             sourceRow = self.selectedIndexes()[0].row()
-            targetRow = self.indexAt(event.pos()).row()
+            targetRow = self.indexAt(event.position().toPoint()).row()
             if targetRow == -1:  # no row, so drop at end
                 targetRow = self.rowCount()
             # Careful about sorting during setItem calls: Issue #2065

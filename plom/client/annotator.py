@@ -705,7 +705,7 @@ class Annotator(QWidget):
         log.debug("wholePage: downloading files for testnum %s", testnum)
         dl = self.parentMarkerUI.Qapp.downloader
         pagedata = dl.msgr.get_pagedata_context_question(testnum, self.question_num)
-        # Issue #1553, we crudely filter ID page out
+        # Issue #1553: we filter ID page out, somewhat crudely (Issue #2707)
         pagedata = [
             x for x in pagedata if not x["pagename"].casefold().startswith("id")
         ]
@@ -763,7 +763,7 @@ class Annotator(QWidget):
 
         dl = self.parentMarkerUI.Qapp.downloader
         pagedata = dl.msgr.get_pagedata_context_question(testNumber, self.question_num)
-        # Issue #1553, we crudely filter ID page out
+        # Issue #1553: we filter ID page out, somewhat crudely (Issue #2707)
         pagedata = [
             x for x in pagedata if not x["pagename"].casefold().startswith("id")
         ]
