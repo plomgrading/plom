@@ -422,10 +422,6 @@ class MarkingTaskTagsView(APIView):
         try:
             mts.get_tags_for_task(code)
         except ValueError as e:
-            return Response(
-                str(e), status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         except RuntimeError as e:
-            return Response(
-                str(e), status=status.HTTP_404_NOT_FOUND
-            )
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)

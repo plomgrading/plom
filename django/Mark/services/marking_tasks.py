@@ -472,5 +472,7 @@ class MarkingTaskService:
             list[str]: the text of all tags for this task.
         """
 
-        task = self.get_task_from_code(code)  # TODO: what if the client has an OOD task with the same code?
+        task = self.get_task_from_code(
+            code
+        )  # TODO: what if the client has an OOD task with the same code?
         return [tag.text for tag in task.tag_set]
