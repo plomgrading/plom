@@ -31,7 +31,9 @@ services:
     depends_on:
       - web
   web:
-    build: .
+    build:
+      context: django/
+      dockerfile: ../Containerfile.django
     ports:
       - 8000:8000
       - 3000:3000

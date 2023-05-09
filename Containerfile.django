@@ -15,8 +15,8 @@ WORKDIR /code
 RUN apt update -y && apt install -y cmake gcc latexmk texlive-pictures build-essential git
 
 # Install dependencies
-COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+COPY ./requirements.txt.django .
+RUN pip install -r requirements.txt.django
 
 # Copy project
-COPY . .
+COPY django/ .
