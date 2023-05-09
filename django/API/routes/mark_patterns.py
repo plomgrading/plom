@@ -13,6 +13,7 @@ from API.views import (
     MgetOneImage,
     MgetRubricsByQuestion,
     MgetRubricPanes,
+    McreateRubric,
     MmodifyRubric,
     MlatexFragment,
 )
@@ -76,6 +77,7 @@ class MarkURLPatterns:
                 MgetRubricPanes.as_view(),
                 name="api_MK_get_rubric_panes",
             ),
+            path("rubric", McreateRubric.as_view(), name="api_MK_create_rubric"),
             re_path(
                 r"rubric/(?P<key>[0-9]{12})$",
                 MmodifyRubric.as_view(),
