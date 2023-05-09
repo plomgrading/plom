@@ -352,9 +352,9 @@ webplom_test:
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - pushd django
     - python3 -m pip install coverage
-    - python3 -m pip install -r requirements.txt
+    - python3 -m pip install -r requirements.txt.django
+    - pushd django
     - export PLOM_USING_DOCKER=1
     - python3 -m demo --test --randomarker
     - coverage run --source='.' manage.py test
