@@ -32,7 +32,7 @@ services:
       - web
   web:
     build:
-      context: ./
+      context: .
       dockerfile: Containerfile.django
     ports:
       - 8000:8000
@@ -40,8 +40,10 @@ services:
     expose:
       - 8000
     command: ./docker_run.sh
+    # TODO: careful here: there is already a /code inside the container
+    # for some reason we're mounting our own there instead...
     volumes:
-      - .:/code
+      - ./django:/code
     depends_on:
       - postgres
   postgres:
