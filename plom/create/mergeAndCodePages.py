@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Julian Lapenna
 
 import tempfile
 import math
