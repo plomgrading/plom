@@ -340,8 +340,8 @@ flake8:
 
 flake8-docstrings:
   stage: static_analysis
-  needs: ["docker-image"]
-  image: $IM
+  #needs: ["docker-image"]
+  #image: $IM
   before_script:
     - python3 -m pip install flake8-docstrings
   script:
