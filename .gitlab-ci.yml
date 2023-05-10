@@ -5,6 +5,7 @@
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Julian Lapenna
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -334,6 +335,18 @@ flake8:
     - flake8 --exit-zero
     # fail test if any errors here
     - flake8 --select E,W
+  allow_failure: true
+
+
+flake8-docstrings:
+  stage: static_analysis
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - python3 -m pip install flake8-docstrings
+  script:
+    # this seems to be what we're using
+    - flake8 --docstring-convention google 
   allow_failure: true
 
 
