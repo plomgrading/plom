@@ -339,14 +339,13 @@ flake8:
 
 
 flake8-docstrings:
+  image: python:3.11
   stage: static_analysis
-  #needs: ["docker-image"]
-  #image: $IM
   before_script:
     - python3 -m pip install flake8-docstrings
   script:
     # this seems to be what we're using
-    - flake8 --docstring-convention google 
+    - flake8 --docstring-convention google
   allow_failure: true
 
 
