@@ -10,6 +10,7 @@ from API.routes import (
     AnnotationPatterns,
     AnnotationImagePatterns,
     MiscURLPatterns,
+    TagsURLPatterns
 )
 
 """
@@ -31,4 +32,5 @@ urlpatterns = [
     path(PagedataPatterns.prefix, include(PagedataPatterns.patterns)),
     path(AnnotationPatterns.prefix, include(AnnotationPatterns.patterns)),
     path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns)),
+    path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns)),
 ]

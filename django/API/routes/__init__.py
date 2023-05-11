@@ -9,3 +9,4 @@ from .annotation_patterns import (
 from .id_patterns import IdURLPatterns
 from .mark_patterns import MarkURLPatterns
 from .misc_patterns import MiscURLPatterns
+from .tags_patterns import TagsURLPatterns

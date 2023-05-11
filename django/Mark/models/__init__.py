@@ -8,4 +8,5 @@ from .annotations import (
 
 from .tasks import (
     MarkingTask,
+    MarkingTaskTag
 )

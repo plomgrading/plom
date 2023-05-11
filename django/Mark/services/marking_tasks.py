@@ -6,6 +6,7 @@
 import json
 import pathlib
 import imghdr
+import re
 
 from rest_framework.exceptions import ValidationError
 
@@ -19,6 +20,7 @@ from Rubrics.models import Rubric
 
 from Mark.models import (
     MarkingTask,
+    MarkingTaskTag,
     Annotation,
     AnnotationImage,
 )
@@ -461,6 +463,16 @@ class MarkingTaskService:
         task = self.get_latest_task(paper, question)
         return Annotation.objects.filter(task=task).order_by("-edition").first()
 
+    def get_all_tags(self):
+        """
+        Get all of the saved tags.
+
+        Returns:
+            list[str]: The text of all the tags that exist.
+        """
+
+        return [tag.text for tag in MarkingTaskTag.objects.all()]
+
     def get_tags_for_task(self, code):
         """
         Get a list of tags assigned to this marking task.
@@ -475,4 +487,57 @@ class MarkingTaskService:
         task = self.get_task_from_code(
             code
         )  # TODO: what if the client has an OOD task with the same code?
-        return [tag.text for tag in task.tag_set]
+        return [tag.text for tag in task.markingtasktag_set.all()]
+
+    def create_tag(self, user, tag_text):
+        """
+        Create a new tag that can be associated with marking task.
+        
+        Args:
+            user: reference to a User instance
+            tag_text: str, the text content of a tag.
+
+            Returns:
+                MarkingTaskTag: reference to the newly created tag
+        """
+
+        if re.match(r'([-_+;:@]|\w)+', tag_text):
+            # allowable characters: - _ + ; : @ and any alphanumeric character
+            new_tag = MarkingTaskTag(
+                user=user,
+                text=tag_text,
+            )
+            new_tag.save()
+
+            return new_tag
+        else:
+            raise ValidationError(f"Invalid tag text: {tag_text}")
+
+    def add_tag(self, tag, task):
+        """
+        Add a tag to a marking task.
+
+        Args:
+            tag: reference to a MarkingTaskTag instance
+            task: reference to a MarkingTask instance
+        """
+
+        tag.task.add(task)
+        tag.save()
+
+    def get_tag_from_text(self, text):
+        """
+        Get a tag object from its text contents.
+
+        Args:
+            text: str, the text contents of a tag.
+
+        Returns:
+            MarkingTaskTag | None: The tag if it exists, and
+            None if it does not exist.
+        """
+
+        text_tags = MarkingTaskTag.objects.filter(text=text)
+        if text_tags.exists():
+            # Assuming the queryset will always have a length of one
+            return text_tags.first()

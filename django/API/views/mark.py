@@ -412,16 +412,72 @@ class MgetAnnotationImage(APIView):
         )
 
 
-class MarkingTaskTagsView(APIView):
+class TagsFromCodeView(APIView):
     """
     Handle getting and setting tags for marking tasks.
     """
 
     def get(self, request, code):
+        """
+        Get all of the tags for a particular task.
+
+        Args:
+            code: str, question/paper code for a task
+
+        Returns:
+            200: list of tag texts
+
+        Raises:
+            406: Invalid task code
+            404: Task is not found
+        """
         mts = MarkingTaskService()
         try:
-            mts.get_tags_for_task(code)
+            return Response(mts.get_tags_for_task(code), status=status.HTTP_200_OK)
         except ValueError as e:
-            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
         except RuntimeError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, code):
+        """
+        Add a tag to a task. If the tag does not exist in the database, create it
+        as a side effect.
+
+        Args:
+            code: str, question/paper code for a task
+
+        Returns:
+            200: OK response
+
+        Raises:
+            406: Invalid task code or tag text
+            404: Task is not found
+        """
+
+        tag_text = request.data["tag_text"]
+        mts = MarkingTaskService()
+        try:
+            the_task = mts.get_task_from_code(code)
+            the_tag = mts.get_tag_from_text(tag_text)
+            if the_tag:
+                mts.add_tag(the_tag, the_task)
+                return Response(status=status.HTTP_200_OK)
+            else:
+                new_tag = mts.create_tag(request.user, tag_text)
+                mts.add_tag(new_tag, the_task)
+                return Response(status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response(str(e), status=status.HTTP_406_NOT_ACCEPTABLE)
+        except RuntimeError as e:
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+
+
+class GetAllTags(APIView):
+    """
+    Respond with all of the tags in the server.
+    """
+
+    def get(self, request):
+        mts = MarkingTaskService()
+        return Response(mts.get_all_tags(), status=status.HTTP_200_OK)

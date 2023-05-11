@@ -29,6 +29,8 @@ from .mark import (
     MgetAnnotations,
     MgetAnnotationImage,
     MgetDoneTasks,
+    TagsFromCodeView,
+    GetAllTags,
 )
 
 from .rubrics import (
