@@ -5,6 +5,8 @@
 
 from pathlib import Path
 
+import PyPDF2
+
 from plom import check_version_map
 from plom.misc_utils import working_directory
 from plom.create.buildNamedPDF import build_papers_backend
@@ -87,6 +89,14 @@ def build_papers(
             raise ValueError(
                 "Not enough papers to prename everything in the filtered classlist"
             )
+    # make sure all papers have same number of pages.
+    source = Path("sourceVersions")
+    source_version = {}
+    for f in source.glob("*.pdf"):
+        with open(f, 'rb') as pdf_file:
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            num_pages = len(pdf_reader.pages)
+            print(f"Number of pages: {num_pages}")
     # all okay, so get rid of that list.
     del papernums
     # reorganise the class list into a dict indexed by paper_number
