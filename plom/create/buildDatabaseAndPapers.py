@@ -91,12 +91,18 @@ def build_papers(
             )
     # make sure all papers have same number of pages.
     source = Path("sourceVersions")
-    source_version = {}
+    source_version = set()
     for f in source.glob("*.pdf"):
         with open(f, 'rb') as pdf_file:
             pdf_reader = PyPDF2.PdfReader(pdf_file)
             num_pages = len(pdf_reader.pages)
             print(f"Number of pages: {num_pages}")
+            source_version.add(num_pages)
+    if len(source_version) != 1:
+        raise ValueError("Not all source PDFs have the same number of pages")
+    # get rid of the source_version and directory
+    del source_version
+    del source
     # all okay, so get rid of that list.
     del papernums
     # reorganise the class list into a dict indexed by paper_number
