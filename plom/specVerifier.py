@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2023 Julian Lapenna
 
 from copy import deepcopy
 import logging
@@ -38,6 +39,7 @@ warn_mark = " [warning]"
 check_mark = " [check]"
 chk = check_mark
 
+MAX_PAPERS_TO_PRODUCE = 9999
 
 # Some helper functions
 
@@ -658,6 +660,11 @@ class SpecVerifier:
 
         if self.numberToProduce == 0:
             raise ValueError('Specification error - "numberToProduce" cannot be zero.')
+        
+        if self.numberToProduce > MAX_PAPERS_TO_PRODUCE:
+            raise ValueError(
+                'Specification error - "numberToProduce" cannot be greater than 9999.'
+            )
 
     def check_questions(self, print=print):
         if "numberOfQuestions" not in self.spec:
