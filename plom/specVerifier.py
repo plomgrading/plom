@@ -660,7 +660,7 @@ class SpecVerifier:
 
         if self.numberToProduce == 0:
             raise ValueError('Specification error - "numberToProduce" cannot be zero.')
-        
+
         if self.numberToProduce > MAX_PAPERS_TO_PRODUCE:
             raise ValueError(
                 'Specification error - "numberToProduce" cannot be greater than 9999.'
