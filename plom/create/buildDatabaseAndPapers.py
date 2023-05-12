@@ -96,9 +96,10 @@ def build_papers(
     for f in source.glob("*.pdf"):
         doc = fitz.open(f)
         num_pages = len(doc)
+        doc.close()
         print(f"Number of pages: {num_pages}")
         source_version.add(num_pages)
-    if len(source_version) != 1:
+    if len(source_version) > 1:
         raise ValueError("Not all source PDFs have the same number of pages")
     # get rid of the source_version and directory
     del source_version
