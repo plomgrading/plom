@@ -346,10 +346,13 @@ flake8-docstrings:
     - python3 -m pip install pydocstyle[toml]
   script:
     # show all errors and warnings but don't fail
-    - pydocstyle --add-ignore=D100,D101,D102,D103,D104 plom || false
-    # TODO: many errors here: may want to tighten rules later removing things from --add-ignore
-    - pydocstyle -e --add-ignore=D100,D101,D102,D103,D104 plom
-  allow_failure: true
+    - pydocstyle plom || false
+    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
+    # pydocstyle -s -e plom
+    # Instead, just ensure the total does not increase
+    - NUM_ERRORS=`pydocstyle  --count plom | tail -n 1`
+    - echo $NUM_ERRORS
+    - bash -c "[[ $NUM_ERRORS -le 768 ]]"  # Future hackers: try to decrease this number
 
 
 # TODO: why do we need to run makemigrations/migrate before tests?
