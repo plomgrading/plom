@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021, 2023 Colin B. Macdonald
 
 import gzip
 from pathlib import Path
@@ -17,8 +17,6 @@ from sklearn.metrics import accuracy_score
 
 def train_model():
     """Trains the random forest model and saves it."""
-
-    # Fetch the MNIST data.
     mnist = fetch_openml("mnist_784")
 
     # pylint: disable=no-member
