@@ -14,9 +14,6 @@ max-line-length = 88
 # E501 = we have too many long lines
 # W503 = black breaks lines before a binary op which flake does not like, but black does not mind
 # E741 = do not use variables called I or O (confusion with one zero)
-# D10x = missing docstrings (TODO: obviously it would be better to fix them)
 extend-ignore = E203, E402, E501, W503, E741
 per-file-ignores =
     */__init__.py: F401, E402
-per-file-ignores =
-    django/*: D100, D101, D102, D103, D104

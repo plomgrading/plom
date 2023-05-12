@@ -338,17 +338,17 @@ flake8:
   allow_failure: true
 
 
+# TODO: also test django
 flake8-docstrings:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - python3 -m pip install flake8-docstrings
+    - python3 -m pip install pydocstyle[toml]
   script:
     # show all errors and warnings but don't fail
-    - flake8 --docstring-convention google --exit-zero
+    - pydocstyle --add-ignore=D100,D101,D102,D103,D104 plom || false
     # TODO: many errors here: may want to tighten rules later removing things from --add-ignore
-    # TODO: also test django
-    - flake8 --docstring-convention google plom
+    - pydocstyle -e --add-ignore=D100,D101,D102,D103,D104 plom
   allow_failure: true
 
 
