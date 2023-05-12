@@ -348,7 +348,7 @@ flake8-docstrings:
     - flake8 --docstring-convention google --exit-zero
     # TODO: many errors here: may want to tighten rules later removing things from --add-ignore
     # TODO: also test django
-    - flake8 --docstring-convention google --add-ignore=D100,D101,D102,D103,D104 plom
+    - flake8 --docstring-convention google plom
   allow_failure: true
 
 
