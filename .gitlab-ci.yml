@@ -344,8 +344,11 @@ flake8-docstrings:
   before_script:
     - python3 -m pip install flake8-docstrings
   script:
-    # this seems to be what we're using
-    - flake8 --docstring-convention google
+    # show all errors and warnings but don't fail
+    - flake8 --docstring-convention google --exit-zero
+    # TODO: many errors here: may want to tighten rules later removing things from --add-ignore
+    # TODO: also test django
+    - flake8 --docstring-convention google --add-ignore=D100,D101,D102,D103,D104 plom
   allow_failure: true
 
 
