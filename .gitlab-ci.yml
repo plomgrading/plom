@@ -338,7 +338,6 @@ flake8:
   allow_failure: true
 
 
-# TODO: also test django
 flake8-docstrings:
   image: python:3.11
   stage: static_analysis
@@ -350,9 +349,24 @@ flake8-docstrings:
     # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
     # pydocstyle -s -e plom
     # Instead, just ensure the total does not increase
-    - NUM_ERRORS=`pydocstyle  --count plom | tail -n 1`
-    - echo $NUM_ERRORS
-    - bash -c "[[ $NUM_ERRORS -le 768 ]]"  # Future hackers: try to decrease this number
+    - pydocstyle --count plom | tail -n 1
+    - NUMERR=`pydocstyle --count plom | tail -n 1`
+    - echo $NUMERR
+    - bash -c "[[ $NUMERR -le 768 ]]"  # Future hackers: try to decrease this number
+
+
+flake8-docstrings-django:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]==6.3.0
+  script:
+    # show all errors and warnings but don't fail
+    - pydocstyle django || true
+    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
+    # pydocstyle -s -e django
+    # Instead, just ensure the total does not increase
+    - pydocstyle --count django | tail -n 1
 
 
 # TODO: why do we need to run makemigrations/migrate before tests?
