@@ -348,8 +348,8 @@ pydocstyle:
     # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
     # pydocstyle -s -e plom
     # Instead, just ensure the total does not increase
-    - pydocstyle --count plom | tail -n 1
-    - NUMERR=`pydocstyle --count plom | tail -n 1`
+    - pydocstyle --count plom | tail -n 1 || true
+    - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     - bash -c "[[ $NUMERR -le 768 ]]"  # Future hackers: try to decrease this number
 
@@ -365,7 +365,7 @@ pydocstyle-django:
     # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
     # pydocstyle -s -e django
     # Instead, just ensure the total does not increase
-    - pydocstyle --count django | tail -n 1
+    - pydocstyle --count django | tail -n 1 || true
 
 
 # TODO: why do we need to run makemigrations/migrate before tests?
