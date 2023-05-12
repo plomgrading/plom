@@ -123,10 +123,11 @@ def make_groups_and_users():
 
 
 def save_fixture(filename):
-    """
-    Save a snapshot of the database as a JSON file to 'fixtures/filename.json'
-    """
+    """Save a snapshot of the database as a JSON file.
 
+    Args:
+        filename (str): saves to 'fixtures/filename'
+    """
     fixtures_dir = settings.BASE_DIR / "fixtures"
     fixtures_dir.mkdir(exist_ok=True)
 
