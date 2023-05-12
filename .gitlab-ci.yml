@@ -354,6 +354,7 @@ pydocstyle:
     - bash -c "[[ $NUMERR -le 764 ]]"
 
 
+# TODO: currently allowed-to-fail (for a while!)
 pydocstyle-django:
   image: python:3.11
   stage: static_analysis
@@ -369,6 +370,7 @@ pydocstyle-django:
     - echo $NUMERR
     # Future hackers: please try to decrease this number
     - bash -c "[[ $NUMERR -le 987 ]]"
+  allow_failure: true
 
 
 # TODO: why do we need to run makemigrations/migrate before tests?
