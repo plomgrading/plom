@@ -343,10 +343,10 @@ flake8-docstrings:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - python3 -m pip install pydocstyle[toml]
+    - python3 -m pip install pydocstyle[toml]==6.3.0
   script:
     # show all errors and warnings but don't fail
-    - pydocstyle plom || false
+    - pydocstyle plom || true
     # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
     # pydocstyle -s -e plom
     # Instead, just ensure the total does not increase
