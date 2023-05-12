@@ -93,7 +93,7 @@ def build_papers(
     # make sure all papers have same number of pages.
     source = Path("sourceVersions")
     source_version = set()
-    for f in source.glob("*.pdf"):
+    for f in source.glob("version*.pdf"):
         doc = fitz.open(f)
         num_pages = len(doc)
         doc.close()
