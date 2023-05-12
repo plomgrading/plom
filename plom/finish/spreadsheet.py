@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2023 Julian Lapenna
 
 import arrow
 import csv
@@ -67,9 +68,9 @@ def write_spreadsheet(spreadSheetDict, labels, filename):
                 row["Total"] = ""
 
             lu = arrow.get(thisTest["last_update"])
-            row["LastUpdate"] = arrowtime_to_string(lu)
+            row["LastUpdate"] = arrowtime_to_string(lu).replace('_', ' ', 1).replace('_', '', 1)
 
-            row["CSVWriteTime"] = utc_now_to_string()
+            row["CSVWriteTime"] = utc_now_to_string().replace('_', ' ', 1).replace('_', '', 1)
 
             warnString = ""
             if not thisTest["identified"]:
