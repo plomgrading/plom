@@ -2,10 +2,11 @@
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2023 Julian Lapenna
 
 from pathlib import Path
 
-import PyPDF2
+import fitz
 
 from plom import check_version_map
 from plom.misc_utils import working_directory
@@ -93,11 +94,10 @@ def build_papers(
     source = Path("sourceVersions")
     source_version = set()
     for f in source.glob("*.pdf"):
-        with open(f, 'rb') as pdf_file:
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            num_pages = len(pdf_reader.pages)
-            print(f"Number of pages: {num_pages}")
-            source_version.add(num_pages)
+        doc = fitz.open(f)
+        num_pages = len(doc)
+        print(f"Number of pages: {num_pages}")
+        source_version.add(num_pages)
     if len(source_version) != 1:
         raise ValueError("Not all source PDFs have the same number of pages")
     # get rid of the source_version and directory
