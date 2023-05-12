@@ -338,7 +338,7 @@ flake8:
   allow_failure: true
 
 
-flake8-docstrings:
+pydocstyle:
   image: python:3.11
   stage: static_analysis
   before_script:
@@ -355,7 +355,7 @@ flake8-docstrings:
     - bash -c "[[ $NUMERR -le 768 ]]"  # Future hackers: try to decrease this number
 
 
-flake8-docstrings-django:
+pydocstyle-django:
   image: python:3.11
   stage: static_analysis
   before_script:
