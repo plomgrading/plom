@@ -663,7 +663,7 @@ class SpecVerifier:
 
         if self.numberToProduce > MAX_PAPERS_TO_PRODUCE:
             raise ValueError(
-                'Specification error - "numberToProduce" cannot be greater than 9999.'
+                f'Specification error - "numberToProduce" cannot be greater than {MAX_PAPERS_TO_PRODUCE}.'
             )
 
     def check_questions(self, print=print):
