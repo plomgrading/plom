@@ -435,6 +435,18 @@ class MarkingTaskService:
         )  # TODO: what if the client has an OOD task with the same code?
         return [tag.text for tag in task.markingtasktag_set.all()]
 
+    def sanitize_tag_text(self, tag_text):
+        """Return a sanitized text from client input. Currently only entails a call to tag_text.strip().
+        
+        Args:
+            tag_text: str, text that has come from a client request.
+
+        Returns:
+            str: sanitized version of the text.
+        """
+
+        return tag_text.strip()
+
     def create_tag(self, user, tag_text):
         """Create a new tag that can be associated with marking task.
 
@@ -445,9 +457,6 @@ class MarkingTaskService:
         Returns:
             MarkingTaskTag: reference to the newly created tag
         """
-
-        # TODO: perhaps we need more text sanitization
-        tag_text = tag_text.strip()
 
         if re.match(r"([-_+;:@]|\w)+", tag_text):
             # allowable characters: - _ + ; : @ and any alphanumeric character

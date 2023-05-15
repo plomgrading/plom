@@ -431,8 +431,10 @@ class TagsFromCodeView(APIView):
             406: Invalid task code or tag text
             404: Task is not found
         """
-        tag_text = request.data["tag_text"]
         mts = MarkingTaskService()
+        tag_text = request.data["tag_text"]
+        tag_text = mts.sanitize_tag_text(tag_text)
+
         try:
             the_task = mts.get_task_from_code(code)
             the_tag = mts.get_tag_from_text(tag_text)
@@ -461,8 +463,10 @@ class TagsFromCodeView(APIView):
             406: Invalid task code or task does not have tag
             404: Task is not found
         """
-        tag_text = request.data["tag_text"]
         mts = MarkingTaskService()
+        tag_text = request.data["tag_text"]
+        tag_text = mts.sanitize_tag_text(tag_text)
+
         try:
             the_task = mts.get_task_from_code(code)
             the_tag = mts.get_tag_from_text(tag_text)
