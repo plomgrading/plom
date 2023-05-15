@@ -20,8 +20,7 @@ from API.views import (
 
 
 class MarkURLPatterns:
-    """
-    URLs that handle marking and interacting with plom-client.
+    """URLs that handle marking and interacting with plom-client.
 
     All of these patterns are under the route "MK,"
     e.g. "progress" will become "MK/progress"

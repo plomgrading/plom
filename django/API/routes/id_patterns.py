@@ -17,8 +17,7 @@ from API.views import (
 
 
 class IdURLPatterns:
-    """
-    URLs for handling ID'ing tasks and interacting with the client.
+    """URLs for handling ID'ing tasks and interacting with the client.
 
     All of these patterns are under the route "ID", so the pattern
     "progress" will become "ID/progress"

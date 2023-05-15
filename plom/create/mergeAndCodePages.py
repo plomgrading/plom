@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Julian Lapenna
 
 import tempfile
 import math
@@ -337,7 +338,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
         w = font.text_length(name, fontsize=fontsize)
     tw = fitz.TextWriter(page.rect)
     tw.append(
-        fitz.Point(page_width / 2 - w / 2, name_id_rect.y0 + 38),
+        fitz.Point(page_width * (x / 100.0) - w / 2, name_id_rect.y0 + 38),
         name,
         fontsize=fontsize,
     )
@@ -346,7 +347,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     fontsize = 36
     w = font.text_length(sid, fontsize=fontsize)
     tw.append(
-        fitz.Point(page_width / 2 - w / 2, name_id_rect.y0 + 90),
+        fitz.Point(page_width * (x / 100.0) - w / 2, name_id_rect.y0 + 90),
         sid,
         fontsize=fontsize,
     )
@@ -359,7 +360,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     w = font.text_length(sign_here, fontsize=fontsize)
     tw = fitz.TextWriter(page.rect, color=(0.9, 0.9, 0.9))
     tw.append(
-        fitz.Point(page_width / 2 - w / 2, signature_rect.y0 + 52),
+        fitz.Point(page_width * (x / 100.0) - w / 2, signature_rect.y0 + 52),
         sign_here,
         fontsize=fontsize,
     )

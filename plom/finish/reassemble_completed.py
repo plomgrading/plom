@@ -175,10 +175,10 @@ def reassemble_paper(
     """
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
-    short_name = msgr.getInfoShortName()
     spec = msgr.get_spec()
+    short_name = spec["name"]
     num_questions = spec["numberOfQuestions"]
-    max_marks = msgr.MgetAllMax()
+    max_marks = {str(q): msgr.getMaxMark(q) for q in range(1, num_questions + 1)}
 
     completedTests = msgr.RgetCompletionStatus()
     t = str(testnum)  # dicts keyed by strings
@@ -239,10 +239,10 @@ def reassemble_all_papers(*, msgr, outdir=Path("reassembled"), tmpdir=None, skip
     """
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
-    short_name = msgr.getInfoShortName()
     spec = msgr.get_spec()
+    short_name = spec["name"]
     num_questions = spec["numberOfQuestions"]
-    max_marks = msgr.MgetAllMax()
+    max_marks = {str(q): msgr.getMaxMark(q) for q in range(1, num_questions + 1)}
 
     completedTests = msgr.RgetCompletionStatus()
     # dict testnumber -> [scanned, id'd, #q's marked]
