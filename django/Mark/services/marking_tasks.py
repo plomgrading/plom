@@ -417,9 +417,9 @@ class MarkingTaskService:
         """Get all of the saved tags.
 
         Returns:
-            list[str]: The text of all the tags that exist.
+            list[(int, str)]: The primary key and text of all the tags that exist.
         """
-        return [tag.text for tag in MarkingTaskTag.objects.all()]
+        return [(tag.pk, tag.text) for tag in MarkingTaskTag.objects.all()]
 
     def get_tags_for_task(self, code):
         """Get a list of tags assigned to this marking task.
@@ -481,3 +481,16 @@ class MarkingTaskService:
         if text_tags.exists():
             # Assuming the queryset will always have a length of one
             return text_tags.first()
+
+    def remove_tag_from_task(self, tag, task):
+        """Remove a tag from a marking task.
+
+        Args:
+            tag: reference to a MarkingTaskTag instance
+            task: reference to a MarkingTask instance
+        """
+        try:
+            tag.task.remove(task)
+            tag.save()
+        except MarkingTask.DoesNotExist:
+            raise ValueError(f"Task {code} does not have tag {tag.text}")
