@@ -492,7 +492,7 @@ class MarkingTaskService:
     def create_tag(self, user, tag_text):
         """
         Create a new tag that can be associated with marking task.
-        
+
         Args:
             user: reference to a User instance
             tag_text: str, the text content of a tag.
@@ -501,7 +501,7 @@ class MarkingTaskService:
                 MarkingTaskTag: reference to the newly created tag
         """
 
-        if re.match(r'([-_+;:@]|\w)+', tag_text):
+        if re.match(r"([-_+;:@]|\w)+", tag_text):
             # allowable characters: - _ + ; : @ and any alphanumeric character
             new_tag = MarkingTaskTag(
                 user=user,

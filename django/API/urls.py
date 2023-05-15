@@ -10,7 +10,7 @@ from API.routes import (
     AnnotationPatterns,
     AnnotationImagePatterns,
     MiscURLPatterns,
-    TagsURLPatterns
+    TagsURLPatterns,
 )
 
 """
