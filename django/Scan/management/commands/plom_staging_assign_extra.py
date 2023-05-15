@@ -70,26 +70,40 @@ class Command(BaseCommand):
         scs.clear_extra_page_cmd(username, bundle_name, index)
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "bundle",
-            type=str,
-            help="The bundle on which to operate",
-        )
         sp = parser.add_subparsers(
             dest="command",
             description="Assign an extra page to a paper and questions.",
         )
-        sp.add_parser("list", help="List the extra pages in the bundle.")
-        sp.add_parser("papers", help="List the known paper-numbers in the bundle.")
+        spl = sp.add_parser("list", help="List the extra pages in the bundle.")
+        spl.add_argument(
+            "bundle",
+            type=str,
+            help="The bundle on which to operate",
+        )
+
+        spp = sp.add_parser(
+            "papers", help="List the known paper-numbers in the bundle."
+        )
+        spp.add_argument(
+            "bundle",
+            type=str,
+            help="The bundle on which to operate",
+        )
+
         spa = sp.add_parser(
             "assign", help="Assign the extra page a paper-number and question-list."
         )
         spa.add_argument("username", type=str, help="username doing the assigning.")
         spa.add_argument(
+            "bundle",
+            type=str,
+            help="The bundle on which to operate",
+        )
+        spa.add_argument(
             "-i", "--index", type=int, help="index of page within the bundle (from one)"
         )
         spa.add_argument(
-            "-p", "--paper", type=int, help="the paper-number of the extra-page"
+            "-t", "--paper", type=int, help="the paper-number of the extra-page"
         )
         spa.add_argument(
             "-q",

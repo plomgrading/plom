@@ -15,10 +15,9 @@ import fitz
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
-from django.db.models import Prefetch
 from django_huey import db_task
 from django.utils import timezone
 
@@ -26,7 +25,6 @@ from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap
 from plom.scan.scansToImages import make_mucked_up_jpeg
 from plom.scan.readQRCodes import checkQRsValid
-from plom.scan.question_list_utils import check_question_list
 from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.tpv_utils import (
     parseTPV,
@@ -46,7 +44,6 @@ from Scan.models import (
     ManagePageToImage,
     ManageParseQR,
 )
-from Papers.models import Paper
 from Papers.services import ImageBundleService
 from Papers.services import SpecificationService
 
@@ -477,63 +474,6 @@ class ScanService:
             # finally - mark the bundle as having had its qr-codes read.
             bundle_obj.has_qr_codes = True
             bundle_obj.save()
-
-    def surgery_unknown_to_extra(self, bundle_pk, idx, *, papernum, questions):
-        """Replace a single UnknownStagingImage with a ExtraStagingImage.
-
-        This is to identify a completely blank paper.
-
-        TODO: not sure ExtraStagingImage is the right thing.
-        """
-        raise NotImplementedError()
-
-    @transaction.atomic()
-    def surgery_map_extra(
-        self, bundle_name, user_supplied_idx, *, papernum, question_list
-    ):
-        """Fill in the missing information in a ExtraStagingImage.
-
-        This is to identify which paper and question(s) are in a ExtraStagingImage.
-        You can call it again to update the information with new information.
-
-        Args:
-            bundle_name (str)
-            user_supplied_idx (int): which page of the bundle to edit.
-                Is 1-indexed.
-
-        Keyword Args:
-            papernum (int)
-            question_list (list)
-
-        Raises:
-            ValueError: can't find things.
-
-        TODO: some other routine for a page where all three QRcodes failed?
-        """
-        idx = user_supplied_idx  # internal bundle-order is 1-indexed
-
-        bundle = StagingBundle.objects.get(slug=bundle_name)
-        # note that this does not tell us if it is because the index is out of range
-        # or if the page is not an extra-page, just that it does not exist
-        try:
-            ex_img = ExtraStagingImage.objects.get(
-                staging_image__bundle=bundle, staging_image__bundle_order=idx
-            )
-        except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"No extra page at index {user_supplied_idx} in "
-                f'bundle "{bundle_name}": {e}'
-            )
-
-        if not Paper.objects.filter(paper_number=papernum).exists():
-            raise ValueError(f"Paper {papernum} does not exist in the database")
-
-        n_questions = SpecificationService().get_n_questions()
-        sane_qlist = check_question_list(question_list, n_questions=n_questions)
-
-        ex_img.paper_number = papernum
-        ex_img.question_list = sane_qlist
-        ex_img.save()
 
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk):

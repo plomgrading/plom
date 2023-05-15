@@ -237,6 +237,29 @@ class ScanCastService:
     def assign_extra_page(
         self, user_obj, bundle_obj, bundle_order, paper_number, question_list
     ):
+        """Fill in the missing information in a ExtraStagingImage.
+
+        The command assigns the paper-number and question list to the
+        given extra page.
+
+        This is a wrapper around the actual service command
+        "assign_extra_page" that does the work. Note that
+        "assign_extra_page_cmd" takes username and bundlename as
+        strings, while the "assign_extra_page" takes the corresponding
+        data-base objects.
+
+        Args:
+            user_obj (danjgo auth user database mode instance): the database model instance representing the user assigning information
+            bundle_obj (danjgo staging bundle database mode instance): the database model instance representing the bundle being processed
+            bundle_order (int): which page of the bundle to edit.
+               Is 1-indexed.
+            paper_number (int)
+            question_list (list)
+
+        Raises:
+            ValueError: can't find things.
+
+        """
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
         # make sure paper_number in db
@@ -277,6 +300,29 @@ class ScanCastService:
     def assign_extra_page_cmd(
         self, username, bundle_name, bundle_order, paper_number, question_list
     ):
+        """Fill in the missing information in a ExtraStagingImage.
+
+        The command assigns the paper-number and question list to the
+        given extra page.
+
+        This is a wrapper around the actual service command
+        "assign_extra_page" that does the work. Note that
+        "assign_extra_page_cmd" takes username and bundlename as
+        strings, while the "assign_extra_page" takes the corresponding
+        data-base objects.
+
+        Args:
+            username (str): the name of the user who is assigning the info
+            bundle_name (str): the name of the bundle being processed
+            bundle_order (int): which page of the bundle to edit.
+                Is 1-indexed.
+            paper_number (int)
+            question_list (list)
+
+        Raises:
+            ValueError: can't find things.
+
+        """
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name__in=["scanner", "manager"]
