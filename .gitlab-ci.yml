@@ -5,6 +5,7 @@
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Julian Lapenna
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -324,9 +325,8 @@ pylint:
 
 
 flake8:
-  stage: test
-  needs: ["docker-image"]
-  image: $IM
+  image: python:3.11
+  stage: static_analysis
   before_script:
     - python3 -m pip install flake8
   script:
@@ -334,6 +334,42 @@ flake8:
     - flake8 --exit-zero
     # fail test if any errors here
     - flake8 --select E,W
+  allow_failure: true
+
+
+pydocstyle:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]==6.3.0
+  script:
+    # show all errors and warnings but don't fail
+    - pydocstyle plom || true
+    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
+    # pydocstyle -s -e plom
+    # Instead, just ensure the total does not increase
+    - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
+    - echo $NUMERR
+    # Future hackers: please try to decrease this number
+    - bash -c "[[ $NUMERR -le 764 ]]"
+
+
+# TODO: currently allowed-to-fail (for a while!)
+pydocstyle-django:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]==6.3.0
+  script:
+    # show all errors and warnings but don't fail
+    - pydocstyle django || true
+    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
+    # pydocstyle -s -e django
+    # Instead, just ensure the total does not increase
+    - NUMERR=`pydocstyle --count django | tail -n 1 || true`
+    - echo $NUMERR
+    # Future hackers: please try to decrease this number
+    - bash -c "[[ $NUMERR -le 987 ]]"
   allow_failure: true
 
 

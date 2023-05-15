@@ -525,13 +525,13 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
 def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     """Randomly generates and inserts garbage pages into a PDF document.
 
-    Used for testing.
-
     Arguments:
         pdf_file (pathlib.Path): a pdf file we add pages to.
 
     Keyword Arguments:
         number_of_garbage_pages (int): how many junk pages to add (default: 2)
+
+    Intended for testing.
     """
     green = [0, 0.75, 0]
 
@@ -555,7 +555,7 @@ def make_colliding_pages(paper_dir, outfile):
         outfile (pathlib.Path): modify this pdf file, appending the
             colliding pages.
 
-    Purely used for testing.
+    Intended for testing.
     """
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
@@ -597,8 +597,7 @@ def make_colliding_pages(paper_dir, outfile):
 
 
 def splitFakeFile(outfile, *, parts=3):
-    """Split the scribble pdf into specified number of files (defaults to 3)"""
-
+    """Split the scribble pdf into specified number of files (defaults to 3)."""
     outfile = Path(outfile)
     originalPDF = fitz.open(outfile)
 
@@ -635,8 +634,6 @@ def make_scribbles(basedir=Path("."), *, msgr):
     or for testing purposes.
 
     Args:
-        server (str): the name and port of the server.
-        password (str): the "manager" password.
         basedir (str/pathlib.Path): the blank tests (for scribbling) will
             be taken from `basedir/papersToPrint`.  The pdf files with
             scribbles will be created in `basedir`.  Defaults to current

@@ -4,8 +4,16 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2023 Julian Lapenna
 
 """Plom tools for scanning tests and pushing to servers.
+
+See help for each subcommand or consult online documentation for an
+overview of the steps in setting up a server.
+
+Most subcommands communicate with a server, which can be specified
+on the command line or by setting environment variables PLOM_SERVER
+and PLOM_MANAGER_PASSWORD.
 
 ## Overview of the scanning process
 

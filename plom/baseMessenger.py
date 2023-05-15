@@ -404,27 +404,6 @@ class BaseMessenger:
     # ----------------------
     # Test information
 
-    def getInfoShortName(self):
-        """The short name of the exam.
-
-        Returns:
-            str: the short name of the exam.
-
-        Exceptions:
-            PlomServerNotReady: Server does not have name because it
-                does not yet have a spec.
-            PlomSeriousException: any other errors.
-        """
-        with self.SRmutex:
-            try:
-                response = self.get("/info/shortName")
-                response.raise_for_status()
-                return response.text
-            except requests.HTTPError as e:
-                if response.status_code == 400:
-                    raise PlomServerNotReady(response.reason) from None
-                raise PlomSeriousException(f"Some other sort of error {e}") from None
-
     def get_spec(self):
         """Get the specification of the exam from the server.
 
@@ -442,6 +421,32 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise PlomServerNotReady(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def getMaxMark(self, question):
+        """Get the maximum mark for this question.
+
+        Raises:
+            PlomRangeException: `question` is out of range or non-integer.
+            PlomAuthenticationException:
+            PlomSeriousException: something unexpected happened.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/maxmark/{question}",
+                    json={"user": self.user, "token": self.token},
+                )
+                # throw errors when response code != 200.
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 400:
+                    raise PlomRangeException(response.reason) from None
+                if response.status_code == 416:
+                    raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getQuestionVersionMap(self, papernum):
