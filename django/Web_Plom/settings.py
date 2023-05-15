@@ -241,15 +241,15 @@ MAX_BUNDLE_SIZE = 1e9
 # MAX_FILE_SIZE = 1e6
 
 
-# LOGGING = {
-#     "version": 1,
-#     "handlers": {
-#         "console": {
-#             "class": "logging.StreamHandler",
-#         },
-#     },
-#     "loggers": {},
-# }
+LOGGING = {
+    "version": 1,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {},
+}
 
 # When hunting down n-plus-1 query problems make use of the nplusone package
 # https://github.com/jmcarp/nplusone

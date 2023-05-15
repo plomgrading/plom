@@ -445,6 +445,10 @@ class MarkingTaskService:
         Returns:
             MarkingTaskTag: reference to the newly created tag
         """
+
+        # TODO: perhaps we need more text sanitization
+        tag_text = tag_text.strip()
+
         if re.match(r"([-_+;:@]|\w)+", tag_text):
             # allowable characters: - _ + ; : @ and any alphanumeric character
             new_tag = MarkingTaskTag(
