@@ -22,8 +22,7 @@ import logging
 
 
 class QuestionMaxMark_how_to_get_data(APIView):
-    """
-    Return the max mark for a given question.
+    """Return the max mark for a given question.
 
     TODO: how do I make the `data["q"]` thing work?  This always fails with KeyError
     """
@@ -48,8 +47,7 @@ class QuestionMaxMark_how_to_get_data(APIView):
 
 
 class QuestionMaxMark(APIView):
-    """
-    Return the max mark for a given question.
+    """Return the max mark for a given question.
 
     Returns:
         (200): returns the maximum number of points for a question
@@ -96,8 +94,7 @@ class MarkingProgressCount(APIView):
 
 
 class MgetDoneTasks(APIView):
-    """
-    Retrieve data for questions which have already been graded by the user.
+    """Retrieve data for questions which have already been graded by the user.
 
     Respond with status 200.
 
@@ -136,8 +133,7 @@ class MgetDoneTasks(APIView):
 
 
 class MgetNextTask(APIView):
-    """
-    Responds with a code for the next available marking task.
+    """Responds with a code for the next available marking task.
 
     Returns:
         200: An available task exists, returns the task code as a string.
@@ -160,10 +156,7 @@ class MgetNextTask(APIView):
 
 class MclaimThisTask(APIView):
     def patch(self, request, code, *args):
-        """
-        Attach a user to a marking task and return the task's metadata.
-        """
-
+        """Attach a user to a marking task and return the task's metadata."""
         mss = MarkingTaskService()
         the_task = mss.get_task_from_code(code)
         mss.assign_task_to_user(request.user, the_task)
@@ -176,10 +169,7 @@ class MclaimThisTask(APIView):
         return Response([question_data, [], the_task.pk])
 
     def post(self, request, code, *args):
-        """
-        Accept a marker's grade and annotation for a task.
-        """
-
+        """Accept a marker's grade and annotation for a task."""
         mts = MarkingTaskService()
         data = request.POST
         files = request.FILES
@@ -229,8 +219,7 @@ class MclaimThisTask(APIView):
 
 
 class MgetPageDataQuestionInContext(APIView):
-    """
-    Get page metadata for a particular test-paper optionally with a question highlighted.
+    """Get page metadata for a particular test-paper optionally with a question highlighted.
 
     APIs backed by this routine return a JSON response with a list of
     dicts, where each dict has keys: `pagename`, `md5`, `included`,
@@ -341,9 +330,7 @@ class MgetPageDataQuestionInContext(APIView):
 
 
 class MgetOneImage(APIView):
-    """
-    Get a page image from the server.
-    """
+    """Get a page image from the server."""
 
     def get(self, request, pk, hash):
         pds = PageDataService()
@@ -360,9 +347,7 @@ class MgetOneImage(APIView):
 
 
 class MgetAnnotations(APIView):
-    """
-    Get the latest annotations for a question.
-    """
+    """Get the latest annotations for a question."""
 
     def get(self, request, paper, question):
         mts = MarkingTaskService()
@@ -385,9 +370,7 @@ class MgetAnnotations(APIView):
 
 
 class MgetAnnotationImage(APIView):
-    """
-    Get an annotation-image.
-    """
+    """Get an annotation-image."""
 
     def get(self, request, paper, question, edition=None):
         mts = MarkingTaskService()
@@ -413,13 +396,10 @@ class MgetAnnotationImage(APIView):
 
 
 class TagsFromCodeView(APIView):
-    """
-    Handle getting and setting tags for marking tasks.
-    """
+    """Handle getting and setting tags for marking tasks."""
 
     def get(self, request, code):
-        """
-        Get all of the tags for a particular task.
+        """Get all of the tags for a particular task.
 
         Args:
             code: str, question/paper code for a task
@@ -440,9 +420,7 @@ class TagsFromCodeView(APIView):
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
 
     def patch(self, request, code):
-        """
-        Add a tag to a task. If the tag does not exist in the database, create it
-        as a side effect.
+        """Add a tag to a task. If the tag does not exist in the database, create it as a side effect.
 
         Args:
             code: str, question/paper code for a task
@@ -454,7 +432,6 @@ class TagsFromCodeView(APIView):
             406: Invalid task code or tag text
             404: Task is not found
         """
-
         tag_text = request.data["tag_text"]
         mts = MarkingTaskService()
         try:
@@ -474,9 +451,7 @@ class TagsFromCodeView(APIView):
 
 
 class GetAllTags(APIView):
-    """
-    Respond with all of the tags in the server.
-    """
+    """Respond with all of the tags in the server."""
 
     def get(self, request):
         mts = MarkingTaskService()
