@@ -124,7 +124,7 @@ class MgetDoneTasks(APIView):
                 annotation.task.code,
                 annotation.score,
                 annotation.marking_time,
-                [],  # TODO: tags are not implemented yet
+                mts.get_tags_for_task(annotation.task.code),
                 annotation.task.pk,  # TODO: integrity check is not implemented yet
             ],
             marks,
@@ -165,8 +165,7 @@ class MclaimThisTask(APIView):
         paper, question = mss.unpack_code(code)
         question_data = pds.get_question_pages_list(paper, question)
 
-        # TODO: tags and integrity check are hardcoded for now
-        return Response([question_data, [], the_task.pk])
+        return Response([question_data, mss.get_tags_for_task(code), the_task.pk])
 
     def post(self, request, code, *args):
         """Accept a marker's grade and annotation for a task."""
