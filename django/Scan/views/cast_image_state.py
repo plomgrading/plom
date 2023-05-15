@@ -11,9 +11,7 @@ from Papers.services import SpecificationService
 
 
 class DiscardImageType(ScannerRequiredView):
-    """
-    Discard a particular StagingImage type.
-    """
+    """Discard a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
         ScanCastService().discard_image_type_from_bundle_timestamp_and_order(
@@ -24,9 +22,7 @@ class DiscardImageType(ScannerRequiredView):
 
 
 class ExtraliseImageType(ScannerRequiredView):
-    """
-    Extralise a particular StagingImage type.
-    """
+    """Extralise a particular StagingImage type."""
 
     def post(self, request, timestamp, index):
         # TODO - improve this form processing

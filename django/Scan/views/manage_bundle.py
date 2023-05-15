@@ -21,15 +21,13 @@ from Papers.services import SpecificationService
 
 
 class ManageBundleView(ScannerRequiredView):
-    """
-    Let a user view an uploaded bundle and read its QR codes.
-    """
+    """Let a user view an uploaded bundle and read its QR codes."""
 
     def build_context(self, timestamp, user, index):
         """Build a context for a particular page of a bundle.
 
         Args:
-            timestamps (float): select a bundle by its timestamp.
+            timestamp (float): select a bundle by its timestamp.
             user (todo): which user.
             index (int): 1-indexed.
         """
@@ -87,6 +85,7 @@ class ManageBundleView(ScannerRequiredView):
 
 
 class GetBundleNavFragmentView(ScannerRequiredView):
+    """Return the image display fragment from a user-uploaded bundle."""
     def get(self, request, timestamp, index):
         try:
             timestamp = float(timestamp)
@@ -138,9 +137,7 @@ class GetBundleNavFragmentView(ScannerRequiredView):
 
 
 class GetBundleImageView(ScannerRequiredView):
-    """
-    Return an image from a user-uploaded bundle
-    """
+    """Return an image from a user-uploaded bundle."""
 
     def get(self, request, timestamp, index):
         try:
