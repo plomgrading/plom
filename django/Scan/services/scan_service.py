@@ -10,6 +10,7 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
+from warnings import warn
 
 import fitz
 from django.conf import settings
@@ -980,7 +981,7 @@ class ScanService:
         return self.get_bundle_paper_numbers(bundle_obj)
 
     @transaction.atomic
-    def get_id_box_cmd(self):
+    def get_id_box_cmd(self, top, bottom, left, right):
         id_box_folder = settings.MEDIA_ROOT / "id_box_images"
         id_box_folder.mkdir(exist_ok=True)
 
@@ -992,10 +993,19 @@ class ScanService:
             orientation = id_img.staging_image.rotation
             qr_data = id_img.staging_image.parsed_qr
             if len(qr_data) == 3:
-                id_box = pipr.extract_rectangular_region(
-                    img_path, orientation, qr_data, 0.28, 0.58, 0.09, 0.91
-                )
+                if top and bottom and left and right:
+                    id_box = pipr.extract_rectangular_region(
+                        img_path, orientation, qr_data, top, bottom, left, right
+                    )
+                else:
+                    id_box = pipr.extract_rectangular_region(
+                        img_path, orientation, qr_data, 0.28, 0.58, 0.09, 0.91
+                    )
                 id_box.save(id_box_folder / f"id_box_{id_img.paper_number}.png")
+            else:
+                warn(
+                    "Fewer than 3 QR codes found, cannot extract ID box from paper {id_img.paper_number}."
+                )
 
 
 # ----------------------------------------

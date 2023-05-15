@@ -6,6 +6,7 @@
 import numpy as np
 import cv2 as cv
 from PIL import Image
+from warnings import warn
 from plom.scan import rotate_bitmap, rotate
 
 
@@ -183,8 +184,7 @@ class PageImageProcessor:
         return rotate_angle
 
     def apply_image_transformation(self, image, qr_dict):
-        """
-        Given an image, apply an affine transformation to correct its orientation based on QR coordinates
+        """Given an image, apply an affine transformation to correct its orientation based on QR coordinates.
 
         Args:
             image (numpy.ndarray): the image which will be unskewed
@@ -237,8 +237,7 @@ class PageImageProcessor:
     def extract_rectangular_region(
         self, image_path, orientation, qr_dict, top, bottom, left, right
     ):
-        """
-        Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it
+        """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
         Args:
             img_path (str/pathlib.Path): path to image file
@@ -249,7 +248,8 @@ class PageImageProcessor:
             right (float): same as top, defining the right boundary
 
         Returns:
-            PIL.Image: the requested subsection of the original image
+            PIL.Image: the requested subsection of the original image, or
+            the full, righted image if an invalid box range is specified.
         """
         pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(image_path)
         pil_img.rotate(orientation)
@@ -263,6 +263,23 @@ class PageImageProcessor:
         bottom = round(self.TOP + bottom * self.HEIGHT)
         left = round(self.LEFT + left * self.WIDTH)
         right = round(self.LEFT + right * self.WIDTH)
+
+        if top < 0:
+            warn("Top input of {top} is outside of image pixel range, capping at 0.")
+        top = max(top, 0)
+        if left < 0:
+            warn("Left input of {left} is outside of image pixel range, capping at 0.")
+        left = max(left, 0)
+        if right > pil_img.width:
+            warn(
+                "Right input of {right} is outside of image pixel range, capping at {pil_img.width}."
+            )
+        right = min(right, pil_img.width)
+        if bottom > pil_img.height:
+            warn(
+                "Bottom input of {bottom} is outside of image pixel range, capping at {pil_img.height}."
+            )
+        bottom = min(bottom, pil_img.height)
 
         cropped_img = righted_img[top:bottom, left:right]
 
