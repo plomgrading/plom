@@ -16,17 +16,14 @@ from Scan.models import (
 
 
 class ScanCastService:
-    """
-    Functions for casting staging images to different types
-    """
+    """Functions for casting staging images to different types."""
 
     # ----------------------------------------
     # Page casting helper function
     # ----------------------------------------
 
     def string_to_staging_image_type(self, img_str):
-        """A helper function to translate from string to the staging image enum type"""
-
+        """A helper function to translate from string to the staging image enum type."""
         img_str = img_str.casefold()
         if img_str.casefold() == "discard":
             return StagingImage.DISCARD
@@ -67,9 +64,7 @@ class ScanCastService:
 
         Returns:
             None.
-
         """
-
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )
@@ -345,7 +340,7 @@ class ScanCastService:
     def clear_extra_page_info_from_bundle_timestamp_and_order(
         self, user_obj, bundle_timestamp, bundle_order
     ):
-        """A wrapper around clear_image_type
+        """A wrapper around clear_image_type.
 
         The main difference is that it that takes a
         bundle-timestamp instead of a bundle-object itself. Further,
@@ -359,9 +354,7 @@ class ScanCastService:
 
         Returns:
             None.
-
         """
-
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )
@@ -420,9 +413,7 @@ class ScanCastService:
 
         Returns:
             None.
-
         """
-
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )

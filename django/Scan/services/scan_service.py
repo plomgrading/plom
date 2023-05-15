@@ -51,9 +51,7 @@ from Scan.services.qr_validators import QRErrorService
 
 
 class ScanService:
-    """
-    Functions for staging scanned test-papers.
-    """
+    """Functions for staging scanned test-papers."""
 
     def upload_bundle(
         self,
@@ -66,23 +64,20 @@ class ScanService:
         *,
         debug_jpeg=False,
     ):
-        """
-        Upload a bundle PDF and store it in the filesystem + database.
+        """Upload a bundle PDF and store it in the filesystem + database.
+
         Also, split PDF into page images + store in filesystem and database.
 
         Args:
-            upload_pdf_file (Django File): File-object containing the pdf (can also be a TemporaryUploadedFile or InMemoryUploadedFile)
+            uploaded_pdf_file (Django File): File-object containing the pdf (can also be a TemporaryUploadedFile or InMemoryUploadedFile)
             slug (str): Filename slug for the pdf
             user (Django User): the user uploading the file
             timestamp (datetime): the datetime at which the file was uploaded
             pdf_hash (str): the sha256 of the pdf.
             number_of_pages (int): the number of pages in the pdf
-
         Keyword Args:
-            debug_jpeg (bool): off by default.  If True then we make some rotations by
-            non-multiplies of 90, and save some low-quality jpegs.
+            debug_jpeg (bool): off by default.  If True then we make some rotations by non-multiplies of 90, and save some low-quality jpegs.
         """
-
         fh = uploaded_pdf_file.open()
         with transaction.atomic():
             bundle_obj = StagingBundle.objects.create(
@@ -104,13 +99,12 @@ class ScanService:
         slug,
         username,
         timestamp,
-        hashed,
+        pdf_hash,
         number_of_pages,
         *,
         debug_jpeg=False,
     ):
-        """
-        Wrapper around upload_bundle for use by the commandline bundle upload command.
+        """Wrapper around upload_bundle for use by the commandline bundle upload command.
 
         Checks if the supplied username has permissions to access and upload scans.
 
@@ -121,7 +115,8 @@ class ScanService:
             timestamp (datetime): the datetime at which the file was uploaded
             pdf_hash (str): the sha256 of the pdf.
             number_of_pages (int): the number of pages in the pdf
-
+        Keyword Args:
+            debug_jpeg (bool): off by default.  If True then we make some rotations by non-multiplies of 90, and save some low-quality jpegs.
         """
         # username => user_object, if in scanner group, else exception raised.
         try:
@@ -141,17 +136,18 @@ class ScanService:
             slug,
             user_obj,
             timestamp,
-            hashed,
+            pdf_hash,
             number_of_pages,
             debug_jpeg=debug_jpeg,
         )
 
     def split_and_save_bundle_images(self, bundle_pk, *, debug_jpeg=False):
-        """
-        Read a PDF document and save page images to filesystem/database
+        """Read a PDF document and save page images to filesystem/database.
 
         Args:
             bundle_pk: StagingBundle object primary key
+        Keyword Args:
+            debug_jpeg (bool): off by default.  If True then we make some rotations by non-multiplies of 90, and save some low-quality jpegs.
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         task = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
@@ -187,15 +183,13 @@ class ScanService:
 
     @transaction.atomic
     def remove_bundle(self, bundle_name, *, user=None):
-        """Remove a bundle PDF from the filesystem + database
+        """Remove a bundle PDF from the filesystem and database.
 
         Args:
             bundle_name (str): which bundle.
-
+        
         Keyword Args:
-            user (None/str): also filter by user.
-                TODO: user is *not* for permissions: looks like just
-                a way to identify a bundle.
+            user (None/str): also filter by user. TODO: user is *not* for permissions: looks like just a way to identify a bundle.
         """
         if user:
             bundle = StagingBundle.objects.get(
@@ -208,7 +202,7 @@ class ScanService:
 
     @transaction.atomic
     def _remove_bundle(self, bundle_pk):
-        """Remove a bundle PDF from the filesystem + database
+        """Remove a bundle PDF from the filesystem + database.
 
         Args:
             bundle_pk: the primary key for a particular bundle.
@@ -218,12 +212,12 @@ class ScanService:
         bundle.delete()
 
     @transaction.atomic
-    def check_for_duplicate_hash(self, hash):
+    def check_for_duplicate_hash(self, pdf_hash):
+        """Check if a PDF has already been uploaded.
+
+        Returns True if the hash already exists in the database.
         """
-        Check if a PDF has already been uploaded: return True if the hash
-        already exists in the database.
-        """
-        return StagingBundle.objects.filter(pdf_hash=hash).exists()
+        return StagingBundle.objects.filter(pdf_hash=pdf_hash).exists()
 
     @transaction.atomic
     def get_bundle_from_timestamp(self, timestamp):
@@ -233,10 +227,7 @@ class ScanService:
 
     @transaction.atomic
     def get_bundle(self, timestamp, user):
-        """
-        Get a bundle from the database. To uniquely identify a bundle, we need
-        its timestamp and user
-        """
+        """Get a bundle from the database from its timestamp and user."""
         return StagingBundle.objects.get(
             user=user,
             timestamp=timestamp,
@@ -244,10 +235,7 @@ class ScanService:
 
     @transaction.atomic
     def get_image(self, timestamp, user, index):
-        """
-        Get an image from the database. To uniquely identify an image, we need a bundle
-        (and a timestamp, and user) and a page index
-        """
+        """Get an image from the database from bundle-timestamp, user and index."""
         bundle = self.get_bundle(timestamp, user)
         return StagingImage.objects.get(
             bundle=bundle,
@@ -256,31 +244,21 @@ class ScanService:
 
     @transaction.atomic
     def get_n_images(self, bundle):
-        """
-        Get the number of page images in a bundle by counting the number of
-        StagingImages saved to the database
-        """
+        """Get the number of page images in a bundle from the number of its StagingImages."""
         return StagingImage.objects.filter(bundle=bundle).count()
 
     @transaction.atomic
     def get_all_images(self, bundle):
-        """
-        Get all the page images in a bundle
-        """
-
+        """Get all the page images in a bundle."""
         return StagingImage.objects.filter(bundle=bundle)
 
     @transaction.atomic
     def get_user_bundles(self, user):
-        """
-        Return all of the staging bundles that a user uploaded
-        """
-        # bundles = StagingBundle.objects.filter(user=user, has_page_images=True)
+        """Return all of the staging bundles that the given user uploaded."""
         return list(StagingBundle.objects.filter(user=user))
 
     def parse_qr_code(self, list_qr_codes):
-        """
-        Parsing QR codes into list of dictionaries
+        """Parse QR codes into list of dictionaries.
 
         Args:
             list_qr_codes: (list) QR codes returned from QRextract() method as a dictionary
@@ -395,8 +373,8 @@ class ScanService:
 
     @transaction.atomic
     def read_qr_codes(self, bundle_pk):
-        """
-        Read QR codes of scanned pages in a bundle.
+        """Read QR codes of scanned pages in a bundle.
+        
         QR Code:
         -         Test ID:  00001
         -        Page Num:  00#
@@ -433,9 +411,8 @@ class ScanService:
 
         Args:
             bundle_pk: primary key of bundle DB object
-
         Keyword args:
-            papernum (int):
+            papernum (int): the number of the test-paper
             questions (list): doc elsewhere, but a list same length
                 as the bundle, each element is list of which questions
                 to attach that page too.
@@ -499,42 +476,33 @@ class ScanService:
 
     @transaction.atomic
     def get_qr_code_results(self, bundle, page_index):
-        """
-        Check the results of a QR code scanning task. If done, return
-        the QR code data. Otherwise, return None.
+        """Check the results of a QR code scanning task.
+
+        If done, return the QR code data. Otherwise, return None.
         """
         return StagingImage.objects.get(
             bundle=bundle, bundle_order=page_index
         ).parsed_qr
 
     def validate_qr_codes(self, bundle, spec):
-        """
-        Validate qr codes in bundle images (saved to disk) against the spec.
-        """
+        """Validate qr codes in bundle images (saved to disk) against the spec."""
         base_path = pathlib.Path(bundle.file_path).parent
-        # print("SPEC PUBLIC CODE:", spec["publicCode"])
         qrs = checkQRsValid(base_path, spec)
         return qrs
 
     def get_n_pushed_images(self, bundle):
-        """
-        Return the number of staging images that have been pushed.
-        """
+        """Return the number of staging images that have been pushed."""
         pushed = StagingImage.objects.filter(bundle=bundle, pushed=True)
         return len(pushed)
 
     @transaction.atomic
     def get_all_known_images(self, bundle):
-        """
-        Get all the images with completed QR code data - they can be pushed.
-        """
+        """Get all the images with completed QR code data - they can be pushed."""
         return list(bundle.stagingimage_set.filter(image_type=StagingImage.KNOWN))
 
     @transaction.atomic
     def all_complete_images_pushed(self, bundle):
-        """
-        Return True if all of the completed images in a bundle have been pushed.
-        """
+        """Check if all of the completed images in a bundle have been pushed."""
         completed_images = self.get_all_complete_images(bundle)
         for img in completed_images:
             if not img.pushed:
@@ -693,7 +661,9 @@ class ScanService:
 
     @transaction.atomic
     def is_bundle_perfect(self, bundle_pk):
-        """Tests if the bundle (given by its pk) is perfect. A bundle is perfect when
+        """Tests if the bundle (given by its pk) is perfect.
+
+        A bundle is perfect when
           * no unread pages, no error-pages, no unknown-pages, and
           * all extra pages have data.
         this, in turn, means that all pages present in bundle are
@@ -789,7 +759,6 @@ class ScanService:
             and ``version``.  Finally for extra-pages, it contains
             ``paper_number``, and ``question_list``.
         """
-
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
 
@@ -846,13 +815,13 @@ class ScanService:
 
     @transaction.atomic
     def get_bundle_papers_pages_list(self, bundle_obj):
-        """Returns an ordered list of papers and their known/extra
-        pages in the given bundle.  Each item in the list is a pair
+        """Return an ordered list of papers and their known/extra pages in the given bundle.
+
+        Each item in the list is a pair
         (paper_number, page-info). The page-info is itself a ordered
         list of dicts. Each dict contains information about a page in
         the given paper in the given bundle.
         """
-
         # We build the ordered list in two steps. First build a dict of lists indexed by paper-number.
         papers = {}
         # Loop over the known-images first and then the extra-pages.
@@ -960,8 +929,7 @@ class ScanService:
 
     @transaction.atomic
     def get_bundle_paper_numbers(self, bundle_obj):
-        """Return a sorted list of paper-numbers in the given bundle
-        as determined by known and extra pages."""
+        """Return a sorted list of paper-numbers in the given bundle as determined by known and extra pages."""
         paper_list = []
         for img in bundle_obj.stagingimage_set.filter(
             image_type=StagingImage.KNOWN
@@ -1090,8 +1058,7 @@ def huey_parent_read_qr_codes_task(bundle_pk):
 def huey_child_get_page_image(
     bundle_pk, index, basedir, basename, *, quiet=True, debug_jpeg=False
 ):
-    """
-    Render a page image and save to disk in the background
+    """Render a page image and save to disk in the background.
 
     Args:
         bundle_pk: bundle DB object's primary key
@@ -1134,12 +1101,12 @@ def huey_child_get_page_image(
 
 @db_task(queue="tasks")
 def huey_child_parse_qr_code(image_pk, *, quiet=True):
-    """
-    Huey task of parsing QR codes, check QR errors, rotate image,
-    and save to database in the background
+    """Huey task of parsing QR codes, check QR errors, rotate image, and save to database in the background.
 
     Args:
         image_pk: primary key of the image
+    Keyword Args:
+        quiet (bool): currently unused?
     """
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path

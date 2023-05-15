@@ -17,13 +17,13 @@ from Scan.services import ScanService
 
 
 class Command(BaseCommand):
-    """
-    commands:
-        python3 manage.py plom_staging_bundles upload (username) (file) <- drag and drop or copy path
-        python3 manage.py plom_staging_bundles status
-        python3 manage.py plom_staging_bundles read_qr (bundle name) <- can get it from status
-        python3 manage.py plom_staging_bundles push (bundle name) <- can get it from status
-        python3 manage.py plom_staging_bundles pages bundle name
+    """Management command that contains several subcommands.
+    
+    python3 manage.py plom_staging_bundles upload (username) (file) <- drag and drop or copy path
+    python3 manage.py plom_staging_bundles status
+    python3 manage.py plom_staging_bundles read_qr (bundle name) <- can get it from status
+    python3 manage.py plom_staging_bundles push (bundle name) <- can get it from status
+    python3 manage.py plom_staging_bundles pages bundle name
     """
 
     help = "Upload bundle pdf files to staging area"

@@ -11,10 +11,7 @@ from plom.scan.question_list_utils import check_question_list
 
 
 class Command(BaseCommand):
-    """
-    commands:
-        python3 manage.py plom_staging_unknowify_page discard (bundle name) (bundle_order)
-    """
+    """python3 manage.py plom_staging_unknowify_page discard (bundle name) (bundle_order)."""
 
     help = """Assign an extra page to a paper and question(s). Note that
     this command cannot cast a page to the 'extra'-type, instead one
