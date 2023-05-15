@@ -449,7 +449,7 @@ class MarkingTaskService:
 
     def is_tag_text_valid(self, text):
         """Return True if the tag text passes our validation checks, False otherwise.
-        
+
         Args:
             text: str, tag text. Assumes it's sanitized.
         """
