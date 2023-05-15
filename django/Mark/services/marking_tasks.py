@@ -437,7 +437,7 @@ class MarkingTaskService:
 
     def sanitize_tag_text(self, tag_text):
         """Return a sanitized text from client input. Currently only entails a call to tag_text.strip().
-        
+
         Args:
             tag_text: str, text that has come from a client request.
 
@@ -481,7 +481,7 @@ class MarkingTaskService:
         tag.save()
 
     def get_tag_from_text(self, text):
-        """Get a tag object from its text contents.
+        """Get a tag object from its text contents. Assumes the input text has already been sanitized.
 
         Args:
             text: str, the text contents of a tag.
