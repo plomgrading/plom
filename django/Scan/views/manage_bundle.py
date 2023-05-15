@@ -86,6 +86,7 @@ class ManageBundleView(ScannerRequiredView):
 
 class GetBundleNavFragmentView(ScannerRequiredView):
     """Return the image display fragment from a user-uploaded bundle."""
+
     def get(self, request, timestamp, index):
         try:
             timestamp = float(timestamp)

@@ -138,6 +138,7 @@ class QRErrorService:
 
         Returns None if all good, else raises various ValueError describing the inconsistencies.
         """
+
         # ------ helper function to test data consistency
         def is_list_inconsistent(lst):
             return any([X != lst[0] for X in lst])

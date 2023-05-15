@@ -187,7 +187,7 @@ class ScanService:
 
         Args:
             bundle_name (str): which bundle.
-        
+
         Keyword Args:
             user (None/str): also filter by user. TODO: user is *not* for permissions: looks like just a way to identify a bundle.
         """
@@ -374,7 +374,7 @@ class ScanService:
     @transaction.atomic
     def read_qr_codes(self, bundle_pk):
         """Read QR codes of scanned pages in a bundle.
-        
+
         QR Code:
         -         Test ID:  00001
         -        Page Num:  00#
