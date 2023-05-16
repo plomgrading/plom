@@ -50,6 +50,7 @@ def download_rubrics_to_file(filename, *, msgr, verbose=True):
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
+        verbose (bool): display diagnostic output on stdout.
 
     Returns:
         None: but saves a file as a side effect.
@@ -87,6 +88,7 @@ def upload_rubrics_from_file(filename, *, msgr, verbose=True):
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
+        verbose (bool): display diagnostic output on stdout.
     """
     if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
         filename = filename.with_suffix(filename.suffix + ".toml")

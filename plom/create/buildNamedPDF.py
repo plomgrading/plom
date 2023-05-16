@@ -30,7 +30,9 @@ def _make_PDF(x):
 
 
 def outputProductionCSV(spec, make_PDF_args):
-    """Output a csv with info on produced papers. Take the make_PDF_args that were used and dump them in a csv
+    """Output a csv with info on produced papers.
+
+    Take the make_PDF_args that were used and dump them in a csv.
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
@@ -84,7 +86,7 @@ def build_papers_backend(
         global_question_version_map (dict): dict of dicts mapping first by
             paper number (int) then by question number (int) to version (int).
 
-    Keyword arguments:
+    Keyword Arguments:
         classlist_by_papernum (dict): classlist keyed by ``papernum`` (int).
             Each value is a dicts with keys ``id`` and ``name``.  Any
             paper numbers corresponding to keys in `classlists_by_papernum`
