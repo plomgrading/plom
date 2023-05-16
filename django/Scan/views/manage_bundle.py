@@ -117,7 +117,7 @@ class GetBundleNavFragmentView(ScannerRequiredView):
         # If page is an extra page then we grab some data for the
         # set-extra-page-info form stuff
         if current_page["status"] == "extra":
-            # TODO - we really need a list of question-labels.
+            # TODO - we really need a list of question-labels: Issue #2716
             # This is a hack to be fixed vvvvvvvvvvvv
             question_labels = [
                 f"Q.{n+1}" for n in range(SpecificationService().get_n_questions())
