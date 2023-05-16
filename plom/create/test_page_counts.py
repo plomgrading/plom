@@ -19,14 +19,14 @@ def test_equal_page_count(tmpdir):
     tmp = Path(tmpdir)
     # build the source version pdfs in sourceVersions/
     buildDemoSourceFiles(tmp, solutions=True)
-    a = check_equal_page_count(tmp / "sourceVersions")
-    print(a)
-    assert a
+    check_true = check_equal_page_count(tmp / "sourceVersions")
+    print(check_true)
+    assert check_true
     print(x for x in (tmp / "sourceVersions").glob("*.pdf"))
     # change the name of one of the solution pdfs to make the page counts unequal
     os.rename(tmp / "sourceVersions" / "solutions1.pdf", tmp / "sourceVersions" / "version3.pdf")
     # check that the page counts are no longer equal
-    a = check_equal_page_count(tmp / "sourceVersions")
-    print(a)
-    assert not a
+    check_false = check_equal_page_count(tmp / "sourceVersions")
+    print(check_false)
+    assert not check_false
     print(x for x in (tmp / "sourceVersions").glob("*.pdf"))
