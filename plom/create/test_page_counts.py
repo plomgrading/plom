@@ -30,3 +30,5 @@ def test_equal_page_count(tmpdir):
     print(check_false)
     assert not check_false
     print(x for x in (tmp / "sourceVersions").glob("*.pdf"))
+    # change the name of the solution pdf back to solutions1.pdf
+    os.rename(tmp / "sourceVersions" / "version3.pdf", tmp / "sourceVersions" / "solutions1.pdf")

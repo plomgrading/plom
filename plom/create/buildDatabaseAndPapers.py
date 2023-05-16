@@ -161,7 +161,6 @@ def check_equal_page_count(path) -> bool:
         source_version.add(num_pages)
     if len(source_version) > 1:
         return False
-        # raise ValueError("Not all source PDFs have the same number of pages")
     # get rid of the source_version and directory
     del source_version
     del source
