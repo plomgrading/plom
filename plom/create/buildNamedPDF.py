@@ -103,6 +103,9 @@ def build_papers_backend(
             ID/Signature box.
         ycoord (float): percentage from top to bottom of page to place
             ID/Signature box.
+
+    Returns:
+        None
     """
     # mapping from pages to groups for labelling top of pages
     make_PDF_args = []

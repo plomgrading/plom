@@ -89,6 +89,9 @@ def upload_rubrics_from_file(filename, *, msgr, verbose=True):
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         verbose (bool): display diagnostic output on stdout.
+
+    Returns:
+        None
     """
     if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
         filename = filename.with_suffix(filename.suffix + ".toml")
@@ -143,6 +146,9 @@ def upload_demo_rubrics(*, msgr, numquestions=3):
         numquestions (int): how many questions should we build for.
             TODO: get number of questions from the server spec if
             omitted.
+
+    Returns:
+        None
 
     The demo data is a bit sparse: we fill in missing pieces and
     multiply over questions.
