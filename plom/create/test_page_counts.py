@@ -7,6 +7,7 @@ from pathlib import Path
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.buildDatabaseAndPapers import check_equal_page_count
 
+
 def test_equal_page_count_true(tmpdir):
     """Checks that the page counts of each source version pdf are equal.
 
@@ -19,7 +20,7 @@ def test_equal_page_count_true(tmpdir):
     buildDemoSourceFiles(tmp)
     check_true = check_equal_page_count(tmp / "sourceVersions")
     assert check_true
-    
+
 
 def test_equal_page_count_false(tmpdir):
     # check that it fails when the page counts are not equal
