@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
@@ -14,9 +15,7 @@ from Scan.forms import FlagImageForm, ReplaceImageForm
 
 
 class ReadQRcodesView(ScannerRequiredView):
-    """
-    Read QR codes of all pages in a bundle
-    """
+    """Read QR codes of all pages in a bundle."""
 
     def post(self, request, timestamp):
         try:
@@ -32,9 +31,7 @@ class ReadQRcodesView(ScannerRequiredView):
 
 
 class UpdateQRProgressView(ScannerRequiredView):
-    """
-    Get the progress of a background QR code reading task.
-    """
+    """Get the progress of a background QR code reading task."""
 
     def build_context(self, timestamp, user, index):
         context = super().build_context()
@@ -122,9 +119,7 @@ class UpdateQRProgressView(ScannerRequiredView):
 
 
 class QRParsingProgressAlert(ScannerRequiredView):
-    """
-    Display and update an alert while QR code reading is in progress.
-    """
+    """Display and update an alert while QR code reading is in progress."""
 
     def post(self, request, timestamp):
         try:

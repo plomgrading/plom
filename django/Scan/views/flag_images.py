@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechntizer
 
 from Scan.views.qr_codes import UpdateQRProgressView
 from django.http import Http404, HttpResponse
@@ -10,10 +11,7 @@ from Papers.services import ImageBundleService
 
 
 class FlagPageImage(UpdateQRProgressView):
-    """
-    If a page image has an error, this method allows
-    scanners to flag the page image to the manager.
-    """
+    """If a page image has an error, this method allows scanners to flag the page image to the manager."""
 
     def post(self, request, timestamp, index):
         try:

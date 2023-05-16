@@ -315,9 +315,11 @@ def map_extra_pages_to_bundle4():
         print(f"Assigning extra pages to test {paper_number} in fake bundle 4")
         for question, page in enumerate(pages):
             call_command(
-                "plom_staging_bundles",
-                "map_extra",
+                "plom_staging_assign_extra",
+                "assign",
+                "demoScanner1",
                 "fake_bundle4",
+                "-i",
                 page,
                 "-t",
                 paper_number,

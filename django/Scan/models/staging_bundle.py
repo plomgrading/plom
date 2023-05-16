@@ -8,9 +8,7 @@ from django.contrib.auth.models import User
 
 
 class StagingBundle(models.Model):
-    """
-    A user-uploaded bundle that isn't validated.
-    """
+    """A user-uploaded bundle that isn't validated."""
 
     def _staging_bundle_upload_path(self, filename):
         # save bundle as "//media/staging/bundles/username/bundle-timestamp/filename"
