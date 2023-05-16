@@ -16,12 +16,23 @@ class PageImageProcessor:
     (TODO: gamma correction, etc?)
     """
 
-    # values used for QR code centre locations
-    # see pdf_page_add_labels_QRs() in plom/create/mergeAndCode.py
-    TOP = 55
-    BOTTOM = 737
-    RIGHT = 562
-    LEFT = 50
+    # values used for QR code centre locations and page dimensions
+    # values from pdf_page_add_labels_QRs() in plom/create/mergeAndCode.py
+    # TOP = 55
+    # BOTTOM = 737
+    # RIGHT = 562
+    # LEFT = 50
+    # PWIDTH = 612
+    # PHEIGHT = 792
+
+    # obtained by running QRextract on un-rotated pages -- better to use these since in pixel units?
+    # TODO: are these values deterministic?
+    TOP = 139.5
+    BOTTOM = 1861.5
+    RIGHT = 1419.5
+    LEFT = 126.5
+    PWIDTH = 1546
+    PHEIGHT = 2000
 
     # dimensions of the QR-bounded region
     WIDTH = RIGHT - LEFT
@@ -223,14 +234,27 @@ class PageImageProcessor:
                     [qr_dict["SE"]["x_coord"], qr_dict["SW"]["y_coord"]],
                 ]
             )
+            # for some reason, adding random numbers to the point coords gives better results than actual coords
+            # src_three_points = np.float32(
+            #     [
+            #         [qr_dict["NE"]["x_coord"] + 10, qr_dict["NE"]["y_coord"] + 6],
+            #         [qr_dict["SW"]["x_coord"] + 5, qr_dict["SW"]["y_coord"] + 50],
+            #         [qr_dict["SE"]["x_coord"] + 45, qr_dict["SW"]["y_coord"] + 25],
+            #     ]
+            # )
         else:
             return image
 
         affine_matrix = cv.getAffineTransform(src_three_points, dest_three_points)
+
+        print(f"SRC: {src_three_points}")
+        print(f"DEST: {dest_three_points}")
+        print(f"AFFINE MATRIX: {affine_matrix}")
+
         return cv.warpAffine(
             image,
             affine_matrix,
-            (image.shape[1], image.shape[0]),
+            (self.PWIDTH, self.PHEIGHT),
             flags=cv.INTER_LINEAR,
         )
 
@@ -258,6 +282,7 @@ class PageImageProcessor:
         opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)
 
         righted_img = self.apply_image_transformation(opencv_img, qr_dict)
+        # Image.fromarray(cv.cvtColor(righted_img, cv.COLOR_BGR2RGB)).show()
 
         top = round(self.TOP + top * self.HEIGHT)
         bottom = round(self.TOP + bottom * self.HEIGHT)
@@ -284,4 +309,6 @@ class PageImageProcessor:
         cropped_img = righted_img[top:bottom, left:right]
 
         # convert the result to a PIL.Image
-        return Image.fromarray(cv.cvtColor(cropped_img, cv.COLOR_BGR2RGB))
+        result = Image.fromarray(cv.cvtColor(cropped_img, cv.COLOR_BGR2RGB))
+        # result.show()
+        return result
