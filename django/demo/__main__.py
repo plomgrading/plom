@@ -148,7 +148,14 @@ def prepare_assessment():
     )
     call_command("plom_demo_spec")
 
-    save_fixture("spec_created.json")
+    # save_fixture("spec_created.json")
+    (settings.BASE_DIR / "fixtures").mkdir(exist_ok=True)
+    call_command(
+        "dumpdata",
+        "--natural-foreign",
+        "Papers.Specification",
+        f"-o{settings.BASE_DIR}/fixtures/test_spec.json"
+    )
 
     call_command(
         "plom_preparation_test_source",
@@ -170,7 +177,12 @@ def prepare_assessment():
     )
     call_command("plom_preparation_qvmap", "generate")
 
-    save_fixture("test_prepared.json")
+    call_command(
+        "dumpdata",
+        "--natural-foreign",
+        "Preparation",
+        f"-o{settings.BASE_DIR}/fixtures/preparation.json"
+    )
 
 
 def launch_huey_workers():
@@ -195,7 +207,15 @@ def build_db_and_papers():
     print("Populating database in background")
     call_command("plom_papers", "build_db")
 
-    save_fixture("papers_db_populated.json")
+    # save_fixture("papers_db_populated.json")
+    call_command(
+        "dumpdata",
+        "--natural-foreign",
+        "Papers.Paper",
+        "--exclude=Papers.FixedPage",
+        "--exclude=Papers.IDPage",
+        f"-o{settings.BASE_DIR}/fixtures/papers.json"
+    )
 
     call_command("plom_preparation_extrapage", "build")
     call_command("plom_build_papers", "--start-all")
@@ -225,7 +245,7 @@ def wait_for_papers_to_be_ready():
             sleep(1)
         else:
             print("Extra page and papers all built - continuing to next step of demo.")
-            save_fixture("papers_built.json")
+            # save_fixture("papers_built.json")
             break
 
 
@@ -272,7 +292,7 @@ def wait_for_upload(number_of_bundles=3, homework_bundles={}):
                 print(out)
             sleep(0.5)
 
-    save_fixture("bundles_uploaded.json")
+    # save_fixture("bundles_uploaded.json")
 
 
 def read_qr_codes(number_of_bundles=3):
@@ -342,7 +362,7 @@ def wait_for_qr_read(number_of_bundles=3):
                 print(f"fake_bundle{n}.pdf has been read")
                 break
 
-    save_fixture("qr_codes_read.json")
+    # save_fixture("qr_codes_read.json")
 
 
 def push_if_ready(number_of_bundles=3, homework_bundles={}, attempts=15):
@@ -382,7 +402,7 @@ def push_if_ready(number_of_bundles=3, homework_bundles={}, attempts=15):
             print("All bundles pushed.")
             break
 
-    save_fixture("pushed_bundles.json")
+    # save_fixture("pushed_bundles.json")
 
 
 def wait_for_exit():
