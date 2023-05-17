@@ -150,7 +150,6 @@ def check_equal_page_count(path) -> bool:
     Returns:
         bool: True if all the source version PDFs have the same number of pages, False otherwise.
     """
-    # make sure that all papers have the same number of pages
     source = Path(path)
     source_version = set()
     for f in source.glob("version*.pdf"):
@@ -161,9 +160,6 @@ def check_equal_page_count(path) -> bool:
         source_version.add(num_pages)
     if len(source_version) > 1:
         return False
-    # get rid of the source_version and directory
-    del source_version
-    del source
     return True
 
 
