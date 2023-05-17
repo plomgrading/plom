@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Julian Lapenna
 
@@ -180,10 +180,10 @@ def build_database(*, msgr, vermap={}, verbose=True):
         verbose (bool): default True, print status of each DB row
             creation to stdout.
 
-    return:
+    Returns:
         None
 
-    raises:
+    Raises:
         PlomExistingDatabase
         PlomServerNotReady
     """

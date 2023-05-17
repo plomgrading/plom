@@ -69,14 +69,21 @@ class ScanService:
         Also, split PDF into page images + store in filesystem and database.
 
         Args:
-            uploaded_pdf_file (Django File): File-object containing the pdf (can also be a TemporaryUploadedFile or InMemoryUploadedFile)
+            uploaded_pdf_file (Django File): File-object containing the pdf
+                (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
             slug (str): Filename slug for the pdf
             user (Django User): the user uploading the file
             timestamp (datetime): the datetime at which the file was uploaded
             pdf_hash (str): the sha256 of the pdf.
-            number_of_pages (int): the number of pages in the pdf
+            number_of_pages (int): the number of pages in the pdf.
+
         Keyword Args:
-            debug_jpeg (bool): off by default.  If True then we make some rotations by non-multiplies of 90, and save some low-quality jpegs.
+            debug_jpeg (bool): off by default.  If True then we make some
+                rotations by non-multiples of 90, and save some
+                low-quality jpegs.
+
+        Returns:
+            None
         """
         fh = uploaded_pdf_file.open()
         with transaction.atomic():
@@ -115,8 +122,13 @@ class ScanService:
             timestamp (datetime): the datetime at which the file was uploaded
             pdf_hash (str): the sha256 of the pdf.
             number_of_pages (int): the number of pages in the pdf
+
         Keyword Args:
-            debug_jpeg (bool): off by default.  If True then we make some rotations by non-multiplies of 90, and save some low-quality jpegs.
+            debug_jpeg (bool): off by default.  If True then we make some rotations
+                by non-multiples of 90, and save some low-quality jpegs.
+
+        Returns:
+            None
         """
         # username => user_object, if in scanner group, else exception raised.
         try:
@@ -146,8 +158,13 @@ class ScanService:
 
         Args:
             bundle_pk: StagingBundle object primary key
+
         Keyword Args:
-            debug_jpeg (bool): off by default.  If True then we make some rotations by non-multiplies of 90, and save some low-quality jpegs.
+            debug_jpeg (bool): off by default.  If True then we make some rotations
+                by non-multiples of 90, and save some low-quality jpegs.
+
+        Returns:
+            None
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         task = huey_parent_split_bundle_task(bundle_pk, debug_jpeg=debug_jpeg)
@@ -189,7 +206,11 @@ class ScanService:
             bundle_name (str): which bundle.
 
         Keyword Args:
-            user (None/str): also filter by user. TODO: user is *not* for permissions: looks like just a way to identify a bundle.
+            user (None/str): also filter by user. TODO: user is *not* for
+                permissions: looks like just a way to identify a bundle.
+
+        Returns:
+            None
         """
         if user:
             bundle = StagingBundle.objects.get(
@@ -410,12 +431,16 @@ class ScanService:
         """WIP support for hwscan.
 
         Args:
-            bundle_pk: primary key of bundle DB object
+            bundle_pk: primary key of bundle DB object.
+
         Keyword args:
             papernum (int): the number of the test-paper
             questions (list): doc elsewhere, but a list same length
                 as the bundle, each element is list of which questions
                 to attach that page too.
+
+        Returns:
+            None
         """
         root_folder = settings.MEDIA_ROOT / "page_images"
         root_folder.mkdir(exist_ok=True)
@@ -1070,6 +1095,9 @@ def huey_child_get_page_image(
         quiet (bool): currently unused?
         debug_jpeg (bool): off by default.  If True then we make some rotations by
             non-multiplies of 90, and save some low-quality jpegs.
+
+    Returns:
+        None
     """
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 

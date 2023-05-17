@@ -112,7 +112,7 @@ Server administration
 
 Like this `peewee.OperationalError: disk I/O error`?
 Plom uses an SQLite database; it
-[should not be run on NFS storage](https://gitlab.com/plom/plom/issues/811).
+[should not be run on NFS storage](https://gitlab.com/plom/plom/-/issues/811).
 Apparently "people" know this but we were just as "thrilled" as you probably
 are to discover it on a production server.
 

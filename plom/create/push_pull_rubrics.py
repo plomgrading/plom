@@ -7,7 +7,7 @@ import json
 import sys
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
@@ -50,6 +50,7 @@ def download_rubrics_to_file(filename, *, msgr, verbose=True):
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
+        verbose (bool): display diagnostic output on stdout.
 
     Returns:
         None: but saves a file as a side effect.
@@ -87,6 +88,10 @@ def upload_rubrics_from_file(filename, *, msgr, verbose=True):
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
+        verbose (bool): display diagnostic output on stdout.
+
+    Returns:
+        None
     """
     if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
         filename = filename.with_suffix(filename.suffix + ".toml")
@@ -141,6 +146,9 @@ def upload_demo_rubrics(*, msgr, numquestions=3):
         numquestions (int): how many questions should we build for.
             TODO: get number of questions from the server spec if
             omitted.
+
+    Returns:
+        None
 
     The demo data is a bit sparse: we fill in missing pieces and
     multiply over questions.
