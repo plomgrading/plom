@@ -5,6 +5,7 @@ from django.contrib import admin
 
 from Mark.models import (
     MarkingTask,
+    MarkingTaskTag,
     Annotation,
     AnnotationImage,
 )
@@ -14,3 +15,4 @@ from Mark.models import (
 admin.site.register(MarkingTask)
 admin.site.register(Annotation)
 admin.site.register(AnnotationImage)
+admin.site.register(MarkingTaskTag)

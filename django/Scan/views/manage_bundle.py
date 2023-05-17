@@ -10,6 +10,7 @@ from django.http import Http404, FileResponse
 from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ScanService
+from Papers.services import SpecificationService
 
 
 # from Scan.models import StagingImage
@@ -20,15 +21,13 @@ from Scan.services import ScanService
 
 
 class ManageBundleView(ScannerRequiredView):
-    """
-    Let a user view an uploaded bundle and read its QR codes.
-    """
+    """Let a user view an uploaded bundle and read its QR codes."""
 
     def build_context(self, timestamp, user, index):
         """Build a context for a particular page of a bundle.
 
         Args:
-            timestamps (float): select a bundle by its timestamp.
+            timestamp (float): select a bundle by its timestamp.
             user (todo): which user.
             index (int): 1-indexed.
         """
@@ -86,6 +85,8 @@ class ManageBundleView(ScannerRequiredView):
 
 
 class GetBundleNavFragmentView(ScannerRequiredView):
+    """Return the image display fragment from a user-uploaded bundle."""
+
     def get(self, request, timestamp, index):
         try:
             timestamp = float(timestamp)
@@ -96,11 +97,11 @@ class GetBundleNavFragmentView(ScannerRequiredView):
         scanner = ScanService()
         bundle = scanner.get_bundle(timestamp, request.user)
         n_pages = scanner.get_n_images(bundle)
+
         if index < 0 or index > n_pages:
             raise Http404("Bundle page does not exist.")
 
         current_page = scanner.get_bundle_single_page_info(bundle, index)
-
         context.update(
             {
                 "is_pushed": bundle.pushed,
@@ -113,14 +114,31 @@ class GetBundleNavFragmentView(ScannerRequiredView):
                 "current_page": current_page,
             }
         )
+        # If page is an extra page then we grab some data for the
+        # set-extra-page-info form stuff
+        if current_page["status"] == "extra":
+            # TODO - we really need a list of question-labels: Issue #2716
+            # This is a hack to be fixed vvvvvvvvvvvv
+            question_labels = [
+                f"Q.{n+1}" for n in range(SpecificationService().get_n_questions())
+            ]
+            paper_numbers = scanner.get_bundle_paper_numbers(bundle)
+            all_paper_numbers = [
+                n + 1 for n in range(SpecificationService().get_n_to_produce())
+            ]
+            context.update(
+                {
+                    "question_labels": question_labels,
+                    "bundle_paper_numbers": paper_numbers,
+                    "all_paper_numbers": all_paper_numbers,
+                }
+            )
 
         return render(request, "Scan/fragments/nav_bundle.html", context)
 
 
 class GetBundleImageView(ScannerRequiredView):
-    """
-    Return an image from a user-uploaded bundle
-    """
+    """Return an image from a user-uploaded bundle."""
 
     def get(self, request, timestamp, index):
         try:

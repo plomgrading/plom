@@ -123,10 +123,11 @@ def make_groups_and_users():
 
 
 def save_fixture(filename):
-    """
-    Save a snapshot of the database as a JSON file to 'fixtures/filename.json'
-    """
+    """Save a snapshot of the database as a JSON file.
 
+    Args:
+        filename (str): saves to 'fixtures/filename'
+    """
     fixtures_dir = settings.BASE_DIR / "fixtures"
     fixtures_dir.mkdir(exist_ok=True)
 
@@ -314,9 +315,11 @@ def map_extra_pages_to_bundle4():
         print(f"Assigning extra pages to test {paper_number} in fake bundle 4")
         for question, page in enumerate(pages):
             call_command(
-                "plom_staging_bundles",
-                "map_extra",
+                "plom_staging_assign_extra",
+                "assign",
+                "demoScanner1",
                 "fake_bundle4",
+                "-i",
                 page,
                 "-t",
                 paper_number,

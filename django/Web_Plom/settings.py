@@ -245,10 +245,17 @@ LOGGING = {
     "version": 1,
     "handlers": {
         "console": {
+            "level": "DEBUG",
             "class": "logging.StreamHandler",
         },
     },
-    "loggers": {},
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "propagate": True,
+            "level": "DEBUG",
+        }
+    },
 }
 
 # When hunting down n-plus-1 query problems make use of the nplusone package

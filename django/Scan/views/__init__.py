@@ -51,4 +51,5 @@ from .change_image_state import (
 
 from .cast_image_state import (
     DiscardImageType,
+    ExtraliseImageType,
 )

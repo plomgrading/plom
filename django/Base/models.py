@@ -134,6 +134,26 @@ class SingletonHueyTask(HueyTask):
         return obj
 
 
+class Tag(models.Model):
+    """
+    Represents a text entry that can have a many-to-one
+    relationship with another table.
+
+    This is an abstract class that should be extended in other apps.
+
+    user: reference to a User instance, the user who created the task
+    time: when the tag was first created
+    text: the text contents of the tag
+    """
+
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    time = models.DateField(default=timezone.now)
+    text = models.TextField(null=False)
+
+    class Meta:
+        abstract = True
+
+
 # ---------------------------------
 # Define the signal handlers for huey tasks.
 # if the task has the kwarg "quiet=True" then

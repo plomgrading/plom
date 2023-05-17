@@ -7,14 +7,15 @@ from plom.scan import rotate_bitmap
 
 
 class PageImageProcessor:
-    """
-    Functions for processing a page-image: rotation
+    """Functions for processing a page-image: rotation.
+
     (TODO: gamma correction, etc?)
     """
 
     def get_page_orientation(self, qr_code_data):
-        """
-        Return a string representing a page orientation. The choices are:
+        """Return a string representing a page orientation.
+
+        The choices are:
             upright: page doesn't need to be rotated
             upside_down: page should be rotated 180 degrees
             turned_left: page should be rotated -90 degrees
@@ -51,7 +52,6 @@ class PageImageProcessor:
         Args:
             qr_code_data: (dict) data parsed from page-image QR codes
         """
-
         northeast_orientation = None
         if "NE" in qr_code_data:
             expected_corner = qr_code_data["NE"]["quadrant"]
@@ -117,16 +117,15 @@ class PageImageProcessor:
     def check_corner(
         self, val_from_qr, upright, turned_right, turned_left, upside_down
     ):
-        """
-        Check a page corner for its actual orientation.
+        """Check a page corner for its actual orientation.
 
         Args:
-            val_from_qr: (str) one of "1", "2", "3", "4"
-            upright: (str) the quadrant value for an upright orientation,
+            val_from_qr (str): one of "1", "2", "3", "4"
+            upright (str): the quadrant value for an upright orientation,
                            one of "1", "2", "3", "4"
-            turned_right: (str) value for a turned_right orientation
-            turned_left: (str) value for a turned_left orientation
-            upside_dow: (str) value for an upside_down orientation
+            turned_right (str): value for a turned_right orientation
+            turned_left (str): value for a turned_left orientation
+            upside_down (str): value for an upside_down orientation
         """
         if val_from_qr == upright:
             return "upright"
@@ -138,9 +137,9 @@ class PageImageProcessor:
             return "upside_down"
 
     def rotate_page_image(self, path, qr_data):
-        """
-        Get the current orientation of a page-image using its parsed QR code
-        data. If it isn't upright, rotate the image and replace it on disk.
+        """Get the current orientation of a page-image using its parsed QR code data.
+
+        If it isn't upright, rotate the image and replace it on disk.
 
         Args:
             path (str/pathlib.Path): path to image file

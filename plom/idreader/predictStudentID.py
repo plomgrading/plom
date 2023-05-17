@@ -5,8 +5,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (c) 2022 Edith Coates
 
-"""
-Use image processing to extract and "read" student numbers.
+"""Use image processing to extract and "read" student numbers.
 
 See:
 https://www.pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
@@ -118,7 +117,6 @@ def get_digit_images(ID_box, num_digits):
         list: A list of numpy.ndarray which are the images for each digit.
             In case of errors, returns an empty list
     """
-
     processed_digits_images_list = []
 
     for digit_index in range(num_digits):
