@@ -13,7 +13,7 @@
 
 # Not really server deps
 PyQt6==6.5.0
-PyQt6-sip==13.5.0
+PyQt6-sip==13.5.1
 
 aiohttp==3.8.4
 appdirs==1.4.4
@@ -21,16 +21,16 @@ arrow==1.2.3
 canvasapi==3.0.0
 exif==1.6.0
 file-magic==0.4.1
-fonttools==4.39.3
+fonttools==4.39.4
 importlib-resources==5.12.0
 imutils==0.5.4
 lapsolver==1.1.0
-numpy==1.24.2
+numpy==1.24.3
 opencv-python-headless==4.7.0.72
-packaging==23.0
+packaging==23.1
 pandas==1.5.3
 passlib==1.7.4
-peewee==3.16.0
+peewee==3.16.2
 Pillow==9.5.0
 pymupdf==1.22.1
 PyMySQL==1.0.3
@@ -41,7 +41,7 @@ scikit-learn==1.2.2
 segno==1.5.2
 stdiomask==0.0.6
 tomli==2.0.1
-tomlkit==0.11.7
+tomlkit==0.11.8
 tqdm==4.65.0
 urllib3==1.26.15
 zipfly==6.0.5
