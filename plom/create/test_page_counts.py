@@ -33,7 +33,6 @@ def test_equal_page_count_false(tmpdir):
     clone.save(tmp / "sourceVersions/version3.pdf")
     # check that the page counts are no longer equal
     check_false = check_equal_page_count(tmp / "sourceVersions")
-    print(check_false)
     assert not check_false
     # delete version3.pdf
     os.remove(tmp / "sourceVersions/version3.pdf")
