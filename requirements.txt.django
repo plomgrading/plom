@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 beautifulsoup4==4.12.2
+debugpy==1.6.7
 django==4.1.9
 django-braces==1.15.0
 django-htmx==1.14.0
@@ -14,13 +15,10 @@ django-reset-migrations
 django-session-timeout
 djangorestframework==3.14.0
 model_bakery==1.11.0
-# https://pypi.org/project/random-username/
-# https://github.com/williexu/random_username
-random-username
+psycopg2-binary==3.1.9
+random-username==1.0.2
 tabulate==0.9.0
-psycopg2-binary  # for mucking with postgres databases - use binary so that we don't have to build
-debugpy
-whitenoise
+whitenoise==6.4.0
 
 
 #---------- for dev / debug work - comment out unless using it.
