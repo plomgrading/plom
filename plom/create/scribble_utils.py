@@ -14,7 +14,7 @@ import random
 import sys
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 
@@ -369,7 +369,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
         assert excess > 0
 
 
-def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
+def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
     """Fill-in exams with fake data for demo or testing.
 
     Arguments:
@@ -382,6 +382,9 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
         which (iterable): By default we scribble on all exams or specify
             something like ``which=range(10, 16)`` here to scribble on a
             subset. (default: `None`)
+
+    Returns:
+        None
     """
     # Customizable data
     extra_page_probability = 0.2
@@ -531,6 +534,9 @@ def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     Keyword Arguments:
         number_of_garbage_pages (int): how many junk pages to add (default: 2)
 
+    Returns:
+        None
+
     Intended for testing.
     """
     green = [0, 0.75, 0]
@@ -642,6 +648,9 @@ def make_scribbles(basedir=Path("."), *, msgr):
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
+
+    Returns:
+        None
 
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
