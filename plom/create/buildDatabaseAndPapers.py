@@ -148,7 +148,7 @@ def check_equal_page_count(path) -> bool:
         path (pathlib.Path/str): path to the directory containing the source version PDFs.
 
     Returns:
-        bool: True if all the source version PDFs have the same number of pages, False otherwise.
+        True if all the source version PDFs have the same number of pages, False otherwise.
     """
     source = Path(path)
     source_version = set()
