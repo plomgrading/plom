@@ -233,6 +233,8 @@ class IDHandler:
     def IDgetImage(self, data, request):
         """Return the ID page image for a specified paper number.
 
+        DEPRECATED 0.14.0: no modern callers, only for old clients.
+
         Responds with status 200/204/404/409/410.
 
         Args:
@@ -282,6 +284,8 @@ class IDHandler:
     @authenticate_by_token_required_fields([])
     def ID_get_donotmark_images(self, data, request):
         """Return the Do Not Mark page images for a specified paper number.
+
+        DEPRECATED 0.14.0: no modern callers, only for old clients.
 
         Responds with status 200/204/404/410.
 

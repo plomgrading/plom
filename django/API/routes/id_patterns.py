@@ -10,7 +10,6 @@ from API.views import (
     IDgetDoneTasks,
     IDgetNextTask,
     IDclaimThisTask,
-    IDgetImage,
     GetIDPredictions,
     GetClasslist,
 )
@@ -48,12 +47,6 @@ class IdURLPatterns:
             ),
         ]
         id_patterns += tasks
-
-        # get ID page images from server
-        images = [
-            path("image/<paper_id>/", IDgetImage.as_view(), name="api_ID_get_image"),
-        ]
-        id_patterns += images
 
         # get ID'er predictions
         predictions = [
