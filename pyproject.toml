@@ -33,7 +33,8 @@ qt_api = "pyqt6"
 
 [tool.djlint]
 # TODO: many of these should be fixed instead of ignored!
-ignore="H021,H023,H006,H013,H025,H030,H031,H005,H016,H020"
+# H037: vaguely false positives from "class" inside if-else
+ignore="H021,H023,H006,H013,H025,H030,H031,H005,H016,H020,H037"
 # indent=2
 
 [tool.pydocstyle]
