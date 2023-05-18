@@ -153,7 +153,7 @@ def prepare_assessment():
         "dumpdata",
         "--natural-foreign",
         "Papers.Specification",
-        f"-o{settings.BASE_DIR}/fixtures/test_spec.json"
+        f"-o{settings.BASE_DIR}/fixtures/test_spec.json",
     )
 
     call_command(
@@ -180,7 +180,7 @@ def prepare_assessment():
         "dumpdata",
         "--natural-foreign",
         "Preparation",
-        f"-o{settings.BASE_DIR}/fixtures/preparation.json"
+        f"-o{settings.BASE_DIR}/fixtures/preparation.json",
     )
 
 
@@ -212,7 +212,7 @@ def build_db_and_papers():
         "Papers.Paper",
         "--exclude=Papers.FixedPage",
         "--exclude=Papers.IDPage",
-        f"-o{settings.BASE_DIR}/fixtures/papers.json"
+        f"-o{settings.BASE_DIR}/fixtures/papers.json",
     )
 
     call_command("plom_preparation_extrapage", "build")

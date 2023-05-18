@@ -208,8 +208,12 @@ class TestMarkingTasksWithFixtures(TestCase):
         task1 = mts.create_task(paper1, 1)
         task2 = mts.create_task(paper2, 1)
 
-        question_version1 = StagingPQVMapping.objects.get(paper_number=1, question=1).version
-        question_version2 = StagingPQVMapping.objects.get(paper_number=2, question=1).version
+        question_version1 = StagingPQVMapping.objects.get(
+            paper_number=1, question=1
+        ).version
+        question_version2 = StagingPQVMapping.objects.get(
+            paper_number=2, question=1
+        ).version
 
         self.assertEqual(task1.question_version, question_version1)
         self.assertAlmostEqual(task1.code, "q0001g1")
