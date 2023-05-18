@@ -93,16 +93,16 @@ def parse_verify_save_spec(fname, *, save=False):
 def autogen_users_file(demo, auto, numbered, rawfile=Path("userListRaw.csv")):
     """Make a file of users and passwords.
 
-    args:
+    Args:
         demo (bool): make canned demo with known usernames/passwords.
         auto (int or None): number of autogenerate usernames and passwords.
         numbered (bool): autogenerate usernames like "user03" and pwds.
 
-    keyword args:
+    Keyword Args:
         rawfile (str/pathlib.Path): a filename to write usernames/passwords.
             Defaults to "userListRaw.csv" in the current working directory.
 
-    return:
+    Returns:
         pathlib.Path: the filename written to, "userListRaw.csv" by default.
     """
     rawfile = Path(rawfile)

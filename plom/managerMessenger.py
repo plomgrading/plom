@@ -479,6 +479,10 @@ class ManagerMessenger(BaseMessenger):
         return imageList
 
     def IDgetImageFromATest(self):
+        """Get any ID image.
+
+        DEPRECATED: only legacy servers do this.
+        """
         self.SRmutex.acquire()
         try:
             response = self.get(

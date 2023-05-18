@@ -1805,21 +1805,25 @@ class Manager(QWidget):
         certainty = self.ui.predictionTW.item(idx[0].row(), 4)
         if certainty is not None:
             certainty = certainty.data(Qt.ItemDataRole.DisplayRole)
-        try:
-            img_bytes = self.msgr.request_ID_image(test)
-        except PlomException as err:
-            ErrorMsg(self, str(err)).exec()
-            return
 
-        if not img_bytes:
-            return
         with tempfile.TemporaryDirectory() as td:
-            img_ext = imghdr.what(None, h=img_bytes)
-            img_name = Path(td) / f"id.{img_ext}"
-            with open(img_name, "wb") as fh:
-                fh.write(img_bytes)
-            if not img_ext:
-                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            pagedata = self.msgr.get_pagedata(test)
+            id_pages = []
+            for row in pagedata:
+                # Issue #2707: better use a image-type key
+                if not row["pagename"].casefold().startswith("id"):
+                    continue
+                img_bytes = self.msgr.get_image(row["id"], row["md5"])
+                ext = Path(row["server_path"]).suffix
+                filename = Path(td) / f'img_{int(test):04}_{row["pagename"]}{ext}'
+                with open(filename, "wb") as fh:
+                    fh.write(img_bytes)
+                id_pages.append(filename)
+            if not id_pages:
+                return
+            assert len(id_pages) == 1, "Expected at most one ID page"
+            (img_name,) = id_pages
+
             if sid is None and pred_sid is not None:
                 title = f"ID page: predicted as {pred_sid} certainty {certainty}"
             elif sid == pred_sid:
@@ -2632,14 +2636,25 @@ class Manager(QWidget):
                 return
 
         test = int(self.ui.reviewIDTW.item(r, 0).text())
-        img_bytes = self.msgr.request_ID_image(test)
+
         with tempfile.TemporaryDirectory() as td:
-            img_ext = imghdr.what(None, h=img_bytes)
-            img_name = Path(td) / f"id.0.{img_ext}"
-            with open(img_name, "wb") as fh:
-                fh.write(img_bytes)
-            if not img_ext:
-                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            pagedata = self.msgr.get_pagedata(test)
+            id_pages = []
+            for row in pagedata:
+                # Issue #2707: better use a image-type key
+                if not row["pagename"].casefold().startswith("id"):
+                    continue
+                img_bytes = self.msgr.get_image(row["id"], row["md5"])
+                ext = Path(row["server_path"]).suffix
+                filename = Path(td) / f'img_{int(test):04}_{row["pagename"]}{ext}'
+                with open(filename, "wb") as fh:
+                    fh.write(img_bytes)
+                id_pages.append(filename)
+            if not id_pages:
+                return
+            assert len(id_pages) == 1, "Expected at most one ID page"
+            (img_name,) = id_pages
+
             rvw = ReviewViewWindowID(self, img_name)
             if rvw.exec() == QDialog.DialogCode.Accepted:
                 # first remove auth from that user - safer.
