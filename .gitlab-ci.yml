@@ -328,7 +328,7 @@ flake8:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - python3 -m pip install flake8
+    - python3 -m pip install flake8~=6.0.0
   script:
     # show all errors and warnings but don't fail
     - flake8 --exit-zero
@@ -622,7 +622,7 @@ docs_sphinx:
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install tex-gyre
-    - pip install myst-parser sphinx sphinx_rtd_theme sphinx-argparse
+    - pip install myst-parser~=1.0.0 sphinx~=6.2.1 sphinx_rtd_theme~=1.2.0 sphinx-argparse~=0.4.0
   script:
     - pushd doc
     - ls
