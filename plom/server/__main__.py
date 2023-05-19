@@ -6,6 +6,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2023 Divy Patel
 
 """Command line tool to start Plom servers."""
 
@@ -192,13 +193,13 @@ def get_parser():
         "users",
         help="Create initial user accounts",
         description="""
-          Manipulate users accounts, but you may want "plom-create users"
-          instead.  With no arguments, produce a template
-          file for you to edit, with passwords displayed in plain text.
+          Manipulate users accounts. Use "plom-create users"
+          instead if the server is already running.  With no arguments, produces
+          a template file for you to edit, with passwords displayed in plain text.
           Given a filename, parses a plain-text user list, performs some
           simple sanity checks and then hashes the passwords to a file for the
           server.  If you prefer, you can ignore user accounts for now and
-          create them after the server is running.
+          create them after the server is running, using plom-create.
         """,
     )
     spR = sub.add_parser(
