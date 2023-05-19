@@ -123,10 +123,11 @@ def make_groups_and_users():
 
 
 def save_fixture(filename):
-    """
-    Save a snapshot of the database as a JSON file to 'fixtures/filename.json'
-    """
+    """Save a snapshot of the database as a JSON file.
 
+    Args:
+        filename (str): saves to 'fixtures/filename'
+    """
     fixtures_dir = settings.BASE_DIR / "fixtures"
     fixtures_dir.mkdir(exist_ok=True)
 
@@ -147,7 +148,13 @@ def prepare_assessment():
     )
     call_command("plom_demo_spec")
 
-    save_fixture("spec_created.json")
+    (settings.BASE_DIR / "fixtures").mkdir(exist_ok=True)
+    call_command(
+        "dumpdata",
+        "--natural-foreign",
+        "Papers.Specification",
+        f"-o{settings.BASE_DIR}/fixtures/test_spec.json",
+    )
 
     call_command(
         "plom_preparation_test_source",
@@ -169,7 +176,12 @@ def prepare_assessment():
     )
     call_command("plom_preparation_qvmap", "generate")
 
-    save_fixture("test_prepared.json")
+    call_command(
+        "dumpdata",
+        "--natural-foreign",
+        "Preparation",
+        f"-o{settings.BASE_DIR}/fixtures/preparation.json",
+    )
 
 
 def launch_huey_workers():
@@ -194,7 +206,14 @@ def build_db_and_papers():
     print("Populating database in background")
     call_command("plom_papers", "build_db")
 
-    save_fixture("papers_db_populated.json")
+    call_command(
+        "dumpdata",
+        "--natural-foreign",
+        "Papers.Paper",
+        "--exclude=Papers.FixedPage",
+        "--exclude=Papers.IDPage",
+        f"-o{settings.BASE_DIR}/fixtures/papers.json",
+    )
 
     call_command("plom_preparation_extrapage", "build")
     call_command("plom_build_papers", "--start-all")
@@ -224,7 +243,6 @@ def wait_for_papers_to_be_ready():
             sleep(1)
         else:
             print("Extra page and papers all built - continuing to next step of demo.")
-            save_fixture("papers_built.json")
             break
 
 
@@ -271,8 +289,6 @@ def wait_for_upload(number_of_bundles=3, homework_bundles={}):
                 print(out)
             sleep(0.5)
 
-    save_fixture("bundles_uploaded.json")
-
 
 def read_qr_codes(number_of_bundles=3):
     for n in range(1, number_of_bundles + 1):
@@ -314,9 +330,11 @@ def map_extra_pages_to_bundle4():
         print(f"Assigning extra pages to test {paper_number} in fake bundle 4")
         for question, page in enumerate(pages):
             call_command(
-                "plom_staging_bundles",
-                "map_extra",
+                "plom_staging_assign_extra",
+                "assign",
+                "demoScanner1",
                 "fake_bundle4",
+                "-i",
                 page,
                 "-t",
                 paper_number,
@@ -338,8 +356,6 @@ def wait_for_qr_read(number_of_bundles=3):
             else:
                 print(f"fake_bundle{n}.pdf has been read")
                 break
-
-    save_fixture("qr_codes_read.json")
 
 
 def push_if_ready(number_of_bundles=3, homework_bundles={}, attempts=15):
@@ -378,8 +394,6 @@ def push_if_ready(number_of_bundles=3, homework_bundles={}, attempts=15):
         else:
             print("All bundles pushed.")
             break
-
-    save_fixture("pushed_bundles.json")
 
 
 def wait_for_exit():

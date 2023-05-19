@@ -28,6 +28,8 @@ from .mark import (
     MgetAnnotations,
     MgetAnnotationImage,
     MgetDoneTasks,
+    TagsFromCodeView,
+    GetAllTags,
 )
 
 from .report import (

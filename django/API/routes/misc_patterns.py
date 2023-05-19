@@ -15,9 +15,9 @@ from API.views import (
 
 
 class MiscURLPatterns:
-    """
-    URL patterns that don't fit in the other files;
-    all of these patterns have no particular prefix.
+    """URL patterns that don't fit in the other files.
+
+    All of these patterns have no particular prefix.
     """
 
     @staticmethod

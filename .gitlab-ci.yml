@@ -5,6 +5,7 @@
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Julian Lapenna
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -63,9 +64,9 @@ docker-image:
       fi
     - >
       if [ "$DOCKER_USE_CACHE" == "1" ]; then
-        docker build --cache-from $IM_LATEST --tag $IM .
+        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile.legacy
       else
-        docker build --tag $IM .
+        docker build --tag $IM . -f Containerfile.legacy
       fi
     - docker push $IM
 
@@ -138,7 +139,7 @@ djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint==1.25.1
+    - pip install djlint~=1.27.2
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html
 
@@ -148,7 +149,7 @@ djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint==1.25.1
+    - pip install djlint~=1.27.2
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html --check --warn
 
@@ -324,16 +325,51 @@ pylint:
 
 
 flake8:
-  stage: test
-  needs: ["docker-image"]
-  image: $IM
+  image: python:3.11
+  stage: static_analysis
   before_script:
-    - python3 -m pip install flake8
+    - python3 -m pip install flake8~=6.0.0
   script:
     # show all errors and warnings but don't fail
     - flake8 --exit-zero
     # fail test if any errors here
     - flake8 --select E,W
+  allow_failure: true
+
+
+pydocstyle:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]==6.3.0
+  script:
+    # show all errors and warnings but don't fail
+    - pydocstyle plom || true
+    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
+    # pydocstyle -s -e plom
+    # Instead, just ensure the total does not increase
+    - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
+    - echo $NUMERR
+    # Future hackers: please try to decrease this number
+    - bash -c "[[ $NUMERR -le 732 ]]"
+
+
+# TODO: currently allowed-to-fail (for a while!)
+pydocstyle-django:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]==6.3.0
+  script:
+    # show all errors and warnings but don't fail
+    - pydocstyle django || true
+    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
+    # pydocstyle -s -e django
+    # Instead, just ensure the total does not increase
+    - NUMERR=`pydocstyle --count django | tail -n 1 || true`
+    - echo $NUMERR
+    # Future hackers: please try to decrease this number
+    - bash -c "[[ $NUMERR -le 743 ]]"
   allow_failure: true
 
 
@@ -352,9 +388,9 @@ webplom_test:
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - pushd django
     - python3 -m pip install coverage
-    - python3 -m pip install -r requirements.txt
+    - python3 -m pip install -r requirements.txt.django
+    - pushd django
     - export PLOM_USING_DOCKER=1
     - python3 -m demo --test --randomarker
     - coverage run --source='.' manage.py test
@@ -586,7 +622,7 @@ docs_sphinx:
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install tex-gyre
-    - pip install myst-parser sphinx sphinx_rtd_theme sphinx-argparse
+    - pip install myst-parser~=1.0.0 sphinx~=6.2.1 sphinx_rtd_theme~=1.2.0 sphinx-argparse~=0.4.0
   script:
     - pushd doc
     - ls

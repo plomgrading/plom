@@ -5,20 +5,17 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import HttpResponse, Http404
+from django.http import Http404
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerRequiredView
 
-from Papers.services import ImageBundleService, PaperCreatorService
+from Papers.services import ImageBundleService
 from Scan.services import ScanService
 
 
 class PushPageImage(ScannerRequiredView):
-    """
-    Once it's passed all of the validation checks, push a page image
-    out of the "staging" database.
-    """
+    """Once it's passed all of the validation checks, push a page image out of the "staging" database."""
 
     def post(self, request, timestamp, index):
         try:
@@ -37,9 +34,7 @@ class PushPageImage(ScannerRequiredView):
 
 
 class PushAllPageImages(ScannerRequiredView):
-    """
-    Push all page-images that pass the QR validation checks.
-    """
+    """Push all page-images that pass the QR validation checks."""
 
     def post(self, request, timestamp):
         try:
@@ -55,9 +50,7 @@ class PushAllPageImages(ScannerRequiredView):
 
 
 class PagePushingUpdateView(ScannerRequiredView):
-    """
-    Get the status of pushing a page-image.
-    """
+    """Get the status of pushing a page-image."""
 
     def get(self, request, timestamp, index):
         try:

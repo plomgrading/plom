@@ -27,8 +27,8 @@ from Scan.views import (
     ChangeErrorImageState,
     ReplacePageImage,
     ChangeCollisionImageState,
-    DiscardImage,
     DiscardImageType,
+    ExtraliseImageType,
 )
 
 
@@ -139,5 +139,10 @@ urlpatterns = [
         "discard/<timestamp>/<int:index>/",
         DiscardImageType.as_view(),
         name="discard_image",
+    ),
+    path(
+        "extralise/<timestamp>/<int:index>/",
+        ExtraliseImageType.as_view(),
+        name="extralise_image",
     ),
 ]

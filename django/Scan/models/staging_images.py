@@ -2,14 +2,14 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Natalie Balashov
 
 from django.db import models
 from Scan.models import StagingBundle
 
 
 class StagingImage(models.Model):
-    """
-    An image of a scanned page that isn't validated.
+    """An image of a scanned page that isn't validated.
 
     Note that bundle_order is the 1-indexed position of the image with the pdf. This contrasts with pymupdf (for example) for which pages are 0-indexed.
     """
@@ -35,8 +35,6 @@ class StagingImage(models.Model):
     image_file = models.ImageField(upload_to=_staging_image_upload_path)
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)
-    paper_id = models.PositiveIntegerField(default=None, null=True)
-    page_number = models.PositiveIntegerField(default=None, null=True)
     rotation = models.IntegerField(default=0)
     pushed = models.BooleanField(default=False)
     image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)

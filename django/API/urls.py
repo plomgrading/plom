@@ -10,6 +10,7 @@ from API.routes import (
     AnnotationPatterns,
     AnnotationImagePatterns,
     MiscURLPatterns,
+    TagsURLPatterns,
 )
 
 from API.views import (
@@ -38,6 +39,7 @@ urlpatterns = [
     path(PagedataPatterns.prefix, include(PagedataPatterns.patterns)),
     path(AnnotationPatterns.prefix, include(AnnotationPatterns.patterns)),
     path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns)),
+    path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns)),
     path(
         "REP/spreadsheet",
         REPspreadsheet.as_view(),

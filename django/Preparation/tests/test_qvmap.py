@@ -7,7 +7,7 @@ from Preparation.services import PQVMappingService
 
 
 class PQVMappingServiceTests(TestCase):
-    fixtures = ["spec_created.json"]
+    fixtures = ["test_spec.json"]
 
     def test_num_to_produce(self):
         """

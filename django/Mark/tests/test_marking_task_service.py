@@ -17,33 +17,6 @@ class MarkingTaskServiceTests(TestCase):
     Unit tests for Mark.services.MarkingTaskService
     """
 
-    def test_create_task(self):
-        """
-        Test MarkingTaskService.create_task()
-        """
-
-        paper1 = baker.make(Paper, paper_number=1)
-        paper2 = baker.make(Paper, paper_number=2)
-
-        mts = MarkingTaskService()
-        with self.assertRaisesMessage(
-            RuntimeError, "Server does not have a question-version map."
-        ):
-            mts.create_task(1, 1)
-
-        baker.make(StagingPQVMapping, paper_number=1, question=1, version=1)
-        baker.make(StagingPQVMapping, paper_number=1, question=2, version=1)
-        baker.make(StagingPQVMapping, paper_number=2, question=1, version=2)
-        baker.make(StagingPQVMapping, paper_number=2, question=2, version=2)
-
-        task1 = mts.create_task(paper1, 1)
-        self.assertEqual(task1.question_version, 1)
-        self.assertEqual(task1.code, "q0001g1")
-
-        task2 = mts.create_task(paper2, 1)
-        self.assertEqual(task2.question_version, 2)
-        self.assertEqual(task2.code, "q0002g1")
-
     def test_unpack_code(self):
         """
         Test MarkingTaskService.unpack_code
@@ -221,3 +194,39 @@ class MarkingTaskServiceTests(TestCase):
         self.assertFalse(mts.user_can_update_task(user, "q0003g1"))
         self.assertTrue(mts.user_can_update_task(user, "q0004g1"))
         self.assertFalse(mts.user_can_update_task(user, "q0005g1"))
+
+
+class TestMarkingTasksWithFixtures(TestCase):
+    fixtures = ["test_spec.json", "preparation.json", "papers.json"]
+
+    def test_create_task(self):
+        """Test MarkingTaskService.create_task()"""
+        paper1 = Paper.objects.get(paper_number=1)
+        paper2 = Paper.objects.get(paper_number=2)
+
+        mts = MarkingTaskService()
+        task1 = mts.create_task(paper1, 1)
+        task2 = mts.create_task(paper2, 1)
+
+        question_version1 = StagingPQVMapping.objects.get(
+            paper_number=1, question=1
+        ).version
+        question_version2 = StagingPQVMapping.objects.get(
+            paper_number=2, question=1
+        ).version
+
+        self.assertEqual(task1.question_version, question_version1)
+        self.assertAlmostEqual(task1.code, "q0001g1")
+        self.assertEqual(task2.question_version, question_version2)
+        self.assertEqual(task2.code, "q0002g1")
+
+    def test_marking_task_before_pqvmap(self):
+        """Test that .create_task() fails if there is no QV map."""
+        paper1 = Paper.objects.get(paper_number=1)
+
+        # Remove QV map for testing purposes
+        StagingPQVMapping.objects.all().delete()
+
+        with self.assertRaises(RuntimeError):
+            mts = MarkingTaskService()
+            mts.create_task(paper1, 1)
