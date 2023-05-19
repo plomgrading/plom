@@ -1,12 +1,11 @@
+<!-- Copyright (C) 2022 Edith Coates -->
+<!-- Copyright (C) 2023 Colin B. Macdonald -->
 {% extends 'base/base.html' %}
-
 {% block title %}Web Plom - Scan{% endblock %}
-
 {% block page_heading %}Scan bundles{% endblock %}
-
 {% block main_content %}
-<div class="d-flex justify-content-center">
-    <!-- <div class="card text-center w-50" style="min-width: fit-content;">
+    <div class="d-flex justify-content-center">
+        <!-- <div class="card text-center w-50" style="min-width: fit-content;">
         <div class="card-body">
             <h2 class="card-title m-4 mt-2">Uploading bundle</h2>
             <div class="spinner-border mb-3"></div>
@@ -16,6 +15,6 @@
             </div>
         </div>
     </div> -->
-    <div hx-get="{% url 'scan_image_update' timestamp %}" hx-trigger="load"></div>
-</div>
+        <div hx-get="{% url 'scan_image_update' timestamp %}" hx-trigger="load"></div>
+    </div>
 {% endblock %}

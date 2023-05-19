@@ -139,7 +139,7 @@ djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint==1.25.1
+    - pip install djlint~=1.27.2
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html
 
@@ -149,7 +149,7 @@ djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint==1.25.1
+    - pip install djlint~=1.27.2
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html --check --warn
 
