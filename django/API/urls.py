@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import include, path
 
@@ -13,6 +14,7 @@ from API.routes import (
     TagsURLPatterns,
 )
 
+# TODO: these are possibly temporary
 from API.views import (
     REPspreadsheet,
     REPidentified,
