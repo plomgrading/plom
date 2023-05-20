@@ -25,3 +25,4 @@ def test_equal_page_count_false(tmp_path):
     clone.new_page()
     clone.save(tmp_path / "sourceVersions/version3.pdf")
     assert not check_equal_page_count(tmp_path / "sourceVersions")
+    
