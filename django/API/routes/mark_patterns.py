@@ -28,8 +28,8 @@ class MarkURLPatterns:
 
     prefix = "MK/"
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns():
         mark_patterns = []
 
         # Overall marking progress
@@ -96,5 +96,3 @@ class MarkURLPatterns:
         mark_patterns += latex
 
         return mark_patterns
-
-    patterns = get_patterns()

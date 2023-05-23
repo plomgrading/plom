@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import include, path
 
@@ -26,11 +27,11 @@ routers: https://www.django-rest-framework.org/api-guide/routers/
 
 
 urlpatterns = [
-    path("", include(MiscURLPatterns.patterns)),
-    path(MarkURLPatterns.prefix, include(MarkURLPatterns.patterns)),
-    path(IdURLPatterns.prefix, include(IdURLPatterns.patterns)),
-    path(PagedataPatterns.prefix, include(PagedataPatterns.patterns)),
-    path(AnnotationPatterns.prefix, include(AnnotationPatterns.patterns)),
-    path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns)),
-    path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns)),
+    path("", include(MiscURLPatterns.patterns())),
+    path(MarkURLPatterns.prefix, include(MarkURLPatterns.patterns())),
+    path(IdURLPatterns.prefix, include(IdURLPatterns.patterns())),
+    path(PagedataPatterns.prefix, include(PagedataPatterns.patterns())),
+    path(AnnotationPatterns.prefix, include(AnnotationPatterns.patterns())),
+    path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns())),
+    path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns())),
 ]

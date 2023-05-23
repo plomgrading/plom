@@ -20,8 +20,8 @@ class MiscURLPatterns:
     All of these patterns have no particular prefix.
     """
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns():
         misc_patterns = [
             path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
             path("Version/", ServerVersion.as_view(), name="api_server_version"),
@@ -39,5 +39,3 @@ class MiscURLPatterns:
         ]
 
         return misc_patterns
-
-    patterns = get_patterns()
