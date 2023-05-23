@@ -18,7 +18,7 @@ class TagsURLPatterns:
     prefix = "tags/"
 
     @classmethod
-    def get_patterns():
+    def patterns(cls):
         tag_patterns = [
             path("", GetAllTags.as_view(), name="api_all_tags"),
             path("<code>", TagsFromCodeView.as_view(), name="api_tags_code"),

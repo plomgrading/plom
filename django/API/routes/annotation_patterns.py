@@ -25,7 +25,7 @@ class PagedataPatterns:
     prefix = "pagedata/"
 
     @classmethod
-    def patterns():
+    def patterns(cls):
         pagedata_patterns = [
             path(
                 "<int:paper>",
@@ -51,7 +51,7 @@ class AnnotationPatterns:
     prefix = "annotations/"
 
     @classmethod
-    def patterns():
+    def patterns(cls):
         annotations_patterns = [
             path(
                 "<int:paper>/<int:question>/",
@@ -72,7 +72,7 @@ class AnnotationImagePatterns:
     prefix = "annotations_image/"
 
     @classmethod
-    def patterns():
+    def patterns(cls):
         annotations_image_patterns = [
             path(
                 "<int:paper>/<int:question>/<int:edition>",

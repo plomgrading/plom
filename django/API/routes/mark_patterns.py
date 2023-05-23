@@ -29,7 +29,7 @@ class MarkURLPatterns:
     prefix = "MK/"
 
     @classmethod
-    def patterns():
+    def patterns(cls):
         mark_patterns = []
 
         # Overall marking progress

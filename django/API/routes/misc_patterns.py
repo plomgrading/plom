@@ -21,7 +21,7 @@ class MiscURLPatterns:
     """
 
     @classmethod
-    def patterns():
+    def patterns(cls):
         misc_patterns = [
             path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
             path("Version/", ServerVersion.as_view(), name="api_server_version"),

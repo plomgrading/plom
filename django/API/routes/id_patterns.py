@@ -25,7 +25,7 @@ class IdURLPatterns:
     prefix = "ID/"
 
     @classmethod
-    def patterns():
+    def patterns(cls):
         id_patterns = []
 
         # Get overall ID progress
