@@ -1,5 +1,6 @@
 <!-- Copyright (C) 2022-2023 Brennen Chiu -->
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023 Divy Patel -->
 
 {% extends "base/base.html" %}
 {% block title %}Web Plom - Scan{% endblock %}
@@ -94,11 +95,7 @@
 			> p{{pg.order}}</button>
 		{% elif pg.status == 'extra' %}
 		<button
-		  {% if pg.info.question_list %}
-		  class="btn m-1 btn-outline-info"
-		  {% else %}
-		  class="btn m-1 btn-info"
-		  {% endif %}
+		  class="<%= pg.info.question_list ? 'btn m-1 btn-outline-info' : 'btn m-1 btn-info' %>"
 		  onclick="this.blur();"
 		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 		  hx-swap="outerHTML"
@@ -174,11 +171,7 @@
 		</button>
 	      {% elif pg.status == 'extra' %}
 		<button
-		  {% if pg.info.question_list %}
-		  class="btn m-1 btn-outline-info"
-		  {% else %}
-		  class="btn m-1 btn-info"
-		  {% endif %}
+		  class="<%= pg.info.question_list ? 'btn m-1 btn-outline-info' : 'btn m-1 btn-info' %>"
 		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 		  hx-swap="outerHTML"
 		  hx-target="#navFragment"
