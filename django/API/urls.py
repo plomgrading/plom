@@ -35,13 +35,13 @@ routers: https://www.django-rest-framework.org/api-guide/routers/
 
 
 urlpatterns = [
-    path("", include(MiscURLPatterns.patterns)),
-    path(MarkURLPatterns.prefix, include(MarkURLPatterns.patterns)),
-    path(IdURLPatterns.prefix, include(IdURLPatterns.patterns)),
-    path(PagedataPatterns.prefix, include(PagedataPatterns.patterns)),
-    path(AnnotationPatterns.prefix, include(AnnotationPatterns.patterns)),
-    path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns)),
-    path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns)),
+    path("", include(MiscURLPatterns.patterns())),
+    path(MarkURLPatterns.prefix, include(MarkURLPatterns.patterns())),
+    path(IdURLPatterns.prefix, include(IdURLPatterns.patterns())),
+    path(PagedataPatterns.prefix, include(PagedataPatterns.patterns())),
+    path(AnnotationPatterns.prefix, include(AnnotationPatterns.patterns())),
+    path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns())),
+    path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns())),
     path(
         "REP/spreadsheet",
         REPspreadsheet.as_view(),
