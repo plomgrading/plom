@@ -24,8 +24,8 @@ class PagedataPatterns:
 
     prefix = "pagedata/"
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns(cls):
         pagedata_patterns = [
             path(
                 "<int:paper>",
@@ -41,8 +41,6 @@ class PagedataPatterns:
 
         return pagedata_patterns
 
-    patterns = get_patterns()
-
 
 class AnnotationPatterns:
     """
@@ -52,8 +50,8 @@ class AnnotationPatterns:
 
     prefix = "annotations/"
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns(cls):
         annotations_patterns = [
             path(
                 "<int:paper>/<int:question>/",
@@ -64,8 +62,6 @@ class AnnotationPatterns:
 
         return annotations_patterns
 
-    patterns = get_patterns()
-
 
 class AnnotationImagePatterns:
     """
@@ -75,8 +71,8 @@ class AnnotationImagePatterns:
 
     prefix = "annotations_image/"
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns(cls):
         annotations_image_patterns = [
             path(
                 "<int:paper>/<int:question>/<int:edition>",
@@ -91,5 +87,3 @@ class AnnotationImagePatterns:
         ]
 
         return annotations_image_patterns
-
-    patterns = get_patterns()
