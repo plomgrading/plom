@@ -11,7 +11,7 @@ from BuildPaperPDF.models import PDFTask
 
 
 class BuildPaperPDFTests(TestCase):
-    """Test BuildPaperPDF.services.BuildPapersService"""
+    """Test BuildPaperPDF.services.BuildPapersService."""
 
     def make_tasks(self):
         with catch_warnings():  # Don't worry about timezone naivete
@@ -24,7 +24,7 @@ class BuildPaperPDFTests(TestCase):
             baker.make(PDFTask, status="complete")
 
     def test_get_n_complete_tasks(self):
-        """test BuildPapersService.get_n_complete_tasks"""
+        """Test BuildPapersService.get_n_complete_tasks."""
         bps = BuildPapersService()
         n_complete = bps.get_n_complete_tasks()
         self.assertEqual(n_complete, 0)
@@ -35,7 +35,7 @@ class BuildPaperPDFTests(TestCase):
         self.assertEqual(n_complete, 2)
 
     def test_get_n_pending_tasks(self):
-        """test BuildPapersService.get_n_pending_tasks"""
+        """Test BuildPapersService.get_n_pending_tasks."""
         bps = BuildPapersService()
         n_pending = bps.get_n_pending_tasks()
         self.assertEqual(n_pending, 0)
@@ -46,7 +46,7 @@ class BuildPaperPDFTests(TestCase):
         self.assertEqual(n_pending, 4)
 
     def test_get_n_tasks(self):
-        """Test BuildPapersService.get_n_tasks"""
+        """Test BuildPapersService.get_n_tasks."""
         bps = BuildPapersService()
         n_total = bps.get_n_tasks()
         self.assertEqual(n_total, 0)
@@ -57,7 +57,7 @@ class BuildPaperPDFTests(TestCase):
         self.assertEqual(n_total, 6)
 
     def test_get_n_running_tasks(self):
-        """Test BuildPapersService.get_n_running_tasks"""
+        """Test BuildPapersService.get_n_running_tasks."""
         bps = BuildPapersService()
         n_running = bps.get_n_running_tasks()
         self.assertEqual(n_running, 0)

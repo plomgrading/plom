@@ -27,7 +27,7 @@ class BuildPaperPDFs(ManagerRequiredView):
     template_name = "BuildPaperPDF/build_paper_pdfs.html"
 
     def table_fragment(self, request):
-        """Get the current state of the tasks, render it as an HTML table, and return"""
+        """Get the current state of the tasks, render it as an HTML table, and return."""
         bps = BuildPapersService()
         task_context = bps.get_task_context()
 
@@ -151,7 +151,7 @@ class PDFTableView(ManagerRequiredView):
 
 
 class UpdatePDFTable(PDFTableView):
-    """Get an updated pdf-building-progress table"""
+    """Get an updated pdf-building-progress table."""
 
     def get(self, request):
         return self.render_pdf_table(request)
@@ -174,7 +174,7 @@ class GetPDFFile(ManagerRequiredView):
 
 
 class GetStreamingZipOfPDFs(ManagerRequiredView):
-    """Get the completed test paper PDFs in one zip file"""
+    """Get the completed test paper PDFs in one zip file."""
 
     # using zipfly python package.  see django example here
     # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
