@@ -67,7 +67,7 @@ class BuildPapersService:
         return len(error_tasks) > 0
 
     def create_task(
-        self, index: int, huey_id: id, filename: str, student_name=None, student_id=None
+        self, index: int, huey_id: id, student_name=None, student_id=None
     ):
         """Create and save a PDF-building task to the database."""
         paper = get_object_or_404(Paper, paper_number=index)
@@ -76,7 +76,6 @@ class BuildPapersService:
             paper=paper,
             huey_id=huey_id,
             status="todo",
-            filename=filename,
             student_name=student_name,
             student_id=student_id,
         )
@@ -153,19 +152,15 @@ class BuildPapersService:
         self.papers_to_print.mkdir(exist_ok=True)
         for paper_obj in Paper.objects.all():
             paper_number = paper_obj.paper_number
-            filename = f"exam_{paper_number}"
             student_name = None
             student_id = None
             if paper_number in prenamed:
                 student_id = prenamed[paper_number]["id"]
                 student_name = prenamed[paper_number]["studentName"]
-                filename += f"_{student_id}"
 
-            filename += ".pdf"
             self.create_task(
                 paper_number,
                 None,
-                filename=filename,
                 student_id=student_id,
                 student_name=student_name,
             )
@@ -272,9 +267,9 @@ class BuildPapersService:
                 "paper_number": task.paper.paper_number,
                 "status": task.status,
                 "message": task.message,
-                "pdf_filename": task.filename,
+                "pdf_filename": task.file_display_name(),
             }
-            for task in PDFTask.objects.all()
+            for task in PDFTask.objects.all().order_by("paper__paper_number")
         ]
 
     def get_zipfly_generator(self, short_name, *, chunksize=1024 * 1024):
