@@ -1,12 +1,13 @@
 <!--
 __copyright__ = "Copyright (C) 2023 Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2023 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2023 Edith Coates"
 __license__ = "AGPL-3.0-or-later"
  -->
 
 # Running the demo
 
-Roughly `python3 -m demo` from inside the `django/` directory,
+Roughly `python3 manage.py plom_demo` from inside the `django/` directory,
 but for details see https://gitlab.com/plom/plom/-/issues/2604
 
 To stop the demo type "quit" and press enter.
