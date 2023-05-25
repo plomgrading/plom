@@ -66,9 +66,7 @@ class BuildPapersService:
         error_tasks = PDFTask.objects.filter(status="error")
         return len(error_tasks) > 0
 
-    def create_task(
-        self, index: int, huey_id: id, student_name=None, student_id=None
-    ):
+    def create_task(self, index: int, huey_id: id, student_name=None, student_id=None):
         """Create and save a PDF-building task to the database."""
         paper = get_object_or_404(Paper, paper_number=index)
 

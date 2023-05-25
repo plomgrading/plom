@@ -35,7 +35,7 @@ class PDFTask(HueyTask):
 
     def file_path(self):
         """Get the path of the generated PDF file.
-        
+
         Returns:
             pathlib.Path | None: If the file exists, return the path. If it doesn't, return None.
         """
