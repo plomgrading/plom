@@ -13,7 +13,7 @@ class ExamMockerService:
         Returns: path to the exam on disk
         Side effect: saves a temp directory that needs to be removed later
         """
-        sources_dir = settings.BASE_DIR / "sourceVersions"
+        sources_dir = settings.MEDIA_ROOT / "sourceVersions"
         qr_code_temp_dir = sources_dir / "qr_temp"
         if qr_code_temp_dir.exists():
             shutil.rmtree(qr_code_temp_dir)
