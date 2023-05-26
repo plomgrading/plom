@@ -1677,7 +1677,7 @@ class Manager(QWidget):
                 f"Spreadsheet written to {filename} but grading is not complete.",
                 info="Either some papers are unidentified or they are not fully marked.",
                 info_pre=False,
-            ).exec_()
+            ).exec()
 
     def viewTestStatus(self):
         pvi = self.ui.overallTW.selectedItems()
@@ -1881,19 +1881,19 @@ class Manager(QWidget):
                 f' {timestamp.isoformat(" ", "seconds")}.',
                 question="Do you want to rerun it?",
             )
-            if msg.exec_() == QMessageBox.StandardButton.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
             self.id_reader_run(ignore_timestamp=True)
 
     def id_reader_kill(self):
         if (
-            SimpleQuestion(self, "Stop running process", "Are you sure?").exec_()
+            SimpleQuestion(self, "Stop running process", "Are you sure?").exec()
             == QMessageBox.StandardButton.No
         ):
             return
         msg = self.msgr.id_reader_kill()
         txt = "Stopped background ID reader process.  Server response:"
-        InfoMsg(self, txt, info=msg).exec_()
+        InfoMsg(self, txt, info=msg).exec()
 
     def run_predictor(self):
         try:
