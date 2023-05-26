@@ -28,7 +28,8 @@ class HueyTask(PolymorphicModel):
 
     It keeps track of a huey task's ID, the time created, and the
     status. Also, this is where we define the functions for handling
-    signals sent from the huey consumer."""
+    signals sent from the huey consumer.
+    """
 
     huey_id = models.UUIDField(null=True)
     status = models.CharField(max_length=20, default="todo")
@@ -48,7 +49,8 @@ class SingletonBaseModel(models.Model):
     """We define a singleton model for the test-specification.
 
     This abstract model ensures that any derived models have at most a
-    single row."""
+    single row.
+    """
 
     class Meta:
         abstract = True
@@ -67,9 +69,7 @@ class SingletonBaseModel(models.Model):
 
 
 class BaseTask(PolymorphicModel):
-    """
-    A base class for all "tasks" that are sent from the server to
-    the PyQT client.
+    """A base class for all "tasks" that are sent from the server to the PyQT client.
 
     Status is represented by a choice kwarg, see
     https://docs.djangoproject.com/en/4.2/ref/models/fields/#choices
@@ -96,8 +96,7 @@ class BaseTask(PolymorphicModel):
 
 
 class BaseAction(PolymorphicModel):
-    """
-    A base class for all "actions" that pertain to marker user management.
+    """A base class for all "actions" that pertain to marker user management.
 
     I.E., grading a question, assigning a task, assigning the task to a new user, etc
     with the goal of saving a "history" of all marking/user management actions.
@@ -135,9 +134,7 @@ class SingletonHueyTask(HueyTask):
 
 
 class Tag(models.Model):
-    """
-    Represents a text entry that can have a many-to-one
-    relationship with another table.
+    """Represents a text entry that can have a many-to-one relationship with another table.
 
     This is an abstract class that should be extended in other apps.
 

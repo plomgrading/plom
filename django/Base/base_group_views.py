@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.views.generic import View
 from braces.views import LoginRequiredMixin, GroupRequiredMixin
@@ -9,7 +10,7 @@ from braces.views import LoginRequiredMixin, GroupRequiredMixin
 
 # Create your views here.
 class AdminRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    """A base class view for admins"""
+    """A base class view for admins."""
 
     group_required = ["admin"]
     login_url = "login"
@@ -26,7 +27,7 @@ class AdminRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
 
 class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    """A base class view for managers"""
+    """A base class view for managers."""
 
     group_required = ["manager"]
     login_url = "login"
@@ -43,7 +44,7 @@ class ManagerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
 
 class ScannerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    """A base class view for scanners"""
+    """A base class view for scanners."""
 
     group_required = ["scanner"]
     login_url = "login"
@@ -61,7 +62,7 @@ class ScannerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
 
 
 class MarkerRequiredView(LoginRequiredMixin, GroupRequiredMixin, View):
-    """A base class view for markers"""
+    """A base class view for markers."""
 
     group_required = ["marker"]
     login_url = "login"
