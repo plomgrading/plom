@@ -95,7 +95,11 @@
 			> p{{pg.order}}</button>
 		{% elif pg.status == 'extra' %}
 		<button
-		  class="<%= pg.info.question_list ? 'btn m-1 btn-outline-info' : 'btn m-1 btn-info' %>"
+		  class={% if pg.info.question_list %}
+		  	"btn m-1 btn-outline-info"
+		  {% else %}
+		  	"btn m-1 btn-info"
+		  {% endif %}
 		  onclick="this.blur();"
 		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 		  hx-swap="outerHTML"
@@ -171,7 +175,11 @@
 		</button>
 	      {% elif pg.status == 'extra' %}
 		<button
-		  class="<%= pg.info.question_list ? 'btn m-1 btn-outline-info' : 'btn m-1 btn-info' %>"
+		  class={% if pg.info.question_list %}
+		  	"btn m-1 btn-outline-info"
+		  {% else %}
+		  	"btn m-1 btn-info"
+		  {% endif %}
 		  hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
 		  hx-swap="outerHTML"
 		  hx-target="#navFragment"
