@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "Identify",
     "Progress",
     "Rubrics",
+    "Demo",
 ]
 
 MIDDLEWARE = [

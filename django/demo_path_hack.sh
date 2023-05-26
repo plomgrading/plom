@@ -10,4 +10,4 @@ set -e
 
 export PYTHONPATH=".."
 
-python3 -m demo
+python3 manage.py plom_demo
