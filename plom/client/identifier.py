@@ -430,14 +430,22 @@ class IDClient(QWidget):
 
         all_predictions_for_paper = self.predictions.get(str(tn), None)
 
+        # reset style
+        self.ui.pSIDLabel0.setText("")
+        self.ui.pNameLabel0.setText("")
+        self.ui.predictionBox0.setTitle("No prediction")
+        self.ui.predictionBox0.setStyleSheet("background-color:")
+        self.ui.predButton0.hide()
+        self.ui.pSIDLabel1.setText("")
+        self.ui.pNameLabel1.setText("")
+        self.ui.predictionBox1.setTitle("No prediction")
+        self.ui.predictionBox1.setStyleSheet("background-color:")
+        self.ui.predButton1.hide()
+        self.ui.predictionBox1.hide()
+
         # Handle case-by-case: no predictions, one prediction or two predictions
         if not all_predictions_for_paper:
-            self.ui.predButton0.hide()
-            self.ui.pSIDLabel0.setText("")
-            self.ui.pNameLabel0.setText("")
-            self.ui.predictionBox0.setTitle("No prediction")
-            self.ui.predictionBox0.setStyleSheet("background-color:")
-            self.ui.predictionBox1.hide()
+            pass
         elif len(all_predictions_for_paper) == 1:
             (pred,) = all_predictions_for_paper
             psid = pred["student_id"]  # predicted student ID
@@ -469,6 +477,12 @@ class IDClient(QWidget):
                 )
                 self.ui.predButton0.setText("&Accept\nPrediction")
                 self.ui.predictionBox1.hide()
+
+                if pred["certainty"] < 0.3:
+                    self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
+                else:
+                    self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
+
             else:
                 raise RuntimeError(
                     f"Found unexpected predictions by predictor {pred['predictor']}, which should not be here."
@@ -479,14 +493,24 @@ class IDClient(QWidget):
             assert pred0["predictor"] in ("MLGreedy", "MLLAP")
             assert pred1["predictor"] in ("MLGreedy", "MLLAP")
             if pred0["student_id"] == pred1["student_id"]:
+                self.ui.predButton0.show()
+                self.ui.pSIDLabel0.setText(pred0["student_id"])
+                # complicated/fragile way of getting student name...?
+                _psnid = self.student_id_to_snid[pred0["student_id"]]
+                _pname = self.snid_to_student_name[_psnid]
+                self.ui.pNameLabel0.setText(_pname)
+                self.ui.predictionBox0.setTitle(
+                    f"{pred0['predictor']} prediction"
+                    f" with certainty {round(pred0['certainty'], 3)}"
+                    f" agrees with {pred1['predictor']} prediction"
+                    f" of certainty {round(pred1['certainty'], 3)}"
+                )
                 # only single option shown, so keep alt-a shortcut
                 self.ui.predButton0.setText("&Accept\nPrediction")
-                self.ui.predictionBox0.setTitle(
-                    f"{pred0['predictor']} prediction "
-                    f"with certainty {round(pred0['certainty'], 3)}"
-                    f"agrees with {pred1['predictor']} prediction "
-                    f"of certainty {round(pred1['certainty'], 3)}"
-                )
+                if pred0["certainty"] < 0.3 or pred1["certainty"] < 0.3:
+                    self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
+                else:
+                    self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
             else:
                 self.ui.predButton0.show()
                 self.ui.pSIDLabel0.setText(pred0["student_id"])
@@ -510,16 +534,8 @@ class IDClient(QWidget):
                 self.ui.predButton0.setText("Accept\nPrediction")
                 self.ui.predButton1.setText("Accept\nPrediction")
 
-            if pred0["student_id"] != pred1["student_id"]:
                 self.ui.predictionBox0.setStyleSheet("background-color: #FFD700")
                 self.ui.predictionBox1.setStyleSheet("background-color: #FFD700")
-            elif (
-                pred["certainty"] < 0.3
-            ):  # inaccurate Greedy prediction tend to have certainty less than 0.3
-                # useful to warn the user if LAP agrees with Greedy, but both have a high chance of being incorrect
-                self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
-            else:
-                self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
         else:
             raise RuntimeError(
                 f"Found unexpected 3 or more predictions:\n{all_predictions_for_paper}"
