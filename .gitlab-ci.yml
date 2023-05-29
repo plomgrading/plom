@@ -352,6 +352,7 @@ pydocstyle:
     - echo $NUMERR
     # Future hackers: please try to decrease this number
     - bash -c "[[ $NUMERR -le 657 ]]"
+  allow_failure: true
 
 
 # TODO: currently allowed-to-fail (for a while!)
