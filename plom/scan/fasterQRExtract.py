@@ -16,7 +16,7 @@ from .rotate import pil_load_with_jpeg_exif_rot_applied
 
 
 def findCorner(qr, dim):
-    """Determines the x-y coordinates and relative location of the given QR code's approximate centre
+    """Determines the x-y coordinates and relative location of the given QR code's approximate centre.
 
     Args:
         qr (zxingcpp.Result): object containing the information stored in the QR code
@@ -60,7 +60,7 @@ def findCorner(qr, dim):
 def QRextract(image, try_harder=True):
     """Decode and return QR codes in an image.
 
-    args:
+    Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
             the local dir or specified e.g., using `pathlib.Path`.  Can
             also be an instance of Pillow's `Image`.
@@ -69,7 +69,7 @@ def QRextract(image, try_harder=True):
             failure rates in the synthetic images used in CI testing.
             Details below.
 
-    returns:
+    Returns:
         dict/None: Keys "NW", "NE", "SW", "SE", each with a dict containing
             a 'tpv_signature', 'x', 'y' keys that correspond to strings extracted from
             QR codes (one string per code) and the x-y coordinates of the QR code.
@@ -149,7 +149,7 @@ def QRextract(image, try_harder=True):
 def QRextract_legacy(image, write_to_file=True, try_harder=True):
     """Decode QR codes in an image, return or save them in .qr file.
 
-    args:
+    Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
             the local dir or specified e.g., using `pathlib.Path`.  Can
             also be an instance of Pillow's `Image`.
@@ -163,7 +163,7 @@ def QRextract_legacy(image, write_to_file=True, try_harder=True):
             failure rates in the synthetic images used in CI testing.
             Details blow.
 
-    returns:
+    Returns:
         dict/None: Keys "NW", "NE", "SW", "SE", each with a list of the
             strings extracted from QR codes, one string per code.  The
             list is empty if no QR codes found in that corner.

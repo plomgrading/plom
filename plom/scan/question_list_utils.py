@@ -59,7 +59,7 @@ def check_question_list(s, n_questions):
 def canonicalize_page_question_map(s, pages, numquestions):
     """Make a canonical page-to-questions mapping from various shorthand inputs.
 
-    args:
+    Args:
         s (str/list/tuple): the input, can be a special string "all"
             or a string which we will parse.  Or an integer.  Or a list
             of ints, or a list of list of ints.
@@ -67,7 +67,7 @@ def canonicalize_page_question_map(s, pages, numquestions):
         numquestins (int): how many questions total, used for checking
             input.
 
-    returns:
+    Returns:
         A list of lists.
     """
     s = _parse_questions(s)

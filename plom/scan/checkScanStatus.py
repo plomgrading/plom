@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021 Jed Yeo
 
 from plom.misc_utils import format_int_list_with_runs
@@ -19,6 +19,13 @@ def check_and_print_scan_status(papers, unknowns, bundles, *, msgr):
         papers (bool): print info on test papers.
         unknowns (bool): print info on unknown pages.
         bundles (bool): print info about bundles.
+
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+
+    Returns:
+        None
     """
     if not any((papers, unknowns, bundles)):
         papers = unknowns = bundles = True
@@ -104,8 +111,12 @@ def check_and_print_scan_status_papers(*, msgr):
 
 @with_scanner_messenger
 def check_and_print_scan_status_unknowns(*, msgr):
-    """Prints summary of unknown pages."""
+    """Prints summary of unknown pages.
 
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+    """
     print("# Unknown page info\n")
     unknown_pagedata = msgr.getUnknownPages()
     N = len(unknown_pagedata)
