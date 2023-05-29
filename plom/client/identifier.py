@@ -441,8 +441,8 @@ class IDClient(QWidget):
         elif len(all_predictions_for_paper) == 1:
             (pred,) = all_predictions_for_paper
             psid = pred["student_id"]  # predicted student ID
-            psnid = self.student_id_to_snid[psid]  # predicted SNID
-            pname = self.snid_to_student_name[psnid]  # predicted student name
+            _psnid = self.student_id_to_snid[psid]  # predicted SNID
+            pname = self.snid_to_student_name[_psnid]  # predicted student name
             if pname == "":
                 # disable accept prediction button
                 pred = []
@@ -475,28 +475,42 @@ class IDClient(QWidget):
                 )
 
         elif len(all_predictions_for_paper) == 2:
-            first_pred, second_pred = all_predictions_for_paper
-            assert first_pred["predictor"] in ("MLGreedy", "MLLAP")
-            assert second_pred["predictor"] in ("MLGreedy", "MLLAP")
-            if first_pred["student_id"] == second_pred["student_id"]:
+            pred0, pred1 = all_predictions_for_paper
+            assert pred0["predictor"] in ("MLGreedy", "MLLAP")
+            assert pred1["predictor"] in ("MLGreedy", "MLLAP")
+            if pred0["student_id"] == pred1["student_id"]:
                 # only single option shown, so keep alt-a shortcut
                 self.ui.predButton0.setText("&Accept\nPrediction")
                 self.ui.predictionBox0.setTitle(
-                    f"{first_pred['predictor']} prediction with certainty {round(first_pred['certainty'], 3)} agrees with {second_pred['predictor']} prediction of certainty {round(second_pred['certainty'], 3)}"
+                    f"{pred0['predictor']} prediction "
+                    f"with certainty {round(pred0['certainty'], 3)}"
+                    f"agrees with {pred1['predictor']} prediction "
+                    f"of certainty {round(pred1['certainty'], 3)}"
                 )
             else:
+                self.ui.predButton0.show()
+                self.ui.pSIDLabel0.setText(pred0["student_id"])
+                # complicated/fragile way of getting student name...?
+                _psnid = self.student_id_to_snid[pred0["student_id"]]
+                _pname = self.snid_to_student_name[_psnid]
+                self.ui.pNameLabel0.setText(_pname)
+                self.ui.predictionBox0.setTitle(
+                    f"Prediction by {pred0['predictor']} with certainty {round(pred0['certainty'], 3)}"
+                )
                 self.ui.predictionBox1.show()
                 self.ui.predButton1.show()
-                self.ui.pSIDLabel1.setText(psid)
-                self.ui.pNameLabel1.setText(pname)
+                self.ui.pSIDLabel1.setText(pred1["student_id"])
+                _psnid = self.student_id_to_snid[pred1["student_id"]]
+                _pname = self.snid_to_student_name[_psnid]
+                self.ui.pNameLabel1.setText(_pname)
                 self.ui.predictionBox1.setTitle(
-                    f"Prediction by MLGreedy with certainty {round(pred['certainty'], 3)}"
+                    f"Prediction by {pred1['predictor']} with certainty {round(pred1['certainty'], 3)}"
                 )
                 # two predictions shown - not alt-a shortcut.
                 self.ui.predButton0.setText("Accept\nPrediction")
                 self.ui.predButton1.setText("Accept\nPrediction")
 
-            if first_pred["student_id"] != second_pred["student_id"]:
+            if pred0["student_id"] != pred1["student_id"]:
                 self.ui.predictionBox0.setStyleSheet("background-color: #FFD700")
                 self.ui.predictionBox1.setStyleSheet("background-color: #FFD700")
             elif (
