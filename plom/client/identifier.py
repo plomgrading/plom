@@ -428,92 +428,90 @@ class IDClient(QWidget):
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
 
-        # get a list of predictions for test number tn
+        print(tn)
+        print(self.predictions)
         all_predictions_for_paper = self.predictions.get(str(tn), None)
 
-        if all_predictions_for_paper:
-            for pred in all_predictions_for_paper:
-                psid = pred["student_id"]  # predicted student ID
-                psnid = self.student_id_to_snid[psid]  # predicted SNID
-                pname = self.snid_to_student_name[psnid]  # predicted student name
-                if pname == "":
-                    # disable accept prediction button
-                    pred = []
-
-                if pred["predictor"] == "prename":
-                    self.ui.predButton0.show()
-                    self.ui.pSIDLabel0.setText(psid)
-                    self.ui.pNameLabel0.setText(pname)
-                    self.ui.predictionBox0.setTitle(
-                        "Prenamed paper: is it signed?  if not signed, is it blank?"
-                    )
-                    self.ui.predButton0.setText("Confirm\n&Prename")
-                    self.ui.predictionBox0.setStyleSheet("background-color: #89CFF0")
-
-                    self.ui.predictionBox1.hide()
-
-                elif pred["predictor"] == "MLLAP":
-                    self.ui.predButton0.show()
-                    self.ui.pSIDLabel0.setText(psid)
-                    self.ui.pNameLabel0.setText(pname)
-                    self.ui.predictionBox0.setTitle(
-                        f"Prediction by MLLAP with certainty {round(pred['certainty'], 3)}"
-                    )
-                    self.ui.predButton0.setText("&Accept\nPrediction")
-
-                    self.ui.predictionBox1.hide()
-
-                elif pred["predictor"] == "MLGreedy":
-                    first_pred = all_predictions_for_paper[0]
-                    second_pred = all_predictions_for_paper[1]
-                    if first_pred["student_id"] == second_pred["student_id"]:
-                        # only single option shown, so keep alt-a shortcut
-                        self.ui.predButton0.setText("&Accept\nPrediction")
-                        self.ui.predictionBox0.setTitle(
-                            f"{first_pred['predictor']} prediction with certainty {round(first_pred['certainty'], 3)} agrees with {second_pred['predictor']} prediction of certainty {round(second_pred['certainty'], 3)}"
-                        )
-                    else:
-                        self.ui.predictionBox1.show()
-                        self.ui.predButton1.show()
-                        self.ui.pSIDLabel1.setText(psid)
-                        self.ui.pNameLabel1.setText(pname)
-                        self.ui.predictionBox1.setTitle(
-                            f"Prediction by MLGreedy with certainty {round(pred['certainty'], 3)}"
-                        )
-                        # two predictions shown - not alt-a shortcut.
-                        self.ui.predButton0.setText("Accept\nPrediction")
-                        self.ui.predButton1.setText("Accept\nPrediction")
-
-                    if first_pred["student_id"] != second_pred["student_id"]:
-                        self.ui.predictionBox0.setStyleSheet(
-                            "background-color: #FFD700"
-                        )
-                        self.ui.predictionBox1.setStyleSheet(
-                            "background-color: #FFD700"
-                        )
-                    elif (
-                        pred["certainty"] < 0.3
-                    ):  # inaccurate Greedy prediction tend to have certainty less than 0.3
-                        # useful to warn the user if LAP agrees with Greedy, but both have a high chance of being incorrect
-                        self.ui.predictionBox0.setStyleSheet(
-                            "background-color: #FF7F50"
-                        )
-                    else:
-                        self.ui.predictionBox0.setStyleSheet(
-                            "background-color: #00FA9A"
-                        )
-                else:
-                    raise RuntimeError(
-                        f"Found unexpected predictions by predictor {pred['predictor']}, which should not be here."
-                    )
-
-        else:
+        if not all_predictions_for_paper:
             self.ui.predButton0.hide()
             self.ui.pSIDLabel0.setText("")
             self.ui.pNameLabel0.setText("")
             self.ui.predictionBox0.setTitle("No prediction")
             self.ui.predictionBox0.setStyleSheet("background-color:")
             self.ui.predictionBox1.hide()
+        elif len(all_predictions_for_paper) == 1:
+            (pred,) = all_predictions_for_paper
+            psid = pred["student_id"]  # predicted student ID
+            psnid = self.student_id_to_snid[psid]  # predicted SNID
+            pname = self.snid_to_student_name[psnid]  # predicted student name
+            if pname == "":
+                # disable accept prediction button
+                pred = []
+                # TODO: this will cause a crash on next part...
+
+            if pred["predictor"] == "prename":
+                self.ui.predButton0.show()
+                self.ui.pSIDLabel0.setText(psid)
+                self.ui.pNameLabel0.setText(pname)
+                self.ui.predictionBox0.setTitle(
+                    "Prenamed paper: is it signed?  if not signed, is it blank?"
+                )
+                self.ui.predButton0.setText("Confirm\n&Prename")
+                self.ui.predictionBox0.setStyleSheet("background-color: #89CFF0")
+
+                self.ui.predictionBox1.hide()
+
+            elif pred["predictor"] in ("MLLAP", "MLGreedy"):
+                self.ui.predButton0.show()
+                self.ui.pSIDLabel0.setText(psid)
+                self.ui.pNameLabel0.setText(pname)
+                self.ui.predictionBox0.setTitle(
+                    f"Prediction by {pred['predictor']} with certainty {round(pred['certainty'], 3)}"
+                )
+                self.ui.predButton0.setText("&Accept\nPrediction")
+                self.ui.predictionBox1.hide()
+            else:
+                raise RuntimeError(
+                    f"Found unexpected predictions by predictor {pred['predictor']}, which should not be here."
+                )
+
+        elif len(all_predictions_for_paper) == 2:
+            first_pred, second_pred = all_predictions_for_paper
+            assert set(first_pred["predictor"], second_pred["predictor"]) == set(
+                "MLGreddy", "MLLAP"
+            )
+            if first_pred["student_id"] == second_pred["student_id"]:
+                # only single option shown, so keep alt-a shortcut
+                self.ui.predButton0.setText("&Accept\nPrediction")
+                self.ui.predictionBox0.setTitle(
+                    f"{first_pred['predictor']} prediction with certainty {round(first_pred['certainty'], 3)} agrees with {second_pred['predictor']} prediction of certainty {round(second_pred['certainty'], 3)}"
+                )
+            else:
+                self.ui.predictionBox1.show()
+                self.ui.predButton1.show()
+                self.ui.pSIDLabel1.setText(psid)
+                self.ui.pNameLabel1.setText(pname)
+                self.ui.predictionBox1.setTitle(
+                    f"Prediction by MLGreedy with certainty {round(pred['certainty'], 3)}"
+                )
+                # two predictions shown - not alt-a shortcut.
+                self.ui.predButton0.setText("Accept\nPrediction")
+                self.ui.predButton1.setText("Accept\nPrediction")
+
+            if first_pred["student_id"] != second_pred["student_id"]:
+                self.ui.predictionBox0.setStyleSheet("background-color: #FFD700")
+                self.ui.predictionBox1.setStyleSheet("background-color: #FFD700")
+            elif (
+                pred["certainty"] < 0.3
+            ):  # inaccurate Greedy prediction tend to have certainty less than 0.3
+                # useful to warn the user if LAP agrees with Greedy, but both have a high chance of being incorrect
+                self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
+            else:
+                self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
+        else:
+            raise RuntimeError(
+                f"Found unexpected 3 or more predictions:\n{all_predictions_for_paper}"
+            )
 
         # now update the snid entry line-edit.
         # if test is already identified then populate the ID-lineedit accordingly
