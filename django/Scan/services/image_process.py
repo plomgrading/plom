@@ -216,7 +216,7 @@ class PageImageProcessor:
                 [
                     [qr_dict["NW"]["x_coord"], qr_dict["NW"]["y_coord"]],
                     [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
-                    [qr_dict["SE"]["x_coord"], qr_dict["SW"]["y_coord"]],
+                    [qr_dict["SE"]["x_coord"], qr_dict["SE"]["y_coord"]],
                 ]
             )
         elif "NE" in qr_dict:
@@ -231,25 +231,13 @@ class PageImageProcessor:
                 [
                     [qr_dict["NE"]["x_coord"], qr_dict["NE"]["y_coord"]],
                     [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
-                    [qr_dict["SE"]["x_coord"], qr_dict["SW"]["y_coord"]],
+                    [qr_dict["SE"]["x_coord"], qr_dict["SE"]["y_coord"]],
                 ]
             )
-            # for some reason, adding random numbers to the point coords gives better results than actual coords
-            # src_three_points = np.float32(
-            #     [
-            #         [qr_dict["NE"]["x_coord"] + 10, qr_dict["NE"]["y_coord"] + 6],
-            #         [qr_dict["SW"]["x_coord"] + 5, qr_dict["SW"]["y_coord"] + 50],
-            #         [qr_dict["SE"]["x_coord"] + 45, qr_dict["SW"]["y_coord"] + 25],
-            #     ]
-            # )
         else:
             return image
 
         affine_matrix = cv.getAffineTransform(src_three_points, dest_three_points)
-
-        print(f"SRC: {src_three_points}")
-        print(f"DEST: {dest_three_points}")
-        print(f"AFFINE MATRIX: {affine_matrix}")
 
         return cv.warpAffine(
             image,
