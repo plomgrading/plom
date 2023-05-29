@@ -22,7 +22,6 @@ class BaseScanProgressPage(ManagerRequiredView):
         context.update(
             {
                 "curr_page": page_name,
-                "n_colliding": 0,  # mss.get_n_colliding_pages(),
                 "n_error": 0,  # mss.get_n_error_image(),
                 "n_discarded": 0,  # mss.get_n_discarded_pages(),
                 "n_error": 0,  # mss.get_n_error_image(),
