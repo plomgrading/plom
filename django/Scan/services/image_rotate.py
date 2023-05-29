@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 
+from pathlib import Path
 from PIL import Image
 
 from django.contrib.auth.models import User
@@ -14,6 +15,9 @@ class ImageRotateService:
 
     @transaction.atomic
     def rotate_image(self, user_obj, bundle_obj, bundle_order):
+        """
+        angle = 90 rotates counter-clockwise
+        """
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
 
@@ -22,11 +26,19 @@ class ImageRotateService:
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
         
-        print(staging_img.image_file)
         image = Image.open(staging_img.image_file)
-        image = image.rotate(angle=180, expand=True)
-        image.show()
+        new_image = image.rotate(angle=90, expand=True)
+        new_image.save(Path("media") / str(staging_img.image_file))
+        width, height = new_image.size
+        image.close()
+        
+        if height > width:
+            img_layout = "Tall"
+        else:
+            img_layout = "Wide"
 
+        return img_layout
+    
     @transaction.atomic
     def rotate_image_cmd(self, username, bundle_name, bundle_order):
         try:
@@ -41,6 +53,6 @@ class ImageRotateService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
         
-        self.rotate_image(user_obj, bundle_obj, bundle_order)
-    
+        img_layout = self.rotate_image(user_obj, bundle_obj, bundle_order)
 
+        return img_layout
