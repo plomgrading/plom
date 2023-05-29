@@ -428,10 +428,9 @@ class IDClient(QWidget):
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
 
-        print(tn)
-        print(self.predictions)
         all_predictions_for_paper = self.predictions.get(str(tn), None)
 
+        # Handle case-by-case: no predictions, one prediction or two predictions
         if not all_predictions_for_paper:
             self.ui.predButton0.hide()
             self.ui.pSIDLabel0.setText("")
@@ -477,9 +476,8 @@ class IDClient(QWidget):
 
         elif len(all_predictions_for_paper) == 2:
             first_pred, second_pred = all_predictions_for_paper
-            assert set(first_pred["predictor"], second_pred["predictor"]) == set(
-                "MLGreddy", "MLLAP"
-            )
+            assert first_pred["predictor"] in ("MLGreedy", "MLLAP")
+            assert second_pred["predictor"] in ("MLGreedy", "MLLAP")
             if first_pred["student_id"] == second_pred["student_id"]:
                 # only single option shown, so keep alt-a shortcut
                 self.ui.predButton0.setText("&Accept\nPrediction")
