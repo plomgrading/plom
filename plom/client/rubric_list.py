@@ -436,16 +436,45 @@ class RubricTable(QTableWidget):
         self.item(rc, 3).setToolTip(hoverText.strip())
         self.setSortingEnabled(_sorting_enabled)
 
-    def setRubricsByKeys(self, rubric_list, key_list):
-        """Clear table and repopulate rubrics in the key_list"""
+    def setRubricsByKeys(self, rubric_list, id_list, *, alt_order=None):
+        """Clear table and repopulate rubrics in the key_list
+
+        Args:
+            rubric_list (list): all the rubrics, which are dicts with
+                various keys, most notably for us, ``id``.
+            id_list (list): which ``id``s should insert into the table.
+                Any ids that missing in `rubric_list` will simply be
+                skipped.
+
+        Keyword Args:
+            alt_order (None/list): use this order instead of `key_list`.
+                But ignore anything in `alt_order` that isn't in `key_list`.
+                Anything that isn't in `alt_order` but is in `key_list`
+                should appear at the end of the list.
+                Defaults to None, which means just use the `key_list`
+                order.
+        """
+        if alt_order:
+            # construct a new list from alt_order and key_list
+            new_list = []
+            for x in alt_order:
+                if x in id_list:
+                    new_list.append(x)
+            for x in id_list:
+                if x not in new_list:
+                    new_list.append(x)
+            id_list = new_list
+        self._setRubricsByKeys(rubric_list, id_list)
+
+    def _setRubricsByKeys(self, rubric_list, id_list):
         # remove everything
         for r in range(self.rowCount()):
             self.removeRow(0)
-        # since populating in order of key_list, build all keys from rubric_list
+        # since populating in order of id_list, build all keys from rubric_list
         rkl = [X["id"] for X in rubric_list]
-        for id in key_list:
-            try:  # guard against mysterious keys - should not happen unless people doing silliness
-                rb = rubric_list[rkl.index(id)]
+        for i in id_list:
+            try:  # guard against mysterious keys
+                rb = rubric_list[rkl.index(i)]
             except (ValueError, KeyError, IndexError):
                 continue
             self.appendNewRubric(rb)
@@ -1132,6 +1161,7 @@ class RubricWidget(QWidget):
                 "hidden": [],
                 "tab_order": [],
                 "user_tabs": [],
+                "group_tabs": [],
             }
 
         # Update the wranglerState for any new rubrics not in shown/hidden (Issue #1493)
@@ -1166,8 +1196,8 @@ class RubricWidget(QWidget):
                     group_tab_data[g] = []
                 group_tab_data[g].append(rubric["id"])
 
-        # TODO: order of rubrics within group tabs?
         current_group_tabs = self.get_group_tabs_dict()
+        prev_group_tabs = {x["name"]: x["ids"] for x in wranglerState["group_tabs"]}
         for name, tab in current_group_tabs.items():
             if name not in group_tab_data.keys():
                 log.info("Removing now-empty tab: group %s is now empty", name)
@@ -1177,7 +1207,8 @@ class RubricWidget(QWidget):
             tab = current_group_tabs.get(g)
             if tab is None:
                 tab = self.add_new_group_tab(g)
-            tab.setRubricsByKeys(self.rubrics, idlist)
+            prev_order = prev_group_tabs.get(g)
+            tab.setRubricsByKeys(self.rubrics, idlist, alt_order=prev_order)
 
         # TODO: if we later deleting rubrics, this will need to deal with rubrics that
         # have disappeared from self.rubrics but still appear in some tab
@@ -1572,6 +1603,11 @@ class RubricWidget(QWidget):
                 self.RTW.widget(n).shortname for n in range(0, self.RTW.count())
             ],
             "user_tabs": [
-                {"name": t.shortname, "ids": t.getKeyList()} for t in self.user_tabs
+                {"name": t.shortname, "ids": t.getKeyList()}
+                for t in self.get_user_tabs()
+            ],
+            "group_tabs": [
+                {"name": t.shortname, "ids": t.getKeyList()}
+                for t in self.get_group_tabs()
             ],
         }
