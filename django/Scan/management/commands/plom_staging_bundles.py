@@ -25,7 +25,6 @@ class Command(BaseCommand):
     python3 manage.py plom_staging_bundles read_qr (bundle name) <- can get it from status
     python3 manage.py plom_staging_bundles push (bundle name) <- can get it from status
     python3 manage.py plom_staging_bundles pages bundle name
-    python3 manage.py plom_staging_bundles get_id_box (top) (bottom) (left) (right)
     """
 
     help = "Upload bundle pdf files to staging area"
@@ -202,14 +201,6 @@ class Command(BaseCommand):
             tabulate(bundle_page_list, headers="firstrow", tablefmt="simple_outline")
         )
 
-    def get_id_box(self, top, bottom, left, right):
-        scanner = ScanService()
-        try:
-            scanner.get_id_box_cmd(top, bottom, left, right)
-            self.stdout.write(f"Getting the ID box from all ID pages")
-        except ValueError as err:
-            raise CommandError(err)
-
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
             dest="command",
@@ -267,38 +258,6 @@ class Command(BaseCommand):
             help="Show only pages with indicated status",
             choices=["all", "unknown", "known", "extra", "discard", "error"],
             default="all",
-        )
-
-        sp_id = sp.add_parser(
-            "get_id_box", help="Extract the ID box from all ID pages."
-        )
-        sp_id.add_argument(
-            "top",
-            type=float,
-            help="top bound of rectangle to extract",
-            default=None,
-            nargs="?",
-        )
-        sp_id.add_argument(
-            "bottom",
-            type=float,
-            help="bottom bound of rectangle to extract",
-            default=None,
-            nargs="?",
-        )
-        sp_id.add_argument(
-            "left",
-            type=float,
-            help="left bound of rectangle to extract",
-            default=None,
-            nargs="?",
-        )
-        sp_id.add_argument(
-            "right",
-            type=float,
-            help="right bound of rectangle to extract",
-            default=None,
-            nargs="?",
         )
 
     def handle(self, *args, **options):
