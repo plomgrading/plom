@@ -430,12 +430,18 @@ class IDClient(QWidget):
 
         all_predictions_for_paper = self.predictions.get(str(tn), None)
 
+        # helper function to hide all this SNID garbage
+        def get_name_from_id(sid):
+            _snid = self.student_id_to_snid[sid]
+            return self.snid_to_student_name[_snid]
+
         # reset style
         self.ui.pSIDLabel0.setText("")
         self.ui.pNameLabel0.setText("")
         self.ui.predictionBox0.setTitle("No prediction")
         self.ui.predictionBox0.setStyleSheet("background-color:")
         self.ui.predButton0.hide()
+        self.ui.predictionBox0.hide()
         self.ui.pSIDLabel1.setText("")
         self.ui.pNameLabel1.setText("")
         self.ui.predictionBox1.setTitle("No prediction")
@@ -448,41 +454,30 @@ class IDClient(QWidget):
             pass
         elif len(all_predictions_for_paper) == 1:
             (pred,) = all_predictions_for_paper
-            psid = pred["student_id"]  # predicted student ID
-            _psnid = self.student_id_to_snid[psid]  # predicted SNID
-            pname = self.snid_to_student_name[_psnid]  # predicted student name
-            if pname == "":
-                # disable accept prediction button
-                pred = []
-                # TODO: this will cause a crash on next part...
+            predicted_name = get_name_from_id(pred["student_id"])
 
+            self.ui.predictionBox0.show()
+            self.ui.predButton0.show()
+            if not predicted_name:
+                self.ui.predButton0.hide()
+
+            self.ui.pSIDLabel0.setText(pred["student_id"])
+            self.ui.pNameLabel0.setText(predicted_name)
             if pred["predictor"] == "prename":
-                self.ui.predButton0.show()
-                self.ui.pSIDLabel0.setText(psid)
-                self.ui.pNameLabel0.setText(pname)
                 self.ui.predictionBox0.setTitle(
                     "Prenamed paper: is it signed?  if not signed, is it blank?"
                 )
                 self.ui.predButton0.setText("Confirm\n&Prename")
                 self.ui.predictionBox0.setStyleSheet("background-color: #89CFF0")
-
-                self.ui.predictionBox1.hide()
-
             elif pred["predictor"] in ("MLLAP", "MLGreedy"):
-                self.ui.predButton0.show()
-                self.ui.pSIDLabel0.setText(psid)
-                self.ui.pNameLabel0.setText(pname)
                 self.ui.predictionBox0.setTitle(
                     f"Prediction by {pred['predictor']} with certainty {round(pred['certainty'], 3)}"
                 )
                 self.ui.predButton0.setText("&Accept\nPrediction")
-                self.ui.predictionBox1.hide()
-
                 if pred["certainty"] < 0.3:
                     self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
                 else:
                     self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
-
             else:
                 raise RuntimeError(
                     f"Found unexpected predictions by predictor {pred['predictor']}, which should not be here."
@@ -493,12 +488,14 @@ class IDClient(QWidget):
             assert pred0["predictor"] in ("MLGreedy", "MLLAP")
             assert pred1["predictor"] in ("MLGreedy", "MLLAP")
             if pred0["student_id"] == pred1["student_id"]:
+                # show just one bar
+                self.ui.predictionBox0.show()
                 self.ui.predButton0.show()
                 self.ui.pSIDLabel0.setText(pred0["student_id"])
-                # complicated/fragile way of getting student name...?
-                _psnid = self.student_id_to_snid[pred0["student_id"]]
-                _pname = self.snid_to_student_name[_psnid]
-                self.ui.pNameLabel0.setText(_pname)
+                predicted_name = get_name_from_id(pred0["student_id"])
+                self.ui.pNameLabel0.setText(predicted_name)
+                if not predicted_name:
+                    self.ui.predButton0.hide()
                 self.ui.predictionBox0.setTitle(
                     f"{pred0['predictor']} prediction"
                     f" with certainty {round(pred0['certainty'], 3)}"
@@ -512,25 +509,31 @@ class IDClient(QWidget):
                 else:
                     self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
             else:
+                # show two bars
+                self.ui.predictionBox0.show()
                 self.ui.predButton0.show()
+                self.ui.predictionBox1.show()
+                self.ui.predButton1.show()
+
                 self.ui.pSIDLabel0.setText(pred0["student_id"])
-                # complicated/fragile way of getting student name...?
-                _psnid = self.student_id_to_snid[pred0["student_id"]]
-                _pname = self.snid_to_student_name[_psnid]
-                self.ui.pNameLabel0.setText(_pname)
+                predicted_name = get_name_from_id(pred0["student_id"])
+                self.ui.pNameLabel0.setText(predicted_name)
+                if not predicted_name:
+                    self.ui.predButton0.hide()
                 self.ui.predictionBox0.setTitle(
                     f"Prediction by {pred0['predictor']} with certainty {round(pred0['certainty'], 3)}"
                 )
                 self.ui.predictionBox1.show()
                 self.ui.predButton1.show()
                 self.ui.pSIDLabel1.setText(pred1["student_id"])
-                _psnid = self.student_id_to_snid[pred1["student_id"]]
-                _pname = self.snid_to_student_name[_psnid]
-                self.ui.pNameLabel1.setText(_pname)
+                predicted_name = get_name_from_id(pred1["student_id"])
+                self.ui.pNameLabel1.setText(predicted_name)
+                if not predicted_name:
+                    self.ui.predButton1.hide()
                 self.ui.predictionBox1.setTitle(
                     f"Prediction by {pred1['predictor']} with certainty {round(pred1['certainty'], 3)}"
                 )
-                # two predictions shown - not alt-a shortcut.
+                # two predictions shown - no alt-a shortcut to make you stop and think
                 self.ui.predButton0.setText("Accept\nPrediction")
                 self.ui.predButton1.setText("Accept\nPrediction")
 
