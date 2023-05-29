@@ -323,29 +323,8 @@ class IDClient(QWidget):
             name_list.append(sname)
 
     def getPredictions(self):
-        """Send request for prediction list to server.
-
-        For some reason, this also updates font-sizes and stuff.
-        """
+        """Send request for prediction list to server."""
         self.predictions = self.msgr.IDgetPredictions()
-
-        # Also tweak font size
-        fnt = self.font()
-        fnt.setPointSize(fnt.pointSize() * 2)
-        self.ui.pNameLabel0.setFont(fnt)
-        self.ui.pNameLabel1.setFont(fnt)
-        # also tweak size of "accept prediction" button font
-        self.ui.predButton0.setFont(fnt)
-        self.ui.predButton1.setFont(fnt)
-        # make the SID larger still.
-        fnt.setPointSizeF(fnt.pointSize() * 1.5)
-        self.ui.pSIDLabel0.setFont(fnt)
-        self.ui.pSIDLabel1.setFont(fnt)
-        # And if no predictions then hide that box
-        # TODO do this on a paper-by-paper basis
-        if not self.predictions:
-            self.ui.predictionBox0.hide()
-            self.ui.predictionBox1.hide()
 
     def setCompleters(self):
         """Set up the studentname + studentnumber line-edit completers.
@@ -428,92 +407,132 @@ class IDClient(QWidget):
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
 
-        # get a list of predictions for test number tn
         all_predictions_for_paper = self.predictions.get(str(tn), None)
 
-        if all_predictions_for_paper:
-            for pred in all_predictions_for_paper:
-                psid = pred["student_id"]  # predicted student ID
-                psnid = self.student_id_to_snid[psid]  # predicted SNID
-                pname = self.snid_to_student_name[psnid]  # predicted student name
-                if pname == "":
-                    # disable accept prediction button
-                    pred = []
+        # helper function to hide all this SNID garbage
+        def get_name_from_id(sid):
+            _snid = self.student_id_to_snid[sid]
+            return self.snid_to_student_name[_snid]
 
-                if pred["predictor"] == "prename":
-                    self.ui.predButton0.show()
-                    self.ui.pSIDLabel0.setText(psid)
-                    self.ui.pNameLabel0.setText(pname)
-                    self.ui.predictionBox0.setTitle(
-                        "Prenamed paper: is it signed?  if not signed, is it blank?"
-                    )
-                    self.ui.predButton0.setText("Confirm\n&Prename")
-                    self.ui.predictionBox0.setStyleSheet("background-color: #89CFF0")
+        # Reset everything, fonts, etc then hide the boxes
+        fnt = self.font()
+        fnt.setPointSize(fnt.pointSize() * 2)
+        self.ui.pNameLabel0.setFont(fnt)
+        self.ui.pNameLabel1.setFont(fnt)
+        # also tweak size of "accept prediction" button font
+        self.ui.predButton0.setFont(fnt)
+        self.ui.predButton1.setFont(fnt)
+        # make the SID larger still.
+        fnt.setPointSizeF(fnt.pointSize() * 1.5)
+        self.ui.pSIDLabel0.setFont(fnt)
+        self.ui.pSIDLabel1.setFont(fnt)
+        self.ui.pSIDLabel0.setText("")
+        self.ui.pNameLabel0.setText("")
+        self.ui.predictionBox0.setTitle("No prediction")
+        self.ui.predictionBox0.setStyleSheet("background-color:")
+        self.ui.predButton0.hide()
+        self.ui.predictionBox0.hide()
+        self.ui.pSIDLabel1.setText("")
+        self.ui.pNameLabel1.setText("")
+        self.ui.predictionBox1.setTitle("No prediction")
+        self.ui.predictionBox1.setStyleSheet("background-color:")
+        self.ui.predButton1.hide()
+        self.ui.predictionBox1.hide()
 
-                    self.ui.predictionBox1.hide()
+        # Handle case-by-case: no predictions, one prediction or two predictions
+        if not all_predictions_for_paper:
+            pass
+        elif len(all_predictions_for_paper) == 1:
+            (pred,) = all_predictions_for_paper
+            predicted_name = get_name_from_id(pred["student_id"])
 
-                elif pred["predictor"] == "MLLAP":
-                    self.ui.predButton0.show()
-                    self.ui.pSIDLabel0.setText(psid)
-                    self.ui.pNameLabel0.setText(pname)
-                    self.ui.predictionBox0.setTitle(
-                        f"Prediction by MLLAP with certainty {round(pred['certainty'], 3)}"
-                    )
-                    self.ui.predButton0.setText("&Accept\nPrediction")
+            self.ui.predictionBox0.show()
+            self.ui.predButton0.show()
+            if not predicted_name:
+                self.ui.predButton0.hide()
 
-                    self.ui.predictionBox1.hide()
-
-                elif pred["predictor"] == "MLGreedy":
-                    first_pred = all_predictions_for_paper[0]
-                    second_pred = all_predictions_for_paper[1]
-                    if first_pred["student_id"] == second_pred["student_id"]:
-                        # only single option shown, so keep alt-a shortcut
-                        self.ui.predButton0.setText("&Accept\nPrediction")
-                        self.ui.predictionBox0.setTitle(
-                            f"{first_pred['predictor']} prediction with certainty {round(first_pred['certainty'], 3)} agrees with {second_pred['predictor']} prediction of certainty {round(second_pred['certainty'], 3)}"
-                        )
-                    else:
-                        self.ui.predictionBox1.show()
-                        self.ui.predButton1.show()
-                        self.ui.pSIDLabel1.setText(psid)
-                        self.ui.pNameLabel1.setText(pname)
-                        self.ui.predictionBox1.setTitle(
-                            f"Prediction by MLGreedy with certainty {round(pred['certainty'], 3)}"
-                        )
-                        # two predictions shown - not alt-a shortcut.
-                        self.ui.predButton0.setText("Accept\nPrediction")
-                        self.ui.predButton1.setText("Accept\nPrediction")
-
-                    if first_pred["student_id"] != second_pred["student_id"]:
-                        self.ui.predictionBox0.setStyleSheet(
-                            "background-color: #FFD700"
-                        )
-                        self.ui.predictionBox1.setStyleSheet(
-                            "background-color: #FFD700"
-                        )
-                    elif (
-                        pred["certainty"] < 0.3
-                    ):  # inaccurate Greedy prediction tend to have certainty less than 0.3
-                        # useful to warn the user if LAP agrees with Greedy, but both have a high chance of being incorrect
-                        self.ui.predictionBox0.setStyleSheet(
-                            "background-color: #FF7F50"
-                        )
-                    else:
-                        self.ui.predictionBox0.setStyleSheet(
-                            "background-color: #00FA9A"
-                        )
+            self.ui.pSIDLabel0.setText(pred["student_id"])
+            self.ui.pNameLabel0.setText(predicted_name)
+            if pred["predictor"] == "prename":
+                self.ui.predictionBox0.setTitle(
+                    "Prenamed paper: is it signed?  if not signed, is it blank?"
+                )
+                self.ui.predButton0.setText("Confirm\n&Prename")
+                self.ui.predictionBox0.setStyleSheet("background-color: #89CFF0")
+            elif pred["predictor"] in ("MLLAP", "MLGreedy"):
+                self.ui.predictionBox0.setTitle(
+                    f"Prediction by {pred['predictor']} with certainty {round(pred['certainty'], 3)}"
+                )
+                self.ui.predButton0.setText("&Accept\nPrediction")
+                if pred["certainty"] < 0.3:
+                    self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
                 else:
-                    raise RuntimeError(
-                        f"Found unexpected predictions by predictor {pred['predictor']}, which should not be here."
-                    )
+                    self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
+            else:
+                raise RuntimeError(
+                    f"Found unexpected predictions by predictor {pred['predictor']}, which should not be here."
+                )
 
+        elif len(all_predictions_for_paper) == 2:
+            pred0, pred1 = all_predictions_for_paper
+            assert pred0["predictor"] in ("MLGreedy", "MLLAP")
+            assert pred1["predictor"] in ("MLGreedy", "MLLAP")
+            if pred0["student_id"] == pred1["student_id"]:
+                # show just one bar
+                self.ui.predictionBox0.show()
+                self.ui.predButton0.show()
+                self.ui.pSIDLabel0.setText(pred0["student_id"])
+                predicted_name = get_name_from_id(pred0["student_id"])
+                self.ui.pNameLabel0.setText(predicted_name)
+                if not predicted_name:
+                    self.ui.predButton0.hide()
+                self.ui.predictionBox0.setTitle(
+                    f"{pred0['predictor']} prediction"
+                    f" with certainty {round(pred0['certainty'], 3)}"
+                    f" agrees with {pred1['predictor']} prediction"
+                    f" of certainty {round(pred1['certainty'], 3)}"
+                )
+                # only single option shown, so keep alt-a shortcut
+                self.ui.predButton0.setText("&Accept\nPrediction")
+                if pred0["certainty"] < 0.3 or pred1["certainty"] < 0.3:
+                    self.ui.predictionBox0.setStyleSheet("background-color: #FF7F50")
+                else:
+                    self.ui.predictionBox0.setStyleSheet("background-color: #00FA9A")
+            else:
+                # show two bars
+                self.ui.predictionBox0.show()
+                self.ui.predButton0.show()
+                self.ui.predictionBox1.show()
+                self.ui.predButton1.show()
+
+                self.ui.pSIDLabel0.setText(pred0["student_id"])
+                predicted_name = get_name_from_id(pred0["student_id"])
+                self.ui.pNameLabel0.setText(predicted_name)
+                if not predicted_name:
+                    self.ui.predButton0.hide()
+                self.ui.predictionBox0.setTitle(
+                    f"Prediction by {pred0['predictor']} with certainty {round(pred0['certainty'], 3)}"
+                )
+                self.ui.predictionBox1.show()
+                self.ui.predButton1.show()
+                self.ui.pSIDLabel1.setText(pred1["student_id"])
+                predicted_name = get_name_from_id(pred1["student_id"])
+                self.ui.pNameLabel1.setText(predicted_name)
+                if not predicted_name:
+                    self.ui.predButton1.hide()
+                self.ui.predictionBox1.setTitle(
+                    f"Prediction by {pred1['predictor']} with certainty {round(pred1['certainty'], 3)}"
+                )
+                # two predictions shown - no alt-a shortcut to make you stop and think
+                self.ui.predButton0.setText("Accept\nPrediction")
+                self.ui.predButton1.setText("Accept\nPrediction")
+
+                self.ui.predictionBox0.setStyleSheet("background-color: #FFD700")
+                self.ui.predictionBox1.setStyleSheet("background-color: #FFD700")
         else:
-            self.ui.predButton0.hide()
-            self.ui.pSIDLabel0.setText("")
-            self.ui.pNameLabel0.setText("")
-            self.ui.predictionBox0.setTitle("No prediction")
-            self.ui.predictionBox0.setStyleSheet("background-color:")
-            self.ui.predictionBox1.hide()
+            raise RuntimeError(
+                f"Found unexpected 3 or more predictions:\n{all_predictions_for_paper}"
+            )
 
         # now update the snid entry line-edit.
         # if test is already identified then populate the ID-lineedit accordingly
