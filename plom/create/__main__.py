@@ -533,7 +533,6 @@ def get_parser():
     )
     sp_tag.add_argument(
         "task",
-        nargs=1,
         help="""
             Which task to tag, e.g., q0123g4 for paper 123 question 4.
         """,
@@ -850,7 +849,7 @@ def main():
         try:
             # TODO: probably we want something sane like --paper 123 --question 4
             # task = f"q{paper:04}g{question}"
-            (task,) = args.task
+            task = args.task
             if args.rm:
                 print(f"Task {task}, removing tags: {args.tags}")
                 for t in args.tags:
