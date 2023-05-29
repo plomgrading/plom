@@ -17,16 +17,7 @@ class PageImageProcessor:
     """
 
     # values used for QR code centre locations and page dimensions
-    # values from pdf_page_add_labels_QRs() in plom/create/mergeAndCode.py
-    # TOP = 55
-    # BOTTOM = 737
-    # RIGHT = 562
-    # LEFT = 50
-    # PWIDTH = 612
-    # PHEIGHT = 792
-
-    # obtained by running QRextract on un-rotated pages -- better to use these since in pixel units?
-    # TODO: are these values deterministic?
+    # obtained by running QRextract on un-rotated demo page images
     TOP = 139.5
     BOTTOM = 1861.5
     RIGHT = 1419.5
@@ -270,7 +261,6 @@ class PageImageProcessor:
         opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)
 
         righted_img = self.apply_image_transformation(opencv_img, qr_dict)
-        # Image.fromarray(cv.cvtColor(righted_img, cv.COLOR_BGR2RGB)).show()
 
         top = round(self.TOP + top * self.HEIGHT)
         bottom = round(self.TOP + bottom * self.HEIGHT)
@@ -298,5 +288,4 @@ class PageImageProcessor:
 
         # convert the result to a PIL.Image
         result = Image.fromarray(cv.cvtColor(cropped_img, cv.COLOR_BGR2RGB))
-        # result.show()
         return result
