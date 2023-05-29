@@ -341,11 +341,6 @@ class IDClient(QWidget):
         fnt.setPointSizeF(fnt.pointSize() * 1.5)
         self.ui.pSIDLabel0.setFont(fnt)
         self.ui.pSIDLabel1.setFont(fnt)
-        # And if no predictions then hide that box
-        # TODO do this on a paper-by-paper basis
-        if not self.predictions:
-            self.ui.predictionBox0.hide()
-            self.ui.predictionBox1.hide()
 
     def setCompleters(self):
         """Set up the studentname + studentnumber line-edit completers.
