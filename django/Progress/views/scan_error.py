@@ -17,9 +17,11 @@ class ScanError(BaseScanProgressPage):
 
     def get(self, request):
         context = self.build_context("error_page")
-        mss = ManageScanService()
-        error_pages = mss.get_error_pages_list()
-        context.update({"error_pages": error_pages, "n_error": len(error_pages)})
+
+        # TODO: Error page view needs redesign
+        # mss = ManageScanService()
+        # error_pages = mss.get_error_pages_list()
+        context.update({"error_pages": 0, "n_error": 0})
         return render(request, "Progress/scan_error.html", context)
 
 

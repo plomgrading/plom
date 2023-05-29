@@ -19,12 +19,14 @@ class ScanDiscarded(BaseScanProgressPage):
 
     def get(self, request):
         context = self.build_context("discarded")
-        mss = ManageScanService()
-        context.update(
-            {
-                "discarded_pages": mss.get_discarded_pages_list(),
-            }
-        )
+
+        # TODO: Discarded pages view needs redesign
+        # mss = ManageScanService()
+        # context.update(
+        #     {
+        #         "discarded_pages": mss.get_discarded_pages_list(),
+        #     }
+        # )
         return render(request, "Progress/scan_discarded.html", context)
 
 
