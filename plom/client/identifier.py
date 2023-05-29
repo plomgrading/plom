@@ -323,24 +323,8 @@ class IDClient(QWidget):
             name_list.append(sname)
 
     def getPredictions(self):
-        """Send request for prediction list to server.
-
-        For some reason, this also updates font-sizes and stuff.
-        """
+        """Send request for prediction list to server."""
         self.predictions = self.msgr.IDgetPredictions()
-
-        # Also tweak font size
-        fnt = self.font()
-        fnt.setPointSize(fnt.pointSize() * 2)
-        self.ui.pNameLabel0.setFont(fnt)
-        self.ui.pNameLabel1.setFont(fnt)
-        # also tweak size of "accept prediction" button font
-        self.ui.predButton0.setFont(fnt)
-        self.ui.predButton1.setFont(fnt)
-        # make the SID larger still.
-        fnt.setPointSizeF(fnt.pointSize() * 1.5)
-        self.ui.pSIDLabel0.setFont(fnt)
-        self.ui.pSIDLabel1.setFont(fnt)
 
     def setCompleters(self):
         """Set up the studentname + studentnumber line-edit completers.
@@ -430,7 +414,18 @@ class IDClient(QWidget):
             _snid = self.student_id_to_snid[sid]
             return self.snid_to_student_name[_snid]
 
-        # reset style
+        # Reset everything, fonts, etc then hide the boxes
+        fnt = self.font()
+        fnt.setPointSize(fnt.pointSize() * 2)
+        self.ui.pNameLabel0.setFont(fnt)
+        self.ui.pNameLabel1.setFont(fnt)
+        # also tweak size of "accept prediction" button font
+        self.ui.predButton0.setFont(fnt)
+        self.ui.predButton1.setFont(fnt)
+        # make the SID larger still.
+        fnt.setPointSizeF(fnt.pointSize() * 1.5)
+        self.ui.pSIDLabel0.setFont(fnt)
+        self.ui.pSIDLabel1.setFont(fnt)
         self.ui.pSIDLabel0.setText("")
         self.ui.pNameLabel0.setText("")
         self.ui.predictionBox0.setTitle("No prediction")
