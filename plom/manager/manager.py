@@ -1802,7 +1802,7 @@ class Manager(QWidget):
         pred_sid = self.ui.predictionTW.item(idx[0].row(), 3)
         if pred_sid is not None:
             pred_sid = pred_sid.data(Qt.ItemDataRole.DisplayRole)
-        certainty = self.ui.predictionTW.item(idx[0].row(), 4)
+        certainty = self.ui.predictionTW.item(idx[0].row(), 5)
         if certainty is not None:
             certainty = certainty.data(Qt.ItemDataRole.DisplayRole)
 
