@@ -421,7 +421,7 @@ webplom_test:
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - ls
-    - # let opencv have its little drama about config-3.py *before* coverage
+    # let opencv have its little drama about config-3.py *before* coverage
     - python3 -c "import cv2"
     - coverage run --source='.' manage.py test
     - ls
