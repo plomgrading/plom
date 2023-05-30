@@ -22,9 +22,7 @@ def generate_unique_key():
 
 
 class Rubric(models.Model):
-    """
-    Represents a marker's comment and mark delta for a particular question.
-    """
+    """Represents a marker's comment and mark delta for a particular question."""
 
     key = models.TextField(null=False, default=generate_unique_key)
     kind = models.TextField(null=False, default="")
@@ -41,9 +39,7 @@ class Rubric(models.Model):
 
 
 class RubricPane(models.Model):
-    """
-    A user's configuration for the 'rubrics' pane in the annotation window.
-    """
+    """A user's configuration for the 'rubrics' pane in the annotation window."""
 
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
     question = models.PositiveIntegerField(default=0)

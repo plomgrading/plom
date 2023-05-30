@@ -82,7 +82,6 @@ def print_dangling(dangling):
 
 def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
     """Find and print things in classlist or database (but not both)."""
-
     students_from_cl = {(s["id"], s["name"]) for s in classlist}
     students_from_db = {
         (s["sid"], s["sname"]) for n, s in pns_to_ids.items() if s["identified"]

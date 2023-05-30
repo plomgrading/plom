@@ -11,9 +11,7 @@ from API.views import (
 
 
 class TagsURLPatterns:
-    """
-    URLs for handling marking task-related tags.
-    """
+    """URLs for handling marking task-related tags."""
 
     prefix = "tags/"
 

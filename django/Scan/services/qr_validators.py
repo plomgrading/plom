@@ -136,14 +136,15 @@ class QRErrorService:
         or potentially (if an extra page)
         'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'tpv': 'plomX', 'raw_qr_string': 'plomX1'},
 
-        Returns None if all good, else raises various ValueError describing the inconsistencies.
+        Returns:
+            None if all good
+
+        Raises:
+            ValueError: describing various inconsistencies.
         """
 
-        # ------ helper function to test data consistency
         def is_list_inconsistent(lst):
             return any([X != lst[0] for X in lst])
-
-        # ------ end helper function
 
         # check all page-types are the same
         page_types = [parsed_qr_dict[x]["page_type"] for x in parsed_qr_dict]

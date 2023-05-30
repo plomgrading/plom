@@ -22,7 +22,7 @@ margin = 10
 def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_images):
     """Reassemble a pdf from the cover and question images.
 
-    args:
+    Args:
         outname (str/pathlib.Path): name of a PDF file to write.
         shortName (str): The name of the exam, written into metadata.
         sid (str): Student ID, to be written into metadata.
@@ -33,7 +33,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         dnm_images (list): str/Path images to be combined into a new
             final page.
 
-    return:
+    Returns:
         None
     """
     outname = Path(outname)

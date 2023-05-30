@@ -12,9 +12,7 @@ from Identify.services import IdentifyTaskService
 
 
 class GetClasslist(APIView):
-    """
-    Get the classlist.
-    """
+    """Get the classlist."""
 
     def get(self, request):
         sstu = StagingStudentService()
@@ -31,8 +29,7 @@ class GetClasslist(APIView):
 
 
 class GetIDPredictions(APIView):
-    """
-    Get predictions for test-paper identification.
+    """Get predictions for test-paper identification.
 
     TODO: not implemented in Django, Issue #2672.
     For now, just return all the pre-named papers.
@@ -56,6 +53,7 @@ class GetIDPredictions(APIView):
 
 class IDgetDoneTasks(APIView):
     """When a id-client logs on they request a list of papers they have already IDd.
+
     Send back the list.
     """
 
@@ -92,10 +90,7 @@ class IDgetNextTask(APIView):
 
 class IDprogressCount(APIView):
     def get(self, request):
-        """
-        Responds with a list of completed/total tasks.
-        """
-
+        """Responds with a list of completed/total tasks."""
         its = IdentifyTaskService()
         progress = its.get_id_progress()
         return Response(progress, status=status.HTTP_200_OK)
@@ -104,7 +99,6 @@ class IDprogressCount(APIView):
 class IDclaimThisTask(APIView):
     def patch(self, request, paper_id):
         """Claims this identifying task for the user."""
-
         its = IdentifyTaskService()
         try:
             its.claim_task(request.user, paper_id)
@@ -116,10 +110,8 @@ class IDclaimThisTask(APIView):
 
     def put(self, request, paper_id):
         """Assigns a name and a student ID to the paper."""
-
         data = request.data
         user = request.user
-
         its = IdentifyTaskService()
         its.identify_paper(user, paper_id, data["sid"], data["sname"])
         return Response(status=status.HTTP_200_OK)
