@@ -11,15 +11,13 @@ from API.views import (
     MgetAnnotationImage,
 )
 
-"""
-URLs for handling annotation data.
-"""
+"""URLs for handling annotation data."""
 
 
 class PagedataPatterns:
-    """
-    Data for creating annotation images from pages
-    These patterns fall under the route "pagedata"
+    """Data for creating annotation images from pages.
+
+    These patterns fall under the route "pagedata".
     """
 
     prefix = "pagedata/"
@@ -43,8 +41,8 @@ class PagedataPatterns:
 
 
 class AnnotationPatterns:
-    """
-    URLs for getting annotations
+    """URLs for getting annotations.
+
     These patterns fall under the route "annotations"
     """
 
@@ -64,8 +62,8 @@ class AnnotationPatterns:
 
 
 class AnnotationImagePatterns:
-    """
-    URLs for annotation images
+    """URLs for annotation images.
+
     These patterns fall under the route "annotations_image"
     """
 

@@ -337,7 +337,7 @@ flake8:
   allow_failure: true
 
 
-pydocstyle:
+pydocstyle-plom-count:
   image: python:3.11
   stage: static_analysis
   before_script:
@@ -351,12 +351,23 @@ pydocstyle:
     - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 657 ]]"
+    - bash -c "[[ $NUMERR -le 644 ]]"
   allow_failure: true
 
 
-# TODO: currently allowed-to-fail (for a while!)
-pydocstyle-django:
+# For now, an allowlist of submodules that must pass
+# TODO: add more modules and eventually just plom/
+pydocstyle-plom:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]==6.3.0
+  script:
+    - pydocstyle -s -e plom/create plom/scan plom/demo plom/finish
+  allow_failure: true
+
+
+pydocstyle-django-count:
   image: python:3.11
   stage: static_analysis
   before_script:
@@ -370,7 +381,21 @@ pydocstyle-django:
     - NUMERR=`pydocstyle --count django | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 696 ]]"
+    - bash -c "[[ $NUMERR -le 642 ]]"
+  allow_failure: true
+
+
+# For now, an allowlist of submodules that must pass
+# TODO: add more modules and eventually just django/
+pydocstyle-django:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install pydocstyle[toml]==6.3.0
+  script:
+    - pushd django
+    - pydocstyle -s -e API Base Rubrics Scan
+    - popd
   allow_failure: true
 
 

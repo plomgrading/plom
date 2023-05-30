@@ -28,15 +28,12 @@ log = logging.getLogger("RubricServer")
 
 
 class RubricService:
-    """
-    Class to encapsulate functions for creating and modifying rubrics.
-    """
+    """Class to encapsulate functions for creating and modifying rubrics."""
 
     __valid_kinds = ("absolute", "neutral", "relative")
 
     def create_rubric(self, rubric_data):
-        """
-        Create a rubric using data submitted by a marker.
+        """Create a rubric using data submitted by a marker.
 
         Args:
             rubric_data: (dict) data for a rubric submitted by a web request.
@@ -44,7 +41,6 @@ class RubricService:
         Returns:
             Rubric: the created and saved rubric instance.
         """
-
         # TODO: add a function to check if a rubric_data is valid/correct
         self.check_rubric(rubric_data)
 
@@ -66,8 +62,7 @@ class RubricService:
 
     @transaction.atomic
     def modify_rubric(self, key, rubric_data):
-        """
-        Modify a rubric.
+        """Modify a rubric.
 
         Args:
             key: (str) a sequence of ints representing
@@ -79,7 +74,6 @@ class RubricService:
         Exceptions:
             ValueError: wrong "kind" or invalid rubric data
         """
-
         username = rubric_data.pop("username")
         user = User.objects.get(
             username=username
@@ -103,8 +97,7 @@ class RubricService:
         return rubric_instance
 
     def get_rubrics(self, *, question=None):
-        """
-        Get the rubrics, possibly filtered by question number
+        """Get the rubrics, possibly filtered by question number.
 
         Args:
             question: (None/str) question number or None for all.
@@ -112,7 +105,6 @@ class RubricService:
         Returns:
             list: dictionaries, one for each rubric.
         """
-
         if question is None:
             rubric_list = Rubric.objects.all()
         else:
@@ -244,8 +236,7 @@ class RubricService:
                 log.info("Built delta-rubric -%d for Q%s: %s", m, q, r.pk)
 
     def erase_all_rubrics(self):
-        """
-        Remove all rubrics, permanently deleting them.  BE CAREFUL.
+        """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
         Returns:
             int: how many rubrics were removed.
@@ -257,8 +248,7 @@ class RubricService:
         return n
 
     def get_rubric_pane(self, user, question):
-        """
-        Gets a rubric pane for a user.
+        """Gets a rubric pane for a user.
 
         Args:
             user: a User instance
@@ -267,29 +257,25 @@ class RubricService:
         Returns:
             dict: the JSON representation of the pane.
         """
-
         pane, created = RubricPane.objects.get_or_create(user=user, question=question)
         if created:
             return {}
         return pane.data
 
     def update_rubric_pane(self, user, question, data):
-        """
-        Updates a rubric pane for a user.
+        """Updates a rubric pane for a user.
 
         Args:
             user: a User instance
             question: int
             data: dict representing the new pane
         """
-
         pane = RubricPane.objects.get(user=user, question=question)
         pane.data = data
         pane.save()
 
     def check_rubric(self, rubric_data):
-        """
-        Check rubric data to ensure the data is consistent.
+        """Check rubric data to ensure the data is consistent.
 
         Args:
             rubric_data: (dict) data for a rubric submitted by a web request.
