@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2021, 2023 Colin B. Macdonald
-# Copyright (C) 2022 Natalie Balashov
+# Copyright (C) 2022-23 Natalie Balashov
 # Copyright (C) 2022 Edith Coates
 #
 # Copying and distribution of this file, with or without modification,
@@ -20,3 +20,5 @@ unvalidate
 crate
 discreet
 vise
+# Frobenius norm calculated in django/Scan/tests/test_image_process.py
+fro

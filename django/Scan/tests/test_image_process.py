@@ -146,13 +146,12 @@ class PageImageProcessorTests(TestCase):
             scanner = ScanService()
             qr_dict_id = scanner.parse_qr_code([codes])
             affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
-
-            self.assertTrue(abs(affine_matrix[0][0] - 0.996) / 0.996 < 0.01)
-            self.assertTrue(abs(affine_matrix[0][1] + 0.087) / 0.087 < 0.01)
-            self.assertTrue(abs(affine_matrix[0][2] - 10.855) / 10.855 < 0.01)
-            self.assertTrue(abs(affine_matrix[1][0] - 0.087) / 0.087 < 0.01)
-            self.assertTrue(abs(affine_matrix[1][1] - 0.996) / 0.996 < 0.01)
-            self.assertTrue(abs(affine_matrix[1][2] + 134.659) / 134.659 < 0.01)
+            expected_matrix = np.float64(
+                [[0.996, -0.087, 10.855], [0.087, 0.996, -134.659]]
+            )
+            self.assertTrue(
+                np.linalg.norm(affine_matrix - expected_matrix, "fro") < 0.001
+            )
 
     def test_affine_matrix_no_correction(self):
         """Test PageImageProcessor.create_affine_transformation_matrix() with an image that does not need correction."""
@@ -164,13 +163,8 @@ class PageImageProcessorTests(TestCase):
         scanner = ScanService()
         qr_dict_id = scanner.parse_qr_code([codes])
         affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
-
-        self.assertTrue((affine_matrix[0][0] - 1) < 0.001)
-        self.assertTrue((affine_matrix[0][1] - 0) < 0.001)
-        self.assertTrue((affine_matrix[0][2] - 0) < 0.001)
-        self.assertTrue((affine_matrix[1][0] - 0) < 0.001)
-        self.assertTrue((affine_matrix[1][1] - 1) < 0.001)
-        self.assertTrue((affine_matrix[1][2] - 0) < 0.001)
+        expected_matrix = np.float64([[1, 0, 0], [0, 1, 0]])
+        self.assertTrue(np.linalg.norm(affine_matrix - expected_matrix, "fro") < 0.001)
 
     def test_ID_box_corrected_and_extracted(self):
         """Test PageImageProcessor.extract_rectangular_region() on an image with 3-degree rotation.
