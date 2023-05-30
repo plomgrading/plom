@@ -50,16 +50,17 @@ class ScanTestPaperProgress(ManagerRequiredView):
         mss = ManageScanService()
         context = self.build_context()
 
-        if filter_by == "all":
-            test_papers = mss.get_test_paper_list()
-        elif filter_by == "complete":
-            test_papers = mss.get_test_paper_list(exclude_incomplete=True)
-        elif filter_by == "incomplete":
-            test_papers = mss.get_test_paper_list(exclude_complete=True)
-        else:
-            raise Http404("Unrecognized filtering argument.")
+        # TODO: test paper list needs updating
+        # if filter_by == "all":
+        #     test_papers = mss.get_test_paper_list()
+        # elif filter_by == "complete":
+        #     test_papers = mss.get_test_paper_list(exclude_incomplete=True)
+        # elif filter_by == "incomplete":
+        #     test_papers = mss.get_test_paper_list(exclude_complete=True)
+        # else:
+        #     raise Http404("Unrecognized filtering argument.")
 
-        context.update({"test_papers": test_papers})
+        # context.update({"test_papers": test_papers})
         return render(request, "Progress/fragments/scan_overview_table.html", context)
 
 
