@@ -5,9 +5,11 @@
 from django.test import TestCase
 from django.conf import settings
 
+import cv2 as cv
+import imutils
+import numpy as np
 import pathlib
 import tempfile
-import cv2 as cv
 from PIL import Image
 
 from Scan.services import PageImageProcessor, ScanService
@@ -15,9 +17,7 @@ from plom.scan import QRextract
 
 
 class PageImageProcessorTests(TestCase):
-    """
-    Test the functions in services.PageImageProcessor
-    """
+    """Test the functions in services.PageImageProcessor."""
 
     def setUp(self):
         self.upright_page_full = {
@@ -90,9 +90,7 @@ class PageImageProcessorTests(TestCase):
         return super().setUp()
 
     def test_check_corner(self):
-        """
-        Test PageImageProcessor.check_corner()
-        """
+        """Test PageImageProcessor.check_corner()."""
         pipr = PageImageProcessor()
         orientation = pipr.check_corner(
             val_from_qr="1",
@@ -104,9 +102,7 @@ class PageImageProcessorTests(TestCase):
         self.assertEqual(orientation, "upright")
 
     def test_get_page_orientation(self):
-        """
-        Test PageImageProcessor.get_page_orientation()
-        """
+        """Test PageImageProcessor.get_page_orientation()."""
         pipr = PageImageProcessor()
 
         upright = pipr.get_page_orientation(self.upright_page_full)
@@ -135,62 +131,63 @@ class PageImageProcessorTests(TestCase):
         with self.assertRaises(RuntimeError):
             pipr.get_page_orientation({})
 
-    def test_apply_image_transformation(self):
-        """
-        Test PageImageProcessor.apply_image_transformation()
-        """
+    def test_affine_matrix_correct_5_deg_rot(self):
+        """Test PageImageProcessor.create_affine_transformation_matrix() for an image with 5-degree rotation."""
         pipr = PageImageProcessor()
-        curr_dir = settings.BASE_DIR / "Scan" / "tests"
-        img_path = curr_dir / "id_page_img.png"
+        img_path = settings.BASE_DIR / "Scan" / "tests" / "id_page_img.png"
         test_img = Image.open(img_path)
 
-        # with tempfile.TemporaryDirectory() as tmpdir:
-        if True:
-            img_rot_path = curr_dir / "rot_3_deg_img.png"
-            img_rot = test_img.rotate(3, expand=True)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            img_rot_path = pathlib.Path(tmpdir) / "rot_5_deg_img.png"
+            img_rot = test_img.rotate(5, expand=True)
             img_rot.save(img_rot_path)
 
             codes = QRextract(img_rot_path)
             scanner = ScanService()
             qr_dict_id = scanner.parse_qr_code([codes])
+            affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
 
-            img_cv = cv.imread(str(img_rot_path))
+            self.assertTrue(abs(affine_matrix[0][0] - 0.996) / 0.996 < 0.01)
+            self.assertTrue(abs(affine_matrix[0][1] + 0.087) / 0.087 < 0.01)
+            self.assertTrue(abs(affine_matrix[0][2] - 10.855) / 10.855 < 0.01)
+            self.assertTrue(abs(affine_matrix[1][0] - 0.087) / 0.087 < 0.01)
+            self.assertTrue(abs(affine_matrix[1][1] - 0.996) / 0.996 < 0.01)
+            self.assertTrue(abs(affine_matrix[1][2] + 134.659) / 134.659 < 0.01)
 
-            # Image.fromarray(cv.cvtColor(img_cv, cv.COLOR_BGR2RGB)).show()
-            cv.imwrite(str(curr_dir / "3_deg_img_before_transformation.png"), img_cv)
+    def test_affine_matrix_no_correction(self):
+        """Test PageImageProcessor.create_affine_transformation_matrix() with an image that does not need correction."""
+        pipr = PageImageProcessor()
+        img_path = settings.BASE_DIR / "Scan" / "tests" / "id_page_img.png"
+        test_img = Image.open(img_path)
 
-            transformed_img = pipr.apply_image_transformation(img_cv, qr_dict_id)
+        codes = QRextract(img_path)
+        scanner = ScanService()
+        qr_dict_id = scanner.parse_qr_code([codes])
+        affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
 
-            # Image.fromarray(cv.cvtColor(transformed_img, cv.COLOR_BGR2RGB)).show()
-            output_path = curr_dir / "3_deg_img_after_transformation.png"
-            cv.imwrite(str(output_path), transformed_img)
+        self.assertTrue((affine_matrix[0][0] - 1) < 0.001)
+        self.assertTrue((affine_matrix[0][1] - 0) < 0.001)
+        self.assertTrue((affine_matrix[0][2] - 0) < 0.001)
+        self.assertTrue((affine_matrix[1][0] - 0) < 0.001)
+        self.assertTrue((affine_matrix[1][1] - 1) < 0.001)
+        self.assertTrue((affine_matrix[1][2] - 0) < 0.001)
 
-    def test_extract_rectangular_region(self):
-        """
-        Test PageImageProcessor.extract_rectangular_region()
+    def test_ID_box_corrected_and_extracted(self):
+        """Test PageImageProcessor.extract_rectangular_region() on an image with 3-degree rotation.
+
+        Verify that the extracted ID box is upright by checking the interior of the blank "Signature" box,
+        which is a subsection of the image that should be white.
         """
         in_top = 0.28
         in_bottom = 0.58
         in_left = 0.09
         in_right = 0.91
         pipr = PageImageProcessor()
-        curr_dir = settings.BASE_DIR / "Scan" / "tests"
-        img_path = curr_dir / "id_page_img.png"
-
+        img_path = settings.BASE_DIR / "Scan" / "tests" / "id_page_img.png"
         test_img = Image.open(img_path)
-        cropped_img = test_img.crop(
-            (
-                round(pipr.LEFT + in_left * pipr.WIDTH),
-                round(pipr.TOP + in_top * pipr.HEIGHT),
-                round(pipr.LEFT + in_right * pipr.WIDTH),
-                round(pipr.TOP + in_bottom * pipr.HEIGHT),
-            )
-        )
-        cropped_img.save(curr_dir / "unrotated_cropped.png")
 
-        # with tempfile.TemporaryDirectory() as tmpdir:
-        if True:
-            img_rot_path = curr_dir / "rot_3_deg_img.png"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            img_rot_path = pathlib.Path(tmpdir) / "rotated_img.png"
             img_rot = test_img.rotate(3, expand=True)
             img_rot.save(img_rot_path)
 
@@ -201,47 +198,6 @@ class PageImageProcessorTests(TestCase):
             output_img = pipr.extract_rectangular_region(
                 img_rot_path, 0, qr_dict_id, in_top, in_bottom, in_left, in_right
             )
-            output_path = curr_dir / "rotated_and_corrected_cropped.png"
-            output_img.save(output_path)
-
-    def test_affine_transform_zero_correction(self):
-        """
-        Check whether OpenCV does strange things with images that don't need correction.
-        """
-        pipr = PageImageProcessor()
-        curr_dir = settings.BASE_DIR / "Scan" / "tests"
-        img_path = curr_dir / "id_page_img.png"
-        codes = QRextract(img_path)
-        scanner = ScanService()
-        qr_dict_no_rot = scanner.parse_qr_code([codes])
-
-        img_cv = cv.imread(str(img_path))
-        # Image.fromarray(cv.cvtColor(img_cv, cv.COLOR_BGR2RGB)).show()
-        transformed_img = pipr.apply_image_transformation(img_cv, qr_dict_no_rot)
-        # Image.fromarray(cv.cvtColor(transformed_img, cv.COLOR_BGR2RGB)).show()
-        output_path = curr_dir / "no_correction_after_transformation.png"
-        cv.imwrite(str(output_path), transformed_img)
-
-    def test_affine_transform_15_degree_rot(self):
-        """
-        Check cv.warpAffine() on an image with a 15-degree rotation.
-        """
-        pipr = PageImageProcessor()
-        curr_dir = settings.BASE_DIR / "Scan" / "tests"
-        img_path = curr_dir / "id_page_img.png"
-        test_img = Image.open(img_path)
-
-        img_rot_path = curr_dir / "rot_15_deg_img.png"
-        img_rot = test_img.rotate(15, expand=True)
-        img_rot.save(img_rot_path)
-
-        codes = QRextract(img_rot_path)
-        scanner = ScanService()
-        qr_dict_id = scanner.parse_qr_code([codes])
-
-        img_cv = cv.imread(str(img_rot_path))
-        # Image.fromarray(cv.cvtColor(img_cv, cv.COLOR_BGR2RGB)).show()
-        transformed_img = pipr.apply_image_transformation(img_cv, qr_dict_id)
-        # Image.fromarray(cv.cvtColor(transformed_img, cv.COLOR_BGR2RGB)).show()
-        output_path = curr_dir / "15_deg_after_transformation.png"
-        cv.imwrite(str(output_path), transformed_img)
+            output_opencv = cv.cvtColor(np.array(output_img), cv.COLOR_RGB2BGR)
+            white_subimage = output_opencv[395:490, 300:1030]
+            self.assertTrue((np.mean(white_subimage) - 255) < 0.001)
