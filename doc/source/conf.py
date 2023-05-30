@@ -15,9 +15,21 @@
 #
 import os
 import sys
+import django
 
+sys.path.insert(0, os.path.abspath("../../django/"))
 sys.path.insert(0, os.path.abspath("../.."))
+os.environ["DJANGO_SETTINGS_MODULE"] = "Web_Plom.settings"
+django.setup()
 
+# # https://daniel.feldroy.com/posts/2023-01-configuring-sphinx-auto-doc-with-django
+# sys.path.insert(0, os.path.abspath("."))
+# os.environ["DJANGO_SETTINGS_MODULE"] = "django_settings"
+# django.setup()
+
+# # something else
+# from django.conf import settings
+# settings.configure()
 
 # -- Project information -----------------------------------------------------
 
