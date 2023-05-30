@@ -420,7 +420,11 @@ webplom_test:
     - pushd django
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
+    - ls
     - coverage run --source='.' manage.py test
+    - ls
+    - cat config-3.py || true
+    - rm -f config-3.py
     - coverage report --precision=2
     - coverage xml -o django_coverage.xml
     - popd
