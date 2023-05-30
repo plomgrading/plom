@@ -25,7 +25,6 @@ class DemoProcessesService:
 
     def get_database_engine(self):
         """Which database engine are we using?"""
-
         from Web_Plom import settings
 
         engine = settings.DATABASES["default"]["ENGINE"]
@@ -136,9 +135,7 @@ class DemoProcessesService:
                 path.unlink(missing_ok=True)
 
     def initialize_server_and_db(self):
-        """
-        Configure Django settings and flush the previous database and media files.
-        """
+        """Configure Django settings and flush the previous database and media files."""
         self.setup_django()
 
         engine = self.get_database_engine()
