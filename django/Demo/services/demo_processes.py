@@ -107,7 +107,7 @@ class DemoProcessesService:
         call_command("migrate")
 
         if engine == "sqlite":
-            sqlite_set_wal()
+            self.sqlite_set_wal()
 
     def launch_huey_workers(self):
         # I don't understand why, but this seems to need to be run as a sub-proc
