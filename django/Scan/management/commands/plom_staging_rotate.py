@@ -15,9 +15,8 @@ class Command(BaseCommand):
 
     def rotate_image_from_bundle(self, username, bundle_name, bundle_order):
         scanner = ImageRotateService()
-        img_layout = scanner.rotate_image_cmd(username, bundle_name, bundle_order)
+        scanner.rotate_image_cmd(username, bundle_name, bundle_order)
         self.stdout.write(f"Bundle '{bundle_name}' page {bundle_order} has been rotated.")
-        self.stdout.write(f"Image orientation: {img_layout}")
 
     def add_arguments(self, parser):
         parser.add_argument(
