@@ -685,6 +685,7 @@ appstreamValid:
 
 
 # TODO: perhaps all deps should be in the docker image?
+# TODO: django requirements too?
 docs_sphinx:
   stage: test
   needs: ["docker-image"]
@@ -693,6 +694,7 @@ docs_sphinx:
     - apt-get update
     - apt-get --no-install-recommends --yes install tex-gyre
     - pip install myst-parser~=1.0.0 sphinx~=6.2.1 sphinx_rtd_theme~=1.2.0 sphinx-argparse~=0.4.0
+    - python3 -m pip install -r requirements.txt.django
   script:
     - pushd doc
     - ls
