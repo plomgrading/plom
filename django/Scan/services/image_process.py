@@ -185,15 +185,14 @@ class PageImageProcessor:
         rotate_bitmap(path, rotate_angle)
         return rotate_angle
 
-    def apply_image_transformation(self, image, qr_dict):
-        """Given an image, apply an affine transformation to correct its orientation based on QR coordinates.
+    def create_affine_transformation_matrix(self, qr_dict):
+        """Given QR data for an image, determine the affine transformation needed to correct the image's orientation.
 
         Args:
-            image (numpy.ndarray): the image which will be unskewed
             qr_dict (dict): the QR information for the image
 
         Returns:
-            numpy.ndarray: the image after an affine transformation has been applied
+            numpy.ndarray: the affine transformation matrix for correcting the image
         """
         if "NW" in qr_dict:
             dest_three_points = np.float32(
@@ -226,16 +225,8 @@ class PageImageProcessor:
                 ]
             )
         else:
-            return image
-
-        affine_matrix = cv.getAffineTransform(src_three_points, dest_three_points)
-
-        return cv.warpAffine(
-            image,
-            affine_matrix,
-            (self.PWIDTH, self.PHEIGHT),
-            flags=cv.INTER_LINEAR,
-        )
+            return np.float64([[1, 0, 0], [0, 1, 0]])
+        return cv.getAffineTransform(src_three_points, dest_three_points)
 
     def extract_rectangular_region(
         self, image_path, orientation, qr_dict, top, bottom, left, right
@@ -260,7 +251,13 @@ class PageImageProcessor:
         # convert the PIL.Image to OpenCV format
         opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)
 
-        righted_img = self.apply_image_transformation(opencv_img, qr_dict)
+        affine_matrix = self.create_affine_transformation_matrix(qr_dict)
+        righted_img = cv.warpAffine(
+            opencv_img,
+            affine_matrix,
+            (self.PWIDTH, self.PHEIGHT),
+            flags=cv.INTER_LINEAR,
+        )
 
         top = round(self.TOP + top * self.HEIGHT)
         bottom = round(self.TOP + bottom * self.HEIGHT)
