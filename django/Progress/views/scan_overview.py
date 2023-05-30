@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Edith Coates
 
 from django.shortcuts import render
 from django.http import Http404, FileResponse
@@ -18,12 +18,12 @@ class ScanOverview(BaseScanProgressPage):
 
     def get(self, request):
         mss = ManageScanService()
-        total_pages = mss.get_total_pages()
-        scanned_pages = mss.get_scanned_pages()
+        total_pages = mss.get_total_fixed_pages()
+        scanned_pages = mss.get_number_of_scanned_pages()
         percent_pages_complete = scanned_pages / total_pages * 100
 
         total_papers = mss.get_total_test_papers()
-        completed_papers = mss.get_completed_test_papers()
+        completed_papers = mss.get_number_completed_test_papers()
         percent_papers_complete = completed_papers / total_papers * 100
 
         context = self.build_context("overview")
@@ -35,7 +35,6 @@ class ScanOverview(BaseScanProgressPage):
                 "total_papers": total_papers,
                 "completed_papers": completed_papers,
                 "percent_papers_complete": int(percent_papers_complete),
-                "test_papers": mss.get_test_paper_list(),
             }
         )
         return render(request, "Progress/scan_overview.html", context)
@@ -51,16 +50,17 @@ class ScanTestPaperProgress(ManagerRequiredView):
         mss = ManageScanService()
         context = self.build_context()
 
-        if filter_by == "all":
-            test_papers = mss.get_test_paper_list()
-        elif filter_by == "complete":
-            test_papers = mss.get_test_paper_list(exclude_incomplete=True)
-        elif filter_by == "incomplete":
-            test_papers = mss.get_test_paper_list(exclude_complete=True)
-        else:
-            raise Http404("Unrecognized filtering argument.")
+        # TODO: test paper list needs updating
+        # if filter_by == "all":
+        #     test_papers = mss.get_test_paper_list()
+        # elif filter_by == "complete":
+        #     test_papers = mss.get_test_paper_list(exclude_incomplete=True)
+        # elif filter_by == "incomplete":
+        #     test_papers = mss.get_test_paper_list(exclude_complete=True)
+        # else:
+        #     raise Http404("Unrecognized filtering argument.")
 
-        context.update({"test_papers": test_papers})
+        # context.update({"test_papers": test_papers})
         return render(request, "Progress/fragments/scan_overview_table.html", context)
 
 
