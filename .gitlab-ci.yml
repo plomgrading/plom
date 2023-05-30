@@ -311,6 +311,7 @@ doctests:
     - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
+# needs full dependencies, cannot easily run with other early static analysis
 pylint:
   stage: test
   needs: ["docker-image"]
