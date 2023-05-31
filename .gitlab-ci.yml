@@ -420,14 +420,9 @@ webplom_test:
     - pushd django
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
-    - ls
-    # let opencv have its little drama about config-3.py *before* coverage
-    - python3 -c "import cv2"
     - coverage run --source='.' manage.py test
-    - ls
-    - cat config-3.py || true
-    - rm -f config-3.py
-    - coverage report --precision=2
+    # -i ignores an error caused by openCV's config-3.py file
+    - coverage report -i --precision=2
     - coverage xml -o django_coverage.xml
     - popd
   coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
