@@ -7,6 +7,7 @@ import random
 
 from django.db import models
 from django.contrib.auth.models import User
+from Mark.models.annotations import Annotation
 
 
 def generate_key():
@@ -36,6 +37,7 @@ class Rubric(models.Model):
     meta = models.TextField(null=True)  # can be long
     versions = models.JSONField(null=True, default=list)
     parameters = models.JSONField(null=True, default=list)
+    annotations = models.ManyToManyField(Annotation, blank=True)
 
 
 class RubricPane(models.Model):
