@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.test import TestCase
 from django.conf import settings
 
 import cv2 as cv
-import imutils
 import numpy as np
 import pathlib
 import tempfile
