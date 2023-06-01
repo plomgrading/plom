@@ -8,12 +8,6 @@ from Rubrics import views
 
 
 urlpatterns = [
-    path(
-        "", 
-        views.RubricLandingPageView.as_view(), 
-        name="rubrics_landing"
-        ),
-    path("select/",  
-        views.RubricLandingPageView.select,
-        name="select"),
+    path("", views.RubricLandingPageView.as_view(), name="rubrics_landing"),
+    path("select/", views.RubricLandingPageView.select, name="select"),
 ]

@@ -34,7 +34,6 @@ class RubricLandingPageView(ManagerRequiredView):
 
         options = []
         if request.method == "POST":
-
             if "option1" in request.POST:
                 options.append("option1")
 
