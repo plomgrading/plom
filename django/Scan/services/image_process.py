@@ -239,8 +239,9 @@ class PageImageProcessor:
                 the affine transform.
             qr_dict (dict): parsed QR code data, used to calculate the
                 transformation.
-            top (float): fractional value in ``[0, 1]`` which define the
-                top boundary of the desired subsection of the image.
+            top (float): fractional value in roughly in ``[0, 1]``
+                which define the top boundary of the desired subsection of
+                the image.
             left (float): same as top, defining the left boundary
             bottom (float): same as top, defining the bottom boundary
             right (float): same as top, defining the right boundary
