@@ -9,6 +9,9 @@
 import logging
 
 from operator import itemgetter
+from matplotlib import pyplot as plt
+import matplotlib
+
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -112,20 +115,21 @@ class RubricService:
         rubric_data = []
 
         for r in rubric_list.prefetch_related("user"):
-            rubric_dict = {
-                "id": r.key,
-                "kind": r.kind,
-                "display_delta": r.display_delta,
-                "value": r.value,
-                "out_of": r.out_of,
-                "text": r.text,
-                "tags": r.tags,
-                "meta": r.meta,
-                "username": r.user.username,
-                "question": r.question,
-                "versions": r.versions,
-                "parameters": r.parameters,
-            }
+            rubric_dict = self.rubric_dict(r)
+            # {
+            #     "id": r.key,
+            #     "kind": r.kind,
+            #     "display_delta": r.display_delta,
+            #     "value": r.value,
+            #     "out_of": r.out_of,
+            #     "text": r.text,
+            #     "tags": r.tags,
+            #     "meta": r.meta,
+            #     "username": r.user.username,
+            #     "question": r.question,
+            #     "versions": r.versions,
+            #     "parameters": r.parameters,
+            # }
             rubric_data.append(rubric_dict)
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
@@ -283,3 +287,85 @@ class RubricService:
         # if rubric_data["kind"] not in ["relative", "neutral", "absolute"]:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
+
+    def rubric_dict(self, r: Rubric):
+        """Gets a dictionary representation of a rubric.
+
+        Args:
+            r: a Rubric instance
+        
+        Returns:
+            dict: dictionary representation of a rubric.
+        """
+        rubric_dict = {
+            "id": r.key,
+            "kind": r.kind,
+            "display_delta": r.display_delta,
+            "value": r.value,
+            "out_of": r.out_of,
+            "text": r.text,
+            "tags": r.tags,
+            "meta": r.meta,
+            "username": r.user.username,
+            "question": r.question,
+            "versions": r.versions,
+            "parameters": r.parameters,
+        }
+        return rubric_dict
+
+    def rubric_counts(self, sort_by: str) -> dict:
+        """Return a dictionary of counts for a given key.
+
+        For example: Passing in "value" will return a dictionary
+        with the grading value as the key and the number of times
+        that grading value was given out as the value.
+
+        Args:
+            sort_by: (str) must be a valid key in the rubric database
+
+        Returns:
+            dict: a dictionary of rubric counts.
+        """
+        all_rubrics = Rubric.objects.all()
+        counts = {}
+        for r in all_rubrics.prefetch_related("user"):
+            r_dict = self.rubric_dict(r)
+            sort_key = r_dict[sort_by]
+
+            if sort_key not in counts:
+                counts[sort_key] = 1
+            else:
+                counts[sort_key] += 1
+        print("counts: ", counts)
+        print("sorted: ", dict(sorted(counts.items())))
+        return dict(sorted(counts.items()))
+    
+    def plot_hist_dict(self, graph_dict: dict, filename: str) -> None:
+        """Saves a histogram of rubric dictionary values plotted to a file.
+
+        The saved file is located in the static folder.
+        
+        Args:
+            graph_dict: (dict) a dictionary of rubric key counts
+            filename: (str) name of the saved file
+        """
+        if not graph_dict: # TODO: maybe raise an exception instead
+            print("No data to plot.")
+            return None
+        save_location = f"./static/{filename}.png"
+
+        matplotlib.use('Agg')
+
+        plt.bar(graph_dict.keys(), graph_dict.values())
+        # TODO: add helper methods for axies and labels
+        # print(range(min(graph_dict.keys()), max(graph_dict.keys())+1))
+        # plt.xticks(
+        #     ticks=range(min(graph_dict.keys()), max(graph_dict.keys())+1), 
+        #     labels=graph_dict.keys(), 
+        #     rotation=90
+        #     );
+        plt.savefig(save_location)
+        plt.close()
+        print(f"Saved histogram to {save_location}")
+        return None
+
