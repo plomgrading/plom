@@ -8,11 +8,10 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
-from Scan.models import (StagingBundle)
+from Scan.models import StagingBundle
 
 
 class ImageRotateService:
-
     @transaction.atomic
     def rotate_image(self, user_obj, bundle_obj, bundle_order):
         if bundle_obj.pushed:
@@ -30,19 +29,21 @@ class ImageRotateService:
             staging_img.rotation = 0
 
         staging_img.save()
-    
+
     @transaction.atomic
     def rotate_image_cmd(self, username, bundle_name, bundle_order):
         try:
-            user_obj = User.objects.get(username__iexact=username, groups__name__in=["scanner", "manager"])
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name__in=["scanner", "manager"]
+            )
         except ObjectDoesNotExist:
             raise PermissionError(
                 f"User '{username}' does not exist or has wrong permissions!"
             )
-        
+
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
-        
+
         self.rotate_image(user_obj, bundle_obj, bundle_order)

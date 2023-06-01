@@ -7,16 +7,16 @@ from Scan.services import ImageRotateService
 
 
 class Command(BaseCommand):
-    """
-    python3 manage.py plom_staging_rotate (username) (bundle name) (bundle_order)
-    """
+    """python3 manage.py plom_staging_rotate (username) (bundle name) (bundle_order)."""
 
     help = "Rotate a page from the given bundle name and bundle order"
 
     def rotate_image_from_bundle(self, username, bundle_name, bundle_order):
         scanner = ImageRotateService()
         scanner.rotate_image_cmd(username, bundle_name, bundle_order)
-        self.stdout.write(f"Bundle '{bundle_name}' page {bundle_order} has been rotated.")
+        self.stdout.write(
+            f"Bundle '{bundle_name}' page {bundle_order} has been rotated."
+        )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -32,7 +32,7 @@ class Command(BaseCommand):
             type=int,
             help="The order of the page",
         )
-    
+
     def handle(self, *args, **options):
         self.rotate_image_from_bundle(
             options["username"],
