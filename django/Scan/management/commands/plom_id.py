@@ -17,8 +17,14 @@ class Command(BaseCommand):
 
     def get_id_box(self, top, bottom, left, right):
         scanner = ScanService()
+        box = (top, bottom, left, right)
+        if any(x is None for x in box):
+            if all(x is None for x in box):
+                box = None
+            else:
+                raise CommandError("If you provide one dimension you must provide all")
         try:
-            scanner.get_id_box_cmd(top, bottom, left, right)
+            scanner.get_id_box_cmd(box)
             self.stdout.write("Extracted the ID box from all known ID pages.")
         except ValueError as err:
             raise CommandError(err)
