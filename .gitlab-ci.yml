@@ -421,8 +421,9 @@ webplom_test:
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - coverage run --source='.' manage.py test
-    - coverage report --precision=2
-    - coverage xml -o django_coverage.xml
+    # -i ignores an error caused by openCV's config-3.py file
+    - coverage report -i --precision=2
+    - coverage xml -i -o django_coverage.xml
     - popd
   coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
   artifacts:
