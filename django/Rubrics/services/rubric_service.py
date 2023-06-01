@@ -322,10 +322,10 @@ class RubricService:
         that grading value was given out as the value.
 
         Args:
-            sort_by: (str) must be a valid key in the rubric database
+            sort_by: must be a valid key in the rubric database
 
         Returns:
-            dict: a dictionary of rubric counts.
+            A dictionary of rubric counts of the given key.
         """
         all_rubrics = Rubric.objects.all()
         counts = {}
@@ -337,36 +337,35 @@ class RubricService:
                 counts[sort_key] = 1
             else:
                 counts[sort_key] += 1
-        print("counts: ", counts)
-        print("sorted: ", dict(sorted(counts.items())))
+        # print("counts: ", counts)
+        # print("sorted: ", dict(sorted(counts.items())))
         return dict(sorted(counts.items()))
-    
+
     def plot_hist_dict(self, graph_dict: dict, filename: str) -> None:
         """Saves a histogram of rubric dictionary values plotted to a file.
 
         The saved file is located in the static folder.
-        
+    
         Args:
             graph_dict: (dict) a dictionary of rubric key counts
             filename: (str) name of the saved file
         """
-        if not graph_dict: # TODO: maybe raise an exception instead
+        if not graph_dict:  # TODO: maybe raise an exception instead
             print("No data to plot.")
             return None
         save_location = f"./static/{filename}.png"
 
-        matplotlib.use('Agg')
+        matplotlib.use("Agg")
 
         plt.bar(graph_dict.keys(), graph_dict.values())
         # TODO: add helper methods for axies and labels
         # print(range(min(graph_dict.keys()), max(graph_dict.keys())+1))
         # plt.xticks(
-        #     ticks=range(min(graph_dict.keys()), max(graph_dict.keys())+1), 
-        #     labels=graph_dict.keys(), 
+        #     ticks=range(min(graph_dict.keys()), max(graph_dict.keys())+1),
+        #     labels=graph_dict.keys(),
         #     rotation=90
         #     );
         plt.savefig(save_location)
         plt.close()
         print(f"Saved histogram to {save_location}")
         return None
-

@@ -10,15 +10,15 @@ from Rubrics.services import RubricService
 
 class RubricLandingPageView(ManagerRequiredView):
     """A landing page for displaying and analyzing rubrics."""
+
     template_name = "Rubrics/rubrics_landing.html"
     rs = RubricService()
-
 
     def get(self, request):
         context = self.build_context()
 
-        value_counts = self.rs.rubric_counts("value") # dict of values
-        self.rs.plot_hist_dict(value_counts, "value_histogram") # histogram from dict
+        value_counts = self.rs.rubric_counts("value")  # dict of values
+        self.rs.plot_hist_dict(value_counts, "value_histogram")  # histogram from dict
 
         display_delta_counts = self.rs.rubric_counts("display_delta")
         self.rs.plot_hist_dict(display_delta_counts, "delta_histogram")
