@@ -279,20 +279,5 @@ class Command(BaseCommand):
             self.show_bundle_pages(
                 bundle_name=options["bundle_name"], show=options["show"]
             )
-        elif options["command"] == "map_extra":
-            service = ScanService()
-            n_questions = SpecificationService().get_n_questions()
-            question_list = check_question_list(options["question"][0], n_questions)
-            # pass that to the server
-            service.surgery_map_extra(
-                options["bundle_name"],
-                options["idx"],
-                papernum=options["papernum"],
-                question_list=question_list,
-            )
-        elif options["command"] == "get_id_box":
-            self.get_id_box(
-                options["top"], options["bottom"], options["left"], options["right"]
-            )
         else:
             self.print_help("manage.py", "plom_staging_bundles")
