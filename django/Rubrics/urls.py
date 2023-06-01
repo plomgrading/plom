@@ -16,5 +16,4 @@ urlpatterns = [
     path("select/",  
         views.RubricLandingPageView.select,
         name="select"),
-    ]
-
+]

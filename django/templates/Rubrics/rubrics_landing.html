@@ -23,7 +23,7 @@
 <div>
   <div>
     <h3> Simple form with feedback: </h3>
-    <form method="POST" action="{% url 'select' %}">
+    <form method="post" action="{% url 'select' %}">
       {% csrf_token %}
       {{ form.as_p }}
       <input type="submit" value="Submit" />

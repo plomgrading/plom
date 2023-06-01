@@ -294,7 +294,7 @@ class RubricService:
 
         Args:
             r: a Rubric instance
-        
+
         Returns:
             dict: dictionary representation of a rubric.
         """
@@ -345,7 +345,7 @@ class RubricService:
         """Saves a histogram of rubric dictionary values plotted to a file.
 
         The saved file is located in the static folder.
-    
+
         Args:
             graph_dict: (dict) a dictionary of rubric key counts
             filename: (str) name of the saved file
