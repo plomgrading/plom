@@ -1015,9 +1015,7 @@ class ScanService:
                     f"cannot extract ID box from paper {id_img.paper_number}."
                 )
                 continue
-            id_box = pipr.extract_rectangular_region(
-                img_path, orientation, qr_data, *box
-            )
+            id_box = pipr.extract_rect_region(img_path, orientation, qr_data, *box)
             id_box.save(id_box_folder / f"id_box_{id_img.paper_number:04}.png")
 
 

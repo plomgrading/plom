@@ -228,15 +228,19 @@ class PageImageProcessor:
             return np.float64([[1, 0, 0], [0, 1, 0]])
         return cv.getAffineTransform(src_three_points, dest_three_points)
 
-    def extract_rectangular_region(
+    def extract_rect_region(
         self, image_path, orientation, qr_dict, top, bottom, left, right
     ):
         """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
         Args:
-            img_path (str/pathlib.Path): path to image file
-            qr_data (dict): parsed QR code data
-            top (float): fractional value in [0, 1] which define the top boundary of the desired subsection of the image
+            image_path (str/pathlib.Path): path to image file
+            orientation (): a pre-rotation to be applied before calculating
+                the affine transform.
+            qr_dict (dict): parsed QR code data, used to calculate the
+                transformation.
+            top (float): fractional value in ``[0, 1]`` which define the
+                top boundary of the desired subsection of the image.
             left (float): same as top, defining the left boundary
             bottom (float): same as top, defining the bottom boundary
             right (float): same as top, defining the right boundary

@@ -157,7 +157,7 @@ class PageImageProcessorTests(TestCase):
         """Test PageImageProcessor.create_affine_transformation_matrix() with an image that does not need correction."""
         pipr = PageImageProcessor()
         img_path = settings.BASE_DIR / "Scan" / "tests" / "id_page_img.png"
-        test_img = Image.open(img_path)
+        # test_img = Image.open(img_path)
 
         codes = QRextract(img_path)
         scanner = ScanService()
@@ -167,7 +167,7 @@ class PageImageProcessorTests(TestCase):
         self.assertTrue(np.linalg.norm(affine_matrix - expected_matrix, "fro") < 0.001)
 
     def test_ID_box_corrected_and_extracted(self):
-        """Test PageImageProcessor.extract_rectangular_region() on an image with 3-degree rotation.
+        """Test PageImageProcessor rectangle extractor on an image with 3-degree rotation.
 
         Verify that the extracted ID box is upright by checking the interior of the blank "Signature" box,
         which is a subsection of the image that should be white.
@@ -189,7 +189,7 @@ class PageImageProcessorTests(TestCase):
             scanner = ScanService()
             qr_dict_id = scanner.parse_qr_code([codes])
 
-            output_img = pipr.extract_rectangular_region(
+            output_img = pipr.extract_rect_region(
                 img_rot_path, 0, qr_dict_id, in_top, in_bottom, in_left, in_right
             )
             output_opencv = cv.cvtColor(np.array(output_img), cv.COLOR_RGB2BGR)
