@@ -1001,7 +1001,7 @@ class ScanService:
                     id_box = pipr.extract_rectangular_region(
                         img_path, orientation, qr_data, 0.28, 0.58, 0.09, 0.91
                     )
-                id_box.save(id_box_folder / f"id_box_{id_img.paper_number}.png")
+                id_box.save(id_box_folder / f"id_box_{id_img.paper_number:04}.png")
             else:
                 warn(
                     "Fewer than 3 QR codes found, cannot extract ID box from paper {id_img.paper_number}."
