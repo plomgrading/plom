@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -18,7 +19,7 @@ class Command(BaseCommand):
         scanner = ScanService()
         try:
             scanner.get_id_box_cmd(top, bottom, left, right)
-            self.stdout.write(f"Extracted the ID box from all known ID pages.")
+            self.stdout.write("Extracted the ID box from all known ID pages.")
         except ValueError as err:
             raise CommandError(err)
 
