@@ -1872,7 +1872,8 @@ class MarkerClient(QWidget):
             with open(soln, "wb") as fh:
                 fh.write(im_bytes)
             return soln
-        except PlomNoSolutionException:
+        except PlomNoSolutionException as e:
+            log.warning(f"no solution image: {e}")
             # if a residual file is there, delete it
             if os.path.isfile(soln):
                 os.remove(soln)

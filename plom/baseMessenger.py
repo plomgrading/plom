@@ -1043,7 +1043,20 @@ class BaseMessenger:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def getSolutionImage(self, question, version):
+    def getSolutionImage(self, question: int, version: int) -> BytesIO:
+        """Download the solution image for a question version.
+
+        Args:
+            question: the question number.
+            version: the version number.
+
+        Returns:
+            contents of a bitmap file.
+
+        Raises:
+            PlomAuthenticationException
+            PlomNoSolutionException
+        """
         with self.SRmutex:
             try:
                 response = self.get(
@@ -1056,6 +1069,7 @@ class BaseMessenger:
                     },
                 )
                 response.raise_for_status()
+                # deprecated: new servers will 404
                 if response.status_code == 204:
                     raise PlomNoSolutionException(
                         f"Server has no solution for question {question} version {version}",
@@ -1064,6 +1078,8 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
+                if response.status_code == 404:
+                    raise PlomNoSolutionException(response.reason)
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getUnknownPages(self):
