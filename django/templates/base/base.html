@@ -1,6 +1,11 @@
-<!-- Copyright (C) 2022 Edith Coates -->
-<!-- Copyright (C) 2022 Brennen Chiu -->
-<!-- Copyright (C) 2023 Colin B. Macdonald -->
+<!-- 
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023 Julian Lapenna
+-->
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -111,6 +116,11 @@
                                         <a class="nav-link link-light is_sidebar_link" href="{% url 'signup' %}">Create
                                             <br>
                                         Scanners/Markers</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link" href="{% url 'tags_landing' %}">
+                                            Tags
+                                        </a>
                                     </li>
                                     <li class="nav-item accordion accordion-flush">
                                         <a class="nav-link link-light is_sidebar_link"
