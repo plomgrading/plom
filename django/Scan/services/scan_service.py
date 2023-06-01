@@ -1011,7 +1011,8 @@ class ScanService:
             qr_data = id_img.staging_image.parsed_qr
             if len(qr_data) != 3:
                 warn(
-                    "Fewer than 3 QR codes found, cannot extract ID box from paper {id_img.paper_number}."
+                    "Fewer than 3 QR codes found, "
+                    f"cannot extract ID box from paper {id_img.paper_number}."
                 )
                 continue
             id_box = pipr.extract_rectangular_region(

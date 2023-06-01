@@ -265,19 +265,21 @@ class PageImageProcessor:
         right = round(self.LEFT + right * self.WIDTH)
 
         if top < 0:
-            warn("Top input of {top} is outside of image pixel range, capping at 0.")
+            warn(f"Top input of {top} is outside of image pixel range, capping at 0.")
         top = max(top, 0)
         if left < 0:
-            warn("Left input of {left} is outside of image pixel range, capping at 0.")
+            warn(f"Left input of {left} is outside of image pixel range, capping at 0.")
         left = max(left, 0)
         if right > pil_img.width:
             warn(
-                "Right input of {right} is outside of image pixel range, capping at {pil_img.width}."
+                f"Right input of {right} is outside of image pixel range,"
+                f" capping at {pil_img.width}."
             )
         right = min(right, pil_img.width)
         if bottom > pil_img.height:
             warn(
-                "Bottom input of {bottom} is outside of image pixel range, capping at {pil_img.height}."
+                f"Bottom input of {bottom} is outside of image pixel range,"
+                f" capping at {pil_img.height}."
             )
         bottom = min(bottom, pil_img.height)
 
