@@ -1,9 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Julian Lapenna
 
 from django.urls import path
 
-from Rubrics.views import RubricLandingPageView
+from Rubrics import views
 
 
-urlpatterns = [path("", RubricLandingPageView.as_view(), name="rubrics_landing")]
+urlpatterns = [
+    path(
+        "", 
+        views.RubricLandingPageView.as_view(), 
+        name="rubrics_landing"
+        ),
+    path("select/",  
+        views.RubricLandingPageView.select,
+        name="select"),
+    ]
+

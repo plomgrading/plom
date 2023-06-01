@@ -2,10 +2,11 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from Base.base_group_views import ManagerRequiredView
 from Rubrics.services import RubricService
+from Rubrics.forms import RubricForm
 
 
 class RubricLandingPageView(ManagerRequiredView):
@@ -23,4 +24,25 @@ class RubricLandingPageView(ManagerRequiredView):
         display_delta_counts = self.rs.rubric_counts("display_delta")
         self.rs.plot_hist_dict(display_delta_counts, "delta_histogram")
 
+        form = RubricForm()
+        context.update({"form": form})
+
         return render(request, self.template_name, context=context)
+
+    def select(request):
+        """Feedback form using boolean checkboxes."""
+
+        options = []
+        if request.method == "POST":
+
+            if "option1" in request.POST:
+                options.append("option1")
+
+            if "option2" in request.POST:
+                options.append("option2")
+
+            if "option3" in request.POST:
+                options.append("option3")
+
+        request.session["options"] = options
+        return redirect("rubrics_landing")
