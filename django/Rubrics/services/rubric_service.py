@@ -5,6 +5,7 @@
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2023 Julian Lapenna
 
 import logging
 
