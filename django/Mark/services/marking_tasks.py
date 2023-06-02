@@ -275,7 +275,8 @@ class MarkingTaskService:
 
                 rubrics = Rubric.objects.filter(key=da_key)
                 for rubric in rubrics:
-                    rubric.annotations.add(annotation)
+                    if annotation:
+                        rubric.annotations.add(annotation)
 
         annotation.save()
 
