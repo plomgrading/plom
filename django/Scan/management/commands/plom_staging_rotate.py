@@ -16,7 +16,7 @@ class Command(BaseCommand):
         scanner = ImageRotateService()
         try:
             scanner.rotate_image_cmd(username, bundle_name, bundle_order)
-        except ValueError as e:
+        except (ValueError, PermissionError) as e:
             raise CommandError(e)
         self.stdout.write(
             f"Bundle '{bundle_name}' page {bundle_order} has been rotated."

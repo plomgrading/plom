@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-
-from pathlib import Path
-from PIL import Image
+# Copyright (C) 2023 Colin B. Macdonald
 
 from django.contrib.auth.models import User
 from django.db import transaction
