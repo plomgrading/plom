@@ -98,6 +98,9 @@ Homepage = 'https://plomgrading.org/'
 # [tool.setuptools]
 # zip-safe = true
 
+[tool.setuptools]
+packages = ["plom"]
+
 [tool.setuptools.dynamic]
 version = {attr = 'plom.__version__'}
 
