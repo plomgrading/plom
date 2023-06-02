@@ -10,7 +10,7 @@ from Scan.services import ImageRotateService
 class Command(BaseCommand):
     """python3 manage.py plom_staging_rotate (username) (bundle name) (bundle_order)."""
 
-    help = "Rotate a page from the given bundle name and bundle order"
+    help = "Rotate a page of a bundle by 90 degrees counter clockwise."
 
     def rotate_image_from_bundle(self, username, bundle_name, bundle_order):
         scanner = ImageRotateService()
