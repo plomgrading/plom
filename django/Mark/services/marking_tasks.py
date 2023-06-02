@@ -257,6 +257,7 @@ class MarkingTaskService:
         """Save a user's marking attempt to the database."""
         task = self.get_task_from_code(code)
         editions_so_far = Annotation.objects.filter(task=task).count()
+
         annotation = Annotation(
             edition=editions_so_far + 1,
             score=score,
@@ -266,6 +267,16 @@ class MarkingTaskService:
             task=task,
             user=user,
         )
+
+        for x in data["sceneItems"]:
+            if x[0] == "GroupDeltaText":
+                da_key = x[3]
+                print(da_key)
+
+                rubrics = Rubric.objects.filter(key=da_key)
+                for rubric in rubrics:
+                    rubric.annotations.add(annotation)
+
         annotation.save()
 
     def get_n_marked_tasks(self):
