@@ -153,18 +153,17 @@ class PageImageProcessor:
         elif val_from_qr == upside_down:
             return "upside_down"
 
-    def rotate_page_image(self, path, qr_data):
+    def rotate_page_image(self, qr_data):
         """Get the current orientation of a page-image using its parsed QR code data.
 
-        If it isn't upright, rotate the image and replace it on disk.
+        If it isn't upright, return the angle by which the image needs to be rotated.
 
         Args:
-            path (str/pathlib.Path): path to image file
             qr_data (dict): parsed QR code data
 
         Returns:
-            int: rotation angle by which the page was rotated.
-            If page was not rotated, rotation angle of 0 is returned.
+            int: rotation angle by which the page needs to be rotated.
+                If page is already upright, rotation angle of 0 is returned.
         """
         try:
             orientation = self.get_page_orientation(qr_data)
@@ -182,7 +181,6 @@ class PageImageProcessor:
         else:
             rotate_angle = 180
 
-        rotate_bitmap(path, rotate_angle)
         return rotate_angle
 
     def create_affine_transformation_matrix(self, qr_dict):

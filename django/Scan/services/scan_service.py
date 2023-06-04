@@ -1109,7 +1109,7 @@ def huey_parent_read_qr_codes_task(bundle_pk):
             # TODO - check for error status here.
             img = StagingImage.objects.get(pk=X["image_pk"])
             img.parsed_qr = X["parsed_qr"]
-            img.rotation = X["rotation"]
+            img.rotation += X["rotation"]
             img.save()
 
         bundle_obj.has_qr_codes = True
@@ -1185,10 +1185,10 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
 
     pipr = PageImageProcessor()
 
-    has_had_rotation = pipr.rotate_page_image(image_path, page_data)
+    rotation = pipr.rotate_page_image(page_data)
     # Re-read QR codes if the page image has been rotated
-    if has_had_rotation != 0:
-        code_dict = QRextract(image_path)
+    if rotation != 0:
+        code_dict = QRextract(image_path, rotation=rotation)
         page_data = scanner.parse_qr_code([code_dict])
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
@@ -1197,5 +1197,5 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
     return {
         "image_pk": image_pk,
         "parsed_qr": page_data,
-        "rotation": 0,
+        "rotation": rotation,
     }
