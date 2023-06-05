@@ -29,6 +29,8 @@ from Scan.views import (
     ChangeCollisionImageState,
     DiscardImageType,
     ExtraliseImageType,
+    RotateImageClockwise,
+    RotateImageCounterClockwise,
 )
 
 
@@ -144,5 +146,15 @@ urlpatterns = [
         "extralise/<timestamp>/<int:index>/",
         ExtraliseImageType.as_view(),
         name="extralise_image",
+    ),
+    path(
+        "rotate/clockwise/<timestamp>/<int:index>/",
+        RotateImageClockwise.as_view(),
+        name="rotate_img_cw",
+    ),
+    path(
+        "rotate/counterclockwise/<timestamp>/<int:index>/",
+        RotateImageCounterClockwise.as_view(),
+        name="rotate_img_ccw",
     ),
 ]
