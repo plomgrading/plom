@@ -3,7 +3,7 @@
 
 from django.db import models
 
-from Base.models import BaseTask, BaseAction
+from Base.models import BaseTask, BaseAction, Tag
 from Papers.models import Paper
 
 
@@ -21,3 +21,11 @@ class MarkingTask(BaseTask):
     code = models.TextField(default="", unique=False)
     question_number = models.PositiveIntegerField(null=False, default=0)
     question_version = models.PositiveIntegerField(null=False, default=0)
+
+
+class MarkingTaskTag(Tag):
+    """
+    Represents a tag that can be assigned to one or more marking tasks.
+    """
+
+    task = models.ManyToManyField(MarkingTask)

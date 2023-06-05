@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 
 from collections import defaultdict
 import hashlib
@@ -19,7 +19,7 @@ log = logging.getLogger("scan")
 
 
 def extract_order(filename):
-    """From filename of form 'blah-n.png' extract 'n' and return as an int"""
+    """From filename of form 'blah-n.png' extract 'n' and return as an int."""
     return int(Path(filename).stem.split("-")[-1])
 
 
@@ -32,7 +32,6 @@ def extractTPV(name):
 
     Return a triple of str (XXXX, YY, Z) .
     """
-
     # TODO - replace this with something less cludgy.
     # should be tXXXXpYYvZ.blah
     assert name[0] == "t"
@@ -64,7 +63,7 @@ def move_files_post_upload(bundle, f, qr=True):
     The image file is moved to 'uploads/sentpages' within the bundle.
     If the qr-flag is set then also move the corresponding .qr file
 
-    args:
+    Args:
         bundle (pathlib.Path): the "base" bundle directory.
         f (pathlib.Path): a filename, possibly with a path.
         qr (bool): There should also be a file same as `f` but
@@ -212,14 +211,20 @@ def uploadTPages(bundle_dir, skip_list, *, msgr):
 def upload_HW_pages(file_list, bundle_name, bundledir, sid, *, msgr):
     """Upload "homework" pages to a particular student ID on the server.
 
-    args:
+    Args:
         file_list (list): each row is `[n, f, q]` where `n` is the page
             number in the bundle, `f` is the filename, and `q` is a list
             of questions to which this upload should be attached.
         bundle_name (str)
         sid (str): student ID number.
-        server (str/None)
-        password (str/None)
+
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+
+    Returns:
+        dict: some information about what was uploaded that could
+        be better documented except that I'd rather just delete this.
 
     Bundle must already be created.  We will upload the files.
     """
@@ -239,7 +244,7 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, *, msgr):
 
 @with_scanner_messenger
 def checkTestHasThatSID(student_id, *, msgr):
-    """Get test-number corresponding to given student id
+    """Get test-number corresponding to given student id.
 
     For HW tests should be pre-IDd, so this function is used
     to map a student-id to the underlying test. This means that

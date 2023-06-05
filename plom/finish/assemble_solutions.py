@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2022 Andrew Rechnitzer
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022-2023 Colin B. Macdonald
 
 from pathlib import Path
 import tempfile
@@ -93,9 +93,10 @@ def assemble_solutions(
         ValueError: paper number does not exist, or is not ready.
         RuntimeError: cannot get solution images.
     """
-    shortName = msgr.getInfoShortName()
     spec = msgr.get_spec()
-    numberOfQuestions = spec["numberOfQuestions"]
+    shortName = spec["name"]
+    num_questions = spec["numberOfQuestions"]
+    maxMarks = {str(q): msgr.getMaxMark(q) for q in range(1, num_questions + 1)}
 
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
@@ -120,7 +121,6 @@ def assemble_solutions(
         # dict testnumber -> [scanned, id'd, #q's marked]
         identifiedTests = msgr.getIdentified()
         # dict testNumber -> [sid, sname]
-        maxMarks = msgr.MgetAllMax()
 
         if testnum is not None:
             t = str(testnum)
@@ -135,7 +135,7 @@ def assemble_solutions(
                 raise ValueError(f"Paper {t} not scanned, cannot reassemble")
             if not completed[1]:
                 raise ValueError(f"Paper {t} not identified, cannot reassemble")
-            if completed[2] != numberOfQuestions:
+            if completed[2] != num_questions:
                 if verbose:
                     print(f"Note: paper {t} not fully marked but building soln anyway")
             sid = identifiedTests[t][0]
@@ -151,7 +151,7 @@ def assemble_solutions(
                 if not (completed[0] and completed[1]):
                     continue
                 # Maybe someone wants only the finished papers?
-                # if completed[2] != numberOfQuestions:
+                # if completed[2] != num_questions:
                 #     continue
                 sid = identifiedTests[t][0]
                 _assemble_one_soln(

@@ -17,8 +17,7 @@ from Papers.services import SpecificationService
 
 
 class GetSpecification(APIView):
-    """
-    Return the public part of the specification.
+    """Return the public part of the specification.
 
     Returns:
         (200) JsonResponse: the spec
@@ -28,10 +27,9 @@ class GetSpecification(APIView):
     def get(self, request):
         spec = SpecificationService()
         if not spec.is_there_a_spec():
-            exc = APIException()
-            exc.status_code = status.HTTP_400_BAD_REQUEST
-            exc.detail = "Server does not have a spec."
-            raise exc
+            return Response(
+                "Server does not have a spec", status=status.HTTP_400_BAD_REQUEST
+            )
 
         the_spec = spec.get_the_spec()
         the_spec.pop("privateSeed", None)
@@ -40,9 +38,7 @@ class GetSpecification(APIView):
 
 
 class ServerVersion(APIView):
-    """
-    Get the server version. (Debug: hardcoded for now)
-    """
+    """Get the server version."""
 
     def get(self, request):
         version = f"Plom server version {__version__} with API {Plom_API_Version}"
@@ -50,8 +46,7 @@ class ServerVersion(APIView):
 
 
 class CloseUser(APIView):
-    """
-    Delete the user's token and log them out.
+    """Delete the user's token and log them out.
 
     Returns:
         (200) user is logged out successfully

@@ -66,6 +66,10 @@ class ScanCastServiceTests(TestCase):
             StagingImage.DISCARD,
             StagingImage.ERROR,
             StagingImage.ERROR,
+            StagingImage.EXTRA,
+            StagingImage.EXTRA,
+            StagingImage.EXTRA,
+            StagingImage.EXTRA,
         ]:
             self.make_image(img)
 

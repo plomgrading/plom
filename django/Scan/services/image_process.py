@@ -3,18 +3,36 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from plom.scan import rotate_bitmap
+import numpy as np
+import cv2 as cv
+from PIL import Image
+from warnings import warn
+from plom.scan import rotate_bitmap, rotate
 
 
 class PageImageProcessor:
-    """
-    Functions for processing a page-image: rotation
+    """Functions for processing a page-image: rotation.
+
     (TODO: gamma correction, etc?)
     """
 
+    # values used for QR code centre locations and page dimensions
+    # obtained by running QRextract on un-rotated demo page images
+    TOP = 139.5
+    BOTTOM = 1861.5
+    RIGHT = 1419.5
+    LEFT = 126.5
+    PWIDTH = 1546
+    PHEIGHT = 2000
+
+    # dimensions of the QR-bounded region
+    WIDTH = RIGHT - LEFT
+    HEIGHT = BOTTOM - TOP
+
     def get_page_orientation(self, qr_code_data):
-        """
-        Return a string representing a page orientation. The choices are:
+        """Return a string representing a page orientation.
+
+        The choices are:
             upright: page doesn't need to be rotated
             upside_down: page should be rotated 180 degrees
             turned_left: page should be rotated -90 degrees
@@ -51,7 +69,6 @@ class PageImageProcessor:
         Args:
             qr_code_data: (dict) data parsed from page-image QR codes
         """
-
         northeast_orientation = None
         if "NE" in qr_code_data:
             expected_corner = qr_code_data["NE"]["quadrant"]
@@ -117,16 +134,15 @@ class PageImageProcessor:
     def check_corner(
         self, val_from_qr, upright, turned_right, turned_left, upside_down
     ):
-        """
-        Check a page corner for its actual orientation.
+        """Check a page corner for its actual orientation.
 
         Args:
-            val_from_qr: (str) one of "1", "2", "3", "4"
-            upright: (str) the quadrant value for an upright orientation,
+            val_from_qr (str): one of "1", "2", "3", "4"
+            upright (str): the quadrant value for an upright orientation,
                            one of "1", "2", "3", "4"
-            turned_right: (str) value for a turned_right orientation
-            turned_left: (str) value for a turned_left orientation
-            upside_dow: (str) value for an upside_down orientation
+            turned_right (str): value for a turned_right orientation
+            turned_left (str): value for a turned_left orientation
+            upside_down (str): value for an upside_down orientation
         """
         if val_from_qr == upright:
             return "upright"
@@ -138,9 +154,9 @@ class PageImageProcessor:
             return "upside_down"
 
     def rotate_page_image(self, path, qr_data):
-        """
-        Get the current orientation of a page-image using its parsed QR code
-        data. If it isn't upright, rotate the image and replace it on disk.
+        """Get the current orientation of a page-image using its parsed QR code data.
+
+        If it isn't upright, rotate the image and replace it on disk.
 
         Args:
             path (str/pathlib.Path): path to image file
@@ -168,3 +184,112 @@ class PageImageProcessor:
 
         rotate_bitmap(path, rotate_angle)
         return rotate_angle
+
+    def create_affine_transformation_matrix(self, qr_dict):
+        """Given QR data for an image, determine the affine transformation needed to correct the image's orientation.
+
+        Args:
+            qr_dict (dict): the QR information for the image
+
+        Returns:
+            numpy.ndarray: the affine transformation matrix for correcting the image
+        """
+        if "NW" in qr_dict:
+            dest_three_points = np.float32(
+                [
+                    [self.LEFT, self.TOP],
+                    [self.LEFT, self.BOTTOM],
+                    [self.RIGHT, self.BOTTOM],
+                ]
+            )
+            src_three_points = np.float32(
+                [
+                    [qr_dict["NW"]["x_coord"], qr_dict["NW"]["y_coord"]],
+                    [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
+                    [qr_dict["SE"]["x_coord"], qr_dict["SE"]["y_coord"]],
+                ]
+            )
+        elif "NE" in qr_dict:
+            dest_three_points = np.float32(
+                [
+                    [self.RIGHT, self.TOP],
+                    [self.LEFT, self.BOTTOM],
+                    [self.RIGHT, self.BOTTOM],
+                ]
+            )
+            src_three_points = np.float32(
+                [
+                    [qr_dict["NE"]["x_coord"], qr_dict["NE"]["y_coord"]],
+                    [qr_dict["SW"]["x_coord"], qr_dict["SW"]["y_coord"]],
+                    [qr_dict["SE"]["x_coord"], qr_dict["SE"]["y_coord"]],
+                ]
+            )
+        else:
+            return np.float64([[1, 0, 0], [0, 1, 0]])
+        return cv.getAffineTransform(src_three_points, dest_three_points)
+
+    def extract_rect_region(
+        self, image_path, orientation, qr_dict, top, bottom, left, right
+    ):
+        """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
+
+        Args:
+            image_path (str/pathlib.Path): path to image file
+            orientation (): a pre-rotation to be applied before calculating
+                the affine transform.
+            qr_dict (dict): parsed QR code data, used to calculate the
+                transformation.
+            top (float): fractional value in roughly in ``[0, 1]``
+                which define the top boundary of the desired subsection of
+                the image.
+            left (float): same as top, defining the left boundary
+            bottom (float): same as top, defining the bottom boundary
+            right (float): same as top, defining the right boundary
+
+        Returns:
+            PIL.Image: the requested subsection of the original image, or
+            the full, righted image if an invalid box range is specified.
+        """
+        pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(image_path)
+        pil_img.rotate(orientation)
+
+        # convert the PIL.Image to OpenCV format
+        opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)
+
+        affine_matrix = self.create_affine_transformation_matrix(qr_dict)
+        righted_img = cv.warpAffine(
+            opencv_img,
+            affine_matrix,
+            (self.PWIDTH, self.PHEIGHT),
+            flags=cv.INTER_LINEAR,
+        )
+
+        top = round(self.TOP + top * self.HEIGHT)
+        bottom = round(self.TOP + bottom * self.HEIGHT)
+        left = round(self.LEFT + left * self.WIDTH)
+        right = round(self.LEFT + right * self.WIDTH)
+
+        if top < 0:
+            warn(f"Top input of {top} is outside of image pixel range, capping at 0.")
+        top = max(top, 0)
+        if left < 0:
+            warn(f"Left input of {left} is outside of image pixel range, capping at 0.")
+        left = max(left, 0)
+        if right > pil_img.width:
+            warn(
+                f"Right input of {right} is outside of image pixel range,"
+                f" capping at {pil_img.width}."
+            )
+        right = min(right, pil_img.width)
+        if bottom > pil_img.height:
+            warn(
+                f"Bottom input of {bottom} is outside of image pixel range,"
+                f" capping at {pil_img.height}."
+            )
+        bottom = min(bottom, pil_img.height)
+
+        cropped_img = righted_img[top:bottom, left:right]
+
+        # convert the result to a PIL.Image
+        result = Image.fromarray(cv.cvtColor(cropped_img, cv.COLOR_BGR2RGB))
+        return result

@@ -5,7 +5,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-import pathlib
 from datetime import datetime
 from django.utils import timezone
 import arrow
@@ -14,7 +13,6 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, Http404, FileResponse
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRefresh
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from Base.base_group_views import ScannerRequiredView
 
@@ -24,10 +22,7 @@ from Scan.forms import BundleUploadForm
 
 
 class ScannerHomeView(ScannerRequiredView):
-    """
-    Display an upload form for bundle PDFs, and a dashboard of previously uploaded/staged
-    bundles.
-    """
+    """Display an upload form for bundle PDFs, and a dashboard of previously uploaded/staged bundles."""
 
     def build_context(self, user):
         context = super().build_context()
@@ -109,9 +104,7 @@ class ScannerHomeView(ScannerRequiredView):
 
 
 class RemoveBundleView(ScannerRequiredView):
-    """
-    Delete an uploaded bundle
-    """
+    """Delete an uploaded bundle."""
 
     def delete(self, request, timestamp):
         try:
@@ -126,9 +119,7 @@ class RemoveBundleView(ScannerRequiredView):
 
 
 class GetBundleView(ScannerRequiredView):
-    """
-    Return a user-uploaded bundle PDF
-    """
+    """Return a user-uploaded bundle PDF."""
 
     def get(self, request, timestamp):
         try:
@@ -147,9 +138,7 @@ class GetBundleView(ScannerRequiredView):
 
 
 class GetStagedBundleFragmentView(ScannerRequiredView):
-    """
-    Return a user-uploaded bundle PDF
-    """
+    """Return a user-uploaded bundle PDF."""
 
     def get(self, request, timestamp):
         try:

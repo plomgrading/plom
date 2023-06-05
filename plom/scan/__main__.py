@@ -4,8 +4,16 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2023 Julian Lapenna
 
 """Plom tools for scanning tests and pushing to servers.
+
+See help for each subcommand or consult online documentation for an
+overview of the steps in setting up a server.
+
+Most subcommands communicate with a server, which can be specified
+on the command line or by setting environment variables PLOM_SERVER
+and PLOM_MANAGER_PASSWORD.
 
 ## Overview of the scanning process
 
@@ -50,6 +58,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
+from pathlib import Path
 
 from stdiomask import getpass
 
@@ -226,16 +235,20 @@ def main():
         args.password = getpass('Please enter the "scanner" password: ')
 
     if args.command == "process":
+        scan_pdf = args.scanPDF
+        assert " " not in Path(scan_pdf).name, "File name should not have spaces"
         processScans(
-            args.scanPDF,
+            scan_pdf,
             gamma=args.gamma,
             extractbmp=args.extractbmp,
             demo=args.demo,
             msgr=(args.server, args.password),
         )
     elif args.command == "upload":
+        bundle_name = args.bundleName
+        assert " " not in bundle_name, "Bundle name should not have spaces"
         uploadImages(
-            args.bundleName,
+            bundle_name,
             do_unknowns=args.unknowns,
             do_collisions=args.collisions,
             prompt=(not args.yes),

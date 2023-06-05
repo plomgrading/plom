@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, Http404
@@ -13,9 +14,7 @@ from Scan.services import ScanService
 
 
 class BundleSplittingProgressView(ScannerRequiredView):
-    """
-    Display a spinner and progress bar while image rendering happens in the background.
-    """
+    """Display a spinner and progress bar during background rendering."""
 
     def get(self, request, timestamp):
         try:
@@ -44,9 +43,7 @@ class BundleSplittingProgressView(ScannerRequiredView):
 
 
 class BundleSplittingUpdateView(ScannerRequiredView):
-    """
-    Return an updated progress card to be displayed on the bundle splitting progress view.
-    """
+    """Return an updated progress card to be displayed on the bundle splitting progress view."""
 
     def get(self, request, timestamp):
         try:

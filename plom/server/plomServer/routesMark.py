@@ -829,6 +829,8 @@ class MarkHandler:
     def MgetAllMax(self):
         """Respond with information on max mark possible for each question in the exam.
 
+        DEPRECATED 0.14.0: no modern callers, only for old clients.
+
         Respond with status 200/404.
 
         Returns:

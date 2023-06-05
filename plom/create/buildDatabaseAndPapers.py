@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2023 Julian Lapenna
 
 from pathlib import Path
+
+import fitz
 
 from plom import check_version_map
 from plom.misc_utils import working_directory
@@ -87,6 +90,9 @@ def build_papers(
             raise ValueError(
                 "Not enough papers to prename everything in the filtered classlist"
             )
+    # make sure there is an equal number of pages in all the source PDFs
+    if not check_equal_page_count("sourceVersions"):
+        raise ValueError("Source PDFs have different numbers of pages")
     # all okay, so get rid of that list.
     del papernums
     # reorganise the class list into a dict indexed by paper_number
@@ -135,6 +141,27 @@ def build_papers(
     )
 
 
+def check_equal_page_count(path) -> bool:
+    """Check that all the source version PDFs in the given directory have the same number of pages.
+
+    Arguments:
+        path (pathlib.Path/str): path to the directory containing the source version PDFs.
+
+    Returns:
+        True if all the source version PDFs have the same number of pages, False otherwise.
+    """
+    source = Path(path)
+    source_version = set()
+    for f in source.glob("version*.pdf"):
+        doc = fitz.open(f)
+        num_pages = len(doc)
+        doc.close()
+        source_version.add(num_pages)
+    if len(source_version) > 1:
+        return False
+    return True
+
+
 @with_manager_messenger
 def build_database(*, msgr, vermap={}, verbose=True):
     """Build the database from a pre-set version map.
@@ -148,10 +175,10 @@ def build_database(*, msgr, vermap={}, verbose=True):
         verbose (bool): default True, print status of each DB row
             creation to stdout.
 
-    return:
+    Returns:
         None
 
-    raises:
+    Raises:
         PlomExistingDatabase
         PlomServerNotReady
     """

@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Divy Patel
 
 [build-system]
 requires = ["setuptools", "wheel"]
@@ -32,6 +34,12 @@ addopts = "--ignore plom/django"
 qt_api = "pyqt6"
 
 [tool.djlint]
-# TODO: many of these should be fixed instead of ignored!
-ignore="H021,H023,H006,H013,H025,H030,H031,H005,H016,H020"
+# TODO: fix then remove from ignore list: H006, H013
+# TODO: think about: H020, H025, H030, H031
+ignore="H006,H013,H020,H021,H023,H025,H030,H031"
 # indent=2
+
+[tool.pydocstyle]
+convention = "google"
+# TODO: many of these should be fixed instead of ignored!
+add-ignore = "D100,D101,D102,D103,D104,D107,D106"

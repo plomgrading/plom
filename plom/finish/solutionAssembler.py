@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import tempfile
@@ -20,7 +20,7 @@ margin = 10
 def assemble(outname, shortName, sid, coverfile, img_list, watermark=False):
     """Assemble a pdf from the solution images.
 
-    args:
+    Args:
         outname (str, Path): name of a PDF file to write.
         shortName (str): The name of the exam, written into metadata.
         coverfile (str/pathlib.Path): a coversheet already in PDF format.
@@ -29,7 +29,7 @@ def assemble(outname, shortName, sid, coverfile, img_list, watermark=False):
             per page.
         watermark (bool): whether to watermark soln pages with student id.
 
-    return:
+    Returns:
         None
     """
     outname = Path(outname)

@@ -14,14 +14,17 @@ log = logging.getLogger("scan")
 def rotate_bitmap(fname, angle, *, clockwise=False):
     """Rotate bitmap counterclockwise, possibly in metadata.
 
-    args:
+    Args:
         filename (pathlib.Path/str): name of a file
         angle (int): CCW angle of rotation: 0, 90, 180, 270, or -90.
 
-    keyword args:
+    Keyword args:
         clockwise (bool): By default this is False and we do anti-clockwise
             ("counter-clockwise") rotations.  Pass True if you want `+90`
             to be a clockwise rotation instead.
+
+    Returns:
+        None: modifies the image as a side effect.
 
     If its a jpeg, we have special handling, otherwise, we use the Python
     library ``PIL`` to open, rotate and then resave the image, replacing
@@ -93,7 +96,7 @@ def rotate_bitmap_jpeg_exif(fname, angle):
 
 
 def pil_load_with_jpeg_exif_rot_applied(f):
-    """PIL's Image load does not apply exif orientation, so provide a helper that does.
+    """Pillow's Image load does not apply exif orientation, so provide a helper that does.
 
     Args:
         f (str/pathlib.Path): a path to a file.

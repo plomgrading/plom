@@ -46,7 +46,7 @@ def decode_QRs_in_image_files(where):
 
 
 def reOrientPage(fname, qrs):
-    """Re-orient this page if needed, changing the image file on disk
+    """Re-orient this page if needed, changing the image file on disk.
 
     If a page is upright, a subset of the QR codes 1 through 4 are on
     the corners:
@@ -78,7 +78,6 @@ def reOrientPage(fname, qrs):
        bool: True if the image was already upright or has now been
              made upright.  False if the image is in unknown
              orientation or we have contradictory information.
-
     """
     targets = {
         "upright": [1, 2, 3, 4],  # [NE, NW, SW, SE]
@@ -101,7 +100,7 @@ def reOrientPage(fname, qrs):
     current = [g("NE"), g("NW"), g("SW"), g("SE")]
 
     def comp(A, B):
-        """compare two lists ignoring any positions with Nones"""
+        """Compare two lists ignoring any positions with Nones."""
         return all([x == y for x, y in zip(A, B) if x and y])
 
     matches = {k: comp(v, current) for (k, v) in targets.items() if comp(v, current)}
@@ -248,7 +247,9 @@ def checkQRsValid(bundledir, spec):
 
 
 def validateQRsAgainstSpec(spec, fname, t, p, v):
-    """After pageimages have been decoded we need to check the results
+    """Do some kind of checking and someday document it better.
+
+    After pageimages have been decoded we need to check the results
     against the spec. A simple check of test-name and magic-code were
     done already, but now the test-page-version triples are checked.
 

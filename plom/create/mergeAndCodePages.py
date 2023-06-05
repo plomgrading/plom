@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Julian Lapenna
 
 import tempfile
 import math
@@ -34,7 +35,7 @@ def create_QR_codes(papernum, pagenum, ver, code, dur):
 
     Returns:
         list: of ``pathlib.Path` for PNG files for each corner's QR code.
-            The corners are indexed counterclockwise from the top-right:
+        The corners are indexed counterclockwise from the top-right:
 
             index | meaning
             ------|--------
@@ -156,11 +157,11 @@ def create_exam_and_insert_QR(
 def pdf_page_add_stamp(page, stamp):
     """Add top-middle stamp to a PDF page.
 
-    args:
+    Args:
         page (fitz.Page): a particular page of a PDF file.
         stamp (str): text for the top-middle
 
-    returns:
+    Returns:
         None: but modifies page as a side-effect.
     """
     w = 70  # box width
@@ -186,7 +187,7 @@ def pdf_page_add_stamp(page, stamp):
 def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
-    args:
+    Args:
         page (fitz.Page): a particular page of a PDF file.
         shortname (str): a short string that we will write on the staple
             indicator.
@@ -196,7 +197,7 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
             False for an even page, and None if you don't want to draw a
             staple corner.
 
-    returns:
+    Returns:
         None: but modifies page as a side-effect.
     """
     w = 70  # box width
@@ -285,7 +286,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
             and 100 is the bottom of the page.  If None, defaults to 42
             for historical reasons (to match the position in our demo).
 
-    Keyword args:
+    Keyword Arguments:
         signherebox (bool): add a "sign here" box, default True.
 
     Raises:
@@ -337,7 +338,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
         w = font.text_length(name, fontsize=fontsize)
     tw = fitz.TextWriter(page.rect)
     tw.append(
-        fitz.Point(page_width / 2 - w / 2, name_id_rect.y0 + 38),
+        fitz.Point(page_width * (x / 100.0) - w / 2, name_id_rect.y0 + 38),
         name,
         fontsize=fontsize,
     )
@@ -346,7 +347,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     fontsize = 36
     w = font.text_length(sid, fontsize=fontsize)
     tw.append(
-        fitz.Point(page_width / 2 - w / 2, name_id_rect.y0 + 90),
+        fitz.Point(page_width * (x / 100.0) - w / 2, name_id_rect.y0 + 90),
         sid,
         fontsize=fontsize,
     )
@@ -359,7 +360,7 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
     w = font.text_length(sign_here, fontsize=fontsize)
     tw = fitz.TextWriter(page.rect, color=(0.9, 0.9, 0.9))
     tw.append(
-        fitz.Point(page_width / 2 - w / 2, signature_rect.y0 + 52),
+        fitz.Point(page_width * (x / 100.0) - w / 2, signature_rect.y0 + 52),
         sign_here,
         fontsize=fontsize,
     )

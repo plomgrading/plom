@@ -216,7 +216,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     def textToPng(self, force=False):
         """Try to switch to rendering via latex.
 
-        args:
+        Args:
             force (bool): If True, add the `tex:` prefix if not present.
         """
         if self.is_rendered():

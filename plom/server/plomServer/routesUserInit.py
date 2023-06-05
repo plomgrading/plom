@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Edith Coates
 
@@ -204,6 +204,8 @@ class UserInitHandler:
     @no_authentication_only_log_request
     async def InfoShortName(self, request):
         """The short name of the exam.
+
+        DEPRECATED 0.14.0: no modern callers, only for old clients.
 
         Returns:
             aiohttp.Response: 200 and the short name or 400 if the

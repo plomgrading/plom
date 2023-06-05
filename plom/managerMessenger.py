@@ -479,6 +479,10 @@ class ManagerMessenger(BaseMessenger):
         return imageList
 
     def IDgetImageFromATest(self):
+        """Get any ID image.
+
+        DEPRECATED: only legacy servers do this.
+        """
         self.SRmutex.acquire()
         try:
             response = self.get(
@@ -1751,22 +1755,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.get(
                 f"/REP/originalFiles/{testNumber}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def MgetAllMax(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/MK/allMax",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()

@@ -1,3 +1,5 @@
+<!-- Copyright (C) 2022-2023 Edith Coates -->
+
 {% extends 'base/base.html' %}
 
 {% block title %}Web Plom - Progress{% endblock %}
@@ -22,14 +24,6 @@
                     {% else %}
                     <a class="nav-link" href="{% url 'progress_scan_bundles' %}">Bundles</a>
                     {% endif %}
-                </li>
-                <li class="nav-item">
-                    <a 
-                        class="nav-link {% if curr_page == 'colliding' %}active{% endif %}" 
-                        href="{% url 'progress_scan_colliding' %}"
-                    >
-                        Colliding pages {% if n_colliding %}({{ n_colliding }}){% endif %}
-                    </a>
                 </li>
                 <li class="nav-item">
                     {% if curr_page == "unknown_page" %}

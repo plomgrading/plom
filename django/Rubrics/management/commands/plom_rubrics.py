@@ -11,7 +11,7 @@ import sys
 from tabulate import tabulate
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 

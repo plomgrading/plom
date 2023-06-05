@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 
 import hashlib
 import logging
@@ -32,7 +32,7 @@ def make_base_directories():
 def make_bundle_dir(bundledir):
     """Make various subdirectories that processing/uploading will need.
 
-    args:
+    Args:
         bundledir (pathlib.Path): the path to the bundle, either relative
             to the CWD or a full path.
     """
@@ -53,16 +53,15 @@ def make_bundle_dir(bundledir):
 def get_bundle_dir(bundle_name, *, basedir=Path(".")):
     """Make a filesystem for processing/uploading a bundle.
 
-    args:
+    Args:
         bundle_name (str): the name of the bundle (not a path).
 
-    kwargs:
+    Keyword Args:
         basedir (pathlib.Path): default's to the current working
-            directory.
+            directory.  The bundle directory ``bundle_dir`` will be
+            ``basedir / bundles / bundle_name``.
 
-    The bundle directory `bundle_dir` will be basedir / bundles / bundle_name.
-
-    returns:
+    Returns:
         pathlib.Path: `bundle_dir`, the bundle directory, something
             like `<basedir>/bundles/<bundle_name>`.
     """
@@ -129,12 +128,12 @@ def _archiveBundle(filename, *, basedir=Path("."), subdir=Path(".")):
 
 
 def archiveHWBundle(file_name, *, basedir=Path(".")):
-    """Archive a hw-pages bundle pdf"""
+    """Archive a hw-pages bundle pdf."""
     log.debug(f"Archiving homework bundle {file_name}")
     _archiveBundle(file_name, basedir=basedir, subdir=Path("HW"))
 
 
 def archiveTBundle(file_name):
-    """Archive a test-pages bundle pdf"""
+    """Archive a test-pages bundle pdf."""
     log.debug(f"Archiving test-page bundle {file_name}")
     _archiveBundle(file_name)

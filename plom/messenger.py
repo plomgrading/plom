@@ -177,34 +177,6 @@ class Messenger(BaseMessenger):
     # ------------------------
     # ------------------------
     # Marker stuff
-    def getMaxMark(self, question):
-        """Get the maximum mark for this question and version.
-
-        Raises:
-            PlomRangeException: `question` is out of range or non-integer.
-            PlomAuthenticationException:
-            PlomSeriousException: something unexpected happened.
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/maxmark/{question}",
-                json={"user": self.user, "token": self.token},
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 400:
-                raise PlomRangeException(response.reason) from None
-            if response.status_code == 416:
-                raise PlomRangeException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def MrequestDoneTasks(self, q, v):
         self.SRmutex.acquire()
         try:

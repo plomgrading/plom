@@ -1677,7 +1677,7 @@ class Manager(QWidget):
                 f"Spreadsheet written to {filename} but grading is not complete.",
                 info="Either some papers are unidentified or they are not fully marked.",
                 info_pre=False,
-            ).exec_()
+            ).exec()
 
     def viewTestStatus(self):
         pvi = self.ui.overallTW.selectedItems()
@@ -1802,24 +1802,28 @@ class Manager(QWidget):
         pred_sid = self.ui.predictionTW.item(idx[0].row(), 3)
         if pred_sid is not None:
             pred_sid = pred_sid.data(Qt.ItemDataRole.DisplayRole)
-        certainty = self.ui.predictionTW.item(idx[0].row(), 4)
+        certainty = self.ui.predictionTW.item(idx[0].row(), 5)
         if certainty is not None:
             certainty = certainty.data(Qt.ItemDataRole.DisplayRole)
-        try:
-            img_bytes = self.msgr.request_ID_image(test)
-        except PlomException as err:
-            ErrorMsg(self, str(err)).exec()
-            return
 
-        if not img_bytes:
-            return
         with tempfile.TemporaryDirectory() as td:
-            img_ext = imghdr.what(None, h=img_bytes)
-            img_name = Path(td) / f"id.{img_ext}"
-            with open(img_name, "wb") as fh:
-                fh.write(img_bytes)
-            if not img_ext:
-                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            pagedata = self.msgr.get_pagedata(test)
+            id_pages = []
+            for row in pagedata:
+                # Issue #2707: better use a image-type key
+                if not row["pagename"].casefold().startswith("id"):
+                    continue
+                img_bytes = self.msgr.get_image(row["id"], row["md5"])
+                ext = Path(row["server_path"]).suffix
+                filename = Path(td) / f'img_{int(test):04}_{row["pagename"]}{ext}'
+                with open(filename, "wb") as fh:
+                    fh.write(img_bytes)
+                id_pages.append(filename)
+            if not id_pages:
+                return
+            assert len(id_pages) == 1, "Expected at most one ID page"
+            (img_name,) = id_pages
+
             if sid is None and pred_sid is not None:
                 title = f"ID page: predicted as {pred_sid} certainty {certainty}"
             elif sid == pred_sid:
@@ -1877,19 +1881,19 @@ class Manager(QWidget):
                 f' {timestamp.isoformat(" ", "seconds")}.',
                 question="Do you want to rerun it?",
             )
-            if msg.exec_() == QMessageBox.StandardButton.No:
+            if msg.exec() == QMessageBox.StandardButton.No:
                 return
             self.id_reader_run(ignore_timestamp=True)
 
     def id_reader_kill(self):
         if (
-            SimpleQuestion(self, "Stop running process", "Are you sure?").exec_()
+            SimpleQuestion(self, "Stop running process", "Are you sure?").exec()
             == QMessageBox.StandardButton.No
         ):
             return
         msg = self.msgr.id_reader_kill()
         txt = "Stopped background ID reader process.  Server response:"
-        InfoMsg(self, txt, info=msg).exec_()
+        InfoMsg(self, txt, info=msg).exec()
 
     def run_predictor(self):
         try:
@@ -2632,14 +2636,25 @@ class Manager(QWidget):
                 return
 
         test = int(self.ui.reviewIDTW.item(r, 0).text())
-        img_bytes = self.msgr.request_ID_image(test)
+
         with tempfile.TemporaryDirectory() as td:
-            img_ext = imghdr.what(None, h=img_bytes)
-            img_name = Path(td) / f"id.0.{img_ext}"
-            with open(img_name, "wb") as fh:
-                fh.write(img_bytes)
-            if not img_ext:
-                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            pagedata = self.msgr.get_pagedata(test)
+            id_pages = []
+            for row in pagedata:
+                # Issue #2707: better use a image-type key
+                if not row["pagename"].casefold().startswith("id"):
+                    continue
+                img_bytes = self.msgr.get_image(row["id"], row["md5"])
+                ext = Path(row["server_path"]).suffix
+                filename = Path(td) / f'img_{int(test):04}_{row["pagename"]}{ext}'
+                with open(filename, "wb") as fh:
+                    fh.write(img_bytes)
+                id_pages.append(filename)
+            if not id_pages:
+                return
+            assert len(id_pages) == 1, "Expected at most one ID page"
+            (img_name,) = id_pages
+
             rvw = ReviewViewWindowID(self, img_name)
             if rvw.exec() == QDialog.DialogCode.Accepted:
                 # first remove auth from that user - safer.

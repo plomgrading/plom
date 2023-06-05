@@ -4,20 +4,16 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 
 from django.shortcuts import render
-from django.http import HttpResponse, FileResponse
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import FileResponse
 
 from Base.base_group_views import ScannerRequiredView
-from Scan.services import ScanService
 from Progress.services import ManageScanService
 
 from plom.misc_utils import format_int_list_with_runs
 
 
 class ScannerSummaryView(ScannerRequiredView):
-    """
-    Display the summary of the whole test
-    """
+    """Display the summary of the whole test."""
 
     def get(self, request):
         context = super().build_context()
@@ -59,9 +55,7 @@ class ScannerSummaryView(ScannerRequiredView):
 
 
 class ScannerPushedImageView(ScannerRequiredView):
-    """
-    Display the summary of the whole test
-    """
+    """Display the summary of the whole test."""
 
     def get(self, request, img_pk):
         mss = ManageScanService()
