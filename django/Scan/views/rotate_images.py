@@ -8,14 +8,17 @@ from Base.base_group_views import ScannerRequiredView
 
 from Scan.services import ImageRotateService
 
+
 class RotateImageClockwise(ScannerRequiredView):
     def post(self, request, timestamp, index):
         try:
             timestamp = float(timestamp)
         except ValueError:
             return Http404()
-        
-        ImageRotateService().rotate_image_from_bundle_timestamp_and_order(request.user, timestamp, index, clockwise=True, counter_clockwise=False)
+
+        ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
+            request.user, timestamp, index, clockwise=True, counter_clockwise=False
+        )
 
         return HttpResponseClientRefresh()
 
@@ -26,7 +29,9 @@ class RotateImageCounterClockwise(ScannerRequiredView):
             timestamp = float(timestamp)
         except ValueError:
             return Http404()
-        
-        ImageRotateService().rotate_image_from_bundle_timestamp_and_order(request.user, timestamp, index, clockwise=False, counter_clockwise=True)
+
+        ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
+            request.user, timestamp, index, clockwise=False, counter_clockwise=True
+        )
 
         return HttpResponseClientRefresh()

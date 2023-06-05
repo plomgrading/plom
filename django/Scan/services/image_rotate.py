@@ -11,7 +11,9 @@ from Scan.models import StagingBundle
 
 class ImageRotateService:
     @transaction.atomic
-    def rotate_image_from_bundle_timestamp_and_order(self, user_obj, bundle_timestamp, bundle_order, clockwise, counter_clockwise):
+    def rotate_image_from_bundle_timestamp_and_order(
+        self, user_obj, bundle_timestamp, bundle_order, clockwise, counter_clockwise
+    ):
         """A wrapper around rotate_image_cmd.
 
         Args:
@@ -25,10 +27,14 @@ class ImageRotateService:
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )
-        self.rotate_image(user_obj, bundle_obj, bundle_order, clockwise, counter_clockwise)
+        self.rotate_image(
+            user_obj, bundle_obj, bundle_order, clockwise, counter_clockwise
+        )
 
     @transaction.atomic
-    def rotate_image(self, user_obj, bundle_obj, bundle_order, clockwise, counter_clockwise):
+    def rotate_image(
+        self, user_obj, bundle_obj, bundle_order, clockwise, counter_clockwise
+    ):
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
 
@@ -66,4 +72,6 @@ class ImageRotateService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self.rotate_image(user_obj, bundle_obj, bundle_order, clockwise=False, counter_clockwise=True)
+        self.rotate_image(
+            user_obj, bundle_obj, bundle_order, clockwise=False, counter_clockwise=True
+        )
