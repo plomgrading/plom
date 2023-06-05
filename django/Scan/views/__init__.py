@@ -19,7 +19,6 @@ from .manage_bundle import (
     GetBundleNavFragmentView,
     GetBundleImageView,
     BundleThumbnailView,
-    GetBundleThumbnailFragmentView,
     GetBundleThumbnailView,
 )
 

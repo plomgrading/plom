@@ -205,20 +205,6 @@ class BundleThumbnailView(ScannerRequiredView):
         return render(request, "Scan/bundle_thumbnails.html", context)
 
 
-class GetBundleThumbnailFragmentView(ScannerRequiredView):
-    """Return an image from a user-uploaded bundle."""
-
-    def get(self, request, timestamp, index):
-        return HttpResponse(
-            f"""<img
-        src='/scan/thumbnails/{timestamp}/{index}'
-        class="border rounded-start"
-        style="max-height: 16em;"
-        >
-        """
-        )
-
-
 class GetBundleThumbnailView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 

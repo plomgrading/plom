@@ -1154,6 +1154,7 @@ def huey_child_get_page_image(
         None
     """
     import fitz
+    from plom.scan import rotate
     from PIL import Image
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -1174,11 +1175,12 @@ def huey_child_get_page_image(
     with open(save_path, "rb") as f:
         image_hash = hashlib.sha256(f.read()).hexdigest()
 
-    with Image.open(save_path) as img:
-        size = 256, 256
-        img.thumbnail(size, Image.Resampling.LANCZOS)
-        thumb_path = basedir / ("thumb-" + basename + ".png")
-        img.save(thumb_path)
+    # make sure we load with exif rotations if required
+    pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(save_path)
+    size = 256, 256
+    pil_img.thumbnail(size, Image.Resampling.LANCZOS)
+    thumb_path = basedir / ("thumb-" + basename + ".png")
+    pil_img.save(thumb_path)
 
     # TODO - return an error of some sort here if problems
 
