@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Colin B. Macdonald
 
 import pathlib
 from warnings import warn
@@ -52,4 +53,6 @@ class IDReaderService:
                     )
                     continue
                 id_box = pipr.extract_rect_region(img_path, orientation, qr_data, *box)
-                id_box.save(id_box_folder / f"id_box_{id_img.paper.paper_number:04}.png")
+                id_box.save(
+                    id_box_folder / f"id_box_{id_img.paper.paper_number:04}.png"
+                )
