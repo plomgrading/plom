@@ -153,7 +153,7 @@ class PageImageProcessor:
         elif val_from_qr == upside_down:
             return "upside_down"
 
-    def rotate_page_image(self, qr_data):
+    def get_rot_angle_from_QRs(self, qr_data):
         """Get the current orientation of a page-image using its parsed QR code data.
 
         If it isn't upright, return the angle by which the image needs to be rotated.
