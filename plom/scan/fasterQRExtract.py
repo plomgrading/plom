@@ -57,13 +57,15 @@ def findCorner(qr, dim):
     return NS + EW, mx, my
 
 
-def QRextract(image, try_harder=True, rotation=0):
+def QRextract(image, *, try_harder=True, rotation=0):
     """Decode and return QR codes in an image.
 
     Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
             the local dir or specified e.g., using `pathlib.Path`.  Can
             also be an instance of Pillow's `Image`.
+
+    Keyword Args:
         try_harder (bool): Try to find QRs on a smaller resolution.
             Defaults to True.  Sometimes this seems work around high
             failure rates in the synthetic images used in CI testing.
