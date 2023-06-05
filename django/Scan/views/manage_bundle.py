@@ -157,7 +157,7 @@ class BundleThumbnailView(ScannerRequiredView):
         """Build a context for a particular page of a bundle.
 
         Args:
-            timestamps (float): select a bundle by its timestamp.
+            timestamp (float): select a bundle by its timestamp.
             user (todo): which user.
             index (int): 1-indexed.
         """
@@ -206,9 +206,7 @@ class BundleThumbnailView(ScannerRequiredView):
 
 
 class GetBundleThumbnailFragmentView(ScannerRequiredView):
-    """
-    Return an image from a user-uploaded bundle
-    """
+    """Return an image from a user-uploaded bundle."""
 
     def get(self, request, timestamp, index):
         return HttpResponse(
@@ -222,9 +220,7 @@ class GetBundleThumbnailFragmentView(ScannerRequiredView):
 
 
 class GetBundleThumbnailView(ScannerRequiredView):
-    """
-    Return an image from a user-uploaded bundle
-    """
+    """Return an image from a user-uploaded bundle."""
 
     def get(self, request, timestamp, index):
         try:

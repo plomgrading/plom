@@ -266,8 +266,9 @@ class ScanService:
 
     @transaction.atomic
     def get_thumbnail_image(self, timestamp, user, index):
-        """
-        Get a thubnail image from the database. To uniquely identify an image, we need a bundle
+        """Get a thubnail image from the database.
+
+        To uniquely identify an image, we need a bundle
         (and a timestamp, and user) and a page index
         """
         bundle_obj = self.get_bundle(timestamp, user)
