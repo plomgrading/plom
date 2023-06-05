@@ -99,7 +99,7 @@ def QRextract(image, *, try_harder=True, rotation=0):
         image = pil_load_with_jpeg_exif_rot_applied(image)
 
     if rotation != 0:
-        assert rotation in [-90, 90, 270, 180]
+        assert rotation in (-90, 90, 270, 180)
         image = image.rotate(rotation, expand=True)
 
     # PIL does lazy loading.  Force loading now so we see errors now.
