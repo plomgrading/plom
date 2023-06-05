@@ -268,17 +268,21 @@ class MarkingTaskService:
             user=user,
         )
 
+        annotation.save()
+
         for x in data["sceneItems"]:
             if x[0] == "GroupDeltaText":
                 da_key = x[3]
-                print(da_key)
+                print("rubric " + da_key + " should be linked to annotation with task object code " + annotation.task.code)
 
-                rubrics = Rubric.objects.filter(key=da_key)
-                for rubric in rubrics:
-                    if annotation:
-                        rubric.annotations.add(annotation)
-
-        annotation.save()
+                rubric = Rubric.objects.get(key=da_key)
+                print(rubric)
+                rubric.annotations.add(annotation)
+                rubric.save()
+                print("Annotations:")
+                print(rubric.annotations.all())
+                print()
+                print()
 
     def get_n_marked_tasks(self):
         """Return the number of marking tasks that are completed."""
