@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 import json
 import pathlib
@@ -270,19 +271,12 @@ class MarkingTaskService:
 
         annotation.save()
 
-        for x in data["sceneItems"]:
-            if x[0] == "GroupDeltaText":
-                da_key = x[3]
-                print("rubric " + da_key + " should be linked to annotation with task object code " + annotation.task.code)
-
-                rubric = Rubric.objects.get(key=da_key)
-                print(rubric)
+        # link to rubric object
+        for item in data["sceneItems"]:
+            if item[0] == "GroupDeltaText":
+                rubric = Rubric.objects.get(key=item[3])
                 rubric.annotations.add(annotation)
                 rubric.save()
-                print("Annotations:")
-                print(rubric.annotations.all())
-                print()
-                print()
 
     def get_n_marked_tasks(self):
         """Return the number of marking tasks that are completed."""
