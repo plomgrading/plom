@@ -94,7 +94,7 @@
                         <img 
                           src="{% url 'scan_get_thumbnail' bundle.timestamp 1 %}"
                           class="border rounded-start"
-                          style="max-height: 14em;"
+                          style="max-height: 16em; transform:rotate(calc(-1 * {{ cover_angle }}deg));"
                           >
                         <div class="p-2">
                           <h5 class="card-title">{{ bundle.slug }}.pdf</h5>

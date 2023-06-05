@@ -265,6 +265,14 @@ class ScanService:
         )
 
     @transaction.atomic
+    def get_first_image(self, bundle_obj):
+        """Get the first image from the given bundle."""
+        return StagingImage.objects.get(
+            bundle=bundle_obj,
+            bundle_order=1,
+        )
+
+    @transaction.atomic
     def get_thumbnail_image(self, timestamp, user, index):
         """Get a thubnail image from the database.
 
