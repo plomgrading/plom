@@ -10,6 +10,7 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
+from warnings import warn
 
 import fitz
 from django.conf import settings
@@ -978,6 +979,44 @@ class ScanService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
         return self.get_bundle_paper_numbers(bundle_obj)
+
+    @transaction.atomic
+    def get_id_box_cmd(self, box, *, dur=None):
+        """Extract the id box, or really any rectangular part of the id page, rotation corrected.
+
+        Args:
+            box (None/list): the box to extract or a default is empty/None.
+
+        Keyword Args:
+            dur (None/pathlib.Path): what directory to save to, or choose
+                a internal default if omitted.
+
+        Returns:
+            None
+        """
+        if not dur:
+            id_box_folder = settings.MEDIA_ROOT / "id_box_images"
+        else:
+            id_box_folder = pathlib.Path(dur)
+        if not box:
+            box = (0.28, 0.58, 0.09, 0.91)
+        id_box_folder.mkdir(exist_ok=True)
+
+        pipr = PageImageProcessor()
+        id_pages = KnownStagingImage.objects.filter(page_number=1)
+
+        for id_img in id_pages:
+            img_path = id_img.staging_image.image_file.path
+            orientation = id_img.staging_image.rotation
+            qr_data = id_img.staging_image.parsed_qr
+            if len(qr_data) != 3:
+                warn(
+                    "Fewer than 3 QR codes found, "
+                    f"cannot extract ID box from paper {id_img.paper_number}."
+                )
+                continue
+            id_box = pipr.extract_rect_region(img_path, orientation, qr_data, *box)
+            id_box.save(id_box_folder / f"id_box_{id_img.paper_number:04}.png")
 
 
 # ----------------------------------------

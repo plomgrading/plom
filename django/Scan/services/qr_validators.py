@@ -144,6 +144,7 @@ class QRErrorService:
         """
 
         def is_list_inconsistent(lst):
+            """Helper function to test data consistency."""
             return any([X != lst[0] for X in lst])
 
         # check all page-types are the same
