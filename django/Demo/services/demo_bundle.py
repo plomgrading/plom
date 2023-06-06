@@ -142,17 +142,13 @@ class DemoBundleService:
         return assignment
 
     def make_last_page_with_wrong_version(self, pdf_doc, paper_number):
-        """Removes the last page of the doc and replaces it with a nearly
-        blank page that contains a qr-code that is nearly valid except
-        that the version is wrong.
-
+        """Removes the last page of the doc and replaces it with a nearly blank page that contains a qr-code that is nearly valid except that the version is wrong.
 
         Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
             paper_number (int): the paper_number of that test-paper.
 
         Returns:
         pdf_doc (fitz.Document): the updated pdf-document with replaced last page.
-
         """
         from plom import SpecVerifier
         from plom.create.mergeAndCodePages import create_QR_codes
@@ -216,10 +212,7 @@ class DemoBundleService:
         pdf_doc.fullcopy_page(last_page)
 
     def insert_qr_from_previous_page(self, pdf_doc, paper_number):
-        """Stamps a qr-code for the second-last page onto the last page,
-        in order to create a page with inconsistent qr-codes. This can
-        happen when, for example, a folded page is fed into the scanner.
-
+        """Stamps a qr-code for the second-last page onto the last page, in order to create a page with inconsistent qr-codes. This can happen when, for example, a folded page is fed into the scanner.
 
         Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
             paper_number (int): the paper_number of that test-paper.
@@ -326,14 +319,14 @@ class DemoBundleService:
             pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
 
     def _convert_duplicates_dict(self, duplicates):
-        """If duplicates is a list of dicts, convert into a dict"""
+        """If duplicates is a list of dicts, convert into a dict."""
         duplicates_dict = {}
         for paper_dict in duplicates:
             duplicates_dict[paper_dict["paper"]] = paper_dict["page"]
         return duplicates_dict
 
     def _convert_duplicates_list(self, duplicates):
-        """If duplicates is a list, convert into a dict"""
+        """If duplicates is a list, convert into a dict."""
         duplicates_dict = {}
         for paper in duplicates:
             duplicates_dict[paper] = -1
