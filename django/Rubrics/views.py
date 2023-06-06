@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect
 from Base.base_group_views import ManagerRequiredView
 from Rubrics.services import RubricService
 from Rubrics.forms import RubricForm
+from Rubrics.models import Rubric
 
 
 class RubricLandingPageView(ManagerRequiredView):
@@ -26,6 +27,16 @@ class RubricLandingPageView(ManagerRequiredView):
 
         form = RubricForm()
         context.update({"form": form})
+
+        rubrics = Rubric.objects.all()
+        print(rubrics)
+        print('rubrics[119]:', rubrics[119])
+        print()
+        print('annotations: ', rubrics[119].annotations.all())
+        anns = self.rs.get_annotation_from_rubric(rubrics[119])
+        print(anns)
+        print("now get rubrics from annotation:")
+        print(self.rs.get_rubrics_from_annotation(anns[0]))
 
         return render(request, self.template_name, context=context)
 

@@ -117,7 +117,7 @@ class RubricService:
         rubric_data = []
 
         for r in rubric_list.prefetch_related("user"):
-            rubric_dict = self.rubric_dict(r)
+            rubric_dict = self._rubric_dict(r)
             # {
             #     "id": r.key,
             #     "kind": r.kind,
@@ -290,7 +290,7 @@ class RubricService:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
 
-    def get_annotation_uses(self, rubric: Rubric) -> list:
+    def get_annotation_from_rubric(self, rubric: Rubric) -> list:
         """Get the list of annotations that use this rubric.
 
         Args:
@@ -301,7 +301,7 @@ class RubricService:
         """
         return list(rubric.annotations.all())
 
-    def get_rubrics_for_annotation(self, annotation: Annotation) -> list:
+    def get_rubrics_from_annotation(self, annotation: Annotation) -> list:
         """Get the list of rubrics that are used by this annotation.
 
         Args:
@@ -311,8 +311,9 @@ class RubricService:
             list of Rubric instances
         """
         rubrics = Rubric.objects.filter(annotations=annotation)
-        return list(annotation.rubrics.all())
-    def rubric_dict(self, r: Rubric):
+        return rubrics
+
+    def _rubric_dict(self, r: Rubric):
         """Gets a dictionary representation of a rubric.
 
         Args:
@@ -334,6 +335,7 @@ class RubricService:
             "question": r.question,
             "versions": r.versions,
             "parameters": r.parameters,
+            "annotations": r.annotations,
         }
         return rubric_dict
 
@@ -353,7 +355,7 @@ class RubricService:
         all_rubrics = Rubric.objects.all()
         counts = {}
         for r in all_rubrics.prefetch_related("user"):
-            r_dict = self.rubric_dict(r)
+            r_dict = self._rubric_dict(r)
             sort_key = r_dict[sort_by]
 
             if sort_key not in counts:
