@@ -6,6 +6,7 @@
 # Copyright (C) 2022-2023 Natalie Balashov
 
 import csv
+import json
 import numpy as np
 from pathlib import Path
 from scipy.optimize import linear_sum_assignment
@@ -13,7 +14,8 @@ from scipy.optimize import linear_sum_assignment
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from Identify.services import IdentifyTaskService
+from Identify.services.id_tasks import IdentifyTaskService
+from Identify.services.id_reader import IDReaderService
 
 
 class Command(BaseCommand):
@@ -25,42 +27,39 @@ class Command(BaseCommand):
     help = "Run matching tools to generate predictions."
 
     def run_auto_iding(self):
+        """Runs the matching with Greedy and Linear Sum Assignment."""
         try:
-            sids, probs = self.get_sids_and_probabilities()
+            sids = self.get_sids()
+            probs = self.get_probabilities()
             self.predict_id_greedy(sids, probs)
             self.predict_id_lap_solver(sids, probs)
-            self.stdout.write("Ran Greedy and Linear Assignment matching problems and saved results to two CSV files.")
+            self.stdout.write(
+                "Ran matching problems and saved results to two CSV files."
+            )
         except ValueError as err:
             raise CommandError(err)
 
-    def get_sids_and_probabilities():
-        """Retrieve student ID numbers from `classlist.csv` and
-           probability data from `id_prob_heatmaps.json`
+    def get_sids(self):
+        """Returns a list containing student ID numbers to use for matching."""
+        self.stdout.write("Getting the classlist")
+        id_reader_service = IDReaderService()
+        return id_reader_service.get_classlist_sids_for_ID_matching()
+
+    def get_probabilities(self):
+        """Retrieve probability data from `id_prob_heatmaps.json`.
 
         Returns:
-            tuple: a 2-tuple consisting of two lists, where the first contains student ID numbers
-                   and the second contains the probability data
-
-        Raises:
-            FileNotFoundError: no probability data
+            list: probabiliity data to use for matching
         """
-        heatmaps_file = specdir / "id_prob_heatmaps.json"
-
-        # implicitly raises FileNotFoundError if no heatmap
-        with open(heatmaps_file, "r") as fh:
-            probabilities = json.load(fh)
-        # ugh, undo Json mucking our int keys into str
+        self.stdout.write("Getting probability heatmaps.")
+        heatmaps_file = settings.MEDIA_ROOT / "id_prob_heatmaps.json"
+        try:
+            with open(heatmaps_file, "r") as fh:
+                probabilities = json.load(fh)
+        except FileNotFoundError as err:
+            raise CommandError(err)
         probabilities = {int(k): v for k, v in probabilities.items()}
-
-        self.stdout.write("Getting the classlist")
-        sids = []
-        with open(specdir / "classlist.csv", newline="") as csvfile:
-            csv_reader = csv.reader(csvfile, delimiter=",")
-            next(csv_reader, None)  # skip the header
-            for row in csv_reader:
-                sids.append(row[0])
-
-        return sids, probabilities
+        return probabilities
 
     def predict_id_greedy(self, sids, probabilities):
         """Match each unidentified paper against best fit in classlist.
@@ -68,12 +67,12 @@ class Command(BaseCommand):
         Returns:
             None: instead saves result to a csv file.
         """
-        greedy_predictions = greedy(sids, probabilities)
+        greedy_predictions = self.greedy(sids, probabilities)
 
         with open(settings.MEDIA_ROOT / "greedy_predictions.csv", "w") as f:
             write = csv.writer(f)
             write.writerow(("paper_num", "student_ID", "certainty"))
-            write.writerows(lap_predictions)
+            write.writerows(greedy_predictions)
 
     def predict_id_lap_solver(self, sids, probabilities):
         """Matching unidentified papers against classlist via linear assignment problem.
@@ -94,24 +93,28 @@ class Command(BaseCommand):
         """
         self.stdout.write(f"Original class list has {len(sids)} students.\n")
 
-        id_task_service = IdentifyTaskService()
-        ided_papers = id_task_service.get_all_identified_tasks()
-        for paper in ided_papers:
+        id_reader_service = IDReaderService()
+        ided_sids = id_reader_service.get_already_matched_sids()
+        for ided_stu in ided_sids:
             try:
-                sids.remove(paper[1])
+                sids.remove(ided_stu)
             except ValueError:
                 pass
 
-        unidentified_papers = id_task_service.get_unidentified_tasks()
+        unidentified_papers = id_reader_service.get_unidentified_papers()
         self.stdout.write("\nAssignment problem: ")
-        self.stdout.write(f"{len(unidentified_papers)} unidentified papers to match with " + 
-                f"{len(sids)} unused names in the classlist.")
+        self.stdout.write(
+            f"{len(unidentified_papers)} unidentified papers to match with "
+            + f"{len(sids)} unused names in the classlist."
+        )
 
         # exclude papers for which we don't have probabilities
         papers = [n for n in unidentified_papers if n in probabilities]
         if len(papers) < len(unidentified_papers):
-            self.stdout.write(f"\nNote: {len(unidentified_papers) - len(papers)} papers " + 
-                    f"were not autoread; have {len(papers)} papers to match.\n")
+            self.stdout.write(
+                f"\nNote: {len(unidentified_papers) - len(papers)} papers "
+                + f"were not autoread; have {len(papers)} papers to match.\n"
+            )
 
         if len(papers) == 0 or len(sids) == 0:
             raise IndexError(
@@ -121,7 +124,7 @@ class Command(BaseCommand):
 
         self.stdout.write("\nBuilding cost matrix and solving assignment problem...")
         t = time.process_time()
-        lap_predictions = lap_solver(papers, sids, probabilities)
+        lap_predictions = self.lap_solver(papers, sids, probabilities)
         self.stdout.write(f" done in {time.process_time() - t:.02} seconds.")
 
         with open(settings.MEDIA_ROOT / "lap_predictions.csv", "w") as f:
@@ -186,14 +189,18 @@ class Command(BaseCommand):
         Args:
             test_numbers (list): int, the ones we want to match.
             student_IDs (list): A list of student ID numbers.
-            probabilities (dict): dict with keys that contain a test number and values that contain a probability matrix,
+            probabilities (dict): dict with keys that contain a test number
+            and values that contain a probability matrix,
             which is a list of lists of floats.
 
         Returns:
             list: triples of (`paper_number`, `student_ID`, `certainty`),
-            where certainty is the mean of digit probabilities for the student_ID selected by LAP solver.
+            where certainty is the mean of digit probabilities for the student_ID
+            selected by LAP solver.
         """
-        cost_matrix = self.assemble_cost_matrix(test_numbers, student_IDs, probabilities)
+        cost_matrix = self.assemble_cost_matrix(
+            test_numbers, student_IDs, probabilities
+        )
 
         row_IDs, column_IDs = linear_sum_assignment(cost_matrix)
 
@@ -223,9 +230,10 @@ class Command(BaseCommand):
             list: a list of tuples (paper_number, id_prediction, certainty)
 
         Algorithm:
-            For each entry in probabilities, check each student id in the classlist against the matrix.
-            The probabilities corresponding to the digits in the student id are extracted.
-            Calculate a mean of those digit probabilities, and choose the student id that yielded the highest mean value.
+            For each entry in probabilities, check each student id in the classlist
+            against the matrix. The probabilities corresponding to the digits in the
+            student id are extracted. Calculate a mean of those digit probabilities,
+            and choose the student id that yielded the highest mean value.
             The calculated digit probabilities mean is returned as the "certainty".
         """
         predictions = []
@@ -252,37 +260,5 @@ class Command(BaseCommand):
 
         return predictions
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "top",
-            type=float,
-            help="top bound of rectangle to extract",
-            default=None,
-            nargs="?",
-        )
-        parser.add_argument(
-            "bottom",
-            type=float,
-            help="bottom bound of rectangle to extract",
-            default=None,
-            nargs="?",
-        )
-        parser.add_argument(
-            "left",
-            type=float,
-            help="left bound of rectangle to extract",
-            default=None,
-            nargs="?",
-        )
-        parser.add_argument(
-            "right",
-            type=float,
-            help="right bound of rectangle to extract",
-            default=None,
-            nargs="?",
-        )
-
     def handle(self, *args, **options):
-        self.get_id_box(
-            options["top"], options["bottom"], options["left"], options["right"]
-        )
+        self.run_auto_iding()

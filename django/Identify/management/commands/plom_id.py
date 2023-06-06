@@ -6,27 +6,26 @@
 # Copyright (c) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
-import math
-from pathlib import Path
-
-import numpy as np
 import cv2
 import imutils
 from imutils.perspective import four_point_transform
+import json
+import math
+import numpy as np
+from pathlib import Path
 
-from .model_utils import load_model
-
-
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+from plom.idreader.model_utils import download_or_train_model, load_model
 from Identify.services.id_reader import IDReaderService
 
 
 class Command(BaseCommand):
-    """Management command for extracting the ID box and doing ID digit reading.
+    """Management command with subcommands for extracting the ID box and doing ID digit reading.
 
-    python3 manage.py plom_id (top) (bottom) (left) (right)
-    python3 manage.py plom_id --digits
+    python3 manage.py plom_id idbox (top) (bottom) (left) (right)
+    python3 manage.py plom_id idreader
     """
 
     help = "Extract the ID box from all papers."
@@ -45,18 +44,35 @@ class Command(BaseCommand):
         except ValueError as err:
             raise CommandError(err)
 
-    def get_digits_grouped_by_paper(self):
-        idservice = IDReaderService()
+    def run_id_reader(self):
         try:
-            idservice.get_digits_cmd()
-            self.stdout.write("Extracted the digits from the ID box from all known ID pages.")
+            self.stdout.write("Firing up the auto id reader.")
+            self.stdout.write(
+                "Ensuring we have the model: download if not, or train if cannot download..."
+            )
+            download_or_train_model()
+
+            self.stdout.write("Extracting ID boxes...")
+            idservice = IDReaderService()
+            id_box_files = idservice.get_id_box_cmd(None)
+
+            self.stdout.write("Computing probabilities for student ID digits.")
+            student_number_length = 8
+            probs = self.compute_probabilities(
+                id_box_files, 0, 1, student_number_length
+            )
+
+            probs = {k: [x.tolist() for x in v] for k, v in probs.items()}
+            with open(settings.MEDIA_ROOT / "id_prob_heatmaps.json", "w") as fh:
+                json.dump(probs, fh, indent="  ")
+            self.stdout.write(
+                "Ran the ID reader and saved probabilities to a JSON file."
+            )
         except ValueError as err:
             raise CommandError(err)
 
-    def bounding_rect_area(bounding_rectangle):
-        """Return the area of the rectangle.
-
-        Used to sort by area of bounding rect.
+    def bounding_rect_area(self, bounding_rectangle):
+        """Return the area of the rectangle, useful for sorting by area of bounding rect.
 
         Args:
             bounding_rectangle (list): Target rectangle object.
@@ -67,7 +83,7 @@ class Command(BaseCommand):
         _, _, w, h = cv2.boundingRect(bounding_rectangle)
         return w * h
 
-    def get_digit_box(filename, top, bottom):
+    def get_digit_box(self, filename, top, bottom):
         """Find the box that includes the student ID for extracting the digits.
 
         Args:
@@ -135,7 +151,7 @@ class Command(BaseCommand):
         ID_box = scaled[30:350, 355:1220]
         return ID_box
 
-    def get_digit_images(ID_box, num_digits):
+    def get_digit_images(self, ID_box, num_digits):
         """Find the digit images and return them in a list.
 
         Args:
@@ -161,7 +177,9 @@ class Command(BaseCommand):
             )
             contour_lists = imutils.grab_contours(contours)
             # sort by bounding box area
-            sorted_contours = sorted(contour_lists, key=bounding_rect_area, reverse=True)
+            sorted_contours = sorted(
+                contour_lists, key=self.bounding_rect_area, reverse=True
+            )
             # make sure we can find at least one contour
             if len(sorted_contours) == 0:
                 # can't make a prediction so return empty list
@@ -200,13 +218,19 @@ class Command(BaseCommand):
             py = int((28 - h) // 2)
             # and a bit more clean-up - put black around border where needed
             roi2 = cv2.copyMakeBorder(
-                roi, px, 28 - w - px, py, 28 - h - py, cv2.BORDER_CONSTANT, value=[0, 0, 0]
+                roi,
+                px,
+                28 - w - px,
+                py,
+                28 - h - py,
+                cv2.BORDER_CONSTANT,
+                value=[0, 0, 0],
             )
             processed_digits_images_list.append(roi2)
         return processed_digits_images_list
 
     def get_digit_prob(
-        prediction_model, id_page_file, top, bottom, num_digits, *, debug=True
+        self, prediction_model, id_page_file, top, bottom, num_digits, *, debug=True
     ):
         """Return a list of probability predictions for the student ID digits on the cropped image.
 
@@ -227,19 +251,18 @@ class Command(BaseCommand):
                 In case of errors it returns an empty list
         """
         id_page_file = Path(id_page_file)
-        # Retrieve the box including the digits in a row.
-        ID_box = get_digit_box(id_page_file, top, bottom)
-        if ID_box is None:  # some sort of error finding the ID box
-            print("Trouble finding the ID box")
+        ID_box = self.get_digit_box(id_page_file, top, bottom)
+        if ID_box is None:
+            self.stdout.write("Trouble finding the ID box")
             return []
         if debug:
             dbdir = Path("debug_id_reader")
             dbdir.mkdir(exist_ok=True)
             p = dbdir / f"idbox_{id_page_file.stem}.png"
             cv2.imwrite(str(p), ID_box)
-        processed_digits_images = get_digit_images(ID_box, num_digits)
+        processed_digits_images = self.get_digit_images(ID_box, num_digits)
         if len(processed_digits_images) == 0:
-            print("Trouble finding digits inside the ID box")
+            self.stdout.write("Trouble finding digits inside the ID box")
             return []
         if debug:
             for n, digit_image in enumerate(processed_digits_images):
@@ -258,8 +281,8 @@ class Command(BaseCommand):
             prob_lists.append(number_pred_prob[0])
         return prob_lists
 
-    def compute_probabilities(image_file_paths, top, bottom, num_digits):
-        """Return a list of probabilities for digits for each test.
+    def compute_probabilities(self, image_file_paths, top, bottom, num_digits):
+        """Return probabilities for digits for each test.
 
         Args:
             image_file_paths (dict): A dictionary including the paths of the images.
@@ -272,64 +295,69 @@ class Command(BaseCommand):
             dict: A dictionary which involves the probabilities for each image file.
         """
         prediction_model = load_model()
-        # Dictionary of test numbers their digit-probabilities
         probabilities = {}
         for testNumber, image_file in image_file_paths.items():
-            prob_lists = get_digit_prob(
+            prob_lists = self.get_digit_prob(
                 prediction_model, image_file, top, bottom, num_digits
             )
             if len(prob_lists) == 0:
-                print(
+                self.stdout.write(
                     f"Test{testNumber}: could not read digits, excluding from calculations"
                 )
                 continue
             elif len(prob_lists) != 8:
-                print(f"Test{testNumber}: unexpectedly len={len(prob_lists)}: {prob_lists}")
+                self.stdout.write(
+                    f"Test{testNumber}: unexpectedly len={len(prob_lists)}: {prob_lists}"
+                )
                 probabilities[testNumber] = prob_lists
             else:
                 probabilities[testNumber] = prob_lists
         return probabilities
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        sp = parser.add_subparsers(
+            dest="command",
+            description="ID reading",
+        )
+        sp_box = sp.add_parser(
+            "idbox", help="Extract a rectangular region from all pushed ID pages."
+        )
+        sp_box.add_argument(
             "top",
             type=float,
             help="top bound of rectangle to extract",
             default=None,
             nargs="?",
         )
-        parser.add_argument(
+        sp_box.add_argument(
             "bottom",
             type=float,
             help="bottom bound of rectangle to extract",
             default=None,
             nargs="?",
         )
-        parser.add_argument(
+        sp_box.add_argument(
             "left",
             type=float,
             help="left bound of rectangle to extract",
             default=None,
             nargs="?",
         )
-        parser.add_argument(
+        sp_box.add_argument(
             "right",
             type=float,
             help="right bound of rectangle to extract",
             default=None,
             nargs="?",
         )
-
-        parser.add_argument(
-            "--digits",
-            action="store_true",
-            help="Instead of extracting a box, get all of the digits, grouped by paper",
-        )
+        sp_idreader = sp.add_parser("idreader", help="Run existing ID reading tools.")
 
     def handle(self, *args, **options):
-        if options["digits"]:
-            self.get_digits_grouped_by_paper()
-        else:
+        if options["command"] == "idbox":
             self.get_id_box(
                 options["top"], options["bottom"], options["left"], options["right"]
             )
+        elif options["command"] == "idreader":
+            self.run_id_reader()
+        else:
+            self.print_help("manage.py", "plom_id")

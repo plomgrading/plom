@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Natalie Balashov
 
 from Identify.models import (
     PaperIDTask,
@@ -68,38 +67,6 @@ class IdentifyTaskService:
                     [task.paper.paper_number, latest.student_id, latest.student_name]
                 )
 
-        return id_list
-
-    def get_unidentified_tasks(self, user):
-        """
-        Return the results of incomplete tasks (not yet IDed)
-        With the form [[paper_id, student_id, student_name]]
-        """
-
-        id_list = []
-        not_IDed_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
-        for task in not_IDed_tasks:
-            latest = self.get_latest_id_results(task)
-            if latest:
-                id_list.append(
-                    [task.paper.paper_number, latest.student_id, latest.student_name]
-                )
-        return id_list
-
-    def get_all_identified_tasks(self):
-        """
-        Return the results of all previously completed tasks
-        With the form [[paper_id, student_id, student_name]]
-        """
-
-        id_list = []
-        done_tasks = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
-        for task in done_tasks:
-            latest = self.get_latest_id_results(task)
-            if latest:
-                id_list.append(
-                    [task.paper.paper_number, latest.student_id, latest.student_name]
-                )
         return id_list
 
     def get_id_progress(self):
