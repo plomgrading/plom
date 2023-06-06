@@ -10,6 +10,9 @@ from shlex import split
 from django.core.management import call_command
 from django.conf import settings
 
+from Scan.services import ScanCastService
+from Scan.models import ExtraStagingImage, StagingImage
+
 
 class DemoCreationService:
     """Handle creating the demo exam and populating the database."""
@@ -19,7 +22,7 @@ class DemoCreationService:
         call_command("plom_create_groups")
         call_command("plom_create_demo_users")
 
-    def prepare_assessment(self):
+    def prepare_assessment(self, config):
         print("Prepare assessment: ")
         print(
             "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
@@ -52,7 +55,9 @@ class DemoCreationService:
             "upload",
             "useful_files_for_testing/cl_for_demo.csv",
         )
-        call_command("plom_preparation_qvmap", "generate")
+
+        n_to_produce = config["num_to_produce"]
+        call_command("plom_preparation_qvmap", "generate", f"-n {n_to_produce}")
 
         call_command(
             "dumpdata",
@@ -212,27 +217,37 @@ class DemoCreationService:
         call_command("plom_rubrics", "init")
         call_command("plom_rubrics", "push", "--demo")
 
-    def map_extra_pages_to_bundle4(self):
-        """
-        Map the extra pages generated in fake_bundle4.
+    def map_extra_pages(self, config):
+        """Map extra pages that are in otherwise fully fixed-page bundles."""
+        caster = ScanCastService()
+        bundles = config["bundles"]
+        n_bundles = len(bundles)
 
-        TODO: This function is very hardcoded.
-        """
+        for i in range(n_bundles):
+            bundle = bundles[i]
+            bundle_slug = f"fake_bundle{i+1}"
+            if "extra_page_papers" in bundle.keys():
+                extra_page_papers = bundle["extra_page_papers"]
+                for paper in extra_page_papers:
+                    extra_pages = ExtraStagingImage.objects.filter(
+                        staging_image__bundle__slug=bundle_slug,
+                        paper_number=paper,
+                    )
 
-        extra_pages = {31: [2, 3], 32: [10, 11], 33: [18, 19]}
-
-        for paper_number, pages in extra_pages.items():
-            print(f"Assigning extra pages to test {paper_number} in fake bundle 4")
-            for question, page in enumerate(pages):
-                call_command(
-                    "plom_staging_assign_extra",
-                    "assign",
-                    "demoScanner1",
-                    "fake_bundle4",
-                    "-i",
-                    page,
-                    "-t",
-                    paper_number,
-                    "-q",
-                    question + 1,
-                )
+                    # command must be called twice, since the demo generates double extra pages
+                    for question, page in enumerate(extra_pages):
+                        print(question)
+                        print(page)
+                        print(page.staging_image)
+                        call_command(
+                            "plom_staging_assign_extra",
+                            "assign",
+                            "demoScanner1",
+                            bundle_slug,
+                            "-i",
+                            page.staging_image.bundle_order,
+                            "-t",
+                            paper,
+                            "-q",
+                            question + 1,
+                        )
