@@ -3,25 +3,17 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020-2023 Colin B. Macdonald
-# Copyright (c) 2022 Edith Coates
 # Copyright (C) 2022-2023 Natalie Balashov
 
-
-import math
+import csv
+import numpy as np
 from pathlib import Path
+from scipy.optimize import linear_sum_assignment
 
-import numpy as np
-import cv2
-import imutils
-from imutils.perspective import four_point_transform
-
-from .model_utils import load_model
-
-
-from lapsolver import solve_dense
-import numpy as np
-
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+
+from Identify.services import IdentifyTaskService
 
 
 class Command(BaseCommand):
@@ -30,144 +22,112 @@ class Command(BaseCommand):
     python3 manage.py auto_ider
     """
 
-    help = ""
+    help = "Run matching tools to generate predictions."
 
-    def func_name(self, top, bottom, left, right):
-        idservice = IDReaderService()
-        box = (top, bottom, left, right)
-        if any(x is None for x in box):
-            if all(x is None for x in box):
-                box = None
-            else:
-                raise CommandError("If you provide one dimension you must provide all")
+    def run_auto_iding(self):
         try:
-            idservice.get_id_box_cmd(box)
-            self.stdout.write("Extracted the ID box from all known ID pages.")
+            sids, probs = self.get_sids_and_probabilities()
+            self.predict_id_greedy(sids, probs)
+            self.predict_id_lap_solver(sids, probs)
+            self.stdout.write("Ran Greedy and Linear Assignment matching problems and saved results to two CSV files.")
         except ValueError as err:
             raise CommandError(err)
 
-##########################################################################################
-########################## SERVER FUNCTIONS ##############################################
+    def get_sids_and_probabilities():
+        """Retrieve student ID numbers from `classlist.csv` and
+           probability data from `id_prob_heatmaps.json`
 
-def get_sids_and_probabilities():
-    """Retrieve student ID numbers from `classlist.csv` and
-       probability data from `id_prob_heatmaps.json`
+        Returns:
+            tuple: a 2-tuple consisting of two lists, where the first contains student ID numbers
+                   and the second contains the probability data
 
-    Returns:
-        tuple: a 2-tuple consisting of two lists, where the first contains student ID numbers
-               and the second contains the probability data
+        Raises:
+            FileNotFoundError: no probability data
+        """
+        heatmaps_file = specdir / "id_prob_heatmaps.json"
 
-    Raises:
-        RuntimeError: id reader still running
-        FileNotFoundError: no probability data
-    """
-    heatmaps_file = specdir / "id_prob_heatmaps.json"
+        # implicitly raises FileNotFoundError if no heatmap
+        with open(heatmaps_file, "r") as fh:
+            probabilities = json.load(fh)
+        # ugh, undo Json mucking our int keys into str
+        probabilities = {int(k): v for k, v in probabilities.items()}
 
-    # implicitly raises FileNotFoundError if no heatmap
-    with open(heatmaps_file, "r") as fh:
-        probabilities = json.load(fh)
-    # ugh, undo Json mucking our int keys into str
-    probabilities = {int(k): v for k, v in probabilities.items()}
+        self.stdout.write("Getting the classlist")
+        sids = []
+        with open(specdir / "classlist.csv", newline="") as csvfile:
+            csv_reader = csv.reader(csvfile, delimiter=",")
+            next(csv_reader, None)  # skip the header
+            for row in csv_reader:
+                sids.append(row[0])
 
-    log.info("Getting the classlist")
-    sids = []
-    with open(specdir / "classlist.csv", newline="") as csvfile:
-        csv_reader = csv.reader(csvfile, delimiter=",")
-        next(csv_reader, None)  # skip the header
-        for row in csv_reader:
-            sids.append(row[0])
+        return sids, probabilities
 
-    return sids, probabilities
+    def predict_id_greedy(self, sids, probabilities):
+        """Match each unidentified paper against best fit in classlist.
 
+        Returns:
+            None: instead saves result to a csv file.
+        """
+        greedy_predictions = greedy(sids, probabilities)
 
-def predict_id_greedy(self):
-    """Match each unidentified paper against best fit in classlist.
+        with open(settings.MEDIA_ROOT / "greedy_predictions.csv", "w") as f:
+            write = csv.writer(f)
+            write.writerow(("paper_num", "student_ID", "certainty"))
+            write.writerows(lap_predictions)
 
-    Insert these predictions into the database as "MLGreedy" predictions.
+    def predict_id_lap_solver(self, sids, probabilities):
+        """Matching unidentified papers against classlist via linear assignment problem.
 
-    Returns:
-        string: a message that communicates whether the predictions were
-        successfully inserted into the DB.
-    """
-    sids, probabilities = get_sids_and_probabilities()
-    greedy_predictions = greedy(sids, probabilities)
+        Get the classlist and remove all people that are already IDed
+        against a paper.  Get the list of unidentified papers.
 
-    # temporary, for debugging/experimenting
-    # with open(specdir / "greedy_predictions.json", "w") as f:
-    #     json.dump(greedy_predictions, f)
+        Probably some cannot be read: drop those from the list of unidentified
+        papers.
 
-    ok, msg = self.ID_put_predictions(greedy_predictions, "MLGreedy")
-    assert ok
-    return msg
+        Match the two.
 
+        Returns:
+            None: instead saves result to a csv file.
 
-def predict_id_lap_solver(self):
-    """Matching unidentified papers against classlist via linear assignment problem.
+        Raises:
+            IndexError: something is zero, degenerate assignment problem.
+        """
+        self.stdout.write(f"Original class list has {len(sids)} students.\n")
 
-    Get the classlist and remove all people that are already IDed
-    against a paper.  Get the list of unidentified papers.
+        id_task_service = IdentifyTaskService()
+        ided_papers = id_task_service.get_all_identified_tasks()
+        for paper in ided_papers:
+            try:
+                sids.remove(paper[1])
+            except ValueError:
+                pass
 
-    Probably some cannot be read: drop those from the list of unidentified
-    papers.
+        unidentified_papers = id_task_service.get_unidentified_tasks()
+        self.stdout.write("\nAssignment problem: ")
+        self.stdout.write(f"{len(unidentified_papers)} unidentified papers to match with " + 
+                f"{len(sids)} unused names in the classlist.")
 
-    Match the two.
+        # exclude papers for which we don't have probabilities
+        papers = [n for n in unidentified_papers if n in probabilities]
+        if len(papers) < len(unidentified_papers):
+            self.stdout.write(f"\nNote: {len(unidentified_papers) - len(papers)} papers " + 
+                    f"were not autoread; have {len(papers)} papers to match.\n")
 
-    Insert these predictions into the database as "MLLAP" predictions.
+        if len(papers) == 0 or len(sids) == 0:
+            raise IndexError(
+                f"Assignment problem is degenerate: {len(papers)} unidentified "
+                f"machine-read papers and {len(sids)} unused students."
+            )
 
-    TODO: consider doing this client-side, although Manager tool would
-    then depend on lapsolver or perhaps SciPy's linear_sum_assignment
+        self.stdout.write("\nBuilding cost matrix and solving assignment problem...")
+        t = time.process_time()
+        lap_predictions = lap_solver(papers, sids, probabilities)
+        self.stdout.write(f" done in {time.process_time() - t:.02} seconds.")
 
-    Returns:
-        str: multiline status text, appropriate to show to a user.
-
-    Raises:
-        IndexError: something is zero, degenerate assignment problem.
-    """
-    sids, probabilities = get_sids_and_probabilities()
-
-    status = f"Original class list has {len(sids)} students.\n"
-
-    X = self.DB.IDgetIdentifiedTests()
-    for x in X:
-        try:
-            sids.remove(x[1])
-        except ValueError:
-            pass
-
-    unidentified_papers = self.DB.IDgetUnidentifiedTests()
-    status += "\nAssignment problem: "
-    status += f"{len(unidentified_papers)} unidentified papers to match with "
-    status += f"{len(sids)} unused names in the classlist."
-
-    # exclude papers for which we don't have probabilities
-    papers = [n for n in unidentified_papers if n in probabilities]
-    if len(papers) < len(unidentified_papers):
-        status += f"\nNote: {len(unidentified_papers) - len(papers)} papers "
-        status += f"were not autoread; have {len(papers)} papers to match.\n"
-
-    if len(papers) == 0 or len(sids) == 0:
-        raise IndexError(
-            f"Assignment problem is degenerate: {len(papers)} unidentified "
-            f"machine-read papers and {len(sids)} unused students."
-        )
-
-    status += "\nBuilding cost matrix and solving assignment problem..."
-    t = time.process_time()
-    lap_predictions = lap_solver(papers, sids, probabilities)
-    status += f" done in {time.process_time() - t:.02} seconds."
-
-    # temporary, for debugging/experimenting
-    # with open(specdir / "lap_predictions.json", "w") as f:
-    #     json.dump(lap_predictions, f)
-
-    ok, msg = self.ID_put_predictions(lap_predictions, "MLLAP")
-    assert ok
-    status += "\n" + msg
-
-    return status
-
-##########################################################################################
-########################### MATCHING FUNCTIONS #########################################
+        with open(settings.MEDIA_ROOT / "lap_predictions.csv", "w") as f:
+            write = csv.writer(f)
+            write.writerow(("paper_num", "student_ID", "certainty"))
+            write.writerows(lap_predictions)
 
     def calc_log_likelihood(self, student_ID, prediction_probs):
         """Calculate the log likelihood that an ID prediction matches the student ID.
@@ -197,7 +157,6 @@ def predict_id_lap_solver(self):
 
         return log_likelihood
 
-
     def assemble_cost_matrix(self, test_numbers, student_IDs, probabilities):
         """Compute the cost matrix between list of tests and list of student IDs.
 
@@ -217,13 +176,12 @@ def predict_id_lap_solver(self):
         for test in test_numbers:
             row = []
             for student_ID in student_IDs:
-                row.append(calc_log_likelihood(student_ID, probabilities[test]))
+                row.append(self.calc_log_likelihood(student_ID, probabilities[test]))
             costs.append(row)
         return costs
 
-
     def lap_solver(self, test_numbers, student_IDs, probabilities):
-        """Run linear assignment problem solver, return prediction results.
+        """Run SciPy's linear sum assignment problem solver, return prediction results.
 
         Args:
             test_numbers (list): int, the ones we want to match.
@@ -234,18 +192,10 @@ def predict_id_lap_solver(self):
         Returns:
             list: triples of (`paper_number`, `student_ID`, `certainty`),
             where certainty is the mean of digit probabilities for the student_ID selected by LAP solver.
-
-        use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
-        (as implemented in the ``lapsolver`` package)
-        to find least cost assignment of tests to studentIDs.
-
-        This is potentially time-consuming but in practice for 1000 papers I observed
-        a tiny fraction of a section.  The package ``lapsolver`` itself notes
-        3000x3000 in around 3 seconds.
         """
-        cost_matrix = assemble_cost_matrix(test_numbers, student_IDs, probabilities)
+        cost_matrix = self.assemble_cost_matrix(test_numbers, student_IDs, probabilities)
 
-        row_IDs, column_IDs = solve_dense(cost_matrix)
+        row_IDs, column_IDs = linear_sum_assignment(cost_matrix)
 
         predictions = []
         for r, c in zip(row_IDs, column_IDs):
@@ -259,7 +209,6 @@ def predict_id_lap_solver(self):
 
             predictions.append((test_num, sid, certainty))
         return predictions
-
 
     def greedy(self, student_IDs, probabilities):
         """Generate greedy predictions for student ID numbers.
@@ -302,9 +251,6 @@ def predict_id_lap_solver(self):
             predictions.append((paper_num, student_IDs[largest_prob], max(sid_probs)))
 
         return predictions
-#########################################################################################
-##########################################################################################
-
 
     def add_arguments(self, parser):
         parser.add_argument(

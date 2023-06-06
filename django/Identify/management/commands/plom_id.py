@@ -6,7 +6,6 @@
 # Copyright (c) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
-
 import math
 from pathlib import Path
 
@@ -24,7 +23,7 @@ from Identify.services.id_reader import IDReaderService
 
 
 class Command(BaseCommand):
-    """Management command for extracting the ID box.
+    """Management command for extracting the ID box and doing ID digit reading.
 
     python3 manage.py plom_id (top) (bottom) (left) (right)
     python3 manage.py plom_id --digits
@@ -54,12 +53,10 @@ class Command(BaseCommand):
         except ValueError as err:
             raise CommandError(err)
 
-##########################################################################################
-########################## LEGACY ID READING ####################################################
     def bounding_rect_area(bounding_rectangle):
         """Return the area of the rectangle.
 
-        Define this in order to sort by area of bounding rect.
+        Used to sort by area of bounding rect.
 
         Args:
             bounding_rectangle (list): Target rectangle object.
@@ -69,7 +66,6 @@ class Command(BaseCommand):
         """
         _, _, w, h = cv2.boundingRect(bounding_rectangle)
         return w * h
-
 
     def get_digit_box(filename, top, bottom):
         """Find the box that includes the student ID for extracting the digits.
@@ -137,9 +133,7 @@ class Command(BaseCommand):
 
         # the digit box numbers again come from the IDBox template and numerology
         ID_box = scaled[30:350, 355:1220]
-
         return ID_box
-
 
     def get_digit_images(ID_box, num_digits):
         """Find the digit images and return them in a list.
@@ -153,12 +147,10 @@ class Command(BaseCommand):
                 In case of errors, returns an empty list
         """
         processed_digits_images_list = []
-
         for digit_index in range(num_digits):
             # TODO: Maybe remove magical hackery.
             # extract the kth digit box. Some magical hackery / numerology here.
             digit1 = ID_box[0:100, digit_index * 109 + 5 : (digit_index + 1) * 109 - 5]
-
             # TODO: I think I could remove all of this.
             # Now some hackery to centre on the digit so closer to mnist dataset.
             # Find the contours and centre on the largest (by area).
@@ -211,9 +203,7 @@ class Command(BaseCommand):
                 roi, px, 28 - w - px, py, 28 - h - py, cv2.BORDER_CONSTANT, value=[0, 0, 0]
             )
             processed_digits_images_list.append(roi2)
-
         return processed_digits_images_list
-
 
     def get_digit_prob(
         prediction_model, id_page_file, top, bottom, num_digits, *, debug=True
@@ -242,25 +232,21 @@ class Command(BaseCommand):
         if ID_box is None:  # some sort of error finding the ID box
             print("Trouble finding the ID box")
             return []
-
         if debug:
             dbdir = Path("debug_id_reader")
             dbdir.mkdir(exist_ok=True)
             p = dbdir / f"idbox_{id_page_file.stem}.png"
             cv2.imwrite(str(p), ID_box)
-
         processed_digits_images = get_digit_images(ID_box, num_digits)
         if len(processed_digits_images) == 0:
             print("Trouble finding digits inside the ID box")
             return []
-
         if debug:
             for n, digit_image in enumerate(processed_digits_images):
                 p = dbdir / f"digit_{id_page_file.stem}-pos{n}.png"
                 cv2.imwrite(str(p), digit_image)
                 # cv2.imshow("argh", digit_image)
                 # cv2.waitKey(0)
-
         prob_lists = []
         for digit_image in processed_digits_images:
             # get it into format needed by model predictor
@@ -270,9 +256,7 @@ class Command(BaseCommand):
             digit_vector = digit_vector.reshape((1, np.prod(digit_image.shape)))
             number_pred_prob = prediction_model.predict_proba(digit_vector)
             prob_lists.append(number_pred_prob[0])
-
         return prob_lists
-
 
     def compute_probabilities(image_file_paths, top, bottom, num_digits):
         """Return a list of probabilities for digits for each test.
@@ -288,10 +272,8 @@ class Command(BaseCommand):
             dict: A dictionary which involves the probabilities for each image file.
         """
         prediction_model = load_model()
-
         # Dictionary of test numbers their digit-probabilities
         probabilities = {}
-
         for testNumber, image_file in image_file_paths.items():
             prob_lists = get_digit_prob(
                 prediction_model, image_file, top, bottom, num_digits
@@ -306,12 +288,7 @@ class Command(BaseCommand):
                 probabilities[testNumber] = prob_lists
             else:
                 probabilities[testNumber] = prob_lists
-
         return probabilities
-
-##########################################################################################################
-##########################################################################################################
-
 
     def add_arguments(self, parser):
         parser.add_argument(
