@@ -5,6 +5,7 @@
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2023 Julian Lapenna
 
 import logging
 
@@ -16,6 +17,7 @@ from django.db import transaction
 
 from rest_framework.exceptions import ValidationError
 
+from Mark.models import Annotation
 from Papers.services import SpecificationService
 from Rubrics.serializers import (
     RubricSerializer,
@@ -283,3 +285,26 @@ class RubricService:
         # if rubric_data["kind"] not in ["relative", "neutral", "absolute"]:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
+
+    def get_annotation_uses(self, rubric: Rubric) -> list:
+        """Get the list of annotations that use this rubric.
+
+        Args:
+            Rubric instance
+
+        Returns:
+            list of Annotation instances
+        """
+        return list(rubric.annotations.all())
+
+    def get_rubrics_for_annotation(self, annotation: Annotation) -> list:
+        """Get the list of rubrics that are used by this annotation.
+
+        Args:
+            Annotation instance
+
+        Returns:
+            list of Rubric instances
+        """
+        rubrics = Rubric.objects.filter(annotations=annotation)
+        return list(annotation.rubrics.all())
