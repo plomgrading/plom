@@ -212,7 +212,7 @@ class DemoBundleService:
             tw.write_text(pdf_doc[-2])
 
     def append_duplicate_page(self, pdf_doc, page_number):
-        last_page = len(pdf_doc - 1)
+        last_page = len(pdf_doc) - 1
         pdf_doc.fullcopy_page(last_page)
 
     def insert_qr_from_previous_page(self, pdf_doc, paper_number):
