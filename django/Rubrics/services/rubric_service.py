@@ -336,7 +336,19 @@ class RubricService:
         rubrics = Rubric.objects.filter(annotations__in=annotations)
         print("rubrics from papers: ", rubrics)
         return rubrics
+    
+    def get_rubrics_from_user(self, username: str):
+        """Get the list of rubrics used by this user.
 
+        Args:
+            username: username of the user
+
+        Returns:
+            Queryset: Rubric instances
+        """
+        user = User.objects.get(username=username)
+        return Rubric.objects.filter(user=user)
+    
     def _rubric_dict(self, r: Rubric):
         """Gets a dictionary representation of a rubric.
 

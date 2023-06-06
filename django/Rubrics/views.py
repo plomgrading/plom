@@ -41,6 +41,9 @@ class RubricLandingPageView(ManagerRequiredView):
         print()
         print("now get rubrics from paper 62:")
         print(self.rs.get_rubrics_from_paper(62))
+        print()
+        print("rubrics marked by manager:")
+        print(self.rs.get_rubrics_from_user("manager"))  
 
         return render(request, self.template_name, context=context)
 
