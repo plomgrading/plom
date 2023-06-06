@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 
 from Identify.models import (
     PaperIDTask,
@@ -9,55 +10,45 @@ from Papers.models import Paper, IDPage
 
 
 class IdentifyTaskService:
-    """
-    Class to encapsulate methods for handing out paper identification tasks
-    to the client.
-    """
+    """Class to encapsulate methods for handing out paper identification tasks to the client."""
 
     def are_there_id_tasks(self):
-        """
-        Return True if there is at least one ID task in the database.
-        """
-
+        """Return True if there is at least one ID task in the database."""
         return PaperIDTask.objects.exists()
 
     def create_task(self, paper):
-        """
-        Create an identification task for a paper.
+        """Create an identification task for a paper.
 
         Args:
             paper: a Paper instance
         """
-
         task = PaperIDTask(paper=paper)
         task.save()
 
     def id_task_exists(self, paper):
-        """
-        Return true if an ID tasks exists for a particular paper.
-        """
-
+        """Return true if an ID tasks exists for a particular paper."""
         return PaperIDTask.objects.filter(paper=paper).exists()
 
     def get_latest_id_results(self, task):
-        """
-        Return the latest results from a PaperIDAction instance
+        """Return the latest results from a PaperIDAction instance.
 
         Args:
             task: reference to a PaperIDTask instance
         """
-
         latest = PaperIDAction.objects.filter(task=task)
         latest = latest.order_by("-time")
         if latest:
             return latest[0]
 
     def get_done_tasks(self, user):
-        """
-        Return the results of previously completed tasks for a user
-        With the form [[paper_id, student_id, student_name]]
-        """
+        """Retrieve the results of previously completed ID tasks for a user.
 
+        Args:
+            user: reference to a User instance
+
+        Returns:
+            list: contains [[paper_id, student_id, student_name]]
+        """
         id_list = []
         done_tasks = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
         for task in done_tasks:
@@ -74,29 +65,22 @@ class IdentifyTaskService:
 
         Returns:
             list: A list including the number of identified papers
-            and the total number of papers.
+                and the total number of papers.
         """
-
         completed = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
         total = PaperIDTask.objects.all()
 
         return [len(completed), len(total)]
 
     def get_next_task(self):
-        """
-        Return the next available identification task.
-        """
-
+        """Return the next available identification task."""
         todo_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
         todo_tasks = todo_tasks.order_by("paper__paper_number")
         if todo_tasks:
             return todo_tasks.first()
 
     def claim_task(self, user, paper_number):
-        """
-        Claim an ID task for a user.
-        """
-
+        """Claim an ID task for a user."""
         try:
             task = PaperIDTask.objects.get(paper__paper_number=paper_number)
         except PaperIDTask.DoesNotExist:
@@ -110,19 +94,13 @@ class IdentifyTaskService:
         task.save()
 
     def get_id_page(self, paper_number):
-        """
-        Return the ID page image of a certain test-paper.
-        """
-
+        """Return the ID page image of a certain test-paper."""
         id_page = IDPage.objects.get(paper__paper_number=paper_number)
         id_img = id_page.image
         return id_img
 
     def identify_paper(self, user, paper_number, student_id, student_name):
-        """
-        Identify a test-paper and close its associated task.
-        """
-
+        """Identify a test-paper and close its associated task."""
         try:
             task = PaperIDTask.objects.get(paper__paper_number=paper_number)
         except PaperIDTask.DoesNotExist:
@@ -137,27 +115,22 @@ class IdentifyTaskService:
         task.save()
 
     def surrender_task(self, user, task):
-        """
-        Remove a user from a marking task, set its status to 'todo', and
-        save the action to the database.
+        """Remove user from a marking task, set status to 'todo', and save action to the database.
 
         Args:
             user: reference to a User instance
             task: reference to a MarkingTask instance
         """
-
         task.assigned_user = None
         task.status = PaperIDTask.TO_DO
         task.save()
 
     def surrender_all_tasks(self, user):
-        """
-        Surrender all of the tasks currently assigned to the user.
+        """Surrender all of the tasks currently assigned to the user.
 
         Args:
             user: reference to a User instance
         """
-
         user_tasks = PaperIDTask.objects.filter(
             assigned_user=user, status=PaperIDTask.OUT
         )
