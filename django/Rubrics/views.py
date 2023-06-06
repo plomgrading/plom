@@ -37,6 +37,10 @@ class RubricLandingPageView(ManagerRequiredView):
         print(anns)
         print("now get rubrics from annotation:")
         print(self.rs.get_rubrics_from_annotation(anns[0]))
+        print()
+        print()
+        print("now get rubrics from paper 62:")
+        print(self.rs.get_rubrics_from_paper(62))
 
         return render(request, self.template_name, context=context)
 

@@ -21,6 +21,8 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from Mark.models import Annotation
+from Mark.models.tasks import MarkingTask
+from Papers.models.paper_structure import Paper
 from Papers.services import SpecificationService
 from Rubrics.serializers import (
     RubricSerializer,
@@ -297,20 +299,42 @@ class RubricService:
             Rubric instance
 
         Returns:
-            list of Annotation instances
+            Queryset: Annotation instances
         """
-        return list(rubric.annotations.all())
+        return rubric.annotations.all() # consider getting a key instead of rubric
 
-    def get_rubrics_from_annotation(self, annotation: Annotation) -> list:
+    def get_rubrics_from_annotation(self, annotation):
         """Get the list of rubrics that are used by this annotation.
 
         Args:
-            Annotation instance
+            annotation: (Annotation) Annotation instance
 
         Returns:
-            list of Rubric instances
+            Queryset: Rubric instances
         """
-        rubrics = Rubric.objects.filter(annotations=annotation)
+        return Rubric.objects.filter(annotations=annotation) # consider getting a key instead of annotation
+    
+    def get_rubrics_from_paper(self, paper: int):
+        """Get the list of rubrics that are used by this paper.
+
+        Args:
+            paper: Paper instance
+
+        Returns:
+            Queryset: Rubric instances
+        """ 
+        # need to check that this actually works
+
+        # consider getting a paper number instead of paper
+        paper_obj = Paper.objects.get(pk=paper)
+        print("paper_obj: ", paper_obj)
+        # print(MarkingTask.objects.all())
+        marking_tasks = MarkingTask.objects.filter(paper=paper_obj)
+        print("marking_tasks: ", marking_tasks)
+        annotations = Annotation.objects.filter(task__in=marking_tasks)
+        print("annotations from tasks: ", annotations)
+        rubrics = Rubric.objects.filter(annotations__in=annotations)
+        print("rubrics from papers: ", rubrics)
         return rubrics
 
     def _rubric_dict(self, r: Rubric):
