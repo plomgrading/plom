@@ -1,0 +1,42 @@
+<!-- 
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Edith Coates 
+    Copyright (C) 2023 Julian Lapenna
+-->
+
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block page_heading %}Rubrics{% endblock %}
+
+{% block main_content %}
+
+<h3>Generic plotting:</h3>
+<div style="display: flex;">
+  <div style="flex: 1;">
+    <img class="img-plot" src="{% static 'value_histogram.png' %}" style="width: 600px"><br><br>
+  </div>
+  <div style="flex: 1;">
+    <img class="img-plot" src="{% static 'delta_histogram.png' %}" style="width: 600px"><br><br>
+  </div>
+</div>
+<div>
+  <div>
+    <h3> Simple form with feedback: </h3>
+    <form method="post" action="{% url 'select' %}">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <input type="submit" value="Submit" />
+    </form>
+  </div>
+  <br>
+  <h5> Selected options: </h5>
+  <div>
+    {% if request.session.options %}
+    {{ request.session.options|join:", " }}
+    {% else %}
+    <p>Nothing</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
