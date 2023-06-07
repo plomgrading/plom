@@ -54,13 +54,12 @@ class Command(BaseCommand):
 
             self.stdout.write("Extracting ID boxes...")
             idservice = IDReaderService()
-            id_box_files = idservice.get_id_box_cmd(None)
+            # id_box_files = idservice.get_id_box_cmd(None)
+            id_box_files = idservice.get_id_box_cmd((0.1, 0.8, 0.02, 0.98))
 
             self.stdout.write("Computing probabilities for student ID digits.")
             student_number_length = 8
-            probs = self.compute_probabilities(
-                id_box_files, 0, 1, student_number_length
-            )
+            probs = self.compute_probabilities(id_box_files, student_number_length)
 
             probs = {k: [x.tolist() for x in v] for k, v in probs.items()}
             with open(settings.MEDIA_ROOT / "id_prob_heatmaps.json", "w") as fh:
@@ -83,29 +82,18 @@ class Command(BaseCommand):
         _, _, w, h = cv2.boundingRect(bounding_rectangle)
         return w * h
 
-    def get_digit_box(self, filename, top, bottom):
+    def get_digit_box(self, filename):
         """Find the box that includes the student ID for extracting the digits.
 
         Args:
             filename (str/pathlib.Path): the image of the ID page.
-            top (float): Top of the cropping in `[0, 1]`, a percentage of
-                the height of the image.
-            bottom (bottom): Bottom of the cropping in `[0, 1`].  Its
-                often helpful to crop in case there are other large boxes on
-                the page, which might confuse the box-finder.
 
         Returns:
             None: in case of some sort of error, or
             numpy.ndarray: The processed image that includes the student
                 ID digits.
         """
-        front_image = cv2.imread(str(filename))
-
-        top = math.floor(top * front_image.shape[0])
-        bottom = math.ceil(bottom * front_image.shape[0])
-        # Extract only the required portion of the image.
-        cropped_image = front_image[:][top:bottom]
-
+        cropped_image = cv2.imread(str(filename))
         # Process the image so as to find the contours.
         # Grey, Blur and Edging are standard processes for text detection.
         # TODO: I must make these better formatted.
@@ -229,16 +217,12 @@ class Command(BaseCommand):
             processed_digits_images_list.append(roi2)
         return processed_digits_images_list
 
-    def get_digit_prob(
-        self, prediction_model, id_page_file, top, bottom, num_digits, *, debug=True
-    ):
+    def get_digit_prob(self, prediction_model, id_page_file, num_digits, *, debug=True):
         """Return a list of probability predictions for the student ID digits on the cropped image.
 
         Args:
             prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
             id_page_file (str/pathlib.Path): File path for the image which includes the ID box.
-            top (float): Top boundary of image in `[0, 1]`.
-            bottom (float): Bottom boundary of image in `[0, 1]`.
             num_digits (int): Number of digits in the student ID.
 
         Keyword Args:
@@ -251,12 +235,12 @@ class Command(BaseCommand):
                 In case of errors it returns an empty list
         """
         id_page_file = Path(id_page_file)
-        ID_box = self.get_digit_box(id_page_file, top, bottom)
+        ID_box = self.get_digit_box(id_page_file)
         if ID_box is None:
             self.stdout.write("Trouble finding the ID box")
             return []
         if debug:
-            dbdir = Path("debug_id_reader")
+            dbdir = Path(settings.MEDIA_ROOT / "debug_id_reader")
             dbdir.mkdir(exist_ok=True)
             p = dbdir / f"idbox_{id_page_file.stem}.png"
             cv2.imwrite(str(p), ID_box)
@@ -281,15 +265,11 @@ class Command(BaseCommand):
             prob_lists.append(number_pred_prob[0])
         return prob_lists
 
-    def compute_probabilities(self, image_file_paths, top, bottom, num_digits):
+    def compute_probabilities(self, image_file_paths, num_digits):
         """Return probabilities for digits for each test.
 
         Args:
             image_file_paths (dict): A dictionary including the paths of the images.
-            top (float): Top boundary of image in `[0, 1]` where 0 is the
-                top of the page and 1 is the bottom.
-            bottom (float): Bottom boundary of image in `[0, 1]`.
-            num_digits (int): Number of digits in the student ID.
 
         Returns:
             dict: A dictionary which involves the probabilities for each image file.
@@ -297,9 +277,7 @@ class Command(BaseCommand):
         prediction_model = load_model()
         probabilities = {}
         for testNumber, image_file in image_file_paths.items():
-            prob_lists = self.get_digit_prob(
-                prediction_model, image_file, top, bottom, num_digits
-            )
+            prob_lists = self.get_digit_prob(prediction_model, image_file, num_digits)
             if len(prob_lists) == 0:
                 self.stdout.write(
                     f"Test{testNumber}: could not read digits, excluding from calculations"
