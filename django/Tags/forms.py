@@ -4,6 +4,6 @@
 from django import forms
 
 class TagFormFilter(forms.Form):
-    text_entry1 = forms.CharField(required=False, widget=forms.TextInput, label='tag_filter')
-    strict_match = forms.BooleanField(required=False, label='strict_match')
+    tag_filter_text = forms.CharField(required=False, widget=forms.TextInput, label="Tag Text")
+    strict_match = forms.BooleanField(required=False, label="Strict Match")
    
