@@ -12,4 +12,62 @@
 <div>
     <p>This page has been intentionally left blank (apart from this line here)</p>
 </div>
+<div>
+    <h5> Simple text form: </h5>
+    <form method="POST" action="{% url 'tag_filter' %}">
+        {% csrf_token %}
+        {{ text_field_form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+</div>
+<div>
+    <br><br><br>
+    Well, well, well, what do we have here?
+    <br>
+    It looks like you said "{{ text_entry1 }}"!
+    <br>
+    There are {{ tag_count }} tags that contain "{{ text_entry1 }}"
+    <br>
+</div>
+<div>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 30%;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #333;
+            color: #fff;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #e9e9e9;
+        }
+    </style>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tag</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rubric in rubrics %}
+            <tr>
+                <td>{{ rubric.key }}</td>
+                <td>{{ rubric.tags }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

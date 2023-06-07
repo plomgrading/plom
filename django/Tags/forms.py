@@ -3,4 +3,7 @@
 
 from django import forms
 
-# add forms here
+class TagFormFilter(forms.Form):
+    text_entry1 = forms.CharField(required=False, widget=forms.TextInput, label='tag_filter')
+    strict_match = forms.BooleanField(required=False, label='strict_match')
+   
