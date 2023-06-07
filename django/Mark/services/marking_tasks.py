@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Julian Lapenna
 
 import json
 import pathlib
@@ -257,6 +258,7 @@ class MarkingTaskService:
         """Save a user's marking attempt to the database."""
         task = self.get_task_from_code(code)
         editions_so_far = Annotation.objects.filter(task=task).count()
+
         annotation = Annotation(
             edition=editions_so_far + 1,
             score=score,
@@ -266,7 +268,15 @@ class MarkingTaskService:
             task=task,
             user=user,
         )
+
         annotation.save()
+
+        # link to rubric object
+        for item in data["sceneItems"]:
+            if item[0] == "GroupDeltaText":
+                rubric = Rubric.objects.get(key=item[3])
+                rubric.annotations.add(annotation)
+                rubric.save()
 
     def get_n_marked_tasks(self):
         """Return the number of marking tasks that are completed."""
