@@ -1089,9 +1089,9 @@ linuxbin_ubuntu2204:
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 macos12_client:
-  image: macos-12-xcode-13
+  image: macos-12-xcode-14
   tags:
-  - shared-macos-amd64
+  - saas-macos-medium-m1
   rules:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
