@@ -20,7 +20,7 @@
                         </button>
                     {% endif %}
                 </div>
-                <div class="col d-flex justify-content-center">
+                <div class="col d-flex justify-content-center" style="height:600px;">
                     <img src="{% url 'scan_get_image' timestamp index %}"
                          class="img-fluid shadow"
                          alt=""
@@ -106,10 +106,10 @@
 		    {% else %}
 			<div>
 				<p>Rotate Image:</p>
-				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate counter-clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_ccw' timestamp index %}" hx-swap="outerHTML" hx-target="#navFragment">
+				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate counter-clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_ccw' timestamp index %}">
 					<i class="bi-arrow-counterclockwise fs-5"></i>
 				</a>
-				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_cw' timestamp index %}" hx-swap="outerHTML" hx-target="#navFragment">
+				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_cw' timestamp index %}">
 					<i class="bi-arrow-clockwise fs-5"></i>
 				</a>
 			</div>

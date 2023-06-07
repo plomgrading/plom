@@ -17,7 +17,7 @@ class RotateImageClockwise(ScannerRequiredView):
             return Http404()
 
         ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-            request.user, timestamp, index, clockwise=True, counter_clockwise=False
+            request.user, timestamp, index, angle=-90
         )
 
         return HttpResponseClientRefresh()
@@ -31,7 +31,7 @@ class RotateImageCounterClockwise(ScannerRequiredView):
             return Http404()
 
         ImageRotateService().rotate_image_from_bundle_timestamp_and_order(
-            request.user, timestamp, index, clockwise=False, counter_clockwise=True
+            request.user, timestamp, index, angle=90
         )
 
         return HttpResponseClientRefresh()
