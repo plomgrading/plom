@@ -1089,9 +1089,9 @@ linuxbin_ubuntu2204:
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 macos12_client:
-  image: macos-12-xcode-13
+  image: macos-12-xcode-14
   tags:
-  - shared-macos-amd64
+  - saas-macos-medium-m1
   rules:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
@@ -1136,6 +1136,8 @@ macos11_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
   stage: packaging
   script:
   - sw_vers
@@ -1236,6 +1238,8 @@ macos1014_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
   stage: packaging
   script:
   - sw_vers
@@ -1275,11 +1279,10 @@ macos1014_client:
 # this was slow and failed, went back to "brew"
 #   asdf plugin-add imagemagick
 #   asdf install imagemagick 7.0.11-5
-# Other possible images: macos-10.15-xcode-11, macos-11-xcode-12
 macos_server:
-  image: macos-12-xcode-13
+  image: macos-12-xcode-14
   tags:
-  - shared-macos-amd64
+  - saas-macos-medium-m1
   rules:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
