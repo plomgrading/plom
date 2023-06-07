@@ -6,12 +6,11 @@ import pathlib
 from warnings import warn
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from Identify.models import PaperIDTask
 from Identify.services.id_tasks import IdentifyTaskService
-from Papers.models import Image, IDPage, Paper
+from Papers.models import IDPage
 from Preparation.services import StagingStudentService
 from Scan.services.image_process import PageImageProcessor
 
@@ -67,9 +66,9 @@ class IDReaderService:
     def get_already_matched_sids(self):
         """Return the list of all student IDs that have been matched with a paper."""
         sid_list = []
+        id_task_service = IdentifyTaskService()
         IDed_tasks = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
         for task in IDed_tasks:
-            id_task_service = IdentifyTaskService()
             latest = id_task_service.get_latest_id_results(task)
             if latest:
                 sid_list.append(latest.student_id)
@@ -80,10 +79,7 @@ class IDReaderService:
         paper_list = []
         not_IDed_tasks = PaperIDTask.objects.filter(status=PaperIDTask.TO_DO)
         for task in not_IDed_tasks:
-            id_task_service = IdentifyTaskService()
-            latest = id_task_service.get_latest_id_results(task)
-            if latest:
-                paper_list.append(task.paper.paper_number)
+            paper_list.append(task.paper.paper_number)
         return paper_list
 
     def get_classlist_sids_for_ID_matching(self):

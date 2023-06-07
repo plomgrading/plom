@@ -8,13 +8,12 @@
 import csv
 import json
 import numpy as np
-from pathlib import Path
 from scipy.optimize import linear_sum_assignment
+import time
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from Identify.services.id_tasks import IdentifyTaskService
 from Identify.services.id_reader import IDReaderService
 
 
@@ -92,7 +91,6 @@ class Command(BaseCommand):
             IndexError: something is zero, degenerate assignment problem.
         """
         self.stdout.write(f"Original class list has {len(sids)} students.\n")
-
         id_reader_service = IDReaderService()
         ided_sids = id_reader_service.get_already_matched_sids()
         for ided_stu in ided_sids:
@@ -108,7 +106,6 @@ class Command(BaseCommand):
             + f"{len(sids)} unused names in the classlist."
         )
 
-        # exclude papers for which we don't have probabilities
         papers = [n for n in unidentified_papers if n in probabilities]
         if len(papers) < len(unidentified_papers):
             self.stdout.write(
