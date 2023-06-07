@@ -106,6 +106,15 @@
 		    </div>
 		    {% if is_pushed %}
 		    {% else %}
+			<div>
+				<p>Rotate Image:</p>
+				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate counter-clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_ccw' timestamp index %}" hx-swap="outerHTML" hx-target="#navFragment">
+					<i class="bi-arrow-counterclockwise fs-5"></i>
+				</a>
+				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_cw' timestamp index %}" hx-swap="outerHTML" hx-target="#navFragment">
+					<i class="bi-arrow-clockwise fs-5"></i>
+				</a>
+			</div>
 		    <div>
 		      <a class="btn btn-danger text-center w-100 mb-3" 
 			 hx-post="{% url 'discard_image' timestamp index %}"
@@ -189,6 +198,15 @@
 		    </div>
 		    {% if is_pushed %}
 		    {% else %}
+			<div>
+				<p>Rotate Image:</p>
+				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate counter-clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_ccw' timestamp index %}" hx-swap="outerHTML" hx-target="#navFragment">
+					<i class="bi-arrow-counterclockwise fs-5"></i>
+				</a>
+				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_cw' timestamp index %}" hx-swap="outerHTML" hx-target="#navFragment">
+					<i class="bi-arrow-clockwise fs-5"></i>
+				</a>
+			</div>
 		    <div>
 		      <a class="btn btn-danger text-center w-100 mb-3" 
 			 hx-post="{% url 'discard_image' timestamp index %}"
@@ -239,6 +257,15 @@
 		    </div>
 		    {% if is_pushed %}
 		    {% else %}
+			<div>
+				<p>Rotate Image:</p>
+				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate counter-clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_ccw' timestamp index %}" hx-swap="outerHTML" hx-target="#navFragment">
+					<i class="bi-arrow-counterclockwise fs-5"></i>
+				</a>
+				<a class="btn btn-secondary text-center mb-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Rotate clockwise" style="width: 49%;" hx-post="{% url 'rotate_img_cw' timestamp index %}" hx-swap="outerHTML" hx-target="#navFragment">
+					<i class="bi-arrow-clockwise fs-5"></i>
+				</a>
+			</div>
 		    <div>
 		      <a class="btn btn-danger text-center w-100 mb-3" 
 			 hx-post="{% url 'discard_image' timestamp index %}"
