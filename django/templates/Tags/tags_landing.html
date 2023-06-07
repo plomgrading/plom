@@ -9,11 +9,9 @@
 {% block page_heading %}Tags{% endblock %}
 
 {% block main_content %}
+
 <div>
-    <p>This page has been intentionally left blank (apart from this line here)</p>
-</div>
-<div>
-    <h5> Simple text form: </h5>
+    <h5> Tag filtering form: </h5>
     <form method="POST" action="{% url 'tag_filter' %}">
         {% csrf_token %}
         {{ text_field_form.as_p }}
