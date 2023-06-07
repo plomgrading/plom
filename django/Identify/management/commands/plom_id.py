@@ -4,7 +4,7 @@
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Scan.services import ScanService
+from Identify.services.id_reader import IDReaderService
 
 
 class Command(BaseCommand):
@@ -16,7 +16,7 @@ class Command(BaseCommand):
     help = "Extract the ID box from all papers."
 
     def get_id_box(self, top, bottom, left, right):
-        scanner = ScanService()
+        idservice = IDReaderService()
         box = (top, bottom, left, right)
         if any(x is None for x in box):
             if all(x is None for x in box):
@@ -24,7 +24,7 @@ class Command(BaseCommand):
             else:
                 raise CommandError("If you provide one dimension you must provide all")
         try:
-            scanner.get_id_box_cmd(box)
+            idservice.get_id_box_cmd(box)
             self.stdout.write("Extracted the ID box from all known ID pages.")
         except ValueError as err:
             raise CommandError(err)
