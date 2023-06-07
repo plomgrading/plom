@@ -33,7 +33,7 @@
     <style>
         table {
             border-collapse: collapse;
-            width: 30%;
+            width: 40%;
         }
 
         th,
@@ -51,20 +51,28 @@
         tbody tr:nth-child(even) {
             background-color: #e9e9e9;
         }
+        
+        th.id-column {
+            width: 100px;
+        }
+
+        th.tag-column {
+            width: 200px;
+        }
     </style>
 
     <table>
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Tag</th>
+                <th class="id-column">ID</th>
+                <th class="tag-column">Tag</th>
             </tr>
         </thead>
         <tbody>
             {% for rubric in rubrics %}
             <tr>
-                <td>{{ rubric.key }}</td>
-                <td>{{ rubric.tags }}</td>
+                <td class="id-column">{{ rubric.key }}</td>
+                <td class="tag-column">{{ rubric.tags }}</td>
             </tr>
             {% endfor %}
         </tbody>
