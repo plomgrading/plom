@@ -10,7 +10,6 @@ import cv2
 import imutils
 from imutils.perspective import four_point_transform
 import json
-import math
 import numpy as np
 from pathlib import Path
 
@@ -328,7 +327,18 @@ class Command(BaseCommand):
             default=None,
             nargs="?",
         )
-        sp_idreader = sp.add_parser("idreader", help="Run existing ID reading tools.")
+        sp.add_parser(
+            "idreader",
+            help="Run existing ID reading tools.",
+            description="""
+                This command tries to find the student ID boxes on each ID page.
+                When those are successfully read, each digit is passed to a
+                machine learning model to produce a "heat map" of which digit it
+                might be.
+                To make predictions based on those results, see
+                `python manage.py auto_ider`.
+            """,
+        )
 
     def handle(self, *args, **options):
         if options["command"] == "idbox":

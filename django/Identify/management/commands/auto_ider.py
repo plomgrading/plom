@@ -23,7 +23,10 @@ class Command(BaseCommand):
     python3 manage.py auto_ider
     """
 
-    help = "Run matching tools to generate predictions."
+    help = """
+        Run matching tools to generate predictions.
+        You need to run `python3 manage.py plom_id idreader` first.
+    """
 
     def run_auto_iding(self):
         """Runs the matching with Greedy and Linear Sum Assignment."""
@@ -68,6 +71,9 @@ class Command(BaseCommand):
         """
         greedy_predictions = self.greedy(sids, probabilities)
 
+        # TODO: for now we write to a file: perhaps it should be in the
+        # cwd instead of MEDIA_ROOT, but ultimately it should just be
+        # pushed onward to the database (Issue #2764)
         with open(settings.MEDIA_ROOT / "greedy_predictions.csv", "w") as f:
             write = csv.writer(f)
             write.writerow(("paper_num", "student_ID", "certainty"))
@@ -124,6 +130,7 @@ class Command(BaseCommand):
         lap_predictions = self.lap_solver(papers, sids, probabilities)
         self.stdout.write(f" done in {time.process_time() - t:.02} seconds.")
 
+        # See above, Issue #2764
         with open(settings.MEDIA_ROOT / "lap_predictions.csv", "w") as f:
             write = csv.writer(f)
             write.writerow(("paper_num", "student_ID", "certainty"))
