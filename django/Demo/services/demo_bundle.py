@@ -7,6 +7,7 @@ import csv
 import fitz
 import tempfile
 from pathlib import Path
+from collections import defaultdict
 
 from django.core.management import call_command
 
@@ -15,6 +16,8 @@ from plom.create.scribble_utils import (
     scribble_pages,
     splitFakeFile,
 )
+
+from Papers.services import SpecificationService
 
 
 class DemoBundleService:
@@ -36,6 +39,63 @@ class DemoBundleService:
                         }
                     )
         return classlist
+
+    def get_default_paper_length(self):
+        """Get the default number of pages in a paper from the specification."""
+        return SpecificationService().get_n_pages()
+
+    def split_into_bundle_files(self, out_file, config):
+        """Split the single scribble PDF file into the designated number of bundles.
+
+        Args:
+            out_file (path.Path): path to the monolithic scribble PDF
+            config (dict): server config
+        """
+        bundles = config["bundles"]
+        n_bundles = len(bundles)
+        default_n_pages = self.get_default_paper_length()
+
+        with fitz.open(out_file) as scribble_pdf:
+            from_page_idx = 0
+            to_page_idx = default_n_pages
+            curr_bundle_idx = 0
+            bundle_doc = None
+
+            for paper in range(1, config["num_to_produce"] + 1):
+                print("PAPER", paper)
+
+                curr_bundle = bundles[curr_bundle_idx]
+                for key in curr_bundle.keys():
+                    if key in [
+                        "garbage_page_papers",
+                        "duplicate_page_papers",
+                    ]:
+                        if paper in curr_bundle[key]:
+                            print(
+                                f"to index incremented because paper {paper} is in {key}"
+                            )
+                            to_page_idx += 1
+                    elif key == "duplicates":
+                        for inst in curr_bundle["duplicates"]:
+                            if inst["paper"] == paper:
+                                to_page_idx += 1
+
+                print("From", from_page_idx)
+                print("to", to_page_idx)
+
+                if paper == curr_bundle["first_paper"]:
+                    bundle_doc = fitz.open()
+                bundle_doc.insert_pdf(
+                    scribble_pdf, from_page=from_page_idx, to_page=to_page_idx
+                )
+                if paper == curr_bundle["last_paper"]:
+                    bundle_filename = out_file.stem + f"{curr_bundle_idx + 1}.pdf"
+                    bundle_doc.save(out_file.with_name(bundle_filename))
+                    bundle_doc.close()
+                    curr_bundle_idx += 1
+
+                from_page_idx = to_page_idx + 1
+                to_page_idx = from_page_idx + default_n_pages - 1
 
     def get_extra_page(self):
         # Assumes that the extra page has been generated
@@ -82,17 +142,13 @@ class DemoBundleService:
         return assignment
 
     def make_last_page_with_wrong_version(self, pdf_doc, paper_number):
-        """Removes the last page of the doc and replaces it with a nearly
-        blank page that contains a qr-code that is nearly valid except
-        that the version is wrong.
-
+        """Removes the last page of the doc and replaces it with a nearly blank page that contains a qr-code that is nearly valid except that the version is wrong.
 
         Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
             paper_number (int): the paper_number of that test-paper.
 
         Returns:
         pdf_doc (fitz.Document): the updated pdf-document with replaced last page.
-
         """
         from plom import SpecVerifier
         from plom.create.mergeAndCodePages import create_QR_codes
@@ -152,13 +208,11 @@ class DemoBundleService:
             tw.write_text(pdf_doc[-2])
 
     def append_duplicate_page(self, pdf_doc, page_number):
-        pdf_doc.fullcopy_page(page_number - 1)
+        last_page = len(pdf_doc) - 1
+        pdf_doc.fullcopy_page(last_page)
 
     def insert_qr_from_previous_page(self, pdf_doc, paper_number):
-        """Stamps a qr-code for the second-last page onto the last page,
-        in order to create a page with inconsistent qr-codes. This can
-        happen when, for example, a folded page is fed into the scanner.
-
+        """Stamps a qr-code for the second-last page onto the last page, in order to create a page with inconsistent qr-codes. This can happen when, for example, a folded page is fed into the scanner.
 
         Args: pdf_doc (fitz.Document): a pdf document of a test-paper.
             paper_number (int): the paper_number of that test-paper.
@@ -264,7 +318,21 @@ class DemoBundleService:
             # the 2nd qr-code goes in NW corner.
             pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
 
-    def _scribble_loop(
+    def _convert_duplicates_dict(self, duplicates):
+        """If duplicates is a list of dicts, convert into a dict."""
+        duplicates_dict = {}
+        for paper_dict in duplicates:
+            duplicates_dict[paper_dict["paper"]] = paper_dict["page"]
+        return duplicates_dict
+
+    def _convert_duplicates_list(self, duplicates):
+        """If duplicates is a list, convert into a dict."""
+        duplicates_dict = {}
+        for paper in duplicates:
+            duplicates_dict[paper] = -1
+        return duplicates_dict
+
+    def scribble_bundle(
         self,
         assigned_papers_ids,
         extra_page_path,
@@ -272,13 +340,13 @@ class DemoBundleService:
         *,
         extra_page_papers=[],
         garbage_page_papers=[],
-        duplicate_pages={},
+        duplicate_pages=[],
         duplicate_qr=[],
         wrong_version=[],
     ):
         # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
         # garbage_page_papers = list of paper_numbers to which we append a garbage page
-        # duplicate_pages = dict of n:p = page-p from paper-n = to be duplicated (causing collisions)
+        # duplicate_pages = a list of papers to have their final page duplicated.
         # wrong_version = list of paper_numbers to which we replace last page with a blank but wrong version number.
 
         # A complete collection of the pdfs created
@@ -303,9 +371,7 @@ class DemoBundleService:
                             extra_page_path,
                         )
                     if paper_number in duplicate_pages:
-                        self.append_duplicate_page(
-                            pdf_document, duplicate_pages[paper_number]
-                        )
+                        self.append_duplicate_page(pdf_document, duplicate_pages)
 
                     # scribble on the pages
                     scribble_pages(pdf_document)
@@ -318,25 +384,27 @@ class DemoBundleService:
                     if paper_number in garbage_page_papers:
                         self.append_garbage_page(pdf_document)
 
+                    # TODO: Append out-of-range papers and wrong public codes to some bundles
+
                     # finally, append this to the bundle
                     all_pdf_documents.insert_pdf(pdf_document)
-            # now insert a page from a different assessment to cause a "wrong public code" error
-            self.insert_page_from_another_assessment(all_pdf_documents)
-            # append some out-of-range pages
-            self.append_out_of_range_paper_and_page(all_pdf_documents)
 
             all_pdf_documents.save(out_file)
 
-    def scribble_on_exams(
-        self,
-        *,
-        number_of_bundles=3,
-        extra_page_papers=[],
-        garbage_page_papers=[],
-        duplicate_pages={},
-        duplicate_qr=[],
-        wrong_version=[],
-    ):
+    def _flatten(self, list_to_flatten):
+        flat_list = []
+        for sublist in list_to_flatten:
+            flat_list += sublist
+        return flat_list
+
+    def _get_combined_list(self, bundles: dict, key: str):
+        filtered = filter(lambda bundle: key in bundle.keys(), bundles)
+        return self._flatten([bundle[key] for bundle in filtered])
+
+    def scribble_on_exams(self, config):
+        bundles = config["bundles"]
+        n_bundles = len(bundles)
+
         classlist = self.get_classlist_as_dict()
         classlist_length = len(classlist)
         papers_to_print = Path("media/papersToPrint")
@@ -354,34 +422,25 @@ class DemoBundleService:
         print(
             f"Making a bundle of {len(papers_to_use)} papers, of which {number_prenamed} are prenamed"
         )
-        print(f"Extra pages will be appended to papers: {extra_page_papers}")
-        print(f"Garbage pages will be appended after papers: {garbage_page_papers}")
-        print(f"Duplicate pages will be inserted: {duplicate_pages}")
-        print(
-            f"The last page of papers {wrong_version} will be replaced with qr-codes with incorrect versions"
-        )
-        print(
-            f"A qr-code from the second last page of the test-paper paper will be inserted on last page of that paper; in papers: {duplicate_qr}"
-        )
-        print(
-            "A page from a different assessment will be inserted near the end of the bundles"
-        )
-        print("A page from a non-existent test-paper will be appended to the bundles")
-        print("A non-existent page from a test-paper will be appended to the bundles")
         print("^" * 40)
 
-        out_file = Path("fake_bundle.pdf")
+        print(assigned_papers_ids)
 
-        self._scribble_loop(
-            assigned_papers_ids,
-            extra_page_path,
-            out_file,
-            extra_page_papers=extra_page_papers,
-            garbage_page_papers=garbage_page_papers,
-            duplicate_pages=duplicate_pages,
-            duplicate_qr=duplicate_qr,
-            wrong_version=wrong_version,
-        )
-        # take this single output pdf and split it into given number of bundles, then remove it.
-        splitFakeFile(out_file, parts=number_of_bundles)
-        out_file.unlink(missing_ok=True)
+        for i in range(n_bundles):
+            bundle = defaultdict(list, bundles[i])
+            bundle_path = Path(f"fake_bundle{i + 1}.pdf")
+
+            first_idx = bundle["first_paper"] - 1
+            last_idx = bundle["last_paper"]
+            papers_in_bundle = assigned_papers_ids[first_idx:last_idx]
+
+            self.scribble_bundle(
+                papers_in_bundle,
+                extra_page_path,
+                bundle_path,
+                extra_page_papers=bundle["extra_page_papers"],
+                garbage_page_papers=bundle["garbage_page_papers"],
+                duplicate_pages=bundle["duplicate_pages"],
+                duplicate_qr=bundle["duplicate_qr"],
+                wrong_version=bundle["wrong_version"],
+            )
