@@ -167,7 +167,7 @@ class ImageViewWidget(QWidget):
             self.resetView()
 
     def get_orientation(self):
-        """Report the sum of user-performed rotations."""
+        """Report the sum of user-performed rotations as counter-clockwise angle in degrees."""
         return self.view.theta
 
     def resizeEvent(self, whatev):
