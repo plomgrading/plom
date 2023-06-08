@@ -83,7 +83,5 @@ class TagItemView(ManagerRequiredView):
 
     def tag_delete(request, tag_text):
         """Delete a tag."""
-        # TODO: Delete tag from the database.
-        print("delete tag")
         TagItemView.ts.delete_tag(tag_text=tag_text)
         return redirect("tags_landing")
