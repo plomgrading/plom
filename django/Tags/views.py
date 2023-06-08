@@ -62,6 +62,10 @@ class TagItemView(ManagerRequiredView):
     def get(self, request, tag_text):
         context = self.build_context()
 
+        print(request)
+        print("GET: ", request.GET)
+        print("POST: ", request.POST)
+
         tag = self.ts.get_tag(tag_text=tag_text)
         context.update({"tag": tag, "form": self.form(instance=tag)})
 
@@ -80,4 +84,6 @@ class TagItemView(ManagerRequiredView):
     def tag_delete(request, tag_text):
         """Delete a tag."""
         # TODO: Delete tag from the database.
+        print("delete tag")
+        TagItemView.ts.delete_tag(tag_text=tag_text)
         return redirect("tags_landing")

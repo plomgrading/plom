@@ -8,7 +8,7 @@ class TagService:
     """Class to encapsulate functions for creating and modifying tags."""
 
     def get_tag(self, tag_text: str):
-        """Get a singulat tag by its text.
+        """Get a singular tag by its text.
 
         Args:
             tag_text: The text of the tag.
@@ -71,3 +71,12 @@ class TagService:
         for task_tag in task_tags: # this feels like n+1 query
             counts.update({task_tag: task_tag.task.all().count()})
         return counts
+
+    def delete_tag(self, tag_text: str):
+        """Delete a tag by its text.
+
+        Args:
+            tag_text: The text of the tag.
+        """
+        tag = self.get_tag(tag_text)
+        tag.delete()
