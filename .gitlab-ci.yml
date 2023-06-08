@@ -194,6 +194,7 @@ make_package:
     - pip install --upgrade build
     - python -m build
     - ls dist
+    - md5sum dist/
   artifacts:
     paths:
       - dist/plom-*.tar.gz
