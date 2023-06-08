@@ -133,11 +133,11 @@ class ImageViewWidget(QWidget):
                 rotateB_cw = QToolButton()
                 rotateB_cw.setText("\N{Clockwise Open Circle Arrow}")
                 rotateB_cw.setToolTip("rotate clockwise")
-                rotateB_cw.clicked.connect(lambda: self.view.rotateImage(90))
+                rotateB_cw.clicked.connect(lambda: self.view.rotateImage(-90))
                 rotateB_ccw = QToolButton()
                 rotateB_ccw.setText("\N{Anticlockwise Open Circle Arrow}")
                 rotateB_ccw.setToolTip("rotate counter-clockwise")
-                rotateB_ccw.clicked.connect(lambda: self.view.rotateImage(-90))
+                rotateB_ccw.clicked.connect(lambda: self.view.rotateImage(90))
                 buttons.addSpacing(12)
                 buttons.addWidget(rotateB_cw)
                 buttons.addWidget(rotateB_ccw)
@@ -332,7 +332,8 @@ class _ExamView(QGraphicsView):
                 rot = QTransform()
                 # if more than one image, its not well-defined which one theta gets
                 self.theta = data["orientation"]
-                rot.rotate(data["orientation"])
+                # 90 means CCW, but we have a minus sign b/c of a y-downward coordsys
+                rot.rotate(-data["orientation"])
                 pix = pix.transformed(rot)
                 pixmap = QGraphicsPixmapItem(pix)
                 pixmap.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
@@ -387,7 +388,8 @@ class _ExamView(QGraphicsView):
         self.fitInView(self.imageGItem, Qt.AspectRatioMode.KeepAspectRatio)
 
     def rotateImage(self, dTheta):
-        self.rotate(dTheta)
+        # 90 means CCW, but we have a minus sign b/c of a y-downward coordsys
+        self.rotate(-dTheta)
         self.theta += dTheta
         if self.theta == 360:
             self.theta = 0
