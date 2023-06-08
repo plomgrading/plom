@@ -189,7 +189,7 @@ docker-tag-latest:
 make_package:
   image: python:3.11
   stage: build
-  cache: {}
+  needs: []
   script:
     - pip install --upgrade build
     - python -m build
@@ -203,11 +203,9 @@ make_package:
 
 # If we have a tag, then push to PyPI using TWINE_* env vars
 # Debug: `upload -r testpypi`, comment `only`, change and unprotect token
-# TODO: why do this from our docker image?
 pypi:
-  image: $IM
+  image: python:3.11
   stage: packaging
-  needs: ["docker-image"]
   rules:
    - if: $CI_COMMIT_TAG
   cache: {}
