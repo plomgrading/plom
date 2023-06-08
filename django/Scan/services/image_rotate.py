@@ -12,7 +12,11 @@ from Scan.models import StagingBundle
 class ImageRotateService:
     @transaction.atomic
     def rotate_image_from_bundle_timestamp_and_order(
-        self, user_obj, bundle_timestamp, bundle_order, angle,
+        self,
+        user_obj,
+        bundle_timestamp,
+        bundle_order,
+        angle,
     ):
         """A wrapper around rotate_image_cmd.
 
@@ -27,14 +31,10 @@ class ImageRotateService:
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )
-        self.rotate_image(
-            user_obj, bundle_obj, bundle_order, angle
-        )
+        self.rotate_image(user_obj, bundle_obj, bundle_order, angle)
 
     @transaction.atomic
-    def rotate_image(
-        self, user_obj, bundle_obj, bundle_order, angle
-    ):
+    def rotate_image(self, user_obj, bundle_obj, bundle_order, angle):
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
 
@@ -42,13 +42,15 @@ class ImageRotateService:
             staging_img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
-        
+
         # Rotating by 90 = counter-clockwise
         # Rotating by -90 = clockwise
         staging_img.rotation += angle
 
-        if staging_img.rotation >= 360 or staging_img.rotation <= -360:
-            staging_img.rotation = 0
+        if staging_img.rotation >= 360:
+            staging_img.rotation %= 360
+        elif staging_img.rotation <= -360:
+            staging_img.rotation %= -360
 
         staging_img.save()
 
