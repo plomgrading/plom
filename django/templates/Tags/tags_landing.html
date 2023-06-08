@@ -18,7 +18,8 @@
 
         th,
         td {
-            padding: 10px;
+            padding: 1px;
+            padding-left: 4px;
             text-align: left;
             border: 1px solid #ccc;
         }
@@ -51,9 +52,8 @@
             <br><br>
             You are filtering for tags containing "{{ tag_filter_text }}" with
             strict matching {{ request.session.strict_match }}.
-            <br><br>
         </div>
-        <div style="flex: 1;">
+        <div style="flex: 1.8;">
             <table>
                 <thead>
                     <tr>
@@ -71,9 +71,13 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <br><br>
         </div>
     </div>
     <div>
+        <br>
+        <h5> Papers by tags: </h5>
+        <br>
         <table>
             <thead>
                 <tr>
@@ -87,7 +91,9 @@
                     <td class="id-column">{{ id.paper_number }}</td>
                     <td class="tag-column">
                         {% for tag in tags %}
-                        {{ tag }}<br>
+                        {% if tag %}
+                        <a href="{% url 'tag_item' tag %}">{{ tag }}</a><br>
+                        {% endif %}
                         {% endfor %}
                     </td>
                 </tr>

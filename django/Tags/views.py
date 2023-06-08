@@ -4,7 +4,7 @@
 from django.shortcuts import render, redirect
 
 from Base.base_group_views import ManagerRequiredView
-from Tags.forms import TagFormFilter
+from Tags.forms import TagFormFilter, TagEditForm
 from Tags.services.tag_service import TagService
 
 
@@ -13,6 +13,7 @@ class TagLandingPageView(ManagerRequiredView):
 
     template_name = "Tags/tags_landing.html"
     ts = TagService()
+    form = TagEditForm
 
     def get(self, request):
         print("GET: ", request.GET)
@@ -36,18 +37,23 @@ class TagLandingPageView(ManagerRequiredView):
         print(task_tags)
         print(task_tags.__len__())
 
-        print(task_tags[0].text)
-        print(task_tags[0].task.all())
+        # print(task_tags[0].text)
+        # print(task_tags[0].task.all())
         papers = self.ts.get_papers_from_task_tags(task_tags)
         print(papers)
         print(type(papers))
 
         tag_counts = self.ts.get_task_tags_counts()
+        print(tag_counts)
 
         context.update({"tag_count": task_tags.__len__()})
+        print("good 1")
         context.update({"task_tags": task_tags})
+        print("good 2")
         context.update({"papers": papers})
+        print("good 3")
         context.update({"tag_counts": tag_counts})
+        print("good 4")
 
         return render(request, self.template_name, context=context)
 
@@ -58,3 +64,29 @@ class TagLandingPageView(ManagerRequiredView):
         request.session["strict_match"] = request.POST.get("strict_match", "off")
 
         return redirect("tags_landing")
+    
+
+class TagItemView(ManagerRequiredView):
+    """A page for displaying a single tag and its annotations."""
+
+    template_name = "Tags/rubric_item.html"
+    ts = TagService()
+    form = TagEditForm
+
+    def get(self, request, tag_text):
+        context = self.build_context()
+
+        tag = self.ts.get_tag(tag_text=tag_text)
+        context.update({"tag": tag, "form": self.form(instance=tag)})
+
+        return render(request, self.template_name, context=context)
+
+    def post(request, tag_text):
+        form = TagEditForm(request.POST)
+
+        if form.is_valid():
+            tag = TagItemView.ts.get_tag(tag_text=tag_text)
+            for key, value in form.cleaned_data.items():
+                tag.__setattr__(key, value)
+            tag.save()
+        return redirect("tag_item", tag_text=tag_text)

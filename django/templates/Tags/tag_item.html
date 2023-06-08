@@ -1,0 +1,30 @@
+<!-- 
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Julian Lapenna
+-->
+
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block page_heading %}Tag Info{% endblock %}
+
+{% block main_content %}
+
+<p>Tag text: {{ tag.text }}</p>
+<p>User: {{ tag.user }}</p>
+<p>Time: {{ tag.time }}</p>
+<p>Task codes: 
+    {% for task in tag.task %}
+        {{ task.code }}<br>
+    {% endfor %}
+    </p>
+<p>Question:</p>
+<p>Version:</p>
+<p># used: TODO</p>
+
+<form action="{% url 'tag_edit' tag.text %}" method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Submit">
+</form>
+

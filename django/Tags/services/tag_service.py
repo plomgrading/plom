@@ -7,6 +7,18 @@ from Mark.models.tasks import MarkingTask, MarkingTaskTag
 class TagService:
     """Class to encapsulate functions for creating and modifying tags."""
 
+    def get_tag(self, tag_text: str):
+        """Get a singulat tag by its text.
+
+        Args:
+            tag_text: The text of the tag.
+
+        Returns:
+            A tag object.
+        """
+        tag = MarkingTaskTag.objects.get(text=tag_text)
+        return tag
+
     def get_task_tags_with_tag(self, tag_text: str):
         """Get all task tags that contain the given text.
 
