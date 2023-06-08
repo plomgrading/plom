@@ -2480,7 +2480,9 @@ class MarkerClient(QWidget):
 
     def view_other(self):
         """Shows a particular paper number and question."""
-        tgs = SelectTestQuestion(self, self.exam_spec, self.question)
+        max_papernum = self.exam_spec["numberToProduce"]
+        max_question_idx = self.exam_spec["numberOfQuestions"]
+        tgs = SelectTestQuestion(self, max_papernum, max_question_idx, self.question)
         if tgs.exec() != QDialog.DialogCode.Accepted:
             return
         tn, q, get_annotated = tgs.get_results()

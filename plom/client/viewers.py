@@ -183,16 +183,16 @@ class WholeTestView(QDialog):
 
 
 class SelectTestQuestion(QDialog):
-    def __init__(self, parent, info, question_index):
+    def __init__(self, parent, max_papernum, max_question_index, question_index):
         super().__init__(parent)
         self.setWindowTitle("View another paper")
         flay = QFormLayout()
         self.tsb = QSpinBox()
-        self.tsb.setRange(1, info["numberToProduce"])
+        self.tsb.setRange(1, max_papernum)
         self.tsb.setValue(1)
         flay.addRow("Select paper:", self.tsb)
         self.gsb = QSpinBox()
-        self.gsb.setRange(1, info["numberOfQuestions"])
+        self.gsb.setRange(1, max_question_index)
         self.gsb.setValue(question_index)
         flay.addRow("Select question:", self.gsb)
         self.annotations = QCheckBox("Show annotations")
