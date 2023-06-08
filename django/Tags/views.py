@@ -42,9 +42,12 @@ class TagLandingPageView(ManagerRequiredView):
         print(papers)
         print(type(papers))
 
+        tag_counts = self.ts.get_task_tags_counts()
+
         context.update({"tag_count": task_tags.__len__()})
         context.update({"task_tags": task_tags})
         context.update({"papers": papers})
+        context.update({"tag_counts": tag_counts})
 
         return render(request, self.template_name, context=context)
 
