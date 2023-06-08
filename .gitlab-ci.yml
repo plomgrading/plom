@@ -185,8 +185,24 @@ docker-tag-latest:
     - main
 
 
+# to ensure the pypi job works, make sure we can package
+make_package:
+  image: python:3.11
+  stage: build
+  cache: {}
+  script:
+    - pip install --upgrade build
+    - python -m build
+  artifacts:
+    paths:
+      - plom-*.tar.gz
+      - plom-*.whl
+    expire_in: 16 days
+
+
 # If we have a tag, then push to PyPI using TWINE_* env vars
 # Debug: `upload -r testpypi`, comment `only`, change and unprotect token
+# TODO: why do this from our docker image?
 pypi:
   image: $IM
   stage: packaging
