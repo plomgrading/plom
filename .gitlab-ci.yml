@@ -589,6 +589,9 @@ fullworkflow:
     - pwd
     - ls /
     - cd /exam
+    - ls /usr/local/lib/python3.10/dist-packages/plom/
+    - ls /src
+    - python3 --version
     # Build tests
     - mkdir play
     - pushd play
