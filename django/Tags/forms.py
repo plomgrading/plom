@@ -7,14 +7,18 @@ from Mark.models.tasks import MarkingTaskTag
 
 
 class TagFormFilter(forms.Form):
-    tag_filter_text = forms.CharField(required=False, widget=forms.TextInput, label="Tag Text")
+    tag_filter_text = forms.CharField(
+        required=False, widget=forms.TextInput, label="Tag Text"
+    )
     strict_match = forms.BooleanField(required=False, label="Strict Match")
 
 
 class TagEditForm(forms.ModelForm):
     class Meta:
         model = MarkingTaskTag
-        fields = ["text",]
+        fields = [
+            "text",
+        ]
         widgets = {
             "text": forms.TextInput(attrs={"style": "width: 60%;"}),
         }

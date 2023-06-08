@@ -18,7 +18,7 @@
     <section>
             <div>
                 <h5> Tag filtering form: </h5>
-                <form method="POST" action="{% url 'tag_filter' %}">
+                <form method="post" action="{% url 'tag_filter' %}">
                     {% csrf_token %}
                     {{ text_field_form.as_p }}
                     <button type="submit">Submit</button>

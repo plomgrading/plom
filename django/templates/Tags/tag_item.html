@@ -21,7 +21,7 @@
             {% endfor %}</p>
         <p>Used: {{ tag.task.count }} times</p>
 
-        <form action="{% url 'tag_edit' tag.text %}" method="POST">
+        <form action="{% url 'tag_edit' tag.text %}" method="post">
             {% csrf_token %}
             {{ form.as_p }}
             <input type="submit" value="Save changes">

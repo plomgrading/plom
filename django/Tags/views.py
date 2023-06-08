@@ -38,7 +38,7 @@ class TagLandingPageView(ManagerRequiredView):
                 "tag_counts": tag_counts,
                 "text_field_form": text_field_form,
                 "tag_filter_text": tag_filter_text,
-                "tag_filter_strict": tag_filter_strict
+                "tag_filter_strict": tag_filter_strict,
             }
         )
 
