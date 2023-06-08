@@ -93,16 +93,16 @@ def parse_verify_save_spec(fname, *, save=False):
 def autogen_users_file(demo, auto, numbered, rawfile=Path("userListRaw.csv")):
     """Make a file of users and passwords.
 
-    args:
+    Args:
         demo (bool): make canned demo with known usernames/passwords.
         auto (int or None): number of autogenerate usernames and passwords.
         numbered (bool): autogenerate usernames like "user03" and pwds.
 
-    keyword args:
+    Keyword Args:
         rawfile (str/pathlib.Path): a filename to write usernames/passwords.
             Defaults to "userListRaw.csv" in the current working directory.
 
-    return:
+    Returns:
         pathlib.Path: the filename written to, "userListRaw.csv" by default.
     """
     rawfile = Path(rawfile)
@@ -533,7 +533,6 @@ def get_parser():
     )
     sp_tag.add_argument(
         "task",
-        nargs=1,
         help="""
             Which task to tag, e.g., q0123g4 for paper 123 question 4.
         """,
@@ -850,7 +849,7 @@ def main():
         try:
             # TODO: probably we want something sane like --paper 123 --question 4
             # task = f"q{paper:04}g{question}"
-            (task,) = args.task
+            task = args.task
             if args.rm:
                 print(f"Task {task}, removing tags: {args.tags}")
                 for t in args.tags:

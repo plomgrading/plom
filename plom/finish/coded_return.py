@@ -3,9 +3,7 @@
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
-"""
-Gather reassembled papers with html page for digital return.
-"""
+"""Gather reassembled papers with html page for digital return."""
 
 import html
 import os
@@ -57,7 +55,7 @@ def copy_soln_files(shortname, todir, sns):
 def make_coded_return_webpage(use_hex, digits, salt=None, server=None, solutions=False):
     """Make the secret codes and the return-code webpage.
 
-    args:
+    Args:
         use_hex (bool): use random hex digits, otherwise an integer
             without leading zeros.
         digits (int): length of secret code.

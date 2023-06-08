@@ -2,9 +2,7 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-"""
-Plom tools associated with scanning papers
-"""
+"""Plom tools associated with scanning papers."""
 
 __copyright__ = "Copyright (C) 2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"

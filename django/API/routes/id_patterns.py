@@ -10,15 +10,13 @@ from API.views import (
     IDgetDoneTasks,
     IDgetNextTask,
     IDclaimThisTask,
-    IDgetImage,
     GetIDPredictions,
     GetClasslist,
 )
 
 
 class IdURLPatterns:
-    """
-    URLs for handling ID'ing tasks and interacting with the client.
+    """URLs for handling ID'ing tasks and interacting with the client.
 
     All of these patterns are under the route "ID", so the pattern
     "progress" will become "ID/progress"
@@ -26,8 +24,8 @@ class IdURLPatterns:
 
     prefix = "ID/"
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns(cls):
         id_patterns = []
 
         # Get overall ID progress
@@ -50,12 +48,6 @@ class IdURLPatterns:
         ]
         id_patterns += tasks
 
-        # get ID page images from server
-        images = [
-            path("image/<paper_id>/", IDgetImage.as_view(), name="api_ID_get_image"),
-        ]
-        id_patterns += images
-
         # get ID'er predictions
         predictions = [
             path(
@@ -76,5 +68,3 @@ class IdURLPatterns:
         id_patterns += classlist
 
         return id_patterns
-
-    patterns = get_patterns()

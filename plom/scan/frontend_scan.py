@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
 """Plom tools for scanning tests and pushing to servers.
@@ -56,13 +56,13 @@ log = logging.getLogger("scan")
 
 
 def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
-    """Process PDF file into images and read QRcodes
+    """Process PDF file into images and read QRcodes.
 
-    args:
+    Args:
         pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
             the current working directory.
 
-    keyword args:
+    Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         bundle_name (str/None): Override the bundle name (which is by
@@ -72,7 +72,7 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
         demo (bool): do things appropriate for a demo such as lower quality
             or various simulated rotations.
 
-    return:
+    Returns:
         None
 
     Convert file into a bundle-name
@@ -139,18 +139,18 @@ def uploadImages(
 ):
     """Upload processed images from bundle.
 
-    args:
+    Args:
         bundle_name (str): usually the PDF filename but in general
             whatever string was used to define a bundle.
 
-    keyword args:
+    Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         do_unknowns (bool):
         do_collisions (bool):
         prompt (bool): ok to interactively prompt (default: True).
 
-    return:
+    Returns:
         None
 
     Try to create a bundle on server.

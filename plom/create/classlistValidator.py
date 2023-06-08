@@ -32,13 +32,13 @@ class PlomClasslistValidator:
         pass
 
     def readClassList(self, filename):
-        """Read classlist from filename and return as list of dicts
+        """Read classlist from filename and return as list of dicts.
 
         Arguments:
             filename (pathlib.Path/str): csv-file to be loaded.
 
         Returns:
-            list(dict): list of dictionaries (keys are column titles)
+            list(dict): list of dictionaries (keys are column titles).
         """
         classAsDict = []
         with open(filename) as csvfile:
@@ -125,7 +125,7 @@ class PlomClasslistValidator:
         }
 
     def check_ID_column(self, id_key, classList):
-        """Check the ID column of the classlist"""
+        """Check the ID column of the classlist."""
         err = []
         ids_used = defaultdict(list)
         for x in classList:
@@ -144,7 +144,7 @@ class PlomClasslistValidator:
             return (True, [])
 
     def check_papernumber_column(self, papernum_key, classList):
-        """Check the papernumber column of the classlist"""
+        """Check the papernumber column of the classlist."""
         err = []
         numbers_used = defaultdict(list)
         for x in classList:
@@ -171,7 +171,7 @@ class PlomClasslistValidator:
             return (True, [])
 
     def check_name_column(self, fullname_key, classList):
-        """Check name column return any warnings"""
+        """Check name column return any warnings."""
         warn = []
         for x in classList:
             # check non-trivial length after removing spaces and commas
@@ -184,8 +184,7 @@ class PlomClasslistValidator:
         return warn
 
     def check_classlist_against_spec(self, spec, classlist_length):
-        """
-        Validate the classlist-length against spec parameters
+        """Validate the classlist-length against spec parameters.
 
         Args:
             spec (None/dict/SpecVerifier): an optional test specification,
@@ -206,8 +205,7 @@ class PlomClasslistValidator:
         return []
 
     def validate_csv(self, filename, spec=None):
-        """
-        Validate the classlist csv and return summaries of any errors and warnings.
+        """Validate the classlist csv and return summaries of any errors and warnings.
 
         Args:
             filename (str/pathlib.Path): a csv file from which to try to

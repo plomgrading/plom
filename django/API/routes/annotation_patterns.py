@@ -11,21 +11,19 @@ from API.views import (
     MgetAnnotationImage,
 )
 
-"""
-URLs for handling annotation data.
-"""
+"""URLs for handling annotation data."""
 
 
 class PagedataPatterns:
-    """
-    Data for creating annotation images from pages
-    These patterns fall under the route "pagedata"
+    """Data for creating annotation images from pages.
+
+    These patterns fall under the route "pagedata".
     """
 
     prefix = "pagedata/"
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns(cls):
         pagedata_patterns = [
             path(
                 "<int:paper>",
@@ -41,19 +39,17 @@ class PagedataPatterns:
 
         return pagedata_patterns
 
-    patterns = get_patterns()
-
 
 class AnnotationPatterns:
-    """
-    URLs for getting annotations
+    """URLs for getting annotations.
+
     These patterns fall under the route "annotations"
     """
 
     prefix = "annotations/"
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns(cls):
         annotations_patterns = [
             path(
                 "<int:paper>/<int:question>/",
@@ -64,19 +60,17 @@ class AnnotationPatterns:
 
         return annotations_patterns
 
-    patterns = get_patterns()
-
 
 class AnnotationImagePatterns:
-    """
-    URLs for annotation images
+    """URLs for annotation images.
+
     These patterns fall under the route "annotations_image"
     """
 
     prefix = "annotations_image/"
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns(cls):
         annotations_image_patterns = [
             path(
                 "<int:paper>/<int:question>/<int:edition>",
@@ -91,5 +85,3 @@ class AnnotationImagePatterns:
         ]
 
         return annotations_image_patterns
-
-    patterns = get_patterns()

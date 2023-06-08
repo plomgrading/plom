@@ -20,8 +20,7 @@ from API.views import (
 
 
 class MarkURLPatterns:
-    """
-    URLs that handle marking and interacting with plom-client.
+    """URLs that handle marking and interacting with plom-client.
 
     All of these patterns are under the route "MK,"
     e.g. "progress" will become "MK/progress"
@@ -29,8 +28,8 @@ class MarkURLPatterns:
 
     prefix = "MK/"
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns(cls):
         mark_patterns = []
 
         # Overall marking progress
@@ -97,5 +96,3 @@ class MarkURLPatterns:
         mark_patterns += latex
 
         return mark_patterns
-
-    patterns = get_patterns()

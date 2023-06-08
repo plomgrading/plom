@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 import csv
 import json
@@ -10,7 +10,7 @@ from pathlib import Path
 import sys
 
 if sys.version_info >= (3, 9):
-    import importlib.resources as resources
+    from importlib import resources
 else:
     import importlib_resources as resources
 

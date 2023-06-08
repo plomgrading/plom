@@ -2,11 +2,13 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Julian Lapenna
 
 import random
 
 from django.db import models
 from django.contrib.auth.models import User
+from Mark.models.annotations import Annotation
 
 
 def generate_key():
@@ -22,9 +24,7 @@ def generate_unique_key():
 
 
 class Rubric(models.Model):
-    """
-    Represents a marker's comment and mark delta for a particular question.
-    """
+    """Represents a marker's comment and mark delta for a particular question."""
 
     key = models.TextField(null=False, default=generate_unique_key)
     kind = models.TextField(null=False, default="")
@@ -38,12 +38,11 @@ class Rubric(models.Model):
     meta = models.TextField(null=True)  # can be long
     versions = models.JSONField(null=True, default=list)
     parameters = models.JSONField(null=True, default=list)
+    annotations = models.ManyToManyField(Annotation, blank=True)
 
 
 class RubricPane(models.Model):
-    """
-    A user's configuration for the 'rubrics' pane in the annotation window.
-    """
+    """A user's configuration for the 'rubrics' pane in the annotation window."""
 
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
     question = models.PositiveIntegerField(default=0)

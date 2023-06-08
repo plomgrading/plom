@@ -5,18 +5,42 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
+from Papers.models import Paper, QuestionPage
 from Scan.models import (
     StagingBundle,
     StagingImage,
     DiscardStagingImage,
+    ExtraStagingImage,
     UnknownStagingImage,
 )
 
 
 class ScanCastService:
-    """
-    Functions for casting staging images to different types
-    """
+    """Functions for casting staging images to different types."""
+
+    # ----------------------------------------
+    # Page casting helper function
+    # ----------------------------------------
+
+    def string_to_staging_image_type(self, img_str):
+        """A helper function to translate from string to the staging image enum type."""
+        img_str = img_str.casefold()
+        if img_str.casefold() == "discard":
+            return StagingImage.DISCARD
+
+        elif img_str.casefold() == "extra":
+            return StagingImage.EXTRA
+
+        elif img_str.casefold() == "error":
+            return StagingImage.ERROR
+
+        elif img_str.casefold() == "known":
+            return StagingImage.KNOWN
+
+        elif img_str.casefold() == "unknown":
+            return StagingImage.UNKNOWN
+        else:
+            raise ValueError(f"Unrecognisable image type '{img_str}'")
 
     # ----------------------------------------
     # Page casting
@@ -40,9 +64,7 @@ class ScanCastService:
 
         Returns:
             None.
-
         """
-
         bundle_obj = StagingBundle.objects.get(
             timestamp=bundle_timestamp,
         )
@@ -149,7 +171,7 @@ class ScanCastService:
 
         if image_type == StagingImage.UNKNOWN:
             raise ValueError(
-                "Trying to cast 'unknown' image to and already 'unknown' bundle image."
+                "Trying to 'unknowify' and already 'unknown' bundle image."
             )
         if image_type not in [
             StagingImage.DISCARD,
@@ -206,23 +228,272 @@ class ScanCastService:
             user_obj, bundle_obj, bundle_order, image_type=image_type
         )
 
-    def string_to_staging_image_type(self, img_str):
-        """A helper function to translate from string to the staging image enum type"""
+    @transaction.atomic
+    def assign_extra_page(
+        self, user_obj, bundle_obj, bundle_order, paper_number, question_list
+    ):
+        """Fill in the missing information in a ExtraStagingImage.
 
-        img_str = img_str.casefold()
-        if img_str.casefold() == "discard":
-            return StagingImage.DISCARD
+        The command assigns the paper-number and question list to the
+        given extra page.
 
-        elif img_str.casefold() == "extra":
-            return StagingImage.EXTRA
+        This is a wrapper around the actual service command
+        "assign_extra_page" that does the work. Note that
+        "assign_extra_page_cmd" takes username and bundlename as
+        strings, while the "assign_extra_page" takes the corresponding
+        data-base objects.
 
-        elif img_str.casefold() == "error":
-            return StagingImage.ERROR
+        Args:
+            user_obj (danjgo auth user database mode instance): the database model instance representing the user assigning information
+            bundle_obj (danjgo staging bundle database mode instance): the database model instance representing the bundle being processed
+            bundle_order (int): which page of the bundle to edit.
+               Is 1-indexed.
+            paper_number (int)
+            question_list (list)
 
-        elif img_str.casefold() == "known":
-            return StagingImage.KNOWN
+        Raises:
+            ValueError: can't find things.
 
-        elif img_str.casefold() == "unknown":
-            return StagingImage.UNKNOWN
+        """
+        if bundle_obj.pushed:
+            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        # make sure paper_number in db
+        try:
+            paper = Paper.objects.get(paper_number=paper_number)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Paper {paper_number} is not in the database.")
+        # now check all the question-numbers
+        for q in question_list:
+            if not QuestionPage.objects.filter(paper=paper, question_number=q).exists():
+                raise ValueError(f"No question {q} in database.")
+
+        # at this point the paper-number and question-list are valid, so get the image at that bundle-order.
+        try:
+            img = bundle_obj.stagingimage_set.get(
+                bundle_order=bundle_order, image_type=StagingImage.EXTRA
+            )
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find an extra-page at order {bundle_order}")
+
+        eximg = img.extrastagingimage
+        eximg.paper_number = paper_number
+        eximg.question_list = question_list
+        eximg.save()
+
+    @transaction.atomic
+    def assign_extra_page_from_bundle_timestamp_and_order(
+        self, user_obj, timestamp, bundle_order, paper_number, question_list
+    ):
+        bundle_obj = StagingBundle.objects.get(
+            timestamp=timestamp,
+        )
+        self.assign_extra_page(
+            user_obj, bundle_obj, bundle_order, paper_number, question_list
+        )
+
+    @transaction.atomic
+    def assign_extra_page_cmd(
+        self, username, bundle_name, bundle_order, paper_number, question_list
+    ):
+        """Fill in the missing information in a ExtraStagingImage.
+
+        The command assigns the paper-number and question list to the
+        given extra page.
+
+        This is a wrapper around the actual service command
+        "assign_extra_page" that does the work. Note that
+        "assign_extra_page_cmd" takes username and bundlename as
+        strings, while the "assign_extra_page" takes the corresponding
+        data-base objects.
+
+        Args:
+            username (str): the name of the user who is assigning the info
+            bundle_name (str): the name of the bundle being processed
+            bundle_order (int): which page of the bundle to edit.
+                Is 1-indexed.
+            paper_number (int)
+            question_list (list)
+
+        Raises:
+            ValueError: can't find things.
+
+        """
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name__in=["scanner", "manager"]
+            )
+        except ObjectDoesNotExist:
+            raise PermissionDenied(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        self.assign_extra_page(
+            user_obj, bundle_obj, bundle_order, paper_number, question_list
+        )
+
+    @transaction.atomic
+    def clear_extra_page_info_from_bundle_timestamp_and_order(
+        self, user_obj, bundle_timestamp, bundle_order
+    ):
+        """A wrapper around clear_image_type.
+
+        The main difference is that it that takes a
+        bundle-timestamp instead of a bundle-object itself. Further,
+        it infers the image-type from the bundle and the bundle-order
+        rather than requiring it explicitly.
+
+        Args:
+            user_obj: (obj) An instead of a django user
+            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_order: (int) Bundle order of a page.
+
+        Returns:
+            None.
+        """
+        bundle_obj = StagingBundle.objects.get(
+            timestamp=bundle_timestamp,
+        )
+        self.clear_extra_page(user_obj, bundle_obj, bundle_order)
+
+    @transaction.atomic
+    def clear_extra_page(self, user_obj, bundle_obj, bundle_order):
+        if bundle_obj.pushed:
+            raise ValueError("This bundle has been pushed - it cannot be modified.")
+
+        try:
+            img = bundle_obj.stagingimage_set.get(
+                bundle_order=bundle_order, image_type=StagingImage.EXTRA
+            )
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find an extra-page at order {bundle_order}")
+
+        eximg = img.extrastagingimage
+        eximg.paper_number = None
+        eximg.question_list = None
+        eximg.save()
+
+    @transaction.atomic
+    def clear_extra_page_cmd(self, username, bundle_name, bundle_order):
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name__in=["scanner", "manager"]
+            )
+        except ObjectDoesNotExist:
+            raise PermissionDenied(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        self.clear_extra_page(user_obj, bundle_obj, bundle_order)
+
+    @transaction.atomic
+    def extralise_image_type_from_bundle_timestamp_and_order(
+        self, user_obj, bundle_timestamp, bundle_order
+    ):
+        """A wrapper around extralise_image_type_from_bundle cmd.
+
+        The main difference is that it that takes a
+        bundle-timestamp instead of a bundle-object itself. Further,
+        it infers the image-type from the bundle and the bundle-order
+        rather than requiring it explicitly.
+
+        Args:
+            user_obj: (obj) An instead of a django user
+            bundle_timestamp: (float) The timestamp of the bundle
+            bundle_order: (int) Bundle order of a page.
+
+        Returns:
+            None.
+        """
+        bundle_obj = StagingBundle.objects.get(
+            timestamp=bundle_timestamp,
+        )
+        try:
+            img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find an image at order {bundle_order}")
+        self.extralise_image_type_from_bundle(
+            user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
+        )
+
+    @transaction.atomic
+    def extralise_image_type_from_bundle(
+        self, user_obj, bundle_obj, bundle_order, *, image_type=None
+    ):
+        if bundle_obj.pushed:
+            raise ValueError("This bundle has been pushed - it cannot be modified.")
+        try:
+            img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find an image at order {bundle_order}")
+
+        if (
+            image_type is None
+        ):  # Compute the type of the image at that position and use that.
+            image_type = img.image_type
+
+        if image_type == StagingImage.EXTRA:
+            raise ValueError("Trying to 'extralise' and already 'extra' bundle image.")
+        if image_type not in [
+            StagingImage.DISCARD,
+            StagingImage.KNOWN,
+            StagingImage.UNKNOWN,
+            StagingImage.ERROR,
+        ]:
+            raise ValueError(f"Image type '{image_type}' not recognised.")
+        if img.image_type != image_type:
+            raise ValueError(
+                f"Image at position {bundle_order} is not an '{image_type}', it is type '{img.image_type}'"
+            )
+
+        # Be very careful to update the image type when doing this sort of operation.
+        img.image_type = StagingImage.EXTRA
+        # delete the old type information
+        # TODO - keep more detailed history so easier to undo.
+        # Hence we have this branching for time being.
+        if image_type == StagingImage.DISCARD:
+            img.discardstagingimage.delete()
+        elif image_type == StagingImage.KNOWN:
+            img.knownstagingimage.delete()
+        elif image_type == StagingImage.UNKNOWN:
+            img.unknownstagingimage.delete()
+        elif image_type == StagingImage.ERROR:
+            img.errorstagingimage.delete()
         else:
-            raise ValueError(f"Unrecognisable image type '{img_str}'")
+            raise RuntimeError("Cannot recognise image type")
+
+        ExtraStagingImage.objects.create(
+            staging_image=img,
+        )
+        img.save()
+
+    @transaction.atomic
+    def extralise_image_type_from_bundle_cmd(
+        self, username, bundle_name, bundle_order, *, image_type=None
+    ):
+        try:
+            user_obj = User.objects.get(
+                username__iexact=username, groups__name__in=["scanner", "manager"]
+            )
+        except ObjectDoesNotExist:
+            raise PermissionDenied(
+                f"User '{username}' does not exist or has wrong permissions!"
+            )
+
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_name}' does not exist!")
+
+        self.extralise_image_type_from_bundle(
+            user_obj, bundle_obj, bundle_order, image_type=image_type
+        )

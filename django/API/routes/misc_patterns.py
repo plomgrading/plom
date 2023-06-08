@@ -15,13 +15,13 @@ from API.views import (
 
 
 class MiscURLPatterns:
-    """
-    URL patterns that don't fit in the other files;
-    all of these patterns have no particular prefix.
+    """URL patterns that don't fit in the other files.
+
+    All of these patterns have no particular prefix.
     """
 
-    @staticmethod
-    def get_patterns():
+    @classmethod
+    def patterns(cls):
         misc_patterns = [
             path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
             path("Version/", ServerVersion.as_view(), name="api_server_version"),
@@ -39,5 +39,3 @@ class MiscURLPatterns:
         ]
 
         return misc_patterns
-
-    patterns = get_patterns()

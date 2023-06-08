@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 import csv
 import json
@@ -22,7 +22,7 @@ def _version_map_from_json(f):
 
 
 def _version_map_from_csv(f):
-    """Extract the version map from a csv file
+    """Extract the version map from a csv file.
 
     Args:
         f (pathlib.Path): a csv file, must have a `test_number` column
@@ -30,7 +30,7 @@ def _version_map_from_csv(f):
             is autodetected.  For example, this could be output of
             :func:`save_question_version_map`.
 
-    Return:
+    Returns:
         dict: keys are the paper numbers (`int`) and each value is a row
         of the version map: another dict with questions as question
         number (`int`) and value version (`int`).
@@ -72,7 +72,7 @@ def version_map_from_file(f):
             dicts.  Either case could, for example, be the output of
             :func:`save_question_version_map`.
 
-    Return:
+    Returns:
         dict: keys are the paper numbers (`int`) and each value is a row
         of the version map: another dict with questions as question
         number (`int`) and value version (`int`).
@@ -121,12 +121,12 @@ def download_version_map(*, msgr):
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
 
-    return:
+    Return:
         dict: keys are the paper numbers (`int`) and each value is a row
         of the version map: another dict with questions as question
         number (`int`) and value version (`int`).
 
-    raises:
+    Raises:
         PlomServerNotReady
     """
     return msgr.getGlobalQuestionVersionMap()
@@ -147,10 +147,10 @@ def save_version_map(filename=None, *, msgr):
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
 
-    return:
+    Return:
         pathlib.Path: the name of the file saved.
 
-    raises:
+    Raises:
         PlomServerNotReady
 
     Note if you specify ``.json``, the paper numbers and questions

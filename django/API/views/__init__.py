@@ -15,7 +15,6 @@ from .identify import (
     IDgetNextTask,
     IDprogressCount,
     IDclaimThisTask,
-    IDgetImage,
 )
 
 from .mark import (
@@ -29,6 +28,8 @@ from .mark import (
     MgetAnnotations,
     MgetAnnotationImage,
     MgetDoneTasks,
+    TagsFromCodeView,
+    GetAllTags,
 )
 
 from .rubrics import (

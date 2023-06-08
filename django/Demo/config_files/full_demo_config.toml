@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Edith Coates
+
+num_to_produce = 70
+
+# bundle 1
+[[bundles]]
+first_paper = 1
+last_paper = 10
+garbage_page_papers = [1, 2]
+duplicate_qr_papers = [3, 4]
+wrong_version_papers = [5, 6]
+duplicate_page_papers = [7, 8]
+
+
+# bundle 2
+[[bundles]]
+first_paper = 11
+last_paper = 20
+
+
+# bundle 3
+[[bundles]]
+first_paper = 21
+last_paper = 30
+
+
+# bundle 4
+[[bundles]]
+first_paper = 31
+last_paper = 40
+extra_page_papers = [31, 32]
+
+
+# bundle 5
+[[bundles]]
+first_paper = 41
+last_paper = 70

@@ -127,26 +127,25 @@ class QRErrorService:
                 )
 
     def check_consistent_qr(self, parsed_qr_dict):
-        """Check the parsed qr-codes (typically scanned from a
-        page-image) and confirm that they are both self-consistent,
-        and that the publicCode matches that in the test
-        specification.
+        """Check the parsed qr-codes: confirm they are self-consistent and that the publicCode matches the test spec.
 
-        parsed_qr_dict is of the form
+        Note that the parsed_qr_dict is of the form
         {
         'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_info': {'page_num': 1, 'paper_id': 1, 'public_code': '28558', 'version_num': 1}, 'page_type': 'plom_qr', 'tpv': '00001001001', 'raw_qr_string': '00001001001128558'},
         }
         or potentially (if an extra page)
         'NE': {'x_coord': 1419.5, 'y_coord': 139.5, 'quadrant': '1', 'page_type': 'plom_extra', 'tpv': 'plomX', 'raw_qr_string': 'plomX1'},
 
-        Returns None if all good, else raises various ValueError describing the inconsistencies.
+        Returns:
+            None if all good
+
+        Raises:
+            ValueError: describing various inconsistencies.
         """
 
-        # ------ helper function to test data consistency
         def is_list_inconsistent(lst):
+            """Helper function to test data consistency."""
             return any([X != lst[0] for X in lst])
-
-        # ------ end helper function
 
         # check all page-types are the same
         page_types = [parsed_qr_dict[x]["page_type"] for x in parsed_qr_dict]
@@ -185,8 +184,9 @@ class QRErrorService:
         # check that the version in the qr-code matches the question-version-map in the system.
 
     def check_qr_against_spec_and_qvmap(self, parsed_qr_dict, correct_public_code):
-        """Check the info in the qr-code against the spec and the
-        qv-map in the database. More precisely, check that the
+        """Check the info in the qr-code against the spec and the qv-map in the database.
+
+        More precisely, check that the
         publc-code in the qr-code matches the public-code in the
         test-specification. Then check that the (paper,page,version)
         triple in the qr-code matches a (paper,page,version) in the

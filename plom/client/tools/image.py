@@ -26,8 +26,7 @@ class CommandImage(CommandTool):
     """A class for making image commands."""
 
     def __init__(self, scene, pt, image, scale=1, border=True, data=None):
-        """
-        Initialize a new Image command.
+        """Initialize a new Image command.
 
         Args:
             scene (PageScene): the scene the image is being inserted into.
@@ -61,13 +60,10 @@ class CommandImage(CommandTool):
 
 
 class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
-    """
-    An image added to a paper.
-    """
+    """An image added to a paper."""
 
     def __init__(self, pt, qImage, scale, border, data):
-        """
-        Initialize a new ImageItem.
+        """Initialize a new ImageItem.
 
         Args:
             pt (QPoint): the point of the top left corner of the image.
@@ -90,9 +86,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         self.thick = 4
 
     def paint(self, painter, option, widget=None):
-        """
-        Paints the scene by adding a red border around the image if applicable.
-        """
+        """Paints the scene by adding a red border around the image if applicable."""
         if not self.scene().itemWithinBounds(self):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
@@ -107,8 +101,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
             painter.restore()
 
     def pickle(self):
-        """
-        Pickle the image into a list containing important information.
+        """Pickle the image into a list containing important information.
 
         Returns:
             (list): containing
@@ -138,8 +131,7 @@ class ImageItem(UndoStackMoveMixin, QGraphicsPixmapItem):
         return pickle
 
     def mouseDoubleClickEvent(self, event: "QGraphicsSceneMouseEvent"):
-        """
-        On double-click, show menu and modify image according to user inputs.
+        """On double-click, show menu and modify image according to user inputs.
 
         Args:
             event (QMouseEvent): the double mouse click.
@@ -172,10 +164,10 @@ class ImageSettingsDialog(QDialog):
     NumButtons = 3
 
     def __init__(self, parent, scalePercent, checked):
-        """
-        Initialize a new image settings dialog object.
+        """Initialize a new image settings dialog object.
 
         Args:
+            parent: parent of the dialog.
             scalePercent (int): Scale of the image (as a percentage)
             checked (bool): True if the image currently has a red border,
                 False otherwise.
@@ -194,16 +186,15 @@ class ImageSettingsDialog(QDialog):
         self.setWindowTitle("Image Settings")
 
     def createFormGroupBox(self, scalePercent, checked):
-        """
-        Build the form Box.
+        """Build the form Box.
 
         Args:
             scalePercent (int): Scale of the image (as a percentage)
             checked (bool): True if the image currently has a red border,
                 False otherwise.
+
         Returns:
             None
-
         """
         self.formGroupBox = QGroupBox("Image Settings")
         layout = QFormLayout()
@@ -217,16 +208,16 @@ class ImageSettingsDialog(QDialog):
         self.formGroupBox.setLayout(layout)
 
     def getSettings(self):
-        """
-        Return the settings held in the dialog box.
+        """Return the settings held in the dialog box.
 
         Notes:
             Even if the user presses Cancel, the values will still be held
             by the dialog box. Make sure to ensure exec() returns true
             before accessing these values.
+
         Returns:
-            (int): the scale of the image that the user has chosen.
-            (bool): True if user wants image to have a red border,
-                False otherwise.
+            tuple: (int, bool): first the scale of the image that the user
+            has chosen, and then True if user wants image to have a red border,
+            False otherwise.
         """
         return self.scaleButton.value(), self.checkBox.isChecked()

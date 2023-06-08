@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
+# Copyright (C) 2023 Andrew Rechnitzer
 
 import pathlib
 import hashlib
@@ -18,9 +19,7 @@ from Scan.services import ScanService
 
 
 class BundleUploadForm(forms.Form):
-    """
-    Upload a bundle PDF
-    """
+    """Django form for upload of a bundle PDF."""
 
     pdf = forms.FileField(
         allow_empty_file=False,
@@ -68,10 +67,7 @@ class BundleUploadForm(forms.Form):
 
 
 class FlagImageForm(forms.Form):
-    """
-    A form to flag the images with error to the manager
-    Added comment to show what the error is.
-    """
+    """A form to flag the images with error to the manager."""
 
     comment = forms.CharField(
         label="Comment",
@@ -88,9 +84,7 @@ class FlagImageForm(forms.Form):
 
 
 class ReplaceImageForm(forms.Form):
-    """
-    Replace an error page image form.
-    """
+    """Replace an error page image form."""
 
     single_pdf = forms.FileField(
         allow_empty_file=False,

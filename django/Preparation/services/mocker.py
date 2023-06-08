@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2022-2023 Edith Coates
+
+
 import fitz
 import shutil
 from plom.create.mergeAndCodePages import create_QR_codes, pdf_page_add_labels_QRs
@@ -5,15 +10,15 @@ from django.conf import settings
 
 
 class ExamMockerService:
-    """Take an uploaded source file and stamp dummy QR codes/text"""
+    """Take an uploaded source file and stamp dummy QR codes/text."""
 
     def mock_exam(self, version: int, source_path: str, n_pages: int, short_name: str):
-        """Create the mock exam
+        """Create the mock exam.
 
-        Returns: path to the exam on disk
-        Side effect: saves a temp directory that needs to be removed later
+        Returns: path to the exam on disk.
+        Side effect: saves a temp directory that needs to be removed later.
         """
-        sources_dir = settings.BASE_DIR / "sourceVersions"
+        sources_dir = settings.MEDIA_ROOT / "sourceVersions"
         qr_code_temp_dir = sources_dir / "qr_temp"
         if qr_code_temp_dir.exists():
             shutil.rmtree(qr_code_temp_dir)
