@@ -585,6 +585,9 @@ fullworkflow:
     - apt-get update
     - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
+    - pwd
+    - ls /
+    - cd /exam
     # Build tests
     - mkdir play
     - pushd play
