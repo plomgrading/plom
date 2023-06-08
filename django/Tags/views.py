@@ -83,10 +83,13 @@ class TagItemView(ManagerRequiredView):
 
     def post(request, tag_text):
         form = TagEditForm(request.POST)
-
+        print(form)
+        print(form.is_valid())
+        
         if form.is_valid():
+            print("form is valid")
             tag = TagItemView.ts.get_tag(tag_text=tag_text)
             for key, value in form.cleaned_data.items():
                 tag.__setattr__(key, value)
             tag.save()
-        return redirect("tag_item", tag_text=tag_text)
+        return redirect("tag_item", tag_text=value)

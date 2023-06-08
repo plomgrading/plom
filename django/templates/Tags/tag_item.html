@@ -13,7 +13,12 @@
 <p>Tag text: {{ tag.text }}</p>
 <p>User: {{ tag.user }}</p>
 <p>Time: {{ tag.time }}</p>
-<p># used: TODO</p>
+<p>Associated codes: 
+    {{ tag.task.first.code }}
+    {% for task in tag.task.all|slice:"1:" %} <!-- so that it doesn't end with a comma -->
+        , {{ task.code }}
+    {% endfor %}</p>
+<p>Used: {{ tag.task.count }} times</p>
 
 <form action="{% url 'tag_edit' tag.text %}" method="POST">
     {% csrf_token %}
