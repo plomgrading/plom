@@ -25,6 +25,7 @@ class TagLandingPageView(ManagerRequiredView):
         text_field_form = TagFormFilter()
         context.update({"text_field_form": text_field_form})
         context.update({"tag_filter_text": tag_filter_text})
+        context.update({"tag_filter_strict": tag_filter_strict})
 
 
         if tag_filter_strict == "on":
@@ -93,3 +94,8 @@ class TagItemView(ManagerRequiredView):
                 tag.__setattr__(key, value)
             tag.save()
         return redirect("tag_item", tag_text=value)
+
+    def tag_delete(request, tag_text):
+        """Delete a tag."""
+        print("tag_delete")
+        return redirect("tags_landing")

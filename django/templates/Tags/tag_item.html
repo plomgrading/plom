@@ -13,10 +13,10 @@
 <p>Tag text: {{ tag.text }}</p>
 <p>User: {{ tag.user }}</p>
 <p>Time: {{ tag.time }}</p>
-<p>Associated codes: 
+<p>Associated codes:
     {{ tag.task.first.code }}
     {% for task in tag.task.all|slice:"1:" %} <!-- so that it doesn't end with a comma -->
-        , {{ task.code }}
+    , {{ task.code }}
     {% endfor %}</p>
 <p>Used: {{ tag.task.count }} times</p>
 
@@ -25,4 +25,14 @@
     {{ form.as_p }}
     <input type="submit" value="Submit">
 </form>
+<br>
+<br>
+<div>
+    <a href="{% url 'tags_landing' %}">Back to all tags</a>
+
+    <div style="text-align: right; padding-right: 2%;">
+        <button onclick="location.href='{% url 'tag_delete' tag.text %}';" class="delete-button">Delete tag</button>
+    </div>
+    
+</div>
 {% endblock %}
