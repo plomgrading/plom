@@ -10,5 +10,5 @@ urlpatterns = [
     path("", TagLandingPageView.as_view(), name="tags_landing"),
     path("tag_filter/", TagLandingPageView.tag_filter, name="tag_filter"),
     path("<str:tag_text>/", TagItemView.as_view(), name="tag_item"),
-    path("<int:tag_text>/edit/", TagItemView.post, name="tag_edit"),
+    path("<str:tag_text>/edit/", TagItemView.post, name="tag_edit"),
     ]

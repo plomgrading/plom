@@ -16,6 +16,6 @@ class TagEditForm(forms.ModelForm):
         model = MarkingTaskTag
         fields = ["task", "text"]
         widgets = {
-            "task": forms.TextInput(attrs={"rows": 10, "cols": 100}),
-            "text": forms.Textarea(attrs={"rows": 10, "cols": 100}),
+            "task": forms.TextInput(attrs={"style": "width: 60%;"}),
+            "text": forms.TextInput(attrs={"style": "width: 60%;"}),
         }

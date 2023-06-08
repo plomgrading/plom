@@ -69,7 +69,7 @@ class TagLandingPageView(ManagerRequiredView):
 class TagItemView(ManagerRequiredView):
     """A page for displaying a single tag and its annotations."""
 
-    template_name = "Tags/rubric_item.html"
+    template_name = "Tags/tag_item.html"
     ts = TagService()
     form = TagEditForm
 

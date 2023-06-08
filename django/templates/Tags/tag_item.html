@@ -13,13 +13,6 @@
 <p>Tag text: {{ tag.text }}</p>
 <p>User: {{ tag.user }}</p>
 <p>Time: {{ tag.time }}</p>
-<p>Task codes: 
-    {% for task in tag.task %}
-        {{ task.code }}<br>
-    {% endfor %}
-    </p>
-<p>Question:</p>
-<p>Version:</p>
 <p># used: TODO</p>
 
 <form action="{% url 'tag_edit' tag.text %}" method="POST">
@@ -27,4 +20,4 @@
     {{ form.as_p }}
     <input type="submit" value="Submit">
 </form>
-
+{% endblock %}
