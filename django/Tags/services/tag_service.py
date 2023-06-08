@@ -18,5 +18,14 @@ class TagService:
         papers = {}
         for task_tag in task_tags:
             for task in task_tag.task.all():
-                papers.update({task.paper: task_tag.text})
+                if task.paper not in papers:
+                    papers.update({task.paper: set()})
+                papers[task.paper].add(task_tag.text)
         return papers
+    
+    def get_task_tags_counts(self):
+        task_tags = MarkingTaskTag.objects.all()
+        counts = {}
+        for task_tag in task_tags: # this feels like n+1 query
+            counts.update({task_tag.text: task_tag.task.all().count()})
+        return counts

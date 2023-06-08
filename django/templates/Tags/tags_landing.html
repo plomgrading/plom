@@ -19,9 +19,10 @@
     </form>
 </div>
 <div>
-    <br><br><br>
-    You are filtering for tags containing "{{ tag_filter_text }}" with strict matching {{ request.session.strict_match }}.
-    <br>
+    <br><br>
+    You are filtering for tags containing "{{ tag_filter_text }}" with strict matching {{ request.session.strict_match
+    }}.
+    <br><br>
 </div>
 <div>
     <style>
@@ -45,7 +46,7 @@
         tbody tr:nth-child(even) {
             background-color: #e9e9e9;
         }
-        
+
         th.id-column {
             width: 100px;
         }
@@ -59,14 +60,18 @@
         <thead>
             <tr>
                 <th class="id-column">Paper ID</th>
-                <th class="tag-column">Tag</th>
+                <th class="tag-column">Matching Tags</th>
             </tr>
         </thead>
         <tbody>
-            {% for id, tag in papers.items %}
+            {% for id, tags in papers.items %}
             <tr>
-                <td class="id-column">{{ id }}</td>
-                <td class="tag-column">{{ tag }}</td>
+                <td class="id-column">{{ id.paper_number }}</td>
+                <td class="tag-column">
+                    {% for tag in tags %}
+                    {{ tag }}<br>
+                    {% endfor %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
