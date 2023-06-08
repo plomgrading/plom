@@ -193,10 +193,11 @@ make_package:
   script:
     - pip install --upgrade build
     - python -m build
+    - ls dist
   artifacts:
     paths:
-      - plom-*.tar.gz
-      - plom-*.whl
+      - dist/plom-*.tar.gz
+      - dist/plom-*.whl
     expire_in: 16 days
 
 
