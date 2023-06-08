@@ -39,7 +39,7 @@ class ImageRotateService:
             staging_img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
-        
+
         self._rotate_image(staging_img.pk, angle)
 
     @transaction.atomic
@@ -57,10 +57,10 @@ class ImageRotateService:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
-        
+
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
-        
+
         try:
             staging_img = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
@@ -70,12 +70,13 @@ class ImageRotateService:
 
     @transaction.atomic
     def _rotate_image(self, staging_img_pk, angle, **kwargs):
-
         try:
             staging_img = StagingImage.objects.get(pk=staging_img_pk)
         except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find an image with this pk value {staging_img_pk}")
-        
+            raise ValueError(
+                f"Cannot find an image with this pk value {staging_img_pk}"
+            )
+
         # Rotating by 90 = counter-clockwise
         # Rotating by -90 = clockwise
         staging_img.rotation += angle
