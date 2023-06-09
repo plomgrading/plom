@@ -1147,7 +1147,7 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
 
     pipr = PageImageProcessor()
 
-    rotation = pipr.get_rot_angle_from_QRs(page_data)
+    rotation = pipr.get_rotation_angle_from_QRs(page_data)
     # Re-read QR codes if the page image needs to be rotated
     if rotation != 0:
         code_dict = QRextract(image_path, rotation=rotation)
