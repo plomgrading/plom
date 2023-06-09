@@ -152,9 +152,10 @@ djlint-strict:
   before_script:
     - pip install djlint~=1.30.2
   script:
-    - djlint django/templates/Scan/*.html django/templates/Scan/*/*.html --profile django
-    - djlint django/templates/Rubrics/*.html --profile django
     - djlint django/templates/base/*.html --profile django
+    - djlint django/templates/Rubrics/*.html --profile django
+    - djlint django/templates/Scan/*.html django/templates/Scan/*/*.html --profile django
+    - djlint django/templates/SpecCreator/*.html --profile django
 
 
 djlint-check:
@@ -174,9 +175,10 @@ djlint-check-strict:
   before_script:
     - pip install djlint~=1.30.2
   script:
-    - djlint django/templates/Scan/*.html django/templates/Scan/*/*.html --check
-    - djlint django/templates/Rubrics/*.html --check
     - djlint django/templates/base/*.html --check
+    - djlint django/templates/Rubrics/*.html --check
+    - djlint django/templates/Scan/*.html django/templates/Scan/*/*.html --check
+    - djlint django/templates/SpecCreator/*.html --check
   allow_failure: true
 
 
