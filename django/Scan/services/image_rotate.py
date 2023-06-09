@@ -28,9 +28,7 @@ class ImageRotateService:
         Returns:
             None.
         """
-        bundle_obj = StagingBundle.objects.get(
-            timestamp=bundle_timestamp,
-        )
+        bundle_obj = StagingBundle.objects.get(timestamp=bundle_timestamp)
 
         if bundle_obj.pushed:
             raise ValueError("This bundle has been pushed - it cannot be modified.")
