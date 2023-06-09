@@ -12,6 +12,7 @@ from django.conf import settings
 
 from Scan.services import ScanCastService
 from Scan.models import ExtraStagingImage, StagingImage
+from Papers.services import SpecificationService
 
 
 class DemoCreationService:
@@ -172,7 +173,7 @@ class DemoCreationService:
                     sleep(0.5)
                 else:
                     print(f"fake_bundle{n}.pdf has been read")
-                    break
+                    return
 
     def push_if_ready(self, number_of_bundles=3, homework_bundles={}, attempts=15):
         print(
@@ -228,17 +229,17 @@ class DemoCreationService:
             bundle_slug = f"fake_bundle{i+1}"
             if "extra_page_papers" in bundle.keys():
                 extra_page_papers = bundle["extra_page_papers"]
-                for paper in extra_page_papers:
-                    extra_pages = ExtraStagingImage.objects.filter(
-                        staging_image__bundle__slug=bundle_slug,
-                        paper_number=paper,
-                    )
+                extra_pages = ExtraStagingImage.objects.filter(
+                    staging_image__bundle__slug=bundle_slug,
+                ).order_by("staging_image__bundle_order")
 
+                n_questions = SpecificationService().get_n_questions()
+
+                for i in range(len(extra_page_papers)):
+                    paper_extra_pages = extra_pages[i*2:i*2+2]
+                    
                     # command must be called twice, since the demo generates double extra pages
-                    for question, page in enumerate(extra_pages):
-                        print(question)
-                        print(page)
-                        print(page.staging_image)
+                    for page in paper_extra_pages:
                         call_command(
                             "plom_staging_assign_extra",
                             "assign",
@@ -247,7 +248,7 @@ class DemoCreationService:
                             "-i",
                             page.staging_image.bundle_order,
                             "-t",
-                            paper,
+                            extra_page_papers[i],
                             "-q",
-                            question + 1,
+                            n_questions,  # default to last question 
                         )
