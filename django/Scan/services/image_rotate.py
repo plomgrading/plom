@@ -81,9 +81,7 @@ class ImageRotateService:
         # Rotating by -90 = clockwise
         staging_img.rotation += angle
 
-        if staging_img.rotation >= 360:
-            staging_img.rotation %= 360
-        elif staging_img.rotation <= -360:
-            staging_img.rotation %= -360
+        # keep it in [0, 360)
+        staging_img.rotation %= 360
 
         staging_img.save()
