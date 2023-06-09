@@ -10,7 +10,6 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
-from warnings import warn
 
 import fitz
 from django.conf import settings
@@ -1148,6 +1147,11 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
     pipr = PageImageProcessor()
 
     rotation = pipr.get_rotation_angle_from_QRs(page_data)
+
+    # Andrew wanted to leave the possibility of re-introducing hard
+    # rotations in the future, like one of these functions:
+    # from plom.scan import rotate_bitmap, rotate
+
     # Re-read QR codes if the page image needs to be rotated
     if rotation != 0:
         code_dict = QRextract(image_path, rotation=rotation)

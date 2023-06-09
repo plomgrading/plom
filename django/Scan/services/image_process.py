@@ -7,7 +7,6 @@ import numpy as np
 import cv2 as cv
 from PIL import Image
 from warnings import warn
-from plom.scan import rotate_bitmap, rotate
 
 
 class PageImageProcessor:
