@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Natalie Balashov
 
 beautifulsoup4==4.12.2
 debugpy==1.6.7
@@ -19,6 +20,9 @@ psycopg2-binary==2.9.6
 random-username==1.0.2
 tabulate==0.9.0
 whitenoise==6.4.0
+
+# for ID reading
+scipy==1.10.1
 
 
 #---------- for dev / debug work - comment out unless using it.

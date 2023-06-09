@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Colin B. Macdonald
 
 from Identify.models import (
@@ -41,7 +42,10 @@ class IdentifyTaskService:
             return latest[0]
 
     def get_done_tasks(self, user):
-        """Return the results of previously completed tasks for a user.
+        """Retrieve the results of previously completed ID tasks for a user.
+
+        Args:
+            user: reference to a User instance
 
         Returns:
             list: a list of 3-lists of the form
@@ -63,7 +67,7 @@ class IdentifyTaskService:
 
         Returns:
             list: A list including the number of identified papers
-            and the total number of papers.
+                and the total number of papers.
         """
         completed = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
         total = PaperIDTask.objects.all()

@@ -19,7 +19,7 @@ from Identify.models import (
 
 
 class IdentifyTaskTests(TestCase):
-    """Tests for Identify.services.IdentifyTaskService."""
+    """Tests for ``Identify.services.IdentifyTaskService`` functions."""
 
     def setUp(self):
         self.marker0 = baker.make(User, username="marker0")
