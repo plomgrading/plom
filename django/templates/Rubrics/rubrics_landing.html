@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Divy Patel
+    Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends 'base/base.html' %}
 {% load static %}
@@ -48,6 +49,6 @@
         </table>
     </div>
     {% comment %} For sorting table by clicking headers {% endcomment %}
-    {% comment %} TODO: move to a more appropriate place {% endcomment %}
+    {% comment %} TODO: move to a more appropriate place (Issue #2762) {% endcomment %}
     <script src="https://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
 {% endblock %}
