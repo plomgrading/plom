@@ -163,7 +163,7 @@ djlint-check-strict:
   script:
     - djlint django/templates/Scan/*.html django/templates/Scan/*/*.html --check
     - djlint django/templates/Rubrics/*.html --check
-    - djlint django/templates/Base/*.html --check
+    - djlint django/templates/base/*.html --check
   allow_failure: true
 
 
