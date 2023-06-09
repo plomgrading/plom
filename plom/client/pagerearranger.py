@@ -79,7 +79,8 @@ class SourceList(QListWidget):
         if pix.isNull():
             raise RuntimeError(f"Could not read an image from {pfile}")
         rot = QTransform()
-        rot.rotate(angle)
+        # 90 means CCW, but we have a minus sign b/c of a y-downward coordsys
+        rot.rotate(-angle)
         if angle != 0:
             pix = pix.transformed(rot)
         it = QListWidgetItem(QIcon(pix), name)
@@ -288,7 +289,8 @@ class SinkList(QListWidget):
         if pix.isNull():
             raise RuntimeError(f"Could not read an image from {self.item_files[name]}")
         rot = QTransform()
-        rot.rotate(angle)
+        # 90 means CCW, but we have a minus sign b/c of a y-downward coordsys
+        rot.rotate(-angle)
         if angle != 0:
             pix = pix.transformed(rot)
         # ci = self.item(self.item_positions[name])
@@ -523,8 +525,8 @@ class RearrangementViewer(QDialog):
         self.sLeftB.clicked.connect(self.shuffleLeft)
         self.sRightB.clicked.connect(self.shuffleRight)
         self.reverseB.clicked.connect(self.reverseOrder)
-        self.rotateB_cw.clicked.connect(lambda: self.rotateImages(90))
-        self.rotateB_ccw.clicked.connect(lambda: self.rotateImages(-90))
+        self.rotateB_cw.clicked.connect(lambda: self.rotateImages(-90))
+        self.rotateB_ccw.clicked.connect(lambda: self.rotateImages(90))
         self.appendB.clicked.connect(self.sourceToSink)
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
@@ -773,7 +775,7 @@ class RearrangementViewer(QDialog):
         self.listB.reverseOrder()
 
     def rotateImages(self, angle=90):
-        """Rotates the currently selected page by 90 degrees."""
+        """Rotates the currently selected page, by default by 90 degrees CCW."""
         self.listB.rotateSelectedImages(angle)
 
     def viewImage(self, image_data):
