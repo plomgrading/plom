@@ -8,17 +8,13 @@ from Papers.models import Paper
 
 
 class PaperIDTask(BaseTask):
-    """
-    Represents a test-paper that needs to be identified.
-    """
+    """Represents a test-paper that needs to be identified."""
 
     paper = models.OneToOneField(Paper, on_delete=models.CASCADE)
 
 
 class PaperIDAction(BaseAction):
-    """
-    Represents an identification of a test-paper.
-    """
+    """Represents an identification of a test-paper."""
 
     student_name = models.TextField(default="")
     student_id = models.TextField(default="")

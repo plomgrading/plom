@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 
 from django.db import models
 
@@ -37,6 +38,7 @@ class Image(models.Model):
     hash (str): the sha256 hash of the image.
     rotation (int): the angle to rotate the original image in order to give
         it the correct orientation.
+    parsed_qr (dict): the JSON dict containing QR code information for the page image.
     """
 
     def _image_upload_path(self, filename):
@@ -62,6 +64,7 @@ class Image(models.Model):
     image_file = models.ImageField(null=False, upload_to=_image_upload_path)
     hash = models.CharField(null=True, max_length=64)
     rotation = models.IntegerField(null=False, default=0)
+    parsed_qr = models.JSONField(default=dict, null=True)
 
 
 class DiscardImage(models.Model):

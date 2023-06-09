@@ -10,7 +10,6 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
-from warnings import warn
 
 import fitz
 from django.conf import settings
@@ -980,44 +979,6 @@ class ScanService:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
         return self.get_bundle_paper_numbers(bundle_obj)
 
-    @transaction.atomic
-    def get_id_box_cmd(self, box, *, dur=None):
-        """Extract the id box, or really any rectangular part of the id page, rotation corrected.
-
-        Args:
-            box (None/list): the box to extract or a default is empty/None.
-
-        Keyword Args:
-            dur (None/pathlib.Path): what directory to save to, or choose
-                a internal default if omitted.
-
-        Returns:
-            None
-        """
-        if not dur:
-            id_box_folder = settings.MEDIA_ROOT / "id_box_images"
-        else:
-            id_box_folder = pathlib.Path(dur)
-        if not box:
-            box = (0.28, 0.58, 0.09, 0.91)
-        id_box_folder.mkdir(exist_ok=True)
-
-        pipr = PageImageProcessor()
-        id_pages = KnownStagingImage.objects.filter(page_number=1)
-
-        for id_img in id_pages:
-            img_path = id_img.staging_image.image_file.path
-            orientation = id_img.staging_image.rotation
-            qr_data = id_img.staging_image.parsed_qr
-            if len(qr_data) != 3:
-                warn(
-                    "Fewer than 3 QR codes found, "
-                    f"cannot extract ID box from paper {id_img.paper_number}."
-                )
-                continue
-            id_box = pipr.extract_rect_region(img_path, orientation, qr_data, *box)
-            id_box.save(id_box_folder / f"id_box_{id_img.paper_number:04}.png")
-
 
 # ----------------------------------------
 # factor out the huey tasks.
@@ -1109,7 +1070,7 @@ def huey_parent_read_qr_codes_task(bundle_pk):
             # TODO - check for error status here.
             img = StagingImage.objects.get(pk=X["image_pk"])
             img.parsed_qr = X["parsed_qr"]
-            img.rotation = X["rotation"]
+            img.rotation += X["rotation"]
             img.save()
 
         bundle_obj.has_qr_codes = True
@@ -1168,7 +1129,7 @@ def huey_child_get_page_image(
 
 @db_task(queue="tasks")
 def huey_child_parse_qr_code(image_pk, *, quiet=True):
-    """Huey task of parsing QR codes, check QR errors, rotate image, and save to database in the background.
+    """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     Args:
         image_pk: primary key of the image
@@ -1185,17 +1146,20 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
 
     pipr = PageImageProcessor()
 
-    has_had_rotation = pipr.rotate_page_image(image_path, page_data)
-    # Re-read QR codes if the page image has been rotated
-    if has_had_rotation != 0:
-        code_dict = QRextract(image_path)
+    rotation = pipr.get_rotation_angle_from_QRs(page_data)
+
+    # Andrew wanted to leave the possibility of re-introducing hard
+    # rotations in the future, such as `plom.scan.rotate_bitmap`.
+
+    # Re-read QR codes if the page image needs to be rotated
+    if rotation != 0:
+        code_dict = QRextract(image_path, rotation=rotation)
         page_data = scanner.parse_qr_code([code_dict])
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
     # Return the parsed QR codes for parent process to store in db
-    # Zero rotation returned because rotate_page_image() modifies the image
     return {
         "image_pk": image_pk,
         "parsed_qr": page_data,
-        "rotation": 0,
+        "rotation": rotation,
     }
