@@ -99,7 +99,29 @@ Homepage = 'https://plomgrading.org/'
 # zip-safe = true
 
 [tool.setuptools]
-packages = ["plom"]
+packages = [
+    "plom",
+    "plom.create",
+    "plom.create.fonts",
+    "plom.scan",
+    "plom.finish",
+    "plom.client",
+    "plom.client.ui_files",
+    "plom.client.tools",
+    "plom.client.icons",
+    "plom.client.cursors",
+    "plom.client.help_img",
+    "plom.manager",
+    "plom.server",
+    "plom.server.plomServer",
+    "plom.db",
+    "plom.demo",
+    "plom.idreader",
+    "plom.solutions",
+    "plom.testTemplates",
+    "plom.canvas",
+    "plom.scripts",
+]
 
 [tool.setuptools.dynamic]
 version = {attr = 'plom.__version__'}
