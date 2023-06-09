@@ -4,37 +4,37 @@
 -->
 {% extends 'base/base.html' %}
 {% load static %}
-
 {% block page_heading %}Tag Info{% endblock %}
-
 {% block main_content %}
-
-<body>
-    <section>
-        <p>Tag text: {{ tag.text }}</p>
-        <p>User: {{ tag.user }}</p>
-        <p>Time: {{ tag.time }}</p>
-        <p>Associated codes:
-            {{ tag.task.first.code }}
-            {% for task in tag.task.all|slice:"1:" %} <!-- so that it doesn't end with a comma -->
-            , {{ task.code }}
-            {% endfor %}</p>
-        <p>Used: {{ tag.task.count }} times</p>
-
-        <form action="{% url 'tag_edit' tag.text %}" method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <input type="submit" value="Save changes">
-        </form>
-    </section><br>
-    <section>
-        <div>
-            <a href="{% url 'tags_landing' %}">Back to all tags</a>
-            
-            <button onclick="confirmDelete(event, '{% url 'tag_delete' tag.text %}');" class="delete-button"
-                style="float: right; margin-right: 2%;">Delete tag</button>
-
-            <script>
+    <body>
+        <section>
+            <p>Tag text: {{ tag.text }}</p>
+            <p>User: {{ tag.user }}</p>
+            <p>Time: {{ tag.time }}</p>
+            <p>
+                Associated codes:
+                {{ tag.task.first.code }}
+                {% for task in tag.task.all|slice:"1:" %}
+                    <!-- so that it doesn't end with a comma -->
+                    , {{ task.code }}
+                {% endfor %}
+            </p>
+            <p>Used: {{ tag.task.count }} times</p>
+            <form action="{% url 'tag_edit' tag.text %}" method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <input type="submit" value="Save changes">
+            </form>
+        </section>
+        <br>
+        <section>
+            <div>
+                <a href="{% url 'tags_landing' %}">Back to all tags</a>
+                <button onclick="confirmDelete(event, '{% url 'tag_delete' tag.text %}');"
+                        class="delete-button"
+                        style="float: right;
+                               margin-right: 2%">Delete tag</button>
+                <script>
                 function confirmDelete(event, url) {
                     event.preventDefault(); // Prevent the default click behavior
 
@@ -43,9 +43,8 @@
                         window.location.href = url;
                     }
                 }
-            </script>
-
-        </div>
-    </section>
-</body>
+                </script>
+            </div>
+        </section>
+    </body>
 {% endblock %}
