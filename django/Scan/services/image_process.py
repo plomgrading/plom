@@ -3,10 +3,13 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-import numpy as np
-import cv2 as cv
-from PIL import Image
 from warnings import warn
+
+import cv2 as cv
+import numpy as np
+from PIL import Image
+
+from plom.scan import rotate
 
 
 class PageImageProcessor:

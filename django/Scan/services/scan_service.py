@@ -1149,8 +1149,7 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
     rotation = pipr.get_rotation_angle_from_QRs(page_data)
 
     # Andrew wanted to leave the possibility of re-introducing hard
-    # rotations in the future, like one of these functions:
-    # from plom.scan import rotate_bitmap, rotate
+    # rotations in the future, such as `plom.scan.rotate_bitmap`.
 
     # Re-read QR codes if the page image needs to be rotated
     if rotation != 0:
