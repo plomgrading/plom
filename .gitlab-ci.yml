@@ -162,6 +162,8 @@ djlint-check-strict:
     - pip install djlint~=1.30.2
   script:
     - djlint django/templates/Scan/*.html django/templates/Scan/*/*.html --check
+    - djlint django/templates/Rubrics/*.html --check
+    - djlint django/templates/Base/*.html --check
   allow_failure: true
 
 
