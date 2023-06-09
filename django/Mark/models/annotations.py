@@ -8,18 +8,14 @@ from Mark.models.tasks import MarkingTask
 
 
 class AnnotationImage(models.Model):
-    """
-    A raster representation of an annotated question.
-    """
+    """A raster representation of an annotated question."""
 
     path = models.TextField(null=False, default="")
     hash = models.TextField(null=False, default="")
 
 
 class Annotation(models.Model):
-    """
-    Represents a marker's annotation of a particular test paper's question.
-    """
+    """Represents a marker's annotation of a particular test paper's question."""
 
     edition = models.IntegerField(null=True)
     score = models.IntegerField(null=True)

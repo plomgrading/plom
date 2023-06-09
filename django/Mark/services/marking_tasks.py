@@ -454,7 +454,6 @@ class MarkingTaskService:
         Returns:
             str: sanitized version of the text.
         """
-
         return tag_text.strip()
 
     def is_tag_text_valid(self, text):
@@ -476,7 +475,6 @@ class MarkingTaskService:
         Returns:
             MarkingTaskTag: reference to the newly created tag
         """
-
         if self.is_tag_text_valid(tag_text):
             # allowable characters: - _ + ; : @ and any alphanumeric character
             new_tag = MarkingTaskTag(

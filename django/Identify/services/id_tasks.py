@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023 Colin B. Macdonald
 
 from Identify.models import (
     PaperIDTask,
     PaperIDAction,
 )
-from Papers.models import Paper, IDPage
+from Papers.models import IDPage
 
 
 class IdentifyTaskService:
@@ -47,7 +48,8 @@ class IdentifyTaskService:
             user: reference to a User instance
 
         Returns:
-            list: contains [[paper_id, student_id, student_name]]
+            list: a list of 3-lists of the form
+            ``[[paper_id, student_id, student_name], [...]]``.
         """
         id_list = []
         done_tasks = PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
@@ -115,7 +117,7 @@ class IdentifyTaskService:
         task.save()
 
     def surrender_task(self, user, task):
-        """Remove user from a marking task, set status to 'todo', and save action to the database.
+        """Remove a user from a marking task and set its status to 'todo'.
 
         Args:
             user: reference to a User instance
