@@ -236,8 +236,8 @@ class DemoCreationService:
                 n_questions = SpecificationService().get_n_questions()
 
                 for i in range(len(extra_page_papers)):
-                    paper_extra_pages = extra_pages[i*2:i*2+2]
-                    
+                    paper_extra_pages = extra_pages[i * 2 : i * 2 + 2]
+
                     # command must be called twice, since the demo generates double extra pages
                     for page in paper_extra_pages:
                         call_command(
@@ -250,5 +250,5 @@ class DemoCreationService:
                             "-t",
                             extra_page_papers[i],
                             "-q",
-                            n_questions,  # default to last question 
+                            n_questions,  # default to last question
                         )
