@@ -68,6 +68,12 @@ class PageImageProcessor:
 
         Args:
             qr_code_data: (dict) data parsed from page-image QR codes
+
+        Returns:
+            str: short description of the orientation.
+
+        Raises:
+            RuntimeError: something inconsistent in the QR data.
         """
         northeast_orientation = None
         if "NE" in qr_code_data:
@@ -165,6 +171,10 @@ class PageImageProcessor:
         Returns:
             int: rotation angle by which the page needs to be rotated.
             If page is already upright, rotation angle of 0 is returned.
+            Currently also returns zero if the orientation cannot be
+            determined: this might not be what you want (TODO).
+            See also also ``get_page_orientation``, although these two
+            methods should perhaps converge in the future (TODO).
         """
         try:
             orientation = self.get_page_orientation(qr_data)
