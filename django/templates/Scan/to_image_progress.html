@@ -1,8 +1,12 @@
 <!-- Copyright (C) 2022 Edith Coates -->
 <!-- Copyright (C) 2023 Colin B. Macdonald -->
-{% extends 'base/base.html' %}
-{% block title %}Web Plom - Scan{% endblock %}
-{% block page_heading %}Scan bundles{% endblock %}
+{% extends "base/base.html" %}
+{% block title %}
+    Web Plom - Scan
+{% endblock title %}
+{% block page_heading %}
+    Scan bundles
+{% endblock page_heading %}
 {% block main_content %}
     <div class="d-flex justify-content-center">
         <!-- <div class="card text-center w-50" style="min-width: fit-content;">
@@ -17,4 +21,4 @@
     </div> -->
         <div hx-get="{% url 'scan_image_update' timestamp %}" hx-trigger="load"></div>
     </div>
-{% endblock %}
+{% endblock main_content %}
