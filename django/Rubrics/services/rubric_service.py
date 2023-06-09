@@ -122,7 +122,8 @@ class RubricService:
         return new_rubric_data
 
     def get_all_rubrics(self):
-        """Get all the rubrics lazily. This means lazy filtering is possible.
+        """Get all the rubrics lazily, so that lazy filtering is possible.
+
         See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy
 
         Returns:
