@@ -128,11 +128,10 @@ class DemoCreationService:
             subprocess.check_call(split(py_man_cmd))
             sleep(0.2)
         # we don't want to mess with these - just upload them
-        hw_bundle_names = [
-            f"fake_hw_bundle_{paper_number}.pdf" for paper_number in homework_bundles
-        ]
-        for bname in hw_bundle_names:
-            cmd = f"plom_staging_bundles upload demoScanner{1} {bname}"
+        for bundle in homework_bundles:
+            paper_number = bundle["paper_number"]
+            bundle_name = f"fake_hw_bundle_{paper_number}.pdf"
+            cmd = f"plom_staging_bundles upload demoScanner{1} {bundle_name}"
             py_man_cmd = f"python3 manage.py {cmd}"
             subprocess.check_call(split(py_man_cmd))
             sleep(0.2)
@@ -175,13 +174,14 @@ class DemoCreationService:
                     print(f"fake_bundle{n}.pdf has been read")
                     return
 
-    def push_if_ready(self, number_of_bundles=3, homework_bundles={}, attempts=15):
+    def push_if_ready(self, number_of_bundles=3, homework_bundles=[], attempts=15):
         print(
             "Try to push all bundles - some will fail since they are not yet ready, or contain unknowns/errors etc"
         )
         todo = [f"fake_bundle{k+1}" for k in range(number_of_bundles)]
-        for n in homework_bundles:
-            todo.append(f"fake_hw_bundle_{n}")
+        for bundles in homework_bundles:
+            paper_number = bundles["paper_number"]
+            todo.append(f"fake_hw_bundle_{paper_number}")
 
         while True:
             done = []

@@ -13,10 +13,14 @@ from django.core.management import call_command
 class DemoHWBundleService:
     """Handle creating homework bundles in the demo."""
 
-    def make_hw_bundle(self, paper_number, *, question_list=[[1]]):
+    def make_hw_bundle(self, bundle: dict):
+        paper_number = bundle["paper_number"]
+        question_list = bundle["pages"]
+
         print(
             f"Making a homework bundle as paper {paper_number} with question-page mapping {question_list}"
         )
+
         # question_list should be a list of lists eg [[1], [1,2], [], [2,3]]
         out_file = Path(f"fake_hw_bundle_{paper_number}.pdf")
         doc = fitz.Document()
@@ -37,9 +41,12 @@ class DemoHWBundleService:
 
         doc.save(out_file)
 
-    def map_homework_pages(self, homework_bundles={}):
+    def map_homework_pages(self, homework_bundles=[]):
         print("Mapping homework pages to questions")
-        for paper_number, question_list in homework_bundles.items():
+        for bundle in homework_bundles:
+            paper_number = bundle["paper_number"]
+            question_list = bundle["pages"]
+
             bundle_name = f"fake_hw_bundle_{paper_number}"
             print(
                 f"Assigning pages in {bundle_name} to paper {paper_number} questions {question_list}"
