@@ -33,7 +33,7 @@ class Rubric(models.Model):
     question = models.IntegerField(null=False, default=0)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     tags = models.TextField(null=True)  # can be long
-    meta = models.TextField(null=True)  # can be long
+    meta = models.TextField(null=True, blank=True)  # can be long
     versions = models.JSONField(null=True, default=list)
     parameters = models.JSONField(null=True, default=list)
 

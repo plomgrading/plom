@@ -1,0 +1,28 @@
+<!-- 
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Divy Patel
+-->
+
+
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block page_heading %}Rubric Info{% endblock %}
+
+{% block main_content %}
+
+<p>Rubric ID: {{ rubric.key }}</p>
+<p>Delta: {{ rubric.display_delta }}</p>
+<p>Kind: {{ rubric.kind }}</p>
+<p>Text: {{ rubric.text }}</p>
+<p># used: TODO</p>
+
+<form action="{% url 'rubric_edit' rubric.key %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Submit">
+</form>
+
+<p>Annotations: TODO</p>
+
+{% endblock %}

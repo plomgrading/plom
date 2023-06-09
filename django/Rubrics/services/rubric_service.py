@@ -5,6 +5,8 @@
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Divy Patel
 
 import logging
 
@@ -112,25 +114,21 @@ class RubricService:
         rubric_data = []
 
         for r in rubric_list.prefetch_related("user"):
-            rubric_dict = {
-                "id": r.key,
-                "kind": r.kind,
-                "display_delta": r.display_delta,
-                "value": r.value,
-                "out_of": r.out_of,
-                "text": r.text,
-                "tags": r.tags,
-                "meta": r.meta,
-                "username": r.user.username,
-                "question": r.question,
-                "versions": r.versions,
-                "parameters": r.parameters,
-            }
+            rubric_dict = self.rubric_dict(r)
             rubric_data.append(rubric_dict)
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
         return new_rubric_data
+
+    def get_all_rubrics(self):
+        """Get all the rubrics lazily. This means lazy filtering is possible.
+        See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy
+
+        Returns:
+            QuerySet: lazy queryset of all rubrics.
+        """
+        return Rubric.objects.all()
 
     def init_rubrics(self):
         """Add special rubrics such as deltas and per-question specific.
@@ -283,3 +281,28 @@ class RubricService:
         # if rubric_data["kind"] not in ["relative", "neutral", "absolute"]:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
+
+    def rubric_dict(self, r: Rubric):
+        """Gets a dictionary representation of a rubric.
+
+        Args:
+            r: a Rubric instance
+
+        Returns:
+            dict: dictionary representation of a rubric.
+        """
+        rubric_dict = {
+            "id": r.key,
+            "kind": r.kind,
+            "display_delta": r.display_delta,
+            "value": r.value,
+            "out_of": r.out_of,
+            "text": r.text,
+            "tags": r.tags,
+            "meta": r.meta,
+            "username": r.user.username,
+            "question": r.question,
+            "versions": r.versions,
+            "parameters": r.parameters,
+        }
+        return rubric_dict
