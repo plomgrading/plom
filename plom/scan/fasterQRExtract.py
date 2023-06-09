@@ -57,17 +57,21 @@ def findCorner(qr, dim):
     return NS + EW, mx, my
 
 
-def QRextract(image, try_harder=True):
+def QRextract(image, *, try_harder=True, rotation=0):
     """Decode and return QR codes in an image.
 
     Args:
         image (str/pathlib.Path/PIL.Image): an image filename, either in
             the local dir or specified e.g., using `pathlib.Path`.  Can
             also be an instance of Pillow's `Image`.
+
+    Keyword Args:
         try_harder (bool): Try to find QRs on a smaller resolution.
             Defaults to True.  Sometimes this seems work around high
             failure rates in the synthetic images used in CI testing.
             Details below.
+        rotation (int): Rotate the image by 90, -90, 180 or 270 degrees
+            counterclockwise prior to reading the QR codes. Defaults to 0.
 
     Returns:
         dict/None: Keys "NW", "NE", "SW", "SE", each with a dict containing
@@ -93,6 +97,10 @@ def QRextract(image, try_harder=True):
 
     if not isinstance(image, Image.Image):
         image = pil_load_with_jpeg_exif_rot_applied(image)
+
+    if rotation != 0:
+        assert rotation in (-90, 90, 270, 180)
+        image = image.rotate(rotation, expand=True)
 
     # PIL does lazy loading.  Force loading now so we see errors now.
     # Otherwise, zxing-cpp might hide error messages, Issue #2597

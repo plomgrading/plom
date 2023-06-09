@@ -10,7 +10,6 @@ import pathlib
 import random
 from statistics import mode
 import tempfile
-from warnings import warn
 
 import fitz
 from django.conf import settings
@@ -1071,7 +1070,7 @@ def huey_parent_read_qr_codes_task(bundle_pk):
             # TODO - check for error status here.
             img = StagingImage.objects.get(pk=X["image_pk"])
             img.parsed_qr = X["parsed_qr"]
-            img.rotation = X["rotation"]
+            img.rotation += X["rotation"]
             img.save()
 
         bundle_obj.has_qr_codes = True
@@ -1130,7 +1129,7 @@ def huey_child_get_page_image(
 
 @db_task(queue="tasks")
 def huey_child_parse_qr_code(image_pk, *, quiet=True):
-    """Huey task of parsing QR codes, check QR errors, rotate image, and save to database in the background.
+    """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     Args:
         image_pk: primary key of the image
@@ -1147,17 +1146,20 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
 
     pipr = PageImageProcessor()
 
-    has_had_rotation = pipr.rotate_page_image(image_path, page_data)
-    # Re-read QR codes if the page image has been rotated
-    if has_had_rotation != 0:
-        code_dict = QRextract(image_path)
+    rotation = pipr.get_rotation_angle_from_QRs(page_data)
+
+    # Andrew wanted to leave the possibility of re-introducing hard
+    # rotations in the future, such as `plom.scan.rotate_bitmap`.
+
+    # Re-read QR codes if the page image needs to be rotated
+    if rotation != 0:
+        code_dict = QRextract(image_path, rotation=rotation)
         page_data = scanner.parse_qr_code([code_dict])
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
     # Return the parsed QR codes for parent process to store in db
-    # Zero rotation returned because rotate_page_image() modifies the image
     return {
         "image_pk": image_pk,
         "parsed_qr": page_data,
-        "rotation": 0,
+        "rotation": rotation,
     }
