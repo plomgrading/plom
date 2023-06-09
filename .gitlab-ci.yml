@@ -395,7 +395,7 @@ pydocstyle-django:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
     - pushd django
-    - pydocstyle -s -e API Base Rubrics Scan
+    - pydocstyle -s -e API Base Rubrics Scan Tags
     - popd
   allow_failure: true
 
