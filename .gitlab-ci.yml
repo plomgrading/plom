@@ -151,7 +151,7 @@ djlint-check:
   before_script:
     - pip install djlint~=1.27.2
   script:
-    - djlint django/templates/*/*.html django/templates/*/*/*.html --check --warn
+    - djlint django/templates/*/*.html django/templates/*/*/*.html --check
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
