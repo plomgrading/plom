@@ -4,9 +4,11 @@
     Copyright (C) 2023 Divy Patel
     Copyright (C) 2023 Colin B. Macdonald
 -->
-{% extends 'base/base.html' %}
+{% extends "base/base.html" %}
 {% load static %}
-{% block page_heading %}Rubrics{% endblock %}
+{% block page_heading %}
+    Rubrics
+{% endblock page_heading %}
 {% block main_content %}
     {% comment %} Filter {% endcomment %}
     <div>
@@ -51,4 +53,4 @@
     {% comment %} For sorting table by clicking headers {% endcomment %}
     {% comment %} TODO: move to a more appropriate place (Issue #2762) {% endcomment %}
     <script src="https://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
-{% endblock %}
+{% endblock main_content %}
