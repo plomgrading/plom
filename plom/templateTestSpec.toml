@@ -21,7 +21,6 @@ numberOfQuestions = 3
 # total number of papers to produce
 # (set to "-1" to use length of classlist + 10%)
 numberToProduce = 20
-# NOTE: the numberToName field is deprecated in favour of the paper_number column in classlist.
 
 # the id-page - always taken from Version1
 idPage = 1  # must be exactly 1 page
