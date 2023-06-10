@@ -1,93 +1,77 @@
 <!-- Copyright (C) 2022 Andrew Rechnitzer -->
 <!-- Copyright (C) 2023 Colin B. Macdonald -->
-
 {% extends "base/base.html" %}
 {% block page_heading %}Manage connection to Plom-classic server{% endblock %}
 {% block main_content %}
-  <div class="d-grid gap-2">
-    <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
-
-    <div class="card">
-      <div class="card-body">
-	{% if server_name %}
-        <h4 class="card-title">
-	  {{server_name}} : {{server_port}}
-	</h4>
-        <div class="card-text">
-	  <button class="btn btn-warning">change server information</button>
-	</div>
-	{% else %}
-        <h4 class="card-title">
-	Server information not yet set.
-        </h4>
-        <div class="card-text">
-	  <a class="btn btn-primary" href="server">set server information</a>
-	</div>
-	{% endif %}
-      </div>
+    <div class="d-grid gap-2">
+        <a class="btn btn-primary" href="../">Return to assessment preparation page</a>
+        <div class="card">
+            <div class="card-body">
+                {% if server_name %}
+                    <h4 class="card-title">{{ server_name }} : {{ server_port }}</h4>
+                    <div class="card-text">
+                        <button class="btn btn-warning">change server information</button>
+                    </div>
+                {% else %}
+                    <h4 class="card-title">Server information not yet set.</h4>
+                    <div class="card-text">
+                        <a class="btn btn-primary" href="server">set server information</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                {% if server_name %}
+                    {% if manager_password %}
+                        <h4 class="card-title">Manager password: {{ manager_password }}</h4>
+                        <div class="card-text">
+                            <button class="btn btn-warning">change manager password</button>
+                        </div>
+                    {% else %}
+                        <h4 class="card-title">Set manager password</h4>
+                        <div class="card-text">
+                            <button class="btn btn-warning">change server information</button>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <h4 class="card-title">Cannot set manager information until server is set.</h4>
+                    <div class="card-text"></div>
+                {% endif %}
+            </div>
+        </div>
     </div>
-
-    <div class="card">
-      <div class="card-body">
-	{% if server_name %}
-	{% if manager_password %}
-        <h4 class="card-title">
-	  Manager password: {{manager_password}}
-	</h4>
-        <div class="card-text">
-	  <button class="btn btn-warning">change manager password</button>
-	</div>
-	{% else %}
-        <h4 class="card-title">
-	  Set manager password
-	</h4>
-        <div class="card-text">
-	  <button class="btn btn-warning">change server information</button>
-	</div>
-	{% endif %}
-	{% else %}
-        <h4 class="card-title">
-	  Cannot set manager information until server is set.
-        </h4>
-        <div class="card-text">
-	</div>
-	{% endif %}
-      </div>
-    </div>
-  </div>
-
-  </div>
+</div>
 {% endblock %}
-
-         <!--       <form enctype="multipart/form-data" -->
-        <!--             id="form" -->
-        <!--             method="post" -->
-        <!--             action="/preparation/classic/server"> -->
-        <!--         {% csrf_token %} -->
-        <!--         <label for="server_name">Server name</label> -->
-        <!--         <input id="server_name" -->
-        <!--                class="form-input" -->
-        <!--                type="string" -->
-	<!-- 	       name="server_name" -->
-	<!-- 	       {% if server_name is None %} -->
-        <!--                value="localhost" -->
-	<!-- 	       {% else %} -->
-        <!--                value="{{ server_name }}" -->
-	<!-- 	       {% endif %} -->
-	<!-- 	       required -->
-	<!-- 	       /> -->
-        <!--         <label for="server_name">Server port</label> -->
-        <!--         <input id="server_post" -->
-        <!--                class="form-input" -->
-        <!--                type="number" -->
-	<!-- 	       name="server_port" -->
-	<!-- 	       {% if server_port is None %} -->
-        <!--                value="41984" -->
-	<!-- 	       {% else %} -->
-        <!--                value="{{ server_port }}" -->
-	<!-- 	       {% endif %} -->
-	<!-- 	       required -->
-	<!-- 	       /> -->
-        <!--         <button class="btn btn-primary" type="submit">set</button> -->
-        <!--     </form> -->
-	<!-- </div> -->
+<!--       <form enctype="multipart/form-data" -->
+<!--             id="form" -->
+<!--             method="post" -->
+<!--             action="/preparation/classic/server"> -->
+<!--         {% csrf_token %} -->
+<!--         <label for="server_name">Server name</label> -->
+<!--         <input id="server_name" -->
+<!--                class="form-input" -->
+<!--                type="string" -->
+<!-- 	       name="server_name" -->
+<!-- 	       {% if server_name is None %} -->
+<!--                value="localhost" -->
+<!-- 	       {% else %} -->
+<!--                value="{{ server_name }}" -->
+<!-- 	       {% endif %} -->
+<!-- 	       required -->
+<!-- 	       /> -->
+<!--         <label for="server_name">Server port</label> -->
+<!--         <input id="server_post" -->
+<!--                class="form-input" -->
+<!--                type="number" -->
+<!-- 	       name="server_port" -->
+<!-- 	       {% if server_port is None %} -->
+<!--                value="41984" -->
+<!-- 	       {% else %} -->
+<!--                value="{{ server_port }}" -->
+<!-- 	       {% endif %} -->
+<!-- 	       required -->
+<!-- 	       /> -->
+<!--         <button class="btn btn-primary" type="submit">set</button> -->
+<!--     </form> -->
+<!-- </div> -->
