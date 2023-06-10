@@ -154,8 +154,9 @@ djlint-strict:
   script:
     - djlint django/templates/base/*.html --profile django
     - djlint django/templates/Rubrics/*.html --profile django
-    - djlint django/templates/Scan/*.html django/templates/Scan/*/*.html --profile django
+    - djlint django/templates/Scan/*.html --profile django
     - djlint django/templates/SpecCreator/*.html --profile django
+    - djlint django/templates/*/*/*.html --profile django
 
 
 djlint-check:
