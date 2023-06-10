@@ -1,25 +1,22 @@
 {% extends 'base/base.html' %}
-
 {% block title %}Connect to classic - Send information{% endblock %}
-
 {% block page_heading %}Send information to Plom-classic server{% endblock %}
-
 {% block main_content %}
-<div class="d-grid gap-2">
-    <div class="card w-50" id="task-status">
-        {% if db_init_task %}
-        {{ fragment |safe }}
-        {% else %}
-        <div class="card-body">
-            <h5 class="card-title">Send question-version map to Plom-classic</h5>
-            <p class="card-text">Will initialise a Plom-classic database with {{ n_to_produce }} test-papers.</p>
-            <form action="{% url 'connect_init_db' %}" method="post">
-                {% csrf_token %}
-                <input type="submit" class="btn btn-primary" value="Send">
-                <a class="btn btn-primary" href="{% url 'connect_send_info' %}">Back</a>
-            </form>
+    <div class="d-grid gap-2">
+        <div class="card w-50" id="task-status">
+            {% if db_init_task %}
+                {{ fragment |safe }}
+            {% else %}
+                <div class="card-body">
+                    <h5 class="card-title">Send question-version map to Plom-classic</h5>
+                    <p class="card-text">Will initialise a Plom-classic database with {{ n_to_produce }} test-papers.</p>
+                    <form action="{% url 'connect_init_db' %}" method="post">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-primary" value="Send">
+                        <a class="btn btn-primary" href="{% url 'connect_send_info' %}">Back</a>
+                    </form>
+                </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
-</div>
 {% endblock %}
