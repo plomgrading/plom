@@ -1195,13 +1195,6 @@ def huey_child_parse_qr_code(image_pk, *, quiet=True):
         page_data = scanner.parse_qr_code([code_dict])
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
-        # now fix up the thumbnail
-        from PIL import Image
-
-        with Image.open(thumb_path) as tn_img:
-            tn_rotated = tn_img.rotate(angle=has_had_rotation, expand=True)
-        tn_rotated.save(thumb_path)
-
     # Return the parsed QR codes for parent process to store in db
     return {
         "image_pk": image_pk,

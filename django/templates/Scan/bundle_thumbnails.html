@@ -1,8 +1,12 @@
 <!-- Copyright (C) 2022-2023 Brennen Chiu -->
 <!-- Copyright (C) 2023 Andrew Rechnitzer -->
 {% extends "base/base.html" %}
-{% block title %}Web Plom - Scan{% endblock %}
-{% block page_heading %}Manage bundle{% endblock %}
+{% block title %}
+    Web Plom - Scan
+{% endblock title %}
+{% block page_heading %}
+    Manage bundle
+{% endblock page_heading %}
 {% block main_content %}
     <div style="margin: 0px 0px 16px 2.5px">
         <a class="btn btn-success" href="{% url 'scan_home' %}">
@@ -112,4 +116,4 @@
         return new bootstrap.Tooltip(tooltipTriggerEl)
     })
                     </script>
-                {% endblock %}
+                {% endblock main_content %}
