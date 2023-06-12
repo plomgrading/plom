@@ -67,9 +67,12 @@ class Command(BaseCommand):
         Returns:
             None: instead saves result to a csv file.
         """
+        id_reader_service = IDReaderService()
         greedy_predictions = self.greedy(sids, probabilities)
         for pred in greedy_predictions:
-            add_or_change_ID_prediction(None, pred[0], pred[1], pred[2], "MLGreedy")
+            id_reader_service.add_or_change_ID_prediction(
+                None, pred[0], pred[1], pred[2], "MLGreedy"
+            )
 
         # Save to CSV file for debugging
         # with open(settings.MEDIA_ROOT / "greedy_predictions.csv", "w") as f:
@@ -129,7 +132,9 @@ class Command(BaseCommand):
         self.stdout.write(f" done in {time.process_time() - t:.02} seconds.")
 
         for pred in lap_predictions:
-            add_or_change_ID_prediction(None, pred[0], pred[1], pred[2], "MLLAP")
+            id_reader_service.add_or_change_ID_prediction(
+                None, pred[0], pred[1], pred[2], "MLLAP"
+            )
 
         # Save predictions to CSV for debugging
         # with open(settings.MEDIA_ROOT / "lap_predictions.csv", "w") as f:

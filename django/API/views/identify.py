@@ -66,12 +66,12 @@ class GetIDPredictions(APIView):
         user = request.user
         id_reader_service = IDReaderService()
         for paper_num in data:
-            id_reader_service.add_or_change_prediction(
+            id_reader_service.add_or_change_ID_prediction(
                 user,
-                paper_num,
-                paper_num["sid"],
-                paper_num["certainty"],
-                paper_num["predictor"],
+                int(paper_num),
+                data[paper_num]["student_id"],
+                data[paper_num]["certainty"],
+                data[paper_num]["predictor"],
             )
         return Response(status=status.HTTP_200_OK)
 
@@ -86,6 +86,10 @@ class GetIDPredictions(APIView):
                 return Response(status=status.HTTP_200_OK)
             except RuntimeError:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            for predictor_name in ("MLLAP", "MLGreedy"):
+                id_reader_service.delete_ID_predictions(user, predictor_name)
+            return Response(status=status.HTTP_200_OK)
 
 
 class IDgetDoneTasks(APIView):

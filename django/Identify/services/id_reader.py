@@ -6,11 +6,13 @@ import pathlib
 from warnings import warn
 
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from Identify.models import PaperIDTask, IDPrediction
 from Identify.services import IdentifyTaskService
-from Papers.models import IDPage
+from Papers.models import IDPage, Paper
 from Preparation.services import StagingStudentService
 from Scan.services.image_process import PageImageProcessor
 
@@ -136,8 +138,10 @@ class IDReaderService:
     ):
         """Add a new ID prediction or change an existing prediction in the DB."""
         try:
-            # hardcode user to Manager
-            user_obj = User.objects.get(groups__name="manager")
+            # TODO: hardcoded demo manager user
+            user_obj = User.objects.get(
+                username__iexact="manager", groups__name="manager"
+            )
         except ObjectDoesNotExist:
             raise ValueError(f"Manager user '{username}' does not exist")
         paper = Paper.objects.get(paper_number=paper_num)
@@ -148,7 +152,7 @@ class IDReaderService:
         if not existing_pred:
             new_prediction = IDPrediction(
                 user=user_obj,
-                paper=paper_num,
+                paper=paper,
                 predictor=predictor,
                 student_id=student_id,
                 certainty=certainty,
