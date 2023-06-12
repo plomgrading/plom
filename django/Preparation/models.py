@@ -4,7 +4,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.db import models
-from django.db import transaction
 from django.conf import settings
 
 from Base.models import SingletonBaseModel, HueyTask
@@ -70,16 +69,6 @@ class StagingPQVMapping(models.Model):
     paper_number = models.PositiveIntegerField(null=False)
     question = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
-
-
-# ---------------------------------
-# Make a table for info to help connect to the plom-classic server
-
-
-class ClassicPlomServerInformation(SingletonBaseModel):
-    server_name = models.TextField(null=True)
-    server_port = models.PositiveIntegerField(null=True)
-    server_manager_password = models.TextField(null=True)
 
 
 # ---------------------------------
