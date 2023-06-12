@@ -8,8 +8,8 @@ from warnings import warn
 from django.conf import settings
 from django.db import transaction
 
-from Identify.models import PaperIDTask
-from Identify.services.id_tasks import IdentifyTaskService
+from Identify.models import PaperIDTask, IDPrediction
+from Identify.services import IdentifyTaskService
 from Papers.models import IDPage
 from Preparation.services import StagingStudentService
 from Scan.services.image_process import PageImageProcessor

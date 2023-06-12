@@ -14,7 +14,7 @@ import time
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from Identify.services.id_reader import IDReaderService
+from Identify.services import IDReaderService
 
 
 class Command(BaseCommand):
