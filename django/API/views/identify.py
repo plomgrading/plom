@@ -40,6 +40,13 @@ class GetIDPredictions(APIView):
     """
 
     def get(self, request, *, predictor=None):
+        """Get ID predictions from either a particular predictor or all predictors.
+
+        Returns:
+            dict: a dict keyed by paper_number of lists of prediction dicts
+            if returning all ID predictions, or a dict of dicts if returning
+            only predictions for a single predictor.
+        """
         id_reader_service = IDReaderService()
         if not predictor:
             predictions = id_reader_service.get_ID_predictions()
@@ -49,13 +56,11 @@ class GetIDPredictions(APIView):
                 predictions = {}
                 for s in sstu.get_students():
                     if s["paper_number"]:
-                        predictions[s["paper_number"]] = [
-                            {
-                                "student_id": s["student_id"],
-                                "certainty": 100,
-                                "predictor": "prename",
-                            }
-                        ]
+                        predictions[s["paper_number"]] = {
+                            "student_id": s["student_id"],
+                            "certainty": 100,
+                            "predictor": "prename",
+                        }
         else:
             predictions = id_reader_service.get_ID_predictions(predictor=predictor)
         return Response(predictions)
