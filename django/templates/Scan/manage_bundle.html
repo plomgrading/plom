@@ -128,7 +128,16 @@
                                             p{{ pg.order }}
                                         </button>
                                     {% elif pg.status == 'extra' %}
-                                        <button class="{% if pg.info.question_list %}" btn m-1 btn-outline-info {% else %} btn m-1 btn-info {% endif %} onclick=" this.blur hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}" hx-swap="outerHTML" hx-target="#navFragment" hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}" data-bs-toggle="tooltip" data-bs-placement="top" {% if pg.info.question_list %} data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}" {% else %} data-bs-title="Extra page - no data" {% endif %}> p{{ pg.order }}
+                                        <button class="{% if pg.info.question_list %} btn m-1 btn-outline-info {% else %} btn m-1 btn-info {% endif %}"
+                                                onclick="this.blur();"
+                                                hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
+                                                hx-swap="outerHTML"
+                                                hx-target="#navFragment"
+                                                hx-replace-url="{% url 'scan_manage_bundle' timestamp forloop.counter %}"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                {% if pg.info.question_list %} data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}" {% else %} data-bs-title="Extra page - no data" {% endif %}>
+                                            p{{ pg.order }}
                                         </button>
                                     {% elif pg.status == 'unread' %}
                                         <button class="btn m-1 btn-outline-dark"
