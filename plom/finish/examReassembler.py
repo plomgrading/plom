@@ -28,10 +28,10 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         sid (str): Student ID, to be written into metadata.
         coverfile (str/pathlib.Path): a coversheet already in PDF format.
             Pass None to omit (deprecated "totalling mode" did this).
-        id_images (list): str/Path images to be inserted one per page.
-        marked_pages (list): str/Path images to be inserted one per page.
-        dnm_images (list): str/Path images to be combined into a new
-            final page.
+        id_images (list): dict of images with keys "filename" (`pathlib.Path`)
+            and "rotation" (`integer`).
+        marked_pages (list): as above.
+        dnm_images (list): as above.
 
     Returns:
         None
@@ -43,9 +43,15 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     else:
         exam = fitz.open()
 
-    for img_name in [*id_images, *marked_pages]:
-        img_name = Path(img_name)
+    # TODO: consider breaking this into two loops: id_images are more like dnm
+    for row in [*id_images, *marked_pages]:
+        img_name = row["filename"]
+        # currently always zero for the marked pages
+        rot_angle = row["rotation"]
         im = PIL.Image.open(img_name)
+
+        # TODO: replace all this with load_with_exif
+        # then apply of soft rotation
 
         # Rotate page not the image: we want landscape on screen
         if im.width > im.height:
@@ -90,11 +96,13 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         W = (w - 2 * margin) // len(dnm_images)
         header_bottom = margin + h // 10
         offset = margin
-        for img_name in dnm_images:
+        for row in dnm_images:
             rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
             # fitz insert_image does not respect exif
-            rot = rot_angle_from_jpeg_exif_tag(img_name)
-            pg.insert_image(rect, filename=img_name, rotate=rot)  # ccw
+            rot = rot_angle_from_jpeg_exif_tag(row["filename"])
+            # now apply soft rotation
+            rot += row["rotation"]
+            pg.insert_image(rect, filename=row["filename"], rotate=rot)  # ccw
             offset += W
         if len(dnm_images) > 1:
             text = 'These pages were flagged "Do No Mark" by the instructor.'

@@ -82,7 +82,11 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         img_bytes = msgr.get_image(row["id"], row["md5"])
         with open(filename, "wb") as f:
             f.write(img_bytes)
-        id_pages.append(filename)
+        if row["orientation"]:
+            # load with exif, then soft rotate, then resave?
+            # or can we somehow keep this until the writer?
+            pass
+        id_pages.append({"filename": filename, "rotation": row["orientation"]})
 
     marked_pages = []
     for q in range(1, num_questions + 1):
@@ -92,7 +96,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         filename = tmpdir / f"img_{int(t):04}_q{q:02}.{im_type}"
         if not im_type:
             raise PlomSeriousException(f"Could not identify image type: {filename}")
-        marked_pages.append(filename)
+        marked_pages.append({"filename": filename, "rotation": 0})
         with open(filename, "wb") as f:
             f.write(obj)
 
@@ -106,7 +110,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         img_bytes = msgr.get_image(row["id"], row["md5"])
         with open(filename, "wb") as f:
             f.write(img_bytes)
-        dnm_pages.append(filename)
+        dnm_pages.append({"filename": filename, "rotation": row["orientation"]})
 
     return (id_pages, marked_pages, dnm_pages)
 
