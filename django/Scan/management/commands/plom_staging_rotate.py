@@ -13,9 +13,8 @@ class Command(BaseCommand):
     help = "Rotate a page of a bundle by 90 degrees counter clockwise."
 
     def rotate_image_from_bundle(self, username, bundle_name, bundle_order):
-        scanner = ImageRotateService()
         try:
-            scanner.rotate_image_cmd(username, bundle_name, bundle_order)
+            ImageRotateService().rotate_image_cmd(username, bundle_name, bundle_order)
         except (ValueError, PermissionError) as e:
             raise CommandError(e)
         self.stdout.write(

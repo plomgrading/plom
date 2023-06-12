@@ -135,23 +135,38 @@ copyright_year:
   allow_failure: true
 
 
+# TODO: tighten up by adding `--profile django` (but not with --check?)
 djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.27.2
+    - pip install djlint~=1.30.2
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html
 
 
-# TODO: remove --warn to make these errors, Issue #2666
+# eventually replace the above job
+djlint-strict:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - pip install djlint~=1.30.2
+  script:
+    - djlint django/templates/base/*.html --profile django
+    - djlint django/templates/Rubrics/*.html --profile django
+    - djlint django/templates/Scan/*.html --profile django
+    - djlint django/templates/SpecCreator/*.html --profile django
+    - djlint django/templates/*/*/*.html --profile django
+
+
 djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.27.2
+    - pip install djlint~=1.30.2
   script:
-    - djlint django/templates/*/*.html django/templates/*/*/*.html --check --warn
+    - djlint django/templates/*/*.html django/templates/*/*/*.html --check
+  allow_failure: true
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
