@@ -36,3 +36,21 @@ extra_page_papers = [31, 32]
 [[bundles]]
 first_paper = 41
 last_paper = 70
+
+
+# HW bundle 1
+[[hw_bundles]]
+paper_number = 61
+pages = [[1], [2], [], [2, 3], [3]]
+
+
+# HW bundle 2
+[[hw_bundles]]
+paper_number = 62
+pages = [[1], [1, 2], [2], [], [3]]
+
+
+# HW bundle 3
+[[hw_bundles]]
+paper_number = 63
+pages = [[1, 2], [3], []]

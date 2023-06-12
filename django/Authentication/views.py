@@ -1,4 +1,9 @@
-from multiprocessing import context
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022 Natalie Balashov
+
 from django.contrib.auth.models import User, Group
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
@@ -16,7 +21,6 @@ from random_username.generate import generate_username
 from .services import generate_link, check_username
 from .signupForm import CreateManagerForm, CreateScannersAndMarkersForm
 from Base.base_group_views import AdminRequiredView, ManagerRequiredView
-from Connect.services import CoreUsersService
 
 
 # Create your views here.
@@ -57,7 +61,6 @@ class SetPassword(View):
             user = None
         if user is not None and default_token_generator.check_token(user, token):
             reset_form = SetPasswordForm(user, request.POST)
-            core = CoreUsersService()
 
             # scanner and marker group
             if (
@@ -70,18 +73,7 @@ class SetPassword(View):
                     user.profile.signup_confirmation = True
                     user.save()
                     print(reset_form.cleaned_data.get("new_password1"))
-                    if not core.is_there_a_valid_connection():
-                        context = {
-                            "classic_Plom_user": "Cannot create user on Plom-classic - no connection found."
-                        }
-                    else:
-                        core.create_core_user(
-                            user.username, reset_form.cleaned_data.get("new_password1")
-                        )
-                        context = {
-                            "classic_Plom_user": "Web Plom created an account for you in Plom-classic. You can use the same account in Web Plom and Plom-classic."
-                        }
-                    return render(request, self.set_password_complete, context)
+                    return render(request, self.set_password_complete)
                 # display error message
                 else:
                     tri_quote = '"""'
