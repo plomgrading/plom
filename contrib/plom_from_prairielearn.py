@@ -1,7 +1,7 @@
 #!/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2023 Colin B. Macdonald
 
 """Start a Plom server from a PrairieLearn pdf file upload.
 
@@ -90,7 +90,6 @@ spec = plom.SpecVerifier(
         "numberOfVersions": 1,
         "numberOfPages": 2,
         "numberToProduce": -1,
-        "numberToName": -1,
         "numberOfQuestions": 1,
         "idPages": {"pages": [1]},
         "doNotMark": {"pages": []},
