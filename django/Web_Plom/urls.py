@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Julian Lapenna
 
 """Web_Plom URL Configuration
 
@@ -37,4 +38,5 @@ urlpatterns = [
     path("scan/", include("Scan.urls")),
     path("progress/", include("Progress.urls")),
     path("rubrics/", include("Rubrics.urls")),
+    path("paper_tags/", include("Tags.urls")),
 ]
