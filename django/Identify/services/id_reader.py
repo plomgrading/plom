@@ -109,7 +109,6 @@ class IDReaderService:
         """
         predictions = {}
         if predictor:
-            print('querying for predictions from "%s"', predictor)
             pred_query = IDPrediction.objects.filter(predictor=predictor)
             for pred in pred_query:
                 predictions[pred.paper.paper_number] = {
@@ -118,7 +117,6 @@ class IDReaderService:
                     "predictor": pred.predictor,
                 }
         else:
-            print("querying for all predictions")
             pred_query = IDPrediction.objects.all()
             for pred in pred_query:
                 if predictions.get(pred.paper.paper_number) is None:
@@ -138,10 +136,8 @@ class IDReaderService:
     ):
         """Add a new ID prediction or change an existing prediction in the DB."""
         try:
-            # TODO: hardcoded demo manager user
-            user_obj = User.objects.get(
-                username__iexact="manager", groups__name="manager"
-            )
+            # TODO: hardcoded to use "first" manager user in DB
+            user_obj = User.objects.filter(groups__name="manager").first()
         except ObjectDoesNotExist:
             raise ValueError(f"Manager user '{username}' does not exist")
         paper = Paper.objects.get(paper_number=paper_num)
@@ -158,19 +154,15 @@ class IDReaderService:
                 certainty=certainty,
             )
             new_prediction.save()
-            print(f"Paper {paper_num} IDed by {predictor} as {student_id}")
         else:
             existing_pred.student_id = student_id
             existing_pred.certainty = certainty
             existing_pred.save()
-            print(f"Paper {paper_num} ID changed to {student_id} ({predictor})")
 
     @transaction.atomic
     def delete_ID_predictions(self, user, predictor=None):
         """Delete all ID predictions from a particular predictor."""
         if predictor:
             prediction = IDPrediction.objects.filter(predictor=predictor).delete()
-            print(f"Predictions IDed by {predictor} were deleted.")
         else:
             prediction = IDPrediction.objects.all().delete()
-            print(f"All predictions were deleted.")

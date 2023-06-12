@@ -74,12 +74,6 @@ class Command(BaseCommand):
                 None, pred[0], pred[1], pred[2], "MLGreedy"
             )
 
-        # Save to CSV file for debugging
-        # with open(settings.MEDIA_ROOT / "greedy_predictions.csv", "w") as f:
-        #     write = csv.writer(f)
-        #     write.writerow(("paper_num", "student_ID", "certainty"))
-        #     write.writerows(greedy_predictions)
-
     def predict_id_lap_solver(self, sids, probabilities):
         """Matching unidentified papers against classlist via linear assignment problem.
 
@@ -135,12 +129,6 @@ class Command(BaseCommand):
             id_reader_service.add_or_change_ID_prediction(
                 None, pred[0], pred[1], pred[2], "MLLAP"
             )
-
-        # Save predictions to CSV for debugging
-        # with open(settings.MEDIA_ROOT / "lap_predictions.csv", "w") as f:
-        #     write = csv.writer(f)
-        #     write.writerow(("paper_num", "student_ID", "certainty"))
-        #     write.writerows(lap_predictions)
 
     def calc_log_likelihood(self, student_ID, prediction_probs):
         """Calculate the log likelihood that an ID prediction matches the student ID.
