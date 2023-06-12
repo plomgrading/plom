@@ -90,3 +90,83 @@ class IDReaderService:
         for entry in classlist:
             students.append(entry.pop("student_id"))
         return students
+
+    @transaction.atomic
+    def get_ID_predictions(self, predictor=None):
+        """Get ID predictions for a particular predictor, or all predictions if no predictor specified.
+
+        Keyword Args:
+            predictor (str): predictor whose predictions are returned.
+                If None, all predictions are returned.
+
+        Returns:
+            dict: if returning all predictions, a dict of lists of dicts.
+                If returning predictions for a specific predictor, a dict of dicts.
+                Inner-most dicts contain prediction info (ie. SID, certainty, predictor).
+                Outer-most dict is keyed by paper number.
+        """
+        predictions = {}
+        if predictor:
+            print('querying for predictions from "%s"', predictor)
+            pred_query = IDPrediction.objects.filter(predictor=predictor)
+            for pred in pred_query:
+                predictions[pred.paper.paper_number] = {
+                    "student_id": pred.student_id,
+                    "certainty": pred.certainty,
+                    "predictor": pred.predictor,
+                }
+        else:
+            print("querying for all predictions")
+            pred_query = IDPrediction.objects.all()
+            for pred in pred_query:
+                if predictions.get(pred.paper.paper_number) is None:
+                    predictions[pred.paper.paper_number] = []
+                predictions[pred.paper.paper_number].append(
+                    {
+                        "student_id": pred.student_id,
+                        "certainty": pred.certainty,
+                        "predictor": pred.predictor,
+                    }
+                )
+        return predictions
+
+    @transaction.atomic
+    def add_or_change_ID_prediction(
+        self, user, paper_num, student_id, certainty, predictor
+    ):
+        """Add a new ID prediction or change an existing prediction in the DB."""
+        try:
+            # hardcode user to Manager
+            user_obj = User.objects.get(groups__name="manager")
+        except ObjectDoesNotExist:
+            raise ValueError(f"Manager user '{username}' does not exist")
+        paper = Paper.objects.get(paper_number=paper_num)
+        try:
+            existing_pred = IDPrediction.objects.get(paper=paper, predictor=predictor)
+        except IDPrediction.DoesNotExist:
+            existing_pred = None
+        if not existing_pred:
+            new_prediction = IDPrediction(
+                user=user_obj,
+                paper=paper_num,
+                predictor=predictor,
+                student_id=student_id,
+                certainty=certainty,
+            )
+            new_prediction.save()
+            print(f"Paper {paper_num} IDed by {predictor} as {student_id}")
+        else:
+            existing_pred.student_id = student_id
+            existing_pred.certainty = certainty
+            existing_pred.save()
+            print(f"Paper {paper_num} ID changed to {student_id} ({predictor})")
+
+    @transaction.atomic
+    def delete_ID_predictions(self, user, predictor=None):
+        """Delete all ID predictions from a particular predictor."""
+        if predictor:
+            prediction = IDPrediction.objects.filter(predictor=predictor).delete()
+            print(f"Predictions IDed by {predictor} were deleted.")
+        else:
+            prediction = IDPrediction.objects.all().delete()
+            print(f"All predictions were deleted.")

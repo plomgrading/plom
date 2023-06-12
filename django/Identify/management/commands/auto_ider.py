@@ -35,9 +35,7 @@ class Command(BaseCommand):
             probs = self.get_probabilities()
             self.predict_id_greedy(sids, probs)
             self.predict_id_lap_solver(sids, probs)
-            self.stdout.write(
-                "Ran matching problems and saved results to two CSV files."
-            )
+            self.stdout.write("Ran matching problems and saved results.")
         except ValueError as err:
             raise CommandError(err)
 
@@ -70,14 +68,14 @@ class Command(BaseCommand):
             None: instead saves result to a csv file.
         """
         greedy_predictions = self.greedy(sids, probabilities)
+        for pred in greedy_predictions:
+            add_or_change_ID_prediction(None, pred[0], pred[1], pred[2], "MLGreedy")
 
-        # TODO: for now we write to a file: perhaps it should be in the
-        # cwd instead of MEDIA_ROOT, but ultimately it should just be
-        # pushed onward to the database (Issue #2764)
-        with open(settings.MEDIA_ROOT / "greedy_predictions.csv", "w") as f:
-            write = csv.writer(f)
-            write.writerow(("paper_num", "student_ID", "certainty"))
-            write.writerows(greedy_predictions)
+        # Save to CSV file for debugging
+        # with open(settings.MEDIA_ROOT / "greedy_predictions.csv", "w") as f:
+        #     write = csv.writer(f)
+        #     write.writerow(("paper_num", "student_ID", "certainty"))
+        #     write.writerows(greedy_predictions)
 
     def predict_id_lap_solver(self, sids, probabilities):
         """Matching unidentified papers against classlist via linear assignment problem.
@@ -130,11 +128,14 @@ class Command(BaseCommand):
         lap_predictions = self.lap_solver(papers, sids, probabilities)
         self.stdout.write(f" done in {time.process_time() - t:.02} seconds.")
 
-        # See above, Issue #2764
-        with open(settings.MEDIA_ROOT / "lap_predictions.csv", "w") as f:
-            write = csv.writer(f)
-            write.writerow(("paper_num", "student_ID", "certainty"))
-            write.writerows(lap_predictions)
+        for pred in lap_predictions:
+            add_or_change_ID_prediction(None, pred[0], pred[1], pred[2], "MLLAP")
+
+        # Save predictions to CSV for debugging
+        # with open(settings.MEDIA_ROOT / "lap_predictions.csv", "w") as f:
+        #     write = csv.writer(f)
+        #     write.writerow(("paper_num", "student_ID", "certainty"))
+        #     write.writerows(lap_predictions)
 
     def calc_log_likelihood(self, student_ID, prediction_probs):
         """Calculate the log likelihood that an ID prediction matches the student ID.
