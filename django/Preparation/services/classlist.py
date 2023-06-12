@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
 
@@ -163,3 +169,19 @@ class StagingStudentService:
             return max(N1, N2, N3)
         else:
             return max(N1, N2)
+
+    def get_classlist_sids_for_ID_matching(self):
+        """Returns a list containing all student IDs on the classlist."""
+        students = []
+        classlist = self.get_students()
+        for entry in classlist:
+            students.append(entry.pop("student_id"))
+        return students
+
+    def get_prename_for_paper(self, paper_number):
+        """Return student ID for prenamed paper or None if paper is not prenamed."""
+        try:
+            student_obj = StagingStudent.objects.get(paper_number=paper_number)
+            return student_obj.student_id
+        except StagingStudent.ObjectDoesNotExist:
+            return None
