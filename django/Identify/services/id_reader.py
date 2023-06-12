@@ -103,9 +103,9 @@ class IDReaderService:
 
         Returns:
             dict: if returning all predictions, a dict of lists of dicts.
-                If returning predictions for a specific predictor, a dict of dicts.
-                Inner-most dicts contain prediction info (ie. SID, certainty, predictor).
-                Outer-most dict is keyed by paper number.
+            If returning predictions for a specific predictor, a dict of dicts.
+            Inner-most dicts contain prediction info (ie. SID, certainty, predictor).
+            Outer-most dict is keyed by paper number.
         """
         predictions = {}
         if predictor:
@@ -139,7 +139,7 @@ class IDReaderService:
             # TODO: hardcoded to use "first" manager user in DB
             user_obj = User.objects.filter(groups__name="manager").first()
         except ObjectDoesNotExist:
-            raise ValueError(f"Manager user '{username}' does not exist")
+            raise ValueError("Manager user does not exist")
         paper = Paper.objects.get(paper_number=paper_num)
         try:
             existing_pred = IDPrediction.objects.get(paper=paper, predictor=predictor)
@@ -163,6 +163,6 @@ class IDReaderService:
     def delete_ID_predictions(self, user, predictor=None):
         """Delete all ID predictions from a particular predictor."""
         if predictor:
-            prediction = IDPrediction.objects.filter(predictor=predictor).delete()
+            IDPrediction.objects.filter(predictor=predictor).delete()
         else:
-            prediction = IDPrediction.objects.all().delete()
+            IDPrediction.objects.all().delete()

@@ -5,7 +5,6 @@
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2022-2023 Natalie Balashov
 
-import csv
 import json
 import numpy as np
 from scipy.optimize import linear_sum_assignment
@@ -65,7 +64,7 @@ class Command(BaseCommand):
         """Match each unidentified paper against best fit in classlist.
 
         Returns:
-            None: instead saves result to a csv file.
+            None: instead pushes the results to the DB
         """
         id_reader_service = IDReaderService()
         greedy_predictions = self.greedy(sids, probabilities)
@@ -86,7 +85,7 @@ class Command(BaseCommand):
         Match the two.
 
         Returns:
-            None: instead saves result to a csv file.
+            None: instead pushes the results to the DB
 
         Raises:
             IndexError: something is zero, degenerate assignment problem.

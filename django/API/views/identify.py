@@ -41,7 +41,7 @@ class GetIDPredictions(APIView):
 
     def get(self, request, *, predictor=None):
         id_reader_service = IDReaderService()
-        if predictor == None:
+        if not predictor:
             predictions = id_reader_service.get_ID_predictions()
         elif predictor == "prename":  # TODO: remove this block later
             sstu = StagingStudentService()
@@ -76,8 +76,7 @@ class GetIDPredictions(APIView):
         return Response(status=status.HTTP_200_OK)
 
     def delete(self, request, predictor=None):
-        """Remove ID predictions from a predictor."""
-        data = request.data
+        """Remove ID predictions from either a particular predictor or all predictors."""
         user = request.user
         id_reader_service = IDReaderService()
         if predictor:
