@@ -1,9 +1,17 @@
-<!-- Copyright (C) 2022 Edith Coates -->
-<!-- Copyright (C) 2022 Brennen Chiu -->
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
-{% extends 'base/base.html' %}
-{% block title %}Web Plom - Scan{% endblock %}
-{% block page_heading %}Scan bundles{% endblock %}
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Web Plom - Scan
+{% endblock title %}
+{% block page_heading %}
+    Scan bundles
+{% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-2">
         <div class="card w-50">
@@ -121,4 +129,4 @@
                 </div>
             </div>
         </div>
-    {% endblock %}
+    {% endblock main_content %}

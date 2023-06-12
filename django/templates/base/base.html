@@ -1,6 +1,10 @@
-<!-- Copyright (C) 2022 Edith Coates -->
-<!-- Copyright (C) 2022 Brennen Chiu -->
-<!-- Copyright (C) 2023 Colin B. Macdonald -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Edith Coates
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023 Julian Lapenna
+-->
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -26,7 +30,9 @@
               href="{% static '/css/profile.css' %}">
         <!-- Title -->
         <title>
-            {% block title %}Web Plom{% endblock %}
+            {% block title %}
+                Web Plom
+            {% endblock title %}
         </title>
     </head>
     <!-- Need the csrf token to enable htmx -->
@@ -112,6 +118,14 @@
                                             <br>
                                         Scanners/Markers</a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link"
+                                           href="{% url 'rubrics_landing' %}">Rubrics</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link link-light is_sidebar_link"
+                                           href="{% url 'tags_landing' %}">Tags</a>
+                                    </li>
                                     <li class="nav-item accordion accordion-flush">
                                         <a class="nav-link link-light is_sidebar_link"
                                            data-bs-toggle="collapse"
@@ -154,13 +168,16 @@
                                 min-height: 100%">
                         <!-- Page heading -->
                         <h1 class="fw-lighter" style="margin: 15px;">
-                            {% block page_heading %}{% endblock %}
+                            {% block page_heading %}
+                            {% endblock page_heading %}
                         </h1>
                         <p class="lead" style="margin-bottom: 25px;">
-                            {% block page_subheading %}{% endblock %}
+                            {% block page_subheading %}
+                            {% endblock page_subheading %}
                         </p>
                         <!-- Main content -->
-                        {% block main_content %}{% endblock %}
+                        {% block main_content %}
+                        {% endblock main_content %}
                     </div>
                 </div>
             </div>

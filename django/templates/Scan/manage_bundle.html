@@ -1,9 +1,17 @@
-<!-- Copyright (C) 2022-2023 Brennen Chiu -->
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
-<!-- Copyright (C) 2023 Divy Patel -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Brennen Chiu
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Divy Patel
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
-{% block title %}Web Plom - Scan{% endblock %}
-{% block page_heading %}Manage bundle{% endblock %}
+{% block title %}
+    Web Plom - Scan
+{% endblock title %}
+{% block page_heading %}
+    Manage bundle
+{% endblock page_heading %}
 {% block main_content %}
     <div style="margin: 0px 0px 16px 2.5px">
         <a class="btn btn-success" href="{% url 'scan_home' %}">
@@ -60,6 +68,12 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div style="margin: 0px 0px 16px 2.5px">
+            <a class="btn btn-success" href="{% url 'scan_home' %}">
+                <i class="bi bi-chevron-left"></i>
+                Return to upload
+            </a>
         </div>
         <div id="accord">
             <button class="btn btn-secondary"
@@ -125,11 +139,7 @@
                                             p{{ pg.order }}
                                         </button>
                                     {% elif pg.status == 'extra' %}
-                                        <button {% if pg.info.question_list %}
-						class="btn m-1 btn-outline-info"
-                                                {% else %}
-						class="btn m-1 btn-info"
-                                                {% endif %}
+                                        <button class="{% if pg.info.question_list %} btn m-1 btn-outline-info {% else %} btn m-1 btn-info {% endif %}"
                                                 onclick="this.blur();"
                                                 hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
                                                 hx-swap="outerHTML"
@@ -208,15 +218,7 @@
                                             p{{ pg.order }}
                                         </button>
                                     {% elif pg.status == 'extra' %}
-                                        <button class="{% if pg.info.question_list %}"
-                                                btn
-                                                m-1
-                                                btn-outline-info
-                                                {% else %}
-                                                btn
-                                                m-1
-                                                btn-info
-                                                {% endif %}
+                                        <button class="btn m-1 {% if pg.info.question_list %} btn-outline-info {% else %} btn-info {% endif %}"
                                                 hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
                                                 hx-swap="outerHTML"
                                                 hx-target="#navFragment"
@@ -318,11 +320,11 @@
              hx-get="{% url 'scan_nav_bundle' timestamp index %}"
              hx-swap="outerHTML"
              hx-trigger="load"></div>
-    </div>
-    <script>
+        <script>
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     })
-    </script>
-{% endblock %}
+
+        </script>
+    {% endblock main_content %}

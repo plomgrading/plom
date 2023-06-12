@@ -624,7 +624,7 @@ class TestSpecService:
         if errors_to_raise:
             raise ValidationError(errors_to_raise)
 
-        # As a final step, send through the plom-classic spec verifier
+        # As a final step, send through the spec verifier
         valid_spec = None
         try:
             spec_dict = services.TestSpecGenerateService(self).generate_spec_dict()
