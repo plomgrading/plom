@@ -61,7 +61,6 @@ INSTALLED_APPS = [
     "SpecCreator",
     "Profile",
     "BuildPaperPDF",
-    "Connect",
     "Scan",
     "API",
     "Mark",
