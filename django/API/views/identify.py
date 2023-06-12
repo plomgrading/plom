@@ -2,13 +2,14 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Natalie Balashov
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
 from Preparation.services import StagingStudentService
-from Identify.services import IdentifyTaskService
+from Identify.services import IdentifyTaskService, IDReaderService
 
 
 class GetClasslist(APIView):
@@ -29,26 +30,62 @@ class GetClasslist(APIView):
 
 
 class GetIDPredictions(APIView):
-    """Get predictions for test-paper identification.
+    """Get, put and delete predictions for test-paper identification.
 
-    TODO: not implemented in Django, Issue #2672.
-    For now, just return all the pre-named papers.
+    If no predictor is specified, get or delete all predictions.
+
+    Client needs predictions to be formatted as a dict of lists,
+    where each list contains an inner dict with prediction
+    info for a particular predictor (could have more than one).
     """
 
     def get(self, request, *, predictor=None):
-        # TODO: Issue #2672
-        assert predictor is None or predictor == "prename"
-        sstu = StagingStudentService()
-        if sstu.are_there_students():
-            predictions = {}
-            for s in sstu.get_students():
-                if s["paper_number"]:
-                    predictions[s["paper_number"]] = {
-                        "student_id": s["student_id"],
-                        "certainty": 100,
-                        "predictor": "preID",
-                    }
-            return Response(predictions)
+        id_reader_service = IDReaderService()
+        if predictor == None:
+            predictions = id_reader_service.get_ID_predictions()
+        elif predictor == "prename":  # TODO: remove this block later
+            sstu = StagingStudentService()
+            if sstu.are_there_students():
+                predictions = {}
+                for s in sstu.get_students():
+                    if s["paper_number"]:
+                        predictions[s["paper_number"]] = [
+                            {
+                                "student_id": s["student_id"],
+                                "certainty": 100,
+                                "predictor": "prename",
+                            }
+                        ]
+        else:
+            predictions = id_reader_service.get_ID_predictions(predictor=predictor)
+        return Response(predictions)
+
+    def put(self, request):
+        """Add or change ID predictions."""
+        data = request.data
+        user = request.user
+        id_reader_service = IDReaderService()
+        for paper_num in data:
+            id_reader_service.add_or_change_prediction(
+                user,
+                paper_num,
+                paper_num["sid"],
+                paper_num["certainty"],
+                paper_num["predictor"],
+            )
+        return Response(status=status.HTTP_200_OK)
+
+    def delete(self, request, predictor=None):
+        """Remove ID predictions from a predictor."""
+        data = request.data
+        user = request.user
+        id_reader_service = IDReaderService()
+        if predictor:
+            try:
+                id_reader_service.delete_ID_predictions(user, predictor)
+                return Response(status=status.HTTP_200_OK)
+            except RuntimeError:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class IDgetDoneTasks(APIView):
