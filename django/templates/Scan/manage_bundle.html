@@ -125,14 +125,10 @@
                                             p{{ pg.order }}
                                         </button>
                                     {% elif pg.status == 'extra' %}
-                                        <button class="{% if pg.info.question_list %}"
-                                                btn
-                                                m-1
-                                                btn-outline-info
+                                        <button {% if pg.info.question_list %}
+						class="btn m-1 btn-outline-info"
                                                 {% else %}
-                                                btn
-                                                m-1
-                                                btn-info
+						class="btn m-1 btn-info"
                                                 {% endif %}
                                                 onclick="this.blur();"
                                                 hx-get="{% url 'scan_nav_bundle' timestamp forloop.counter %}"
