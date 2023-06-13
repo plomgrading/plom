@@ -334,7 +334,7 @@ class RubricService:
         """
         user = User.objects.get(username=username)
         return Rubric.objects.filter(user=user)
-    
+
     def _rubric_dict(self, r: Rubric):
         """Gets a dictionary representation of a rubric.
 

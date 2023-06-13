@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from model_bakery import baker
 
+from Mark.models import Annotation
 from Rubrics.models import Rubric
 from Rubrics.services import RubricService
 
@@ -29,6 +30,8 @@ class RubricServiceTests(TestCase):
     def setUp(self):
         user1 = baker.make(User, username="Liam")
         user2 = baker.make(User, username="Olivia")
+        annotation1 = baker.make(Annotation)
+        annotation2 = baker.make(Annotation)
 
         self.neutral_rubric = baker.make(
             Rubric,
@@ -43,6 +46,7 @@ class RubricServiceTests(TestCase):
             meta="asdfg",
             versions=[],
             parameters=[],
+            annotation = annotation1,
         )
 
         self.modified_neutral_rubric = baker.make(
@@ -58,6 +62,7 @@ class RubricServiceTests(TestCase):
             meta="hjklz",
             versions=[],
             parameters=[],
+            annotation = annotation2,
         )
 
         self.relative_rubric = baker.make(
@@ -73,6 +78,7 @@ class RubricServiceTests(TestCase):
             meta="hjklz",
             versions=[],
             parameters=[],
+            annotation = annotation2,
         )
 
         self.modified_relative_rubric = baker.make(
@@ -81,6 +87,7 @@ class RubricServiceTests(TestCase):
             display_delta="+3",
             value=3,
             user=user2,
+            annotation = annotation1,
         )
 
         self.absolute_rubric = baker.make(
@@ -96,6 +103,7 @@ class RubricServiceTests(TestCase):
             meta="lkjhg",
             versions=[],
             parameters=[],
+            annotation = annotation1,
         )
 
         self.modified_absolute_rubric = baker.make(
@@ -105,6 +113,7 @@ class RubricServiceTests(TestCase):
             value=3,
             out_of=5,
             user=user2,
+            annotation = annotation1,
         )
 
         return super().setUp()
@@ -332,3 +341,42 @@ class RubricServiceTests(TestCase):
             self.assertEqual(r.display_delta, d["display_delta"])
             self.assertEqual(r.value, d["value"])
             self.assertEqual(r.out_of, d["out_of"])
+
+    def test_rubrics_from_user(self):
+        """
+        Test RubricService.rubrics_from_user()
+        """
+        service = RubricService()
+        user = baker.make(User)
+        rubrics = service.get_rubrics_from_user(user)
+        self.assertEqual(len(rubrics), 0)
+
+        baker.make(Rubric, user=user)
+        rubrics = service.get_rubrics_from_user(user)
+        self.assertEqual(len(rubrics), 1)
+
+        baker.make(Rubric, user=user)
+        rubrics = service.get_rubrics_from_user(user)
+        self.assertEqual(len(rubrics), 2)
+
+        baker.make(Rubric, user=user)
+        rubrics = service.get_rubrics_from_user(user)
+        self.assertEqual(len(rubrics), 3)
+
+    def test_rubrics_from_annotation(self):
+        """
+        Test RubricService.rubrics_from_annotation()
+        """
+        service = RubricService()
+        annotation1 = baker.make(Annotation)
+
+        rubrics = service.get_rubrics_from_annotation(annotation1)
+        self.assertEqual(len(rubrics), 0)
+
+        baker.make(Rubric, annotation=annotation1)
+        rubrics = service.get_rubrics_from_annotation(annotation1)
+        self.assertEqual(len(rubrics), 1)
+
+        baker.make(Rubric, annotation=annotation1)
+        rubrics = service.get_rubrics_from_annotation(annotation1)
+        self.assertEqual(len(rubrics), 2)
