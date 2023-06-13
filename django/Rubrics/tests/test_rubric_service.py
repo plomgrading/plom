@@ -49,7 +49,7 @@ class RubricServiceTests(TestCase):
             meta="asdfg",
             versions=[],
             parameters=[],
-            annotation=annotation1,
+            annotations=annotation1,
         )
 
         self.modified_neutral_rubric = baker.make(
@@ -65,7 +65,7 @@ class RubricServiceTests(TestCase):
             meta="hjklz",
             versions=[],
             parameters=[],
-            annotation=annotation2,
+            annotations=annotation2,
         )
 
         self.relative_rubric = baker.make(
@@ -81,7 +81,7 @@ class RubricServiceTests(TestCase):
             meta="hjklz",
             versions=[],
             parameters=[],
-            annotation=annotation2,
+            annotations=annotation2,
         )
 
         self.modified_relative_rubric = baker.make(
@@ -106,7 +106,7 @@ class RubricServiceTests(TestCase):
             meta="lkjhg",
             versions=[],
             parameters=[],
-            annotation=annotation1,
+            annotations=annotation1,
         )
 
         self.modified_absolute_rubric = baker.make(
@@ -116,7 +116,7 @@ class RubricServiceTests(TestCase):
             value=3,
             out_of=5,
             user=user2,
-            annotation=annotation1,
+            annotations=annotation1,
         )
 
         return super().setUp()
@@ -346,9 +346,6 @@ class RubricServiceTests(TestCase):
             self.assertEqual(r.out_of, d["out_of"])
 
     def test_rubrics_from_user(self):
-        """
-        Test RubricService.get_rubrics_from_user()
-        """
         service = RubricService()
         user = baker.make(User)
         rubrics = service.get_rubrics_from_user(user)
@@ -367,27 +364,21 @@ class RubricServiceTests(TestCase):
         self.assertEqual(len(rubrics), 3)
 
     def test_rubrics_from_annotation(self):
-        """
-        Test RubricService.get_rubrics_from_annotation()
-        """
         service = RubricService()
         annotation1 = baker.make(Annotation)
 
         rubrics = service.get_rubrics_from_annotation(annotation1)
         self.assertEqual(len(rubrics), 0)
 
-        baker.make(Rubric, annotation=annotation1)
+        baker.make(Rubric, annotations=annotation1)
         rubrics = service.get_rubrics_from_annotation(annotation1)
         self.assertEqual(len(rubrics), 1)
 
-        baker.make(Rubric, annotation=annotation1)
+        baker.make(Rubric, annotations=annotation1)
         rubrics = service.get_rubrics_from_annotation(annotation1)
         self.assertEqual(len(rubrics), 2)
 
     def test_annotations_from_rubric(self):
-        """
-        Test RubricService.get_annotation_from_rubric()
-        """
         service = RubricService()
         rubric1 = baker.make(Rubric)
 
@@ -403,9 +394,6 @@ class RubricServiceTests(TestCase):
         self.assertEqual(len(annotations), 2)
 
     def test_rubrics_from_paper(self):
-        """
-        Test RubricService.rubrics_from_paper()
-        """
         service = RubricService()
         paper1 = baker.make(Paper, paper_number=1)
         marking_task1 = baker.make(MarkingTask, paper=paper1)
@@ -414,6 +402,6 @@ class RubricServiceTests(TestCase):
         rubrics = service.get_rubrics_from_paper(paper1)
         self.assertEqual(len(rubrics), 0)
 
-        baker.make(Rubric, annotation=annotation1)
+        baker.make(Rubric, annotations=annotation1)
         rubrics = service.get_rubrics_from_paper(paper1)
         self.assertEqual(len(rubrics), 1)
