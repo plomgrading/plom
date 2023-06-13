@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023 Natalie Balashov
 
 import csv
 import fitz
@@ -423,8 +424,6 @@ class DemoBundleService:
             f"Making a bundle of {len(papers_to_use)} papers, of which {number_prenamed} are prenamed"
         )
         print("^" * 40)
-
-        print(assigned_papers_ids)
 
         for i in range(n_bundles):
             bundle = defaultdict(list, bundles[i])
