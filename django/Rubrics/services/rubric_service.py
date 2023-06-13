@@ -292,8 +292,8 @@ class RubricService:
         #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
         pass
 
-    def get_annotation_from_rubric(self, rubric: Rubric) -> list:
-        """Get the list of annotations that use this rubric.
+    def get_annotation_from_rubric(self, rubric: Rubric):
+        """Get the queryset of annotations that use this rubric.
 
         Args:
             Rubric instance
@@ -304,7 +304,7 @@ class RubricService:
         return rubric.annotations.all() # consider getting a key instead of rubric
 
     def get_rubrics_from_annotation(self, annotation):
-        """Get the list of rubrics that are used by this annotation.
+        """Get the queryset of rubrics that are used by this annotation.
 
         Args:
             annotation: (Annotation) Annotation instance
@@ -315,7 +315,7 @@ class RubricService:
         return Rubric.objects.filter(annotations=annotation) # consider getting a key instead of annotation
     
     def get_rubrics_from_paper(self, paper: int):
-        """Get the list of rubrics that are used by this paper.
+        """Get the queryset of rubrics that are used by this paper.
 
         Args:
             paper: Paper instance
@@ -323,22 +323,14 @@ class RubricService:
         Returns:
             Queryset: Rubric instances
         """ 
-        # need to check that this actually works
-
-        # consider getting a paper number instead of paper
         paper_obj = Paper.objects.get(pk=paper)
-        print("paper_obj: ", paper_obj)
-        # print(MarkingTask.objects.all())
         marking_tasks = MarkingTask.objects.filter(paper=paper_obj)
-        print("marking_tasks: ", marking_tasks)
         annotations = Annotation.objects.filter(task__in=marking_tasks)
-        print("annotations from tasks: ", annotations)
         rubrics = Rubric.objects.filter(annotations__in=annotations)
-        print("rubrics from papers: ", rubrics)
         return rubrics
     
     def get_rubrics_from_user(self, username: str):
-        """Get the list of rubrics used by this user.
+        """Get the queryset of rubrics used by this user.
 
         Args:
             username: username of the user
@@ -374,59 +366,3 @@ class RubricService:
             "annotations": r.annotations,
         }
         return rubric_dict
-
-    def rubric_counts(self, sort_by: str) -> dict:
-        """Return a dictionary of counts for a given key.
-
-        For example: Passing in "value" will return a dictionary
-        with the grading value as the key and the number of times
-        that grading value was given out as the value.
-
-        Args:
-            sort_by: must be a valid key in the rubric database
-
-        Returns:
-            A dictionary of rubric counts of the given key.
-        """
-        all_rubrics = Rubric.objects.all()
-        counts = {}
-        for r in all_rubrics.prefetch_related("user"):
-            r_dict = self._rubric_dict(r)
-            sort_key = r_dict[sort_by]
-
-            if sort_key not in counts:
-                counts[sort_key] = 1
-            else:
-                counts[sort_key] += 1
-        # print("counts: ", counts)
-        # print("sorted: ", dict(sorted(counts.items())))
-        return dict(sorted(counts.items()))
-
-    def plot_hist_dict(self, graph_dict: dict, filename: str) -> None:
-        """Saves a histogram of rubric dictionary values plotted to a file.
-
-        The saved file is located in the static folder.
-
-        Args:
-            graph_dict: (dict) a dictionary of rubric key counts
-            filename: (str) name of the saved file
-        """
-        if not graph_dict:  # TODO: maybe raise an exception instead
-            print("No data to plot.")
-            return None
-        save_location = f"./static/{filename}.png"
-
-        matplotlib.use("Agg")
-
-        plt.bar(graph_dict.keys(), graph_dict.values())
-        # TODO: add helper methods for axies and labels
-        # print(range(min(graph_dict.keys()), max(graph_dict.keys())+1))
-        # plt.xticks(
-        #     ticks=range(min(graph_dict.keys()), max(graph_dict.keys())+1),
-        #     labels=graph_dict.keys(),
-        #     rotation=90
-        #     );
-        plt.savefig(save_location)
-        plt.close()
-        print(f"Saved histogram to {save_location}")
-        return None
