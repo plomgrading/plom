@@ -410,7 +410,7 @@ class RubricServiceTests(TestCase):
         paper1 = baker.make(Paper, paper_number=1)
         marking_task1 = baker.make(MarkingTask, paper=paper1)
         annotation1 = baker.make(Annotation, marking_task=marking_task1)
-        
+
         rubrics = service.get_rubrics_from_paper(paper1)
         self.assertEqual(len(rubrics), 0)
 
