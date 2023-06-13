@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023 Julian Lapenna
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 from model_bakery import baker
 
-from Mark.models import Annotation
+from Mark.models.annotations import Annotation
+from Mark.models.tasks import MarkingTask
+from Papers.models.paper_structure import Paper
 from Rubrics.models import Rubric
 from Rubrics.services import RubricService
 
@@ -344,7 +347,7 @@ class RubricServiceTests(TestCase):
 
     def test_rubrics_from_user(self):
         """
-        Test RubricService.rubrics_from_user()
+        Test RubricService.get_rubrics_from_user()
         """
         service = RubricService()
         user = baker.make(User)
@@ -365,7 +368,7 @@ class RubricServiceTests(TestCase):
 
     def test_rubrics_from_annotation(self):
         """
-        Test RubricService.rubrics_from_annotation()
+        Test RubricService.get_rubrics_from_annotation()
         """
         service = RubricService()
         annotation1 = baker.make(Annotation)
@@ -380,3 +383,37 @@ class RubricServiceTests(TestCase):
         baker.make(Rubric, annotation=annotation1)
         rubrics = service.get_rubrics_from_annotation(annotation1)
         self.assertEqual(len(rubrics), 2)
+
+    def test_annotations_from_rubric(self):
+        """
+        Test RubricService.get_annotation_from_rubric()
+        """
+        service = RubricService()
+        rubric1 = baker.make(Rubric)
+
+        annotations = service.get_annotation_from_rubric(rubric1)
+        self.assertEqual(len(annotations), 0)
+
+        baker.make(Annotation, rubric=rubric1)
+        annotations = service.get_annotation_from_rubric(rubric1)
+        self.assertEqual(len(annotations), 1)
+
+        baker.make(Annotation, rubric=rubric1)
+        annotations = service.get_annotation_from_rubric(rubric1)
+        self.assertEqual(len(annotations), 2)
+
+    def test_rubrics_from_paper(self):
+        """
+        Test RubricService.rubrics_from_paper()
+        """
+        service = RubricService()
+        paper1 = baker.make(Paper, paper_number=1)
+        marking_task1 = baker.make(MarkingTask, paper=paper1)
+        annotation1 = baker.make(Annotation, marking_task=marking_task1)
+        
+        rubrics = service.get_rubrics_from_paper(paper1)
+        self.assertEqual(len(rubrics), 0)
+
+        baker.make(Rubric, annotation=annotation1)
+        rubrics = service.get_rubrics_from_paper(paper1)
+        self.assertEqual(len(rubrics), 1)
