@@ -49,7 +49,7 @@ class RubricServiceTests(TestCase):
             meta="asdfg",
             versions=[],
             parameters=[],
-            annotation = annotation1,
+            annotation=annotation1,
         )
 
         self.modified_neutral_rubric = baker.make(
@@ -65,7 +65,7 @@ class RubricServiceTests(TestCase):
             meta="hjklz",
             versions=[],
             parameters=[],
-            annotation = annotation2,
+            annotation=annotation2,
         )
 
         self.relative_rubric = baker.make(
@@ -81,7 +81,7 @@ class RubricServiceTests(TestCase):
             meta="hjklz",
             versions=[],
             parameters=[],
-            annotation = annotation2,
+            annotation=annotation2,
         )
 
         self.modified_relative_rubric = baker.make(
@@ -90,7 +90,7 @@ class RubricServiceTests(TestCase):
             display_delta="+3",
             value=3,
             user=user2,
-            annotation = annotation1,
+            annotation=annotation1,
         )
 
         self.absolute_rubric = baker.make(
@@ -106,7 +106,7 @@ class RubricServiceTests(TestCase):
             meta="lkjhg",
             versions=[],
             parameters=[],
-            annotation = annotation1,
+            annotation=annotation1,
         )
 
         self.modified_absolute_rubric = baker.make(
@@ -116,7 +116,7 @@ class RubricServiceTests(TestCase):
             value=3,
             out_of=5,
             user=user2,
-            annotation = annotation1,
+            annotation=annotation1,
         )
 
         return super().setUp()
