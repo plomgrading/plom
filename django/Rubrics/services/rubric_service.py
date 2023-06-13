@@ -1,18 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2010-2023 Colin B. Macdonald
+# Copyright (C) 2019-2023 Colin B. Macdonald
 # Copyright (C) 2019-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023 Divy Patel
 
 import logging
 
 from operator import itemgetter
-from matplotlib import pyplot as plt
-import matplotlib
-
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -120,25 +118,21 @@ class RubricService:
 
         for r in rubric_list.prefetch_related("user"):
             rubric_dict = self._rubric_dict(r)
-            # {
-            #     "id": r.key,
-            #     "kind": r.kind,
-            #     "display_delta": r.display_delta,
-            #     "value": r.value,
-            #     "out_of": r.out_of,
-            #     "text": r.text,
-            #     "tags": r.tags,
-            #     "meta": r.meta,
-            #     "username": r.user.username,
-            #     "question": r.question,
-            #     "versions": r.versions,
-            #     "parameters": r.parameters,
-            # }
             rubric_data.append(rubric_dict)
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
         return new_rubric_data
+
+    def get_all_rubrics(self):
+        """Get all the rubrics lazily, so that lazy filtering is possible.
+
+        See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy
+
+        Returns:
+            QuerySet: lazy queryset of all rubrics.
+        """
+        return Rubric.objects.all()
 
     def init_rubrics(self):
         """Add special rubrics such as deltas and per-question specific.

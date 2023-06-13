@@ -10,6 +10,10 @@ from shlex import split
 from django.core.management import call_command
 from django.conf import settings
 
+from Scan.services import ScanCastService
+from Scan.models import ExtraStagingImage, StagingImage
+from Papers.services import SpecificationService
+
 
 class DemoCreationService:
     """Handle creating the demo exam and populating the database."""
@@ -19,7 +23,7 @@ class DemoCreationService:
         call_command("plom_create_groups")
         call_command("plom_create_demo_users")
 
-    def prepare_assessment(self):
+    def prepare_assessment(self, config):
         print("Prepare assessment: ")
         print(
             "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
@@ -52,7 +56,9 @@ class DemoCreationService:
             "upload",
             "useful_files_for_testing/cl_for_demo.csv",
         )
-        call_command("plom_preparation_qvmap", "generate")
+
+        n_to_produce = config["num_to_produce"]
+        call_command("plom_preparation_qvmap", "generate", f"-n {n_to_produce}")
 
         call_command(
             "dumpdata",
@@ -122,11 +128,10 @@ class DemoCreationService:
             subprocess.check_call(split(py_man_cmd))
             sleep(0.2)
         # we don't want to mess with these - just upload them
-        hw_bundle_names = [
-            f"fake_hw_bundle_{paper_number}.pdf" for paper_number in homework_bundles
-        ]
-        for bname in hw_bundle_names:
-            cmd = f"plom_staging_bundles upload demoScanner{1} {bname}"
+        for bundle in homework_bundles:
+            paper_number = bundle["paper_number"]
+            bundle_name = f"fake_hw_bundle_{paper_number}.pdf"
+            cmd = f"plom_staging_bundles upload demoScanner{1} {bundle_name}"
             py_man_cmd = f"python3 manage.py {cmd}"
             subprocess.check_call(split(py_man_cmd))
             sleep(0.2)
@@ -167,15 +172,16 @@ class DemoCreationService:
                     sleep(0.5)
                 else:
                     print(f"fake_bundle{n}.pdf has been read")
-                    break
+                    return
 
-    def push_if_ready(self, number_of_bundles=3, homework_bundles={}, attempts=15):
+    def push_if_ready(self, number_of_bundles=3, homework_bundles=[], attempts=15):
         print(
             "Try to push all bundles - some will fail since they are not yet ready, or contain unknowns/errors etc"
         )
         todo = [f"fake_bundle{k+1}" for k in range(number_of_bundles)]
-        for n in homework_bundles:
-            todo.append(f"fake_hw_bundle_{n}")
+        for bundles in homework_bundles:
+            paper_number = bundles["paper_number"]
+            todo.append(f"fake_hw_bundle_{paper_number}")
 
         while True:
             done = []
@@ -212,27 +218,37 @@ class DemoCreationService:
         call_command("plom_rubrics", "init")
         call_command("plom_rubrics", "push", "--demo")
 
-    def map_extra_pages_to_bundle4(self):
-        """
-        Map the extra pages generated in fake_bundle4.
+    def map_extra_pages(self, config):
+        """Map extra pages that are in otherwise fully fixed-page bundles."""
+        caster = ScanCastService()
+        bundles = config["bundles"]
+        n_bundles = len(bundles)
 
-        TODO: This function is very hardcoded.
-        """
+        for i in range(n_bundles):
+            bundle = bundles[i]
+            bundle_slug = f"fake_bundle{i+1}"
+            if "extra_page_papers" in bundle.keys():
+                extra_page_papers = bundle["extra_page_papers"]
+                extra_pages = ExtraStagingImage.objects.filter(
+                    staging_image__bundle__slug=bundle_slug,
+                ).order_by("staging_image__bundle_order")
 
-        extra_pages = {31: [2, 3], 32: [10, 11], 33: [18, 19]}
+                n_questions = SpecificationService().get_n_questions()
 
-        for paper_number, pages in extra_pages.items():
-            print(f"Assigning extra pages to test {paper_number} in fake bundle 4")
-            for question, page in enumerate(pages):
-                call_command(
-                    "plom_staging_assign_extra",
-                    "assign",
-                    "demoScanner1",
-                    "fake_bundle4",
-                    "-i",
-                    page,
-                    "-t",
-                    paper_number,
-                    "-q",
-                    question + 1,
-                )
+                for i in range(len(extra_page_papers)):
+                    paper_extra_pages = extra_pages[i * 2 : i * 2 + 2]
+
+                    # command must be called twice, since the demo generates double extra pages
+                    for page in paper_extra_pages:
+                        call_command(
+                            "plom_staging_assign_extra",
+                            "assign",
+                            "demoScanner1",
+                            bundle_slug,
+                            "-i",
+                            page.staging_image.bundle_order,
+                            "-t",
+                            extra_page_papers[i],
+                            "-q",
+                            n_questions,  # default to last question
+                        )

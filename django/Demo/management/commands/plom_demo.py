@@ -9,12 +9,14 @@ from time import sleep
 from shlex import split
 
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
 from Demo.services import (
     DemoProcessesService,
     DemoCreationService,
     DemoBundleService,
     DemoHWBundleService,
+    ServerConfigService,
 )
 
 
@@ -33,26 +35,13 @@ class Command(BaseCommand):
         self,
         dbs: DemoBundleService,
         dhs: DemoHWBundleService,
-        number_of_bundles,
+        config: dict,
         homework_bundles,
     ):
-        dbs.scribble_on_exams(
-            number_of_bundles=number_of_bundles,
-            extra_page_papers=[
-                31,
-                32,
-                33,
-                49,
-                50,
-            ],  # The first three papers in fake_bundle4 have extra pages.
-            garbage_page_papers=[1, 2],
-            duplicate_pages={1: 3, 2: 6},
-            duplicate_qr=[3, 4],
-            wrong_version=[5, 6],
-        )
+        dbs.scribble_on_exams(config)
 
-        for paper_number, question_list in homework_bundles.items():
-            dhs.make_hw_bundle(paper_number, question_list=question_list)
+        for bundle in homework_bundles:
+            dhs.make_hw_bundle(bundle)
 
     def upload_bundles(
         self, dcs: DemoCreationService, number_of_bundles, homework_bundles
@@ -70,6 +59,7 @@ class Command(BaseCommand):
         self,
         dcs: DemoCreationService,
         dhs: DemoHWBundleService,
+        config: dict,
         number_of_bundles,
         homework_bundles,
     ):
@@ -84,7 +74,7 @@ class Command(BaseCommand):
             number_of_bundles=number_of_bundles,
         )
 
-        dcs.map_extra_pages_to_bundle4()
+        dcs.map_extra_pages(config)
 
     def push_bundles(
         self, dcs: DemoCreationService, number_of_bundles, homework_bundles
@@ -94,28 +84,25 @@ class Command(BaseCommand):
             number_of_bundles=number_of_bundles, homework_bundles=homework_bundles
         )
 
-    def post_server_init(self, dcs: DemoCreationService, stop_at: str):
+    def post_server_init(self, dcs: DemoCreationService, config: dict, stop_at: str):
         self.papers_and_db(dcs)
 
         print("*" * 40)
-        number_of_bundles = 5
+        number_of_bundles = len(config["bundles"])
 
-        homework_bundles = {
-            61: [[1], [2], [], [2, 3], [3]],
-            62: [[1], [1, 2], [2], [], [3]],
-            63: [[1, 2], [3], []],
-        }
+        homework_bundles = config["hw_bundles"]
+
         bundle_service = DemoBundleService()
         homework_service = DemoHWBundleService()
-        self.create_bundles(
-            bundle_service, homework_service, number_of_bundles, homework_bundles
-        )
+        self.create_bundles(bundle_service, homework_service, config, homework_bundles)
 
         self.upload_bundles(dcs, number_of_bundles, homework_bundles)
         if stop_at == "bundles_uploaded":
             return
 
-        self.read_bundles(dcs, homework_service, number_of_bundles, homework_bundles)
+        self.read_bundles(
+            dcs, homework_service, config, number_of_bundles, homework_bundles
+        )
         if stop_at == "bundles_read":
             return
 
@@ -176,6 +163,12 @@ class Command(BaseCommand):
                     "Cannot run plom-client randomarker with a demo breakpoint."
                 )
 
+        config_service = ServerConfigService()
+        config = config_service.read_server_config(
+            settings.BASE_DIR / "Demo/config_files/full_demo_config.toml"
+        )
+        print(config)
+
         proc_service = DemoProcessesService()
         proc_service.initialize_server_and_db()
 
@@ -195,7 +188,7 @@ class Command(BaseCommand):
 
         # TODO: I get errors if I move this after launching the server...
         print("*" * 40)
-        creation_service.prepare_assessment()
+        creation_service.prepare_assessment(config)
 
         if stop_at == "preparation":
             huey_worker_proc.terminate()
@@ -205,7 +198,7 @@ class Command(BaseCommand):
         server_proc = proc_service.launch_server()
 
         try:  # We're guaranteed to hit the cleanup code in the "finally" block
-            self.post_server_init(creation_service, stop_at)
+            self.post_server_init(creation_service, config, stop_at)
 
             if options["randomarker"]:
                 self.run_randomarker()

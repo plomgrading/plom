@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2020-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2023 Colin B. Macdonald
+
 # Example test specification for Plom
 
 # >>> Edit the data below <<<
@@ -21,7 +25,6 @@ numberOfQuestions = 3
 # total number of papers to produce
 # (set to "-1" to use length of classlist + 10%)
 numberToProduce = 20
-# NOTE: the numberToName field is deprecated in favour of the paper_number column in classlist.
 
 # the id-page - always taken from Version1
 idPage = 1  # must be exactly 1 page

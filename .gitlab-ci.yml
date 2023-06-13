@@ -135,23 +135,38 @@ copyright_year:
   allow_failure: true
 
 
+# TODO: tighten up by adding `--profile django` (but not with --check?)
 djlint:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.27.2
+    - pip install djlint~=1.30.2
   script:
     - djlint django/templates/*/*.html django/templates/*/*/*.html
 
 
-# TODO: remove --warn to make these errors, Issue #2666
+# eventually replace the above job
+djlint-strict:
+  image: python:3.11
+  stage: static_analysis
+  before_script:
+    - pip install djlint~=1.30.2
+  script:
+    - djlint django/templates/base/*.html --profile django
+    - djlint django/templates/Rubrics/*.html --profile django
+    - djlint django/templates/Scan/*.html --profile django
+    - djlint django/templates/SpecCreator/*.html --profile django
+    - djlint django/templates/*/*/*.html --profile django
+
+
 djlint-check:
   image: python:3.11
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.27.2
+    - pip install djlint~=1.30.2
   script:
-    - djlint django/templates/*/*.html django/templates/*/*/*.html --check --warn
+    - djlint django/templates/*/*.html django/templates/*/*/*.html --check
+  allow_failure: true
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
@@ -352,7 +367,7 @@ pydocstyle-plom-count:
     - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 644 ]]"
+    - bash -c "[[ $NUMERR -le 634 ]]"
   allow_failure: true
 
 
@@ -382,7 +397,7 @@ pydocstyle-django-count:
     - NUMERR=`pydocstyle --count django | tail -n 1 || true`
     - echo $NUMERR
     # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 642 ]]"
+    - bash -c "[[ $NUMERR -le 539 ]]"
   allow_failure: true
 
 
@@ -395,7 +410,7 @@ pydocstyle-django:
     - python3 -m pip install pydocstyle[toml]~=6.3.0
   script:
     - pushd django
-    - pydocstyle -s -e API Base Rubrics Scan
+    - pydocstyle -s -e API Base Demo Identify Mark Rubrics Scan Tags
     - popd
   allow_failure: true
 
@@ -421,8 +436,9 @@ webplom_test:
     - export PLOM_USING_DOCKER=1
     - python3 manage.py plom_demo --no-waiting --randomarker
     - coverage run --source='.' manage.py test
-    - coverage report --precision=2
-    - coverage xml -o django_coverage.xml
+    # -i ignores an error caused by openCV's config-3.py file
+    - coverage report -i --precision=2
+    - coverage xml -i -o django_coverage.xml
     - popd
   coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
   artifacts:
@@ -1088,9 +1104,9 @@ linuxbin_ubuntu2204:
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 macos12_client:
-  image: macos-12-xcode-13
+  image: macos-12-xcode-14
   tags:
-  - shared-macos-amd64
+  - saas-macos-medium-m1
   rules:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
@@ -1135,6 +1151,8 @@ macos11_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
   stage: packaging
   script:
   - sw_vers
@@ -1235,6 +1253,8 @@ macos1014_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
+    when: manual
+  allow_failure: true
   stage: packaging
   script:
   - sw_vers
@@ -1274,11 +1294,10 @@ macos1014_client:
 # this was slow and failed, went back to "brew"
 #   asdf plugin-add imagemagick
 #   asdf install imagemagick 7.0.11-5
-# Other possible images: macos-10.15-xcode-11, macos-11-xcode-12
 macos_server:
-  image: macos-12-xcode-13
+  image: macos-12-xcode-14
   tags:
-  - shared-macos-amd64
+  - saas-macos-medium-m1
   rules:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never

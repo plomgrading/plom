@@ -1,3 +1,8 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 <table class="table table-striped" id="progressTable">
     <thead>
         <tr>
@@ -12,10 +17,9 @@
         {% for tp in test_papers %}
             <tr>
                 <td>
-                    <a 
-                        class="btn" 
-                        onclick="toggle_pages('{{ tp.paper_number }}_page')" 
-                        style="background-color: lightgrey;">
+                    <a class="btn"
+                       onclick="toggle_pages('{{ tp.paper_number }}_page')"
+                       style="background-color: lightgrey">
                         {{ tp.paper_number }}
                         <i class="bi bi-chevron-down"></i>
                     </a>
@@ -27,39 +31,32 @@
                 {% else %}
                     <td class="text-danger">Incomplete</td>
                 {% endif %}
-                <td>
-                </td>
+                <td></td>
             </tr>
             {% for page in tp.pages %}
-            <tr
-                id="{{ tp.paper_number }}_page{{ forloop.counter }}"
-                hidden="true"
-                class="table-active"
-            >
-                <td></td>
-                <td>{{ page.number }}</td>
-                {% if page.version %}
-                    <td>{{ page.version }}</td>
-                {% else %}
-                    <td>-</td>
-                {% endif %}
-                {% if page.image %}
-                    <td class="text-success">&ensp;Scanned</td>
-                {% else %}
-                    <td class="text-danger">&ensp;Pending</td>
-                {% endif %}
-                <td>
-                    {% if page.image %}
-                    <a 
-                        class="btn btn-primary btn-small"
-                        hx-get="{% url 'progress_scan_page_modal' tp.paper_number page.number %}"
-                        hx-swap="afterend"
-                    >
-                        View
-                    </a>
+                <tr id="{{ tp.paper_number }}_page{{ forloop.counter }}"
+                    hidden="true"
+                    class="table-active">
+                    <td></td>
+                    <td>{{ page.number }}</td>
+                    {% if page.version %}
+                        <td>{{ page.version }}</td>
+                    {% else %}
+                        <td>-</td>
                     {% endif %}
-                </td>
-            </tr>
+                    {% if page.image %}
+                        <td class="text-success">&ensp;Scanned</td>
+                    {% else %}
+                        <td class="text-danger">&ensp;Pending</td>
+                    {% endif %}
+                    <td>
+                        {% if page.image %}
+                            <a class="btn btn-primary btn-small"
+                               hx-get="{% url 'progress_scan_page_modal' tp.paper_number page.number %}"
+                               hx-swap="afterend">View</a>
+                        {% endif %}
+                    </td>
+                </tr>
             {% endfor %}
         {% endfor %}
     </tbody>

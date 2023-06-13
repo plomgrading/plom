@@ -2,25 +2,33 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Web Plom - Sign Up{% endblock %}</title>
-</head>
-<body>
-    {% block page_heading%}Sign up{% endblock %}
-    {% block main_content%}
-    <div>
-        <p>Click on the user type you want to create.</p>
-        <a class="btn" 
-            style="background-color: #0F984F; color: white; width: 150px; height: 60px; margin-right: 3px; padding-top: 16px"
-            href="{% url 'signup_scanners' %}">
-            Scanners
-        </a>
-        <a class="btn" 
-            style="background-color: #FF434B; color: white; width: 150px; height: 60px; margin-left: 3px; padding-top: 16px"
-            href="{% url 'signup_markers' %}">
-            Markers
-        </a>
-    </div>
-    {% endblock%}
-</body>    
+    <head>
+        <meta charset="UTF-8">
+        <title>
+            {% block title %}Web Plom - Sign Up{% endblock %}
+        </title>
+    </head>
+    <body>
+        {% block page_heading %}Sign up{% endblock %}
+        {% block main_content %}
+            <div>
+                <p>Click on the user type you want to create.</p>
+                <a class="btn"
+                   style="background-color: #0F984F;
+                          color: white;
+                          width: 150px;
+                          height: 60px;
+                          margin-right: 3px;
+                          padding-top: 16px"
+                   href="{% url 'signup_scanners' %}">Scanners</a>
+                <a class="btn"
+                   style="background-color: #FF434B;
+                          color: white;
+                          width: 150px;
+                          height: 60px;
+                          margin-left: 3px;
+                          padding-top: 16px"
+                   href="{% url 'signup_markers' %}">Markers</a>
+            </div>
+        {% endblock %}
+    </body>
