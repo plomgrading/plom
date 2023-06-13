@@ -19,7 +19,6 @@ from Papers.models import (
     QuestionPage,
     CreatePaperTask,
 )
-from Preparation.services import StagingStudentService
 
 
 log = logging.getLogger("PaperCreatorService")
@@ -63,6 +62,10 @@ class PaperCreatorService:
         qv_mapping (dict): Mapping from each question-number to
             version for this particular paper. Of the form {q: v}
         """
+        # private to prevent circular imports
+        from Preparation.services import StagingStudentService
+        from Identify.services import IDReaderService
+
         paper_obj = Paper(paper_number=paper_number)
         try:
             paper_obj.save()
@@ -86,9 +89,9 @@ class PaperCreatorService:
 
         student_service = StagingStudentService()
         prename_sid = student_service.get_prename_for_paper(paper_number)
-        if prenamed_sid:
+        if prename_sid:
             id_reader_service = IDReaderService()
-            id_reader_service.add_prename_ID_prediction(student_id, paper_number)
+            id_reader_service.add_prename_ID_prediction(prename_sid, paper_number)
 
         for q_id, question in spec["question"].items():
             index = int(q_id)

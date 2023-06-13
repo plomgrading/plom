@@ -183,5 +183,5 @@ class StagingStudentService:
         try:
             student_obj = StagingStudent.objects.get(paper_number=paper_number)
             return student_obj.student_id
-        except StagingStudent.ObjectDoesNotExist:
+        except ObjectDoesNotExist:
             return None
