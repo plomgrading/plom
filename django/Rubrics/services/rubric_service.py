@@ -295,7 +295,7 @@ class RubricService:
         Returns:
             Queryset: Annotation instances
         """
-        return rubric.annotations.all() # consider getting a key instead of rubric
+        return rubric.annotations.all()
 
     def get_rubrics_from_annotation(self, annotation):
         """Get the queryset of rubrics that are used by this annotation.
@@ -306,8 +306,8 @@ class RubricService:
         Returns:
             Queryset: Rubric instances
         """
-        return Rubric.objects.filter(annotations=annotation) # consider getting a key instead of annotation
-    
+        return Rubric.objects.filter(annotations=annotation)
+
     def get_rubrics_from_paper(self, paper: int):
         """Get the queryset of rubrics that are used by this paper.
 
@@ -316,13 +316,13 @@ class RubricService:
 
         Returns:
             Queryset: Rubric instances
-        """ 
+        """
         paper_obj = Paper.objects.get(pk=paper)
         marking_tasks = MarkingTask.objects.filter(paper=paper_obj)
         annotations = Annotation.objects.filter(task__in=marking_tasks)
         rubrics = Rubric.objects.filter(annotations__in=annotations)
         return rubrics
-    
+
     def get_rubrics_from_user(self, username: str):
         """Get the queryset of rubrics used by this user.
 
