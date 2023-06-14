@@ -20,17 +20,20 @@ class StudentMarksService:
         """
         paper_obj = Paper.objects.get(pk=paper_num)
         marking_tasks = paper_obj.markingtask_set.all()
-        annotations = Annotation.objects.filter(task__in=marking_tasks)
+        annotations = Annotation.objects.filter(task__in=marking_tasks).order_by("edition")
 
         annotations_by_task = {}
         for annotation in annotations:
             annotations_by_task[annotation.task] = annotation
+        
+        print(annotations)
+        print(annotations_by_task)
 
         questions = {}
         for marking_task in marking_tasks:
             annotation_data = annotations_by_task[marking_task].annotation_data
             # questions[marking_task.question_number] = {
-            questions["Question " + str(marking_task.question_number)] = {
+            questions["q" + str(marking_task.question_number)] = {
                 "question": marking_task.question_number,
                 "version": marking_task.question_version,
                 "out_of": annotation_data["maxMark"],
@@ -38,4 +41,4 @@ class StudentMarksService:
             }
 
         # return { paper_num: questions }
-        return { "Paper " + str(paper_num): questions }
+        return { "p" + str(paper_num): questions }
