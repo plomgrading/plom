@@ -35,7 +35,7 @@ class StagingImage(models.Model):
     image_file = models.ImageField(upload_to=_staging_image_upload_path)
     image_hash = models.CharField(max_length=64)
     parsed_qr = models.JSONField(default=dict, null=True)
-    rotation = models.IntegerField(default=0)
+    rotation = models.IntegerField(null=True, default=None)
     pushed = models.BooleanField(default=False)
     image_type = models.TextField(choices=ImageTypeChoices.choices, default=UNREAD)
 
