@@ -3,10 +3,10 @@
 
 from django.urls import path
 
-from StudentMarks.views import StudentMarkView
+from StudentMarks.views import StudentMarkView, StudentMarkPaperView
 
 
 urlpatterns = [
     path("", StudentMarkView.as_view(), name="student_marks"),
-    path("marks.json", StudentMarkView.as_view(), name="student_marks_json")
+    path("<int:paper_num>/paper/", StudentMarkPaperView.as_view(), name="paper_num"),
 ]
