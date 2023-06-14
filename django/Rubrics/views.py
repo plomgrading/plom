@@ -56,7 +56,8 @@ class RubricItemView(ManagerRequiredView):
         # with a zero, it will be interpreted as a 11 digit key, which result in an error
         rubric_key = str(rubric_key).zfill(12)
         rubric = self.rs.get_all_rubrics().get(key=rubric_key)
-        context.update({"rubric": rubric, "form": self.form(instance=rubric)})
+        annotations = rubric.annotations.all()
+        context.update({"rubric": rubric, "form": self.form(instance=rubric), "annotations": annotations})
 
         return render(request, self.template_name, context=context)
 
