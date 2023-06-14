@@ -9,28 +9,29 @@ from Papers.models.paper_structure import Paper
 class StudentMarksService:
     """Service for the Student Marks page."""
 
-    def get_marks_from_paper(self, paper_num : int) -> dict:
+    def get_marks_from_paper(self, paper_num : int, original: bool=False) -> dict:
         """Get the marks for a paper.
 
         Args:
             paper_num: The paper number.
+            original: Gets the first edition of a mark if true, otherwise get latest (default).
 
         Returns:
             The mark information for each question in the paper.
         """
         paper_obj = Paper.objects.get(pk=paper_num)
         marking_tasks = paper_obj.markingtask_set.all()
-        annotations = Annotation.objects.filter(task__in=marking_tasks).order_by("edition")
+        if original:
+            annotations = Annotation.objects.filter(task__in=marking_tasks).order_by("-edition")
+        else:
+            annotations = Annotation.objects.filter(task__in=marking_tasks).order_by("edition")
 
         annotations_by_task = {}
         for annotation in annotations:
             annotations_by_task[annotation.task] = annotation
-        
-        print(annotations)
-        print(annotations_by_task)
 
         questions = {}
-        for marking_task in marking_tasks:
+        for marking_task in marking_tasks.order_by("question_number"):
             annotation_data = annotations_by_task[marking_task].annotation_data
             # questions[marking_task.question_number] = {
             questions["q" + str(marking_task.question_number)] = {
@@ -42,3 +43,19 @@ class StudentMarksService:
 
         # return { paper_num: questions }
         return { "p" + str(paper_num): questions }
+
+    def get_all_marks(self, original: bool=False) -> dict:
+        """Get the marks for all papers.
+
+        Args:
+            original: Gets the first edition of a mark if true, otherwise get latest (default).
+
+        Returns:
+            The mark information for each question in each paper.
+        """
+        papers = Paper.objects.all()
+        marks = {}
+        for paper in papers:
+            marks.update(self.get_marks_from_paper(paper.paper_number, original))
+
+        return marks

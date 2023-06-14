@@ -18,22 +18,9 @@ class StudentMarkView(ManagerRequiredView):
     def get(self, request):
         context = self.build_context()
 
-        # TODO: Get the student marks from the database.
-        # temporary random data
-        dict = {
-            "sports": 10,
-            "countries": ["Pakistan", "USA", "India", "China", "Germany", "France", "Spain"],
-            "types_of_wood": ["Teak", "Deodar", "Sal", "Sheesham"],
-            "colors": ["Red", "Green", "Blue", "Yellow"],
-        }
-        print("good")
-        json_data = json.dumps(dict)
-        parsed_data = json.loads(json_data)
-        print(parsed_data["sports"])
-        context["content"] = json_data
+        student_marks = self.sms.get_all_marks()
 
-
-        return render(request, "StudentMarks/student_marks.html", context=context)
+        return JsonResponse(student_marks)
 
 
 class StudentMarkPaperView(ManagerRequiredView):
