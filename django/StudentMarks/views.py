@@ -8,7 +8,6 @@ from django.http import JsonResponse
 
 from Base.base_group_views import ManagerRequiredView
 from StudentMarks.services import StudentMarksService
-from StudentMarks.forms import StudentMarksFilterForm
 from SpecCreator.services import StagingSpecificationService
 
 
@@ -26,7 +25,7 @@ class StudentMarkView(ManagerRequiredView):
         context["papers"] = papers
 
         n_questions = self.scs.get_n_questions()
-        context["n_questions"] = range(1,n_questions+1)
+        context["n_questions"] = range(1, n_questions + 1)
 
         # return JsonResponse(student_marks)
         return render(request, self.template, context)
