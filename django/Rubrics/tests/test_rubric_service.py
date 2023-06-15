@@ -362,11 +362,15 @@ class RubricServiceTests(TestCase):
         rubrics = service.get_rubrics_from_annotation(annotation1)
         self.assertEqual(len(rubrics), 0)
 
-        baker.make(Rubric, annotations=annotation1)
+        b = baker.make(Rubric)
+        b.annotations.add(annotation1)
+        b.save()
         rubrics = service.get_rubrics_from_annotation(annotation1)
         self.assertEqual(len(rubrics), 1)
 
-        baker.make(Rubric, annotations=annotation1)
+        b = baker.make(Rubric)
+        b.annotations.add(annotation1)
+        b.save()
         rubrics = service.get_rubrics_from_annotation(annotation1)
         self.assertEqual(len(rubrics), 2)
 
