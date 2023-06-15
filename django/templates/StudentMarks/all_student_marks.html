@@ -7,7 +7,8 @@
 {% load custom_tags %}
 {% block page_heading %}
     Student Marks
-{% endblock page_heading %}{% block main_content %}
+{% endblock page_heading %}
+{% block main_content %}
     {% comment %} Table {% endcomment %}
     <div>
         <table style="width: auto"
@@ -45,7 +46,7 @@
                             {% endfor %}
                         {% endif %}
                     </tr>
-            {% endfor %}
+                {% endfor %}
             </tbody>
         </table>
     </div>
