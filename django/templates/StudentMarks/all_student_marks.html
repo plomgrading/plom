@@ -4,6 +4,7 @@
 -->
 {% extends "base/base.html" %}
 {% load static %}
+{% load custom_tags %}
 {% block page_heading %}Student Marks{% endblock page_heading %}
 {% block main_content %}
 {% comment %} Table {% endcomment %}
@@ -22,35 +23,30 @@
             {% for p_key, p_val in papers.items %}
             <tr>
                 <td>{{ p_key }}</td>
-
-                {% comment %}Not graded{% endcomment %}
-
-                {% if not p_val %}
-                {% for i in n_questions %}
-                <td>Not graded</td>
-                {% endfor %}
-
-                {% comment %}Fully graded{% endcomment %}
-
-                {% elif p_val|length == n_questions|length %}
-                {% for q_key, q_val in p_val.items %}
-                <td>{{ q_val.student_mark }}</td>
-                {% endfor %}
-
-                {% comment %}Partially graded{% endcomment %}
-
-                {% else %}
+                {% if not p_val %}                                  {% comment %}Not graded{% endcomment %}
                 {% for i in n_questions %}
                 <td>
-                {% if i in p_val %}
-                {% for q_key, q_val in p_val.items %}
-                {% if q_key == i %}
-                {{ q_val.student_mark }}
-                {% endif %}
+                    Not graded
+                </td>
                 {% endfor %}
-                {% else %}
-                Not graded
-                {% endif %}
+
+                {% elif p_val|length == n_questions|length %}       {% comment %}Fully graded{% endcomment %}
+                {% for q_key, q_val in p_val.items %}
+                <td>
+                    {{ q_val.student_mark }}
+                </td>
+                {% endfor %}
+
+                {% else %}                                          {% comment %}Partially graded{% endcomment %}
+                {% for i in n_questions %}
+                <td>
+                    {% with p_val|get_item:i as dict %}
+                    {% if dict %}
+                    {{ dict.student_mark }}
+                    {% else %}
+                    Not graded
+                    {% endif %}
+                    {% endwith %}
                 </td>
                 {% endfor %}
                 {% endif %}
