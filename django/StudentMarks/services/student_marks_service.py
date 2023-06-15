@@ -33,16 +33,16 @@ class StudentMarksService:
         questions = {}
         for marking_task in marking_tasks.order_by("question_number"):
             annotation_data = annotations_by_task[marking_task].annotation_data
-            # questions[marking_task.question_number] = {
-            questions["q" + str(marking_task.question_number)] = {
+            questions[marking_task.question_number] = {
+            # questions["q" + str(marking_task.question_number)] = {
                 "question": marking_task.question_number,
                 "version": marking_task.question_version,
                 "out_of": annotation_data["maxMark"],
                 "student_mark": annotations_by_task[marking_task].score,
             }
 
-        # return { paper_num: questions }
-        return { "p" + str(paper_num): questions }
+        return { paper_num: questions }
+        # return { "p" + str(paper_num): questions }
 
     def get_all_marks(self, original: bool=False) -> dict:
         """Get the marks for all papers.
