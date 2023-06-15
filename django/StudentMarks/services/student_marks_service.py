@@ -9,7 +9,7 @@ from Papers.models.paper_structure import Paper
 class StudentMarksService:
     """Service for the Student Marks page."""
 
-    def get_marks_from_paper(self, paper_num : int, original: bool = False) -> dict:
+    def get_marks_from_paper(self, paper_num: int, original: bool = False) -> dict:
         """Get the marks for a paper.
 
         Args:
