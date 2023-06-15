@@ -59,3 +59,27 @@ class StudentMarksService:
             marks.update(self.get_marks_from_paper(paper.paper_number, original))
 
         return marks
+    
+    def get_all_papers(self):
+        """Get all papers.
+
+        Returns:
+            Queryset: All paper objects.
+        """
+        return Paper.objects.all()
+    
+    def get_marks_from_paper_set(self, paper_set: set, original: bool=False) -> dict:
+        """Get the marks for a set of papers.
+
+        Args:
+            paper_set: The set of (int) paper numbers.
+            original: Gets the first edition of a mark if true, otherwise get latest (default).
+
+        Returns:
+            The mark information for each question in each paper.
+        """
+        marks = {}
+        for paper_num in paper_set:
+            marks.update(self.get_marks_from_paper(paper_num, original))
+
+        return marks
