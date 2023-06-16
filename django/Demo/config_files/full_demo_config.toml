@@ -2,6 +2,9 @@
 # Copyright (C) 2023 Edith Coates
 
 test_spec = "demo"
+test_sources = ["demo", "demo"]
+prenaming_enabled = true
+classlist = "demo"
 num_to_produce = 70
 
 # bundle 1

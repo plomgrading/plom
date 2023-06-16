@@ -216,7 +216,7 @@ class Command(BaseCommand):
         print("*" * 40)
         creation_service.prepare_assessment(config)
 
-        if stop_at == "preparation":
+        if stop_at == "preparation" or "n_to_produce" not in config.keys():
             huey_worker_proc.terminate()
             return
 

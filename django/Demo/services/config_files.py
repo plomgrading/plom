@@ -37,3 +37,13 @@ class ServerConfigService:
             raise PlomConfigError(
                 "A test specification is required in order to build a server."
             )
+
+        if "bundles" in config.keys() or "hw_bundles" in config.keys():
+            if "test_sources" not in config.keys():
+                raise PlomConfigError(
+                    "Bundles are specified but the config lacks a test_sources field."
+                )
+            if "num_to_produce" not in config.keys():
+                raise PlomConfigError(
+                    "Bundles are specified but the config lacks a num_to_produce field."
+                )

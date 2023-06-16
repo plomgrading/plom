@@ -28,7 +28,15 @@ class DemoCreationService:
         print(
             "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
         )
-        call_command("plom_demo_spec")
+        spec_path = config["test_spec"]
+        if spec_path == "demo":
+            call_command("plom_demo_spec")
+        else:
+            call_command(
+                "plom_preparation_test_spec",
+                "upload",
+                f"{spec_path}",
+            )
 
         (settings.BASE_DIR / "fixtures").mkdir(exist_ok=True)
         call_command(
@@ -38,27 +46,44 @@ class DemoCreationService:
             f"-o{settings.BASE_DIR}/fixtures/test_spec.json",
         )
 
-        call_command(
-            "plom_preparation_test_source",
-            "upload",
-            "-v 1",
-            "useful_files_for_testing/test_version1.pdf",
-        )
-        call_command(
-            "plom_preparation_test_source",
-            "upload",
-            "-v 2",
-            "useful_files_for_testing/test_version2.pdf",
-        )
-        call_command("plom_preparation_prenaming", enable=True)
-        call_command(
-            "plom_preparation_classlist",
-            "upload",
-            "useful_files_for_testing/cl_for_demo.csv",
-        )
+        if "test_sources" in config.keys():
+            sources = config["test_sources"]
+            for i in range(len(sources)):
+                if sources[i] == "demo":
+                    file = f"useful_files_for_testing/test_version{i+1}.pdf"
+                else:
+                    file = sources[i]
 
-        n_to_produce = config["num_to_produce"]
-        call_command("plom_preparation_qvmap", "generate", f"-n {n_to_produce}")
+                call_command(
+                    "plom_preparation_test_source",
+                    "upload",
+                    f"-v {i+1}",
+                    file,
+                )
+        else:
+            print("No test sources specified. Stopping.")
+            return
+
+        if "prenaming" in config.keys() and config["prenaming"]:
+            call_command("plom_preparation_prenaming", enable=True)
+
+        if "classlist" in config.keys():
+            if config["classlist"] == "demo":
+                file = "useful_files_for_testing/cl_for_demo.csv"
+            else:
+                file = config["classlist"]
+            call_command(
+                "plom_preparation_classlist",
+                "upload",
+                file,
+            )
+
+        if "num_to_produce" in config.keys():
+            n_to_produce = config["num_to_produce"]
+            call_command("plom_preparation_qvmap", "generate", f"-n {n_to_produce}")
+        else:
+            print("No papers to produce. Stopping.")
+            return
 
         call_command(
             "dumpdata",
