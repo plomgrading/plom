@@ -3,30 +3,43 @@
 {% block title %}Web Plom - Identify Progress{% endblock %}
 {% block page_heading %}Identifying progress{% endblock %}
 {% block main_content %}
-<div class="card mb-2">
+<div class="card mb-2 w-25">
     <h4 class="p-2" style="margin-bottom: 0px;">Papers Identified: {{ identified_papers_count }} / {{ all_id_papers_count }}</h4>
 </div>
-<div class="card">
+<div class="card w-50">
     <table class="table table-hover" style="margin-bottom: 0px;">
         <thead>
             <tr>
               <th scope="col">Paper</th>
-              <th scope="col">Pages</th>
+              <th scope="col">ID Page</th>
+              <th scope="col">Student ID</th>
+              <th scope="col">Student Name</th>
+              <th scope="col"></th>
             </tr>
         </thead>
         <tbody>
-            {% for i in paper_amount %}
+            {% for id_paper in all_id_papers %}
+            {% if id_paper.image == none %}
             <tr>
-              <th scope="row">{{ i }}</th>
-              <th scope="row">
-                <button class="btn btn-outline-success">1</button>
-                <button class="btn btn-outline-success">2</button>
-                <button class="btn btn-outline-success">3</button>
-                <button class="btn btn-outline-success">4</button>
-                <button class="btn btn-outline-success">5</button>
-                <button class="btn btn-outline-success">6</button>
-              </th>
+                <td class="align-middle" scope="row">{{ id_paper.paper.paper_number }}</td>
+                <td class="text-center" colspan="3">No ID</td>
+                <td class="align-middle" scope="row">
+                    <button class="btn btn-outline-danger disabled">Clear ID</button>
+                </td> 
             </tr>
+            {% else %}
+            <tr>
+              <td class="align-middle" scope="row">{{ id_paper.paper.paper_number }}</td>
+              <td class="align-middle" scope="row">
+                <button class="btn btn-outline-success">1</button>
+              </td>
+              <td class="align-middle" scope="row">123456789</td>
+              <td class="align-middle" scope="row">Mr. Nobody</td>
+              <td class="align-middle" scope="row">
+                <button class="btn btn-outline-danger">Clear ID</button>
+              </td> 
+            </tr>
+            {% endif %}
             {% endfor %}
         </tbody>
     </table>
