@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2023 Edith Coates
+
+test_spec = "demo"
+num_to_produce = 5
+
+[[hw_bundles]]
+paper_number = 1
+pages = [[1], [2], [3]]
+
+[[hw_bundles]]
+paper_number = 2
+pages = [[1, 2], [2, 3], [3]]
+
+[[hw_bundles]]
+paper_number = 3
+pages = [[1], [2], [], [2, 3], []]
+
+[[hw_bundles]]
+paper_number = 4
+pages = [[1, 2, 3], [3]]
+
+[[hw_bundles]]
+paper_number = 5
+pages = [[], [1], [2, 3]]

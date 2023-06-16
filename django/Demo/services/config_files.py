@@ -4,6 +4,12 @@
 import tomlkit
 
 
+class PlomConfigError(Exception):
+    """An error for an invalid server config file."""
+
+    pass
+
+
 class ServerConfigService:
     """Handle building a server database from a config file."""
 
@@ -17,4 +23,17 @@ class ServerConfigService:
             dict: a server config.
         """
         with open(path, "r") as config_file:
-            return tomlkit.loads(config_file.read())
+            try:
+                config = tomlkit.loads(config_file.read())
+                self.validate_config(config)
+                return config
+            except tomlkit.exceptions.ParseError as e:
+                raise ValueError(e)
+
+    def validate_config(self, config):
+        """Validate a server config file."""
+
+        if "test_spec" not in config.keys():
+            raise PlomConfigError(
+                "A test specification is required in order to build a server."
+            )
