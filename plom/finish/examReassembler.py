@@ -87,36 +87,44 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
             else:
                 pg.insert_image(rec, filename=img_name)
 
-    if len(dnm_images) > 1:
-        w, h = papersize_landscape
-    else:
-        w, h = papersize_portrait
-    if dnm_images:
-        pg = exam.new_page(width=w, height=h)
-        W = (w - 2 * margin) // len(dnm_images)
-        header_bottom = margin + h // 10
-        offset = margin
-        for row in dnm_images:
-            rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
-            # fitz insert_image does not respect exif
-            rot = rot_angle_from_jpeg_exif_tag(row["filename"])
-            # now apply soft rotation
-            rot += row["rotation"]
-            pg.insert_image(rect, filename=row["filename"], rotate=rot)  # ccw
-            offset += W
-        if len(dnm_images) > 1:
-            text = 'These pages were flagged "Do No Mark" by the instructor.'
-        else:
-            text = 'This page was flagged "Do No Mark" by the instructor.'
-        text += "  In most cases nothing here was marked."
-        r = pg.insert_textbox(
-            fitz.Rect(margin, margin, w - margin, header_bottom),
-            text,
-            fontsize=12,
-            color=(0, 0, 0),
-            align="left",
-        )
-        assert r > 0
+    # process DNM pages one at a time, putting at most three per page
+    on_this_page = 0
+    for idx, row in enumerate(dnm_images):
+        how_many_more = len(dnm_images) - idx
+        if on_this_page == 0:
+            if how_many_more > 1:
+                # two or more pages main, do a landscape page
+                w, h = papersize_landscape
+            else:
+                w, h = papersize_portrait
+            pg = exam.new_page(width=w, height=h)
+            # width of each image on the page
+            W = (w - 2 * margin) // min(3, how_many_more)
+            header_bottom = margin + h // 10
+            offset = margin
+            if how_many_more > 1:
+                text = 'These pages were flagged "Do No Mark" by the instructor.'
+            else:
+                text = 'This page was flagged "Do No Mark" by the instructor.'
+            text += "  In most cases nothing here was marked."
+            r = pg.insert_textbox(
+                fitz.Rect(margin, margin, w - margin, header_bottom),
+                text,
+                fontsize=12,
+                color=(0, 0, 0),
+                align="left",
+            )
+            assert r > 0
+        rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
+        # fitz insert_image does not respect exif
+        rot = rot_angle_from_jpeg_exif_tag(row["filename"])
+        # now apply soft rotation
+        rot += row["rotation"]
+        pg.insert_image(rect, filename=row["filename"], rotate=rot)  # ccw
+        offset += W
+        on_this_page += 1
+        if on_this_page == 3:
+            on_this_page = 0
 
     exam.set_metadata(
         {
