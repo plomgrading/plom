@@ -1,5 +1,9 @@
-<!-- Copyright (C) 2022-2023 Brennen Chiu -->
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Brennen Chiu
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
 {% extends "base/base.html" %}
 {% block title %}
     Web Plom - Scan
@@ -22,98 +26,106 @@
                         <h5>
                             Bundle <q>{{ slug }}</q> summary
                         </h5>
-                        {% if is_pushed %}
-                            <div class="alert alert-success">
-                                Pushed <i class="bi bi-check-circle text-success"></i>
+                        {# djlint:off #}
+                            {% if is_pushed %}
+                                <div class="alert alert-success">
+                                    Pushed <i class="bi bi-check-circle text-success"></i>
                             {% else %}
                                 <div class="alert alert-info">
-                                {% endif %}
-                                <ul>
-                                    <li>{{ known_pages }} / {{ total_pages }} known pages</li>
-                                    {% if known_pages != total_pages %}
-                                        <li>{{ unknown_pages }} unknown pages</li>
-                                        <li>{{ extra_pages }} extra pages</li>
-                                        <li>{{ discard_pages }} discard pages</li>
-                                        <li>{{ error_pages }} error pages</li>
-                                    {% endif %}
-                                </ul>
+                            {% endif %}
+                        {# djlint:on #}
+                        <ul>
+                            <li>{{ known_pages }} / {{ total_pages }} known pages</li>
+                            {% if known_pages != total_pages %}
+                                <li>{{ unknown_pages }} unknown pages</li>
+                                <li>{{ extra_pages }} extra pages</li>
+                                <li>{{ discard_pages }} discard pages</li>
+                                <li>{{ error_pages }} error pages</li>
+                            {% endif %}
+                        </ul>
+                        {# djlint:off #}
                             </div>
-                        </div>
-                        <div class="col-8">
-                            <h5>Bundle Contains:</h5>
-                            {% for paper,pages in papers_pages_list %}
-                                {% with pg=pages|dictsort:"order"|first %}
-                                    <button class="btn m-1 btn-outline-success"
-                                            type="button"
-                                            onclick="this.blur();"
-                                            hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
-                                            hx-swap="outerHTML"
-                                            hx-target="#navFragment"
-                                            hx-replace-url="{% url 'scan_manage_bundle' timestamp pg.order %}">
-                                        paper {{ paper }}
-                                    </button>
-                                {% endwith %}
-                            {% endfor %}
-                        </div>
+                        {# djlint:on #}
+                    </div>
+                    <div class="col-8">
+                        <h5>Bundle Contains:</h5>
+                        {% for paper,pages in papers_pages_list %}
+                            {% with pg=pages|dictsort:"order"|first %}
+                                <button class="btn m-1 btn-outline-success"
+                                        type="button"
+                                        onclick="this.blur();"
+                                        hx-get="{% url 'scan_nav_bundle' timestamp pg.order %}"
+                                        hx-swap="outerHTML"
+                                        hx-target="#navFragment"
+                                        hx-replace-url="{% url 'scan_manage_bundle' timestamp pg.order %}">
+                                    paper {{ paper }}
+                                </button>
+                            {% endwith %}
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+    <div style="margin: 0px 0px 16px 2.5px">
         <div class="card w-75 m4">
             <div class="card-body">
                 <h5 class="card-title">Page images</h5>
                 <div class="row row-cols-5">
                     {% for pg in pages %}
                         <div class="col">
+                            {# djlint:off #}
                             {% if pg.status == "known" %}
                                 <div class="alert alert-success"
                                      data-bs-toggle="tooltip"
                                      data-bs-placement="top"
                                      data-bs-title="paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }}">
-                                {% elif pg.status == "extra" %}
-                                    <div class="alert alert-info"
-                                         data-bs-toggle="tooltip"
-                                         data-bs-placement="top"
-                                         {% if pg.info.question_list %} data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}" {% else %} data-bs-title="Extra page - no data" {% endif %}>
-                                    {% elif pg.status == "error" %}
-                                        <div class="alert alert-danger"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="error: {{ pg.info.reason }}">
-                                        {% elif pg.status == "unknown" %}
-                                            <div class="alert alert-warning"
-                                                 data-bs-toggle="tooltip"
-                                                 data-bs-placement="top"
-                                                 data-bs-title="Unknown page">
-                                            {% elif pg.status == "unread" %}
-                                                <div class="alert alert-dark"
-                                                     data-bs-toggle="tooltip"
-                                                     data-bs-placement="top"
-                                                     data-bs-title="qr-unread">
-                                                {% elif pg.status == "discard" %}
-                                                    <div class="alert alert-dark"
-                                                         data-bs-toggle="tooltip"
-                                                         data-bs-placement="top"
-                                                         data-bs-title="discard: {{ pg.info.reason }}">
-                                                    {% endif %}
-                                                    <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
-                                                        <img class="img-thumbnail"
-                                                             style="transform:rotate(calc(-1 * {{ pg.rotation }}deg))"
-                                                             src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
-                                                    </img>
-                                                </a>
-                                                {{ pg.rotation }}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
+                            {% elif pg.status == "extra" %}
+                                <div class="alert alert-info"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     {% if pg.info.question_list %} data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}" {% else %} data-bs-title="Extra page - no data" {% endif %}>
+                            {% elif pg.status == "error" %}
+                                <div class="alert alert-danger"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     data-bs-title="error: {{ pg.info.reason }}">
+                            {% elif pg.status == "unknown" %}
+                                <div class="alert alert-warning"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     data-bs-title="Unknown page">
+                            {% elif pg.status == "unread" %}
+                                <div class="alert alert-dark"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     data-bs-title="qr-unread">
+                            {% elif pg.status == "discard" %}
+                                <div class="alert alert-dark"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-placement="top"
+                                     data-bs-title="discard: {{ pg.info.reason }}">
+                            {% endif %}
+                            {# djlint:on #}
+                            <a href="{% url 'scan_manage_bundle' timestamp pg.order %}">
+                                <img class="img-thumbnail"
+                                     style="transform:rotate(calc(-1 * {{ pg.rotation }}deg))"
+                                     src="{% url 'scan_get_thumbnail' timestamp pg.order %}">
+                            </a>
+                            {{ pg.rotation }}
+                            {# djlint:off #}
                             </div>
+                            {# djlint:on #}
                         </div>
-                    </div>
-                    <script>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     })
-                    </script>
-                {% endblock main_content %}
+    </script>
+{% endblock main_content %}
