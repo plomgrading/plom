@@ -30,8 +30,8 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
             Pass None to omit (deprecated "totalling mode" did this).
         id_images (list): dict of images with keys "filename" (`pathlib.Path`)
             and "rotation" (`integer`).
-        marked_pages (list): as above.
-        dnm_images (list): as above.
+        marked_pages (list): `pathlib.Path` for each image.
+        dnm_images (list): as above ``id_images``.
 
     Returns:
         None
@@ -43,15 +43,18 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     else:
         exam = fitz.open()
 
-    # TODO: consider breaking this into two loops: id_images are more like dnm
-    for row in [*id_images, *marked_pages]:
-        img_name = row["filename"]
-        # currently always zero for the marked pages
-        rot_angle = row["rotation"]
-        im = PIL.Image.open(img_name)
+    for img in id_images:
+        w, h = papersize_portrait
+        pg = exam.new_page(width=w, height=h)
+        rect = fitz.Rect(margin, margin, w - margin, h - margin)
+        # fitz insert_image does not respect exif
+        rot = rot_angle_from_jpeg_exif_tag(img["filename"])
+        # now apply soft rotation
+        rot += img["rotation"]
+        pg.insert_image(rect, filename=img["filename"], rotate=rot)  # ccw
 
-        # TODO: replace all this with load_with_exif
-        # then apply of soft rotation
+    for img_name in marked_pages:
+        im = PIL.Image.open(img_name)
 
         # Rotate page not the image: we want landscape on screen
         if im.width > im.height:

@@ -96,7 +96,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         filename = tmpdir / f"img_{int(t):04}_q{q:02}.{im_type}"
         if not im_type:
             raise PlomSeriousException(f"Could not identify image type: {filename}")
-        marked_pages.append({"filename": filename, "rotation": 0})
+        marked_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
 
