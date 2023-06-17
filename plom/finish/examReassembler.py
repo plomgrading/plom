@@ -72,24 +72,6 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
 
         pg.insert_image(rec, filename=img_name, rotate=angle)
 
-        # TODO: useful bit of transcoding-in-memory code here: move somewhere!
-        # Its not currently useful here b/c clients try jpeg themselves now
-        continue
-
-        png_size = img_name.stat().st_size
-        # Make a jpeg in memory, and use that if its significantly smaller
-        with tempfile.SpooledTemporaryFile(mode="w+b", suffix=".jpg") as jpeg_file:
-            im.convert("RGB").save(
-                jpeg_file, format="jpeg", quality=90, optimize=True, subsampling=0
-            )
-            jpeg_size = jpeg_file.tell()  # cannot use stat as above
-            if jpeg_size < 0.75 * png_size:
-                # print("Using smaller JPEG for {}".format(img_name))
-                jpeg_file.seek(0)
-                pg.insert_image(rec, stream=jpeg_file.read())
-            else:
-                pg.insert_image(rec, filename=img_name)
-
     # process DNM pages one at a time, putting at most three per page
     on_this_page = 0
     for idx, img in enumerate(dnm_images):
@@ -139,3 +121,23 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     exam.save(outname, deflate=True)
     # https://gitlab.com/plom/plom/-/issues/1777
     exam.close()
+
+
+def _unused_in_memory_jpeg_conversion(img_name, pg, rec):
+    # TODO: useful bit of transcoding-in-memory code
+    # Its not currently used b/c clients try jpeg themselves now
+
+    png_size = img_name.stat().st_size
+    im = PIL.Image.open(img_name)
+    # Make a jpeg in memory, and use that if its significantly smaller
+    with tempfile.SpooledTemporaryFile(mode="w+b", suffix=".jpg") as jpeg_file:
+        im.convert("RGB").save(
+            jpeg_file, format="jpeg", quality=90, optimize=True, subsampling=0
+        )
+        jpeg_size = jpeg_file.tell()  # cannot use stat as above
+        if jpeg_size < 0.75 * png_size:
+            # print("Using smaller JPEG for {}".format(img_name))
+            jpeg_file.seek(0)
+            pg.insert_image(rec, stream=jpeg_file.read())
+        else:
+            pg.insert_image(rec, filename=img_name)
